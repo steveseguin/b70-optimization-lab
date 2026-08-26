@@ -1,0 +1,136 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp4-mtp4-f16-eager-quality-recovery-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Recover the full quality gate for current-f01e AutoRound TP4/MTP4/eager/F16 without re-entering the known-fatal 32K selector or retesting the known-divergent 2K selector. Run exact 4K, quarantined-parent reproduction at 8K, exact 16K, exact 24K, then the full quality battery in one fresh server lifetime. A complete global pass may authorize only 4K/16K/24K for explicit Grade C human publication; 8K remains quarantined, 2K and 32K retain prior diagnostic classifications, and x0 remains missing.",
+  "prior_failure": {
+    "campaign": "qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-depth-expansion-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-depth-expansion-20260826-r1",
+    "terminal_sha256": "1bb805f7bfd6a42c00112d3de83942c80f6d209df04ffc3e759a913910041596",
+    "arm_sha256": "1ec324563e5f31b79ea49e30fa7aef57c189190ffed8148525c600fb165fddf3",
+    "quality_stdout_sha256": "b98265b35591c51049047f0e2844c06f916c0d1d9c095a44d309c5af514d1388",
+    "server_log_sha256": "805be94de4d58b7066bec5dd0b1fb6c15151fb07273d1b6ff2c5bd95d38bf107",
+    "classification": "incomplete-mixed-depth-engine-fatal-32k-quality-not-run",
+    "fatal_error": "RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.",
+    "observed_32k_target_prefix_tokens": 126,
+    "excluded_depths": [2048, 32768]
+  },
+  "target_oracles": {
+    "campaign": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "terminal_sha256": "f6ed578228a9e6c21c68653b828a0ecc4ee776107337446e6ecc2f595d47297e",
+    "quality_sha256": "2172c3bdba148062487ba73980fee46a5f1f2501baa37ceb83ca0e058bcaa83f",
+    "depth_receipts": {
+      "4096": {"sha256": "1dbba43c7ed816156f53b489e2287247e8a96f26a7d5f15a1a381d28f7e89e02", "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"},
+      "8192": {"sha256": "a4a898748454b9d2588fd911c9e38ddfff58a129736db3a97ce1b871c5f472dc", "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53"},
+      "16384": {"sha256": "d0a621857ecd56e7b2cb44ec07381b5e4ebfbd3e0df322fdc741f92f0715481a", "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7"},
+      "24576": {"sha256": "13122dd794bd0e9106450224b5a19261585a2740a9b293e787e8e6a74e4fd4b6", "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8"}
+    },
+    "gate": "The 4K, 16K, and 24K candidates must each exactly match the 128 same-topology TP4/MTP0 target IDs. The 8K candidate must reproduce the quarantined TP4/MTP4 parent and is never a target-parity cell. Neither 2K nor 32K may be requested. TP1 receipts and all MTP1/MTP2/MTP3 results are not targets."
+  },
+  "parent_sentinel": {
+    "campaign": "qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-8k-sentinel-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-8k-sentinel-20260826-r1",
+    "terminal_sha256": "37a3ffe9eaf87fb8c1debeb105573af6032714701b584ba8b56dcfa00cda5a09",
+    "exact_8k_sha256": "47ff0673a1f8a2dd66d9b634d9d63e1c8a16406cb536742ab69675e5ab5c386e",
+    "quality_sha256": "21956342bd4d26199206f1cfb6f070e1b6feafea15e361e278f27ec48350981a",
+    "verification_sha256": "a2ef789ab6d820a285858e733ea195dd631fbe5ea085c971540711c5225e00c5",
+    "output_token_ids_sha256": "dd31856f45269d222efe0f6f5f1ac9342b6c9ae55e5ce9129fc02b27abdb7e8e",
+    "acceptance": "97/124 accepted",
+    "state": "quarantined-target-parity-failed",
+    "target_parity": false,
+    "first_divergence": {"one_based": 99, "candidate": 411, "target": 579},
+    "gate": "Candidate 8K must reproduce all 128 quarantined parent candidate IDs; mismatch quarantines the campaign. Reproducing the parent satisfies continuity only and never grants 8K target parity or publication authority."
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 4,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1,2,3",
+    "mtp_depth": 4,
+    "speculative_config": {"method": "qwen3_next_mtp", "num_speculative_tokens": 4},
+    "startup_speculator_identity": {"method": "mtp", "num_spec_tokens": 4},
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {"VLLM_XPU_ENABLE_XPU_GRAPH": "0", "VLLM_XPU_GRAPH": "0"},
+    "oneapi_device_selector": "unset"
+  },
+  "speculator_binding": {
+    "type": "native embedded Qwen MTP; no external draft model",
+    "mtp_tensor_count": 29,
+    "mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de"
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [4096, 8192, 16384, 24576],
+    "target_parity_depths": [4096, 16384, 24576],
+    "parent_reproduction_only_depths": [8192],
+    "explicitly_excluded_depths": [2048, 32768],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896
+  },
+  "acceptance_contract": {
+    "snapshot_scope": "Both counters immediately before and after each exact-depth request, with no intervening traffic",
+    "gate": "All before/after/delta values finite; counters nondecreasing; drafted_delta > 0; accepted_delta > 0; accepted_delta <= drafted_delta"
+  },
+  "quality_contract": {
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1/quality.json",
+    "baseline_sha256": "2172c3bdba148062487ba73980fee46a5f1f2501baa37ceb83ca0e058bcaa83f",
+    "gate": "pass_all, baseline_match_all, seven exact cases, eight deterministic repeats, long context, and all 16 usage records explicitly cached_tokens == 0"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-20260826-r1",
+    "port": 19491,
+    "container": "q38-f01e-ar-tp4-mtp4-f16-recovery-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-quality-recovery-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-recovery": "All four exact requests and acceptance gates pass, 8K reproduces the quarantined parent, 4K/16K/24K exactly match TP4/MTP0, and full objective/baseline/cache/topology/cleanup gates pass. Authorize only 4K/16K/24K for explicit Grade C human publication.",
+    "quarantined-recovery-cell-failed": "One or more of 4K/16K/24K fails exact depth, acceptance, or TP4/MTP0 parity; retain all receipts without measured-cell authority.",
+    "quarantined-parent-8k-mismatch": "Candidate 8K differs from the quarantined TP4/MTP4 reproduction parent; retain all receipts without per-depth authority.",
+    "quarantined-quality-failed": "Objective/cache-zero or same-topology baseline quality fails.",
+    "unsupported": "Only an explicit exact-image native-MTP unsupported line qualifies.",
+    "failed": "Infrastructure, binding, startup, identity, metrics, topology, cache, or cleanup failure."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+    "historical_replacement_allowed": false,
+    "protected_route_replacement_allowed": false,
+    "existing_tp4_8k_replacement_allowed": false,
+    "site_publication_automatic": false,
+    "human_per_depth_adjudication_required": true,
+    "successful_human_grade_c_depths": [4096, 16384, 24576],
+    "parent_target_parity_required_globally": false,
+    "structurally_quarantined_depths": [8192],
+    "retained_prior_quarantined_depths": [2048, 8192],
+    "retained_prior_runtime_fatal_depths": [32768],
+    "excluded_from_recovery": [2048, 32768],
+    "x0_missing": true,
+    "descendant_execution_authorized": false,
+    "partial_valid_depths_independently_classifiable": true
+  },
+  "cache_contract": {"filesystem": "ext4", "fresh": true, "writable_ntfs_forbidden": true, "rank_namespaces": ["rank_0_0", "rank_1_0", "rank_2_0", "rank_3_0"]}
+}
