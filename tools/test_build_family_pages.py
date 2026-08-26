@@ -3262,14 +3262,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 29 matrices", overview_html)
-        self.assertIn("588/2,001 classified", overview_html)
+        self.assertIn("589/2,001 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "370", "measured"),
+            ("lab-measured", "371", "measured"),
             ("lab-screened", "35", "screened"),
             ("quarantined", "116", "quarantined"),
             ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,413", "missing"),
+            ("missing", "1,412", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -4809,29 +4809,41 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(result["authority"]["protected_decode_values_unchanged"], [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144])
         self.assertEqual(series["q38-f01e-autoround-tp2-mtp2-eager-f16-exact-context-r1-grade-c"]["points"][0]["decode_tok_s"], 20.36405574066059)
 
-    def test_q38_current_f01e_tp2_mtp4_quarantines_only_8k_without_speed(self) -> None:
+    def test_q38_current_f01e_tp2_mtp4_measures_only_4k_and_retains_8k_quarantine(self) -> None:
         family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
         packets = {item["id"]: item for item in family["packets"]}
+        series = {item["id"]: item for item in family["series_measurements"]}
         contracts = {item["id"]: item for item in family["coverage_contracts"]}
-        packet_id = "qwen38-27b-autoround-int4-tp2-f01e-mtp4-eager-f16-8k-quarantine"
+        quarantine_packet_id = "qwen38-27b-autoround-int4-tp2-f01e-mtp4-eager-f16-8k-quarantine"
+        measured_packet_id = "qwen38-27b-autoround-int4-tp2-f01e-mtp4-eager-f16-4k-grade-c"
+        measurement_id = "q38-f01e-autoround-tp2-mtp4-eager-f16-exact-4k-r1-grade-c"
         contract_id = "qwen38-tp2-vllm-xpu-autoround-f01e-mtp4-eager-depth"
 
-        self.assertEqual(packets[packet_id]["grades"]["evidence"]["grade"], "D")
+        self.assertEqual(packets[quarantine_packet_id]["grades"]["evidence"]["grade"], "D")
+        self.assertEqual(packets[measured_packet_id]["grades"]["evidence"]["grade"], "C")
+        self.assertEqual(
+            series[measurement_id]["points"],
+            [{"x": 4096, "decode_tok_s": 21.080466832575162, "ttft_ms": 4336.120582011063, "cached_tokens": 0, "drafted_tokens": 148, "accepted_tokens": 90, "draft_acceptance_rate": 0.6081081081081081, "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"}],
+        )
         cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
         self.assertEqual(errors, [])
         self.assertEqual(len(cells), 7)
-        self.assertEqual([cell for cell in cells if cell["state"] == "lab-measured"], [])
+        measured = [cell for cell in cells if cell["state"] == "lab-measured"]
+        self.assertEqual(len(measured), 1)
+        self.assertEqual(measured[0]["selectors"]["active_context_tokens"], 4096)
+        self.assertEqual(measured[0]["evidence_id"], measurement_id)
+        self.assertEqual(measured[0]["packet_id"], measured_packet_id)
         quarantined = [cell for cell in cells if cell["state"] == "quarantined"]
         self.assertEqual(len(quarantined), 1)
         self.assertEqual(quarantined[0]["selectors"]["active_context_tokens"], 8192)
-        self.assertEqual(quarantined[0]["packet_id"], packet_id)
+        self.assertEqual(quarantined[0]["packet_id"], quarantine_packet_id)
         self.assertNotIn("evidence_id", quarantined[0])
         self.assertNotIn("point_x", quarantined[0])
         self.assertIn("token-99", quarantined[0]["label"])
         self.assertTrue(quarantined[0]["evidence"].endswith("tp2-mtp4-f16-eager-8k-sentinel-r1-result.json"))
         self.assertEqual(
             [cell["selectors"]["active_context_tokens"] for cell in cells if cell["state"] == "missing"],
-            [0, 2048, 4096, 16384, 24576, 32768],
+            [0, 2048, 16384, 24576, 32768],
         )
         self.assertTrue(all(cell["selectors"]["tp"] == 2 and cell["selectors"]["mtp"] == 4 and cell["selectors"]["graph_mode"] == "off" and cell["selectors"]["kv"] == "f16" for cell in cells))
 
@@ -4841,6 +4853,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertFalse(result["diagnostic_point"]["site_speed_publication"])
         self.assertFalse(result["authority"]["historical_or_protected_replacement"])
         self.assertEqual(result["authority"]["protected_decode_values_unchanged"], [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144])
+        measured_result = json.loads((MODULE.ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-4k-sentinel-r1-result.json").read_text())
+        self.assertEqual(measured_result["authority"]["site_cells"], 1)
+        self.assertTrue(measured_result["authority"]["existing_8k_quarantine_unchanged"])
+        self.assertTrue(measured_result["authority"]["x0_2k_16k_24k_32k_remain_missing"])
         rendered = MODULE.family_page(family)
         self.assertNotIn("21.915468017099425", rendered)
         self.assertNotIn("22.13683638090851", rendered)
