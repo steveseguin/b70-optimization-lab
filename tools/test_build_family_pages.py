@@ -3230,14 +3230,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 21 matrices", overview_html)
-        self.assertIn("518/1,945 classified", overview_html)
+        self.assertIn("523/1,945 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "319", "measured"),
+            ("lab-measured", "324", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "103", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,427", "missing"),
+            ("missing", "1,422", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -4251,7 +4251,7 @@ class FamilyCoverageTest(unittest.TestCase):
         graph_series = series["q38-autoround-tp4-f16kv-http-context-r1-grade-c"]
         self.assertEqual(graph_series["points"][2]["decode_tok_s"], 69.8695629973191)
 
-    def test_q38_current_f01e_tp4_eager_oracle_is_one_additive_cell(self) -> None:
+    def test_q38_current_f01e_tp4_eager_oracle_adds_five_without_replacing_8k(self) -> None:
         family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
         packets = {item["id"]: item for item in family["packets"]}
         series = {item["id"]: item for item in family["series_measurements"]}
@@ -4272,14 +4272,23 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(len(cells), 7)
         measured = [cell for cell in cells if cell["state"] == "lab-measured"]
-        self.assertEqual(len(measured), 1)
-        self.assertEqual(measured[0]["selectors"]["active_context_tokens"], 8192)
-        self.assertEqual(measured[0]["evidence_id"], measurement_id)
-        self.assertEqual(measured[0]["packet_id"], packet_id)
+        self.assertEqual(len(measured), 6)
+        retained = next(cell for cell in measured if cell["selectors"]["active_context_tokens"] == 8192)
+        self.assertEqual(retained["evidence_id"], measurement_id)
+        self.assertEqual(retained["packet_id"], packet_id)
         self.assertEqual(
             [cell["selectors"]["active_context_tokens"] for cell in cells if cell["state"] == "missing"],
-            [0, 2048, 4096, 16384, 24576, 32768],
+            [0],
         )
+        expansion_id = "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c"
+        expansion_packet = "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c"
+        expansion = series[expansion_id]
+        self.assertEqual([point["x"] for point in expansion["points"]], [2048, 4096, 16384, 24576, 32768])
+        self.assertEqual(
+            [cell["selectors"]["active_context_tokens"] for cell in measured if cell["evidence_id"] == expansion_id],
+            [2048, 4096, 16384, 24576, 32768],
+        )
+        self.assertTrue(all(cell["packet_id"] == expansion_packet for cell in measured if cell["evidence_id"] == expansion_id))
         self.assertTrue(all(
             cell["selectors"]["tp"] == 4
             and cell["selectors"]["mtp"] == 0

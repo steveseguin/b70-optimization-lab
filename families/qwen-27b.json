@@ -666,6 +666,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-r1-result.json"
     },
     {
+      "id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c",
+      "label": "Qwen3.8 AutoRound INT4 · TP4 current-image eager/F16 depth expansion",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "cards": 4,
+      "status": "quality-battery-qualified-grade-c-http-depth-expansion",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "TP4", "HTTP serving", "exact context 2K-32K", "F16 KV", "eager", "full quality battery", "2K cross-TP caveat", "x0 missing", "prior 8K cell retained"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Current-f01e AutoRound INT4 TP4/MTP0 eager/F16 target-only serving at all six canonical nonzero depths",
+          "basis": "All six cache-zero exact TP4-native receipts, the complete quality and baseline battery, all-four-worker topology, rank-cache isolation, and cleanup passed. The 8K output reproduced the frozen TP4 parent; 4K-32K matched TP1, while 2K has an explicit cross-topology token-90 caveat that does not invalidate the TP4-native oracle. Five missing site cells are filled additively and the prior 8K speed remains unchanged.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-official-fp8-tp1-eager-depth-grade-c",
       "label": "Qwen3.8 official FP8 · TP1 eager depth screen",
       "revision": "qwen3.8-27b",
@@ -4167,6 +4189,35 @@
       "quality": "The exact 8K gate and full battery passed: 7/7 exact cases, deterministic 8/8 repeat with one hash, the long-context needle, 24/24 baseline comparisons, cache zero on all 16 requests, and exact 128-token parity with the frozen TP1 target.",
       "caveat": "Grade C one-server exact-8K target-oracle evidence. x=0 and every other active-context depth remain missing. This eager current-image cell is additive and does not replace the b2dd graph curve, protected 71.900 route, any headline, or LocalMaxxing result.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-r1-result.json"
+    },
+    {
+      "id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 target-only TP4 eager · F16 KV · exact nonzero context expansion",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp4-vllm-xpu-autoround-eager-oracle-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "none",
+      "profile_id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-grade-c-r1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c-additive-five-cell-publication",
+      "promotion_status": "authorized-five-new-context-cells-prior-8k-retained-no-x0-graph-headline-or-submission",
+      "config": {"tp": 4, "mtp": 0, "graph": "off", "graph_mode": "off", "enforce_eager": true, "kv": "f16", "speculation": "none", "parallel_slots": 1, "configured_max_context_tokens": 32896, "gpu_memory_utilization": 0.6, "prefix_caching": false},
+      "workload": "One-slot vLLM OpenAI-compatible HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 2048, "decode_tok_s": 9.826154819323886, "historical_100_event_decode_tok_s": 9.925408908407967, "ttft_ms": 2685.9955209947657, "effective_prompt_throughput_proxy_tok_s": 762.4733488913331, "cached_tokens": 0, "output_token_ids_sha256": "921825efade0d24e902bdbaffecfde1275acf6afeb349d15f993f518b50f7446"},
+        {"x": 4096, "decode_tok_s": 10.052904972149483, "historical_100_event_decode_tok_s": 10.15444946681766, "ttft_ms": 1420.6567570072366, "effective_prompt_throughput_proxy_tok_s": 2883.1735602543827, "cached_tokens": 0, "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"},
+        {"x": 16384, "decode_tok_s": 10.256704369059573, "historical_100_event_decode_tok_s": 10.360307443494518, "ttft_ms": 5845.1856519968715, "effective_prompt_throughput_proxy_tok_s": 2802.9905251003943, "cached_tokens": 0, "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7"},
+        {"x": 24576, "decode_tok_s": 10.167773834875007, "historical_100_event_decode_tok_s": 10.270478621085866, "ttft_ms": 8964.552515011746, "effective_prompt_throughput_proxy_tok_s": 2741.4642235455517, "cached_tokens": 0, "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8"},
+        {"x": 32768, "decode_tok_s": 10.211861327963087, "historical_100_event_decode_tok_s": 10.315011442386956, "ttft_ms": 12209.947939001722, "effective_prompt_throughput_proxy_tok_s": 2683.7133265188263, "cached_tokens": 0, "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786"}
+      ],
+      "quality": "All six TP4-native exact-depth receipts and the full quality/baseline battery passed; the 8K output matched the frozen parent and 4K-32K matched the TP1 comparison.",
+      "caveat": "Grade C one-server curve. TP4 2K diverged from the conservative TP1 comparison at token 90, but passed every TP4-native gate. This record publishes only five previously missing cells: the existing exact-8K measurement remains unchanged, x0 stays missing, and graph, MTP, protected, headline, and submission authority do not transfer.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-r1-result.json"
     },
     {
       "id": "q38-b2dd-tp1-graph-f16-exact-context",
@@ -8362,7 +8413,7 @@
   {
     "id": "qwen38-tp4-vllm-xpu-autoround-f01e-eager-oracle-depth",
     "label": "Qwen3.8 TP4 · current f01e AutoRound eager oracle depth",
-    "description": "Seven exact selector cells for the current-f01e AutoRound INT4 TP4 target-only MTP0 eager F16-KV lane: one Grade C cache-zero oracle measurement at 8K and six explicit missing depths including x=0.",
+    "description": "Seven exact selector cells for the current-f01e AutoRound INT4 TP4 target-only MTP0 eager F16-KV lane: six Grade C cache-zero nonzero measurements and explicit missing x=0. The earlier exact-8K cell is retained; five cells are additive from the expansion.",
     "fixed_selectors": {
       "revision": "qwen3.8-27b",
       "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
@@ -8379,8 +8430,13 @@
       {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768], "value_labels": {"0": "0", "2048": "2K", "4096": "4K", "8192": "8K", "16384": "16K", "24576": "24K", "32768": "32K"}}
     ],
     "rules": [
-      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "Only the preregistered exact-8K target oracle was measured; configured maximum context and the graph curve never substitute for this current-image eager profile.", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1", "retry": {"status": "queued", "trigger": "separately-preregistered-exact-depth-expansion"}},
+      {"id": "default-exact-gap", "match": {"active_context_tokens": "*"}, "state": "missing", "label": "unmeasured exact cell", "reason": "x=0 has no exact fixture and is not inferred from configured maximum context, another graph mode, or another topology.", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "queued", "trigger": "new-exact-zero-context-fixture"}},
+      {"id": "measured-2k", "match": {"active_context_tokens": 2048}, "state": "lab-measured", "label": "D9.83 · Grade C", "reason": "Exact cache-zero TP4-native eager cell with full quality; conservative TP1 comparison diverges at token 90.", "evidence_id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-4k", "match": {"active_context_tokens": 4096}, "state": "lab-measured", "label": "D10.05 · Grade C", "reason": "Exact cache-zero TP4-native eager cell with full quality and TP1 comparison parity.", "evidence_id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-8k-oracle", "match": {"active_context_tokens": 8192}, "state": "lab-measured", "label": "D9.65 · T4,768 · Grade C oracle", "reason": "Exact cache-zero TP4 target-only cell with full objective and baseline quality, all-four-worker topology, and exact same-image TP1 token parity.", "evidence_id": "q38-f01e-autoround-tp4-eager-f16-exact-8k-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-oracle-8k-grade-c", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-8k-oracle-sentinel-20260826-r1", "retry": {"status": "complete"}}
+      ,{"id": "measured-16k", "match": {"active_context_tokens": 16384}, "state": "lab-measured", "label": "D10.26 · Grade C", "reason": "Exact cache-zero TP4-native eager cell with full quality and TP1 comparison parity.", "evidence_id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-24k", "match": {"active_context_tokens": 24576}, "state": "lab-measured", "label": "D10.17 · Grade C", "reason": "Exact cache-zero TP4-native eager cell with full quality and TP1 comparison parity.", "evidence_id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
+      {"id": "measured-32k", "match": {"active_context_tokens": 32768}, "state": "lab-measured", "label": "D10.21 · Grade C", "reason": "Exact cache-zero TP4-native eager cell with full quality and TP1 comparison parity.", "evidence_id": "q38-f01e-autoround-tp4-eager-f16-exact-context-expansion-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp4-f01e-eager-f16-depth-grade-c", "parent": "qwen38-official-f01e-autoround-tp4-mtp0-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}}
     ]
   },
   {
