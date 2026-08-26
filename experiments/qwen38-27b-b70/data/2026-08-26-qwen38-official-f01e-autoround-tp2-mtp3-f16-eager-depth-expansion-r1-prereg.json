@@ -1,0 +1,213 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp2-mtp3-f16-eager-depth-expansion-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Measure current-f01e AutoRound TP2/MTP3/eager/F16 at exact 4K, 8K, 16K, 24K, and 32K in one server lifetime. Authorization is pinned exclusively to the five independently valid same-topology TP2/MTP2 depth receipts. Exact 2K is explicitly excluded because TP2/MTP2 diverged from TP2/MTP0 at output token 90. Each included depth independently requires exact depth, finite positive conserved acceptance, cache zero, and exact same-topology TP2/MTP0 target parity. Retain partial evidence without historical replacement.",
+  "target_oracles": {
+    "campaign": "qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "terminal_sha256": "63fe2e8a85db47af331743b93b1c6e181f930775104f19483eb7b9e1da0f2c60",
+    "quality_sha256": "ef15f39a848d262a4582b1ab6c9a2f10713ecfbcae02497bc4462c8ae5a3af96",
+    "tracked_result_sha256": "c4423e5231ac112152a0bdc02419b805cc9422aa1f3d572e8c2c01f9b64baaa7",
+    "depth_receipts": {
+      "2048": {
+        "sha256": "57b1ad5760ab790c3b839a897bc6b1807a2d1037710b0e949e2977973cc5864e",
+        "output_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89"
+      },
+      "4096": {
+        "sha256": "6e32b0a05f7e355bf21c5e3ebd0e04a16fbf3d54bc39890aa8740b3a5430f187",
+        "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"
+      },
+      "8192": {
+        "sha256": "55bc2ad94cb920dda1233f3d26209d009a80549469974182c0455d2826f11266",
+        "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53"
+      },
+      "16384": {
+        "sha256": "c93e67650b0bf61941f33280dd66a2de82b555c4d65b0a0ddc1093defb03d569",
+        "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7"
+      },
+      "24576": {
+        "sha256": "eaef51ab0c3ad12501d1f9b087233359b3a6455cce25bb68161828cd61600fa0",
+        "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8"
+      },
+      "32768": {
+        "sha256": "cf37631f2d2d32fb0dfbc7ab1674b9cccdf67270791fc728112dbd2a458edc9b",
+        "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786"
+      }
+    },
+    "gate": "Every included candidate must exactly match the 128 TP2/MTP0 target IDs at its depth. The pinned 2K target receipt exists only to bind the parent divergence exclusion; 2K is not executed. TP1 receipts are not targets."
+  },
+  "parent_oracles": {
+    "campaign": "qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp2-f16-eager-depth-expansion-20260826-r1",
+    "terminal_sha256": "a803293e6273fc968161982f337c2962b64e99b2e8ff5a1ef3de7285895e5707",
+    "arm_result_sha256": "84ea935a30aa268752c16336b88e89f1926b8b68d9ccef62c6beddb2d966176f",
+    "quality_sha256": "df1c8a434d229f0b673f40fd8ee77cd659c953cdfaaaaf536c3191cf1903e1e9",
+    "excluded_depths": {
+      "2048": {
+        "reason": "TP2/MTP2 output diverged from TP2/MTP0 at one-based output token 90",
+        "depth_sha256": "6f79f5461f3b933c90a54f7dfdf98e65a929f975051ba38729c2750277943d36",
+        "verification_sha256": "f89773221b1837ea2bef1efd0dee1c484acb81acbf0aecd0c2194c8a6208affa",
+        "candidate_output_token_ids_sha256": "921825efade0d24e902bdbaffecfde1275acf6afeb349d15f993f518b50f7446",
+        "target_output_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89",
+        "first_divergence": {
+          "zero_based": 89,
+          "one_based": 90,
+          "candidate": 59178,
+          "target": 16539
+        },
+        "drafted_tokens": 110,
+        "accepted_tokens": 72
+      }
+    },
+    "depth_receipts": {
+      "4096": {
+        "sha256": "426062cbce3657bd19babf89cd469d4ca048867638d48489cd0ac344db4dbe96",
+        "verification_sha256": "70b4f07912a9aaa5408b06823b61a6f6df838959eed7d55c8f65e062011d372d",
+        "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+        "drafted_tokens": 94,
+        "accepted_tokens": 80
+      },
+      "8192": {
+        "sha256": "35153d22f9d19d2bc03d290c0b75f9bc4ed90a4a0af04a2d54b832e0afd67c54",
+        "verification_sha256": "a88154e7784b81e9acb16c70b911168597fed4852db0f1aedd61a1a7cf473691",
+        "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53",
+        "drafted_tokens": 96,
+        "accepted_tokens": 79
+      },
+      "16384": {
+        "sha256": "dfb67819f64551dc1f4f929f7e0cbaeb0e5c7ef770589227981c4ae814216c8c",
+        "verification_sha256": "7fc2ef310856d69656242ea3077b46276613ea1032ece41bdb2becfcf3c11860",
+        "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7",
+        "drafted_tokens": 104,
+        "accepted_tokens": 76
+      },
+      "24576": {
+        "sha256": "0b0063f9863ab19ff37eca89750f8e73cf65e1ab8575b562d2cd7c680db7c688",
+        "verification_sha256": "9651bcc546c0cabcb2dfea8689fa9800824f92d4a3bf7998997f1296bb9b9487",
+        "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8",
+        "drafted_tokens": 102,
+        "accepted_tokens": 76
+      },
+      "32768": {
+        "sha256": "e1cfbf42e623240ecf35d368fdbad513b95bd36ddc8feec227461b87e768a0a8",
+        "verification_sha256": "e40fdd2b2bee8f9ac01b987af22ac4f798dda8fa439de3987539195aba6af1a1",
+        "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786",
+        "drafted_tokens": 106,
+        "accepted_tokens": 74
+      }
+    },
+    "gate": "The terminal and arm receipts must remain a globally clean partial result with exactly five valid 4K-32K oracles and the exact pinned 2K token-90 divergence. Parent quality, TP2 topology, rank-cache isolation, and cleanup must pass. No other topology or MTP depth authorizes this arm."
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 2,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1",
+    "mtp_depth": 3,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 3
+    },
+    "startup_speculator_identity": {
+      "method": "mtp",
+      "num_spec_tokens": 3
+    },
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "0",
+      "VLLM_XPU_GRAPH": "0"
+    },
+    "oneapi_device_selector": "unset"
+  },
+  "speculator_binding": {
+    "type": "native embedded Qwen MTP; no external draft model",
+    "mtp_tensor_count": 29,
+    "mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de"
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "depth_zero_state": "missing",
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "excluded_depths": {
+      "2048": "Pinned TP2/MTP2 divergence from TP2/MTP0 at one-based output token 90; not executed in this campaign"
+    }
+  },
+  "acceptance_contract": {
+    "snapshot_scope": "Both counters immediately before and after each exact-depth request, with no intervening traffic",
+    "gate": "All before/after/delta values finite; counters nondecreasing; drafted_delta > 0; accepted_delta > 0; accepted_delta <= drafted_delta"
+  },
+  "quality_contract": {
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1/quality.json",
+    "baseline_sha256": "ef15f39a848d262a4582b1ab6c9a2f10713ecfbcae02497bc4462c8ae5a3af96",
+    "gate": "pass_all, baseline_match_all, seven exact cases, eight deterministic repeats, long context, and all 16 usage records explicitly cached_tokens == 0"
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1",
+    "port": 19495,
+    "container": "q38-f01e-ar-tp2-mtp3-f16-depth-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-depth-expansion": "All five included exact, acceptance, same-topology target, full-quality, topology, cache, and cleanup gates pass.",
+    "partial-depth-expansion": "Global gates pass but fewer than five included depths satisfy exact, acceptance, and target parity; freeze and retain each valid depth independently.",
+    "quarantined-quality-failed": "Objective/cache-zero or same-topology baseline quality fails.",
+    "unsupported": "Only an explicit exact-image native-MTP unsupported line qualifies.",
+    "failed": "Infrastructure, binding, startup, identity, metrics, topology, cache, or cleanup failure."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "protected_decode_values_unchanged": [
+      71.45427094575045,
+      30.329809361830037,
+      49.05894025767351,
+      71.9001988117144
+    ],
+    "historical_replacement_allowed": false,
+    "protected_route_replacement_allowed": false,
+    "existing_tp2_mtp0_replacement_allowed": false,
+    "site_publication_automatic": false,
+    "descendant_execution_authorized": false,
+    "partial_valid_depths_independently_classifiable": true
+  },
+  "cache_contract": {
+    "filesystem": "ext4",
+    "fresh": true,
+    "writable_ntfs_forbidden": true,
+    "rank_namespaces": [
+      "rank_0_0",
+      "rank_1_0"
+    ]
+  }
+}
