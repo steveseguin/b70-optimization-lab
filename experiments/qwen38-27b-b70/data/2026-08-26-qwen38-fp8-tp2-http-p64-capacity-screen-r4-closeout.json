@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.qwen38-fp8-http-capacity-screen-closeout.v1",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-capacity-screen-20260826-r4",
+  "state": "closed",
+  "classification": "diagnostic-capacity-screen-not-publishable",
+  "identity": {
+    "model_repository": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "cards": 2,
+    "topology": "TP2",
+    "generation": "target-only / MTP0",
+    "kv_cache": "FP16"
+  },
+  "qualified_control": {
+    "active_slots": 32,
+    "concurrency": 32,
+    "median_aggregate_tok_s": 470.1816471020778
+  },
+  "diagnostic": {
+    "active_slots": 64,
+    "concurrency": 64,
+    "aggregate_tok_s": 694.859185985348,
+    "gain_over_control_percent": 47.78526347594592,
+    "ttft_ms_p50": 889.2494689789601,
+    "ttft_ms_p95": 1742.8522976348174,
+    "result": "qwen38-fp8-tp2-http-p64-capacity-screen-20260826-r4-attempt1/result.json",
+    "result_sha256": "d1b84100ceba3290362f11da3dcef16e86925bdd6703af38f1d163c1d40ba39b",
+    "qualification_sha256": "a9c43ac007934ff0ac01e34e15f676e9779615d941e9b3f20a985dc7a8e72bf0",
+    "output_gate": "passed",
+    "cleanup": "clean",
+    "queued": false
+  },
+  "selection": {
+    "minimum_gain_percent": 5.0,
+    "promising": true,
+    "publication": "none from R4",
+    "next": "two wholly new fresh-server p64 confirmation attempts",
+    "no_interpolation_or_extrapolation": true
+  }
+}
