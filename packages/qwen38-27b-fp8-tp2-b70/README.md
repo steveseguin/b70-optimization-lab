@@ -2,11 +2,13 @@
 
 This is the first distribution-package front door. It uses Qwen's official
 FP8 model and a digest-pinned vLLM XPU container on two Intel Arc Pro B70
-32 GiB cards. The lab reproduction reached `21.708532 tok/s` decode and passed
-the recorded semantic, repeat, and long-context gates. A separately measured
+32 GiB cards. The portable upstream-image baseline reached `21.708532 tok/s`
+decode. The lab's optional block-W8A16 overlay reached **`35.011369 tok/s`**
+for one fresh user and **`1,112.570323 tok/s`** aggregate at 128 active users,
+while passing the recorded sequential and concurrent quality gates. A separately measured
 33,024-token service profile reaches `20.389854 tok/s` decode at an exact 32K
 prompt with `21.873 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
-`774.394144 tok/s` aggregate at 64 active users.
+`774.394144 tok/s` aggregate at 64 active users on the unpatched baseline.
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -19,13 +21,14 @@ The machine-readable front door is [`package.json`](package.json).
 
 ## Who built what
 
-**neural.download lab — integrated:** B70/XPU integration, graph and quality
-validation, direct-I/O model verification, direct-P2P concurrency tuning, and
-this digest-pinned package. The packaged route measured `21.708532 tok/s`; the
-validated P2P setting raised c64 aggregate throughput from `695.792088` to
-`774.394144 tok/s` (11.30%). No project patch is applied; the model and
-container remain the pinned upstream artifacts. See the
-[lab evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
+**neural.download lab — integrated and optimized:** B70/XPU integration,
+graph and quality validation, direct-I/O model verification, direct-P2P
+concurrency tuning, and the block-W8A16 dispatch. Against the exact same
+overlay image with its environment gate omitted, W8A16 improved fresh
+single-user decode from `21.872717` to `35.011369 tok/s` (+60.07%) and c128
+aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
+[W8A16 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
+and the earlier [baseline evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
 
 ## What you need
 
@@ -59,7 +62,18 @@ weights.
 docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
 ```
 
-No project patch is required for this baseline.
+No project patch is required for the baseline. To build the faster
+default-off W8A16 overlay from its pinned vLLM source commit:
+
+```bash
+BUILD_ROOT=/path/to/dedicated-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh
+```
+
+The helper applies the exact
+[patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch)
+and builds the repository-local Docker overlay. The model weights are not
+modified.
 
 ## 3. Preflight
 
@@ -97,6 +111,22 @@ OUT=/path/to/result.json \
 Read the reproduction guide before comparing results: its prompt shape,
 quality boundary, zero-cache requirement, and experimental TP2 graph warning
 are part of the result identity.
+
+To reproduce the optimized 128-slot short-context profile instead, use the
+dedicated wrapper and its full quality battery:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-w8a16-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh
+
+OUT_DIR=/path/to/new-w8a16-attempt \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh
+```
+
+That service is deliberately limited to 256 total tokens. Its 1,112.57 tok/s
+aggregate result must not be presented as a 32K-context measurement.
 
 For the measured 2K through 32K operating profile, launch the distinct
 one-slot service and run its exact-token sweep:

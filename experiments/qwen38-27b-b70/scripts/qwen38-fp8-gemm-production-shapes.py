@@ -2,9 +2,10 @@
 """Time the Qwen3.8 TP2 FP8 GEMMs without claiming endpoint throughput.
 
 This is an attribution microbenchmark.  It uses the block-scale layouts sent by
-vLLM to ``_xpu_C::fp8_gemm`` at concurrency 64 and synchronizes each sample
-batch.  Results are only comparable when the image, GPU, shapes, warmup, and
-iteration counts are recorded together.
+vLLM to either ``_xpu_C::fp8_gemm`` (W8A8) or
+``_xpu_C::fp8_gemm_w8a16`` at concurrency 64 and synchronizes each sample
+batch. Results are only comparable when the image, GPU, shapes, kernel,
+warmup, and iteration counts are recorded together.
 """
 
 from __future__ import annotations
@@ -31,6 +32,7 @@ SHAPES = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--kernel", choices=("w8a8", "w8a16"), default="w8a8")
     parser.add_argument("--m", type=int, default=64)
     parser.add_argument("--block", type=int, default=128)
     parser.add_argument("--warmup", type=int, default=20)
@@ -54,7 +56,8 @@ def main() -> None:
         # Match vLLM's logical layouts: A [M,K] contiguous, checkpoint weight
         # [N,K] contiguous then transposed to an NT [K,N] view, and block
         # scales contiguous as [K/128,N/128].
-        a = torch.empty((args.m, k), dtype=dtype, device=device).fill_(0.5)
+        a_dtype = dtype if args.kernel == "w8a8" else torch.float16
+        a = torch.empty((args.m, k), dtype=a_dtype, device=device).fill_(0.5)
         weight_nk = torch.empty((n, k), dtype=dtype, device=device).fill_(0.25)
         b = weight_nk.t()
         a_scale = torch.ones(
@@ -66,10 +69,19 @@ def main() -> None:
             device=device,
         )
 
-        def invoke() -> torch.Tensor:
-            return torch.ops._xpu_C.fp8_gemm(
-                a, b, torch.float16, a_scale, b_scale, None
-            )
+        if args.kernel == "w8a8":
+
+            def invoke() -> torch.Tensor:
+                return torch.ops._xpu_C.fp8_gemm(
+                    a, b, torch.float16, a_scale, b_scale, None
+                )
+
+        else:
+
+            def invoke() -> torch.Tensor:
+                return torch.ops._xpu_C.fp8_gemm_w8a16(
+                    a, b, b_scale, None
+                )
 
         reference = invoke()
         for _ in range(args.warmup - 1):
@@ -91,6 +103,7 @@ def main() -> None:
         rows.append(
             {
                 "name": name,
+                "kernel": args.kernel,
                 "m": args.m,
                 "k": k,
                 "n": n,
@@ -111,6 +124,7 @@ def main() -> None:
 
     payload = {
         "kind": "attribution_microbenchmark_not_endpoint_throughput",
+        "kernel": args.kernel,
         "image": os.environ.get("BENCH_IMAGE", "unknown"),
         "torch": torch.__version__,
         "kernel_package": importlib.metadata.version("vllm-xpu-kernels"),

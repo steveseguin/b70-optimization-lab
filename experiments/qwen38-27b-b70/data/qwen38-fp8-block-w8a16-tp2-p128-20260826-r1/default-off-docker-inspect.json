@@ -1,0 +1,335 @@
+[
+    {
+        "Id": "5158f9aebfe87e652a200e9757f33d6d6cd1a36c3ee681a4ce9a4fbaaa5f61aa",
+        "Created": "2026-08-26T18:52:05.384405652Z",
+        "Path": "vllm",
+        "Args": [
+            "serve",
+            "--model",
+            "/model",
+            "--served-model-name",
+            "qwen38-fp8-block-default-r117",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--tensor-parallel-size",
+            "2",
+            "--dtype",
+            "float16",
+            "--quantization",
+            "fp8",
+            "--kv-cache-dtype",
+            "auto",
+            "--gpu-memory-utilization",
+            "0.96",
+            "--max-model-len",
+            "256",
+            "--block-size",
+            "64",
+            "--max-num-seqs",
+            "128",
+            "--max-num-batched-tokens",
+            "256",
+            "--no-enable-prefix-caching",
+            "--enable-prompt-tokens-details",
+            "--language-model-only",
+            "--compilation-config",
+            "{\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[1],\"max_cudagraph_capture_size\":1}"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 2283739,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-08-26T18:52:05.462445476Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+        "ResolvConfPath": "/var/lib/docker/containers/5158f9aebfe87e652a200e9757f33d6d6cd1a36c3ee681a4ce9a4fbaaa5f61aa/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/5158f9aebfe87e652a200e9757f33d6d6cd1a36c3ee681a4ce9a4fbaaa5f61aa/hostname",
+        "HostsPath": "/var/lib/docker/containers/5158f9aebfe87e652a200e9757f33d6d6cd1a36c3ee681a4ce9a4fbaaa5f61aa/hosts",
+        "LogPath": "/var/lib/docker/containers/5158f9aebfe87e652a200e9757f33d6d6cd1a36c3ee681a4ce9a4fbaaa5f61aa/5158f9aebfe87e652a200e9757f33d6d6cd1a36c3ee681a4ce9a4fbaaa5f61aa-json.log",
+        "Name": "/qwen38-fp8-block-default-p2p1-p128-r117-control",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/mnt/fast-ai/vllm-cache/q38-official-fp8-f01e/fp8-block-default-p2p1-p128-r117:/root/.cache/vllm",
+                "/dev/dri:/dev/dri",
+                "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8:/model:ro"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "18117"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 8589934592,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [
+                {
+                    "PathOnHost": "/dev/dri",
+                    "PathInContainer": "/dev/dri",
+                    "CgroupPermissions": "rwm"
+                }
+            ],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8",
+                "Destination": "/model",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/mnt/fast-ai/vllm-cache/q38-official-fp8-f01e/fp8-block-default-p2p1-p128-r117",
+                "Destination": "/root/.cache/vllm",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/dev/dri",
+                "Destination": "/dev/dri",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "5158f9aebfe8",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "VLLM_WORKER_MULTIPROC_METHOD=spawn",
+                "ONEAPI_DEVICE_SELECTOR=level_zero:0,1",
+                "CCL_ATL_TRANSPORT=ofi",
+                "CCL_SEND=direct",
+                "CCL_TOPO_P2P_ACCESS=1",
+                "VLLM_XPU_ENABLE_XPU_GRAPH=1",
+                "CCL_ZE_IPC_EXCHANGE=pidfd",
+                "PYTORCH_ALLOC_CONF=expandable_segments:True",
+                "FI_PROVIDER=tcp",
+                "CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4294967296",
+                "CCL_RECV=direct",
+                "CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296",
+                "CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296",
+                "ZE_AFFINITY_MASK=0,1",
+                "VLLM_TARGET_DEVICE=xpu",
+                "FI_TCP_IFACE=lo",
+                "PATH=/opt/venv/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "DEBIAN_FRONTEND=noninteractive",
+                "VIRTUAL_ENV=/opt/venv",
+                "UV_PYTHON_INSTALL_DIR=/opt/uv/python",
+                "UV_HTTP_TIMEOUT=500",
+                "PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_INDEX_STRATEGY=unsafe-best-match",
+                "UV_LINK_MODE=copy",
+                "LD_LIBRARY_PATH=/tmp/ucx_install/lib:/opt/venv/lib:/usr/local/lib"
+            ],
+            "Cmd": [
+                "--model",
+                "/model",
+                "--served-model-name",
+                "qwen38-fp8-block-default-r117",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--tensor-parallel-size",
+                "2",
+                "--dtype",
+                "float16",
+                "--quantization",
+                "fp8",
+                "--kv-cache-dtype",
+                "auto",
+                "--gpu-memory-utilization",
+                "0.96",
+                "--max-model-len",
+                "256",
+                "--block-size",
+                "64",
+                "--max-num-seqs",
+                "128",
+                "--max-num-batched-tokens",
+                "256",
+                "--no-enable-prefix-caching",
+                "--enable-prompt-tokens-details",
+                "--language-model-only",
+                "--compilation-config",
+                "{\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[1],\"max_cudagraph_capture_size\":1}"
+            ],
+            "Image": "neural-download/vllm-openai-xpu:f01e-qwen38-fp8-block-w8a16-r115",
+            "Volumes": null,
+            "WorkingDir": "/workspace/vllm",
+            "Entrypoint": [
+                "vllm",
+                "serve"
+            ],
+            "Labels": {
+                "org.opencontainers.image.version": "24.04"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "6550d868e3e71005ea9af4cbf9b9e0f973809cd2de6c1156d5088350b03b8af6",
+            "SandboxKey": "/var/run/docker/netns/6550d868e3e7",
+            "Ports": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "18117"
+                    }
+                ]
+            },
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "e7b6b22bb759de0de3456fa76e99119c4fc8d2c00ef50bd89caa4c4da1e7888c",
+                    "EndpointID": "6a127035da9b0609cd7fcb2758a60ade8e4262a6dcfdcd37ca4860afe15ab017",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "MacAddress": "e2:f6:76:b6:fb:42",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+            "size": 4562,
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

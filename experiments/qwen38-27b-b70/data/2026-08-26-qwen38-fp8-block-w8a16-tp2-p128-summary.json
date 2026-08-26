@@ -1,0 +1,70 @@
+{
+  "schema": "neural.download.optimization-result.v1",
+  "status": "quality-qualified-candidate",
+  "model": "Qwen/Qwen3.8-27B-FP8",
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "tensor_parallel_size": 2
+  },
+  "runtime": {
+    "base_image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "overlay_image_id": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "torch": "2.13.0+xpu",
+    "vllm_xpu_kernels": "0.1.12.3"
+  },
+  "change": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+    "environment_gate": "VLLM_XPU_FP8_BLOCK_W8A16=1",
+    "default_off": true,
+    "description": "Route checkpoint block-FP8 linear weights through the existing _xpu_C::fp8_gemm_w8a16 primitive and skip dynamic activation FP8 quantization."
+  },
+  "service_shape": {
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 256,
+    "block_size": 64,
+    "kv_cache_dtype": "auto",
+    "prefix_cache": false,
+    "speculation": "none (target-only/MTP0)",
+    "collective_p2p_access": 1
+  },
+  "single_user": {
+    "scope": "Fresh 40-token prompt, 128 generated tokens, cache zero; after-TTFT rate. Row zero is the fresh-response headline and later identical-prompt rows are support only.",
+    "default_off_tok_s": 21.872716695997745,
+    "w8a16_tok_s": 35.01136892707062,
+    "improvement_percent": 60.068680144689004,
+    "evidence_default_off": "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/default-off-c1-p40-o128.json",
+    "evidence_w8a16": "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c1-p128-p40-o128.json"
+  },
+  "aggregate": {
+    "scope": "128 simultaneous unique short HTTP prompts, 128 returned token IDs each, cache zero, output-isolation qualified; median of conditioned repeats 2-5. The first repeat is excluded as a declared conditioning batch.",
+    "default_off_tok_s": 860.4609811456287,
+    "w8a16_tok_s": 1112.5703227078056,
+    "improvement_percent": 29.299334552801604,
+    "w8a16_conditioned_range_tok_s": 10.800573937546915,
+    "w8a16_conditioned_cv": 0.004717431042606865,
+    "evidence_default_off": "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/default-off-c128-measured-x5.json",
+    "evidence_w8a16": "qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-measured-x5.json"
+  },
+  "measured_concurrency_screen": [
+    {"concurrent_users": 64, "aggregate_tok_s": 833.6955167227709, "samples": 1},
+    {"concurrent_users": 80, "aggregate_tok_s": 980.9004226113435, "samples": 1},
+    {"concurrent_users": 96, "aggregate_tok_s": 1064.718014389288, "samples": 1},
+    {"concurrent_users": 112, "aggregate_tok_s": 1090.40107434281, "samples": 1},
+    {"concurrent_users": 128, "aggregate_tok_s": 1122.9866085091517, "samples": 1}
+  ],
+  "quality": {
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8 identical",
+    "concurrent_semantic_cases": "1024/1024",
+    "performance_output_classification": "output-isolation-qualified-shape-variant",
+    "all_completion_token_counts_complete": true,
+    "all_cached_prompt_tokens_zero": true,
+    "cross_base_oracle_collisions": 0,
+    "note": "Greedy token identity varies with batch shape. The gate proves semantic canaries, complete outputs, cache-zero execution, and cross-prompt isolation; it does not claim universal sequential token identity at c128."
+  },
+  "reporting_boundary": "Every performance value is directly measured. No interpolation or extrapolation. This short-context p128 service is a separate operating profile from the published 32K depth service."
+}

@@ -382,14 +382,22 @@
       "dependency_links": [
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
         "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
         "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
-        "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+        "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
+        "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json"
       ],
       "missing": [
         "tested Intel driver and Docker host guide",
         "clean-host replay",
-        "beginner recovery flow"
+        "beginner recovery flow",
+        "block-W8A16 exact 2K-32K context replay"
       ]
     },
     {

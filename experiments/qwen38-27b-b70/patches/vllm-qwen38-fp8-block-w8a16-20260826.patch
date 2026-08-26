@@ -1,0 +1,49 @@
+diff --git a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+index 92d6458bb..51d61bd4f 100644
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import math
++import os
+ from collections.abc import Sequence
+ 
+ import torch
+@@ -190,6 +191,22 @@ class XPUW8A16FP8LinearKernel(FP8ScaledMMLinearKernel):
+ 
+ 
+ class XPUFp8BlockScaledMMKernel(Fp8BlockScaledMMLinearKernel):
++    def __init__(self, config: FP8ScaledMMLinearLayerConfig) -> None:
++        super().__init__(config)
++        self._use_w8a16 = os.environ.get(
++            "VLLM_XPU_FP8_BLOCK_W8A16", "0"
++        ).strip().lower() in ("1", "true", "yes", "on")
++        if self._use_w8a16:
++            if not hasattr(torch.ops._xpu_C, "fp8_gemm_w8a16"):
++                raise RuntimeError(
++                    "VLLM_XPU_FP8_BLOCK_W8A16 requires "
++                    "_xpu_C::fp8_gemm_w8a16"
++                )
++            # The oneDNN W8A16 primitive consumes the original FP16/BF16
++            # activation directly. Skip dynamic activation quantization in
++            # Fp8BlockScaledMMLinearKernel.apply_weights.
++            self.apply_input_quant = False
++
+     @classmethod
+     def is_supported(
+         cls, compute_capability: int | None = None
+@@ -274,6 +291,13 @@ class XPUFp8BlockScaledMMKernel(Fp8BlockScaledMMLinearKernel):
+         # B is [N, K]; .t() gives [K, N] view (no copy).
+         # Bs is stored as [n_blocks, k_blocks] view; .t() recovers the
+         # contiguous [k_blocks, n_blocks] buffer that oneDNN expects.
++        if self._use_w8a16:
++            return torch.ops._xpu_C.fp8_gemm_w8a16(
++                A,
++                B.t(),
++                Bs.t(),
++                None,
++            )
+         return torch.ops._xpu_C.fp8_gemm(
+             A,
+             B.t(),

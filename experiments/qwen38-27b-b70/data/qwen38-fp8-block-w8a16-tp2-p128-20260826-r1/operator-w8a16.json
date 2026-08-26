@@ -1,0 +1,115 @@
+{
+  "kind": "attribution_microbenchmark_not_endpoint_throughput",
+  "kernel": "w8a16",
+  "image": "neural-download/vllm-openai-xpu:f01e-qwen38-w8a8-rms-debug-r93",
+  "torch": "2.13.0+xpu",
+  "kernel_package": "0.1.12.3",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "warmup": 20,
+  "iterations_per_repeat": 100,
+  "repeats": 7,
+  "rows": [
+    {
+      "name": "attention_qkv",
+      "kernel": "w8a16",
+      "m": 64,
+      "k": 5120,
+      "n": 4096,
+      "samples_us": [
+        28.300819999999998,
+        33.978629999999995,
+        32.58603,
+        32.46682,
+        32.46383,
+        32.452130000000004,
+        30.458119999999997
+      ],
+      "median_us": 32.46383,
+      "min_us": 28.300819999999998,
+      "max_us": 33.978629999999995,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        5120
+      ],
+      "a_scale_shape": [
+        64,
+        40
+      ],
+      "b_scale_shape": [
+        40,
+        32
+      ]
+    },
+    {
+      "name": "mlp_gate_up",
+      "kernel": "w8a16",
+      "m": 64,
+      "k": 5120,
+      "n": 8704,
+      "samples_us": [
+        79.18117,
+        77.94506,
+        77.90936,
+        77.84776,
+        77.89706,
+        77.79446,
+        77.80027
+      ],
+      "median_us": 77.89706,
+      "min_us": 77.79446,
+      "max_us": 79.18117,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        5120
+      ],
+      "a_scale_shape": [
+        64,
+        40
+      ],
+      "b_scale_shape": [
+        40,
+        68
+      ]
+    },
+    {
+      "name": "mlp_down",
+      "kernel": "w8a16",
+      "m": 64,
+      "k": 8704,
+      "n": 5120,
+      "samples_us": [
+        69.37325999999999,
+        69.49356,
+        69.37115,
+        69.41076,
+        70.23846,
+        70.28455,
+        70.64966
+      ],
+      "median_us": 69.49356,
+      "min_us": 69.37115,
+      "max_us": 70.64966,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        8704
+      ],
+      "a_scale_shape": [
+        64,
+        68
+      ],
+      "b_scale_shape": [
+        68,
+        40
+      ]
+    }
+  ]
+}

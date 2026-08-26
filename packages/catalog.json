@@ -1718,7 +1718,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Alibaba's Qwen3.8 27B in the official 8-bit (FP8) form on two Arc Pro B70 cards, run from a pinned Docker image with vLLM. No patches; the easiest two-card route.",
+        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with a pinned vLLM XPU image and the lab's optional default-off block-W8A16 overlay.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1739,15 +1739,17 @@
           "two cards",
           "Docker",
           "official checkpoint",
-          "target only"
+          "target only",
+          "MTP0",
+          "W8A16"
         ],
         "published_at": "2026-08-22",
         "featured_metric": {
-          "value": 21.708532,
+          "value": 35.01136892707062,
           "unit": "tok/s",
           "label": "decode",
-          "scope": "Median decode after TTFT on five unique cache-zero p512/g128 requests using the size-one graph route.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json"
+          "scope": "Fresh-response after-TTFT decode for one measured 40-token prompt and 128 generated tokens on the block-W8A16 overlay; cache zero, target-only/MTP0, short-context p128 service.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json"
         }
       },
       "contributors": [
@@ -1756,10 +1758,10 @@
           "name": "neural.download lab",
           "kind": "lab",
           "profile": "https://github.com/steveseguin/b70-optimization-lab",
-          "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, and the digest-pinned package.",
+          "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 vLLM dispatch, and the digest-pinned package.",
           "status": "integrated",
-          "validated_effect": "The packaged graph route measured 21.708532 tok/s; direct oneCCL P2P access raised the qualified c64 HTTP profile from 695.792088 to 774.394144 tok/s (11.30%). No project patch is applied.",
-          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md"
+          "validated_effect": "Against the exact same overlay image with the environment gate omitted, block W8A16 raised fresh single-user decode from 21.872717 to 35.011369 tok/s (+60.07%) and conditioned c128 aggregate decode from 860.460981 to 1112.570323 tok/s (+29.30%).",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md"
         }
       ],
       "hardware": {
@@ -1776,19 +1778,23 @@
       },
       "runtime": {
         "kind": "container",
-        "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f"
+        "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+        "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+        "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh"
       },
       "project_patches": {
-        "required": false,
-        "items": [],
-        "reason": "Pinned official vLLM XPU image baseline; no project patch is applied."
+        "required": true,
+        "items": [
+          "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch"
+        ],
+        "reason": "The optimized headline depends on the default-off block-W8A16 vLLM dispatch. The original upstream-image baseline remains available by omitting the overlay and environment gate."
       },
       "commands": {
         "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/vllm-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
-        "health": "curl -fsS http://127.0.0.1:18087/health",
-        "benchmark": "OUT=/path/to/result.json repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
-        "stop": "docker stop -t 20 qwen38-fp8-tp2"
+        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/w8a16-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18116/health",
+        "benchmark": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 OUT_DIR=/path/to/new-attempt repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
+        "stop": "docker stop -t 20 qwen38-fp8-block-w8a16-tp2-p128"
       },
       "dependencies": [
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -1796,6 +1802,10 @@
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-concurrency-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-concurrency.sh",
@@ -1803,6 +1813,11 @@
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
         "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
         "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
+        "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-measured-x5.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/w8a16-c128-quality-1024.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-depth-20260826-r1-attempt1/summary.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-depth-r1-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-concurrency-r3-prereg.json",
@@ -1843,6 +1858,48 @@
         "scripts/summarize-http-concurrency-attempts.py"
       ],
       "performance_profiles": [
+        {
+          "id": "http-block-w8a16-output-audited-aggregate-vs-concurrent-users",
+          "label": "Block-W8A16 official FP8 TP2 aggregate decode",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "Measured short-context vLLM HTTP completions on two B70s with official block-FP8 weights, FP16 activations/KV, target-only/MTP0, the lab block-W8A16 dispatch, direct oneCCL P2P access, 128 active slots, 256-token service capacity, cache disabled, and 128 returned raw token IDs per response. The c64-c128 ladder points are one measured screen each. The separately confirmed c128 headline is 1112.570323 tok/s, the median of conditioned repeats 2-5. Output isolation and 1024/1024 semantic canaries passed; greedy output is batch-shape-dependent. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
+          "points": [
+            {
+              "concurrent_sequences": 64,
+              "value": 833.6955167227709,
+              "per_user_value": 13.026492448793295,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 80,
+              "value": 980.9004226113435,
+              "per_user_value": 12.261255282641795,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 96,
+              "value": 1064.718014389288,
+              "per_user_value": 11.090812649888417,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 112,
+              "value": 1090.40107434281,
+              "per_user_value": 9.735723877168,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 128,
+              "value": 1112.5703227078056,
+              "per_user_value": 8.691955646154732,
+              "samples": 4
+            }
+          ]
+        },
         {
           "id": "http-decode-vs-active-context",
           "label": "Official FP8 TP2 HTTP decode over exact active context",
@@ -2119,7 +2176,8 @@
         "tested clean-host Intel driver and Docker installation",
         "clean-host endpoint replay",
         "beginner recovery flow",
-        "natural-prompt HTTP speed and TTFT context sweep"
+        "natural-prompt HTTP speed and TTFT context sweep",
+        "block-W8A16 exact 2K-32K context replay"
       ]
     },
     {

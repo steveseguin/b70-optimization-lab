@@ -13,6 +13,66 @@ Intel Arc Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8
 weights, native FP16 KV, TP2, one graph-captured decode size, and no MTP,
 DFlash, draft model, response reuse, or speculation.
 
+## Optimized block-W8A16 profile
+
+The lab's default-off block-W8A16 overlay is now the fastest quality-qualified
+official-FP8 profile in this guide. It uses the FP8 weights unchanged while
+keeping activations in FP16 for the existing XPU W8A16 GEMM primitive.
+
+| Measured profile | Default-off | W8A16 overlay | Patch-only change |
+| --- | ---: | ---: | ---: |
+| one fresh user, 40 prompt + 128 output tokens | 21.872717 tok/s | **35.011369 tok/s** | **+60.07%** |
+| 128 active users, aggregate decode | 860.460981 tok/s | **1,112.570323 tok/s** | **+29.30%** |
+
+The c128 headline is the median of conditioned repeats 2-5 on one server. All
+four included repeats returned 16,384 completion tokens with cache zero and
+passed output isolation. The same endpoint passed 7/7 sequential exact cases,
+eight identical sequential repeats, and 1,024/1,024 concurrent semantic
+canaries. Greedy token identity varies with batch shape, so this is an
+output-isolation-qualified shape variant, not a universal token-exact claim.
+
+This short-context p128 profile has a 256-token service limit. It is separate
+from the exact 2K-32K context measurements below; no long-context W8A16 value
+is inferred from it.
+
+### Build the exact overlay
+
+The build helper creates a dedicated checkout at vLLM commit
+`ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9`, applies the
+[repository patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch),
+and overlays only the modified integration file onto the pinned upstream XPU
+image:
+
+```bash
+BUILD_ROOT=/path/to/dedicated-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh
+```
+
+The locally validated overlay image ID was
+`sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556`.
+Docker rebuild identities can vary with builder metadata, so verify that the
+installed `xpu.py` SHA-256 is
+`7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208`.
+
+### Launch and validate the p128 profile
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-w8a16-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh
+
+OUT_DIR=/path/to/new-w8a16-attempt \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh
+```
+
+The benchmark wrapper captures a fresh single-user row, one excluded c128
+conditioning batch, five measured c128 batches, the sequential suite, and
+1,024 concurrent semantic cases. It refuses to overwrite an existing result
+directory. See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md),
+[structured summary](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json),
+and [raw receipts](../../experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/).
+
 ## Captured result
 
 - median decode after TTFT: **`21.708532 tok/s`**

@@ -66,7 +66,7 @@ PACKAGE_ML = {
     # does not encode its draft depth; the latter's measured rate and launcher
     # do not share the reasoning/workload identity expected by the projection.
     # Their measured 26.7 and 36.8 tok/s headlines remain shown unchanged.
-    "qwen38-27b-fp8-vllm-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none", "prompt_tokens": 512, "output_tokens": 128},
+    "qwen38-27b-fp8-vllm-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "FP8", "runtime": "vllm", "spec": "none", "prompt_tokens": 40, "output_tokens": 128},
     "qwen38-27b-q4km-tp1-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "prompt_tokens": 128, "output_tokens": 128},
     "qwen38-27b-q4km-tp2-asrock-b70": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor", "prompt_tokens": 128, "output_tokens": 128},
 }

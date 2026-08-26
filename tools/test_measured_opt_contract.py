@@ -18,7 +18,8 @@ FAMILY_CATALOG = ROOT / "families/catalog.json"
 
 # Each pinned pair is the packet's own recorded workload convention: the
 # conventional first-hundred-words suites run ~128-token prompts with
-# 100-128-token answers; MiniMax and the FP8 TP2 packet record longer shapes.
+# 100-128-token answers. MiniMax records a longer shape; the FP8 TP2 packet
+# binds its promoted measurement to its directly observed 40-token prompt.
 PINNED_WORKLOADS = {
     "gemma4-26b-a4b-q8-b70-125tps-20260701": (128, 128),
     "laguna-s-2.1-int4-b70-125tps-20260731": (128, 128),
@@ -28,7 +29,7 @@ PINNED_WORKLOADS = {
     "nemotron-35-lightning-30b-a3b-b70": (128, 100),
     "ornith-15-35b-a3b-q4km-b70": (128, 100),
     "ornith-15-9b-q8-b70": (128, 100),
-    "qwen38-27b-fp8-vllm-tp2-asrock-b70": (512, 128),
+    "qwen38-27b-fp8-vllm-tp2-asrock-b70": (40, 128),
     "qwen38-27b-q4km-tp1-b70": (128, 128),
     "qwen38-27b-q4km-tp2-asrock-b70": (128, 128),
 }

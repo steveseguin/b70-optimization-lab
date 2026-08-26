@@ -1,0 +1,77 @@
+[
+    {
+        "Architecture": "amd64",
+        "Config": {
+            "ArgsEscaped": true,
+            "Entrypoint": [
+                "vllm",
+                "serve"
+            ],
+            "Env": [
+                "PATH=/opt/venv/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "DEBIAN_FRONTEND=noninteractive",
+                "VIRTUAL_ENV=/opt/venv",
+                "UV_PYTHON_INSTALL_DIR=/opt/uv/python",
+                "UV_HTTP_TIMEOUT=500",
+                "PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_INDEX_STRATEGY=unsafe-best-match",
+                "UV_LINK_MODE=copy",
+                "LD_LIBRARY_PATH=/tmp/ucx_install/lib:/opt/venv/lib:/usr/local/lib",
+                "VLLM_TARGET_DEVICE=xpu",
+                "VLLM_WORKER_MULTIPROC_METHOD=spawn"
+            ],
+            "Labels": {
+                "org.opencontainers.image.version": "24.04"
+            },
+            "Shell": [
+                "bash",
+                "-c"
+            ],
+            "WorkingDir": "/workspace/vllm"
+        },
+        "Created": "2026-08-26T18:32:31.708064604Z",
+        "Descriptor": {
+            "digest": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "size": 4562
+        },
+        "Id": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
+        "Metadata": {
+            "LastTagTime": "2026-08-26T18:32:31.88513126Z"
+        },
+        "Os": "linux",
+        "Parent": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+        "RepoDigests": [
+            "neural-download/vllm-openai-xpu@sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556"
+        ],
+        "RepoTags": [
+            "neural-download/vllm-openai-xpu:f01e-qwen38-fp8-block-w8a16-r115"
+        ],
+        "RootFS": {
+            "Layers": [
+                "sha256:42724e448bf499ec7d4b3c21d6cc68fe665ef677ed393c3dbb5357394e89ff91",
+                "sha256:6e0daf7833b70d66d5f1a3257deadfc733cea6eb70fc2a28a2710bbe6fd48ee3",
+                "sha256:5eee47704dd070cdbefd7b56d6a7c9908760c682cd25bfcabc9a6f1499c0ad86",
+                "sha256:9e813fffcaa0ca8c930d7e21c750b40a0d5d175c8216c9d14bd934c3d9bf7d70",
+                "sha256:1d39b99cde8161e5e4f74b6ffd92511f4c57d14725adbce394a855fa87e9d787",
+                "sha256:f1adb9f2814b94f5828b18074db149a08ce74fdf13ccb094d502ab5cb7307756",
+                "sha256:71aa28d3fa3bdc934fac6f5461784401a620de58750ab1405958f5d610d73a5f",
+                "sha256:092050bd252b179161bb01c291cd7fc9203118a8e44707a57969ab31c505f1cf",
+                "sha256:5e63bde4496a3065b2e8d861e65ae8da334269674595f1b99d695a51a466f71b",
+                "sha256:026f1c2d9f9df792624e9035d638f4f84d38d043a00e4545ad42bbff90fb8c96",
+                "sha256:e9ca8d6b3282aff80df2da01c2fd7f981883feb2cf16fdb3400140e642bd33d4",
+                "sha256:dc38a47632fb2b76225b78f9df4ac04aa1b01e8ac983e267882f36888c179623",
+                "sha256:6ddad800633e3e319655401acaf0c6c4386107762c41338c52680a05bbe50626",
+                "sha256:d67902c87efeb109dbe1e3e78279ae5281d09334012c802ff1a047a440c18abe",
+                "sha256:a13e48d5d3c63e330b60b47b2eec2a93e034142c5b450060153302807acdd7b2",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+                "sha256:c587105fef614a8cc6a397f4095f92a3738ca0dc811a6974d1ae9b9977621efd",
+                "sha256:2628dc497f2afc74ed2d386c75488ad117e501aa3527ec123e6bd47f3476d8a8",
+                "sha256:4ba3bc9b0ba08d2c7724297a3170b799be091ae6c6f583bf9a5f2d848e59e5de"
+            ],
+            "Type": "layers"
+        },
+        "Size": 4649193896
+    }
+]

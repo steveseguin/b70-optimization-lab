@@ -1,0 +1,115 @@
+{
+  "kind": "attribution_microbenchmark_not_endpoint_throughput",
+  "kernel": "w8a8",
+  "image": "neural-download/vllm-openai-xpu:f01e-qwen38-w8a8-rms-debug-r93",
+  "torch": "2.13.0+xpu",
+  "kernel_package": "0.1.12.3",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "warmup": 20,
+  "iterations_per_repeat": 100,
+  "repeats": 7,
+  "rows": [
+    {
+      "name": "attention_qkv",
+      "kernel": "w8a8",
+      "m": 64,
+      "k": 5120,
+      "n": 4096,
+      "samples_us": [
+        72.55946,
+        96.09758000000001,
+        92.89538,
+        88.16767,
+        87.19307,
+        72.49616,
+        72.44516
+      ],
+      "median_us": 87.19307,
+      "min_us": 72.44516,
+      "max_us": 96.09758000000001,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        5120
+      ],
+      "a_scale_shape": [
+        64,
+        40
+      ],
+      "b_scale_shape": [
+        40,
+        32
+      ]
+    },
+    {
+      "name": "mlp_gate_up",
+      "kernel": "w8a8",
+      "m": 64,
+      "k": 5120,
+      "n": 8704,
+      "samples_us": [
+        145.54801999999998,
+        145.65851999999998,
+        145.55072,
+        145.43751999999998,
+        145.45112,
+        145.47272,
+        145.42802
+      ],
+      "median_us": 145.47272,
+      "min_us": 145.42802,
+      "max_us": 145.65851999999998,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        5120
+      ],
+      "a_scale_shape": [
+        64,
+        40
+      ],
+      "b_scale_shape": [
+        40,
+        68
+      ]
+    },
+    {
+      "name": "mlp_down",
+      "kernel": "w8a8",
+      "m": 64,
+      "k": 8704,
+      "n": 5120,
+      "samples_us": [
+        122.0007,
+        121.455,
+        121.38239999999999,
+        121.3548,
+        121.34619,
+        121.33919999999999,
+        121.2843
+      ],
+      "median_us": 121.3548,
+      "min_us": 121.2843,
+      "max_us": 122.0007,
+      "output_identical_within_run": true,
+      "a_contiguous": true,
+      "b_contiguous": false,
+      "b_stride": [
+        1,
+        8704
+      ],
+      "a_scale_shape": [
+        64,
+        68
+      ],
+      "b_scale_shape": [
+        68,
+        40
+      ]
+    }
+  ]
+}

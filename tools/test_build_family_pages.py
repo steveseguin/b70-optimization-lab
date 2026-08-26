@@ -77,7 +77,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">68.6&dagger;</a>", index_html)
         self.assertIn(">165.4&dagger;</a>", index_html)
         self.assertIn(">163.6&dagger;</a>", index_html)
-        self.assertIn(">774.4&dagger;</a>", index_html)
+        self.assertIn(">1,112.6&dagger;</a>", index_html)
         self.assertNotIn("raw&dagger;", index_html)
         self.assertNotIn("HTTP&dagger;", index_html)
         fp8_row = re.search(
@@ -85,9 +85,9 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(fp8_row)
         self.assertIn(">20.39&dagger;</a>", fp8_row.group(0))
-        self.assertIn(">774.4&dagger;</a>", fp8_row.group(0))
-        self.assertIn("64 active users", fp8_row.group(0))
-        self.assertIn("all reported points are within the 64-slot limit", fp8_row.group(0))
+        self.assertIn(">1,112.6&dagger;</a>", fp8_row.group(0))
+        self.assertIn("128 active users", fp8_row.group(0))
+        self.assertIn("256-token service profile", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )
