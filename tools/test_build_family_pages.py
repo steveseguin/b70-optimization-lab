@@ -3280,14 +3280,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
         self.assertIn("Coverage · 31 matrices", overview_html)
-        self.assertIn("595/2,015 classified", overview_html)
+        self.assertIn("596/2,015 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "376", "measured"),
+            ("lab-measured", "377", "measured"),
             ("lab-screened", "35", "screened"),
             ("quarantined", "117", "quarantined"),
             ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,420", "missing"),
+            ("missing", "1,419", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -3352,7 +3352,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("value=13.250527400483348 tok/s", deferred_html)
         self.assertIn("value=11.165397459018312 tok/s", deferred_html)
         self.assertIn('data-family-view="context-q38-tp1-autoround-mtp2-partial"', deferred_html)
-        self.assertIn("Qwen3.8 AutoRound TP1 eager MTP2 partial depth", deferred_html)
+        self.assertIn("Qwen3.8 AutoRound TP1 MTP2 depth", deferred_html)
         self.assertIn("value=11.394116870048126 tok/s", deferred_html)
         self.assertIn("value=9.789228307267285 tok/s", deferred_html)
         self.assertIn('data-family-view="context-q38-tp1-autoround-mtp1-partial"', deferred_html)
@@ -4703,6 +4703,45 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("MTP1 eager/E4M3 · exact 4K Grade C", rendered)
         self.assertIn("4K: 8.38", rendered)
         self.assertNotIn("8.463240801535022", rendered)
+
+    def test_q38_current_f01e_tp1_mtp2_piecewise_publishes_only_exact_4k_with_cache_defect_disclosed(self) -> None:
+        family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
+        packets = {item["id"]: item for item in family["packets"]}
+        series = {item["id"]: item for item in family["series_measurements"]}
+        contracts = {item["id"]: item for item in family["coverage_contracts"]}
+        packet_id = "qwen38-27b-autoround-int4-tp1-f01e-mtp2-piecewise-f16-4k-grade-c"
+        measurement_id = "q38-f01e-autoround-tp1-mtp2-piecewise-f16-exact-4k-r1-grade-c"
+        contract_id = "qwen38-tp1-vllm-xpu-autoround-mtp-matrix"
+
+        self.assertEqual(packets[packet_id]["grades"]["evidence"]["grade"], "C")
+        self.assertIn("omitted its promised cache gate", packets[packet_id]["grades"]["evidence"]["basis"])
+        points = series[measurement_id]["points"]
+        self.assertEqual([point["x"] for point in points], [4096])
+        self.assertEqual(points[0]["decode_tok_s"], 11.988874911178696)
+        self.assertEqual(points[0]["ttft_ms"], 2941.726919991197)
+        self.assertEqual((points[0]["accepted_tokens"], points[0]["drafted_tokens"]), (80, 94))
+
+        cells, errors = MODULE.expand_coverage_contract(contracts[contract_id])
+        self.assertEqual(errors, [])
+        scoped = [cell for cell in cells if cell["selectors"]["mtp"] == 2 and cell["selectors"]["graph_mode"] == "PIECEWISE" and cell["selectors"]["kv"] == "f16"]
+        measured = [cell for cell in scoped if cell["state"] == "lab-measured"]
+        self.assertEqual([cell["selectors"]["active_context_tokens"] for cell in measured], [4096])
+        self.assertEqual(measured[0]["evidence_id"], measurement_id)
+        self.assertEqual(measured[0]["packet_id"], packet_id)
+        self.assertEqual([cell["selectors"]["active_context_tokens"] for cell in scoped if cell["state"] == "missing"], [0, 2048, 8192, 16384, 24576, 32768])
+
+        result = json.loads((MODULE.ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-r1-result.json").read_text())
+        self.assertFalse(result["cache_isolation"]["original_terminal_enforced_cache_gate"])
+        self.assertTrue(result["cache_isolation"]["postrun_audit_passed"])
+        self.assertEqual(result["cache_isolation"]["observed_rank_namespaces"], ["rank_0_0"])
+        self.assertEqual(result["human_adjudication"]["selected_depths"], [4096])
+        self.assertEqual(result["human_adjudication"]["excluded_depths"], [0, 2048, 8192, 16384, 24576, 32768])
+        self.assertFalse(result["authority"]["historical_or_protected_replacement"])
+
+        rendered = MODULE.family_page(family)
+        self.assertIn("MTP2 PIECEWISE · exact 4K Grade C · cache defect disclosed", rendered)
+        self.assertIn("4K: 11.99", rendered)
+        self.assertNotIn("12.10997465775626", rendered)
 
     def test_q38_current_f01e_tp2_mtp1_piecewise_publishes_only_exact_4k(self) -> None:
         family = json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())

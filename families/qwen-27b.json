@@ -626,6 +626,20 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp1-f16-piecewise-4k-sentinel-r1-result.json"
     },
     {
+      "id": "qwen38-27b-autoround-int4-tp1-f01e-mtp2-piecewise-f16-4k-grade-c",
+      "label": "Qwen3.8 AutoRound INT4 · TP1 PIECEWISE/F16 MTP2 exact 4K",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "cards": 1,
+      "status": "grade-c-exact-4k-mtp2-piecewise-postrun-cache-audited",
+      "evidence_level": "B70-measured Grade C · disclosed runner defect",
+      "coverage": ["native MTP2", "TP1", "HTTP serving", "PIECEWISE graph", "exact context 4K", "F16 KV", "80/94 accepted", "dual-parent parity", "full quality battery", "post-run cache audit", "other depths missing or quarantined"],
+      "grades": {"evidence": {"grade": "C", "scope": "Current-f01e AutoRound INT4 TP1/MTP2/PIECEWISE/F16 serving at exact 4K", "basis": "The exact cache-zero request accepted 80/94 isolated draft tokens, matched both clean same-image TP1/MTP0 parents across all 128 tokens, and passed full quality, graph/topology identity, model verification, and runtime cleanup. The original runner omitted its promised cache gate; a separately hashed report-only audit found exactly rank_0_0 in the surviving dedicated cache. Explicit human adjudication publishes only 4K with that defect disclosed; 2K/8K/16K corruption caveats and all other missing depths remain.", "reviewed_at": "2026-08-26", "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-r1-result.json", "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-piecewise-cache-gate-correction.md"]}},
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-tp1-f01e-mtp4-eager-f16-screened-grade-d",
       "label": "Qwen3.8 AutoRound INT4 · TP1 current-image eager/F16 MTP4 screened depth",
       "revision": "qwen3.8-27b",
@@ -4501,6 +4515,29 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json"
     },
     {
+      "id": "q38-f01e-autoround-tp1-mtp2-piecewise-f16-exact-4k-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "variant": "AutoRound INT4 TP1 PIECEWISE native MTP2 · F16 KV · exact 4K · post-run cache audited",
+      "runtime": "vLLM XPU 0.27.2rc1.dev77+gac7509e2b",
+      "runtime_family": "vLLM XPU",
+      "runtime_profile_id": "qwen38-tp1-vllm-xpu-autoround-native-mtp-v1",
+      "runtime_snapshot_id": "f01e24f6-ac7509e2-official-image",
+      "speculation_method": "native-mtp",
+      "profile_id": "q38-f01e-autoround-tp1-mtp2-piecewise-f16-exact-4k-grade-c-r1",
+      "measurement_class": "conventional-99-interval-exact-depth-openai-http-serving-grade-c-postrun-cache-audited",
+      "promotion_status": "explicit-human-one-cell-with-cache-gate-defect-disclosure-no-expansion-headline-or-submission",
+      "config": {"tp": 1, "mtp": 2, "graph": "on", "graph_mode": "PIECEWISE", "graph_capture_sizes": [1], "enforce_eager": false, "kv": "f16", "speculation": "native-mtp", "num_speculative_tokens": 2, "parallel_slots": 1, "configured_max_context_tokens": 32896, "gpu_memory_utilization": 0.9, "prefix_caching": false, "pythonhashseed": 0},
+      "workload": "One-slot exact-4K OpenAI HTTP completion; 128 returned IDs; cache zero; isolated draft counters; conventional first-100 decode over 99 intervals",
+      "axis": "active_context_tokens",
+      "points": [{"x": 4096, "decode_tok_s": 11.988874911178696, "historical_100_event_decode_tok_s": 12.10997465775626, "ttft_ms": 2941.726919991197, "cached_tokens": 0, "drafted_tokens": 94, "accepted_tokens": 80, "draft_acceptance_rate": 0.851063829787234, "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0"}],
+      "quality": "Exact depth, cache zero, isolated 80/94 acceptance, dual-parent token parity, full quality, PIECEWISE identity, TP1 topology, model verification, runtime cleanup, and a separate complete surviving-cache audit passed.",
+      "caveat": "Grade C exact-4K singleton through explicit human adjudication. The launch runner did not enforce its promised cache gate; the separately hashed post-run audit is disclosed. x0/2K/8K/16K/24K/32K remain missing for this graph tuple, and eager MTP2 corruption caveats at 2K/8K/16K remain in force.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-r1-result.json"
+    },
+    {
       "id": "q38-f01e-autoround-tp1-mtp1-eager-f16-exact-context-r1-grade-d",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -6267,12 +6304,13 @@
     },
     {
       "id": "context-q38-tp1-autoround-mtp2-partial",
-      "title": "Qwen3.8 AutoRound TP1 eager MTP2 partial depth",
-      "subtitle": "Grade D partial · current f01e/ac7509e2 image · F16 KV · exact target parity at 4K/24K/32K · 2K/8K/16K quarantined at tokens 90/99/32 · x=0 missing · conventional 99-interval decode",
+      "title": "Qwen3.8 AutoRound TP1 MTP2 depth",
+      "subtitle": "Current f01e/ac7509e2 image · F16 KV · eager Grade D partial plus a separate PIECEWISE exact-4K Grade C point with its original cache-gate omission disclosed and a passing post-run audit · 2K/8K/16K corruption caveats remain · conventional 99-interval decode",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "ttft_ms", "draft_acceptance_rate"],
       "series": [
-        {"label": "MTP2 eager · exact-parity depths", "measurement_ids": ["q38-f01e-autoround-tp1-mtp2-eager-f16-exact-context-r1-grade-d"]}
+        {"label": "MTP2 eager · exact-parity depths", "measurement_ids": ["q38-f01e-autoround-tp1-mtp2-eager-f16-exact-context-r1-grade-d"]},
+        {"label": "MTP2 PIECEWISE · exact 4K Grade C · cache defect disclosed", "measurement_ids": ["q38-f01e-autoround-tp1-mtp2-piecewise-f16-exact-4k-r1-grade-c"]}
       ]
     },
     {
@@ -7521,6 +7559,7 @@
       {"id": "measured-f01e-autoround-mtp3-eager-f16-context-24576", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 3, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D11.23 · MTP3 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp3-eager-f16-exact-context-r1-grade-d", "point_x": 24576, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp3-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-f01e-autoround-mtp3-eager-f16-context-32768", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 3, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D11.17 · MTP3 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp3-eager-f16-exact-context-r1-grade-d", "point_x": 32768, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp3-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp3-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "quarantined-f01e-autoround-mtp2-eager-f16-context-2048", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP2 token-90 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 2K output first diverged from the same-image target oracle at token 90; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-2k-parity-pass"}},
+      {"id": "measured-f01e-autoround-mtp2-piecewise-f16-context-4096", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 4096, "graph_mode": "PIECEWISE", "kv": "f16"}, "state": "lab-measured", "label": "D11.99 · T2,942 · A80/94 · Grade C · cache defect disclosed", "reason": "Exact cache-zero TP1 native-MTP2 PIECEWISE cell with isolated acceptance, dual-parent parity, full quality, graph/topology/model/cleanup gates, and a separate passing full-content audit of the surviving dedicated cache; the original runner's omitted cache gate remains disclosed.", "evidence_id": "q38-f01e-autoround-tp1-mtp2-piecewise-f16-exact-4k-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp2-piecewise-f16-4k-grade-c", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-piecewise-4k-sentinel-20260826-r1", "retry": {"status": "complete"}},
       {"id": "measured-f01e-autoround-mtp2-eager-f16-context-4096", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"}, "state": "lab-measured", "label": "D11.39 · MTP2 · Grade D partial", "reason": "Exact cache-zero depth, acceptance, full quality, and target-token parity passed; published by explicit per-depth human coverage adjudication while the whole arm remains fail-closed.", "evidence_id": "q38-f01e-autoround-tp1-mtp2-eager-f16-exact-context-r1-grade-d", "point_x": 4096, "packet_id": "qwen38-27b-autoround-int4-tp1-f01e-mtp2-eager-depth-grade-d", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "complete"}},
       {"id": "quarantined-f01e-autoround-mtp2-eager-f16-context-8192", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP2 token-99 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 8K output first diverged from the same-image target oracle at token 99; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-8k-parity-pass"}},
       {"id": "quarantined-f01e-autoround-mtp2-eager-f16-context-16384", "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca", "tp": 1, "mtp": 2, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"}, "state": "quarantined", "label": "MTP2 token-32 divergence · Grade D diagnostic", "reason": "Exact measurement, acceptance, and full quality passed, but the 16K output first diverged from the same-image target oracle at token 32; its speed remains diagnostic only.", "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-r1-result.json", "parent": "qwen38-official-f01e-autoround-tp1-mtp2-f16-eager-depth-expansion-20260826-r1", "retry": {"status": "blocked-on-exact-parity", "trigger": "same-profile-16k-parity-pass"}},
