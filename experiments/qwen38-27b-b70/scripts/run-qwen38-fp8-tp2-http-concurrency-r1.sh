@@ -18,6 +18,7 @@ image='vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d00
 harness="${repo_root}/scripts/bench-openai-concurrency-oracle.py"
 client="${repo_root}/scripts/bench-openai-realistic-suite.py"
 single_client="${repo_root}/scripts/bench-openai-single-decode.py"
+qualifier="${repo_root}/scripts/qualify-openai-concurrency-attempt.py"
 verifier="${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh"
 manifest="${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json"
 run_dir="${out_parent}/${campaign}-attempt${attempt}"
@@ -77,7 +78,7 @@ trap cleanup EXIT INT TERM
 
 free -b >"${run_dir}/memory-before.txt"
 docker image inspect "${image}" >"${run_dir}/image-inspect.json"
-inputs=("${suite}" "${harness}" "${client}" "${single_client}" "${verifier}" "${manifest}" "${prereg}" "${BASH_SOURCE[0]}")
+inputs=("${suite}" "${harness}" "${client}" "${single_client}" "${qualifier}" "${verifier}" "${manifest}" "${prereg}" "${BASH_SOURCE[0]}")
 [[ -z "${oracle_digests}" ]] || inputs+=("${oracle_digests}")
 sha256sum "${inputs[@]}" >"${run_dir}/input-sha256sums.txt"
 "${verifier}" "${model_dir}" >"${run_dir}/model-verification.txt"
@@ -136,84 +137,12 @@ printf '%s\n' "${harness_status}" >"${run_dir}/harness-exit-status.txt"
 curl -fsS "http://127.0.0.1:${port}/metrics" >"${run_dir}/metrics-after.txt" || true
 docker logs "${container}" >"${server_log}" 2>&1
 
-python3 -B - "${run_dir}" "${pilot}" >"${run_dir}/qualification.json" <<'PY'
-import json, math, pathlib, re, statistics, sys
-root = pathlib.Path(sys.argv[1]); pilot = sys.argv[2] == "1"
-d = json.loads((root / "result.json").read_text())
-oracle = d["oracle"]["rows"]
-batches = d["batches"]
-rows = oracle + [row for batch in batches for row in batch["rows"]]
-oracle_complete = len(oracle) == 64 and all(
-    row.get("completion_tokens") == 128
-    and len(row.get("token_ids", [])) == 128
-    for row in oracle
-)
-counts_complete = all(row.get("completion_tokens") == 128 for row in rows)
-ids_complete = all(len(row.get("token_ids", [])) == 128 for row in rows)
-cache_zero = d["oracle"]["cached_tokens_all_zero"] and all(
-    batch["cached_tokens_all_zero"] for batch in batches
-)
-oracle_cache_zero = d["oracle"]["cached_tokens_all_zero"]
-collisions = sum(batch.get("cross_base_oracle_collision_count", 0) for batch in batches)
-isolation = all(batch.get("complete_token_id_identity_all") for batch in batches) and collisions == 0
-def pct(values, p):
-    values = sorted(float(v) for v in values if isinstance(v, (int, float)) and math.isfinite(v))
-    if not values: return None
-    pos = (len(values) - 1) * p
-    lo = int(pos); hi = min(lo + 1, len(values) - 1); frac = pos - lo
-    return values[lo] * (1 - frac) + values[hi] * frac
-def ms(values, p):
-    value = pct(values, p)
-    return value * 1000 if value is not None else None
-latency = []
-for batch in batches:
-    ttft = [row.get("ttft_s") for row in batch["rows"]]
-    elapsed = [row.get("elapsed_s") for row in batch["rows"]]
-    latency.append({
-        "concurrent_users": batch["concurrency"],
-        "aggregate_tok_s_wall": batch["aggregate_tok_s_wall"],
-        "ttft_ms_p50": ms(ttft, .50),
-        "ttft_ms_p95": ms(ttft, .95),
-        "end_to_end_ms_p50": ms(elapsed, .50),
-        "end_to_end_ms_p95": ms(elapsed, .95),
-        "queued_profile": batch["concurrency"] > 4,
-    })
-passed = oracle_complete and oracle_cache_zero and (
-    pilot or (counts_complete and ids_complete and cache_zero and isolation)
-)
-out = {
-    "classification": (
-        "qualified-oracle-pilot" if passed and pilot else
-        "output-isolation-qualified-shape-variant" if passed else "failed-closed"
-    ),
-    "pilot": pilot,
-    "oracle_rows_64_complete": oracle_complete,
-    "completion_tokens_128_all": counts_complete,
-    "complete_token_id_identity_all": ids_complete,
-    "cached_tokens_all_zero": cache_zero,
-    "cross_base_oracle_collision_count": collisions,
-    "server_active_slots": 4,
-    "queued_latency_boundary": "concurrency > 4 includes service queueing",
-    "latency": latency,
-}
-json.dump(out, sys.stdout, indent=2, sort_keys=True); print()
-if not passed: raise SystemExit(3)
-if pilot:
-    compact = {
-        "schema": "neural.download.concurrency-token-oracle-digests.v1",
-        "cached_tokens_zero": d["oracle"]["cached_tokens_all_zero"],
-        "rows": [{
-            "base_prompt_id": re.sub(r"-c[0-9]+$", "", row["prompt_id"]),
-            "prompt_id": row["prompt_id"],
-            "prompt_sha256": row["prompt_sha256"],
-            "completion_tokens": row["completion_tokens"],
-            "token_ids_sha256": __import__("hashlib").sha256(
-                json.dumps(row["token_ids"], separators=(",", ":")).encode()
-            ).hexdigest(),
-        } for row in oracle],
-    }
-    (root / "oracle-digests.json").write_text(json.dumps(compact, indent=2, sort_keys=True) + "\n")
-PY
+qualifier_cmd=(python3 "${qualifier}" --result "${run_dir}/result.json"
+  --out "${run_dir}/qualification.json" --active-slots 4)
+if (( pilot == 1 )); then
+  qualifier_cmd+=(--pilot --oracle-out "${run_dir}/oracle-digests.json")
+fi
+"${qualifier_cmd[@]}"
 
 sha256sum "${run_dir}/result.json" "${run_dir}/qualification.json" >"${run_dir}/result-sha256sums.txt"
 [[ -f "${run_dir}/oracle-digests.json" ]] && sha256sum "${run_dir}/oracle-digests.json" >>"${run_dir}/result-sha256sums.txt"

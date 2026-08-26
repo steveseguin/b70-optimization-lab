@@ -41,7 +41,6 @@ class Fp8ConcurrencyPilotContractTest(unittest.TestCase):
         for key, field in (
             ("oracle", "oracle_sha256"),
             ("suite", "suite_sha256"),
-            ("runner", "runner_sha256"),
             ("summarizer", "summarizer_sha256"),
             ("excluded_warmup_client", "excluded_warmup_client_sha256"),
         ):
@@ -50,6 +49,12 @@ class Fp8ConcurrencyPilotContractTest(unittest.TestCase):
                 hashlib.sha256(source.read_bytes()).hexdigest(),
                 data["frozen_inputs"][field],
             )
+        # R2 deliberately remains bound to the historical runner that failed;
+        # R3 freezes the repaired runner rather than rewriting this contract.
+        self.assertEqual(
+            data["frozen_inputs"]["runner_sha256"],
+            "f7151dae87ba77b852218b2f9b51fb3e6558952c2896de0f2e7a3c9188466ad7",
+        )
 
 
 if __name__ == "__main__":
