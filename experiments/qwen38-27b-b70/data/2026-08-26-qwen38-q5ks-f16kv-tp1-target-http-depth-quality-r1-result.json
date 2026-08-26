@@ -1,0 +1,160 @@
+{
+  "schema": "neural.download.qwen38-q5ks-f16kv-target-http-depth-quality-result.v1",
+  "campaign_id": "qwen38-q5ks-f16kv-tp1-target-http-depth-quality-20260826-r1",
+  "status": "passed",
+  "classification": "grade-c-f16kv-exact-depth-serving-curve-with-full-qwen38-quality-battery",
+  "completed_at_utc": "2026-08-26T04:17:51.210381+00:00",
+  "identity": {
+    "git_head": "a4894239553c66a1d0ab16228ec557685d0f09f5",
+    "model": {
+      "path": "/mnt/usb-models/llm-models/qwen3.8-27b-unsloth-gguf/Qwen3.8-27B-UD-Q5_K_S.gguf",
+      "repository": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+      "quantization": "UD-Q5_K_S",
+      "size_bytes": 18665753504,
+      "sha256": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe",
+      "family_relationship": "current Qwen3.8 target weights; this quantized artifact is a subset of the Qwen3.8 27B family"
+    },
+    "runtime": {
+      "name": "llama.cpp",
+      "source_commit": "9fee29e9435f865ec0b811a783a6471a136d9317",
+      "reported_version": "version: 0.2.0-dev (build 1, commit 9fee29e)",
+      "binary_path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/llama-server",
+      "binary_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964",
+      "local_dso_sha256": {
+        "libllama-server-impl.so": "8d2507871a45c9aeab76aacfcd5d9b7b06b1fe5387db4e8774fc31c17b213534",
+        "libllama-common.so.0": "50d4c2699b417d41d8f88f0bf868366532314b6298546d214d84c9ed109afb7e",
+        "libmtmd.so.0": "7b2bf1015f9e853189168767e7473fe1b5a331c5ff484e005907ba246049e0c9",
+        "libllama.so.0": "e43c73e0107c671f93ee2211269bb73f672d59353a331f44ff2ebdaaa4b1d6bf",
+        "libggml.so.0": "db46d7b720d042c212dbeb8391d1f7b5b4ff0114c00f62f80cf49dde9a2e19d5",
+        "libggml-cpu.so.0": "d1fbb0b0e1bb82376db22303cc4cad68937668b3740ba69c7d2d336e84a52bb8",
+        "libggml-sycl.so.0": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f",
+        "libggml-base.so.0": "d7675d35df93b61b5175370128527e1225e60ad330aaa8fe1b317ade9b90c4ab"
+      }
+    },
+    "configuration": {
+      "gpu": "one Intel Arc Pro B70",
+      "tp": 1,
+      "mtp": 0,
+      "transport": "HTTP /v1/completions",
+      "graph_mode": "off",
+      "fit": "off",
+      "flash_attention": "on",
+      "target_kv": "f16",
+      "context_capacity_tokens": 33024,
+      "parallel_slots": 1,
+      "completion_tokens_per_cell": 128,
+      "cache_ram": 0,
+      "context_checkpoints": 0,
+      "spec_type": "none"
+    }
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "synthetic repeated-token exact-depth fixture; separate natural-language quality battery required",
+    "context_axis_disclosure": {
+      "x0": "zero prior active context plus one explicit ordinary prompt token",
+      "positive_depths": "exact submitted token counts",
+      "configured_capacity_is_not_active_context": true
+    },
+    "cells": [
+      {"active_context_tokens": 0, "serving_decode_tok_s_99_interval": 22.617348746656774, "cached_tokens": 0, "output_token_ids_sha256": "1a8460d6ac1e6052606d8c64525ae12eb2f40380159055df785817b741194ef0"},
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 22.072826293347987, "cached_tokens": 0, "output_token_ids_sha256": "ece13c1eb408964c3128c70d38a32914c75fc26805495f007b779fc638516bd9"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 21.51247483924336, "cached_tokens": 0, "output_token_ids_sha256": "b1552b09fca7b1391bc0883523a25ec62eb57c78dcae9dd81730dcc2a9e0574a"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 20.699622782660835, "cached_tokens": 0, "output_token_ids_sha256": "6c8a98455d0ea4ea6fca2430e1d6ceb61129259a6fb3a1d72e9ef9e97174777c"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 19.116902989029395, "cached_tokens": 0, "output_token_ids_sha256": "c52d107b24abc6b399e434935e94de59bef7909dd6193c220b13c334926ba24a"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 17.847541304863622, "cached_tokens": 0, "output_token_ids_sha256": "c35d4eb0eaf833b4d9c1eaa01c095e3b0ef8d9333f5fd077882df9c00530e083"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 16.72668172192112, "cached_tokens": 0, "output_token_ids_sha256": "8321d4ab8ca666e8ced57014460bede9a5139bd992a8f27553620be85d3f59e8"}
+    ]
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": {
+      "passed": 7,
+      "required": 7,
+      "names": ["exact_ok", "copy_phrase", "arithmetic", "json_schema", "factual", "logic", "code_execution"]
+    },
+    "repeat_stability": {
+      "passed": true,
+      "runs": 2,
+      "unique_hashes": 1,
+      "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    },
+    "long_context_needle": {
+      "passed": true,
+      "requested_context_tokens": 27200,
+      "actual_prompt_tokens_before_chat_template": 25200,
+      "api_usage_prompt_tokens": 25212,
+      "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"
+    },
+    "cache_zero_requests": {
+      "passed": 10,
+      "required": 10
+    },
+    "baseline_comparison": "not_run"
+  },
+  "q8_kv_sibling_context": {
+    "relationship": "passed same-model/runtime/workload Q8_0-KV sibling bound by the F16 campaign identity",
+    "result_path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q5ks-q8kv-tp1-target-http-depth-quality-r1-result.json",
+    "result_sha256": "2653041587bb80a1ea2c08d177114911d9cf60a2d379baa782a416396a7f0cd3",
+    "only_selector_delta": "target KV cache K/V q8_0 to f16",
+    "comparison_metric": "F16 serving decode minus Q8_0 serving decode at the same exact active context",
+    "cells": [
+      {"active_context_tokens": 0, "f16_minus_q8_tok_s": 0.1319877898304469, "f16_over_q8_percent": 0.5869943119164223, "output_token_hash_equal": false},
+      {"active_context_tokens": 2048, "f16_minus_q8_tok_s": 1.1927823816161407, "f16_over_q8_percent": 5.712547285142211, "output_token_hash_equal": true},
+      {"active_context_tokens": 4096, "f16_minus_q8_tok_s": 1.927192601103357, "f16_over_q8_percent": 9.840004232108424, "output_token_hash_equal": true},
+      {"active_context_tokens": 8192, "f16_minus_q8_tok_s": 3.194906984802447, "f16_over_q8_percent": 18.251692982032463, "output_token_hash_equal": false},
+      {"active_context_tokens": 16384, "f16_minus_q8_tok_s": 5.068258307199439, "f16_over_q8_percent": 36.076492942800066, "output_token_hash_equal": true},
+      {"active_context_tokens": 24576, "f16_minus_q8_tok_s": 6.024590033117903, "f16_over_q8_percent": 50.95673571382606, "output_token_hash_equal": false},
+      {"active_context_tokens": 32768, "f16_minus_q8_tok_s": 6.512232771015315, "f16_over_q8_percent": 63.75510614733473, "output_token_hash_equal": false}
+    ],
+    "summary": {
+      "f16_faster_cells": 7,
+      "measured_cells": 7,
+      "exact_output_hash_matches": 3,
+      "exact_output_hash_comparisons": 7
+    },
+    "authority_boundary": "The Q8_0 sibling provides matched contextual comparison only. No Q8 speed, output hash, quality, site cell, or other authority transfers to this F16 result, and no F16 authority transfers back to Q8_0."
+  },
+  "validation": {
+    "all_terminal_checks_passed": true,
+    "terminal_check_count": 16,
+    "passed_q8_sibling_bound": true,
+    "clean_shutdown": true,
+    "forced_kill": false,
+    "port_closed": true,
+    "render_node_idle": true,
+    "server_survivor": false
+  },
+  "raw_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q5ks-f16kv-tp1-target-http-depth-quality-20260826-r1",
+    "file_count": 24,
+    "sha256": {
+      "terminal-receipt.json": "4ec596d510ec9854e77ecb56aacd18763c68386512c0e9df3a77c3f902a81bd9",
+      "identity.json": "c9d5162fc5c8b5dedf064245333ea5d2ca1ef8095c9b533e5df6fdf60d0e6e46",
+      "target-mtp0/quality.json": "6cfa27576aa2b6b1a4cd0036075ea7298ebb12e49850913914075589f64f51ea",
+      "target-mtp0/depth-0/exact-depth.json": "dc36b4a58938a3ad5bfa9b5647439e4e78182e8a6e27464f8f9295fca801f763",
+      "target-mtp0/depth-2048/exact-depth.json": "f18e6c487992a952523ebc013c5562b43c079b053358206f3e986227443c3aea",
+      "target-mtp0/depth-4096/exact-depth.json": "461b23cf0cdae3a69e62219259946a6f87165869929cdf78a0a3d9fca91c7df4",
+      "target-mtp0/depth-8192/exact-depth.json": "384640954bc81620e75ccc9da954aa522e014d24ecb0f1ba7299f7dcc59ae531",
+      "target-mtp0/depth-16384/exact-depth.json": "2e51473c1149d76df7fd5685475a9fd824ceacde7d1e87eb9c2101627d5c4564",
+      "target-mtp0/depth-24576/exact-depth.json": "fca56e0f8c0ad4763f7fa1dfad538d17e567709ec23d5743d5a7d9aa6bea4ed7",
+      "target-mtp0/depth-32768/exact-depth.json": "4a2b9e8a97937f4133e7bc4fb0b51476ff20fe0d4ce4f9f263e6e7b041cf9683",
+      "target-mtp0/server.log": "37c8f235b3fe508fa780dc5ad54ec8085cec5a5ae18331ce5f52c7d34dbd770a"
+    }
+  },
+  "authority": {
+    "site_target_only_f16_curve_publication": true,
+    "target_only_f16_serving_curve_cells": 7,
+    "q8_kv_cells": 0,
+    "speculative_cells": 0,
+    "tp2_or_tp4_cells": 0,
+    "graph_cells": 0,
+    "prefill_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "scope_boundary": "This closes only the current-weight Qwen3.8 UD-Q5_K_S TP1 target-only, graph-off, fit-off, F16-KV HTTP serving curve at 0/2/4/8/16/24/32K. It is not Q8-KV, speculative, TP2/TP4, graph, prefill, concurrency, headline, protected-speed replacement, or LocalMaxxing authority.",
+  "next_implication": "Publish these seven measured F16-KV target-only cells beside, but distinctly from, the independently qualified Q8_0-KV sibling. Preserve the measured F16 advantage and partial output-hash differences as KV-precision context, then continue other current-weight Qwen3.8 quantization, MTP, graph, and topology cells under separate preregistrations."
+}
