@@ -60,6 +60,15 @@ or replace any captured value.
    point is inherited, estimated, interpolated, or promoted from the 256-token
    canary.
 
+The revision-bound builder is now
+`scripts/prepare-0731-dspark-draft-pack.py`. Its default is a metadata-only,
+no-write plan. Execution remains blocked until the completed 0731 receipt is
+available and separately requires `--execute` plus its frozen acknowledgement.
+The builder copies the three exclusive MTP shards into sibling staging (never
+symlinks), validates all 2,977 tensors and 7,010,106,780 logical bytes, records
+source/destination hashes, and atomically promotes only a complete pack. No
+payload copy has been run.
+
 New 0731 evidence must use the fail-closed scorer modes. Exact canaries use
 `quality/exact-canaries-0731-target-contract-v1.json`; that contract binds the
 served model, target revision, frozen suite bytes, seed, output limit, and
