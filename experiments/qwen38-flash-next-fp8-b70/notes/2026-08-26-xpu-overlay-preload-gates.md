@@ -135,3 +135,33 @@ After the native package gate passes:
 
 Context, MTP, graph, and speed expansion remain downstream of that exact
 correctness gate.
+
+## First real TP4 load: bounded constructor failure and repair
+
+Attempt 4 passed every frozen launcher gate, including four-rank XCCL barrier
+and all-reduce, and brought up all four TP4/EP4 workers. It selected Triton for
+both GDN decode and block-FP8 MoE. It then stopped in the PLE constructor before
+checkpoint weight loading; this was not a hang, OOM, collective failure, model
+fit failure, or throughput result.
+
+`PleOffloadLayer.get_target_device()` combined the accelerator-aware current
+device index with a literal `cuda` device type. The surrounding default-device
+context consequently sent ordinary PLE constructor tensors through
+`torch.cuda._lazy_init()` on the XPU-only PyTorch build. All four ranks failed
+the same way. The full external log is retained at:
+
+```text
+/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt4/server.log
+```
+
+The focused repair is vLLM commit `240899082e`: select the active PyTorch
+accelerator's device type while retaining the existing current-device index
+and CPU-offload early return. It does not change kernels, quantization,
+topology, memory policy, graph mode, or benchmark settings. The worker unit
+suite passes `21/21`, covering XPU, CUDA, and CPU-offload selection, and a real
+B70 probe proves that the same PLE constructor device context creates ordinary
+tensors on `xpu:0`. Patch artifact `vllm/0007` preserves the repair.
+
+Structured attempt evidence is in
+`data/20260826-tp4-first-load-attempt4.json`. The next action is an unchanged
+attempt 5 with only the source repair and launcher source-head pin advanced.

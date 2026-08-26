@@ -35,7 +35,7 @@ runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtim
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 
-expected_vllm_head="48a350bcf63e83a1d87d361415088113b038a662"
+expected_vllm_head="240899082e3c9a4733c5871038f604e583bf2498"
 expected_kernels_head="7cf216774fb3c5eabf20d1f481d6548682604c37"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
@@ -99,6 +99,7 @@ cleanup() {
     kill -KILL -- "-${server_pid}" 2>/dev/null || true
     wait "${server_pid}" 2>/dev/null || true
   fi
+  find "${rpc_dir}" -mindepth 1 -delete 2>/dev/null || true
   rmdir "${rpc_dir}" 2>/dev/null || true
 }
 trap cleanup EXIT

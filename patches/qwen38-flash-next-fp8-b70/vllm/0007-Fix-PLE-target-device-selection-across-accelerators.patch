@@ -1,0 +1,84 @@
+From 240899082e3c9a4733c5871038f604e583bf2498 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 18:48:42 -0400
+Subject: [PATCH] Fix PLE target device selection across accelerators
+
+---
+ tests/v1/worker/test_ple_offload_worker.py    | 41 +++++++++++++++++++
+ .../layers/ple_offload_layer.py               |  8 +++-
+ 2 files changed, 48 insertions(+), 1 deletion(-)
+
+diff --git a/tests/v1/worker/test_ple_offload_worker.py b/tests/v1/worker/test_ple_offload_worker.py
+index 9083fd8036..f9e9901160 100644
+--- a/tests/v1/worker/test_ple_offload_worker.py
++++ b/tests/v1/worker/test_ple_offload_worker.py
+@@ -254,6 +254,47 @@ def test_ple_offload_request_msgpack_round_trip() -> None:
+     assert decoded == request
+ 
+ 
++@pytest.mark.parametrize(("device_type", "device_index"), [("xpu", 2), ("cuda", 1)])
++def test_ple_target_device_uses_current_accelerator(
++    monkeypatch: pytest.MonkeyPatch,
++    device_type: str,
++    device_index: int,
++) -> None:
++    monkeypatch.setattr(envs, "VLLM_PLE_CPU_OFFLOAD", False)
++    monkeypatch.setattr(
++        ple_offload_layer.torch.accelerator,
++        "current_accelerator",
++        lambda: torch.device(device_type),
++    )
++    monkeypatch.setattr(
++        ple_offload_layer.torch.accelerator,
++        "current_device_index",
++        lambda: device_index,
++    )
++
++    assert PleOffloadLayer.get_target_device() == torch.device(
++        device_type, device_index
++    )
++
++
++def test_ple_target_device_is_cpu_in_offload_process(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setattr(envs, "VLLM_PLE_CPU_OFFLOAD", True)
++    monkeypatch.setattr(
++        ple_offload_layer.torch.accelerator,
++        "current_accelerator",
++        lambda: pytest.fail("CPU offload should not query an accelerator"),
++    )
++    monkeypatch.setattr(
++        ple_offload_layer.torch.accelerator,
++        "current_device_index",
++        lambda: pytest.fail("CPU offload should not query an accelerator"),
++    )
++
++    assert PleOffloadLayer.get_target_device() == torch.device("cpu")
++
++
+ @pytest.mark.parametrize(
+     ("ple_layer_ids", "expected"),
+     [
+diff --git a/vllm/model_executor/layers/ple_offload_layer.py b/vllm/model_executor/layers/ple_offload_layer.py
+index 2106bbe7d6..e3716e7b84 100644
+--- a/vllm/model_executor/layers/ple_offload_layer.py
++++ b/vllm/model_executor/layers/ple_offload_layer.py
+@@ -253,7 +253,13 @@ class PleOffloadLayer(nn.Module, ABC):
+         """Return CPU for the offload process and the active GPU otherwise."""
+         if envs.VLLM_PLE_CPU_OFFLOAD:
+             return torch.device("cpu")
+-        return torch.device("cuda", torch.accelerator.current_device_index())
++        accelerator = torch.accelerator.current_accelerator()
++        if accelerator is None:
++            raise RuntimeError("PLE requires an active accelerator")
++        return torch.device(
++            accelerator.type,
++            torch.accelerator.current_device_index(),
++        )
+ 
+     @abstractmethod
+     def forward_impl(
+-- 
+2.43.0
+

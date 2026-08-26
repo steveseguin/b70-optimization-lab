@@ -1,0 +1,52 @@
+{
+  "date": "2026-08-26",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+  "attempt": 4,
+  "status": "bounded_failure_before_weight_loading",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "48a350bcf63e83a1d87d361415088113b038a662",
+    "kernel_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp_dose": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "moe_backend": "triton",
+    "offload_backend": "uva",
+    "cpu_offload_gb_per_rank": 12,
+    "cpu_offload_params": [
+      "ple_embedding.ngram_embedding.weight"
+    ]
+  },
+  "passed_before_failure": {
+    "four_rank_xccl_barrier_and_allreduce": true,
+    "tp4_ep4_worker_initialization": true,
+    "gdn_backend": "triton",
+    "fp8_moe_backend": "triton",
+    "checkpoint_weight_loading_started": false
+  },
+  "failure": {
+    "class": "accelerator_device_type_hardcode",
+    "location": "vllm/model_executor/layers/ple_offload_layer.py:256",
+    "trigger": "Qwen4ExpNGramEmbedding constructor torch.tensor(multipliers)",
+    "exception": "AssertionError: Torch not compiled with CUDA enabled",
+    "all_four_ranks_matched": true,
+    "classification": "source portability bug; not a performance regression, OOM, hang, collective failure, or model-fit failure"
+  },
+  "repair": {
+    "vllm_commit": "240899082e3c9a4733c5871038f604e583bf2498",
+    "patch_artifact": "patches/qwen38-flash-next-fp8-b70/vllm/0007-Fix-PLE-target-device-selection-across-accelerators.patch",
+    "unit_tests": "21 passed",
+    "real_b70_device_context_probe": "pass on xpu:0",
+    "performance_identity_changes": []
+  },
+  "external_evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt4",
+    "server_log_sha256": "6382a9a49a958864345971849fa7cabdca5c3c8f1ecf1fc7296fdb99348dec9d",
+    "identity_sha256": "9ec461c4bb36be87dc46166efe1ad0d6a8114dcc70ec1bcc54b5ae6e0b6bef49",
+    "runtime_versions_sha256": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "xccl_preflight_sha256": "df565edfab6149772d931ce93b03bf474d57afb6bb464b3558974cb6221a8014"
+  },
+  "next_action": "retry the identical frozen TP4/EP4 eager MTP0 load as attempt 5 with only the focused PLE source repair"
+}
