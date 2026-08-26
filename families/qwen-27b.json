@@ -524,6 +524,28 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q5ks-f16kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+      "label": "Qwen3.8 Q4_K_XL · TP1 target-only F16-KV HTTP context curve",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "quality-battery-qualified-grade-c-http-curve",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "active context 0-32K", "F16 KV", "full quality battery"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.8 UD-Q4_K_XL target-only TP1 HTTP serving at seven exact active-context depths with graph and fit disabled and F16 KV",
+          "basis": "all seven cache-zero depth receipts completed under one exact pinned identity; the full natural-language quality battery passed 7 exact cases, 2 repeat runs, and a 25,200-token long-context case, for 10/10 cache-zero quality requests. The synthetic exact-depth fixture and single campaign remain Grade C; no Q8_0-KV, graph, prefill, speculative, TP2/TP4, headline, protected-score, or LocalMaxxing authority transfers.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-mtp5-research",
       "label": "Qwen3.8 AutoRound INT4 · TP2 + MTP5",
       "revision": "qwen3.8-27b",
@@ -3667,6 +3689,37 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-qwen38-tp1-weight-ladder-sweep.json"
     },
     {
+      "id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207",
+      "quantization": "UD-Q4_K_XL",
+      "variant": "UD-Q4_K_XL target-only",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q4kxl-f16kv-target-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-target-only-f16kv-site-curve-no-headline-or-submission",
+      "identity": {"model_revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502", "model_sha256": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964", "terminal_receipt_sha256": "7686c8e460e3a45a81b625833b561de091e4db3fd0c2b3fac2f2cbbaca26731c"},
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "fit": "off", "kv": "f16", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "HTTP /v1/completions; exact submitted token depths; 128 generated tokens; cache zero; conventional 99-interval serving decode",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 21.826326109162604, "cached_tokens": 0, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "context_semantics": "zero prior active context plus one explicit ordinary prompt token"},
+        {"x": 2048, "decode_tok_s": 21.311674949425424, "cached_tokens": 0, "output_token_ids_sha256": "0a428a380938d4f8566036c21dba0b61c90affcb4f43a70b427f9519d8105bd2"},
+        {"x": 4096, "decode_tok_s": 20.87064005039118, "cached_tokens": 0, "output_token_ids_sha256": "66698ee7dccd3e65e98407f2cdd04b19705ced64670137a6524ede7b2c187d6a"},
+        {"x": 8192, "decode_tok_s": 20.01988162715276, "cached_tokens": 0, "output_token_ids_sha256": "cdfb82ff7c612de156451afd34a8ab0dc79830d80494ff4a1c18552bb6ef994e"},
+        {"x": 16384, "decode_tok_s": 18.641111109262432, "cached_tokens": 0, "output_token_ids_sha256": "76af0304a4d33053006a4471631681c16f3063c76ab1451792c42c5d023c07e2"},
+        {"x": 24576, "decode_tok_s": 17.370272845612092, "cached_tokens": 0, "output_token_ids_sha256": "490e6ee1f61d149c3c979165ed2ece4e7874972637ec4818498db4a10816cdbe"},
+        {"x": 32768, "decode_tok_s": 16.387443320790123, "cached_tokens": 0, "output_token_ids_sha256": "3e7f1a4b1ab7e9ecd6f7dd4a4b5890192051a7d18643ba2e0b9f2f4a75bc9419"}
+      ],
+      "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 repeat runs, one 25,200-token long-context case, and cached_tokens=0 on all 10 quality requests. All seven depth requests were also cache zero.",
+      "caveat": "Grade C target-only F16-KV serving curve. The matched Q8_0-KV HTTP sibling is not yet valid and is not compared here. No graph, prefill, speculative, TP2/TP4, protected or headline replacement, or LocalMaxxing authority is authorized.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-f16kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
       "id": "q38-q4kxl-tp1-kv-q8-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4051,6 +4104,16 @@
         {"label": "UD-Q5_K_S", "measurement_ids": ["q38-q5ks-tp1-kv-f16-context"]},
         {"label": "UD-Q4_K_XL", "measurement_ids": ["q38-q4kxl-tp1-kv-f16-context"]},
         {"label": "Q8_0 weights", "measurement_ids": ["q38-q8weights-tp1-kv-f16-context"]}
+      ]
+    },
+    {
+      "id": "context-q4kxl-f16-http",
+      "title": "Q4_K_XL F16 HTTP context",
+      "subtitle": "Grade C · Qwen3.8 UD-Q4_K_XL target-only TP1 · graph and fit off · exact cache-zero HTTP serving through 32K · full quality battery passed · matched Q8_0 HTTP sibling pending and not plotted",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -5736,11 +5799,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D21.81 · P762.57 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D21.826 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. x=0 is zero prior context plus one ordinary prompt token.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 0,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -5757,11 +5821,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D21.53 · P735.45 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D21.312 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 2048,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -5778,11 +5843,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D21.37 · P719.47 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D20.871 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 4096,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -5799,11 +5865,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D21.06 · P689.58 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D20.020 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 8192,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -5820,11 +5887,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D20.49 · P639.46 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D18.641 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 16384,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -5841,11 +5909,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D19.95 · P596.49 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D17.370 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 24576,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
@@ -5862,11 +5931,12 @@
           "kv": "f16"
         },
         "state": "lab-measured",
-        "label": "D19.45 · P564.86 · raw sweep",
-        "reason": "Exact raw-engine depth point. Performance measured; serving quality and optimization maturity are graded separately.",
-        "evidence_id": "q38-q4kxl-tp1-kv-f16-context",
+        "label": "D16.387 · HTTP · Grade C",
+        "reason": "Authorized exact-depth cache-zero F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.",
+        "evidence_id": "q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c",
         "point_x": 32768,
-        "parent": "qwen38-tp1-raw-depth-sweep",
+        "packet_id": "qwen38-27b-q4kxl-f16kv-target-http-depth-grade-c",
+        "parent": "qwen38-q4kxl-f16kv-target-http-depth-quality-r1",
         "retry": {
           "status": "complete"
         }
