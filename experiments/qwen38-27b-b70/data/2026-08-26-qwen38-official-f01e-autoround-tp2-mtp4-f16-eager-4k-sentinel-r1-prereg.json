@@ -1,0 +1,134 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-tp2-mtp4-f16-eager-4k-sentinel-prereg.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-4k-sentinel-20260826-r1",
+  "state": "preregistered-not-launched",
+  "purpose": "Bound current-f01e AutoRound TP2/MTP4/eager/F16 at exact 4K only. The completed TP2/MTP3 scoped campaign is the hard mechanism parent, while the completed TP2/MTP0 4K receipt is the sole target oracle. Require exact depth and cache zero, isolated finite positive conserved acceptance, exact 128-token target parity, full objective and same-topology baseline quality, TP2 topology, rank-cache isolation, and cleanup. No automatic depth expansion, publication, or descendant is authorized.",
+  "parent_oracle": {
+    "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp3-f16-eager-depth-expansion-20260826-r1",
+    "terminal_receipt_sha256": "977a0aba4fed5510fb8ec568e3a9eb99df4f86a872478878e8c85d147899b64c",
+    "arm_result_sha256": "ed3f1b46ac8a6a6ed4ec5592a9a7621e82e1d5a8b59a30c73adc04af41b8ec2f",
+    "quality_receipt_sha256": "f74046dd65642d9fa8cb177fed12bba27bbdeada1a7ff8fb5273bf3966245e2b",
+    "exact_4k_receipt_sha256": "daf7201c641185f1dd4e54ff1661c7a817d49979afe0d06c3661ef5e2bad1ec7",
+    "verification_4k_receipt_sha256": "b1f0b4701936c4b7ca7cb5ca9e85ab91e394336ebca8b0cd1fed79a9dbc6a756",
+    "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+    "drafted_tokens": 123,
+    "accepted_tokens": 86,
+    "gate": "The scoped parent must remain a clean five-depth 4K-32K TP2/MTP3 result with exact parity, positive conserved acceptance, full objective and TP2/MTP0-baseline quality, TP2 worker topology, rank-cache isolation, and cleanup. Its 4K depth and verification receipts are separately hash-pinned. This parent authorizes only this preregistered sentinel."
+  },
+  "target_oracle": {
+    "campaign_id": "qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1",
+    "terminal_receipt_sha256": "63fe2e8a85db47af331743b93b1c6e181f930775104f19483eb7b9e1da0f2c60",
+    "exact_4k_receipt_sha256": "6e32b0a05f7e355bf21c5e3ebd0e04a16fbf3d54bc39890aa8740b3a5430f187",
+    "quality_receipt_sha256": "ef15f39a848d262a4582b1ab6c9a2f10713ecfbcae02497bc4462c8ae5a3af96",
+    "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0",
+    "gate": "The candidate must return exactly the same 128 token IDs as this same-image, same-topology TP2/MTP0/eager/F16 4K receipt. TP1, TP4, MTP1, MTP2, and MTP3 outputs are not targets."
+  },
+  "historical_risk": {
+    "tp1_mtp4": "The current-f01e TP1/MTP4 8K sentinel passed, but a separate-boot expansion diverged from TP1/MTP0 first at token 99 and later killed EngineCore at exact 32K on the speculative-token shape assertion. That blocks treating one pass as long-context authority.",
+    "tp4_mtp4": "The current-f01e TP4/MTP4 exact-8K sentinel drafted 124 tokens and accepted 97, passed objective/baseline quality and cleanup, but diverged from TP4/MTP0 first at token 99 and is structurally quarantined.",
+    "tp2_mtp4_8k_quarantine": {
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-8k-sentinel-r1-result.json",
+      "sha256": "ae0828434248862bc9eaa8bcb82fe6a74d20b8007dc186b3f72477e68a38a3d3",
+      "status": "quarantined-target-parity-failed",
+      "first_divergence_one_based": 99,
+      "candidate_token": 411,
+      "target_token": 579,
+      "site_measured_speed_cells": 0,
+      "gate": "This existing same-profile exact-8K failure remains a speedless structural quarantine. A clean 4K observation cannot clear, replace, or reinterpret it."
+    },
+    "sentinel_only_reason": "The same TP2/MTP4 profile is already target-divergent at exact 8K, and MTP4 has topology-local parity and long-context risk on neighboring topologies. A single exact-4K sentinel is the smallest clean-parent measurement; 16K/24K/32K remain unauthorized even if 4K passes."
+  },
+  "run_identity": {
+    "model": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "quantization": "AutoRound INT4 W4A16",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "image_id": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3",
+    "tensor_parallel": 2,
+    "pipeline_parallel": 1,
+    "data_parallel": 1,
+    "gpu_affinity": "0,1",
+    "mtp_depth": 4,
+    "speculative_config": {"method": "qwen3_next_mtp", "num_speculative_tokens": 4},
+    "startup_speculator_identity": {"method": "mtp", "num_spec_tokens": 4},
+    "kv_cache_dtype": "float16",
+    "graph_mode": "off",
+    "max_model_len": 32896,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.6,
+    "prefix_cache": false,
+    "pythonhashseed": 0,
+    "graph_environment": {"VLLM_XPU_ENABLE_XPU_GRAPH": "0", "VLLM_XPU_GRAPH": "0"},
+    "oneapi_device_selector": "unset"
+  },
+  "speculator_binding": {
+    "type": "native embedded Qwen MTP; no external draft model",
+    "mtp_tensor_count": 29,
+    "mtp_tensor_sha256": "94102b67c6b84e65dbb9bae37c00bd88ac1a43ff577ce65fd8842d231c7e89de"
+  },
+  "exact_depth_contract": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "depths": [4096],
+    "output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "context_capacity": 32896,
+    "gate": "Exact active prompt depth 4096, cached_tokens == 0, 128 returned token IDs, and every helper exact-depth check passes."
+  },
+  "acceptance_contract": {
+    "snapshot_scope": "Both speculative counters immediately before and after only the exact-4K request, with no intervening traffic.",
+    "gate": "All before/after/delta values finite; counters nondecreasing; drafted_delta > 0; accepted_delta > 0; accepted_delta <= drafted_delta."
+  },
+  "quality_contract": {
+    "baseline": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp0-f16-eager-depth-expansion-20260826-r1/quality.json",
+    "baseline_sha256": "ef15f39a848d262a4582b1ab6c9a2f10713ecfbcae02497bc4462c8ae5a3af96",
+    "gate": "pass_all, baseline_match_all, seven exact cases, eight deterministic repeats, long context, and all 16 usage records explicitly cached_tokens == 0."
+  },
+  "execution": {
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-4k-sentinel-r1.sh",
+    "output_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-4k-sentinel-20260826-r1",
+    "cache_root": "/home/steve/qwen38-current-main-runs/cache-official-f01e-autoround-tp2-mtp4-f16-eager-4k-sentinel-20260826-r1",
+    "port": 19518,
+    "container": "q38-f01e-ar-tp2-mtp4-f16-4k-r1",
+    "ack": "RUN qwen38-official-f01e-autoround-tp2-mtp4-f16-eager-4k-sentinel-20260826-r1",
+    "default_is_inert": true,
+    "fresh_roots_only": true,
+    "one_server_lifetime": true,
+    "global_signal_and_exit_cleanup": true
+  },
+  "terminal_classification": {
+    "passed-quality-clean-sentinel": "Exact depth/cache-zero, exact target parity, isolated positive conserved acceptance, objective/baseline quality, TP2 topology, rank-cache isolation, and cleanup pass.",
+    "quarantined-target-parity-failed": "Exact depth and acceptance pass but any output ID differs from TP2/MTP0; preserve lower-grade evidence without publication or descendant authority.",
+    "quarantined-acceptance-failed": "Exact depth passes but isolated speculative counters fail.",
+    "quarantined-quality-failed": "Mechanism gates pass but objective, cache-zero, or baseline quality fails.",
+    "quarantined-exact-depth-failed": "The exact 4K or cache-zero gate fails.",
+    "unsupported": "Only an explicit exact-image native-MTP unsupported line qualifies.",
+    "failed": "Startup, binding, topology, identity, metrics, rank-cache, cleanup, or harness failure."
+  },
+  "interpretation": {
+    "speed_floor": null,
+    "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+    "historical_replacement_allowed": false,
+    "protected_route_replacement_allowed": false,
+    "site_publication_automatic": false,
+    "depth_expansion_authorized": false,
+    "descendant_expansion_is_automatic": false,
+    "descendant_execution_authorized": false,
+    "failure_retains_lower_grade_evidence": true,
+    "exact_profile_only": true
+  },
+  "cache_contract": {
+    "filesystem": "ext4",
+    "fresh": true,
+    "writable_ntfs_forbidden": true,
+    "rank_namespaces": ["rank_0_0", "rank_1_0"]
+  }
+}
