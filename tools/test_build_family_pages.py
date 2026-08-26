@@ -1614,6 +1614,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp2-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-f01e-mtp3-eager-depth": 7,
+            "qwen38-tp4-vllm-xpu-autoround-f01e-mtp4-eager-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-strict-snapshot": 1,
         }
         self.assertEqual(set(contracts), set(expected_counts))
@@ -1625,7 +1626,7 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 1938)
+        self.assertEqual(len(all_cells), 1945)
 
         fp8_tp1_cells, errors = MODULE.expand_coverage_contract(
             contracts["qwen38-tp1-vllm-xpu-target-matrix"]
@@ -3228,15 +3229,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 20 matrices", overview_html)
-        self.assertIn("517/1,938 classified", overview_html)
+        self.assertIn("Coverage · 21 matrices", overview_html)
+        self.assertIn("518/1,945 classified", overview_html)
         for state, count, word in (
             ("lab-measured", "319", "measured"),
             ("lab-screened", "32", "screened"),
-            ("quarantined", "102", "quarantined"),
+            ("quarantined", "103", "quarantined"),
             ("closed", "6", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,421", "missing"),
+            ("missing", "1,427", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)
@@ -4141,6 +4142,17 @@ class FamilyCoverageTest(unittest.TestCase):
             ),
             f"no error contained all of {needles!r}: {errors}",
         )
+
+    def test_q38_current_f01e_tp4_mtp4_is_structural_quarantine_only(self) -> None:
+        family=json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text()); contracts={x["id"]:x for x in family["coverage_contracts"]}
+        cells,errors=MODULE.expand_coverage_contract(contracts["qwen38-tp4-vllm-xpu-autoround-f01e-mtp4-eager-depth"]); self.assertEqual(errors,[]); self.assertEqual(len(cells),7)
+        quarantined=[x for x in cells if x["state"]=="quarantined"]; self.assertEqual(len(quarantined),1); self.assertEqual(quarantined[0]["selectors"]["active_context_tokens"],8192); self.assertIn("token-99",quarantined[0]["label"]); self.assertNotIn("evidence_id",quarantined[0]); self.assertNotIn("point_x",quarantined[0])
+        self.assertEqual([x["selectors"]["active_context_tokens"] for x in cells if x["state"]=="missing"],[0,2048,4096,16384,24576,32768])
+        series_ids={x["id"] for x in family["series_measurements"]}; self.assertNotIn("q38-f01e-autoround-tp4-mtp4-eager-f16-exact-8k-r1",series_ids)
+        result=json.loads((MODULE.ROOT / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp4-mtp4-f16-eager-8k-sentinel-r1-result.json").read_text())
+        self.assertEqual(result["status"],"quarantined-target-parity-failed"); self.assertEqual(result["target_failure"]["first_divergence"]["one_based"],99); self.assertFalse(result["diagnostic_point"]["site_speed_publication"]); self.assertEqual(result["authority"]["site_measured_speed_cells"],0); self.assertEqual(result["authority"]["site_structural_quarantine_cells"],1)
+        rendered=MODULE.family_page(family); self.assertNotIn("22.446312547454145",rendered); self.assertNotIn("22.67304297722641",rendered)
+        self.assertEqual(result["authority"]["protected_decode_values_unchanged"],[71.45427094575045,30.329809361830037,49.05894025767351,71.9001988117144])
 
     def test_q38_current_f01e_tp4_mtp3_is_one_adjudicated_cell(self) -> None:
         family=json.loads((MODULE.ROOT / "families/qwen-27b.json").read_text())
