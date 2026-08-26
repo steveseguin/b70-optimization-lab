@@ -1,0 +1,144 @@
+{
+  "schema": "neural.download.qwen38-b2dd-tp4-exact-depth-quality-result.v1",
+  "campaign_id": "qwen38-b2dd9ce73d-tp4-exact-depth-quality-20260826-r1",
+  "status": "passed",
+  "classification": "grade-c-tp4-mtp0-f16kv-full-and-piecewise-six-nonzero-exact-depth-serving-cells-with-full-quality-battery",
+  "completed_at_utc": "2026-08-26T06:55:18.427286+00:00",
+  "identity": {
+    "lab_git_head": "3538d51b8f4517b3ccfbee1fba8e5a0252c38c55",
+    "origin_main_at_launch": "3538d51b8f4517b3ccfbee1fba8e5a0252c38c55",
+    "local_lab_unchanged": true,
+    "remote_main_advanced_during_stage": false,
+    "model": {
+      "path": "/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan",
+      "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+      "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+      "quantization": "AutoRound INT4 W4A16",
+      "family_relationship": "quantized artifact subset of the current Qwen3.8 27B weight revision"
+    },
+    "runtime": {
+      "profile": "b2dd9ce73d/1e90ffa672 both-current zero-overlay",
+      "image_tag": "neural-download/vllm-openai-xpu:vllm-b2dd9ce73d-kernel-1e90ffa672-official",
+      "image_id": "sha256:059d4b3ee881c2a54d801518d59fd26b4e3c3af8840f4c18187c8b28000bc296",
+      "base_digest": "sha256:3ee0ec37825cc03e866a75198e6fee2a201efb68a717852ed35737a3ae59f876",
+      "source_identity_sha256": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+      "vllm_head": "b2dd9ce73dce2ad09007d1db5c171454118981d7",
+      "vllm_tree": "65c93c14916a9a895c5592b8a0ba2803efc96346",
+      "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "source_overlay": "none",
+      "decision_overlay": "none"
+    },
+    "configuration": {
+      "gpu": "four Intel Arc Pro B70 GPUs",
+      "gpu_affinity": [0, 1, 2, 3],
+      "tp": 4,
+      "pp": 1,
+      "dp": 1,
+      "mtp": 0,
+      "transport": "HTTP /v1/completions",
+      "target_kv": "float16",
+      "graph_mode": "FULL_AND_PIECEWISE",
+      "graph_capture_sizes": [1, 2],
+      "max_graph_capture_size": 2,
+      "gpu_memory_utilization": 0.6,
+      "max_model_len": 32896,
+      "max_num_seqs": 1,
+      "max_num_batched_tokens": 1024,
+      "chunked_prefill": true,
+      "async_scheduling": true,
+      "prefix_cache": false,
+      "pythonhashseed": "unset",
+      "cache_policy": "fresh",
+      "server_lifetimes": 1
+    }
+  },
+  "serving_curve": {
+    "evidence_grade": "C",
+    "metric": "conventional HTTP serving decode tok/s over 99 intervals between streamed token-ID events 1 and 100",
+    "fixture": "exact submitted token-ID depth fixture; separate natural-language quality battery required",
+    "context_axis_disclosure": {
+      "x0": "missing; the exact harness correctly refused to replace an empty fixture with an ordinary nonempty prompt",
+      "positive_depths": "exact submitted token counts",
+      "configured_capacity_tokens": 32896,
+      "configured_capacity_is_not_active_context": true,
+      "quality_workloads_fill_no_exact_context_cell": true
+    },
+    "cells": [
+      {"active_context_tokens": 2048, "serving_decode_tok_s_99_interval": 71.16806401683698, "time_to_first_token_s": 0.5474729180059512, "timestamped_events": 100, "inter_token_intervals": 99, "prompt_token_ids_sha256": "a173e60e5047c0f080e0ea45680eecbb533d30946cfc2ae0e028c684bf18d1ba", "returned_prompt_token_ids_sha256": "a173e60e5047c0f080e0ea45680eecbb533d30946cfc2ae0e028c684bf18d1ba", "output_token_ids_sha256": "921825efade0d24e902bdbaffecfde1275acf6afeb349d15f993f518b50f7446", "text_sha256": "66367b83b19f1a870fe3e81d99b234d453053e909eb2464c217c0d9bd138e76f", "cached_tokens": 0, "completion_tokens": 128, "receipt_sha256": "0b3f04813e2f3766692b60539062acdf23daab2f9f49b796f150af3e41127acc"},
+      {"active_context_tokens": 4096, "serving_decode_tok_s_99_interval": 70.15283483831283, "time_to_first_token_s": 1.1045590020003146, "timestamped_events": 100, "inter_token_intervals": 99, "prompt_token_ids_sha256": "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0", "returned_prompt_token_ids_sha256": "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0", "output_token_ids_sha256": "3febb16ef2033c31e17817c6753ccdb95ad6e39db394ed4476ee12fb86af78b0", "text_sha256": "29282a3945596da2a2cafc00e102bbccce696187a7080532f69487601e90c780", "cached_tokens": 0, "completion_tokens": 128, "receipt_sha256": "e9e950225b4c7b1350ff45f7b5e460cc5da7129d59d1a69c7d21a1362f1a2826"},
+      {"active_context_tokens": 8192, "serving_decode_tok_s_99_interval": 69.8695629973191, "time_to_first_token_s": 2.210061638004845, "timestamped_events": 100, "inter_token_intervals": 99, "prompt_token_ids_sha256": "6baa17bea14f0ecad7e4edf54a05256eafaef1d447a447569fd303371c671741", "returned_prompt_token_ids_sha256": "6baa17bea14f0ecad7e4edf54a05256eafaef1d447a447569fd303371c671741", "output_token_ids_sha256": "34e792ccf3c1d795b686750f27990de2ca605c22046c97b3fff8ad0a7fc82e53", "text_sha256": "552ece3a6e5273ae1415ba49e9a8cc4f95484940faf2714ff50c5d2c29db3851", "cached_tokens": 0, "completion_tokens": 128, "receipt_sha256": "70cc0464eaffc8ecaf46164e012cc7bbc50d31cd04c0874ae6f97635c2603516"},
+      {"active_context_tokens": 16384, "serving_decode_tok_s_99_interval": 69.06861442980266, "time_to_first_token_s": 4.56175836300099, "timestamped_events": 100, "inter_token_intervals": 99, "prompt_token_ids_sha256": "b7acffcd09d9466fd8382a72248f5447c59f4ee18572aff243ef29ee889883e7", "returned_prompt_token_ids_sha256": "b7acffcd09d9466fd8382a72248f5447c59f4ee18572aff243ef29ee889883e7", "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7", "text_sha256": "bf48ce2ede15334c3b4bc3378ba50b0ac974375082dd9a4e11e743f0048e681e", "cached_tokens": 0, "completion_tokens": 128, "receipt_sha256": "a321ff294119f7c5df989925afb541d1d3c170baa71ca31cda2a145fb06becb0"},
+      {"active_context_tokens": 24576, "serving_decode_tok_s_99_interval": 67.87242695878132, "time_to_first_token_s": 7.011821513995528, "timestamped_events": 100, "inter_token_intervals": 99, "prompt_token_ids_sha256": "0e0004c062890ee48b86fa426373baada8c1c277faaadb749d01689f4afaaa36", "returned_prompt_token_ids_sha256": "0e0004c062890ee48b86fa426373baada8c1c277faaadb749d01689f4afaaa36", "output_token_ids_sha256": "f4dfe5a8618f0d3e1adf675e788ad7b9a58d3f1fcf9e9a4ddd30f513a47654b8", "text_sha256": "79ecc1e18a8ebe24a24ba41c46d045e803efbe9d25542d9250a204c0ce118c17", "cached_tokens": 0, "completion_tokens": 128, "receipt_sha256": "64c8cea962299e5e3fbcbe46f3a7ec9d5472f24b70ee84bf96a36a1b63df9e32"},
+      {"active_context_tokens": 32768, "serving_decode_tok_s_99_interval": 66.64506545273888, "time_to_first_token_s": 9.568525565002346, "timestamped_events": 100, "inter_token_intervals": 99, "prompt_token_ids_sha256": "3c4526a112dfc70bc62205f4e7f060f14ee49ef748527cd58778c3c2c238302c", "returned_prompt_token_ids_sha256": "3c4526a112dfc70bc62205f4e7f060f14ee49ef748527cd58778c3c2c238302c", "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786", "text_sha256": "db35b0959c22b404d521e727399ebdc3310c8c3cde123060c302e77de2de1a17", "cached_tokens": 0, "completion_tokens": 128, "receipt_sha256": "444d50d8c85a99d27532ba2192b4f118a1629b724f91ebbac006207f5dbc150c"}
+    ]
+  },
+  "quality": {
+    "pass_all": true,
+    "exact_cases": {"passed": 7, "required": 7},
+    "repeat_stability": {"passed": true, "runs": 8, "unique_hashes": 1, "output_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"},
+    "long_context_needle": {"passed": true, "requested_context_tokens": 8192, "actual_prompt_tokens_before_chat_template": 7617, "api_usage_prompt_tokens": 7629, "output_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1"},
+    "baseline_comparisons": {"passed": 24, "required": 24, "match_all": true},
+    "cache_zero_requests": {"passed": 16, "required": 16}
+  },
+  "validation": {
+    "stage_terminal_pass": true,
+    "exact_run_identity_passed": true,
+    "worker_ranks": [0, 1, 2, 3],
+    "graph_capture_passed": true,
+    "graph_capture_checks": {"capture_finished": true, "engine_not_eager": true, "full_decode_capture": true, "piecewise_capture": true, "quantization_inc": true},
+    "runner_final_pass": true,
+    "runner_return_code": 0,
+    "speed_gate_applied": false,
+    "historical_speed_replacement_allowed": false,
+    "post_cleanup_passed": true,
+    "clean_four_card_shutdown": true
+  },
+  "raw_artifacts": {
+    "run_root": "/home/steve/qwen38-current-main-runs/tp4-exact-depth-b2dd9ce73d-20260826-r1/01-exact-depths",
+    "cache_root": "/home/steve/qwen38-current-main-runs/tp4-exact-depth-cache-b2dd9ce73d-20260826-r1/01-exact-depths",
+    "run_file_count": 44,
+    "cache_manifest_entries": 4421,
+    "sha256": {
+      "stage-receipt.json": "09445b43ca46acbb88f16da2a9fffd9ae4cc14b262f6e52cff35d990582b6160",
+      "bench.json": "b7bfed3d388649927aaaa2bf8204396f03041ad46c031e392919cb5e3592eff1",
+      "quality.json": "3f50f98f614f5256db38868c7ee42e25652a721ba9e90e2bb1a30c3bd34ca7a9",
+      "cache-manifest.post.sha256": "cedae61252876d72b79f1d69d0c148fd7737ad06af8ad37cb1bc45155d16ac22",
+      "source-identity.json": "2a0ee74968dd68ba15b31eeef3e404807d125e6e52a0e96d25e8b955bd4ae0a0",
+      "validation-suite.json": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+      "input-files.sha256": "7eed5d0e45493c8dc5833d31c1deb5ef800bb3c991084a1580f490e86d0c557e",
+      "canary.json": "83b2f9e9985e0e8786cd1fe30152882ca1e60500482bfcf24237163c7396ed5a",
+      "final.status": "9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2",
+      "exact-depth/depth-2048.json": "0b3f04813e2f3766692b60539062acdf23daab2f9f49b796f150af3e41127acc",
+      "exact-depth/depth-4096.json": "e9e950225b4c7b1350ff45f7b5e460cc5da7129d59d1a69c7d21a1362f1a2826",
+      "exact-depth/depth-8192.json": "70cc0464eaffc8ecaf46164e012cc7bbc50d31cd04c0874ae6f97635c2603516",
+      "exact-depth/depth-16384.json": "a321ff294119f7c5df989925afb541d1d3c170baa71ca31cda2a145fb06becb0",
+      "exact-depth/depth-24576.json": "64c8cea962299e5e3fbcbe46f3a7ec9d5472f24b70ee84bf96a36a1b63df9e32",
+      "exact-depth/depth-32768.json": "444d50d8c85a99d27532ba2192b4f118a1629b724f91ebbac006207f5dbc150c"
+    }
+  },
+  "authority": {
+    "site_tp4_mtp0_f16kv_graph_exact_nonzero_context_publication": true,
+    "evidence_grade": "C",
+    "authorized_cells": 6,
+    "selectors": {"active_context_tokens": [2048, 4096, 8192, 16384, 24576, 32768], "graph_mode": "FULL_AND_PIECEWISE", "mtp": 0, "revision": "qwen3.8-27b-current-weights", "target_kv": "float16", "target_quantization": "AutoRound INT4 W4A16", "tp": 4, "transport": "HTTP /v1/completions"},
+    "depth_zero_cells": 0,
+    "configured_capacity_cells": 0,
+    "short_suite_parent_cells": 0,
+    "quality_workload_cells": 0,
+    "other_tp_mtp_kv_graph_or_quantization_cells": 0,
+    "prefill_cells": 0,
+    "protected_or_headline_replacement": false,
+    "localmaxxing_submission": false
+  },
+  "explicit_prohibitions": [
+    "Do not publish an x0 cell from this run.",
+    "Do not publish configured capacity 32896 as an active-context cell.",
+    "Do not publish the qualified parent's 71.77179128057259 or 71.82969607434323 short-suite speeds as context cells.",
+    "Do not use this evidence to replace any headline or protected historical value.",
+    "Do not submit any value from this packet to LocalMaxxing.",
+    "Do not infer another TP, MTP depth, KV dtype, graph mode, quantization, prefill, or concurrency cell."
+  ],
+  "protected_decode_values": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144],
+  "scope_boundary": "This authorizes only six Grade-C nonzero exact active-context cells for the current-weight Qwen3.8 AutoRound INT4 TP4, MTP0, F16-KV, FULL_AND_PIECEWISE HTTP serving lane at 2/4/8/16/24/32K. x0 remains explicitly missing. Capacity, quality prompts, the qualified parent's short-suite speeds, other selectors, headlines, protected values, and LocalMaxxing remain unauthorized.",
+  "next_implication": "Publish only the six exact nonzero cells with the Grade-C fixture and full-quality disclosure; leave x0 missing and continue the broader TP4 matrix with separately preregistered packets."
+}
