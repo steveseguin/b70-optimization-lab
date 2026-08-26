@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "build-and-import-pass",
+  "source": {
+    "repository": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+    "commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
+    "patch_sha256": "656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177",
+    "runtime_source_sha256": {
+      "csrc/xpu/gdn_attn/causal_conv1d.hpp": "49c864fa3a09467be8ef955e052b3281212e5f986b34167f19f0592bd9d7d033",
+      "csrc/xpu/gdn_attn/gated_delta_rule.hpp": "c38e92ff153d0a204a6fbe16c7bf22fc9961ba75ba173016a227e46f3e06f413",
+      "csrc/xpu/gdn_attn/gdn_attn_interface.cpp": "e9049bd502c885dd6eec762532efdb5e9a13abe94c210ad996a8df9feeb6d614"
+    }
+  },
+  "toolchain": {
+    "builder_image_id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+    "torch": "2.13.0+xpu",
+    "oneapi_compiler": "2026.1.1.20260724",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "sycl_tla_commit": "87f6850680a580654b9ea2c80dbc01aeb36ad231",
+    "max_jobs": 1,
+    "successful_memory_limit_gib": 14,
+    "successful_memory_plus_swap_limit_gib": 28,
+    "initial_attempt": "stopped by the 10-GiB cgroup limit during the large XE2 chunk_gated_delta_rule compile; cached objects were reused"
+  },
+  "build_flags": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "BASIC_KERNELS_ENABLED": 0,
+    "FA2_KERNELS_ENABLED": 0,
+    "MOE_KERNELS_ENABLED": 0,
+    "GDN_KERNELS_ENABLED": 1,
+    "MQA_LOGITS_KERNELS_ENABLED": 0,
+    "MHC_KERNELS_ENABLED": 1,
+    "XPU_SPECIFIC_KERNELS_ENABLED": 1,
+    "XPUMEM_ALLOCATOR_ENABLED": 0,
+    "BUILD_SYCL_TLA_KERNELS": 1,
+    "VLLM_XPU_ENABLE_XE2": 1,
+    "VLLM_XPU_ENABLE_XE_DEFAULT": 0
+  },
+  "artifacts": {
+    "wheel": "vllm_xpu_kernels-0.1.14.dev14+g1e90ffa.d20260826-cp38-abi3-linux_x86_64.whl",
+    "wheel_sha256": "d0b5f5e46a53d9e1f45688e198e6a5a42af241688f369900c524930dcebac1a0",
+    "wheel_zip_integrity": "pass",
+    "xpu_extension_sha256": "de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "overlay": {
+    "base_image_id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mtp-width-r1",
+    "image_id": "sha256:fe1f44b6ead7ce015ace715c98fa13ff9f44627fdc717d6bbf1efa9a5cffdbb2",
+    "replaced_files": [
+      "vllm_xpu_kernels/_xpu_C.abi3.so",
+      "vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so"
+    ],
+    "import_smoke": [
+      "gdn_attention",
+      "causal_conv1d_spec",
+      "gated_delta_rule_spec",
+      "fp8_gemm_out"
+    ],
+    "import_smoke_status": "pass"
+  },
+  "reporting_boundary": "This receipt proves source/build identity, wheel integrity, overlay hashes, and CPU-side extension import/registration only. The focused XPU regression test and end-to-end model behavior are separate R2 gates."
+}

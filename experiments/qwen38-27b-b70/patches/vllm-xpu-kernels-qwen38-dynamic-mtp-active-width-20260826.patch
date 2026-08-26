@@ -1,0 +1,144 @@
+diff --git a/csrc/xpu/gdn_attn/causal_conv1d.hpp b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+index 5dcb4f0..7930673 100644
+--- a/csrc/xpu/gdn_attn/causal_conv1d.hpp
++++ b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+@@ -1045,7 +1045,14 @@ void causal_conv1d(
+   if (is_spec) {
+     TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
++    // Dynamic speculative scheduling keeps the state-index tensor at the
++    // configured maximum width while emitting fewer active tokens. Derive the
++    // active width from the compact output/token-index buffers and retain the
++    // original row stride for state lookup.
++    TORCH_CHECK(num_spec_decodes > 0);
++    TORCH_CHECK(num_virtual_tokens % num_spec_decodes == 0);
++    num_spec_tokens = num_virtual_tokens / num_spec_decodes;
++    TORCH_CHECK(num_spec_tokens <= cache_indices->size(1));
+     cache_indices_stride_0 = cache_indices->stride(0);
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+index 445ff26..94a9900 100644
+--- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
++++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+@@ -702,7 +702,12 @@ void gated_delta_rule(
+   if (is_spec) {
+     TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
++    // Dynamic speculative scheduling retains max-width state rows but passes
++    // compact q/k/v buffers for the active width of this scheduler step.
++    TORCH_CHECK(num_spec_decodes > 0);
++    TORCH_CHECK(total_seqlen % num_spec_decodes == 0);
++    num_spec_tokens = total_seqlen / num_spec_decodes;
++    TORCH_CHECK(num_spec_tokens <= cache_indices->size(1));
+     cache_indices_stride_0 = cache_indices->stride(0);
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index e1757be..6a55ea7 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -93,7 +93,7 @@ std::vector<torch::Tensor> causal_conv1d_spec(
+       spec_state_indices_tensor.size(0) == num_spec_decodes,
+       "spec_state_indices_tensor must have size [num_spec_decodes, "
+       "num_speculative_tokens + 1]");
+-  const int num_speculative_tokens = spec_state_indices_tensor.size(1) - 1;
++  const int max_num_spec_tokens = spec_state_indices_tensor.size(1);
+ 
+   TORCH_CHECK(
+       num_accepted_tokens.is_contiguous(),
+@@ -108,8 +108,18 @@ std::vector<torch::Tensor> causal_conv1d_spec(
+       num_accepted_tokens.size(0) == num_spec_decodes,
+       "num_accepted_tokens size must be num_spec_decodes");
+ 
+-  TORCH_CHECK(spec_token == num_spec_decodes * (num_speculative_tokens + 1));
+   TORCH_CHECK(spec_token > 0, "spec_token must be > 0 for causal_conv1d_spec");
++  TORCH_CHECK(
++      spec_token % num_spec_decodes == 0,
++      "spec_token must be divisible by num_spec_decodes");
++  const int num_spec_tokens = spec_token / num_spec_decodes;
++  TORCH_CHECK(
++      num_spec_tokens <= max_num_spec_tokens,
++      "active speculative width (",
++      num_spec_tokens,
++      ") exceeds spec_state_indices_tensor width (",
++      max_num_spec_tokens,
++      ")");
+ 
+   TORCH_CHECK(
+       z.size(0) >= num_actual_tokens,
+diff --git a/tests/gdn_attn/test_gdn_attn.py b/tests/gdn_attn/test_gdn_attn.py
+index 00fb28e..9b39c74 100755
+--- a/tests/gdn_attn/test_gdn_attn.py
++++ b/tests/gdn_attn/test_gdn_attn.py
+@@ -806,7 +806,8 @@ def ref_gdn_attention_spec(
+ 
+ 
+ @pytest.mark.parametrize("num_spec_decodes", NUM_SPEC_DECODES)
+-@pytest.mark.parametrize("num_spec_tokens", NUM_SPEC_TOKENS)
++@pytest.mark.parametrize(("num_spec_tokens", "state_width"),
++                         [(2, 2), (2, 3), (3, 3)])
+ @pytest.mark.parametrize("num_k_heads", [16])
+ @pytest.mark.parametrize("head_k_dim", [128])
+ @pytest.mark.parametrize("num_v_heads", [32])
+@@ -820,9 +821,9 @@ def ref_gdn_attention_spec(
+                          ids=format_tc)
+ @pytest.mark.parametrize("ssm_state_is_fp32", [False, True])
+ @torch.inference_mode()
+-def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+-                           head_k_dim, num_v_heads, head_v_dim, width,
+-                           tp_size, has_bias, activation, reorder_input,
++def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, state_width,
++                           num_k_heads, head_k_dim, num_v_heads, head_v_dim,
++                           width, tp_size, has_bias, activation, reorder_input,
+                            dtype, ssm_state_is_fp32):
+     """Pure spec-decode batch: num_prefills == num_decodes == 0,
+     num_spec_decodes sequences each contributing num_spec_tokens tokens.
+@@ -880,15 +881,20 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+                         device=device)
+     dt_bias = torch.randn(num_v_heads // tp_size, dtype=dtype, device=device)
+ 
+-    # Each spec seq owns K consecutive cache slots (cols 0..K-1).
+-    state_slots = random.sample(range(cache_batch_size), num_spec_decodes * K)
++    # Dynamic scheduling may retain the configured maximum-width state row
++    # while emitting fewer active token positions for this step.
++    state_slots = random.sample(range(cache_batch_size),
++                                num_spec_decodes * state_width)
+     spec_state_indices_tensor = torch.tensor(state_slots,
+                                              dtype=torch.int32,
+                                              device=device).reshape(
+-                                                 num_spec_decodes, K)
+-    # Mix of acceptance counts including the 0 edge case.
++                                                 num_spec_decodes, state_width)
++    # The accepted count belongs to the preceding step, which may have used
++    # the configured maximum width even when this step emits fewer tokens.
++    accepted_counts = [state_width]
++    accepted_counts.extend(
++        random.randint(0, state_width)
++        for _ in range(num_spec_decodes - 1))
+     num_accepted_tokens = torch.tensor(
+-        [random.randint(0, K) for _ in range(num_spec_decodes)],
+-        dtype=torch.int32,
+-        device=device)
++        accepted_counts, dtype=torch.int32, device=device)
+ 
+@@ -998,6 +1004,17 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+                                        ref_ssm_state[slot],
+                                        atol=atol,
+                                        rtol=rtol)
++        # Padded state columns are stride-only storage and must stay untouched.
++        for t in range(K, state_width):
++            slot = int(spec_state_indices_tensor[n, t].item())
++            torch.testing.assert_close(conv_state[slot],
++                                       ref_conv_state[slot],
++                                       atol=0,
++                                       rtol=0)
++            torch.testing.assert_close(ssm_state[slot],
++                                       ref_ssm_state[slot],
++                                       atol=0,
++                                       rtol=0)
+ 
+ 
+ MIXED_NUM_SPEC_DECODES = [1, 4]

@@ -2,32 +2,45 @@
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-image=${IMAGE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}
+image=${IMAGE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mtp-width-r1}
 model_dir=${MODEL_DIR:?set MODEL_DIR to the downloaded Qwen3.8-27B-FP8 directory}
 cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new writable cache directory}
-container=${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-r1}
+container=${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 port=${PORT:-18128}
-image_id=sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd
+image_id=sha256:fe1f44b6ead7ce015ace715c98fa13ff9f44627fdc717d6bbf1efa9a5cffdbb2
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
+patch_sha256=656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177
+xpu_extension_sha256=de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62
+gdn_library_sha256=2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355
 
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
 docker image inspect "${image}" >/dev/null 2>&1 || {
-  printf 'image is missing: %s\nBuild the pinned kernel and W8A16 overlays first.\n' "${image}" >&2
+  printf 'image is missing: %s\nBuild the dynamic-MTP kernel overlay first.\n' "${image}" >&2
   exit 1
 }
 [[ "$(docker image inspect "${image}" --format '{{.Id}}')" == "${image_id}" ]] || {
-  printf 'image ID does not match the preregistered runtime\n' >&2
+  printf 'image ID does not match the preregistered R2 runtime\n' >&2
   exit 1
 }
-[[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')" == "${kernel_head}" ]] || {
-  printf 'image does not contain the required mixed-batch XPU kernel\n' >&2
-  exit 1
-}
+for label_and_value in \
+  "neural.download.kernel.head=${kernel_head}" \
+  "neural.download.kernel.patch.sha256=${patch_sha256}" \
+  "neural.download.kernel.xpu-extension.sha256=${xpu_extension_sha256}" \
+  "neural.download.kernel.gdn-library.sha256=${gdn_library_sha256}"; do
+  label=${label_and_value%%=*}
+  expected=${label_and_value#*=}
+  [[ "$(docker image inspect "${image}" --format "{{ index .Config.Labels \"${label}\" }}")" == \
+    "${expected}" ]] || { printf 'image label mismatch: %s\n' "${label}" >&2; exit 1; }
+done
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
   printf 'container already exists: %s\n' "${container}" >&2
   exit 1
 fi
+[[ ! -e "${cache_dir}" ]] || {
+  printf 'R2 requires a new cache directory: %s\n' "${cache_dir}" >&2
+  exit 1
+}
 mkdir -p "${cache_dir}"
 
 container_lifecycle=(--rm)
@@ -58,7 +71,7 @@ exec docker run "${container_lifecycle[@]}" --name "${container}" \
   --env CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
   --env CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
   "${image}" \
-  --model /model --served-model-name qwen38-fp8-w8a16-mtp2-dynamic-mtp1 \
+  --model /model --served-model-name qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2 \
   --host 0.0.0.0 --port 8000 \
   --tensor-parallel-size 2 \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \

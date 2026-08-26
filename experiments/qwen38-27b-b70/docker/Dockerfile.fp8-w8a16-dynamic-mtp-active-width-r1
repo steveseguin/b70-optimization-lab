@@ -1,0 +1,29 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122
+FROM ${BASE_IMAGE}
+
+ARG PATCH_SHA256=656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177
+ARG XPU_EXTENSION_SHA256=de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62
+ARG GDN_LIBRARY_SHA256=2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355
+
+COPY _xpu_C.abi3.so /tmp/_xpu_C.abi3.so
+COPY libgdn_attn_kernels_xe_2.so /tmp/libgdn_attn_kernels_xe_2.so
+
+RUN test "$(sha256sum /tmp/_xpu_C.abi3.so | awk '{print $1}')" = \
+        "${XPU_EXTENSION_SHA256}" \
+    && test "$(sha256sum /tmp/libgdn_attn_kernels_xe_2.so | awk '{print $1}')" = \
+        "${GDN_LIBRARY_SHA256}" \
+    && install -m 0755 /tmp/_xpu_C.abi3.so \
+        /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so \
+    && install -m 0755 /tmp/libgdn_attn_kernels_xe_2.so \
+        /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
+    && rm -f /tmp/_xpu_C.abi3.so /tmp/libgdn_attn_kernels_xe_2.so \
+    && /opt/venv/bin/python -c \
+        'import torch, vllm_xpu_kernels._xpu_C; assert hasattr(torch.ops._xpu_C, "gdn_attention"); assert hasattr(torch.ops._xpu_C, "causal_conv1d_spec"); assert hasattr(torch.ops._xpu_C, "fp8_gemm_out")'
+
+LABEL neural.download.base.image.id="sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd" \
+      neural.download.kernel.head="1e90ffa672ba02f17a909da11838a4c55b199783" \
+      neural.download.kernel.patch="qwen38-dynamic-mtp-active-width-r1" \
+      neural.download.kernel.patch.sha256="${PATCH_SHA256}" \
+      neural.download.kernel.xpu-extension.sha256="${XPU_EXTENSION_SHA256}" \
+      neural.download.kernel.gdn-library.sha256="${GDN_LIBRARY_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-w8a16-dynamic-mtp-active-width-r1"

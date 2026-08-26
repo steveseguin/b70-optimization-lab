@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "classification": "quarantined-kernel-incompatibility",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "publisher_mtp_layers": 1,
+    "maximum_requested_speculative_tokens": 2,
+    "mode": "serial reuse of one publisher MTP layer; not native two-layer MTP"
+  },
+  "treatment": {
+    "name": "built-in batch-size-dependent MTP2/MTP1 schedule",
+    "num_speculative_tokens_per_batch_size": [[1, 1, 2], [2, 128, 1]],
+    "source_patch": null,
+    "target_verification_changed": false
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image_id": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
+    "w8a16_environment_gate": "VLLM_XPU_FP8_BLOCK_W8A16=1"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "prefix_cache": false
+  },
+  "quality": {
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "exact_hash_match_vs_static_mtp2_control": true,
+    "cache_nonzero_requests": 0,
+    "evidence": "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-20260826-r1/sequential-quality.json"
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "first_eligible_after_ttft_tok_s": 82.99533908328402,
+    "first_eligible_wall_tok_s": 79.32201293784823,
+    "cached_tokens": 0,
+    "retention_gate_tok_s": 82.810053,
+    "retention_gate_passed": true,
+    "evidence": "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-20260826-r1/single-p40-o128.json"
+  },
+  "concurrency": {
+    "declared_c64_measurement": null,
+    "failure_threshold": "two active requests",
+    "failure": "XPU GDN kernel assumed the compact active token width equaled the maximum-width speculative state tensor",
+    "primary_error": "Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.",
+    "secondary_error": "scheduler KeyError after both TP workers failed",
+    "device_fault": false,
+    "evidence": "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-20260826-r1/diagnostic-c2.json",
+    "trace": "qwen38-fp8-w8a16-mtp2-dynamic-mtp1-20260826-r1/diagnostic-server-final.log"
+  },
+  "repair": {
+    "patch": "../patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
+    "patch_sha256": "656c0d6572b6130a2f6f0afc3528d46ef4fd5b7d98652571b11e5a66b139a177",
+    "status": "requires separately preregistered R2 validation"
+  },
+  "decision": {
+    "status": "quarantined-before-aggregate-gate",
+    "r1_promotion": "prohibited",
+    "r1_aggregate_performance_claim": "none"
+  },
+  "reporting_boundary": "The single-user and sequential-quality observations completed before the failure and remain valid for the exact R1 identity. The failed c64 transition and diagnostic c2 replay are mechanism evidence only and carry no throughput authority. No result is interpolated or extrapolated."
+}
