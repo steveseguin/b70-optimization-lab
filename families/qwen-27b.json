@@ -568,6 +568,54 @@
       "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4kxl-q8kv-tp1-target-http-depth-quality-r1-result.json"
     },
     {
+      "id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c",
+      "label": "Qwen3.8 Q8_0 weights · TP1 target-only F16-KV HTTP context curve",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "quality-battery-qualified-grade-c-http-curve",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "active context 0-32K", "F16 KV", "full quality battery"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.8 Q8_0-weight target-only TP1 HTTP serving at seven exact active-context depths with graph and fit disabled and F16 KV",
+          "basis": "all seven cache-zero depth receipts completed under one exact pinned identity; the full natural-language quality battery passed 7 exact cases, 2 repeat runs, and a 25,200-token long-context case, for 10/10 cache-zero quality requests. The synthetic exact-depth fixture and single campaign remain Grade C; no Q8_0-KV, graph, prefill, speculative, TP2/TP4, headline, protected-score, or LocalMaxxing authority transfers.",
+          "reviewed_at": "2026-08-26",
+          "evidence": ["experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json"]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
+      "id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c",
+      "label": "Qwen3.8 Q8_0 weights · TP1 target-only Q8_0-KV HTTP context curve",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "cards": 1,
+      "status": "quality-battery-qualified-grade-c-http-curve",
+      "evidence_level": "B70-measured Grade C",
+      "coverage": ["target-only MTP0", "HTTP serving", "active context 0-32K", "Q8_0 KV", "full quality battery"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "Qwen3.8 Q8_0-weight target-only TP1 HTTP serving at seven exact active-context depths with graph and fit disabled and Q8_0 KV",
+          "basis": "all seven cache-zero depth receipts completed under one exact pinned identity; the full natural-language quality battery passed 7 exact cases, 2 repeat runs, and a 25,200-token long-context case, for 10/10 cache-zero quality requests. The earlier Grade D estimate overpredicted every measured cell and missed all seven frozen intervals; it remains historical calibration evidence only. The synthetic exact-depth fixture and single campaign remain Grade C; no F16-KV, other-quantization, graph, prefill, speculative, TP2/TP4, headline, protected-score, or LocalMaxxing authority transfers.",
+          "reviewed_at": "2026-08-26",
+          "evidence": [
+            "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-http-depth-quality-r1-result.json",
+            "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+            "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-estimator-calibration-r1.json"
+          ]
+        }
+      },
+      "manifest": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
       "id": "qwen38-27b-autoround-int4-mtp5-research",
       "label": "Qwen3.8 AutoRound INT4 · TP2 + MTP5",
       "revision": "qwen3.8-27b",
@@ -3634,6 +3682,72 @@
       "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json"
     },
     {
+      "id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 weights target-only",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-q8-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q8weights-f16kv-target-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-target-only-q8weights-f16kv-site-curve-no-headline-or-submission",
+      "identity": {"model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf", "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964", "libggml_sycl_sha256": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f", "terminal_receipt_sha256": "42d12af5440c63f7b0ae1c765e491df5a7bff7138c367916d6202b2ff45b1aad"},
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "fit": "off", "kv": "f16", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "HTTP /v1/completions; exact submitted token depths; 128 generated tokens; cache zero; conventional 99-interval serving decode",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 15.717197487271713, "cached_tokens": 0, "output_token_ids_sha256": "dab29d7687ea2f3c58e9592665e8a4e14d7504ec873e580fb89ee9f1b9574883", "context_semantics": "zero prior active context plus one explicit ordinary prompt token"},
+        {"x": 2048, "decode_tok_s": 15.458843096537539, "cached_tokens": 0, "output_token_ids_sha256": "db361b8a7e37128f73b8bfcd463d48ec90ca4297dad2d9f16221dd50d8a627fe"},
+        {"x": 4096, "decode_tok_s": 15.230509805983916, "cached_tokens": 0, "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256"},
+        {"x": 8192, "decode_tok_s": 14.775880887179762, "cached_tokens": 0, "output_token_ids_sha256": "adf9344f835b00dd7d74d0e68ddfbfe65d14f15ffdbea0c0e0127099cd06b54c"},
+        {"x": 16384, "decode_tok_s": 14.007513353127061, "cached_tokens": 0, "output_token_ids_sha256": "793a531365cdedd1722ac0dfe3102bbfef18968f501c5fc1845a80ec40986cc5"},
+        {"x": 24576, "decode_tok_s": 13.321273594224953, "cached_tokens": 0, "output_token_ids_sha256": "c89d818b02947c125f26355896823ff201cb7a0234571af166b62580101c6983"},
+        {"x": 32768, "decode_tok_s": 12.6788728221903, "cached_tokens": 0, "output_token_ids_sha256": "12d7b35a781713c3af6635b5d069aa8d5b087e256a49cf395270bd68c65edf91"}
+      ],
+      "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 repeat runs, one 25,200-token long-context case, and cached_tokens=0 on all 10 quality requests. All seven depth requests were also cache zero.",
+      "caveat": "Grade C target-only Q8_0-weight/F16-KV serving curve. The older raw-engine F16 curve remains separately labeled and is not mixed into this HTTP series. No Q8_0-KV, graph, prefill, speculative, TP2/TP4, protected or headline replacement, or LocalMaxxing authority is authorized.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json"
+    },
+    {
+      "id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0 weights target-only",
+      "runtime_family": "llama.cpp SYCL",
+      "runtime_profile_id": "qwen38-q8-tp1-llamacpp-sycl-target-only-v1",
+      "speculation_method": "none",
+      "runtime": "llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317",
+      "profile_id": "q38-q8weights-q8kv-target-http-depth-grade-c-v1",
+      "measurement_class": "conventional-99-interval-exact-depth-http-serving-grade-c",
+      "promotion_status": "authorized-target-only-q8weights-q8kv-site-curve-no-headline-or-submission",
+      "identity": {"model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf", "model_sha256": "f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8", "llama_server_sha256": "ff2441d012488e3cf7fc537a3e7c1a05fea9159043f3f3a0b257f6647e7c6964", "libggml_sycl_sha256": "959fe7c30eea55d6a2225d970e81e0fb49cfbbf83a4332c79f79c3b0d5bf6b7f", "terminal_receipt_sha256": "a48968624a9b167e2e997031b8dfadc4af91d89dd0e838e76351cd0c96cf3f4e"},
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "graph_mode": "off", "fit": "off", "kv": "q8_0", "speculation": "none", "configured_max_context_tokens": 33024, "cache_prompt": false, "ctx_checkpoints": 0},
+      "workload": "HTTP /v1/completions; exact submitted token depths; 128 generated tokens; cache zero; conventional 99-interval serving decode",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 15.64211300487966, "cached_tokens": 0, "output_token_ids_sha256": "1a8460d6ac1e6052606d8c64525ae12eb2f40380159055df785817b741194ef0", "context_semantics": "zero prior active context plus one explicit ordinary prompt token"},
+        {"x": 2048, "decode_tok_s": 14.874633425244946, "cached_tokens": 0, "output_token_ids_sha256": "db361b8a7e37128f73b8bfcd463d48ec90ca4297dad2d9f16221dd50d8a627fe"},
+        {"x": 4096, "decode_tok_s": 14.242379238866612, "cached_tokens": 0, "output_token_ids_sha256": "d6e637475049304d94d09bd553ade177f8831eab0754109f2df3c64d4865f256"},
+        {"x": 8192, "decode_tok_s": 13.144786025605898, "cached_tokens": 0, "output_token_ids_sha256": "c58c7f49909bd0d4c9206f0ba0a4c8b086368344ec7b9bcf3a9ed53e6d956337"},
+        {"x": 16384, "decode_tok_s": 11.10097936684887, "cached_tokens": 0, "output_token_ids_sha256": "6729ff1c62f25b70f1c52df382839824037a3e5900b481e2a44eae106fdc4727"},
+        {"x": 24576, "decode_tok_s": 9.640680271615087, "cached_tokens": 0, "output_token_ids_sha256": "dbce1eabae7120052f6b87f2b267d0180c77cc56ed07edf6a78984c2c02659d9"},
+        {"x": 32768, "decode_tok_s": 8.548307893500933, "cached_tokens": 0, "output_token_ids_sha256": "747773a85e12c33128105d8b7163690e67e692ab4a048fb3d08a2f25f01c1186"}
+      ],
+      "quality": "Full Qwen3.8 quality battery passed: 7 exact cases, 2 repeat runs, one 25,200-token long-context case, and cached_tokens=0 on all 10 quality requests. All seven depth requests were also cache zero.",
+      "caveat": "Grade C target-only Q8_0-weight/Q8_0-KV serving curve. The earlier Grade D raw-engine estimate overpredicted all seven measured rates by 24.8%-29.2% relative to the measurements and missed every frozen interval; the snapshot remains historical calibration evidence only. No F16-KV, other quantization, graph, prefill, speculative, TP2/TP4, protected or headline replacement, or LocalMaxxing authority is authorized.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-http-depth-quality-r1-result.json",
+      "historical_estimate_evidence": [
+        "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-estimator-calibration-r1.json"
+      ]
+    },
+    {
       "id": "q38-q5ks-tp1-kv-f16-context",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -4274,6 +4388,17 @@
       "series": [
         {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-f16kv-target-http-context-r1-grade-c"]},
         {"label": "Q8_0 KV · HTTP · Grade C", "measurement_ids": ["q38-q4kxl-tp1-q8kv-target-http-context-r1-grade-c"]}
+      ]
+    },
+    {
+      "id": "context-q8weights-http",
+      "title": "Q8_0-weight HTTP context × KV",
+      "subtitle": "Grade C · same Qwen3.8 Q8_0 artifact and runtime · target-only TP1 · graph and fit off · exact cache-zero HTTP serving through 32K · both full quality batteries passed",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s"],
+      "series": [
+        {"label": "F16 KV · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"]},
+        {"label": "Q8_0 KV · HTTP · Grade C", "measurement_ids": ["q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"]}
       ]
     },
     {
@@ -5393,7 +5518,7 @@
   {
     "id": "qwen38-tp1-llamacpp-sycl-target-matrix",
     "label": "Qwen3.8 TP1 · llama.cpp SYCL target-only matrix",
-    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 49 exact raw measurements; no MTP speed is transferred into them.",
+    "description": "112 meaningful target-only cells: four GGUF artifacts × MTP0 × seven exact active-context depths × graph off/SYCL × f16/q8_0 KV. These cells preserve 56 exact measurements; retired estimates remain historical calibration evidence only, and no MTP speed is transferred into them.",
     "fixed_selectors": {
       "runtime_family": "llama.cpp SYCL"
     },
@@ -6424,72 +6549,72 @@
       {
         "id": "measured-q8weights-tp1-kv-f16-context-0",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D19.663 · P996.89 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 0, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D15.717 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. x=0 is zero prior context plus one ordinary prompt token.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 0, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-f16-context-2048",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D19.593 · P987.39 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 2048, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D15.459 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-f16-context-4096",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D19.509 · P959.56 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 4096, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D15.231 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-f16-context-8192",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D19.294 · P914.06 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 8192, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D14.776 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-f16-context-16384",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D18.839 · P837.51 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 16384, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D14.008 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-f16-context-24576",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D18.418 · P773.15 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 24576, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D13.321 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
         "id": "measured-q8weights-tp1-kv-f16-context-32768",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "f16"},
-        "state": "lab-measured", "label": "D18.024 · P719.14 · raw sweep", "reason": "Exact raw-engine Q8_0 F16-KV depth point with five repetitions; matched service quality evidence is recorded separately.", "evidence_id": "q38-q8weights-tp1-kv-f16-context", "point_x": 32768, "parent": "qwen38-tp1-raw-depth-sweep", "retry": {"status": "complete"}
+        "state": "lab-measured", "label": "D12.679 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/F16-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed.", "evidence_id": "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-f16kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-0",
+        "id": "measured-q8weights-tp1-kv-q8-context-0",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-0", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D15.642 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only. x=0 is zero prior context plus one ordinary prompt token.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 0, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-2048",
+        "id": "measured-q8weights-tp1-kv-q8-context-2048",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-2048", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D14.875 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 2048, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-4096",
+        "id": "measured-q8weights-tp1-kv-q8-context-4096",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-4096", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D14.242 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 4096, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-8192",
+        "id": "measured-q8weights-tp1-kv-q8-context-8192",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-8192", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D13.145 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 8192, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-16384",
+        "id": "measured-q8weights-tp1-kv-q8-context-16384",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-16384", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D11.101 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 16384, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-24576",
+        "id": "measured-q8weights-tp1-kv-q8-context-24576",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 24576, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-24576", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D9.641 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 24576, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       },
       {
-        "id": "estimated-q8weights-tp1-kv-q8-context-32768",
+        "id": "measured-q8weights-tp1-kv-q8-context-32768",
         "match": {"revision": "qwen3.8-27b", "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98", "tp": 1, "mtp": 0, "active_context_tokens": 32768, "graph_mode": "off", "kv": "q8_0"},
-        "state": "estimated", "label": "Evidence D estimate · optimization unassessed", "reason": "Calibrated raw-engine decode estimate only. Evidence grade D describes estimate support; optimization maturity remains unassessed. No boot, quality, serving, or promotion authority.", "estimate_id": "q38-q8weights-q8kv-tp1-context-estimate-v1-32768", "parent": "qwen38-q8weights-q8kv-context-estimator-v1", "retry": {"status": "queued", "trigger": "exact target measurement"}
+        "state": "lab-measured", "label": "D8.548 · HTTP · Grade C", "reason": "Authorized exact-depth cache-zero Q8_0-weight/Q8_0-KV HTTP serving point under the Grade C target-only identity; the full quality battery passed. The retired estimate remains historical calibration evidence only.", "evidence_id": "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c", "point_x": 32768, "packet_id": "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c", "parent": "qwen38-q8weights-q8kv-target-http-depth-quality-r1", "retry": {"status": "complete"}
       }
     ]
   },

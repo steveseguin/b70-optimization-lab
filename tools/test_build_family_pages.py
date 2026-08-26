@@ -1994,9 +1994,9 @@ class FamilyCoverageTest(unittest.TestCase):
             contracts["qwen38-tp1-llamacpp-sycl-target-matrix"]
         )
         self.assertEqual(
-            sum(cell["state"] == "lab-measured" for cell in q38_target), 49
+            sum(cell["state"] == "lab-measured" for cell in q38_target), 56
         )
-        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 7)
+        self.assertEqual(sum(cell["state"] == "estimated" for cell in q38_target), 0)
         self.assertTrue(all(cell["selectors"]["mtp"] == 0 for cell in q38_target))
         q38_tp4_snapshot, _ = MODULE.expand_coverage_contract(
             contracts["qwen38-tp4-vllm-xpu-autoround-strict-snapshot"]
@@ -2135,10 +2135,163 @@ class FamilyCoverageTest(unittest.TestCase):
             and cell["selectors"]["kv"] == "f16"
         ]
         self.assertEqual(len(q38_q8_f16), 7)
-        self.assertTrue(all(cell["state"] == "lab-measured" for cell in q38_q8_f16))
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"]
+            == "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"
+            and cell["packet_id"]
+            == "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c"
+            and "HTTP" in cell["label"]
+            and "Grade C" in cell["label"]
+            for cell in q38_q8_f16
+        ))
+        q38_q8_f16_series = series[
+            "q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"
+        ]
+        q38_q8_f16_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-f16kv-tp1-target-http-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(q38_q8_f16_result["status"], "passed")
+        self.assertEqual(q38_q8_f16_result["serving_curve"]["evidence_grade"], "C")
         self.assertEqual(
-            [cell["evidence_id"] for cell in q38_q8_f16],
-            ["q38-q8weights-tp1-kv-f16-context"] * 7,
+            [
+                (point["x"], point["decode_tok_s"], point["cached_tokens"],
+                 point["output_token_ids_sha256"])
+                for point in q38_q8_f16_series["points"]
+            ],
+            [
+                (cell["active_context_tokens"],
+                 cell["serving_decode_tok_s_99_interval"],
+                 cell["cached_tokens"], cell["output_token_ids_sha256"])
+                for cell in q38_q8_f16_result["serving_curve"]["cells"]
+            ],
+        )
+        self.assertTrue(q38_q8_f16_result["quality"]["pass_all"])
+        self.assertEqual(
+            q38_q8_f16_result["quality"]["cache_zero_requests"],
+            {"passed": 10, "required": 10},
+        )
+        self.assertEqual(q38_q8_f16_series["config"]["mtp"], 0)
+        self.assertEqual(q38_q8_f16_series["config"]["graph_mode"], "off")
+        self.assertEqual(q38_q8_f16_series["config"]["fit"], "off")
+        self.assertEqual(q38_q8_f16_series["config"]["kv"], "f16")
+        self.assertTrue(
+            q38_q8_f16_result["authority"][
+                "site_target_only_q8weights_f16_curve_publication"
+            ]
+        )
+        self.assertFalse(
+            q38_q8_f16_result["authority"]["protected_or_headline_replacement"]
+        )
+        q38_q8_f16_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"]
+            == "qwen38-27b-q8weights-f16kv-target-http-depth-grade-c"
+        )
+        self.assertEqual(q38_q8_f16_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_q8_f16_packet)
+
+        q38_q8_q8 = [
+            cell for cell in q38_target
+            if cell["selectors"]["artifact_id"]
+            == "qwen38-27b-ggmlorg-q8-0-0669b98"
+            and cell["selectors"]["graph_mode"] == "off"
+            and cell["selectors"]["kv"] == "q8_0"
+        ]
+        self.assertEqual(len(q38_q8_q8), 7)
+        self.assertTrue(all(
+            cell["state"] == "lab-measured"
+            and cell["evidence_id"]
+            == "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"
+            and cell["packet_id"]
+            == "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c"
+            and "HTTP" in cell["label"]
+            and "Grade C" in cell["label"]
+            for cell in q38_q8_q8
+        ))
+        q38_q8_q8_series = series[
+            "q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"
+        ]
+        q38_q8_q8_result = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-target-http-depth-quality-r1-result.json"
+        ).read_text())
+        self.assertEqual(q38_q8_q8_result["status"], "passed")
+        self.assertEqual(q38_q8_q8_result["serving_curve"]["evidence_grade"], "C")
+        self.assertEqual(
+            [
+                (point["x"], point["decode_tok_s"], point["cached_tokens"],
+                 point["output_token_ids_sha256"])
+                for point in q38_q8_q8_series["points"]
+            ],
+            [
+                (cell["active_context_tokens"],
+                 cell["serving_decode_tok_s_99_interval"],
+                 cell["cached_tokens"], cell["output_token_ids_sha256"])
+                for cell in q38_q8_q8_result["serving_curve"]["cells"]
+            ],
+        )
+        self.assertTrue(q38_q8_q8_result["quality"]["pass_all"])
+        self.assertEqual(
+            q38_q8_q8_result["quality"]["cache_zero_requests"],
+            {"passed": 10, "required": 10},
+        )
+        self.assertEqual(q38_q8_q8_series["config"]["mtp"], 0)
+        self.assertEqual(q38_q8_q8_series["config"]["graph_mode"], "off")
+        self.assertEqual(q38_q8_q8_series["config"]["fit"], "off")
+        self.assertEqual(q38_q8_q8_series["config"]["kv"], "q8_0")
+        self.assertTrue(
+            q38_q8_q8_result["authority"][
+                "site_target_only_q8weights_q8kv_curve_publication"
+            ]
+        )
+        self.assertFalse(
+            q38_q8_q8_result["authority"]["protected_or_headline_replacement"]
+        )
+        q38_q8_q8_packet = next(
+            packet for packet in family["packets"]
+            if packet["id"]
+            == "qwen38-27b-q8weights-q8kv-target-http-depth-grade-c"
+        )
+        self.assertEqual(q38_q8_q8_packet["grades"]["evidence"]["grade"], "C")
+        self.assertNotIn("featured_metric", q38_q8_q8_packet)
+
+        q38_q8_estimates = [
+            estimate for estimate in family["estimates"]
+            if estimate["id"].startswith(
+                "q38-q8weights-q8kv-tp1-context-estimate-v1-"
+            )
+        ]
+        self.assertEqual(len(q38_q8_estimates), 7)
+        self.assertTrue(all(
+            estimate["state"] == "estimated"
+            and estimate["record"]
+            == "data/qwen38-q8weights-q8kv-tp1-context-estimate-v1.json"
+            for estimate in q38_q8_estimates
+        ))
+        q38_q8_calibration = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q8weights-q8kv-tp1-estimator-calibration-r1.json"
+        ).read_text())
+        self.assertEqual(q38_q8_calibration["summary"]["band_hits"], 0)
+        self.assertEqual(q38_q8_calibration["summary"]["band_misses"], 7)
+        self.assertTrue(q38_q8_calibration["summary"]["all_actuals_below_lower_band"])
+        self.assertEqual(
+            [point["actual"] for point in q38_q8_calibration["points"]],
+            [point["decode_tok_s"] for point in q38_q8_q8_series["points"]],
+        )
+        q38_q8_view = next(
+            view for view in family["views"]
+            if view["id"] == "context-q8weights-http"
+        )
+        self.assertEqual(q38_q8_view["metrics"], ["decode_tok_s"])
+        self.assertEqual(
+            [item["measurement_ids"] for item in q38_q8_view["series"]],
+            [
+                ["q38-q8weights-tp1-f16kv-target-http-context-r1-grade-c"],
+                ["q38-q8weights-tp1-q8kv-target-http-context-r1-grade-c"],
+            ],
         )
 
         q38_q5ks_q8_http = [
@@ -2592,14 +2745,13 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("Coverage · 12 matrices", overview_html)
         self.assertIn("316/1,793 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "214", "measured"),
-            ("estimated", "7", "estimated"),
+            ("lab-measured", "221", "measured"),
             ("lab-screened", "32", "screened"),
             ("quarantined", "63", "quarantined"),
             ("missing", "1,477", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
-        self.assertIn('class="is-estimated"', overview_html)
+        self.assertNotIn('class="is-estimated"', overview_html)
 
         self.assertEqual(
             family["initial_view_ids"],
@@ -2612,8 +2764,8 @@ class FamilyCoverageTest(unittest.TestCase):
         for view_id in family["initial_view_ids"]:
             self.assertIn(f'data-family-view="{view_id}"', initial_html)
             self.assertNotIn(f'data-family-view="{view_id}"', deferred_html)
-        self.assertIn("22 more evidence views", deferred_html)
-        self.assertEqual(deferred_html.count('data-family-view="'), 22)
+        self.assertIn("23 more evidence views", deferred_html)
+        self.assertEqual(deferred_html.count('data-family-view="'), 23)
         self.assertIn(
             'data-family-view="context-q4kxl-f16-http"',
             deferred_html,
