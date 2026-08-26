@@ -1,0 +1,44 @@
+{
+  "schema": "neural.download.qwen38-fp8-kernel-only-screen-result.v1",
+  "state": "complete-negative-screen",
+  "campaign_id": "qwen38-fp8-tp2-http-p64-kernel-1e90-screen-20260826-r23",
+  "candidate": {
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13",
+    "image_id": "sha256:9403883cdbec3df988f486815f9dd528eb98baf0cc73d04ef3631ff0ac6a35b0",
+    "base_publisher_digest": "sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_head": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "kernel_wheel_sha256": "f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6",
+    "source_overlay": "none",
+    "single_variable": "XPU-kernel wheel only; vLLM remained at the promoted ac7509e2 source"
+  },
+  "measurement": {
+    "concurrent_users": 64,
+    "aggregate_tok_s_wall": 728.035937223874,
+    "excluded_warmup_tok_s": 719.6315339745854,
+    "ttft_ms_p50": 1506.4462234731764,
+    "ttft_ms_p95": 2238.636957190465,
+    "end_to_end_ms_p50": 11036.218138004187,
+    "end_to_end_ms_p95": 11219.639484130312,
+    "output_classification": "output-isolation-qualified-shape-variant",
+    "completion_tokens_128_all": true,
+    "complete_token_id_identity_all": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "p2p_activation_rank_count": 2,
+    "block_fp8_kernel_selected": true,
+    "cleanup": "clean"
+  },
+  "comparison": {
+    "protected_c64_median_tok_s": 774.394144,
+    "delta_tok_s": -46.35820677612594,
+    "delta_percent": -5.986383953870133,
+    "promising_threshold_tok_s": 813.1138512,
+    "threshold_passed": false,
+    "remaining_gap_to_objective_percent": 20.18637477382299
+  },
+  "evidence_directory": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-p64-kernel-1e90-screen-20260826-r23-attempt1",
+  "result_sha256": "47ae40d6dbe19037a9a1a9095edc804c48cd6531ed71be31798422cdb39bde13",
+  "qualification_sha256": "32bbb95d728c830a570ea83b707ba96efef33238ab18848a7f34b9b731bd631a",
+  "conclusion": "The newer 1e90 XPU-kernel wheel regresses the exact promoted-vLLM c64 profile. It does not advance to confirmation, and the protected 774.394144 tok/s result remains unchanged."
+}
