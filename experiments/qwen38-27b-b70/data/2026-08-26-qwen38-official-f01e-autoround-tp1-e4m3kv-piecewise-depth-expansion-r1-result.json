@@ -1,0 +1,50 @@
+{
+  "schema": "neural.download.qwen38-official-autoround-e4m3kv-piecewise-depth-expansion-compact-result.v1",
+  "campaign_id": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1",
+  "status": "passed-quality-clean-expansion",
+  "identity": {
+    "model_repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "model_revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "model_manifest_sha256": "731d851b39d37f3d58c5a74ad6a7cd3ade1c9e8543ef1612a5d55131ff8331b8",
+    "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_source": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernels_version": "0.1.12.3"
+  },
+  "config": {
+    "tp": 1,
+    "cards": 1,
+    "mtp": 0,
+    "speculation": "none",
+    "graph": "on",
+    "graph_mode": "PIECEWISE",
+    "enforce_eager": false,
+    "kv": "fp8_e4m3",
+    "parallel_slots": 1,
+    "configured_max_context_tokens": 32896,
+    "max_num_batched_tokens": 1024,
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "pythonhashseed": 0
+  },
+  "workload": "One-slot vLLM OpenAI-compatible HTTP completions; six exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+  "axis": "active_context_tokens",
+  "points": [
+    {"x": 2048, "decode_tok_s": 29.763525310023436, "ttft_ms": 1383.3610949950526, "effective_prompt_throughput_proxy_tok_s": 1480.452217002188, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "c606180877a26135511d7c4213c48c6107d20368e5d107aefe2b0de795ef4e89", "raw_sha256": "3ee523b6f37c5a133897d59a3dba69ecf2e2b374825d923539cadf6a95f06013"},
+    {"x": 4096, "decode_tok_s": 28.9442310610282, "ttft_ms": 2534.876361998613, "effective_prompt_throughput_proxy_tok_s": 1615.8579019493186, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "a3d7ad63a22cfb897d9d7f69952e30e2036617776d18fb4c8a9be1513da522cd", "raw_sha256": "cb4f7c4b0047240b9f01c876e6703211512df3ac2b6bbf2dd5846fa05ad6c528"},
+    {"x": 8192, "decode_tok_s": 28.663718207928127, "ttft_ms": 5269.396286996198, "effective_prompt_throughput_proxy_tok_s": 1554.6372969169533, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "80363e2d6f67a92484cb7e1f347cf7765520b6f5a3ac8d1b1a3573d3cddcba67", "raw_sha256": "dea5eea660665ff0771ef0126c5329b0e8f1f4729c95509701c7c6bd361a137f"},
+    {"x": 16384, "decode_tok_s": 28.028757083522407, "ttft_ms": 11340.360561007401, "effective_prompt_throughput_proxy_tok_s": 1444.7512415376461, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "dbfad6275fcf961d6a4869c42fdd978f505baa46fb5771d92633bc75288946b7", "raw_sha256": "2d1d3a7f39fe2aac5954f0b22497e7fd7b890a8001053c370222d79ded21121f"},
+    {"x": 24576, "decode_tok_s": 27.319292359315934, "ttft_ms": 18166.281376004918, "effective_prompt_throughput_proxy_tok_s": 1352.836031289343, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "1c3ddf94bb9acdcab20064b923112bafb086c93b76cc4a7d43ace3f1a91b923d", "raw_sha256": "f64e3b049d9994ed84bd7483f59cc28e2d4972e90714447a5b438ffed6077676"},
+    {"x": 32768, "decode_tok_s": 26.782574825882012, "ttft_ms": 25756.289586992352, "effective_prompt_throughput_proxy_tok_s": 1272.232939039044, "cached_tokens": 0, "completion_tokens": 128, "output_token_ids_sha256": "a8cef4e48817cd6ebd4de86dd67e81bd8dddb950b0f2d134ef0897d888bb4786", "raw_sha256": "b3655cca451016fa147741618fe37d40d4ca53863a7ade3f41e21ec08c238221"}
+  ],
+  "quality": {"grade": "C", "scope": "six repeated-token exact-depth points plus the complete text-quality battery", "all_six_depth_gates_passed": true, "exact_cases": 7, "repeat_runs": 8, "unique_repeat_hashes": 1, "baseline_comparisons": 24, "long_context_needle_passed": true, "cache_zero": true, "interpolation_or_extrapolation": false, "raw_sha256": "db60abb6585ae1a6832142ca6881c40499b227d19ea43c595af643d1eca386c9"},
+  "model_verification": {"status": "verified", "files_verified": 19, "direct_and_ordinary_paths_coherent": true, "raw_sha256": "e2343c1467894620f1a0cb76d643a05015ff207ef16bac2001134b70755b2edd"},
+  "lineage": {"supersedes_current_singleton_diagnostic": "qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-8k-sentinel-20260826-r1", "singleton_publication_authority": false, "singleton_8k_decode_tok_s": 28.726353926869724, "new_curve_8k_decode_tok_s": 28.663718207928127, "older_e9d_quarantine_retained": true, "automatic_descendant_expansion": false},
+  "cleanup": {"status": "clean", "terminal_receipt_sha256": "9d9242b7899dc1260454d48f0472a1c7e554a09f516fb413d94b5ecb21e0ae77", "arm_result_sha256": "0f1cb9b997dab8cbb2fb79291769e8120cc992fac31a447ea6c6f808599740ce", "campaign_container_absent_at_sealing": true, "port_19472_closed_at_sealing": true},
+  "authority": {"site_cells": 6, "active_context_tokens": [2048, 4096, 8192, 16384, 24576, 32768], "net_new_site_cells": 6, "zero_context_cells": 0, "tp_mtp_other_runtime_or_other_kv_cells": 0, "headline_or_protected_replacement": false, "localmaxxing_submission": false, "protected_decode_values_unchanged": [71.45427094575045, 30.329809361830037, 49.05894025767351, 71.9001988117144]},
+  "tracked_inputs": {
+    "preregistration": {"path": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-r1-prereg.json", "sha256": "87902eb531cc15c436bbf5fc1a77b8ef6ceffd6e3494a1dcccb7a0d069380e01"},
+    "runner": {"path": "experiments/qwen38-27b-b70/scripts/run-20260826-qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-r1.sh", "sha256": "41594e00a70a006db68920764e6e0ff61da5108d3f974a5e316bb1aeeff24894"}
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/qwen38-official-f01e-autoround-tp1-e4m3kv-piecewise-depth-expansion-20260826-r1"
+}
