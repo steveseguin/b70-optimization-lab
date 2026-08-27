@@ -13,7 +13,7 @@ where the weights happen to live.
 **For the maintainer:** this is the map of what sits where, and which storage
 has to be mounted before a lane will run.
 
-Last verified: 2026-08-21.
+Last verified: 2026-08-27 19:55 EDT.
 
 ## Internal NVMe
 
@@ -21,17 +21,20 @@ Last verified: 2026-08-21.
 
 | Path | Size | Notes |
 | --- | --- | --- |
+| `/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8` | 185.56 GB | Active local Flash-Next checkpoint; pinned verification is described below |
 | `/mnt/fast-ai/llm-models/laguna-s-2.1` | 70 G | Active campaign model: 68 G `int4` target, 2.1 G `dflash-int4` draft |
-| `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf` | 57 G | Gemma 4 26B Q8 reference/production lane |
+| `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf` | symlink | Compatibility path to the Gemma 4 Q8 tree now on USB |
 | `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-hf-tokenizer` | 62 M | Tokenizer for the above |
 | `/mnt/fast-ai/llm-cache/hf` | 46 G+ | Hugging Face cache |
 | `/mnt/fast-ai/bench-results` | 205 G | Run evidence; several `CURRENT.md` record identities point here |
 | `/mnt/fast-ai/llm-optimization-artifacts` | 23 G | Sealed run roots |
 | `/mnt/fast-ai/deepseek-v4-corpora` | 25 G | Prompt corpora |
 
-Only the active Laguna model and the Gemma 4 26B pair are kept on NVMe as
-working weights. Everything else was relocated on 2026-07-25 to free the disk,
-which had reached 98% full.
+Through 2026-08-21, only the active Laguna model and the Gemma 4 26B pair were
+kept on NVMe as working weights after the 2026-07-25 relocation. The Gemma
+tree moved to USB and Flash-Next moved onto NVMe on 2026-08-27, as recorded
+below. This preserves the earlier storage history without treating it as the
+current layout.
 
 ## External USB Drive
 
@@ -118,6 +121,71 @@ Stable aliases under `/mnt/fast-ai/llm-models/` are
 `qwen3.6-27b-bf16-qwen`, and `qwen3.6-35b-a3b-bf16-qwen`. The first two
 require the USB mount; the BF16 aliases point to the internal sources, whose
 verified backups are on USB.
+
+## 2026-08-27 Cold-Tree Relocation
+
+Three cold trees were copied to USB, checked against their source inventories
+and per-file SHA-256 lists, switched to compatibility symlinks, and checked
+again through those symlinks. The retained receipts are under
+`/mnt/fast-ai/storage-relocation-20260827/`; each lane's
+`verification-summary.txt` records `tree_cmp=pass` and `sha256_check=pass`.
+All three `post-switch-changes.txt` and `post-switch-rsync.stderr` files are
+empty.
+
+| Tree | Apparent bytes | External destination | Compatibility path |
+| --- | ---: | --- | --- |
+| Qwen 27B EAGLE data | 184,228,530,276 | `/mnt/usb-models/archived-fast-ai-bench-results/qwen36-27b-autoround-int4-b70-eagle-data` | `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data` |
+| DeepSeek V4 Flash evidence | 23,948,877,437 | `/mnt/usb-models/archived-fast-ai-bench-results/deepseek-v4-flash-xpu` | `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu` |
+| Gemma 4 26B Q8 model tree | 61,054,291,085 | `/mnt/usb-models/llm-models/gemma4-26b-a4b-it-q8-gguf` | `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf` |
+
+The Gemma verification summary retains its temporary destination name,
+`/mnt/usb-models/llm-models/.gemma4-26b-a4b-it-q8-gguf.incoming-20260827`.
+That verified directory was renamed to the final destination shown above
+before the compatibility symlink and post-switch checks were completed.
+
+## Qwen3.8 Flash-Next Local Checkpoint
+
+The active checkpoint path is
+`/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8`. The external source copy is
+retained at `/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8`; it is a backup,
+not the active path.
+
+The full verifier receipt is
+`/mnt/fast-ai/llm-models/.verification/Qwen3.8-Flash-Next-FP8-20260827.json`
+(SHA-256
+`6ae22291119e8c8a01597bda9fe4b1fb5850912655ec188e363a88eb6de58470`).
+It passed against `Qwen/Qwen3.8-Flash-Next-FP8` revision
+`bcd9f01ddc9cff2316eb84281bebcd5b058bddce`: 144 root files,
+185,563,783,127 bytes, and 131 indexed shards. The frozen tree-metadata
+SHA-256 is
+`4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2`;
+the config and index SHA-256 values are respectively
+`99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d`
+and `0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6`.
+The receipt records the pre-promotion incoming path because the full check ran
+before the verified directory was renamed to the active path. No GPU boot from
+the localized path had been attempted at this storage checkpoint.
+
+The matching 18-file runtime package is retained under
+`/mnt/fast-ai/qwen38-runtime-publication/`:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `qwen38-flash-next-runtime-stage-2f829747.tar` | 1,968,250,880 | `6bf1b547e3887c86007f5ef5ad7c67be365ce4888f0e2c0a1f360dde7a7b13c3` |
+| `qwen38-flash-next-runtime-stage-2f829747.tar.part-0000` | 1,073,741,824 | `ea8d91b4a184b26a04d18f9f4ac58fb6e116c9fc750e8532fb1ad0cc27f46ca1` |
+| `qwen38-flash-next-runtime-stage-2f829747.tar.part-0001` | 894,509,056 | `38ba225d4908ad976b2b08b0ac945f6d95cd4528143ebe231d58c075068b88b4` |
+| `qwen38-flash-next-runtime-stage-2f829747.tar.receipt.json` | 4,401 | `ac6cddf7bc193b6ccd3d837c0b461c099e7f0c8fc97a1997ab1c7bb736f088b5` |
+
+The package receipt reports a clean extraction and exact hashes for all 18
+files. Concatenating the two numbered parts reproduces the tar SHA-256. The
+embedded source manifest SHA-256 is
+`9fa443fdb7a6d0042cf04f859cc6fd6a7bdc09943e16cafb4ea084573c892d2b`.
+
+The USB filesystem is NTFS through `fuseblk`/ntfs-3g. It is suitable for cold
+trees, model backups, and evidence, but not for an `overlay2` or containerd
+data root. Compatibility paths into USB also require the drive to be mounted.
+At 2026-08-27 19:55 EDT, `df -B1` reported 121,202,786,304 bytes available on
+the internal ext4 filesystem and 511,215,669,248 bytes available on USB.
 
 ## Old Paths Still Work
 
