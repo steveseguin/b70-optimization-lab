@@ -93,3 +93,32 @@ retained with its exact scope. Passing fills only TP4/EP4, eager, MTP4,
 active-context 4,096, text, automatic-KV. It remains Grade C while the inherited
 short target quality is 5/7 and cannot be called deployment-ready or
 record-eligible.
+
+## Attempt 1 result
+
+Attempt 1 preserved the frozen identity, became healthy, and passed cache
+admission. All four ranks again reported 32.06 GiB model allocation and 12.22
+GiB selective host placement. The fixed 29-block allocation exposed 4,674
+cache tokens and 1.07x maximum concurrency at the 4,352-token limit.
+
+The preregistered quality gate failed at the long-context request. The last
+captured scheduler state had 3,904 computed tokens, a 64-token scheduled chunk,
+92.86% cache usage, and four speculative slots. After five one-minute wait
+messages, the engine's 300-second worker-response deadline expired during
+token sampling, the request returned HTTP 500, and the service shut down. The
+helper writes its JSON only after every stage, so no partial quality JSON was
+produced; this attempt receives no short, repeat, baseline-parity, or exact-4K
+quality credit and no timing rows were authorized.
+
+The API and engine ended, but workers lingered until the operator stopped the
+launcher. During that cleanup the kernel logged compute/copy engine resets and
+follow-on messages on all four B70 addresses. No process or listener remained,
+and all four devices were discoverable afterward, but a post-reset four-rank
+collective was not run. Two earlier corrected Samsung NVMe endpoint reports
+were unrelated and had zero uncorrected status.
+
+This exact MTP4/active-4K selector is quarantined. Raising only
+`VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS` is not a safe retry because the workers
+remained unresponsive and card engines reset during cleanup. The successful
+MTP4/512 and MTP3/4K cells remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json`.

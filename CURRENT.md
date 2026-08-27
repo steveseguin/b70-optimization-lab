@@ -1014,11 +1014,19 @@ configured-512 MTP0-4 depth grid: all 26 MTP0
 comparisons matched, repeats were 16/16, the bounded cache-zero needle passed,
 and three corrected target-hash rows measured `21.119694 / 18.576249 /
 20.727176 tok/s`, median `20.727176 tok/s`, with 1,716/1,716 cumulative draft
-acceptance. It remains a Grade-C short screen; MTP4 4K, deeper MTP1/MTP2,
+acceptance. It remains a Grade-C short screen; deeper MTP1/MTP2,
 graph, TP1/TP2 fit, vision, full quality, and clean-host replay remain open. The
 51B PLE/input-embedding shards remain
 pinned in system RAM during serving; generation does not stream them from the
 external checkpoint drive.
+
+The first TP4/MTP4 exact-4K arm is now a quarantined infrastructure result,
+not an open blank. Its 29-block cache admitted 4,352 tokens, but the quality
+request stopped at 3,904 computed tokens when the worker-response deadline
+expired during sampling. No quality JSON or timing row was promoted. Cleanup
+was followed by engine resets on all four B70 addresses; all devices are
+discoverable and idle afterward, but the next GPU arm must repeat the
+four-rank preflight. MTP4/512 and MTP3/4K remain unchanged.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

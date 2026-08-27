@@ -81,9 +81,11 @@ Receipt:
 
 The configured-4,352 MTP3 gate and complete configured-512 MTP0-4 depth grid
 now pass their bounded gates. MTP4/512 is the fastest short screen at a
-`20.727176 tok/s` median with 1,716/1,716 cumulative draft acceptance. Next,
-extend MTP4 to exact 4K, then MTP2 and MTP1, while retaining the existing MTP3
-4K result. Reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
+`20.727176 tok/s` median with 1,716/1,716 cumulative draft acceptance. The
+MTP4 exact-4K selector is quarantined after its first quality request
+stalled at 3,904 computed tokens and cleanup reset all four card engines. Next,
+repeat the four-rank preflight, then extend MTP2 and MTP1 to exact 4K while
+retaining the existing MTP3 result. Reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
 host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
@@ -157,6 +159,21 @@ surviving files are preserved and checksummed, and the unchanged workload was
 rerun correctly. This closes the configured-512 TP4 MTP0-4 grid, not MTP4 at
 4K or production readiness. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json`.
+
+## TP4 MTP4 exact-4K quarantine
+
+Attempt 1 retained the successful MTP4/512 source/runtime/placement and used
+the exact 29-block cache allocation (`341266432` bytes). It became healthy and
+admitted 4,352 tokens, but its exact-4K quality request stopped at 3,904
+computed tokens when the 300-second worker-response deadline expired during
+sampling. The service shut down before the helper wrote a durable quality
+JSON; no quality or speed credit is authorized.
+
+Workers lingered until the launcher was stopped. Cleanup was followed by
+engine resets on all four B70 addresses. No process or listener remained, and
+all cards were discoverable afterward, but a post-reset collective was not
+run. Do not retry by raising only the deadline. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json`.
 
 The user has selected roughly 4K as the practical deployment ceiling for now.
 The next launch should therefore use configured maximum 4,352 and exactly

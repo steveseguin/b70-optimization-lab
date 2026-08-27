@@ -83,9 +83,9 @@ The service-shaped TP4/MTP3 configured-4,352 point now passes exact 4K parity,
 formal depth, and three p4096/o256 rows. Its TTFT and wall-rate tradeoff, plus
 fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
-and TP2 require a separate fit/offload design. MTP1/512, MTP2/512, MTP3/512,
-and MTP3/4K are separately screened below; deeper MTP1/MTP2 and all MTP4
-remain gaps. Graph,
+and TP2 require a separate fit/offload design. The complete configured-512
+MTP1-4 grid and MTP3/4K are separately screened below; deeper MTP1/MTP2 remain
+gaps, while MTP4/4K is quarantined. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
@@ -198,6 +198,27 @@ last row. That surviving JSON and log are preserved and checksummed; the
 identical three-row workload was rerun with distinct filenames without changing
 the service. Receipt:
 [`20260827-tp4-mtp4-512-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json).
+
+## Quarantined exact-4K TP4 MTP4 screen
+
+The additive MTP4/4K attempt retained the successful 512-token source,
+runtime, placement, and eager TP4/EP4 identity. Its exact 29-block fixed cache
+admitted 4,352 tokens and exposed 4,674 cache tokens at 1.07x concurrency; all
+four ranks again reported 32.06 GiB model allocation and 12.22 GiB host
+placement.
+
+The exact-4K quality request stopped at 3,904 computed tokens when the engine's
+300-second worker-response deadline expired during token sampling. The request
+returned HTTP 500 and the service shut down. Because the helper did not write
+its partial in-memory result, no short, repeat, baseline-parity, exact-4K, or
+speed credit is taken from this attempt.
+
+Workers lingered after the service stopped. During cleanup the kernel logged
+engine resets on all four B70 addresses. No process or listener remained, and
+all four cards were discoverable afterward, but no post-reset collective was
+run. Raising only the deadline is therefore not an authorized retry. This cell
+is quarantined at Evidence D; MTP4/512 and MTP3/4K remain untouched. Receipt:
+[`20260827-tp4-mtp4-4352-attempt1-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json).
 
 ## Exact 4K TP4 MTP3 screen
 

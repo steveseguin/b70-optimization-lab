@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-worker-response-timeout",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-4352-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-4352-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 4,
+    "num_speculative_tokens": 4,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 4352,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 341266432,
+    "kv_cache_memory_mib": 325.45703125,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "chat_template_kwargs": {"enable_thinking": false},
+    "diagnostics": "none"
+  },
+  "placement": {
+    "backend": "selective UVA",
+    "parameters": ["ple_embedding.ngram_embedding.weight", "embed_tokens.weight"],
+    "offloaded_bytes_by_rank": 13117911040,
+    "offloaded_gib_by_rank_exact": 12.21700668334961,
+    "reported_offload_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "interpretation": "The 51B FP8 PLE n-gram embedding shard plus input embedding remained resident in pinned host RAM and GPU-addressable through UVA on each rank after cold load."
+  },
+  "serving": {
+    "healthy_api_before_gate": true,
+    "reported_max_model_len": 4352,
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "target_weight_load_seconds": 551.49,
+    "mtp_weight_load_seconds": 115.30,
+    "model_load_seconds_by_rank": [679.899327, 679.904624, 679.501823, 679.408570],
+    "attention_alignment_tokens": 832,
+    "kv_cache_pool_block_bytes": 11767808,
+    "fixed_allocation_blocks_by_current_source_arithmetic": 29,
+    "kv_cache_tokens": 4674,
+    "maximum_concurrency_at_4352": 1.07,
+    "admission_gate": "passed",
+    "post_failure_cleanup": {
+      "residual_processes": 0,
+      "residual_listeners": 0,
+      "device_discovery_after_cleanup": "all four expected B70 devices present",
+      "full_collective_revalidation_after_cleanup": false
+    }
+  },
+  "quality_gate": {
+    "status": "failed-before-durable-suite-output",
+    "requested_long_context_filler_tokens": 4372,
+    "expected_server_prompt_tokens": 4096,
+    "durable_quality_json_written": false,
+    "helper_exit_code": 1,
+    "failure_request_id": "chatcmpl-q38fn-mtp4-4k-a1-long-context-94334a66",
+    "last_scheduler_num_computed_tokens": 3904,
+    "last_scheduler_num_scheduled_tokens": 64,
+    "last_scheduler_kv_cache_usage": 0.9285714285714286,
+    "failure": "The long-context request returned HTTP 500 after the engine's worker-response deadline expired during sample_tokens. The engine then shut down.",
+    "short_and_repeat_credit": "none: although the helper reached the long-context function, it writes the suite JSON only at completion, so no partial output artifact exists and no short/repeat result is promoted from this attempt.",
+    "baseline_match_credit": "none",
+    "exact_4k_credit": "none"
+  },
+  "runtime_boundary": {
+    "configured_execute_model_timeout_seconds": 300,
+    "timeout_source": "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS default",
+    "failure_request_shared_broadcast_wait_messages": 5,
+    "total_shared_broadcast_wait_messages_in_server_log": 8,
+    "engine_fatal": "TimeoutError: RPC call to sample_tokens timed out.",
+    "interpretation": "The exact selector is quarantined. Raising the deadline alone is not an authorized retry because the workers remained unresponsive and cleanup was followed by card-engine resets."
+  },
+  "host_health": {
+    "unrelated_corrected_events": "Two corrected Samsung NVMe endpoint reports at 0000:01:00.0 occurred before the service failure; both reported zero uncorrected status.",
+    "b70_events": "During post-failure cleanup, the kernel logged compute/copy engine resets and follow-on fault-response messages on all four expected B70 addresses: 0000:23:00.0, 0000:27:00.0, 0000:43:00.0, and 0000:47:00.0.",
+    "recovery_scope": "After cleanup, no model process or listener remained, all four expected devices were discoverable, and device 0 reported idle power. A post-reset four-rank collective was not run, so the next GPU launch must repeat the fail-closed collective preflight."
+  },
+  "speed": {
+    "authorized": false,
+    "reason": "The preregistered quality gate failed before the formal exact-depth and comparison rows."
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass-before-long-context",
+    "cache_admission": "pass",
+    "exact_4k_quality": "fail-infrastructure",
+    "throughput_screen": "not-run",
+    "promotion_eligible": false,
+    "site_state": "quarantined",
+    "evidence_grade": "D",
+    "preserve_all_prior_cells": true,
+    "retry_gate": "Do not retry by increasing only VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS. Reopen after a material bounded fix or a smaller-depth 4K control isolates whether MTP4 itself causes the worker stall."
+  },
+  "sha256": {
+    "server.log": "86467a2ede438165a3726fe1ef2f681a4d988a3cb59614da0e4559d352af1a9e",
+    "identity.txt": "719fc8a5d6667c2a3cabf5f93231be3c372894a9c63f40c05a4eb3c284a6ef1e",
+    "staged-runtime-preflight.txt": "c1bcd120dea59c93a57619362c9fd1f6e3d325a0d4e2a9cf2722b220a3b3c586",
+    "models.json": "f6e85703374fcdcba468cdd555d188e35a8fb930db63674eb83b809c63fbfd51",
+    "server-command.shell.txt": "87b3a2c031b1a0ddf0034d77c9b90496c71fd9d5d7218ecd1cee20b291964638",
+    "quality-v2-short-repeat-and-4k.invocation.log": "9efa679209841a08f97821edff08eb4a797c7bddce4db26551a32728d29d12a1",
+    "quality-v2-short-repeat-and-4k.exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "kernel-journal-run-window.log": "d97c24f09b9112235e78655d08b7eea0034ecf46c34ca4fe2888b4e0972bf144",
+    "xccl-tp4-preflight.log": "75e0390b1b7d445809f2eacadce6c87ad3f811d320cea6243b9c6dbf2d35e843",
+    "input-sha256sums.txt": "d3e2dc265e4832149f048dcaceb35a1a14f273aa690602106113c60381a707ff"
+  }
+}
