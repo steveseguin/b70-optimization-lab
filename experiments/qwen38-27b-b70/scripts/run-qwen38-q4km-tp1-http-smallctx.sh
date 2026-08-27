@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../../.." && pwd)
 model_dir="${MODEL_DIR:-}"
+draft_dir="${DRAFT_DIR:-}"
 build_dir="${BUILD_DIR:-}"
 source_dir="${SOURCE_DIR:-}"
 out_parent="${OUT_DIR:-${repo_root}/experiments/qwen38-27b-b70/data}"
@@ -25,6 +26,9 @@ parallel_slots="${PARALLEL_SLOTS:-64}"
 ctx_size="${CTX_SIZE:-32768}"
 concurrency_points="${CONCURRENCY_POINTS:-1,2,4,8,16,32,64}"
 allow_queueing="${ALLOW_QUEUEING:-0}"
+concurrent_canary="${CONCURRENT_CANARY:-0}"
+canary_concurrency="${CANARY_CONCURRENCY:-64}"
+canary_rounds="${CANARY_ROUNDS:-2}"
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case "${profile}" in
@@ -34,6 +38,16 @@ case "${profile}" in
     expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
     expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
     expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
+    ;;
+  q4mtp2_tp1)
+    model_filename=Qwen3.8-27B-Q4_K_M.gguf
+    model_label=qwen38-q4km-q4mtp-tp1-mtp2-http-smallctx
+    expected_model_sha=31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34
+    expected_server_sha=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
+    expected_backend_sha=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
+    draft_filename=mtp-Qwen3.8-27B-Q4_0.gguf
+    expected_draft_sha=50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e
+    [[ -n "${draft_dir}" ]] || fail 'q4mtp2_tp1 requires DRAFT_DIR'
     ;;
   tp2)
     topology=tp2
@@ -62,7 +76,7 @@ case "${profile}" in
     expected_source_commit=a4349bcee933cd2b13820bc72fbe842e9c2f4b7a
     [[ -n "${source_dir}" && -d "${source_dir}/.git" ]] || fail 'Q8 TP2 requires SOURCE_DIR'
     ;;
-  *) fail 'PROFILE must be tp1, tp2, q8_tp1, or q8_tp2' ;;
+  *) fail 'PROFILE must be tp1, q4mtp2_tp1, tp2, q8_tp1, or q8_tp2' ;;
 esac
 [[ -n "${model_dir}" && -n "${build_dir}" ]] || fail 'set MODEL_DIR and BUILD_DIR'
 [[ "${gpu_index}" =~ ^[0-9]+$ ]] || fail 'GPU_INDEX must be numeric'
@@ -78,15 +92,21 @@ esac
 [[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || fail 'CTX_SIZE must be positive'
 [[ "${concurrency_points}" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]] || fail 'CONCURRENCY_POINTS must be comma-separated positive integers'
 [[ "${allow_queueing}" == 0 || "${allow_queueing}" == 1 ]] || fail 'ALLOW_QUEUEING must be 0 or 1'
+[[ "${concurrent_canary}" == 0 || "${concurrent_canary}" == 1 ]] || fail 'CONCURRENT_CANARY must be 0 or 1'
+[[ "${canary_concurrency}" =~ ^[1-9][0-9]*$ ]] || fail 'CANARY_CONCURRENCY must be positive'
+[[ "${canary_rounds}" =~ ^[1-9][0-9]*$ ]] || fail 'CANARY_ROUNDS must be positive'
 IFS=, read -r -a concurrency_values <<< "${concurrency_points}"
 for value in "${concurrency_values[@]}"; do
   (( allow_queueing == 1 || value <= parallel_slots )) || fail 'a concurrency point exceeds PARALLEL_SLOTS without ALLOW_QUEUEING=1'
 done
 
 model="${model_dir}/${model_filename}"
+draft=
+if [[ -n "${draft_filename:-}" ]]; then draft="${draft_dir}/${draft_filename}"; fi
 server="${build_dir}/bin/llama-server"
 backend="${build_dir}/bin/libggml-sycl.so"
 [[ -f "${model}" && -x "${server}" && -f "${backend}" ]] || fail 'model/server/backend missing'
+[[ -z "${draft}" || -f "${draft}" ]] || fail 'draft model missing'
 [[ -f "${suite}" && -f "${prereg}" ]] || fail 'frozen preregistration dependency missing'
 
 exec 7>"/run/lock/muse-glimmer-gpu-exclusive.lock"
@@ -104,6 +124,9 @@ pgrep -af 'llama-(server|bench|batched-bench)|vllm' >/dev/null && fail 'another 
 [[ "$(sha256sum "${model}" | awk '{print $1}')" == "${expected_model_sha}" ]] || fail 'model SHA-256 mismatch'
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == "${expected_server_sha}" ]] || fail 'server SHA-256 mismatch'
 [[ "$(sha256sum "${backend}" | awk '{print $1}')" == "${expected_backend_sha}" ]] || fail 'backend SHA-256 mismatch'
+if [[ -n "${draft}" ]]; then
+  [[ "$(sha256sum "${draft}" | awk '{print $1}')" == "${expected_draft_sha}" ]] || fail 'draft SHA-256 mismatch'
+fi
 if [[ "${topology}" == tp2 ]]; then
   [[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${expected_source_commit}" ]] || fail 'source commit mismatch'
 fi
@@ -157,6 +180,8 @@ unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REOR
 
 env | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=|PATH=)' | LC_ALL=C sort > "${run_dir}/environment.txt"
 sha_inputs=("${model}" "${server}" "${backend}" "${suite}" "${prereg}" "${repo_root}/scripts/bench-openai-concurrency-oracle.py")
+if [[ -n "${draft}" ]]; then sha_inputs+=("${draft}"); fi
+if (( concurrent_canary == 1 )); then sha_inputs+=("${repo_root}/experiments/qwen38-27b-b70/scripts/qwen38-concurrent-quality-canary.py"); fi
 if [[ -n "${oracle_digests}" ]]; then sha_inputs+=("${oracle_digests}"); fi
 sha256sum "${sha_inputs[@]}" > "${run_dir}/sha256sums.txt"
 if [[ "${topology}" == tp2 ]]; then
@@ -165,8 +190,13 @@ fi
 free -b > "${run_dir}/memory-before.txt"
 xpu-smi dump -d "${gpu_index}" -m 0,1,2,3,4,5 -n 1 > "${run_dir}/xpu-before.txt" 2>&1 || true
 
-cmd=("${server}" --model "${model}" "${device_args[@]}" --gpu-layers 99
-  --fit off --flash-attn on --batch-size 2048 --ubatch-size 256
+cmd=("${server}" --model "${model}" "${device_args[@]}" --gpu-layers 99)
+if [[ -n "${draft}" ]]; then
+  cmd+=(--model-draft "${draft}" --device-draft SYCL0 --gpu-layers-draft 99
+    --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-n-min 0 --spec-draft-p-min 0
+    --cache-type-k-draft f16 --cache-type-v-draft f16)
+fi
+cmd+=(--fit off --flash-attn on --batch-size 2048 --ubatch-size 256
   --cache-type-k f16 --cache-type-v f16 --cache-ram 0 --ctx-checkpoints 0
   --reasoning off --threads 8 --poll 50 --ctx-size "${ctx_size}" --parallel "${parallel_slots}"
   --cont-batching --metrics --host 127.0.0.1 --port "${port}")
@@ -265,5 +295,14 @@ json.dump(out, sys.stdout, indent=2); print()
 if not qualified:
     raise SystemExit(3)
 PY
+
+if (( concurrent_canary == 1 )); then
+  python3 "${repo_root}/experiments/qwen38-27b-b70/scripts/qwen38-concurrent-quality-canary.py" \
+    --base-url "http://127.0.0.1:${port}" --model "${model_label}" \
+    --concurrency "${canary_concurrency}" --rounds "${canary_rounds}" --timeout 900 \
+    --request-id-prefix "${campaign}-a${attempt}-semantic" \
+    --output-json "${run_dir}/concurrent-quality-canary.json" \
+    >"${run_dir}/concurrent-quality-canary.stdout"
+fi
 
 printf 'PASS: %s\n' "${run_dir}"

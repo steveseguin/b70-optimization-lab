@@ -1,0 +1,52 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-prereg.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r1",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-27",
+  "purpose": "Fill the exact one-B70 Q4_K_M plus Q4_0 MTP2 many-user gap with output-audited native HTTP measurements rather than target-only transfer or projection.",
+  "identity": {
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "tp": 1,
+    "mtp_depth": 2,
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "graph": "off",
+    "reasoning": "off"
+  },
+  "server_profile": {
+    "endpoint": "llama.cpp native HTTP /completion",
+    "context_tokens_total": 32768,
+    "parallel_slots": 64,
+    "nominal_context_tokens_per_slot": 512,
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0,
+    "continuous_batching": true
+  },
+  "measurement": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-smallctx-suite.json",
+    "suite_sha256": "be2864e10c811796a5499b723b7a345bbf756f29c72033dcf274e5957fc23909",
+    "concurrent_users": [1, 2, 4, 8, 16, 32, 64],
+    "max_output_tokens": 128,
+    "fresh_server_attempts": 2,
+    "required_speed_stability": "both attempts pass; relative range at every point <=10%",
+    "required_output_gate": "128 complete raw token IDs per response, cached_tokens=0, unique expanded prompts, no cross-base sequential-oracle collision",
+    "required_semantic_gate": "each fresh server passes two rounds of 64 synchronized exact-answer requests (128 requests per attempt) with cached_tokens=0",
+    "sequential_mtp0_oracle": {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp1-http-concurrency-oracle-digests.json",
+      "sha256": "0bff10d407ea22b7138b4d68c2602869d877a09ba0c48cb8686d6a43bb398fbb",
+      "boundary": "Exact-match counts are reported but not required above one user because target-only greedy output is itself batch-shape-dependent across fresh servers. Isolation plus concurrent semantic quality is required instead."
+    }
+  },
+  "publication": {
+    "classification_if_passed": "output-isolation-and-concurrent-semantic-quality-qualified-shape-variant",
+    "no_interpolation_or_extrapolation": true,
+    "not_a_single_user_headline": true,
+    "not_a_32k_result": true,
+    "failed_points_remain_diagnostic": true,
+    "target_only_values_do_not_transfer": true
+  }
+}
