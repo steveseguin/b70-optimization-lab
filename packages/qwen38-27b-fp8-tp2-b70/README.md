@@ -2,10 +2,19 @@
 
 This is the first distribution-package front door. It uses Qwen's official
 FP8 model and digest-pinned vLLM XPU containers on two Intel Arc Pro B70
-32 GiB cards. The selected dynamic MTP8-to-MTP1 service reaches a replicated
-median of **`146.814418 tok/s`** for one fresh user and **`1,094.314767 tok/s`**
-aggregate at 64 active users while passing 1,024/1,024 concurrent exact-answer
-checks across two fresh servers. The target-only block-W8A16 service remains the aggregate peak at
+32 GiB cards. On the fixed 12-prompt realistic suite, the selected dynamic
+MTP8-to-MTP1 service reaches **`58.391033 tok/s`** conventional cold decode,
+the center of two independent fresh-server medians (`58.537756` and
+`58.244309 tok/s`). Every one of the 24 requests reported zero cached tokens.
+The first chronological cold run is independently visible as approved
+LocalMaxxing run
+[`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h);
+the second cold run remains the required repository replay rather than being
+averaged into that external submission.
+The same service separately reaches **`146.814418 tok/s`** on its earlier
+high-acceptance 40-token fixture and **`1,094.314767 tok/s`** aggregate at 64
+active users while passing 1,024/1,024 concurrent exact-answer checks across
+two fresh servers. The target-only block-W8A16 service remains the aggregate peak at
 **`1,112.570323 tok/s`** with 128 active users. A separately measured
 33,024-token W8A16 service profile reaches `31.489587 tok/s` decode at an exact
 32K prompt with `13.740 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
@@ -48,7 +57,10 @@ The active state allocation separately raised the dynamic service from
 from MTP4 to MTP5 raised its single-user median from `116.711347` to
 `128.428318 tok/s`; the replicated MTP7 policy reached `137.211213 tok/s`, and
 the later replicated MTP8 policy raised it again to `146.814418 tok/s` while
-retaining c64 aggregate throughput at `1,094.314767 tok/s`.
+retaining c64 aggregate throughput at `1,094.314767 tok/s`. A subsequent
+two-server cold realistic suite measured `58.537756`/`58.244309 tok/s`, so
+`58.391033 tok/s` is now the general package headline and the 146.814418 row
+is retained only with its exact high-acceptance fixture scope.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
@@ -173,6 +185,22 @@ The benchmark requires the single-user gate, a complete output-isolated c64
 batch, at least 98% of the prior replicated aggregate result, sequential baseline
 agreement, and 512/512 concurrent exact-answer checks. The service is limited
 to 256 total tokens and is not the long-context profile.
+
+For the fixed cold realistic single-user gate used by the package headline,
+start another fresh server with another empty cache directory and run:
+
+```bash
+OUT=/path/to/new-realistic-suite.json \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh
+```
+
+The wrapper sends each of the 12 natural prompts exactly once, requests 128
+tokens, requires streamed token-ID timing, checks the conventional 99-interval
+window, and fails unless every request reports `cached_tokens=0`. The two
+published cold servers took 165.327/164.822 seconds from container start to
+HTTP readiness; their first inference still JIT-compiled three EAGLE kernels,
+producing 829/743 ms first-request TTFT. See the
+[cold result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
 
 For the original portable target-only baseline, in the serving terminal:
 

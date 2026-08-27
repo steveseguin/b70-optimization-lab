@@ -1,0 +1,110 @@
+{
+  "schema": "neural-download-realistic-cold-repeat-v1",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "quantization": "official block-scaled FP8 weights; FP16 activations and KV"
+  },
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "count": 2,
+    "topology": "TP2"
+  },
+  "runtime": {
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "block_w8a16": true,
+    "prefix_caching": false,
+    "max_model_len": 256,
+    "max_num_batched_tokens": 512,
+    "max_num_seqs": 128,
+    "speculative_policy": "publisher MTP layer serially reused to depth 8 at batch size 1; depth 1 at batch sizes 2-128",
+    "target_model_verified_accepted_tokens": true
+  },
+  "benchmark": {
+    "suite_id": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+    "runner_sha256": "911fcd172cb3b4d2a319e34cc6ba6ca41ee7c352fcd269e93008371e45cc4fb2",
+    "launcher_sha256": "1460927c0ab231c98db28f5013d300530ff82ca6bfb6130ea2d29660c9772992",
+    "prompt_count_per_run": 12,
+    "max_output_tokens": 128,
+    "metric": "median_tok_s_1_100_intervals_after_ttft",
+    "metric_generated_events": 100,
+    "metric_intervals": 99,
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp",
+    "temperature": 0,
+    "top_p": 1,
+    "seed": 42,
+    "natural_finish_required": true,
+    "each_prompt_once_per_fresh_server": true
+  },
+  "runs": [
+    {
+      "id": "r1",
+      "realistic_suite": "qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r1/realistic-suite.json",
+      "server_log": "qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r1/server.log",
+      "realistic_suite_sha256": "d767bd98624a79c556d0ddc019a8fc01878f02094be68933a384f420b567de85",
+      "server_log_sha256": "af4132af0cb70ab53c407446c6fa8e6f1a41620b38891736f4a98a591a096d62",
+      "container_start_to_server_ready_seconds": 165.32661119,
+      "engine_init_seconds": 90.29,
+      "compile_seconds": 71.85,
+      "conventional_median_tok_s": 58.53775636708166,
+      "conventional_p10_tok_s": 48.117648082801715,
+      "full_after_ttft_median_tok_s": 58.54939626208175,
+      "wall_median_tok_s": 55.43623115004252,
+      "median_ttft_ms": 108.09404402971268,
+      "first_request_ttft_ms": 828.8191859610379,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "completed_output_tokens": 1536
+    },
+    {
+      "id": "r2",
+      "realistic_suite": "qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r2/realistic-suite.json",
+      "server_log": "qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r2/server.log",
+      "realistic_suite_sha256": "2926b0cdfc5c0f43ba7ca2432b9c1c8fe33bbc0af20d02893f7cfde5e89381b0",
+      "server_log_sha256": "e8f154fb39cf58f9e020d6fddebf00dd92786ce9a5f91b5d82ca31e206f4731b",
+      "container_start_to_server_ready_seconds": 164.822365977,
+      "engine_init_seconds": 90.31,
+      "compile_seconds": 72.26,
+      "conventional_median_tok_s": 58.24430922631423,
+      "conventional_p10_tok_s": 47.89668298954427,
+      "full_after_ttft_median_tok_s": 58.347267344997675,
+      "wall_median_tok_s": 55.270329904099995,
+      "median_ttft_ms": 107.45038453023881,
+      "first_request_ttft_ms": 742.7758489502594,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "completed_output_tokens": 1536
+    }
+  ],
+  "promoted": {
+    "aggregation": "arithmetic mean of two independently cold-started server suite medians",
+    "conventional_median_tok_s": 58.39103279669794,
+    "conventional_p10_tok_s": 48.00716553617299,
+    "full_after_ttft_median_tok_s": 58.448331803539716,
+    "wall_median_tok_s": 55.35328052707126,
+    "median_ttft_ms": 107.77221427997574,
+    "run_median_range_percent": 0.5025551471047766,
+    "total_requests": 24,
+    "total_output_tokens": 3072,
+    "cached_tokens_all_zero": true,
+    "gate_passed": true
+  },
+  "external_submission": {
+    "service": "LocalMaxxing",
+    "run_id": "cmtb5n45n0021qq01n13vly2h",
+    "status": "APPROVED",
+    "source_run": "r1",
+    "tok_s_out": 58.53775636708166,
+    "url": "https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h",
+    "aggregation_note": "The external submission reports the first chronological run directly; it does not combine the independent replay."
+  },
+  "interpretation": {
+    "short_fixture_tok_s": 146.81441784235233,
+    "short_fixture_status": "retained as a separately labeled 40-prompt-token high-acceptance fixture, not the general package headline",
+    "cold_start_observation": "Each empty-cache server compiled for about 72 seconds, completed engine initialization in about 90 seconds, and became HTTP-ready about 165 seconds after container start. The first inference then JIT-compiled three EAGLE preparation kernels, producing 829 ms and 743 ms first-request TTFT in R1/R2.",
+    "acceptance_observation": "Server logs reported workload-dependent MTP8 draft acceptance around 26-34% during the realistic suite, explaining why varied natural prompts are materially slower than the earlier high-acceptance fixture."
+  }
+}

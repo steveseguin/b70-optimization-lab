@@ -1747,11 +1747,11 @@
         ],
         "published_at": "2026-08-27",
         "featured_metric": {
-          "value": 146.81441784235233,
+          "value": 58.39103279669794,
           "unit": "tok/s",
-          "label": "decode",
-          "scope": "Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP8 at one active request and MTP1 under load, short-context 256-token service.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json"
+          "label": "realistic cold decode",
+          "scope": "Arithmetic mean of two independently cold-started server medians on the fixed 12-prompt realistic suite: conventional 99-interval decode after TTFT, 128 generated tokens, every request cache zero, dynamic MTP8 at one active request, short-context 256-token service. The separately labeled 40-token fixture measured 146.814418 tok/s.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-summary.json"
         }
       },
       "contributors": [
@@ -1810,7 +1810,7 @@
         "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
         "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
         "health": "curl -fsS http://127.0.0.1:18128/health",
-        "benchmark": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 OUT_DIR=/path/to/new-attempt repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh",
+        "benchmark": "OUT=/path/to/new-realistic-suite.json repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh",
         "stop": "docker stop -t 30 qwen38-fp8-w8a16-dynamic-mtp-tp2"
       },
       "dependencies": [
@@ -1831,6 +1831,7 @@
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-concurrency.sh",
@@ -1880,6 +1881,15 @@
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-dynamic-mtp1-20260827-r15/c64-quality-512.json",
         "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp8-r16-replication-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-summary.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r1/realistic-suite.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r1/server.log",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r2/realistic-suite.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/r2/server.log",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-realistic-cold-20260827/identity.env",
+        "data/localmaxxing-qwen38-27b-official-fp8-w8a16-tp2-dynamic-mtp8-realistic-58tok-20260827.queue.json",
+        "data/localmaxxing-responses/qwen38-27b-official-fp8-w8a16-tp2-dynamic-mtp8-realistic-20260827.response.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-dynamic-mtp1-20260827-r16/c64-screen.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-dynamic-mtp1-20260827-r16/c64-quality-512.json",
         "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-r17-negative.md",
@@ -2424,7 +2434,7 @@
         "tested clean-host Intel driver and Docker installation",
         "clean-host endpoint replay",
         "beginner recovery flow",
-        "natural-prompt HTTP speed and TTFT context sweep"
+        "natural-prompt HTTP TTFT/context sweep beyond the measured short-context realistic suite"
       ]
     },
     {

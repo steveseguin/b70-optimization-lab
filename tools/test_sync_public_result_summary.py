@@ -28,9 +28,10 @@ class PublicResultSummaryTests(unittest.TestCase):
         readme = MODULE.README.read_text(encoding="utf-8")
         block = readme.split(MODULE.START, 1)[1].split(MODULE.END, 1)[0]
         homepage = (MODULE.ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn("146.814418", block)
+        self.assertIn("58.391033", block)
         self.assertNotIn("158.60211", block)
-        self.assertIn(">146.81&dagger;</a>", homepage)
+        self.assertIn(">58.39&dagger;</a>", homepage)
+        self.assertIn("high-acceptance 40-token fixture", homepage)
         self.assertIn(">1,094.3&dagger;</a>", homepage)
         self.assertNotIn("Our fastest Qwen3.8 experiment", homepage)
 

@@ -449,10 +449,10 @@
           <td>Qwen dense</td>
           <td class="num">Aug 27</td>
           <td><span class="action">Repair dynamic GDN width and active Mamba allocation, then replicate MTP8 at c1 with MTP1 under load.</span></td>
-          <td class="num">146.814 / 1,094.315 tok/s</td>
+          <td class="num">58.391 realistic / 146.814 fixture / 1,094.315 aggregate tok/s</td>
           <td>Selected candidate</td>
-          <td>Two fresh servers replicated both directly measured operating points and passed 1,024/1,024 synchronized concurrent exact-answer checks total. MTP9 was faster alone but failed aggregate retention.</td>
-          <td><a href="experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp8-r16-replication-result.md">result</a></td>
+          <td>Two cold realistic servers established the 58.391 general headline; the 146.814 short fixture and 1,094.315 c64 workload remain separately labeled. Concurrent validation passed 1,024/1,024 exact-answer checks total. MTP9 was faster on the fixture but failed aggregate retention.</td>
+          <td><a href="experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md">result</a></td>
         </tr>
 
         <tr class="section">
@@ -594,7 +594,8 @@
     fuse repeated work, and verify clean runtime. Qwen Q4 went from 24.2 to 50.1 tok/s;
     the broader dense-Qwen lab program went from a 15.55 tok/s one-card Q8 baseline to
     an honest 101.17 tok/s two-card AutoRound/MTP research anchor, then to the
-    selected 146.81 tok/s official-FP8/W8A16 dynamic-MTP candidate. Those are different
+    selected 58.39 tok/s cold-realistic official-FP8/W8A16 dynamic-MTP candidate
+    (with a separate 146.81 tok/s high-acceptance fixture). Those are different
     model, quantization, and card identities, not a like-for-like percentage speedup.
     MiniMax then moved from early 101 GB GGUF bring-up to 17.7 tok/s on GGUF/RPC and
     37.1 tok/s on vLLM AutoRound with the llm-scaler u4 decode path.

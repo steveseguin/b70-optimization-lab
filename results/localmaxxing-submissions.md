@@ -107,6 +107,7 @@ the conventional 99-interval field.
 | Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M | 1x Arc Pro B70 | **72.169452 tok/s**, fixed cold realistic suite | [`cmt9m8hgp00ysli017rhfj46x`](https://www.localmaxxing.com/runs/cmt9m8hgp00ysli017rhfj46x) | [repro](../repro/nemotron-35-lightning-30b-a3b-b70/README.md) |
 | Ornith 1.5 9B Q8_0 | 1x Arc Pro B70 | **49.588381 tok/s**, fixed cold realistic suite | [`cmt9m8ht100yxli01gdop0ol4`](https://www.localmaxxing.com/runs/cmt9m8ht100yxli01gdop0ol4) | [repro](../repro/ornith-15-9b-q8-b70/README.md) |
 | Qwen3.8 27B GGUF Q4_K_M, target-only TP1 | 1x Arc Pro B70 | **27.824790 tok/s**, fixed cold realistic suite | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | [repro](../repro/qwen38-27b-q4km-tp1-b70/README.md) |
+| Qwen3.8 27B official FP8/W8A16, dynamic MTP8, TP2 | 2x Arc Pro B70 | **58.537756 tok/s**, fixed cold realistic suite; independent cold replay 58.244309 | [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h) | [repro](../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md) |
 | Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
 
 Current measured-but-unsubmitted work belongs in its model packet, not this
@@ -114,20 +115,25 @@ public-submission index.
 
 Date: 2026-08-27
 
-The current Qwen3.8 27B official-FP8/W8A16 TP2 dynamic-MTP8 result was reviewed
-and intentionally **not submitted**. Its `146.814 tok/s` singleton observation
-comes from a short HTTP service probe rather than the fixed cold realistic
-suite, while its `1,094 tok/s` c64 observation is aggregate throughput. The
-LocalMaxxing speed-test schema has no aggregate-throughput field, so publishing
-that value as scalar `tokSOut` would mislabel it as single-stream decode. The
-MTP9 follow-up is a measured negative and is also ineligible.
+The Qwen3.8 27B official-FP8/W8A16 TP2 dynamic-MTP8 service passed the fixed
+cold realistic gate on two independent fresh servers at `58.537756` and
+`58.244309 tok/s` conventional. The first chronological run was server-dry-run
+validated, submitted once, and immediately approved as
+[`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h).
+It contains 12 unique requests, 128 output tokens each, streamed token-ID
+timing, `cached_tokens=0` throughout, and target-verified MTP8 accepted tokens.
 
-The next eligible promotion step is a fixed cold realistic-suite capture
-through the selected MTP8 service, with the exact model/runtime/patch identity,
-`cached_tokens=0`, conventional 99-interval accounting, natural output and
-quality evidence. If that gate passes and the result adds merit in the matching
-category, run the server dry-run and submit the single-stream result once; keep
-the concurrency curve in its neural.download evidence packet.
+The earlier `146.814 tok/s` singleton remains a separately labeled
+high-acceptance 40-token fixture, not the submitted realistic headline. The
+`1,094 tok/s` c64 observation remains neural.download aggregate evidence
+because the LocalMaxxing speed-test schema has no aggregate-throughput field;
+publishing it as scalar `tokSOut` would mislabel it as single-stream decode.
+MTP9 remains a measured negative and was not submitted.
+
+Queue:
+[`../data/localmaxxing-qwen38-27b-official-fp8-w8a16-tp2-dynamic-mtp8-realistic-58tok-20260827.queue.json`](../data/localmaxxing-qwen38-27b-official-fp8-w8a16-tp2-dynamic-mtp8-realistic-58tok-20260827.queue.json).
+Receipt:
+[`../data/localmaxxing-responses/qwen38-27b-official-fp8-w8a16-tp2-dynamic-mtp8-realistic-20260827.response.json`](../data/localmaxxing-responses/qwen38-27b-official-fp8-w8a16-tp2-dynamic-mtp8-realistic-20260827.response.json).
 
 Date: 2026-08-26
 

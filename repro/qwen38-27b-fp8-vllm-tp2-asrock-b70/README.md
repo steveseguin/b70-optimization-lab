@@ -16,6 +16,34 @@ and static-MTP1 profiles remain documented for honest comparison.
 
 ## Selected dynamic MTP8-to-MTP1 profile
 
+The package's general single-user headline is the fixed cold realistic suite,
+not the earlier single-prompt fixture:
+
+| Fresh server | conventional 99-interval median | p10 | wall median | TTFT median |
+| --- | ---: | ---: | ---: | ---: |
+| realistic R1 | 58.537756 | 48.117648 | 55.436231 | 108.094 ms |
+| realistic R2 | 58.244309 | 47.896683 | 55.270330 | 107.450 ms |
+| two-server center | **58.391033** | **48.007166** | **55.353281** | **107.772 ms** |
+
+Both independently cold-started servers passed all 12 unique prompts, returned
+128/128 tokens per prompt, and reported `cached_tokens=0` for every request.
+Container-to-ready time was 165.327/164.822 seconds with empty compile caches.
+The first inference paid three additional EAGLE-kernel JIT compilations and
+829/743 ms TTFT. Reproduce one fresh attempt after launching the service with:
+
+```bash
+OUT=/path/to/new-realistic-suite.json \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh
+```
+
+See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md)
+and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-summary.json).
+The first chronological run was submitted without combining replays and is
+approved on [LocalMaxxing](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h).
+
+The earlier high-acceptance 40-prompt-token fixture remains useful shape
+evidence and measured:
+
 Two separately preregistered fresh-server attempts measured:
 
 | Active users | R15 tok/s | R16 tok/s | two-attempt median |

@@ -1005,6 +1005,16 @@ therefore **`146.814418 tok/s` single-user and `1,094.314767 tok/s` c64
 aggregate**. This is the current official-FP8 candidate service, not an
 interpolation between those two directly measured operating points.
 
+That `146.814418 tok/s` singleton is specific to the preregistered,
+high-acceptance 40-prompt-token fixture. The required fixed 12-prompt cold
+realistic suite subsequently measured `58.537756` and `58.244309 tok/s`
+conventional on two independently cold-started servers, for a package
+headline of **`58.391033 tok/s`**. All 24 requests were cache-zero and returned
+all 128 requested tokens. The varied suite saw only about 26–34% MTP draft
+acceptance, so its result is deliberately not blended with the short fixture
+or the separate c64 aggregate result. See the
+[cold realistic result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
+
 The next singleton step, MTP9, reached `158.602110 tok/s` but retained only
 `889.607586 tok/s` at c64, below the frozen aggregate-retention gate. A 64-slot
 treatment fell to `806.950345`; two busy-period latch treatments reached only
