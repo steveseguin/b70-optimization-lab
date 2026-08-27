@@ -163,6 +163,7 @@ export VLLM_XPU_ENABLE_XPU_GRAPH=0
 export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0
 export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0
 export VLLM_XPU_MOE_SYNC_TRACE="${moe_sync_trace}"
+export VLLM_KV_CACHE_LAYOUT=BLHNC
 if [[ "${moe_capture}" == 1 ]]; then
   export VLLM_XPU_MOE_CAPTURE_DIR="${run_dir}/routed-input-captures"
 else
@@ -251,6 +252,7 @@ for namespace, op in [
 print(f'xpu_device_count={torch.xpu.device_count()}')
 assert torch.xpu.device_count() == 4
 assert envs.VLLM_XPU_MOE_SYNC_TRACE == bool(int(os.environ['VLLM_XPU_MOE_SYNC_TRACE']))
+assert envs.VLLM_KV_CACHE_LAYOUT == 'BLHNC'
 
 discovery_path = pathlib.Path(os.environ['Q38_RUN_DIR']) / 'xpu-discovery.json'
 devices = json.loads(discovery_path.read_text())['device_list']
@@ -355,6 +357,7 @@ PY
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
   printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512 max_num_batched_tokens=64\n'
   printf 'kv_cache_memory_bytes=201326592\n'
+  printf 'kv_cache_layout=BLHNC\n'
   printf 'xpu_moe_sync_trace=%s diagnostic_timing=%s\n' "${moe_sync_trace}" "${moe_sync_trace}"
   printf 'xpu_moe_capture=%s capture_dir=%s\n' "${moe_capture}" "${VLLM_XPU_MOE_CAPTURE_DIR:-}"
 } >"${run_dir}/identity.txt"

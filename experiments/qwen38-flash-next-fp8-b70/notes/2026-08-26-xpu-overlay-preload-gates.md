@@ -438,9 +438,12 @@ conservative 92% automatic budget reported `-1.46 GiB` available for cache
 blocks after the 31.27-GiB model and diagnostic profile. This is a clean
 post-profile configuration stop, not a recurrence of the routed failure.
 
-Attempt 15 keeps the same 512-token, one-sequence diagnostic identity and uses
-an explicit 192-MiB cache allocation. That fits below the measured post-profile
-headroom and is ample for this bounded startup/canary lane. It does not change
-model execution or decode kernels. If healthy, issue a real non-padding API
-canary before shutdown, then run a separate trace/capture-off quality and
-performance qualification.
+Attempt 15 kept the same identity and again passed every layer. The explicit
+192-MiB cache allocation was accepted, then cache construction stopped cleanly
+because the model mixes 53,248-byte and 851,968-byte pages while the inherited
+default layout was not block-outermost. Current vLLM explicitly requires a
+block-outermost layout for this mixed-page model and names `BLHNC` as the valid
+choice. Attempt 16 adds that declaration; cache size, model placement, kernels,
+and all other identity fields remain unchanged. If healthy, issue a real
+non-padding API canary before shutdown, then run a separate trace/capture-off
+quality and performance qualification.
