@@ -1,0 +1,46 @@
+# Preregistration: Qwen3.8 FP8 dynamic MTP8-at-one/MTP1-at-load R15
+
+## Question
+
+Can singleton MTP depth eight improve the newly promoted MTP7 service by at
+least 2% while retaining at least 98% of its replicated c64 aggregate median
+and passing the same exact-output gates?
+
+The frozen promoted MTP7 medians are 137.2112133265758 tok/s for one user and
+1102.2661160731836 aggregate tok/s at c64. R15 is one bounded treatment,
+preregistered before its server starts.
+
+## Frozen runtime and treatment
+
+- official `Qwen/Qwen3.8-27B-FP8` revision
+  `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`;
+- image
+  `neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1`,
+  ID `sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6`;
+- unchanged block-W8A16, active-width GDN, and active-Mamba-allocation patches;
+- 2x B70/TP2, max length 256, 128 sequence slots, MBT512, block size 64,
+  FP16 activations/KV, prefix cache off, and direct oneCCL transport;
+- only service change: schedule exactly `[[1,1,8],[2,128,1]]`;
+- new container `qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r15`, port 18138, and a
+  previously nonexistent compile-cache directory.
+
+## Ordered gates
+
+1. Direct-verify every model weight and exact image/patch label, then confirm
+   the live MTP8-to-MTP1 schedule.
+2. Require c2 output isolation, engine health, 7/7 sequential exact cases,
+   8/8 repeat stability, and exact frozen-baseline agreement.
+3. After one excluded conditioner, require the first eligible single-user row
+   to return 128 cache-zero tokens at **at least 139.955438 tok/s** (2% above
+   the promoted MTP7 median).
+4. After one excluded transition, require the declared c64 batch to return all
+   8192 tokens with complete IDs, zero cached tokens, and zero cross-base
+   collisions at **at least 1080.220794 aggregate tok/s** (98% of the promoted
+   c64 median).
+5. Require **512/512 synchronized exact-answer requests**, all cache-zero,
+   followed by a healthy endpoint and zero-exit stop.
+6. Preserve raw logs, inspection, checksums, and excluded receipts.
+
+A pass authorizes only a separately preregistered R16 replication. Failure
+closes this exact MTP8 treatment and retains MTP7. No missing concurrency,
+context, or MTP depth is inferred, interpolated, or extrapolated.
