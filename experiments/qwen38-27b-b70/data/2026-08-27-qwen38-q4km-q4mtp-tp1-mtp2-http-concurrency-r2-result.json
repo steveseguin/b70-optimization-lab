@@ -1,0 +1,123 @@
+{
+  "schema": "neural.download.qwen38-q4mtp-http-concurrency-result.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2",
+  "status": "output-isolation-and-concurrent-canary-qualified",
+  "measured_at": "2026-08-27",
+  "identity": {
+    "target_model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_model_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "oracle_digests_sha256": "0bff10d407ea22b7138b4d68c2602869d877a09ba0c48cb8686d6a43bb398fbb",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "runtime": "llama.cpp SYCL",
+    "endpoint": "native HTTP /completion",
+    "target_quantization": "Q4_K_M",
+    "draft_quantization": "Q4_0",
+    "mtp_depth": 2,
+    "kv_cache": "f16 target and draft",
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0
+  },
+  "selected_capacity": {
+    "parallel_slots": 16,
+    "context_tokens_total": 8192,
+    "nominal_context_tokens_per_slot": 512,
+    "selection": "First healthy profile in the preregistered bounded capacity descent."
+  },
+  "unsupported_larger_profiles": [
+    {
+      "parallel_slots": 64,
+      "context_tokens_total": 32768,
+      "status": "startup OOM before any request"
+    },
+    {
+      "parallel_slots": 64,
+      "context_tokens_total": 16384,
+      "status": "startup OOM before any request"
+    },
+    {
+      "parallel_slots": 32,
+      "context_tokens_total": 16384,
+      "status": "startup OOM before any request"
+    }
+  ],
+  "qualification": {
+    "fresh_server_attempts": [4, 5],
+    "attempts_passed": 2,
+    "completion_tokens_128_all": true,
+    "complete_raw_token_ids_all": true,
+    "cached_tokens_zero_all": true,
+    "cross_base_oracle_collision_count": 0,
+    "point_relative_range_at_most_10_percent": true,
+    "maximum_relative_range_percent": 3.032398308617924,
+    "concurrent_semantic_canary": {
+      "concurrency": 16,
+      "requests_per_attempt": 128,
+      "attempts": 2,
+      "passed": 256,
+      "failed": 0,
+      "cached_tokens_nonzero": 0
+    },
+    "sequential_token_identity_boundary": "The one-user output matched the frozen target-only sequential oracle in both attempts. Multi-user greedy output was batch-shape-dependent, so this is output-isolation-qualified with a separate 256/256 concurrent exact-answer semantic gate, not token-identity-qualified at every batch shape."
+  },
+  "points": [
+    {
+      "concurrent_users": 1,
+      "aggregate_tok_s": 34.89261578012342,
+      "per_user_tok_s": 34.89261578012342,
+      "attempt_values": [35.269482383483876, 34.51574917676296],
+      "relative_range_percent": 2.1601510516453755,
+      "samples": 2
+    },
+    {
+      "concurrent_users": 2,
+      "aggregate_tok_s": 41.25496493747313,
+      "per_user_tok_s": 20.627482468736567,
+      "attempt_values": [41.88047236696556, 40.62945750798071],
+      "relative_range_percent": 3.032398308617924,
+      "samples": 2
+    },
+    {
+      "concurrent_users": 4,
+      "aggregate_tok_s": 52.3551634776993,
+      "per_user_tok_s": 13.088790869424825,
+      "attempt_values": [53.08608696818907, 51.62423998720953],
+      "relative_range_percent": 2.792173462703862,
+      "samples": 2
+    },
+    {
+      "concurrent_users": 8,
+      "aggregate_tok_s": 47.914052836702545,
+      "per_user_tok_s": 5.989256604587818,
+      "attempt_values": [48.29641585178973, 47.53168982161536],
+      "relative_range_percent": 1.5960370390304086,
+      "samples": 2
+    },
+    {
+      "concurrent_users": 16,
+      "aggregate_tok_s": 68.34116883301498,
+      "per_user_tok_s": 4.271323052063436,
+      "attempt_values": [68.96547754267002, 67.71686012335994],
+      "relative_range_percent": 1.827035505291042,
+      "samples": 2
+    }
+  ],
+  "strict_sequential_oracle_exact": {
+    "attempt_4": ["1/1", "1/2", "1/4", "4/8", "9/16"],
+    "attempt_5": ["1/1", "1/2", "1/4", "5/8", "9/16"]
+  },
+  "raw_artifacts": {
+    "attempt_4_root": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-attempt4",
+    "attempt_5_root": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-attempt5",
+    "sha256": {
+      "attempt4/result.json": "6a64da25e42e24eb8aad90d7d5ff567eed3ceb330e3d8b96cbb134e0f2c4883e",
+      "attempt4/qualification.json": "9f40c3893399c9a3403d6c094a7048be1753d0a53ee5ab78d6e939b9eeb24d7f",
+      "attempt4/concurrent-quality-canary.json": "0070e58d125f3e1a473d9493e7b2c9922c3ae68031f57f3649d3be7394dfd5ec",
+      "attempt5/result.json": "d0458b1e1c4115e19b63880ddceeb9cc6890e994a231b0becf2288735fe28de9",
+      "attempt5/qualification.json": "649d2bdef246909a3dcd9ed4d19d90eb94123e82a9c693128b94867f33e6f088",
+      "attempt5/concurrent-quality-canary.json": "0728bfc9e84d76fd0219f8575ffb95337c9962f34b5a819c5ec587415d86c85c"
+    }
+  },
+  "publication_boundary": "Every displayed point is the median of two directly measured fresh-server attempts. No interpolation or extrapolation. This is a 16-slot, 8K-total-context service profile; it is not a 32K-per-user result and must not be compared as capacity-equivalent to the target-only 64-slot/32K-total profile."
+}

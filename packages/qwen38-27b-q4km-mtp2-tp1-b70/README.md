@@ -20,5 +20,13 @@ decode at 4K/8K/16K/24K/32K. The exact 32K point is `37.583325 tok/s` with
 `39.439 s` TTFT. This is Grade D repeated-token shape evidence, not natural
 prose. The 2K fixture reproducibly diverged at generated token 23 and remains
 quarantined, so MTP2 is not claimed universally target-exact. The target-only
-or MTP2 concurrency curves do not transfer; exact MTP2 concurrency remains
-open until measured directly.
+concurrency curve does not transfer.
+
+The directly measured MTP2 HTTP service profile supports 16 slots with 8K
+total context (512 nominal tokens per slot). Two fresh servers measured
+**68.341 aggregate tok/s at 16 concurrent users**; every throughput response
+returned 128 uncached token IDs and **256/256** separate concurrent exact-answer
+canaries passed. Multi-user greedy tokens remain batch-shape-dependent, so this
+is output-isolation-qualified rather than token-identical at every batch shape.
+The 32- and 64-slot profiles failed startup with device OOM and are not
+supported on one B70. See the [structured concurrency result](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json).

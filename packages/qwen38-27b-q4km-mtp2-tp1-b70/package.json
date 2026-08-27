@@ -99,6 +99,23 @@
         {"context_tokens": 24576, "value": 28201.415912015364, "samples": 1},
         {"context_tokens": 32768, "value": 39439.232949051075, "samples": 1}
       ]
+    },
+    {
+      "id": "http-output-audited-aggregate-vs-concurrent-users",
+      "label": "Output-audited MTP2 HTTP aggregate decode",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "llama.cpp native HTTP /completion on one B70 with Q4_K_M target, Q4_0 MTP draft at depth 2, 16 slots, 8K total F16 target/draft context (512 nominal tokens per slot), prompt cache and slot similarity disabled, unique short prompts, and 128 returned raw token IDs per throughput request. Each marker is the median of two fresh-server attempts whose relative range was at most 3.04%; 256/256 separate concurrent exact-answer canaries passed. Multi-user greedy output is batch-shape-dependent. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json",
+      "points": [
+        {"concurrent_sequences": 1, "value": 34.89261578012342, "per_user_value": 34.89261578012342, "samples": 2},
+        {"concurrent_sequences": 2, "value": 41.25496493747313, "per_user_value": 20.627482468736567, "samples": 2},
+        {"concurrent_sequences": 4, "value": 52.3551634776993, "per_user_value": 13.088790869424825, "samples": 2},
+        {"concurrent_sequences": 8, "value": 47.914052836702545, "per_user_value": 5.989256604587818, "samples": 2},
+        {"concurrent_sequences": 16, "value": 68.34116883301498, "per_user_value": 4.271323052063436, "samples": 2}
+      ]
     }
   ],
   "hardware": {
@@ -121,7 +138,7 @@
   },
   "known_limitations": [
     "The 42.636988 tok/s headline is short-context single-user native HTTP. A separate Grade D shape sweep is exact at 4K-32K, including 37.583325 tok/s at 32K, but the 2K fixture reproducibly diverged from MTP0 at generated token 23. MTP2 is therefore not universally target-exact across context/content shapes.",
-    "Output-qualified concurrency remains unmeasured for this MTP2 deployment.",
+    "Output-qualified concurrency reaches 68.341 aggregate tok/s at 16 users only in the measured 16-slot/8K-total service profile. Larger 32- and 64-slot MTP2 profiles failed startup with device OOM; this is not a 32K-per-user or 64-user claim.",
     "MTP5 is explicitly unsafe for this identity: it changed all 12 complete target outputs and is not a supported speed mode.",
     "The tested 16 GiB host used swap and a 13 GiB process memory cap. A clean-host Intel/oneAPI install and source-build replay remain pending.",
     "The target and MTP draft come from two pinned repositories/revisions and both downloads are required."
@@ -159,6 +176,12 @@
     "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-mtp0-vs-q4mtp-mtp2-r3-comparison.json",
     "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json",
     "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-report-recovery-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r1-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-capacity-amendment.json",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.md",
+    "experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r1.sh",
+    "experiments/qwen38-27b-b70/scripts/qwen38-concurrent-quality-canary.py",
     "experiments/qwen38-27b-b70/scripts/recover-20260827-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2.py",
     "experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q4km-q4mtp-tp1-screen-attempt.sh",
     "scripts/bench-openai-realistic-suite.py",
@@ -167,7 +190,6 @@
   ],
   "missing": [
     "representative natural-prompt long-context HTTP speed and TTFT for this MTP2 profile",
-    "output-qualified HTTP concurrency curve for this MTP2 profile",
     "tested clean-host Intel driver and oneAPI installation",
     "clean-host source build and endpoint replay",
     "beginner recovery flow"

@@ -99,7 +99,18 @@ See the [structured partial result](../../experiments/qwen38-27b-b70/data/2026-0
 
 This means MTP2 is not universally target-exact across context/content shapes;
 do not treat the partial curve as a whole-profile quality pass. The no-MTP
-concurrency curve does not transfer, and output-qualified MTP2 concurrency is
-still unmeasured. The tested small host had 16 GiB RAM plus swap; the launcher
-caps the scope at 13 GiB RAM and 12 GiB swap. Stop competing model processes
-before launch.
+concurrency curve does not transfer.
+
+The directly measured MTP2 serving profile is 16 slots with `--ctx-size 8192`
+(512 nominal context tokens per slot). Across two fresh servers, aggregate
+decode measured 34.893/41.255/52.355/47.914/**68.341 tok/s** at
+1/2/4/8/16 concurrent users. All throughput requests returned 128 uncached raw
+token IDs, output isolation passed, and 256/256 separate 16-way exact-answer
+canaries passed. Multi-user greedy output is batch-shape-dependent, so it is
+not a token-identity claim. Attempts at 32 slots/16K total and 64 slots at both
+16K and 32K total failed startup with device OOM; do not advertise more than
+16 active MTP2 users on one B70 from this evidence. The exact commands and raw
+receipts are linked from the [concurrency result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.md).
+
+The tested small host had 16 GiB RAM plus swap; the launcher caps the scope at
+13 GiB RAM and 12 GiB swap. Stop competing model processes before launch.

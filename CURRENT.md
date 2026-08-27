@@ -43,10 +43,14 @@ Do not reuse the target-only context or concurrency values for this deployment.
 The exact MTP2 context campaign measured target-oracle-exact 4K-32K cells,
 including **37.583325 tok/s** and **39.439 s TTFT** at 32K, but reproducibly
 diverged at 2K/generated token 23. The curve is therefore Grade D partial and
-MTP2 is not universally target-exact across context/content shapes. The next
-campaign is output-qualified unique-prompt HTTP concurrency; natural-prompt
-long-context evidence also remains open. No benchmark process is currently
-live.
+MTP2 is not universally target-exact across context/content shapes. The
+output-qualified HTTP concurrency campaign is also complete: the first viable
+one-B70 MTP2 capacity was 16 slots/8K total context, where two fresh servers
+measured **68.341 aggregate tok/s at 16 users** and 256/256 concurrent
+exact-answer canaries passed. The 32-slot/16K and 64-slot/16K or 32K profiles
+failed startup with device OOM. Multi-user greedy output remains
+batch-shape-dependent, so this is output-isolation-qualified. Natural-prompt
+long-context evidence remains open. No benchmark process is currently live.
 
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or

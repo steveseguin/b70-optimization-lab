@@ -68,8 +68,8 @@ qualified MTP depth 2 at **`42.636988 tok/s`**. The value is the median of two
 fresh-server full fixed-suite attempts (`42.600910`, `42.673065`), not the
 earlier selected fixture. Both attempts passed cache-zero and objective-canary
 gates and matched 12/12 complete arrays against each other and the same-build
-MTP0 oracle. MTP5 matched 0/12 and is rejected. Exact MTP2 32K and concurrency
-remain unmeasured and are not inherited from the no-MTP package. See the
+MTP0 oracle. MTP5 matched 0/12 and is rejected. MTP2 context and concurrency
+were measured separately and are not inherited from the no-MTP package. See the
 [MTP2 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.md).
 
 The follow-up MTP2 exact-depth audit did not justify a whole-profile pass. The
@@ -79,6 +79,15 @@ point measured **`37.583325 tok/s`** with **`39.439 s` TTFT**. Those five cells
 are published only as Grade D partial synthetic-shape evidence. They do not
 establish natural-prose long-context behavior, repair the 2K failure, or imply
 intermediate values. See the [partial depth result](../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json).
+
+The subsequent MTP2 concurrency campaign qualified a smaller serving profile:
+16 slots with 8K total configured context. Two fresh servers measured
+**`68.341 aggregate tok/s`** at 16 users, all throughput responses returned 128
+uncached token IDs, and 256/256 concurrent exact-answer canaries passed.
+Multi-user greedy output remained batch-shape-dependent, so the result is
+output-isolation-qualified rather than token-identical. The 32-slot/16K and
+64-slot/16K or 32K profiles failed startup with device OOM. No intermediate or
+larger-capacity value is inferred. See the [structured concurrency result](../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json).
 
 The LocalMaxxing submission `cmtb5n45n0021qq01n13vly2h` was built from the
 incomplete FP8 evidence and is premature. Repository surfaces mark withdrawal

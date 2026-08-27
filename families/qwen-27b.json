@@ -2185,7 +2185,7 @@
       "workload": "Two fresh servers; fixed 12-prompt/six-class raw native HTTP suite; 512-token cap; median of class medians; conventional events 1-100 over 99 intervals after TTFT",
       "metrics": {"decode_tok_s": [42.63698751409024]},
       "quality": "Both replicas passed workload, cache-zero, and objective canary gates; 12/12 complete arrays were exact between replicas and against the same-build MTP0 target-only control.",
-      "caveat": "Single-user short-context only. MTP5 matched 0/12 target arrays and is rejected. No 32K or concurrency authority transfers from the target-only package.",
+      "caveat": "Single-user short-context headline only. MTP5 matched 0/12 target arrays and is rejected. No 32K or concurrency authority transfers from the target-only package; separately measured MTP2 context and concurrency profiles appear below.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json"
     },
     {
@@ -2213,6 +2213,32 @@
       "quality": "All six exact-depth transport/cache gates and objective canaries passed; displayed 4K-32K points exactly match the same-target same-runtime MTP0 token oracle.",
       "caveat": "Partial Grade D curve. The whole arm remains failed because 2K diverged reproducibly at generated token 23; 2K is quarantined. Synthetic repeated-token shape fixture, not natural prose; no interpolation, extrapolation, headline, or concurrency authority.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json"
+    },
+    {
+      "id": "q38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+      "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5",
+      "quantization": "Q4_K_M",
+      "variant": "Q4_K_M target with external Q4_0 MTP2 · 16-slot/8K-total HTTP",
+      "runtime": "llama.cpp SYCL",
+      "runtime_family": "llama.cpp SYCL",
+      "profile_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2",
+      "measurement_class": "two-fresh-server-output-isolation-and-concurrent-canary-qualified-native-http",
+      "config": {"tp": 1, "mtp": 2, "graph": "off", "kv": "f16", "draft_kv": "f16", "reasoning_enabled": false, "parallel_slots": 16, "configured_max_context_tokens": 8192, "prompt_cache": false},
+      "workload": "Unique short prompts; 128 returned token IDs per throughput request; cache zero; two fresh servers; separate 16-way exact-answer canary repeated eight times per attempt",
+      "axis": "concurrent_users",
+      "points": [
+        {"x": 1, "aggregate_tok_s": 34.89261578012342, "per_user_tok_s": 34.89261578012342, "samples": 2},
+        {"x": 2, "aggregate_tok_s": 41.25496493747313, "per_user_tok_s": 20.627482468736567, "samples": 2},
+        {"x": 4, "aggregate_tok_s": 52.3551634776993, "per_user_tok_s": 13.088790869424825, "samples": 2},
+        {"x": 8, "aggregate_tok_s": 47.914052836702545, "per_user_tok_s": 5.989256604587818, "samples": 2},
+        {"x": 16, "aggregate_tok_s": 68.34116883301498, "per_user_tok_s": 4.271323052063436, "samples": 2}
+      ],
+      "quality": "All throughput requests returned 128 uncached token IDs with zero cross-base collisions; 256/256 concurrent exact-answer canaries passed across the two attempts.",
+      "caveat": "8K total configured context, 512 nominal tokens per slot. Multi-user greedy output is batch-shape-dependent. The 32-slot/16K and both 64-slot profiles failed startup with device OOM; no interpolation or extrapolation.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json"
     },
     {
       "id": "q38-q4km-tp2-conventional",

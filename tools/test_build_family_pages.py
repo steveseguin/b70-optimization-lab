@@ -79,6 +79,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">165.4&dagger;</a>", index_html)
         self.assertIn(">163.6&dagger;</a>", index_html)
         self.assertIn(">1,112.6&dagger;</a>", index_html)
+        self.assertIn(">68.3&dagger;</a>", index_html)
         self.assertNotIn("raw&dagger;", index_html)
         self.assertNotIn("HTTP&dagger;", index_html)
         fp8_row = re.search(
