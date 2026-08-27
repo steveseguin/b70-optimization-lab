@@ -7,7 +7,15 @@ build_dir=${BUILD_DIR:?set BUILD_DIR}
 gpu=${GPU_INDEX:-0}
 host=${HOST_ADDR:-127.0.0.1}
 port=${PORT:-18139}
+ctx_size=${CTX_SIZE:-8192}
+parallel_slots=${PARALLEL_SLOTS:-1}
+ubatch_size=${UBATCH_SIZE:-512}
+threads=${THREADS:-16}
 [[ "${gpu}" =~ ^[0-9]+$ ]] || { printf 'GPU_INDEX must be numeric\n' >&2; exit 2; }
+[[ "${ctx_size}" =~ ^[1-9][0-9]*$ ]] || { printf 'CTX_SIZE must be positive\n' >&2; exit 2; }
+[[ "${parallel_slots}" =~ ^[1-9][0-9]*$ ]] || { printf 'PARALLEL_SLOTS must be positive\n' >&2; exit 2; }
+[[ "${ubatch_size}" =~ ^[1-9][0-9]*$ ]] || { printf 'UBATCH_SIZE must be positive\n' >&2; exit 2; }
+[[ "${threads}" =~ ^[1-9][0-9]*$ ]] || { printf 'THREADS must be positive\n' >&2; exit 2; }
 pgrep -x llama-server >/dev/null && { printf 'Another llama-server is running\n' >&2; exit 1; }
 "${script_dir}/preflight.sh"
 set +u
@@ -30,6 +38,6 @@ exec systemd-run --user --scope --quiet --property=MemoryHigh=11G --property=Mem
   --model-draft "${draft_dir}/mtp-Qwen3.8-27B-Q4_0.gguf" --device-draft SYCL0 --gpu-layers-draft 99 \
   --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-n-min 0 --spec-draft-p-min 0 \
   --cache-type-k f16 --cache-type-v f16 --cache-type-k-draft f16 --cache-type-v-draft f16 \
-  --flash-attn on --batch-size 2048 --ubatch-size 512 --cache-ram 0 --ctx-checkpoints 0 \
-  --reasoning off --threads 16 --poll 50 --ctx-size 8192 --parallel 1 --cont-batching \
+  --flash-attn on --batch-size 2048 --ubatch-size "${ubatch_size}" --cache-ram 0 --ctx-checkpoints 0 \
+  --reasoning off --threads "${threads}" --poll 50 --ctx-size "${ctx_size}" --parallel "${parallel_slots}" --cont-batching \
   --no-cache-prompt --slot-prompt-similarity 0 --metrics --host "${host}" --port "${port}"

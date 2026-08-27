@@ -1,0 +1,60 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-prereg.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-20260827-r1",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-27",
+  "purpose": "Fill the exact Q4_K_M plus Q4_0 MTP2 active-context decode and TTFT gap through 32K without inheriting target-only values.",
+  "identity": {
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "gpu": "one Intel Arc Pro B70 32 GiB",
+    "tp": 1,
+    "mtp_depth": 2,
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "graph": "off",
+    "reasoning": "off"
+  },
+  "server_profile": {
+    "context_tokens_total": 33024,
+    "parallel_slots": 1,
+    "flash_attention": true,
+    "batch_size": 2048,
+    "ubatch_size": 512,
+    "prompt_cache": false,
+    "slot_prompt_similarity": 0,
+    "fit": "off"
+  },
+  "measurement": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "fixture_sha256": "ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9",
+    "active_context_tokens": [2048, 4096, 8192, 16384, 24576, 32768],
+    "max_output_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "fresh_server_attempts": 1,
+    "required_gates": [
+      "exact submitted and reported prompt depth",
+      "cached_tokens=0",
+      "no truncation or context shift",
+      "128 returned raw token IDs",
+      "exact output-token digest match to the same-target same-runtime MTP0 oracle at every depth",
+      "objective canaries pass",
+      "positive finite draft counters"
+    ]
+  },
+  "oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-tp1-mtp0-exact-depth-token-oracle.json",
+    "sha256": "922be29c65b173872a6857205a33bc78d54572f5d6dac8f8100b69ebbac131ff"
+  },
+  "publication": {
+    "evidence_grade": "C synthetic repeated-token shape fixture; not representative natural prose",
+    "no_interpolation_or_extrapolation": true,
+    "configured_context_is_not_active_context": true,
+    "no_single_user_headline_authority": true,
+    "failed_or_divergent_depths_remain_failed_or_quarantined": true,
+    "target_only_context_values_do_not_transfer": true
+  }
+}
