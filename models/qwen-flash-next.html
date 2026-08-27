@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qwen3.8 Flash-Next · 125B-A6B on Intel Arc Pro B70 — neural.download</title>
+<meta name="description" content="Qwen&#x27;s experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass. Every number links to its measured proof.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/models/qwen-flash-next.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/models/qwen-flash-next.html">
+<meta property="og:title" content="Qwen3.8 Flash-Next · 125B-A6B on Intel Arc Pro B70 — neural.download">
+<meta property="og:description" content="Qwen&#x27;s experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass. Every number links to its measured proof.">
+<meta property="og:image" content="https://neural.download/models/cards/qwen-flash-next.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen-flash-next.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Qwen3.8 Flash-Next · 125B-A6B measured on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/models/qwen-flash-next.html">
+<meta name="twitter:title" content="Qwen3.8 Flash-Next · 125B-A6B on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:description" content="Qwen&#x27;s experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass. Every number links to its measured proof.">
+<meta name="twitter:image" content="https://neural.download/models/cards/qwen-flash-next.png">
+<meta name="twitter:image:alt" content="Qwen3.8 Flash-Next · 125B-A6B measured on Intel Arc Pro B70 — neural.download">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Qwen3.8 Flash-Next · 125B-A6B", "description": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass.", "url": "https://neural.download/models/qwen-flash-next.html", "dateModified": "2026-08-27", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .family-main { max-width: 1120px; }
+  .lineage { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+  .lineage span { padding:5px 8px; border:1px solid rgba(255,255,255,.7); font:700 10px var(--mono); text-transform:uppercase; }
+  .artifact-disclosure { flex-basis:100%; font:600 10px var(--mono); }
+  .artifact-disclosure summary { cursor:pointer; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(255,255,255,.7); text-transform:uppercase; }
+  .artifact-disclosure ul { margin:7px 0 0; padding:8px 10px 8px 28px; background:rgba(255,255,255,.08); line-height:1.6; overflow-wrap:anywhere; }
+  .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero h1 { font-size:clamp(22px, 2.6vw, 32px); }
+  .hero-headline { display:flex; align-items:baseline; gap:10px 14px; flex-wrap:wrap; margin:14px 0 0; color:inherit; text-decoration:none; }
+  .hero .hero-headline .big { font:900 clamp(54px, 7vw, 84px)/1 var(--display); color:var(--paper, #fff); }
+  .hero .hero-headline .unit { font:700 12px/1.25 var(--mono); text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.85); }
+  .hero .hero-headline .gloss { font-size:13px; color:rgba(255,255,255,.9); }
+  .hero .hero-headline small { flex-basis:100%; color:rgba(255,255,255,.75); font-size:12.5px; }
+  .result-strip { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin:0 0 14px; }
+  .result { display:block; border:2px solid var(--ink); background:var(--paper); padding:11px 12px 9px; }
+  .result.is-featured { border-color:var(--spot); }
+  .result:hover { border-color:var(--spot); }
+  .result .r-kind { display:block; font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .result b { font:900 27px/1.15 var(--display); }
+  .result .r-unit { margin-left:5px; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .result .r-note { display:block; font-size:11px; color:var(--muted); }
+  .result .r-gate { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .result.is-screened .r-gate { color:var(--warn); }
+  .family-cta { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
+  .family-cta .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 14px; border:2px solid var(--ink); background:var(--ink); color:var(--paper); font:700 11px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .family-cta .button:hover { background:var(--spot); border-color:var(--spot); color:#fff; }
+  .family-cta .button.secondary { background:transparent; color:var(--ink); }
+  .family-cta .button.secondary:hover { background:var(--ink); color:var(--paper); }
+  .cta-note { font-size:12px; color:var(--muted); }
+  .packet-note { display:block; margin-top:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--warn); }
+  .meta-strip { display:flex; flex-wrap:wrap; gap:8px 26px; margin:0 0 20px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .meta-strip div { cursor:help; }
+  .meta-strip dt { font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .meta-strip dd { margin:1px 0 0; font-size:12.5px; }
+  .stat-row { display:grid; grid-template-columns:minmax(150px,1fr) auto; gap:5px 14px; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .stat-values { display:flex; flex-wrap:wrap; justify-content:end; gap:8px 14px; }
+  .stat-metric { display:grid; grid-template-columns:auto auto; align-items:baseline; column-gap:4px; }
+  .stat-metric small { grid-column:1 / -1; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
+  .stat-row .m { text-align:right; }
+  .stat-row:last-child { border-bottom:0; }
+  .stat-row b { font:900 20px/1 var(--display); }
+  .stat-row .u { font:700 10px var(--mono); text-transform:uppercase; color:var(--muted); margin-left:4px; }
+  .stat-row .l { font-size:12.5px; }
+  .stat-row .m { grid-column:1 / -1; font:11px var(--mono); color:var(--muted); }
+  .stat-row.is-superseded { color:var(--muted); }
+  .stat-row.is-superseded b { font:700 15px/1 var(--display); color:var(--muted); }
+  .combo-list { list-style:none; margin:0; padding:0; border:2px solid var(--ink); background:var(--paper); }
+  .contract-grid { display:grid; gap:12px; margin-bottom:14px; }
+  .contract-overview { border:2px solid var(--ink); padding:12px; margin-bottom:12px; background:var(--surface); }
+  .contract-overview-head span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; }
+  .contract-overview-head b { display:block; margin-top:3px; font:900 23px/1 var(--display); text-transform:uppercase; }
+  .contract-overview-rail { display:flex; width:100%; height:9px; margin-top:11px; overflow:hidden; border:1px solid var(--ink); background:var(--paper); }
+  .contract-overview-rail .is-lab-measured { background:var(--good); }
+  .contract-overview-rail .is-estimated { background:var(--spot); }
+  .contract-overview-rail .is-quarantined { background:#a12820; }
+  .contract-overview-rail .is-missing { background:var(--line); }
+  .contract-overview-rail .is-lab-screened, .contract-overview-rail .is-closed { background:var(--warn); }
+  .contract-overview-rail .is-community-measured { background:var(--s2); }
+  .contract-overview-rail .is-unsupported { background:var(--muted); }
+  .contract-overview-counts { display:flex; flex-wrap:wrap; gap:5px 14px; margin-top:8px; font:10px var(--mono); text-transform:uppercase; }
+  .contract-card { border:2px solid var(--ink); background:var(--paper); padding:12px; }
+  .contract-head { display:flex; justify-content:space-between; gap:16px; align-items:start; }
+  .contract-head h3 { margin:0; font:900 17px/1.1 var(--display); text-transform:uppercase; }
+  .contract-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
+  .contract-head > b { font:900 25px/1 var(--display); white-space:nowrap; }
+  .contract-stats, .contract-state-rail { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font:10px var(--mono); text-transform:uppercase; }
+  .contract-state-rail span { padding:3px 6px; border:1px solid var(--line); }
+  .contract-filters { margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .contract-filters summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters div { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:7px; }
+  .contract-filters strong { min-width:110px; font:700 10px var(--mono); text-transform:uppercase; }
+  .contract-filters span { padding:3px 6px; background:var(--surface); font:9px var(--mono); }
+  .combo { display:grid; grid-template-columns:130px 1fr auto auto; gap:4px 12px; align-items:baseline; padding:9px 12px; border-bottom:1px solid var(--line); }
+  .combo:last-child { border-bottom:0; }
+  .combo .c-state { font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .combo.is-lab-measured .c-state { color:var(--good); }
+  .combo.is-lab-screened .c-state { color:var(--warn); }
+  .combo.is-quarantined .c-state { color:#a12820; }
+  .combo .c-what { font-size:12.5px; }
+  .combo .c-what code { font:8.5px var(--mono); color:var(--muted); border:1px solid var(--line); padding:0 4px; vertical-align:1px; }
+  .combo .c-dead { font-size:11.5px; color:var(--muted); font-weight:400; }
+  .combo .c-val { font:700 13px var(--mono); white-space:nowrap; }
+  .combo .c-links { font:11px var(--mono); white-space:nowrap; }
+  .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
+  .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
+  .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .combo-gaps { margin:0 0 6px; }
+  .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
+  .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
+  h2, .section-head { scroll-margin-top:70px; }
+  @media (max-width:520px) {
+    .combo { grid-template-columns:1fr; gap:2px; }
+    .stat-row { grid-template-columns:1fr; }
+    .result-strip { grid-template-columns:1fr; }
+  }
+  .signal[title] { cursor: help; }
+  .placeholder { margin:10px 0 22px; padding:12px 16px; border:2px solid var(--line); background:var(--surface); color:var(--muted); }
+  .placeholder p { margin:0; font-size:13.5px; }
+  .badge.todo { background:var(--surface); color:var(--muted); border-color:var(--muted); }
+  .hr-card { border:2px solid var(--ink); background:var(--paper); padding:13px 14px 11px; margin:0 0 12px; }
+  .hr-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+  .hr-card h3 { margin:0; font:900 15px var(--display); text-transform:uppercase; }
+  .hr-deploy { margin:3px 0 0; color:var(--muted); font:10.5px var(--mono); }
+  .hr-grade { flex:0 0 auto; text-align:right; }
+  .hr-grade-letter { display:block; font:900 26px/1 var(--display); color:var(--spot-dark); }
+  .hr-grade-note { display:block; margin-top:3px; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .hr-bar-row { display:grid; grid-template-columns:108px 1fr 78px; align-items:center; gap:8px; margin:5px 0; font:10.5px var(--mono); }
+  .hr-bar-label { color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .hr-bar-track { display:block; height:9px; background:var(--surface); border:1px solid var(--ink); }
+  .hr-bar { display:block; height:100%; background:var(--ink); }
+  .hr-bar.is-measured { background:var(--spot); }
+  .hr-bar.is-physical { background:var(--muted); opacity:.55; }
+  .hr-bar-value { text-align:right; font-weight:700; white-space:nowrap; }
+  .hr-bar-value small { font-weight:400; color:var(--muted); }
+  .hr-why { margin:9px 0 0; color:var(--muted); font-size:12px; }
+  .hr-links { margin:7px 0 0; font:10.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .hr-links a { border-bottom:1px solid currentColor; }
+  .visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+  details.fine { margin:0 0 22px; color:var(--muted); font-size:12.5px; }
+  details.fine summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+  details.fine p { margin:6px 0 0; }
+  details.fine .closure-note { margin-top:8px; }
+  .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:0 0 22px; }
+  .signal { border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
+  .signal span { display:block; color:var(--muted); font:700 9.5px var(--mono); text-transform:uppercase; letter-spacing:.05em; }
+  .signal b { display:block; margin-top:3px; font:900 18px var(--display); text-transform:uppercase; }
+  .signal small { display:block; margin-top:4px; color:var(--muted); line-height:1.3; }
+  .section-head { display:flex; align-items:end; justify-content:space-between; gap:18px; margin:34px 0 10px; }
+  .section-head h2 { margin:0; font:900 25px/1.1 var(--display); text-transform:uppercase; }
+  .section-head p { max-width:68ch; margin:0; color:var(--muted); font-size:13px; }
+  .views-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+  figure.family-view { margin:0; min-width:0; max-width:720px; }
+  .chart-head { display:flex; justify-content:space-between; gap:12px; align-items:start; min-height:64px; }
+  .chart-head h3 { margin:0; font:900 15px var(--display); text-transform:uppercase; }
+  .chart-head p { margin:3px 0 0; color:var(--muted); font-size:11.5px; line-height:1.35; }
+  .metric-switch, .coverage-switch { display:flex; flex-wrap:wrap; gap:4px; }
+  .metric-switch { justify-content:end; }
+  .metric-switch button, .coverage-switch button { appearance:none; border:1px solid var(--ink); padding:4px 7px; background:transparent; color:var(--ink); font:700 9px var(--mono); text-transform:uppercase; cursor:pointer; }
+  .metric-switch button[aria-pressed="true"], .coverage-switch button[aria-selected="true"] { background:var(--ink); color:var(--paper); }
+  .family-chart { min-height:210px; }
+  .gap-line { height:0!important; border-top:2px dashed var(--muted); background:transparent!important; }
+  .metric-fallback { width:100%; margin-top:9px; border-collapse:collapse; font-size:11px; }
+  .metric-fallback caption { padding-bottom:4px; text-align:left; font:700 9px var(--mono); text-transform:uppercase; }
+  .metric-fallback th, .metric-fallback td { padding:5px 7px; border-top:1px solid var(--line); text-align:left; vertical-align:top; }
+  .metric-fallback th { width:72px; font:700 9px var(--mono); text-transform:uppercase; }
+  .proof-links { display:block; margin-top:5px; }
+  .proof-links a { border-bottom:1px solid currentColor; }
+  .coverage-panel > p { margin:8px 0 0; color:var(--muted); font:11px var(--mono); }
+  .coverage-table td { min-width:130px; white-space:normal; }
+  .coverage-cell > a { display:block; color:inherit; text-decoration:none; }
+  .coverage-cell .cell-packet { display:inline-block; margin-top:5px; border-bottom:1px solid currentColor; color:var(--muted); font:700 8.5px var(--mono); text-transform:uppercase; }
+  .coverage-cell .state { display:block; font:700 9px var(--mono); text-transform:uppercase; }
+  .coverage-cell b { display:block; margin-top:3px; font:12px var(--mono); }
+  .is-lab-measured .state, .coverage-legend .is-lab-measured { color:var(--good); }
+  .is-lab-screened .state, .coverage-legend .is-lab-screened { color:var(--warn); }
+  .is-estimated .state, .coverage-legend .is-estimated { color:var(--spot-dark); }
+  .is-quarantined .state, .coverage-legend .is-quarantined { color:#a12820; }
+  .is-unsupported .state, .coverage-legend .is-unsupported { color:var(--muted); }
+  .is-closed .state, .coverage-legend .is-closed { color:var(--warn); }
+  .is-missing .state, .coverage-legend .is-missing { color:var(--muted); }
+  .coverage-legend { display:flex; flex-wrap:wrap; gap:5px 14px; margin:8px 0 0; font:10px var(--mono); text-transform:uppercase; }
+  .closure-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; }
+  .closure-card { display:block; border:1px solid var(--line); border-left:5px solid var(--warn); padding:9px 11px; background:var(--surface); }
+  .closure-card span { display:block; margin-bottom:4px; color:var(--muted); font:9px var(--mono); text-transform:uppercase; }
+  .closure-card b { font-size:11.5px; line-height:1.3; }
+  .packet-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:10px; }
+  .packet-card { display:block; border:2px solid var(--ink); padding:12px 13px; background:var(--paper); }
+  .packet-card:hover { border-color:var(--spot); }
+  .packet-top { display:flex; justify-content:space-between; gap:8px; color:var(--muted); font:700 9px var(--mono); text-transform:uppercase; }
+  .packet-top b { color:var(--good); text-align:right; }
+  .packet-badges { display:flex; justify-content:end; align-items:center; flex-wrap:wrap; gap:4px 7px; text-align:right; }
+  .opt-grade { padding:1px 4px; border:1px solid var(--spot); color:var(--spot-dark); }
+  .opt-grade[data-ready="true"] { background:var(--spot); color:#fff; }
+  .packet-card h3 { margin:7px 0 5px; font:900 15px/1.15 var(--display); text-transform:uppercase; }
+  .packet-card p { margin:0; color:var(--muted); font-size:12px; }
+  .packet-workload { display:block; margin-top:5px; color:var(--muted); font:9.5px/1.35 var(--mono); }
+  .grade-rail { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .curated-grade { padding:2px 5px; border:1px solid var(--ink); font:800 8.5px var(--mono); text-transform:uppercase; }
+  .curated-grade.is-pending { border-color:var(--line); color:var(--muted); }
+  .coverage-rail { display:flex; flex-wrap:wrap; gap:3px; margin-top:9px; }
+  .coverage-rail span { padding:2px 5px; background:var(--surface); border:1px solid var(--line); font:8.5px var(--mono); text-transform:uppercase; }
+  .scope-note { margin:12px 0 0; padding:10px 12px; border-left:5px solid var(--spot); background:var(--surface); font-size:12.5px; }
+  @media (max-width:850px) { .signals { grid-template-columns:repeat(2,minmax(0,1fr)); } .views-grid { grid-template-columns:1fr; } }
+  @media (max-width:520px) { .signals { grid-template-columns:1fr 1fr; } .section-head, .chart-head { display:block; } .metric-switch { justify-content:start; margin-top:7px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary"><a href="index.html" aria-current="page">Models</a><a href="../learn.html">Learn</a><a href="../guides.html">Recipes</a><a href="../index.html#lab-speeds">Benchmarks</a><a href="../index.html#contribute">Contribute</a><a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></nav>
+</div></div>
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Qwen3.8 Flash-Next · 125B-A6B</p>
+  <h1>Qwen3.8 Flash-Next · 125B-A6B</h1>
+  <p>Qwen&#x27;s experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass.</p>
+  <a class="hero-headline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json" title="qwen38-flash-next-fp8-tp4-research · One instrumentation-free server; p146/o256/c1; three sequential repetitive-prompt requests; full-output rate after first text, not the conventional 99-interval final gate"><span class="big">5.22</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 4 words a second</span><small>qwen38-flash-next · FP8 block-128 · vLLM XPU 658965050 + kernels 2f829747 · 4× B70 · Evidence C of A–D</small></a>
+  <div class="lineage"><span>Qwen3.8 Flash-Next · base post-trained weights</span><details class="artifact-disclosure"><summary>1 exact artifacts · 1 quantizations</summary><ul><li><code>qwen38-flash-next-fp8-bcd9f01</code> · FP8 block-128 · Qwen/Qwen3.8-Flash-Next-FP8@bcd9f01ddc9cff2316eb84281bebcd5b058bddce</li></ul></details></div>
+</div></header>
+<main id="main"><div class="wrap family-main">
+<div class="family-cta"><a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen38-flash-next-fp8-b70/README.md">Read the lab report</a><a class="inline" href="#packets">All packets and recipes</a><span class="cta-note">No step-by-step install guide is published for this model yet.</span></div>
+  <dl class="meta-strip" aria-label="Family signals">
+    <div title="TP4 plus EP4 with selective host placement on four 32-GiB B70 cards, reviewed 2026-08-27"><dt>B70 fit</dt><dd>Four card screened</dd></div>
+    <div title="5/7 strict cases twice and 15/16 majority repeat stability; no long-context, vision, or clean-host qualification"><dt>Quality evidence</dt><dd>Research only short screen</dd></div></dl>
+
+  <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
+  <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json">
+  <div class="packet-top"><span>qwen38-flash-next</span><span class="packet-badges"><b>B70-screened</b></span></div>
+  <h3 title="Qwen3.8 Flash-Next FP8 · TP4 research server">Qwen3.8 Flash-Next FP8 · TP4 research server</h3>
+  <p class="packet-promise">Measured evidence: <b>5.22 tok/s</b> on 4× B70 · research-only-quality-caveat</p>
+  <small class="packet-workload">One instrumentation-free server; p146/o256/c1; three sequential repetitive-prompt requests; full-output rate after first text, not the conventional 99-interval final gate</small>
+  <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
+  <div class="grade-rail"><span class="curated-grade" tabindex="0" title="exact attempt-19 TP4/EP4 eager text-serving identity · Exact model, source overlay, staged runtime, serving, short quality and three same-server speed observations are retained; full quality, independent fresh-server repeat, long context, vision and clean-host replay remain missing." aria-label="Evidence grade C: exact attempt-19 TP4/EP4 eager text-serving identity · Exact model, source overlay, staged runtime, serving, short quality and three same-server speed observations are retained; full quality, independent fresh-server repeat, long context, vision and clean-host replay remain missing.">Evidence C <small>of A–D</small></span></div>
+  <div class="coverage-rail"><span>TP4/EP4</span><span>MTP0</span><span>eager</span><span>text-only</span><span>configured max 512</span><span>short quality screen</span></div>
+</a></div>
+
+
+  <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
+  <section class="contract-overview" data-coverage-aggregate><div class="contract-overview-head"><div><span>Coverage · 1 matrices</span><b>1/420 classified</b></div></div><div class="contract-overview-rail" role="img" aria-label="419 missing, 1 screened"><span class="is-missing" data-coverage-state="missing" style="flex-grow:419" title="419 missing"></span><span class="is-lab-screened" data-coverage-state="lab-screened" style="flex-grow:1" title="1 screened"></span></div><div class="contract-overview-counts"><span class="is-missing"><b>419</b> missing</span><span class="is-lab-screened"><b>1</b> screened</span></div></section><div class="contract-grid"><section class="contract-card" data-coverage-contract="flash-next-serving-space"><div class="contract-head"><div><h3 title="Text and vision serving coverage">Text and vision serving coverage</h3><p>Exact Cartesian coverage contract.</p></div><b>1/420</b></div><div class="contract-stats"><span><b>420</b> exact cells</span><span><b>1</b> classified</span><span><b>0</b> measured</span><span><b>419</b> gaps</span><span><b>420</b> retry-tagged</span></div><div class="contract-state-rail"><span class="is-lab-screened"><b>1</b> ◇ screened</span><span class="is-missing"><b>419</b> · untested</span></div><p class="contract-fixed">Fixed: runtime_family=vLLM XPU · parallel_profile=TP=EP</p><details class="contract-filters"><summary>Break down by axis</summary><div><strong>Weight revision</strong><span title="◇ screened 1, · untested 419"><b>qwen38-flash-next</b> 1/420</span></div><div><strong>Artifact</strong><span title="◇ screened 1, · untested 419"><b>qwen38-flash-next-fp8-bcd9f01</b> 1/420</span></div><div><strong>Tensor parallel</strong><span title="· untested 140"><b>1</b> 0/140</span><span title="· untested 140"><b>2</b> 0/140</span><span title="◇ screened 1, · untested 139"><b>4</b> 1/140</span></div><div><strong>MTP depth</strong><span title="◇ screened 1, · untested 83"><b>0</b> 1/84</span><span title="· untested 84"><b>1</b> 0/84</span><span title="· untested 84"><b>2</b> 0/84</span><span title="· untested 84"><b>3</b> 0/84</span><span title="· untested 84"><b>4</b> 0/84</span></div><div><strong>Active context</strong><span title="◇ screened 1, · untested 59"><b>0</b> 1/60</span><span title="· untested 60"><b>2048</b> 0/60</span><span title="· untested 60"><b>4096</b> 0/60</span><span title="· untested 60"><b>8192</b> 0/60</span><span title="· untested 60"><b>16384</b> 0/60</span><span title="· untested 60"><b>24576</b> 0/60</span><span title="· untested 60"><b>32768</b> 0/60</span></div><div><strong>Graph mode</strong><span title="◇ screened 1, · untested 209"><b>off</b> 1/210</span><span title="· untested 210"><b>PIECEWISE</b> 0/210</span></div><div><strong>KV cache</strong><span title="◇ screened 1, · untested 419"><b>auto</b> 1/420</span></div><div><strong>Modality</strong><span title="◇ screened 1, · untested 209"><b>text</b> 1/210</span><span title="· untested 210"><b>vision</b> 0/210</span></div></details></section></div><div class="combo-block"><p class="combo-scope">Official FP8 child artifact, vLLM XPU, text, zero prior context, eager, automatic KV, and TP=EP where runnable. Fixed: revision=qwen38-flash-next · artifact_id=qwen38-flash-next-fp8-bcd9f01 · runtime_family=vLLM XPU · parallel_profile=TP=EP · active_context_tokens=0 · graph_mode=off · kv=auto · modality=text.</p><ul class="combo-list"><li class="combo is-lab-screened"><span class="c-state">◇ Speed check only</span><span class="c-what">4 cards, no speculative decoding <code>TP4·MTP0</code></span><b class="c-val">5.22 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/qwen38-flash-next-fp8-b70/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>14 untested combinations</summary><div class="gap-chips"><code title="1 card, no speculative decoding — fit design needed">TP1·MTP0</code><code title="2 cards, no speculative decoding — fit design needed">TP2·MTP0</code><code title="1 card, + speculative decoding (depth 1) — not measured">TP1·MTP1</code><code title="2 cards, + speculative decoding (depth 1) — not measured">TP2·MTP1</code><code title="4 cards, + speculative decoding (depth 1) — runtime port needed">TP4·MTP1</code><code title="1 card, + speculative decoding (depth 2) — not measured">TP1·MTP2</code><code title="2 cards, + speculative decoding (depth 2) — not measured">TP2·MTP2</code><code title="4 cards, + speculative decoding (depth 2) — not measured">TP4·MTP2</code><code title="1 card, + speculative decoding (depth 3) — not measured">TP1·MTP3</code><code title="2 cards, + speculative decoding (depth 3) — not measured">TP2·MTP3</code><code title="4 cards, + speculative decoding (depth 3) — not measured">TP4·MTP3</code><code title="1 card, + speculative decoding (depth 4) — not measured">TP1·MTP4</code><code title="2 cards, + speculative decoding (depth 4) — not measured">TP2·MTP4</code><code title="4 cards, + speculative decoding (depth 4) — not measured">TP4·MTP4</code></div></details><a class="inline" href="../families/qwen-flash-next.json">Full matrix and exact selectors</a></div></div>
+
+
+  <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/qwen-flash-next.json">family data</a></div>
+  <div class="views-grid"><figure class="chart family-view" data-family-view="qwen-flash-next-tp-screen">
+  <div class="chart-head"><div><h3 title="Research speed screen by TP">Research speed screen by TP <span class="view-flag">◇ screened, experimental</span></h3><p>Only TP4 has a bounded screen; three samples share one server and workload, so no mini-curve is implied</p></div><div class="metric-switch"></div></div>
+  <div class="stat-row"><span class="l">official FP8 · eager MTP0 · tensor parallel cards 4</span><span class="stat-values"><span class="stat-metric"><b>5.22</b><span class="u">tok/s</span><small>Decode</small></span><span class="stat-metric"><b>5,376</b><span class="u">ms</span><small>TTFT</small></span></span><span class="m">research only HTTP speed screen · not promotion eligible; short quality qualification failed · screened, not fully qualified · <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json">evidence</a></span></div>
+  <div class="legend"><span><i style="background:var(--s1)"></i>official FP8 · eager MTP0</span><span><i class="gap-line"></i>missing</span></div>
+  <figcaption><span class="proof-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json">evidence 1</a></span></figcaption>
+</figure></div>
+  <details class="fine"><summary>Fine print</summary><p>Qwen4Exp hybrid Gated DeltaNet/QSA sparse MoE, 48 layers, 2560 hidden. The FP8 repository is a quantized child of Qwen3.8 Flash-Next, not a separate model. Measurements remain artifact- and runtime-specific. Measurements, artifact hashes, outputs, quality decisions, and speed stay pinned to their exact recorded identity.</p></details>
+
+  <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
+  <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>
+
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2></div></div>
+  <div class="placeholder"><p>No projection is shown: this model is not in the ML Bottleneck catalog yet. The measured numbers above stand on their own.</p></div>
+
+  <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Recipes</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/qwen-flash-next.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
+</div></main>
+<footer><div class="wrap"><span>Unofficial lab, not affiliated with Intel. Measurements link to proof; estimates are labeled.</span><span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span></div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=1d7b21a0d3"></script>
+<script>
+(() => {
+  document.querySelectorAll('[data-family-view]').forEach(view => {
+    view.querySelectorAll('[data-metric-button]').forEach(button => button.addEventListener('click', () => {
+      const metric = button.dataset.metricButton;
+      view.querySelectorAll('[data-metric-button]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      view.querySelectorAll('[data-family-metric]').forEach(chart => chart.hidden = chart.dataset.familyMetric !== metric);
+      view.querySelectorAll('[data-family-summary]').forEach(summary => summary.hidden = summary.dataset.familySummary !== metric);
+    }));
+  });
+  const coverageTabs = Array.from(document.querySelectorAll('[data-coverage-button]'));
+  const activateCoverageTab = (button, moveFocus = false) => {
+    const panel = button.dataset.coverageButton;
+    coverageTabs.forEach(item => {
+      item.setAttribute('aria-selected', String(item === button));
+      item.tabIndex = item === button ? 0 : -1;
+    });
+    document.querySelectorAll('[data-coverage-panel]').forEach(item => item.hidden = item.dataset.coveragePanel !== panel);
+    if (moveFocus) button.focus();
+  };
+  coverageTabs.forEach((button, index) => {
+    button.addEventListener('click', () => activateCoverageTab(button));
+    button.addEventListener('keydown', event => {
+      let target = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') target = coverageTabs[(index + 1) % coverageTabs.length];
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') target = coverageTabs[(index - 1 + coverageTabs.length) % coverageTabs.length];
+      if (event.key === 'Home') target = coverageTabs[0];
+      if (event.key === 'End') target = coverageTabs[coverageTabs.length - 1];
+      if (target) { event.preventDefault(); activateCoverageTab(target, true); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

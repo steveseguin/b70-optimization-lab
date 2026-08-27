@@ -365,10 +365,10 @@ class FamilyCoverageTest(unittest.TestCase):
         }
         catalog = json.loads(MODULE.CATALOG.read_text())
         family_ids = {entry["id"] for entry in catalog["families"]}
-        self.assertEqual(len(family_ids), 17)
+        self.assertEqual(len(family_ids), len(catalog["families"]))
         self.assertLessEqual(expected | {"qwen-35b"}, family_ids)
         model_index = (MODULE.ROOT / "models/index.html").read_text()
-        for family_id in expected | {"qwen-35b"}:
+        for family_id in family_ids:
             self.assertIn(f'href="{family_id}.html"', model_index)
 
         registry = json.loads(MODULE.COVERAGE_REGISTRY.read_text())

@@ -1,0 +1,253 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "qwen-flash-next",
+  "primary_packet_id": "qwen38-flash-next-fp8-tp4-research",
+  "name": "Qwen Flash-Next",
+  "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
+  "publisher": "Qwen",
+  "updated_at": "2026-08-27",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass.",
+  "architecture": {
+    "class": "Qwen4Exp hybrid Gated DeltaNet/QSA sparse MoE",
+    "model_type": "qwen4_exp",
+    "design": "125B total, about 6B active, plus 51B n-gram embedding and 4B MTP",
+    "layers": 48,
+    "hidden_size": 2560,
+    "experts": 512,
+    "experts_used": 10,
+    "native_context_tokens": 262144,
+    "evidence": "results/qwen38-flash-next-fp8-b70/README.md"
+  },
+  "dimensions": {
+    "weight_revision": ["qwen38-flash-next"],
+    "weight_quantization": ["FP8 block-128"],
+    "runtime": ["vLLM XPU 658965050 + kernels 2f829747"],
+    "tp": [1, 2, 4],
+    "ep": [1, 2, 4],
+    "mtp": [0, 1, 2, 3, 4],
+    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "configured_max_context_tokens": [512, 1536, 262144],
+    "graph_mode": ["off", "PIECEWISE"],
+    "kv": ["auto"],
+    "modality": ["text", "vision"]
+  },
+  "weight_revisions": [
+    {
+      "id": "qwen38-flash-next",
+      "label": "Qwen3.8 Flash-Next",
+      "role": "base post-trained weights",
+      "repository": "Qwen/Qwen3.8-Flash-Next",
+      "revision_status": "The retained FP8 export identifies this base repository, but the exact parent base commit is not locally pinned.",
+      "quantized_artifacts": [
+        {
+          "id": "qwen38-flash-next-fp8-bcd9f01",
+          "label": "Official fine-grained block-FP8 export",
+          "quantization": "FP8 block-128",
+          "quantization_origin": "export",
+          "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+          "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+          "evidence": "model-intake/post-download-validation-20260826.md"
+        }
+      ]
+    }
+  ],
+  "model_variants": [],
+  "transfer_scope": {
+    "status": "The FP8 repository is a quantized child of Qwen3.8 Flash-Next, not a separate model. Measurements remain artifact- and runtime-specific.",
+    "transfers": [
+      "the Qwen4Exp architecture integration and model-specific source patches across exact weight formats after independent qualification",
+      "the artifact verification, cache-zero quality, and coverage workflow"
+    ],
+    "does_not_transfer": [
+      "attempt-19 performance or output behavior to unquantized weights, another export, or another runtime",
+      "the 512-token text screen to native 262K context or vision serving",
+      "MTP0 evidence to any speculative depth"
+    ],
+    "evidence": "results/qwen38-flash-next-fp8-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "four-card screened",
+      "scope": "TP4 plus EP4 with selective host placement on four 32-GiB B70 cards",
+      "basis": "The exact FP8 export became healthy and served real text requests on all four cards.",
+      "reviewed_at": "2026-08-27"
+    },
+    "quality_evidence": {
+      "band": "research-only-short-screen",
+      "scope": "5/7 strict cases twice and 15/16 majority repeat stability; no long-context, vision, or clean-host qualification",
+      "evidence": ["experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated popularity snapshot is stored for this exact FP8 artifact."
+    }
+  },
+  "run_measurements": [
+    {
+      "id": "qwen38-flash-next-fp8-tp4-attempt19",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 0,
+        "configured_max_context_tokens": 512,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-production-source-screen-v1",
+      "measurement_class": "research-only HTTP speed screen",
+      "promotion_status": "not promotion eligible; short quality qualification failed",
+      "quality_scope": "5/7 strict cases in both batteries; 15/16 repeat stability; substantive reasoning miss; no long-context, vision, or clean-host qualification",
+      "workload": "One instrumentation-free server; p146/o256/c1; three sequential repetitive-prompt requests; full-output rate after first text, not the conventional 99-interval final gate",
+      "metrics": {
+        "decode_tok_s": [5.221849709057954],
+        "ttft_ms": [5376.467669993872]
+      },
+      "raw_observations": {
+        "decode_tok_s": [5.142647219137399, 5.221849709057954, 5.289933931346957],
+        "ttft_ms": [7752.22969299648, 5376.467669993872, 4535.219874989707],
+        "aggregation": "median of three sequential same-server observations; all raw values remain in the evidence receipt"
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 5.221849709057954, "label": "median research screen; short quality failed"}
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
+    }
+  ],
+  "series_measurements": [],
+  "estimates": [],
+  "packets": [
+    {
+      "id": "qwen38-flash-next-fp8-tp4-research",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 research server",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+      "cards": 4,
+      "status": "research-only-quality-caveat",
+      "evidence_level": "B70-screened",
+      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512", "short quality screen"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "exact attempt-19 TP4/EP4 eager text-serving identity",
+          "basis": "Exact model, source overlay, staged runtime, serving, short quality and three same-server speed observations are retained; full quality, independent fresh-server repeat, long context, vision and clean-host replay remain missing.",
+          "reviewed_at": "2026-08-27",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "qwen38-flash-next-fp8-tp4-attempt19",
+        "sample_index": 0,
+        "value": 5.221849709057954,
+        "unit": "tok/s",
+        "workload": "One instrumentation-free server; p146/o256/c1; three sequential repetitive-prompt requests; full-output rate after first text, not the conventional 99-interval final gate",
+        "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
+      },
+      "manifest": "results/qwen38-flash-next-fp8-b70/README.md"
+    }
+  ],
+  "views": [
+    {
+      "id": "qwen-flash-next-tp-screen",
+      "title": "Research speed screen by TP",
+      "subtitle": "Only TP4 has a bounded screen; three samples share one server and workload, so no mini-curve is implied",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "missing_x": [1, 2],
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "official FP8 · eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-attempt19"], "x_from": "config.tp"}
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "qwen-flash-next-mtp-by-tp",
+      "label": "MTP depth × TP",
+      "fixed": "Official FP8 child artifact, vLLM XPU, text, zero prior context, eager, automatic KV, and TP=EP where runnable.",
+      "row_axis": {"key": "mtp", "label": "MTP depth", "prefix": "MTP"},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "qwen38-flash-next",
+        "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+        "runtime_family": "vLLM XPU",
+        "parallel_profile": "TP=EP",
+        "active_context_tokens": 0,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "rows": [0, 1, 2, 3, 4],
+      "columns": [1, 2, 4],
+      "cells": {
+        "0:1": {"state": "missing", "label": "fit design needed"},
+        "0:2": {"state": "missing", "label": "fit design needed"},
+        "0:4": {"state": "lab-screened", "label": "5.222 tok/s; quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19", "packet_id": "qwen38-flash-next-fp8-tp4-research"},
+        "1:1": {"state": "missing", "label": "not measured"},
+        "1:2": {"state": "missing", "label": "not measured"},
+        "1:4": {"state": "missing", "label": "runtime port needed"},
+        "2:1": {"state": "missing", "label": "not measured"},
+        "2:2": {"state": "missing", "label": "not measured"},
+        "2:4": {"state": "missing", "label": "not measured"},
+        "3:1": {"state": "missing", "label": "not measured"},
+        "3:2": {"state": "missing", "label": "not measured"},
+        "3:4": {"state": "missing", "label": "not measured"},
+        "4:1": {"state": "missing", "label": "not measured"},
+        "4:2": {"state": "missing", "label": "not measured"},
+        "4:4": {"state": "missing", "label": "not measured"}
+      }
+    }
+  ],
+  "coverage_contracts": [
+    {
+      "id": "flash-next-serving-space",
+      "label": "Text and vision serving coverage",
+      "fixed_selectors": {"runtime_family": "vLLM XPU", "parallel_profile": "TP=EP"},
+      "axes": [
+        {"key": "revision", "label": "Weight revision", "values": ["qwen38-flash-next"]},
+        {"key": "artifact_id", "label": "Artifact", "values": ["qwen38-flash-next-fp8-bcd9f01"]},
+        {"key": "tp", "label": "Tensor parallel", "values": [1, 2, 4]},
+        {"key": "mtp", "label": "MTP depth", "values": [0, 1, 2, 3, 4]},
+        {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768]},
+        {"key": "graph_mode", "label": "Graph mode", "values": ["off", "PIECEWISE"]},
+        {"key": "kv", "label": "KV cache", "values": ["auto"]},
+        {"key": "modality", "label": "Modality", "values": ["text", "vision"]}
+      ],
+      "rules": [
+        {
+          "id": "default-gap",
+          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": "*", "graph_mode": "*", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "not measured",
+          "parent": "flash-next-qualification-backlog",
+          "retry": {"status": "queued"}
+        },
+        {
+          "id": "attempt19-text-control",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "lab-screened",
+          "label": "5.222 tok/s research screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "parent": "flash-next-attempt19",
+          "retry": {"status": "needs-full-qualification"}
+        }
+      ]
+    }
+  ]
+}

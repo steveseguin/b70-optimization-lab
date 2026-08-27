@@ -1,6 +1,6 @@
 # Details page checklist
 
-Every model page on neural.download — the 17 family pages (`models/<family>.html`,
+Every model page on neural.download — all cataloged family pages (`models/<family>.html`,
 from `tools/build-family-pages.py`) and the 13 package pages
 (`models/<package-id>.html`, from `tools/build-model-pages.py`) — must carry the
 same skeleton. A section with no data is shown as a labeled gap, never dropped,
