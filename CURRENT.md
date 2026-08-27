@@ -991,6 +991,28 @@ versus the same-shape static MTP0, MTP1, and MTP2 controls. No replication or
 threshold sweep ran. See the
 [result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md).
 
+The active-width GDN repair plus active-lookahead Mamba-state allocation then
+made a different policy viable: reuse the checkpoint's one publisher MTP layer
+serially for the singleton request, but fall back to MTP1 whenever two or more
+requests are active. Replicated single-user medians rose through MTP2/MTP3/
+MTP4/MTP5/MTP7/MTP8 at `83.680193 / 99.930434 / 116.711347 / 128.428318 /
+137.211213 / 146.814418 tok/s`. The selected MTP8-to-MTP1 service measured
+`146.808244` and `146.820592 tok/s` on two preregistered fresh servers and
+retained `1,095.553649` and `1,093.075885 tok/s` aggregate at c64. Both c64
+attempts returned all 8,192 requested token IDs, passed output isolation, and
+passed 512/512 synchronized exact-answer requests. The packaged medians are
+therefore **`146.814418 tok/s` single-user and `1,094.314767 tok/s` c64
+aggregate**. This is the current official-FP8 candidate service, not an
+interpolation between those two directly measured operating points.
+
+The next singleton step, MTP9, reached `158.602110 tok/s` but retained only
+`889.607586 tok/s` at c64, below the frozen aggregate-retention gate. A 64-slot
+treatment fell to `806.950345`; two busy-period latch treatments reached only
+`61.620428` and `157.939541` single-user with `866.085639` c64 for the corrected
+variant; and keeping MTP8 through c2 reached `146.822210` single-user but only
+`836.139048` at c64. These are measured negatives. The default remains the
+replicated MTP8-at-c1/MTP1-under-load policy.
+
 Resume and evidence:
 
 - [Qwen3.8 model board](README.md#qwen38-27b-model-board)
@@ -1012,6 +1034,9 @@ Resume and evidence:
 - [official FP8 block-W8A16 MTP0 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 - [official FP8 block-W8A16 MTP1 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
 - [official FP8 dynamic MTP2/MTP0 negative result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md)
+- [official FP8 dynamic MTP8 replication](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp8-r16-replication-result.md)
+- [official FP8 dynamic MTP9 negative](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-r17-negative.md)
+- [official FP8 MTP8-through-c2 negative](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp8-c2-r21-negative.md)
 
 Do not retry the built-in TP2 SYCL profiler or the unsafe root-both remote-write
 prototype inherited from Qwen3.6 work. Both caused device faults/resets. Do not

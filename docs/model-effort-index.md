@@ -75,16 +75,17 @@ Main entries:
 - [archived contributed GPTQ INT4/MTP route](../community/sergiiob-qwen38-27b-vllm-xpu/STATUS.md)
 - [AutoRound INT4/MTP3 lane and replay gates](../repro/qwen38-27b-autoround-int4-b70/README.md)
 
-Status: active as of 2026-08-26. The current lab record is target-only
-Q4_K_M TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper),
-with a device-local Q4_K gate/up/SwiGLU fusion, 12/12 complete-output hash
-parity, and all cache counters zero. Q8_0 TP2 reached `36.772932 tok/s`
-conventional. The official FP8 vLLM artifact now has a qualified TP2 size-one
-graph baseline at `21.708532 tok/s`, an exact one-slot 2K→32K HTTP profile,
-and an output-audited c1→c64 HTTP profile. The 32K point is `20.389854 tok/s`
-with `21.873 s` TTFT. Four active slots reach `81.086716 tok/s`; c8-c64 queue
-and remain near `81.5 tok/s`, with c64 median/p95 TTFT of `47.2/93.3 s`. It
-remains slower than GGUF and its TP2 graph path is explicitly experimental.
+Status: active as of 2026-08-27. The target-only GGUF records remain Q4_K_M
+TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper) and Q8_0
+TP2 at `36.772932 tok/s`. The official FP8 route has moved beyond its original
+`21.708532 tok/s` graph baseline: the block-W8A16 overlay directly measures
+`31.489587 tok/s` at an exact 32K prompt, target-only/MTP0 peaks at
+`1,112.570323 tok/s` aggregate at c128, and the selected replicated dynamic
+MTP8-to-MTP1 service reaches `146.814418 tok/s` for one user while retaining
+`1,094.314767 tok/s` aggregate at c64. The latter passed 1,024/1,024
+synchronized concurrent exact-answer checks across two fresh servers. MTP9
+and the subsequent latch/c2 threshold treatments are retained as measured
+negatives; no failed treatment is spliced into the package headline.
 
 The strict-greedy distributed-argmax candidate was token-for-token exact
 across a position-balanced 48-request replay, but it moved the primary metric
