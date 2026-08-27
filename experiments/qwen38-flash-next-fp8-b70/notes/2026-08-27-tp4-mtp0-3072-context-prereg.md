@@ -41,9 +41,12 @@ After health and identity gates:
 2. Require one exact 12.22-GiB selective-placement receipt from each rank and
    cache capacity of at least 2,304 tokens.
 3. Run the short/needle suite once with 16 repeats, thinking disabled, and
-   `--long-context-tokens 2048`. Require all recorded cached-token values to be
-   zero, one repeat hash, and an exact needle response. The known 5/7 short
-   result may reproduce; any new short failure is a regression.
+   `--long-context-tokens 2157`. Offline calibration gives 2,036 raw prompt
+   tokens; the previously observed 12-token chat wrapper should make server
+   usage exactly 2,048 tokens. Server usage is authoritative. Require exactly
+   2,048 prompt tokens, all recorded cached-token values zero, one repeat hash,
+   and an exact needle response. The known 5/7 short result may reproduce; any
+   new short failure is a regression.
 4. Run the formal exact-depth harness once at depth 2,048 with configured
    capacity 3,072. It uses the Flash-Next-specific sealed flat-token fixture,
    requests 128 output tokens, and must pass every harness check: exactly
