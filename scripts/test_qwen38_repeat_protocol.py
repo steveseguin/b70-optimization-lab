@@ -27,6 +27,16 @@ probe = load("qwen38_repeat_probe", "qwen38-repeat-sensitivity-probe.py")
 
 
 class RepeatProtocolTests(unittest.TestCase):
+    def test_logic_case_uses_semantic_casefold_match(self):
+        logic = next(
+            case for case in quality.make_exact_cases() if case["name"] == "logic"
+        )
+        self.assertEqual(logic["expected"], "yes")
+        self.assertEqual(logic["match"], "casefold")
+        self.assertTrue(quality.exact_case_pass(logic, {"normalized": "Yes"}))
+        self.assertTrue(quality.exact_case_pass(logic, {"normalized": "YES"}))
+        self.assertFalse(quality.exact_case_pass(logic, {"normalized": "No"}))
+
     def _run_quality_repeats(self, contents: list[str]) -> dict[str, Any]:
         iterator = iter(contents)
 

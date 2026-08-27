@@ -191,6 +191,7 @@ def make_exact_cases() -> list[dict[str, Any]]:
             ],
             "max_tokens": 8,
             "expected": "yes",
+            "match": "casefold",
         },
         {
             "name": "code_execution",
@@ -207,6 +208,19 @@ def make_exact_cases() -> list[dict[str, Any]]:
             "expected": "14",
         },
     ]
+
+
+def exact_case_pass(case: dict[str, Any], result: dict[str, Any]) -> bool:
+    if "expected" in case:
+        match = case.get("match", "exact")
+        if match == "casefold":
+            return result["normalized"].casefold() == case["expected"].casefold()
+        return result["normalized"] == case["expected"]
+    parsed = extract_json_object(result["content"])
+    expected_fields = case["json_expected_fields"]
+    return isinstance(parsed, dict) and all(
+        str(parsed.get(key)) == expected for key, expected in expected_fields.items()
+    )
 
 
 def run_exact_cases(
@@ -240,15 +254,13 @@ def run_exact_cases(
             "pass": False,
         }
         if "expected" in case:
-            item["pass"] = result["normalized"] == case["expected"]
+            match = case.get("match", "exact")
+            item["match"] = match
+            item["pass"] = exact_case_pass(case, result)
         else:
             parsed = extract_json_object(result["content"])
             item["json_parsed"] = parsed
-            expected_fields = case["json_expected_fields"]
-            item["pass"] = isinstance(parsed, dict) and all(
-                str(parsed.get(key)) == expected
-                for key, expected in expected_fields.items()
-            )
+            item["pass"] = exact_case_pass(case, result)
         results.append(item)
     return results
 
