@@ -18,7 +18,7 @@ if [[ "${1:-}" != "--execute" || "${2:-}" != "--ack" || "${3:-}" != "${ack}" || 
 fi
 
 model="${MODEL_PATH:-/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8}"
-stage="${KERNEL_STAGE:-/mnt/usb-models/qwen38-build/runtime-core-moe-1b0e26a-b70}"
+stage="${KERNEL_STAGE:-/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70}"
 vllm_src="${VLLM_SRC:-/home/steve/src/vllm-current-main}"
 kernels_src="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
 python="${VLLM_PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}"
@@ -34,12 +34,13 @@ cache_dir="${cache_parent}/${campaign}-attempt${attempt}"
 compile_cache_dir="/tmp/${campaign}-attempt${attempt}-compile"
 server_log="${run_dir}/server.log"
 rpc_dir="/tmp/${campaign}-attempt${attempt}-rpc"
-runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-loadable.sha256"
+runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-padding-guard-loadable.sha256"
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
+padding_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-moe-padding-guard-gates.json"
 
 expected_vllm_head="396b4e688d02c0922761fb98fe9fb26f6df6e5ff"
-expected_kernels_head="7cf216774fb3c5eabf20d1f481d6548682604c37"
+expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
 
@@ -51,7 +52,7 @@ expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e
 [[ "$(head -1 "${vllm_bin}")" == "#!${python}" ]] || fail "vLLM wrapper does not use the pinned interpreter"
 [[ -d "${model}" && -d "${stage}/vllm_xpu_kernels" ]] || fail "model or staged runtime is missing"
 [[ -d "${vllm_src}/.git" && -d "${kernels_src}/.git" ]] || fail "source checkout is missing"
-[[ -f "${runtime_manifest}" && -f "${validation_root}/summary.json" && -f "${moe_receipt}" ]] || fail "sealed validation input is missing"
+[[ -f "${runtime_manifest}" && -f "${validation_root}/summary.json" && -f "${moe_receipt}" && -f "${padding_receipt}" ]] || fail "sealed validation input is missing"
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ ! -e "${cache_dir}" ]] || fail "refusing to reuse ${cache_dir}"
 [[ ! -e "${compile_cache_dir}" ]] || fail "refusing to reuse ${compile_cache_dir}"
@@ -71,6 +72,7 @@ printf '%s  %s\n' "${expected_model_config_sha}" "${model}/config.json" | sha256
 printf '%s  %s\n' a5119c7fdb6c8703eae8b91df4a4ef9fa0e634ea755a15a6138537c1f92e649c "${validation_root}/summary.json" | sha256sum -c -
 printf '%s  %s\n' 4d0b3dfe88c7b3996bd016ded52b3061bb890080182ca8fb13f279d38c761991 "${validation_root}/qwen38-flash-next-fp8-hashes.jsonl" | sha256sum -c -
 printf '%s  %s\n' c9a824f7f037d503ca63d08656e5959b0feaa0a66bb8a40441861b5be88cd75f "${moe_receipt}" | sha256sum -c -
+printf '%s  %s\n' e48f079a61dd75c15fdf5136e6b9f4ca2c2f5957a2a2f158ba70f4bdd3ad5762 "${padding_receipt}" | sha256sum -c -
 [[ "$(find "${stage}/vllm_xpu_kernels" -type f \( -name '*.py' -o -name '*.so' \) | wc -l)" == 18 ]] || fail "staged loadable file set changed"
 (cd "${stage}/vllm_xpu_kernels" && sha256sum -c "${runtime_manifest}")
 
@@ -183,6 +185,7 @@ export Q38_MODEL_PATH="${model}"
 export Q38_RUN_DIR="${run_dir}"
 export Q38_VALIDATION_ROOT="${validation_root}"
 export Q38_MOE_RECEIPT="${moe_receipt}"
+export Q38_PADDING_RECEIPT="${padding_receipt}"
 export Q38_MOE_CAPTURE="${moe_capture}"
 
 "${python}" - <<'PY'
@@ -224,6 +227,12 @@ moe_receipt = json.loads(pathlib.Path(os.environ['Q38_MOE_RECEIPT']).read_text()
 assert moe_receipt['status'] == 'pass'
 assert moe_receipt['backend']['experts_class'].endswith('.TritonExperts')
 assert moe_receipt['result']['mismatches'] == 0
+padding_receipt = json.loads(pathlib.Path(os.environ['Q38_PADDING_RECEIPT']).read_text())
+assert padding_receipt['status'] == 'pass'
+assert padding_receipt['source']['kernel_head'] == '2f829747503c77d4814834dffd0840fb1dd9f75a'
+assert padding_receipt['runtime']['candidate_moe_binary_sha256'] == 'bac5a9c31fe8c214004d5c39bd9aaa7ee10daf8dc7d2ba09dda1671a77fc666e'
+assert padding_receipt['profile_replay']['status'] == 'pass'
+assert padding_receipt['valid_route_control']['status'] == 'pass'
 modules = [
     vllm_xpu_kernels,
     importlib.import_module('vllm_xpu_kernels._C'),

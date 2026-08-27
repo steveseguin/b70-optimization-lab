@@ -910,14 +910,20 @@ shared expert at the live M64 shape. The exact routed gate also passes with the
 same 31.57-GiB allocation and 31.837891-GiB allocator reservation as attempt
 12, so a simple allocation/reservation OOM is not established.
 
-The next bounded full attempt adds only 303.125 MiB/rank of low-decode-risk
-headroom by selectively mapping the untied input embedding through XPU UVA.
-The exact rank-local embedding mechanism gate passed with bit-identical sampled
-rows. Attempt 13 also captures rank-unique routed inputs immediately before the
-faulting call. Trace/capture runs are diagnostic and cannot support speed
-claims; if attempt 13 becomes healthy, rerun the same identity with both modes
-off before quality or throughput promotion. If it faults, preserve the exact
-captures and coredumps, recover the devices, and replay one rank offline. See the
+Attempt 13 applied the 303.125-MiB/rank embedding margin exactly but reached the
+same routed boundary. Its four captures proved every dummy-profile route was
+the normal padding sentinel (`id=-1`, weight zero) on every rank. The inherited
+XPU alignment component did not filter that sentinel before its count/map step.
+Kernel commit `2f829747503c77d4814834dffd0840fb1dd9f75a` corrects all four
+alignment variants. Four focused tests, the exact all-padding M64 replay at
+attempt-13 memory placement, and the ordinary valid-route real-weight M64
+control all pass. The replacement stage changes only the MoE extension and the
+previous stage remains intact.
+
+Attempt 14 is the next bounded TP4 boot with trace and capture enabled. It is
+diagnostic and cannot support a speed claim. If healthy, require a real
+non-padding API canary, then rerun the same identity with both modes off for
+quality and throughput qualification. See the
 [bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,

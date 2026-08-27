@@ -1,0 +1,51 @@
+{
+  "status": "pass",
+  "scope": "one-B70 Qwen3.8 Flash-Next FP8 MoE padding-handling gates; not a TP4 or throughput result",
+  "source": {
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "patch": "patches/qwen38-flash-next-fp8-b70/vllm-xpu-kernels/0004-fix-moe-ignore-padding-sentinels-during-alignment.patch",
+    "patch_sha256": "ecc1cb5c84b148e96755b0b834408ae5ffaf9e497d2c1eb7d46735b4cf850a88",
+    "gate_script": "experiments/qwen38-flash-next-fp8-b70/tools/fullshape-triton-fp8-moe-gate.py",
+    "gate_script_sha256": "70de8b0dc0705ee5690b48a0c6d43ea97b0d82a555c40ca41f528a0921b010a0"
+  },
+  "runtime": {
+    "stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "previous_moe_binary_sha256": "c71e818c8a3affb586b5a3437c583430a00293fbf6d93f0090f9e1748402e5a3",
+    "candidate_moe_binary_sha256": "bac5a9c31fe8c214004d5c39bd9aaa7ee10daf8dc7d2ba09dda1671a77fc666e",
+    "other_17_loadable_files_changed": 0
+  },
+  "tests": {
+    "focused_padding_cases": 4,
+    "focused_padding_passed": 4,
+    "exact_shape": {
+      "tokens": 64,
+      "top_k": 10,
+      "global_experts": 512,
+      "local_experts": 128,
+      "block_size_m": 16
+    }
+  },
+  "profile_replay": {
+    "status": "pass",
+    "routing": "all-padding",
+    "weights": "real layer-0 rank-0 checkpoint pack",
+    "ple_uva_bytes": 12800061440,
+    "allocated_bytes": 33580796416,
+    "reserved_bytes": 33850130432,
+    "output_shape": [64, 2560],
+    "finite": true,
+    "max_abs": 0.0,
+    "elapsed_seconds": 1.09686526900623
+  },
+  "valid_route_control": {
+    "status": "pass",
+    "routing": "cyclic valid expert IDs",
+    "weights": "real layer-0 rank-0 checkpoint pack",
+    "ple_uva_bytes": 12800061440,
+    "output_shape": [64, 2560],
+    "finite": true,
+    "max_abs": 0.000028252601623535156,
+    "elapsed_seconds": 1.0851658679894172
+  },
+  "conclusion": "The candidate handles the exact padded profile shape and preserves the established valid-route gate. The previous runtime stage remains intact. A fresh TP4 diagnostic boot is authorized; speed qualification still requires trace and capture disabled."
+}

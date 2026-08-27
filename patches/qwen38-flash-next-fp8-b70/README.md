@@ -30,6 +30,7 @@ fa0d3e4ff71d51f5c5e0e318934c9a5d6aa33f68426cd0f50203073ead2bbbbd  vllm/0010-Avoi
 23d25179eb7e287ca8217afac479ec0fe55736cb2e20ff8032e866ffd77b536e  vllm-xpu-kernels/0001-fix-xpu-restore-architecture-probe-bindings.patch
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch
+ecc1cb5c84b148e96755b0b834408ae5ffaf9e497d2c1eb7d46735b4cf850a88  vllm-xpu-kernels/0004-fix-moe-ignore-padding-sentinels-during-alignment.patch
 ```
 
 These are source artifacts only. A deployment package must additionally pin

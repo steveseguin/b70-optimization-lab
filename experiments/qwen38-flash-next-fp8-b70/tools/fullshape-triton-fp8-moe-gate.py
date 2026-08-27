@@ -48,6 +48,12 @@ def main() -> None:
         "--weights", choices=("constant", "layer0-rank0-checkpoint"), default="constant"
     )
     parser.add_argument(
+        "--routing",
+        choices=("cyclic", "all-padding"),
+        default="cyclic",
+        help="Use ordinary valid routing or the captured profile-run padding sentinel",
+    )
+    parser.add_argument(
         "--model-path",
         type=Path,
         default=Path("/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"),
@@ -97,6 +103,7 @@ def main() -> None:
         "ep_rank": args.ep_rank,
         "path": args.path,
         "weights": args.weights,
+        "routing": args.routing,
         "ple_uva": args.map_ple_uva,
         "target_allocated_gib": args.target_allocated_gib,
         "target_reserved_gib": args.target_reserved_gib,
@@ -259,17 +266,25 @@ def main() -> None:
             ),
             flush=True,
         )
-    topk_ids = (
-        torch.arange(args.tokens * topk, device=device, dtype=torch.int32)
-        .remainder_(routed_experts)
-        .reshape(args.tokens, topk)
-    )
-    topk_weights = torch.full(
-        (args.tokens, topk),
-        1.0 / topk,
-        device=device,
-        dtype=torch.float32,
-    )
+    if args.routing == "all-padding":
+        topk_ids = torch.full(
+            (args.tokens, topk), -1, device=device, dtype=torch.int32
+        )
+        topk_weights = torch.zeros(
+            (args.tokens, topk), device=device, dtype=torch.float32
+        )
+    else:
+        topk_ids = (
+            torch.arange(args.tokens * topk, device=device, dtype=torch.int32)
+            .remainder_(routed_experts)
+            .reshape(args.tokens, topk)
+        )
+        topk_weights = torch.full(
+            (args.tokens, topk),
+            1.0 / topk,
+            device=device,
+            dtype=torch.float32,
+        )
     quant_config = FusedMoEQuantConfig.make(
         quant_dtype=weight_dtype,
         block_shape=block_shape,

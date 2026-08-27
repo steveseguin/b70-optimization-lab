@@ -403,3 +403,34 @@ phase trace, and enables rank-unique routed-input capture. A healthy diagnostic
 must still be followed by a trace/capture-off qualification before any speed
 claim; a fault must preserve and hash the capture and device evidence before
 recovery.
+
+## Attempt 13 capture and padding-handling correction
+
+Attempt 13 verified the intended placement on all four ranks: each reported
+12.22 GiB selectively offloaded, model load fell to 31.27 GiB/rank, and all 131
+shards loaded. It nevertheless stopped at the same first routed call. The run
+preserved four rank-unique input captures, four device reports, and a bounded
+system log before the proven all-card recovery; four-card compute, peer access,
+and XCCL all passed afterward.
+
+The captures removed the remaining ambiguity. Every rank had the same finite
+BF16 hidden states, and every profile row was intentionally marked as padding:
+all expert IDs were `-1` and all expert weights were zero. This is the normal
+vLLM dummy-profile contract. The XPU alignment component filtered expert IDs
+above the configured range but did not filter the `-1` padding sentinel before
+using it in its count/map step. The same omission existed in all four alignment
+variants and predates this optimization overlay.
+
+Kernel commit `2f829747503c77d4814834dffd0840fb1dd9f75a` adds the missing
+two-sided range check and four focused tests covering the exact 64x10/512-expert
+all-padding and mixed-padding shapes, with and without an expert map. All four
+tests pass. A new isolated runtime stage changes only `_moe_C.abi3.so`; the
+previous stage remains intact. The exact all-padding replay passes at attempt
+13's 31.274554-GiB allocation and 31.525391-GiB reservation, and the ordinary
+valid-route real-weight M64 control also remains finite and passing. Evidence is
+in `data/20260827-moe-padding-guard-gates.json`.
+
+Attempt 14 is the next full TP4 diagnostic using that sealed component. Trace
+and capture remain enabled for boot proof and continue to disqualify its timing.
+If it becomes healthy, issue a real non-padding API canary before shutdown, then
+run a separate trace/capture-off quality and performance qualification.
