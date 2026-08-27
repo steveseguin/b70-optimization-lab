@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "status": "partial",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+  "attempt": 19,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt19",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none"
+  },
+  "serving": {
+    "health_gate": "pass-by-completed-api-work",
+    "health_file_bytes": 0,
+    "kv_cache_tokens": 1536,
+    "api_requests_completed": true,
+    "shutdown": {
+      "classification": "controlled-stop-with-logging-caveat",
+      "signal": "SIGTERM",
+      "engine_drain_started": true,
+      "engine_request_processing_complete": true,
+      "api_application_shutdown_complete": true,
+      "worker_shutdown_done_ranks_logged": [0, 2, 3],
+      "worker_rank_1_completion_line_present": false,
+      "residual_processes_after_stop": 0,
+      "caveat": "The API output handler logged EngineDeadError after the engine manager was deliberately stopped. Rank 1 did not emit the final completion line. Treat this as a shutdown-observability caveat, not a clean-shutdown qualification."
+    }
+  },
+  "short_quality": {
+    "suite_count": 2,
+    "strict_exact_pass_counts": [5, 5],
+    "strict_exact_case_count_per_suite": 7,
+    "strict_failures_reproduced": {
+      "logic": {"expected": "yes", "content": "Yes"},
+      "code_execution": {"expected": "14", "content": "30"}
+    },
+    "repeat_pass_by_suite": [false, true],
+    "repeat_count_by_suite": [8, 8],
+    "repeat_majority_content": "blue, green, red, yellow",
+    "repeat_divergence_count": 1,
+    "repeat_total_count": 16,
+    "repeat_divergent_content": "black, blue, green, red",
+    "cached_token_values_all_zero": true,
+    "cached_token_observations": 30,
+    "long_context_case": "not-run",
+    "qualification": "fail"
+  },
+  "exploratory_speed": {
+    "harness": "scripts/bench-openai-concurrency.py",
+    "concurrency": 1,
+    "requested_prompt_tokens": 128,
+    "actual_prompt_tokens": 146,
+    "requested_and_completed_output_tokens": 256,
+    "warmups_by_run": [1, 0, 0],
+    "output_sha256_all_equal": true,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "tok_s_out_after_ttft": [5.142647219137399, 5.221849709057954, 5.289933931346957],
+    "median_tok_s_out_after_ttft": 5.221849709057954,
+    "tok_s_out_wall": [4.449694511688859, 4.705774975115023, 4.836666253972994],
+    "median_tok_s_out_wall": 4.705774975115023,
+    "ttft_s": [7.75222969299648, 5.376467669993872, 4.535219874989707],
+    "median_ttft_s": 5.376467669993872,
+    "measurement_valid_for_identity": true,
+    "record_or_promotion_eligible": false,
+    "classification": "research-baseline",
+    "performance_caveat": "No model-specific MoE tuning configuration was present."
+  },
+  "coverage": {
+    "captured": ["TP4", "EP4", "MTP0", "eager", "512-token maximum context identity", "short quality", "single-stream short-context decode"],
+    "not_captured": ["TP1", "TP2", "graph", "MTP1+", "context above 512 tokens", "deployment-grade quality", "fresh-boot determinism"]
+  },
+  "qualification": {
+    "production_source_and_runtime": "pass",
+    "healthy_tp4_api": "pass",
+    "full_quality": "fail",
+    "determinism": "fail",
+    "long_context": "not-run",
+    "promotion_eligible": false,
+    "site_grade_ceiling": "research"
+  },
+  "authority_note": "Git source SHAs and staged runtime hashes are authoritative; installed package version strings are stale metadata and do not identify the active overlay.",
+  "sha256": {
+    "server.log": "16bdac00482291d198fea8265cf19ac7d548b905dd7a6a693d2fbfb869ca3ada",
+    "identity.txt": "ce3f544a7ec5a7070377df54b80c091ab53867475c12b6c1499a0acc1715cff4",
+    "quality-short.json": "6e7e2e7b451c5b2b13b973840ff224e7053f22cf046ad4f9383c034cfcd455a3",
+    "quality-short-repeat2.json": "6fd881049a20114055f33bc72cc473718770e09f4b95675447a85664eaddddf2",
+    "bench-p128-o256-c1-r1.json": "756f8694a40c8fbd63ffd485241bc3bf3c8120651e6689efb8b8dc707bc097eb",
+    "bench-p128-o256-c1-r2.json": "e7e69be48b866a857e25d64889d921954a438b3abcdbf9ee8a0c08ae07143320",
+    "bench-p128-o256-c1-r3.json": "519da8dd5cb24272d030ae68382e255bb422089b6df87fd8e24944b6e9eca82f"
+  }
+}

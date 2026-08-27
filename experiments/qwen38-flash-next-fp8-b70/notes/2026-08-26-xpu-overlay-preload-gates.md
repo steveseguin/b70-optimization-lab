@@ -498,3 +498,37 @@ the embedding (`2 passed`) and QSA (`19 passed`, `27` platform skips) suites
 pass separately. The active launcher no longer accepts or exports diagnostic
 settings and records `diagnostics=none`. Attempt 19 is the first production
 quality/performance candidate.
+
+## Attempt 19: production TP4 research baseline
+
+Attempt 19 used the diagnostic-free production source and sealed runtime. It
+became healthy with 1,536 cache tokens and served two short-quality batteries
+plus three single-stream timing samples. Both batteries reproduced five of
+seven strict exact cases. The case-only `Yes`/`yes` miss and the substantive
+`30`/`14` range-expression miss remain. One of the first battery's eight
+greedy repeats selected a different four-color answer; the second battery's
+eight repeats were stable. Across both batteries, 15/16 repeats matched the
+majority answer and every one of the 30 requests reported zero cached tokens.
+
+The three exploratory 146-prompt-token, 256-output-token samples measured
+`5.142647`, `5.221850`, and `5.289934 tok/s` after first text, for a median of
+`5.221850 tok/s`. All three completed 256 tokens with the same output hash.
+This is a valid measurement of the exact eager TP4/EP4/MTP0/512 identity, but
+it is only a research baseline: the quality and repeat-stability gates failed,
+so it is not record-, deployment-, or promotion-eligible. The log also notes
+that no model-specific MoE tuning configuration was available, so this is not
+an optimized performance ceiling.
+
+The server was deliberately stopped while idle. The engine entered its drain
+path, reported request processing complete, and the API completed shutdown.
+The API output handler then logged an engine-ended exception after its manager
+had been stopped; ranks 0, 2, and 3 logged final worker completion while rank 1
+did not emit that last line. No worker, server, or listener remained. Record
+this as a controlled stop with a shutdown-observability caveat, not as a clean
+shutdown qualification or a serving failure.
+
+The compact evidence record is
+`data/20260827-tp4-attempt19-production-qualification.json`. It closes one
+honest matrix cell: TP4 + EP4 + eager + MTP0 at the 512-token bring-up limit.
+TP1, TP2, graph, MTP1+, longer context, fresh-boot determinism, and
+deployment-grade quality remain explicit gaps.

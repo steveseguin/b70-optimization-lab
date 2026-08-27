@@ -937,8 +937,13 @@ miss (`range(4)` squares answered `30` rather than `14`) plus one case-only
 strict miss (`Yes` versus `yes`), so it is a diagnostic serving proof rather
 than quality certification or speed evidence. Production head `658965050`
 removes all trace/capture call sites while preserving the embedding, QSA, GDN,
-and performance patches. Attempt 19 is the first instrumentation-free quality
-and throughput candidate. See the
+and performance patches. Attempt 19 is the first instrumentation-free healthy
+production baseline: both short batteries passed 5/7 strict exact cases, but
+the substantive `30`/`14` miss remained and one of 16 total greedy repeats
+diverged. Its three exact-identity exploratory samples measured a median
+`5.221850 tok/s` after first text. This is an honest TP4/EP4/eager/MTP0/512
+research cell, not a deployment or record candidate. TP1, TP2, graph, MTP1+,
+longer context, and fresh-boot determinism remain gaps. See the
 [bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
