@@ -1,0 +1,36 @@
+{
+  "classification": "output-isolation-qualified-shape-variant",
+  "output": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-attempt4/result.json",
+  "batches": [
+    {
+      "concurrency": 1,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 35.269482383483876,
+      "oracle_exact": "1/1"
+    },
+    {
+      "concurrency": 2,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 41.88047236696556,
+      "oracle_exact": "1/2"
+    },
+    {
+      "concurrency": 4,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 53.08608696818907,
+      "oracle_exact": "1/4"
+    },
+    {
+      "concurrency": 8,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 48.29641585178973,
+      "oracle_exact": "4/8"
+    },
+    {
+      "concurrency": 16,
+      "repeat": 1,
+      "aggregate_tok_s_wall": 68.96547754267002,
+      "oracle_exact": "9/16"
+    }
+  ]
+}
