@@ -68,10 +68,12 @@ if [[ "${mtp_exact}" == "1" ]]; then
   runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-mtp1-exact-loadable.sha256"
   component_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-mtp1-exact-component-gates.json"
   expected_kernels_head="ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
+  expected_stage_build_head="ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
 else
   runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-padding-guard-loadable.sha256"
   component_receipt=""
-  expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
+  expected_kernels_head="ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
+  expected_stage_build_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 fi
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
@@ -413,6 +415,7 @@ PY
   printf 'model=%s\n' "${model}"
   printf 'vllm_head=%s\n' "${expected_vllm_head}"
   printf 'kernels_head=%s\n' "${expected_kernels_head}"
+  printf 'runtime_stage_build_head=%s\n' "${expected_stage_build_head}"
   printf 'stage=%s\n' "${stage}"
   printf 'compile_cache=%s\n' "${compile_cache_dir}"
   printf 'offload_backend=uva\n'
