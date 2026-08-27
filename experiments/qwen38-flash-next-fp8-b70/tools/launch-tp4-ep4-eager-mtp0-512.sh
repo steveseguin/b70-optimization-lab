@@ -279,7 +279,8 @@ args = EngineArgs(
     cpu_offload_params={
         'ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'
     },
-    gpu_memory_utilization=.92, kv_cache_dtype='auto', block_size=64,
+    gpu_memory_utilization=.92, kv_cache_memory_bytes=201326592,
+    kv_cache_dtype='auto', block_size=64,
     generation_config='vllm', load_format='safetensors', async_scheduling=False,
 )
 config = args.create_engine_config(usage_context=None)
@@ -294,6 +295,7 @@ assert config.offload_config.uva.cpu_offload_params == {
 assert config.kernel_config.moe_backend == 'triton'
 assert config.speculative_config is None
 assert config.scheduler_config.max_num_batched_tokens == 64
+assert config.cache_config.kv_cache_memory_bytes == 201326592
 selector = 'ple_embedding.ngram_embedding.weight'
 assert f'.{selector}.' in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight.'
 assert f'.{selector}.' not in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight_scale.'
@@ -352,6 +354,7 @@ PY
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
   printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512 max_num_batched_tokens=64\n'
+  printf 'kv_cache_memory_bytes=201326592\n'
   printf 'xpu_moe_sync_trace=%s diagnostic_timing=%s\n' "${moe_sync_trace}" "${moe_sync_trace}"
   printf 'xpu_moe_capture=%s capture_dir=%s\n' "${moe_capture}" "${VLLM_XPU_MOE_CAPTURE_DIR:-}"
 } >"${run_dir}/identity.txt"
@@ -389,6 +392,7 @@ args=(
   --cpu-offload-gb 12.25
   --cpu-offload-params ple_embedding.ngram_embedding.weight embed_tokens.weight
   --gpu-memory-utilization 0.92
+  --kv-cache-memory-bytes 201326592
   --kv-cache-dtype auto
   --block-size 64
   --generation-config vllm

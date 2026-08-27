@@ -920,10 +920,13 @@ attempt-13 memory placement, and the ordinary valid-route real-weight M64
 control all pass. The replacement stage changes only the MoE extension and the
 previous stage remains intact.
 
-Attempt 14 is the next bounded TP4 boot with trace and capture enabled. It is
-diagnostic and cannot support a speed claim. If healthy, require a real
-non-padding API canary, then rerun the same identity with both modes off for
-quality and throughput qualification. See the
+Attempt 14 passed routed processing and combination through all 48 layers on
+all four ranks. Startup then stopped cleanly because the 92% automatic memory
+budget left no cache-block allowance after profiling. Attempt 15 keeps the same
+diagnostic identity and uses an explicit 192-MiB cache allocation for the
+bounded 512-token, one-sequence lane. If healthy, require a real non-padding API
+canary, then rerun with trace and capture off for quality and throughput
+qualification. See the
 [bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,

@@ -430,7 +430,17 @@ previous stage remains intact. The exact all-padding replay passes at attempt
 valid-route real-weight M64 control also remains finite and passing. Evidence is
 in `data/20260827-moe-padding-guard-gates.json`.
 
-Attempt 14 is the next full TP4 diagnostic using that sealed component. Trace
-and capture remain enabled for boot proof and continue to disqualify its timing.
-If it becomes healthy, issue a real non-padding API canary before shutdown, then
-run a separate trace/capture-off quality and performance qualification.
+Attempt 14 used that sealed component and passed the complete model profile:
+all 48 MoE layers on all four ranks completed routed processing and combination,
+with no device or engine execution error. This closes the prior TP4 execution
+blocker. Startup then stopped at cache configuration because the launcher's
+conservative 92% automatic budget reported `-1.46 GiB` available for cache
+blocks after the 31.27-GiB model and diagnostic profile. This is a clean
+post-profile configuration stop, not a recurrence of the routed failure.
+
+Attempt 15 keeps the same 512-token, one-sequence diagnostic identity and uses
+an explicit 192-MiB cache allocation. That fits below the measured post-profile
+headroom and is ample for this bounded startup/canary lane. It does not change
+model execution or decode kernels. If healthy, issue a real non-padding API
+canary before shutdown, then run a separate trace/capture-off quality and
+performance qualification.
