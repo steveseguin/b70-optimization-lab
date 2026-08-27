@@ -137,7 +137,7 @@ curl -fsS "http://127.0.0.1:${port}/health" >/dev/null || fail 'server readiness
 curl -fsS "http://127.0.0.1:${port}/props" >"${out_dir}/props.json" || true
 curl -fsS "http://127.0.0.1:${port}/metrics" >"${out_dir}/metrics-before.txt" || true
 llama_pid=$(pgrep -n -x llama-server)
-tr '\0' ' ' <"/proc/${llama_pid}/cmdline" >"${out_dir}/server-command.txt"; printf '\n' >>"${out_dir}/server-command.txt"
+tr '\0' ' ' <"/proc/${llama_pid}/cmdline" | sed 's/[[:space:]]*$//' >"${out_dir}/server-command.txt"; printf '\n' >>"${out_dir}/server-command.txt"
 tr '\0' '\n' <"/proc/${llama_pid}/environ" | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|SYCL_UR_USE_LEVEL_ZERO_V2=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | LC_ALL=C sort >"${out_dir}/runtime-environment.txt"
 
 python3 "${repo}/scripts/bench-openai-realistic-suite.py" \
