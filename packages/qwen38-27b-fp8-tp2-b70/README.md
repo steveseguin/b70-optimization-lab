@@ -2,8 +2,8 @@
 
 This is the first distribution-package front door. It uses Qwen's official
 FP8 model and digest-pinned vLLM XPU containers on two Intel Arc Pro B70
-32 GiB cards. The selected dynamic MTP4-to-MTP1 service reaches a replicated
-median of **`116.711347 tok/s`** for one fresh user and **`1,091.652182 tok/s`**
+32 GiB cards. The selected dynamic MTP5-to-MTP1 service reaches a replicated
+median of **`128.428318 tok/s`** for one fresh user and **`1,098.315357 tok/s`**
 aggregate at 64 active users while passing 1,024/1,024 concurrent exact-answer
 checks across two fresh servers. The target-only block-W8A16 service remains the aggregate peak at
 **`1,112.570323 tok/s`** with 128 active users. A separately measured
@@ -18,10 +18,10 @@ remains the highest-throughput mode. The site and guide keep those identities
 separate.
 
 The checkpoint has one publisher MTP layer. The dynamic service serially
-reuses it for MTP4 only at one active request, then uses MTP1 at two or more.
-The two fresh-server attempts measured 117.572120/115.850573 tok/s single and
-1,094.053681/1,089.250683 tok/s aggregate; see the
-[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp4-r9-replication-result.md).
+reuses it for MTP5 only at one active request, then uses MTP1 at two or more.
+The two fresh-server attempts measured 128.579263/128.277373 tok/s single and
+1,095.783748/1,100.846966 tok/s aggregate; see the
+[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp5-r11-replication-result.md).
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -45,9 +45,9 @@ aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
 and the earlier [baseline evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
 The active state allocation separately raised the dynamic service from
 `817.007910` to a replicated high-throughput lane. Raising singleton depth
-from MTP3 to MTP4 then raised its single-user median from `99.930434` to
-`116.711347 tok/s` and its c64 median from `1,074.939939` to
-`1,091.652182 tok/s`.
+from MTP4 to MTP5 then raised its single-user median from `116.711347` to
+`128.428318 tok/s` while retaining its c64 rate (`1,091.652182` to
+`1,098.315357 tok/s`).
 
 **vLLM XPU kernel contributors — upstream mixed-batch fix:** upstream commits
 [`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)

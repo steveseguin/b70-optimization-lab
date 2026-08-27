@@ -1718,7 +1718,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and the lab's replicated dynamic MTP4-to-MTP1 service profiles on the block-W8A16 overlay.",
+        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and the lab's replicated dynamic MTP5-to-MTP1 service profiles on the block-W8A16 overlay.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1742,16 +1742,16 @@
           "target only",
           "MTP0",
           "MTP1",
-          "dynamic MTP4 to MTP1",
+          "dynamic MTP5 to MTP1",
           "W8A16"
         ],
         "published_at": "2026-08-27",
         "featured_metric": {
-          "value": 116.71134683609132,
+          "value": 128.4283182361941,
           "unit": "tok/s",
           "label": "decode",
-          "scope": "Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP4 at one active request and MTP1 under load, short-context 256-token service.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp4-dynamic-mtp1-r9-summary.json"
+          "scope": "Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP5 at one active request and MTP1 under load, short-context 256-token service.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp5-dynamic-mtp1-r11-summary.json"
         }
       },
       "contributors": [
@@ -1762,8 +1762,8 @@
           "profile": "https://github.com/steveseguin/b70-optimization-lab",
           "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 dispatch, dynamic-width GDN repair, active Mamba-state allocation, and the digest-pinned package.",
           "status": "integrated",
-          "validated_effect": "Block W8A16 raised the matched target-only single/c128 shapes by 60.07%/29.30%. Active-Mamba allocation enabled the high-throughput dynamic service; raising singleton depth from MTP3 to MTP4 then improved its replicated single-user median by 16.79% and its c64 aggregate median by 1.55%.",
-          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp4-r9-replication-result.md"
+          "validated_effect": "Block W8A16 raised the matched target-only single/c128 shapes by 60.07%/29.30%. Active-Mamba allocation enabled the high-throughput dynamic service; raising singleton depth from MTP4 to MTP5 then improved its replicated single-user median by 10.04% while retaining the c64 aggregate rate (+0.61%).",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp5-r11-replication-result.md"
         },
         {
           "id": "vllm-xpu-kernel-contributors",
@@ -1862,6 +1862,12 @@
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp4-dynamic-mtp1-20260827-r8/c64-quality-512.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp4-dynamic-mtp1-20260827-r9/c64-screen.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp4-dynamic-mtp1-20260827-r9/c64-quality-512.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp5-r11-replication-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp5-dynamic-mtp1-r11-summary.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp5-dynamic-mtp1-20260827-r10/c64-screen.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp5-dynamic-mtp1-20260827-r10/c64-quality-512.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp5-dynamic-mtp1-20260827-r11/c64-screen.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp5-dynamic-mtp1-20260827-r11/c64-quality-512.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md",
@@ -1932,8 +1938,8 @@
           "unit": "tok/s",
           "x_metric": "speculative_tokens",
           "x_label": "Active speculative tokens for the one-user shape",
-          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only; MTP1 uses the publisher's one MTP layer once; MTP2 through MTP4 serially reuse it. The selected dynamic service uses MTP4 only for one active request and falls back to MTP1 for two or more. MTP2, MTP3, and MTP4 are each medians of two preregistered fresh-server attempts; MTP0 and MTP1 retain their earlier declared samples. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp4-dynamic-mtp1-r9-summary.json",
+          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only; MTP1 uses the publisher's one MTP layer once; MTP2 through MTP5 serially reuse it. The selected dynamic service uses MTP5 only for one active request and falls back to MTP1 for two or more. MTP2, MTP3, MTP4, and MTP5 are each medians of two preregistered fresh-server attempts; MTP0 and MTP1 retain their earlier declared samples. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp5-dynamic-mtp1-r11-summary.json",
           "points": [
             {
               "speculative_tokens": 0,
@@ -1959,6 +1965,11 @@
               "speculative_tokens": 4,
               "value": 116.71134683609132,
               "samples": 2
+            },
+            {
+              "speculative_tokens": 5,
+              "value": 128.4283182361941,
+              "samples": 2
             }
           ]
         },
@@ -1969,19 +1980,19 @@
           "unit": "tok/s",
           "x_metric": "concurrent_sequences",
           "x_label": "Concurrent HTTP users",
-          "scope": "Two directly measured operating points from the same 256-token service on two B70s: MTP4 at one active request and MTP1 at c64. Values are medians across separately preregistered fresh-server R8/R9 attempts with cache zero. Both c64 batches returned complete token IDs with no cross-base collisions and each passed 512/512 synchronized exact-answer requests. The line connects measured markers only; no intermediate concurrency is claimed, interpolated, or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp4-dynamic-mtp1-r9-summary.json",
+          "scope": "Two directly measured operating points from the same 256-token service on two B70s: MTP5 at one active request and MTP1 at c64. Values are medians across separately preregistered fresh-server R10/R11 attempts with cache zero. Both c64 batches returned complete token IDs with no cross-base collisions and each passed 512/512 synchronized exact-answer requests. The line connects measured markers only; no intermediate concurrency is claimed, interpolated, or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp5-dynamic-mtp1-r11-summary.json",
           "points": [
             {
               "concurrent_sequences": 1,
-              "value": 116.71134683609132,
-              "per_user_value": 116.71134683609132,
+              "value": 128.4283182361941,
+              "per_user_value": 128.4283182361941,
               "samples": 2
             },
             {
               "concurrent_sequences": 64,
-              "value": 1091.6521818350793,
-              "per_user_value": 17.057065341173114,
+              "value": 1098.3153567738368,
+              "per_user_value": 17.1611774495912,
               "samples": 2
             }
           ]
