@@ -135,6 +135,18 @@ MTP9_P64_NEGATIVE_RAW = (
 MTP9_P64_NEGATIVE_SUMMARY = (
     DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-p64-dynamic-mtp1-r18-summary.json"
 )
+MTP9_LATCH_R19_NEGATIVE_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp9-latch-dynamic-mtp1-20260827-r19"
+)
+MTP9_LATCH_R19_NEGATIVE_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-latch-r19-summary.json"
+)
+MTP9_LATCH_R20_NEGATIVE_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp9-latch2-dynamic-mtp1-20260827-r20"
+)
+MTP9_LATCH_R20_NEGATIVE_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-latch2-r20-summary.json"
+)
 DYNAMIC_MAMBA_PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -1267,6 +1279,74 @@ def main() -> int:
     }
     assert not (MTP9_P64_NEGATIVE_RAW / "c64-quality-512.json").exists()
 
+    latch_r19 = load(MTP9_LATCH_R19_NEGATIVE_SUMMARY)
+    assert latch_r19["classification"] == "measured-negative-latch-lifecycle-bug"
+    assert latch_r19["single_user"]["gate_passed"] is False
+    assert latch_r19["concurrency"]["declared_c64_performed"] is False
+    assert latch_r19["quality"]["c2_sequential_oracle_exact"] == "1/2"
+    assert not (MTP9_LATCH_R19_NEGATIVE_RAW / "c64-screen.json").exists()
+    close(
+        load(MTP9_LATCH_R19_NEGATIVE_RAW / "single-p40-o128.json")[
+            "fresh_response_validity"
+        ]["headline_tok_s_after_ttft"],
+        latch_r19["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    latch_r19_inspect = load(
+        MTP9_LATCH_R19_NEGATIVE_RAW / "docker-inspect-final.json"
+    )[0]
+    assert latch_r19_inspect["State"]["ExitCode"] == 0
+    assert latch_r19_inspect["State"]["OOMKilled"] is False
+
+    latch_r20 = load(MTP9_LATCH_R20_NEGATIVE_SUMMARY)
+    assert latch_r20["classification"] == (
+        "measured-negative-aggregate-and-concurrent-quality-gates"
+    )
+    assert latch_r20["decision"]["status"] == (
+        "closed-negative-latch-worsens-mtp9-aggregate"
+    )
+    assert latch_r20["single_user"]["gate_passed"] is True
+    assert latch_r20["concurrency"]["gate_passed"] is False
+    assert latch_r20["quality"]["c2_sequential_oracle_exact"] == "2/2"
+    assert latch_r20["quality"]["declared_c64_sequential_oracle_exact"] == (
+        "57/64"
+    )
+    latch_r20_single = load(
+        MTP9_LATCH_R20_NEGATIVE_RAW / "single-p40-o128.json"
+    )
+    close(
+        latch_r20_single["fresh_response_validity"][
+            "headline_tok_s_after_ttft"
+        ],
+        latch_r20["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    latch_r20_c64 = load(MTP9_LATCH_R20_NEGATIVE_RAW / "c64-screen.json")
+    validate_output_isolation_batch(latch_r20_c64["batches"][0], 64)
+    close(
+        latch_r20_c64["batches"][0]["aggregate_tok_s_wall"],
+        latch_r20["concurrency"]["declared_c64_tok_s"],
+    )
+    assert not (MTP9_LATCH_R20_NEGATIVE_RAW / "c64-quality-512.json").exists()
+    latch_r20_inspect = load(
+        MTP9_LATCH_R20_NEGATIVE_RAW / "docker-inspect-final.json"
+    )[0]
+    assert latch_r20_inspect["State"]["ExitCode"] == 0
+    assert latch_r20_inspect["State"]["OOMKilled"] is False
+    latch_r20_labels = latch_r20_inspect["Config"]["Labels"]
+    assert latch_r20_labels[
+        "neural.download.vllm.dynamic-sd-latch.patch.sha256"
+    ] == latch_r20["runtime"]["latch_patch_sha256"]
+    latch_r20_env = latch_r20_inspect["Config"]["Env"]
+    assert "VLLM_DYNAMIC_SD_LATCH_PEAK_BATCH=1" in latch_r20_env
+    latch_r20_command = latch_r20_inspect["Config"]["Cmd"]
+    latch_r20_config = json.loads(
+        latch_r20_command[latch_r20_command.index("--speculative-config") + 1]
+    )
+    assert latch_r20_config == {
+        "method": "qwen3_next_mtp",
+        "num_speculative_tokens": 9,
+        "num_speculative_tokens_per_batch_size": [[1, 1, 9], [2, 128, 1]],
+    }
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -1414,6 +1494,10 @@ def main() -> int:
         "bench-w8a16-mtp9-dynamic-mtp1-r17.sh",
         "run-w8a16-mtp9-p64-dynamic-mtp1-r18-server.sh",
         "bench-w8a16-mtp9-p64-dynamic-mtp1-r18.sh",
+        "run-w8a16-mtp9-latch-dynamic-mtp1-r19-server.sh",
+        "bench-w8a16-mtp9-latch-dynamic-mtp1-r19.sh",
+        "run-w8a16-mtp9-latch2-dynamic-mtp1-r20-server.sh",
+        "bench-w8a16-mtp9-latch2-dynamic-mtp1-r20.sh",
         "run-w8a16-dynamic-mtp-server.sh",
         "bench-w8a16-dynamic-mtp.sh",
         "build-w8a16-dynamic-mamba-image.sh",
