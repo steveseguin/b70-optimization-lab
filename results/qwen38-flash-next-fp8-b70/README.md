@@ -8,11 +8,11 @@ This packet covers the first instrumentation-free TP4/EP4 server results for the
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
 healthy, serve cache-zero MTP0 context through a formal exact-8K screen, and
-run matched MTP1/512, MTP2/512, and MTP3/512 research screens at 9.372,
-11.895, and 14.889 tok/s.
-It also qualifies MTP3 at exact 4K with a `15.502 tok/s` legacy-comparable
-decode median, while exposing much slower TTFT and lower wall throughput than
-MTP0. The MTP3 rows remain bounded screens, not stable ceilings. It
+run matched MTP1-4 configured-512 research screens at 9.372, 11.895, 14.889,
+and 20.727 tok/s. It also qualifies MTP1 with a 32-block headroom recipe and
+MTP3 at exact 4K, with `8.904` and `15.502 tok/s` decode medians respectively.
+MTP3 remains the preferred 4K recipe because it also has lower TTFT and higher
+wall output. These rows remain bounded screens, not stable ceilings. The packet
 does not yet establish a production recipe, a fully quality-qualified speed,
 stable repeated serving at 8K, 16K+ behavior, or vision support.
 
@@ -84,8 +84,8 @@ formal depth, and three p4096/o256 rows. Its TTFT and wall-rate tradeoff, plus
 fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
-MTP1-4 grid and MTP3/4K are separately screened below; deeper MTP1/MTP2 remain
-gaps, while MTP4/4K is quarantined. Graph,
+MTP1-4 grid and exact-4K MTP1/MTP3 cells are separately screened below;
+MTP2/MTP4 at exact 4K are quarantined. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
@@ -198,6 +198,32 @@ last row. That surviving JSON and log are preserved and checksummed; the
 identical three-row workload was rerun with distinct filenames without changing
 the service. Receipt:
 [`20260827-tp4-mtp4-512-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json).
+
+## Exact 4K TP4 MTP1 headroom screen
+
+The 4K MTP1 support arm preserves the successful source, staged runtime,
+TP4/EP4 eager path, selective host placement, and text client identity. It uses
+a configured maximum of 4,352 and an exact 32-block cache allocation
+(376,569,856 bytes, 359.125 MiB per rank), exposing 9,284 cache tokens and
+2.13x reported concurrency. The allocation is 16 blocks above the admission
+floor; this screen does not claim that 32 blocks is minimal or that cache
+headroom explains the separate MTP2/MTP4 stalls.
+
+All 26 sealed MTP0 comparisons matched, repeats held one hash for 16/16 runs,
+the cache-zero needle passed at exactly 4,096 server prompt tokens, and the
+formal p4096/o128 row passed all 25 checks at `3.471451019 tok/s` conventional
+with `317.104665 s` TTFT. Three p4096/o256/c1 rows then returned all 256 tokens
+with the accepted target hash at `8.904420575`, `8.868704697`, and
+`9.581812274 tok/s` after first text, median **`8.904420575 tok/s`**. Median
+wall output was `0.981050478 tok/s`, median TTFT was `232.079233 s`, and
+cumulative counters accepted 528/539 draft tokens.
+
+This is a Grade-C support cell, not a deployment or record result: the target's
+inherited strict quality remains 5/7, clean-boot replay is still missing, and
+the wall-rate and TTFT rows vary widely. MTP3 remains the preferred exact-4K
+recipe at `15.501565 tok/s` decode, `187.899186 s` TTFT, and `1.246260 tok/s`
+wall output. Receipt:
+[`20260827-tp4-mtp1-4352-headroom32-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json).
 
 ## Tested/quarantined exact-4K TP4 MTP2 screen
 

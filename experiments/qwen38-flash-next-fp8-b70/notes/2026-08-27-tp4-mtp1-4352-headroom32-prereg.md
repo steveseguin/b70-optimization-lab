@@ -113,3 +113,32 @@ deployment-ready or record-eligible until a later clean-boot stability
 confirmation. If a long request stops responding, preserve the scheduler
 and service evidence, take no partial credit, and do not retry by changing
 only a timeout.
+
+## Attempt 1 result
+
+Attempt 1 preserved the frozen native-MTP1 identity, passed the fresh
+four-rank preflight, became healthy, and passed cache admission. The exact
+32-block allocation reported 9,284 cache tokens and 2.13x maximum concurrency.
+All ranks reported 32.06 GiB model allocation, 12.22 GiB selective host
+placement, and 832-token alignment.
+
+The complete quality gate passed: all 26 sealed MTP0 comparisons, 16/16
+fixed-set repeats with one hash, the exact 4,096-token needle, and zero cached
+or created-cache tokens across all 24 audited requests. The inherited strict
+score remains 5/7, explaining the helper's expected exit 1. The formal exact
+p4096/o128 gate passed all 25 checks at `3.471451019 tok/s` conventional with
+`317.104665 s` TTFT.
+
+All three no-warmup p4096/o256 rows completed with the accepted target hash.
+They measured `8.904420575 / 8.868704697 / 9.581812274 tok/s` after first
+text, median `8.904420575 tok/s`. Median TTFT was `232.079233 s`, median wall
+output rate was `0.981050 tok/s`, and the decode rows span 8.01% of their
+median. Cumulative session metrics accepted 528/539 draft tokens (97.96%).
+
+The service then completed a controlled stop: all four workers and the API
+finished, no process or listener remained, all four cards were discoverable,
+and the kernel run window named no B70 address. This closes only the
+TP4/eager/native-MTP1/active-4K/headroom32 Grade-C cell. It does not establish
+the minimum cache, prove that cache pressure caused the MTP2/MTP4 stalls, or
+make the recipe deployment- or record-ready. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json`.

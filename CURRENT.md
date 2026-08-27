@@ -1037,6 +1037,22 @@ at 3,904 computed and zero output tokens, so no comparison speed row or median
 is authorized. Cleanup reset all four cards. This selector is a tested Grade-C
 capability with quarantined readiness; MTP2/512 remains unchanged.
 
+TP4/MTP1 exact-4K now closes the remaining unclassified MTP-depth cell at the
+user's practical 4K ceiling. The preregistered 32-block headroom recipe exposed
+9,284 cache tokens and passed all 26 MTP0 comparisons, 16/16 repeats, the exact
+4K needle, the formal p4096/o128 gate, and all three p4096/o256 rows. Those rows
+measured `8.904421 / 8.868705 / 9.581812 tok/s` after first text, median
+`8.904421 tok/s`; median TTFT was `232.079233 s` and median wall output was
+`0.981050 tok/s`. Cumulative acceptance was 528/539. This is a separate Grade-C
+support recipe, not evidence that cache headroom caused the MTP2/MTP4 boundary
+and not a minimum-cache claim. MTP3 remains the preferred exact-4K recipe at
+`15.501565 tok/s`, lower TTFT, and higher wall output. The TP4 eager text matrix
+is therefore fully classified across MTP0-4 at configured 512 and active 4K:
+MTP0/MTP1/MTP3 are screened at 4K, while MTP2/MTP4 are explicitly quarantined.
+The 51B PLE/input-embedding state remains pinned in host RAM through UVA; the
+four cards are otherwise filled to about 32.06 GiB per rank, which is the
+current 128-GiB-VRAM/4K deployment policy.
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
 protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the
