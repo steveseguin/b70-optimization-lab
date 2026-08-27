@@ -8,10 +8,11 @@ build_dir=${BUILD_DIR:?set BUILD_DIR}
 out_dir=${OUT_DIR:?set OUT_DIR to a new evidence directory}
 arm=${ARM:?set ARM to mtp0 or mtp2}
 attempt=${ATTEMPT:?set ATTEMPT}
-oracle=${ORACLE_PATH:-}
 port=${PORT:-18140}
 campaign=qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1
 prereg=${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-prereg.json
+amendment=${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-mtp2-amendment.json
+oracle=${repo}/experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1-mtp0/summary.json
 fixture=${repo}/data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json
 server=${build_dir}/bin/llama-server
 backend=${build_dir}/bin/libggml-sycl.so
@@ -27,7 +28,8 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == 35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545 ]] || fail 'server SHA mismatch'
 [[ "$(sha256sum "${backend}" | awk '{print $1}')" == 0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154 ]] || fail 'backend SHA mismatch'
 if [[ "${arm}" == mtp2 ]]; then
-  [[ -f "${oracle}" ]] || fail 'MTP2 requires ORACLE_PATH to the committed MTP0 summary'
+  [[ -f "${amendment}" && -f "${oracle}" ]] || fail 'sealed MTP2 oracle dependency missing'
+  [[ "$(sha256sum "${oracle}" | awk '{print $1}')" == 7605eec0ca0dc04c0af43bd42f540a1041cadfc77a1e852803bb03cf10733d2f ]] || fail 'MTP0 oracle SHA mismatch'
 fi
 
 git -C "${repo}" fetch origin main --quiet
@@ -43,7 +45,7 @@ pgrep -af 'llama-(server|bench|batched-bench)|vllm' >/dev/null && fail 'another 
 
 mkdir -p "${out_dir}"
 sha_inputs=("${prereg}" "${fixture}" "${server}" "${backend}")
-if [[ "${arm}" == mtp2 ]]; then sha_inputs+=("${oracle}"); fi
+if [[ "${arm}" == mtp2 ]]; then sha_inputs+=("${amendment}" "${oracle}"); fi
 sha256sum "${sha_inputs[@]}" >"${out_dir}/sha256sums.txt"
 python3 "${repo}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
   "${repo}/repro/qwen38-27b-q4km-tp1-b70/model-direct.json" "${target_dir}" \
@@ -128,7 +130,9 @@ python3 "${repo}/scripts/neural-download-canaries.py" \
   --out "${out_dir}/canaries-after.json" >"${out_dir}/canaries-after.stdout"
 curl -fsS "http://127.0.0.1:${port}/metrics" >"${out_dir}/metrics-after.txt" || true
 
-python3 - "${out_dir}" "${arm}" "${attempt}" "${campaign}" "${oracle}" >"${out_dir}/summary.json" <<'PY'
+oracle_arg=
+if [[ "${arm}" == mtp2 ]]; then oracle_arg=${oracle}; fi
+python3 - "${out_dir}" "${arm}" "${attempt}" "${campaign}" "${oracle_arg}" >"${out_dir}/summary.json" <<'PY'
 import json, math, pathlib, statistics, sys
 root, arm, attempt, campaign, oracle_path = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
 oracle = json.loads(pathlib.Path(oracle_path).read_text()) if oracle_path else None

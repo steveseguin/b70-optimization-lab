@@ -1,0 +1,27 @@
+{
+  "schema": "neural.download.benchmark-preregistration-amendment.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1",
+  "created_at_utc": "2026-08-27T21:45:16Z",
+  "reason": "Freeze the successfully completed matched MTP0 arm as the immutable per-case target-token oracle before either MTP2 attempt.",
+  "parent": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-prereg.json",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1-mtp0/summary.json",
+    "sha256": "7605eec0ca0dc04c0af43bd42f540a1041cadfc77a1e852803bb03cf10733d2f",
+    "raw_manifest": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1-mtp0/raw-manifest.sha256",
+    "raw_manifest_sha256": "eb07b7572fdd7cb494e5c99da1d080155c687c897efdd9a989a6b5c66a7b9423",
+    "status": "passed",
+    "cases": 18,
+    "canaries_before": true,
+    "canaries_after": true,
+    "all_request_gates_passed": true
+  },
+  "observed_control_points": [
+    {"active_context_tokens": 2048, "median_decode_tok_s": 27.156383847670647, "median_ttft_ms": 1990.0190220214427},
+    {"active_context_tokens": 4096, "median_decode_tok_s": 26.891745622954783, "median_ttft_ms": 3996.85174098704},
+    {"active_context_tokens": 8192, "median_decode_tok_s": 26.506892663571648, "median_ttft_ms": 8210.282117011957},
+    {"active_context_tokens": 16384, "median_decode_tok_s": 25.614968483887566, "median_ttft_ms": 17291.826548986137},
+    {"active_context_tokens": 24576, "median_decode_tok_s": 24.88976730624862, "median_ttft_ms": 27169.197064009495},
+    {"active_context_tokens": 32768, "median_decode_tok_s": 24.150388490970368, "median_ttft_ms": 37853.535161935724}
+  ],
+  "unchanged_rules": "All parent identities, gates, aggregation, quarantine rules, and publication boundaries remain unchanged. The control observations do not alter or select the MTP2 workload."
+}
