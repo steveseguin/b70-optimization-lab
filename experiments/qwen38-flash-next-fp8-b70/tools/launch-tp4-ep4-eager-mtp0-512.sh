@@ -47,7 +47,7 @@ validation_root="${repo_root}/data/model-intake/post-download-validation-2026082
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 padding_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-moe-padding-guard-gates.json"
 
-expected_vllm_head="44fb789db880d808161a46311a65d3eafa0e3032"
+expected_vllm_head="1372c62d975c554f4b465c8299bc5f3295301ceb"
 expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
@@ -254,6 +254,17 @@ for namespace, op in [
 gdn_schema = torch.ops._xpu_C.gdn_attention.default._schema
 assert len(gdn_schema.arguments) == 23, gdn_schema
 print(gdn_schema)
+gdn_spec_schema = torch.ops._xpu_C.gdn_attention_spec_decode.default._schema
+assert len(gdn_spec_schema.arguments) == 23, gdn_spec_schema
+assert tuple(arg.name for arg in gdn_spec_schema.arguments) == (
+    'core_attn_out', 'z', 'projected_states_qkvz', 'projected_states_ba',
+    'num_k_heads', 'num_v_heads', 'head_k_dim', 'head_v_dim', 'conv_state',
+    'ssm_state', 'conv_weights', 'conv_bias', 'activation', 'A_log', 'dt_bias',
+    'spec_query_start_loc', 'spec_state_indices_tensor', 'spec_token_indices',
+    'num_accepted_tokens', 'num_spec_decodes', 'num_actual_tokens', 'tp_size',
+    'reorder_input',
+), gdn_spec_schema
+print(gdn_spec_schema)
 print(f'xpu_device_count={torch.xpu.device_count()}')
 assert torch.xpu.device_count() == 4
 assert envs.VLLM_KV_CACHE_LAYOUT == 'BLHNC'

@@ -4,7 +4,7 @@ Exported: 2026-08-26
 
 The production vLLM series is based on
 `76cfe1cd88d30d525eec8be5bff75f8b77471c88` and applies patches
-`0001` through `0010`, `0012`, and `0014` through `0017` in that order.
+`0001` through `0010`, `0012`, and `0014` through `0018` in that order.
 Patches `0011` and `0013` are opt-in diagnostic research artifacts and must
 not be applied to a performance or production tree. The kernel
 compatibility series is based on
@@ -34,6 +34,7 @@ fb7063c15743b306b218a6159f94935325bfcfd8c6db61200fa4e1cb196906f9  vllm/0014-Norm
 4e7ce685db32a88695ab4a3d4f05bf468a34974a23e24d3772c37a4582b45956  vllm/0015-Support-legacy-XPU-GDN-ABI-for-target-decode.patch
 e9d2ed0234695954ea8c1bdb0edb1b18cc00c0be8c1bfb8e7d021abb0e80795e  vllm/0016-Fail-closed-on-XPU-GDN-schema-mismatches.patch
 cdd9631a9480ab333fb4340812adf856ad65e22b0c4da1b1a8ef91bb04d7fa3c  vllm/0017-Port-Qwen4Exp-MTP-tests-to-tokens-per-state-cache-AP.patch
+7d5328a5d5175fdd0c97ac83b9cb826e8e3dce5d30c755a26c4f732000f41937  vllm/0018-Route-legacy-XPU-GDN-speculative-decode.patch
 23d25179eb7e287ca8217afac479ec0fe55736cb2e20ff8032e866ffd77b536e  vllm-xpu-kernels/0001-fix-xpu-restore-architecture-probe-bindings.patch
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch

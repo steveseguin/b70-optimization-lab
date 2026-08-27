@@ -1,0 +1,118 @@
+From 1372c62d975c554f4b465c8299bc5f3295301ceb Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 08:35:33 -0400
+Subject: [PATCH] Route legacy XPU GDN speculative decode
+
+---
+ vllm/_xpu_ops.py | 88 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 88 insertions(+)
+
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 184662bd1..c2067307f 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -20,6 +20,46 @@ _XPU_GDN_ATTENTION_ARG_COUNT = (
+     if hasattr(torch.ops._xpu_C, "gdn_attention")
+     else None
+ )
++_XPU_GDN_SPEC_ATTENTION_ARG_COUNT = (
++    len(torch.ops._xpu_C.gdn_attention_spec_decode.default._schema.arguments)
++    if hasattr(torch.ops._xpu_C, "gdn_attention_spec_decode")
++    else None
++)
++_XPU_GDN_SPEC_ATTENTION_ARG_NAMES = (
++    tuple(
++        argument.name
++        for argument in (
++            torch.ops._xpu_C.gdn_attention_spec_decode.default._schema.arguments
++        )
++    )
++    if hasattr(torch.ops._xpu_C, "gdn_attention_spec_decode")
++    else None
++)
++_LEGACY_XPU_GDN_SPEC_ATTENTION_ARG_NAMES = (
++    "core_attn_out",
++    "z",
++    "projected_states_qkvz",
++    "projected_states_ba",
++    "num_k_heads",
++    "num_v_heads",
++    "head_k_dim",
++    "head_v_dim",
++    "conv_state",
++    "ssm_state",
++    "conv_weights",
++    "conv_bias",
++    "activation",
++    "A_log",
++    "dt_bias",
++    "spec_query_start_loc",
++    "spec_state_indices_tensor",
++    "spec_token_indices",
++    "num_accepted_tokens",
++    "num_spec_decodes",
++    "num_actual_tokens",
++    "tp_size",
++    "reorder_input",
++)
+ 
+ if TYPE_CHECKING:
+ 
+@@ -175,6 +215,54 @@ def _gdn_attention_core_xpu_impl(
+     )
+ 
+     if _XPU_GDN_ATTENTION_ARG_COUNT == 23:
++        if num_spec_decodes > 0:
++            # Older XPU runtimes expose separate target and speculative GDN
++            # operators. Preserve their tuned target path and route pure
++            # speculative batches through the matching legacy operator.
++            assert _XPU_GDN_SPEC_ATTENTION_ARG_COUNT == 23
++            assert (
++                _XPU_GDN_SPEC_ATTENTION_ARG_NAMES
++                == _LEGACY_XPU_GDN_SPEC_ATTENTION_ARG_NAMES
++            )
++            assert num_prefills == 0
++            assert num_decodes == 0
++            assert spec_sequence_masks is not None
++            assert spec_query_start_loc is not None
++            assert spec_token_indx is not None
++            assert spec_state_indices_tensor is not None
++            assert non_spec_query_start_loc is None
++            assert non_spec_state_indices_tensor is None
++            torch.ops._xpu_C.gdn_attention_spec_decode(
++                core_attn_out,
++                z,
++                projected_states_qkvz,
++                projected_states_ba,
++                self.num_k_heads,
++                self.num_v_heads,
++                self.head_k_dim,
++                self.head_v_dim,
++                conv_state=self.kv_cache[0],
++                ssm_state=self.kv_cache[1],
++                conv_weights=conv_weights,
++                conv_bias=self.conv1d.bias,
++                activation=self.activation,
++                A_log=self.A_log,
++                dt_bias=self.dt_bias,
++                spec_query_start_loc=spec_query_start_loc.contiguous(),
++                spec_state_indices_tensor=spec_state_indices_tensor.contiguous(),
++                spec_token_indices=spec_token_indx.contiguous(),
++                num_accepted_tokens=(
++                    num_accepted_tokens.contiguous()
++                    if num_accepted_tokens is not None
++                    else None
++                ),
++                num_spec_decodes=num_spec_decodes,  # type: ignore[attr-defined]
++                num_actual_tokens=num_actual_tokens,  # type: ignore[attr-defined]
++                tp_size=self.tp_size,
++                reorder_input=not self.gqa_interleaved_layout,
++            )
++            return
++
+         assert num_spec_decodes == 0
+         assert spec_sequence_masks is None
+         assert spec_query_start_loc is None
+-- 
+2.43.0
+
