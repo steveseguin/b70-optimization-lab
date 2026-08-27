@@ -1,0 +1,69 @@
+From 687aa13dc81ec543b02e9b531a99b84186cef7b1 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 03:24:59 -0400
+Subject: [PATCH] Support legacy XPU GDN ABI for target decode
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ vllm/_xpu_ops.py | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index aea178589..002073030 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -15,6 +15,12 @@ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
+ 
++_XPU_GDN_ATTENTION_ARG_COUNT = (
++    len(torch.ops._xpu_C.gdn_attention.default._schema.arguments)
++    if hasattr(torch.ops._xpu_C, "gdn_attention")
++    else None
++)
++
+ if TYPE_CHECKING:
+ 
+     def register_fake(fn):
+@@ -168,6 +174,38 @@ def _gdn_attention_core_xpu_impl(
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
++    if _XPU_GDN_ATTENTION_ARG_COUNT == 23:
++        assert num_spec_decodes == 0
++        assert non_spec_token_indx is None
++        assert non_spec_query_start_loc is not None
++        assert non_spec_state_indices_tensor is not None
++        torch.ops._xpu_C.gdn_attention(
++            core_attn_out,
++            z,
++            projected_states_qkvz,
++            projected_states_ba,
++            self.num_k_heads,
++            self.num_v_heads,
++            self.head_k_dim,
++            self.head_v_dim,
++            conv_state=self.kv_cache[0],
++            ssm_state=self.kv_cache[1],
++            conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias,
++            activation=self.activation,
++            A_log=self.A_log,
++            dt_bias=self.dt_bias,
++            num_prefills=num_prefills,  # type: ignore[attr-defined]
++            num_decodes=num_decodes,  # type: ignore[attr-defined]
++            has_initial_state=has_initial_state,  # type: ignore[attr-defined]
++            non_spec_query_start_loc=non_spec_query_start_loc,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            num_actual_tokens=num_actual_tokens,  # type: ignore[attr-defined]
++            tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++        return
++
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,
+-- 
+2.43.0
+

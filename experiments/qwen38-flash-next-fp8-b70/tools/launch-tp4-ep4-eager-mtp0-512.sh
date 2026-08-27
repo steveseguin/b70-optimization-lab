@@ -39,7 +39,7 @@ validation_root="${repo_root}/data/model-intake/post-download-validation-2026082
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 padding_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-moe-padding-guard-gates.json"
 
-expected_vllm_head="d41e6408989a145a8f39820228ebeee48b0157ab"
+expected_vllm_head="687aa13dc81ec543b02e9b531a99b84186cef7b1"
 expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
@@ -238,6 +238,7 @@ modules = [
     vllm_xpu_kernels,
     importlib.import_module('vllm_xpu_kernels._C'),
     importlib.import_module('vllm_xpu_kernels._moe_C'),
+    importlib.import_module('vllm_xpu_kernels._xpu_C'),
 ]
 for module in modules:
     path = pathlib.Path(module.__file__).resolve()
@@ -249,6 +250,9 @@ for namespace, op in [
     ('_moe_C', 'topk_softmax'),
 ]:
     print(torch._C._dispatch_find_schema_or_throw(f'{namespace}::{op}', '').schema())
+gdn_schema = torch.ops._xpu_C.gdn_attention.default._schema
+assert len(gdn_schema.arguments) == 23, gdn_schema
+print(gdn_schema)
 print(f'xpu_device_count={torch.xpu.device_count()}')
 assert torch.xpu.device_count() == 4
 assert envs.VLLM_XPU_MOE_SYNC_TRACE == bool(int(os.environ['VLLM_XPU_MOE_SYNC_TRACE']))

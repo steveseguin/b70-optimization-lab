@@ -926,9 +926,14 @@ cache and block-outermost `BLHNC` layout. Attempt 16 reached cache binding and
 exposed a stale QSA adapter assumption about vLLM's standardized logical cache
 view. vLLM `d41e640898` now normalizes both raw and compressed QSA side caches
 once at bind time, with both layout contracts covered by the passing reference
-suite and no per-token work added. Attempt 17 applies only that correction. If
-healthy, require a real non-padding API canary, then remove diagnostics and run
-the separate quality and throughput qualification. See the
+suite and no per-token work added. Attempt 17 passed cache binding/allocation
+and reached final warmup, where it exposed a 29-field source versus 23-field
+preserved GDN component mismatch. vLLM `687aa13dc` now selects the exact legacy
+target-decode call only for that detected component and fails closed on any
+speculative batch; the current 29-field path is unchanged. Attempt 18 applies
+only this compatibility correction. If healthy, require a real non-padding API
+canary, then remove diagnostics and run the separate quality and throughput
+qualification. See the
 [bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,

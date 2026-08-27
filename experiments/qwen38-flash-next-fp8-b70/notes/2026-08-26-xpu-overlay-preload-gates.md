@@ -457,3 +457,25 @@ cross-layer `BLHNC` view. Attempt 17 keeps the attempt-16 diagnostic identity
 and adds only this adapter correction. If healthy, issue a real non-padding API
 canary before shutdown, then remove trace/capture call sites and run a separate
 quality and performance qualification.
+
+Attempt 17 passed the QSA bind, allocated the explicit cache (`1,536` tokens),
+and reached final kernel warmup. It then stopped cleanly because current vLLM's
+combined GDN wrapper supplied 29 interface fields while the preserved optimized
+runtime component exposes its earlier 23-field target-decode interface. This is
+a source/component packaging mismatch; no component rebuild or replacement is
+required for the MTP0 lane.
+
+vLLM commit `687aa13dc` detects the loaded interface once at module import and,
+only for the 23-field component, requires `num_spec_decodes == 0` and the
+ordinary contiguous target batch before issuing that component's exact call.
+The current 29-field path remains unchanged for a future updated MTP runtime.
+The staged import/schema gate passes and the launcher now fails closed unless
+the pinned component reports exactly 23 fields. Attempt 18 keeps all attempt-17
+runtime settings and changes only this source adapter.
+
+An attempted upstream kernel update was deliberately not completed: the latest
+upstream refactors the same GDN file that carries extensive local serving work,
+so resolving it is a separate performance-preserving port, not a safe startup
+shortcut. The exact pre-update tree is preserved as a complete verified bundle
+at `/mnt/usb-models/qwen38-build/source-backups/vllm-xpu-kernels-pre-gdn-sync-2f829747.bundle`
+(SHA-256 `be14c05473a77ea908282dc62478dc6fe5f5b55dedd3477f1de0b4f6c21fc149`).
