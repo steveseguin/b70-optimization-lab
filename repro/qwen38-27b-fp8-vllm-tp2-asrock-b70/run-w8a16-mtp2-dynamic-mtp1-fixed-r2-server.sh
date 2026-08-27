@@ -9,11 +9,17 @@ container=${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 port=${PORT:-18128}
 served_model=${SERVED_MODEL_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 speculative_config=${SPECULATIVE_CONFIG:-'{"method":"qwen3_next_mtp","num_speculative_tokens":2,"num_speculative_tokens_per_batch_size":[[1,1,2],[2,128,1]]}'}
+max_num_seqs=${MAX_NUM_SEQS:-128}
 image_id=${EXPECTED_IMAGE_ID:-sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 patch_sha256=68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5
 xpu_extension_sha256=de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62
 gdn_library_sha256=2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355
+
+[[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || {
+  printf 'MAX_NUM_SEQS must be positive\n' >&2
+  exit 1
+}
 
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
@@ -86,7 +92,7 @@ exec docker run "${container_lifecycle[@]}" --name "${container}" \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.96 \
   --max-model-len 256 --block-size 64 \
-  --max-num-seqs 128 --max-num-batched-tokens 512 \
+  --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens 512 \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
   --language-model-only \
   --speculative-config "${speculative_config}" \
