@@ -264,3 +264,58 @@ was reloaded using the repository's proven recovery procedure. Four-device
 discovery and the exact BDF mapping returned afterward. The launcher now caps
 every XPU-SMI inventory call at 30 seconds so management telemetry can never
 block a model launch indefinitely. The fresh model run uses attempt 11.
+
+## Attempt 11: full load passes, first forward faults again
+
+Attempt 11 passed the bounded four-device inventory, staged-runtime schema,
+idle-memory, and four-rank XCCL barrier/all-reduce gates. All four ranks made
+the 11.92-GiB PLE UVA view ready within one second, loaded all 131 shards, and
+completed post-load processing. Rank 0 loaded weights in 551.92 seconds; the
+four model-load times were 559.34--560.52 seconds at 31.57 GiB reported per
+rank.
+
+The first 64-token dummy/profile forward still failed. The initial Python
+symptom was Level Zero error 40 (`UR_RESULT_ERROR_OUT_OF_RESOURCES`) in the
+first MoE call; shutdown then surfaced error 20 (`UR_RESULT_ERROR_DEVICE_LOST`)
+on all ranks. The kernel journal began recording CCS write faults at 20:30:46
+on all four BDFs, followed by unsuccessful `-EPERM` fault responses, CAT error
+18, job timeouts/resets, and one coredump per card. The four virtual addresses
+are different and only share the low `b69000` suffix. Treat the OOR name as a
+runtime symptom, not proof of physical-HBM exhaustion.
+
+The API never became healthy and no decode request or throughput measurement
+exists. The server log and all four device coredumps are preserved in the
+external attempt directory with hashes in
+`data/20260826-tp4-first-load-attempt11.json`. The failed processes and compile
+cache are gone, and xe reinitialized all four BDFs. The structured receipt does
+not claim a retained launcher exit code or a post-reload compute gate that the
+attempt-local evidence did not record.
+
+## Exact routed-MoE isolation after attempt 11
+
+The one-B70 isolation gate now covers the exact local routed-expert geometry:
+128 local / 512 global experts, hidden 2560, intermediate 640, top-k 10,
+FP8 128x128 block weights, BF16 activations, the production modular NoDPEP
+path, and rank-0's 512-to-128 expert map. The live attempt-11 MoE shape is M64,
+not M256: TP4+EP4 with DP1/PCP1 does not activate sequence-parallel AG/RS even
+though `allgather_reducescatter` is the configured backend.
+
+All corrected gates passed:
+
+- constant-weight functional M64 with the global expert map;
+- constant-weight modular M1 and M256 stress;
+- real checkpoint layer-0 rank-0 packed weights/scales at modular M1;
+- real checkpoint layer-0 rank-0 packed weights/scales at modular M64 with
+  the global expert map;
+- that exact real M64 arm while an exact 12,800,061,440-byte TP4-local PLE
+  host-USM/UVA view remained live.
+
+Every output was finite and shaped correctly. The checkpoint-side CPU audit
+also found every rank-0 layer-0 FP8 expert element finite and every scale
+finite, positive, and nonzero. This exonerates basic expert packing, scale
+layout, EP remapping, the default one-layer Triton tile, and a single live PLE
+mapping. The next full launch must be instrumented to separate full-model
+residency and earlier/shared/full-forward state from the routed kernel instead
+of repeating another blind profile attempt. The gate and exact results are in
+`tools/fullshape-triton-fp8-moe-gate.py` and
+`data/20260826-fullshape-triton-fp8-moe-isolation.json`.

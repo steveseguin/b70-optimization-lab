@@ -1,0 +1,96 @@
+{
+  "status": "bounded_negative",
+  "attempt": 11,
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "bb4ad1cca6459ab3246b1685cce0993f03fdbc93",
+    "kernels_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tp": 4,
+    "ep": 4,
+    "all2all_backend": "allgather_reducescatter",
+    "moe_backend": "triton",
+    "mtp": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "gpu_memory_utilization": 0.92,
+    "offload": "selective UVA, PLE embedding only, 12 GiB/rank"
+  },
+  "preflight": {
+    "xpu_device_count": 4,
+    "idle_memory_used_mib_range": [42.875, 42.883],
+    "staged_runtime_schema_gate": "pass",
+    "xccl_barrier": "pass, all four ranks",
+    "xccl_allreduce": "pass, all four ranks returned 4.0"
+  },
+  "result": {
+    "all_ranks_uva_ready": true,
+    "ple_uva_gib_per_rank": 11.92,
+    "rank_0_weight_load_seconds": 551.92,
+    "rank_model_load_seconds": [560.517773, 560.188269, 559.647918, 559.344484],
+    "accelerator_memory_reported_gib_per_rank": 31.57,
+    "failure_stage": "first 64-token profile_run dummy forward, first MoE layer",
+    "first_reported_failure": "level_zero error 40, UR_RESULT_ERROR_OUT_OF_RESOURCES",
+    "shutdown_failure": "level_zero error 20, UR_RESULT_ERROR_DEVICE_LOST",
+    "api_healthy": false,
+    "decode_measurement": null
+  },
+  "kernel_evidence": {
+    "fault_timestamp_local": "2026-08-26T20:30:46-04:00",
+    "summary": "All four B70 BDFs logged CCS write faults, unsuccessful -EPERM fault responses, CAT error 18, job timeouts/resets, and one device coredump each.",
+    "fault_addresses": {
+      "0000:23:00.0": "0x00007fb203b69000",
+      "0000:27:00.0": "0x0000791fefb69000",
+      "0000:43:00.0": "0x0000717af3b69000",
+      "0000:47:00.0": "0x000077160bb69000"
+    },
+    "address_caution": "The virtual addresses are not identical; only their low b69000 suffix matches.",
+    "journal_location": "system journal; no raw journal export was placed in the attempt directory"
+  },
+  "evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt11",
+    "server_log": {
+      "bytes": 99504,
+      "sha256": "22504eea6ec0d9071f2370c1b933864e8a6789a34130e8f8c7e9898e06e379e5"
+    },
+    "coredumps": [
+      {
+        "file": "devcoredump-card0-bdf43-rank2-pid997689.bin",
+        "bdf": "0000:43:00.0",
+        "rank": 2,
+        "bytes": 119593,
+        "sha256": "0889a80b7b9197104e6b863edd164b9b63a2664a4c4ce802815afd361edd3f21"
+      },
+      {
+        "file": "devcoredump-card2-bdf47-rank3-pid997746.bin",
+        "bdf": "0000:47:00.0",
+        "rank": 3,
+        "bytes": 119659,
+        "sha256": "81f1dd9da7340c068c8877850d1bbe1326341f0d8f6129710bd0f501ee4adeba"
+      },
+      {
+        "file": "devcoredump-card3-bdf23-rank0-pid997581.bin",
+        "bdf": "0000:23:00.0",
+        "rank": 0,
+        "bytes": 145130,
+        "sha256": "efb3aa2d1073fb1c8fcaf9d63e2bc1a8a0bf1d214c5864a94885e7b589863de9"
+      },
+      {
+        "file": "devcoredump-card4-bdf27-rank1-pid997632.bin",
+        "bdf": "0000:27:00.0",
+        "rank": 1,
+        "bytes": 119585,
+        "sha256": "b5a3ad2f2a1e2a33e6c83652d5b34317c8258a00d0eeb7d1356b49eddb42d5e5"
+      }
+    ]
+  },
+  "cleanup_and_recovery": {
+    "attempt_processes_remaining": 0,
+    "compile_cache_remaining": false,
+    "matching_shm_entries_remaining": 0,
+    "xe_reinitialized_all_four_bdfs_at_local": "2026-08-26T20:32:47-04:00 through 2026-08-26T20:32:48-04:00",
+    "current_driver_bindings_and_dri_mappings": "present for all four B70s"
+  },
+  "interpretation": "The 64-token bound did not repair the full-model first forward. UR_RESULT_ERROR_OUT_OF_RESOURCES is a runtime symptom, not proof of physical VRAM exhaustion. No decode or throughput claim was produced."
+}
