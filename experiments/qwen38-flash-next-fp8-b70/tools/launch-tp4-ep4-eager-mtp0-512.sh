@@ -4,6 +4,7 @@ set -Eeuo pipefail
 max_model_len="${MAX_MODEL_LEN:-512}"
 mtp="${MTP:-0}"
 mtp_exact="${MTP_EXACT:-0}"
+kv_cache_memory_bytes="${KV_CACHE_MEMORY_BYTES:-201326592}"
 speculative_config_json=""
 [[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" || "${max_model_len}" == "4352" || "${max_model_len}" == "8448" ]] || {
   printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, 4352, or 8448\n' >&2
@@ -90,6 +91,8 @@ expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e
 
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail "ATTEMPT must be a positive integer"
 [[ "${port}" =~ ^[1-9][0-9]*$ ]] || fail "PORT must be a positive integer"
+[[ "${kv_cache_memory_bytes}" =~ ^[1-9][0-9]*$ ]] || \
+  fail "KV_CACHE_MEMORY_BYTES must be a positive integer"
 [[ -x "${python}" && -x "${vllm_bin}" ]] || fail "pinned vLLM virtual environment is missing"
 [[ "$(head -1 "${vllm_bin}")" == "#!${python}" ]] || fail "vLLM wrapper does not use the pinned interpreter"
 [[ -d "${model}" && -d "${stage}/vllm_xpu_kernels" ]] || fail "model or staged runtime is missing"
@@ -236,6 +239,7 @@ export Q38_PADDING_RECEIPT="${padding_receipt}"
 export Q38_MAX_MODEL_LEN="${max_model_len}"
 export Q38_MTP="${mtp}"
 export Q38_SPECULATIVE_CONFIG_JSON="${speculative_config_json}"
+export Q38_KV_CACHE_MEMORY_BYTES="${kv_cache_memory_bytes}"
 
 "${python}" - <<'PY'
 import os
@@ -334,6 +338,7 @@ for device in range(4):
 model = os.environ['Q38_MODEL_PATH']
 mtp = int(os.environ['Q38_MTP'])
 speculative_config_json = os.environ['Q38_SPECULATIVE_CONFIG_JSON']
+kv_cache_memory_bytes = int(os.environ['Q38_KV_CACHE_MEMORY_BYTES'])
 engine_kwargs = dict(
     model=model, tokenizer=model, dtype='bfloat16', tensor_parallel_size=4,
     pipeline_parallel_size=1, data_parallel_size=1,
@@ -346,7 +351,7 @@ engine_kwargs = dict(
     cpu_offload_params={
         'ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'
     },
-    gpu_memory_utilization=.92, kv_cache_memory_bytes=201326592,
+    gpu_memory_utilization=.92, kv_cache_memory_bytes=kv_cache_memory_bytes,
     kv_cache_dtype='auto', block_size=64,
     generation_config='vllm', load_format='safetensors', async_scheduling=False,
 )
@@ -380,7 +385,7 @@ else:
     assert config.speculative_config is None
 assert config.model_config.max_model_len == int(os.environ['Q38_MAX_MODEL_LEN'])
 assert config.scheduler_config.max_num_batched_tokens == 64
-assert config.cache_config.kv_cache_memory_bytes == 201326592
+assert config.cache_config.kv_cache_memory_bytes == kv_cache_memory_bytes
 selector = 'ple_embedding.ngram_embedding.weight'
 assert f'.{selector}.' in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight.'
 assert f'.{selector}.' not in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight_scale.'
@@ -438,7 +443,7 @@ PY
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
   printf 'moe_backend=triton eager=1 mtp=%s max_model_len=%s max_num_batched_tokens=64\n' "${mtp}" "${max_model_len}"
   printf 'mtp_exact_recurrent=%s\n' "${mtp_exact}"
-  printf 'kv_cache_memory_bytes=201326592\n'
+  printf 'kv_cache_memory_bytes=%s\n' "${kv_cache_memory_bytes}"
   printf 'kv_cache_layout=BLHNC\n'
   printf 'diagnostics=none\n'
 } >"${run_dir}/identity.txt"
@@ -476,7 +481,7 @@ args=(
   --cpu-offload-gb 12.25
   --cpu-offload-params ple_embedding.ngram_embedding.weight embed_tokens.weight
   --gpu-memory-utilization 0.92
-  --kv-cache-memory-bytes 201326592
+  --kv-cache-memory-bytes "${kv_cache_memory_bytes}"
   --kv-cache-dtype auto
   --block-size 64
   --generation-config vllm

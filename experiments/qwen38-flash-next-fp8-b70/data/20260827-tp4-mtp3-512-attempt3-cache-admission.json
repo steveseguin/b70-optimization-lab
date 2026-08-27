@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-27",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-512-r1",
+  "attempt": 3,
+  "status": "failed-cache-admission",
+  "identity": {
+    "tp": 4,
+    "ep": 4,
+    "mtp": 3,
+    "configured_max_context_tokens": 512,
+    "kv_cache_memory_bytes": 201326592,
+    "command_speculative_config_count": 1,
+    "command_num_speculative_tokens": 3
+  },
+  "boundary": {
+    "target_checkpoint_shards_loaded": 131,
+    "mtp_checkpoint_selection_pass_completed": true,
+    "healthy_api_proven": false,
+    "model_responses": 0,
+    "quality_rows": 0,
+    "speed_rows": 0,
+    "promotion_eligible": false
+  },
+  "failure": "Cache admission required about 0.20 GiB for one 512-token MTP3 request, exceeding the inherited 192-MiB fixed cache.",
+  "exact_cache_audit": {
+    "pool_block_bytes": 11767808,
+    "usable_blocks_required": 18,
+    "reserved_null_blocks": 1,
+    "hard_floor_blocks": 19,
+    "hard_floor_bytes": 223588352,
+    "retry_blocks": 20,
+    "retry_bytes": 235356160
+  },
+  "cleanup": {
+    "workers_exited_normally": true,
+    "residual_processes": 0,
+    "residual_listener": false,
+    "launch_local_journal_rejection": false
+  },
+  "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-512-r1-attempt3",
+  "next_attempt": 4
+}
