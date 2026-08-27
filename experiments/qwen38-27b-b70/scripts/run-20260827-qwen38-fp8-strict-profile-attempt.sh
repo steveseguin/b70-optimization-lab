@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
-profile=${PROFILE:?set PROFILE to mtp0, mtp0-eager, mtp0-eager-defaultoff, mtp1, or dynamic-mtp8}
+profile=${PROFILE:?set PROFILE to mtp0, mtp0-eager, mtp0-eager-defaultoff, mtp0-eager-defaultoff-tp1, mtp1, or dynamic-mtp8}
 attempt=${ATTEMPT:?set ATTEMPT to a unique fresh-server attempt label}
 model_dir=${MODEL_DIR:?set MODEL_DIR to the verified Qwen3.8-27B-FP8 directory}
 out_dir=${OUT_DIR:?set OUT_DIR to a new evidence directory}
@@ -109,6 +109,22 @@ case "${profile}" in
       MODEL_DIR="${model_dir}"
       VLLM_CACHE_DIR="${cache_dir}"
       "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-eager-server.sh"
+    )
+    ;;
+  mtp0-eager-defaultoff-tp1)
+    port=${PORT:-18136}
+    container=${CONTAINER_NAME:-qwen38-fp8-strict-mtp0-eager-defaultoff-tp1-${attempt}}
+    served_model=qwen38-fp8-strict-mtp0-eager-defaultoff-tp1
+    launcher=(
+      env
+      MAX_MODEL_LEN=1024
+      MAX_NUM_BATCHED_TOKENS=1024
+      PORT="${port}"
+      CONTAINER_NAME="${container}"
+      SERVED_MODEL_NAME="${served_model}"
+      MODEL_DIR="${model_dir}"
+      VLLM_CACHE_DIR="${cache_dir}"
+      "${repo}/experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-fp8-eager-defaultoff-tp1-server.sh"
     )
     ;;
   dynamic-mtp8)
