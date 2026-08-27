@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "status": "partial-runtime-stability-failure-research-only",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-8448-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-8448-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 8448,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none",
+    "preregistration_commit": "d3fa4e90b"
+  },
+  "serving": {
+    "health_gate": "pass-by-models-endpoint-and-completed-api-work",
+    "reported_max_model_len": 8448,
+    "kv_cache_tokens": 9504,
+    "maximum_concurrency_at_8448": 1.12,
+    "capacity_caveat": "The 1.12x value is the runtime cache calculator output; max_num_seqs remained 1 and no multi-user claim is made.",
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "model_load_seconds_by_rank": [555.211773, 553.407566, 554.706105, 553.693411],
+    "model_memory_gib_by_rank": [31.27, 31.27, 31.27, 31.27],
+    "request_order": [
+      "quality-v2-short-repeat-and-exact-8k-needle",
+      "formal-exact-p8192-o128",
+      "legacy-comparative-p8192-o256-context-r1",
+      "legacy-comparative-p8192-o256-context-r2",
+      "legacy-comparative-p8192-o256-context-r3-runtime-failure"
+    ],
+    "runtime_compilation_caveat": "Four first-seen-shape compilation notices occurred during the prerequisite quality phase. No such notice occurred during the formal or legacy-comparative rows; no diagnostic or compilation setting was changed.",
+    "shutdown": {
+      "classification": "runtime-failure-followed-by-complete-cleanup",
+      "api_application_shutdown_complete": true,
+      "worker_cleanup_logged_ranks": [1, 2, 3],
+      "rank0_parent-exit_cleanup_logged": true,
+      "residual_processes_after_stop": 0,
+      "residual_listeners_after_stop": 0,
+      "caveat": "The runtime stopped during the third comparison request and initiated its own shutdown. The launcher was then interrupted after the API and workers had exited; no serving process or port-19641 listener remained."
+    }
+  },
+  "quality_v2": {
+    "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "baseline": "configured-4352 exact-4K attempt 1",
+    "baseline_receipt": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json",
+    "baseline_raw_artifact": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt1/quality-v2-short-and-4k.json",
+    "baseline_raw_artifact_sha256": "a458747f6c84b1adbfbf4dff77ab8c5ffabf5446a990fc6711a66ae1119389b4",
+    "baseline_status": "passed",
+    "baseline_comparisons_all_true": true,
+    "repeat_protocol": "fixed-set-v2",
+    "strict_exact_pass_count": 5,
+    "strict_exact_case_count": 7,
+    "strict_failures": {
+      "logic": {"expected": "yes", "content": "Yes"},
+      "code_execution": {"expected": "14", "content": "30"}
+    },
+    "repeat": {
+      "pass": true,
+      "count": 16,
+      "unique_hash_count": 1,
+      "expected": "blue, green, red, yellow",
+      "content": "blue, green, red, yellow"
+    },
+    "long_context": {
+      "requested_filler_tokens": 8800,
+      "raw_prompt_tokens": 8180,
+      "server_prompt_tokens": 8192,
+      "needle": "B70_QWEN38_NEEDLE_20260816",
+      "content": "B70_QWEN38_NEEDLE_20260816",
+      "pass": true,
+      "cached_tokens": 0,
+      "created_cache_tokens": 0
+    },
+    "cached_and_created_cache_values_all_zero": true,
+    "cached_token_observations": 24,
+    "helper_exit_code": 1,
+    "helper_exit_code_expected": true,
+    "pass_all": false,
+    "pass_all_caveat": "The inherited substantive 5-of-7 short-quality boundary remains; all incremental repeat-v2 and exact-8K quality gates passed."
+  },
+  "formal_exact_8k": {
+    "status": "passed",
+    "prompt_tokens": 8192,
+    "completion_tokens": 128,
+    "cached_tokens": 0,
+    "finish_reason": "length",
+    "returned_token_ids": 128,
+    "conventional_99_interval_tok_s": 3.97972923995132,
+    "historical_100_event_tok_s": 4.019928525203353,
+    "ttft_s": 386.5343322980043,
+    "elapsed_s": 417.9901819709921,
+    "output_token_ids_sha256": "0efd150b868d63f11cb4327bec07b02c7778d137142495924139e5221b4cebd3",
+    "measurement_class": "formal exact-depth 100-event/99-interval row"
+  },
+  "legacy_comparative_8k": {
+    "prompt_tokens_each_valid_rows": 8192,
+    "output_tokens_each_valid_rows": 256,
+    "concurrency": 1,
+    "harness_added_warmups": 0,
+    "prerequisite_gates_completed_before_timing": true,
+    "unique_prompt_salts": ["context-r1", "context-r2", "context-r3"],
+    "harness_sha256_at_run": "0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0",
+    "valid_rows": [
+      {
+        "sample": 1,
+        "tok_s_out_after_ttft": 5.170404147374639,
+        "tok_s_out_wall": 0.8743919368484945,
+        "ttft_s": 243.26231589599047,
+        "elapsed_s": 292.7748864229943,
+        "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+      },
+      {
+        "sample": 2,
+        "tok_s_out_after_ttft": 5.182352525810221,
+        "tok_s_out_wall": 0.9610983780422232,
+        "ttft_s": 216.9634954840003,
+        "elapsed_s": 266.36191033999785,
+        "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+      }
+    ],
+    "invalid_rows": [
+      {
+        "sample": 3,
+        "elapsed_s": 331.6175391440047,
+        "first_text_seen": false,
+        "usage_seen": false,
+        "chunks": 0,
+        "classification": "runtime-stopped-responding",
+        "raw_harness_exit_code": 0,
+        "raw_harness_exit_code_caveat": "The then-current helper did not reject an error-only or empty stream. The retained raw JSON is invalid evidence; the helper is now covered by fail-closed tests."
+      }
+    ],
+    "median_authorized": false,
+    "median_tok_s_out_after_ttft": null,
+    "curve_point_authorized": false,
+    "cached_tokens": "not-captured-by-this-harness",
+    "measurement_class": "incomplete legacy after-first-text exact-depth comparison",
+    "interpretation": "Two successful rows are retained as observations, but the required three-row comparison did not complete. No median or legacy context-curve point may be derived from them."
+  },
+  "failure": {
+    "phase": "third legacy-comparative exact-8K request",
+    "reported_num_computed_tokens_before_stop": 960,
+    "symptom": "The coordinator received no response for the next sampling step through five one-minute waits; the runtime then ended the request and shut down.",
+    "server_result": "fatal coordinator timeout while collecting the next sampling step",
+    "scope": "same-server repeated-comparison stability at exact 8K",
+    "does_not_invalidate": [
+      "the earlier exact-8K quality needle",
+      "the 16-of-16 repeat gate",
+      "the completed formal exact-p8192/o128 cache-zero measurement",
+      "the prior 0/1K/2K/4K captured results"
+    ]
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass-before-late-runtime-failure",
+    "fixed_set_full_repeat": "pass-16-of-16",
+    "exact_8k_context_needle": "pass",
+    "formal_exact_8k_gate": "pass",
+    "three_row_legacy_comparison": "fail-runtime-stability",
+    "full_short_quality": "fail-known-5-of-7-boundary",
+    "promotion_eligible": false,
+    "site_state": "lab-screened",
+    "site_grade_ceiling": "research-with-runtime-stability-caveat",
+    "site_interpretation": "The exact-8K formal capability cell is screened. The legacy curve stops at 4K, and deployment qualification is blocked."
+  },
+  "artifact_notes": {
+    "exact-depth-8k-o128.invocation.log": "The exact-depth helper prints the complete result JSON to stdout, so this retained stdout mirror is intentionally byte-identical to exact-depth-8k-o128.json; it is not a separate command transcript.",
+    "quality-v2-short-and-8k.exit-code": "The retained value is 1 by design because the inherited 5-of-7 short boundary makes the full helper result false even though every incremental 8K gate passed.",
+    "bench-context8k-o256-c1-r3.json": "Retained invalid raw output that demonstrates the old benchmark helper's missing-response acceptance bug; it is explicitly excluded from all metrics."
+  },
+  "fail_closed_followup": {
+    "commit": "08a8651438a45a6ed65416612521d24d71075990",
+    "helper_sha256": "d590c63c87b1e664417b4198dbbb873cbe4f252509fa8f9fc50830efca2b4cf4",
+    "scope": "The comparison helper now rejects explicit stream errors, missing or inconsistent usage, missing text, and partial output.",
+    "tests": "python3 -m unittest -v scripts/test_bench_openai_concurrency.py; 6 passed",
+    "performance_impact": "none; evidence-helper validation only, with no server or runtime setting changed"
+  },
+  "sha256": {
+    "server.log": "dc6f87624d40f69f13a311f0bd78cf2228b957995893a9d5da4fdd7fd6db4fe1",
+    "identity.txt": "eb0c4d58822348d72e07f614dce2190eaf0a82bbb5f692e9711ff158d7831aaf",
+    "models.json": "ebdf636854bed1fdc6915ce31767936b7ceca6e5cbf89582f6feb9d670993bc0",
+    "quality-v2-short-and-8k.json": "dc93824a4bef00a51de0315496243a474ba6f6e7834af4e0192b30506a208ac2",
+    "quality-v2-short-and-8k.invocation.log": "9731a3494624c0f8cc4f671833decdb4643f656cf9d734e869164c3a78f80e85",
+    "quality-v2-short-and-8k.exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "exact-depth-8k-o128.json": "2a8bfbb133ae4cf1b54ee31fd1c632ea8f843b7109fa72baff5b69d357e453aa",
+    "exact-depth-8k-o128.invocation.log": "2a8bfbb133ae4cf1b54ee31fd1c632ea8f843b7109fa72baff5b69d357e453aa",
+    "bench-context8k-o256-c1-r1.json": "da646374fe2addf06e5e7a38becbabb26207e6a3098fdd6c8605cd1c5d865fc4",
+    "bench-context8k-o256-c1-r2.json": "4586fc3f73289b61689e17bef85c20285a299610b3717cd1f08f2e74c969c3b7",
+    "bench-context8k-o256-c1-r3.json": "6d75a759633cb8788ac6a42abcd209f012331034621eb5ef6cd8b51a584034ab",
+    "bench-context8k-o256-c1-r1.invocation.log": "45841ba498adfa314bba4b5dd5c9abe6cefa8d2907dfc541e8c38458c6f87b09",
+    "bench-context8k-o256-c1-r2.invocation.log": "9274b789f24a7f3c4cd17c11734b5bddda838f7e19462ddf2b30b06955cb22b3",
+    "bench-context8k-o256-c1-r3.invocation.log": "b1bf0e6c9a27c91af72700e6a285506301f5c56bcbd9edd9beb42eba4ecb66a1"
+  }
+}

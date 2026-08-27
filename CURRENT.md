@@ -966,8 +966,14 @@ quarantine still disclosed. The additive configured-4,352 arm then passed
 exact baseline agreement, 16/16 fixed-set repeats, the exact cache-zero 4K
 needle, and the formal exact-depth gate. Its formal rate was `4.456026 tok/s`;
 three legacy-comparable exact-4K rows had a `5.233665 tok/s` after-first-text
-median. The next context cell is 8K; MTP1 still requires the
-performance-preserving runtime port.
+median. The configured-8,448 arm then passed exact baseline agreement, 16/16
+fixed-set repeats, an exact cache-zero 8K needle, and the formal p8192/o128 gate
+at `3.979729 tok/s`. Two secondary rows completed at `5.170404 / 5.182353
+tok/s`, but the runtime stopped during the required third row; no legacy median
+or curve point is authorized. The formal 8K cell is research-screened with a
+stability caveat, and helper commit `08a865143` now rejects incomplete streams.
+MTP1 still requires the performance-preserving runtime port; 16K+ waits on a
+bounded stability and larger-cache design.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

@@ -7,8 +7,9 @@ Last updated: 2026-08-27
 This is the first instrumentation-free TP4/EP4 server result for the official
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
-healthy, and serve real requests. It does not yet establish a production
-recipe, a quality-qualified speed, long-context behavior, or vision support.
+healthy, and serve real requests through a formal exact-8K context screen. It
+does not yet establish a production recipe, a fully quality-qualified speed,
+stable repeated serving at 8K, 16K+ behavior, or vision support.
 
 ## Measured point
 
@@ -73,8 +74,9 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next context point is 8K under the same sealed TP4/EP4/eager/MTP0 runtime.
-TP1 and TP2 require a separate fit/offload design.
+The next context points are 16K/24K/32K, but the 8K repeated-serving failure
+must be understood and a larger fixed-cache design is needed before they are
+responsible run targets. TP1 and TP2 require a separate fit/offload design.
 MTP1+ requires a
 performance-preserving port to the newer speculative runtime interface. Graph,
 deeper context, vision,
@@ -142,3 +144,23 @@ TTFT was `123.391275 s`. The site graph labels those legacy-comparable values
 separately from the formal rate. Short quality remains 5/7, so the cell is
 research-screened, not deployment-ready. See the
 [`exact-4K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json).
+
+## Exact 8K formal screen and stability boundary
+
+The additive configured-8,448 arm again retained the exact source, runtime,
+placement, eager/MTP0 identity, and fixed 192-MiB cache. It reported 9,504
+cache tokens. All seven short outputs matched the 4K baseline, fixed-set
+repeats were 16/16 identical, and the exact 8K needle passed cache-zero.
+
+The formal p8192/o128 row completed with 128 token IDs at `3.979729240 tok/s`
+on its 99-interval window and `386.534332 s` TTFT. Two secondary p8192/o256
+rows completed at `5.170404147` and `5.182352526 tok/s` after first text with
+the same output hash. The runtime stopped during the required third comparison,
+so those two observations have no authorized median and the legacy context
+curve intentionally stops at 4K. The comparison helper now fails closed on
+this class of incomplete response in commit `08a865143`.
+
+This fills the formal exact-8K capability cell as research-screened evidence,
+but repeated-serving stability, full short quality, and deployment promotion
+failed. See the
+[`exact-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json).

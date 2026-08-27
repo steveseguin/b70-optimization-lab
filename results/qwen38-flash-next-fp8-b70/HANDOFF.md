@@ -63,7 +63,17 @@ Its formal rate was `4.456026 tok/s`; three legacy-comparable exact-4K rows had
 a `5.233665 tok/s` after-first-text median. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json`.
 
-Next, add the 8K context point, then forward-port the speculative runtime for
-MTP1. TP1/TP2 need a new memory design
+The additive configured-8,448 arm passed exact baseline agreement, 16/16
+fixed-set repeats, the exact cache-zero 8K needle, and the formal p8192/o128
+gate at `3.979729 tok/s` with `386.534332 s` TTFT. Two legacy-comparable rows
+completed at `5.170404 / 5.182353 tok/s` with identical output; the runtime
+stopped during row 3, so no legacy median or curve point is authorized. Commit
+`08a865143` makes the helper fail closed on incomplete streamed responses.
+Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
+
+Next, forward-port the speculative runtime for MTP1. Defer 16K+ until the 8K
+repeated-serving boundary and larger fixed-cache requirement have a bounded
+design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.

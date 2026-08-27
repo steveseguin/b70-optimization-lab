@@ -571,3 +571,15 @@ the exact cache-zero 4K needle, and passed the formal p4096/o128 gate at
 rows had a `5.233665 tok/s` after-first-text median. The known 5/7 short
 boundary remains, so 4K is research-screened rather than promoted. Evidence is
 in `data/20260827-tp4-mtp0-4352-context-screen.json`.
+
+The additive configured-8,448 arm retained the fixed 192-MiB cache and all
+accepted performance settings. It reported 9,504 cache tokens, exactly matched
+the 4K short/repeat baseline, returned the exact cache-zero 8K needle, and
+passed the formal p8192/o128 gate at `3.979729 tok/s` on the 99-interval window.
+Two p8192/o256 comparison rows completed at `5.170404 / 5.182353 tok/s` with
+the same output hash; the runtime stopped during row 3 after five one-minute
+waits, so no comparison median or legacy curve point is authorized. Commit
+`08a865143` hardens the helper against incomplete streams. The exact-8K formal
+cell is research-screened with a stability caveat, and 16K+ expansion pauses
+pending a bounded stability/cache design. Evidence is in
+`data/20260827-tp4-mtp0-8448-context-screen.json`.

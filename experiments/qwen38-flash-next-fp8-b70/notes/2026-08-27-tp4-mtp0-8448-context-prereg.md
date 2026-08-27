@@ -90,3 +90,32 @@ The baseline raw 4K quality JSON SHA-256 is
 Any identity/capacity mismatch, new short failure, repeat divergence, nonzero
 cache reuse, needle failure, or formal failure stops the arm before speed
 interpretation. Prior 0/1K/2K/4K results remain unchanged in every outcome.
+
+## Result
+
+Attempt 1 preserved the preregistered identity and reported 9,504 cache tokens,
+or 1.12x at the configured 8,448-token maximum. Placement remained exactly
+12.22 GiB and model memory 31.27 GiB on every rank.
+
+The incremental quality phase passed: all short outputs matched the exact-4K
+baseline, the fixed-set canary was 16/16 identical, and the needle was returned
+at exactly 8,192 server prompt tokens with cached and created-cache counts both
+zero. The formal p8192/o128 gate also passed cache-zero with 128 returned token
+IDs, a `3.979729240 tok/s` conventional 99-interval rate, and
+`386.534332 s` TTFT.
+
+The secondary comparison did not complete. Rows 1 and 2 returned the same
+output hash at `5.170404147` and `5.182352526 tok/s` after first text. During
+row 3, the coordinator received no response for the next sampling step through
+five one-minute waits and the runtime shut down. The old helper wrote an empty
+row and exited zero; commit `08a865143` now makes explicit stream errors,
+missing usage/text, partial output, and inconsistent usage fail closed, backed
+by six focused tests.
+
+Therefore the formal exact-8K capability cell is research-screened with a
+runtime-stability caveat. There is no authorized three-row median and no 8K
+point on the legacy-comparable context curve. Deployment and 16K+ expansion
+remain blocked pending a stability/cache design, while every earlier captured
+rate remains unchanged. No process or port listener remained after cleanup.
+
+Receipt: `data/20260827-tp4-mtp0-8448-context-screen.json`.
