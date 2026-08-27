@@ -1,0 +1,14 @@
+{
+  "schema": "neural.download.benchmark-prereg-amendment.v1",
+  "campaign": "qwen38-q4km-q4mtp-tp1-depth-screen-20260827-r1",
+  "created_utc": "2026-08-27T20:10:00Z",
+  "reason": "The historical 27.83 tok/s target-only package evidence predates returned token IDs, so it cannot serve as the preregistered complete-token-array oracle.",
+  "additive_arm": {
+    "mtp_depth": 0,
+    "role": "same-build target-only token oracle and performance control",
+    "draft_loaded": false,
+    "all_other_identity_workload_sampling_cache_and_quality_rules": "identical to the sealed r1 preregistration"
+  },
+  "decision_effect": "MTP0 is not eligible to win the MTP depth screen. It supplies the target-only token oracle and a same-runtime speed denominator. The original MTP1/2/3/5 winner and two-fresh-server promotion rules are unchanged.",
+  "timing": "Authored after MTP1 completed and before MTP2 completed; it does not change any seen arm, metric, or threshold."
+}

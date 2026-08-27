@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
-depth=${MTP_DEPTH:?set MTP_DEPTH to 1, 2, 3, or 5}
+depth=${MTP_DEPTH:?set MTP_DEPTH to 0, 1, 2, 3, or 5}
 attempt=${ATTEMPT:?set ATTEMPT to a unique attempt label}
 target_dir=${TARGET_DIR:?set TARGET_DIR to the Qwen3.8 ggml-org GGUF directory}
 draft_dir=${DRAFT_DIR:?set DRAFT_DIR to the directory containing the pinned Unsloth MTP draft}
@@ -21,7 +21,7 @@ expected_server=35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545
 expected_backend=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
-[[ "${depth}" =~ ^(1|2|3|5)$ ]] || fail 'MTP_DEPTH must be 1, 2, 3, or 5'
+[[ "${depth}" =~ ^(0|1|2|3|5)$ ]] || fail 'MTP_DEPTH must be 0, 1, 2, 3, or 5'
 [[ ! -e "${out_dir}" ]] || fail "refusing to overwrite ${out_dir}"
 [[ -f "${target}" && -f "${draft}" && -x "${server}" && -f "${backend}" ]] || fail 'model/runtime artifact missing'
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == "${expected_server}" ]] || fail 'llama-server SHA-256 mismatch'
@@ -39,9 +39,11 @@ mkdir -p "${out_dir}"
 python3 "${repo}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
   "${repo}/repro/qwen38-27b-q4km-tp1-b70/model-direct.json" "${target_dir}" \
   --json "${out_dir}/target-verification.json" >"${out_dir}/target-verification.stdout"
-python3 "${repo}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
-  "${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4mtp-draft-direct.json" "${draft_dir}" \
-  --json "${out_dir}/draft-verification.json" >"${out_dir}/draft-verification.stdout"
+if [[ "${depth}" != 0 ]]; then
+  python3 "${repo}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
+    "${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4mtp-draft-direct.json" "${draft_dir}" \
+    --json "${out_dir}/draft-verification.json" >"${out_dir}/draft-verification.stdout"
+fi
 
 python3 - "${out_dir}/campaign-identity.json" "${attempt}" "${depth}" "${target}" "${draft}" "${server}" "${backend}" "${suite}" "${prereg}" <<'PY'
 import datetime as dt
@@ -65,7 +67,7 @@ value = {
         "suite": {"path": suite, "sha256": digest(suite)},
         "prereg": {"path": prereg, "sha256": digest(prereg)},
     },
-    "contract": {"mtp_depth": int(depth), "tp": 1, "gpu": 0, "target_kv": "f16", "draft_kv": "f16", "graph": "off", "reasoning": "off", "parallel_slots": 1, "configured_context_tokens": 8192, "prompt_cache": False, "prompt_count": 12, "prompt_classes": 6, "max_tokens": 512, "metric_events": 100, "metric_intervals": 99},
+    "contract": {"mtp_depth": int(depth), "draft_active": int(depth) > 0, "tp": 1, "gpu": 0, "target_kv": "f16", "draft_kv": "f16" if int(depth) > 0 else None, "graph": "off", "reasoning": "off", "parallel_slots": 1, "configured_context_tokens": 8192, "prompt_cache": False, "prompt_count": 12, "prompt_classes": 6, "max_tokens": 512, "metric_events": 100, "metric_intervals": 99},
 }
 pathlib.Path(out).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
@@ -113,15 +115,18 @@ export GGML_SYCL_MMQ_Q4K_REORDER=1
 unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
 unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
 
+server_args=("${server}" --model "${target}" --device SYCL0 --gpu-layers 99 --split-mode none --fit off)
+if [[ "${depth}" != 0 ]]; then
+  server_args+=(--model-draft "${draft}" --device-draft SYCL0 --gpu-layers-draft 99 --spec-type draft-mtp
+    --spec-draft-n-max "${depth}" --spec-draft-n-min 0 --spec-draft-p-min 0
+    --cache-type-k-draft f16 --cache-type-v-draft f16)
+fi
+server_args+=(--cache-type-k f16 --cache-type-v f16 --flash-attn on --batch-size 2048 --ubatch-size 512
+  --cache-ram 0 --ctx-checkpoints 0 --reasoning off --threads 16 --poll 50 --ctx-size 8192
+  --parallel 1 --cont-batching --no-cache-prompt --slot-prompt-similarity 0 --metrics
+  --host 127.0.0.1 --port "${port}")
 systemd-run --user --scope --quiet --property=MemoryHigh=11G --property=MemoryMax=13G --property=MemorySwapMax=12G \
-  "${server}" --model "${target}" --device SYCL0 --gpu-layers 99 --split-mode none --fit off \
-  --model-draft "${draft}" --device-draft SYCL0 --gpu-layers-draft 99 --spec-type draft-mtp \
-  --spec-draft-n-max "${depth}" --spec-draft-n-min 0 --spec-draft-p-min 0 \
-  --cache-type-k f16 --cache-type-v f16 --cache-type-k-draft f16 --cache-type-v-draft f16 \
-  --flash-attn on --batch-size 2048 --ubatch-size 512 --cache-ram 0 --ctx-checkpoints 0 \
-  --reasoning off --threads 16 --poll 50 --ctx-size 8192 --parallel 1 --cont-batching \
-  --no-cache-prompt --slot-prompt-similarity 0 --metrics --host 127.0.0.1 --port "${port}" \
-  >"${out_dir}/server.log" 2>&1 &
+  "${server_args[@]}" >"${out_dir}/server.log" 2>&1 &
 server_pid=$!
 
 for _ in $(seq 1 600); do
