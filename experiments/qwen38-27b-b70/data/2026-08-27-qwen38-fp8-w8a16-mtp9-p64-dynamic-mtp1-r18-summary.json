@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "classification": "measured-negative-aggregate-gate",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "startup_kv_cache_tokens": 4062,
+    "startup_nominal_256_token_concurrency": 15.87,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 9,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 9], [2, 64, 1]]
+    }
+  },
+  "quality": {
+    "c2_output_isolation": "2/2",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "declared_c64_completion_tokens": 8192,
+    "declared_c64_complete_token_ids": true,
+    "declared_c64_cached_tokens_all_zero": true,
+    "declared_c64_cross_base_oracle_collision_count": 0,
+    "concurrent_exact_answer_canary_performed": false
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 158.72806185558292,
+    "fresh_response_wall_tok_s": 142.6302266064839,
+    "ttft_s": 0.09101483004633337,
+    "gate_tok_s": 149.750706,
+    "gate_passed": true,
+    "change_vs_promoted_mtp8_median_percent": 8.114764331949553
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 781.7212821177822,
+    "declared_c64_tok_s": 806.9503445630488,
+    "declared_c64_per_user_tok_s": 12.608599133797638,
+    "gate_tok_s": 1072.428472,
+    "gate_passed": false,
+    "change_vs_promoted_mtp8_median_percent": -26.25975919100817,
+    "shortfall_vs_gate_percent": -24.75485632546235
+  },
+  "shutdown": {
+    "health_before_stop": "pass",
+    "container_exit_code": 0,
+    "oom_killed": false,
+    "engine_dead_error": false
+  },
+  "decision": {
+    "status": "closed-negative-p64-does-not-recover-mtp9",
+    "reason": "Reducing max_num_seqs from 128 to 64 did not change the 4,062-token startup KV capacity and worsened the declared c64 rate. MTP8 remains selected."
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp9-p64-dynamic-mtp1-20260827-r18",
+  "reporting_boundary": "Every reported rate is directly measured. No intermediate concurrency, long-context rate, or other speculative depth is inferred, interpolated, or extrapolated."
+}

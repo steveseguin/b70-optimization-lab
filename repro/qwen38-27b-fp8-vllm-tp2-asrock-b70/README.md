@@ -69,6 +69,9 @@ same service fell to `889.607586 tok/s` at c64 and failed its preregistered
 aggregate-retention gate. It is preserved as a negative rather than spliced
 into the selected MTP8 profile; see the
 [MTP9 result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-r17-negative.md).
+An exact 64-slot recovery treatment retained the same 4,062-token KV capacity
+and fell further to `806.950345 tok/s` at c64; see the
+[p64 negative](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-p64-r18-negative.md).
 
 ## Optimized block-W8A16 profile
 

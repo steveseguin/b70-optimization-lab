@@ -52,7 +52,9 @@ retaining c64 aggregate throughput at `1,094.314767 tok/s`.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
-It remains measured negative evidence and is not the packaged default.
+Limiting that treatment to 64 scheduler slots did not change its 4,062-token
+KV capacity and reduced c64 further to `806.950345 tok/s`. Both remain measured
+negative evidence and are not the packaged default.
 
 **vLLM XPU kernel contributors — upstream mixed-batch fix:** upstream commits
 [`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)

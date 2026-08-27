@@ -129,6 +129,12 @@ MTP9_DYNAMIC_NEGATIVE_RAW = (
 MTP9_DYNAMIC_NEGATIVE_SUMMARY = (
     DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-dynamic-mtp1-r17-summary.json"
 )
+MTP9_P64_NEGATIVE_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp9-p64-dynamic-mtp1-20260827-r18"
+)
+MTP9_P64_NEGATIVE_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-p64-dynamic-mtp1-r18-summary.json"
+)
 DYNAMIC_MAMBA_PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -1222,6 +1228,45 @@ def main() -> int:
     assert mtp9_inspect["State"]["ExitCode"] == 0
     assert mtp9_inspect["State"]["OOMKilled"] is False
 
+    mtp9_p64_negative = load(MTP9_P64_NEGATIVE_SUMMARY)
+    assert mtp9_p64_negative["classification"] == (
+        "measured-negative-aggregate-gate"
+    )
+    assert mtp9_p64_negative["decision"]["status"] == (
+        "closed-negative-p64-does-not-recover-mtp9"
+    )
+    assert mtp9_p64_negative["service"]["max_num_seqs"] == 64
+    assert mtp9_p64_negative["service"]["startup_kv_cache_tokens"] == 4062
+    assert mtp9_p64_negative["single_user"]["gate_passed"] is True
+    assert mtp9_p64_negative["concurrency"]["gate_passed"] is False
+    p64_single = load(MTP9_P64_NEGATIVE_RAW / "single-p40-o128.json")
+    close(
+        p64_single["fresh_response_validity"]["headline_tok_s_after_ttft"],
+        mtp9_p64_negative["single_user"][
+            "fresh_response_after_ttft_tok_s"
+        ],
+    )
+    p64_c64 = load(MTP9_P64_NEGATIVE_RAW / "c64-screen.json")
+    validate_output_isolation_batch(p64_c64["batches"][0], 64)
+    close(
+        p64_c64["batches"][0]["aggregate_tok_s_wall"],
+        mtp9_p64_negative["concurrency"]["declared_c64_tok_s"],
+    )
+    p64_inspect = load(MTP9_P64_NEGATIVE_RAW / "docker-inspect-final.json")[0]
+    assert p64_inspect["State"]["ExitCode"] == 0
+    assert p64_inspect["State"]["OOMKilled"] is False
+    p64_command = p64_inspect["Config"]["Cmd"]
+    assert p64_command[p64_command.index("--max-num-seqs") + 1] == "64"
+    p64_config = json.loads(
+        p64_command[p64_command.index("--speculative-config") + 1]
+    )
+    assert p64_config == {
+        "method": "qwen3_next_mtp",
+        "num_speculative_tokens": 9,
+        "num_speculative_tokens_per_batch_size": [[1, 1, 9], [2, 64, 1]],
+    }
+    assert not (MTP9_P64_NEGATIVE_RAW / "c64-quality-512.json").exists()
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -1367,6 +1412,8 @@ def main() -> int:
         "bench-w8a16-mtp8-dynamic-mtp1-r16.sh",
         "run-w8a16-mtp9-dynamic-mtp1-r17-server.sh",
         "bench-w8a16-mtp9-dynamic-mtp1-r17.sh",
+        "run-w8a16-mtp9-p64-dynamic-mtp1-r18-server.sh",
+        "bench-w8a16-mtp9-p64-dynamic-mtp1-r18.sh",
         "run-w8a16-dynamic-mtp-server.sh",
         "bench-w8a16-dynamic-mtp.sh",
         "build-w8a16-dynamic-mamba-image.sh",
@@ -1435,6 +1482,12 @@ def main() -> int:
                     "single_user"
                 ]["fresh_response_after_ttft_tok_s"],
                 "mtp9_dynamic_negative_c64_tok_s": mtp9_negative[
+                    "concurrency"
+                ]["declared_c64_tok_s"],
+                "mtp9_p64_negative_single_tok_s": mtp9_p64_negative[
+                    "single_user"
+                ]["fresh_response_after_ttft_tok_s"],
+                "mtp9_p64_negative_c64_tok_s": mtp9_p64_negative[
                     "concurrency"
                 ]["declared_c64_tok_s"],
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
