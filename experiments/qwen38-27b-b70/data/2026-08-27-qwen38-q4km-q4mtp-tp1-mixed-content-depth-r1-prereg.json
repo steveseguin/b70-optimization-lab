@@ -1,0 +1,86 @@
+{
+  "schema": "neural.download.benchmark-preregistration.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1",
+  "created_at_utc": "2026-08-27T21:36:17Z",
+  "purpose": "Replace the Q4_K_M plus MTP2 repeated-token context diagnostic with directly measured three-class real-content HTTP decode and TTFT points, using a fresh matched MTP0 target oracle and two fresh MTP2 server attempts.",
+  "frozen_identity": {
+    "hardware": "one Intel Arc Pro B70 32 GiB, GPU0, TP1",
+    "target": {
+      "file": "Qwen3.8-27B-Q4_K_M.gguf",
+      "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+    },
+    "draft": {
+      "file": "mtp-Qwen3.8-27B-Q4_0.gguf",
+      "sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+      "depth": 2
+    },
+    "runtime": {
+      "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+      "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+      "graph": false,
+      "target_and_draft_kv": "f16",
+      "flash_attention": true,
+      "configured_context": 33024,
+      "parallel_slots": 1,
+      "batch": 2048,
+      "ubatch": 512,
+      "threads": 16,
+      "prompt_cache": false,
+      "context_checkpoints": false,
+      "reasoning": false
+    },
+    "fixture": {
+      "path": "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+      "sha256": "a8a48b3549062759cc94b28f2360bea119f8adde582ace04928111b624d952ed",
+      "classes": ["technical-prose", "python-code", "structured-docs"],
+      "depths": [2048, 4096, 8192, 16384, 24576, 32768],
+      "cases_per_depth": 3,
+      "source_repetition": false
+    },
+    "request": {
+      "endpoint": "/v1/completions",
+      "flat_exact_token_ids": true,
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_p": 1,
+      "seed": 1,
+      "ignore_eos": true,
+      "return_token_ids": true,
+      "add_special_tokens": false,
+      "truncate_prompt_tokens": null
+    }
+  },
+  "run_order": [
+    "one fresh MTP0 server for the target-output oracle",
+    "freeze and commit the MTP0 result before speculative attempts",
+    "two separate fresh MTP2 servers over the same ordered 18 cases"
+  ],
+  "per_request_gates": [
+    "usage prompt count equals the exact submitted depth",
+    "cached_tokens equals zero and llama cache_n is zero when reported",
+    "no truncation or context shift",
+    "128 returned token IDs and a length stop",
+    "100 timestamped output events and 99 inter-token intervals"
+  ],
+  "arm_gates": {
+    "mtp0": "all 18 request gates and the objective canary battery pass; output hashes become the sole frozen target oracle",
+    "mtp2": "all 18 request gates, objective canaries, positive draft/accepted counters, and exact 128-token equality to the frozen MTP0 case at every published cell"
+  },
+  "aggregation": {
+    "per_depth_decode": "median of the three class conventional 99-interval decode rates",
+    "per_depth_ttft": "median of the three directly measured class TTFT values",
+    "across_mtp2_attempts": "median of the two fresh-server per-depth medians; retain both samples and relative range",
+    "headline_authority": false
+  },
+  "publication_policy": {
+    "passed_cell": "may replace only the same Q4_K_M plus Q4_0 MTP2 TP1 context/TTFT cell and must retain fixture scope and sample counts",
+    "failed_or_divergent_cell": "preserve and quarantine with no speed publication",
+    "no_interpolation_or_extrapolation": true,
+    "not_authorized": [
+      "single-user strict headline replacement",
+      "natural retrieval or task-quality claim",
+      "LocalMaxxing submission",
+      "transfer to another quantization, topology, MTP depth, KV type, graph mode, runtime, or model revision"
+    ]
+  }
+}
