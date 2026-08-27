@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70 — 42.6 tok/s measured — neural.download</title>
+<meta name="description" content="The one-card Qwen3.8 Q4_K_M target with its separately downloaded Q4_0 MTP draft at depth 2. Two fresh servers measured a 55.75% strict decode gain with target-exact output. Measured 42.6 tok/s strict varied-prompt decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q4_K_M target + Q4_0 MTP d">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/models/qwen38-27b-q4km-mtp2-tp1-b70.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/models/qwen38-27b-q4km-mtp2-tp1-b70.html">
+<meta property="og:title" content="Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70 — 42.6 tok/s measured">
+<meta property="og:description" content="The one-card Qwen3.8 Q4_K_M target with its separately downloaded Q4_0 MTP draft at depth 2. Two fresh servers measured a 55.75% strict decode gain with target-exact output. Measured 42.6 tok/s strict varied-prompt decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q4_K_M target + Q4_0 MTP d">
+<meta property="og:image" content="https://neural.download/models/cards/qwen38-27b-q4km-mtp2-tp1-b70.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-27b-q4km-mtp2-tp1-b70.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70: 42.6 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/models/qwen38-27b-q4km-mtp2-tp1-b70.html">
+<meta name="twitter:title" content="Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70 — 42.6 tok/s measured">
+<meta name="twitter:description" content="The one-card Qwen3.8 Q4_K_M target with its separately downloaded Q4_0 MTP draft at depth 2. Two fresh servers measured a 55.75% strict decode gain with target-exact output. Measured 42.6 tok/s strict varied-prompt decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q4_K_M target + Q4_0 MTP d">
+<meta name="twitter:image" content="https://neural.download/models/cards/qwen38-27b-q4km-mtp2-tp1-b70.png">
+<meta name="twitter:image:alt" content="Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70: 42.6 tok/s measured on Intel Arc Pro B70 — neural.download">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70", "description": "The one-card Qwen3.8 Q4_K_M target with its separately downloaded Q4_0 MTP draft at depth 2. Two fresh servers measured a 55.75% strict decode gain with target-exact output. Measured 42.6 tok/s strict varied-prompt decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q4_K_M target + Q4_0 MTP d", "url": "https://neural.download/models/qwen38-27b-q4km-mtp2-tp1-b70.html", "dateModified": "2026-08-27", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen 27B · 3.6 → 3.8", "item": "https://neural.download/models/qwen-27b.html"}, {"@type": "ListItem", "position": 4, "name": "Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70", "item": "https://neural.download/models/qwen38-27b-q4km-mtp2-tp1-b70.html"}]}
+</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
+  .facts div { min-width: 0; }
+  .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }
+  .placeholder { margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .placeholder p { margin: 0; font-size: 13.5px; }
+  .badge.todo { background: var(--surface); color: var(--muted); border-color: var(--muted); }
+  .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
+  .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+  .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .limitations { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }
+  .limitations-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+  .limitations ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
+  .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
+  .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
+  .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .actions .button.secondary { background: transparent; color: var(--ink); }
+  .actions .button.secondary:hover { background: var(--ink); color: var(--paper); }
+  .copy-md { appearance: none; border: 2px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); min-height: 36px; padding: 6px 10px; font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin: 0 0 12px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font: 900 15px var(--display); text-transform: uppercase; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font: 10.5px var(--mono); }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font: 900 26px/1 var(--display); color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font: 10.5px var(--mono); }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font: 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  @media (max-width: 520px) { .hr-bar-row { grid-template-columns: 92px 1fr 70px; } .measured .big { font-size: 36px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html" aria-current="page">Models</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="qwen-27b.html">Qwen 27B · 3.6 → 3.8</a> / 27B</p>
+  <p class="eyebrow">Candidate package · llama.cpp SYCL · 1× Intel Arc Pro B70</p>
+  <h1>Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70</h1>
+  <p>The one-card Qwen3.8 Q4_K_M target with its separately downloaded Q4_0 MTP draft at depth 2. Two fresh servers measured a 55.75% strict decode gain with target-exact output.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose" id="package-page">
+
+  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">42.6</span><span class="unit">tok/s strict varied-prompt decode</span></div><p class="scope">Median of two fresh-server class-balanced medians over the fixed 12-prompt/six-class, 512-cap native HTTP suite; one B70, TP1, MTP2, F16 target/draft KV, cache zero, 12/12 complete arrays exact between replicas and against same-build MTP0. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json">proof file</a></p><p class="scope-gloss">MTP = multi-token prediction, a small draft the main model verifies</p>
+  <div class="actions">
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Qwen3.8%2027B%20Q4_K_M%20+%20MTP2%20on%20one%20Intel%20Arc%20Pro%20B70">Submit an improvement</a>
+  </div>
+
+  <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 27B</dd></div><div><dt>Publisher</dt><dd>Alibaba / Qwen</dd></div><div><dt>Checkpoint</dt><dd>ggml-org/Qwen3.8-27B-GGUF</dd></div><div><dt>Compression</dt><dd>Q4_K_M target + Q4_0 MTP draft</dd></div><div><dt>Software</dt><dd>llama.cpp SYCL</dd></div><div><dt>Cards</dt><dd>1× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>20.3 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">interactive</span></dd></div><div><dt>Published</dt><dd>2026-08-27</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
+<div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>exact active-context HTTP depth and TTFT sweep for this MTP2 profile</li><li>output-qualified HTTP concurrency curve for this MTP2 profile</li><li>tested clean-host Intel driver and oneAPI installation</li><li>clean-host source build and endpoint replay</li><li>beginner recovery flow</li></ul></div>
+<div class="limitations"><p class="limitations-tag">What to know</p><ul><li>The 42.636988 tok/s headline is short-context single-user native HTTP. Exact 32K and output-qualified concurrency remain unmeasured for this MTP2 deployment.</li><li>MTP5 is explicitly unsafe for this identity: it changed all 12 complete target outputs and is not a supported speed mode.</li><li>The tested 16 GiB host used swap and a 13 GiB process memory cap. A clean-host Intel/oneAPI install and source-build replay remain pending.</li><li>The target and MTP draft come from two pinned repositories/revisions and both downloads are required.</li></ul></div>
+<h2 id="profiles">Measured performance profiles <span class="badge lab">Lab-measured</span></h2><figure class="chart"><h4>Strict decode over MTP depth <span class="badge lab">Lab-measured</span></h4><svg viewBox="0 0 640 260" width="100%" role="img" aria-label="Strict decode over MTP depth" xmlns="http://www.w3.org/2000/svg"><line x1="64" y1="216.0" x2="620" y2="216.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,101.6 L249.3,55.9 L434.7,37.8 L620.0,40.0" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="101.6" r="4" fill="var(--spot)"></circle><text x="64.0" y="92.6" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">27.4</text><circle cx="249.3" cy="55.9" r="4" fill="var(--spot)"></circle><text x="249.3" y="46.9" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">38.3</text><circle cx="434.7" cy="37.8" r="4" fill="var(--spot)"></circle><text x="434.7" y="28.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">42.6</text><circle cx="620.0" cy="40.0" r="4" fill="var(--spot)"></circle><text x="620.0" y="31.0" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">42.1</text><text x="64.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">MTP0</text><text x="249.3" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">MTP1</text><text x="434.7" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">MTP2</text><text x="620.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">MTP3</text><text x="64" y="254" font-size="11" font-family="var(--mono)" fill="var(--muted)">Maximum MTP draft depth · y: tok/s</text></svg><figcaption>One-B70 fixed full-suite screen under one target/runtime identity. MTP0/1/3 are one fresh-server screen values; MTP2 is the qualified median of two fresh servers. All displayed speculative arms are 12/12 target-exact. MTP5 measured 32.241 tok/s but is excluded because it matched 0/12 target arrays. No value is interpolated or extrapolated. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json">evidence</a></figcaption></figure>
+<h2 id="multi-user">Many people at once <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified multi-user aggregate profile is published for this exact package. Diagnostic or unsupported boundaries may still appear under “What to know” or in the full guide. Nothing is interpolated or promoted from a different model, quantization, runtime, or card count.</p></div>
+
+  <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
+  <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="qwen-27b.html"><b>Qwen 27B · 3.6 → 3.8 coverage</b><span>Variants, evidence, gaps, and recipes</span></a>
+      <a href="qwen38-27b-q4km-tp1-b70.html"><b>Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70</b><span>27.8 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-q8-tp1-b70.html"><b>Qwen3.8 27B Q8_0 on one Intel Arc Pro B70</b><span>19.6 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-256k-vision-mtp-b70.html"><b>Qwen3.8 27B 256K + vision + MTP draft on one Intel Arc Pro B70</b><span>26.7 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html"><b>Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards</b><span>strict headline pending · vLLM XPU</span></a>
+      <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
+      <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=1d7b21a0d3"></script>
+<script>
+(() => {
+  document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+      try {
+        const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+        if (!response.ok) throw new Error("fetch failed");
+        await navigator.clipboard.writeText(await response.text());
+        button.textContent = "Copied"; button.classList.add("copied");
+      } catch (error) { button.textContent = "Copy failed"; button.classList.add("failed"); }
+      window.setTimeout(() => { button.textContent = original; button.classList.remove("copied", "failed"); button.disabled = false; }, 1800);
+    });
+  });
+})();
+</script>
+</body>
+</html>

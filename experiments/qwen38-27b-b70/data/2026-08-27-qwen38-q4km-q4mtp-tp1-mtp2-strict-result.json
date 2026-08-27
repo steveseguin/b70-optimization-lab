@@ -1,0 +1,64 @@
+{
+  "status": "strict-package-headline-qualified",
+  "profile": "Qwen3.8 27B Q4_K_M target plus same-revision Q4_0 external MTP draft, TP1, MTP depth 2, F16 target/draft KV, graph off, reasoning off, raw native completions",
+  "metric": {
+    "name": "median-of-two-attempt class-balanced medians, events 1-100 over 99 intervals after TTFT",
+    "unit": "tok/s",
+    "attempt_values": [42.60090969763503, 42.67306533054544],
+    "value": 42.63698751409024,
+    "attempt_relative_range_percent": 0.16923248361897913
+  },
+  "matched_target_only_control": {
+    "value_tok_s": 27.375681662420252,
+    "mtp2_gain_percent": 55.74767430401495,
+    "complete_token_arrays_exact": "12/12"
+  },
+  "qualification": {
+    "fresh_mtp2_servers": 2,
+    "prompt_count_per_attempt": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "cached_tokens_all_zero": true,
+    "performance_gates_passed": true,
+    "objective_canaries_passed": true,
+    "complete_token_arrays_exact_between_mtp2_attempts": "12/12",
+    "complete_token_arrays_exact_against_same_build_mtp0": "12/12"
+  },
+  "depth_screen": [
+    {"mtp": 0, "tok_s": 27.375681662420252, "gain_percent": 0.0, "target_exact": true, "disposition": "matched control"},
+    {"mtp": 1, "tok_s": 38.32021307697288, "gain_percent": 39.979027917966484, "target_exact": true, "disposition": "valid, slower than winner"},
+    {"mtp": 2, "tok_s": 42.60090969763503, "gain_percent": 55.61588647531319, "target_exact": true, "disposition": "winner; replicated separately"},
+    {"mtp": 3, "tok_s": 42.123431279701364, "gain_percent": 53.87171650788871, "target_exact": true, "disposition": "valid, slower than winner"},
+    {"mtp": 5, "tok_s": 32.240502503888, "gain_percent": 17.771384542291144, "target_exact": false, "exact_prompts": "0/12", "disposition": "rejected for target-output divergence"}
+  ],
+  "draft_counters_final_attempt": {
+    "draft_tokens": 5132,
+    "accepted_tokens": 3429,
+    "verification_steps": 2570,
+    "acceptance_rate": 0.6681605611847233,
+    "scope": "Full performance suite plus objective canaries on the second fresh MTP2 server"
+  },
+  "identities": {
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154"
+  },
+  "evidence": {
+    "preregistration": "2026-08-27-qwen38-q4km-q4mtp-tp1-depth-screen-r1-prereg.json",
+    "mtp0_control": "qwen38-q4km-targetonly-tp1-mtp0-20260827-r1",
+    "mtp1_screen": "qwen38-q4km-q4mtp-tp1-mtp1-20260827-r1",
+    "mtp2_winner_a": "qwen38-q4km-q4mtp-tp1-mtp2-20260827-r2",
+    "mtp2_winner_b": "qwen38-q4km-q4mtp-tp1-mtp2-20260827-r3",
+    "mtp3_screen": "qwen38-q4km-q4mtp-tp1-mtp3-20260827-r1",
+    "mtp5_rejected": "qwen38-q4km-q4mtp-tp1-mtp5-20260827-r1",
+    "mtp2_pair_comparison": "2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-r2-r3-comparison.json",
+    "mtp0_vs_mtp2_comparison": "2026-08-27-qwen38-q4km-mtp0-vs-q4mtp-mtp2-r3-comparison.json"
+  },
+  "invalid_attempts": [
+    {"attempt": "qwen38-q4km-q4mtp-tp1-mtp2-20260827-r1", "reason": "runner file changed during live shell; exited before canaries", "eligible": false}
+  ],
+  "scope": "Single-user short-context one-B70 HTTP decode only. No 32K, concurrency, Q8, TP2, chat-template, or alternate-runtime authority transfers from this headline."
+}

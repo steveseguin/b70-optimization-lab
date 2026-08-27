@@ -1,0 +1,49 @@
+# HELP llamacpp:prompt_tokens_total Number of prompt tokens processed.
+# TYPE llamacpp:prompt_tokens_total counter
+llamacpp:prompt_tokens_total 1000
+# HELP llamacpp:prompt_seconds_total Prompt process time
+# TYPE llamacpp:prompt_seconds_total counter
+llamacpp:prompt_seconds_total 5.973
+# HELP llamacpp:tokens_predicted_total Number of generation tokens processed.
+# TYPE llamacpp:tokens_predicted_total counter
+llamacpp:tokens_predicted_total 5980
+# HELP llamacpp:tokens_predicted_seconds_total Predict process time
+# TYPE llamacpp:tokens_predicted_seconds_total counter
+llamacpp:tokens_predicted_seconds_total 204.682
+# HELP llamacpp:n_decode_total Total number of llama_decode() calls
+# TYPE llamacpp:n_decode_total counter
+llamacpp:n_decode_total 2031
+# HELP llamacpp:n_tokens_max Largest observed n_tokens.
+# TYPE llamacpp:n_tokens_max counter
+llamacpp:n_tokens_max 589
+# HELP llamacpp:spec_decode_num_draft_tokens_total Total draft tokens generated
+# TYPE llamacpp:spec_decode_num_draft_tokens_total counter
+llamacpp:spec_decode_num_draft_tokens_total 9977
+# HELP llamacpp:spec_decode_num_accepted_tokens_total Total draft tokens accepted by the target model
+# TYPE llamacpp:spec_decode_num_accepted_tokens_total counter
+llamacpp:spec_decode_num_accepted_tokens_total 3993
+# HELP llamacpp:spec_decode_num_drafts_total Total speculative decoding verification steps
+# TYPE llamacpp:spec_decode_num_drafts_total counter
+llamacpp:spec_decode_num_drafts_total 2003
+# HELP llamacpp:prompt_tokens_seconds Average prompt throughput in tokens/s.
+# TYPE llamacpp:prompt_tokens_seconds gauge
+llamacpp:prompt_tokens_seconds 167.42
+# HELP llamacpp:predicted_tokens_seconds Average generation throughput in tokens/s.
+# TYPE llamacpp:predicted_tokens_seconds gauge
+llamacpp:predicted_tokens_seconds 29.2161
+# HELP llamacpp:requests_processing Number of requests processing.
+# TYPE llamacpp:requests_processing gauge
+llamacpp:requests_processing 0
+# HELP llamacpp:requests_deferred Number of requests deferred.
+# TYPE llamacpp:requests_deferred gauge
+llamacpp:requests_deferred 0
+# HELP llamacpp:n_busy_slots_per_decode Average number of busy slots per llama_decode() call
+# TYPE llamacpp:n_busy_slots_per_decode gauge
+llamacpp:n_busy_slots_per_decode 1
+# HELP llamacpp:spec_decode_num_accepted_tokens_per_pos_total Accepted tokens per draft position
+# TYPE llamacpp:spec_decode_num_accepted_tokens_per_pos_total counter
+llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="0"} 1513
+llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="1"} 1021
+llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 680
+llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="3"} 464
+llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="4"} 315

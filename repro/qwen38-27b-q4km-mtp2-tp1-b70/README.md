@@ -1,0 +1,97 @@
+# Qwen3.8 27B Q4_K_M + Q4_0 MTP2 on one Arc Pro B70
+
+> **Candidate portable reproduction.** The strict one-user headline is
+> `42.636988 tok/s`, from two fresh full-suite servers. It is 55.75% faster
+> than the identical-build MTP0 control and matches all 12 complete target
+> token arrays. Clean-host Intel/oneAPI installation remains unverified.
+
+This is a separate deployment from the target-only Q4 package. It requires
+both the 18.97 GB target and a 1.37 GB external MTP draft.
+
+## Exact downloads
+
+```bash
+huggingface-cli download ggml-org/Qwen3.8-27B-GGUF \
+  Qwen3.8-27B-Q4_K_M.gguf \
+  --revision 0669b98607d47046c7c2b3f801011d54a08cfccf \
+  --local-dir /path/to/qwen38-target
+
+huggingface-cli download unsloth/Qwen3.8-27B-GGUF \
+  MTP/mtp-Qwen3.8-27B-Q4_0.gguf \
+  --revision 4ca720788d1e01f1bff70c033e0d0028fd02e502 \
+  --local-dir /path/to/qwen38-draft-root
+```
+
+Set `DRAFT_DIR=/path/to/qwen38-draft-root/MTP`. The target SHA-256 is
+`31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34`;
+the draft is
+`50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e`.
+Both are checked through direct and ordinary reads before launch.
+
+## Source and patches
+
+Build the exact lab stack in a new directory:
+
+```bash
+SOURCE_DIR=/path/to/new/llama.cpp-qwen38-mtp2 \
+  repro/qwen38-27b-q4km-mtp2-tp1-b70/restore-and-build.sh
+```
+
+The builder verifies and applies, in order:
+
+1. [Full Intel SYCL lab stack](../../patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64).
+2. [Qwen3.8 Q4_K_M increment](../../patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64).
+3. [TP1 GDN state-I/O widening](../../patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64).
+4. [TP1 convolution/QK widening](../../patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64).
+5. [TP1 QK source-shape widening](../../patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64).
+6. [Memo hardening artifact](../../patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64); its rejected Q8-output door stays disabled.
+
+The exact measured binary SHA-256 was
+`35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545`
+and `libggml-sycl.so` was
+`0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154`.
+A locally rebuilt binary is a distinct identity until its validation passes.
+
+## Preflight, launch, and validate
+
+```bash
+export TARGET_DIR=/path/to/qwen38-target
+export DRAFT_DIR=/path/to/qwen38-draft-root/MTP
+export BUILD_DIR=/path/to/new/llama.cpp-qwen38-mtp2/build-sycl-aot-bmg-g31
+
+repro/qwen38-27b-q4km-mtp2-tp1-b70/preflight.sh
+repro/qwen38-27b-q4km-mtp2-tp1-b70/run-server.sh
+```
+
+In a second terminal:
+
+```bash
+OUT_DIR=/path/to/new-qwen38-mtp2-result \
+  repro/qwen38-27b-q4km-mtp2-tp1-b70/bench.sh
+```
+
+Success requires the full twelve-prompt/six-class 512-cap suite, cache zero,
+all objective canaries, and `target_arrays_exact=12/12`. A speed printed by a
+failed gate is not a result.
+
+## Why depth 2
+
+| MTP depth | strict tok/s | target-exact | decision |
+| ---: | ---: | ---: | --- |
+| 0 | 27.376 | 12/12 | matched control |
+| 1 | 38.320 | 12/12 | valid |
+| 2 | **42.637** | 12/12 | two-server winner |
+| 3 | 42.123 | 12/12 | valid, slower |
+| 5 | 32.241 | **0/12** | rejected |
+
+See the [structured result](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json)
+and [result note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.md).
+MTP5 is not an optional speed preset; it changed all twelve outputs.
+
+## Current boundary
+
+The measured headline is single-user and short-context. The no-MTP package's
+32K and concurrency curves do not transfer. Exact MTP2 context/TTFT and
+output-qualified concurrency are the next measurements. The tested small host
+had 16 GiB RAM plus swap; the launcher caps the scope at 13 GiB RAM and 12 GiB
+swap. Stop competing model processes before launch.

@@ -20,13 +20,29 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-08-26:
+Verified on 2026-08-27:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
 - no listeners on `8000`, `18080`-`18089`, `19470`, or `19471`;
 - no Qwen benchmark listeners on `18110`-`18129`;
 - no `llama-server`, vLLM, or frontdoor process or container is running.
+
+## Active Qwen3.8 One-Card Package Work
+
+The strict Q4_K_M target plus external Q4_0 MTP-draft screen is complete.
+MTP2 is the qualified one-card mode at **42.636988 tok/s**, the median of two
+fresh-server class-balanced 12-prompt/512-cap suites. It is 55.75% faster than
+the same-build MTP0 control (`27.375682 tok/s`); both replicas passed cache-zero
+and objective-canary gates and matched all 12 complete MTP0 token arrays. MTP5
+matched 0/12 and is rejected. The package and exact replay are in
+[`packages/qwen38-27b-q4km-mtp2-tp1-b70/`](packages/qwen38-27b-q4km-mtp2-tp1-b70/)
+and [`repro/qwen38-27b-q4km-mtp2-tp1-b70/`](repro/qwen38-27b-q4km-mtp2-tp1-b70/).
+
+Do not reuse the target-only 32K or concurrency values for this deployment.
+The immediate campaigns are exact active-context/TTFT measurement through 32K
+and output-qualified unique-prompt HTTP concurrency for MTP2, followed by
+package/family/site synchronization. No benchmark process is currently live.
 
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or

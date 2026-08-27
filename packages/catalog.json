@@ -2332,6 +2332,176 @@
       ]
     },
     {
+      "manifest": "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json",
+      "format": "b70-model-package-v1",
+      "id": "qwen38-27b-q4km-mtp2-tp1-b70",
+      "name": "Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70",
+      "status": "candidate",
+      "audience": "intermediate",
+      "guide": "repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md",
+      "clean_host_tested": false,
+      "library": {
+        "model_family": "Qwen3.8",
+        "publisher": "Alibaba / Qwen",
+        "variant": "27B",
+        "summary": "The one-card Qwen3.8 Q4_K_M target with its separately downloaded Q4_0 MTP draft at depth 2. Two fresh servers measured a 55.75% strict decode gain with target-exact output.",
+        "quantization": "Q4_K_M target + Q4_0 MTP draft",
+        "runtime_label": "llama.cpp SYCL",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "interactive"
+        ],
+        "tags": [
+          "one card",
+          "MTP2",
+          "speculative decoding",
+          "cache zero",
+          "source build"
+        ],
+        "published_at": "2026-08-27",
+        "featured_metric": {
+          "value": 42.63698751409024,
+          "unit": "tok/s",
+          "label": "strict varied-prompt decode",
+          "scope": "Median of two fresh-server class-balanced medians over the fixed 12-prompt/six-class, 512-cap native HTTP suite; one B70, TP1, MTP2, F16 target/draft KV, cache zero, 12/12 complete arrays exact between replicas and against same-build MTP0.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json"
+        }
+      },
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab",
+          "contribution": "Qwen3.8 Q4_K_M kernel stack, external-MTP integration, strict MTP0/1/2/3/5 depth screen, output oracle, package, and validation.",
+          "status": "integrated",
+          "validated_effect": "MTP2 measured 42.636988 tok/s versus 27.375682 for the matched target-only control (+55.75%), with 12/12 complete outputs exact across both fresh MTP2 servers and the control.",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.md"
+        },
+        {
+          "id": "mndodd",
+          "name": "mndodd",
+          "kind": "external",
+          "profile": "https://github.com/mndodd",
+          "contribution": "Optimized Intel SYCL llama.cpp fork used as the pinned runtime base beneath the lab patch stack.",
+          "status": "integrated",
+          "validated_effect": "Credited only for the separately matched fork contribution documented by the base Q4 package; the MTP2 screen and gain are this lab's measurements.",
+          "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+        }
+      ],
+      "performance_profiles": [
+        {
+          "id": "strict-decode-vs-mtp-depth",
+          "label": "Strict decode over MTP depth",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_metric": "speculative_tokens",
+          "x_label": "Maximum MTP draft depth",
+          "scope": "One-B70 fixed full-suite screen under one target/runtime identity. MTP0/1/3 are one fresh-server screen values; MTP2 is the qualified median of two fresh servers. All displayed speculative arms are 12/12 target-exact. MTP5 measured 32.241 tok/s but is excluded because it matched 0/12 target arrays. No value is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json",
+          "points": [
+            {
+              "speculative_tokens": 0,
+              "value": 27.375681662420252,
+              "samples": 1
+            },
+            {
+              "speculative_tokens": 1,
+              "value": 38.32021307697288,
+              "samples": 1
+            },
+            {
+              "speculative_tokens": 2,
+              "value": 42.63698751409024,
+              "samples": 2
+            },
+            {
+              "speculative_tokens": 3,
+              "value": 42.123431279701364,
+              "samples": 1
+            }
+          ]
+        }
+      ],
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 1,
+        "host_ram_min_bytes": 17179869184,
+        "host_ram_plus_swap_min_bytes": 25769803776,
+        "model_weight_bytes": 20343461088
+      },
+      "model": {
+        "repository": "ggml-org/Qwen3.8-27B-GGUF",
+        "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+        "manifest": "repro/qwen38-27b-q4km-tp1-b70/model-direct.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "project": "mndodd/llama.cpp",
+        "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+        "build": "repro/qwen38-27b-q4km-mtp2-tp1-b70/restore-and-build.sh"
+      },
+      "known_limitations": [
+        "The 42.636988 tok/s headline is short-context single-user native HTTP. Exact 32K and output-qualified concurrency remain unmeasured for this MTP2 deployment.",
+        "MTP5 is explicitly unsafe for this identity: it changed all 12 complete target outputs and is not a supported speed mode.",
+        "The tested 16 GiB host used swap and a 13 GiB process memory cap. A clean-host Intel/oneAPI install and source-build replay remain pending.",
+        "The target and MTP draft come from two pinned repositories/revisions and both downloads are required."
+      ],
+      "project_patches": {
+        "required": true,
+        "items": [
+          "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
+          "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+        ],
+        "reason": "The measured target and MTP verifier path uses the complete lab TP1 source stack; the guide links and verifies every patch."
+      },
+      "commands": {
+        "preflight": "TARGET_DIR=/path/to/target DRAFT_DIR=/path/to/draft BUILD_DIR=/path/to/build repro/qwen38-27b-q4km-mtp2-tp1-b70/preflight.sh",
+        "launch": "TARGET_DIR=/path/to/target DRAFT_DIR=/path/to/draft BUILD_DIR=/path/to/build repro/qwen38-27b-q4km-mtp2-tp1-b70/run-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18139/health",
+        "benchmark": "OUT_DIR=/path/to/new-result repro/qwen38-27b-q4km-mtp2-tp1-b70/bench.sh",
+        "stop": "Ctrl-C in the foreground server terminal; then pgrep -x llama-server must return no process"
+      },
+      "dependencies": [
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/verify-models.sh",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/preflight.sh",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/restore-and-build.sh",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/run-server.sh",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/bench.sh",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-depth-screen-r1-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-r2-r3-comparison.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-mtp0-vs-q4mtp-mtp2-r3-comparison.json",
+        "experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q4km-q4mtp-tp1-screen-attempt.sh",
+        "scripts/bench-openai-realistic-suite.py",
+        "scripts/neural-download-canaries.py",
+        "scripts/compare-strict-attempt-outputs.py"
+      ],
+      "missing": [
+        "exact active-context HTTP depth and TTFT sweep for this MTP2 profile",
+        "output-qualified HTTP concurrency curve for this MTP2 profile",
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery flow"
+      ]
+    },
+    {
       "manifest": "packages/qwen38-27b-q4km-tp1-b70/package.json",
       "format": "b70-model-package-v1",
       "id": "qwen38-27b-q4km-tp1-b70",

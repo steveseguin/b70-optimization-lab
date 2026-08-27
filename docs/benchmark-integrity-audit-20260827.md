@@ -63,6 +63,15 @@ TP1 differs from the TP2 raw oracle 12/12 and is therefore published as a
 separate quality-gated arithmetic identity, not as cross-TP byte equivalence.
 See the [TP1 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.md).
 
+Qwen3.8 Q4_K_M TP1 with the separately pinned Q4_0 MTP draft subsequently
+qualified MTP depth 2 at **`42.636988 tok/s`**. The value is the median of two
+fresh-server full fixed-suite attempts (`42.600910`, `42.673065`), not the
+earlier selected fixture. Both attempts passed cache-zero and objective-canary
+gates and matched 12/12 complete arrays against each other and the same-build
+MTP0 oracle. MTP5 matched 0/12 and is rejected. Exact MTP2 32K and concurrency
+remain unmeasured and are not inherited from the no-MTP package. See the
+[MTP2 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.md).
+
 The LocalMaxxing submission `cmtb5n45n0021qq01n13vly2h` was built from the
 incomplete FP8 evidence and is premature. Repository surfaces mark withdrawal
 as recommended. The external service does not provide a trusted automated

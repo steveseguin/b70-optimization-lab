@@ -1,0 +1,50 @@
+{
+  "artifacts": {
+    "backend": {
+      "path": "/mnt/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825/build-sycl-aot-bmg-g31/bin/libggml-sycl.so",
+      "sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154"
+    },
+    "draft": {
+      "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-unsloth-gguf/MTP/mtp-Qwen3.8-27B-Q4_0.gguf",
+      "sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e"
+    },
+    "prereg": {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-depth-screen-r1-prereg.json",
+      "sha256": "bc05c07569a3f132e567a8491a999e21b17074f434f26ced8dc869c9043c02c7"
+    },
+    "server": {
+      "path": "/mnt/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825/build-sycl-aot-bmg-g31/bin/llama-server",
+      "sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545"
+    },
+    "suite": {
+      "path": "/home/steve/b70-optimization-lab/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+      "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+    },
+    "target": {
+      "path": "/mnt/fast-ai/llm-models/qwen3.8-27b-gguf/Qwen3.8-27B-Q4_K_M.gguf",
+      "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+    }
+  },
+  "attempt": "qwen38-q4km-q4mtp-tp1-mtp2-20260827-r3",
+  "contract": {
+    "configured_context_tokens": 8192,
+    "draft_active": true,
+    "draft_kv": "f16",
+    "gpu": 0,
+    "graph": "off",
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "mtp_depth": 2,
+    "parallel_slots": 1,
+    "prompt_cache": false,
+    "prompt_classes": 6,
+    "prompt_count": 12,
+    "reasoning": "off",
+    "target_kv": "f16",
+    "tp": 1
+  },
+  "created_utc": "2026-08-27T20:28:51.321061+00:00",
+  "profile": "q4km-target-q4mtp-tp1-depth2-reasoning-off",
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-screen-attempt.v1"
+}
