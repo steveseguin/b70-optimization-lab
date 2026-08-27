@@ -1006,7 +1006,11 @@ target hash. Median TTFT was `187.899186 s` and median wall output rate was
 196.19% higher but TTFT is 52.28% slower and wall rate is 16.12% lower, so the
 workload-aligned comparison is descriptive, not a causal MTP-only A/B: MTP0
 used vLLM `658965050` while MTP3 used `1372c62d`. The next production work is TTFT/prefill plus fresh-boot stability rather than a
-decode-only promotion. MTP2/MTP4, deeper MTP1, graph, TP1/TP2 fit, vision, full quality, and
+decode-only promotion. TP4/MTP2/512 now also passes all 26 MTP0 comparisons,
+16/16 repeats, its bounded cache-zero needle, and three target-hash rows at
+`13.586501 / 10.064085 / 11.895061 tok/s`, median `11.895061 tok/s`; its 29.61%
+row span keeps it a variable Grade-C screen. MTP4/512 is the active bounded
+arm. Deeper MTP1/MTP2/MTP4, graph, TP1/TP2 fit, vision, full quality, and
 clean-host replay remain open. The 51B PLE/input-embedding shards remain
 pinned in system RAM during serving; generation does not stream them from the
 external checkpoint drive.

@@ -8,7 +8,8 @@ This packet covers the first instrumentation-free TP4/EP4 server results for the
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
 healthy, serve cache-zero MTP0 context through a formal exact-8K screen, and
-run matched MTP1/512 and MTP3/512 research screens at 9.372 and 14.889 tok/s.
+run matched MTP1/512, MTP2/512, and MTP3/512 research screens at 9.372,
+11.895, and 14.889 tok/s.
 It also qualifies MTP3 at exact 4K with a `15.502 tok/s` legacy-comparable
 decode median, while exposing much slower TTFT and lower wall throughput than
 MTP0. The MTP3 rows remain bounded screens, not stable ceilings. It
@@ -82,9 +83,9 @@ The service-shaped TP4/MTP3 configured-4,352 point now passes exact 4K parity,
 formal depth, and three p4096/o256 rows. Its TTFT and wall-rate tradeoff, plus
 fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
-and TP2 require a separate fit/offload design. MTP1/512, MTP3/512, and
-MTP3/4K are separately screened below; deeper MTP1 plus MTP2 and MTP4 remain
-gaps. Graph,
+and TP2 require a separate fit/offload design. MTP1/512, MTP2/512, MTP3/512,
+and MTP3/4K are separately screened below; deeper MTP1/MTP2 and all MTP4
+remain gaps. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
@@ -115,6 +116,28 @@ the separate MTP0 `5.221849709 tok/s` control. Cumulative metrics accepted
 503/505 draft tokens. MTP0 remains the packet's primary historical cell; MTP1
 is a separate matrix result and does not replace it. Receipt:
 [`20260827-tp4-mtp1-512-attempt3-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json).
+
+## Matched TP4 MTP2 screen
+
+The configured-512 MTP2 arm preserves the MTP1 source/runtime and selective
+host placement while changing only native speculative depth and its proven
+cache requirement. Its 201,326,592-byte fixed allocation resolved to 17 usable
+current-source blocks with 1,273,856 bytes left over, and reported 621 cache
+tokens at 1.21x concurrency.
+
+All 26 sealed MTP0 comparisons matched, fixed-set repeats held one hash for
+16/16 runs, the small cache-zero needle passed, and all 24 audited usages were
+complete. The inherited strict target score remains 5/7. Three p146/o256/c1
+rows returned the target hash at `13.586500712`, `10.064084892`, and
+`11.895061403 tok/s`, median **`11.895061403 tok/s`** after first text. Median
+end-to-end output was `7.804965165 tok/s`, median TTFT was `11.278097242 s`,
+and cumulative counters accepted 770/770 draft tokens across both positions.
+
+The rows span 29.61% of the median. Comparisons with other depth cells are
+therefore descriptive cross-run evidence rather than same-window causal A/Bs.
+This closes only TP4/eager/MTP2/configured-512 as Grade C; it does not establish
+MTP2 4K or deployment readiness. Receipt:
+[`20260827-tp4-mtp2-512-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-512-attempt1-result.json).
 
 ## Matched TP4 MTP3 screen
 

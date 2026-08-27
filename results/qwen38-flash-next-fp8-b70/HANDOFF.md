@@ -79,8 +79,9 @@ stopped during row 3, so no legacy median or curve point is authorized. Commit
 Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
 
-The configured-4,352 MTP3 gate now passes. Next, reduce its 4K TTFT and qualify
-fresh-boot stability, then fill MTP2/MTP4 and deeper MTP1 cells. Audit the XPU
+The configured-4,352 MTP3 gate and configured-512 MTP2 gate now pass. MTP4/512
+is the active bounded run. Next, reduce MTP3 4K TTFT and qualify fresh-boot
+stability, then extend useful MTP depths to 4K and deeper MTP1. Audit the XPU
 host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
@@ -96,6 +97,19 @@ passed the small cache-zero needle, and measured `9.773841 / 9.372254 /
 8.107468 tok/s`, median `9.372254 tok/s` after first text. It accepted 503/505
 drafts in cumulative endpoint metrics. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json`.
+
+## TP4 MTP2/512 closeout
+
+Attempt 1 passed cache admission with a 192-MiB allocation resolving to 17
+usable blocks and 621 reported tokens,
+matched all 26 sealed MTP0 comparisons, held one hash for 16/16 repeats, passed
+the small cache-zero needle, and completed all 24 audited usages. Three
+p146/o256/c1 rows returned the target hash at `13.586501 / 10.064085 /
+11.895061 tok/s`, median `11.895061 tok/s` after first text. Median end-to-end
+output was `7.804965 tok/s`, median TTFT was `11.278097 s`, and cumulative
+acceptance was 770/770 across two positions. The 29.61% row span keeps this a
+variable Grade-C screen, not a stable ceiling or causal depth A/B. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-512-attempt1-result.json`.
 
 Attempt 2 remains preserved as a client-identity mismatch, not a runtime
 parity failure. The exact-runtime candidate and its component gates remain
