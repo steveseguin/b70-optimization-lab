@@ -46,10 +46,13 @@ three exact-1K samples had a `5.133588 tok/s` median after first text. The same
 5/7 short-quality boundary remains, so the cell is research-only. Its receipt
 is `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json`.
 
-Next, use the reported 3,949-token capacity to add a separate configured-3K
-arm for the 2K context point without changing the 192-MiB cache. First verify
-that the configured maximum leaves enough capacity for the exact request and
-output budget. Then
-forward-port the speculative runtime for MTP1. TP1/TP2 need a new memory design
+The separate configured-3K arm passed an exact cache-zero 2K needle and
+reported 6,144 cache tokens, but one of 16 repeats diverged. The frozen gate
+stopped before any 2K speed request; the cell is quarantined and the prior
+rates are unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json`.
+
+Next, resolve or bound repeat determinism, then forward-port the speculative
+runtime for MTP1. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.

@@ -542,3 +542,12 @@ the realistic suite's preferred 99-interval median was `4.449168 tok/s`. The
 known 5/7 short strict result remained, including the substantive `30`/`14`
 miss, so the new context cell is a research screen rather than a promotion.
 Evidence is in `data/20260827-tp4-mtp0-1536-context-screen.json`.
+
+The following configured-3,072 arm kept the same fixed cache, source, runtime,
+placement, eager, and MTP0 identity. It reported 6,144 cache tokens and passed
+the exact needle at 2,048 server prompt tokens with all 24 quality requests
+cache-zero. Its short answers matched the known 5/7 boundary, but one of 16
+repeat outputs diverged. The preregistered stop gate prevented all 2K speed
+requests, so this is a quarantined capability result rather than a measured
+curve point. Evidence is in
+`data/20260827-tp4-mtp0-3072-context-screen.json`.

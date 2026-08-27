@@ -954,9 +954,12 @@ repeats, completed the 12-prompt cache-zero realistic suite at a preferred
 `4.449168 tok/s` 99-interval median, and measured three exact-1K samples at a
 `5.133588 tok/s` after-first-text median. The known 5/7 strict short-quality
 boundary remains, so this closes a second research cell without authorizing
-promotion. The next context point can reuse the observed 3,949-token cache
-capacity under a separate configured-3K identity; MTP1 still requires the
-performance-preserving runtime port.
+promotion. The separate configured-3K arm then passed an exact cache-zero 2K
+needle and matched the same short outputs, but one of 16 repeats diverged. Its
+frozen stop gate correctly prevented every 2K speed request. The 2K cell is
+therefore quarantined with no invented rate, while the 512 and 1K results stay
+unchanged. Repeat determinism is now the immediate production blocker; MTP1
+still requires the performance-preserving runtime port.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

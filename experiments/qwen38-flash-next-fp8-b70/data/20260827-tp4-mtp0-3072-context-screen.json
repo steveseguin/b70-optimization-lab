@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "status": "bounded-negative",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-3072-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-3072-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 3072,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none",
+    "launcher_commit": "89cc374f3",
+    "fixture_commit": "241e01c5a",
+    "needle_calibration_commit": "24f313d84"
+  },
+  "serving": {
+    "health_gate": "pass-by-models-endpoint-and-24-completed-api-requests",
+    "reported_max_model_len": 3072,
+    "kv_cache_tokens": 6144,
+    "maximum_concurrency_at_3072": 2.0,
+    "capacity_caveat": "The 2.00x value is the runtime cache calculator output. max_num_seqs remained 1, so it is not an observed multi-user serving claim; the configuration-specific rise from 3,949 tokens on the 1,536-cap arm is not interpreted as a physical-capacity curve.",
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "model_load_seconds_by_rank": [557.360845, 556.107896, 557.127007, 556.677047],
+    "model_memory_gib_by_rank": [31.27, 31.27, 31.27, 31.27],
+    "shutdown": {
+      "classification": "controlled-stop-with-api-observability-caveat",
+      "signal": "SIGTERM",
+      "engine_request_processing_complete": true,
+      "worker_shutdown_done_ranks_logged": [0, 1, 2, 3],
+      "api_application_shutdown_complete": true,
+      "residual_processes_after_stop": 0,
+      "forced_process_stop_logged": false,
+      "caveat": "The API output handler logged the known post-manager-stop EngineDeadError and the resource tracker reported one shared-memory cleanup item. All workers and the application completed shutdown and no process or listener remained."
+    }
+  },
+  "quality": {
+    "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "baseline_status": "passed",
+    "baseline_match_all": true,
+    "baseline_caveat": "The comparator checks the short outputs, the first repeat, and needle output. It does not override the independently failed 16-run repeat-stability gate.",
+    "strict_exact_pass_count": 5,
+    "strict_exact_case_count": 7,
+    "strict_failures": {
+      "logic": {"expected": "yes", "content": "Yes"},
+      "code_execution": {"expected": "14", "content": "30"}
+    },
+    "repeat": {
+      "pass": false,
+      "count": 16,
+      "unique_hash_count": 2,
+      "majority": {
+        "count": 15,
+        "content": "blue, green, red, yellow",
+        "sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+      },
+      "divergent": {
+        "index": 8,
+        "count": 1,
+        "content": "black, blue, green, red",
+        "sha256": "d9aa9ff224b182bc4b2ade06018e937a73ff5e869242309755e775731005b4c4"
+      }
+    },
+    "long_context": {
+      "requested_filler_tokens": 2157,
+      "raw_prompt_tokens": 2036,
+      "server_prompt_tokens": 2048,
+      "needle": "B70_QWEN38_NEEDLE_20260816",
+      "content": "B70_QWEN38_NEEDLE_20260816",
+      "pass": true,
+      "cached_tokens": 0
+    },
+    "cached_token_values_all_zero": true,
+    "cached_token_observations": 24,
+    "pass_all": false
+  },
+  "stop_gate": {
+    "triggered": true,
+    "reason": "repeat divergence",
+    "formal_exact_depth_request_sent": false,
+    "legacy_exact_2k_speed_requests_sent": false,
+    "speed_interpretation_authorized": false,
+    "classification": "2K needle capability passed; cell quarantined on repeat stability",
+    "prior_results_affected": false
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass",
+    "exact_2k_context_needle": "pass",
+    "sixteen_repeat_stability": "fail-15-of-16-majority",
+    "full_short_quality": "fail-known-5-of-7-boundary",
+    "promotion_eligible": false,
+    "site_state": "quarantined",
+    "site_grade_ceiling": "bounded-negative"
+  },
+  "sealed_inputs": {
+    "quality_suite_sha256": "67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d",
+    "exact_depth_fixture_sha256": "c44fccbaf600cc506d8ed0cc7357161057b86abc44469b611be71db97558061d",
+    "exact_depth_harness_sha256": "8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067",
+    "legacy_depth_harness_sha256": "0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0"
+  },
+  "sha256": {
+    "server.log": "0d3b7311d3d4d21a61470b6950328f7c9fe2149a02ac4f2f7e986b5a71966f33",
+    "identity.txt": "9d088db9f6c52656ae669cad3112fbbe08a28e0e93eedcd000ec10d2a939f8be",
+    "models.json": "7dd62cf68a6cb6b87515d831f076f8e0f88b2b7217122df29ccb3d048fdd1382",
+    "quality-short-and-2k.json": "18af5284da0b4a9647fadfaf35e9d422ab36d1b3d5cdc05a2f1ed04bc8219331",
+    "quality-short-and-2k.invocation.log": "a5155637d9a2abbe1b83a4f24cc823bbe9e200724105f8a594954420e43530ef",
+    "quality-short-and-2k.exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  }
+}

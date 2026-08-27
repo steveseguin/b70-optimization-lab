@@ -101,3 +101,30 @@ evidence required for this cell.
   `3aa1bba4d0ade3c07e7cad10bb5ee01245dc194d28dc17359311ece3b4ab6f36`;
 - `scripts/bench-openai-concurrency.py` SHA-256
   `0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0`.
+
+## Result
+
+The server passed every identity and capacity gate. It loaded all 131 shards
+in 548 seconds, retained the exact 12.22-GiB selective placement and 31.27-GiB
+model footprint on every rank, and reported 6,144 cache tokens under the fixed
+192-MiB allocation.
+
+The short outputs matched the prior arm exactly: five of seven strict cases,
+with only the known case-only logic miss and substantive range-expression
+miss. The calibrated needle used exactly 2,048 server prompt tokens, returned
+the exact needle, and reported zero cached tokens. All 24 quality requests
+were cache-zero. The baseline comparator matched its short, first-repeat, and
+needle fields, but it does not cover the independently failed 16-run
+repeat-stability gate.
+
+The repeat gate failed: 15 runs returned `blue, green, red, yellow`, while run
+index eight returned `black, blue, green, red`. The frozen stop rule therefore
+prevented the formal exact-depth and three comparative speed requests. No 2K
+speed claim exists. The cell is classified `quarantined`: exact 2K needle
+capability passed, but repeat stability did not.
+
+The controlled stop completed all four worker shutdowns and application
+shutdown without a forced process stop. The API handler emitted its known
+post-manager-stop message and the resource tracker reported one cleanup item;
+no process or listener remained. The compact receipt is
+`data/20260827-tp4-mtp0-3072-context-screen.json`.

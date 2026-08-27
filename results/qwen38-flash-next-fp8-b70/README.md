@@ -73,9 +73,9 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next context qualification point is the same sealed
-TP4/EP4/eager/MTP0 runtime at 2K active context under a separate configured-3K
-identity. TP1 and TP2 require a separate fit/offload design. MTP1+ requires a
+The next qualification priority is repeat determinism under the same sealed
+TP4/EP4/eager/MTP0 runtime. TP1 and TP2 require a separate fit/offload design.
+MTP1+ requires a
 performance-preserving port to the newer speculative runtime interface. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
@@ -95,3 +95,16 @@ text and `29.043115 s` median TTFT.
 The same two short-suite failures remained, so this is another research-only
 cell, not a deployment promotion. See the
 [`1K context receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json).
+
+## Quarantined 2K context screen
+
+The additive configured-3,072 arm again kept the exact production source,
+runtime, placement, and 192-MiB cache identity. It reported 6,144 cache tokens
+and passed the exact needle at 2,048 server prompt tokens. The short battery
+matched the prior outputs and all 24 requests were cache-zero.
+
+One of 16 repeats returned a different four-color list. The preregistered stop
+gate therefore blocked the formal exact-depth and comparative speed requests.
+This closes the 2K combination as a quarantined capability result, not a speed
+measurement; the 512 and 1K rates above are unchanged. See the
+[`2K bounded-negative receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json).

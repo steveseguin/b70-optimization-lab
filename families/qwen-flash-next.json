@@ -74,10 +74,11 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; the additive arm passed a 987-token needle, 16/16 repeats, and a cache-zero 12-prompt realistic timing gate; no deeper context, vision, or clean-host qualification",
+      "scope": "Short quality remains 5/7; the 1K arm passed its needle, 16/16 repeats, and cache-zero realistic timing gate; the exact cache-zero 2K needle passed but its arm was quarantined after one of 16 repeats diverged; no deeper context, vision, or clean-host qualification",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
-        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json"
       ]
     },
     "popularity": {
@@ -200,17 +201,18 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536", "short quality and 1K context screens"],
+      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536/3072", "short quality, 1K screen, and quarantined 2K needle"],
       "grades": {
         "evidence": {
           "grade": "C",
           "scope": "exact attempt-19 TP4/EP4 eager text-serving identity",
-          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, 16 repeats, the 12-prompt realistic suite, and exact-depth speed observations are retained; full quality, deeper context, vision and clean-host replay remain missing.",
+          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, the 12-prompt realistic suite, exact-1K speed observations, and the bounded 2K quality failure are retained. The 2K arm published no speed after its repeat stop gate; full quality, deeper context, vision and clean-host replay remain missing.",
           "reviewed_at": "2026-08-27",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
-            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json"
           ]
         }
       },
@@ -331,6 +333,17 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-research",
           "parent": "flash-next-context1k-a1",
           "retry": {"status": "needs-full-quality"}
+        },
+        {
+          "id": "context2k-text-quarantine",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "quarantined",
+          "label": "2K needle passed · 1/16 repeat divergence · no speed",
+          "reason": "The exact cache-zero 2K needle passed and the short outputs matched the prior arm, but one of 16 repeats diverged. The frozen gate prevented all speed requests, so no 2K rate is published.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "parent": "flash-next-context2k-a1",
+          "retry": {"status": "blocked-on-determinism", "trigger": "fresh configured-3072 identity passes sealed 16-of-16 repeat gate"}
         }
       ]
     }
