@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "classification": "validated-python-overlay-build",
+  "base_image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mtp-width-r1",
+  "base_image_id": "sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72",
+  "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+  "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+  "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+  "patch": "../patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch",
+  "patch_sha256": "3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190",
+  "installed_files": {
+    "vllm/v1/core/sched/scheduler.py": "6d550a8e6a5c6abf200d66fbc4fc45c8ce371a312d454c39e057a45b364994c3",
+    "vllm/v1/core/single_type_kv_cache_manager.py": "b9a100331f98882dc01dc6f6efac53b1fc1fc949ba0b8915e932336a8a521c09"
+  },
+  "inherited_runtime": {
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "active_width_patch_sha256": "68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5",
+    "xpu_extension_sha256": "de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "validation": {
+    "dynamic_sd_tests": "19/19 passed",
+    "mamba_align_variable_draft_regression": "1/1 passed",
+    "ruff_check": "passed",
+    "ruff_format_check": "passed after formatting",
+    "container_py_compile": "passed",
+    "source_identity_before_overlay": "both installed source files byte-identical to ac7509e2",
+    "new_mamba_block_count_oracle": [3, 2, 2, 2]
+  },
+  "reporting_boundary": "This receipt validates construction and unit behavior only. It is not model correctness, capacity, or performance evidence."
+}

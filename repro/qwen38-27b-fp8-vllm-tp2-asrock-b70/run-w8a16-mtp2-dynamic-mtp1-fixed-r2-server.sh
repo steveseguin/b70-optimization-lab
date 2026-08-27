@@ -7,7 +7,8 @@ model_dir=${MODEL_DIR:?set MODEL_DIR to the downloaded Qwen3.8-27B-FP8 directory
 cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new writable cache directory}
 container=${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 port=${PORT:-18128}
-image_id=sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72
+served_model=${SERVED_MODEL_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
+image_id=${EXPECTED_IMAGE_ID:-sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 patch_sha256=68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5
 xpu_extension_sha256=de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62
@@ -33,6 +34,13 @@ for label_and_value in \
   [[ "$(docker image inspect "${image}" --format "{{ index .Config.Labels \"${label}\" }}")" == \
     "${expected}" ]] || { printf 'image label mismatch: %s\n' "${label}" >&2; exit 1; }
 done
+if [[ -n "${DYNAMIC_MAMBA_PATCH_SHA256:-}" ]]; then
+  [[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.vllm.dynamic-mamba-allocation.patch.sha256" }}')" == \
+    "${DYNAMIC_MAMBA_PATCH_SHA256}" ]] || {
+    printf 'dynamic Mamba allocation patch label mismatch\n' >&2
+    exit 1
+  }
+fi
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
   printf 'container already exists: %s\n' "${container}" >&2
   exit 1
@@ -71,7 +79,7 @@ exec docker run "${container_lifecycle[@]}" --name "${container}" \
   --env CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
   --env CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
   "${image}" \
-  --model /model --served-model-name qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2 \
+  --model /model --served-model-name "${served_model}" \
   --host 0.0.0.0 --port 8000 \
   --tensor-parallel-size 2 \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \

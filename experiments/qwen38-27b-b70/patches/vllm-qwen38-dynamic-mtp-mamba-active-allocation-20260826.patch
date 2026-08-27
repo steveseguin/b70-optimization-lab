@@ -1,0 +1,160 @@
+diff --git a/tests/v1/spec_decode/test_dynamic_sd.py b/tests/v1/spec_decode/test_dynamic_sd.py
+index 8d46b241c..4c3c91218 100644
+--- a/tests/v1/spec_decode/test_dynamic_sd.py
++++ b/tests/v1/spec_decode/test_dynamic_sd.py
+@@ -5,9 +5,11 @@
+ import logging
+ 
+ import pytest
++import torch
+ 
+ from tests.v1.core.utils import create_requests, create_scheduler
+ from vllm.v1.core.sched.scheduler import Scheduler
++from vllm.v1.kv_cache_interface import MambaSpec
+ from vllm.v1.spec_decode.dynamic.utils import build_dynamic_sd_schedule_lookup
+ from vllm.v1.structured_output import StructuredOutputManager
+ 
+@@ -164,6 +166,44 @@ def test_scheduler_uses_dsd_k_based_on_number_of_scheduled_requests():
+         assert output.num_spec_tokens_to_schedule == expected_k
+ 
+ 
++def test_dynamic_sd_allocates_mamba_states_for_possible_final_k():
++    max_num_seqs = 4
++    scheduler = create_scheduler(
++        max_num_seqs=max_num_seqs,
++        max_num_batched_tokens=max_num_seqs * 10,
++        num_blocks=32,
++        block_size=16,
++        num_speculative_tokens=2,
++        num_speculative_tokens_per_batch_size=[(1, 1, 2), (2, 4, 1)],
++        kv_cache_spec=MambaSpec(
++            block_size=16,
++            shapes=((1,),),
++            dtypes=(torch.float32,),
++            mamba_cache_mode="none",
++            num_speculative_blocks=2,
++        ),
++    )
++
++    output = _add_requests_and_schedule(scheduler, max_num_seqs)
++
++    assert output.num_spec_tokens_to_schedule == 1
++    manager = scheduler.kv_cache_manager.coordinator.single_type_managers[0]
++    block_counts = [len(manager.req_to_blocks[str(i)]) for i in range(max_num_seqs)]
++    assert block_counts == [3, 2, 2, 2]
++
++
++def test_dynamic_sd_allocation_is_safe_for_increasing_schedule():
++    scheduler = _make_scheduler_with_dynamic_sd(
++        [(1, 1, 1), (2, 4, 2)],
++        max_num_seqs=4,
++        max_num_batched_tokens=40,
++        runtime_num_speculative_tokens=2,
++    )
++
++    assert scheduler._allocation_lookahead_tokens(0) == 2
++    assert scheduler._allocation_lookahead_tokens(1) == 2
++
++
+ def test_scheduler_clamps_dsd_k_to_runtime_num_speculative_tokens():
+     scheduler = _make_scheduler_with_dynamic_sd(
+         [(1, 256, 5)],
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index e4a213286..b6b99d0e6 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -473,6 +473,16 @@ class Scheduler(SchedulerInterface):
+             num_new_tokens -= self.num_prefill_lookahead - remaining
+         return max(num_new_tokens, 0)
+ 
++    def _allocation_lookahead_tokens(self, scheduled_reqs: int) -> int:
++        """Reserve the largest K still possible for this FCFS batch."""
++        if self.dynamic_sd_lookup is None or self.policy != SchedulingPolicy.FCFS:
++            return self.num_lookahead_tokens
++
++        first_possible_batch = min(
++            scheduled_reqs + 1, self.scheduler_config.max_num_seqs
++        )
++        return max(self.dynamic_sd_lookup[first_possible_batch:])
++
+     def schedule(self, throttle_prefills: bool = False) -> SchedulerOutput:
+         self.current_step += 1
+         # NOTE(woosuk) on the scheduling algorithm:
+@@ -631,7 +641,9 @@ class Scheduler(SchedulerInterface):
+                     new_blocks = self.kv_cache_manager.allocate_slots(
+                         request,
+                         num_new_tokens,
+-                        num_lookahead_tokens=self.num_lookahead_tokens,
++                        num_lookahead_tokens=self._allocation_lookahead_tokens(
++                            len(num_scheduled_tokens)
++                        ),
+                     )
+ 
+                     if new_blocks is not None:
+@@ -1007,7 +1019,9 @@ class Scheduler(SchedulerInterface):
+                 # mismatching local and remote block counts.
+                 limit_lookahead_tokens = load_kv_async and self.num_lookahead_tokens > 0
+                 effective_lookahead_tokens = (
+-                    0 if limit_lookahead_tokens else self.num_lookahead_tokens
++                    0
++                    if limit_lookahead_tokens
++                    else self._allocation_lookahead_tokens(len(num_scheduled_tokens))
+                 )
+ 
+                 # Determine if we need to allocate cross-attention blocks.
+diff --git a/vllm/v1/core/single_type_kv_cache_manager.py b/vllm/v1/core/single_type_kv_cache_manager.py
+index ded6bc809..46f031c52 100644
+--- a/vllm/v1/core/single_type_kv_cache_manager.py
++++ b/vllm/v1/core/single_type_kv_cache_manager.py
+@@ -1465,6 +1465,15 @@ class MambaManager(SingleTypeKVCacheManager):
+         """
+         return 0
+ 
++    def _speculative_blocks_for_allocation(
++        self,
++        num_tokens: int,
++        num_tokens_main_model: int,
++    ) -> int:
++        """Return the active lookahead width capped by the configured maximum."""
++        lookahead_tokens = max(num_tokens - num_tokens_main_model, 0)
++        return min(lookahead_tokens, self.num_speculative_blocks)
++
+     def get_num_blocks_to_allocate(
+         self,
+         request_id: str,
+@@ -1486,12 +1495,13 @@ class MambaManager(SingleTypeKVCacheManager):
+             # and don't schedule it in the current step.
+             return self.block_pool.num_gpu_blocks + 1
+         if self.mamba_cache_mode != "align":
+-            # Allocate extra `num_speculative_blocks` blocks for
+-            # speculative decoding (MTP/EAGLE) with linear attention.
+-            if self.num_speculative_blocks > 0:
+-                num_tokens += (
+-                    self.kv_cache_spec.block_size * self.num_speculative_blocks
+-                )
++            speculative_blocks = self._speculative_blocks_for_allocation(
++                num_tokens, num_tokens_main_model
++            )
++            if apply_admission_cap:
++                speculative_blocks = self.num_speculative_blocks
++            if speculative_blocks > 0:
++                num_tokens += self.kv_cache_spec.block_size * speculative_blocks
+             return super().get_num_blocks_to_allocate(
+                 request_id,
+                 num_tokens,
+@@ -1550,10 +1560,11 @@ class MambaManager(SingleTypeKVCacheManager):
+     ) -> list[KVCacheBlock]:
+         assert isinstance(self.kv_cache_spec, MambaSpec)
+         if self.mamba_cache_mode != "align":
+-            # Allocate extra `num_speculative_blocks` blocks for
+-            # speculative decoding (MTP/EAGLE) with linear attention.
+-            if self.num_speculative_blocks > 0:
+-                num_tokens += self.block_size * self.num_speculative_blocks
++            speculative_blocks = self._speculative_blocks_for_allocation(
++                num_tokens, num_tokens_main_model
++            )
++            if speculative_blocks > 0:
++                num_tokens += self.block_size * speculative_blocks
+             return super().allocate_new_blocks(
+                 request_id, num_tokens, num_tokens_main_model
+             )
