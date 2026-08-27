@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "partial",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+  "attempt": 18,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt18",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "max_model_len": 512,
+    "vllm_head": "687aa13dc81ec543b02e9b531a99b84186cef7b1",
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "diagnostics": "trace-and-capture"
+  },
+  "serving": {
+    "health_gate": "pass",
+    "profile_layers_per_rank": 48,
+    "capture_file_count": 192,
+    "kv_cache_tokens": 1536,
+    "clean_shutdown": true
+  },
+  "canary": {
+    "status": "fail",
+    "expected": "14",
+    "content": "30",
+    "cached_tokens": 0,
+    "follow_up": {
+      "addition": "5",
+      "copy": "BLUE-17",
+      "json": "{\"ok\":true,\"n\":7}",
+      "deterministic_repeat": "30"
+    }
+  },
+  "short_quality": {
+    "pass_all": false,
+    "exact_pass_count": 5,
+    "exact_case_count": 7,
+    "repeat_pass": true,
+    "repeat_count": 8,
+    "cached_token_values": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "strict_failures": {
+      "logic": {"expected": "yes", "content": "Yes"},
+      "code_execution": {"expected": "14", "content": "30"}
+    }
+  },
+  "qualification": {
+    "diagnostic_serving_proof": "pass",
+    "full_quality": "fail",
+    "speed_eligible": false,
+    "site_grade_ceiling": "research"
+  },
+  "sha256": {
+    "server.log": "b8d0e74fd9e17d0395d67345521f5853f55e68a89c02e7ff88749bc30d153d0a",
+    "identity.txt": "638c4ce580600a65b1c6c28595f506ee3574ef616cf68375de1a58e866e5208c",
+    "models.json": "1ec39ab82e013ce528850161d1bdd4809535ff71bf3c6a8d0983586ccf040f1e",
+    "canary-request.json": "274c2cb3933ae4af6743633517548fa363d7e1228202bc809fe6cd2ac27d9ee1",
+    "canary.json": "b2e3f6f6788d3cfbebe616a00bb2839985dd300d8ee105f44b52f443e166030c",
+    "diagnostic-canaries.json": "6e0eecf3435fb3084b996b520cb71742ba0afaeeb917ededee46c2d931e58c44",
+    "quality-short-diagnostic.json": "ec57999e18fd5a09fd7134553ba72ab763ca234a970c1b7f760bad9c7c1e3fb4"
+  }
+}

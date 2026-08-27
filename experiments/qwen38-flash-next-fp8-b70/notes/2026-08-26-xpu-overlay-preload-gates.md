@@ -479,3 +479,22 @@ so resolving it is a separate performance-preserving port, not a safe startup
 shortcut. The exact pre-update tree is preserved as a complete verified bundle
 at `/mnt/usb-models/qwen38-build/source-backups/vllm-xpu-kernels-pre-gdn-sync-2f829747.bundle`
 (SHA-256 `be14c05473a77ea908282dc62478dc6fe5f5b55dedd3477f1de0b4f6c21fc149`).
+
+Attempt 18 is the first healthy TP4 server and real-request proof. It completed
+all profile and warmup passes, allocated 1,536 cache tokens, served four clean
+follow-up canaries (addition, copy, JSON, and deterministic repeat), and shut
+down normally. Prefix-cache use was zero throughout. The preregistered Python
+range canary returned `30` instead of `14`; the short battery passed exact,
+copy, arithmetic, JSON, factual, and all eight repeats, while its strict logic
+case returned `Yes` versus expected lowercase `yes` and its Python range case
+repeated `30`. Therefore attempt 18 is a healthy diagnostic serving proof, not
+a full quality pass and never a speed result.
+The compact receipt is `data/20260827-tp4-attempt18-api-and-quality.json`.
+
+Production source head `658965050` adds the remaining GDN fail-closed checks
+and reverts both diagnostic commits. Source equivalence to the pre-diagnostic
+MoE runner is exact, the selective embedding fix remains byte-identical, and
+the embedding (`2 passed`) and QSA (`19 passed`, `27` platform skips) suites
+pass separately. The active launcher no longer accepts or exports diagnostic
+settings and records `diagnostics=none`. Attempt 19 is the first production
+quality/performance candidate.

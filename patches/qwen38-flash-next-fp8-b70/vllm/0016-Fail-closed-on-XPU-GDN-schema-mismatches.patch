@@ -1,0 +1,37 @@
+From 805c83eb6900fb35ed652decdfe6467c4b0e0150 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 03:44:17 -0400
+Subject: [PATCH] Fail closed on XPU GDN schema mismatches
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ vllm/_xpu_ops.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 002073030..184662bd1 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -176,6 +176,11 @@ def _gdn_attention_core_xpu_impl(
+ 
+     if _XPU_GDN_ATTENTION_ARG_COUNT == 23:
+         assert num_spec_decodes == 0
++        assert spec_sequence_masks is None
++        assert spec_query_start_loc is None
++        assert spec_token_indx is None
++        assert spec_state_indices_tensor is None
++        assert num_accepted_tokens is None
+         assert non_spec_token_indx is None
+         assert non_spec_query_start_loc is not None
+         assert non_spec_state_indices_tensor is not None
+@@ -206,6 +211,7 @@ def _gdn_attention_core_xpu_impl(
+         )
+         return
+ 
++    assert _XPU_GDN_ATTENTION_ARG_COUNT == 29
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,
+-- 
+2.43.0
+
