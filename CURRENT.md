@@ -962,8 +962,12 @@ set produced a 9.19-10.19 margin and 32/32 first-token plus 16/16 full-output
 stability. Its formal exact-2K row passed, and three comparable exact-2K samples
 measured a `5.228429 tok/s` median after first text. The 2K selector is now a
 research-screened cell backed by superseding evidence, with the earlier
-quarantine still disclosed. The next context cell is 4K; MTP1 still requires
-the performance-preserving runtime port.
+quarantine still disclosed. The additive configured-4,352 arm then passed
+exact baseline agreement, 16/16 fixed-set repeats, the exact cache-zero 4K
+needle, and the formal exact-depth gate. Its formal rate was `4.456026 tok/s`;
+three legacy-comparable exact-4K rows had a `5.233665 tok/s` after-first-text
+median. The next context cell is 8K; MTP1 still requires the
+performance-preserving runtime port.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

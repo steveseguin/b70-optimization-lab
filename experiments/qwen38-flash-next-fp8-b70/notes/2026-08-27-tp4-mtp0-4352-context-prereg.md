@@ -96,3 +96,24 @@ Stop before speed interpretation on any source/runtime mismatch, capacity
 below 4,352, new short failure, repeat divergence, nonzero cache reuse, needle
 failure, or formal depth-gate failure. The prior 512, 1K, and 2K results remain
 unchanged regardless of this arm's outcome.
+
+## Result
+
+Attempt 1 preserved the frozen identity. It reported exactly 4,352 configured
+tokens, 7,121 cache tokens, four 12.22-GiB placement receipts, and 31.27 GiB
+per rank. The quality suite matched every 2K short and repeat output, passed
+the prescribed repeat 16/16 with one hash, and returned the exact needle at
+4,096 server prompt tokens with cached and created-cache counts zero.
+
+The formal p4096/o128 row passed every gate at zero cached tokens. Its
+conventional 99-interval rate was `4.456026475 tok/s`, TTFT was `217.909692 s`,
+and all 128 requested token IDs were returned with a length stop. The three
+legacy after-first-text p4096/o256 rows measured `5.298983875`, `5.233664732`,
+and `5.161604624 tok/s`, median `5.233664732 tok/s`; median TTFT was
+`123.391275 s`. All three returned the same 256-token output hash.
+
+The application and all four workers completed controlled shutdown, with the
+known post-manager API message and one resource-tracker cleanup item; no
+process or listener remained. This fills the exact-4K selector as
+research-screened. The inherited 5/7 short boundary still prevents promotion.
+Receipt: `data/20260827-tp4-mtp0-4352-context-screen.json`.

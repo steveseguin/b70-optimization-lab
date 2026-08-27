@@ -73,7 +73,7 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next context point is 4K under the same sealed TP4/EP4/eager/MTP0 runtime.
+The next context point is 8K under the same sealed TP4/EP4/eager/MTP0 runtime.
 TP1 and TP2 require a separate fit/offload design.
 MTP1+ requires a
 performance-preserving port to the newer speculative runtime interface. Graph,
@@ -124,3 +124,21 @@ screens measured `5.034312884`, `5.257401637`, and `5.228429046 tok/s`, median
 `5.228429046 tok/s` after first text. The known 5/7 short boundary remains, so
 the 2K selector is research-screened rather than deployment-ready. See the
 [`repeat-v2 2K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json).
+
+## Exact 4K screen
+
+The additive configured-4,352 arm changed no runtime or performance setting
+other than the minimum block-aligned context maximum needed for p4096/o256.
+The unchanged fixed cache reported 7,121 tokens. All seven short outputs and
+all 16 fixed-set repeats exactly matched the 2K baseline, and the needle passed
+at exactly 4,096 server prompt tokens with zero cached and created-cache
+tokens.
+
+The formal p4096/o128 cache-zero row passed at `4.456026475 tok/s` on its
+99-interval window with `217.909692 s` TTFT. Three separately salted
+p4096/o256 legacy comparisons measured `5.298983875`, `5.233664732`, and
+`5.161604624 tok/s` after first text, median `5.233664732 tok/s`; their median
+TTFT was `123.391275 s`. The site graph labels those legacy-comparable values
+separately from the formal rate. Short quality remains 5/7, so the cell is
+research-screened, not deployment-ready. See the
+[`exact-4K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json).

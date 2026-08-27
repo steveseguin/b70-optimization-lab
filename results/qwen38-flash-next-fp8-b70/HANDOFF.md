@@ -57,7 +57,13 @@ three comparable rows had a `5.228429 tok/s` median after first text. The 2K
 selector is research-screened; the known 5/7 short boundary remains. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json`.
 
-Next, add the 4K context point, then forward-port the speculative runtime for
+The additive configured-4,352 arm passed exact baseline agreement, 16/16
+fixed-set repeats, the exact cache-zero 4K needle, and the formal depth gate.
+Its formal rate was `4.456026 tok/s`; three legacy-comparable exact-4K rows had
+a `5.233665 tok/s` after-first-text median. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json`.
+
+Next, add the 8K context point, then forward-port the speculative runtime for
 MTP1. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.

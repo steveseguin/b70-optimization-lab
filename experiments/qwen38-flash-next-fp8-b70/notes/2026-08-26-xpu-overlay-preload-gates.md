@@ -562,3 +562,12 @@ formal cache-zero depth row passed, and three comparable exact-2K samples had a
 so this supersedes the effective 2K coverage state to research-screened without
 rewriting attempt 1. Evidence is in
 `data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json`.
+
+The additive configured-4,352 arm then retained the same fixed 192-MiB cache
+and every accepted performance setting. It reported 7,121 cache tokens, passed
+the protocol-v2 short/repeat battery with exact baseline agreement, returned
+the exact cache-zero 4K needle, and passed the formal p4096/o128 gate at
+`4.456026 tok/s` on the 99-interval window. Three exact p4096/o256 comparison
+rows had a `5.233665 tok/s` after-first-text median. The known 5/7 short
+boundary remains, so 4K is research-screened rather than promoted. Evidence is
+in `data/20260827-tp4-mtp0-4352-context-screen.json`.
