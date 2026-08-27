@@ -11,10 +11,11 @@ remain immutable evidence.
 
 ## Evidence behind the protocol correction
 
-Across 56 retained open-choice repeats from healthy production servers, 54
-returned `blue, green, red, yellow` and two returned `black, blue, green, red`.
-Both satisfy the old instruction to invent any four color words and sort them.
-The two deviations occurred at unrelated positions on different boots. In
+Across 56 retained open-choice repeats from prior diagnostic and server
+identities, 54 returned `blue, green, red, yellow` and two returned `black,
+blue, green, red`. Both satisfy the old instruction to invent any four color
+words and sort them. This is prompt-sensitivity context, not a same-identity
+stability rate. The two deviations occurred at unrelated positions. In
 contrast, all seven prescribed short cases were byte-identical across five
 healthy batteries, and both retained long-context needles were identical.
 
@@ -64,7 +65,8 @@ The server must again prove:
    truncation, 128 token IDs, length stop, and valid 100-event/99-interval
    timing.
 4. Only if the formal receipt passes, run three no-logprob p2048/o256/c1
-   requests with no warmups, requested prompt-token target 2,099, and salts
+   requests with no harness-added warmups after the server prerequisite gates,
+   requested prompt-token target 2,099, and salts
    `context-r1`, `context-r2`, and `context-r3`. Each must report exactly 2,048
    prompt and 256 completion tokens. These use the unchanged legacy accounting
    solely for comparison to the retained 1K screen.

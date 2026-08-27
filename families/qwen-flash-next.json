@@ -74,7 +74,7 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; the 1K arm passed its needle, 16/16 repeats, and cache-zero realistic timing gate; the protocol-v2 2K retry passed 32/32 fixed-answer sensitivity requests, 16/16 full repeats, an exact cache-zero needle, and the formal exact-depth gate; the original under-specified 2K attempt remains retained as quarantined evidence; no deeper context, vision, or clean-host qualification",
+      "scope": "Short quality remains 5/7; the 1K arm passed its needle, 16/16 repeats, and cache-zero realistic timing gate; the protocol-v2 2K retry passed 32/32 fixed-set first-token sensitivity requests, 16/16 full repeats, an exact cache-zero needle, and the formal exact-depth gate; the original under-specified 2K attempt remains retained as quarantined evidence; no deeper context, vision, or clean-host qualification",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -151,7 +151,7 @@
       "measurement_class": "research-only exact-depth HTTP screen",
       "promotion_status": "not promotion eligible; inherited short quality qualification failed",
       "quality_scope": "987-token exact needle and 16/16 repeats passed; 12-prompt realistic timing gate passed cache-zero; short battery remained 5/7",
-      "workload": "One instrumentation-free server; three unique exact p1024/o256/c1 requests; full-output rate after first text; no warmups; separate 12-prompt realistic suite",
+      "workload": "One instrumentation-free server; three unique exact p1024/o256/c1 requests; full-output rate after first text; no harness-added warmups after the server completed prerequisite gates; separate 12-prompt realistic suite",
       "metrics": {
         "decode_tok_s": [5.13358756138473],
         "ttft_ms": [29043.11463900376]
@@ -190,8 +190,8 @@
       "profile_id": "flash-next-tp4-context2k-repeat-v2-screen-v1",
       "measurement_class": "research-only exact-depth HTTP screen",
       "promotion_status": "not promotion eligible; inherited short quality qualification failed",
-      "quality_scope": "Protocol-v2 fixed-answer sensitivity passed 32/32, full repeats passed 16/16 with one exact output, and the formal 2K cache-zero gate passed; short battery remained 5/7",
-      "workload": "One instrumentation-free server; three unique exact p2048/o256/c1 requests; full-output rate after first text; no warmups; separate formal exact-p2048/o128 cache-zero gate",
+      "quality_scope": "Protocol-v2 fixed-set first-token sensitivity passed 32/32, full repeats passed 16/16 with one exact output, and the formal 2K cache-zero gate passed; short battery remained 5/7",
+      "workload": "One instrumentation-free server; three unique exact p2048/o256/c1 requests; full-output rate after first text; no harness-added warmups after the server completed prerequisite gates; separate formal exact-p2048/o128 cache-zero gate",
       "metrics": {
         "decode_tok_s": [5.228429046201661],
         "ttft_ms": [81146.86629301286]
@@ -227,7 +227,7 @@
         {"x": 1024, "decode_tok_s": 5.13358756138473, "ttft_ms": 29043.11463900376, "samples": 3},
         {"x": 2048, "decode_tok_s": 5.228429046201661, "ttft_ms": 81146.86629301286, "samples": 3}
       ],
-      "quality": "All points remain research-only because the same substantive short-quality miss reproduced. The 1K point passed its needle, 16 repeats, and cache-zero realistic suite; the 2K retry passed its exact needle, fixed-answer repeat protocol, and a separate formal cache-zero exact-depth gate.",
+      "quality": "All points remain research-only because the same substantive short-quality miss reproduced. The 1K point passed its needle, 16 repeats, and cache-zero realistic suite; the 2K retry passed its exact needle, fixed-set repeat protocol, and a separate formal cache-zero exact-depth gate.",
       "caveat": "The x=0 control used a 146-token ordinary prompt at configured max 512; x=1024 used an exact 1,024-token synthetic prompt at configured max 1,536; x=2048 used an exact 2,048-token synthetic prompt at configured max 3,072. The 2K formal 99-interval result is separately labeled in its receipt. This is a bounded HTTP context screen across three additive server identities, not a deployment-qualified depth curve.",
       "evidence": "results/qwen38-flash-next-fp8-b70/README.md"
     }
@@ -248,8 +248,8 @@
       "grades": {
         "evidence": {
           "grade": "C",
-          "scope": "exact attempt-19 TP4/EP4 eager text-serving identity",
-          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, the 12-prompt realistic suite, and exact-1K observations are retained. The original 2K stop-gate evidence remains visible, and a preregistered protocol-v2 retry passed fixed-answer repeats, the exact cache-zero 2K gate, and three exact-2K legacy-comparable observations. Full quality, deeper context, vision and clean-host replay remain missing.",
+          "scope": "exact TP4/EP4 eager MTP0 text-serving source/runtime through the 2K context screen",
+          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, the 12-prompt realistic suite, and exact-1K observations are retained. The original 2K stop-gate evidence remains visible, and a preregistered protocol-v2 retry passed fixed-set repeats, an exact cache-zero 2K gate, and three exact-2K legacy-comparable observations. Full quality, deeper context, vision and clean-host replay remain missing.",
           "reviewed_at": "2026-08-27",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
@@ -287,8 +287,8 @@
     },
     {
       "id": "qwen-flash-next-context-screen",
-      "title": "Research context screen",
-      "subtitle": "Three bounded HTTP points under the same TP4/EP4 eager MTP0 source/runtime; all retain the disclosed short-quality caveat",
+      "title": "Legacy-comparable after-first-text context screen",
+      "subtitle": "The plotted 5.22/5.13/5.23 tok/s values use the legacy after-first-text comparison; the separate formal cache-zero 2K rate is 3.865 tok/s. All points retain the short-quality caveat.",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
@@ -383,7 +383,7 @@
           "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
           "state": "lab-screened",
           "label": "5.228 tok/s exact-2K protocol-v2 screen",
-          "reason": "The preregistered retry passed 32/32 fixed-answer sensitivity requests, 16/16 full repeats, the exact cache-zero needle, and the formal exact-depth gate. The original under-specified repeat divergence remains retained as quarantined attempt-1 history.",
+          "reason": "The preregistered retry passed 32/32 fixed-set first-token sensitivity requests, 16/16 full repeats, the exact cache-zero needle, and the formal exact-depth gate. The original under-specified repeat divergence remains retained as quarantined attempt-1 history.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-context2k-v2-a2",
           "packet_id": "qwen38-flash-next-fp8-tp4-research",
           "parent": "flash-next-context2k-a2",

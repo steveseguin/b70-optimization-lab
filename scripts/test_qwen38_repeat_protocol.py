@@ -79,6 +79,13 @@ class RepeatProtocolTests(unittest.TestCase):
             body["logprob_token_ids"], [probe.BLUE_TOKEN_ID, probe.BLACK_TOKEN_ID]
         )
 
+    def test_probe_requires_both_named_scores(self) -> None:
+        both = [{"token": "blue"}, {"token": "black"}]
+        only_one = [{"token": "blue"}]
+        self.assertTrue(probe.required_named_scores_present(both))
+        self.assertFalse(probe.required_named_scores_present(only_one))
+        self.assertFalse(probe.required_named_scores_present([]))
+
     def test_baseline_compares_repeat_protocol_and_aggregate(self) -> None:
         current = {"exact_cases": [], "repeat_case": {
             "protocol": "fixed-set-v2",

@@ -43,6 +43,12 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def required_named_scores_present(scores: list[dict[str, Any]]) -> bool:
+    """Require both explicitly requested comparison tokens in the response."""
+    returned = {item.get("token") for item in scores}
+    return {"blue", "black"}.issubset(returned)
+
+
 def validate_base_url(value: str) -> str:
     parsed = urllib.parse.urlsplit(value)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -139,7 +145,10 @@ def run_phase(
         "content_counts": counts,
         "unique_hash_count": len({item["sha256"] for item in runs}),
         "cached_tokens_all_zero": all(item["cached_tokens"] == 0 for item in runs),
-        "top_scores_present_all": all(bool(item["first_token_top_scores"]) for item in runs),
+        "top_scores_present_all": all(
+            required_named_scores_present(item["first_token_top_scores"])
+            for item in runs
+        ),
     }
 
 
