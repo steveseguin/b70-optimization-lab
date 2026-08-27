@@ -8,8 +8,8 @@ mtp_exact="${MTP_EXACT:-0}"
   printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, 4352, or 8448\n' >&2
   exit 1
 }
-[[ "${mtp}" == "0" || "${mtp}" == "1" ]] || {
-  printf 'FAIL: MTP must be 0 or 1\n' >&2
+[[ "${mtp}" =~ ^[0-4]$ ]] || {
+  printf 'FAIL: MTP must be 0, 1, 2, 3, or 4\n' >&2
   exit 1
 }
 [[ "${mtp_exact}" == "0" || "${mtp_exact}" == "1" ]] || {
@@ -17,7 +17,7 @@ mtp_exact="${MTP_EXACT:-0}"
   exit 1
 }
 [[ "${mtp_exact}" == "0" || "${mtp}" == "1" ]] || {
-  printf 'FAIL: MTP_EXACT=1 requires MTP=1\n' >&2
+  printf 'FAIL: the exact-runtime candidate is preregistered only for MTP=1\n' >&2
   exit 1
 }
 [[ "${mtp_exact}" == "0" || "${max_model_len}" == "512" ]] || {
