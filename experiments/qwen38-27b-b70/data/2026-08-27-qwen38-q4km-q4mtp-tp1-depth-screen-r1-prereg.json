@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.benchmark-prereg.v1",
+  "campaign": "qwen38-q4km-q4mtp-tp1-depth-screen-20260827-r1",
+  "created_utc": "2026-08-27T20:00:00Z",
+  "purpose": "Screen honest one-B70 Qwen3.8 Q4_K_M target plus same-revision Q4_0 MTP draft depths before any strict promotion.",
+  "frozen_identity": {
+    "target": {
+      "repository": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "file": "Qwen3.8-27B-Q4_K_M.gguf",
+      "bytes": 18973870432,
+      "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+    },
+    "draft": {
+      "repository": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
+      "file": "MTP/mtp-Qwen3.8-27B-Q4_0.gguf",
+      "bytes": 1369590656,
+      "sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e"
+    },
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154"
+  },
+  "fixed_profile": {
+    "gpu": "one Intel Arc Pro B70, physical GPU 0",
+    "tensor_parallel": 1,
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "graph": "off",
+    "reasoning": "off",
+    "parallel_slots": 1,
+    "configured_context_tokens": 8192,
+    "prompt_cache": false,
+    "sampling": {"seed": 42, "temperature": 0, "top_p": 1},
+    "transport": "native raw /completion with returned token IDs"
+  },
+  "screen": {
+    "depths": [1, 2, 3, 5],
+    "fresh_servers_per_depth": 1,
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "headline_formula": "median within each class, then median of six class medians",
+    "cached_tokens_required": 0,
+    "natural_stop_or_length_required": true,
+    "objective_canaries_required": true
+  },
+  "decision_rule": {
+    "screen_only": "No one-server screen value is a public package headline.",
+    "winner": "Highest class-balanced rate among arms that pass every workload, cache, natural-stop/length, canary, and complete-token-array target-oracle gate.",
+    "promotion": "Run the winner on a second fresh server. Promote only the median of the two attempt-level class-balanced medians when all 12 complete arrays match across the two MTP servers and the target-only oracle, or disclose and adjudicate any arithmetic-identity difference before promotion.",
+    "no_transfer": "No result transfers to Q8, TP2, vLLM, alternate context depths, concurrency, chat-template serving, or another draft artifact."
+  }
+}
