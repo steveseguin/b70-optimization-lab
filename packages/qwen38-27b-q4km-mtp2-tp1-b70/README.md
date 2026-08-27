@@ -14,5 +14,11 @@ backend identities.
 
 MTP2 is deliberate. MTP1 was slower (`38.320`), MTP3 was slightly slower
 (`42.123`), and MTP5 changed all twelve target outputs and is rejected.
-Neither the target-only 32K curve nor its concurrency curve transfers to this
-profile; those MTP2 cells remain open until measured directly.
+
+A separate cache-zero exact-depth sweep measured target-oracle-exact MTP2
+decode at 4K/8K/16K/24K/32K. The exact 32K point is `37.583325 tok/s` with
+`39.439 s` TTFT. This is Grade D repeated-token shape evidence, not natural
+prose. The 2K fixture reproducibly diverged at generated token 23 and remains
+quarantined, so MTP2 is not claimed universally target-exact. The target-only
+or MTP2 concurrency curves do not transfer; exact MTP2 concurrency remains
+open until measured directly.

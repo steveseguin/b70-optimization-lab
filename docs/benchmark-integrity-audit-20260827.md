@@ -72,6 +72,14 @@ MTP0 oracle. MTP5 matched 0/12 and is rejected. Exact MTP2 32K and concurrency
 remain unmeasured and are not inherited from the no-MTP package. See the
 [MTP2 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.md).
 
+The follow-up MTP2 exact-depth audit did not justify a whole-profile pass. The
+2K frozen shape diverged reproducibly from MTP0 at generated token 23 and is
+quarantined. The 4K, 8K, 16K, 24K, and 32K receipts were exact; the exact 32K
+point measured **`37.583325 tok/s`** with **`39.439 s` TTFT**. Those five cells
+are published only as Grade D partial synthetic-shape evidence. They do not
+establish natural-prose long-context behavior, repair the 2K failure, or imply
+intermediate values. See the [partial depth result](../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json).
+
 The LocalMaxxing submission `cmtb5n45n0021qq01n13vly2h` was built from the
 incomplete FP8 evidence and is premature. Repository surfaces mark withdrawal
 as recommended. The external service does not provide a trusted automated

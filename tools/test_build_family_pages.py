@@ -51,6 +51,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "packages/ornith-15-35b-a3b-q4km-b70/package.json": ("decode-vs-context-depth", 99.614237),
             "packages/ornith-15-9b-q8-b70/package.json": ("decode-vs-context-depth", 39.83848),
             "packages/qwen38-27b-q4km-tp1-b70/package.json": ("http-decode-vs-active-context", 24.488129029771436),
+            "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json": ("http-decode-vs-active-context", 37.5833250781214),
             "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json": ("http-decode-vs-active-context", 44.43728051677345),
             "packages/qwen38-27b-q8-tp2-b70/package.json": ("http-decode-vs-active-context", 33.848820185540816),
             "packages/qwen38-27b-fp8-tp2-b70/package.json": ("http-decode-vs-active-context", 31.48958732345858),

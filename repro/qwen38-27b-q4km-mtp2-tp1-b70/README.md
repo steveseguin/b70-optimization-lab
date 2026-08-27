@@ -90,8 +90,16 @@ MTP5 is not an optional speed preset; it changed all twelve outputs.
 
 ## Current boundary
 
-The measured headline is single-user and short-context. The no-MTP package's
-32K and concurrency curves do not transfer. Exact MTP2 context/TTFT and
-output-qualified concurrency are the next measurements. The tested small host
-had 16 GiB RAM plus swap; the launcher caps the scope at 13 GiB RAM and 12 GiB
-swap. Stop competing model processes before launch.
+The measured headline is single-user and short-context. A separate exact-depth
+sweep found target-oracle-exact points at 4K, 8K, 16K, 24K, and 32K. The 32K
+point measured `37.583325 tok/s` and `39.439 s` TTFT. It is Grade D synthetic
+shape evidence; it is not a natural-prose long-context claim. The 2K fixture
+diverged from MTP0 at generated token 23 on both attempts and is quarantined.
+See the [structured partial result](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json).
+
+This means MTP2 is not universally target-exact across context/content shapes;
+do not treat the partial curve as a whole-profile quality pass. The no-MTP
+concurrency curve does not transfer, and output-qualified MTP2 concurrency is
+still unmeasured. The tested small host had 16 GiB RAM plus swap; the launcher
+caps the scope at 13 GiB RAM and 12 GiB swap. Stop competing model processes
+before launch.

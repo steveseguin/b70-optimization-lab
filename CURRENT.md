@@ -39,10 +39,14 @@ matched 0/12 and is rejected. The package and exact replay are in
 [`packages/qwen38-27b-q4km-mtp2-tp1-b70/`](packages/qwen38-27b-q4km-mtp2-tp1-b70/)
 and [`repro/qwen38-27b-q4km-mtp2-tp1-b70/`](repro/qwen38-27b-q4km-mtp2-tp1-b70/).
 
-Do not reuse the target-only 32K or concurrency values for this deployment.
-The immediate campaigns are exact active-context/TTFT measurement through 32K
-and output-qualified unique-prompt HTTP concurrency for MTP2, followed by
-package/family/site synchronization. No benchmark process is currently live.
+Do not reuse the target-only context or concurrency values for this deployment.
+The exact MTP2 context campaign measured target-oracle-exact 4K-32K cells,
+including **37.583325 tok/s** and **39.439 s TTFT** at 32K, but reproducibly
+diverged at 2K/generated token 23. The curve is therefore Grade D partial and
+MTP2 is not universally target-exact across context/content shapes. The next
+campaign is output-qualified unique-prompt HTTP concurrency; natural-prompt
+long-context evidence also remains open. No benchmark process is currently
+live.
 
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or

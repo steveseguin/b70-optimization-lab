@@ -1,0 +1,79 @@
+{
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-20260827-r2",
+  "canaries_passed": true,
+  "classification": "Grade D partial exact-context/TTFT coverage",
+  "draft_counters": {
+    "acceptance_rate": 0.8441358024691358,
+    "accepted": 547.0,
+    "drafted": 648.0
+  },
+  "exact_depths": [
+    4096,
+    8192,
+    16384,
+    24576,
+    32768
+  ],
+  "points": [
+    {
+      "active_context_tokens": 2048,
+      "decode_tok_s": 36.435975473550734,
+      "output_token_ids_sha256": "219949de9eff36c76710e9fad3ab22b9b01c6a4a72f712cc66013c9911b218bf",
+      "state": "quarantined-output-divergence",
+      "target_oracle_exact": false,
+      "ttft_ms": 2082.3225650237873
+    },
+    {
+      "active_context_tokens": 4096,
+      "decode_tok_s": 42.78942928972341,
+      "output_token_ids_sha256": "dcae63089f9a212510a1bc56f3db976fdf6f930afdbe04dd165ab0898375d109",
+      "state": "lab-measured-grade-d",
+      "target_oracle_exact": true,
+      "ttft_ms": 4136.035411036573
+    },
+    {
+      "active_context_tokens": 8192,
+      "decode_tok_s": 48.0128640021699,
+      "output_token_ids_sha256": "e9febe4f6f60a852c700465c030614b27a3c2fcf57967766ff04c1d97186828a",
+      "state": "lab-measured-grade-d",
+      "target_oracle_exact": true,
+      "ttft_ms": 8450.344891054556
+    },
+    {
+      "active_context_tokens": 16384,
+      "decode_tok_s": 40.51800771579031,
+      "output_token_ids_sha256": "43a7615f143053d6fe31f49ae84012fa3da0d1a9773099c369ffeab71137b6ab",
+      "state": "lab-measured-grade-d",
+      "target_oracle_exact": true,
+      "ttft_ms": 17837.2559529962
+    },
+    {
+      "active_context_tokens": 24576,
+      "decode_tok_s": 39.554909443320525,
+      "output_token_ids_sha256": "503e5012677d99b037df86f2d9d53e66c5bcfd0c10c255dc94b880b4896f34f4",
+      "state": "lab-measured-grade-d",
+      "target_oracle_exact": true,
+      "ttft_ms": 28201.415912015364
+    },
+    {
+      "active_context_tokens": 32768,
+      "decode_tok_s": 37.5833250781214,
+      "output_token_ids_sha256": "ad3b7472e8bd747cc9b5033366f028638df46c7c1d22ecb778f5626165ce04ac",
+      "state": "lab-measured-grade-d",
+      "target_oracle_exact": true,
+      "ttft_ms": 39439.232949051075
+    }
+  ],
+  "publication_boundary": "Only exact 4K-32K cells may be published as Grade D partial coverage. The 2K cell is quarantined. Synthetic repeated-token shape fixture; no interpolation, extrapolation, natural-prose headline, or whole-profile pass.",
+  "quarantined_depths": [
+    2048
+  ],
+  "report_recovery": {
+    "gpu_actions": 0,
+    "http_requests": 0,
+    "sealed_inputs_verified": 10,
+    "source_failure_preserved": "terminal-receipt.json"
+  },
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-result.v1",
+  "status": "failed-partial-2k-quarantined"
+}

@@ -245,7 +245,7 @@
     <div title="local-llm-on-b70, reviewed 2026-08-23"><dt>B70 fit</dt><dd>High</dd></div>
     <div title="current Qwen3.8 deployment integrity, quant/runtime correctness, repeat stability, and long-context canaries; not a Qwen3.6-wide or general intelligence score"><dt>Quality evidence</dt><dd>Strong deployment evidence</dd></div>
     <div title="2026-08-23T22:51:38Z · Qwen/Qwen3.8-27B; 12,306 likes. Official base-model repositories only; revision-level discovery signal, not quality or packet evidence. Revisions are not summed."><dt>Interest</dt><dd>2.36M</dd></div>
-    <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>149</dd></div></dl>
+    <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>150</dd></div></dl>
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
   <div class="packet-grid"><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-23-qwen38-rolling-nightly-a3561ef8-tpscale.json">
@@ -289,7 +289,7 @@
   <p class="packet-promise">Reproduce <b>42.64 tok/s</b> on 1× B70 · candidate package</p>
   <small class="packet-workload">Median of two fresh-server class-balanced medians over the fixed 12-prompt/six-class, 512-cap native HTTP suite; one B70, TP1, MTP2, F16 target/draft KV, cache zero, 12/12 complete arrays exact between replicas and against same-build MTP0.</small>
   <div class="grade-rail"></div>
-  <div class="coverage-rail"><span>strict decode</span><span>MTP0/1/2/3/5 screen</span><span>quality</span><span>target oracle</span><span>recipe</span></div>
+  <div class="coverage-rail"><span>strict decode</span><span>MTP0/1/2/3/5 screen</span><span>quality</span><span>target oracle</span><span>exact context 4K-32K Grade D partial</span><span>2K quarantined</span><span>TTFT</span><span>recipe</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4km-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-measured Grade C</b></span></div>
   <h3 title="Qwen3.8 Q4_K_M · TP1 F16-KV cache64 SYCL-graph HTTP context curve">Qwen3.8 Q4_K_M · TP1 F16-KV cache64 SYCL-graph HTTP context curve</h3>
