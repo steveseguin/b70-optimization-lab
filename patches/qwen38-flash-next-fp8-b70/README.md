@@ -71,3 +71,12 @@ ecc1cb5c84b148e96755b0b834408ae5ffaf9e497d2c1eb7d46735b4cf850a88  vllm-xpu-kerne
 These are source artifacts only. A deployment package must additionally pin
 and checksum its native XPU binaries, Python environment, model revision, and
 checkpoint tree.
+
+The exact 18-file hybrid runtime stage is pinned by
+`../../experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-padding-guard-loadable.sha256`.
+Package it with `../../scripts/package-qwen38-runtime-stage.py`; the tool rejects
+missing or extra `.py`/`.so` runtime files and Python cache artifacts, verifies
+every file hash, writes a deterministic uncompressed tar plus fixed-size parts,
+re-extracts and verifies the package, and emits a portable JSON receipt. Use
+`--stage`, `--archive`, and optionally `--receipt`, `--split-bytes`, and
+`--verification-dir`; output paths must not already exist.
