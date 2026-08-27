@@ -1,0 +1,3085 @@
+{
+  "schema_version": 1,
+  "classification": "measured-concurrent-exact-answer-quality-canary",
+  "base_url": "http://127.0.0.1:18140",
+  "model": "qwen38-q4km-q4mtp-tp1-mtp2-http-smallctx",
+  "concurrency": 16,
+  "rounds": 8,
+  "total_requests": 128,
+  "pass_all": true,
+  "no_extrapolation": true,
+  "results": [
+    {
+      "round": 1,
+      "concurrency": 16,
+      "elapsed_s": 4.548933200072497,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.4577543849591166,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.157089538988657,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 2.905157839995809,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.547649770975113,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 2.904970609000884,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.458188978023827,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 3.8646370719652623,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.460226950002834,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.158514167997055,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 3.8620432460447773,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.545965911005624,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.458637930918485,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.453712439048104,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 3.8595930410083383,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.454187573050149,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r00-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.157773582963273,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "concurrency": 16,
+      "elapsed_s": 5.125749572995119,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.060103188967332,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.8816611169604585,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.589539170032367,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 5.125379340955988,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 4.5934393759816885,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 4.063230297993869,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.061131555004977,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.591504003969021,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.881421775906347,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.59063584706746,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 5.123670840053819,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 4.060215568984859,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 4.593372934032232,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.061698139063083,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.057531043072231,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r01-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.879049301031046,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "concurrency": 16,
+      "elapsed_s": 4.295494371908717,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.180825716932304,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 3.9293457319727167,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 2.6779404209228233,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.294450055924244,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.181093567982316,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.1830007809912786,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 3.6225143499905244,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.185252254945226,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 3.9298093140823767,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 3.6242807809030637,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.294261315022595,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.1834985229652375,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.1789699950022623,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 3.621465553995222,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.1841469169594347,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r02-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 3.9261826019501314,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "concurrency": 16,
+      "elapsed_s": 4.613499287050217,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.5523218899033964,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.307077996083535,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.015149993938394,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.613243845058605,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.554947377066128,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.555054467986338,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.019509740988724,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.061180099961348,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.307087086024694,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.017449487932026,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.55076018802356,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.060456896084361,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.5546480249613523,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.019622710999101,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.554086541989818,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r03-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.305697696981952,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 5,
+      "concurrency": 16,
+      "elapsed_s": 4.88678866205737,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.263608737033792,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.7028204259695485,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 3.8629719050368294,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.886375728994608,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.866167124011554,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.86687172902748,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.247103949077427,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.865136847947724,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.520061025978066,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.245173716917634,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 4.8244295079493895,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.8641709429211915,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.2624163299333304,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.248003265005536,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.867926535080187,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r04-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.520962192094885,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 6,
+      "concurrency": 16,
+      "elapsed_s": 3.9680780929047614,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 2.9934779489412904,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 3.6646282540168613,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 3.4330710880458355,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 3.967666419921443,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 2.9952708510681987,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 2.9909153929911554,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 3.430610993062146,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 2.991267255973071,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 3.663666068110615,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 3.432579135056585,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 3.906357272993773,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 2.988301728037186,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 2.98908619210124,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 3.43164749792777,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 2.991755079012364,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r05-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 2.9881908759707585,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 7,
+      "concurrency": 16,
+      "elapsed_s": 5.308246729080565,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.113464731955901,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.941892874077894,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.1155162249924615,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 5.2467264119768515,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 4.571276550996117,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 4.110813046107069,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.116060827975161,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.113858263939619,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.938293942017481,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.939036145922728,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 5.307639656006359,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 4.573074292042293,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 4.111935533001088,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.940651186043397,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.5733381130266935,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r06-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 5.12357990804594,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "round": 8,
+      "concurrency": 16,
+      "elapsed_s": 5.335619930992834,
+      "case_counts": {
+        "arithmetic": 2,
+        "code_execution": 2,
+        "copy_phrase": 3,
+        "exact_ok": 3,
+        "factual": 2,
+        "json_schema": 2,
+        "logic": 2
+      },
+      "passed": 16,
+      "failed": 0,
+      "cached_tokens_nonzero": 0,
+      "pass": true,
+      "results": [
+        {
+          "slot": 0,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s000-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.995092715951614,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 1,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s001-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.570372370071709,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 2,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s002-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.575597821967676,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 3,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s003-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 5.274154326063581,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 4,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s004-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 3.9938848689198494,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 5,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s005-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 3.9955580789828673,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 6,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s006-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.907164496020414,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 7,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s007-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 4.574840978020802,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 8,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s008-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.90598715795204,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 9,
+          "case": "arithmetic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s009-arithmetic",
+          "content": "60",
+          "normalized": "60",
+          "sha256": "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+          "elapsed_s": 4.5732935490086675,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "60",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 10,
+          "case": "json_schema",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s010-json_schema",
+          "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "normalized": "{\"answer\": 42, \"unit\": \"widgets\"}",
+          "sha256": "250a25b051da4e7e82761d80134aea4bd17bac1d4644cda1c5df3be93d4e3a91",
+          "elapsed_s": 5.334311352926306,
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 36,
+            "total_tokens": 50,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": null,
+          "json_expected_fields": {
+            "answer": "42",
+            "unit": "widgets"
+          },
+          "json_parsed": {
+            "answer": 42,
+            "unit": "widgets"
+          },
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 11,
+          "case": "factual",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s011-factual",
+          "content": "Au",
+          "normalized": "Au",
+          "sha256": "3325c2b56f2bd49455356ae390f870bd53352ef2affb17eac0216448a01fa636",
+          "elapsed_s": 4.571857328992337,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 26,
+            "total_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "Au",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 12,
+          "case": "logic",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s012-logic",
+          "content": "yes",
+          "normalized": "yes",
+          "sha256": "8a798890fe93817163b10b5f7bd2ca4d25d84c52739a645a889c173eee7d9d3d",
+          "elapsed_s": 4.569789956905879,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 36,
+            "total_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "yes",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 13,
+          "case": "code_execution",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s013-code_execution",
+          "content": "14",
+          "normalized": "14",
+          "sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+          "elapsed_s": 4.90675745299086,
+          "usage": {
+            "completion_tokens": 3,
+            "prompt_tokens": 36,
+            "total_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "14",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 14,
+          "case": "exact_ok",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s014-exact_ok",
+          "content": "OK",
+          "normalized": "OK",
+          "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+          "elapsed_s": 3.999040840077214,
+          "usage": {
+            "completion_tokens": 2,
+            "prompt_tokens": 17,
+            "total_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "OK",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        },
+        {
+          "slot": 15,
+          "case": "copy_phrase",
+          "request_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2-a5-semantic-r07-s015-copy_phrase",
+          "content": "satin cobalt orbit",
+          "normalized": "satin cobalt orbit",
+          "sha256": "cfaf413c134eea7354fa0b63fe7543885f4008cee709e8e4d3349f46872ca569",
+          "elapsed_s": 4.908008950995281,
+          "usage": {
+            "completion_tokens": 6,
+            "prompt_tokens": 26,
+            "total_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            }
+          },
+          "expected": "satin cobalt orbit",
+          "json_expected_fields": null,
+          "json_parsed": null,
+          "cached_tokens": 0,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}
