@@ -7,7 +7,8 @@ out_dir=${OUT_DIR:?set OUT_DIR to a new result directory}
 base_url=${BASE_URL:-http://127.0.0.1:18128}
 model=${MODEL_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5}
 concurrent_quality=${repo_root}/experiments/qwen38-27b-b70/scripts/qwen38-concurrent-quality-canary.py
-replication_floor=1033.117768
+replication_floor=${REPLICATION_FLOOR:-1033.117768}
+quality_prefix=${QUALITY_PREFIX:-qwen38-dynamic-mamba-r5-quality}
 
 [[ -f "${concurrent_quality}" ]] || {
   printf 'missing input: %s\n' "${concurrent_quality}" >&2
@@ -30,7 +31,7 @@ jq -e --argjson floor "${replication_floor}" \
 python3 "${concurrent_quality}" \
   --base-url "${base_url}" --model "${model}" --concurrency 64 \
   --rounds 8 --timeout 600 --seed 42 \
-  --request-id-prefix qwen38-dynamic-mamba-r5-quality \
+  --request-id-prefix "${quality_prefix}" \
   --output-json "${out_dir}/c64-quality-512.json"
 jq -e '
   .total_requests == 512 and

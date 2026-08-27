@@ -8,6 +8,7 @@ cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new writable cache directory
 container=${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 port=${PORT:-18128}
 served_model=${SERVED_MODEL_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
+speculative_config=${SPECULATIVE_CONFIG:-'{"method":"qwen3_next_mtp","num_speculative_tokens":2,"num_speculative_tokens_per_batch_size":[[1,1,2],[2,128,1]]}'}
 image_id=${EXPECTED_IMAGE_ID:-sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 patch_sha256=68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5
@@ -88,5 +89,5 @@ exec docker run "${container_lifecycle[@]}" --name "${container}" \
   --max-num-seqs 128 --max-num-batched-tokens 512 \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
   --language-model-only \
-  --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":2,"num_speculative_tokens_per_batch_size":[[1,1,2],[2,128,1]]}' \
+  --speculative-config "${speculative_config}" \
   --compilation-config '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'

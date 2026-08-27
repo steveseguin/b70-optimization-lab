@@ -13,8 +13,9 @@ harness=${repo_root}/scripts/bench-openai-concurrency-oracle.py
 single=${repo_root}/scripts/bench-openai-single-decode.py
 sequential_quality=${repo_root}/scripts/qwen38-text-quality-suite.py
 sequential_baseline=${repo_root}/experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-mtp2-reuse-screen-20260826-r1/sequential-quality.json
-single_gate=82.810053
-c64_gate=875
+single_gate=${SINGLE_GATE:-82.810053}
+c64_gate=${C64_GATE:-875}
+run_id=${RUN_ID:-qwen38-dynamic-mtp1-r2}
 
 [[ ! -e "${out_dir}" ]] || { printf 'refusing to overwrite %s\n' "${out_dir}" >&2; exit 1; }
 for command_name in curl docker jq python3 sha256sum; do
@@ -63,14 +64,14 @@ validate_concurrency() {
 }
 
 # R1 failed at two active requests. This canary is correctness evidence only.
-run_concurrency 2 "${out_dir}/excluded-c2-crash-canary.json" qwen38-dynamic-mtp1-r2-c2
+run_concurrency 2 "${out_dir}/excluded-c2-crash-canary.json" "${run_id}-c2"
 validate_concurrency "${out_dir}/excluded-c2-crash-canary.json" 2
 curl -fsS "${base_url}/health" >/dev/null
 
 python3 "${sequential_quality}" \
   --base-url "${base_url}" --model "${model}" --tokenizer "${model_dir}" \
   --timeout 600 --seed 20260609 --repeat-runs 8 --skip-long-context \
-  --request-id-prefix qwen38-dynamic-mtp1-fixed-r2-sequential \
+  --request-id-prefix "${run_id}-sequential" \
   --baseline-json "${sequential_baseline}" --require-baseline \
   --chat-template-kwargs-json '{"enable_thinking":false}' \
   --output-json "${out_dir}/sequential-quality.json"
@@ -94,9 +95,9 @@ jq -e --argjson gate "${single_gate}" '
   .rows[0].tok_s_after_ttft >= $gate
 ' "${out_dir}/single-p40-o128.json" >/dev/null
 
-run_concurrency 64 "${out_dir}/excluded-c64-transition.json" qwen38-dynamic-mtp1-r2-transition
+run_concurrency 64 "${out_dir}/excluded-c64-transition.json" "${run_id}-transition"
 validate_concurrency "${out_dir}/excluded-c64-transition.json" 64
-run_concurrency 64 "${out_dir}/c64-screen.json" qwen38-dynamic-mtp1-r2-screen
+run_concurrency 64 "${out_dir}/c64-screen.json" "${run_id}-screen"
 validate_concurrency "${out_dir}/c64-screen.json" 64
 
 sha256sum "${suite}" "${harness}" "${single}" "${sequential_quality}" \
