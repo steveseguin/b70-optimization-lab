@@ -89,6 +89,17 @@ output-isolation-qualified rather than token-identical. The 32-slot/16K and
 64-slot/16K or 32K profiles failed startup with device OOM. No intermediate or
 larger-capacity value is inferred. See the [structured concurrency result](../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2-result.json).
 
+The later mixed-content depth campaign supersedes the repeated-token curve on
+current package/site surfaces without erasing that diagnostic failure. It used
+unrepeated technical prose, Python code, and structured documentation at exact
+2K-32K depths, one fresh MTP0 oracle server, and two fresh MTP2 servers. All
+54 requests passed cache/truncation/token-count gates, all six before/after
+canary batteries passed, and all 36/36 MTP2 arrays were target-exact. The
+three-class/two-server 32K result is **`36.505065 tok/s`** with **`39.538 s`
+TTFT**. It is Grade-B real-content context-shape evidence, not a natural
+retrieval/task suite or a universal parity claim. See the
+[mixed-content result](../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-result.json).
+
 The LocalMaxxing submission `cmtb5n45n0021qq01n13vly2h` was built from the
 incomplete FP8 evidence and is premature. Repository surfaces mark withdrawal
 as recommended. The external service does not provide a trusted automated

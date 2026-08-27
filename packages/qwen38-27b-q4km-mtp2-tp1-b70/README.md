@@ -15,12 +15,14 @@ backend identities.
 MTP2 is deliberate. MTP1 was slower (`38.320`), MTP3 was slightly slower
 (`42.123`), and MTP5 changed all twelve target outputs and is rejected.
 
-A separate cache-zero exact-depth sweep measured target-oracle-exact MTP2
-decode at 4K/8K/16K/24K/32K. The exact 32K point is `37.583325 tok/s` with
-`39.439 s` TTFT. This is Grade D repeated-token shape evidence, not natural
-prose. The 2K fixture reproducibly diverged at generated token 23 and remains
-quarantined, so MTP2 is not claimed universally target-exact. The target-only
-concurrency curve does not transfer.
+A separate cache-zero exact-depth sweep used unrepeated technical prose,
+Python code, and structured documentation at 2K/4K/8K/16K/24K/32K. Each point
+is the median of two fresh-server class medians. The exact 32K result is
+`36.505065 tok/s` with `39.538 s` TTFT; all **36/36** MTP2 case outputs matched
+the fresh matched MTP0 oracle. This is Grade-B real-content context-shape
+evidence, not a natural retrieval/task suite. The older repeated-token
+diagnostic still diverged at 2K/token 23, so parity is not claimed universally.
+See the [structured mixed-content result](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-result.json).
 
 The directly measured MTP2 HTTP service profile supports 16 slots with 8K
 total context (512 nominal tokens per slot). Two fresh servers measured

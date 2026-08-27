@@ -2189,30 +2189,31 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-strict-result.json"
     },
     {
-      "id": "q38-q4km-q4mtp-tp1-mtp2-exact-context-r2-grade-d",
+      "id": "q38-q4km-q4mtp-tp1-mtp2-mixed-content-r1-grade-b",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
       "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
       "speculator_artifact_id": "qwen38-27b-mtp-q4-0-50d9ce5",
       "quantization": "Q4_K_M",
-      "variant": "Q4_K_M target with external Q4_0 MTP2 · F16 KV · partial Grade D",
+      "variant": "Q4_K_M target with external Q4_0 MTP2 · F16 KV · three-class real content",
       "runtime": "llama.cpp SYCL",
       "runtime_family": "llama.cpp SYCL",
-      "profile_id": "qwen38-q4km-q4mtp-tp1-mtp2-exact-context-grade-d-r2",
-      "measurement_class": "conventional-99-interval-exact-depth-native-http-grade-d-partial",
+      "profile_id": "qwen38-q4km-q4mtp-tp1-mtp2-mixed-content-grade-b-r1",
+      "measurement_class": "two-fresh-server-three-class-unrepeated-real-content-exact-depth-native-http-grade-b",
       "config": {"tp": 1, "mtp": 2, "graph": "off", "kv": "f16", "draft_kv": "f16", "reasoning_enabled": false, "parallel_slots": 1, "configured_max_context_tokens": 33024, "prompt_cache": false},
-      "workload": "One-slot native HTTP completions; exact submitted token depths; 128 returned token IDs; cache zero; conventional first-100 decode over 99 intervals",
+      "workload": "Two fresh one-slot native HTTP servers; three unrepeated content classes per exact submitted depth; 128 returned token IDs; cache zero; median of class medians; conventional first-100 decode over 99 intervals",
       "axis": "active_context_tokens",
       "points": [
-        {"x": 4096, "decode_tok_s": 42.78942928972341, "ttft_ms": 4136.035411036573, "cached_tokens": 0, "output_token_ids_sha256": "dcae63089f9a212510a1bc56f3db976fdf6f930afdbe04dd165ab0898375d109"},
-        {"x": 8192, "decode_tok_s": 48.0128640021699, "ttft_ms": 8450.344891054556, "cached_tokens": 0, "output_token_ids_sha256": "e9febe4f6f60a852c700465c030614b27a3c2fcf57967766ff04c1d97186828a"},
-        {"x": 16384, "decode_tok_s": 40.51800771579031, "ttft_ms": 17837.2559529962, "cached_tokens": 0, "output_token_ids_sha256": "43a7615f143053d6fe31f49ae84012fa3da0d1a9773099c369ffeab71137b6ab"},
-        {"x": 24576, "decode_tok_s": 39.554909443320525, "ttft_ms": 28201.415912015364, "cached_tokens": 0, "output_token_ids_sha256": "503e5012677d99b037df86f2d9d53e66c5bcfd0c10c255dc94b880b4896f34f4"},
-        {"x": 32768, "decode_tok_s": 37.5833250781214, "ttft_ms": 39439.232949051075, "cached_tokens": 0, "output_token_ids_sha256": "ad3b7472e8bd747cc9b5033366f028638df46c7c1d22ecb778f5626165ce04ac"}
+        {"x": 2048, "decode_tok_s": 41.424652885454535, "ttft_ms": 2083.700629475061, "cached_tokens": 0, "samples": 6, "target_exact_cases": 6},
+        {"x": 4096, "decode_tok_s": 41.71002822382011, "ttft_ms": 4179.578055511229, "cached_tokens": 0, "samples": 6, "target_exact_cases": 6},
+        {"x": 8192, "decode_tok_s": 41.497569394347856, "ttft_ms": 8569.58368344931, "cached_tokens": 0, "samples": 6, "target_exact_cases": 6},
+        {"x": 16384, "decode_tok_s": 34.65465932855136, "ttft_ms": 18029.892563004978, "cached_tokens": 0, "samples": 6, "target_exact_cases": 6},
+        {"x": 24576, "decode_tok_s": 32.25723037788288, "ttft_ms": 28347.941487503704, "cached_tokens": 0, "samples": 6, "target_exact_cases": 6},
+        {"x": 32768, "decode_tok_s": 36.50506489790905, "ttft_ms": 39538.43021352077, "cached_tokens": 0, "samples": 6, "target_exact_cases": 6}
       ],
-      "quality": "All six exact-depth transport/cache gates and objective canaries passed; displayed 4K-32K points exactly match the same-target same-runtime MTP0 token oracle.",
-      "caveat": "Partial Grade D curve. The whole arm remains failed because 2K diverged reproducibly at generated token 23; 2K is quarantined. Synthetic repeated-token shape fixture, not natural prose; no interpolation, extrapolation, headline, or concurrency authority.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json"
+      "quality": "All 54 target/control/speculative requests passed transport/cache gates and all six before/after objective-canary batteries passed. All 36 MTP2 output arrays exactly matched the fresh same-build MTP0 oracle.",
+      "caveat": "Grade B raw-document continuation profile over unrepeated technical prose, Python code, and structured documentation; not a natural retrieval/task suite. The older repeated-token 2K/token-23 divergence remains valid, so parity is workload-scoped. No interpolation, extrapolation, headline, or concurrency authority.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-result.json"
     },
     {
       "id": "q38-q4km-q4mtp-tp1-mtp2-http-concurrency-r2",

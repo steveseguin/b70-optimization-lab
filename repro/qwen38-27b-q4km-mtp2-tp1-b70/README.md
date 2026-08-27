@@ -90,16 +90,37 @@ MTP5 is not an optional speed preset; it changed all twelve outputs.
 
 ## Current boundary
 
-The measured headline is single-user and short-context. A separate exact-depth
-sweep found target-oracle-exact points at 4K, 8K, 16K, 24K, and 32K. The 32K
-point measured `37.583325 tok/s` and `39.439 s` TTFT. It is Grade D synthetic
-shape evidence; it is not a natural-prose long-context claim. The 2K fixture
-diverged from MTP0 at generated token 23 on both attempts and is quarantined.
-See the [structured partial result](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r2-result.json).
+The measured headline is single-user and short-context. The separate
+mixed-content exact-depth sweep used unrepeated technical prose, Python code,
+and structured documentation at six exact depths. Each published point is the
+median of the three classes and then the median of two fresh servers. At 32K
+it measured `36.505065 tok/s` and `39.538 s` TTFT. All **36/36** MTP2 outputs
+matched the fresh same-build MTP0 oracle; all 54 target/control/speculative
+requests reported cache zero, no truncation, and complete 128-token streams.
+See the [structured result](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-mixed-content-depth-r1-result.json),
+[frozen fixture](../../data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json),
+and [campaign runner](../../experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q4km-q4mtp-tp1-mixed-content-depth-arm.sh).
 
-This means MTP2 is not universally target-exact across context/content shapes;
-do not treat the partial curve as a whole-profile quality pass. The no-MTP
-concurrency curve does not transfer.
+This is representative real-content context-shape evidence, not a natural
+retrieval/task suite. The older repeated-token diagnostic still diverged from
+MTP0 at generated token 23 at 2K, so target parity remains workload-scoped and
+is not a universal claim. The no-MTP concurrency curve does not transfer.
+
+To replay one MTP2 mixed-content arm after completing the exact build above:
+
+```bash
+TARGET_DIR=/path/to/qwen38-target \
+DRAFT_DIR=/path/to/qwen38-draft-root/MTP \
+BUILD_DIR=/path/to/new/llama.cpp-qwen38-mtp2/build-sycl-aot-bmg-g31 \
+OUT_DIR=/path/to/new-mixed-content-result \
+ARM=mtp2 ATTEMPT=local-r1 PORT=18140 \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q4km-q4mtp-tp1-mixed-content-depth-arm.sh
+```
+
+The runner intentionally requires the measured binary hashes, clean synced
+repository state, direct model verification, frozen fixture, and committed
+MTP0 oracle. A locally different rebuild is a new runtime identity and needs a
+new matched control rather than bypassing those checks.
 
 The directly measured MTP2 serving profile is 16 slots with `--ctx-size 8192`
 (512 nominal context tokens per slot). Across two fresh servers, aggregate

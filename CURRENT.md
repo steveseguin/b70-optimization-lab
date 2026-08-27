@@ -40,17 +40,22 @@ matched 0/12 and is rejected. The package and exact replay are in
 and [`repro/qwen38-27b-q4km-mtp2-tp1-b70/`](repro/qwen38-27b-q4km-mtp2-tp1-b70/).
 
 Do not reuse the target-only context or concurrency values for this deployment.
-The exact MTP2 context campaign measured target-oracle-exact 4K-32K cells,
-including **37.583325 tok/s** and **39.439 s TTFT** at 32K, but reproducibly
-diverged at 2K/generated token 23. The curve is therefore Grade D partial and
-MTP2 is not universally target-exact across context/content shapes. The
-output-qualified HTTP concurrency campaign is also complete: the first viable
+The new MTP2 context campaign directly measured unrepeated technical prose,
+Python code, and structured documentation at exact 2K-32K depths. Across two
+fresh MTP2 servers, all 36/36 outputs matched a fresh same-build MTP0 oracle;
+the three-class/two-server 32K aggregate is **36.505065 tok/s** with
+**39.538 s TTFT**. This is Grade-B real-content context-shape evidence, not a
+natural retrieval/task suite. The older repeated-token diagnostic remains a
+real 2K/token-23 divergence, so MTP2 parity is workload-scoped rather than
+universal. The output-qualified HTTP concurrency campaign is also complete:
+the first viable
 one-B70 MTP2 capacity was 16 slots/8K total context, where two fresh servers
 measured **68.341 aggregate tok/s at 16 users** and 256/256 concurrent
 exact-answer canaries passed. The 32-slot/16K and 64-slot/16K or 32K profiles
 failed startup with device OOM. Multi-user greedy output remains
-batch-shape-dependent, so this is output-isolation-qualified. Natural-prompt
-long-context evidence remains open. No benchmark process is currently live.
+batch-shape-dependent, so this is output-isolation-qualified. Natural
+retrieval/task long-context evidence remains open. No benchmark process is
+currently live.
 
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or

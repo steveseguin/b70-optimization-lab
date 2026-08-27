@@ -1,0 +1,426 @@
+{
+  "aggregation": {
+    "across_servers": "median of two fresh-server within-server medians",
+    "decode_metric": "99 inter-token intervals between timestamped output events 1 and 100 after TTFT",
+    "ttft_metric": "direct request start to first returned output token",
+    "within_server": "median of the three content-class values at each exact depth"
+  },
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1",
+  "classification": "Grade B three-class unrepeated real-content exact-depth HTTP decode and TTFT profile",
+  "created_at_utc": "2026-08-27T22:02:52.395445+00:00",
+  "draft_acceptance": {
+    "mtp2-r1-a": {
+      "acceptance_rate": 0.7618567103935419,
+      "accepted": 1510.0,
+      "drafted": 1982.0
+    },
+    "mtp2-r1-b": {
+      "acceptance_rate": 0.7618567103935419,
+      "accepted": 1510.0,
+      "drafted": 1982.0
+    }
+  },
+  "fixture": {
+    "content_classes": [
+      "technical-prose",
+      "python-code",
+      "structured-docs"
+    ],
+    "natural_task_or_retrieval_prompt": false,
+    "path": "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+    "sha256": "a8a48b3549062759cc94b28f2360bea119f8adde582ace04928111b624d952ed",
+    "source_repetition": false
+  },
+  "identity": {
+    "cards": 1,
+    "context_capacity": 33024,
+    "draft": "Q4_0 external MTP",
+    "graph": false,
+    "model": "Qwen3.8-27B",
+    "mtp_depth": 2,
+    "parallel_slots": 1,
+    "prompt_cache": false,
+    "target": "Q4_K_M",
+    "target_and_draft_kv": "f16",
+    "tensor_parallel": 1
+  },
+  "inputs": {
+    "mtp0": {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1-mtp0/summary.json",
+      "sha256": "7605eec0ca0dc04c0af43bd42f540a1041cadfc77a1e852803bb03cf10733d2f"
+    },
+    "mtp2-r1-a": {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1-mtp2-attempt1/summary.json",
+      "sha256": "52526367bfe2b69b7f88d9dc69b2884ce79b959cbc87f1139d7f61e30acaa85f"
+    },
+    "mtp2-r1-b": {
+      "path": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp1-mixed-content-depth-20260827-r1-mtp2-attempt2/summary.json",
+      "sha256": "15decd31beb2e30a8450e7ee8ba75cb5931ea972a69a20732848a94f4335ac06"
+    }
+  },
+  "points": [
+    {
+      "active_context_tokens": 2048,
+      "attempts": [
+        {
+          "attempt": "mtp2-r1-a",
+          "class_decode_tok_s": {
+            "python-code": 49.78527370019149,
+            "structured-docs": 40.23739144033217,
+            "technical-prose": 41.31012918193714
+          },
+          "class_median_decode_tok_s": 41.31012918193714,
+          "class_median_ttft_ms": 2081.2306699808687,
+          "class_ttft_ms": {
+            "python-code": 2081.2306699808687,
+            "structured-docs": 2075.628498918377,
+            "technical-prose": 2089.7176780272275
+          },
+          "target_exact_cases": 3
+        },
+        {
+          "attempt": "mtp2-r1-b",
+          "class_decode_tok_s": {
+            "python-code": 49.74373139902578,
+            "structured-docs": 40.193803362218816,
+            "technical-prose": 41.53917658897193
+          },
+          "class_median_decode_tok_s": 41.53917658897193,
+          "class_median_ttft_ms": 2086.170588969253,
+          "class_ttft_ms": {
+            "python-code": 2086.170588969253,
+            "structured-docs": 2074.6988609898835,
+            "technical-prose": 2095.857133041136
+          },
+          "target_exact_cases": 3
+        }
+      ],
+      "content_classes": 3,
+      "decode_relative_range_percent": 0.552925350196983,
+      "decode_speedup_vs_control_percent": 52.541122992735126,
+      "decode_tok_s": 41.424652885454535,
+      "fresh_server_decode_samples": [
+        41.31012918193714,
+        41.53917658897193
+      ],
+      "fresh_server_ttft_samples_ms": [
+        2081.2306699808687,
+        2086.170588969253
+      ],
+      "fresh_servers": 2,
+      "measured_requests": 6,
+      "target_control_decode_tok_s": 27.156383847670647,
+      "target_control_ttft_ms": 1990.0190220214427,
+      "target_exact_cases": 6,
+      "ttft_ms": 2083.700629475061,
+      "ttft_relative_range_percent": 0.237074314731517
+    },
+    {
+      "active_context_tokens": 4096,
+      "attempts": [
+        {
+          "attempt": "mtp2-r1-a",
+          "class_decode_tok_s": {
+            "python-code": 41.729576602223666,
+            "structured-docs": 47.57493117417806,
+            "technical-prose": 33.88078043206288
+          },
+          "class_median_decode_tok_s": 41.729576602223666,
+          "class_median_ttft_ms": 4178.042831015773,
+          "class_ttft_ms": {
+            "python-code": 4177.897150977515,
+            "structured-docs": 4180.13117404189,
+            "technical-prose": 4178.042831015773
+          },
+          "target_exact_cases": 3
+        },
+        {
+          "attempt": "mtp2-r1-b",
+          "class_decode_tok_s": {
+            "python-code": 41.690479845416554,
+            "structured-docs": 47.51494796693725,
+            "technical-prose": 33.85985015030182
+          },
+          "class_median_decode_tok_s": 41.690479845416554,
+          "class_median_ttft_ms": 4181.113280006684,
+          "class_ttft_ms": {
+            "python-code": 4181.308899074793,
+            "structured-docs": 4174.643793026917,
+            "technical-prose": 4181.113280006684
+          },
+          "target_exact_cases": 3
+        }
+      ],
+      "content_classes": 3,
+      "decode_relative_range_percent": 0.09373466878831836,
+      "decode_speedup_vs_control_percent": 55.10346114614608,
+      "decode_tok_s": 41.71002822382011,
+      "fresh_server_decode_samples": [
+        41.729576602223666,
+        41.690479845416554
+      ],
+      "fresh_server_ttft_samples_ms": [
+        4178.042831015773,
+        4181.113280006684
+      ],
+      "fresh_servers": 2,
+      "measured_requests": 6,
+      "target_control_decode_tok_s": 26.891745622954783,
+      "target_control_ttft_ms": 3996.85174098704,
+      "target_exact_cases": 6,
+      "ttft_ms": 4179.578055511229,
+      "ttft_relative_range_percent": 0.07346313312327124
+    },
+    {
+      "active_context_tokens": 8192,
+      "attempts": [
+        {
+          "attempt": "mtp2-r1-a",
+          "class_decode_tok_s": {
+            "python-code": 47.55527448722808,
+            "structured-docs": 41.47998741428257,
+            "technical-prose": 39.52365730380076
+          },
+          "class_median_decode_tok_s": 41.47998741428257,
+          "class_median_ttft_ms": 8567.481076926924,
+          "class_ttft_ms": {
+            "python-code": 8568.79183894489,
+            "structured-docs": 8567.014393978752,
+            "technical-prose": 8567.481076926924
+          },
+          "target_exact_cases": 3
+        },
+        {
+          "attempt": "mtp2-r1-b",
+          "class_decode_tok_s": {
+            "python-code": 47.44691354968369,
+            "structured-docs": 41.51515137441314,
+            "technical-prose": 39.53554057604039
+          },
+          "class_median_decode_tok_s": 41.51515137441314,
+          "class_median_ttft_ms": 8571.686289971694,
+          "class_ttft_ms": {
+            "python-code": 8571.686289971694,
+            "structured-docs": 8567.619044100866,
+            "technical-prose": 8574.858039035462
+          },
+          "target_exact_cases": 3
+        }
+      ],
+      "content_classes": 3,
+      "decode_relative_range_percent": 0.08473739701815972,
+      "decode_speedup_vs_control_percent": 56.55388174328655,
+      "decode_tok_s": 41.497569394347856,
+      "fresh_server_decode_samples": [
+        41.47998741428257,
+        41.51515137441314
+      ],
+      "fresh_server_ttft_samples_ms": [
+        8567.481076926924,
+        8571.686289971694
+      ],
+      "fresh_servers": 2,
+      "measured_requests": 6,
+      "target_control_decode_tok_s": 26.506892663571648,
+      "target_control_ttft_ms": 8210.282117011957,
+      "target_exact_cases": 6,
+      "ttft_ms": 8569.58368344931,
+      "ttft_relative_range_percent": 0.04907138082905607
+    },
+    {
+      "active_context_tokens": 16384,
+      "attempts": [
+        {
+          "attempt": "mtp2-r1-a",
+          "class_decode_tok_s": {
+            "python-code": 45.01865992734333,
+            "structured-docs": 33.26424117423002,
+            "technical-prose": 34.65000595629667
+          },
+          "class_median_decode_tok_s": 34.65000595629667,
+          "class_median_ttft_ms": 18019.424671074376,
+          "class_ttft_ms": {
+            "python-code": 18012.83775398042,
+            "structured-docs": 18043.05655299686,
+            "technical-prose": 18019.424671074376
+          },
+          "target_exact_cases": 3
+        },
+        {
+          "attempt": "mtp2-r1-b",
+          "class_decode_tok_s": {
+            "python-code": 44.985915072210084,
+            "structured-docs": 33.270539984084785,
+            "technical-prose": 34.65931270080605
+          },
+          "class_median_decode_tok_s": 34.65931270080605,
+          "class_median_ttft_ms": 18040.36045493558,
+          "class_ttft_ms": {
+            "python-code": 18029.899667948484,
+            "structured-docs": 18049.67417102307,
+            "technical-prose": 18040.36045493558
+          },
+          "target_exact_cases": 3
+        }
+      ],
+      "content_classes": 3,
+      "decode_relative_range_percent": 0.02685568027417654,
+      "decode_speedup_vs_control_percent": 35.29065768849171,
+      "decode_tok_s": 34.65465932855136,
+      "fresh_server_decode_samples": [
+        34.65000595629667,
+        34.65931270080605
+      ],
+      "fresh_server_ttft_samples_ms": [
+        18019.424671074376,
+        18040.36045493558
+      ],
+      "fresh_servers": 2,
+      "measured_requests": 6,
+      "target_control_decode_tok_s": 25.614968483887566,
+      "target_control_ttft_ms": 17291.826548986137,
+      "target_exact_cases": 6,
+      "ttft_ms": 18029.892563004978,
+      "ttft_relative_range_percent": 0.11611707495230736
+    },
+    {
+      "active_context_tokens": 24576,
+      "attempts": [
+        {
+          "attempt": "mtp2-r1-a",
+          "class_decode_tok_s": {
+            "python-code": 42.829371513266295,
+            "structured-docs": 32.22899244192072,
+            "technical-prose": 31.020523105026374
+          },
+          "class_median_decode_tok_s": 32.22899244192072,
+          "class_median_ttft_ms": 28347.555490909144,
+          "class_ttft_ms": {
+            "python-code": 28347.555490909144,
+            "structured-docs": 28337.433552951552,
+            "technical-prose": 28350.440441980027
+          },
+          "target_exact_cases": 3
+        },
+        {
+          "attempt": "mtp2-r1-b",
+          "class_decode_tok_s": {
+            "python-code": 42.849022672450324,
+            "structured-docs": 32.28546831384503,
+            "technical-prose": 31.044335929674308
+          },
+          "class_median_decode_tok_s": 32.28546831384503,
+          "class_median_ttft_ms": 28348.327484098263,
+          "class_ttft_ms": {
+            "python-code": 28348.327484098263,
+            "structured-docs": 28366.408850997686,
+            "technical-prose": 28347.19257801771
+          },
+          "target_exact_cases": 3
+        }
+      ],
+      "content_classes": 3,
+      "decode_relative_range_percent": 0.17507973022704276,
+      "decode_speedup_vs_control_percent": 29.60036942484652,
+      "decode_tok_s": 32.25723037788288,
+      "fresh_server_decode_samples": [
+        32.22899244192072,
+        32.28546831384503
+      ],
+      "fresh_server_ttft_samples_ms": [
+        28347.555490909144,
+        28348.327484098263
+      ],
+      "fresh_servers": 2,
+      "measured_requests": 6,
+      "target_control_decode_tok_s": 24.88976730624862,
+      "target_control_ttft_ms": 27169.197064009495,
+      "target_exact_cases": 6,
+      "ttft_ms": 28347.941487503704,
+      "ttft_relative_range_percent": 0.002723277771188823
+    },
+    {
+      "active_context_tokens": 32768,
+      "attempts": [
+        {
+          "attempt": "mtp2-r1-a",
+          "class_decode_tok_s": {
+            "python-code": 38.52414689066205,
+            "structured-docs": 36.492901082775944,
+            "technical-prose": 33.82187121087613
+          },
+          "class_median_decode_tok_s": 36.492901082775944,
+          "class_median_ttft_ms": 39526.50874201208,
+          "class_ttft_ms": {
+            "python-code": 39513.72079306748,
+            "structured-docs": 39534.76907603908,
+            "technical-prose": 39526.50874201208
+          },
+          "target_exact_cases": 3
+        },
+        {
+          "attempt": "mtp2-r1-b",
+          "class_decode_tok_s": {
+            "python-code": 38.520744262109254,
+            "structured-docs": 36.517228713042165,
+            "technical-prose": 33.85251002806581
+          },
+          "class_median_decode_tok_s": 36.517228713042165,
+          "class_median_ttft_ms": 39550.351685029455,
+          "class_ttft_ms": {
+            "python-code": 39550.351685029455,
+            "structured-docs": 39561.4100570092,
+            "technical-prose": 39536.79655096494
+          },
+          "target_exact_cases": 3
+        }
+      ],
+      "content_classes": 3,
+      "decode_relative_range_percent": 0.06664179432157215,
+      "decode_speedup_vs_control_percent": 51.15725741454633,
+      "decode_tok_s": 36.50506489790905,
+      "fresh_server_decode_samples": [
+        36.492901082775944,
+        36.517228713042165
+      ],
+      "fresh_server_ttft_samples_ms": [
+        39526.50874201208,
+        39550.351685029455
+      ],
+      "fresh_servers": 2,
+      "measured_requests": 6,
+      "target_control_decode_tok_s": 24.150388490970368,
+      "target_control_ttft_ms": 37853.535161935724,
+      "target_exact_cases": 6,
+      "ttft_ms": 39538.43021352077,
+      "ttft_relative_range_percent": 0.060303211049632266
+    }
+  ],
+  "publication_authority": {
+    "context_decode_and_ttft_cells": [
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "interpolation_or_extrapolation": false,
+    "localmaxxing_submission": false,
+    "natural_task_or_retrieval_claim": false,
+    "single_user_headline_replacement": false
+  },
+  "publication_boundary": "Directly measured raw-document continuations from unrepeated technical prose, Python code, and structured documentation. Representative real-content context shape, not a natural retrieval/task suite. No value transfers to another quant, topology, MTP depth, KV type, graph mode, runtime, or model revision.",
+  "quality": {
+    "cached_tokens_zero_requests": 54,
+    "complete_output_token_ids_per_case": 128,
+    "mtp2_target_exact_cases": 36,
+    "mtp2_target_exact_total": 36,
+    "objective_canary_batteries_passed": 6,
+    "objective_canary_batteries_total": 6,
+    "request_gate_passes": 54,
+    "request_gate_total": 54
+  },
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mixed-content-depth-result.v1",
+  "status": "passed"
+}
