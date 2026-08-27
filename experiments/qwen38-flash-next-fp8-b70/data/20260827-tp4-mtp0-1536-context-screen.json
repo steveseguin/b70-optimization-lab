@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "status": "partial",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-1536-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-1536-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 1536,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none"
+  },
+  "serving": {
+    "health_gate": "pass-by-completed-api-work",
+    "reported_max_model_len": 1536,
+    "kv_cache_tokens": 3949,
+    "maximum_concurrency_at_1536": 2.57,
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "model_load_seconds_by_rank": [551.184955, 551.323754, 551.712716, 550.669881],
+    "model_memory_gib_by_rank": [31.27, 31.27, 31.27, 31.27],
+    "shutdown": {
+      "classification": "controlled-stop-with-api-logging-caveat",
+      "signal": "SIGTERM",
+      "engine_request_processing_complete": true,
+      "worker_shutdown_done_ranks_logged": [0, 1, 2, 3],
+      "api_application_shutdown_complete": true,
+      "residual_processes_after_stop": 0,
+      "caveat": "All four workers logged shutdown completion. The API output handler logged EngineDeadError after the deliberately stopped engine manager, so this is not claimed as a perfectly clean API shutdown."
+    }
+  },
+  "quality_harness": {
+    "first_invocation": {
+      "status": "invalid-harness-environment",
+      "short_requests_sent": 23,
+      "long_context_sent": false,
+      "output_json_written": false,
+      "reason": "System Python lacked transformers. The healthy server was retained and the suite was rerun with the pinned vLLM interpreter and a new request prefix."
+    },
+    "valid_invocation": {
+      "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python",
+      "strict_exact_pass_count": 5,
+      "strict_exact_case_count": 7,
+      "strict_failures": {
+        "logic": {"expected": "yes", "content": "Yes"},
+        "code_execution": {"expected": "14", "content": "30"}
+      },
+      "repeat_pass": true,
+      "repeat_count": 16,
+      "repeat_unique_hash_count": 1,
+      "repeat_content": "blue, green, red, yellow",
+      "long_context": {
+        "requested_filler_tokens": 1024,
+        "actual_prompt_tokens": 987,
+        "needle": "B70_QWEN38_NEEDLE_20260816",
+        "content": "B70_QWEN38_NEEDLE_20260816",
+        "pass": true,
+        "cached_tokens": 0
+      },
+      "cached_token_values_all_zero": true,
+      "cached_token_observations": 24,
+      "pass_all": false
+    }
+  },
+  "realistic_suite": {
+    "suite_id": "gemma4-26b-a4b-q8-b70-realistic-v1",
+    "prompt_count": 12,
+    "max_output_tokens": 512,
+    "metric_tokens": 100,
+    "metric_intervals": 99,
+    "return_token_ids": true,
+    "thinking": false,
+    "ignore_eos": true,
+    "fresh_response_validity": true,
+    "realistic_final_gate": true,
+    "cached_token_values_all_zero": true,
+    "completion_token_ids_each": 512,
+    "finish_reasons_all_length": true,
+    "median_tok_s_1_100_intervals_after_ttft": 4.449168445347031,
+    "median_tok_s_1_100_legacy_inclusive_events": 4.494109540754577,
+    "median_tok_s_after_ttft_full": 4.569059754014621,
+    "median_tok_s_wall_full": 4.419333385176548,
+    "median_ttft_ms": 3944.517095515039,
+    "quality_scope": "Behavioral outputs are retained for audit, but this throughput harness does not assign semantic pass/fail grades to the 12 free-form responses."
+  },
+  "exact_1k_speed": {
+    "prompt_tokens_each": 1024,
+    "output_tokens_each": 256,
+    "concurrency": 1,
+    "warmups": 0,
+    "unique_prompt_salts": ["context-r1", "context-r2", "context-r3"],
+    "tok_s_out_after_ttft": [5.153794240763608, 5.13358756138473, 5.0512700513432325],
+    "median_tok_s_out_after_ttft": 5.13358756138473,
+    "tok_s_out_wall": [3.2258628101920563, 3.4088958673169802, 3.2111008526336597],
+    "median_tok_s_out_wall": 3.2258628101920563,
+    "ttft_s": [29.686471389984945, 25.229969660984352, 29.04311463900376],
+    "median_ttft_s": 29.04311463900376,
+    "output_sha256_all_equal": true,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "cached_tokens": "not-captured-by-this-harness",
+    "classification": "research-context-speed-screen"
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass",
+    "one_k_context_needle": "pass",
+    "sixteen_repeat_stability": "pass",
+    "realistic_throughput_validity": "pass",
+    "full_short_quality": "fail",
+    "promotion_eligible": false,
+    "site_state": "lab-screened",
+    "site_grade_ceiling": "research"
+  },
+  "sha256": {
+    "server.log": "bd3cbbb9ae928311ec64cf33b56a5af1068d47d93100923e3bfa17955ef9cfa3",
+    "identity.txt": "34376f47899c403049d5847b67b2dc3b340041531b828e5053ae1cc110e73fc8",
+    "models.json": "5cd16d3c9a47d36fab1e214c1dbe7d4b6db6ed2e3df829dc05d04fc647cedda2",
+    "quality-invocation1-failure.txt": "66932a1a829e679f61ecce8d69c87480148c745c5d4575bca454baaf78d92414",
+    "quality-short-and-1k-r2.json": "a04b9725f197a27e25fcecbe9fc50c4a9764e60e530ccd626386a0979ddbc0d7",
+    "realistic-suite-12x512.json": "f93e1a35b8f1361c20fc335a1ee312f7fc04ff96e56ee507d0147ee05e4cae60",
+    "bench-context1k-o256-c1-r1.json": "ad8de7521078654fe12f0f0c247b6c4f34897faa188e3ccd993e9dc04a07c874",
+    "bench-context1k-o256-c1-r2.json": "b7bcf33b8c264c1c0c2c086775c01318251f0b46f3cde7b200937c4e66c5af1d",
+    "bench-context1k-o256-c1-r3.json": "0a8b6faafabc19caf7caa138495835cb8a9cb26f5a878cf7569b9a38d9c73b59"
+  }
+}

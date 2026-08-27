@@ -69,3 +69,40 @@ The short/needle harness is
 The later exact-depth timing harness is
 `scripts/bench-openai-concurrency.py` at SHA-256
 `0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0`.
+
+## Result
+
+The arm completed as a valid research context screen. The server reported the
+configured 1,536-token maximum, 3,949 cache tokens, and 2.57× maximum
+concurrency at that request length. All four ranks retained the exact
+12.22-GiB selective placement and 31.27-GiB model footprint.
+
+The valid quality invocation reproduced the known 5/7 short strict result,
+but improved the repeat evidence to 16/16 one hash and passed the exact needle
+at 987 actual prompt tokens. All 24 quality requests were cache-zero. The first
+quality invocation is retained as an invalid harness-environment attempt: it
+used system Python, sent only the short requests, then stopped before the
+needle or JSON write because the tokenizer dependency was absent. The server
+remained healthy and the valid rerun used a new request prefix.
+
+The sealed 12-prompt realistic suite passed its formal validity gate: unique
+cold prompts, zero cached tokens, 512 returned token IDs per row, and known
+length finish reasons. Its conventional 99-interval median was
+`4.449168445 tok/s`; full-output after-first-text median was `4.569059754
+tok/s`, and median TTFT was `3944.517 ms`. The suite retains free-form outputs
+but does not itself grade their semantic quality.
+
+Three unique exact-1,024-prompt-token, 256-output-token samples measured
+`5.153794241`, `5.133587561`, and `5.051270051 tok/s` after first text, for a
+median of `5.133587561 tok/s`. Median TTFT was `29.043115 s`. That harness did
+not retain cached-token detail, so no cache-zero claim is made for those three
+rows; prompt salts were unique and prefix caching remained disabled.
+
+All four workers logged shutdown completion. The API handler repeated the
+known post-manager-stop log message, so shutdown is classified as controlled
+with an API-observability caveat. The compact receipt is
+`data/20260827-tp4-mtp0-1536-context-screen.json`.
+
+The 1K context and repeat gates pass, but the inherited substantive `30`/`14`
+short-quality miss remains. This cell is `lab-screened`, research-only, and not
+promotion-eligible. It does not alter the attempt-19 512 result.

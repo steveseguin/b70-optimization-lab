@@ -79,3 +79,18 @@ separate fit/offload design. MTP1+ requires a performance-preserving port to
 the newer speculative runtime interface. Graph, longer context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
+
+## Additive 1K context screen
+
+The same exact production source/runtime later served with a configured
+1,536-token maximum while retaining the 192-MiB cache allocation. It reported
+3,949 available cache tokens, passed the exact needle at 987 actual prompt
+tokens, held 16/16 repeats to one hash, and completed the 12-prompt realistic
+suite with zero cached tokens. The preferred realistic-suite median was
+`4.449168445 tok/s` over 99 inter-token intervals; three unique exact-1,024
+prompt + 256 output screens had a median of `5.133587561 tok/s` after first
+text and `29.043115 s` median TTFT.
+
+The same two short-suite failures remained, so this is another research-only
+cell, not a deployment promotion. See the
+[`1K context receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json).

@@ -532,3 +532,13 @@ The compact evidence record is
 honest matrix cell: TP4 + EP4 + eager + MTP0 at the 512-token bring-up limit.
 TP1, TP2, graph, MTP1+, longer context, fresh-boot determinism, and
 deployment-grade quality remain explicit gaps.
+
+The additive 1,536-token-cap arm then kept every production source, runtime,
+placement, cache-size, TP4/EP4, eager, and MTP0 setting unchanged. It reported
+3,949 cache tokens, passed a 987-token exact needle and 16/16 repeats, and
+completed the sealed 12-prompt realistic suite cache-zero. Three exact
+1,024-prompt-token samples produced a `5.133588 tok/s` after-first-text median;
+the realistic suite's preferred 99-interval median was `4.449168 tok/s`. The
+known 5/7 short strict result remained, including the substantive `30`/`14`
+miss, so the new context cell is a research screen rather than a promotion.
+Evidence is in `data/20260827-tp4-mtp0-1536-context-screen.json`.

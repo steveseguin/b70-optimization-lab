@@ -40,13 +40,16 @@ text on p146/o256/c1. Both short batteries passed 5/7 strict cases and one of
 16 greedy repeats diverged. This is Grade-C research evidence and a
 `lab-screened` operating point. It is not record-eligible.
 
-Next: add a separate TP4/EP4/eager/MTP0 1,536-token-cap launcher while keeping
-the 192-MiB cache and every source/runtime identity unchanged. Qualify a 1K
-needle, repeats, realistic suite, and three exact-1K timing samples. Stop
-promotion on any quality, determinism, cache-zero, identity, or capacity
-failure, but preserve the result as an honest matrix classification.
+The additive TP4/EP4/eager/MTP0 1,536-token-cap arm is complete. It passed the
+987-token needle, 16/16 repeats, and the formal realistic-suite validity gate;
+three exact-1K samples had a `5.133588 tok/s` median after first text. The same
+5/7 short-quality boundary remains, so the cell is research-only. Its receipt
+is `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json`.
 
-After that, increase cache for 2K context; then forward-port the speculative
-runtime for MTP1. TP1/TP2 need a new memory design and are not simple launch
-variants. Never overwrite the 512 attempt, remove the accepted runtime, or
-replace a captured rate with an estimate.
+Next, use the reported 3,949-token capacity to add a separate configured-3K
+arm for the 2K context point without changing the 192-MiB cache. First verify
+that the configured maximum leaves enough capacity for the exact request and
+output budget. Then
+forward-port the speculative runtime for MTP1. TP1/TP2 need a new memory design
+and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
+remove the accepted runtime, or replace a captured rate with an estimate.

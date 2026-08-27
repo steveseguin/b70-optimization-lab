@@ -25,7 +25,7 @@
     "tp": [1, 2, 4],
     "ep": [1, 2, 4],
     "mtp": [0, 1, 2, 3, 4],
-    "active_context_tokens": [0, 2048, 4096, 8192, 16384, 24576, 32768],
+    "active_context_tokens": [0, 1024, 2048, 4096, 8192, 16384, 24576, 32768],
     "configured_max_context_tokens": [512, 1536, 262144],
     "graph_mode": ["off", "PIECEWISE"],
     "kv": ["auto"],
@@ -73,9 +73,12 @@
       "reviewed_at": "2026-08-27"
     },
     "quality_evidence": {
-      "band": "research-only-short-screen",
-      "scope": "5/7 strict cases twice and 15/16 majority repeat stability; no long-context, vision, or clean-host qualification",
-      "evidence": ["experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"]
+      "band": "research-only-context-screen",
+      "scope": "Short quality remains 5/7; the additive arm passed a 987-token needle, 16/16 repeats, and a cache-zero 12-prompt realistic timing gate; no deeper context, vision, or clean-host qualification",
+      "evidence": [
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
+      ]
     },
     "popularity": {
       "state": "not-scored",
@@ -121,9 +124,70 @@
         {"metric": "decode_tok_s", "index": 0, "value": 5.221849709057954, "label": "median research screen; short quality failed"}
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-context1k-a1",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 1024,
+        "configured_max_context_tokens": 1536,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-context1k-screen-v1",
+      "measurement_class": "research-only exact-depth HTTP screen",
+      "promotion_status": "not promotion eligible; inherited short quality qualification failed",
+      "quality_scope": "987-token exact needle and 16/16 repeats passed; 12-prompt realistic timing gate passed cache-zero; short battery remained 5/7",
+      "workload": "One instrumentation-free server; three unique exact p1024/o256/c1 requests; full-output rate after first text; no warmups; separate 12-prompt realistic suite",
+      "metrics": {
+        "decode_tok_s": [5.13358756138473],
+        "ttft_ms": [29043.11463900376]
+      },
+      "raw_observations": {
+        "decode_tok_s": [5.153794240763608, 5.13358756138473, 5.0512700513432325],
+        "ttft_ms": [29686.471389984945, 25229.969660984352, 29043.11463900376],
+        "realistic_99_interval_median_tok_s": 4.449168445347031,
+        "aggregation": "median of three unique exact-1K observations; raw values and realistic outputs remain in the evidence receipt"
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 5.13358756138473, "label": "median exact-1K research screen; short quality failed"}
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
     }
   ],
-  "series_measurements": [],
+  "series_measurements": [
+    {
+      "id": "qwen38-flash-next-fp8-tp4-context-screen",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "variant": "official FP8 block-128",
+      "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {"tp": 4, "ep": 4, "parallel_profile": "TP=EP", "mtp": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+      "workload": "HTTP p146/o256 control median at x=0 and three unique exact-p1024/o256 medians at x=1024; after-first-text rates; research-only quality boundary",
+      "axis": "active_context_tokens",
+      "points": [
+        {"x": 0, "decode_tok_s": 5.221849709057954, "samples": 3},
+        {"x": 1024, "decode_tok_s": 5.13358756138473, "ttft_ms": 29043.11463900376, "samples": 3}
+      ],
+      "quality": "Both points remain research-only because the same substantive short-quality miss reproduced; the 1K point additionally passed its needle, 16 repeats, and cache-zero realistic suite.",
+      "caveat": "The x=0 control used a 146-token ordinary prompt and x=1024 used an exact 1,024-token synthetic prompt. This is a bounded HTTP context screen, not a deployment-qualified depth curve.",
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
+    }
+  ],
   "estimates": [],
   "packets": [
     {
@@ -136,16 +200,17 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512", "short quality screen"],
+      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536", "short quality and 1K context screens"],
       "grades": {
         "evidence": {
           "grade": "C",
           "scope": "exact attempt-19 TP4/EP4 eager text-serving identity",
-          "basis": "Exact model, source overlay, staged runtime, serving, short quality and three same-server speed observations are retained; full quality, independent fresh-server repeat, long context, vision and clean-host replay remain missing.",
+          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, 16 repeats, the 12-prompt realistic suite, and exact-depth speed observations are retained; full quality, deeper context, vision and clean-host replay remain missing.",
           "reviewed_at": "2026-08-27",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
-            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
           ]
         }
       },
@@ -172,6 +237,16 @@
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
         {"label": "official FP8 · eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-attempt19"], "x_from": "config.tp"}
+      ]
+    },
+    {
+      "id": "qwen-flash-next-context-screen",
+      "title": "Research context screen",
+      "subtitle": "Two bounded HTTP points under the same TP4/EP4 eager MTP0 source/runtime; both retain the disclosed short-quality caveat",
+      "x_label": "active context tokens",
+      "metrics": ["decode_tok_s", "ttft_ms"],
+      "series": [
+        {"label": "official FP8 · TP4 eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-context-screen"], "x_from": "active_context_tokens"}
       ]
     }
   ],
@@ -223,7 +298,7 @@
         {"key": "artifact_id", "label": "Artifact", "values": ["qwen38-flash-next-fp8-bcd9f01"]},
         {"key": "tp", "label": "Tensor parallel", "values": [1, 2, 4]},
         {"key": "mtp", "label": "MTP depth", "values": [0, 1, 2, 3, 4]},
-        {"key": "active_context_tokens", "label": "Active context", "values": [0, 2048, 4096, 8192, 16384, 24576, 32768]},
+        {"key": "active_context_tokens", "label": "Active context", "values": [0, 1024, 2048, 4096, 8192, 16384, 24576, 32768]},
         {"key": "graph_mode", "label": "Graph mode", "values": ["off", "PIECEWISE"]},
         {"key": "kv", "label": "KV cache", "values": ["auto"]},
         {"key": "modality", "label": "Modality", "values": ["text", "vision"]}
@@ -246,6 +321,16 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-research",
           "parent": "flash-next-attempt19",
           "retry": {"status": "needs-full-qualification"}
+        },
+        {
+          "id": "context1k-text-screen",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 1024, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "lab-screened",
+          "label": "5.134 tok/s exact-1K screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context1k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "parent": "flash-next-context1k-a1",
+          "retry": {"status": "needs-full-quality"}
         }
       ]
     }
