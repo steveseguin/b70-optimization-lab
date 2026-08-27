@@ -19,6 +19,9 @@ containers on two Intel Arc Pro B70 32 GiB cards.
 > W8A16-off (`8/12`) controls also failed. The headline remains blank because
 > the output gate failed—not because speed was unmeasured. See the
 > [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md).
+> A separate one-B70 TP1 eager/default-dispatch pair also matched only `8/12`,
+> proving TP2 and cross-rank oneCCL are not required; see the
+> [TP1 control](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
 
 The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active

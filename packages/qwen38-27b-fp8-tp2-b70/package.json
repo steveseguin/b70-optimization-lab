@@ -20,7 +20,7 @@
     "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "dynamic MTP8 to MTP1", "W8A16"],
     "published_at": "2026-08-27",
     "featured_metric": null,
-    "benchmark_status": "The compliant 12-prompt/512-cap two-server matrix is complete, but no single-user profile passed the 12/12 complete-token-array gate: MTP0, MTP1, and dynamic MTP8 each matched only 8/12. Sealed-cache, eager graph-off, and eager W8A16-off controls also failed. Single-user headlines and MTP1 32K remain withheld; the scoped MTP0 32K and short-context aggregate results remain valid."
+    "benchmark_status": "The compliant 12-prompt/512-cap two-server matrix is complete, but no single-user profile passed the 12/12 complete-token-array gate: MTP0, MTP1, and dynamic MTP8 each matched only 8/12. Sealed-cache, eager graph-off, eager W8A16-off, and one-B70 TP1 controls also failed. TP2 and cross-rank oneCCL are not required for the instability. Single-user headlines and MTP1 32K remain withheld; the scoped MTP0 32K and short-context aggregate results remain valid."
   },
   "contributors": [
     {
@@ -107,6 +107,9 @@
     "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-strict-profile-matrix-summary.json",
     "experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-fp8-strict-profile-attempt.sh",
     "experiments/qwen38-27b-b70/scripts/summarize-20260827-qwen38-fp8-strict-matrix.py",
+    "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-tp1-strict-target-control-comparison.json",
+    "scripts/compare-strict-attempt-outputs.py",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
     "experiments/qwen38-27b-b70/docker/Dockerfile.fp8-kernel-1e90-r13",

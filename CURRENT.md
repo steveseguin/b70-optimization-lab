@@ -1021,6 +1021,13 @@ official-FP8 single-user headlines blank and withhold MTP1 32K while its strict
 target-parity gate fails; retain the independently scoped MTP0 32K and
 short-context aggregate results.
 
+A subsequent one-B70 TP1 eager/default-dispatch control measured
+`11.405360`/`11.413057 tok/s`; every workload and canary gate passed, but the
+fresh servers again matched only `8/12` complete outputs. Divergences began at
+token 6. TP2 and cross-rank oneCCL are not required, so a P2P-off TP2 screen is
+not justified as the next determinism test. The unresolved surface is inside
+the one-rank official-FP8 target/runtime path.
+
 The same integrity audit removed strict featured headlines from six other
 package identities without deleting their measurements: LFM2.5 2.6B, Ornith
 1.5 9B, and Nemotron 3.5 cite raw operating-point/canary artifacts that are not
@@ -1062,6 +1069,7 @@ Resume and evidence:
 - [official FP8 block-W8A16 MTP0 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 - [official FP8 block-W8A16 MTP1 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
 - [official FP8 strict 512-cap matrix result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
+- [official FP8 TP1 strict target-control result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md)
 - [official FP8 dynamic MTP2/MTP0 negative result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md)
 - [official FP8 dynamic MTP8 replication](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp8-r16-replication-result.md)
 - [official FP8 dynamic MTP9 negative](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-r17-negative.md)

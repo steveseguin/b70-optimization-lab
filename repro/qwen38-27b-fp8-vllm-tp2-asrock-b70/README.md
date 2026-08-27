@@ -31,6 +31,9 @@ failed. This bounds the unresolved issue to the official-FP8 target/runtime
 surface; neither compiled-cache identity, graph capture, nor W8A16 is required
 for it. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
 and [machine-readable summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-strict-profile-matrix-summary.json).
+A one-B70 eager/default-dispatch control subsequently matched only `8/12` too,
+so TP2 and cross-rank oneCCL are not required; see the
+[TP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
 
 The single-user headline and MTP1 32K cell stay blank. No diagnostic rate is
 substituted, averaged into another profile, or extrapolated.

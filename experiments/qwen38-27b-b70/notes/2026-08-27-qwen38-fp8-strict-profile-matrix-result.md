@@ -44,8 +44,12 @@ to reduce that profile to a selected short fixture.
 - Speculation cannot be promoted around the problem: MTP1 and dynamic MTP
   both failed fresh-server equality and exact target-array parity.
 
-The remaining diagnosis belongs to the official-FP8 target/runtime surface,
-not to a performance-fixture exception. The experiment does **not** prove
+The subsequent one-card eager/default-dispatch control also matched only
+`8/12` complete outputs at `11.405360`/`11.413057 tok/s`. TP2 and cross-rank
+oneCCL are therefore not required either; see the
+[TP1 result](2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
+The remaining diagnosis belongs to the one-rank official-FP8 target/runtime
+surface, not to a performance-fixture exception. The experiment does **not** prove
 semantic degradation, but it fails the lab's deliberately stricter
 no-unadjudicated-output-change rule. No equality threshold was weakened.
 
@@ -57,9 +61,8 @@ no-unadjudicated-output-change rule. No equality threshold was weakened.
   aggregate results under their exact scopes.
 - Do not spend a 32K MTP1 publication run while its short strict target-parity
   gate is failing. That cell is withheld by correctness, not estimated.
-- Run a bounded TP1 strict target control next. The prior TP1 eager fit result
-  established an 8,448-token service capacity, so a 1,024-token/512-output
-  strict control is feasible, but it is a separate one-card operating profile.
+- TP1 strict target control is complete and failed `8/12`; do not spend a TP2
+  P2P-off run on the disproven cross-rank hypothesis.
 - The full AutoRound INT4/MTP5 server remains excluded from this 15 GiB host;
   preserve its existing research result and do not invent the missing cells.
 

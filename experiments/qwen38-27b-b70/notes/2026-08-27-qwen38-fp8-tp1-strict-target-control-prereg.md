@@ -1,5 +1,8 @@
 # Qwen3.8 official-FP8 TP1 strict target-control preregistration
 
+> Result: TP1 matched only `8/12` complete outputs, so TP2 is not required for
+> the instability. See the [result note](2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
+
 ## Trigger and question
 
 The official-FP8 TP2 target remained nondeterministic after three bounded
