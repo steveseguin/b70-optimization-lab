@@ -102,9 +102,7 @@ def parse_sha256_manifest(raw: bytes) -> tuple[ManifestEntry, ...]:
         try:
             int(digest, 16)
         except ValueError as exc:
-            raise StageError(
-                f"invalid SHA-256 on manifest line {line_number}"
-            ) from exc
+            raise StageError(f"invalid SHA-256 on manifest line {line_number}") from exc
         path = _validate_relative_path(raw_path)
         if path in seen:
             raise StageError(f"duplicate manifest path: {path}")
@@ -193,9 +191,7 @@ def validate_stage(
                 f"SHA-256 mismatch for {relative}: expected {expected[relative]}, "
                 f"got {digest}"
             )
-        validated.append(
-            ValidatedFile(path=relative, sha256=digest, size_bytes=size)
-        )
+        validated.append(ValidatedFile(path=relative, sha256=digest, size_bytes=size))
     return tuple(validated)
 
 
@@ -295,9 +291,7 @@ def build_archive(
             with source.open("rb", buffering=0) as source_handle:
                 hashing_handle = _HashingReader(source_handle)
                 archive.addfile(
-                    _tar_info(
-                        f"{ARCHIVE_PREFIX}/{item.path}", item.size_bytes, mode
-                    ),
+                    _tar_info(f"{ARCHIVE_PREFIX}/{item.path}", item.size_bytes, mode),
                     hashing_handle,
                 )
             actual = hashing_handle.digest.hexdigest()
@@ -350,9 +344,7 @@ def verify_archive_extraction(
                 if not member.isreg():
                     raise StageError(f"archive member is not regular: {member.name}")
                 expected_mode = (
-                    0o755
-                    if index >= 2 and member.name.endswith(".so")
-                    else 0o644
+                    0o755 if index >= 2 and member.name.endswith(".so") else 0o644
                 )
                 deterministic_fields = (
                     member.mtime == 0,
@@ -363,9 +355,7 @@ def verify_archive_extraction(
                     member.mode == expected_mode,
                 )
                 if not all(deterministic_fields):
-                    raise StageError(
-                        f"archive member metadata mismatch: {member.name}"
-                    )
+                    raise StageError(f"archive member metadata mismatch: {member.name}")
                 relative = PurePosixPath(member.name)
                 if relative.is_absolute() or ".." in relative.parts:
                     raise StageError(f"unsafe archive member path: {member.name}")
@@ -490,7 +480,9 @@ def package(
         raise FileExistsError(f"receipt already exists: {receipt_path}")
     if archive_path == receipt_path:
         raise StageError("archive and receipt paths must differ")
-    for existing in archive_path.parent.glob(f"{archive_path.name}.part-[0-9][0-9][0-9][0-9]"):
+    for existing in archive_path.parent.glob(
+        f"{archive_path.name}.part-[0-9][0-9][0-9][0-9]"
+    ):
         raise FileExistsError(f"split part already exists: {existing}")
 
     manifest_raw, entries = load_production_manifest()
@@ -511,9 +503,7 @@ def package(
             validated,
             verification_dir.resolve(),
         )
-        descriptor = os.open(
-            archive_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600
-        )
+        descriptor = os.open(archive_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         os.close(descriptor)
         archive_reserved = True
         os.replace(temporary_archive, archive_path)
@@ -597,9 +587,7 @@ def main() -> int:
         else archive.with_name(f"{archive.name}.receipt.json")
     )
     verification_dir = (
-        args.verification_dir.resolve()
-        if args.verification_dir
-        else archive.parent
+        args.verification_dir.resolve() if args.verification_dir else archive.parent
     )
     try:
         result = package(

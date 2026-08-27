@@ -49,7 +49,9 @@ class RuntimeStagePackageTests(unittest.TestCase):
 
     def test_production_manifest_identity_is_frozen(self) -> None:
         raw, entries = MODULE.load_production_manifest()
-        self.assertEqual(hashlib.sha256(raw).hexdigest(), MODULE.EXPECTED_MANIFEST_SHA256)
+        self.assertEqual(
+            hashlib.sha256(raw).hexdigest(), MODULE.EXPECTED_MANIFEST_SHA256
+        )
         self.assertEqual(len(entries), 18)
 
     def test_exact_inventory_and_hashes_pass(self) -> None:
