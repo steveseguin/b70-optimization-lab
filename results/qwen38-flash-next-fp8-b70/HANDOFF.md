@@ -46,13 +46,18 @@ three exact-1K samples had a `5.133588 tok/s` median after first text. The same
 5/7 short-quality boundary remains, so the cell is research-only. Its receipt
 is `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json`.
 
-The separate configured-3K arm passed an exact cache-zero 2K needle and
-reported 6,144 cache tokens, but one of 16 repeats diverged. The frozen gate
-stopped before any 2K speed request; the cell is quarantined and the prior
-rates are unchanged. Receipt:
+The first configured-3K arm passed an exact cache-zero 2K needle and reported
+6,144 cache tokens, but one open-choice repeat differed. The frozen gate
+stopped before speed; that quarantine remains retained. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json`.
 
-Next, resolve or bound repeat determinism, then forward-port the speculative
-runtime for MTP1. TP1/TP2 need a new memory design
+The repeat-v2 retry changed no server setting. Its prescribed canary passed
+32/32 first tokens and 16/16 full outputs, the formal exact-2K row passed, and
+three comparable rows had a `5.228429 tok/s` median after first text. The 2K
+selector is research-screened; the known 5/7 short boundary remains. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json`.
+
+Next, add the 4K context point, then forward-port the speculative runtime for
+MTP1. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.

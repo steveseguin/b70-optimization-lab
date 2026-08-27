@@ -73,8 +73,8 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next qualification priority is repeat determinism under the same sealed
-TP4/EP4/eager/MTP0 runtime. TP1 and TP2 require a separate fit/offload design.
+The next context point is 4K under the same sealed TP4/EP4/eager/MTP0 runtime.
+TP1 and TP2 require a separate fit/offload design.
 MTP1+ requires a
 performance-preserving port to the newer speculative runtime interface. Graph,
 deeper context, vision,
@@ -108,3 +108,19 @@ gate therefore blocked the formal exact-depth and comparative speed requests.
 This closes the 2K combination as a quarantined capability result, not a speed
 measurement; the 512 and 1K rates above are unchanged. See the
 [`2K bounded-negative receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json).
+
+## Repeat-v2 2K screen
+
+The quarantined arm exposed a flaw in the old canary: it asked the model to
+invent any four colors, and both observed lists obeyed the instruction. A
+prescribed-set retry retained that raw result and changed no server setting.
+The old prompt's returned `blue`/`black` margin was only 0.125-0.375; fixing the
+input set widened it to 9.19-10.19 and produced 32/32 stable first tokens plus
+16/16 exact full repeats.
+
+The retry passed the exact cache-zero 2K needle and formal p2048/o128 gate. Its
+formal 99-interval rate was `3.864877889 tok/s`; three comparable p2048/o256
+screens measured `5.034312884`, `5.257401637`, and `5.228429046 tok/s`, median
+`5.228429046 tok/s` after first text. The known 5/7 short boundary remains, so
+the 2K selector is research-screened rather than deployment-ready. See the
+[`repeat-v2 2K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json).

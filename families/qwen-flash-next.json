@@ -6,7 +6,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-27",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves on four B70s; this first result remains research-only because short quality and repeat stability did not fully pass.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text through an exact 2K screen on four B70s; the lane remains research-only because short quality is still 5/7.",
   "architecture": {
     "class": "Qwen4Exp hybrid Gated DeltaNet/QSA sparse MoE",
     "model_type": "qwen4_exp",
@@ -26,7 +26,7 @@
     "ep": [1, 2, 4],
     "mtp": [0, 1, 2, 3, 4],
     "active_context_tokens": [0, 1024, 2048, 4096, 8192, 16384, 24576, 32768],
-    "configured_max_context_tokens": [512, 1536, 262144],
+    "configured_max_context_tokens": [512, 1536, 3072, 262144],
     "graph_mode": ["off", "PIECEWISE"],
     "kv": ["auto"],
     "modality": ["text", "vision"]
@@ -74,11 +74,12 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; the 1K arm passed its needle, 16/16 repeats, and cache-zero realistic timing gate; the exact cache-zero 2K needle passed but its arm was quarantined after one of 16 repeats diverged; no deeper context, vision, or clean-host qualification",
+      "scope": "Short quality remains 5/7; the 1K arm passed its needle, 16/16 repeats, and cache-zero realistic timing gate; the protocol-v2 2K retry passed 32/32 fixed-answer sensitivity requests, 16/16 full repeats, an exact cache-zero needle, and the formal exact-depth gate; the original under-specified 2K attempt remains retained as quarantined evidence; no deeper context, vision, or clean-host qualification",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
-        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json"
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json"
       ]
     },
     "popularity": {
@@ -165,6 +166,47 @@
         {"metric": "decode_tok_s", "index": 0, "value": 5.13358756138473, "label": "median exact-1K research screen; short quality failed"}
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-context2k-v2-a2",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 2048,
+        "configured_max_context_tokens": 3072,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-context2k-repeat-v2-screen-v1",
+      "measurement_class": "research-only exact-depth HTTP screen",
+      "promotion_status": "not promotion eligible; inherited short quality qualification failed",
+      "quality_scope": "Protocol-v2 fixed-answer sensitivity passed 32/32, full repeats passed 16/16 with one exact output, and the formal 2K cache-zero gate passed; short battery remained 5/7",
+      "workload": "One instrumentation-free server; three unique exact p2048/o256/c1 requests; full-output rate after first text; no warmups; separate formal exact-p2048/o128 cache-zero gate",
+      "metrics": {
+        "decode_tok_s": [5.228429046201661],
+        "ttft_ms": [81146.86629301286]
+      },
+      "raw_observations": {
+        "decode_tok_s": [5.034312884410624, 5.257401637348096, 5.228429046201661],
+        "ttft_ms": [87998.60319800791, 81146.86629301286, 76276.06647202629],
+        "formal_99_interval_tok_s": 3.8648778892817663,
+        "formal_ttft_ms": 111659.75860299659,
+        "aggregation": "median of three unique exact-2K legacy-comparable observations; formal cache-zero rate is retained separately in the evidence receipt"
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 5.228429046201661, "label": "median exact-2K protocol-v2 research screen; short quality failed"}
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json"
     }
   ],
   "series_measurements": [
@@ -178,14 +220,15 @@
       "runtime": "vLLM XPU 658965050 + kernels 2f829747",
       "runtime_family": "vLLM XPU",
       "config": {"tp": 4, "ep": 4, "parallel_profile": "TP=EP", "mtp": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
-      "workload": "HTTP p146/o256 control median at x=0 and three unique exact-p1024/o256 medians at x=1024; after-first-text rates; research-only quality boundary",
+      "workload": "HTTP p146/o256 control median at x=0 plus three unique exact-p1024/o256 and exact-p2048/o256 medians; after-first-text legacy-comparable rates; research-only quality boundary",
       "axis": "active_context_tokens",
       "points": [
         {"x": 0, "decode_tok_s": 5.221849709057954, "samples": 3},
-        {"x": 1024, "decode_tok_s": 5.13358756138473, "ttft_ms": 29043.11463900376, "samples": 3}
+        {"x": 1024, "decode_tok_s": 5.13358756138473, "ttft_ms": 29043.11463900376, "samples": 3},
+        {"x": 2048, "decode_tok_s": 5.228429046201661, "ttft_ms": 81146.86629301286, "samples": 3}
       ],
-      "quality": "Both points remain research-only because the same substantive short-quality miss reproduced; the 1K point additionally passed its needle, 16 repeats, and cache-zero realistic suite.",
-      "caveat": "The x=0 control used a 146-token ordinary prompt at configured max 512; x=1024 used an exact 1,024-token synthetic prompt at configured max 1,536. This is a bounded HTTP context screen across two additive server identities, not a deployment-qualified depth curve.",
+      "quality": "All points remain research-only because the same substantive short-quality miss reproduced. The 1K point passed its needle, 16 repeats, and cache-zero realistic suite; the 2K retry passed its exact needle, fixed-answer repeat protocol, and a separate formal cache-zero exact-depth gate.",
+      "caveat": "The x=0 control used a 146-token ordinary prompt at configured max 512; x=1024 used an exact 1,024-token synthetic prompt at configured max 1,536; x=2048 used an exact 2,048-token synthetic prompt at configured max 3,072. The 2K formal 99-interval result is separately labeled in its receipt. This is a bounded HTTP context screen across three additive server identities, not a deployment-qualified depth curve.",
       "evidence": "results/qwen38-flash-next-fp8-b70/README.md"
     }
   ],
@@ -201,18 +244,19 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536/3072", "short quality, 1K screen, and quarantined 2K needle"],
+      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536/3072", "short quality plus screened 1K and protocol-v2 2K context"],
       "grades": {
         "evidence": {
           "grade": "C",
           "scope": "exact attempt-19 TP4/EP4 eager text-serving identity",
-          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, the 12-prompt realistic suite, exact-1K speed observations, and the bounded 2K quality failure are retained. The 2K arm published no speed after its repeat stop gate; full quality, deeper context, vision and clean-host replay remain missing.",
+          "basis": "Exact model, source overlay, staged runtime, serving, short quality, a 1K needle, the 12-prompt realistic suite, and exact-1K observations are retained. The original 2K stop-gate evidence remains visible, and a preregistered protocol-v2 retry passed fixed-answer repeats, the exact cache-zero 2K gate, and three exact-2K legacy-comparable observations. Full quality, deeper context, vision and clean-host replay remain missing.",
           "reviewed_at": "2026-08-27",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
-            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json"
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json"
           ]
         }
       },
@@ -244,7 +288,7 @@
     {
       "id": "qwen-flash-next-context-screen",
       "title": "Research context screen",
-      "subtitle": "Two bounded HTTP points under the same TP4/EP4 eager MTP0 source/runtime; both retain the disclosed short-quality caveat",
+      "subtitle": "Three bounded HTTP points under the same TP4/EP4 eager MTP0 source/runtime; all retain the disclosed short-quality caveat",
       "x_label": "active context tokens",
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
@@ -335,15 +379,15 @@
           "retry": {"status": "needs-full-quality"}
         },
         {
-          "id": "context2k-text-quarantine",
+          "id": "context2k-text-repeat-v2-screen",
           "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "quarantined",
-          "label": "2K needle passed · 1/16 repeat divergence · no speed",
-          "reason": "The exact cache-zero 2K needle passed and the short outputs matched the prior arm, but one of 16 repeats diverged. The frozen gate prevented all speed requests, so no 2K rate is published.",
-          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json",
+          "state": "lab-screened",
+          "label": "5.228 tok/s exact-2K protocol-v2 screen",
+          "reason": "The preregistered retry passed 32/32 fixed-answer sensitivity requests, 16/16 full repeats, the exact cache-zero needle, and the formal exact-depth gate. The original under-specified repeat divergence remains retained as quarantined attempt-1 history.",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context2k-v2-a2",
           "packet_id": "qwen38-flash-next-fp8-tp4-research",
-          "parent": "flash-next-context2k-a1",
-          "retry": {"status": "blocked-on-determinism", "trigger": "fresh configured-3072 identity passes sealed 16-of-16 repeat gate"}
+          "parent": "flash-next-context2k-a2",
+          "retry": {"status": "needs-full-quality"}
         }
       ]
     }

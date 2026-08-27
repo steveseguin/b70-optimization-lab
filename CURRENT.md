@@ -954,12 +954,16 @@ repeats, completed the 12-prompt cache-zero realistic suite at a preferred
 `4.449168 tok/s` 99-interval median, and measured three exact-1K samples at a
 `5.133588 tok/s` after-first-text median. The known 5/7 strict short-quality
 boundary remains, so this closes a second research cell without authorizing
-promotion. The separate configured-3K arm then passed an exact cache-zero 2K
-needle and matched the same short outputs, but one of 16 repeats diverged. Its
-frozen stop gate correctly prevented every 2K speed request. The 2K cell is
-therefore quarantined with no invented rate, while the 512 and 1K results stay
-unchanged. Repeat determinism is now the immediate production blocker; MTP1
-still requires the performance-preserving runtime port.
+promotion. The first configured-3K arm passed an exact cache-zero 2K needle
+but stopped before speed after one open-choice repeat changed between two valid
+answers. That quarantine remains preserved. A repeat-v2 retry showed the old
+prompt's `black`/`blue` margin was only 0.125-0.375, while prescribing the input
+set produced a 9.19-10.19 margin and 32/32 first-token plus 16/16 full-output
+stability. Its formal exact-2K row passed, and three comparable exact-2K samples
+measured a `5.228429 tok/s` median after first text. The 2K selector is now a
+research-screened cell backed by superseding evidence, with the earlier
+quarantine still disclosed. The next context cell is 4K; MTP1 still requires
+the performance-preserving runtime port.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

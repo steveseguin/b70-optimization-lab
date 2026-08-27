@@ -551,3 +551,14 @@ repeat outputs diverged. The preregistered stop gate prevented all 2K speed
 requests, so this is a quarantined capability result rather than a measured
 curve point. Evidence is in
 `data/20260827-tp4-mtp0-3072-context-screen.json`.
+
+The repeat-v2 retry preserved that quarantined arm, replaced the future
+open-choice gate with a prescribed-set canary, and added a one-token
+score-returning sensitivity probe. The prescribed first token passed 32/32
+with a 9.19-10.19 logprob margin, while the old open-choice margin was only
+0.125-0.375. The full fixed-set repeat passed 16/16, the exact 2K needle and
+formal cache-zero depth row passed, and three comparable exact-2K samples had a
+`5.228429 tok/s` median after first text. The known 5/7 short boundary remains,
+so this supersedes the effective 2K coverage state to research-screened without
+rewriting attempt 1. Evidence is in
+`data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json`.

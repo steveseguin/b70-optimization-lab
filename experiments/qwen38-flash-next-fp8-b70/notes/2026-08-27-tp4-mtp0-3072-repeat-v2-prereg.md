@@ -103,3 +103,31 @@ source/runtime already passed it and this arm changes no server behavior.
   `8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067`;
 - legacy depth harness SHA-256
   `0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0`.
+
+## Result
+
+Attempt 2 kept the exact server identity and again reported 6,144 cache tokens,
+four 12.22-GiB placement receipts, and 31.27 GiB per rank. The sensitivity
+probe passed cache-zero: both phases selected `blue` 32/32. On the open-choice
+prompt, the `blue`-over-`black` returned-score margin varied among only 0.125,
+0.25, and 0.375; with the input set prescribed, the margin was 9.1875 to
+10.1875. This supports retaining the old divergence as an ambiguity-sensitivity
+finding rather than treating it as broad state failure.
+
+The full repeat-v2 battery then returned the exact prescribed list 16/16 with
+one hash, passed the exact 2,048-server-token needle, and kept all 24 requests
+cache-zero. The same known five-of-seven short boundary remained with no new
+failure.
+
+The formal exact-depth row passed every gate at p2048/o128 and measured
+`3.864878 tok/s` on the conventional 99-interval window with `111.660 s`
+TTFT. Three separate p2048/o256 legacy-comparative rows measured `5.034313`,
+`5.257402`, and `5.228429 tok/s` after first text, median `5.228429 tok/s`;
+all returned 256 tokens with the same output hash. The legacy harness does not
+retain cached-token detail, so the formal row is the cache-zero authority.
+
+All four workers and the application completed a controlled stop, with the
+known post-manager API message and four resource-tracker cleanup items; no
+process or listener remained. Attempt 1 remains retained quarantine evidence.
+Attempt 2 supplies a new research-only `lab-screened` 2K measurement. Receipt:
+`data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json`.

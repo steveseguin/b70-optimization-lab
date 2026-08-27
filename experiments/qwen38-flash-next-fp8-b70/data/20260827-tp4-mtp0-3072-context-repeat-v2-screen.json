@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "status": "passed-research-only",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-3072-r1",
+  "attempt": 2,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-3072-r1-attempt2",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 3072,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+    "kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none",
+    "protocol_commit": "d28c69d06",
+    "preregistration_commit": "9608138fe"
+  },
+  "serving": {
+    "health_gate": "pass-by-models-endpoint-and-completed-api-work",
+    "reported_max_model_len": 3072,
+    "kv_cache_tokens": 6144,
+    "maximum_concurrency_at_3072": 2.0,
+    "capacity_caveat": "The 2.00x value is the runtime cache calculator output; max_num_seqs remained 1 and no multi-user claim is made.",
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "model_load_seconds_by_rank": [557.019889, 555.908070, 556.090578, 556.962920],
+    "model_memory_gib_by_rank": [31.27, 31.27, 31.27, 31.27],
+    "shutdown": {
+      "classification": "controlled-stop-with-api-observability-caveat",
+      "signal": "SIGTERM",
+      "engine_request_processing_complete": true,
+      "worker_shutdown_done_ranks_logged": [0, 1, 2, 3],
+      "api_application_shutdown_complete": true,
+      "residual_processes_after_stop": 0,
+      "forced_process_stop_logged": false,
+      "caveat": "The API output handler logged the known post-manager-stop EngineDeadError and the resource tracker reported four shared-memory cleanup items. All workers and the application completed shutdown and no process or listener remained."
+    }
+  },
+  "repeat_sensitivity": {
+    "request_class": "diagnostic-only one-token greedy requests with named token scores",
+    "performance_interpretation_authorized": false,
+    "repeats_per_phase": 32,
+    "cached_token_observations": 64,
+    "cached_token_values_all_zero": true,
+    "scores_present_all": true,
+    "open_choice": {
+      "first_token_counts": {"blue": 32},
+      "blue_over_black_logprob_margin_values": [0.125, 0.25, 0.375],
+      "blue_over_black_logprob_margin_min": 0.125,
+      "blue_over_black_logprob_margin_max": 0.375,
+      "historical_full_output_context": "The retained open-choice protocol produced 54 majority outputs and two alternate outputs across 56 requests; both full outputs satisfied the under-specified instruction."
+    },
+    "fixed_set": {
+      "expected_first_token": "blue",
+      "first_token_counts": {"blue": 32},
+      "blue_over_black_logprob_margin_min": 9.18749956425745,
+      "blue_over_black_logprob_margin_max": 10.187499576248229,
+      "pass": true
+    },
+    "interpretation": "The old prompt strongly amplified a close black/blue choice, while specifying the input set created a large stable margin. The old exact-hash divergence remains disclosed as a sensitivity result rather than a deployment gate."
+  },
+  "quality_v2": {
+    "interpreter": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "repeat_protocol": "fixed-set-v2",
+    "strict_exact_pass_count": 5,
+    "strict_exact_case_count": 7,
+    "strict_failures": {
+      "logic": {"expected": "yes", "content": "Yes"},
+      "code_execution": {"expected": "14", "content": "30"}
+    },
+    "repeat": {
+      "pass": true,
+      "count": 16,
+      "unique_hash_count": 1,
+      "expected": "blue, green, red, yellow",
+      "content": "blue, green, red, yellow"
+    },
+    "long_context": {
+      "requested_filler_tokens": 2157,
+      "raw_prompt_tokens": 2036,
+      "server_prompt_tokens": 2048,
+      "needle": "B70_QWEN38_NEEDLE_20260816",
+      "content": "B70_QWEN38_NEEDLE_20260816",
+      "pass": true,
+      "cached_tokens": 0
+    },
+    "cached_token_values_all_zero": true,
+    "cached_token_observations": 24,
+    "pass_all": false,
+    "pass_all_caveat": "The inherited substantive 5-of-7 short-quality boundary remains; the repeat-v2 and exact-2K incremental gates passed."
+  },
+  "formal_exact_2k": {
+    "status": "passed",
+    "prompt_tokens": 2048,
+    "completion_tokens": 128,
+    "cached_tokens": 0,
+    "finish_reason": "length",
+    "returned_token_ids": 128,
+    "conventional_99_interval_tok_s": 3.8648778892817663,
+    "historical_100_event_tok_s": 3.903917059880572,
+    "ttft_s": 111.65975860299659,
+    "elapsed_s": 145.4062704440148,
+    "output_token_ids_sha256": "5fd297f79da317b0741140cccb52fb710f89dfd1444effe9068b806b0300e57e",
+    "measurement_class": "formal exact-depth 100-event/99-interval row"
+  },
+  "legacy_comparative_2k": {
+    "prompt_tokens_each": 2048,
+    "output_tokens_each": 256,
+    "concurrency": 1,
+    "warmups": 0,
+    "unique_prompt_salts": ["context-r1", "context-r2", "context-r3"],
+    "tok_s_out_after_ttft": [5.034312884410624, 5.257401637348096, 5.228429046201661],
+    "median_tok_s_out_after_ttft": 5.228429046201661,
+    "tok_s_out_wall": [1.8437210993004103, 1.9716555785098753, 2.044089273764376],
+    "median_tok_s_out_wall": 1.9716555785098753,
+    "ttft_s": [87.99860319800791, 81.14686629301286, 76.27606647202629],
+    "median_ttft_s": 81.14686629301286,
+    "output_sha256_all_equal": true,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "cached_tokens": "not-captured-by-this-harness",
+    "measurement_class": "legacy after-first-text exact-depth comparison"
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass",
+    "fixed_set_sensitivity_probe": "pass-32-of-32",
+    "fixed_set_full_repeat": "pass-16-of-16",
+    "exact_2k_context_needle": "pass",
+    "formal_exact_2k_gate": "pass",
+    "full_short_quality": "fail-known-5-of-7-boundary",
+    "promotion_eligible": false,
+    "site_state": "lab-screened",
+    "site_grade_ceiling": "research"
+  },
+  "prior_attempt": {
+    "receipt": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json",
+    "status": "retained-quarantined",
+    "effect": "The raw open-choice divergence and skipped timing remain immutable. This retry supplies new protocol-v2 evidence and does not rewrite attempt 1."
+  },
+  "sha256": {
+    "server.log": "5c86b6e2b25dca64e3be9129be77ecca785eede27054b4538e404acefa317801",
+    "identity.txt": "b7f4525f074dc6934c9e9d8efd002fc4b8d8ce8b8bb3c4c1a8a3103760453fb3",
+    "models.json": "8423e241945c0de0897dbc03487d1df8014791fecea6a2f348528c94ad6a6457",
+    "repeat-sensitivity-32x2.json": "242336c997507a105060f5bb4ad68639bf2b44548e15e1943af38a2dd1412309",
+    "repeat-sensitivity-32x2.invocation.log": "013fa5a7fd86749ea201659e9ec67696bf172b46d1e103e6aaefcf16e1cbf858",
+    "quality-v2-short-and-2k.json": "73e25e165e22f0dd4fd3a7d05243ac61d2f401415f1f2157eff746aeeafdc433",
+    "quality-v2-short-and-2k.invocation.log": "ddaac55867ac676e412625a2c8737ef5f9a2635f17ec688b9008cf2069f975ba",
+    "quality-v2-short-and-2k.exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "exact-depth-2k-o128.json": "3875376d98843afa201390b7837686dd9be8c2d645df968a474c704bae236e81",
+    "exact-depth-2k-o128.invocation.log": "3875376d98843afa201390b7837686dd9be8c2d645df968a474c704bae236e81",
+    "bench-context2k-o256-c1-r1.json": "cb3a422fb6d60039fd2abe9a4cd3135cff9237915bd2afd6f4d88da2d45aeb18",
+    "bench-context2k-o256-c1-r2.json": "e5bb9d782d52d0a2f82ed3b1ad99e3af05dc26ee21e67e316c940ec2501d5e20",
+    "bench-context2k-o256-c1-r3.json": "8eb655324514d1d4eb6d7b63c99328cc9887645fd124805ac9655e722fa5f53a"
+  }
+}
