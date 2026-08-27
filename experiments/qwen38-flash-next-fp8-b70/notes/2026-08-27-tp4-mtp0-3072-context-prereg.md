@@ -44,11 +44,19 @@ After health and identity gates:
    `--long-context-tokens 2048`. Require all recorded cached-token values to be
    zero, one repeat hash, and an exact needle response. The known 5/7 short
    result may reproduce; any new short failure is a regression.
-4. Run three unique exact-p2048/o256/c1 requests, no warmups, with salts
-   `context-r1`, `context-r2`, and `context-r3`. Offline tokenizer calibration
-   fixes `--prompt-tokens 2099`, which produces exactly 2,048 API prompt tokens
-   for all three salts.
-5. Stop the server normally and retain the full log, request outputs, identity,
+4. Run the formal exact-depth harness once at depth 2,048 with configured
+   capacity 3,072. It uses the Flash-Next-specific sealed flat-token fixture,
+   requests 128 output tokens, and must pass every harness check: exactly
+   2,048 prompt tokens in server usage, zero cached tokens, no prompt
+   truncation or context shift, exactly 128 returned token IDs, a length stop,
+   and a valid conventional 100-event/99-interval timing window.
+5. Run three legacy-comparative exact-p2048/o256/c1 requests, no warmups, with
+   salts `context-r1`, `context-r2`, and `context-r3`. Offline tokenizer
+   calibration fixes `--prompt-tokens 2099`, which produces exactly 2,048 API
+   prompt tokens for all three salts. These samples retain the 1K arm's
+   historical after-first-text accounting; the formal exact-depth receipt is
+   the cache-zero and 99-interval authority for the 2K cell.
+6. Stop the server normally and retain the full log, request outputs, identity,
    hashes, and shutdown classification.
 
 The 12-prompt realistic suite is not repeated in this arm: it already passed
@@ -65,12 +73,28 @@ evidence required for this cell.
   substantive short-quality miss still blocks deployment promotion.
 - The prior 512 and 1K measurements remain authoritative for their cells and
   cannot be lowered, overwritten, or replaced by this result.
-- Exact-2K rates are comparable to the exact-1K synthetic-prompt rates, not to
-  the ordinary p146 control or the 99-interval realistic-suite metric.
+- The three legacy exact-2K rates are comparable to the exact-1K
+  synthetic-prompt rates, not to the ordinary p146 control or the 99-interval
+  realistic-suite metric. The formal 2K row uses its separately labeled
+  100-event/99-interval accounting and must not be substituted into that
+  legacy series without the accounting label.
 
 ## Sealed inputs
 
 - `scripts/qwen38-text-quality-suite.py` SHA-256
   `67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d`;
+- `data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json`
+  SHA-256
+  `c44fccbaf600cc506d8ed0cc7357161057b86abc44469b611be71db97558061d`;
+  selected depth-2,048 prompt-token-array SHA-256
+  `a173e60e5047c0f080e0ea45680eecbb533d30946cfc2ae0e028c684bf18d1ba`;
+- `scripts/build-qwen27-exact-depth-fixtures.py` SHA-256
+  `54771cfdf1f84ba6844ddf6a4d8141a0d403750e84af1bba57e13f8c88d81e52`;
+- `scripts/bench-openai-token-depth-suite.py` SHA-256
+  `8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067`;
+  the plan-only formal request payload for model
+  `qwen38-flash-next-fp8-tp4`, depth 2,048, capacity 3,072, vLLM response
+  adapter, seed 1, and 128 output tokens has SHA-256
+  `3aa1bba4d0ade3c07e7cad10bb5ee01245dc194d28dc17359311ece3b4ab6f36`;
 - `scripts/bench-openai-concurrency.py` SHA-256
   `0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0`.

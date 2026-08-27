@@ -11,18 +11,21 @@ to the exact requested count. This makes the input cardinality reproducible;
 it does not claim that repeated synthetic context is representative of natural
 long-context quality.
 
-The Qwen3.6 and Qwen3.8 tokenizer files have different byte identities, so the
-fixtures retain separate revision-specific provenance. For this frozen corpus,
-however, every one of the seven prompt-token hashes is identical across the two
-fixtures. The same exact workload can therefore compare the two weight
-revisions without treating their artifacts or evidence as interchangeable.
+The Qwen3.6, Qwen3.8 27B, and Qwen3.8 Flash-Next tokenizer files have different
+byte identities, so the fixtures retain separate revision-specific provenance.
+For this frozen corpus, however, every one of the seven prompt-token hashes is
+identical across all three fixtures. The same exact workload can therefore
+compare the weight families without treating their artifacts or evidence as
+interchangeable.
 
 Artifact SHA-256:
 
 - `qwen36-6a9e13bd-exact-depth-v1.json`:
   `85b1050c88b4c1e6cb9c4ce7f1580284cd2aa68243dad0d0dff16460decbe5ac`;
 - `qwen38-bce40ca-exact-depth-v1.json`:
-  `ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9`.
+  `ebe507b725af6ec0713de4084d0bf52fbbab48b151511e0019c1bac2c5051bd9`;
+- `qwen38-flash-next-bcd9f01-exact-depth-v1.json`:
+  `c44fccbaf600cc506d8ed0cc7357161057b86abc44469b611be71db97558061d`.
 
 Depth zero is intentionally an empty token array. It is valid for lower-level
 engine or `llama-bench` capability work only; the OpenAI-compatible benchmark
