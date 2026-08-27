@@ -2117,6 +2117,45 @@
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-23-qwen38-tp4-autotune-winner-overlay-result.json"
     },
     {
+      "id": "q38-q8-tp1-strict-reasoningoff-native-r1",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "profile_id": "qwen38-q8-tp1-package-reasoningoff-native-v1",
+      "measurement_class": "strict-two-fresh-server-class-balanced-12-prompt-512-cap-native-http",
+      "promotion_status": "strict-package-headline-with-cross-tp-disclosure",
+      "runtime_identity": {
+        "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+        "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154"
+      },
+      "config": {"tp": 1, "mtp": 0, "graph": "off", "kv": "f16", "reasoning_enabled": false, "parallel_slots": 1, "configured_max_context_tokens": 8192, "prompt_cache": false},
+      "workload": "Two fresh servers; fixed 12-prompt/six-class raw native HTTP suite; 512-token cap; median of class medians; conventional events 1-100 over 99 intervals after TTFT",
+      "metrics": {"decode_tok_s": [19.619239834548473]},
+      "quality": "Both attempts passed workload, cache-zero, and objective-canary gates; 12/12 complete token arrays were exact between fresh TP1 servers. Same-binary prior battery passed 7/7 expected-answer cases, 8/8 repeat stability, a 7,617-token needle, and 16/16 cache-zero checks.",
+      "caveat": "TP1 differs from the strict TP2 raw oracle on 12/12 complete arrays, with first divergences at generated tokens 59-444. It is a separately quality-gated arithmetic identity; no cross-card-count byte-equivalence is claimed.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.json"
+    },
+    {
+      "id": "q38-q8-tp2-strict-reasoningoff-native-r2",
+      "state": "lab-measured",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q8-0-0669b98",
+      "quantization": "Q8_0",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp SYCL",
+      "profile_id": "qwen38-q8-tp2-package-reasoningoff-native-v1",
+      "measurement_class": "strict-two-fresh-server-class-balanced-12-prompt-512-cap-native-http",
+      "promotion_status": "strict-package-headline",
+      "config": {"tp": 2, "mtp": 0, "graph": "off", "kv": "f16", "reasoning_enabled": false, "parallel_slots": 1, "prompt_cache": false},
+      "workload": "Two fresh servers; fixed 12-prompt/six-class raw native HTTP suite; 512-token cap; median of class medians; conventional events 1-100 over 99 intervals after TTFT",
+      "metrics": {"decode_tok_s": [36.726447009509016]},
+      "quality": "Both attempts passed workload, cache-zero, and objective-canary gates; 12/12 complete token arrays were exact between fresh TP2 servers and 12/12 complete response hashes matched the historical raw-completion oracle.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.json"
+    },
+    {
       "id": "q38-q4km-tp2-conventional",
       "state": "lab-measured",
       "revision": "qwen3.8-27b",
@@ -10395,7 +10434,7 @@
         "graph": "off",
         "kv": "f16"
       },
-      "fixed": "Qwen3.8 target-only llama.cpp/SYCL routes with f16 KV. Cells retain their recorded workload identity: TP1 quant rows expose measured raw context curves, while TP2 Q4_K_M/Q8_0 expose conventional suite headlines.",
+      "fixed": "Qwen3.8 target-only llama.cpp/SYCL routes with f16 KV. Cells retain their recorded workload identity: some TP1 quant rows expose raw context curves, while Q4_K_M TP2 and Q8_0 TP1/TP2 expose conventional or strict varied-prompt suite headlines.",
       "decision_note": "This is a coverage map, not a same-workload speed leaderboard. Missing cells have no normalized measured record and are not estimated.",
       "rows": ["qwen38-27b-ggmlorg-q4-k-m-0669b98", "qwen38-27b-unsloth-ud-q5-k-s-4ca7207", "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207", "qwen38-27b-ggmlorg-q8-0-0669b98"],
       "columns": [1, 2, 3, 4],
@@ -10412,8 +10451,8 @@
         "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207:2": {"state": "missing", "label": "no measured route"},
         "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207:3": {"state": "missing", "label": "no measured route"},
         "qwen38-27b-unsloth-ud-q4-k-xl-4ca7207:4": {"state": "missing", "label": "no measured route"},
-        "qwen38-27b-ggmlorg-q8-0-0669b98:1": {"state": "missing", "label": "no normalized route"},
-        "qwen38-27b-ggmlorg-q8-0-0669b98:2": {"state": "lab-measured", "label": "36.773 conventional", "evidence_id": "q38-q8-tp2-conventional", "packet_id": "qwen38-27b-q8-tp2-asrock-b70"},
+        "qwen38-27b-ggmlorg-q8-0-0669b98:1": {"state": "lab-measured", "label": "19.619 strict varied suite", "evidence_id": "q38-q8-tp1-strict-reasoningoff-native-r1", "packet_id": "qwen38-27b-q8-tp1-b70"},
+        "qwen38-27b-ggmlorg-q8-0-0669b98:2": {"state": "lab-measured", "label": "36.726 strict varied suite", "evidence_id": "q38-q8-tp2-strict-reasoningoff-native-r2", "packet_id": "qwen38-27b-q8-tp2-asrock-b70"},
         "qwen38-27b-ggmlorg-q8-0-0669b98:3": {"state": "missing", "label": "no measured route"},
         "qwen38-27b-ggmlorg-q8-0-0669b98:4": {"state": "missing", "label": "no measured route"}
       }

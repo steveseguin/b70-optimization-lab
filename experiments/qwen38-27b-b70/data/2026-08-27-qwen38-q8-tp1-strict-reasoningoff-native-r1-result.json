@@ -1,0 +1,59 @@
+{
+  "status": "strict-package-headline-qualified-with-cross-tp-disclosure",
+  "profile": "Qwen3.8 27B Q8_0, F16 KV, TP1, MTP0, packaged --reasoning off launcher, raw native completions",
+  "metric": {
+    "name": "median-of-attempt-class-balanced-medians, events 1-100 over 99 intervals after TTFT",
+    "unit": "tok/s",
+    "attempt_values": [
+      19.600347624643348,
+      19.638132044453595
+    ],
+    "value": 19.619239834548473,
+    "attempt_relative_range_percent": 0.19258860245803638
+  },
+  "qualification": {
+    "fresh_server_attempts": 2,
+    "prompt_count_per_attempt": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "cached_tokens_all_zero": true,
+    "performance_gates_passed": true,
+    "objective_canaries_passed": true,
+    "complete_token_arrays_exact_between_tp1_attempts": "12/12"
+  },
+  "same_binary_prior_quality": {
+    "evidence": "qwen38-q8weights-f16-tp1-service-quality-20260825-r1/qualification.json",
+    "exact_cases": "7/7",
+    "repeat_stability": "8/8",
+    "long_context_needle": true,
+    "cached_tokens_all_zero": "16/16"
+  },
+  "cross_tp_disclosure": {
+    "oracle": "qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2a",
+    "complete_token_arrays_exact": "0/12",
+    "complete_text_sha256_exact": "0/12",
+    "first_divergent_token_positions": {
+      "incident-retrospective": 216,
+      "code-review": 444,
+      "customer-email": 147,
+      "sql-debugging": 168,
+      "release-plan": 59,
+      "benchmark-analysis": 108,
+      "architecture-tradeoff": 201,
+      "bug-report-synthesis": 114,
+      "technical-guide": 193,
+      "risk-register": 231,
+      "performance-hypotheses": 184,
+      "decision-memo": 77
+    },
+    "interpretation": "TP1 and TP2 are separate arithmetic identities. The cross-TP differences are disclosed and no cross-TP byte-equivalence claim is made. TP1 promotion rests on exact fresh-server TP1 repeatability plus same-binary expected-answer, repeat, long-context, cache, and current objective gates."
+  },
+  "evidence": {
+    "attempt_a": "qwen38-q8-tp1-strict-reasoningoff-native-20260827-r1a",
+    "attempt_b": "qwen38-q8-tp1-strict-reasoningoff-native-20260827-r1b",
+    "comparison": "2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-comparison.json"
+  },
+  "scope": "Single-user short-context target-only TP1 HTTP decode. No TP2, MTP, long-context, concurrency, chat-template, or alternate-quant authority transfers from this headline."
+}

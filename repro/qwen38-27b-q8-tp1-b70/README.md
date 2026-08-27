@@ -9,12 +9,20 @@ This is the repository's quality-conservative one-card Qwen3.8 GGUF lane. It
 uses Q8_0 weights, F16 KV, one server slot, and no draft model or speculative
 decoding. The raw-engine tg128 curve measured `19.662501 tok/s` at depth zero
 and `18.023689 tok/s` at 32K. These are direct `llama-bench` rates, not HTTP or
-realistic-prompt headline rates; no featured package speed is currently
-claimed. The matching service tuple separately passed
+realistic-prompt headline rates. The separately measured strict short-context
+varied-prompt HTTP headline is **`19.619240 tok/s`**, the median of two fresh
+servers with cache zero, both objective batteries passed, and 12/12 complete
+TP1 token arrays exact. The matching service tuple separately passed
 7/7 canaries, 8/8 repeat stability, a 7,617-token needle test, and zero cached
 tokens on all 16 responses. A separate output-audited HTTP profile uses eight
 active slots and queues up to 64 simultaneous requests, reaching a stable
 `68.555544 tok/s` aggregate at 64 requests.
+
+TP1 and TP2 are separate arithmetic identities. This TP1 pair differs from
+the TP2 raw oracle 12/12, with first divergences at generated tokens 59-444;
+the package makes no cross-card-count byte-equivalence claim. Its authority
+comes from exact TP1 fresh-server repeatability plus the same-binary expected-
+answer, repeat, long-context, cache, and current objective gates.
 
 ## Exact dependencies
 
@@ -86,6 +94,25 @@ Success prints `service_quality_passed=true` and
 `cached_tokens_all_zero=true`. Stop the foreground server with `Ctrl-C` and
 confirm `pgrep -x llama-server` returns no process.
 
+For the strict public headline, run two create-only attempts with distinct
+output directories and require exact comparison:
+
+```bash
+ATTEMPT=my-q8-tp1-a MODEL_DIR=/path/to/qwen3.8-27b-q8 \
+BUILD_DIR=/path/to/build OUT_DIR=/path/to/new-attempt-a \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp1-strict-attempt.sh
+
+ATTEMPT=my-q8-tp1-b MODEL_DIR=/path/to/qwen3.8-27b-q8 \
+BUILD_DIR=/path/to/build OUT_DIR=/path/to/new-attempt-b \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp1-strict-attempt.sh
+
+python3 scripts/compare-strict-attempt-outputs.py \
+  /path/to/new-attempt-a /path/to/new-attempt-b \
+  --output /path/to/new-comparison.json
+```
+
+See the [strict result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.md).
+
 For aggregate serving, launch the exact qualified eight-slot/4K-total-context
 profile instead. Requests above eight wait in the server queue; they do not
 allocate additional GPU slots.
@@ -129,5 +156,6 @@ OUT=/path/to/depth.json repro/qwen38-27b-q8-tp1-b70/bench-depth.sh
 
 Measured evidence: [depth result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-local-r2-result.md)
 and [service-quality result](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8weights-f16-tp1-service-quality-r1-result.md).
-Still open: clean-host platform/build replay, a conventional realistic-prompt
-HTTP speed capture, TTFT by context, and queued per-request latency.
+Still open: clean-host platform/build replay, realistic-prompt HTTP speed and
+TTFT by context beyond the qualified short-context headline, and queued
+per-request latency.

@@ -928,6 +928,15 @@ historical raw-completions response hashes. This closes the package-headline
 gap without transferring authority to chat-template, TP1, MTP, long-context,
 or concurrency workloads. See the [strict result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.md).
 
+The one-B70 Q8_0/F16-KV package also qualified independently at
+**`19.619240 tok/s`** from fresh-server values `19.600348` and `19.638132`.
+Both complete varied suites and objective batteries passed with cache zero,
+and TP1 token arrays matched 12/12 across servers. TP1 differs from the TP2
+raw oracle 12/12 (first divergent tokens 59-444), so it is disclosed as a
+separate deterministic arithmetic identity. The exact same TP1 binary's prior
+7/7 expected-answer, 8/8 repeat, 7,617-token needle, and 16/16 cache-zero gates
+provide the broader quality binding. See the [TP1 strict result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.md).
+
 An archived contributed one-B70 GPTQ INT4 route was validated on 2026-08-16. Native
 FP16 KV reached `34.160467 tok/s` target-only and `87.605425 tok/s` MTP4 at
 p512/g128 and 8K; both beat the FP8-KV rows. MTP4 accepted 511/540 drafts,
@@ -1041,10 +1050,10 @@ The same integrity audit removed strict featured headlines from six other
 package identities without deleting their measurements: LFM2.5 2.6B, Ornith
 1.5 9B, and Nemotron 3.5 cite raw operating-point/canary artifacts that are not
 closed in this repository; Ornith 1.5 35B natural-response hashes matched 0/12
-across fresh stock servers; and Qwen3.8 Q8 TP1 is a raw-engine tg128 rate rather
-than a varied-prompt HTTP result. Qwen3.8 Q8 TP2's historical reasoning-enabled
-capture could not headline its reasoning-off package at audit time; the later
-two-server R2 campaign above has now closed that one gap. The other affected
+across fresh stock servers; Qwen3.8 Q8 TP1 had only a raw-engine tg128 rate;
+and Qwen3.8 Q8 TP2 had only a mismatched historical reasoning-policy capture.
+The later two-server TP1 and TP2 campaigns above have now closed both Q8 gaps.
+The other affected
 packages remain **strict headline pending** while their honestly scoped curves
 and historical evidence remain available. See the full
 [benchmark integrity audit](docs/benchmark-integrity-audit-20260827.md).

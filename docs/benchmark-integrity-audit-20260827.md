@@ -56,6 +56,13 @@ paired **`36.726447 tok/s`** value is now the packaged headline; the historical
 row above remains the reason that number was initially withheld. See the
 [R2 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.md).
 
+Qwen3.8 Q8_0 TP1 subsequently closed its different missing contract at
+**`19.619240 tok/s`**. Two complete fresh-server suites and both objective
+batteries passed with cache zero, and TP1 arrays matched 12/12 internally.
+TP1 differs from the TP2 raw oracle 12/12 and is therefore published as a
+separate quality-gated arithmetic identity, not as cross-TP byte equivalence.
+See the [TP1 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.md).
+
 The LocalMaxxing submission `cmtb5n45n0021qq01n13vly2h` was built from the
 incomplete FP8 evidence and is premature. Repository surfaces mark withdrawal
 as recommended. The external service does not provide a trusted automated

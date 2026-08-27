@@ -6,18 +6,17 @@ tg128 curve measured `19.662501 tok/s` at depth zero and `18.023689 tok/s` at
 32K. Prefill pp2048 measured `996.891020` and `719.144647 tok/s` at those same
 depths. Every displayed marker is a five-repetition measurement.
 
-> **Strict package headline pending.** The figures above are direct
-> `llama-bench` context-shape measurements, not a varied-prompt HTTP median.
-> They remain useful scoped evidence but are not the featured package speed.
-> Promotion requires the complete 512-cap varied suite on two fresh servers
-> and a quality/determinism oracle bound to the exact packaged identity.
+> **Strict package headline: `19.619240 tok/s`.** This is the median of two
+> fresh-server class-balanced medians from the complete twelve-prompt,
+> six-class, 512-cap raw HTTP suite. Both attempts were cache-zero, passed the
+> objective canaries, and matched 12/12 complete TP1 token arrays.
 
 The matching OpenAI-compatible service separately passed 7/7 semantic
 canaries, 8/8 repeat stability, a 7,617-token needle, and explicit zero cached
 tokens on all 16 requests. The raw-engine rate is not relabeled as HTTP or
 realistic-prompt speed.
 
-> **Status: candidate; strict headline pending.** The model, source patches, build, launch, depth
+> **Status: candidate; strict headline qualified.** The model, source patches, build, launch, depth
 > benchmark, quality checks, and output-audited HTTP concurrency are closed in
 > this repository. A clean Ubuntu host installation/replay, beginner recovery
 > path, and realistic-prompt HTTP TTFT/depth remain open.
@@ -98,3 +97,22 @@ BUILD_DIR=/path/to/new/llama.cpp-qwen38-q8-tp1/build-sycl-aot-bmg-g31 \
 The guide's `quality.sh` is the promotion gate. The separate
 `bench-depth.sh` reproduces the displayed raw-engine curves when no server is
 running.
+
+For the strict varied-prompt headline, run the create-only attempt wrapper
+twice with distinct `ATTEMPT` and `OUT_DIR` values, then require the comparator
+to exit zero:
+
+```bash
+ATTEMPT=my-q8-tp1-a MODEL_DIR=/path/to/qwen3.8-27b-q8 \
+BUILD_DIR=/path/to/build OUT_DIR=/path/to/new-attempt-a \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp1-strict-attempt.sh
+
+python3 scripts/compare-strict-attempt-outputs.py \
+  /path/to/new-attempt-a /path/to/new-attempt-b \
+  --output /path/to/new-comparison.json
+```
+
+TP1 is exact 12/12 across its two fresh servers but differs from the TP2 raw
+oracle 12/12, with first divergences at generated tokens 59-444. It is a
+separately quality-gated arithmetic identity, not a cross-card-count byte-
+equivalence claim. See the [strict result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.md).

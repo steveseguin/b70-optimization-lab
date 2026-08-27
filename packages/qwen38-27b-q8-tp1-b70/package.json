@@ -18,9 +18,14 @@
     "modalities": ["text"],
     "use_cases": ["general", "coding", "long context"],
     "tags": ["one card", "target only", "cache zero", "source build", "quality conservative"],
-    "published_at": "2026-08-25",
-    "featured_metric": null,
-    "benchmark_status": "The measured five-repeat llama-bench tg128 context curve and separate service-quality battery remain valid scoped evidence, but a complete varied-prompt HTTP suite with a 512-token cap, two fresh-server attempts, and a bound quality/determinism oracle is still required for the package headline."
+    "published_at": "2026-08-27",
+    "featured_metric": {
+      "value": 19.619239834548473,
+      "unit": "tok/s",
+      "label": "strict varied-prompt decode",
+      "scope": "Median of two fresh-server class-balanced medians over the full 12-prompt/six-class, 512-cap, cache-zero raw-completion suite; target-only TP1, MTP0, 12/12 complete token arrays exact within TP1 and all objective canaries passed.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.json"
+    }
   },
   "contributors": [
     {
@@ -120,7 +125,8 @@
     "build": "repro/qwen38-27b-q8-tp1-b70/restore-and-build.sh"
   },
   "known_limitations": [
-    "The measured depth curve is raw llama-bench pp2048/tg128, not a realistic-prompt or HTTP throughput curve.",
+    "The 19.619240 tok/s headline is a short-context varied-prompt HTTP result. The separate depth curve remains raw llama-bench pp2048/tg128 and must not be substituted for that workload.",
+    "TP1 is deterministic 12/12 across its two fresh servers but differs from the TP2 raw oracle 12/12, with first divergences at generated tokens 59-444. It is a separately quality-gated arithmetic identity, not an exact cross-card-count output claim.",
     "The low-latency launcher is one slot at 8K. The throughput launcher uses eight active slots at 4K total context and queues excess requests; its aggregate curve does not qualify queued TTFT or per-request latency.",
     "Exact 64-slot/32K and 32-slot/16K F16-KV profiles do not fit one B70. A 16-slot/8K profile fits but is slower than queued p8 above eight users.",
     "The tested host had 16 GB nominal RAM plus swap. Clean-host installation and replay remain pending."
@@ -165,13 +171,20 @@
     "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp1-http-p8-queue-concurrency-r5-prereg.json",
     "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp1-http-p8-queue-oracle-digests.json",
     "experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q8-tp1-http-p16-qualified-and-p8-queue-prereg.md",
-    "experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp1-http-p8-queue-concurrency-r5.sh"
+    "experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp1-http-p8-queue-concurrency-r5.sh",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-result.json",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp1-strict-reasoningoff-native-r1-comparison.json",
+    "experiments/qwen38-27b-b70/data/qwen38-q8-tp1-strict-reasoningoff-native-20260827-r1a/performance.json",
+    "experiments/qwen38-27b-b70/data/qwen38-q8-tp1-strict-reasoningoff-native-20260827-r1a/canaries.json",
+    "experiments/qwen38-27b-b70/data/qwen38-q8-tp1-strict-reasoningoff-native-20260827-r1b/performance.json",
+    "experiments/qwen38-27b-b70/data/qwen38-q8-tp1-strict-reasoningoff-native-20260827-r1b/canaries.json",
+    "experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp1-strict-attempt.sh"
   ],
   "missing": [
     "tested clean-host Intel driver and oneAPI installation",
     "clean-host source build and endpoint replay",
     "beginner recovery flow",
-    "realistic-prompt HTTP speed and TTFT context sweep",
+    "realistic-prompt HTTP speed and TTFT context sweep beyond the qualified short-context headline",
     "queued TTFT and per-request latency profile"
   ]
 }
