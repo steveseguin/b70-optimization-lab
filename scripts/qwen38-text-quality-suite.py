@@ -263,13 +263,16 @@ def run_repeat_case(
     request_delay_s: float,
     request_id_prefix: str,
 ) -> dict[str, Any]:
+    expected = "blue, green, red, yellow"
+    prompt = (
+        "Sort exactly these four color words alphabetically and reply "
+        "with only the comma-separated lowercase list: "
+        "yellow, red, green, blue"
+    )
     messages = [
         {
             "role": "user",
-            "content": (
-                "Give exactly four comma-separated lowercase color words, "
-                "sorted alphabetically, with no extra text."
-            ),
+            "content": prompt,
         }
     ]
     runs = []
@@ -290,11 +293,14 @@ def run_repeat_case(
     texts = [item["normalized"] for item in runs]
     return {
         "name": "repeat_hash_stability",
+        "protocol": "fixed-set-v2",
+        "prompt": prompt,
         "repeats": repeats,
         "hashes": hashes,
         "texts": texts,
+        "expected": expected,
         "unique_hashes": sorted(set(hashes)),
-        "pass": len(set(hashes)) == 1,
+        "pass": len(set(hashes)) == 1 and all(text == expected for text in texts),
         "runs": runs,
     }
 
@@ -377,9 +383,16 @@ def compare_to_baseline(current: dict[str, Any], baseline_path: Path | None) -> 
     prior_repeat = baseline.get("repeat_case", {})
     current_repeat = current.get("repeat_case", {})
     if prior_repeat:
-        comparisons["repeat:first_hash_same"] = (
-            current_repeat.get("hashes", [None])[0]
-            == prior_repeat.get("hashes", [None])[0]
+        comparisons["repeat:protocol_same"] = (
+            current_repeat.get("protocol", "open-choice-v1")
+            == prior_repeat.get("protocol", "open-choice-v1")
+        )
+        comparisons["repeat:all_hashes_same"] = (
+            current_repeat.get("unique_hashes")
+            == prior_repeat.get("unique_hashes")
+        )
+        comparisons["repeat:aggregate_pass_same"] = (
+            current_repeat.get("pass") == prior_repeat.get("pass")
         )
 
     prior_long = baseline.get("long_context_case")
