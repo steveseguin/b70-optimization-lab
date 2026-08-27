@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.stock-headline-closure-prereg.v1",
+  "created_at_utc": "2026-08-27T23:10:00Z",
+  "objective": "Close missing one-B70 stock-package headlines without reusing the untracked 2026-08-22 summaries.",
+  "profiles": [
+    "lfm25-q8-tp1",
+    "ornith15-9b-q8-tp1",
+    "nemotron35-lightning-udq4km-tp1"
+  ],
+  "fixed_contract": {
+    "cards": 1,
+    "gpu": 0,
+    "tensor_parallel": 1,
+    "speculation": "none",
+    "reasoning": "off",
+    "configured_context_tokens": 8192,
+    "kv": "f16",
+    "parallel_slots": 1,
+    "prompt_cache": false,
+    "context_checkpoints": false,
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "max_output_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "primary_metric": "median of per-class median decode rates over generated events 1-100 after TTFT"
+  },
+  "required_attempts": 2,
+  "freshness": "Stop the server after each attempt and start a new process for the next attempt.",
+  "qualification": [
+    "Both attempts must run the complete fixed suite exactly once.",
+    "Every request must report cached_tokens=0 and cover the 100-event metric window under the 512-token cap.",
+    "Both independent objective canary batteries must pass.",
+    "All 12 complete streamed token-ID arrays must match between fresh servers.",
+    "Model, server, backend libraries, suite, harness, canary script, repository commit, command, and environment identities must be retained and hash-bound.",
+    "The published value is the median of the two fresh-server class-balanced medians; both attempt values and their relative range remain visible."
+  ],
+  "new_family_quality_boundary": "These are unmodified stock-model packages, so no cross-model oracle exists. Fresh-server complete-token identity plus objective self-consistency, arithmetic, copy, and JSON canaries is the registered package quality gate. Any later optimization requires a matched stock oracle.",
+  "fail_closed": [
+    "Do not restore the old 132.351606, 72.169452, or 49.588381 observations as headlines merely because a new run is similar.",
+    "A failed profile remains strict headline pending and its evidence is preserved.",
+    "No headline result transfers to 32K, concurrency, another quantization, another runtime, or another topology."
+  ]
+}
