@@ -123,6 +123,12 @@ MTP8_DYNAMIC_REPLICATION_RAW = (
 MTP8_DYNAMIC_REPLICATION_SUMMARY = (
     DATA / "2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json"
 )
+MTP9_DYNAMIC_NEGATIVE_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp9-dynamic-mtp1-20260827-r17"
+)
+MTP9_DYNAMIC_NEGATIVE_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-dynamic-mtp1-r17-summary.json"
+)
 DYNAMIC_MAMBA_PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -1178,6 +1184,44 @@ def main() -> int:
         "reporting_boundary"
     ]
 
+    mtp9_negative = load(MTP9_DYNAMIC_NEGATIVE_SUMMARY)
+    assert mtp9_negative["classification"] == (
+        "measured-negative-aggregate-gate"
+    )
+    assert mtp9_negative["decision"]["status"] == (
+        "closed-negative-retain-promoted-mtp8"
+    )
+    assert mtp9_negative["single_user"]["gate_passed"] is True
+    assert mtp9_negative["concurrency"]["gate_passed"] is False
+    assert mtp9_negative["quality"][
+        "concurrent_exact_answer_canary_performed"
+    ] is False
+    mtp9_single = load(MTP9_DYNAMIC_NEGATIVE_RAW / "single-p40-o128.json")
+    mtp9_single_rate = mtp9_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    close(
+        mtp9_single_rate,
+        mtp9_negative["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    mtp9_c64 = load(MTP9_DYNAMIC_NEGATIVE_RAW / "c64-screen.json")
+    validate_output_isolation_batch(mtp9_c64["batches"][0], 64)
+    close(
+        mtp9_c64["batches"][0]["aggregate_tok_s_wall"],
+        mtp9_negative["concurrency"]["declared_c64_tok_s"],
+    )
+    mtp9_quality = load(MTP9_DYNAMIC_NEGATIVE_RAW / "sequential-quality.json")
+    assert mtp9_quality["pass_all"] is True
+    assert mtp9_quality["baseline_match_all"] is True
+    assert len(mtp9_quality["exact_cases"]) == 7
+    assert len(mtp9_quality["repeat_case"]["runs"]) == 8
+    assert not (MTP9_DYNAMIC_NEGATIVE_RAW / "c64-quality-512.json").exists()
+    mtp9_inspect = load(
+        MTP9_DYNAMIC_NEGATIVE_RAW / "docker-inspect-final.json"
+    )[0]
+    assert mtp9_inspect["State"]["ExitCode"] == 0
+    assert mtp9_inspect["State"]["OOMKilled"] is False
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -1202,6 +1246,7 @@ def main() -> int:
         6,
         7,
         8,
+        9,
     ]
     for point, expected, samples in zip(
         depth_profile["points"],
@@ -1227,8 +1272,11 @@ def main() -> int:
             mtp8_replication["promoted_medians"][
                 "single_user_fresh_response_after_ttft_tok_s"
             ],
+            mtp9_negative["single_user"][
+                "fresh_response_after_ttft_tok_s"
+            ],
         ),
-        (1, 1, 2, 2, 2, 2, 1, 2, 2),
+        (1, 1, 2, 2, 2, 2, 1, 2, 2, 1),
         strict=True,
     ):
         close(point["value"], expected)
@@ -1317,6 +1365,8 @@ def main() -> int:
         "bench-w8a16-mtp8-dynamic-mtp1-r15.sh",
         "run-w8a16-mtp8-dynamic-mtp1-r16-server.sh",
         "bench-w8a16-mtp8-dynamic-mtp1-r16.sh",
+        "run-w8a16-mtp9-dynamic-mtp1-r17-server.sh",
+        "bench-w8a16-mtp9-dynamic-mtp1-r17.sh",
         "run-w8a16-dynamic-mtp-server.sh",
         "bench-w8a16-dynamic-mtp.sh",
         "build-w8a16-dynamic-mamba-image.sh",
@@ -1381,6 +1431,12 @@ def main() -> int:
                 "mtp8_dynamic_c64_median_tok_s": mtp8_replication[
                     "promoted_medians"
                 ]["c64_aggregate_tok_s"],
+                "mtp9_dynamic_negative_single_tok_s": mtp9_negative[
+                    "single_user"
+                ]["fresh_response_after_ttft_tok_s"],
+                "mtp9_dynamic_negative_c64_tok_s": mtp9_negative[
+                    "concurrency"
+                ]["declared_c64_tok_s"],
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],

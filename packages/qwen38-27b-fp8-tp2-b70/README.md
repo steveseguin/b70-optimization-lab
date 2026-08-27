@@ -50,6 +50,10 @@ from MTP4 to MTP5 raised its single-user median from `116.711347` to
 the later replicated MTP8 policy raised it again to `146.814418 tok/s` while
 retaining c64 aggregate throughput at `1,094.314767 tok/s`.
 
+A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
+`889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
+It remains measured negative evidence and is not the packaged default.
+
 **vLLM XPU kernel contributors — upstream mixed-batch fix:** upstream commits
 [`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)
 and [`1d5b4f5`](https://github.com/vllm-project/vllm-xpu-kernels/commit/1d5b4f5e5ddd8da96ea23c76d7e7421b00083fdb)

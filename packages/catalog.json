@@ -1882,6 +1882,10 @@
         "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-dynamic-mtp1-20260827-r16/c64-screen.json",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp8-dynamic-mtp1-20260827-r16/c64-quality-512.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-r17-negative.md",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp9-dynamic-mtp1-r17-summary.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp9-dynamic-mtp1-20260827-r17/single-p40-o128.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp9-dynamic-mtp1-20260827-r17/c64-screen.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md",
@@ -1952,7 +1956,7 @@
           "unit": "tok/s",
           "x_metric": "speculative_tokens",
           "x_label": "Active speculative tokens for the one-user shape",
-          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only; MTP1 uses the publisher's one MTP layer once; MTP2 through MTP8 serially reuse it. The selected dynamic service uses MTP8 only for one active request and falls back to MTP1 for two or more. MTP2, MTP3, MTP4, MTP5, MTP7, and MTP8 are each medians of two preregistered fresh-server attempts; MTP6 is a measured negative, and MTP0/MTP1 retain their earlier declared samples. No missing MTP depth is inferred. No point is interpolated or extrapolated.",
+          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only; MTP1 uses the publisher's one MTP layer once; MTP2 through MTP9 serially reuse it. The selected dynamic service uses MTP8 only for one active request and falls back to MTP1 for two or more. MTP2, MTP3, MTP4, MTP5, MTP7, and MTP8 are each medians of two preregistered fresh-server attempts; MTP6 and MTP9 are measured negatives, and MTP0/MTP1 retain their earlier declared samples. MTP9's singleton rate passed, but its exact service failed the c64 retention gate, so it is not selected. No missing MTP depth is inferred. No point is interpolated or extrapolated.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json",
           "points": [
             {
@@ -2000,6 +2004,12 @@
               "speculative_tokens": 8,
               "value": 146.81441784235233,
               "samples": 2
+            },
+            {
+              "speculative_tokens": 9,
+              "value": 158.602109747958,
+              "samples": 1,
+              "status": "measured-negative"
             }
           ]
         },

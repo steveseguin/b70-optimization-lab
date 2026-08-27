@@ -64,6 +64,12 @@ and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38
 This is a 256-token short-context service. No 32K dynamic-MTP result is
 claimed, inferred, or extrapolated.
 
+MTP9 was also measured directly at `158.602110 tok/s` for one user, but the
+same service fell to `889.607586 tok/s` at c64 and failed its preregistered
+aggregate-retention gate. It is preserved as a negative rather than spliced
+into the selected MTP8 profile; see the
+[MTP9 result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp9-r17-negative.md).
+
 ## Optimized block-W8A16 profile
 
 The lab's default-off block-W8A16 overlay is now the fastest quality-qualified
