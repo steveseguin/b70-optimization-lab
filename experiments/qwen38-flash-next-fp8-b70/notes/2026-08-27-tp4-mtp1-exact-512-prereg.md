@@ -5,10 +5,12 @@ Date: 2026-08-27
 ## Reason and preservation boundary
 
 The unchanged MTP1 attempt 2 proved TP4 fit, a healthy API, complete responses,
-and positive speculative acceptance, but failed exact MTP0 output parity before
-timing. Its quarantined receipt is
+and positive speculative acceptance. A later audit found that its apparent
+parity failure was confounded by an omitted baseline client setting, so it did
+not validly test exact MTP0 output parity. Its corrected quarantined receipt is
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt2-result.json`.
-This follow-up tests one mechanism-specific correction. It does not replace or
+This exact-runtime follow-up is therefore paused until the preserved runtime is
+rerun with `chat_template_kwargs.enable_thinking=false`. It does not replace or
 lower any MTP0 result, and a failed arm cannot produce a speed claim.
 
 The preserved XPU component already contains an exact recurrent-state path,
@@ -74,3 +76,24 @@ timing. This is an infrastructure-only non-result, preserved in
 Attempt 4 changes only that temporary path to the bounded name
 `/tmp/q38-mtp1-exact-a4-rpc`. The campaign, runtime, model settings, component
 gate, quality criteria, and speed criteria above remain frozen.
+
+## Attempt-4 gate-order closeout and attempt 5
+
+Attempt 4 completed all source/runtime preflights, all four workers loaded the
+target and MTP weights, each reported the exact 12.22-GiB selective placement,
+and the API reached healthy state. The launcher then stopped the healthy server
+before any endpoint request because it checked the inference-only exact-mode
+marker immediately after health. Zero exact markers before inference is the
+expected state, so attempt 4 is an infrastructure-only non-result: no model
+output, quality row, or timing row was produced.
+
+The attempt-4 log audit also found that all four exact-mode markers were already
+present during warmup; the receipt parser incorrectly searched worker labels,
+while these native messages use rank labels. Attempt 5 corrects that parser and
+the gate order. After health and the unchanged placement receipt, the launcher
+saves `/v1/models`, sends one fixed greedy eight-token canary, validates its
+complete response/usage, then requires exactly one exact-mode marker from every
+rank. The frozen quality suite follows only after that receipt. Model, runtime,
+placement, cache, scheduling, MTP, and performance settings remain unchanged.
+Attempt 5 remains on hold unless the corrected preserved-runtime arm still
+fails parity.

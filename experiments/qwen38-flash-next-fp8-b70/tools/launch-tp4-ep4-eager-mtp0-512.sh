@@ -496,12 +496,57 @@ verify_mtp_exact_receipt() {
   local rank count ok=1
   [[ "${mtp_exact}" == "1" ]] || return 0
   for rank in 0 1 2 3; do
-    count=$(grep -F "Worker_TP${rank}_EP${rank}" "${server_log}" | \
+    count=$(grep -F "[rank${rank}]:" "${server_log}" | \
       grep -Fc 'VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT reached' || true)
     printf 'rank=%s exact_recurrent_marker_count=%s\n' "${rank}" "${count}"
     [[ "${count}" == 1 ]] || ok=0
   done >"${run_dir}/mtp-exact-log-receipt.txt"
   (( ok == 1 ))
+}
+
+run_mtp_exact_canary() {
+  [[ "${mtp_exact}" == "1" ]] || return 0
+  "${python}" - "${port}" "${served_model_name}" \
+    "${run_dir}/mtp-exact-canary.json" <<'PY'
+import json
+import pathlib
+import sys
+import urllib.request
+
+port, model, output_path = sys.argv[1:]
+payload = {
+    "model": model,
+    "messages": [{
+        "role": "user",
+        "content": "Reply with only the word ready.",
+    }],
+    "chat_template_kwargs": {"enable_thinking": False},
+    "temperature": 0,
+    "seed": 20260609,
+    "max_tokens": 8,
+    "stream": False,
+}
+request = urllib.request.Request(
+    f"http://127.0.0.1:{port}/v1/chat/completions",
+    data=json.dumps(payload).encode(),
+    headers={"Content-Type": "application/json"},
+    method="POST",
+)
+with urllib.request.urlopen(request, timeout=600) as response:
+    assert response.status == 200, response.status
+    result = json.load(response)
+pathlib.Path(output_path).write_text(json.dumps(result, indent=2) + "\n")
+assert result.get("model") == model, result.get("model")
+choices = result.get("choices")
+assert isinstance(choices, list) and len(choices) == 1, choices
+assert choices[0].get("finish_reason") in {"stop", "length"}, choices[0]
+usage = result.get("usage") or {}
+completion_tokens = usage.get("completion_tokens")
+assert isinstance(completion_tokens, int) and 1 <= completion_tokens <= 8, usage
+assert usage.get("total_tokens") == usage.get("prompt_tokens") + completion_tokens, usage
+PY
+  curl -fsS "http://127.0.0.1:${port}/health" \
+    >"${run_dir}/health-after-exact-canary.json"
 }
 
 capture_failure_journal() {
@@ -530,6 +575,8 @@ if (( healthy == 0 )); then
   fail "server did not become healthy within the bounded startup window"
 fi
 verify_offload_receipt || fail "workers did not each report exact 12.22-GiB selective offload"
+curl -fsS "http://127.0.0.1:${port}/v1/models" >"${run_dir}/models.json"
+run_mtp_exact_canary || fail "exact recurrent MTP canary did not complete"
 verify_mtp_exact_receipt || fail "workers did not each enter exact recurrent MTP mode"
 printf 'HEALTHY: %s pid=%s\n' "${campaign}" "${server_pid}"
 set +e

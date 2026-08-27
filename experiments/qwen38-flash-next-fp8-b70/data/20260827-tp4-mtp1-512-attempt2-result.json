@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "quarantined-output-parity-failure",
+  "status": "quarantined-client-identity-mismatch",
   "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-512-r1",
   "attempt": 2,
   "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-512-r1-attempt2",
@@ -51,6 +51,9 @@
     "baseline_raw_json_sha256": "a458747f6c84b1adbfbf4dff77ab8c5ffabf5446a990fc6711a66ae1119389b4",
     "baseline_status": "failed",
     "baseline_match_all": false,
+    "baseline_chat_template_kwargs": {"enable_thinking": false},
+    "candidate_chat_template_kwargs": null,
+    "identity_match": false,
     "exact_pass_count": 1,
     "exact_case_count": 7,
     "exact_normalized_outputs": {
@@ -72,7 +75,7 @@
     "small_needle_same_hash_as_baseline": false,
     "cached_and_created_cache_values_all_zero": true,
     "responses_complete_by_usage": true,
-    "interpretation": "MTP1 produced complete, coherent reasoning text but did not preserve the accepted MTP0 greedy outputs. The prerequisite parity gate failed, so no timing row is valid or authorized."
+    "interpretation": "MTP1 produced complete, coherent reasoning text, but the candidate omitted the baseline's enable_thinking=false chat-template setting. The client identities did not match, so this run cannot establish either parity or a model/runtime parity failure. No timing row is valid or authorized."
   },
   "speculative_decode": {
     "engaged": true,
@@ -94,12 +97,12 @@
     "healthy_tp4_api": "pass",
     "native_mtp1_engagement": "pass",
     "complete_responses": "pass",
-    "target_output_parity": "fail",
+    "target_output_parity": "not-tested-mismatched-client-identity",
     "throughput": "not-run",
     "promotion_eligible": false,
     "site_state": "quarantined",
     "evidence_grade": "D",
-    "next_gate": "A separately preregistered exact recurrent-state candidate must restore MTP0 output parity before any speed row."
+    "next_gate": "Rerun the unchanged preserved-runtime MTP1 arm with chat_template_kwargs.enable_thinking=false to match the accepted MTP0 baseline before testing any exact-runtime treatment or speed row."
   },
   "sha256": {
     "server.log": "0c3ecdf72e0d189655c9239ede1b084b1796d5261afd11b50c47bf891a5bc5c0",
