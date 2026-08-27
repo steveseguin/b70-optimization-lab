@@ -1,0 +1,95 @@
+{
+  "status": "failed_before_api",
+  "classification": "full-residency routed FP8 MoE device fault after every preceding layer-0 phase synchronized successfully",
+  "scope": "diagnostic timing only; not a performance or quality result",
+  "identity": {
+    "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1",
+    "attempt": 12,
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "f00b56bf2423fae9dca91c7432a0bdc42451b8d1",
+    "kernels_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tp": 4,
+    "ep": 4,
+    "dp": 1,
+    "pcp": 1,
+    "moe_backend": "triton",
+    "all2all_backend_configured": "allgather_reducescatter",
+    "actual_moe_prepare_finalize": "NoDPEP",
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "eager": true,
+    "mtp": 0,
+    "gpu_memory_utilization": 0.92,
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12,
+    "cpu_offload_params": ["ple_embedding.ngram_embedding.weight"],
+    "ple_bytes_per_rank": 12800061440,
+    "xpu_moe_sync_trace": true
+  },
+  "load": {
+    "checkpoint_shards_completed": 131,
+    "checkpoint_shards_total": 131,
+    "checkpoint_loading_seconds_rank0": 549.97,
+    "model_loading_seconds_by_tp_rank": {
+      "0": 558.525771,
+      "1": 558.135039,
+      "2": 558.240356,
+      "3": 558.588584
+    },
+    "reported_accelerator_gib_per_rank": 31.57
+  },
+  "last_passing_trace_phase": {
+    "layer": "language_model.model.layers.0.mlp.experts",
+    "phase": "router_complete",
+    "shape": [64, 10],
+    "all_four_ranks_agree": true,
+    "allocated_bytes_per_rank": 33898646016,
+    "reserved_bytes_per_rank": 34185674752,
+    "max_allocated_bytes_per_rank": 34163364352,
+    "preceding_phases_passed": [
+      "entry",
+      "gate_complete",
+      "dispatch_complete",
+      "shared_no_overlap_complete",
+      "router_complete"
+    ],
+    "missing_phase": "routed_modular_complete"
+  },
+  "faults": [
+    {"tp_rank": 0, "card": "card3", "bdf": "0000:23:00.0", "pid": 1015816, "virtual_address": "0x7ccd73b69000", "level": 1, "guc_id": 22},
+    {"tp_rank": 1, "card": "card4", "bdf": "0000:27:00.0", "pid": 1015867, "virtual_address": "0x7ef4c7569000", "level": 2, "guc_id": 32},
+    {"tp_rank": 2, "card": "card0", "bdf": "0000:43:00.0", "pid": 1015961, "virtual_address": "0x78d507b69000", "level": 2, "guc_id": 42},
+    {"tp_rank": 3, "card": "card2", "bdf": "0000:47:00.0", "pid": 1016019, "virtual_address": "0x7969f3b69000", "level": 1, "guc_id": 52}
+  ],
+  "fault_timing": {
+    "kernel_fault_timestamp": "2026-08-26T21:22:13-04:00",
+    "first_userspace_error_timestamp": "2026-08-26T21:22:29-04:00",
+    "userspace_primary_error": "UR_RESULT_ERROR_OUT_OF_RESOURCES",
+    "shutdown_error": "UR_RESULT_ERROR_DEVICE_LOST",
+    "kernel_evidence": ["unsuccessful -EPERM fault responses", "CAT error 18", "CCS resets", "timed-out jobs", "one device coredump per B70"]
+  },
+  "artifacts": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt12",
+    "server_log": {"bytes": 108263, "sha256": "1cd9f92d18973557017cf6feedcb6cf275eab900922725278ae0c965c658ebe4"},
+    "device_coredumps": {
+      "card0": {"bytes": 449669, "sha256": "01bdedb5d029c67167b55d6ca0d8120d8357231481c85951317c3e0b1b546ca2"},
+      "card2": {"bytes": 449852, "sha256": "8a0423e453de3eafc283c7e25c4e2e38645df5df0372a2d9128917470381d02a"},
+      "card3": {"bytes": 515367, "sha256": "4de6031fb560a7ece41796652570b2f0965f361fb1a98e48a61568fad95a6bbd"},
+      "card4": {"bytes": 449333, "sha256": "5f17d1c506fe6efa894ad1c6d72efc2013098c9b961db04fbb667beca00d23c1"}
+    }
+  },
+  "interpretation": {
+    "proved": "Under full model residency, layer-0 attention and every MoE phase through shared expert and top-k routing complete on every rank; the first failing phase is the modular routed FP8 expert call.",
+    "not_proved": "The Level Zero resource error is not by itself proof of physical HBM exhaustion or corrupt weights.",
+    "no_api_or_decode": true,
+    "no_throughput_result": true
+  },
+  "recovery": {
+    "coredumps_copied_and_hashed_before_release": true,
+    "xe_reloaded_without_reboot": true,
+    "four_device_copy_compute": "pass",
+    "peer_access": "pass",
+    "four_rank_xccl_barrier_allreduce": "pass"
+  }
+}

@@ -57,6 +57,18 @@ def main() -> None:
         action="store_true",
         help="Keep the exact TP4-local 11.92 GiB PLE host-USM view live",
     )
+    parser.add_argument(
+        "--target-allocated-gib",
+        type=float,
+        default=None,
+        help="Touch XPU ballast until torch reports this total allocation",
+    )
+    parser.add_argument(
+        "--target-reserved-gib",
+        type=float,
+        default=None,
+        help="Raise and retain the allocator reservation after ballast is ready",
+    )
     args = parser.parse_args()
 
     torch.manual_seed(20260826)
@@ -86,6 +98,8 @@ def main() -> None:
         "path": args.path,
         "weights": args.weights,
         "ple_uva": args.map_ple_uva,
+        "target_allocated_gib": args.target_allocated_gib,
+        "target_reserved_gib": args.target_reserved_gib,
         "block_shape": block_shape,
         "input_dtype": str(dtype),
         "weight_dtype": str(weight_dtype),
@@ -116,7 +130,6 @@ def main() -> None:
             ),
             flush=True,
         )
-
     hidden_states = torch.randn((args.tokens, hidden), device=device, dtype=dtype).mul_(
         0.01
     )
@@ -187,6 +200,65 @@ def main() -> None:
             flush=True,
         )
     routed_experts = global_experts if args.ep_rank is not None else experts
+    ballast = None
+    if args.target_allocated_gib is not None:
+        if not 1.0 <= args.target_allocated_gib <= 31.75:
+            raise ValueError("target allocation must be between 1.0 and 31.75 GiB")
+        target_bytes = int(args.target_allocated_gib * 1024**3)
+        allocated_before = torch.xpu.memory_allocated()
+        if target_bytes <= allocated_before:
+            raise ValueError(
+                f"target {target_bytes} is not above current {allocated_before}"
+            )
+        ballast = torch.empty(
+            (target_bytes - allocated_before,), dtype=torch.uint8, device=device
+        )
+        ballast.zero_()
+        torch.xpu.synchronize()
+        print(
+            json.dumps(
+                {
+                    "event": "ballast_ready",
+                    "target_bytes": target_bytes,
+                    "allocated_before": allocated_before,
+                    "allocated_after": torch.xpu.memory_allocated(),
+                    "reserved_after": torch.xpu.memory_reserved(),
+                    "max_allocated_after": torch.xpu.max_memory_allocated(),
+                }
+            ),
+            flush=True,
+        )
+    if args.target_reserved_gib is not None:
+        if args.target_allocated_gib is None:
+            raise ValueError("a reserved target requires an allocated target")
+        if not args.target_allocated_gib <= args.target_reserved_gib <= 31.86:
+            raise ValueError("reserved target must be between allocated and 31.86 GiB")
+        target_reserved_bytes = int(args.target_reserved_gib * 1024**3)
+        reserved_before = torch.xpu.memory_reserved()
+        if target_reserved_bytes <= reserved_before:
+            raise ValueError(
+                f"reserved target {target_reserved_bytes} is not above current "
+                f"{reserved_before}"
+            )
+        reservation_padding = torch.empty(
+            (target_reserved_bytes - reserved_before,), dtype=torch.uint8, device=device
+        )
+        reservation_padding.zero_()
+        torch.xpu.synchronize()
+        del reservation_padding
+        torch.xpu.synchronize()
+        print(
+            json.dumps(
+                {
+                    "event": "reservation_ready",
+                    "target_reserved_bytes": target_reserved_bytes,
+                    "allocated_after": torch.xpu.memory_allocated(),
+                    "reserved_after": torch.xpu.memory_reserved(),
+                    "max_allocated_after": torch.xpu.max_memory_allocated(),
+                }
+            ),
+            flush=True,
+        )
     topk_ids = (
         torch.arange(args.tokens * topk, device=device, dtype=torch.int32)
         .remainder_(routed_experts)

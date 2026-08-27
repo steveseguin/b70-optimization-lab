@@ -1,0 +1,59 @@
+{
+  "status": "pass",
+  "scope": "one-B70 allocator-pressure isolation; not a full-model or TP4 result",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "f00b56bf2423fae9dca91c7432a0bdc42451b8d1",
+    "kernels_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "script": "experiments/qwen38-flash-next-fp8-b70/tools/fullshape-triton-fp8-moe-gate.py",
+    "final_script_sha256": "346eeef74854d1aa2946e15c5fc52ffcbf8aa4429e0fd148c43d86266743d8e3",
+    "tokens": 64,
+    "ep_rank": 0,
+    "local_experts": 128,
+    "global_experts": 512,
+    "hidden_size": 2560,
+    "intermediate_size": 640,
+    "top_k": 10,
+    "weights": "real layer-0 rank-0 checkpoint pack",
+    "ple_uva_bytes": 12800061440,
+    "moe_path": "modular NoDPEP Triton FP8"
+  },
+  "full_model_attempt12_boundary": {
+    "allocated_bytes": 33898646016,
+    "reserved_bytes": 34185674752,
+    "max_allocated_bytes": 34163364352,
+    "device_total_bytes": 34242297856,
+    "unreserved_bytes": 56623104
+  },
+  "runs": [
+    {
+      "name": "real-m64-exact-ple-uva-31.57gib-allocated",
+      "status": "pass",
+      "target_allocated_gib": 31.57,
+      "allocated_bytes": 33898846208,
+      "reserved_bytes": 33900462080,
+      "max_allocated_bytes": 33898846208,
+      "elapsed_seconds": 36.17199385400454,
+      "output_shape": [64, 2560],
+      "finite": true
+    },
+    {
+      "name": "real-m64-exact-ple-uva-attempt12-allocation-and-reservation",
+      "status": "pass",
+      "target_allocated_gib": 31.57,
+      "target_reserved_gib": 31.837890625,
+      "allocated_bytes": 33898846208,
+      "reserved_bytes": 34185674752,
+      "max_allocated_bytes": 34184058880,
+      "elapsed_seconds": 36.22487078199629,
+      "output_shape": [64, 2560],
+      "finite": true
+    }
+  ],
+  "excluded_run": {
+    "description": "A 31.0-GiB allocated arm exited without a new kernel-journal fault, but its final stdout and launcher exit code were not retained after the command session yielded. It is excluded from interpretation.",
+    "included_in_interpretation": false
+  },
+  "conclusion": "The exact real routed FP8 kernel passes with the live PLE UVA map at both attempt-12 allocated pressure and attempt-12 allocated-plus-reserved pressure. Raw allocated bytes, allocator reservation, and 54-MiB unreserved headroom do not independently reproduce the full-model fault. Extra headroom may remain operationally prudent, but attempt 12 cannot be classified as a simple physical-HBM or PyTorch-reservation OOM. The next full run must either pass with a minimal low-risk placement margin or capture exact per-rank hidden/top-k inputs and pointer/stride metadata for offline replay."
+}

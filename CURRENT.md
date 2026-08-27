@@ -901,13 +901,23 @@ passed complete Git/LFS, tokenless dry-run, safetensors-header, payload-range,
 and 152,089-tensor index closure. The maintained current-main XPU overlay now
 constructs the model on TP4+EP4, maps the exact 11.92-GiB/rank PLE shard through
 selective UVA, loads all 131 checkpoint shards on all four B70s, and completes
-post-load FP8 processing at about 31.57 GiB reported per rank. Attempt 11 then
-faulted all four devices in the first 64-token profile forward before the API
-became healthy; no decode or throughput result exists. Exact one-B70 gates pass
-both the real routed FP8 expert and real BF16 shared expert at the live M64
-shape. The immediate work is one default-off, explicitly enabled MoE phase
-trace to distinguish a full-residency/preceding-op/full-forward interaction,
-then repair and rerun the same language-only eager MTP0 identity. See the
+post-load FP8 processing at about 31.57 GiB reported per rank. Attempt 12's
+explicit phase trace proved all four ranks complete the layer-0 gate, dispatch,
+BF16 shared expert, and router, then fault simultaneously inside the routed
+expert call before the API becomes healthy; no decode or throughput result
+exists. Exact one-B70 gates pass both the real routed FP8 expert and real BF16
+shared expert at the live M64 shape. The exact routed gate also passes with the
+same 31.57-GiB allocation and 31.837891-GiB allocator reservation as attempt
+12, so a simple allocation/reservation OOM is not established.
+
+The next bounded full attempt adds only 303.125 MiB/rank of low-decode-risk
+headroom by selectively mapping the untied input embedding through XPU UVA.
+The exact rank-local embedding mechanism gate passed with bit-identical sampled
+rows. Attempt 13 also captures rank-unique routed inputs immediately before the
+faulting call. Trace/capture runs are diagnostic and cannot support speed
+claims; if attempt 13 becomes healthy, rerun the same identity with both modes
+off before quality or throughput promotion. If it faults, preserve the exact
+captures and coredumps, recover the devices, and replay one rank offline. See the
 [bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,

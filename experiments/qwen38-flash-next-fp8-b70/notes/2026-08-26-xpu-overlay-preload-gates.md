@@ -351,3 +351,55 @@ router, routed-kernel, and combine completion so the last passing phase
 separates a preceding/full-residency fault from the MoE phase that reports it.
 Structured evidence is in
 `data/20260826-shared-expert-bf16-isolation.json`.
+
+## Attempt 12 phase trace and allocator-pressure replay
+
+Attempt 12 again loaded all 131 shards on all four ranks in 558.14--558.59
+seconds at 31.57 GiB reported per rank. The opt-in trace made the failure
+boundary exact: every rank synchronized successfully after layer-0 entry,
+router-gate projection, dispatch, the complete BF16 shared expert, and top-k
+routing. Every rank's final pass was `router_complete`, shape `[64, 10]`, at
+33,898,646,016 allocated bytes, 34,185,674,752 reserved bytes, and
+34,163,364,352 maximum allocated bytes. No rank reached
+`routed_modular_complete`. All four devices faulted simultaneously in the
+routed call, then recorded the same error-40/error-20 and xe reset pattern as
+attempt 11. The logs and four coredumps are preserved and hashed in
+`data/20260826-tp4-first-load-attempt12.json`.
+
+The memory counters were not accepted as proof of a simple OOM. A one-B70
+replay used the exact real layer-0 rank-0 expert weights, M64 geometry, global
+EP map, and 11.92-GiB PLE UVA mapping. It passed once with 31.57 GiB allocated,
+then passed again with 31.57 GiB allocated and the allocator reservation raised
+to the exact attempt-12 31.837891 GiB boundary, leaving the same 54 MiB outside
+the reservation. The second replay's maximum allocation was slightly higher
+than attempt 12. Therefore allocated pressure, cached reservation, and raw
+unreserved headroom do not independently reproduce the fault.
+
+The next full candidate adds a 303.125-MiB/rank selective-UVA margin by moving
+only the untied input embedding, not the dense LM head or per-layer projections.
+The embedding reads one 5,120-byte BF16 row/rank during decode, making it the
+lowest expected decode-risk placement change. Source patch 0012 wires the
+directly constructed embedding through the existing offloader; without that
+patch, merely adding the selector would silently do nothing. Patch 0013 adds a
+separate default-off exact routed-input capture. On a diagnostic failure it
+writes rank-unique hidden states, top-k weights/IDs, routing buffers, and
+pointer/shape/stride metadata immediately before the kernel, allowing an
+offline one-B70 replay without another full load. Neither diagnostic mode is
+allowed in a speed run. Pressure evidence is in
+`data/20260826-fullshape-triton-fp8-moe-pressure-isolation.json`.
+
+A bounded one-B70 mechanism gate then instantiated the exact TP4 rank-local
+input-embedding shape (`[62080, 2560]`, BF16), routed it through patch 0012's
+Qwen helper and the real XPU UVA offloader, and observed exactly 317,849,600
+offloaded bytes. Four boundary/interior rows matched bit-for-bit before and
+after offload. This proves the selector is effective and the embedding lookup
+remains exact; it is not a full-model health or performance claim. The receipt
+is `data/20260826-embed-uva-offload-gate.json`.
+
+Attempt 13 is therefore the next bounded full-model diagnostic. It retains the
+exact eager TP4+EP4 MTP0 identity, raises the selective UVA allowance to 12.25
+GiB only for the existing PLE embedding and untied input embedding, enables the
+phase trace, and enables rank-unique routed-input capture. A healthy diagnostic
+must still be followed by a trace/capture-off qualification before any speed
+claim; a fault must preserve and hash the capture and device evidence before
+recovery.

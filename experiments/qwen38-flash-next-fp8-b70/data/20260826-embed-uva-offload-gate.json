@@ -1,0 +1,34 @@
+{
+  "device": "xpu:0",
+  "dtype": "torch.bfloat16",
+  "elapsed_seconds": 0.5510270950035192,
+  "environment": {
+    "LD_LIBRARY_PATH": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/cv2/../../lib64:/mnt/usb-models/qwen38-build/runtime-core-moe-1b0e26a-b70/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib",
+    "PYTHONPATH": "/mnt/usb-models/qwen38-build/runtime-core-moe-1b0e26a-b70:/home/steve/src/vllm-current-main",
+    "VLLM_TARGET_DEVICE": "xpu",
+    "ZE_AFFINITY_MASK": "0"
+  },
+  "exact_sample_match": true,
+  "expected_and_observed_offload_bytes": 317849600,
+  "prefix": "language_model.model",
+  "purpose": "exact TP4 rank-local input-embedding UVA offload gate",
+  "sample_indices": [
+    0,
+    1,
+    31039,
+    62079
+  ],
+  "sample_sha256_after": "f38c390bf55c1a5aea491175362158a40adcc0d43fd6755d467dffe011e0fac5",
+  "sample_sha256_before": "f38c390bf55c1a5aea491175362158a40adcc0d43fd6755d467dffe011e0fac5",
+  "schema_version": 1,
+  "script_sha256": "0ae388701d371edcea0edef0b4e8c1c45d18899731be15b7d654c5a7f1264baa",
+  "selector": "embed_tokens.weight",
+  "shape": [
+    62080,
+    2560
+  ],
+  "status": "pass",
+  "torch_version": "2.11.0+xpu",
+  "uva_offloading": true,
+  "weight_device_after": "xpu:0"
+}

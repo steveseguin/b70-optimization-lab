@@ -26,6 +26,7 @@ vllm_bin="${VLLM_BIN:-/home/steve/.venvs/vllm-xpu/bin/vllm}"
 attempt="${ATTEMPT:-1}"
 port="${PORT:-19638}"
 moe_sync_trace="${Q38_MOE_SYNC_TRACE:-0}"
+moe_capture="${Q38_MOE_CAPTURE:-0}"
 run_parent="${RUN_PARENT:-/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70}"
 cache_parent="${CACHE_PARENT:-/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70}"
 run_dir="${run_parent}/${campaign}-attempt${attempt}"
@@ -37,7 +38,7 @@ runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtim
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 
-expected_vllm_head="f00b56bf2423fae9dca91c7432a0bdc42451b8d1"
+expected_vllm_head="396b4e688d02c0922761fb98fe9fb26f6df6e5ff"
 expected_kernels_head="7cf216774fb3c5eabf20d1f481d6548682604c37"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
@@ -45,6 +46,7 @@ expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail "ATTEMPT must be a positive integer"
 [[ "${port}" =~ ^[1-9][0-9]*$ ]] || fail "PORT must be a positive integer"
 [[ "${moe_sync_trace}" =~ ^[01]$ ]] || fail "Q38_MOE_SYNC_TRACE must be 0 or 1"
+[[ "${moe_capture}" =~ ^[01]$ ]] || fail "Q38_MOE_CAPTURE must be 0 or 1"
 [[ -x "${python}" && -x "${vllm_bin}" ]] || fail "pinned vLLM virtual environment is missing"
 [[ "$(head -1 "${vllm_bin}")" == "#!${python}" ]] || fail "vLLM wrapper does not use the pinned interpreter"
 [[ -d "${model}" && -d "${stage}/vllm_xpu_kernels" ]] || fail "model or staged runtime is missing"
@@ -83,6 +85,7 @@ ss -ltn 2>/dev/null | grep -q ":${port} " && fail "port ${port} is already open"
 
 mem_available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
 (( mem_available_kib >= 100 * 1024 * 1024 )) || fail "less than 100 GiB host memory is available"
+(( $(df --output=avail -B1 / | tail -1) >= 12 * 1024 * 1024 * 1024 )) || fail "less than 12 GiB root/tmp space is available"
 (( $(df --output=avail -B1 /dev/shm | tail -1) >= 32 * 1024 * 1024 * 1024 )) || fail "less than 32 GiB shared memory is available"
 (( $(df --output=avail -B1 /mnt/usb-models | tail -1) >= 300 * 1024 * 1024 * 1024 )) || fail "less than 300 GiB external space is available"
 [[ "$(findmnt -no FSTYPE --target /tmp)" =~ ^(ext4|tmpfs)$ ]] || fail "/tmp must be ext4 or tmpfs for vLLM IPC"
@@ -90,6 +93,7 @@ mem_available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
 mkdir -p "${run_dir}" "${cache_dir}/vllm" "${cache_dir}/xdg" \
   "${compile_cache_dir}/torchinductor" "${compile_cache_dir}/triton" "${rpc_dir}"
 chmod 700 "${rpc_dir}"
+df -B1 / /tmp /dev/shm /mnt/usb-models >"${run_dir}/filesystem-preflight.txt"
 
 server_pid=""
 cleanup() {
@@ -157,6 +161,11 @@ export VLLM_XPU_ENABLE_XPU_GRAPH=0
 export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0
 export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0
 export VLLM_XPU_MOE_SYNC_TRACE="${moe_sync_trace}"
+if [[ "${moe_capture}" == 1 ]]; then
+  export VLLM_XPU_MOE_CAPTURE_DIR="${run_dir}/routed-input-captures"
+else
+  unset VLLM_XPU_MOE_CAPTURE_DIR
+fi
 
 export CCL_ATL_TRANSPORT=ofi
 export FI_PROVIDER=tcp
@@ -174,6 +183,7 @@ export Q38_MODEL_PATH="${model}"
 export Q38_RUN_DIR="${run_dir}"
 export Q38_VALIDATION_ROOT="${validation_root}"
 export Q38_MOE_RECEIPT="${moe_receipt}"
+export Q38_MOE_CAPTURE="${moe_capture}"
 
 "${python}" - <<'PY'
 import os
@@ -256,8 +266,10 @@ args = EngineArgs(
     all2all_backend='allgather_reducescatter', language_model_only=True,
     moe_backend='triton', enforce_eager=True, max_model_len=512,
     max_num_seqs=1, max_num_batched_tokens=64,
-    enable_prefix_caching=False, offload_backend='uva', cpu_offload_gb=12,
-    cpu_offload_params={'ple_embedding.ngram_embedding.weight'},
+    enable_prefix_caching=False, offload_backend='uva', cpu_offload_gb=12.25,
+    cpu_offload_params={
+        'ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'
+    },
     gpu_memory_utilization=.92, kv_cache_dtype='auto', block_size=64,
     generation_config='vllm', load_format='safetensors', async_scheduling=False,
 )
@@ -266,19 +278,31 @@ assert config.parallel_config.tensor_parallel_size == 4
 assert config.parallel_config.enable_expert_parallel
 assert config.parallel_config.all2all_backend == 'allgather_reducescatter'
 assert config.offload_config.offload_backend == 'uva'
-assert config.offload_config.uva.cpu_offload_gb == 12
-assert config.offload_config.uva.cpu_offload_params == {'ple_embedding.ngram_embedding.weight'}
+assert config.offload_config.uva.cpu_offload_gb == 12.25
+assert config.offload_config.uva.cpu_offload_params == {
+    'ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'
+}
 assert config.kernel_config.moe_backend == 'triton'
 assert config.speculative_config is None
 assert config.scheduler_config.max_num_batched_tokens == 64
 selector = 'ple_embedding.ngram_embedding.weight'
 assert f'.{selector}.' in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight.'
 assert f'.{selector}.' not in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight_scale.'
+embed_selector = 'embed_tokens.weight'
+assert f'.{embed_selector}.' in '.language_model.model.embed_tokens.weight.'
 ple_bytes_per_rank = 12_800_061_440
-assert ple_bytes_per_rank < 12 * 1024**3
-assert (12 * 1024**3) - ple_bytes_per_rank < 128 * 1024**2
-print('engine_config=tp4_ep4_triton_eager_mtp0_selective_ple_uva')
+embed_bytes_per_rank = 317_849_600
+offload_bytes_per_rank = ple_bytes_per_rank + embed_bytes_per_rank
+offload_budget = int(12.25 * 1024**3)
+assert offload_bytes_per_rank < offload_budget
+assert offload_budget - offload_bytes_per_rank < 64 * 1024**2
+capture_dir = os.getenv('VLLM_XPU_MOE_CAPTURE_DIR', '')
+assert bool(capture_dir) == bool(int(os.environ['Q38_MOE_CAPTURE']))
+assert envs.VLLM_XPU_MOE_CAPTURE_DIR == capture_dir
+print('engine_config=tp4_ep4_triton_eager_mtp0_selective_ple_and_embed_uva')
 print(f'ple_bytes_per_rank={ple_bytes_per_rank}')
+print(f'embed_bytes_per_rank={embed_bytes_per_rank}')
+print(f'offload_bytes_per_rank={offload_bytes_per_rank}')
 PY
 
 if ! timeout 180s "${python}" -m torch.distributed.run \
@@ -314,12 +338,13 @@ PY
   printf 'stage=%s\n' "${stage}"
   printf 'compile_cache=%s\n' "${compile_cache_dir}"
   printf 'offload_backend=uva\n'
-  printf 'cpu_offload_gb=12\n'
-  printf 'cpu_offload_params=ple_embedding.ngram_embedding.weight\n'
+  printf 'cpu_offload_gb=12.25\n'
+  printf 'cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight\n'
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
   printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512 max_num_batched_tokens=64\n'
   printf 'xpu_moe_sync_trace=%s diagnostic_timing=%s\n' "${moe_sync_trace}" "${moe_sync_trace}"
+  printf 'xpu_moe_capture=%s capture_dir=%s\n' "${moe_capture}" "${VLLM_XPU_MOE_CAPTURE_DIR:-}"
 } >"${run_dir}/identity.txt"
 
 sha256sum "${model}/config.json" "${model}/model.safetensors.index.json" \
@@ -352,8 +377,8 @@ args=(
   --max-num-batched-tokens 64
   --no-enable-prefix-caching
   --offload-backend uva
-  --cpu-offload-gb 12
-  --cpu-offload-params ple_embedding.ngram_embedding.weight
+  --cpu-offload-gb 12.25
+  --cpu-offload-params ple_embedding.ngram_embedding.weight embed_tokens.weight
   --gpu-memory-utilization 0.92
   --kv-cache-dtype auto
   --block-size 64
@@ -367,9 +392,28 @@ printf '%q ' "${vllm_bin}" serve "${args[@]}" >"${run_dir}/server-command.shell.
 printf '\n' >>"${run_dir}/server-command.shell.txt"
 
 printf 'Launching %s; log=%s\n' "${campaign}" "${server_log}"
+journal_start_epoch=$(date +%s)
 setsid "${vllm_bin}" serve "${args[@]}" >"${server_log}" 2>&1 &
 server_pid=$!
 printf '%s\n' "${server_pid}" >"${run_dir}/server.pid"
+
+verify_offload_receipt() {
+  local rank count ok=1
+  for rank in 0 1 2 3; do
+    count=$(grep -F "Worker_TP${rank}_EP${rank}" "${server_log}" | \
+      grep -Fc 'Total CPU offloaded parameters: 12.22' || true)
+    printf 'rank=%s exact_12.22_log_count=%s\n' "${rank}" "${count}"
+    [[ "${count}" == 1 ]] || ok=0
+  done >"${run_dir}/offload-log-receipt.txt"
+  (( ok == 1 ))
+}
+
+capture_failure_journal() {
+  journalctl -k --since "@${journal_start_epoch}" --no-pager \
+    >"${run_dir}/kernel-journal-since-launch.log" 2>&1 || true
+  sha256sum "${run_dir}/kernel-journal-since-launch.log" \
+    >"${run_dir}/kernel-journal-since-launch.sha256"
+}
 
 healthy=0
 for _ in $(seq 1 720); do
@@ -384,9 +428,12 @@ for _ in $(seq 1 720); do
   sleep 5
 done
 if (( healthy == 0 )); then
+  capture_failure_journal
+  verify_offload_receipt || fail "workers did not each report exact 12.22-GiB selective offload"
   tail -n 160 "${server_log}" >&2 || true
   fail "server did not become healthy within the bounded startup window"
 fi
+verify_offload_receipt || fail "workers did not each report exact 12.22-GiB selective offload"
 printf 'HEALTHY: %s pid=%s\n' "${campaign}" "${server_pid}"
 set +e
 wait "${server_pid}"
