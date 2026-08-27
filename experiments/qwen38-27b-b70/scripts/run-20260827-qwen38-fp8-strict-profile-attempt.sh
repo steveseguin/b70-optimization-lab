@@ -9,15 +9,34 @@ out_dir=${OUT_DIR:?set OUT_DIR to a new evidence directory}
 cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new empty compile-cache path}
 suite=${SUITE:-${repo}/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}
 readiness_timeout=${READINESS_TIMEOUT_S:-600}
+cache_policy=${CACHE_POLICY:-fresh}
 
 [[ ! -e "${out_dir}" ]] || {
   printf 'refusing to overwrite evidence: %s\n' "${out_dir}" >&2
   exit 1
 }
-[[ ! -e "${cache_dir}" ]] || {
-  printf 'fresh-server attempt requires a new cache path: %s\n' "${cache_dir}" >&2
-  exit 1
-}
+case "${cache_policy}" in
+  fresh)
+    [[ ! -e "${cache_dir}" ]] || {
+      printf 'fresh-cache attempt requires a new cache path: %s\n' "${cache_dir}" >&2
+      exit 1
+    }
+    ;;
+  compiled-kernel-replay)
+    [[ -d "${cache_dir}" ]] || {
+      printf 'compiled-kernel replay requires a populated cache directory: %s\n' "${cache_dir}" >&2
+      exit 1
+    }
+    find "${cache_dir}" -type f -print -quit | grep -q . || {
+      printf 'compiled-kernel replay cache is empty: %s\n' "${cache_dir}" >&2
+      exit 1
+    }
+    ;;
+  *)
+    printf 'CACHE_POLICY must be fresh or compiled-kernel-replay\n' >&2
+    exit 2
+    ;;
+esac
 mkdir -p "${out_dir}"
 
 case "${profile}" in
@@ -99,15 +118,21 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+if [[ "${cache_policy}" == compiled-kernel-replay ]]; then
+  find "${cache_dir}" -type f -print0 | sort -z | xargs -0 sha256sum \
+    >"${out_dir}/compile-cache-before.sha256"
+fi
+
 python3 - "${out_dir}/campaign-identity.json" "${profile}" "${attempt}" \
-  "${model_dir}" "${cache_dir}" "${suite}" "${port}" "${container}" <<'PY'
+  "${model_dir}" "${cache_dir}" "${suite}" "${port}" "${container}" \
+  "${cache_policy}" <<'PY'
 import datetime as dt
 import hashlib
 import json
 import pathlib
 import sys
 
-out, profile, attempt, model, cache, suite, port, container = sys.argv[1:]
+out, profile, attempt, model, cache, suite, port, container, cache_policy = sys.argv[1:]
 suite_path = pathlib.Path(suite)
 data = {
     "schema": "neural.download.qwen38-fp8-strict-attempt.v1",
@@ -116,6 +141,9 @@ data = {
     "attempt": attempt,
     "model_dir": model,
     "fresh_compile_cache": cache,
+    "compile_cache_policy": cache_policy,
+    "compiled_kernel_cache_only": cache_policy == "compiled-kernel-replay",
+    "prompt_kv_response_history_cache_reuse": False,
     "suite": str(suite_path),
     "suite_sha256": hashlib.sha256(suite_path.read_bytes()).hexdigest(),
     "port": int(port),
@@ -195,4 +223,8 @@ PY
 curl -fsS "http://127.0.0.1:${port}/health" >"${out_dir}/post-health.json"
 trap - EXIT INT TERM
 cleanup
+if [[ "${cache_policy}" == compiled-kernel-replay ]]; then
+  find "${cache_dir}" -type f -print0 | sort -z | xargs -0 sha256sum \
+    >"${out_dir}/compile-cache-after.sha256"
+fi
 printf 'complete profile=%s attempt=%s evidence=%s\n' "${profile}" "${attempt}" "${out_dir}"
