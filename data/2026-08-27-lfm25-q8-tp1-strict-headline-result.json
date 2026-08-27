@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.strict-headline-result.v1",
+  "profile": "lfm25-q8-tp1",
+  "status": "qualified",
+  "headline": {
+    "value": 132.13745667864433,
+    "unit": "tok/s",
+    "aggregation": "median of two fresh-server class-balanced medians",
+    "attempt_values": [
+      132.16164589689635,
+      132.1132674603923
+    ],
+    "relative_range_percent": 0.03661220498718485
+  },
+  "contract": {
+    "cards": 1,
+    "tp": 1,
+    "mtp": 0,
+    "reasoning": "off",
+    "configured_context_tokens": 8192,
+    "kv": "f16",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "max_output_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "cache": "zero",
+    "fresh_servers": 2
+  },
+  "quality": {
+    "both_workload_gates_passed": true,
+    "both_objective_canary_batteries_passed": true,
+    "complete_token_arrays_exact": true,
+    "exact_prompts": 12,
+    "total_prompts": 12
+  },
+  "evidence": {
+    "comparison": "data/2026-08-27-lfm25-q8-tp1-strict-headline-comparison.json",
+    "comparison_sha256": "d99a9ac74facb17194b1e3d2050aa94ea7dad777ec331c043abcf94922f26d5a",
+    "attempt_a": "data/neural-download-stock-headline-lfm25-20260827-r1a",
+    "attempt_b": "data/neural-download-stock-headline-lfm25-20260827-r1b",
+    "preregistration": "data/2026-08-27-neural-download-stock-headline-closure-prereg.json"
+  },
+  "notes": "The headline is the median of the two attempt-level class-balanced medians. Loaded weights and compiled kernels were warm; prompts, KV reuse, response reuse, context checkpoints, and learned drafting were disabled. Every request reported zero cached tokens."
+}

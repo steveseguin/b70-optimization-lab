@@ -5,7 +5,7 @@
   "name": "LFM2.5 2.6B",
   "display_name": "LFM2.5 2.6B",
   "publisher": "Liquid AI",
-  "updated_at": "2026-08-23",
+  "updated_at": "2026-08-27",
   "summary": "Liquid AI's LFM2.5, a compact 2.6B model with a hybrid convolution-and-attention design. Very fast on one Arc Pro B70 and a good fit for lightweight assistants and edge-style workloads.",
   "architecture": {
     "class": "LFM2ForCausalLM",
@@ -103,12 +103,12 @@
         "kv": "f16",
         "configured_max_context_tokens": 8192
       },
-      "workload": "two fresh servers; cold 12-prompt suite; 512-token responses; conventional 99-interval median; target-only; cache-zero",
+      "workload": "two fresh servers; complete 12-prompt/six-class suite; 512-token cap; median within prompt class then median across class medians; 100-event/99-interval decode window; target-only; cache-zero",
       "metrics": {
-        "decode_tok_s": [132.351606, 132.467576]
+        "decode_tok_s": [132.16164589689635, 132.1132674603923]
       },
-      "quality": "8-repeat hash stability, arithmetic, exact-copy, and JSON-schema canaries passed; answers were correct but the model emitted untagged reasoning prose",
-      "evidence": "repro/lfm25-26b-q8-b70/README.md"
+      "quality": "both workload gates and objective-canary batteries passed; cached_tokens=0 for every request; complete token arrays exact 12/12 across fresh servers",
+      "evidence": "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json"
     }
   ],
   "series_measurements": [
@@ -142,7 +142,7 @@
     {
       "id": "lfm-serving-operating-point",
       "title": "Serving repeat",
-      "subtitle": "Q8_0 · TP1 · 8K configured · f16 KV · cold 12-prompt cache-zero suite",
+      "subtitle": "Q8_0 · TP1 · MTP0 · 8K configured · f16 KV · full 12-prompt/six-class cache-zero suite",
       "x_label": "tensor parallel cards",
       "discrete": true,
       "metrics": ["decode_tok_s"],

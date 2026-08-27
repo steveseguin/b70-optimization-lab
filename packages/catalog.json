@@ -414,9 +414,15 @@
           "stock upstream",
           "novice"
         ],
-        "published_at": "2026-08-22",
-        "featured_metric": null,
-        "benchmark_status": "The 132.351606/132.467576 varied-suite observations and objective canary summary are preserved in the guide, but their raw operating-point and canary JSON files are not closed in this repository. Import and hash-bind those files, then replay the quality/determinism gate before assigning a strict headline."
+        "published_at": "2026-08-27",
+        "featured_metric": {
+          "value": 132.13745667864433,
+          "unit": "tok/s",
+          "label": "strict class-balanced decode",
+          "scope": "Median of two fresh-server class-balanced medians over the complete 12-prompt/six-class, 512-cap, cache-zero native HTTP suite; one B70, TP1, MTP0, reasoning off, F16 KV, 8K configured context. Both objective-canary batteries passed and complete token arrays matched 12/12 across servers.",
+          "evidence": "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json"
+        },
+        "benchmark_status": "Strict single-user headline qualified on 2026-08-27. The older 132.351606/132.467576 observations remain historical only because their raw artifacts were not retained."
       },
       "contributors": [
         {
@@ -426,8 +432,8 @@
           "profile": "https://github.com/steveseguin/b70-optimization-lab",
           "contribution": "Intake verification, bring-up, baselines, depth sweep, operating point, canary battery, package.",
           "status": "integrated",
-          "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+          "validated_effect": "Stock-upstream characterization; no lab patches in this package. The strict paired single-user result is 132.137457 tok/s.",
+          "evidence": "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json"
         }
       ],
       "performance_profiles": [
@@ -516,7 +522,7 @@
       ],
       "known_limitations": [
         "Emits untagged reasoning prose before final answers regardless of the reasoning flag; answers correct but verbose.",
-        "Canary battery is objective self-consistency only; no cross-model oracle.",
+        "The quality gate establishes objective correctness and exact fresh-server repeatability for this identity; it is not a cross-model capability comparison.",
         "Clean-host beginner flow not yet executed."
       ],
       "hardware": {
@@ -543,9 +549,9 @@
       },
       "commands": {
         "preflight": "python3 scripts/verify-neural-download-model.py repro/lfm25-26b-q8-b70/model-manifest.json \"$MODEL_DIR\" && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
-        "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/LFM2.5-2.6B-Q8_0.gguf --alias lfm25 --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+        "launch": "$BUILD_DIR/bin/llama-server --model $MODEL_DIR/LFM2.5-2.6B-Q8_0.gguf --alias lfm25 --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --split-mode none --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --no-cache-prompt --slot-prompt-similarity 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
         "health": "curl -fsS http://127.0.0.1:18100/health",
-        "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model lfm25 --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
+        "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model lfm25 --api-mode native-raw --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 42 --timeout 900 --return-token-ids --require-natural-eos --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0,\"top_p\":1}' --out performance.json && python3 scripts/neural-download-canaries.py --base-url http://127.0.0.1:18100 --model lfm25 --out canaries.json",
         "stop": "pkill -x llama-server"
       },
       "dependencies": [
@@ -554,13 +560,19 @@
         "repro/lfm25-26b-q8-b70/lfm25-26b-q8.sweep.json",
         "repro/lfm25-26b-q8-b70/lfm25-26b-q8.meta.json",
         "repro/lfm25-26b-q8-b70/depth-sweep.svg",
+        "data/2026-08-27-neural-download-stock-headline-closure-prereg.json",
+        "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json",
+        "data/2026-08-27-lfm25-q8-tp1-strict-headline-comparison.json",
+        "data/neural-download-stock-headline-lfm25-20260827-r1a/qualification.json",
+        "data/neural-download-stock-headline-lfm25-20260827-r1b/qualification.json",
+        "scripts/run-neural-download-stock-headline-attempt.sh",
         "data/neural-download-audit-host-depth-sweeps-20260822/README.md",
         "scripts/verify-neural-download-model.py",
         "docs/neural-download-packet-standard.md"
       ],
       "missing": [
         "tested clean-host platform installation",
-        "additional operating points beyond the 8K standard",
+        "output-qualified HTTP concurrency",
         "beginner recovery flow"
       ]
     },
@@ -675,6 +687,9 @@
         "repro/minimax-m27-b70-89tps-20260520/scripts/05-run-benchmark.sh",
         "repro/minimax-m27-b70-89tps-20260520/manifests/model-pin.json",
         "repro/minimax-m27-b70-89tps-20260520/results/promoted-result-20260519.json",
+        "data/localmaxxing-minimax-m27-prod-c1-systemd-near32k-20260526.payload.json",
+        "data/localmaxxing-responses/minimax-m27-prod-c1-systemd-near32k-20260526.response.json",
+        "docs/minimax-production-c1-service.md",
         "results/minimax-m27-int4-autoround-b70/README.md"
       ],
       "missing": [

@@ -18,6 +18,16 @@ pins the immutable revision above for future package replays; this is a
 reconstruction pin, not a claim that the historical payload has been proven
 byte-identical. See `manifests/model-pin.json`.
 
+A separately measured production request at **32,264 actual prompt tokens**
+and 64 output tokens produced **63.9086 decode tok/s after TTFT**, with
+**23.336 s TTFT**. LocalMaxxing approved receipt
+`cmpm35jsa0003rt01zghtmwip`. This is a discrete near-32K service observation,
+not a value extrapolated from the 2K headline and not a controlled context
+curve: the stored production observations use different output lengths. It
+also carries the historical payload-identity limitation above. Evidence:
+`../../data/localmaxxing-minimax-m27-prod-c1-systemd-near32k-20260526.payload.json`
+and `../../docs/minimax-production-c1-service.md`.
+
 This is the older speed-focused 2K-context repro. For the newer OpenAI-compatible server recipe that defaults to a `32768` token context window, see `../minimax-m27-b70-110tps-ubuntu24-20260523/README.md`.
 
 ## Important Caveats

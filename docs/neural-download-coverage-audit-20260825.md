@@ -1,6 +1,6 @@
-# neural.download coverage audit — 2026-08-25
+# neural.download coverage audit — opened 2026-08-25, updated 2026-08-27
 
-This is a point-in-time audit of the 14 canonical manifests in
+This is a current audit of the 16 canonical manifests in
 `packages/*/package.json`. It counts only measurements attached to the exact
 model, artifact, quantization, runtime, card count, KV type, and workload. A
 configured context limit, a projection, a different quant, or a raw engine
@@ -10,12 +10,38 @@ batch is never substituted for an unmeasured HTTP deployment.
 
 | package-level evidence | packages | coverage |
 | --- | ---: | ---: |
-| headline single-user measurement | 14 / 14 | 100% |
-| directly measured decode at approximately 32K or 32K | 9 / 14 | 64% |
-| HTTP/service TTFT profile | 5 / 14 | 36% |
-| output-audited HTTP concurrency profile | 5 / 14 | 36% |
-| sequential-output-invariant HTTP concurrency profile | 0 / 14 | 0% |
-| clean-host installation and replay | 0 / 14 | 0% |
+| strict or package-qualified headline single-user measurement | 12 / 16 | 75% |
+| directly measured decode at approximately 32K or 32K | 13 / 16 | 81% |
+| HTTP/service TTFT profile | 6 / 16 | 38% |
+| output-audited HTTP concurrency profile | 6 / 16 | 38% |
+| sequential-output-invariant HTTP concurrency profile | 0 / 16 | 0% |
+| clean-host installation and replay | 0 / 16 | 0% |
+
+The four absent package headlines are intentional, not forgotten cells:
+Nemotron 3.5 and Ornith 9B lost their public numbers because their raw strict
+artifacts were not retained; Ornith 35B matched 0/12 complete natural-response
+arrays across fresh stock servers; Qwen3.8 FP8 failed the same fresh-server
+output gate at 8/12. LFM2.5 was formerly in this group, but a preregistered
+two-server replay on 2026-08-27 qualified **132.137457 tok/s** with complete
+arrays exact 12/12 and all workload/cache/canary gates passing.
+
+The home picker was checked cell by cell on 2026-08-27. Two omissions had
+publishable evidence and are now filled: the LFM2.5 strict headline above and
+MiniMax M2.7's discrete 32,264-prompt-token production observation at
+**63.9086 tok/s** after TTFT. The MiniMax cell is daggered because it used a
+64-token output and carries the package's documented historical payload-pin
+limitation. Laguna's stored 32,640-token **39.5886 tok/s** diagnostic is not
+shown as a number: target-only equality failed every row from 4K through
+32,640, so the picker says **withheld after quality failure** instead.
+
+The remaining blank picker cells have no exact, quality-appropriate result for
+their displayed tuple. In particular, raw-engine concurrency does not fill an
+HTTP cell; a configured 32K capacity with a short active prompt does not fill a
+32K-input cell; Q4 target or target-only measurements do not fill Q8+MTP2; and
+one topology, quantization, or speculative depth never fills another. Ornith
+9B and Nemotron are queued for fresh strict replay on this two-card host. The
+four-card Laguna, Muse, MiniMax, and DeepSeek service gaps require the four-card
+host and remain blank rather than inferred.
 
 The home picker had an additional publication defect: it showed only one of
 the eight existing 32K measurements. This audit wires the directly measured
@@ -104,7 +130,7 @@ returned 128 raw token IDs with cache zero and passed output isolation.
 | ---: | --- | --- | --- |
 | 1 | Qwen3.8 27B Q4_K_M TP1 | batch-shape-invariant greedy output for multi-user serving | Realistic HTTP speed/TTFT, exact 2K→32K service depth, and a preregistered output-audited stable HTTP capacity curve are now closed. The corrected 64-slot curve returns complete token IDs and has no cross-base collision, but strict sequential token identity varies for multi-user serving. |
 | 2 | Ornith 1.5 35B Q4_K_M TP1 | realistic HTTP TTFT/depth and qualified concurrency | Its context and raw 1→32 engine curves are complete; the service-shaped workload has not yet been run. |
-| 3 | Qwen3.8 Q8 TP1, LFM2.5, Nemotron 3.5, Ornith 9B | realistic HTTP TTFT/depth; qualified concurrency for the three small/stock packages | Qwen Q8 now has output-audited HTTP concurrency but not realistic-prompt TTFT/depth. The other packages were first brought in as stock one-card baselines and depth-screened with `llama-bench`; package work outpaced service profiling. |
+| 3 | Qwen3.8 Q8 TP1, LFM2.5, Nemotron 3.5, Ornith 9B | realistic HTTP TTFT/depth; qualified concurrency for the three small/stock packages; strict headline closure for Nemotron and Ornith 9B | Qwen Q8 now has output-audited HTTP concurrency but not realistic-prompt TTFT/depth. LFM's strict headline is closed; the other stock packages were first brought in as baselines and depth-screened with `llama-bench`, so service profiling and two headline replays remain. |
 | 4 | Laguna S, Muse-Glimmer, MiniMax M2.7 | decode/prefill/TTFT context curves and qualified concurrency | These are four-card or historical specialist stacks with much higher setup cost; only their promoted workloads were preserved. |
 | 5 | all 14 packages | clean-host Intel/oneAPI replay; beginner recovery outside Qwen Q4 TP1 | Every current result was reconstructed or replayed on an established lab host. Qwen Q4 TP1 now has a failure-oriented beginner recovery checklist plus a primary-source clean-host runbook and inventory receipt script. This host has overlapping oneAPI 2025.3/2026.0/2026.1 packages, so it correctly remains uncertified; only a fresh supported OS can close the badge. |
 
@@ -147,10 +173,11 @@ Qwen3.6 depth/topology cells where a compatible runtime exists.
 MiniMax M2.7 artifacts are checksum-verified in USB cold storage because its
 promoted deployment needs four B70s, so this host cannot honestly fill that
 four-card service matrix. The first-wave
-LFM2.5/Nemotron/Ornith files are not presently mounted here; their existing
-measurements remain valid, but new service runs wait for local or network
-staging. Four-card Laguna, Muse, MiniMax, and DeepSeek gaps stay assigned to a
-four-card machine rather than being approximated here.
+model share is mounted. LFM2.5 was copied to local NVMe and its strict pair is
+complete. Ornith 9B is being staged to local NVMe for the same two-attempt gate;
+Nemotron follows. Network-storage timing is excluded from benchmark attempts.
+Four-card Laguna, Muse, MiniMax, and DeepSeek gaps stay assigned to a four-card
+machine rather than being approximated here.
 
 ## Completion rule
 

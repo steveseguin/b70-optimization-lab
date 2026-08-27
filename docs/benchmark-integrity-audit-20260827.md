@@ -48,6 +48,13 @@ They do not become general single-user headlines.
 | Qwen3.8 27B FP8/W8A16 MTP8, `146.814418 tok/s` | **Selected-fixture diagnostic only.** It used one 40-token high-acceptance fixture and therefore measures that fixture, not representative model speed. | Removed from public headline graphs and package speed; historical mechanism notes carry correction banners. |
 | Qwen3.8 FP8/W8A16 MTP0 c128 `1,112.570323 tok/s` and exact-32K `31.489587 tok/s` | **Retain as separately scoped capacity/context evidence.** These are output-audited target-only measurements, not substitutes for the missing varied-prompt single-user headline. | Keep explicit aggregate/context labels; never use either as the general one-user number. |
 
+Post-audit closure: LFM2.5 2.6B Q8_0 subsequently passed the missing contract
+at **`132.137457 tok/s`**, the median of fresh-server class-balanced values
+`132.161646` and `132.113267`. Both complete 12-prompt/six-class, 512-cap
+attempts passed cache-zero and objective-canary gates, and complete token arrays
+matched 12/12. This replaces the old untracked observations rather than
+retroactively validating them. See the [strict result](../data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json).
+
 Post-audit closure: Qwen3.8 Q8_0 TP2 subsequently passed the exact missing
 contract on two fresh servers. The full 12-prompt/six-class, 512-cap,
 cache-zero attempts measured `36.733956` and `36.718938 tok/s`, passed both
