@@ -79,9 +79,10 @@ stopped during row 3, so no legacy median or curve point is authorized. Commit
 Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
 
-Next, qualify MTP1 at deeper context and audit the XPU host-lookup overlap.
-Defer 16K+ until the 8K repeated-serving boundary and larger fixed-cache
-requirement have a bounded design. TP1/TP2 need a new memory design
+Next, qualify MTP3 at configured maximum 4,352 with its exact 25-block fixed
+cache, then fill MTP2/MTP4 and deeper MTP1 cells. Audit the XPU host-lookup
+overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
+larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.
 
@@ -104,3 +105,29 @@ host-row transfer like the official NVIDIA PLE-prefetch design. Keep MTP0 and
 MTP1 as separate Grade-C cells; neither is deployment- or record-eligible.
 The deployment audit and bounded replacement gate are in
 `experiments/qwen38-flash-next-fp8-b70/notes/2026-08-27-ple-deployment-audit.md`.
+
+## TP4 MTP3/512 closeout
+
+Attempt 4 is the first valid configured-512 MTP3 arm. It retained the MTP1
+source, staged runtime, selective host placement, TP4/EP4, eager/graph-off, and
+client identity, while using the independently sized 20-block fixed cache
+(`235356160` bytes). It became healthy with 568 cache tokens, matched all 26
+bounded MTP0 comparisons, held 16/16 fixed-set repeats to one hash, passed the
+small cache-zero needle, and completed all 24 audited quality requests without
+cache reuse. The inherited strict boundary remains 5/7; the 317-token needle
+is not evidence of 4K MTP3 quality.
+
+Three p146/o256/c1 rows measured `17.473321 / 14.888790 / 12.538689 tok/s`,
+median `14.888790 tok/s` after first text, with the exact MTP0 target hash. The
+post-session endpoint reported 768/768 cumulative draft tokens accepted. The
+rows declined monotonically and span 33.14% of the median, so this is a Grade-C
+research cell rather than a stable ceiling or record. MTP0 remains primary and
+the MTP1 cell is unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json`.
+
+The user has selected roughly 4K as the practical deployment ceiling for now.
+The next launch should therefore use configured maximum 4,352 and exactly
+`294195200` cache bytes (25 blocks) for a 4,096-token prompt plus 256 output
+tokens. Preserve the current host placement: the PLE/input-embedding shards are
+resident in pinned system RAM during service, not streamed from the USB model
+tree. Do not describe MTP3 as 4K-qualified until that separate gate passes.

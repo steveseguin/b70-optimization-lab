@@ -6,7 +6,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-27",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text through a formal exact-8K MTP0 screen plus a matched TP4/MTP1/512 screen at 9.372 tok/s on four B70s; the lane remains research-only because short quality is still 5/7 and deeper MTP1 context is unqualified.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text through a formal exact-8K MTP0 screen plus matched TP4/MTP1/512 and MTP3/512 screens at 9.372 and 14.889 tok/s on four B70s. The MTP3 rows were variable; the lane remains research-only because strict short quality is still 5/7 and deeper speculative context is unqualified.",
   "architecture": {
     "class": "Qwen4Exp hybrid Gated DeltaNet/QSA sparse MoE",
     "model_type": "qwen4_exp",
@@ -74,7 +74,7 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; matched TP4/MTP1/512 reproduced all 26 MTP0 baseline comparisons, passed 16/16 fixed-set repeats and a small cache-zero needle, and measured 9.372 tok/s; deeper MTP1 context, MTP2-4, 16K+, vision, clean-host qualification, and deployment remain open",
+      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; matched TP4/MTP1/512 and MTP3/512 each reproduced all 26 MTP0 baseline comparisons, passed 16/16 fixed-set repeats and a small cache-zero needle, and measured 9.372 and 14.889 tok/s. The MTP3 rows were variable and its needle was only 317 actual prompt tokens; MTP2/MTP4, deeper MTP1/MTP3, 16K+, vision, clean-host qualification, and deployment remain open",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -82,7 +82,8 @@
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json",
-        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json"
       ]
     },
     "popularity": {
@@ -172,6 +173,53 @@
         {"metric": "decode_tok_s", "index": 0, "value": 9.37225436776222, "label": "median matched MTP1 research screen; inherited short quality 5/7"}
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp3-a4",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 3,
+        "active_context_tokens": 0,
+        "configured_max_context_tokens": 512,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp3-matched-screen-v1",
+      "measurement_class": "research-only target-matched MTP HTTP speed screen",
+      "promotion_status": "not promotion eligible; inherited short quality remains 5/7 and speed stability is unqualified",
+      "quality_scope": "All 26 MTP0 baseline comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; small 317-token needle passed; all 24 quality requests complete and cache-zero; no 4K MTP3 claim",
+      "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup per invocation then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
+      "metrics": {
+        "decode_tok_s": [14.88878979448863],
+        "ttft_ms": [11817.638449982041]
+      },
+      "raw_observations": {
+        "decode_tok_s": [17.47332085152878, 14.88878979448863, 12.538688913202236],
+        "wall_output_tok_s": [9.671857481052726, 9.011438903429243, 7.592681229019125],
+        "ttft_ms": [11817.638449982041, 11214.193463994889, 13299.87188798259],
+        "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+        "mtp0_reference_median_tok_s": 5.221849709057954,
+        "mtp0_uplift_percent": 185.12482403815937,
+        "mtp1_reference_median_tok_s": 9.37225436776222,
+        "mtp1_uplift_percent": 58.86028281201647,
+        "cumulative_draft_tokens": 768,
+        "cumulative_accepted_tokens": 768,
+        "aggregation": "median of three same-server observations; the rows declined monotonically and span 33.14% of the median, so cross-run uplift is descriptive rather than a stable same-window causal estimate"
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 14.88878979448863, "label": "median matched MTP3 research screen; variable rows and inherited short quality 5/7"}
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json"
     },
     {
       "id": "qwen38-flash-next-fp8-tp4-context1k-a1",
@@ -439,20 +487,55 @@
         "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
       },
       "manifest": "results/qwen38-flash-next-fp8-b70/README.md"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp3-research",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 MTP3 research screen",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+      "cards": 4,
+      "status": "research-only-quality-caveat",
+      "evidence_level": "B70-screened",
+      "coverage": ["TP4/EP4", "MTP3", "eager", "text-only", "configured max 512", "matched MTP0 quality plus 16/16 repeat and small needle", "variable three-row speed screen"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "exact TP4/EP4 eager MTP3 text serving at configured max 512",
+          "basis": "The exact model, MTP adapter, preserved staged runtime, 20-block cache, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, cumulative draft engagement, and three speed rows are retained. The inherited target quality remains 5/7, the needle is not a 4K test, and speed varied substantially; deeper context, vision, clean-host replay, and deployment qualification remain missing.",
+          "reviewed_at": "2026-08-27",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "qwen38-flash-next-fp8-tp4-mtp3-a4",
+        "sample_index": 0,
+        "value": 14.88878979448863,
+        "unit": "tok/s",
+        "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup per invocation then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
+        "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json"
+      },
+      "manifest": "results/qwen38-flash-next-fp8-b70/README.md"
     }
   ],
   "views": [
     {
       "id": "qwen-flash-next-tp-screen",
       "title": "Research speed screen by TP",
-      "subtitle": "Only TP4 has a bounded screen; three samples share one server and workload, so no mini-curve is implied",
+      "subtitle": "Only TP4 has bounded screens; each MTP cell has three same-server samples under the declared workload, so no TP mini-curve is implied",
       "x_label": "tensor parallel cards",
       "discrete": true,
       "missing_x": [1, 2],
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
         {"label": "official FP8 · eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-attempt19"], "x_from": "config.tp"},
-        {"label": "official FP8 · eager MTP1", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp1-a3"], "x_from": "config.tp"}
+        {"label": "official FP8 · eager MTP1", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp1-a3"], "x_from": "config.tp"},
+        {"label": "official FP8 · eager MTP3 (variable screen)", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp3-a4"], "x_from": "config.tp"}
       ]
     },
     {
@@ -497,7 +580,7 @@
         "2:4": {"state": "missing", "label": "not measured"},
         "3:1": {"state": "missing", "label": "not measured"},
         "3:2": {"state": "missing", "label": "not measured"},
-        "3:4": {"state": "missing", "label": "not measured"},
+        "3:4": {"state": "lab-screened", "label": "14.889 tok/s; variable matched-quality screen", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-a4", "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research"},
         "4:1": {"state": "missing", "label": "not measured"},
         "4:2": {"state": "missing", "label": "not measured"},
         "4:4": {"state": "missing", "label": "not measured"}
@@ -548,6 +631,17 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research",
           "parent": "flash-next-mtp1-a3",
           "retry": {"status": "needs-deeper-context-and-full-quality"}
+        },
+        {
+          "id": "mtp3-text-screen",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "lab-screened",
+          "label": "14.889 tok/s variable matched MTP3 research screen",
+          "reason": "All 26 bounded MTP0 comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. The needle was only 317 actual prompt tokens, inherited short quality remains 5/7, and the speed rows declined monotonically across a wide range.",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-a4",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research",
+          "parent": "flash-next-mtp3-a4",
+          "retry": {"status": "needs-4k-context-speed-stability-and-full-quality"}
         },
         {
           "id": "context1k-text-screen",

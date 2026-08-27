@@ -986,6 +986,24 @@ wait on bounded context/cache work. The official deployment design keeps the
 XPU lane keeps all four TP shards host-resident through selective UVA, and its
 overlap behavior remains an explicit optimization audit.
 
+The configured-512 MTP3 attempt 4 then passed its exact 20-block cache
+admission, became healthy, matched all 26 bounded MTP0 comparisons, held the
+fixed-set repeat to one hash for 16/16 runs, passed the small cache-zero needle,
+and completed all 24 audited quality requests without cache reuse. Three
+p146/o256/c1 rows returned the target hash at `17.473321 / 14.888790 /
+12.538689 tok/s`, median `14.888790 tok/s` after first text. The cumulative
+endpoint reported 768/768 accepted draft tokens. The inherited strict target
+score remains 5/7, the needle was only 317 actual prompt tokens, and the speed
+rows declined monotonically across a wide range, so this is a separate Grade-C
+research cell rather than a stable ceiling, record, or 4K qualification. MTP0
+remains primary and MTP1 is unchanged. The selected next deployment-shaped
+gate is TP4/MTP3 at configured maximum 4,352 with a 25-block fixed cache
+(`294195200` bytes), covering a 4,096-token prompt plus 256 output tokens.
+MTP2/MTP4, deeper MTP1/MTP3, graph, TP1/TP2 fit, vision, full quality, and
+clean-host replay remain open. The 51B PLE/input-embedding shards remain
+pinned in system RAM during serving; generation does not stream them from the
+external checkpoint drive.
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
 protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the

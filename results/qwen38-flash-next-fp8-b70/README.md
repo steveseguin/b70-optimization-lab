@@ -8,7 +8,8 @@ This packet covers the first instrumentation-free TP4/EP4 server results for the
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
 healthy, serve cache-zero MTP0 context through a formal exact-8K screen, and
-run a matched MTP1/512 research screen at 9.372 tok/s. It
+run matched MTP1/512 and MTP3/512 research screens at 9.372 and 14.889 tok/s.
+The MTP3 rows were variable and remain a bounded screen, not a stable ceiling. It
 does not yet establish a production recipe, a fully quality-qualified speed,
 stable repeated serving at 8K, 16K+ behavior, or vision support.
 
@@ -75,11 +76,12 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next context points are 16K/24K/32K, but the 8K repeated-serving failure
-must be understood and a larger fixed-cache design is needed before they are
-responsible run targets. TP1 and TP2 require a separate fit/offload design.
-MTP1/512 is now separately screened below. MTP1 at deeper context and MTP2-4
-remain gaps. Graph,
+The next service-shaped context point is TP4/MTP3 at configured maximum 4,352,
+covering up to a 4,096-token prompt plus 256 output tokens with a separately
+sized fixed cache. The 16K/24K/32K MTP0 expansion is deferred while the 8K
+repeated-serving boundary remains unresolved. TP1 and TP2 require a separate
+fit/offload design. MTP1/512 and MTP3/512 are separately screened below;
+deeper MTP1/MTP3 plus MTP2 and MTP4 remain gaps. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
@@ -110,6 +112,39 @@ the separate MTP0 `5.221849709 tok/s` control. Cumulative metrics accepted
 503/505 draft tokens. MTP0 remains the packet's primary historical cell; MTP1
 is a separate matrix result and does not replace it. Receipt:
 [`20260827-tp4-mtp1-512-attempt3-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json).
+
+## Matched TP4 MTP3 screen
+
+The additive MTP3 arm retains the MTP1 model, source, runtime, TP4/EP4,
+eager/graph-off, text-only, host-placement, and client identity. It changes the
+speculative depth to three and uses the exact 20-block cache allocation needed
+for this configured-512 screen: 235,356,160 bytes (224.453125 MiB) per rank.
+The server reported 568 cache tokens and 1.11x maximum concurrency. The same
+12.22 GiB per-rank PLE/input-embedding shard remains resident in pinned system
+RAM and GPU-addressable through UVA; generation does not stream weights from
+the external checkpoint drive.
+
+All 26 bounded MTP0 comparisons matched, the fixed-set repeat held one hash for
+16/16 runs, the small cache-zero needle passed at 317 actual prompt tokens, and
+all 24 audited quality requests completed with zero cached and created-cache
+tokens. This is not a 4K MTP3 result: the needle was deliberately small. The
+inherited strict target score also remains 5/7 with the same logic and
+range-expression failures, so the evidence grade remains C.
+
+Three p146/o256/c1 rows returned all 256 tokens with the MTP0 target hash at
+`17.473320852`, `14.888789794`, and `12.538688913 tok/s` after first text,
+median **`14.888789794 tok/s`**. Their wall-rate median was `9.011438903 tok/s`
+and TTFT median was `11.817638450 s`. The cumulative endpoint reported 768/768
+draft tokens accepted, 256 at each draft position, proving that MTP3 was
+engaged. It is not per-row acceptance evidence.
+
+The three decode observations declined monotonically and span 33.14% of the
+median. The median is therefore a research screen, not a stable ceiling or
+record. It is descriptively 185.12% above the separate MTP0 screen and 58.86%
+above the separate MTP1 screen, but those cross-run differences are not a
+same-window causal A/B. MTP0 remains the packet primary and MTP1 remains an
+unchanged matrix cell. Receipt:
+[`20260827-tp4-mtp3-512-attempt4-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json).
 
 ## Additive 1K context screen
 
