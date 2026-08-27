@@ -97,6 +97,31 @@ def token_ids_sha256(token_ids: list[int]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def select_pinned_oracle_rows(
+    oracle_rows: list[dict[str, Any]], prompts: list[dict[str, str]]
+) -> list[dict[str, Any]]:
+    """Select an exact prompt prefix from a pinned oracle, allowing a superset."""
+    rows_by_id: dict[str, dict[str, Any]] = {}
+    for row in oracle_rows:
+        prompt_id = row.get("prompt_id")
+        if not isinstance(prompt_id, str):
+            raise ValueError("pinned oracle row is missing a string prompt_id")
+        if prompt_id in rows_by_id:
+            raise ValueError(f"pinned oracle contains duplicate prompt_id: {prompt_id}")
+        rows_by_id[prompt_id] = row
+
+    selected = []
+    for item in prompts:
+        expected_hash = hashlib.sha256(item["prompt"].encode("utf-8")).hexdigest()
+        row = rows_by_id.get(item["id"])
+        if row is None or row.get("prompt_sha256") != expected_hash:
+            raise ValueError(
+                "oracle digest prompt IDs/hashes do not contain the exact expanded suite"
+            )
+        selected.append(row)
+    return selected
+
+
 def summarize_batch(
     *,
     concurrency: int,
@@ -251,16 +276,10 @@ def main() -> int:
         oracle_digest_bytes = args.oracle_digests.read_bytes()
         oracle_digest_sha256 = hashlib.sha256(oracle_digest_bytes).hexdigest()
         oracle_doc = json.loads(oracle_digest_bytes)
-        oracle_rows = oracle_doc["rows"]
-        expected_prompts = {
-            item["id"]: hashlib.sha256(item["prompt"].encode("utf-8")).hexdigest()
-            for item in prompts
-        }
-        actual_prompts = {
-            row["prompt_id"]: row["prompt_sha256"] for row in oracle_rows
-        }
-        if actual_prompts != expected_prompts:
-            raise SystemExit("oracle digest prompt IDs/hashes do not match expanded suite")
+        try:
+            oracle_rows = select_pinned_oracle_rows(oracle_doc["rows"], prompts)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise SystemExit(str(exc)) from exc
         oracle_fresh = oracle_doc.get("cached_tokens_zero") is True
     else:
         oracle_rows = []

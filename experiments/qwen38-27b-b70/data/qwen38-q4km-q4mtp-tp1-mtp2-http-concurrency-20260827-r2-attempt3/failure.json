@@ -1,0 +1,20 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-failure.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2",
+  "attempt": 3,
+  "status": "procedural-failure-preserved",
+  "profile": {
+    "parallel_slots": 16,
+    "context_tokens_total": 8192,
+    "nominal_context_tokens_per_slot": 512
+  },
+  "capacity_result": "healthy",
+  "failure": "The pre-request validator required the frozen 64-row oracle to equal the selected 16-row expanded suite instead of validating and selecting its exact prefix. No benchmark or semantic-canary request ran.",
+  "gpu_requests_completed": 0,
+  "authority": {
+    "speed_points": 0,
+    "quality_points": 0,
+    "capacity_only": "16 slots / 8K total context initialized successfully",
+    "retry_rule": "Repeat the unchanged selected profile after the validator regression fix; two complete fresh attempts remain required."
+  }
+}
