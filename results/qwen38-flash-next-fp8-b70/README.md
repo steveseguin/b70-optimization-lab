@@ -13,8 +13,10 @@ and 20.727 tok/s. It also qualifies 32-block MTP1/MTP2 recipes and MTP3 at
 exact 4K, with `8.904`, `9.893`, and `15.502 tok/s` decode medians respectively.
 MTP3 remains the preferred 4K recipe because it also has lower TTFT and higher
 wall output. These rows remain bounded screens, not stable ceilings. The packet
-does not yet establish a production recipe, a fully quality-qualified speed,
-stable repeated serving at 8K, 16K+ behavior, or vision support.
+now also includes a target-only official-thinking quality profile that passed
+25/25 preregistered responses. It does not yet establish a production recipe,
+a fully quality-qualified MTP speed, stable repeated serving at 8K, 16K+
+behavior, or vision support.
 
 ## Measured point
 
@@ -35,9 +37,9 @@ speed screen, not the lab's conventional realistic-suite 99-interval metric
 and not an optimized ceiling; the runtime reported that no model-specific MoE
 tuning table was available.
 
-## Quality boundary
+## Quality profiles
 
-Two short batteries each passed 5/7 strict cases. Exact response, copy,
+The historical direct-answer batteries passed 5/7 literal cases. Exact response, copy,
 arithmetic, JSON, and factual cases passed. The logic case differed only by
 case (`Yes` instead of `yes`), while the range-expression case substantively
 returned `30` instead of `14`. The first eight-repeat battery contained one
@@ -45,9 +47,25 @@ different valid-looking four-color selection; the second was 8/8 stable, for
 15/16 majority stability overall. All 30 quality requests reported zero cached
 tokens.
 
-These results fail the full-quality and repeat-determinism gates. The measured
-speed must not be submitted as a record, promoted as deployment-ready, or used
-to lower any prior captured result.
+The corrected semantic reading is therefore 6/7, not 5/7: `Yes` is correct.
+The later sealed exact-4K deterministic control matched all 26 baseline
+comparisons, repeated 16/16 with one hash, returned the exact 4,096-token
+needle, and kept all 24 cache observations at zero. Its sole semantic miss was
+still `30` rather than `14`.
+
+A separate target-only profile then used Qwen's published thinking sampler,
+`reasoning_effort=xhigh`, and the `qwen3` reasoning parser. The four-case scout
+passed 4/4, followed by all seven cases at three frozen seeds, 21/21. Every one
+of the 25 responses exposed nonempty separated reasoning and final fields,
+stopped normally, had complete usage accounting, and reported zero cached and
+created-cache tokens. The code expression returned `14` in all four
+appearances. This qualifies the official target quality profile; it does not
+retroactively quality-certify or replace the non-thinking MTP speed rows.
+
+The measured speed remains a bounded research screen and must not be promoted
+as deployment-ready or used to lower any prior captured result. The quality
+receipt is
+[`20260827-tp4-mtp0-official-quality-attempt2-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json).
 
 ## Exact identity
 
@@ -85,10 +103,10 @@ fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
 MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
-only MTP4 at exact 4K remains quarantined. Graph,
-deeper context, vision,
-fresh-server determinism, full quality, clean-host replay, and a sealed
-deployment package remain explicit gaps.
+only MTP4 at exact 4K remains quarantined. Target-only official-thinking
+quality now passes; MTP3 thinking parity, graph, deeper context, vision,
+fresh-server determinism, clean-host replay, and a sealed deployment package
+remain explicit gaps.
 
 ## Matched TP4 MTP1 screen
 

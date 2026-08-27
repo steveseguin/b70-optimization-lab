@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "status": "completed-official-quality-pass",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1",
+  "attempt": 2,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt2",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "reasoning_parser": "qwen3",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none",
+    "preregistration_commit": "010c4ce78"
+  },
+  "placement": {
+    "model_memory_gib_by_rank": [31.27, 31.27, 31.27, 31.27],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "cpu_offload_params": [
+      "ple_embedding.ngram_embedding.weight",
+      "embed_tokens.weight"
+    ],
+    "model_load_seconds_by_rank": [562.341854, 562.002942, 561.997657, 561.391917],
+    "checkpoint_load_seconds": 552.92,
+    "kv_cache_tokens": 7121,
+    "maximum_concurrency_at_4352": 1.64,
+    "interpretation": "The active target resides across four B70s while the PLE/input embedding allocation is pinned host memory exposed through UVA. The external checkpoint is a startup source, not a per-token disk path."
+  },
+  "door_a_nonthinking_control": {
+    "status": "passed",
+    "raw_json": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt2/quality-v2-control.json",
+    "baseline_raw_json": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt1/quality-v2-short-and-4k.json",
+    "baseline_comparisons_passed": 26,
+    "baseline_comparisons_total": 26,
+    "repeat_passed": 16,
+    "repeat_total": 16,
+    "repeat_unique_hash_count": 1,
+    "long_context_server_prompt_tokens": 4096,
+    "long_context_needle": "B70_QWEN38_NEEDLE_20260816",
+    "long_context_pass": true,
+    "semantic_passed": 6,
+    "semantic_total": 7,
+    "sole_semantic_failure": {
+      "case": "code_execution",
+      "expected": "14",
+      "content": "30"
+    },
+    "cache_zero_observations": 24,
+    "usage_complete_observations": 24,
+    "helper_exit_code_interpretation": "The helper's aggregate result remains false only because the inherited deterministic target answer is 30 rather than 14; every incremental parity, repeat, context, usage, and cache gate passed."
+  },
+  "door_b_official_thinking": {
+    "status": "passed",
+    "raw_json": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt2/official-thinking-quality.json",
+    "sampling": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0,
+      "repetition_penalty": 1.0,
+      "reasoning_effort": "xhigh",
+      "max_tokens": 1024,
+      "enable_thinking": true,
+      "preserve_thinking": true
+    },
+    "scout_passed": 4,
+    "scout_total": 4,
+    "grid_passed": 21,
+    "grid_total": 21,
+    "grid_seeds": [2026082711, 2026082712, 2026082713],
+    "semantic_passed": 25,
+    "semantic_total": 25,
+    "separated_nonempty_reasoning_and_final": 25,
+    "finish_reason_stop": 25,
+    "cache_zero_observations": 25,
+    "usage_complete_observations": 25,
+    "completion_tokens_min": 23,
+    "completion_tokens_max": 149,
+    "completion_tokens_mean": 57.56,
+    "code_execution_answers": ["14", "14", "14", "14"],
+    "interpretation": "The official thinking-enabled target profile passed every preregistered semantic and structural gate. This is a separate model-quality profile and does not replace any non-thinking decode measurement."
+  },
+  "timing": {
+    "authorized": false,
+    "rows": 0,
+    "interpretation": "No throughput claim was collected or changed in this quality-only arm."
+  },
+  "shutdown": {
+    "classification": "controlled-stop-with-manager-force-cleanup-caveat",
+    "signal": "SIGTERM",
+    "engine_request_processing_complete": true,
+    "worker_shutdown_done_ranks_logged": [0, 1, 2, 3],
+    "api_application_shutdown_complete": true,
+    "residual_processes_after_stop": 0,
+    "residual_listeners_after_stop": 0,
+    "caveat": "After all quality work completed, the process manager force-killed the remaining EngineCore after its grace period, the known post-manager-stop EngineDeadError was logged, and the resource tracker reported one shared-memory cleanup item."
+  },
+  "journal": {
+    "window": "2026-08-27 18:02:00 through 18:29:30 America/Toronto",
+    "corrected_apei_events": 11,
+    "corrected_endpoint": "Samsung NVMe 0000:01:00.0, vendor 144d device a80a",
+    "aer_uncorrected_status_nonzero": 0,
+    "b70_bdfs": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+    "b70_error_mentions": 0,
+    "external_usb_resets": 1,
+    "external_sda_read_errors": 2,
+    "caveat": "The external USB disk reset once and recovered during the quality window. Two sda read errors were logged. Every promoted raw artifact was subsequently reopened and hashed, but this prevents a clean-journal or storage-stability claim."
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass",
+    "sealed_nonthinking_parity": "pass",
+    "fixed_set_repeat": "pass-16-of-16",
+    "exact_4k_context_needle": "pass",
+    "deterministic_direct_answer_quality": "6-of-7-semantic",
+    "official_thinking_quality": "pass-25-of-25",
+    "speed_claim_changed": false,
+    "site_state": "lab-screened",
+    "remaining_boundaries": [
+      "MTP3 official-thinking parity is not yet tested",
+      "fresh-boot determinism remains unsealed",
+      "the external USB reset prevents a clean-journal storage claim",
+      "vision, graph, multi-user, and native long-context deployment remain open"
+    ]
+  },
+  "sha256": {
+    "server.log": "587aa403b251ad3bf5df66761c777595acdf9ba4f1ea6be8e595a6376a4206f9",
+    "identity.txt": "60f873524d54903563f5a1b716e4e8cef7cbdd317694aaa90c8fb956968bd678",
+    "models.json": "2dcef7bec3ac5faefa49e8a2fb8e3ca26d0a30277e6702c10c18e3415d0d02ee",
+    "models-post-quality.json": "56c10d3f5ee6b9ad24c800427699ce20aa7e269666b21d567d8218b99e1436a0",
+    "metrics-post-quality.prom": "8be475749b0b110022ff3ef72ac55b340bba41ed70df558b23a13a25ed05e338",
+    "quality-v2-control.json": "921042bb7fa5680ae4e9221e1e8ce1d2f90ee15566adee06f3121a7b1c81ffb8",
+    "official-thinking-quality.json": "ad6516145dbbf9b41f9a2c5a761d5245ac0f6cf11d63e2a1130f4e6c4b03f04e"
+  }
+}

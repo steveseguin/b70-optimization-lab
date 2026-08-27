@@ -6,7 +6,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-27",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median. At exact 4K, 32-block MTP1 and MTP2 recipes passed at 8.904 and 9.893 tok/s decode; MTP3 remains preferred at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. Only MTP4 remains quarantined at exact 4K. The lane remains research-only because strict target quality is still 5/7 and deployment stability is unqualified.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median. At exact 4K, 32-block MTP1 and MTP2 recipes passed at 8.904 and 9.893 tok/s decode; MTP3 remains preferred at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. Only MTP4 remains quarantined at exact 4K. Deterministic direct-answer quality is 6/7 semantically, while the separate official-thinking target profile passed 25/25. The lane remains research-only because MTP thinking parity and deployment stability are unqualified.",
   "featured_results": [
     {
       "role": "hero",
@@ -14,7 +14,7 @@
       "measurement_id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1",
       "metric": "decode_tok_s",
       "sample_index": 0,
-      "quality_label": "Exact-4K target-matched Grade-C screen; 187.9-second TTFT and inherited short quality 5/7"
+      "quality_label": "Exact-4K target-matched Grade-C screen; direct-answer target quality 6/7 semantic, with target-only official thinking separately 25/25"
     },
     {
       "role": "support",
@@ -30,7 +30,7 @@
       "measurement_id": "qwen38-flash-next-fp8-tp4-attempt19",
       "metric": "decode_tok_s",
       "sample_index": 0,
-      "quality_label": "Configured-512 Grade-C target screen; inherited short quality 5/7"
+      "quality_label": "Configured-512 Grade-C target screen; direct-answer target quality 6/7 semantic, with target-only official thinking separately 25/25"
     },
     {
       "role": "support",
@@ -123,8 +123,8 @@
       "reviewed_at": "2026-08-27"
     },
     "quality_evidence": {
-      "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; TP4 MTP1-4 at configured 512 are separate matched-quality cells. MTP4 matched all 26 bounded MTP0 outputs, passed 16/16 repeats and the small needle, accepted 1,716/1,716 cumulative draft tokens, and measured a 20.727 tok/s short-screen median. At configured 4352, 32-block MTP1 and MTP2 recipes each matched all 26 sealed MTP0 comparisons, passed 16/16 repeats, the exact 4K needle, a formal p4096/o128 gate, and all three p4096/o256 rows. MTP2 measured 9.893 tok/s decode, 263.3 seconds TTFT, and 0.891 tok/s wall output; the earlier 21-block stop is retained as superseded history. TP4/MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP4 is the only exact-4K MTP-depth quarantine. Graph, vision, clean-host qualification, and deployment remain open",
+      "band": "official-target-quality-pass-research-deployment",
+      "scope": "The deterministic direct-answer target profile is 6/7 semantically: the case-only logic output is correct, while the code expression remains wrong. A separate official-thinking MTP0 target profile passed a 4/4 scout and 21/21 three-seed grid with separated reasoning/final fields, normal stops, complete usage, and zero cache reuse. MTP0 also passed screened 1K/2K/4K and formal 8K gates; TP4 MTP1-4 at configured 512 are separate matched-quality cells. MTP4 matched all 26 bounded MTP0 outputs, passed 16/16 repeats and the small needle, accepted 1,716/1,716 cumulative draft tokens, and measured a 20.727 tok/s short-screen median. At configured 4352, 32-block MTP1 and MTP2 recipes each matched all 26 sealed MTP0 comparisons, passed 16/16 repeats, the exact 4K needle, a formal p4096/o128 gate, and all three p4096/o256 rows. MTP2 measured 9.893 tok/s decode, 263.3 seconds TTFT, and 0.891 tok/s wall output; the earlier 21-block stop is retained as superseded history. TP4/MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP4 is the only exact-4K MTP-depth quarantine. MTP3 thinking parity, graph, vision, clean-host qualification, and deployment remain open",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -139,6 +139,7 @@
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json"
       ]

@@ -144,3 +144,35 @@ non-thinking needle remains the context-integrity evidence.
 Any future thinking-speed result must report reasoning and final-answer tokens
 and latency separately. It cannot silently replace the existing non-thinking
 decode metric.
+
+## Closeout
+
+Attempt 2 passed both doors. The deterministic control matched all 26 sealed
+MTP0 comparisons, repeated 16/16 with one hash, returned the exact 4,096-token
+needle, and reported complete usage plus zero cache reuse for all 24 requests.
+With the semantic grader correction, it is 6/7: `Yes` is correct and `30` for
+the Python expression remains the only substantive miss.
+
+The official thinking scout passed 4/4 and the three-seed grid passed 21/21.
+All 25 responses exposed nonempty separated reasoning and final fields, stopped
+normally, had complete usage, and reported zero cached and created-cache
+tokens. The code expression returned `14` in the scout and at all three grid
+seeds. No timing row was run or inferred.
+
+Placement remained the intended four-card split: 31.27 GiB of model memory per
+rank, 12.22 GiB of selectively host-resident PLE/input parameters per rank, and
+7,121 KV-cache tokens. Weight loading from the external NTFS checkpoint took
+552.92 seconds; inference used the completed VRAM/UVA placement rather than
+streaming weights from disk.
+
+The server stopped after all artifacts were captured. All four workers and the
+API application logged shutdown, with no residual process or listener. Retain
+the process-manager force-cleanup, post-stop EngineDeadError, and one shared
+memory cleanup warning as shutdown caveats. Also retain the journal caveat:
+eleven corrected APEI events named the Samsung NVMe endpoint, and the external
+USB disk reset once with two read errors. No B70 BDF appeared and all
+uncorrected AER status values were zero. Every promoted raw artifact was
+subsequently reopened and hashed, but this is not a clean storage-journal run.
+
+Receipt:
+`../data/20260827-tp4-mtp0-official-quality-attempt2-result.json`.

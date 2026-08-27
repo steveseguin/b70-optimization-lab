@@ -1065,6 +1065,22 @@ The 51B PLE/input-embedding state remains pinned in host RAM through UVA; the
 four cards are otherwise filled to about 32.06 GiB per rank, which is the
 current 128-GiB-VRAM/4K deployment policy.
 
+A separate preregistered target-only official-quality arm now passes. On the
+same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
+matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned
+the exact 4K needle, and kept all 24 cache observations at zero. Its corrected
+semantic score is 6/7: `Yes` is correct, while the code expression still
+returns `30` rather than `14`. The official Qwen thinking sampler then passed
+the 4/4 scout and all 21 three-seed grid responses. Every response had
+separated nonempty reasoning/final text, normal stop, complete usage, and zero
+cache reuse; the code result was `14` in all four appearances. No speed row was
+run or changed. The external USB disk reset once with two read errors during
+the quality window, although every retained artifact reopened and hashed; the
+server also retained the known forced EngineCore cleanup caveat. Therefore the
+official target quality profile is screened, while MTP3 thinking parity,
+fresh-boot determinism, and clean storage/deployment remain open. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json`.
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
 protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the

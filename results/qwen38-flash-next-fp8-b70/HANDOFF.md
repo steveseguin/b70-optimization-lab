@@ -80,15 +80,27 @@ Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
 
 The configured-4,352 MTP3 gate and complete configured-512 MTP0-4 depth grid
-now pass their bounded gates. MTP4/512 is the fastest short screen at a
+now pass their bounded gates. Exact 4K is also classified across MTP0-4:
+MTP0/MTP1/MTP2/MTP3 are screened and only MTP4 is quarantined. MTP4/512 is the fastest short screen at a
 `20.727176 tok/s` median with 1,716/1,716 cumulative draft acceptance. The
 MTP4 exact-4K selector is quarantined after its first quality request
 stalled at 3,904 computed tokens and cleanup reset all four card engines. The
-MTP2 exact-4K selector passed matched quality and formal p4096/o128 at
-`4.126872 tok/s` with `317.350522 s` TTFT, but its first p4096/o256 row also
-stalled at 3,904 computed tokens and is quarantined without a comparison
-speed. Next, repeat the four-rank preflight, then extend MTP1 to exact 4K while
-retaining the existing MTP3 result. Reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
+MTP1 and MTP2 32-block headroom selectors completed their exact-4K batteries
+at `8.904421` and `9.893155 tok/s` decode medians. MTP3 remains preferred at
+`15.501565 tok/s`, `187.899186 s` TTFT, and `1.246260 tok/s` wall output.
+
+The target-only official quality profile also passes. Its sealed
+non-thinking control matched 26/26, repeated 16/16, and returned the exact 4K
+needle; semantically it is 6/7, with only the inherited `30` versus `14` code
+miss. Qwen's official thinking sampler then passed a 4/4 scout and 21/21
+three-seed grid with separated reasoning/final fields, normal stops, complete
+usage, and zero cache reuse. The code answer was `14` in all four thinking
+responses. This does not certify the MTP speed rows or replace any decode
+number. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json`.
+
+Next, repeat the four-rank preflight, test MTP3 official-thinking parity without timing,
+then reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
 host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
