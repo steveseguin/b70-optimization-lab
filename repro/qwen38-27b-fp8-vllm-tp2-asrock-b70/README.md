@@ -11,21 +11,21 @@
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target and MTP
 weights, native FP16 KV, and TP2. The selected interactive service dynamically
-uses MTP5 at one active request and MTP1 at two or more; separate target-only
+uses MTP7 at one active request and MTP1 at two or more; separate target-only
 and static-MTP1 profiles remain documented for honest comparison.
 
-## Selected dynamic MTP5-to-MTP1 profile
+## Selected dynamic MTP7-to-MTP1 profile
 
 Two separately preregistered fresh-server attempts measured:
 
-| Active users | R10 tok/s | R11 tok/s | two-attempt median |
+| Active users | R13 tok/s | R14 tok/s | two-attempt median |
 | ---: | ---: | ---: | ---: |
-| 1 | 128.579263 | 128.277373 | **128.428318** |
-| 64 | 1,095.783748 | 1,100.846966 | **1,098.315357** |
+| 1 | 138.778590 | 135.643836 | **137.211213** |
+| 64 | 1,101.186445 | 1,103.345787 | **1,102.266116** |
 
-The one-user shape requests five speculative tokens by serially reusing the
+The one-user shape requests seven speculative tokens by serially reusing the
 checkpoint's one publisher MTP layer. At two through 128 active requests the
-same service uses one speculative token. R10 and R11 each passed 512/512
+same service uses one speculative token. R13 and R14 each passed 512/512
 synchronized c64 exact-answer requests, 7/7 sequential cases, 8/8 repeat
 stability, exact frozen-baseline comparison, complete token capture,
 cache-zero, and cross-task output isolation.
@@ -58,8 +58,8 @@ The lab-validated overlay image ID is
 If a local rebuild produces a different image ID, inspect and preserve its
 labels and pass that exact value as `EXPECTED_IMAGE_ID`; do not disable the
 patch/source checks. See the
-[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp5-r11-replication-result.md)
-and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp5-dynamic-mtp1-r11-summary.json).
+[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp7-r14-replication-result.md)
+and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp7-dynamic-mtp1-r14-summary.json).
 
 This is a 256-token short-context service. No 32K dynamic-MTP result is
 claimed, inferred, or extrapolated.
@@ -190,7 +190,7 @@ tokens serially reuses that layer; it is not a native MTP2 checkpoint. The
 bounded screen measured `83.646518 tok/s` for one user, but only `737.190110
 tok/s` at c64 versus MTP1's `1,091.642460`, and MBT768 fell to `712.790232`.
 The fixed-width result remains useful negative evidence, but the selected
-dynamic launcher above uses MTP5 for one user and falls back to MTP1 under
+dynamic launcher above uses MTP7 for one user and falls back to MTP1 under
 concurrency. The exact positive and negative boundaries are in the
 [MTP2-reuse result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
 

@@ -96,6 +96,21 @@ MTP5_DYNAMIC_REPLICATION_RAW = (
 MTP5_DYNAMIC_REPLICATION_SUMMARY = (
     DATA / "2026-08-27-qwen38-fp8-w8a16-mtp5-dynamic-mtp1-r11-summary.json"
 )
+MTP6_DYNAMIC_NEGATIVE_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp6-dynamic-mtp1-r12-summary.json"
+)
+MTP7_DYNAMIC_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp7-dynamic-mtp1-20260827-r13"
+)
+MTP7_DYNAMIC_SCREEN_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp7-dynamic-mtp1-r13-summary.json"
+)
+MTP7_DYNAMIC_REPLICATION_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp7-dynamic-mtp1-20260827-r14"
+)
+MTP7_DYNAMIC_REPLICATION_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp7-dynamic-mtp1-r14-summary.json"
+)
 DYNAMIC_MAMBA_PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -1017,6 +1032,78 @@ def main() -> int:
         "reporting_boundary"
     ]
 
+    mtp6_negative = load(MTP6_DYNAMIC_NEGATIVE_SUMMARY)
+    assert mtp6_negative["classification"] == (
+        "measured-negative-single-user-gate"
+    )
+    assert mtp6_negative["decision"]["status"] == (
+        "closed-negative-retain-promoted-mtp5"
+    )
+    assert mtp6_negative["single_user"]["gate_passed"] is False
+    assert mtp6_negative["concurrency"]["declared_c64_run_performed"] is False
+
+    mtp7_screen = load(MTP7_DYNAMIC_SCREEN_SUMMARY)
+    mtp7_replication = load(MTP7_DYNAMIC_REPLICATION_SUMMARY)
+    assert mtp7_screen["classification"] == (
+        "measured-positive-screen-pending-replication"
+    )
+    assert mtp7_screen["decision"]["status"] == (
+        "positive-screen-pending-replication"
+    )
+    assert mtp7_replication["classification"] == (
+        "replicated-quality-qualified-measured-service-profile"
+    )
+    assert mtp7_replication["decision"]["status"] == (
+        "promote-dynamic-mtp7-at-one-mtp1-at-load"
+    )
+    assert mtp7_replication["service"]["speculative_config"] == {
+        "method": "qwen3_next_mtp",
+        "num_speculative_tokens": 7,
+        "num_speculative_tokens_per_batch_size": [[1, 1, 7], [2, 128, 1]],
+    }
+    assert mtp7_replication["quality"]["concurrent_exact_answer_total"] == (
+        "1024/1024"
+    )
+    mtp7_r13_single, mtp7_r13_c64 = validate_dynamic_attempt(
+        MTP7_DYNAMIC_RAW,
+        mtp7_replication["attempts"]["r13"]["single_user_tok_s"],
+        mtp7_replication["attempts"]["r13"]["c64_aggregate_tok_s"],
+        mtp7_replication["runtime"]["image_id"],
+        7,
+        False,
+    )
+    mtp7_r14_single, mtp7_r14_c64 = validate_dynamic_attempt(
+        MTP7_DYNAMIC_REPLICATION_RAW,
+        mtp7_replication["attempts"]["r14"]["single_user_tok_s"],
+        mtp7_replication["attempts"]["r14"]["c64_aggregate_tok_s"],
+        mtp7_replication["runtime"]["image_id"],
+        7,
+        False,
+    )
+    close(
+        statistics.median([mtp7_r13_single, mtp7_r14_single]),
+        mtp7_replication["promoted_medians"][
+            "single_user_fresh_response_after_ttft_tok_s"
+        ],
+    )
+    close(
+        statistics.median([mtp7_r13_c64, mtp7_r14_c64]),
+        mtp7_replication["promoted_medians"]["c64_aggregate_tok_s"],
+    )
+    close(
+        mtp7_replication["promoted_medians"]["c64_aggregate_tok_s"] / 64,
+        mtp7_replication["promoted_medians"]["c64_per_user_tok_s"],
+    )
+    for raw_dir in (MTP7_DYNAMIC_RAW, MTP7_DYNAMIC_REPLICATION_RAW):
+        shutdown_log = (raw_dir / "server-final.log").read_text(
+            errors="replace"
+        )
+        assert "workers still running after grace period" in shutdown_log
+        assert "EngineDeadError" not in shutdown_log
+    assert "No intermediate concurrency" in mtp7_replication[
+        "reporting_boundary"
+    ]
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -1038,6 +1125,8 @@ def main() -> int:
         3,
         4,
         5,
+        6,
+        7,
     ]
     for point, expected, samples in zip(
         depth_profile["points"],
@@ -1054,8 +1143,14 @@ def main() -> int:
             mtp5_replication["promoted_medians"][
                 "single_user_fresh_response_after_ttft_tok_s"
             ],
+            mtp6_negative["single_user"][
+                "fresh_response_after_ttft_tok_s"
+            ],
+            mtp7_replication["promoted_medians"][
+                "single_user_fresh_response_after_ttft_tok_s"
+            ],
         ),
-        (1, 1, 2, 2, 2, 2),
+        (1, 1, 2, 2, 2, 2, 1, 2),
         strict=True,
     ):
         close(point["value"], expected)
@@ -1073,13 +1168,13 @@ def main() -> int:
     ]
     close(
         dynamic_profile["points"][0]["value"],
-        mtp5_replication["promoted_medians"][
+        mtp7_replication["promoted_medians"][
             "single_user_fresh_response_after_ttft_tok_s"
         ],
     )
     close(
         dynamic_profile["points"][1]["value"],
-        mtp5_replication["promoted_medians"]["c64_aggregate_tok_s"],
+        mtp7_replication["promoted_medians"]["c64_aggregate_tok_s"],
     )
     assert all(point["samples"] == 2 for point in dynamic_profile["points"])
     assert "no intermediate concurrency is claimed" in dynamic_profile[
@@ -1134,6 +1229,12 @@ def main() -> int:
         "bench-w8a16-mtp5-dynamic-mtp1-r10.sh",
         "run-w8a16-mtp5-dynamic-mtp1-r11-server.sh",
         "bench-w8a16-mtp5-dynamic-mtp1-r11.sh",
+        "run-w8a16-mtp6-dynamic-mtp1-r12-server.sh",
+        "bench-w8a16-mtp6-dynamic-mtp1-r12.sh",
+        "run-w8a16-mtp7-dynamic-mtp1-r13-server.sh",
+        "bench-w8a16-mtp7-dynamic-mtp1-r13.sh",
+        "run-w8a16-mtp7-dynamic-mtp1-r14-server.sh",
+        "bench-w8a16-mtp7-dynamic-mtp1-r14.sh",
         "run-w8a16-dynamic-mtp-server.sh",
         "bench-w8a16-dynamic-mtp.sh",
         "build-w8a16-dynamic-mamba-image.sh",
@@ -1184,6 +1285,12 @@ def main() -> int:
                     "promoted_medians"
                 ]["single_user_fresh_response_after_ttft_tok_s"],
                 "mtp5_dynamic_c64_median_tok_s": mtp5_replication[
+                    "promoted_medians"
+                ]["c64_aggregate_tok_s"],
+                "mtp7_dynamic_single_median_tok_s": mtp7_replication[
+                    "promoted_medians"
+                ]["single_user_fresh_response_after_ttft_tok_s"],
+                "mtp7_dynamic_c64_median_tok_s": mtp7_replication[
                     "promoted_medians"
                 ]["c64_aggregate_tok_s"],
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "classification": "replicated-quality-qualified-measured-service-profile",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "dynamic_mamba_allocation_patch_sha256": "3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 7,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 7], [2, 128, 1]]
+    }
+  },
+  "attempts": {
+    "r13": {
+      "single_user_tok_s": 138.77859047437784,
+      "c64_aggregate_tok_s": 1101.1864448314723,
+      "concurrent_quality": "512/512",
+      "container_exit_code": 0,
+      "shutdown_note": "Workers reported cleanup complete; the five-second shutdown grace expired and the already-idle EngineCore was force-killed. No request failed and no EngineDeadError occurred."
+    },
+    "r14": {
+      "single_user_tok_s": 135.64383617877377,
+      "c64_aggregate_tok_s": 1103.345787314895,
+      "concurrent_quality": "512/512",
+      "container_exit_code": 0,
+      "shutdown_note": "Workers reported cleanup complete; the five-second shutdown grace expired and the already-idle EngineCore was force-killed. No request failed and no EngineDeadError occurred."
+    }
+  },
+  "promoted_medians": {
+    "single_user_fresh_response_after_ttft_tok_s": 137.2112133265758,
+    "c64_aggregate_tok_s": 1102.2661160731836,
+    "c64_per_user_tok_s": 17.222908063643494,
+    "single_change_vs_mtp5_profile_percent": 6.838752707349927,
+    "aggregate_change_vs_mtp5_profile_percent": 0.35971083122716685
+  },
+  "quality": {
+    "c2_output_isolation_each_attempt": true,
+    "sequential_exact_cases_each_attempt": "7/7",
+    "sequential_repeat_stability_each_attempt": "8/8",
+    "baseline_match_all_each_attempt": true,
+    "concurrent_exact_answer_total": "1024/1024",
+    "cached_tokens_all_zero": true
+  },
+  "decision": {
+    "status": "promote-dynamic-mtp7-at-one-mtp1-at-load",
+    "reason": "Two fresh-server attempts reproduced the single-user gain, retained the aggregate rate, and passed every frozen quality gate."
+  },
+  "evidence_directories": [
+    "qwen38-fp8-w8a16-mtp7-dynamic-mtp1-20260827-r13",
+    "qwen38-fp8-w8a16-mtp7-dynamic-mtp1-20260827-r14"
+  ],
+  "reporting_boundary": "Only the directly measured c1 and c64 shapes are promoted. No intermediate concurrency, long-context rate, or other speculative depth is inferred, interpolated, or extrapolated."
+}
