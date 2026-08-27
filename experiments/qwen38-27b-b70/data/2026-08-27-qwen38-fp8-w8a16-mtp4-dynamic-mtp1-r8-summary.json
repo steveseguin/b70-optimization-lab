@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "classification": "measured-positive-screen-pending-replication",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "dynamic_mamba_allocation_patch_sha256": "3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 4,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 4], [2, 128, 1]]
+    }
+  },
+  "quality": {
+    "c2_output_isolation": "pass",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "baseline": "frozen static MTP2",
+    "concurrent_exact_answer_canary": "512/512",
+    "cached_tokens_all_zero": true,
+    "container_exit_code": 0
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 117.57212031835404,
+    "fresh_response_wall_tok_s": 109.88905713082636,
+    "ttft_s": 0.076117685995996,
+    "gate_tok_s": 101.929043,
+    "gate_passed": true,
+    "change_vs_promoted_mtp3_median_percent": 17.653967892967316
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 985.9514047077116,
+    "declared_c64_tok_s": 1094.0536811158154,
+    "declared_c64_per_user_tok_s": 17.094588767434615,
+    "gate_tok_s": 1053.441141,
+    "gate_passed": true,
+    "change_vs_promoted_mtp3_median_percent": 1.778121840398228,
+    "declared_output": {
+      "requests": 64,
+      "completion_tokens": 8192,
+      "completion_tokens_complete": true,
+      "cached_tokens_all_zero": true,
+      "cross_base_oracle_collision_count": 0,
+      "complete_token_id_identity_all": true,
+      "sequential_oracle_exact": "58/64",
+      "classification": "output-isolation-qualified-shape-variant"
+    }
+  },
+  "shutdown": {
+    "health_before_stop": "pass",
+    "container_exit_code": 0,
+    "oom_killed": false,
+    "engine_dead_error": false,
+    "note": "Both workers reported cleanup complete, but the five-second shutdown grace expired and the already-idle EngineCore was force-killed. No request failed and the container exited zero."
+  },
+  "decision": {
+    "status": "positive-screen-pending-replication",
+    "reason": "MTP4 improved the eligible single-user row by 17.65%, improved rather than reduced the declared c64 rate, and passed every frozen quality gate.",
+    "publication": "not authorized until a separately preregistered fresh-server replication passes"
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp4-dynamic-mtp1-20260827-r8",
+  "reporting_boundary": "Every rate is directly measured. No value is interpolated or extrapolated."
+}
