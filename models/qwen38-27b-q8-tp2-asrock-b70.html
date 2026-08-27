@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards — 36.8 tok/s measured — neural.download</title>
-<meta name="description" content="Alibaba&#x27;s Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. Measured 36.8 tok/s conventional decode median on 2× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q8_0 / F16 KV). Exact pins, patches, and proof; no unmatched proj">
+<title>Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards — strict benchmark pending — neural.download</title>
+<meta name="description" content="Alibaba&#x27;s Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complet">
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -15,24 +15,24 @@
 <meta property="og:site_name" content="neural.download">
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://neural.download/models/qwen38-27b-q8-tp2-asrock-b70.html">
-<meta property="og:title" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards — 36.8 tok/s measured">
-<meta property="og:description" content="Alibaba&#x27;s Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. Measured 36.8 tok/s conventional decode median on 2× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q8_0 / F16 KV). Exact pins, patches, and proof; no unmatched proj">
+<meta property="og:title" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards — strict benchmark pending">
+<meta property="og:description" content="Alibaba&#x27;s Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complet">
 <meta property="og:image" content="https://neural.download/models/cards/qwen38-27b-q8-tp2-asrock-b70.png">
 <meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-27b-q8-tp2-asrock-b70.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards: 36.8 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta property="og:image:alt" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@xyster">
 <meta name="twitter:creator" content="@xyster">
 <meta name="twitter:url" content="https://neural.download/models/qwen38-27b-q8-tp2-asrock-b70.html">
-<meta name="twitter:title" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards — 36.8 tok/s measured">
-<meta name="twitter:description" content="Alibaba&#x27;s Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. Measured 36.8 tok/s conventional decode median on 2× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q8_0 / F16 KV). Exact pins, patches, and proof; no unmatched proj">
+<meta name="twitter:title" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards — strict benchmark pending">
+<meta name="twitter:description" content="Alibaba&#x27;s Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complet">
 <meta name="twitter:image" content="https://neural.download/models/cards/qwen38-27b-q8-tp2-asrock-b70.png">
-<meta name="twitter:image:alt" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards: 36.8 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:image:alt" content="Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards", "description": "Alibaba's Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. Measured 36.8 tok/s conventional decode median on 2× Intel Arc Pro B70 32 GiB with llama.cpp SYCL (Q8_0 / F16 KV). Exact pins, patches, and proof; no unmatched proj", "url": "https://neural.download/models/qwen38-27b-q8-tp2-asrock-b70.html", "dateModified": "2026-08-22", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards", "description": "Alibaba's Qwen3.8 27B on two Arc Pro B70 cards in 8-bit form with llama.cpp - the quality-conservative choice when 4-bit is not enough. The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complet", "url": "https://neural.download/models/qwen38-27b-q8-tp2-asrock-b70.html", "dateModified": "2026-08-22", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
 </script>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen 27B · 3.6 → 3.8", "item": "https://neural.download/models/qwen-27b.html"}, {"@type": "ListItem", "position": 4, "name": "Qwen3.8 27B Q8_0 on two Intel Arc Pro B70 cards", "item": "https://neural.download/models/qwen38-27b-q8-tp2-asrock-b70.html"}]}
@@ -113,9 +113,7 @@
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page">
 
-  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
-  <div class="measured"><span class="big">36.8</span><span class="unit">tok/s conventional decode median</span></div>
-  <p class="scope">Historical reasoning-enabled 99-interval median across the accepted 12-prompt cache-zero suite; the packaged launcher defaults to reasoning off and is a distinct identity. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json">proof file</a></p><p class="scope-gloss">cache-zero = a fresh start, nothing pre-computed · 99-interval median = the middle rate across 99 measured stretches of a long answer</p>
+  <h2 id="measured">Public headline <span class="badge todo">Pending</span></h2><div class="placeholder"><p>The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complete varied-prompt 512-cap two-fresh-server run plus a bound quality/determinism oracle on the exact packaged tuple is required for its headline. Diagnostic measurements remain in the guide and evidence, but none is presented as the package headline.</p></div>
   <div class="actions">
     <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-q8-tp2-asrock-b70/README.md">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-27b-q8-tp2-asrock-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
@@ -135,7 +133,7 @@
     <h2>Keep going</h2>
     <div class="related-grid">
       <a href="qwen-27b.html"><b>Qwen 27B · 3.6 → 3.8 coverage</b><span>Variants, evidence, gaps, and recipes</span></a>
-      <a href="qwen38-27b-q4km-tp1-b70.html"><b>Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70</b><span>27.8 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-q8-tp1-b70.html"><b>Qwen3.8 27B Q8_0 on one Intel Arc Pro B70</b><span>19.7 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-256k-vision-mtp-b70.html"><b>Qwen3.8 27B 256K + vision + MTP draft on one Intel Arc Pro B70</b><span>26.7 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html"><b>Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards</b><span>58.4 tok/s · vLLM XPU</span></a>
+      <a href="qwen38-27b-q4km-tp1-b70.html"><b>Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70</b><span>27.8 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-q8-tp1-b70.html"><b>Qwen3.8 27B Q8_0 on one Intel Arc Pro B70</b><span>strict headline pending · llama.cpp SYCL</span></a><a href="qwen38-27b-256k-vision-mtp-b70.html"><b>Qwen3.8 27B 256K + vision + MTP draft on one Intel Arc Pro B70</b><span>26.7 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html"><b>Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards</b><span>strict headline pending · vLLM XPU</span></a>
       <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
       <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
       <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>

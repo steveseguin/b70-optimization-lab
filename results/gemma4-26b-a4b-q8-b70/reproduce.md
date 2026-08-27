@@ -13,8 +13,10 @@ Best strict cold-suite result:
 
 - draft-MTP VDR2 selected-down fused weighted-sum plus FA-on 32K/VMM:
   `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;
-- primary metric: `124.97714084813418 tok/s` median generated-token throughput
-  for tokens 1-100 after TTFT;
+- primary metric: `122.16035656735696 tok/s`, the median of per-input-class
+  medians using the conventional 99 inter-token intervals; secondary
+  all-prompt median `123.72736943965285 tok/s`; historical 100-event
+  compatibility value `124.97714084813418 tok/s`;
 - config: reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
   `UBATCH_SIZE=1024`, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`,
@@ -27,10 +29,12 @@ Best strict cold-suite result:
 Representative status: the current payload uses the VDR2 selected-down fused
 weighted-sum transfer of the strict `n_max=3`, `n_min=2`,
 `UBATCH_SIZE=1024` family, with FA-on 32K/VMM and final post-norm residual
-fusion. The current exact reproduction measured `124.97714084813418 tok/s` and
-supersedes the previous final-postnorm high `123.67689864739785 tok/s` and the
-previous selected-down high `121.41411987308553 tok/s`. Same-family support
-includes exact-reproduction rows at `121.59076340768573`,
+fusion. The same raw reproduction measured the three aggregations above; the
+class-balanced `122.16035656735696 tok/s` value is now the headline. Historical
+comparisons to the prior `123.67689864739785` final-postnorm and
+`121.41411987308553` selected-down highs used the older aggregation; do not
+compare those figures directly until their raw rows are class-balanced too.
+Same-family historical support includes exact-reproduction rows at `121.59076340768573`,
 `119.26425148518223`, and `113.63257982764395`, plus the older
 `119.94842631460949 tok/s` confirmation and lower variance rows at
 `113.572`, `114.088`, and `111.988 tok/s`; treat this as a higher-variance

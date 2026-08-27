@@ -29,9 +29,19 @@ Agents creating or updating these surfaces must use the repository-local
      operating point that was not actually loaded and measured on a B70.
 
 3. **Benchmarks** (data JSON + summary table in README)
-   - Decode: conventional 99-interval median tok/s on the 12-prompt
-     realistic suite, cold server, `cached_tokens=0` verified per request;
+   - Decode: median within each input class, then median across those class
+     medians, using conventional 99-interval tok/s on the 12-prompt realistic
+     suite, each prompt once,
+     512-token natural-completion cap, `cached_tokens=0` verified per request;
      two fresh-server runs, both numbers published (band, not cherry-pick).
+     Model residency and completed kernel compilation are allowed; prompt/KV/
+     response caches, learned/repeated-prompt drafting, selected fixtures, and
+     prompt subsets are not. A natural EOS after the 100-event metric window is
+     valid and its actual token count must be reported. Keep the ordinary
+     all-prompt median as a secondary diagnostic only.
+   - The suite must identify and contain multiple prompt classes, including at
+     least prose, code, analysis, operations, and documentation/structured
+     writing. Twelve variants of one easy shape are not a varied suite.
    - TTFT and prefill rate at a standard 512-token prompt.
    - For MoE models, note active-parameter count next to the rate so users
      understand why a 30B-A3B outruns a dense 27B.
@@ -43,6 +53,10 @@ Agents creating or updating these surfaces must use the repository-local
    - New families get **self-consistency + sanity canaries**, not oracle
      equality claims (there is no cross-model oracle). The README states
      explicitly what was and was not tested.
+   - Every optimized path must also match its registered unoptimized or
+     unchanged-target oracle under the lane's declared tolerance. A new-family
+     sanity battery can qualify a stock candidate, but it cannot prove that a
+     later optimization preserved outputs.
    - Known limitations verbatim (e.g. context ceilings by KV budget,
      quality class of the quant).
 
@@ -91,6 +105,21 @@ Agents creating or updating these surfaces must use the repository-local
   with a `DOWNLOAD-MANIFEST.txt` in the model directory.
 - Rates are conventional-median only; no legacy-inclusive accounting on the
   page. Failed runs are not silently rerun; bands reflect what happened.
+- A package may retain a runnable recipe with `featured_metric: null` while a
+  strict headline is pending. It must state `library.benchmark_status`; public
+  pages render “strict headline pending” instead of forcing a diagnostic number
+  into the slot.
+- Promotion requires two separate decisions: the performance workload gate and
+  the lane's exact-output/quality plus repeat-determinism gate. Neither implies
+  the other. High-acceptance fixtures and short output-cap screens remain
+  diagnostic even when their output checks pass.
+- Raw performance and quality evidence must live in this repository (or in a
+  deliberately tracked, hash-addressed evidence bundle), not only as filenames
+  on an unshared host. External-submission builders require a
+  `neural.download.promotion-attestation.v1` file that hash-binds the exact
+  speed artifact to the model/runtime/optimization identity and independent
+  quality, target-oracle, repeat, fresh-server, and no-quality-loss decisions.
+  See the [promotion attestation format](promotion-attestation.md).
 - No packet publishes speculation-assisted rates as the headline unless the
   packet IS a speculation package (then both target-only and assisted rates
   appear, labeled).

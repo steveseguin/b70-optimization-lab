@@ -19,13 +19,8 @@
     "use_cases": ["general", "coding", "long context"],
     "tags": ["one card", "target only", "cache zero", "source build", "quality conservative"],
     "published_at": "2026-08-25",
-    "featured_metric": {
-      "value": 19.662501,
-      "unit": "tok/s",
-      "label": "raw decode",
-      "scope": "Direct llama-bench tg128 at depth zero, one B70, Q8_0 weights, F16 KV, five repetitions. The matching service quality battery passed separately; this is not an HTTP or realistic-prompt rate.",
-      "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json"
-    }
+    "featured_metric": null,
+    "benchmark_status": "The measured five-repeat llama-bench tg128 context curve and separate service-quality battery remain valid scoped evidence, but a complete varied-prompt HTTP suite with a 512-token cap, two fresh-server attempts, and a bound quality/determinism oracle is still required for the package headline."
   },
   "contributors": [
     {

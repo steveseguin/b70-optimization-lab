@@ -12,6 +12,10 @@ speculative decoding. The final lab captures reached `27.813629` and
 were cache-zero, and the separate semantic battery passed every canary, 8/8
 repeat stability, and the long-context needle.
 
+The current headline re-aggregates final-J as a median of per-input-class
+medians: **`27.825726 tok/s`**. `27.824790` remains the all-prompt median and
+the older exact capture value; no benchmark row was discarded or replaced.
+
 The result was measured on one B70 selected from a four-B70, 125 GiB host.
 That proves one-card execution, not portability to every one-card PC. This
 candidate therefore conservatively requires Ubuntu 24.04 and 64 GiB host RAM

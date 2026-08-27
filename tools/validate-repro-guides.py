@@ -318,8 +318,19 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
         if not isinstance(published_at, str) or re.fullmatch(r"\d{4}-\d{2}-\d{2}", published_at) is None:
             errors.append(f"{label}: library.published_at must be YYYY-MM-DD")
         metric = library.get("featured_metric")
-        if not isinstance(metric, dict):
-            errors.append(f"{label}: library.featured_metric must be an object")
+        if metric is None:
+            benchmark_status = library.get("benchmark_status")
+            if not isinstance(benchmark_status, str) or not benchmark_status.strip():
+                errors.append(
+                    f"{label}: a package without a featured metric must state "
+                    "library.benchmark_status"
+                )
+            if status == "starter":
+                errors.append(f"{label}: starter packages require a featured metric")
+        elif not isinstance(metric, dict):
+            errors.append(
+                f"{label}: library.featured_metric must be an object or null"
+            )
         else:
             value = metric.get("value")
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:

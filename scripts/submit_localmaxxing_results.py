@@ -13,7 +13,9 @@ from pathlib import Path
 API_URL = "https://www.localmaxxing.com/api/speed-tests"
 API_DRY_RUN_URL = f"{API_URL}/dry-run"
 DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
-PRIMARY_METRIC = "median_tok_s_1_100_intervals_after_ttft"
+PRIMARY_METRIC = (
+    "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
+)
 API_KV_CACHE_DTYPES = {"q8_0", "q4_0", "fp8", "fp16", "auto"}
 API_ATTENTION_BACKENDS = {"flash_attn", "xformers", "sdpa", "triton"}
 API_STRING_LIMITS = {
@@ -83,6 +85,10 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
         problems.append(f"primaryMetricName must be {PRIMARY_METRIC}")
     if engine.get("primaryMetricAccounting") != "inter-token-intervals":
         problems.append("primaryMetricAccounting must be inter-token-intervals")
+    if engine.get("primaryMetricAggregation") != "median-of-prompt-class-medians":
+        problems.append(
+            "primaryMetricAggregation must be median-of-prompt-class-medians"
+        )
     if engine.get("metricWindowGeneratedTokens") != 100:
         problems.append("metricWindowGeneratedTokens must be 100")
     if engine.get("metricWindowIntervals") != 99:
@@ -171,6 +177,12 @@ def api_engine_flags(engine_flags: dict) -> dict:
         ),
         "primaryMetricName": engine_flags.get("primaryMetricName"),
         "primaryMetricAccounting": engine_flags.get("primaryMetricAccounting"),
+        "primaryMetricAggregation": engine_flags.get("primaryMetricAggregation"),
+        "promotionAttestation": engine_flags.get("promotionAttestation"),
+        "promotionAttestationSha256": engine_flags.get(
+            "promotionAttestationSha256"
+        ),
+        "promotionIdentity": engine_flags.get("promotionIdentity"),
         "metricWindowGeneratedTokens": engine_flags.get("metricWindowGeneratedTokens"),
         "metricWindowIntervals": engine_flags.get("metricWindowIntervals"),
         "tokenTimingSource": engine_flags.get("tokenTimingSource"),

@@ -15,6 +15,24 @@ from pathlib import Path
 from typing import Any
 
 
+PROMOTION_OUTPUT_TOKENS = 512
+MIN_PROMOTION_PROMPT_CLASSES = 5
+PROMOTION_PROMPT_CLASSES = {
+    "incident-retrospective": "operations",
+    "code-review": "code",
+    "customer-email": "prose",
+    "sql-debugging": "code",
+    "release-plan": "operations",
+    "benchmark-analysis": "analysis",
+    "architecture-tradeoff": "analysis",
+    "bug-report-synthesis": "operations",
+    "technical-guide": "documentation",
+    "risk-register": "structured-writing",
+    "performance-hypotheses": "analysis",
+    "decision-memo": "prose",
+}
+
+
 def native_cached_tokens(event: dict[str, Any]) -> int | None:
     """Return reused prompt tokens, not native ``tokens_cached`` slot length."""
     timings = event.get("timings")
@@ -312,6 +330,33 @@ def stats(values: list[float]) -> dict[str, float | None]:
     }
 
 
+def class_balanced_stats(
+    rows: list[dict[str, Any]], value_key: str
+) -> dict[str, Any]:
+    """Give each prompt class equal weight in the published median."""
+    grouped: dict[str, list[float]] = {}
+    for row in rows:
+        prompt_class = row.get("prompt_class")
+        value = row.get(value_key)
+        if (
+            isinstance(prompt_class, str)
+            and prompt_class != "unclassified"
+            and isinstance(value, (int, float))
+        ):
+            grouped.setdefault(prompt_class, []).append(float(value))
+    class_medians = {
+        prompt_class: statistics.median(values)
+        for prompt_class, values in sorted(grouped.items())
+    }
+    result: dict[str, Any] = stats(list(class_medians.values()))
+    result["aggregation"] = "median-of-prompt-class-medians"
+    result["class_medians"] = class_medians
+    result["class_prompt_counts"] = {
+        prompt_class: len(grouped[prompt_class]) for prompt_class in class_medians
+    }
+    return result
+
+
 def cached_tokens(row: dict[str, Any]) -> int | None:
     usage = row.get("usage")
     if not isinstance(usage, dict):
@@ -347,8 +392,67 @@ def load_suite(path: Path) -> tuple[dict[str, Any], list[dict[str, str]]]:
     for index, item in enumerate(prompts):
         prompt = item["prompt"] if isinstance(item, dict) else str(item)
         prompt_id = item.get("id", f"prompt-{index:02d}") if isinstance(item, dict) else f"prompt-{index:02d}"
-        out.append({"id": prompt_id, "prompt": prompt})
+        prompt_class = (
+            item.get("prompt_class") if isinstance(item, dict) else None
+        ) or PROMOTION_PROMPT_CLASSES.get(prompt_id)
+        out.append(
+            {
+                "id": prompt_id,
+                "prompt": prompt,
+                "prompt_class": prompt_class or "unclassified",
+            }
+        )
     return meta, out
+
+
+def promotion_gate_failures(
+    *,
+    screening_passed: bool,
+    selected_prompt_ids: list[str],
+    completed_prompt_count: int,
+    suite_prompt_count: int,
+    max_tokens: int,
+    metric_tokens: int,
+    completion_counts: list[Any],
+    ignore_eos: bool,
+    prompt_classes: list[str],
+) -> list[str]:
+    """Return fail-closed reasons that keep a run out of public promotion.
+
+    A short or filtered run can still be useful screening evidence.  It must
+    never call itself the realistic *final* gate, however, because the lab's
+    publication policy requires the complete fixed suite and full 512-token
+    response cap with enough natural output to cover the declared metric.
+    Keep this check independent of summary statistics so payload
+    builders can re-validate raw evidence rather than trusting a stored
+    boolean.
+    """
+    failures: list[str] = []
+    if not screening_passed:
+        failures.append("fresh_response_screening_failed")
+    if selected_prompt_ids:
+        failures.append("prompt_subset_selected")
+    if completed_prompt_count != suite_prompt_count:
+        failures.append("fixed_suite_incomplete")
+    if suite_prompt_count < 12:
+        failures.append("fixed_suite_has_fewer_than_12_prompts")
+    if max_tokens != PROMOTION_OUTPUT_TOKENS:
+        failures.append("max_tokens_must_equal_512")
+    if metric_tokens != 100:
+        failures.append("metric_window_must_equal_100_events")
+    if not completion_counts or any(
+        not isinstance(value, int) or value < 100 for value in completion_counts
+    ):
+        failures.append("every_completion_must_cover_100_event_metric")
+    if ignore_eos:
+        failures.append("ignore_eos_must_be_disabled")
+    classified = {
+        value for value in prompt_classes
+        if isinstance(value, str) and value and value != "unclassified"
+    }
+    if len(prompt_classes) != suite_prompt_count or len(classified) < MIN_PROMOTION_PROMPT_CLASSES:
+        failures.append("fixed_suite_lacks_varied_prompt_classes")
+    return failures
 
 
 def main() -> int:
@@ -395,7 +499,20 @@ def main() -> int:
     parser.add_argument(
         "--require-natural-eos",
         action="store_true",
-        help="Reject ignore_eos=true and require a recorded stop/length reason.",
+        help=(
+            "Reject ignore_eos=true and require a recorded stop/length reason. "
+            "A length finish means the declared 512-token cap was reached; it "
+            "is not mislabeled as a natural EOS token."
+        ),
+    )
+    parser.add_argument(
+        "--allow-screening",
+        action="store_true",
+        help=(
+            "Return success for a fresh-response diagnostic that does not meet "
+            "the full promotion gate. The JSON still records "
+            "realistic_final_gate.passed=false and cannot be submitted."
+        ),
     )
     args = parser.parse_args()
     request_extra = json.loads(args.request_extra_json)
@@ -405,6 +522,7 @@ def main() -> int:
         raise SystemExit("--require-natural-eos rejects ignore_eos=true")
 
     suite_meta, prompts = load_suite(args.suite)
+    suite_prompt_count = len(prompts)
     if args.prompt_id:
         requested = set(args.prompt_id)
         selected = [item for item in prompts if item["id"] in requested]
@@ -438,6 +556,7 @@ def main() -> int:
         )
         row["prompt_index"] = index
         row["prompt_id"] = item["id"]
+        row["prompt_class"] = item["prompt_class"]
         row["prompt_sha256"] = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
         if args.return_token_ids and row.get("stream_token_id_count"):
             offsets = row["token_id_offsets_s"]
@@ -517,19 +636,59 @@ def main() -> int:
         "openai_stream_content_or_reasoning_delta"
     )
 
+    screening_passed = (
+        len(rows) == len(prompts)
+        and len(metric_values) == len(rows)
+        and all(isinstance(v, int) and v == 0 for v in cached_values)
+        and len(set(prompt_hashes)) == len(prompt_hashes)
+        and all(metric_events_cover)
+        and all(
+            isinstance(v, int) and v >= args.metric_tokens
+            for v in completion_counts
+        )
+        and (not args.require_natural_eos or all(finish_reasons_known))
+    )
+    promotion_failures = promotion_gate_failures(
+        screening_passed=screening_passed,
+        selected_prompt_ids=args.prompt_id,
+        completed_prompt_count=len(rows),
+        suite_prompt_count=suite_prompt_count,
+        max_tokens=args.max_tokens,
+        metric_tokens=args.metric_tokens,
+        completion_counts=completion_counts,
+        ignore_eos=request_extra.get("ignore_eos") is True,
+        prompt_classes=[item["prompt_class"] for item in prompts],
+    )
     gate = {
-        "passed": (
-            len(rows) == len(prompts)
-            and len(metric_values) == len(rows)
-            and all(isinstance(v, int) and v == 0 for v in cached_values)
-            and len(set(prompt_hashes)) == len(prompt_hashes)
-            and all(metric_events_cover)
-            and all(isinstance(v, int) and v >= args.metric_tokens for v in completion_counts)
-            and (not args.require_natural_eos or all(finish_reasons_known))
+        "passed": not promotion_failures,
+        "gate_scope": "performance-workload-only",
+        "overall_public_promotion_requires_independent_quality_attestation": True,
+        "promotion_failures": promotion_failures,
+        "required_policy": (
+            "complete fixed varied-prompt suite; every prompt exactly once; "
+            "cached_tokens=0 every row; no prompt subset, prompt/KV/history/"
+            "response reuse, ignore_eos, or warmed-prompt averaging; exactly "
+            "a 512-token natural-completion cap with every response covering "
+            "the 100-event metric; primary metric is the median of the per-"
+            "prompt-class medians for the 99 intervals between generated "
+            "events 1-100"
         ),
-        "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
+        "suite_prompt_count": suite_prompt_count,
+        "completed_prompt_count": len(rows),
+        "full_suite_selected": not args.prompt_id and len(rows) == suite_prompt_count,
+        "prompt_classes": sorted({row["prompt_class"] for row in rows}),
+        "required_distinct_prompt_classes": MIN_PROMOTION_PROMPT_CLASSES,
+        "required_output_cap_tokens": PROMOTION_OUTPUT_TOKENS,
+        "requested_output_cap_tokens": args.max_tokens,
+        "completion_tokens_cover_metric_all": all(
+            isinstance(v, int) and v >= args.metric_tokens
+            for v in completion_counts
+        ),
         "metric_name": "median_tok_s_1_100_after_ttft",
-        "preferred_metric_name": "median_tok_s_1_100_intervals_after_ttft",
+        "preferred_metric_name": (
+            "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
+        ),
+        "preferred_metric_aggregation": "median-of-prompt-class-medians",
         "metric_tokens": args.metric_tokens,
         "metric_events": args.metric_tokens,
         "metric_intervals": args.metric_tokens - 1,
@@ -560,13 +719,26 @@ def main() -> int:
         "tok_s_1_100_after_ttft": stats(metric_values),
         "tok_s_1_100_after_ttft_legacy_inclusive_events": stats(metric_values),
         "tok_s_1_100_intervals_after_ttft": stats(interval_metric_values),
+        "class_balanced_tok_s_1_100_intervals_after_ttft": (
+            class_balanced_stats(
+                rows, "tok_s_1_100_intervals_after_ttft"
+            )
+        ),
         "tok_s_after_ttft_full": stats(full_values),
         "tok_s_wall_full": stats(wall_values),
         "ttft_ms": stats(ttft_values),
     }
     fresh_response_validity = {
-        "valid": gate["passed"],
-        "classification": "fresh-response" if gate["passed"] else "invalid-or-incomplete",
+        "valid": screening_passed,
+        "performance_gate_eligible": gate["passed"],
+        "overall_public_promotion_eligible": False,
+        "classification": (
+            "promotion-grade-fresh-response"
+            if gate["passed"]
+            else "fresh-response-screening"
+            if screening_passed
+            else "invalid-or-incomplete"
+        ),
         "suite_id": suite_meta.get("suite_id"),
         "suite_version": suite_meta.get("version"),
         "prompts_are_unique": gate["prompts_unique"],
@@ -581,6 +753,9 @@ def main() -> int:
         "primary_metric_name": gate["metric_name"],
         "primary_metric_tokens": args.metric_tokens,
         "preferred_metric_name": gate["preferred_metric_name"],
+        "preferred_metric_aggregation": gate[
+            "preferred_metric_aggregation"
+        ],
         "primary_metric_accounting": "legacy-inclusive-events",
         "preferred_metric_accounting": "inter-token-intervals",
         "metric_window_generated_events": args.metric_tokens,
@@ -593,7 +768,9 @@ def main() -> int:
         "note": (
             "Fixed realistic suite; each prompt is sent once as a cold response. "
             "Do not average synthetic repeated prompts, warmed continuations, "
-            "or n-gram/history-accelerated rows into this metric."
+            "or n-gram/history-accelerated rows into this metric. Passing this "
+            "artifact certifies only the performance workload; publication also "
+            "requires a hash-bound independent quality/determinism attestation."
         ),
     }
     result = {
@@ -605,6 +782,8 @@ def main() -> int:
             "suite_path": str(args.suite),
             "suite": suite_meta,
             "prompt_count": len(prompts),
+            "suite_prompt_count": suite_prompt_count,
+            "prompt_classes": sorted({item["prompt_class"] for item in prompts}),
             "max_tokens": args.max_tokens,
             "seed": args.seed,
             "request_extra": request_extra,
@@ -612,6 +791,7 @@ def main() -> int:
             "return_token_ids": args.return_token_ids,
             "selected_prompt_ids": args.prompt_id,
             "require_natural_eos": args.require_natural_eos,
+            "allow_screening": args.allow_screening,
         },
         "realistic_final_gate": gate,
         "fresh_response_validity": fresh_response_validity,
@@ -625,7 +805,7 @@ def main() -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(text + "\n")
     print(text)
-    return 0 if gate["passed"] else 2
+    return 0 if gate["passed"] or (args.allow_screening and screening_passed) else 2
 
 
 if __name__ == "__main__":

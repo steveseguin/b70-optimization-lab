@@ -1,5 +1,11 @@
 # Qwen3.8 FP8 dynamic MTP8 replication and promotion
 
+> **AUDIT CORRECTION, 2026-08-27:** “promotion” in this note meant selection
+> inside the short 40-token mechanism ladder. It did not satisfy the varied
+> 512-cap performance gate and is not a public single-user headline or valid
+> external-submission source. The speed and quality receipts remain diagnostic
+> evidence for the exact selected fixture.
+
 The MTP8-at-one/MTP1-at-load service reproduced and passed every frozen
 quality gate. It replaces MTP7-at-one as the selected short-context
 interactive profile.

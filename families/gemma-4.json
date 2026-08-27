@@ -128,10 +128,10 @@
       "config": {"cards": 1, "tp": 1, "mtp": 3, "kv": "f16", "flash_attention": "on", "configured_max_context_tokens": 32768},
       "workload": "12 unique cold prompts, 512-token output ceiling, cache zero; conventional 99-interval headline",
       "metrics": {
-        "decode_tok_s": [123.72736943965285],
+        "decode_tok_s": [122.16035656735696],
         "ttft_ms": [178.6938319564797]
       },
-      "quality": "512/512 canary passed; the historical 100-event compatibility figure is 124.97714084813418 tok/s and is not used as the conventional metric",
+      "quality": "512/512 canary passed; class-balanced median of input-class medians. The all-prompt 99-interval median is 123.72736943965285 tok/s and the historical 100-event compatibility figure is 124.97714084813418 tok/s; neither is the current headline",
       "evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
     },
     {

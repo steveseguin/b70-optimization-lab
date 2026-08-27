@@ -79,15 +79,13 @@ Status: active as of 2026-08-27. The target-only GGUF records remain Q4_K_M
 TP2 at `49.717503 tok/s` conventional (`50.219700` historical helper) and Q8_0
 TP2 at `36.772932 tok/s`. The official FP8 route has moved beyond its original
 `21.708532 tok/s` graph baseline: the block-W8A16 overlay directly measures
-`31.489587 tok/s` at an exact 32K prompt, target-only/MTP0 peaks at
-`1,112.570323 tok/s` aggregate at c128, and the selected replicated dynamic
-MTP8-to-MTP1 service reaches `58.391033 tok/s` on the fixed two-server cold
-realistic suite. Its separate high-acceptance 40-token fixture reaches
-`146.814418 tok/s`, while c64 reaches `1,094.314767 tok/s` aggregate. The
-latter passed 1,024/1,024
-synchronized concurrent exact-answer checks across two fresh servers. MTP9
+`31.489587 tok/s` at an exact 32K prompt and target-only/MTP0 reaches
+`1,112.570323 tok/s` aggregate at c128 under its scoped short-context gate.
+The dynamic-MTP single-user headline is pending: `58.391033` used a 128-token
+cap and `146.814418` used a selected high-acceptance fixture, so both are
+diagnostic only. MTP9
 and the subsequent latch/c2 threshold treatments are retained as measured
-negatives; no failed treatment is spliced into the package headline.
+negatives; no diagnostic treatment is spliced into the package headline.
 
 The strict-greedy distributed-argmax candidate was token-for-token exact
 across a position-balanced 48-request replay, but it moved the primary metric

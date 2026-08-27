@@ -5,7 +5,13 @@ F16 KV, two B70s, no draft model, and no speculative decoding. The accepted
 historical suite measured `36.772932 tok/s` conventional median with 12/12
 exact output hashes and zero cached tokens.
 
-> **Status: expert candidate.** The model and patch identities, source build,
+> **Strict package headline pending.** That historical suite ran with
+> reasoning enabled, while this package launches with reasoning off. It is
+> valid evidence for its recorded identity, but it is not the packaged
+> identity's headline. The exact package still needs the complete varied-prompt
+> 512-cap suite on two fresh servers plus its bound quality/determinism gate.
+
+> **Status: expert candidate; strict headline pending.** The model and patch identities, source build,
 > service launcher, benchmark, and semantic gates are documented. Platform
 > installation, a model download/direct-read helper, and clean-host replay are
 > still missing.
@@ -60,9 +66,10 @@ curl -fsS http://127.0.0.1:18088/health
 OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh
 ```
 
-The accepted headline was reasoning-enabled. The packaged service defaults to
-`--reasoning off`, which is intentionally a different benchmark identity. Do
-not compare the two without recording that setting.
+The historical accepted capture was reasoning-enabled. The packaged service
+defaults to `--reasoning off`, which is intentionally a different benchmark
+identity. Do not compare the two without recording that setting, and do not use
+the historical number as this package's headline.
 
 ## Output-audited multi-user profile
 

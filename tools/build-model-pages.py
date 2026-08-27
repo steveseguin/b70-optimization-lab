@@ -195,18 +195,25 @@ def svg_profile(profile):
 def page(pkg, all_pkgs, family=None):
     lib = pkg["library"]
     fm = lib.get("featured_metric") or {}
+    has_featured_metric = isinstance(lib.get("featured_metric"), dict)
+    benchmark_status = lib.get("benchmark_status", "Strict benchmark pending")
     hw = pkg.get("hardware") or {}
     model = pkg.get("model") or {}
     runtime = pkg.get("runtime") or {}
     pid = pkg["id"]
     name = pkg["name"]
-    title = f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured — neural.download"
+    title = (
+        f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured — neural.download"
+        if has_featured_metric
+        else f"{name} — strict benchmark pending — neural.download"
+    )
     url = f"{SITE}models/{pid}.html"
     status = STATUS_LABEL.get(pkg.get("status"), pkg.get("status", "").title())
     ml = PACKAGE_ML.get(pid)
     ml_attrs = ""
     exact_projection_workload = bool(
-        ml
+        has_featured_metric
+        and ml
         and isinstance(ml.get("prompt_tokens"), int)
         and ml["prompt_tokens"] > 0
         and isinstance(ml.get("output_tokens"), int)
@@ -218,14 +225,21 @@ def page(pkg, all_pkgs, family=None):
         else " Exact pins, patches, and proof; no unmatched projection is implied."
     )
     desc = (
-        f"{lib.get('summary', '')} Measured {fmt(fm.get('value'))} "
-        f"{fm.get('unit', 'tok/s')} {fm.get('label', 'decode')} on "
-        f"{hw.get('cards', 1)}× {hw.get('accelerator', 'Intel Arc Pro B70')} "
-        f"with {lib.get('runtime_label', '')} ({lib.get('quantization', '')})."
-        f"{projection_tail}"
+        (
+            f"{lib.get('summary', '')} Measured {fmt(fm.get('value'))} "
+            f"{fm.get('unit', 'tok/s')} {fm.get('label', 'decode')} on "
+            f"{hw.get('cards', 1)}× {hw.get('accelerator', 'Intel Arc Pro B70')} "
+            f"with {lib.get('runtime_label', '')} ({lib.get('quantization', '')})."
+            f"{projection_tail}"
+        )
+        if has_featured_metric
+        else (
+            f"{lib.get('summary', '')} {benchmark_status}. Exact recipe and "
+            "diagnostic evidence are retained, but no unqualified headline is published."
+        )
     )
     desc = re.sub(r"\s+", " ", desc).strip()[:300]
-    if exact_projection_workload:
+    if exact_projection_workload and has_featured_metric:
         ml_attrs = (f' data-ml-model="{esc(ml["model"])}" data-ml-quant="{esc(ml["quant"])}" data-ml-runtime="{esc(ml["runtime"])}"'
                     f' data-ml-cards="{esc(hw.get("cards", 1))}" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="{esc(ml.get("spec", "none"))}"'
                     f' data-ml-measured="{esc(fm.get("value", ""))}" data-ml-quant-label="{esc(lib.get("quantization", ""))}" data-ml-runtime-label="{esc(lib.get("runtime_label", ""))}"'
@@ -297,7 +311,7 @@ def page(pkg, all_pkgs, family=None):
         )
     related = [p for p in all_pkgs if p["id"] != pid and p["library"].get("model_family") == lib.get("model_family")][:4]
     related_html = "".join(
-        f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc(fmt((p["library"].get("featured_metric") or {}).get("value")))} tok/s · {esc(p["library"].get("runtime_label", ""))}</span></a>'
+        f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else "strict headline pending")} · {esc(p["library"].get("runtime_label", ""))}</span></a>'
         for p in related
     )
     family_href = f'{esc(family["id"])}.html' if family else ""
@@ -379,13 +393,33 @@ def page(pkg, all_pkgs, family=None):
         projection_html = """
   <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
   <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div>"""
+    measured_html = (
+        f'<h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>'
+        f'<div class="measured"><span class="big">{esc(fmt(fm.get("value")))}</span><span class="unit">{esc(fm.get("unit", "tok/s"))} {esc(fm.get("label", "decode"))}</span></div>'
+        f'<p class="scope">{esc(fm.get("scope", ""))} {evidence_link}</p>{scope_gloss}'
+        if has_featured_metric
+        else (
+            '<h2 id="measured">Public headline <span class="badge todo">Pending</span></h2>'
+            f'<div class="placeholder"><p>{esc(benchmark_status)} Diagnostic measurements remain in the guide and evidence, but none is presented as the package headline.</p></div>'
+        )
+    )
+    seo_title = (
+        f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured"
+        if has_featured_metric
+        else f"{name} — strict benchmark pending"
+    )
+    seo_alt = (
+        f"{name}: {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured on Intel Arc Pro B70 — neural.download"
+        if has_featured_metric
+        else f"{name}: strict benchmark pending on Intel Arc Pro B70 — neural.download"
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)}</title>
-{seo_head(url, f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured", desc, image=f"{SITE}models/cards/{pid}.png", image_alt=f"{name}: {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured on Intel Arc Pro B70 — neural.download", og_type="article", depth=1)}
+{seo_head(url, seo_title, desc, image=f"{SITE}models/cards/{pid}.png", image_alt=seo_alt, og_type="article", depth=1)}
 <script type="application/ld+json">
 {json_for_html_script(ld)}
 </script>
@@ -468,9 +502,7 @@ def page(pkg, all_pkgs, family=None):
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page"{ml_attrs}>
 
-  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2>
-  <div class="measured"><span class="big">{esc(fmt(fm.get('value')))}</span><span class="unit">{esc(fm.get('unit', 'tok/s'))} {esc(fm.get('label', 'decode'))}</span></div>
-  <p class="scope">{esc(fm.get('scope', ''))} {evidence_link}</p>{scope_gloss}
+  {measured_html}
   <div class="actions">
     <a class="button" href="{GITHUB}{esc(pkg.get('guide', ''))}">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../{esc(pkg.get('guide', ''))}" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
@@ -540,7 +572,7 @@ def index_page(pkgs, families):
     )
     rows = "".join(
         f'<a class="guide-card" href="{esc(p["id"])}.html"><div class="gc-top"><div class="gc-n">{esc(STATUS_LABEL.get(p.get("status"), p.get("status", "")))} · {esc(p["library"].get("runtime_label", ""))}</div><h3>{esc(p["name"])}</h3></div>'
-        f'<div class="gc-body"><p>{esc(p["library"].get("summary", ""))}</p><p class="gc-meta"><strong>{esc(fmt((p["library"].get("featured_metric") or {}).get("value")))} tok/s</strong> measured · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
+        f'<div class="gc-body"><p>{esc(p["library"].get("summary", ""))}</p><p class="gc-meta"><strong>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else "strict headline pending")}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
         for p in display_pkgs
     )
     return f"""<!doctype html>

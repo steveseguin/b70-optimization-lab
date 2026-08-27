@@ -8,7 +8,8 @@ import json
 import statistics
 from pathlib import Path
 
-from qualify_realistic_window_metrics import qualify
+from qualify_realistic_window_metrics import qualify, promotion_evidence_failures
+from promotion_evidence import sha256_file, validate_promotion_attestation
 
 
 def parse_identity(path: Path | None) -> dict[str, str]:
@@ -33,6 +34,11 @@ def rounded_median_int(values: list[float]) -> int:
 
 def load_strict_bench(path: Path) -> dict:
     bench = qualify(json.loads(path.read_text()))
+    failures = promotion_evidence_failures(bench)
+    if failures:
+        raise SystemExit(
+            f"{path}: not promotion eligible: {', '.join(failures)}"
+        )
     gate = bench.get("realistic_final_gate") or {}
     fresh = bench.get("fresh_response_validity") or {}
     if gate.get("passed") is not True:
@@ -43,13 +49,15 @@ def load_strict_bench(path: Path) -> dict:
         raise SystemExit(f"{path}: fresh_response_validity.valid is not true")
     if (
         fresh.get("preferred_metric_name")
-        != "median_tok_s_1_100_intervals_after_ttft"
+        != "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
     ):
         raise SystemExit(
             f"{path}: preferred metric is not the conventional interval field"
         )
-    if "tok_s_1_100_intervals_after_ttft" not in (bench.get("summary") or {}):
-        raise SystemExit(f"{path}: conventional interval summary is missing")
+    if "class_balanced_tok_s_1_100_intervals_after_ttft" not in (
+        bench.get("summary") or {}
+    ):
+        raise SystemExit(f"{path}: class-balanced interval summary is missing")
     return bench
 
 
@@ -68,13 +76,31 @@ def main() -> int:
     parser.add_argument("--identity-env", type=Path)
     parser.add_argument("--result-packet", default="")
     parser.add_argument("--notes", required=True)
+    parser.add_argument(
+        "--promotion-attestation",
+        type=Path,
+        required=True,
+        help=(
+            "Hash-bound quality/determinism attestation for this exact "
+            "performance evidence and model/runtime identity."
+        ),
+    )
     args = parser.parse_args()
 
     bench = load_strict_bench(args.bench_json)
+    try:
+        attestation = validate_promotion_attestation(
+            args.promotion_attestation,
+            args.bench_json,
+            expected_model_revision=args.model_revision,
+            expected_runtime_revision=args.engine_version,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise SystemExit(str(exc)) from exc
     identity = parse_identity(args.identity_env)
     rows = bench["rows"]
     summary = bench["summary"]
-    primary = summary["tok_s_1_100_intervals_after_ttft"]
+    primary = summary["class_balanced_tok_s_1_100_intervals_after_ttft"]
     full = summary["tok_s_after_ttft_full"]
     wall = summary["tok_s_wall_full"]
     ttft = summary["ttft_ms"]
@@ -113,7 +139,13 @@ def main() -> int:
         "modelPath": identity.get("model") or identity.get("model_dir") or identity.get("MODEL_DIR"),
         "outputSha256": output_hashes,
         "outputTokens": completion_tokens,
-        "primaryMetricName": "median_tok_s_1_100_intervals_after_ttft",
+        "primaryMetricName": (
+            "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
+        ),
+        "primaryMetricAggregation": "median-of-prompt-class-medians",
+        "promotionAttestation": str(args.promotion_attestation),
+        "promotionAttestationSha256": sha256_file(args.promotion_attestation),
+        "promotionIdentity": attestation["identity"],
         "primaryMetricAccounting": "inter-token-intervals",
         "promptSha256": prompt_hashes,
         "promptTokens": prompt_tokens,

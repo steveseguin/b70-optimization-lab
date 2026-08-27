@@ -6,9 +6,16 @@ front door: it names exact hardware, model, runtime, patches, commands,
 evidence, and any remaining gates without duplicating their source of truth.
 The `library` block supplies normalized discovery fields for the public guide
 browser (family, quant, card count, OS, native/container delivery, use cases,
-and measured metric). The `contributors` block records the exact work and
+and either a promotion-grade measured metric or an explicit strict-benchmark
+pending state). A candidate may use `featured_metric: null` plus a non-empty
+`benchmark_status`; generators show the pending state and never fill it with a
+diagnostic number. The `contributors` block records the exact work and
 evidence carried into that package; upstream dependencies are not treated as
 contributors unless a concrete contribution was adopted.
+
+External submission additionally requires the
+[hash-bound promotion attestation](../docs/promotion-attestation.md); a
+performance-suite `passed` flag alone never authorizes publication.
 
 An optional `performance_profiles` list carries measured curves. Each curve
 names one metric (`decode`, `prefill`, `ttft`, or `aggregate_decode`), uses an

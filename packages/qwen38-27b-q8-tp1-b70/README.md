@@ -6,12 +6,18 @@ tg128 curve measured `19.662501 tok/s` at depth zero and `18.023689 tok/s` at
 32K. Prefill pp2048 measured `996.891020` and `719.144647 tok/s` at those same
 depths. Every displayed marker is a five-repetition measurement.
 
+> **Strict package headline pending.** The figures above are direct
+> `llama-bench` context-shape measurements, not a varied-prompt HTTP median.
+> They remain useful scoped evidence but are not the featured package speed.
+> Promotion requires the complete 512-cap varied suite on two fresh servers
+> and a quality/determinism oracle bound to the exact packaged identity.
+
 The matching OpenAI-compatible service separately passed 7/7 semantic
 canaries, 8/8 repeat stability, a 7,617-token needle, and explicit zero cached
 tokens on all 16 requests. The raw-engine rate is not relabeled as HTTP or
 realistic-prompt speed.
 
-> **Status: candidate.** The model, source patches, build, launch, depth
+> **Status: candidate; strict headline pending.** The model, source patches, build, launch, depth
 > benchmark, quality checks, and output-audited HTTP concurrency are closed in
 > this repository. A clean Ubuntu host installation/replay, beginner recovery
 > path, and realistic-prompt HTTP TTFT/depth remain open.

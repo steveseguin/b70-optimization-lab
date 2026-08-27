@@ -1,5 +1,11 @@
 # Ornith 1.5 35B-A3B — one-B70 neural.download guide
 
+> **Integrity status, 2026-08-27: strict headline pending.** The measured
+> `131.460231 tok/s` performance and same-binary patch exactness remain useful
+> scoped evidence, but the runtime produced 0/12 identical complete natural
+> response hashes across fresh stock servers. It therefore does not satisfy
+> the lab's cross-server determinism requirement for a package headline.
+
 Status: **model verified, one-card operating point validated, and lab decode
 patch promoted** (2026-08-23). Lane: enthusiast MoE; the measured stock
 two-card comparison was slower than one card for single-stream decode.

@@ -29,6 +29,8 @@
     "launcher_sha256": "1460927c0ab231c98db28f5013d300530ff82ca6bfb6130ea2d29660c9772992",
     "prompt_count_per_run": 12,
     "max_output_tokens": 128,
+    "promotion_required_output_cap_tokens": 512,
+    "classification": "fresh-response screening only; output cap is below the promotion requirement",
     "metric": "median_tok_s_1_100_intervals_after_ttft",
     "metric_generated_events": 100,
     "metric_intervals": 99,
@@ -55,7 +57,9 @@
       "wall_median_tok_s": 55.43623115004252,
       "median_ttft_ms": 108.09404402971268,
       "first_request_ttft_ms": 828.8191859610379,
-      "gate_passed": true,
+      "legacy_harness_gate_passed": true,
+      "promotion_gate_passed": false,
+      "promotion_failures": ["requested_output_tokens_not_512"],
       "cached_tokens_all_zero": true,
       "completed_output_tokens": 1536
     },
@@ -74,12 +78,14 @@
       "wall_median_tok_s": 55.270329904099995,
       "median_ttft_ms": 107.45038453023881,
       "first_request_ttft_ms": 742.7758489502594,
-      "gate_passed": true,
+      "legacy_harness_gate_passed": true,
+      "promotion_gate_passed": false,
+      "promotion_failures": ["requested_output_tokens_not_512"],
       "cached_tokens_all_zero": true,
       "completed_output_tokens": 1536
     }
   ],
-  "promoted": {
+  "screening_aggregate_not_promoted": {
     "aggregation": "arithmetic mean of two independently cold-started server suite medians",
     "conventional_median_tok_s": 58.39103279669794,
     "conventional_p10_tok_s": 48.00716553617299,
@@ -90,21 +96,30 @@
     "total_requests": 24,
     "total_output_tokens": 3072,
     "cached_tokens_all_zero": true,
-    "gate_passed": true
+    "legacy_harness_gate_passed": true,
+    "promotion_gate_passed": false,
+    "promotion_failures": ["requested_output_tokens_not_512"]
   },
   "external_submission": {
     "service": "LocalMaxxing",
     "run_id": "cmtb5n45n0021qq01n13vly2h",
-    "status": "APPROVED",
+    "status": "APPROVED_EXTERNALLY_BUT_WITHDRAWAL_RECOMMENDED",
     "source_run": "r1",
     "tok_s_out": 58.53775636708166,
     "url": "https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h",
-    "aggregation_note": "The external submission reports the first chronological run directly; it does not combine the independent replay."
+    "aggregation_note": "The external submission reports the first chronological run directly; it does not combine the independent replay. It was submitted prematurely because the old harness mislabeled a 128-token-cap run as a final gate."
   },
   "interpretation": {
     "short_fixture_tok_s": 146.81441784235233,
-    "short_fixture_status": "retained as a separately labeled 40-prompt-token high-acceptance fixture, not the general package headline",
+    "short_fixture_status": "diagnostic-only selected high-acceptance fixture; excluded from package headlines and public performance graphs",
     "cold_start_observation": "Each empty-cache server compiled for about 72 seconds, completed engine initialization in about 90 seconds, and became HTTP-ready about 165 seconds after container start. The first inference then JIT-compiled three EAGLE preparation kernels, producing 829 ms and 743 ms first-request TTFT in R1/R2.",
     "acceptance_observation": "Server logs reported workload-dependent MTP8 draft acceptance around 26-34% during the realistic suite, explaining why varied natural prompts are materially slower than the earlier high-acceptance fixture."
+  },
+  "audit_correction_2026_08_27": {
+    "status": "not promotion eligible",
+    "reason": "Both attempts requested max_tokens=128. The repository policy required the complete varied-prompt suite under a 512-token natural-completion cap before promotion or LocalMaxxing submission.",
+    "raw_runs_preserved": true,
+    "public_action": "remove 58.391033 and 146.814418 from package and site headline surfaces; retain only as diagnostic evidence",
+    "external_action": "withdrawal recommended for LocalMaxxing cmtb5n45n0021qq01n13vly2h"
   }
 }

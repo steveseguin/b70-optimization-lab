@@ -23,7 +23,10 @@ def render() -> str:
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     packages = sorted(
         catalog["packages"],
-        key=lambda item: float(item["library"]["featured_metric"]["value"]),
+        key=lambda item: (
+            (item["library"].get("featured_metric") or {}).get("value") is not None,
+            float((item["library"].get("featured_metric") or {}).get("value") or 0),
+        ),
         reverse=True,
     )
     lines = [
@@ -33,7 +36,7 @@ def render() -> str:
     ]
     for package in packages:
         library = package["library"]
-        metric = library["featured_metric"]
+        metric = library.get("featured_metric")
         hardware = package["hardware"]
         clean_host = "clean-host tested" if package["clean_host_tested"] else "clean-host replay pending"
         deployment = (
@@ -41,11 +44,16 @@ def render() -> str:
             f"{library['runtime_label']}"
         )
         detail = f"models/{package['id']}.html"
+        measured = (
+            f"**`{format_value(float(metric['value']))} {metric['unit']}`**<br>"
+            f"{metric['label']}"
+            if isinstance(metric, dict)
+            else f"**strict headline pending**<br>{library['benchmark_status']}"
+        )
         lines.append(
             f"| **[{package['name']}]({detail})**<br>{deployment} | "
             f"`{package['status']}` · {clean_host} | "
-            f"**`{format_value(float(metric['value']))} {metric['unit']}`**<br>"
-            f"{metric['label']} | [reproduction guide]({package['guide']}) |"
+            f"{measured} | [reproduction guide]({package['guide']}) |"
         )
     lines.append(END)
     return "\n".join(lines)

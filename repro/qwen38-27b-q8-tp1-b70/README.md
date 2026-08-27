@@ -9,7 +9,8 @@ This is the repository's quality-conservative one-card Qwen3.8 GGUF lane. It
 uses Q8_0 weights, F16 KV, one server slot, and no draft model or speculative
 decoding. The raw-engine tg128 curve measured `19.662501 tok/s` at depth zero
 and `18.023689 tok/s` at 32K. These are direct `llama-bench` rates, not HTTP or
-realistic-prompt headline rates. The matching service tuple separately passed
+realistic-prompt headline rates; no featured package speed is currently
+claimed. The matching service tuple separately passed
 7/7 canaries, 8/8 repeat stability, a 7,617-token needle test, and zero cached
 tokens on all 16 responses. A separate output-audited HTTP profile uses eight
 active slots and queues up to 64 simultaneous requests, reaching a stable

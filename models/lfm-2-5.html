@@ -221,7 +221,6 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / LFM2.5 2.6B</p>
   <h1>LFM2.5 2.6B</h1>
   <p>Liquid AI&#x27;s LFM2.5, a compact 2.6B model with a hybrid convolution-and-attention design. Very fast on one Arc Pro B70 and a good fit for lightweight assistants and edge-style workloads.</p>
-  <a class="hero-headline" href="lfm25-26b-q8-b70.html" title="lfm25-26b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576."><span class="big">132.35</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 99 words a second</span><small>lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70 · B70-verified</small></a>
   <div class="lineage"><span>LFM2.5 2.6B · current measured weights</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -232,11 +231,10 @@
     <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>2</dd></div></dl>
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
-  <div class="packet-grid"><a class="packet-card" href="lfm25-26b-q8-b70.html" data-family-headroom data-ml-model="lfm2.5_2.6b" data-ml-quant="Q8_0" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="132.351606" data-ml-prompt="128" data-ml-output="128">
-  <div class="packet-top"><span>lfm2.5-2.6b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom …</span></span></div>
+  <div class="packet-grid"><a class="packet-card" href="lfm25-26b-q8-b70.html">
+  <div class="packet-top"><span>lfm2.5-2.6b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="LFM2.5 2.6B Q8_0 · TP1">LFM2.5 2.6B Q8_0 · TP1</h3>
-  <p class="packet-promise">Reproduce <b>132.35 tok/s</b> on 1× B70 · candidate package</p>
-  <small class="packet-workload">Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576.</small>
+  <p class="packet-promise">Evidence packet · candidate package</p>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>active context through 32K</span><span>quality</span><span>stock upstream</span></div>
 </a></div>
@@ -263,15 +261,8 @@
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>
 
-  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup (lfm2.5-2.6b · Q8_0 · llama.cpp SYCL · 1× B70). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
-  <div id="package-page" data-ml-model="lfm2.5_2.6b" data-ml-quant="Q8_0" data-ml-quant-label="Q8_0" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL 9fee29e9435f865ec0b811a783a6471a136d9317" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="512" data-ml-measured="132.351606">
-    <div id="package-projection" class="projection" hidden>
-      <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
-      <div data-package-card></div>
-      <div data-package-charts></div>
-    </div>
-    <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
-  </div>
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2></div></div>
+  <div class="placeholder"><p>No projection is shown: the family has no curated headline measurement yet. The measured numbers above stand on their own.</p></div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Recipes</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/lfm-2-5.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>

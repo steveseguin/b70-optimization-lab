@@ -1,5 +1,11 @@
 # Ornith 1.5 9B — neural.download packet (DRAFT: benchmarks pending)
 
+> **Integrity status, 2026-08-27: strict headline pending.** The two varied
+> 512-cap speeds and canary summary below are retained as measured candidate
+> observations, but their raw operating-point/canary JSON files are not closed
+> in this repository. Do not promote or submit them until those artifacts are
+> imported, hash-bound, and the quality/determinism gate is replayed.
+
 Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
 (2026-08-22). Lane: beginner-plus single-card.
 

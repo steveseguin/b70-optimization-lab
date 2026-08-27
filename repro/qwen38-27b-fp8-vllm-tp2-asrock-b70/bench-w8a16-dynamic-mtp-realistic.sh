@@ -19,7 +19,7 @@ python3 "${repo_root}/scripts/bench-openai-realistic-suite.py" \
   --model "${model}" \
   --api-mode completions \
   --suite "${suite}" \
-  --max-tokens 128 \
+  --max-tokens 512 \
   --metric-tokens 100 \
   --seed 42 \
   --timeout 300 \
@@ -44,8 +44,10 @@ if not gate["cached_tokens_all_zero"]:
     raise SystemExit("one or more requests reported cached prompt tokens")
 if not gate["return_token_ids_requested"]:
     raise SystemExit("stream token-ID timing was not requested")
-if len(rows) != 12 or any(row.get("completion_tokens") != 128 for row in rows):
-    raise SystemExit("expected 12 complete 128-token responses")
+if len(rows) != 12 or any((row.get("completion_tokens") or 0) < 100 for row in rows):
+    raise SystemExit("expected the complete suite with every response covering the metric window")
+if data["run_identity"].get("max_tokens") != 512:
+    raise SystemExit("promotion requires the fixed 512-token response cap")
 
 primary = summary["tok_s_1_100_intervals_after_ttft"]
 print(f"conventional_median_tok_s={primary['median']:.12f}")

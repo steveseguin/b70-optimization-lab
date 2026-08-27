@@ -221,11 +221,10 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Ornith 1.5 · dense 9B + MoE 35B-A3B</p>
   <h1>Ornith 1.5 · dense 9B + MoE 35B-A3B</h1>
   <p>Ornith AI&#x27;s Ornith 1.5 line: a dense 9B and a 35B mixture-of-experts (about 3B active per word), both Qwen-derived. The 35B is the fastest single-card model this lab has measured; the 9B is a smaller stock deployment.</p>
-  <a class="hero-headline" href="ornith-15-35b-a3b-q4km-b70.html" title="ornith-15-35b-a3b-q4km-b70 · Mean of two fresh-server conventional 99-interval suite medians (130.451 and 132.469 tok/s), up-to-512-token responses, target-only, cache-zero; the twelfth shared-gate/residual/RMS source fusion improved its matched mean-of-run-medians by +1.38%, with 12/12 prompt-paired averages winning. The legacy 100-event compatibility pair (131.769 and 133.807) remains retained in the evidence but is not the headline."><span class="big">131.46</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 99 words a second</span><small>ornith-1.5-35b-a3b · Q4_K_M · llama.cpp SYCL · 1× B70 · Evidence B of A–D</small></a>
   <div class="lineage"><span>Ornith 1.5 · publisher release line containing architecture-distinct siblings</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
-<div class="result-strip" aria-label="Curated measured results"><a class="result is-scoped" href="ornith-15-9b-q8-b70.html" title="ornith-15-9b-q8-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 49.573292."><span class="r-kind">Ornith 1.5 9B dense · Q8_0 · one B70</span><b>49.59</b><span class="r-unit">tok/s</span><span class="r-note">ornith-1.5-9b · Q8_0 · llama.cpp SYCL · 1× B70</span><span class="r-gate">Evidence C of A–D</span></a></div><div class="family-cta"><a class="button" href="ornith-15-35b-a3b-q4km-b70.html">Open deployment packet</a><a class="inline" href="#packets">All packets and recipes</a></div>
+<div class="family-cta"><a class="button" href="ornith-15-35b-a3b-q4km-b70.html">Open deployment packet</a><a class="inline" href="#packets">All packets and recipes</a></div>
   <dl class="meta-strip" aria-label="Family signals">
     <div title="local-llm-on-b70, reviewed 2026-08-23"><dt>B70 fit</dt><dd>High</dd></div>
     <div title="objective self-consistency and canary evidence for each exact model/quant/runtime packet; not cross-model oracle equality or a general intelligence score"><dt>Quality evidence</dt><dd>Strong scoped deployment evidence</dd></div>
@@ -233,18 +232,16 @@
     <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>9</dd></div></dl>
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
-  <div class="packet-grid"><a class="packet-card" href="ornith-15-9b-q8-b70.html" data-family-headroom data-ml-model="ornith_1.5_9b" data-ml-quant="Q8_0" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="49.588381" data-ml-prompt="128" data-ml-output="100">
-  <div class="packet-top"><span>ornith-1.5-9b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom …</span></span></div>
+  <div class="packet-grid"><a class="packet-card" href="ornith-15-9b-q8-b70.html">
+  <div class="packet-top"><span>ornith-1.5-9b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Ornith 1.5 9B dense · Q8_0 · one B70">Ornith 1.5 9B dense · Q8_0 · one B70</h3>
-  <p class="packet-promise">Reproduce <b>49.59 tok/s</b> on 1× B70 · candidate package</p>
-  <small class="packet-workload">Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 49.573292.</small>
+  <p class="packet-promise">Evidence packet · candidate package</p>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="Ornith 1.5 9B Q8_0 stock llama.cpp/SYCL one-card deployment · two fresh cache-zero serving runs, a seven-point measured 0–32K raw-engine profile, pinned artifact identity, and repeat/arithmetic/copy/JSON canaries are retained; the package has not had a clean-host replay and its quality evidence is scoped self-consistency rather than an external model-quality oracle" aria-label="Evidence grade C: Ornith 1.5 9B Q8_0 stock llama.cpp/SYCL one-card deployment · two fresh cache-zero serving runs, a seven-point measured 0–32K raw-engine profile, pinned artifact identity, and repeat/arithmetic/copy/JSON canaries are retained; the package has not had a clean-host replay and its quality evidence is scoped self-consistency rather than an external model-quality oracle">Evidence C <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>context through 32K</span><span>quality</span><span>recipe</span></div>
-</a><a class="packet-card" href="ornith-15-35b-a3b-q4km-b70.html" data-family-headroom data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="131.460231" data-ml-prompt="128" data-ml-output="100">
-  <div class="packet-top"><span>ornith-1.5-35b-a3b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom …</span></span></div>
+</a><a class="packet-card" href="ornith-15-35b-a3b-q4km-b70.html">
+  <div class="packet-top"><span>ornith-1.5-35b-a3b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Ornith 1.5 35B-A3B MoE · Q4_K_M · one B70">Ornith 1.5 35B-A3B MoE · Q4_K_M · one B70</h3>
-  <p class="packet-promise">Reproduce <b>131.46 tok/s</b> on 1× B70 · candidate package</p>
-  <small class="packet-workload">Mean of two fresh-server conventional 99-interval suite medians (130.451 and 132.469 tok/s), up-to-512-token responses, target-only, cache-zero; the twelfth shared-gate/residual/RMS source fusion improved its matched mean-of-run-medians by +1.38%, with 12/12 prompt-paired averages winning. The legacy 100-event compatibility pair (131.769 and 133.807) remains retained in the evidence but is not the headline.</small>
+  <p class="packet-promise">Evidence packet · candidate package</p>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="Ornith 1.5 35B-A3B Q4_K_M twelve-feature one-card optimization packet · the complete patch and binaries are hashed, the final incremental door has mirrored engine and fresh-server A/B evidence, every candidate and control row was cache-zero, the canonical 128-token transcript was byte-identical across 5,080 candidate hits, objective canaries passed, and the current seven-point 0–32K profile was measured directly; clean-host replay and cross-process output determinism remain open" aria-label="Evidence grade B: Ornith 1.5 35B-A3B Q4_K_M twelve-feature one-card optimization packet · the complete patch and binaries are hashed, the final incremental door has mirrored engine and fresh-server A/B evidence, every candidate and control row was cache-zero, the canonical 128-token transcript was byte-identical across 5,080 candidate hits, objective canaries passed, and the current seven-point 0–32K profile was measured directly; clean-host replay and cross-process output determinism remain open">Evidence B <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>context through 32K</span><span>quality</span><span>patched recipe</span></div>
 </a></div>
@@ -280,15 +277,8 @@
 
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge lab">Lab-measured</span></h2><p>32 simultaneous users share <b>217 combined tok/s</b> on 1 card (Q4_K_M MoE accepted twelve-feature stack); the full curve is under Measured results and in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>.</p></div></div>
 
-  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup (ornith-1.5-35b-a3b · Q4_K_M · llama.cpp SYCL · 1× B70). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
-  <div id="package-page" data-ml-model="ornith_1.5_35b_a3b" data-ml-quant="Q4_K_M" data-ml-quant-label="Q4_K_M MoE twelve-feature stack plus copy-offload setting" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL 9fee29e plus lab patch" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="512" data-ml-measured="131.460231">
-    <div id="package-projection" class="projection" hidden>
-      <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
-      <div data-package-card></div>
-      <div data-package-charts></div>
-    </div>
-    <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
-  </div>
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2></div></div>
+  <div class="placeholder"><p>No projection is shown: the family has no curated headline measurement yet. The measured numbers above stand on their own.</p></div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Recipes</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/ornith-1-5.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>

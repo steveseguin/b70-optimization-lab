@@ -221,7 +221,6 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / Nemotron 3.5 Lightning 30B-A3B</p>
   <h1>Nemotron 3.5 Lightning 30B-A3B</h1>
   <p>NVIDIA&#x27;s Nemotron 3.5 Lightning, a 30B hybrid Mamba mixture-of-experts with about 3B active per word. A fast general assistant that runs on one Arc Pro B70 with stock software.</p>
-  <a class="hero-headline" href="nemotron-35-lightning-30b-a3b-b70.html" title="nemotron-35-lightning-30b-a3b-b70 · Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976."><span class="big">72.17</span><span class="unit">tok/s<br>measured</span><span class="gloss">&asymp; 54 words a second</span><small>nemotron-3.5-lightning-30b-a3b · UD-Q4_K_M · llama.cpp SYCL · 1× B70 · B70-verified</small></a>
   <div class="lineage"><span>Nemotron 3.5 Lightning 30B-A3B · measured model</span></div>
 </div></header>
 <main id="main"><div class="wrap family-main">
@@ -233,11 +232,10 @@
     <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>3</dd></div></dl>
 
   <div class="section-head" id="packets"><div><h2>Packets and recipes</h2><p>The deployment variants of this family, at every maturity.</p></div></div>
-  <div class="packet-grid"><a class="packet-card" href="nemotron-35-lightning-30b-a3b-b70.html" data-family-headroom data-ml-model="nemotron3.5_lightning_30b_a3b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="72.169452" data-ml-prompt="128" data-ml-output="100">
-  <div class="packet-top"><span>nemotron-3.5-lightning-30b-a3b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom …</span></span></div>
+  <div class="packet-grid"><a class="packet-card" href="nemotron-35-lightning-30b-a3b-b70.html">
+  <div class="packet-top"><span>nemotron-3.5-lightning-30b-a3b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Nemotron 3.5 Lightning 30B-A3B · UD-Q4_K_M · one B70">Nemotron 3.5 Lightning 30B-A3B · UD-Q4_K_M · one B70</h3>
-  <p class="packet-promise">Reproduce <b>72.17 tok/s</b> on 1× B70 · candidate package</p>
-  <small class="packet-workload">Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976.</small>
+  <p class="packet-promise">Evidence packet · candidate package</p>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>prefill</span><span>context through 32K</span><span>quality</span><span>recipe</span></div>
 </a></div>
@@ -261,15 +259,8 @@
   <div class="section-head"><div><h2 id="multi-user">Many people at once <span class="badge todo">Not measured</span></h2></div></div>
   <div class="placeholder"><p>Multi-user (aggregate) throughput has not been measured for this family. The lab’s one measured sweep so far is in <a class="inline" href="../learn/multi-user.html">the multi-user report</a>; the projection block below includes a projected users curve where a projection exists.</p></div>
 
-  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge spec">Projected — not measured</span></h2><p>The <a class="inline" href="https://mlbottleneck.com/">ML Bottleneck</a> physics engine projects a tuned-run target and the physical ceiling for the headline setup (nemotron-3.5-lightning-30b-a3b · UD-Q4_K_M · llama.cpp SYCL · 1× B70). The grade is optimization headroom against the tuned-run target, not model quality.</p></div></div>
-  <div id="package-page" data-ml-model="nemotron3.5_lightning_30b_a3b" data-ml-quant="UD-Q4_K_M" data-ml-quant-label="UD-Q4_K_M" data-ml-runtime="llama_cpp" data-ml-runtime-label="llama.cpp SYCL 9fee29e" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="none" data-ml-prompt="128" data-ml-output="512" data-ml-measured="72.169452">
-    <div id="package-projection" class="projection" hidden>
-      <p class="projection-status" data-projection-status>Loading projections from mlbottleneck.com…</p>
-      <div data-package-card></div>
-      <div data-package-charts></div>
-    </div>
-    <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>
-  </div>
+  <div class="section-head"><div><h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2></div></div>
+  <div class="placeholder"><p>No projection is shown: the family has no curated headline measurement yet. The measured numbers above stand on their own.</p></div>
 
   <div class="related"><h2>Keep going</h2><div class="related-grid"><a href="../guides.html"><b>Recipes</b><span>Filter runnable packets</span></a><a href="../learn/models.html"><b>Choose a model</b><span>Quality and deployment trade-offs</span></a><a href="../learn/hardware.html"><b>Hardware</b><span>Cards, memory, and topology</span></a><a href="../families/nemotron-3-5.json"><b>Family data</b><span>Exact normalized coverage source</span></a></div></div>
 </div></main>

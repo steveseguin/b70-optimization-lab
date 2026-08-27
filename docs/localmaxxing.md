@@ -129,7 +129,8 @@ passes.
 
 The submission helper fails closed unless payload `engineFlags` include a
 realistic-suite gate pass marker,
-`primaryMetricName="median_tok_s_1_100_intervals_after_ttft"`,
+`primaryMetricName="median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"`,
+`primaryMetricAggregation="median-of-prompt-class-medians"`,
 `primaryMetricAccounting="inter-token-intervals"`, 100 generated-token events,
 and 99 intervals. The historical `median_tok_s_1_100_after_ttft` field remains
 in old receipts for compatibility but is not eligible for a new submission.

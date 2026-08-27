@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-26**
+Last reviewed: **2026-08-27**
 
 ## Authority And Update Rule
 
@@ -991,37 +991,42 @@ versus the same-shape static MTP0, MTP1, and MTP2 controls. No replication or
 threshold sweep ran. See the
 [result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md).
 
-The active-width GDN repair plus active-lookahead Mamba-state allocation then
-made a different policy viable: reuse the checkpoint's one publisher MTP layer
-serially for the singleton request, but fall back to MTP1 whenever two or more
-requests are active. Replicated single-user medians rose through MTP2/MTP3/
-MTP4/MTP5/MTP7/MTP8 at `83.680193 / 99.930434 / 116.711347 / 128.428318 /
-137.211213 / 146.814418 tok/s`. The selected MTP8-to-MTP1 service measured
-`146.808244` and `146.820592 tok/s` on two preregistered fresh servers and
-retained `1,095.553649` and `1,093.075885 tok/s` aggregate at c64. Both c64
-attempts returned all 8,192 requested token IDs, passed output isolation, and
-passed 512/512 synchronized exact-answer requests. The packaged medians are
-therefore **`146.814418 tok/s` single-user and `1,094.314767 tok/s` c64
-aggregate**. This is the current official-FP8 candidate service, not an
-interpolation between those two directly measured operating points.
+The active-width GDN repair plus active-lookahead Mamba-state allocation
+enabled useful dynamic-MTP mechanism and aggregate-capacity research. However,
+the MTP2–MTP9 singleton ladder used a selected 40-prompt-token high-acceptance
+fixture. Its `146.814418 tok/s` MTP8 point is diagnostic only and must not be a
+package headline or public graph endpoint.
 
-That `146.814418 tok/s` singleton is specific to the preregistered,
-high-acceptance 40-prompt-token fixture. The required fixed 12-prompt cold
-realistic suite subsequently measured `58.537756` and `58.244309 tok/s`
-conventional on two independently cold-started servers, for a package
-headline of **`58.391033 tok/s`**. All 24 requests were cache-zero and returned
-all 128 requested tokens. The varied suite saw only about 26–34% MTP draft
-acceptance, so its result is deliberately not blended with the short fixture
-or the separate c64 aggregate result. See the
-[cold realistic result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
+The subsequent varied 12-prompt repeat measured `58.537756` and `58.244309
+tok/s`, with unique prompts and `cached_tokens=0`, but it requested only 128
+output tokens. The promotion policy required the fixed 512-token natural-
+completion cap. An audit on 2026-08-27 therefore removed the `58.391033 tok/s`
+center from public/package headlines and marked LocalMaxxing
+`cmtb5n45n0021qq01n13vly2h` for recommended withdrawal. The raw runs remain
+screening evidence. The harness now fails closed: short or filtered runs cannot
+emit `realistic_final_gate.passed=true`, and payload builders re-derive
+eligibility from raw rows rather than trusting that boolean. See the
+[audit correction](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
+
+The same integrity audit removed strict featured headlines from six other
+package identities without deleting their measurements: LFM2.5 2.6B, Ornith
+1.5 9B, and Nemotron 3.5 cite raw operating-point/canary artifacts that are not
+closed in this repository; Ornith 1.5 35B natural-response hashes matched 0/12
+across fresh stock servers; and Qwen3.8 Q8 TP1 is a raw-engine tg128 rate rather
+than a varied-prompt HTTP result. Qwen3.8 Q8 TP2's historical reasoning-enabled
+capture also cannot headline its reasoning-off package. All now render
+**strict headline pending** while their honestly scoped curves and historical
+evidence remain available. See the full
+[benchmark integrity audit](docs/benchmark-integrity-audit-20260827.md).
 
 The next singleton step, MTP9, reached `158.602110 tok/s` but retained only
 `889.607586 tok/s` at c64, below the frozen aggregate-retention gate. A 64-slot
 treatment fell to `806.950345`; two busy-period latch treatments reached only
-`61.620428` and `157.939541` single-user with `866.085639` c64 for the corrected
-variant; and keeping MTP8 through c2 reached `146.822210` single-user but only
-`836.139048` at c64. These are measured negatives. The default remains the
-replicated MTP8-at-c1/MTP1-under-load policy.
+`61.620428` and `157.939541` on the diagnostic fixture with `866.085639` c64 for the corrected
+variant; and keeping MTP8 through c2 reached `146.822210` on that fixture but only
+`836.139048` at c64. These are measured negatives. No dynamic-MTP single-user
+policy is promoted until the corrected 512-cap varied suite and independent
+quality/determinism gates pass twice.
 
 Resume and evidence:
 
@@ -1081,7 +1086,10 @@ official capture is **`27.813629`/`27.824790 tok/s`** with 24/24
 oracle-exact hashes: quality-validated at `+6.8-7.0%` over the day-open
 baseline, and approved by LocalMaxxing as
 [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte)
-after the 1-GPU category and provenance review. The cold-weight GEMV diagnostic
+after the 1-GPU category and provenance review. Under the 2026-08-27
+class-balanced aggregation rule, final-J's current headline is
+**`27.825726 tok/s`**; `27.824790` remains the secondary all-prompt median.
+The cold-weight GEMV diagnostic
 then closed the z-row question: the m=6144 kernel is healthy standalone
 (536.7 GB/s cold vs 381.7 in-graph), and the in-graph tax is
 per-activation quantize + dispatch gap (~25 us inside each 62 us

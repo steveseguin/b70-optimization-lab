@@ -276,11 +276,11 @@
   <small class="packet-note">lab report — documents the result; not a step-by-step install guide</small>
   <div class="grade-rail"><span class="curated-grade" tabindex="0" title="Qwen3.8 AutoRound INT4 target-only TP2 HTTP serving at six exact nonzero active-context depths with F16 KV and FULL_AND_PIECEWISE graph · all six cache-zero exact-depth receipts passed under one pinned b2dd9ce73d/1e90ffa672 identity; the full battery passed 7 exact cases, 8 stable repeats, the 8K needle, 24 baseline comparisons, and 16 cache-zero observations. x0 remains explicitly missing; the synthetic fixture and single server lifetime remain Grade C. No other selector, prefill, headline, protected-score, or LocalMaxxing authority transfers." aria-label="Evidence grade C: Qwen3.8 AutoRound INT4 target-only TP2 HTTP serving at six exact nonzero active-context depths with F16 KV and FULL_AND_PIECEWISE graph · all six cache-zero exact-depth receipts passed under one pinned b2dd9ce73d/1e90ffa672 identity; the full battery passed 7 exact cases, 8 stable repeats, the 8K needle, 24 baseline comparisons, and 16 cache-zero observations. x0 remains explicitly missing; the synthetic fixture and single server lifetime remain Grade C. No other selector, prefill, headline, protected-score, or LocalMaxxing authority transfers.">Evidence C <small>of A–D</small></span></div>
   <div class="coverage-rail"><span>target-only MTP0</span><span>HTTP serving</span><span>active context 2K-32K</span><span>F16 KV</span><span>FULL_AND_PIECEWISE</span><span>full quality battery</span><span>x0 missing</span></div>
-</a><a class="packet-card" href="qwen38-27b-q4km-tp1-b70.html" data-family-headroom data-ml-model="qwen3.8_27b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="27.82479" data-ml-prompt="128" data-ml-output="128">
+</a><a class="packet-card" href="qwen38-27b-q4km-tp1-b70.html" data-family-headroom data-ml-model="qwen3.8_27b" data-ml-quant="Q4_K_M" data-ml-runtime="llama_cpp" data-ml-spec="none" data-ml-cards="1" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="27.825725650072858" data-ml-prompt="128" data-ml-output="128">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom …</span></span></div>
   <h3 title="Qwen3.8 Q4_K_M · TP1">Qwen3.8 Q4_K_M · TP1</h3>
-  <p class="packet-promise">Reproduce <b>27.82 tok/s</b> on 1× B70 · candidate package</p>
-  <small class="packet-workload">Conventional 99-interval median on the fixed cold 12-prompt suite; target-only and cache-zero.</small>
+  <p class="packet-promise">Reproduce <b>27.83 tok/s</b> on 1× B70 · candidate package</p>
+  <small class="packet-workload">Class-balanced median of per-input-class medians using conventional 99-interval rates on the fixed cold 12-prompt suite; target-only and cache-zero. The all-prompt median is 27.824790 tok/s.</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>quality</span><span>concurrency</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-26-qwen38-q4km-f16kv-tp1-sycl-graph-cache64-depth-quality-r1-result.json">
@@ -300,22 +300,19 @@
 </a><a class="packet-card" href="qwen38-27b-q8-tp1-b70.html">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Qwen3.8 Q8_0 · TP1">Qwen3.8 Q8_0 · TP1</h3>
-  <p class="packet-promise">Reproduce <b>19.66 tok/s</b> on 1× B70 · candidate package</p>
-  <small class="packet-workload">Direct llama-bench tg128 at depth zero, one B70, Q8_0 weights, F16 KV, five repetitions. The matching service quality battery passed separately; this is not an HTTP or realistic-prompt rate.</small>
+  <p class="packet-promise">Evidence packet · candidate package</p>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>quality</span><span>recipe</span><span>concurrency</span></div>
 </a><a class="packet-card" href="qwen38-27b-q8-tp2-asrock-b70.html">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified measurement</b></span></div>
   <h3 title="Qwen3.8 Q8_0 · TP2">Qwen3.8 Q8_0 · TP2</h3>
-  <p class="packet-promise">Reproduce <b>36.77 tok/s</b> on 2× B70 · candidate-with-identity-caveat</p>
-  <small class="packet-workload">Historical reasoning-enabled 99-interval median across the accepted 12-prompt cache-zero suite; the packaged launcher defaults to reasoning off and is a distinct identity.</small>
+  <p class="packet-promise">Evidence packet · candidate-with-identity-caveat</p>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span></div>
 </a><a class="packet-card" href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Qwen3.8 FP8 · TP2">Qwen3.8 FP8 · TP2</h3>
-  <p class="packet-promise">Reproduce <b>58.39 tok/s</b> on 2× B70 · candidate package</p>
-  <small class="packet-workload">Arithmetic mean of two independently cold-started server medians on the fixed 12-prompt realistic suite: conventional 99-interval decode after TTFT, 128 generated tokens, every request cache zero, dynamic MTP8 at one active request, short-context 256-token service. The separately labeled 40-token fixture measured 146.814418 tok/s.</small>
+  <p class="packet-promise">Evidence packet · candidate package</p>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span><span>queued latency</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp0-f16-piecewise-depth-r3-human-adjudication-result.json">

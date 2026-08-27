@@ -14,16 +14,19 @@ weights, native FP16 KV, and TP2. The selected interactive service dynamically
 uses MTP8 at one active request and MTP1 at two or more; separate target-only
 and static-MTP1 profiles remain documented for honest comparison.
 
-## Selected dynamic MTP8-to-MTP1 profile
+## Dynamic MTP8-to-MTP1 screening profile — not a headline
 
-The package's general single-user headline is the fixed cold realistic suite,
-not the earlier single-prompt fixture:
+> **Audit correction:** the table below used the varied fixed suite and was
+> cache-zero, but the response cap was 128 tokens. It therefore does not pass
+> the 512-cap final gate and is retained only as screening evidence. The old
+> benchmark harness incorrectly called it final. There is currently no
+> promotion-grade single-user headline for this package.
 
 | Fresh server | conventional 99-interval median | p10 | wall median | TTFT median |
 | --- | ---: | ---: | ---: | ---: |
 | realistic R1 | 58.537756 | 48.117648 | 55.436231 | 108.094 ms |
 | realistic R2 | 58.244309 | 47.896683 | 55.270330 | 107.450 ms |
-| two-server center | **58.391033** | **48.007166** | **55.353281** | **107.772 ms** |
+| diagnostic two-server center | **58.391033** | **48.007166** | **55.353281** | **107.772 ms** |
 
 Both independently cold-started servers passed all 12 unique prompts, returned
 128/128 tokens per prompt, and reported `cached_tokens=0` for every request.
@@ -38,11 +41,12 @@ OUT=/path/to/new-realistic-suite.json \
 
 See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md)
 and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-summary.json).
-The first chronological run was submitted without combining replays and is
-approved on [LocalMaxxing](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h).
+The first chronological run was submitted prematurely and is approved on
+[LocalMaxxing](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h).
+Withdrawal is recommended.
 
-The earlier high-acceptance 40-prompt-token fixture remains useful shape
-evidence and measured:
+The earlier high-acceptance 40-prompt-token fixture is a selected diagnostic,
+not realistic performance evidence:
 
 Two separately preregistered fresh-server attempts measured:
 
@@ -51,7 +55,8 @@ Two separately preregistered fresh-server attempts measured:
 | 1 | 146.808244 | 146.820592 | **146.814418** |
 | 64 | 1,095.553649 | 1,093.075885 | **1,094.314767** |
 
-The one-user shape requests eight speculative tokens by serially reusing the
+Do not copy the one-user value into a headline, comparison table, projection,
+or external submission. The one-user shape requests eight speculative tokens by serially reusing the
 checkpoint's one publisher MTP layer. At two through 128 active requests the
 same service uses one speculative token. R15 and R16 each passed 512/512
 synchronized c64 exact-answer requests, 7/7 sequential cases, 8/8 repeat
@@ -74,6 +79,7 @@ Launch and validate it with new cache/result directories:
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache \
+MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh
 
 OUT_DIR=/path/to/new-dynamic-mtp-attempt \

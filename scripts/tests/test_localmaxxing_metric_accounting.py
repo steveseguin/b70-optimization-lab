@@ -33,6 +33,7 @@ def queue_item(metric_name: str, accounting: str) -> dict:
                 "realisticOutputTokenCounts": [100],
                 "primaryMetricName": metric_name,
                 "primaryMetricAccounting": accounting,
+                "primaryMetricAggregation": "median-of-prompt-class-medians",
                 "metricWindowGeneratedTokens": 100,
                 "metricWindowIntervals": 99,
             },
@@ -43,7 +44,7 @@ def queue_item(metric_name: str, accounting: str) -> dict:
 class LocalMaxxingMetricAccountingTest(unittest.TestCase):
     def test_conventional_interval_metric_passes(self) -> None:
         item = queue_item(
-            "median_tok_s_1_100_intervals_after_ttft",
+            "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft",
             "inter-token-intervals",
         )
         self.assertEqual(MODULE.preflight_payload(item), [])
@@ -61,7 +62,7 @@ class LocalMaxxingMetricAccountingTest(unittest.TestCase):
 
     def test_api_projection_preserves_full_offload_and_mtp_identity(self) -> None:
         flags = queue_item(
-            "median_tok_s_1_100_intervals_after_ttft",
+            "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft",
             "inter-token-intervals",
         )["payload"]["engineFlags"]
         flags.update(

@@ -33,7 +33,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 | `../repro/laguna-s-2.1-int4-b70-102tps-20260726/` | `candidate-portable-repro` | Portable sealed-evidence audit, exact source bundles, model-at-revision restore and manifest, native loader verification, and one-cold-suite replay for the four-B70 Laguna row. |
 | `../repro/deepseek-v4-flash-k160-b70-80tps-20260718/` | `lab-replay` | Exact source bundles, fail-closed launcher, validity gates, and evidence for the 80.820 tok/s target-verified DSpark7 result on four B70s. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Result packet | Gemma 4 26B A4B Q8/INT8 one-B70 speed frontier, long-context service lane, older baselines, failed paths, validity gates, vLLM comparison lanes, and LocalMaxxing evidence. |
-| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | `lab-replay` | Originating-host Gemma 4 26B A4B Q8 target material for the `124.977 tok/s` strict cold-suite result on one B70; not a clean-machine installer. |
+| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | `lab-replay` | Originating-host Gemma 4 26B A4B Q8 target material for the `122.160 tok/s` class-balanced cold-suite result on one B70 (`123.727` all-prompt; `124.977` historical compatibility); not a clean-machine installer. |
 | `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | `archived` | Superseded Gemma 4 26B A4B Q8 target material retained for history. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | `candidate-portable-repro` | The closest historical Ubuntu deployment candidate, but mutable package/toolchain dependencies and its current clean-host replay remain open. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | `candidate-portable-repro` | Older strict quality-passed MiniMax M2.7 INT4 lane retained for expert optimization comparisons. |
@@ -137,10 +137,11 @@ The deeper lab packet is
 [`../results/gemma4-26b-a4b-q8-b70/`](../results/gemma4-26b-a4b-q8-b70/README.md).
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
-research. Current promoted result is the realistic cold-suite lane at a
-published legacy `124.97714084813418 tok/s` (`123.72736943965285 tok/s` under
-conventional 99-interval accounting) for the first-to-100th-token timestamp
-window:
+research. Current headline for the realistic cold-suite lane is
+`122.16035656735696 tok/s`, the median of per-input-class medians under
+conventional 99-interval accounting. The secondary all-prompt median is
+`123.72736943965285`; the published legacy 100-event value is
+`124.97714084813418 tok/s`. The exact lane is:
 llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, selected-down fused weighted-sum, bulk sampled-ID verifier
 host read, `FLASH_ATTN=on`, `CTX_SIZE=32768`, VMM on, final post-norm

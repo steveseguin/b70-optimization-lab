@@ -136,7 +136,7 @@ class FamilyCoverageTest(unittest.TestCase):
             )
         self.assertTrue(all(not point["queued_profile"] for point in result["points"]))
 
-    def test_promoted_ornith_packet_and_family_stay_in_parity(self) -> None:
+    def test_scoped_ornith_packet_and_family_stay_in_parity(self) -> None:
         family = json.loads((MODULE.ROOT / "families/ornith-1-5.json").read_text())
         package = json.loads(
             (
@@ -163,14 +163,11 @@ class FamilyCoverageTest(unittest.TestCase):
                 "candidate_run_medians_conventional_tok_s"
             ],
         )
-        self.assertAlmostEqual(
-            package["library"]["featured_metric"]["value"],
-            sum(current) / len(current),
-            places=6,
-        )
+        self.assertIsNone(package["library"]["featured_metric"])
+        self.assertAlmostEqual(sum(current) / len(current), 131.460231, places=6)
         index_html = (MODULE.ROOT / "index.html").read_text()
-        public_headline = f"{package['library']['featured_metric']['value']:.2f}"
-        self.assertGreaterEqual(index_html.count(f">{public_headline}</td>"), 1)
+        self.assertNotIn(">131.46</td>", index_html)
+        self.assertIn("natural-response hashes were not stable", index_html)
         self.assertNotIn(">132.79</td>", index_html)
 
         ratebars = [
@@ -182,7 +179,7 @@ class FamilyCoverageTest(unittest.TestCase):
             )
         ]
         self.assertTrue(ratebars)
-        self.assertIn((float(public_headline), 100.0), ratebars)
+        self.assertIn((125.46, 100.0), ratebars)
         max_rate = max(rate for rate, _ in ratebars)
         for rate, width in ratebars:
             with self.subTest(rate=rate):
@@ -194,8 +191,8 @@ class FamilyCoverageTest(unittest.TestCase):
             "B",
         )
 
-        # Keep the old measurement IDs bound to their original eleven-feature
-        # evidence while moving the public headline to a new twelve-feature ID.
+        # Keep measurement IDs bound to their exact eleven/twelve-feature
+        # evidence even while the strict package headline remains pending.
         self.assertEqual(
             runs["ornith-35b-optimized-one-card"]["metrics"]["decode_tok_s"],
             [130.159639, 128.977294],

@@ -15,6 +15,30 @@ from typing import Any
 
 LEGACY_METRIC = "median_tok_s_1_100_after_ttft"
 INTERVAL_METRIC = "median_tok_s_1_100_intervals_after_ttft"
+INTERVAL_SUMMARY_KEY = "tok_s_1_100_intervals_after_ttft"
+CLASS_BALANCED_METRIC = (
+    "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
+)
+CLASS_BALANCED_SUMMARY_KEY = (
+    "class_balanced_tok_s_1_100_intervals_after_ttft"
+)
+PROMOTION_OUTPUT_TOKENS = 512
+MIN_FIXED_SUITE_PROMPTS = 12
+MIN_PROMOTION_PROMPT_CLASSES = 5
+PROMOTION_PROMPT_CLASSES = {
+    "incident-retrospective": "operations",
+    "code-review": "code",
+    "customer-email": "prose",
+    "sql-debugging": "code",
+    "release-plan": "operations",
+    "benchmark-analysis": "analysis",
+    "architecture-tradeoff": "analysis",
+    "bug-report-synthesis": "operations",
+    "technical-guide": "documentation",
+    "risk-register": "structured-writing",
+    "performance-hypotheses": "analysis",
+    "decision-memo": "prose",
+}
 
 
 def percentile(values: list[float], pct: float) -> float | None:
@@ -62,6 +86,33 @@ def event_window_rates(
     if duration <= 0:
         return None, None
     return event_count / duration, (event_count - 1) / duration
+
+
+def prompt_class_for_row(row: dict[str, Any]) -> str | None:
+    value = row.get("prompt_class") or PROMOTION_PROMPT_CLASSES.get(
+        str(row.get("prompt_id") or "")
+    )
+    return value if isinstance(value, str) and value != "unclassified" else None
+
+
+def class_balanced_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    grouped: dict[str, list[float]] = {}
+    for row in rows:
+        prompt_class = prompt_class_for_row(row)
+        value = row.get("tok_s_1_100_intervals_after_ttft")
+        if prompt_class and isinstance(value, (int, float)):
+            grouped.setdefault(prompt_class, []).append(float(value))
+    class_medians = {
+        prompt_class: statistics.median(values)
+        for prompt_class, values in sorted(grouped.items())
+    }
+    result: dict[str, Any] = stats(list(class_medians.values()))
+    result["aggregation"] = "median-of-prompt-class-medians"
+    result["class_medians"] = class_medians
+    result["class_prompt_counts"] = {
+        prompt_class: len(grouped[prompt_class]) for prompt_class in class_medians
+    }
+    return result
 
 
 def qualify(data: dict[str, Any]) -> dict[str, Any]:
@@ -114,26 +165,107 @@ def qualify(data: dict[str, Any]) -> dict[str, Any]:
 
     summary["tok_s_1_100_after_ttft_legacy_inclusive_events"] = stats(legacy_values)
     summary["tok_s_1_100_intervals_after_ttft"] = stats(interval_values)
+    summary[CLASS_BALANCED_SUMMARY_KEY] = class_balanced_stats(rows)
     gate["metric_name_note"] = (
         "Historical compatibility field: 100 timestamped token events divided "
         "by the first-to-100th event span (99 intervals)."
     )
-    gate["preferred_metric_name"] = INTERVAL_METRIC
+    gate["preferred_metric_name"] = CLASS_BALANCED_METRIC
+    gate["preferred_metric_aggregation"] = "median-of-prompt-class-medians"
     gate["metric_intervals"] = event_count - 1
     fresh["primary_metric_accounting"] = "legacy-inclusive-events"
-    fresh["preferred_metric_name"] = INTERVAL_METRIC
+    fresh["preferred_metric_name"] = CLASS_BALANCED_METRIC
+    fresh["preferred_metric_aggregation"] = "median-of-prompt-class-medians"
     fresh["primary_metric_intervals"] = event_count - 1
     data["metric_accounting"] = {
         "schema": "realistic-window-accounting-v1",
         "historical_metric_name": LEGACY_METRIC,
         "historical_formula": "100 / (timestamp[99] - timestamp[0])",
-        "preferred_metric_name": INTERVAL_METRIC,
-        "preferred_formula": "99 / (timestamp[99] - timestamp[0])",
+        "preferred_metric_name": CLASS_BALANCED_METRIC,
+        "preferred_formula": (
+            "median by prompt class, then median across class medians, of "
+            "99 / (timestamp[99] - timestamp[0])"
+        ),
         "timestamped_events": event_count,
         "inter_token_intervals": event_count - 1,
         "timing_source": fresh.get("token_timing_source"),
     }
     return data
+
+
+def promotion_evidence_failures(data: dict[str, Any]) -> list[str]:
+    """Re-check promotion evidence without trusting a stored ``passed`` flag.
+
+    Older benchmark JSON can contain ``realistic_final_gate.passed=true`` for
+    a 128-token or filtered diagnostic.  Submission tools must derive the
+    answer from raw identity and row fields so that stale or forged booleans
+    cannot authorize publication.
+    """
+    failures: list[str] = []
+    gate = data.get("realistic_final_gate") or {}
+    fresh = data.get("fresh_response_validity") or {}
+    identity = data.get("run_identity") or {}
+    rows = data.get("rows") or []
+    if gate.get("passed") is not True:
+        failures.append("realistic_final_gate_not_passed")
+    if fresh.get("valid") is not True:
+        failures.append("fresh_response_validity_not_valid")
+    if identity.get("max_tokens") != PROMOTION_OUTPUT_TOKENS:
+        failures.append("requested_output_tokens_not_512")
+    if identity.get("selected_prompt_ids"):
+        failures.append("prompt_subset_selected")
+    if not isinstance(rows, list) or len(rows) < MIN_FIXED_SUITE_PROMPTS:
+        failures.append("fixed_suite_has_fewer_than_12_prompts")
+        rows = []
+    expected_count = (
+        identity.get("suite_prompt_count")
+        or gate.get("suite_prompt_count")
+        or identity.get("prompt_count")
+    )
+    if not isinstance(expected_count, int) or len(rows) != expected_count:
+        failures.append("fixed_suite_incomplete")
+    prompt_hashes = [row.get("prompt_sha256") for row in rows]
+    if (
+        not prompt_hashes
+        or any(not isinstance(value, str) or not value for value in prompt_hashes)
+        or len(set(prompt_hashes)) != len(prompt_hashes)
+    ):
+        failures.append("prompt_hashes_missing_or_not_unique")
+    prompt_classes = [
+        prompt_class_for_row(row)
+        for row in rows
+    ]
+    classified = {
+        value for value in prompt_classes
+        if isinstance(value, str) and value and value != "unclassified"
+    }
+    if len(prompt_classes) != len(rows) or len(classified) < MIN_PROMOTION_PROMPT_CLASSES:
+        failures.append("fixed_suite_lacks_varied_prompt_classes")
+    completion_counts = [row.get("completion_tokens") for row in rows]
+    if not completion_counts or any(
+        not isinstance(value, int) or value < 100 for value in completion_counts
+    ):
+        failures.append("every_completion_must_cover_100_event_metric")
+    cached = [row.get("cached_tokens") for row in rows]
+    if not cached or any(not isinstance(value, int) or value != 0 for value in cached):
+        failures.append("cached_tokens_not_all_zero")
+    request_extra = identity.get("request_extra") or {}
+    if isinstance(request_extra, dict) and request_extra.get("ignore_eos") is True:
+        failures.append("ignore_eos_enabled")
+    if gate.get("metric_tokens") != 100:
+        failures.append("metric_window_not_100_events")
+    summary = data.get("summary") or {}
+    conventional = summary.get(INTERVAL_SUMMARY_KEY) or {}
+    if conventional.get("count") != len(rows):
+        failures.append("conventional_metric_missing_rows")
+    class_balanced = summary.get(CLASS_BALANCED_SUMMARY_KEY) or {}
+    if (
+        class_balanced.get("aggregation")
+        != "median-of-prompt-class-medians"
+        or class_balanced.get("count") != len(classified)
+    ):
+        failures.append("class_balanced_metric_missing_prompt_classes")
+    return failures
 
 
 def write_atomic(path: Path, text: str) -> None:
@@ -170,8 +302,10 @@ def main() -> int:
 
     legacy = qualified["summary"]["tok_s_1_100_after_ttft"]["median"]
     interval = qualified["summary"]["tok_s_1_100_intervals_after_ttft"]["median"]
+    class_balanced = qualified["summary"][CLASS_BALANCED_SUMMARY_KEY]["median"]
     print(f"published_legacy_tok_s={legacy}")
     print(f"conventional_interval_tok_s={interval}")
+    print(f"class_balanced_interval_tok_s={class_balanced}")
     return 0
 
 

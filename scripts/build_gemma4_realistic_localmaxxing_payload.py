@@ -13,7 +13,8 @@ import re
 import shlex
 from pathlib import Path
 
-from qualify_realistic_window_metrics import qualify
+from qualify_realistic_window_metrics import qualify, promotion_evidence_failures
+from promotion_evidence import sha256_file, validate_promotion_attestation
 
 
 def flag_value(args: list[str], name: str) -> str | None:
@@ -60,6 +61,11 @@ def load_summary(path: Path) -> dict:
     summary["fresh_response_validity"] = qualified_bench[
         "fresh_response_validity"
     ]
+    failures = promotion_evidence_failures(qualified_bench)
+    if failures:
+        raise SystemExit(
+            f"{path}: not promotion eligible: {', '.join(failures)}"
+        )
     gate = summary.get("realistic_final_gate") or {}
     validity = summary.get("fresh_response_validity") or {}
     if not gate.get("passed"):
@@ -70,13 +76,13 @@ def load_summary(path: Path) -> dict:
         raise SystemExit(f"{path}: fresh_response_validity.valid is not true")
     if (
         validity.get("preferred_metric_name")
-        != "median_tok_s_1_100_intervals_after_ttft"
+        != "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
     ):
         raise SystemExit(f"{path}: conventional interval metric is not preferred")
-    if "tok_s_1_100_intervals_after_ttft" not in (
+    if "class_balanced_tok_s_1_100_intervals_after_ttft" not in (
         summary.get("bench_summary") or {}
     ):
-        raise SystemExit(f"{path}: conventional interval summary is missing")
+        raise SystemExit(f"{path}: class-balanced interval summary is missing")
     model_path = str(summary.get("model_path") or "")
     if "UD-Q8_K_XL" not in model_path:
         raise SystemExit(
@@ -110,6 +116,15 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--label")
     parser.add_argument(
+        "--promotion-attestation",
+        type=Path,
+        required=True,
+        help=(
+            "Hash-bound quality/determinism attestation for the exact benchmark "
+            "referenced by the summary."
+        ),
+    )
+    parser.add_argument(
         "--confirmation-summary",
         type=Path,
         action="append",
@@ -119,6 +134,22 @@ def main() -> int:
     args = parser.parse_args()
 
     summary = load_summary(args.summary_json)
+    try:
+        expected_runtime = str(
+            (summary.get("launcher_identity") or {}).get("llama_cpp_commit")
+            or ""
+        )
+        if not expected_runtime:
+            raise SystemExit(
+                f"{args.summary_json}: launcher identity lacks llama_cpp_commit"
+            )
+        attestation = validate_promotion_attestation(
+            args.promotion_attestation,
+            Path(summary["bench_path"]),
+            expected_runtime_revision=expected_runtime,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise SystemExit(str(exc)) from exc
     confirmations = [load_summary(path) for path in args.confirmation_summary]
 
     bench = summary["bench_summary"]
@@ -151,13 +182,15 @@ def main() -> int:
         f"ub{launcher.get('ubatch_size')}-{stamp}"
     )
 
-    primary = bench["tok_s_1_100_intervals_after_ttft"]
+    primary = bench["class_balanced_tok_s_1_100_intervals_after_ttft"]
     full = bench["tok_s_after_ttft_full"]
     wall = bench["tok_s_wall_full"]
     ttft = bench["ttft_ms"]
     confirmation_rows = []
     for item in confirmations:
-        s = item["bench_summary"]["tok_s_1_100_intervals_after_ttft"]
+        s = item["bench_summary"][
+            "class_balanced_tok_s_1_100_intervals_after_ttft"
+        ]
         f = item["bench_summary"]["tok_s_after_ttft_full"]
         w = item["bench_summary"]["tok_s_wall_full"]
         confirmation_rows.append(
@@ -269,7 +302,13 @@ def main() -> int:
         "outputSha256": output_hashes,
         "poll": int(launcher["poll"]),
         "prefixCaching": False,
-        "primaryMetricName": "median_tok_s_1_100_intervals_after_ttft",
+        "primaryMetricName": (
+            "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
+        ),
+        "primaryMetricAggregation": "median-of-prompt-class-medians",
+        "promotionAttestation": str(args.promotion_attestation),
+        "promotionAttestationSha256": sha256_file(args.promotion_attestation),
+        "promotionIdentity": attestation["identity"],
         "primaryMetricAccounting": "inter-token-intervals",
         "promptSha256": prompt_hashes,
         "promptTokens": prompt_tokens,

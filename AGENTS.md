@@ -146,6 +146,9 @@ synthetic or repetitive prompts, but promotion and LocalMaxxing submissions now
 require the fixed realistic final gate:
 
 - use the fixed realistic prompt suite;
+- require its declared varied classes (at minimum prose, code, analysis,
+  operations, and documentation/structured writing); repeated variants of one
+  easy prompt shape are not representative;
 - run each prompt once as a cold first response;
 - require `cached_tokens=0` for every request;
 - disable prompt/KV cache reuse, context checkpoints, response reuse,
@@ -153,12 +156,38 @@ require the fixed realistic final gate:
 - keep the target model and quantization unchanged;
 - allow speculative decoding/MTP only when accepted tokens are verified by the
   declared target model;
-- report the median conventional rate across the 99 inter-token intervals
-  between generated-token timestamps 1 and 100 after TTFT as the primary
-  metric, plus p10, mean, TTFT, wall tok/s, full 512-token tok/s,
+- report the median within each input class and then the median across those
+  class medians, using the conventional rate across the 99 inter-token
+  intervals between generated-token timestamps 1 and 100 after TTFT, as the
+  primary metric; retain the all-prompt median as a secondary diagnostic; also
+  report p10, mean, TTFT, wall tok/s,
+  full-natural-completion tok/s under the fixed 512-token response cap,
   prompt/output hashes, model identity, runtime commit, env vars, flags, and
   logs. Record the event count, interval count, numerator, and endpoints;
   historical 100-event/99-interval compatibility fields must be labeled.
+
+“Cold response” does not require reloading model weights for every prompt. A
+loaded model, resident weights, initialized runtime, and compiled kernels are
+valid steady-state conditions. It does require that every fixed prompt is used
+once per suite attempt, reports `cached_tokens=0`, and cannot benefit from
+prompt/KV/response reuse, a learned draft, repeated-prompt n-grams, or a
+selected high-acceptance fixture. Run the complete varied suite; a `--prompt-id`
+subset or a response cap below 512 is screening evidence and must make
+`realistic_final_gate.passed=false`.
+
+Performance and quality are independent promotion gates. The optimized path
+must pass the model lane's registered exact-output or quality oracle and its
+repeat/fresh-server determinism requirement. Speculative accepted tokens must
+be verified by the unchanged declared target. A speed result cannot substitute
+for those checks, and a quality pass cannot upgrade a diagnostic workload into
+a performance headline.
+
+Before building an external submission, require a hash-bound
+`neural.download.promotion-attestation.v1` artifact linking the exact
+performance JSON to in-repository quality evidence, model/runtime/optimization
+identity, target-oracle parity, deterministic repeats, a fresh-server repeat,
+an unchanged verifier, and an explicit no-quality-loss decision. A stored
+benchmark `passed` boolean is never sufficient by itself.
 
 The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 

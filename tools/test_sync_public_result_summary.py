@@ -20,19 +20,24 @@ class PublicResultSummaryTests(unittest.TestCase):
         catalog = json.loads(MODULE.CATALOG.read_text(encoding="utf-8"))
         for package in catalog["packages"]:
             with self.subTest(package=package["id"]):
-                value = package["library"]["featured_metric"]["value"]
                 self.assertIn(f"models/{package['id']}.html", block)
-                self.assertIn(MODULE.format_value(float(value)), block)
+                metric = package["library"].get("featured_metric")
+                if metric is None:
+                    self.assertIn("strict headline pending", block)
+                else:
+                    self.assertIn(
+                        MODULE.format_value(float(metric["value"])), block
+                    )
 
     def test_qwen_fp8_selected_and_negative_values_are_not_conflated(self) -> None:
         readme = MODULE.README.read_text(encoding="utf-8")
         block = readme.split(MODULE.START, 1)[1].split(MODULE.END, 1)[0]
         homepage = (MODULE.ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn("58.391033", block)
+        self.assertNotIn("58.391033", block)
+        self.assertNotIn("146.814418", block)
         self.assertNotIn("158.60211", block)
-        self.assertIn(">58.39&dagger;</a>", homepage)
-        self.assertIn("high-acceptance 40-token fixture", homepage)
-        self.assertIn(">1,094.3&dagger;</a>", homepage)
+        self.assertNotIn(">58.39&dagger;</a>", homepage)
+        self.assertNotIn(">146.81&dagger;</a>", homepage)
         self.assertNotIn("Our fastest Qwen3.8 experiment", homepage)
 
 

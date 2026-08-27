@@ -1,5 +1,9 @@
 # Qwen3.8 FP8 dynamic MTP7 replication and promotion
 
+> **AUDIT CORRECTION, 2026-08-27:** this was an internal selection within the
+> short-fixture mechanism ladder, not promotion to a varied-prompt package
+> headline or external submission.
+
 The MTP7-at-one/MTP1-at-load service reproduced and passed every frozen
 quality gate. It replaces MTP5-at-one as the selected short-context
 interactive profile.

@@ -7,6 +7,12 @@ MoE, and target-verified MTP work. Those historical endpoints are not a
 like-for-like percentage comparison; use the linked result evidence for exact
 identities.
 
+Under the 2026-08-27 class-balanced publication rule, the same raw suite's
+headline is **`122.160357 tok/s`**: median within input class, then median
+across the six class medians. `123.727369` is the secondary all-prompt
+99-interval median and `124.977141` is the historical 100-event compatibility
+figure; neither is the current headline.
+
 > **Status: source-verified reconstruction candidate, not a beginner install.**
 > The exact aggregate source stack now applies cleanly from its pinned base.
 > The original record binary hash and historical local Q4_0 draft hash were not
@@ -51,7 +57,7 @@ unique and cache-zero, and every exact JSON retrieval gate passed.
 | 32,571 | 114.85 tok/s | 1,001.69 tok/s | 32.517 s |
 
 This uses the long-context service profile and a 128-token output ceiling; it
-is not the same operating identity as the short-context `123.727 tok/s`
+is not the same operating identity as the short-context `122.160 tok/s`
 headline. Prefill is approximated as actual prompt tokens divided by TTFT.
 See the [compact profile](../../data/gemma4-26b-a4b-q8-b70-context-performance-profile-20260702.json)
 and [all 32 source rows](../../data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json).

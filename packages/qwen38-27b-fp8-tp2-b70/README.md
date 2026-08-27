@@ -1,36 +1,34 @@
 # Qwen3.8 27B FP8 — two-B70 candidate package
 
-This is the first distribution-package front door. It uses Qwen's official
-FP8 model and digest-pinned vLLM XPU containers on two Intel Arc Pro B70
-32 GiB cards. On the fixed 12-prompt realistic suite, the selected dynamic
-MTP8-to-MTP1 service reaches **`58.391033 tok/s`** conventional cold decode,
-the center of two independent fresh-server medians (`58.537756` and
-`58.244309 tok/s`). Every one of the 24 requests reported zero cached tokens.
-The first chronological cold run is independently visible as approved
-LocalMaxxing run
-[`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h);
-the second cold run remains the required repository replay rather than being
-averaged into that external submission.
-The same service separately reaches **`146.814418 tok/s`** on its earlier
-high-acceptance 40-token fixture and **`1,094.314767 tok/s`** aggregate at 64
-active users while passing 1,024/1,024 concurrent exact-answer checks across
-two fresh servers. The target-only block-W8A16 service remains the aggregate peak at
-**`1,112.570323 tok/s`** with 128 active users. A separately measured
-33,024-token W8A16 service profile reaches `31.489587 tok/s` decode at an exact
-32K prompt with `13.740 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
-`774.394144 tok/s` aggregate at 64 active users on the unpatched baseline.
+This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
+containers on two Intel Arc Pro B70 32 GiB cards.
 
-The package also retains a separate static publisher-MTP1 profile. It reaches
-**`61.699580 tok/s`** for one fresh user and **`1,091.642460 tok/s`** aggregate
-at 64 users. Dynamic MTP is the faster interactive mode; target-only/MTP0
-remains the highest-throughput mode. The site and guide keep those identities
-separate.
+> **Strict single-user headline pending.** The previously published
+> `58.391033 tok/s` center used the full varied 12-prompt suite and zero cached
+> tokens, but only a 128-token output cap. The repository's promotion policy
+> required a 512-token natural-completion cap. The old harness mislabeled that
+> screening run as a final gate, so the number has been removed from package
+> and site headline surfaces. The LocalMaxxing submission
+> [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
+> was premature and withdrawal is recommended. The `146.814418 tok/s`
+> selected high-acceptance fixture is diagnostic only and is also excluded
+> from public headline graphs.
 
-The checkpoint has one publisher MTP layer. The dynamic service serially
-reuses it for MTP8 only at one active request, then uses MTP1 at two or more.
-The two fresh-server attempts measured 146.808244/146.820592 tok/s single and
-1,095.553649/1,093.075885 tok/s aggregate; see the
-[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp8-r16-replication-result.md).
+The recipe and independent workload evidence remain useful. The target-only
+block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
+short requests, with explicit output-isolation and semantic gates. A separate
+33,024-token target-only profile measured `31.489587 tok/s` decode at an exact
+32K prompt with `13.740 s` TTFT. These are scoped capacity/context results,
+not replacements for the missing varied-prompt single-user headline.
+
+The package also retains a separate static publisher-MTP1 short-context
+aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
+single-user or realistic-suite headline.
+
+The checkpoint has one publisher MTP layer. Experimental serial reuse to MTP8
+is preserved under `experiments/` for mechanism research, but its selected
+fixture must not be used as a public speed claim. See the corrected
+[screening note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -52,15 +50,11 @@ single-user decode from `21.872717` to `35.011369 tok/s` (+60.07%) and c128
 aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
 [W8A16 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 and the earlier [baseline evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
-The active state allocation separately raised the dynamic service from
-`817.007910` to a replicated high-throughput lane. Raising singleton depth
-from MTP4 to MTP5 raised its single-user median from `116.711347` to
-`128.428318 tok/s`; the replicated MTP7 policy reached `137.211213 tok/s`, and
-the later replicated MTP8 policy raised it again to `146.814418 tok/s` while
-retaining c64 aggregate throughput at `1,094.314767 tok/s`. A subsequent
-two-server cold realistic suite measured `58.537756`/`58.244309 tok/s`, so
-`58.391033 tok/s` is now the general package headline and the 146.814418 row
-is retained only with its exact high-acceptance fixture scope.
+The active state allocation and deeper speculative screens remain diagnostic
+mechanism evidence. None of their selected-fixture singleton rates is a
+package headline. The incomplete 128-cap varied-prompt repeat measured
+`58.537756`/`58.244309 tok/s`; it remains a screening result pending the
+compliant 512-cap two-server suite and independent quality/determinism gate.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
@@ -181,26 +175,31 @@ MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh
 ```
 
-The benchmark requires the single-user gate, a complete output-isolated c64
+The short-context diagnostic benchmark requires its single-user fixture gate, a complete output-isolated c64
 batch, at least 98% of the prior replicated aggregate result, sequential baseline
 agreement, and 512/512 concurrent exact-answer checks. The service is limited
 to 256 total tokens and is not the long-context profile.
 
-For the fixed cold realistic single-user gate used by the package headline,
-start another fresh server with another empty cache directory and run:
+For the fixed varied-prompt single-user gate required before a package
+headline, launch the following 1024-token-cap one-slot profile on another fresh
+server with another empty cache directory and run:
 
 ```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-strict-suite-cache \
+MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh
+
 OUT=/path/to/new-realistic-suite.json \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh
 ```
 
-The wrapper sends each of the 12 natural prompts exactly once, requests 128
-tokens, requires streamed token-ID timing, checks the conventional 99-interval
-window, and fails unless every request reports `cached_tokens=0`. The two
-published cold servers took 165.327/164.822 seconds from container start to
-HTTP readiness; their first inference still JIT-compiled three EAGLE kernels,
-producing 829/743 ms first-request TTFT. See the
-[cold result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
+The corrected wrapper sends each of the 12 natural prompts exactly once, uses
+a 512-token natural-completion cap, requires streamed token-ID timing, checks the conventional 99-interval
+window, and fails unless every request reports `cached_tokens=0`. The prior
+128-cap attempts are retained only as a corrected screening result. They do
+not satisfy this command's final gate. See the
+[audit correction](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
 
 For the original portable target-only baseline, in the serving terminal:
 

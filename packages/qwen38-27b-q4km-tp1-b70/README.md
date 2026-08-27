@@ -1,7 +1,8 @@
 # Qwen3.8 27B Q4_K_M — one-B70 candidate package
 
 This is the user-facing front door for our validated one-card Qwen3.8 lane:
-`27.81–27.82 tok/s`, target-only, cache-zero, and exact against the registered
+`27.825726 tok/s` class-balanced (`27.824790` all-prompt), target-only,
+cache-zero, and exact against the registered
 12-prompt oracle. The full semantic/repeat/needle battery also passed.
 
 > **Status: candidate, not a beginner install guide.** Model, source, patch,

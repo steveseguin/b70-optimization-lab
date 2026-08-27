@@ -10,6 +10,8 @@ port=${PORT:-18128}
 served_model=${SERVED_MODEL_NAME:-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r2}
 speculative_config=${SPECULATIVE_CONFIG:-'{"method":"qwen3_next_mtp","num_speculative_tokens":2,"num_speculative_tokens_per_batch_size":[[1,1,2],[2,128,1]]}'}
 max_num_seqs=${MAX_NUM_SEQS:-128}
+max_model_len=${MAX_MODEL_LEN:-256}
+max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
 image_id=${EXPECTED_IMAGE_ID:-sha256:9918c4477d2d3bdbd84732c5beb13619a89740f9915b1d7393fb48f1d3c8ed72}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 patch_sha256=68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5
@@ -18,6 +20,14 @@ gdn_library_sha256=2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a
 
 [[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || {
   printf 'MAX_NUM_SEQS must be positive\n' >&2
+  exit 1
+}
+[[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || {
+  printf 'MAX_MODEL_LEN must be positive\n' >&2
+  exit 1
+}
+[[ "${max_num_batched_tokens}" =~ ^[1-9][0-9]*$ ]] || {
+  printf 'MAX_NUM_BATCHED_TOKENS must be positive\n' >&2
   exit 1
 }
 
@@ -104,8 +114,8 @@ exec docker run "${container_lifecycle[@]}" --name "${container}" \
   --tensor-parallel-size 2 \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.96 \
-  --max-model-len 256 --block-size 64 \
-  --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens 512 \
+  --max-model-len "${max_model_len}" --block-size 64 \
+  --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens "${max_num_batched_tokens}" \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
   --language-model-only \
   --speculative-config "${speculative_config}" \

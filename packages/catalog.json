@@ -39,10 +39,10 @@
         ],
         "published_at": "2026-08-22",
         "featured_metric": {
-          "value": 123.72736943965285,
+          "value": 122.16035656735696,
           "unit": "tok/s",
           "label": "decode (MTP-assisted)",
-          "scope": "Conventional 99-interval median on the fixed cold suite with the Q4_0 MTP draft assisting; the historical 100-event compatibility figure is 124.977141 tok/s.",
+          "scope": "Class-balanced median of per-input-class medians using conventional 99-interval rates on the fixed cold suite with the Q4_0 MTP draft assisting. The all-prompt median is 123.727369 tok/s; the historical 100-event compatibility figure is 124.977141 tok/s.",
           "evidence": "data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json"
         }
       },
@@ -415,13 +415,8 @@
           "novice"
         ],
         "published_at": "2026-08-22",
-        "featured_metric": {
-          "value": 132.351606,
-          "unit": "tok/s",
-          "label": "decode",
-          "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 132.467576.",
-          "evidence": "repro/lfm25-26b-q8-b70/README.md"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The 132.351606/132.467576 varied-suite observations and objective canary summary are preserved in the guide, but their raw operating-point and canary JSON files are not closed in this repository. Import and hash-bind those files, then replay the quality/determinism gate before assigning a strict headline."
       },
       "contributors": [
         {
@@ -837,13 +832,8 @@
           "stock upstream"
         ],
         "published_at": "2026-08-22",
-        "featured_metric": {
-          "value": 72.169452,
-          "unit": "tok/s",
-          "label": "decode (3B active parameters)",
-          "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 72.035976.",
-          "evidence": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The 72.169452/72.035976 varied-suite observations and reasoning-off canary summary are preserved in the guide, but their raw operating-point and canary JSON files are not closed in this repository. Import and hash-bind those files, then replay the quality/determinism gate before assigning a strict headline."
       },
       "contributors": [
         {
@@ -1028,13 +1018,8 @@
           "lab optimized"
         ],
         "published_at": "2026-08-22",
-        "featured_metric": {
-          "value": 131.460231,
-          "unit": "tok/s",
-          "label": "decode (3B active parameters)",
-          "scope": "Mean of two fresh-server conventional 99-interval suite medians (130.451 and 132.469 tok/s), up-to-512-token responses, target-only, cache-zero; the twelfth shared-gate/residual/RMS source fusion improved its matched mean-of-run-medians by +1.38%, with 12/12 prompt-paired averages winning. The legacy 100-event compatibility pair (131.769 and 133.807) remains retained in the evidence but is not the headline.",
-          "evidence": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The 131.460231 tok/s two-server observation and matched patch A/B evidence remain valid scoped measurements, but the runtime produced 0/12 identical complete natural-response hashes across fresh stock servers. Keep the mechanism and context evidence; require a stable, registered cross-server oracle before assigning a strict package headline."
       },
       "contributors": [
         {
@@ -1346,13 +1331,8 @@
           "beginner"
         ],
         "published_at": "2026-08-22",
-        "featured_metric": {
-          "value": 49.588381,
-          "unit": "tok/s",
-          "label": "decode",
-          "scope": "Conventional 99-interval median, cold 12-prompt suite, 512-token responses, target-only, cache-zero; second fresh-server run 49.573292.",
-          "evidence": "repro/ornith-15-9b-q8-b70/README.md"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The 49.588381/49.573292 varied-suite observations and objective canary summary are preserved in the guide, but their raw operating-point and canary JSON files are not closed in this repository. Import and hash-bind those files, then replay the quality/determinism gate before assigning a strict headline."
       },
       "contributors": [
         {
@@ -1718,7 +1698,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and the lab's replicated dynamic MTP8-to-MTP1 service profiles on the block-W8A16 overlay.",
+        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and diagnostic dynamic-MTP research profiles on the block-W8A16 overlay. A promotion-grade varied-prompt single-user headline is still pending.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1746,13 +1726,8 @@
           "W8A16"
         ],
         "published_at": "2026-08-27",
-        "featured_metric": {
-          "value": 58.39103279669794,
-          "unit": "tok/s",
-          "label": "realistic cold decode",
-          "scope": "Arithmetic mean of two independently cold-started server medians on the fixed 12-prompt realistic suite: conventional 99-interval decode after TTFT, 128 generated tokens, every request cache zero, dynamic MTP8 at one active request, short-context 256-token service. The separately labeled 40-token fixture measured 146.814418 tok/s.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-summary.json"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The prior 58.391 tok/s attempt used a 128-token output cap and the 146.814 tok/s attempt used a selected high-acceptance fixture. Both are diagnostic only. A complete fixed varied-prompt suite with a 512-token cap, independent quality/determinism gates, and two fresh-server runs is required."
       },
       "contributors": [
         {
@@ -1808,7 +1783,7 @@
       },
       "commands": {
         "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
+        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
         "health": "curl -fsS http://127.0.0.1:18128/health",
         "benchmark": "OUT=/path/to/new-realistic-suite.json repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh",
         "stop": "docker stop -t 30 qwen38-fp8-w8a16-dynamic-mtp-tp2"
@@ -1986,94 +1961,6 @@
         "scripts/summarize-http-concurrency-attempts.py"
       ],
       "performance_profiles": [
-        {
-          "id": "http-block-w8a16-single-user-vs-speculative-tokens",
-          "label": "Block-W8A16 official FP8 TP2 single-user decode by MTP mode",
-          "metric": "decode",
-          "unit": "tok/s",
-          "x_metric": "speculative_tokens",
-          "x_label": "Active speculative tokens for the one-user shape",
-          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only; MTP1 uses the publisher's one MTP layer once; MTP2 through MTP9 serially reuse it. The selected dynamic service uses MTP8 only for one active request and falls back to MTP1 for two or more. MTP2, MTP3, MTP4, MTP5, MTP7, and MTP8 are each medians of two preregistered fresh-server attempts; MTP6 and MTP9 are measured negatives, and MTP0/MTP1 retain their earlier declared samples. MTP9's singleton rate passed, but its exact service failed the c64 retention gate, so it is not selected. No missing MTP depth is inferred. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json",
-          "points": [
-            {
-              "speculative_tokens": 0,
-              "value": 35.01136892707062,
-              "samples": 1
-            },
-            {
-              "speculative_tokens": 1,
-              "value": 61.69957987620137,
-              "samples": 1
-            },
-            {
-              "speculative_tokens": 2,
-              "value": 83.68019315544194,
-              "samples": 2
-            },
-            {
-              "speculative_tokens": 3,
-              "value": 99.9304336470082,
-              "samples": 2
-            },
-            {
-              "speculative_tokens": 4,
-              "value": 116.71134683609132,
-              "samples": 2
-            },
-            {
-              "speculative_tokens": 5,
-              "value": 128.4283182361941,
-              "samples": 2
-            },
-            {
-              "speculative_tokens": 6,
-              "value": 130.47321263908694,
-              "samples": 1,
-              "status": "measured-negative"
-            },
-            {
-              "speculative_tokens": 7,
-              "value": 137.2112133265758,
-              "samples": 2
-            },
-            {
-              "speculative_tokens": 8,
-              "value": 146.81441784235233,
-              "samples": 2
-            },
-            {
-              "speculative_tokens": 9,
-              "value": 158.602109747958,
-              "samples": 1,
-              "status": "measured-negative"
-            }
-          ]
-        },
-        {
-          "id": "http-block-w8a16-dynamic-mtp-output-audited-aggregate-vs-concurrent-users",
-          "label": "Block-W8A16 official FP8 TP2 dynamic MTP service",
-          "metric": "aggregate_decode",
-          "unit": "tok/s",
-          "x_metric": "concurrent_sequences",
-          "x_label": "Concurrent HTTP users",
-          "scope": "Two directly measured operating points from the same 256-token service on two B70s: MTP8 at one active request and MTP1 at c64. Values are medians across separately preregistered fresh-server R15/R16 attempts with cache zero. Both c64 batches returned complete token IDs with no cross-base collisions and each passed 512/512 synchronized exact-answer requests. The line connects measured markers only; no intermediate concurrency is claimed, interpolated, or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp8-dynamic-mtp1-r16-summary.json",
-          "points": [
-            {
-              "concurrent_sequences": 1,
-              "value": 146.81441784235233,
-              "per_user_value": 146.81441784235233,
-              "samples": 2
-            },
-            {
-              "concurrent_sequences": 64,
-              "value": 1094.314767229035,
-              "per_user_value": 17.09866823795367,
-              "samples": 2
-            }
-          ]
-        },
         {
           "id": "http-block-w8a16-mtp1-output-audited-aggregate-vs-concurrent-users",
           "label": "Block-W8A16 official FP8 TP2 + MTP1 aggregate decode",
@@ -2475,10 +2362,10 @@
         ],
         "published_at": "2026-08-22",
         "featured_metric": {
-          "value": 27.82479,
+          "value": 27.825725650072858,
           "unit": "tok/s",
           "label": "decode",
-          "scope": "Conventional 99-interval median on the fixed cold 12-prompt suite; target-only and cache-zero.",
+          "scope": "Class-balanced median of per-input-class medians using conventional 99-interval rates on the fixed cold 12-prompt suite; target-only and cache-zero. The all-prompt median is 27.824790 tok/s.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-08-21-q4km-tp1-gpu0-final-j.json"
         }
       },
@@ -3272,13 +3159,8 @@
           "quality conservative"
         ],
         "published_at": "2026-08-25",
-        "featured_metric": {
-          "value": 19.662501,
-          "unit": "tok/s",
-          "label": "raw decode",
-          "scope": "Direct llama-bench tg128 at depth zero, one B70, Q8_0 weights, F16 KV, five repetitions. The matching service quality battery passed separately; this is not an HTTP or realistic-prompt rate.",
-          "evidence": "experiments/qwen38-27b-b70/data/qwen38-q8weights-f16-tp1-local-20260825-r2/result.json"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The measured five-repeat llama-bench tg128 context curve and separate service-quality battery remain valid scoped evidence, but a complete varied-prompt HTTP suite with a 512-token cap, two fresh-server attempts, and a bound quality/determinism oracle is still required for the package headline."
       },
       "contributors": [
         {
@@ -3563,13 +3445,8 @@
           "quality gated"
         ],
         "published_at": "2026-08-22",
-        "featured_metric": {
-          "value": 36.772932224864405,
-          "unit": "tok/s",
-          "label": "conventional decode median",
-          "scope": "Historical reasoning-enabled 99-interval median across the accepted 12-prompt cache-zero suite; the packaged launcher defaults to reasoning off and is a distinct identity.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-15-q8-tp2-transfer-summary.json"
-        }
+        "featured_metric": null,
+        "benchmark_status": "The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complete varied-prompt 512-cap two-fresh-server run plus a bound quality/determinism oracle on the exact packaged tuple is required for its headline."
       },
       "contributors": [
         {

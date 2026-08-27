@@ -7,10 +7,12 @@ checklist, and next-work assessment. Use
 [`production-service.md`](production-service.md) for the persistent backend
 recipe.
 
-The best
-one-B70 Q8 strict result by the required primary metric is
-`124.97714084813418 tok/s` median generated-token throughput for tokens 1-100
-after TTFT across the fixed cold prompt suite:
+The same fixed cold suite now has a **`122.16035656735696 tok/s`** primary
+headline: median within each input class, then median across the six class
+medians, using the conventional 99 inter-token intervals. Its secondary
+all-prompt median is `123.72736943965285 tok/s`; the historical
+`124.97714084813418 tok/s` 100-event value remains a compatibility field, not
+the current headline. Evidence:
 `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`.
 It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
@@ -21,7 +23,8 @@ reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
 `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`,
 LM-head experiment flags unset,
 `cached_tokens=0` on every suite prompt, and
-`realistic_final_gate.passed=true`.
+`realistic_final_gate.passed=true` under the historical workload gate; new
+external promotion additionally requires the hash-bound quality attestation.
 
 Quantization guardrail: the promoted no-quality-loss lane is the literal
 `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf` target/verifier. Older file labels such

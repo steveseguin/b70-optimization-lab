@@ -88,10 +88,36 @@ the conventional 99-interval field.
 > [`../experiments/qwen38-27b-b70/localmaxxing/`](../experiments/qwen38-27b-b70/localmaxxing/)
 > `*.CORRECTION-20260820.json`.
 
+> **🛑 WITHDRAWAL RECOMMENDED, 2026-08-27 — Qwen3.8 official-FP8 dynamic-MTP8
+> record `cmtb5n45n0021qq01n13vly2h` was submitted from an incomplete gate.**
+>
+> The run used the complete varied prompt suite and `cached_tokens=0`, but its
+> response cap was 128 tokens. The policy required the 512-token natural-
+> completion cap for Gemma/Qwen speculative promotion. The benchmark harness
+> incorrectly treated “covers the first 100 events” as “final gate passed,” and
+> the payload builder trusted that boolean. The public `58.537756 tok/s` row is
+> therefore screening evidence, not a valid submission. The repository package
+> headline has been removed, the harness and builders now fail closed, and the
+> raw receipt remains preserved for audit. No LocalMaxxing delete/update API is
+> available; human withdrawal is required.
+
+> **🛑 WITHDRAWAL REVIEW RECOMMENDED, 2026-08-27 — four 2026-08-26 package
+> submissions no longer meet the repository's closed-evidence standard.**
+>
+> LFM2.5 (`cmt9m8h6i00ymli018jvpod9i`), Nemotron
+> (`cmt9m8hgp00ysli017rhfj46x`), and Ornith 9B
+> (`cmt9m8ht100yxli01gdop0ol4`) cite raw operating-point/canary files that are
+> not present in this repository. Ornith 35B
+> (`cmt9m8gvg00yeli01ylok5hfn`) has extensive measured patch evidence but
+> explicitly matched 0/12 complete natural-response hashes across fresh stock
+> servers. Their observations remain preserved, but the repository has removed
+> them as strict package headlines pending imported/hash-bound evidence or a
+> stable cross-server oracle. Qwen Q4 TP1 from the same batch remains eligible.
+
 | Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
 | --- | --- | ---: | --- | --- |
-| LFM2.5 2.6B Q8_0 | 1x Arc Pro B70 | **132.351606 tok/s**, fixed cold realistic suite | [`cmt9m8h6i00ymli018jvpod9i`](https://www.localmaxxing.com/runs/cmt9m8h6i00ymli018jvpod9i) | [repro](../repro/lfm25-26b-q8-b70/README.md) |
-| Ornith 1.5 35B-A3B Q4_K_M | 1x Arc Pro B70 | **131.460231 tok/s**, mean of two fixed cold realistic-suite medians | [`cmt9m8gvg00yeli01ylok5hfn`](https://www.localmaxxing.com/runs/cmt9m8gvg00yeli01ylok5hfn) | [repro](../repro/ornith-15-35b-a3b-q4km-b70/README.md) |
+| LFM2.5 2.6B Q8_0 | 1x Arc Pro B70 | **Withdrawal review recommended.** `132.351606 tok/s` observation; raw performance/canary files are not closed in-repo. | [`cmt9m8h6i00ymli018jvpod9i`](https://www.localmaxxing.com/runs/cmt9m8h6i00ymli018jvpod9i) | [repro](../repro/lfm25-26b-q8-b70/README.md) |
+| Ornith 1.5 35B-A3B Q4_K_M | 1x Arc Pro B70 | **Withdrawal review recommended.** `131.460231 tok/s` observation; fresh-server natural-response determinism unresolved. | [`cmt9m8gvg00yeli01ylok5hfn`](https://www.localmaxxing.com/runs/cmt9m8gvg00yeli01ylok5hfn) | [repro](../repro/ornith-15-35b-a3b-q4km-b70/README.md) |
 | Muse-Glimmer-30B UD-Q8_K_XL, TP4 pretrained DFlash | 4x Arc Pro B70 | **161.900 conventional interval median**, frozen 15-prompt cold suite, target-verified | `cmss8515c00n0ms01n3begqgg` | [packet](muse-glimmer-30b-q8-woq-b70/README.md); [repro](../repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md) |
 | Poolside Laguna S 2.1 INT4, TP4+EP4 DFlash11 | 4x Arc Pro B70 | **125.462 conventional interval median; 126.729 historical compatibility formula**; exact cold width-12 suite with Q/K RMSNorm+RoPE and M12 shared-elementwise fusions | `cms9wuuf300cqpm01t5i285tq` | [qualified packet](laguna-s-2.1-int4-b70/README.md); [record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md) |
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 historical median under the July bar; newer strict review failed parity/determinism | `cmrh35ct50092mj01h7jgydqj` | [historical packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json); [current validation](../experiments/qwen36-27b-autoround-int4-b70/validation-20260815/README.md) |
@@ -104,10 +130,10 @@ the conventional 99-interval field.
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
 | DeepSeek V4 Flash uniform-K160, TP4+EP | 4x Arc Pro B70 | **80.820 strict-suite high**, 78.287 three-suite median-of-medians, target-verified DSpark7 sharded target argmax | `cmrquta9905w3lg013m5vxoqx` | [packet](deepseek-v4-flash-k160-b70/README.md); [evidence](../experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json); [raw receipt](../experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718-raw-receipt.json); [repro](../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md) |
 | DeepSeek V4 Flash uniform-K160, TP4+EP nonspec | 4x Arc Pro B70 | 43.767 median tok/s, direct routed-MoE + wide-epoch oneCCL | `cmrmnp7h81nntmj01lfenydgj` | [ledger](../experiments/deepseek-v4-flash-reap-xpu-b70/results/experiment-ledger.md) |
-| Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M | 1x Arc Pro B70 | **72.169452 tok/s**, fixed cold realistic suite | [`cmt9m8hgp00ysli017rhfj46x`](https://www.localmaxxing.com/runs/cmt9m8hgp00ysli017rhfj46x) | [repro](../repro/nemotron-35-lightning-30b-a3b-b70/README.md) |
-| Ornith 1.5 9B Q8_0 | 1x Arc Pro B70 | **49.588381 tok/s**, fixed cold realistic suite | [`cmt9m8ht100yxli01gdop0ol4`](https://www.localmaxxing.com/runs/cmt9m8ht100yxli01gdop0ol4) | [repro](../repro/ornith-15-9b-q8-b70/README.md) |
-| Qwen3.8 27B GGUF Q4_K_M, target-only TP1 | 1x Arc Pro B70 | **27.824790 tok/s**, fixed cold realistic suite | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | [repro](../repro/qwen38-27b-q4km-tp1-b70/README.md) |
-| Qwen3.8 27B official FP8/W8A16, dynamic MTP8, TP2 | 2x Arc Pro B70 | **58.537756 tok/s**, fixed cold realistic suite; independent cold replay 58.244309 | [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h) | [repro](../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md) |
+| Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M | 1x Arc Pro B70 | **Withdrawal review recommended.** `72.169452 tok/s` observation; raw performance/canary files are not closed in-repo. | [`cmt9m8hgp00ysli017rhfj46x`](https://www.localmaxxing.com/runs/cmt9m8hgp00ysli017rhfj46x) | [repro](../repro/nemotron-35-lightning-30b-a3b-b70/README.md) |
+| Ornith 1.5 9B Q8_0 | 1x Arc Pro B70 | **Withdrawal review recommended.** `49.588381 tok/s` observation; raw performance/canary files are not closed in-repo. | [`cmt9m8ht100yxli01gdop0ol4`](https://www.localmaxxing.com/runs/cmt9m8ht100yxli01gdop0ol4) | [repro](../repro/ornith-15-9b-q8-b70/README.md) |
+| Qwen3.8 27B GGUF Q4_K_M, target-only TP1 | 1x Arc Pro B70 | **27.824790 tok/s**, historical all-prompt median; current class-balanced aggregation is **27.825726 tok/s** | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | [repro](../repro/qwen38-27b-q4km-tp1-b70/README.md) |
+| Qwen3.8 27B official FP8/W8A16, dynamic MTP8, TP2 | 2x Arc Pro B70 | **Withdrawal recommended; no representative result.** Published 58.537756 used a 128-token cap and is diagnostic only. | [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h) | [audit correction](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md) |
 | Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
 
 Current measured-but-unsubmitted work belongs in its model packet, not this
@@ -115,16 +141,18 @@ public-submission index.
 
 Date: 2026-08-27
 
-The Qwen3.8 27B official-FP8/W8A16 TP2 dynamic-MTP8 service passed the fixed
-cold realistic gate on two independent fresh servers at `58.537756` and
-`58.244309 tok/s` conventional. The first chronological run was server-dry-run
-validated, submitted once, and immediately approved as
+**Audit correction:** the Qwen3.8 27B official-FP8/W8A16 TP2 dynamic-MTP8
+attempts measured `58.537756` and `58.244309 tok/s` conventional but used a
+128-token output cap, below the required 512-token promotion cap. The first
+chronological run was prematurely submitted and approved as
 [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h).
 It contains 12 unique requests, 128 output tokens each, streamed token-ID
-timing, `cached_tokens=0` throughout, and target-verified MTP8 accepted tokens.
+timing, `cached_tokens=0` throughout, and target-verified MTP8 accepted tokens;
+those properties make it useful screening evidence but do not close the final
+performance gate. Withdrawal is recommended.
 
-The earlier `146.814 tok/s` singleton remains a separately labeled
-high-acceptance 40-token fixture, not the submitted realistic headline. The
+The earlier `146.814 tok/s` singleton is a selected high-acceptance diagnostic
+fixture and is excluded from public headline graphs. The
 `1,094 tok/s` c64 observation remains neural.download aggregate evidence
 because the LocalMaxxing speed-test schema has no aggregate-throughput field;
 publishing it as scalar `tokSOut` would mislabel it as single-stream decode.
@@ -137,8 +165,10 @@ Receipt:
 
 Date: 2026-08-26
 
-Five new 1x Intel Arc Pro B70 package headlines were server-dry-run validated,
+Five new 1x Intel Arc Pro B70 package records were server-dry-run validated,
 submitted, read back through the authenticated API, and immediately approved.
+The 2026-08-27 integrity audit later retained only Qwen Q4 TP1 as a strict
+headline; the other four require withdrawal review for the reasons above.
 Each public record links both its neural.download model page and its repository
 reproduction packet. LocalMaxxing accepts one context length and one scalar
 output-throughput value per speed-test record, so context curves were not
@@ -152,7 +182,7 @@ them as `tokSOut` would conflate multi-user aggregate and single-stream decode.
 | `lfm25-26b-q8-b70-realistic-132tok-20260826` | [`cmt9m8h6i00ymli018jvpod9i`](https://www.localmaxxing.com/runs/cmt9m8h6i00ymli018jvpod9i) | LFM2.5 2.6B Q8_0 | 1 | 8192 | **132.351606** | — | — |
 | `nemotron35-lightning-30b-a3b-udq4km-b70-realistic-72tok-20260826` | [`cmt9m8hgp00ysli017rhfj46x`](https://www.localmaxxing.com/runs/cmt9m8hgp00ysli017rhfj46x) | Nemotron 3.5 Lightning 30B-A3B UD-Q4_K_M | 1 | 8192 | **72.169452** | — | — |
 | `ornith-15-9b-q8-b70-realistic-49tok-20260826` | [`cmt9m8ht100yxli01gdop0ol4`](https://www.localmaxxing.com/runs/cmt9m8ht100yxli01gdop0ol4) | Ornith 1.5 9B Q8_0 | 1 | 8192 | **49.588381** | — | — |
-| `qwen38-27b-q4km-b70-tp1-target-only-realistic-27tok-20260826` | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | Qwen3.8 27B Q4_K_M, target-only TP1 | 1 | 8192 | **27.824790** | 255.418 | 27.455580 |
+| `qwen38-27b-q4km-b70-tp1-target-only-realistic-27tok-20260826` | [`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte) | Qwen3.8 27B Q4_K_M, target-only TP1 | 1 | 8192 | **27.824790** (submitted all-prompt; current class-balanced `27.825726`) | 255.418 | 27.455580 |
 
 Queue: [`../data/localmaxxing-neural-download-top-results-20260826.queue.json`](../data/localmaxxing-neural-download-top-results-20260826.queue.json).
 Receipt: [`../data/localmaxxing-responses/neural-download-top-results-20260826.response.json`](../data/localmaxxing-responses/neural-download-top-results-20260826.response.json).

@@ -4,7 +4,11 @@ This is the primary quality-conservative Qwen3.8 27B service snapshot for two
 ASRock Intel Arc Pro B70 32 GiB cards. It uses Q8_0 target weights, F16 KV,
 and no MTP, DFlash, draft model, response reuse, or speculation.
 
-## Accepted result
+## Historical accepted identity (not the package headline)
+
+The figures in this section are valid for the recorded reasoning-enabled
+identity. The packaged launcher is reasoning-off, so its strict varied-prompt
+headline remains pending rather than borrowing this number.
 
 - conventional 99-interval median: **`36.772932 tok/s`**
 - p10: `36.046576 tok/s`
@@ -23,9 +27,9 @@ full-decode mean. All four suites produced the same 12 complete output hashes;
 the seven semantic canaries, eight repeats, and 3,829-token needle also matched
 the promoted oracle exactly. A clean accepted-source `A-B-B-A` direct-decode
 sanity bracket measured `37.321045` versus `36.978696 tok/s` (`+0.926%`). The
-historical `36.772932 tok/s` conventional headline remains the highest valid
-cold-suite capture and is not replaced by the lower-throughput matched A/B
-session.
+historical `36.772932 tok/s` conventional capture remains valid for its
+reasoning-enabled identity and is not replaced by the lower-throughput matched
+A/B session. It is not the reasoning-off package headline.
 
 The promoted SG24 follow-up changes that same exact recurrent quad from 16 to
 24 independent SG16 rows per workgroup. Two new opposite-order endpoint pairs
