@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 max_model_len="${MAX_MODEL_LEN:-512}"
-[[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" ]] || {
-  printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, or 3072\n' >&2
+[[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" || "${max_model_len}" == "4352" ]] || {
+  printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, or 4352\n' >&2
   exit 1
 }
 campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-${max_model_len}-r1"
