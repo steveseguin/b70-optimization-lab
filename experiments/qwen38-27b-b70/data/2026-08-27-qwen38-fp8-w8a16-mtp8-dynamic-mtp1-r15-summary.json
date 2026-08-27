@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "classification": "measured-positive-screen-pending-replication",
+  "model": {"repository": "Qwen/Qwen3.8-27B-FP8", "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"},
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "speculative_config": {"method": "qwen3_next_mtp", "num_speculative_tokens": 8, "num_speculative_tokens_per_batch_size": [[1, 1, 8], [2, 128, 1]]}
+  },
+  "quality": {
+    "c2_output_isolation": "2/2",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "concurrent_exact_answer_canary": "512/512",
+    "cached_tokens_all_zero": true,
+    "container_exit_code": 0
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 146.80824408506146,
+    "fresh_response_wall_tok_s": 133.59763719260766,
+    "ttft_s": 0.08621513599064201,
+    "gate_tok_s": 139.955438,
+    "gate_passed": true,
+    "change_vs_promoted_mtp7_median_percent": 6.9943487312832175
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 1091.8890129813012,
+    "declared_c64_tok_s": 1095.5536494164612,
+    "declared_c64_per_user_tok_s": 17.118025772132206,
+    "gate_tok_s": 1080.220794,
+    "gate_passed": true,
+    "change_vs_promoted_mtp7_median_percent": -0.60896969967974,
+    "declared_output": {"requests": 64, "completion_tokens": 8192, "completion_tokens_complete": true, "cached_tokens_all_zero": true, "cross_base_oracle_collision_count": 0, "complete_token_id_identity_all": true}
+  },
+  "shutdown": {"health_before_stop": "pass", "container_exit_code": 0, "oom_killed": false, "engine_dead_error": false},
+  "decision": {"status": "positive-screen-pending-replication", "reason": "MTP8 improved single-user decode by 6.99%, retained 99.39% of the promoted c64 rate, and passed every frozen quality gate."},
+  "evidence_directory": "qwen38-fp8-w8a16-mtp8-dynamic-mtp1-20260827-r15",
+  "reporting_boundary": "Every rate is directly measured. No intermediate concurrency, long-context rate, or other speculative depth is inferred, interpolated, or extrapolated."
+}
