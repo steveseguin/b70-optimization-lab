@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-capacity-amendment.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-20260827-r2",
+  "parent_preregistration": "2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-http-concurrency-r1-prereg.json",
+  "parent_preregistration_sha256": "bf6d523ae349e8db750bac61358192d16281af7f13c1642c645425535f8e9b36",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-27",
+  "reason": "The parent 64-slot/32K-total profile failed before service with device OOM. User policy explicitly permits smaller context windows for high concurrency. This amendment freezes a bounded capacity descent without changing weights, runtime, output length, cache policy, or quality gates.",
+  "parent_failure": {
+    "profile": "64 slots / 32768 total context / 512 nominal tokens per slot",
+    "classification": "unsupported before request",
+    "error": "UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY in recurrent/hybrid memory initialization",
+    "speed_authority": 0
+  },
+  "ordered_capacity_profiles": [
+    {"id": "p64-c16384", "parallel_slots": 64, "context_tokens_total": 16384, "nominal_context_tokens_per_slot": 256, "concurrency_points": [1, 2, 4, 8, 16, 32, 64]},
+    {"id": "p32-c16384", "parallel_slots": 32, "context_tokens_total": 16384, "nominal_context_tokens_per_slot": 512, "concurrency_points": [1, 2, 4, 8, 16, 32]},
+    {"id": "p16-c8192", "parallel_slots": 16, "context_tokens_total": 8192, "nominal_context_tokens_per_slot": 512, "concurrency_points": [1, 2, 4, 8, 16]}
+  ],
+  "selection_rule": "Try profiles in order and stop descending at the first profile that becomes healthy and completes every measurement and quality gate. A startup failure creates no speed. Two fresh complete attempts are required at the selected profile; a healthy capacity-probe attempt may count as the first.",
+  "unchanged_gates": {
+    "max_output_tokens": 128,
+    "complete_raw_token_ids": true,
+    "cached_tokens_zero": true,
+    "unique_expanded_prompts": true,
+    "cross_base_collision_count_zero": true,
+    "two_fresh_attempt_relative_range_at_each_point_lte_percent": 10,
+    "concurrent_exact_answer_canaries_per_attempt": 128,
+    "concurrent_exact_answer_canaries_all_pass": true
+  },
+  "publication": {
+    "selected_context_capacity_must_be_explicit": true,
+    "unsupported_larger_profiles_remain_visible": true,
+    "no_interpolation_or_extrapolation": true,
+    "not_a_32k_or_single_user_headline": true,
+    "target_only_values_do_not_transfer": true
+  }
+}
