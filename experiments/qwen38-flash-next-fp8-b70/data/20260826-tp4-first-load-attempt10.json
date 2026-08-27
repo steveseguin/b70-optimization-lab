@@ -1,0 +1,14 @@
+{
+  "status": "preflight_aborted",
+  "attempt": 10,
+  "model_server_started": false,
+  "failure": "xpu-smi discovery did not return after the attempt-9 Level Zero failure",
+  "confirmation": "one bounded four-device PyTorch allocation probe timed out and the kernel logged GuC job timeouts on 0000:27:00.0",
+  "recovery": {
+    "method": "unbind four live B70 BDFs and reload xe; no FLR and no reboot",
+    "bdfs": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+    "post_reload_discovery": "pass, four expected B70 devices and mappings"
+  },
+  "hardening": "all launcher xpu-smi inventory calls now have a 30-second timeout",
+  "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt10"
+}

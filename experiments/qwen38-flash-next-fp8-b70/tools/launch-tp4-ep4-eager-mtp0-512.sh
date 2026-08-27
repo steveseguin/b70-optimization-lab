@@ -185,9 +185,9 @@ sock.close()
 probe.unlink()
 PY
 
-xpu-smi discovery -j >"${run_dir}/xpu-discovery.json"
+timeout 30s xpu-smi discovery -j >"${run_dir}/xpu-discovery.json" || fail "bounded XPU discovery failed"
 for device in 0 1 2 3; do
-  xpu-smi stats -d "${device}" -j >"${run_dir}/xpu-stats-${device}.json"
+  timeout 30s xpu-smi stats -d "${device}" -j >"${run_dir}/xpu-stats-${device}.json" || fail "bounded XPU stats failed for device ${device}"
 done
 
 "${python}" - <<'PY' >"${run_dir}/staged-runtime-preflight.txt"
@@ -250,7 +250,7 @@ args = EngineArgs(
     distributed_executor_backend='mp', enable_expert_parallel=True,
     all2all_backend='allgather_reducescatter', language_model_only=True,
     moe_backend='triton', enforce_eager=True, max_model_len=512,
-    max_num_seqs=1, max_num_batched_tokens=512,
+    max_num_seqs=1, max_num_batched_tokens=64,
     enable_prefix_caching=False, offload_backend='uva', cpu_offload_gb=12,
     cpu_offload_params={'ple_embedding.ngram_embedding.weight'},
     gpu_memory_utilization=.92, kv_cache_dtype='auto', block_size=64,
@@ -265,6 +265,7 @@ assert config.offload_config.uva.cpu_offload_gb == 12
 assert config.offload_config.uva.cpu_offload_params == {'ple_embedding.ngram_embedding.weight'}
 assert config.kernel_config.moe_backend == 'triton'
 assert config.speculative_config is None
+assert config.scheduler_config.max_num_batched_tokens == 64
 selector = 'ple_embedding.ngram_embedding.weight'
 assert f'.{selector}.' in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight.'
 assert f'.{selector}.' not in '.model.layers.1.ple.ple_embedding.ngram_embedding.weight_scale.'

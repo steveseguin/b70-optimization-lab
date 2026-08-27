@@ -254,3 +254,13 @@ decode-path optimization remain unchanged. This bounds the startup profile
 forward and is intentionally conservative for the first healthy-server gate.
 Larger prefill chunks remain a later matrix dimension once correctness and
 decode are established.
+
+The first attempt-10 invocation never reached vLLM. The post-OOR management
+snapshot hung in `xpu-smi discovery`; one bounded direct PyTorch probe also
+timed out. Passive journal evidence then showed a GuC job-timeout/reset storm
+on `0000:27:00.0`. With no render-node holders, the console on ASPEED, and
+`xe.disable_display=1`, all four live B70 BDFs were unbound and the `xe` module
+was reloaded using the repository's proven recovery procedure. Four-device
+discovery and the exact BDF mapping returned afterward. The launcher now caps
+every XPU-SMI inventory call at 30 seconds so management telemetry can never
+block a model launch indefinitely. The fresh model run uses attempt 11.
