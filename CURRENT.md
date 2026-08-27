@@ -57,6 +57,18 @@ batch-shape-dependent, so this is output-isolation-qualified. Natural
 retrieval/task long-context evidence remains open. No benchmark process is
 currently live.
 
+The quality-conservative one-card Q8_0 target now also has a separately
+qualified short-context Q4_0-draft MTP2 package. Two fresh servers measured
+**37.062028 tok/s** versus **19.582597 tok/s** for the configuration-matched
+MTP0 control (**+89.26%**); all 24/24 MTP2 arrays matched control, cache stayed
+zero, and every objective canary passed. MTP1 passed at 30.260758 tok/s but was
+slower. This profile used only 1,024 configured context tokens: its 32K and
+concurrency cells remain unmeasured and no target-only value transfers. The
+package and replay are in
+[`packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/`](packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/)
+and
+[`repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/`](repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/).
+
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or
 repurpose that tree without first checking service ownership and the canonical
