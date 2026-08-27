@@ -12,7 +12,10 @@ compatibility series is based on
 source pieces dropped by earlier local/upstream merge resolution; its third
 adds the fused block-FP8 and MXFP4 SiLU-multiply implementation translation
 units to the existing basic-kernel build list. It does not replace or remove
-the existing Qwen/GDN/MoE performance work in that kernel tree.
+the existing Qwen/GDN/MoE performance work in that kernel tree. Its fourth
+filters padding sentinels during MoE alignment. Its fifth changes only the
+exact speculative GDN proof path from a fixed four-row bound to the positive
+runtime row count; target-only execution is unchanged.
 
 ## SHA-256
 
@@ -39,6 +42,7 @@ cdd9631a9480ab333fb4340812adf856ad65e22b0c4da1b1a8ef91bb04d7fa3c  vllm/0017-Port
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch
 ecc1cb5c84b148e96755b0b834408ae5ffaf9e497d2c1eb7d46735b4cf850a88  vllm-xpu-kernels/0004-fix-moe-ignore-padding-sentinels-during-alignment.patch
+7cbadf00a334404507ea730ea8281db203d4de7613785b599aa7f9800d523a46  vllm-xpu-kernels/0005-Generalize-exact-GDN-replay-to-MTP-row-count.patch
 ```
 
 These are source artifacts only. A deployment package must additionally pin

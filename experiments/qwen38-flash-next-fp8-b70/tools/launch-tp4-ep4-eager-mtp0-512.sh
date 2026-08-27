@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 max_model_len="${MAX_MODEL_LEN:-512}"
 mtp="${MTP:-0}"
+mtp_exact="${MTP_EXACT:-0}"
 [[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" || "${max_model_len}" == "4352" || "${max_model_len}" == "8448" ]] || {
   printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, 4352, or 8448\n' >&2
   exit 1
@@ -11,7 +12,25 @@ mtp="${MTP:-0}"
   printf 'FAIL: MTP must be 0 or 1\n' >&2
   exit 1
 }
-campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp${mtp}-${max_model_len}-r1"
+[[ "${mtp_exact}" == "0" || "${mtp_exact}" == "1" ]] || {
+  printf 'FAIL: MTP_EXACT must be 0 or 1\n' >&2
+  exit 1
+}
+[[ "${mtp_exact}" == "0" || "${mtp}" == "1" ]] || {
+  printf 'FAIL: MTP_EXACT=1 requires MTP=1\n' >&2
+  exit 1
+}
+[[ "${mtp_exact}" == "0" || "${max_model_len}" == "512" ]] || {
+  printf 'FAIL: MTP_EXACT=1 is preregistered only for MAX_MODEL_LEN=512\n' >&2
+  exit 1
+}
+exact_suffix=""
+served_model_name="qwen38-flash-next-fp8-tp4"
+if [[ "${mtp_exact}" == "1" ]]; then
+  exact_suffix="-exact-recurrent"
+  served_model_name="qwen38-flash-next-fp8-tp4-mtp1-exact-recurrent"
+fi
+campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp${mtp}${exact_suffix}-${max_model_len}-r1"
 ack="RUN ${campaign}"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../../.." && pwd)
@@ -42,13 +61,20 @@ cache_dir="${cache_parent}/${campaign}-attempt${attempt}"
 compile_cache_dir="/tmp/${campaign}-attempt${attempt}-compile"
 server_log="${run_dir}/server.log"
 rpc_dir="/tmp/${campaign}-attempt${attempt}-rpc"
-runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-padding-guard-loadable.sha256"
+if [[ "${mtp_exact}" == "1" ]]; then
+  runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-mtp1-exact-loadable.sha256"
+  component_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-mtp1-exact-component-gates.json"
+  expected_kernels_head="ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
+else
+  runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-padding-guard-loadable.sha256"
+  component_receipt=""
+  expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
+fi
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 padding_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-moe-padding-guard-gates.json"
 
 expected_vllm_head="1372c62d975c554f4b465c8299bc5f3295301ceb"
-expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
 
@@ -59,6 +85,10 @@ expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e
 [[ -d "${model}" && -d "${stage}/vllm_xpu_kernels" ]] || fail "model or staged runtime is missing"
 [[ -d "${vllm_src}/.git" && -d "${kernels_src}/.git" ]] || fail "source checkout is missing"
 [[ -f "${runtime_manifest}" && -f "${validation_root}/summary.json" && -f "${moe_receipt}" && -f "${padding_receipt}" ]] || fail "sealed validation input is missing"
+if [[ "${mtp_exact}" == "1" ]]; then
+  [[ -f "${component_receipt}" ]] || fail "sealed exact-component receipt is missing"
+  printf '%s  %s\n' 97f5969b8c9c929a281387186a62bbdf97aaf67846b07814d2b48db469536926 "${component_receipt}" | sha256sum -c -
+fi
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ ! -e "${cache_dir}" ]] || fail "refusing to reuse ${cache_dir}"
 [[ ! -e "${compile_cache_dir}" ]] || fail "refusing to reuse ${compile_cache_dir}"
@@ -162,7 +192,13 @@ export OMP_NUM_THREADS=1
 
 unset VLLM_PLE_CPU_OFFLOAD
 unset VLLM_XPU_FP8_BLOCK_W8A16 VLLM_XPU_FORCE_GRAPH_WITH_COMM \
-  VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE VLLM_XPU_GDN_NATIVE_FALLBACK
+  VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE VLLM_XPU_GDN_NATIVE_FALLBACK \
+  VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT \
+  VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH
+if [[ "${mtp_exact}" == "1" ]]; then
+  export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+  export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+fi
 export XPU_GRAPH=0
 export VLLM_XPU_GRAPH=0
 export VLLM_XPU_ENABLE_XPU_GRAPH=0
@@ -382,6 +418,7 @@ PY
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
   printf 'moe_backend=triton eager=1 mtp=%s max_model_len=%s max_num_batched_tokens=64\n' "${mtp}" "${max_model_len}"
+  printf 'mtp_exact_recurrent=%s\n' "${mtp_exact}"
   printf 'kv_cache_memory_bytes=201326592\n'
   printf 'kv_cache_layout=BLHNC\n'
   printf 'diagnostics=none\n'
@@ -400,7 +437,7 @@ args=(
   "${model}"
   --host 127.0.0.1
   --port "${port}"
-  --served-model-name qwen38-flash-next-fp8-tp4
+  --served-model-name "${served_model_name}"
   --tokenizer "${model}"
   --dtype bfloat16
   --tensor-parallel-size 4
@@ -452,6 +489,18 @@ verify_offload_receipt() {
   (( ok == 1 ))
 }
 
+verify_mtp_exact_receipt() {
+  local rank count ok=1
+  [[ "${mtp_exact}" == "1" ]] || return 0
+  for rank in 0 1 2 3; do
+    count=$(grep -F "Worker_TP${rank}_EP${rank}" "${server_log}" | \
+      grep -Fc 'VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT reached' || true)
+    printf 'rank=%s exact_recurrent_marker_count=%s\n' "${rank}" "${count}"
+    [[ "${count}" == 1 ]] || ok=0
+  done >"${run_dir}/mtp-exact-log-receipt.txt"
+  (( ok == 1 ))
+}
+
 capture_failure_journal() {
   journalctl -k --since "@${journal_start_epoch}" --no-pager \
     >"${run_dir}/kernel-journal-since-launch.log" 2>&1 || true
@@ -478,6 +527,7 @@ if (( healthy == 0 )); then
   fail "server did not become healthy within the bounded startup window"
 fi
 verify_offload_receipt || fail "workers did not each report exact 12.22-GiB selective offload"
+verify_mtp_exact_receipt || fail "workers did not each enter exact recurrent MTP mode"
 printf 'HEALTHY: %s pid=%s\n' "${campaign}" "${server_pid}"
 set +e
 wait "${server_pid}"

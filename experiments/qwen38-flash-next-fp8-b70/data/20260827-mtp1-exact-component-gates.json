@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "date": "2026-08-27",
+  "purpose": "Pre-endpoint qualification of the TP4 MTP1 exact recurrent candidate",
+  "source": {
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "base_kernel_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "patch": "patches/qwen38-flash-next-fp8-b70/vllm-xpu-kernels/0005-Generalize-exact-GDN-replay-to-MTP-row-count.patch",
+    "patch_sha256": "7cbadf00a334404507ea730ea8281db203d4de7613785b599aa7f9800d523a46"
+  },
+  "build": {
+    "compiler": "/opt/intel/oneapi/compiler/2025.3",
+    "target": "bmg-g21-a0",
+    "gdn_enabled": true,
+    "native_moe_enabled": false,
+    "note": "The accepted final build matches the preserved GDN-on/native-MoE-off B70-only extension configuration. Earlier broad rebuild attempts in the same log were rejected before staging.",
+    "log": "/mnt/usb-models/qwen38-build/logs/xpu-mtp1-exact-ad25aa9.log",
+    "log_sha256": "5c1ef5e1afcd63f65c433bffa16a5e353d8d37df3430b2ac0e48fd96c4fb4dea"
+  },
+  "runtime": {
+    "stage": "/mnt/usb-models/qwen38-build/runtime-mtp1-exact-ad25aa9-b70",
+    "manifest": "experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-mtp1-exact-loadable.sha256",
+    "manifest_sha256": "1ca8f8a999004e2268025673d1c064b6d506630b5969e8d94fbb28cb62fb1625",
+    "loadable_file_count": 18,
+    "changed_from_preserved_runtime_count": 1,
+    "changed_from_preserved_runtime": [
+      "_xpu_C.abi3.so"
+    ],
+    "preserved_xpu_binary_sha256": "8f11e716910289c9e53b770fab14231c040ac5b08ea7830947390ac0fb674496",
+    "candidate_xpu_binary_sha256": "2aa4d03a9bbb4f035eafef64954ac0f03884996fe9b5920f6d3bd873303742a8",
+    "candidate_xpu_binary_bytes": 116315704,
+    "module_provenance": "pass",
+    "spec_schema_argument_count": 23
+  },
+  "production_shape": {
+    "device": "xpu:0",
+    "dtype": "bf16",
+    "ssm_dtype": "fp32",
+    "num_requests": 1,
+    "num_k_heads": 16,
+    "num_v_heads": 48,
+    "head_k_dim": 128,
+    "head_v_dim": 128,
+    "tp_size": 4,
+    "conv_width": 4,
+    "reorder_input": false,
+    "ssm_row_padding_elements": 16384,
+    "exact_recurrent": true,
+    "persistent_scratch": true
+  },
+  "gates": [
+    {
+      "name": "mtp1-row2",
+      "spec_len": 2,
+      "spec_conv_extra_state_len": 1,
+      "case_count": 6,
+      "passed": true,
+      "all_compared_outputs_and_state_bit_exact": true,
+      "raw_json": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/mtp1-exact-ad25aa9-component-gates/row2.json",
+      "raw_json_sha256": "28078988b6cd16559557e0bff92acfc8660e90f60a9d2475a25900789172f7d0",
+      "raw_log_sha256": "b84cf1f7818e42e309fe83c30cc2569df4dfcc817ab1517dbf494feacef7b7fc"
+    },
+    {
+      "name": "generalized-row4-regression",
+      "spec_len": 4,
+      "spec_conv_extra_state_len": 3,
+      "case_count": 8,
+      "passed": true,
+      "all_compared_outputs_and_state_bit_exact": true,
+      "raw_json": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/mtp1-exact-ad25aa9-component-gates/row4.json",
+      "raw_json_sha256": "b9895128a439937fd72b0c59b09c0860ea8a92ac12101d054ba813f8fa72683f",
+      "raw_log_sha256": "25c0d29685f35d1a989799c602ab2564a7192a86e44d6ea8a087d508c797ad6c"
+    }
+  ],
+  "scope": "Direct synthetic projected-activation gates cover the exact recurrent operator, padded FP32 state stride, accepted-column restarts, and two-call history. Endpoint output parity remains mandatory before throughput."
+}

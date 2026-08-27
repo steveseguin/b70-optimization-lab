@@ -1,0 +1,42 @@
+From ad25aa9f69a2171612b9c6b83dfa82c69559f9e4 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 09:07:22 -0400
+Subject: [PATCH] Generalize exact GDN replay to MTP row count
+
+---
+ csrc/xpu/gdn_attn/gdn_attn_interface.cpp | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index e5e51d6..0e3790a 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -947,11 +947,11 @@ void gdn_attention_spec_decode(
+         "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT requires "
+         "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1");
+     TORCH_CHECK(
+-        num_spec_decodes == 1 && total_spec_tokens == 4 &&
++        num_spec_decodes == 1 && total_spec_tokens > 0 &&
+             spec_state_indices_tensor.size(1) ==
+-                (native_spec_prefix_base_state ? 5 : 4),
+-        "exact recurrent proof requires one request with four verifier rows "
+-        "and one state column per row, plus the optional prefix-base column");
++                total_spec_tokens + (native_spec_prefix_base_state ? 1 : 0),
++        "exact recurrent proof requires one request and one state column per "
++        "verifier row, plus the optional prefix-base column");
+     TORCH_CHECK(
+         queue.has_property<sycl::property::queue::in_order>(),
+         "exact recurrent proof requires an in-order XPU queue");
+@@ -1173,7 +1173,8 @@ void gdn_attention_spec_decode(
+     if (native_spec_recurrent_serial_exact) {                             \
+       const int64_t exact_state_offset =                                  \
+           native_spec_prefix_base_state ? 1 : 0;                          \
+-      for (int64_t spec_pos = 0; spec_pos < 4; ++spec_pos) {             \
++      for (int64_t spec_pos = 0; spec_pos < total_spec_tokens;           \
++           ++spec_pos) {                                                 \
+         auto current_state_indices =                                     \
+             spec_state_indices_tensor                                    \
+                 .narrow(0, 0, num_spec_decodes)                          \
+-- 
+2.43.0
+
