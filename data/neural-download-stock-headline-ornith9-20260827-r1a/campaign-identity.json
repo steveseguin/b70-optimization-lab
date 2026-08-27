@@ -1,0 +1,89 @@
+{
+  "artifacts": {
+    "benchmark_harness": {
+      "path": "/home/steve/b70-optimization-lab/scripts/bench-openai-realistic-suite.py",
+      "sha256": "ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52"
+    },
+    "canary_harness": {
+      "path": "/home/steve/b70-optimization-lab/scripts/neural-download-canaries.py",
+      "sha256": "b04d6f33d52904780937bf7f74eac09582f2635852108d9b0d30cb46261b58a7"
+    },
+    "model": {
+      "path": "/mnt/fast-ai/llm-models/ornith-1.5-9b-q8/Ornith-1.5-9B-Q8_0.gguf",
+      "sha256": "6874eeb25c71081dc8f0bbe88f3ebb786312447132745371cd980bce95d259b9"
+    },
+    "model_manifest": {
+      "path": "/home/steve/b70-optimization-lab/repro/ornith-15-9b-q8-b70/model-manifest.json",
+      "sha256": "dd471a61ef6699ad5ec90c8a7057614db46e0566b9bff8d8d571cf2a95281e61"
+    },
+    "preregistration": {
+      "path": "/home/steve/b70-optimization-lab/data/2026-08-27-neural-download-stock-headline-closure-prereg.json",
+      "sha256": "f4aa950f624d38884114e39eb47acbe5373a953266b39004d841782d628c7805"
+    },
+    "runtime": {
+      "libggml-base.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml-base.so",
+        "sha256": "37b4e5ef151d698cbc36d853c6e90a69b93c44c231391a9ef9c602430d77c05a"
+      },
+      "libggml-cpu.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml-cpu.so",
+        "sha256": "609636d85dd1e2bcdaf6bb02500c313e0d6a44d0bbb1ef7b76dd13244f3456a1"
+      },
+      "libggml-sycl.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml-sycl.so",
+        "sha256": "5f0b9ed040737c1629bd4b4968347244c3d4dced88a12a0b80d6f529d7d810e4"
+      },
+      "libggml.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libggml.so",
+        "sha256": "810b6c6dbae53586a491b0ff089fb1e4e5d280b97c5a38fc31389b75af1d9d26"
+      },
+      "libllama-common.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libllama-common.so",
+        "sha256": "59dd9902f947b8591a67e209093543b4b397dfc6075b00863db8ce1cd171f47f"
+      },
+      "libllama-server-impl.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libllama-server-impl.so",
+        "sha256": "c07c39c5b547f41e3dd70207d3b3bcc0014aae8d2ddc04af814f133ee694d344"
+      },
+      "libllama.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libllama.so",
+        "sha256": "03af889304acd9df10f5bd36db9f65ae99de525de81f69eddf90ef011827fa8e"
+      },
+      "libmtmd.so": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/libmtmd.so",
+        "sha256": "f4bfe35aa10369fd69b6aeea6dfd91a1ad2901db1cd21bb0a0606d8c7fec8798"
+      },
+      "llama-server": {
+        "path": "/home/steve/src/llama.cpp-neural-download-20260822/build-sycl-aot-bmg-g31/bin/llama-server",
+        "sha256": "7d524360677aa06d1847e7a68b7e8a8234aaad203ea7334cd7237e6015fb0e56"
+      }
+    },
+    "suite": {
+      "path": "/home/steve/b70-optimization-lab/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+      "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+    }
+  },
+  "attempt": "ornith9-r1a",
+  "contract": {
+    "cards": 1,
+    "configured_context_tokens": 8192,
+    "context_checkpoints": false,
+    "gpu": 0,
+    "graph": "off",
+    "kv": "f16",
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "mtp": 0,
+    "parallel_slots": 1,
+    "prompt_cache": false,
+    "prompt_classes": 6,
+    "prompt_count": 12,
+    "reasoning": "off",
+    "tp": 1
+  },
+  "created_at_utc": "2026-08-27T23:35:23.253754+00:00",
+  "profile": "ornith15-9b-q8-tp1",
+  "repository_commit": "8c77d43754ca28a4c6eda3364517e0610bba35b9",
+  "schema": "neural.download.stock-headline-attempt.v1"
+}
