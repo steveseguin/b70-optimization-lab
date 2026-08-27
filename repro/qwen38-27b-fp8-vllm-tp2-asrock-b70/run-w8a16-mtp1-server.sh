@@ -7,7 +7,19 @@ model_dir=${MODEL_DIR:?set MODEL_DIR to the downloaded Qwen3.8-27B-FP8 directory
 cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new writable cache directory}
 container=${CONTAINER_NAME:-qwen38-fp8-block-w8a16-mtp1-tp2-p128}
 port=${PORT:-18124}
+served_model=${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp1}
+max_num_seqs=${MAX_NUM_SEQS:-128}
+max_model_len=${MAX_MODEL_LEN:-256}
+max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
+
+for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
+  value=${!value_name}
+  [[ "${value}" =~ ^[1-9][0-9]*$ ]] || {
+    printf '%s must be positive\n' "${value_name^^}" >&2
+    exit 1
+  }
+done
 
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
@@ -48,15 +60,14 @@ exec docker run --rm --name "${container}" \
   --env CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
   --env CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
   "${image}" \
-  --model /model --served-model-name qwen38-fp8-block-w8a16-mtp1 \
+  --model /model --served-model-name "${served_model}" \
   --host 0.0.0.0 --port 8000 \
   --tensor-parallel-size 2 \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.96 \
-  --max-model-len 256 --block-size 64 \
-  --max-num-seqs 128 --max-num-batched-tokens 512 \
+  --max-model-len "${max_model_len}" --block-size 64 \
+  --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens "${max_num_batched_tokens}" \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
   --language-model-only \
   --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":1}' \
   --compilation-config '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'
-
