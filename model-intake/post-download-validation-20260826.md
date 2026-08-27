@@ -55,6 +55,29 @@ file rows and the header log contains 131 passing shard rows. Qwen is therefore
 fully validated as a downloaded artifact, but no B70 load is authorized until
 the separate XPU runtime and memory gates close.
 
+## Verifying a relocated Qwen copy
+
+Use the path-parameterized
+[`verify-qwen38-flash-next-fp8-tree.py`](../scripts/verify-qwen38-flash-next-fp8-tree.py)
+after copying this exact Qwen tree to another disk. The revision and artifact
+identity remain frozen in the verifier; only the candidate model root and JSON
+receipt path are configurable. The receipt must be outside the model tree.
+
+```bash
+python3 scripts/verify-qwen38-flash-next-fp8-tree.py \
+  --model-root /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8 \
+  --receipt /mnt/fast-ai/llm-models/.verification/Qwen3.8-Flash-Next-FP8.json
+```
+
+It binds the cached Hugging Face tree metadata to revision
+`bcd9f01ddc9cff2316eb84281bebcd5b058bddce`, requires the exact 144-file,
+185,563,783,127-byte root inventory, hashes LFS and ordinary Git artifacts by
+their respective conventions, checks the fixed config and weight-index hashes,
+and requires the index to close over all 131 declared shards. It writes either
+a pass or failure receipt atomically. This is a full model read of roughly
+185.6 GB; do not run it while the copy or another large model-store transfer is
+active.
+
 After both downloads are visibly complete, the exact explicit invocation is:
 
 ```bash
