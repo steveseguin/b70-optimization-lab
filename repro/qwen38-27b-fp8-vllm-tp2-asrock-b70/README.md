@@ -8,10 +8,61 @@
 > [guide catalog](../guide-catalog.json) and
 > [certification standard](../../docs/reproduction-guide-certification.md).
 
-This is a quality-gated, target-only vLLM/XPU service snapshot for two ASRock
-Intel Arc Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8
-weights, native FP16 KV, TP2, one graph-captured decode size, and no MTP,
-DFlash, draft model, response reuse, or speculation.
+This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
+Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target and MTP
+weights, native FP16 KV, and TP2. The selected interactive service dynamically
+uses MTP2 at one active request and MTP1 at two or more; separate target-only
+and static-MTP1 profiles remain documented for honest comparison.
+
+## Selected dynamic MTP2-to-MTP1 profile
+
+Two separately preregistered fresh-server attempts measured:
+
+| Active users | R4 tok/s | R5 tok/s | two-attempt median |
+| ---: | ---: | ---: | ---: |
+| 1 | 83.665057 | 83.695329 | **83.680193** |
+| 64 | 1,087.492388 | 1,082.585597 | **1,085.038992** |
+
+The one-user shape requests two speculative tokens by serially reusing the
+checkpoint's one publisher MTP layer. At two through 128 active requests the
+same service uses one speculative token. R5 passed 512/512 synchronized c64
+exact-answer requests, 7/7 sequential cases, 8/8 repeat stability, exact
+static-MTP2 baseline comparison, complete token capture, cache-zero, and
+cross-task output isolation.
+
+The selected service requires both the active-width GDN kernel patch and the
+active-lookahead Mamba allocation patch. Build the existing MTP1 kernel and
+W8A16 image first, then:
+
+```bash
+BUILD_ROOT=/path/to/new-active-width-build \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-dynamic-mtp-active-width-kernel-image.sh
+
+repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh
+```
+
+Launch and validate it with new cache/result directories:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh
+
+OUT_DIR=/path/to/new-dynamic-mtp-attempt \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh
+```
+
+The lab-validated overlay image ID is
+`sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6`.
+If a local rebuild produces a different image ID, inspect and preserve its
+labels and pass that exact value as `EXPECTED_IMAGE_ID`; do not disable the
+patch/source checks. See the
+[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mamba-r5-replication-result.md)
+and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json).
+
+This is a 256-token short-context service. No 32K dynamic-MTP result is
+claimed, inferred, or extrapolated.
 
 ## Optimized block-W8A16 profile
 
@@ -132,14 +183,15 @@ passed 7/7 sequential semantic cases, 8/8 repeat stability, and a 512/512 c64
 concurrent semantic canary. See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
 and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-summary.json).
 
-### MTP2 one-layer reuse is research-only
+### Fixed MTP2 one-layer reuse is superseded
 
 The checkpoint has one publisher MTP layer. Asking vLLM for two speculative
 tokens serially reuses that layer; it is not a native MTP2 checkpoint. The
 bounded screen measured `83.646518 tok/s` for one user, but only `737.190110
 tok/s` at c64 versus MTP1's `1,091.642460`, and MBT768 fell to `712.790232`.
-Use the MTP1 launcher above for the selected service. The exact positive and
-negative boundaries are in the
+The fixed-width result remains useful negative evidence, but the selected
+dynamic launcher above retains MTP2 for one user and falls back to MTP1 under
+concurrency. The exact positive and negative boundaries are in the
 [MTP2-reuse result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
 
 ## Captured result

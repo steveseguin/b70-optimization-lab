@@ -1,26 +1,26 @@
 # Qwen3.8 27B FP8 — two-B70 candidate package
 
 This is the first distribution-package front door. It uses Qwen's official
-FP8 model and a digest-pinned vLLM XPU container on two Intel Arc Pro B70
-32 GiB cards. The portable upstream-image baseline reached `21.708532 tok/s`
-decode. The lab's optional block-W8A16 overlay reached **`35.011369 tok/s`**
-for one fresh user and **`1,112.570323 tok/s`** aggregate at 128 active users,
-while passing the recorded sequential and concurrent quality gates. A separately measured
+FP8 model and digest-pinned vLLM XPU containers on two Intel Arc Pro B70
+32 GiB cards. The selected dynamic MTP2-to-MTP1 service reaches a replicated
+median of **`83.680193 tok/s`** for one fresh user and **`1,085.038992 tok/s`**
+aggregate at 64 active users while passing 512/512 concurrent exact-answer
+checks. The target-only block-W8A16 service remains the aggregate peak at
+**`1,112.570323 tok/s`** with 128 active users. A separately measured
 33,024-token W8A16 service profile reaches `31.489587 tok/s` decode at an exact
 32K prompt with `13.740 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
 `774.394144 tok/s` aggregate at 64 active users on the unpatched baseline.
 
-The package also includes a separate publisher-MTP1 profile. It reaches
+The package also retains a separate static publisher-MTP1 profile. It reaches
 **`61.699580 tok/s`** for one fresh user and **`1,091.642460 tok/s`** aggregate
-at 64 users. MTP1 is the faster interactive mode; target-only/MTP0 remains the
-highest-throughput mode. The site and guide keep those identities separate.
+at 64 users. Dynamic MTP is the faster interactive mode; target-only/MTP0
+remains the highest-throughput mode. The site and guide keep those identities
+separate.
 
-An experimental MTP2-reuse screen ran the checkpoint's one publisher MTP
-layer twice. It reached **`83.646518 tok/s`** for the same one-user shape, but
-fell to `737.190110 tok/s` at c64 (`-32.47%` versus MTP1); MBT768 regressed
-again. It is recorded as a research result, not a package default or native
-two-layer MTP. See the
-[MTP2-reuse result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-result.md).
+The checkpoint has one publisher MTP layer. The dynamic service serially
+reuses it for MTP2 only at one active request, then uses MTP1 at two or more.
+Two fresh-server attempts reproduced within 0.46%; see the
+[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mamba-r5-replication-result.md).
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -35,12 +35,15 @@ The machine-readable front door is [`package.json`](package.json).
 
 **neural.download lab — integrated and optimized:** B70/XPU integration,
 graph and quality validation, direct-I/O model verification, direct-P2P
-concurrency tuning, and the block-W8A16 dispatch. Against the exact same
+concurrency tuning, block-W8A16 dispatch, dynamic-width GDN repair, and active
+Mamba-state allocation. Against the exact same
 overlay image with its environment gate omitted, W8A16 improved fresh
 single-user decode from `21.872717` to `35.011369 tok/s` (+60.07%) and c128
 aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
 [W8A16 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 and the earlier [baseline evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
+The active state allocation separately raised the dynamic service from
+`817.007910` to a replicated `1,085.038992 tok/s` median at c64.
 
 **vLLM XPU kernel contributors — upstream mixed-batch fix:** upstream commits
 [`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)
@@ -108,6 +111,19 @@ IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh
 ```
 
+The selected dynamic profile adds two repository patches after that stage:
+
+```bash
+BUILD_ROOT=/path/to/new-active-width-build \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-dynamic-mtp-active-width-kernel-image.sh
+
+repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh
+```
+
+The first patch makes the GDN kernel honor the active dynamic width; the
+second allocates Mamba state from the active FCFS lookahead. Both build helpers
+verify exact source and patch hashes before producing their overlays.
+
 The first helper downloads the exact successful upstream GitHub Actions wheel,
 checks its SHA-256 digest, and installs it over the pinned official image. It
 requires `gh` authentication. If that upstream artifact expires, stop rather
@@ -130,7 +146,24 @@ container image.
 
 ## 4. Launch, check, and benchmark
 
-In the serving terminal:
+For the selected dynamic MTP service:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh
+
+OUT_DIR=/path/to/new-dynamic-mtp-attempt \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh
+```
+
+The benchmark requires the single-user gate, a complete output-isolated c64
+batch, at least 95% of the replicated aggregate result, sequential baseline
+agreement, and 512/512 concurrent exact-answer checks. The service is limited
+to 256 total tokens and is not the long-context profile.
+
+For the original portable target-only baseline, in the serving terminal:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
@@ -234,6 +267,8 @@ docker stop -t 20 qwen38-fp8-tp2
 docker stop -t 20 qwen38-fp8-tp2-concurrency
 # If you launched MTP1 instead:
 docker stop -t 20 qwen38-fp8-block-w8a16-mtp1-tp2-p128
+# If you launched the selected dynamic MTP profile:
+docker stop -t 30 qwen38-fp8-w8a16-dynamic-mtp-tp2
 ```
 
 Do not interrupt graph initialization. If startup fails, preserve the complete

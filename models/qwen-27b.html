@@ -311,11 +311,11 @@
   <small class="packet-workload">Historical reasoning-enabled 99-interval median across the accepted 12-prompt cache-zero suite; the packaged launcher defaults to reasoning off and is a distinct identity.</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span></div>
-</a><a class="packet-card" href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html" data-family-headroom data-ml-model="qwen3.8_27b" data-ml-quant="FP8" data-ml-runtime="vllm" data-ml-spec="none" data-ml-cards="2" data-ml-hardware="Intel Arc Pro B70" data-ml-measured="35.01136892707062" data-ml-prompt="40" data-ml-output="128">
-  <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b><span class="opt-grade" data-family-headroom-value title="Compares measured speed with the modeled tuned target, not model quality or packet evidence.">projected headroom …</span></span></div>
+</a><a class="packet-card" href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html">
+  <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Qwen3.8 FP8 · TP2">Qwen3.8 FP8 · TP2</h3>
-  <p class="packet-promise">Reproduce <b>35.01 tok/s</b> on 2× B70 · candidate package</p>
-  <small class="packet-workload">Fresh-response after-TTFT decode for one measured 40-token prompt and 128 generated tokens on the block-W8A16 overlay; cache zero, target-only/MTP0, short-context p128 service.</small>
+  <p class="packet-promise">Reproduce <b>83.68 tok/s</b> on 2× B70 · candidate package</p>
+  <small class="packet-workload">Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP2 at one active request, short-context 256-token service.</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span><span>queued latency</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp0-f16-piecewise-depth-r3-human-adjudication-result.json">

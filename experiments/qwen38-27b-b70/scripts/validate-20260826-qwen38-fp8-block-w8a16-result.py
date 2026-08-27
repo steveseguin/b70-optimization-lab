@@ -54,6 +54,12 @@ MTP2_DYNAMIC_MAMBA_RAW = (
 MTP2_DYNAMIC_MAMBA_SUMMARY = (
     DATA / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r4-summary.json"
 )
+MTP2_DYNAMIC_MAMBA_REPLICATION_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260827-r5"
+)
+MTP2_DYNAMIC_MAMBA_REPLICATION_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json"
+)
 DYNAMIC_MAMBA_PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -674,6 +680,61 @@ def main() -> int:
         "reporting_boundary"
     ]
 
+    replication = load(MTP2_DYNAMIC_MAMBA_REPLICATION_SUMMARY)
+    assert replication["classification"] == (
+        "quality-qualified-replicated-service-profile"
+    )
+    assert replication["decision"]["status"] == (
+        "promoted-measured-service-profile"
+    )
+    replication_single = load(
+        MTP2_DYNAMIC_MAMBA_REPLICATION_RAW / "single-p40-o128.json"
+    )
+    replication_single_rate = replication_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    close(replication_single_rate, replication["single_user"]["r5_tok_s_after_ttft"])
+    assert replication_single_rate >= replication["single_user"]["gate_tok_s"]
+    close(
+        statistics.median([mamba_single_rate, replication_single_rate]),
+        replication["single_user"]["median_tok_s_after_ttft"],
+    )
+    replication_c64 = load(
+        MTP2_DYNAMIC_MAMBA_REPLICATION_RAW / "c64-screen.json"
+    )
+    validate_output_isolation_batch(replication_c64["batches"][0], 64)
+    replication_c64_rate = replication_c64["batches"][0][
+        "aggregate_tok_s_wall"
+    ]
+    close(replication_c64_rate, replication["replication"]["r5_c64_tok_s"])
+    assert replication_c64_rate >= replication["replication"][
+        "preregistered_floor_tok_s"
+    ]
+    close(
+        statistics.median([mamba_c64_rate, replication_c64_rate]),
+        replication["replication"]["median_c64_tok_s"],
+    )
+    replication_quality = load(
+        MTP2_DYNAMIC_MAMBA_REPLICATION_RAW / "c64-quality-512.json"
+    )
+    assert replication_quality["total_requests"] == 512
+    assert replication_quality["pass_all"] is True
+    assert all(row["passed"] == 64 for row in replication_quality["results"])
+    assert all(row["failed"] == 0 for row in replication_quality["results"])
+    assert all(
+        row["cached_tokens_nonzero"] == 0
+        for row in replication_quality["results"]
+    )
+    replication_inspect = load(
+        MTP2_DYNAMIC_MAMBA_REPLICATION_RAW / "docker-inspect-final.json"
+    )[0]
+    assert replication_inspect["Image"] == replication["runtime"]["image_id"]
+    assert replication_inspect["State"]["ExitCode"] == 0
+    assert replication_inspect["Config"]["Labels"][
+        "neural.download.vllm.dynamic-mamba-allocation.patch.sha256"
+    ] == replication["runtime"]["dynamic_mamba_allocation_patch_sha256"]
+    assert "No unmeasured concurrency" in replication["reporting_boundary"]
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -693,13 +754,41 @@ def main() -> int:
         1,
         2,
     ]
-    for point, expected in zip(
+    for point, expected, samples in zip(
         depth_profile["points"],
-        (optimized_single_rate, mtp_single_rate, mtp2_single_rate),
+        (
+            optimized_single_rate,
+            mtp_single_rate,
+            replication["single_user"]["median_tok_s_after_ttft"],
+        ),
+        (1, 1, 2),
         strict=True,
     ):
         close(point["value"], expected)
-        assert point["samples"] == 1
+        assert point["samples"] == samples
+
+    dynamic_profile = next(
+        profile
+        for profile in package["performance_profiles"]
+        if profile["id"]
+        == "http-block-w8a16-dynamic-mtp-output-audited-aggregate-vs-concurrent-users"
+    )
+    assert [point["concurrent_sequences"] for point in dynamic_profile["points"]] == [
+        1,
+        64,
+    ]
+    close(
+        dynamic_profile["points"][0]["value"],
+        replication["single_user"]["median_tok_s_after_ttft"],
+    )
+    close(
+        dynamic_profile["points"][1]["value"],
+        replication["replication"]["median_c64_tok_s"],
+    )
+    assert all(point["samples"] == 2 for point in dynamic_profile["points"])
+    assert "no intermediate concurrency is claimed" in dynamic_profile[
+        "scope"
+    ]
 
     package_dependencies = set(package["dependencies"])
     for raw_dir in (MTP2_RAW, MTP2_MBT768_RAW):
@@ -735,6 +824,11 @@ def main() -> int:
         "bench-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192.sh",
         "run-w8a16-mtp2-dynamic-mamba-r4-server.sh",
         "bench-w8a16-mtp2-dynamic-mamba-r4.sh",
+        "run-w8a16-mtp2-dynamic-mamba-r5-server.sh",
+        "bench-w8a16-mtp2-dynamic-mamba-r5.sh",
+        "run-w8a16-dynamic-mtp-server.sh",
+        "bench-w8a16-dynamic-mtp.sh",
+        "build-w8a16-dynamic-mamba-image.sh",
         "verify-model-direct.sh",
     ):
         assert (REPRO / name).is_file(), name
@@ -764,6 +858,8 @@ def main() -> int:
                 "mtp2_dynamic_p192_c64_tok_s": None,
                 "mtp2_dynamic_mamba_single_tok_s": mamba_single_rate,
                 "mtp2_dynamic_mamba_c64_tok_s": mamba_c64_rate,
+                "mtp2_dynamic_mamba_replication_single_tok_s": replication_single_rate,
+                "mtp2_dynamic_mamba_replication_c64_tok_s": replication_c64_rate,
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],

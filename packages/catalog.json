@@ -1718,7 +1718,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with distinct target-only/MTP0 and publisher-MTP1 profiles on the lab's optional default-off block-W8A16 overlay.",
+        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and the lab's replicated dynamic MTP2-to-MTP1 service profiles on the block-W8A16 overlay.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1742,16 +1742,16 @@
           "target only",
           "MTP0",
           "MTP1",
-          "MTP2 reuse research",
+          "dynamic MTP2 to MTP1",
           "W8A16"
         ],
-        "published_at": "2026-08-22",
+        "published_at": "2026-08-27",
         "featured_metric": {
-          "value": 35.01136892707062,
+          "value": 83.68019315544194,
           "unit": "tok/s",
           "label": "decode",
-          "scope": "Fresh-response after-TTFT decode for one measured 40-token prompt and 128 generated tokens on the block-W8A16 overlay; cache zero, target-only/MTP0, short-context p128 service.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json"
+          "scope": "Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP2 at one active request, short-context 256-token service.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json"
         }
       },
       "contributors": [
@@ -1760,10 +1760,10 @@
           "name": "neural.download lab",
           "kind": "lab",
           "profile": "https://github.com/steveseguin/b70-optimization-lab",
-          "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 vLLM dispatch, and the digest-pinned package.",
+          "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 dispatch, dynamic-width GDN repair, active Mamba-state allocation, and the digest-pinned package.",
           "status": "integrated",
-          "validated_effect": "Against the exact same overlay image with the environment gate omitted, block W8A16 raised fresh single-user decode from 21.872717 to 35.011369 tok/s (+60.07%) and conditioned c128 aggregate decode from 860.460981 to 1112.570323 tok/s (+29.30%).",
-          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md"
+          "validated_effect": "Block W8A16 raised the matched target-only single/c128 shapes by 60.07%/29.30%. The later active-Mamba allocation raised the dynamic MTP c64 result from 817.007910 to a replicated 1085.038992 tok/s median while retaining 83.680193 tok/s single-user decode.",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mamba-r5-replication-result.md"
         },
         {
           "id": "vllm-xpu-kernel-contributors",
@@ -1793,21 +1793,25 @@
         "image": "vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f",
         "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
         "mtp1_overlay_image_id_validated": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
-        "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh"
+        "dynamic_mtp_overlay_image_id_validated": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+        "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+        "dynamic_mtp_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh"
       },
       "project_patches": {
         "required": true,
         "items": [
-          "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch"
+          "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+          "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
+          "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch"
         ],
-        "reason": "Both optimized profiles depend on the default-off block-W8A16 vLLM dispatch. Concurrent MTP1 additionally pins upstream XPU kernels at 1e90ffa672, including the mixed spec/non-spec GDN correction. The original upstream-image baseline remains available by omitting the overlay and environment gate."
+        "reason": "All optimized profiles use the default-off block-W8A16 dispatch. Concurrent MTP pins XPU kernels at 1e90ffa672 with the mixed-path correction. The selected dynamic MTP service additionally requires the active-width GDN patch and active-lookahead Mamba allocation patch. The original upstream-image baseline remains available by omitting the overlays."
       },
       "commands": {
         "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/w8a16-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
-        "health": "curl -fsS http://127.0.0.1:18116/health",
-        "benchmark": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 OUT_DIR=/path/to/new-attempt repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
-        "stop": "docker stop -t 20 qwen38-fp8-block-w8a16-tp2-p128"
+        "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
+        "health": "curl -fsS http://127.0.0.1:18128/health",
+        "benchmark": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 OUT_DIR=/path/to/new-attempt repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh",
+        "stop": "docker stop -t 30 qwen38-fp8-w8a16-dynamic-mtp-tp2"
       },
       "dependencies": [
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -1818,11 +1822,15 @@
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-dynamic-mtp-active-width-kernel-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-depth-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-depth.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-concurrency.sh",
@@ -1832,6 +1840,16 @@
         "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
         "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
         "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
+        "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch",
+        "experiments/qwen38-27b-b70/docker/Dockerfile.fp8-w8a16-dynamic-mtp-active-width-r1",
+        "experiments/qwen38-27b-b70/docker/Dockerfile.fp8-w8a16-dynamic-mamba-allocation-r1",
+        "experiments/qwen38-27b-b70/scripts/build-w8a16-dynamic-mamba-allocation-image.sh",
+        "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mamba-r5-replication-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260826-r4/bench/c64-screen.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260827-r5/c64-screen.json",
+        "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260827-r5/c64-quality-512.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
         "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md",
@@ -1901,9 +1919,9 @@
           "metric": "decode",
           "unit": "tok/s",
           "x_metric": "speculative_tokens",
-          "x_label": "Requested speculative tokens (MTP2 serially reuses the one publisher layer)",
-          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only, MTP1 uses the publisher's one MTP layer once, and experimental MTP2 reuses that same layer serially. Each marker is the first declared response after its mode's conditioning procedure. MTP2 improves this repeated single-user fixture but loses 32.47% versus MTP1 at c64, so it is research-only. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp2-reuse-summary.json",
+          "x_label": "Active speculative tokens for the one-user shape",
+          "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only, MTP1 uses the publisher's one MTP layer once, and MTP2 serially reuses it at the one-user shape. The selected dynamic service falls back to MTP1 for two or more active requests. MTP2 is the median of two preregistered fresh-server attempts; MTP0 and MTP1 retain their earlier declared samples. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json",
           "points": [
             {
               "speculative_tokens": 0,
@@ -1917,8 +1935,32 @@
             },
             {
               "speculative_tokens": 2,
-              "value": 83.6465178203373,
-              "samples": 1
+              "value": 83.68019315544194,
+              "samples": 2
+            }
+          ]
+        },
+        {
+          "id": "http-block-w8a16-dynamic-mtp-output-audited-aggregate-vs-concurrent-users",
+          "label": "Block-W8A16 official FP8 TP2 dynamic MTP service",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "Two directly measured operating points from the same 256-token service on two B70s: MTP2 at one active request and MTP1 at c64. Values are medians across separately preregistered fresh-server R4/R5 attempts with cache zero. The c64 batches returned complete token IDs with no cross-base collisions, and R5 passed 512/512 synchronized exact-answer requests. The line connects measured markers only; no intermediate concurrency is claimed, interpolated, or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 83.68019315544194,
+              "per_user_value": 83.68019315544194,
+              "samples": 2
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 1085.0389924621618,
+              "per_user_value": 16.953734257221278,
+              "samples": 2
             }
           ]
         },
