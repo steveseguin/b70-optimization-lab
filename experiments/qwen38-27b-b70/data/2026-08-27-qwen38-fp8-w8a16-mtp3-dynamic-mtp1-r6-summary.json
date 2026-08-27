@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "classification": "measured-positive-screen-pending-replication",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "dynamic_mamba_allocation_patch_sha256": "3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 3,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 3], [2, 128, 1]]
+    }
+  },
+  "quality": {
+    "c2_output_isolation": "pass",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "baseline": "static MTP2",
+    "concurrent_exact_answer_canary": "512/512",
+    "cached_tokens_all_zero": true,
+    "container_exit_code": 0
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 99.71248792438314,
+    "fresh_response_wall_tok_s": 94.41216351430681,
+    "ttft_s": 0.07206674700137228,
+    "gate_tok_s": 85.35379701855078,
+    "gate_passed": true,
+    "change_vs_promoted_mtp2_median_percent": 19.159007842106757
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 1013.043780323174,
+    "declared_c64_tok_s": 1066.0003950515268,
+    "declared_c64_per_user_tok_s": 16.656256172680106,
+    "gate_tok_s": 1063.3382126129186,
+    "gate_passed": true,
+    "change_vs_promoted_mtp2_median_percent": -1.7546463807197155,
+    "declared_output": {
+      "requests": 64,
+      "completion_tokens": 8192,
+      "completion_tokens_complete": true,
+      "cached_tokens_all_zero": true,
+      "cross_base_oracle_collision_count": 0,
+      "complete_token_id_identity_all": true,
+      "sequential_oracle_exact": "57/64",
+      "classification": "output-isolation-qualified-shape-variant"
+    }
+  },
+  "decision": {
+    "status": "positive-screen-pending-replication",
+    "reason": "MTP3 improved the eligible single-user row by 19.16% while the declared c64 result retained 98.25% of the promoted aggregate median and all quality gates passed.",
+    "publication": "not authorized until a separately preregistered fresh-server replication passes"
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp3-dynamic-mtp1-20260827-r6",
+  "reporting_boundary": "Every rate is directly measured. No value is interpolated or extrapolated."
+}
