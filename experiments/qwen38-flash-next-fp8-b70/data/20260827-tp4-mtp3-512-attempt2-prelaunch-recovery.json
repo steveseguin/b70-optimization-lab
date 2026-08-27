@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-27",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-512-r1",
+  "attempt": 2,
+  "status": "failed-prelaunch-device-discovery",
+  "boundary": {
+    "server_command_constructed": false,
+    "model_load_started": false,
+    "model_responses": 0,
+    "quality_rows": 0,
+    "speed_rows": 0,
+    "mtp_evidence": false,
+    "promotion_eligible": false
+  },
+  "failure": "The bounded initial xpu-smi discovery timed out and produced an empty discovery file.",
+  "passive_evidence": "The kernel journal showed delayed work from the interrupted attempt-1 load timing out after its model processes had exited.",
+  "recovery": {
+    "method": "documented four-card xe unbind and driver reload without reboot",
+    "preconditions": [
+      "quiet window",
+      "no render-node holders",
+      "display manager inactive",
+      "console on AST",
+      "xe.disable_display=1 present"
+    ],
+    "postconditions": {
+      "four_device_discovery": "pass",
+      "per_card_copy_compute": "pass on 4/4",
+      "four_device_peer_read": "pass",
+      "four_rank_xccl_allreduce": "pass, exact 4.0 on 4/4",
+      "post_recovery_journal": "no new rejection marker",
+      "residual_device_holders": 0
+    },
+    "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/recovery-after-mtp3-attempt2-20260827T1120"
+  },
+  "attempt_evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-512-r1-attempt2",
+  "next_attempt": 3
+}
