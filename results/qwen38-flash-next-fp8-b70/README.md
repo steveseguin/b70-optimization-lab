@@ -199,6 +199,33 @@ identical three-row workload was rerun with distinct filenames without changing
 the service. Receipt:
 [`20260827-tp4-mtp4-512-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json).
 
+## Tested/quarantined exact-4K TP4 MTP2 screen
+
+The additive MTP2/4K arm retained the configured-512 source, runtime,
+placement, and eager TP4/EP4 identity. Its exact 21-block allocation exposed
+4,810 cache tokens and 1.11x concurrency. All four ranks reported 32.06 GiB
+model allocation and 12.22 GiB selective host placement.
+
+All 26 sealed MTP0 comparisons matched, fixed-set repeats held one hash for
+16/16 runs, and the needle passed at exactly 4,096 server prompt tokens. All
+24 quality requests reported zero cached and created-cache tokens. The formal
+p4096/o128 fixture also passed all 25 checks at `4.126872339 tok/s`
+conventional with `317.350522 s` TTFT and zero cached tokens. The inherited
+strict target score remains 5/7.
+
+The first p4096/o256 deployment-shaped row stopped during prefill at 3,904
+computed and zero output tokens. After five one-minute wait messages, the
+300-second worker-response deadline expired, the stream returned an error, and
+the service stopped. No row JSON, output hash, decode score, or three-row
+median is authorized. Rows two and three never started.
+
+Cleanup was followed by one compute and one copy-engine reset on each B70.
+No process or listener remained and all four cards were discoverable, but no
+post-reset collective was run. This is Grade-C exact-4K capability evidence
+with quarantined readiness, not a deployment or record result. The MTP2/512
+and MTP3/4K cells remain untouched. Receipt:
+[`20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json).
+
 ## Quarantined exact-4K TP4 MTP4 screen
 
 The additive MTP4/4K attempt retained the successful 512-token source,

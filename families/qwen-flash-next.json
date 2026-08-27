@@ -6,7 +6,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-27",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median; MTP3 remains the exact-4K evidence at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP4 exact-4K is quarantined after a worker-response timeout and reset cleanup. The lane remains research-only because strict target quality is still 5/7 and deployment stability is unqualified.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median; MTP3 remains the exact-4K evidence at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP2 exact-4K passed matched quality and a formal p4096/o128 gate before its p4096/o256 screen stalled; MTP4 exact-4K is also quarantined. The lane remains research-only because strict target quality is still 5/7 and deployment stability is unqualified.",
   "featured_results": [
     {
       "role": "hero",
@@ -124,7 +124,7 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; TP4 MTP1-4 at configured 512 are separate matched-quality cells. MTP4 matched all 26 bounded MTP0 outputs, passed 16/16 repeats and the small needle, accepted 1,716/1,716 cumulative draft tokens, and measured a 20.727 tok/s short-screen median. TP4/MTP3 at configured 4352 matches all 26 sealed MTP0 4K comparisons, passes 16/16 repeats and an exact 4096-token needle, and measures 15.502 tok/s decode with a 187.9-second TTFT tradeoff. MTP4 at active 4K is quarantined after the worker-response deadline expired at 3,904 computed tokens and cleanup reset all four card engines. Deeper MTP1/MTP2, graph, vision, clean-host qualification, and deployment remain open",
+      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; TP4 MTP1-4 at configured 512 are separate matched-quality cells. MTP4 matched all 26 bounded MTP0 outputs, passed 16/16 repeats and the small needle, accepted 1,716/1,716 cumulative draft tokens, and measured a 20.727 tok/s short-screen median. TP4/MTP3 at configured 4352 matches all 26 sealed MTP0 4K comparisons, passes 16/16 repeats and an exact 4096-token needle, and measures 15.502 tok/s decode with a 187.9-second TTFT tradeoff. MTP2 at active 4K passed all 26 comparisons, 16/16 repeats, the 4K needle, and a formal p4096/o128 gate at 4.127 tok/s before its p4096/o256 screen stalled at 3,904 computed tokens; the selector is quarantined. MTP4 at active 4K is separately quarantined at the same 3,904-token boundary. Deeper MTP1, graph, vision, clean-host qualification, and deployment remain open",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -137,6 +137,7 @@
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json"
       ]
     },
@@ -776,7 +777,7 @@
         "evidence": {
           "grade": "C",
           "scope": "exact TP4/EP4 eager MTP2 text serving at configured max 512",
-          "basis": "The exact model, MTP adapter, preserved staged runtime, 192-MiB fixed allocation resolving to 17 usable blocks, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, 770/770 cumulative draft acceptance, and three target-hash speed rows are retained. The inherited target quality remains 5/7, speed rows span 29.61% of the median, and deeper context, vision, clean-host replay, and deployment qualification remain missing.",
+          "basis": "The exact model, MTP adapter, preserved staged runtime, 192-MiB fixed allocation resolving to 17 usable blocks, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, 770/770 cumulative draft acceptance, and three target-hash speed rows are retained. The inherited target quality remains 5/7 and speed rows span 29.61% of the median; the separate active-4K selector is quarantined after passing matched quality and a formal p4096/o128 gate but failing its p4096/o256 stability gate. Vision, clean-host replay, and deployment qualification remain missing.",
           "reviewed_at": "2026-08-27",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
@@ -959,11 +960,11 @@
           "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
           "state": "lab-screened",
           "label": "11.895 tok/s variable matched MTP2 research screen",
-          "reason": "All 26 bounded MTP0 comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. Inherited short quality remains 5/7, and the rows span 29.61% of their median.",
+          "reason": "All 26 bounded MTP0 comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. Inherited short quality remains 5/7, and the rows span 29.61% of their median. The separate active-4K selector is quarantined and does not lower this configured-512 cell.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-a1",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
           "parent": "flash-next-mtp2-a1",
-          "retry": {"status": "needs-deeper-context-speed-stability-and-full-quality"}
+          "retry": {"status": "needs-speed-stability-and-full-quality"}
         },
         {
           "id": "mtp3-text-screen",
@@ -986,6 +987,16 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp4-research",
           "parent": "flash-next-mtp4-a1",
           "retry": {"status": "needs-full-quality"}
+        },
+        {
+          "id": "mtp2-context4k-mixed-quarantine",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "quarantined",
+          "label": "tested/quarantined · quality + formal pass · sustained shape fails",
+          "reason": "All 26 sealed MTP0 comparisons, 16/16 repeats, the exact 4K needle, and the formal p4096/o128 gate passed; the formal row measured 4.127 tok/s with 317.35 seconds TTFT. The first p4096/o256 deployment-shaped row then exceeded the worker-response deadline during prefill at 3,904 computed and zero output tokens, produced no durable row or comparison decode score, and cleanup reset all four card engines.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json",
+          "parent": "flash-next-mtp2-context4k-a1",
+          "retry": {"status": "blocked-on-runtime-fix", "trigger": "material worker-stall fix or preregistered cache/control arm plus post-reset four-rank preflight"}
         },
         {
           "id": "mtp3-context4k-text-screen",

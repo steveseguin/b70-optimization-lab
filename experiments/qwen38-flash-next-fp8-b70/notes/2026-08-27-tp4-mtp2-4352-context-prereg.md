@@ -101,3 +101,33 @@ short target quality is 5/7 and cannot be called deployment-ready or
 record-eligible. If the long request stops responding, preserve the scheduler
 and service evidence, take no partial quality credit, and do not retry by
 changing only a timeout.
+
+## Attempt 1 result
+
+Attempt 1 preserved the frozen identity, passed the fresh four-rank preflight,
+became healthy, and passed cache admission. The exact 21-block allocation
+reported 4,810 cache tokens and 1.11x maximum concurrency. All four ranks
+reported 32.06 GiB model allocation and 12.22 GiB selective host placement.
+
+The complete matched-quality gate passed: 26/26 MTP0 comparisons, 16/16
+repeat stability with one hash, the exact 4,096-token needle, and zero cached
+or created-cache tokens across all 24 audited requests. The inherited target
+score remains 5/7, explaining the helper's expected exit 1. The formal exact
+p4096/o128 gate also passed every check at `4.126872339 tok/s` conventional,
+`317.350522 s` TTFT, and zero cached tokens.
+
+The first p4096/o256 deployment-shaped row did not produce a durable result.
+Its last scheduler state was still in prefill at 3,904 computed tokens, with a
+64-token scheduled chunk, 90% cache usage, and two speculative slots. After
+five one-minute wait messages, the 300-second worker-response deadline expired
+during sampling, the client received an error event, and the service stopped.
+Rows two and three never started. No p4096/o256 speed credit is taken.
+
+Workers lingered until the launcher was stopped. Cleanup was followed by
+compute/copy engine resets and follow-on messages on all four B70 addresses.
+No process or listener remained and all four devices were discoverable, but a
+post-reset four-rank collective was not run. MTP2/active-4K is therefore a
+mixed quarantine: matched quality and the formal p4096/o128 row are retained,
+while deployment-shaped p4096/o256 stability failed. The configured-512 MTP2
+cell and the successful MTP3/4K cell remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json`.

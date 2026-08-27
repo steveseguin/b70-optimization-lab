@@ -83,8 +83,11 @@ The configured-4,352 MTP3 gate and complete configured-512 MTP0-4 depth grid
 now pass their bounded gates. MTP4/512 is the fastest short screen at a
 `20.727176 tok/s` median with 1,716/1,716 cumulative draft acceptance. The
 MTP4 exact-4K selector is quarantined after its first quality request
-stalled at 3,904 computed tokens and cleanup reset all four card engines. Next,
-repeat the four-rank preflight, then extend MTP2 and MTP1 to exact 4K while
+stalled at 3,904 computed tokens and cleanup reset all four card engines. The
+MTP2 exact-4K selector passed matched quality and formal p4096/o128 at
+`4.126872 tok/s` with `317.350522 s` TTFT, but its first p4096/o256 row also
+stalled at 3,904 computed tokens and is quarantined without a comparison
+speed. Next, repeat the four-rank preflight, then extend MTP1 to exact 4K while
 retaining the existing MTP3 result. Reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
 host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
@@ -123,6 +126,23 @@ host-row transfer like the official NVIDIA PLE-prefetch design. Keep MTP0 and
 MTP1 as separate Grade-C cells; neither is deployment- or record-eligible.
 The deployment audit and bounded replacement gate are in
 `experiments/qwen38-flash-next-fp8-b70/notes/2026-08-27-ple-deployment-audit.md`.
+
+## TP4 MTP2 exact-4K mixed quarantine
+
+Attempt 1 used the exact 21-block allocation (`247123968` bytes), passed the
+fresh four-rank preflight, became healthy, and reported 4,810 cache tokens.
+All 26 sealed MTP0 comparisons matched, repeats held one hash for 16/16, the
+exact 4K needle passed, and the formal p4096/o128 gate passed at
+`4.126872 tok/s` conventional with `317.350522 s` TTFT.
+
+The first p4096/o256 row stopped during prefill at 3,904 computed and zero
+output tokens. The worker-response deadline expired, no durable row was
+written, and rows two and three never started. Cleanup reset all four card
+engines. No process or listener remained and every card was discoverable, but
+the next GPU arm must repeat the collective preflight. Preserve the quality
+and formal artifacts, grant no p4096/o256 comparison speed, and do not retry by
+raising only the timeout. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json`.
 
 ## TP4 MTP3/512 closeout
 

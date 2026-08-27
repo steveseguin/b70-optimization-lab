@@ -1014,7 +1014,7 @@ configured-512 MTP0-4 depth grid: all 26 MTP0
 comparisons matched, repeats were 16/16, the bounded cache-zero needle passed,
 and three corrected target-hash rows measured `21.119694 / 18.576249 /
 20.727176 tok/s`, median `20.727176 tok/s`, with 1,716/1,716 cumulative draft
-acceptance. It remains a Grade-C short screen; deeper MTP1/MTP2,
+acceptance. It remains a Grade-C short screen; deeper MTP1,
 graph, TP1/TP2 fit, vision, full quality, and clean-host replay remain open. The
 51B PLE/input-embedding shards remain
 pinned in system RAM during serving; generation does not stream them from the
@@ -1027,6 +1027,15 @@ expired during sampling. No quality JSON or timing row was promoted. Cleanup
 was followed by engine resets on all four B70 addresses; all devices are
 discoverable and idle afterward, but the next GPU arm must repeat the
 four-rank preflight. MTP4/512 and MTP3/4K remain unchanged.
+
+TP4/MTP2 exact-4K is also now classified, with more positive evidence but the
+same deployment boundary. Its 21-block cache exposed 4,810 tokens; all 26
+MTP0 comparisons, 16/16 repeats, the exact 4K needle, and the formal
+p4096/o128 gate passed. The formal row measured `4.126872 tok/s` conventional
+with `317.350522 s` TTFT. The first p4096/o256 row then stopped during prefill
+at 3,904 computed and zero output tokens, so no comparison speed row or median
+is authorized. Cleanup reset all four cards. This selector is a tested Grade-C
+capability with quarantined readiness; MTP2/512 remains unchanged.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
