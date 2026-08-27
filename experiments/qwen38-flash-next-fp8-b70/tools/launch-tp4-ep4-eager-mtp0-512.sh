@@ -25,6 +25,7 @@ python="${VLLM_PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}"
 vllm_bin="${VLLM_BIN:-/home/steve/.venvs/vllm-xpu/bin/vllm}"
 attempt="${ATTEMPT:-1}"
 port="${PORT:-19638}"
+moe_sync_trace="${Q38_MOE_SYNC_TRACE:-0}"
 run_parent="${RUN_PARENT:-/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70}"
 cache_parent="${CACHE_PARENT:-/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70}"
 run_dir="${run_parent}/${campaign}-attempt${attempt}"
@@ -36,13 +37,14 @@ runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtim
 validation_root="${repo_root}/data/model-intake/post-download-validation-20260826/20260826T211840Z"
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 
-expected_vllm_head="bb4ad1cca6459ab3246b1685cce0993f03fdbc93"
+expected_vllm_head="f00b56bf2423fae9dca91c7432a0bdc42451b8d1"
 expected_kernels_head="7cf216774fb3c5eabf20d1f481d6548682604c37"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
 
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail "ATTEMPT must be a positive integer"
 [[ "${port}" =~ ^[1-9][0-9]*$ ]] || fail "PORT must be a positive integer"
+[[ "${moe_sync_trace}" =~ ^[01]$ ]] || fail "Q38_MOE_SYNC_TRACE must be 0 or 1"
 [[ -x "${python}" && -x "${vllm_bin}" ]] || fail "pinned vLLM virtual environment is missing"
 [[ "$(head -1 "${vllm_bin}")" == "#!${python}" ]] || fail "vLLM wrapper does not use the pinned interpreter"
 [[ -d "${model}" && -d "${stage}/vllm_xpu_kernels" ]] || fail "model or staged runtime is missing"
@@ -154,6 +156,7 @@ export VLLM_XPU_GRAPH=0
 export VLLM_XPU_ENABLE_XPU_GRAPH=0
 export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0
 export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0
+export VLLM_XPU_MOE_SYNC_TRACE="${moe_sync_trace}"
 
 export CCL_ATL_TRANSPORT=ofi
 export FI_PROVIDER=tcp
@@ -197,6 +200,7 @@ import os
 import pathlib
 import torch
 import vllm_xpu_kernels
+import vllm.envs as envs
 from vllm.engine.arg_utils import EngineArgs
 
 root = pathlib.Path(os.environ['Q38_KERNEL_STAGE']).resolve()
@@ -227,6 +231,7 @@ for namespace, op in [
     print(torch._C._dispatch_find_schema_or_throw(f'{namespace}::{op}', '').schema())
 print(f'xpu_device_count={torch.xpu.device_count()}')
 assert torch.xpu.device_count() == 4
+assert envs.VLLM_XPU_MOE_SYNC_TRACE == bool(int(os.environ['VLLM_XPU_MOE_SYNC_TRACE']))
 
 discovery_path = pathlib.Path(os.environ['Q38_RUN_DIR']) / 'xpu-discovery.json'
 devices = json.loads(discovery_path.read_text())['device_list']
@@ -314,6 +319,7 @@ PY
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
   printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512 max_num_batched_tokens=64\n'
+  printf 'xpu_moe_sync_trace=%s diagnostic_timing=%s\n' "${moe_sync_trace}" "${moe_sync_trace}"
 } >"${run_dir}/identity.txt"
 
 sha256sum "${model}/config.json" "${model}/model.safetensors.index.json" \

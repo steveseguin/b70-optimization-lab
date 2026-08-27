@@ -898,13 +898,17 @@ score with a projection or a different accounting convention.
 
 Qwen3.8 Flash-Next FP8 is active as of 2026-08-26. Its pinned 185.56-GB download
 passed complete Git/LFS, tokenless dry-run, safetensors-header, payload-range,
-and 152,089-tensor index closure. It has not been loaded on a B70. The public
-day-zero vLLM implementation remains in open PRs 53896/53899, explicitly
-rejects XPU, and requires PLE host offload because the 172.76-GiB tensor
-payload cannot fit four 32-GiB cards. The immediate work is a current-main XPU
-port with exact FP8 PLE-scale handling and a proven TP4 memory budget, followed
-by a language-only eager MTP0 canary. See the
-[intake boundary](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-intake-and-xpu-bringup-boundary.md).
+and 152,089-tensor index closure. The maintained current-main XPU overlay now
+constructs the model on TP4+EP4, maps the exact 11.92-GiB/rank PLE shard through
+selective UVA, loads all 131 checkpoint shards on all four B70s, and completes
+post-load FP8 processing at about 31.57 GiB reported per rank. Attempt 11 then
+faulted all four devices in the first 64-token profile forward before the API
+became healthy; no decode or throughput result exists. Exact one-B70 gates pass
+both the real routed FP8 expert and real BF16 shared expert at the live M64
+shape. The immediate work is one default-off, explicitly enabled MoE phase
+trace to distinguish a full-residency/preceding-op/full-forward interaction,
+then repair and rerun the same language-only eager MTP0 identity. See the
+[bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

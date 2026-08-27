@@ -319,3 +319,35 @@ residency and earlier/shared/full-forward state from the routed kernel instead
 of repeating another blind profile attempt. The gate and exact results are in
 `tools/fullshape-triton-fp8-moe-gate.py` and
 `data/20260826-fullshape-triton-fp8-moe-isolation.json`.
+
+## Exact BF16 shared-expert isolation after attempt 11
+
+The remaining layer-0 shared path was audited and tested separately. All 48
+shared experts are unquantized BF16: each layer has gate/up matrices shaped
+`[640, 2560]`, down shaped `[2560, 640]`, and a replicated gate shaped
+`[1, 2560]`; there are no shared-expert FP8 scales. At TP4, each rank receives
+160 gate rows, 160 up rows, and 160 down input columns with no padding.
+
+A one-B70 gate loaded the exact layer-0 rank-0 checkpoint shards and
+synchronized after every production phase. Both M1 and the live M64 profile
+shape passed the packed `[320, 2560]` BF16 gate/up linear, the XPU custom
+SiLU-and-multiply operator at the previously uncovered `d=160` shape, the
+`[2560, 160]` down linear, the replicated N=1 expert gate, and the final
+sigmoid multiply. Every intermediate was finite and correctly shaped.
+
+The first M1 invocation is excluded: it attempted to instantiate vLLM's custom
+op wrapper without a current engine-config context and stopped before calling
+the operator. The corrected gate calls the exact registered XPU operator that
+the wrapper dispatches to. No failing kernel result is inferred from the
+excluded harness invocation.
+
+Together with the routed FP8 isolation, this removes basic routed packing,
+scale layout, EP mapping, shared TP slicing, BF16 GEMMs, shared activation, and
+the standalone PLE UVA mapping from the primary fault tree. The next attempt
+uses source patch 0011's explicitly enabled MoE synchronization trace. The
+trace is default-off, changes execution timing when enabled, and can never be
+used for a performance claim. It records entry, gate, dispatch, shared,
+router, routed-kernel, and combine completion so the last passing phase
+separates a preceding/full-residency fault from the MoE phase that reports it.
+Structured evidence is in
+`data/20260826-shared-expert-bf16-isolation.json`.
