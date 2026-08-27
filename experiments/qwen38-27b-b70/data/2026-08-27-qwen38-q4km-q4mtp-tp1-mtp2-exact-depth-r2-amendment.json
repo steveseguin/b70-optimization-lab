@@ -1,0 +1,33 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-amendment.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-20260827-r2",
+  "parent_preregistration": "2026-08-27-qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-r1-prereg.json",
+  "state": "preregistered-not-launched",
+  "created_at": "2026-08-27",
+  "reason": "R1 correctly stopped at the first target-parity failure. R2 repeats the full frozen depth set on a fresh server but records all depth receipts before applying the same fail-closed all-depth decision, so the safety boundary is known rather than inferred from 2K.",
+  "known_parent_failure": {
+    "depth": 2048,
+    "generated_token_one_based": 23,
+    "mtp2_output_token_ids_sha256": "219949de9eff36c76710e9fad3ab22b9b01c6a4a72f712cc66013c9911b218bf",
+    "mtp0_output_token_ids_sha256": "662ef05419a15b282f7c9a44b8f85da84177e195a42fc223cd1e9e7405a0cf73",
+    "raw_receipt_sha256": "3abc7bcd23ae9f61a17d973aa9ee67ee184e6cb9e375a01a77fce51fec89dc52",
+    "disposition": "quarantined"
+  },
+  "unchanged_contract": {
+    "identity": "identical to parent",
+    "active_context_tokens": [2048, 4096, 8192, 16384, 24576, 32768],
+    "max_output_tokens": 128,
+    "cache_zero": true,
+    "target_oracle_exact_required_per_publishable_cell": true,
+    "objective_canaries_required": true,
+    "positive_draft_counters_required": true
+  },
+  "decision": {
+    "all_depth_profile_passes_only_if_all_six_depths_are_target_exact": true,
+    "known_2k_failure_means_profile_promotion_is_already_impossible": true,
+    "exact_remaining_cells_may_be_considered_only_as_grade_d_partial_coverage_after_explicit_adjudication": true,
+    "divergent_cells_remain_quarantined": true,
+    "no_interpolation_or_extrapolation": true,
+    "no_headline_or_localmaxxing_authority": true
+  }
+}

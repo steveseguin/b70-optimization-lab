@@ -1,0 +1,27 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-terminal.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp1-mtp2-exact-depth-20260827-r1",
+  "attempt": "r1",
+  "status": "failed-closed-preserve",
+  "completed_depths": [2048],
+  "failure": "The 2K receipt passed every transport, exact-depth, cache-zero, truncation, and timing gate but its complete 128-token output digest differed from the sealed same-target same-runtime MTP0 oracle.",
+  "first_divergence": {
+    "generated_token_one_based": 23,
+    "mtp2_token_id": 15,
+    "mtp0_token_id": 18,
+    "mtp2_output_token_ids_sha256": "219949de9eff36c76710e9fad3ab22b9b01c6a4a72f712cc66013c9911b218bf",
+    "mtp0_output_token_ids_sha256": "662ef05419a15b282f7c9a44b8f85da84177e195a42fc223cd1e9e7405a0cf73"
+  },
+  "diagnostic_measurement": {
+    "active_context_tokens": 2048,
+    "decode_tok_s": 36.2586595197676,
+    "ttft_ms": 2112.1178979519755,
+    "publishable": false
+  },
+  "authority": {
+    "profile_promotion": false,
+    "context_cells": 0,
+    "headline_replacement": false,
+    "continuation_requires_additive_preregistration": true
+  }
+}
