@@ -239,3 +239,18 @@ padding. The focused offloader/PLE/Qwen suite passes 68 tests; all 14 PLE tests
 pass independently. A real B70 microgate confirmed that the fresh pinned CPU
 allocation maps to a writable XPU UVA view. Patch artifact `vllm/0010`
 preserves the optimization. Attempt 9 advances only this source pin.
+
+Attempt 9 proved the no-copy startup path on all four ranks: every rank
+reported its 11.92 GiB UVA table within one second, all 131 shards loaded, and
+all ranks completed post-load processing in about 558 seconds. The first
+512-token profiling forward then failed in the Triton MoE path with Level Zero
+`UR_RESULT_ERROR_OUT_OF_RESOURCES` on every rank. No decode request ran.
+Structured evidence is in `data/20260826-tp4-first-load-attempt9.json`.
+
+Attempt 10 reduces only `max_num_batched_tokens` from 512 to 64. Chunked
+prefill remains enabled, so the 512-token model-context limit is unchanged;
+TP4, EP4, FP8, eager execution, MTP0, selective UVA, Triton MoE, and every
+decode-path optimization remain unchanged. This bounds the startup profile
+forward and is intentionally conservative for the first healthy-server gate.
+Larger prefill chunks remain a later matrix dimension once correctness and
+decode are established.

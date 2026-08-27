@@ -1,0 +1,35 @@
+{
+  "status": "bounded_negative",
+  "attempt": 9,
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "bb4ad1cca6459ab3246b1685cce0993f03fdbc93",
+    "kernels_head": "7cf216774fb3c5eabf20d1f481d6548682604c37",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "enforce_eager": true,
+    "max_model_len": 512,
+    "max_num_batched_tokens": 512,
+    "offload": "selective UVA, PLE embedding only, 12 GiB/rank"
+  },
+  "result": {
+    "all_ranks_uva_ready": true,
+    "rank_0_weight_load_seconds": 548.85,
+    "all_rank_model_load_seconds": [558.435224, 557.908701, 558.025524, 558.507026],
+    "accelerator_memory_reported_gib_per_rank": 31.61,
+    "failure_stage": "first profile_run dummy forward",
+    "failure": "Triton MoE Level Zero UR_RESULT_ERROR_OUT_OF_RESOURCES on all ranks",
+    "decode_measurement": null
+  },
+  "interpretation": "PLE startup fix passed; bound only the dummy/prefill token budget next while preserving the decode identity",
+  "next_attempt_change": {
+    "max_num_batched_tokens": 64,
+    "unchanged": "TP4, EP4, FP8, eager, MTP0, selective UVA, Triton MoE, max_model_len=512"
+  },
+  "evidence": {
+    "run_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt9",
+    "server_log_sha256": "d2296a397b3323d9194c0a610d71f7c824183ed994dd1643cb3b13c8a89498a7"
+  }
+}

@@ -312,7 +312,7 @@ PY
   printf 'cpu_offload_params=ple_embedding.ngram_embedding.weight\n'
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
-  printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512\n'
+  printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512 max_num_batched_tokens=64\n'
 } >"${run_dir}/identity.txt"
 
 sha256sum "${model}/config.json" "${model}/model.safetensors.index.json" \
@@ -342,7 +342,7 @@ args=(
   --enforce-eager
   --max-model-len 512
   --max-num-seqs 1
-  --max-num-batched-tokens 512
+  --max-num-batched-tokens 64
   --no-enable-prefix-caching
   --offload-backend uva
   --cpu-offload-gb 12
