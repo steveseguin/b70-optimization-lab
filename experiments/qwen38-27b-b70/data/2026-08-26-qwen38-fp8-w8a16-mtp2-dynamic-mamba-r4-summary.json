@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "classification": "measured-positive-screen-pending-replication",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "dynamic_mamba_allocation_patch_sha256": "3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190",
+    "kernel_patch_sha256": "68c486a9a10a2f7e85d7d88783a05f89919e931d2b81922f85be733bfb59f1b5",
+    "xpu_extension_sha256": "de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "returned_tokens_per_request": 128,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 2,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 2], [2, 128, 1]]
+    }
+  },
+  "treatment": {
+    "only_change_vs_r2": "allocate non-align Mamba state from the conservative active dynamic lookahead instead of the configured maximum",
+    "focused_block_count_oracle": [3, 2, 2, 2],
+    "unit_tests": "19/19 dynamic-spec tests plus 1/1 align-mode variable-draft regression",
+    "full_sequence_admission": "maximum-width and unchanged"
+  },
+  "quality": {
+    "c2_crash_canary_completion_tokens": 256,
+    "c2_engine_health_after": "pass",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "baseline": "static MTP2",
+    "cached_tokens_all_zero": true,
+    "concurrent_exact_answer_canary": "pending separately preregistered replication"
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 83.66505733434902,
+    "gate_tok_s": 82.810053,
+    "gate_passed": true,
+    "change_vs_r2_percent": 0.6059260779634146,
+    "change_vs_static_mtp2_percent": 0.022164119314016517
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 1070.0950101723297,
+    "declared_c64_tok_s": 1087.492387739675,
+    "gate_tok_s": 875,
+    "gate_passed": true,
+    "change_vs_r2_percent": 33.10671467261266,
+    "change_vs_static_mtp2_percent": 47.51858077786335,
+    "change_vs_static_mtp1_percent": -0.3801676923824493,
+    "declared_output": {
+      "requests": 64,
+      "completion_tokens": 8192,
+      "cached_tokens_all_zero": true,
+      "cross_base_oracle_collision_count": 0,
+      "sequential_oracle_exact": "56/64",
+      "classification": "output-isolation-qualified-shape-variant"
+    }
+  },
+  "capacity_validation": {
+    "startup_report_is_conservative_static_estimate": "49.20x at 256 tokens",
+    "measured_c64_scheduler_state": "64 running, 0 waiting",
+    "measured_c64_gpu_cache_usage_percent": 91.9,
+    "conclusion": "Active Mamba allocation removed the prior c64 residency bottleneck."
+  },
+  "decision": {
+    "status": "positive-screen-pending-replication",
+    "reason": "The declared 1087.492388 tok/s result exceeded the preregistered 875 tok/s gate while retaining the single-user gate.",
+    "publication": "not authorized until a separately preregistered fresh-server replication and 512-request concurrent exact-answer canary pass"
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260826-r4",
+  "reporting_boundary": "Every rate is directly measured. R4 is a positive screen pending independent fresh-server replication and concurrent quality qualification; no value is interpolated or extrapolated."
+}

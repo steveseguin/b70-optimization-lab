@@ -48,6 +48,17 @@ MTP2_DYNAMIC_P192_SUMMARY = (
     DATA
     / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192-summary.json"
 )
+MTP2_DYNAMIC_MAMBA_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260826-r4"
+)
+MTP2_DYNAMIC_MAMBA_SUMMARY = (
+    DATA / "2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r4-summary.json"
+)
+DYNAMIC_MAMBA_PATCH = (
+    ROOT
+    / "experiments/qwen38-27b-b70/patches"
+    / "vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch"
+)
 PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -601,6 +612,68 @@ def main() -> int:
     ] == "192"
     assert "none is interpolated or extrapolated" in p192["reporting_boundary"]
 
+    mamba = load(MTP2_DYNAMIC_MAMBA_SUMMARY)
+    assert mamba["classification"] == (
+        "measured-positive-screen-pending-replication"
+    )
+    assert mamba["service"]["speculative_config"][
+        "num_speculative_tokens_per_batch_size"
+    ] == [[1, 1, 2], [2, 128, 1]]
+    assert mamba["treatment"]["focused_block_count_oracle"] == [3, 2, 2, 2]
+    assert mamba["quality"]["baseline_match_all"] is True
+    assert mamba["decision"]["status"] == (
+        "positive-screen-pending-replication"
+    )
+    assert hashlib.sha256(DYNAMIC_MAMBA_PATCH.read_bytes()).hexdigest() == (
+        mamba["runtime"]["dynamic_mamba_allocation_patch_sha256"]
+    )
+
+    mamba_raw = MTP2_DYNAMIC_MAMBA_RAW / "bench"
+    mamba_quality = load(mamba_raw / "sequential-quality.json")
+    assert mamba_quality["pass_all"] is True
+    assert mamba_quality["baseline_match_all"] is True
+    mamba_single = load(mamba_raw / "single-p40-o128.json")
+    mamba_single_rate = mamba_single["fresh_response_validity"][
+        "headline_tok_s_after_ttft"
+    ]
+    close(
+        mamba_single_rate,
+        mamba["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    assert mamba_single_rate >= mamba["single_user"]["gate_tok_s"]
+    assert mamba_single["rows"][0]["usage"]["completion_tokens"] == 128
+    assert mamba_single["rows"][0]["usage"]["prompt_tokens_details"][
+        "cached_tokens"
+    ] == 0
+    mamba_c2 = load(mamba_raw / "excluded-c2-crash-canary.json")
+    mamba_transition = load(mamba_raw / "excluded-c64-transition.json")
+    mamba_c64 = load(mamba_raw / "c64-screen.json")
+    validate_output_isolation_batch(mamba_c2["batches"][0], 2)
+    validate_output_isolation_batch(mamba_transition["batches"][0], 64)
+    validate_output_isolation_batch(mamba_c64["batches"][0], 64)
+    close(
+        mamba_transition["batches"][0]["aggregate_tok_s_wall"],
+        mamba["concurrency"]["excluded_transition_tok_s"],
+    )
+    mamba_c64_rate = mamba_c64["batches"][0]["aggregate_tok_s_wall"]
+    close(mamba_c64_rate, mamba["concurrency"]["declared_c64_tok_s"])
+    assert mamba_c64_rate >= mamba["concurrency"]["gate_tok_s"]
+    mamba_inspect = load(MTP2_DYNAMIC_MAMBA_RAW / "docker-inspect-final.json")[0]
+    assert mamba_inspect["Image"] == mamba["runtime"]["image_id"]
+    assert mamba_inspect["Config"]["Labels"][
+        "neural.download.vllm.dynamic-mamba-allocation.patch.sha256"
+    ] == mamba["runtime"]["dynamic_mamba_allocation_patch_sha256"]
+    mamba_log = (MTP2_DYNAMIC_MAMBA_RAW / "server-final.log").read_text(
+        errors="replace"
+    )
+    assert mamba_log.count("Running: 64 reqs, Waiting: 0 reqs") >= 2
+    assert mamba_log.count("GPU KV cache usage: 91.9%") >= 2
+    assert not (mamba_raw / "c64-replication.json").exists()
+    assert not (mamba_raw / "c64-quality-512.json").exists()
+    assert "no value is interpolated or extrapolated" in mamba[
+        "reporting_boundary"
+    ]
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -660,6 +733,8 @@ def main() -> int:
         "bench-w8a16-mtp2-dynamic-mtp1-fixed-r2.sh",
         "run-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192-server.sh",
         "bench-w8a16-mtp2-dynamic-mtp1-fixed-r3-p192.sh",
+        "run-w8a16-mtp2-dynamic-mamba-r4-server.sh",
+        "bench-w8a16-mtp2-dynamic-mamba-r4.sh",
         "verify-model-direct.sh",
     ):
         assert (REPRO / name).is_file(), name
@@ -687,6 +762,8 @@ def main() -> int:
                 ],
                 "mtp2_dynamic_p192_single_tok_s": p192_single_rate,
                 "mtp2_dynamic_p192_c64_tok_s": None,
+                "mtp2_dynamic_mamba_single_tok_s": mamba_single_rate,
+                "mtp2_dynamic_mamba_c64_tok_s": mamba_c64_rate,
                 "depth_32k_w8a16_tok_s": summary["exact_context"]["points"][-1][
                     "w8a16_decode_tok_s"
                 ],
