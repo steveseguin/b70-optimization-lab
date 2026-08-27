@@ -172,6 +172,33 @@ same-window causal A/B. MTP0 remains the packet primary and MTP1 remains an
 unchanged matrix cell. Receipt:
 [`20260827-tp4-mtp3-512-attempt4-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json).
 
+## Matched TP4 MTP4 screen
+
+The configured-512 MTP4 arm keeps the exact MTP3 source, staged runtime,
+TP4/EP4 eager path, selective host placement, and client identity. Its fixed
+282,427,392-byte allocation resolves to exactly 24 current-source cache blocks,
+reporting 558 tokens and 1.09x maximum concurrency. The 51B PLE/input-embedding
+shards remain resident in pinned system RAM during service.
+
+All 26 bounded MTP0 comparisons matched, fixed-set repeats held one hash for
+16/16 runs, the small cache-zero needle passed at 317 actual prompt tokens, and
+all 24 audited quality requests completed. The inherited strict score remains
+5/7, so the evidence grade remains C and this does not establish MTP4 at 4K.
+
+Three corrected p146/o256/c1 rows returned the MTP0 target hash at
+`21.119694109`, `18.576248605`, and `20.727176372 tok/s`, median
+**`20.727176372 tok/s`** after first text. Median wall output was
+`11.560326763 tok/s`, median TTFT was `10.023315082 s`, and the rows span
+12.27% of the median. Cumulative metrics accepted all 1,716 draft tokens, 429
+at each of four positions. The 39.21% descriptive uplift over MTP3/512 is
+cross-run evidence, not a causal same-window A/B.
+
+The first timing loop used one literal result filename, retaining only its
+last row. That surviving JSON and log are preserved and checksummed; the
+identical three-row workload was rerun with distinct filenames without changing
+the service. Receipt:
+[`20260827-tp4-mtp4-512-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json).
+
 ## Exact 4K TP4 MTP3 screen
 
 The deployment-shaped MTP3 arm raises only the configured maximum to 4,352 and

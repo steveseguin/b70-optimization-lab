@@ -1009,9 +1009,14 @@ used vLLM `658965050` while MTP3 used `1372c62d`. The next production work is TT
 decode-only promotion. TP4/MTP2/512 now also passes all 26 MTP0 comparisons,
 16/16 repeats, its bounded cache-zero needle, and three target-hash rows at
 `13.586501 / 10.064085 / 11.895061 tok/s`, median `11.895061 tok/s`; its 29.61%
-row span keeps it a variable Grade-C screen. MTP4/512 is the active bounded
-arm. Deeper MTP1/MTP2/MTP4, graph, TP1/TP2 fit, vision, full quality, and
-clean-host replay remain open. The 51B PLE/input-embedding shards remain
+row span keeps it a variable Grade-C screen. The MTP4/512 arm now closes the
+configured-512 MTP0-4 depth grid: all 26 MTP0
+comparisons matched, repeats were 16/16, the bounded cache-zero needle passed,
+and three corrected target-hash rows measured `21.119694 / 18.576249 /
+20.727176 tok/s`, median `20.727176 tok/s`, with 1,716/1,716 cumulative draft
+acceptance. It remains a Grade-C short screen; MTP4 4K, deeper MTP1/MTP2,
+graph, TP1/TP2 fit, vision, full quality, and clean-host replay remain open. The
+51B PLE/input-embedding shards remain
 pinned in system RAM during serving; generation does not stream them from the
 external checkpoint drive.
 

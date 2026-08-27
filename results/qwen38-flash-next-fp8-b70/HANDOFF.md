@@ -79,9 +79,11 @@ stopped during row 3, so no legacy median or curve point is authorized. Commit
 Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
 
-The configured-4,352 MTP3 gate and configured-512 MTP2 gate now pass. MTP4/512
-is the active bounded run. Next, reduce MTP3 4K TTFT and qualify fresh-boot
-stability, then extend useful MTP depths to 4K and deeper MTP1. Audit the XPU
+The configured-4,352 MTP3 gate and complete configured-512 MTP0-4 depth grid
+now pass their bounded gates. MTP4/512 is the fastest short screen at a
+`20.727176 tok/s` median with 1,716/1,716 cumulative draft acceptance. Next,
+extend MTP4 to exact 4K, then MTP2 and MTP1, while retaining the existing MTP3
+4K result. Reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
 host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
@@ -138,6 +140,23 @@ rows declined monotonically and span 33.14% of the median, so this is a Grade-C
 research cell rather than a stable ceiling or record. MTP0 remains primary and
 the MTP1 cell is unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json`.
+
+## TP4 MTP4/512 closeout
+
+Attempt 1 passed with the frozen source/runtime/placement and exact 24-block
+cache allocation (`282427392` bytes), reporting 558 cache tokens and 1.09x
+concurrency. All 26 MTP0 comparisons matched, repeats held one hash for 16/16,
+the small cache-zero needle passed, and all 24 quality usages completed. Three
+corrected p146/o256/c1 rows returned the target hash at `21.119694 /
+18.576249 / 20.727176 tok/s`, median `20.727176 tok/s` after first text. Median
+wall output was `11.560327 tok/s`, median TTFT was `10.023315 s`, and
+cumulative acceptance was 1,716/1,716 across four positions.
+
+The first timing loop's literal filename retained only its third row; both
+surviving files are preserved and checksummed, and the unchanged workload was
+rerun correctly. This closes the configured-512 TP4 MTP0-4 grid, not MTP4 at
+4K or production readiness. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json`.
 
 The user has selected roughly 4K as the practical deployment ceiling for now.
 The next launch should therefore use configured maximum 4,352 and exactly
