@@ -1,5 +1,8 @@
 # Qwen3.8 FP8 strict single-user profile matrix preregistration
 
+> Result: all six paired controls failed the frozen 12/12 complete-token-array
+> gate. See the [result note](2026-08-27-qwen38-fp8-strict-profile-matrix-result.md).
+
 ## Purpose
 
 Close the promotion-grade single-user gaps for the official FP8 TP2 package

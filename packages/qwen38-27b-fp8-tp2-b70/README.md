@@ -12,7 +12,13 @@ containers on two Intel Arc Pro B70 32 GiB cards.
 > [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
 > was premature and withdrawal is recommended. The `146.814418 tok/s`
 > selected high-acceptance fixture is diagnostic only and is also excluded
-> from public headline graphs.
+> from public headline graphs. The replacement strict matrix completed two
+> full 12-prompt/512-cap attempts per profile, but fresh-server complete-token
+> agreement was only `8/12` for MTP0, `8/12` for MTP1, and `8/12` for dynamic
+> MTP8. Sealed compiled-cache (`10/12`), eager graph-off (`10/12`), and eager
+> W8A16-off (`8/12`) controls also failed. The headline remains blank because
+> the output gate failed—not because speed was unmeasured. See the
+> [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md).
 
 The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
@@ -23,7 +29,9 @@ not replacements for the missing varied-prompt single-user headline.
 
 The package also retains a separate static publisher-MTP1 short-context
 aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
-single-user or realistic-suite headline.
+single-user or realistic-suite headline. Its 32K cell is intentionally
+withheld while the MTP1 strict target-parity gate is failing; no value is
+interpolated from MTP0.
 
 The checkpoint has one publisher MTP layer. Experimental serial reuse to MTP8
 is preserved under `experiments/` for mechanism research, but its selected
@@ -55,6 +63,11 @@ mechanism evidence. None of their selected-fixture singleton rates is a
 package headline. The incomplete 128-cap varied-prompt repeat measured
 `58.537756`/`58.244309 tok/s`; it remains a screening result pending the
 compliant 512-cap two-server suite and independent quality/determinism gate.
+That compliant suite now exists: W8A16 MTP0 measured
+`34.772270`/`34.740755 tok/s`, MTP1 measured
+`55.760069`/`55.782147 tok/s`, and dynamic MTP8 measured
+`68.049727`/`62.432362 tok/s`. All remain diagnostics because their paired
+complete outputs matched only `8/12`.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.

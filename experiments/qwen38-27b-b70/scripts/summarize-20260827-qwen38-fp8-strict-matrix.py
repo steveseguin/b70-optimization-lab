@@ -14,6 +14,7 @@ METRIC = "class_balanced_tok_s_1_100_intervals_after_ttft"
 
 
 def load_attempt(path: Path) -> dict[str, Any]:
+    path = path.resolve()
     performance_path = path / "performance.json"
     canaries_path = path / "canaries.json"
     identity_path = path / "campaign-identity.json"
@@ -27,6 +28,11 @@ def load_attempt(path: Path) -> dict[str, Any]:
     return {
         "path": path,
         "performance_path": performance_path,
+        "performance_display_path": str(
+            performance_path.relative_to(Path.cwd().resolve())
+            if performance_path.is_relative_to(Path.cwd().resolve())
+            else performance_path
+        ),
         "performance_sha256": hashlib.sha256(performance_path.read_bytes()).hexdigest(),
         "profile": profile,
         "attempt": identity["attempt"],
@@ -104,7 +110,7 @@ def main() -> int:
                     "fresh_response_valid": item["fresh_response_valid"],
                     "cached_tokens_all_zero": item["cached_tokens_all_zero"],
                     "canaries_pass": item["canaries_pass"],
-                    "performance_json": str(item["performance_path"]),
+                    "performance_json": item["performance_display_path"],
                     "performance_sha256": item["performance_sha256"],
                 }
             )
@@ -155,7 +161,8 @@ def main() -> int:
     }
     rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
-        args.output.write_text(rendered)
+        with args.output.open("x") as handle:
+            handle.write(rendered)
     else:
         print(rendered, end="")
     return 0

@@ -11,8 +11,29 @@
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target and MTP
 weights, native FP16 KV, and TP2. The selected interactive service dynamically
-uses MTP8 at one active request and MTP1 at two or more; separate target-only
+uses MTP8 at one active request and MTP1 at two or more, but it remains an
+experimental profile rather than a qualified default; separate target-only
 and static-MTP1 profiles remain documented for honest comparison.
+
+## Strict 512-cap matrix — measured, output gate failed
+
+Two full fresh-server attempts were completed for each main single-user
+profile. W8A16 MTP0 measured `34.772270`/`34.740755 tok/s`, static MTP1
+measured `55.760069`/`55.782147 tok/s`, and dynamic MTP8 measured
+`68.049727`/`62.432362 tok/s`. Each used all 12 varied prompts, six prompt
+classes, a 512-token natural-completion cap, the first 100 streamed token
+events, and zero cached tokens. All workload and objective-canary gates passed.
+
+None qualifies: each pair matched only `8/12` complete token arrays. Controls
+using byte-identical compiled caches (`10/12`), graph-off eager execution
+(`10/12`), and graph-off eager execution with W8A16 disabled (`8/12`) also
+failed. This bounds the unresolved issue to the official-FP8 target/runtime
+surface; neither compiled-cache identity, graph capture, nor W8A16 is required
+for it. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
+and [machine-readable summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-strict-profile-matrix-summary.json).
+
+The single-user headline and MTP1 32K cell stay blank. No diagnostic rate is
+substituted, averaged into another profile, or extrapolated.
 
 ## Dynamic MTP8-to-MTP1 screening profile — not a headline
 
