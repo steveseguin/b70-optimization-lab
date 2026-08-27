@@ -66,6 +66,17 @@ validate_concurrency() {
 # R1 failed at two active requests. This canary is correctness evidence only.
 run_concurrency 2 "${out_dir}/excluded-c2-crash-canary.json" "${run_id}-c2"
 validate_concurrency "${out_dir}/excluded-c2-crash-canary.json" 2
+if [[ "${C2_REQUIRE_ORACLE_EXACT:-0}" == "1" ]]; then
+  jq -e '.batches[0].oracle_exact_all == true' \
+    "${out_dir}/excluded-c2-crash-canary.json" >/dev/null || {
+      exact=$(jq -r \
+        '"\(.batches[0].oracle_exact_count)/\(.batches[0].oracle_exact_total)"' \
+        "${out_dir}/excluded-c2-crash-canary.json")
+      printf 'CLOSED: c2 sequential-oracle agreement is %s, not 2/2\n' \
+        "${exact}" >&2
+      exit 5
+    }
+fi
 curl -fsS "${base_url}/health" >/dev/null
 
 python3 "${sequential_quality}" \
