@@ -13,9 +13,6 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from transformers import AutoTokenizer
-
-
 def request_json(url: str, timeout: int) -> dict[str, Any]:
     with urllib.request.urlopen(url, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
@@ -110,6 +107,8 @@ def stream_completion(
             if data == "[DONE]":
                 break
             event = json.loads(data)
+            if event.get("error"):
+                raise RuntimeError("completion stream returned an error event")
             if event.get("usage"):
                 usage = event["usage"]
             for choice in event.get("choices", []):
@@ -124,6 +123,14 @@ def stream_completion(
     prompt_tokens = usage.get("prompt_tokens")
     completion_tokens = usage.get("completion_tokens")
     total_tokens = usage.get("total_tokens")
+    if type(prompt_tokens) is not int or prompt_tokens <= 0:
+        raise RuntimeError("completion stream ended without valid prompt-token usage")
+    if type(completion_tokens) is not int or completion_tokens != output_tokens:
+        raise RuntimeError("completion stream ended without valid completion-token usage")
+    if type(total_tokens) is not int or total_tokens != prompt_tokens + completion_tokens:
+        raise RuntimeError("completion stream ended without consistent total-token usage")
+    if first_text_at is None or chunks <= 0:
+        raise RuntimeError("completion stream ended without generated text")
     elapsed_s = ended - started
     ttft_s = None if first_text_at is None else first_text_at - started
     post_ttft_s = None if first_text_at is None else ended - first_text_at
@@ -203,6 +210,8 @@ def summarize(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main() -> int:
+    from transformers import AutoTokenizer
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--tokenizer", required=True)
