@@ -385,10 +385,14 @@ def page(pkg, all_pkgs, family=None):
     <div data-package-charts></div>
   </div>
   <noscript><p class="projection-status">Projections need JavaScript; the measured numbers above are static.</p></noscript>"""
-    elif ml:
+    elif ml and has_featured_metric:
         projection_html = """
   <h2 id="projection">Optimization grade <span class="badge spec">OPT —</span></h2>
   <p>The measured headline aggregates more than one prompt or completion shape, so a like-for-like tuned-run projection is withheld. The measured speed above is unchanged.</p>"""
+    elif ml:
+        projection_html = """
+  <h2 id="projection">Optimization grade <span class="badge todo">Pending</span></h2>
+  <p>No optimization grade is calculated because this package has no promoted measured headline. Diagnostic or scoped measurements never seed a headline projection.</p>"""
     else:
         projection_html = """
   <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>

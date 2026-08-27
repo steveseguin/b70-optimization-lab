@@ -164,8 +164,11 @@ class MeasuredOptContractTest(unittest.TestCase):
         for package_id, request in mapping.items():
             package = self.packages_by_id[package_id]
             rendered = self.builder.page(package, self.packages)
+            has_featured_metric = isinstance(
+                (package.get("library") or {}).get("featured_metric"), dict
+            )
             with self.subTest(package_id=package_id):
-                if package_id in PINNED_WORKLOADS:
+                if package_id in PINNED_WORKLOADS and has_featured_metric:
                     prompt, output = PINNED_WORKLOADS[package_id]
                     self.assertIn(f'data-ml-prompt="{prompt}"', rendered)
                     self.assertIn(f'data-ml-output="{output}"', rendered)
@@ -173,6 +176,16 @@ class MeasuredOptContractTest(unittest.TestCase):
                     self.assertNotIn("OPT —", rendered)
                     self.assertNotIn(
                         "like-for-like tuned-run projection is withheld", rendered
+                    )
+                elif not has_featured_metric:
+                    self.assertNotIn("data-ml-measured=", rendered)
+                    self.assertNotIn("data-ml-prompt=", rendered)
+                    self.assertNotIn("data-ml-output=", rendered)
+                    self.assertNotIn('id="package-projection"', rendered)
+                    self.assertIn("Optimization grade", rendered)
+                    self.assertIn('badge todo">Pending', rendered)
+                    self.assertIn(
+                        "no promoted measured headline", rendered
                     )
                 else:
                     self.assertNotIn("prompt_tokens", request)
