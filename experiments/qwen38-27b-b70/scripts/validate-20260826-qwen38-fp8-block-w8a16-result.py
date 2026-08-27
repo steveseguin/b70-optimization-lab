@@ -147,6 +147,12 @@ MTP9_LATCH_R20_NEGATIVE_RAW = (
 MTP9_LATCH_R20_NEGATIVE_SUMMARY = (
     DATA / "2026-08-27-qwen38-fp8-w8a16-mtp9-latch2-r20-summary.json"
 )
+MTP8_C2_R21_NEGATIVE_RAW = (
+    DATA / "qwen38-fp8-w8a16-mtp8-c2-dynamic-mtp1-20260827-r21"
+)
+MTP8_C2_R21_NEGATIVE_SUMMARY = (
+    DATA / "2026-08-27-qwen38-fp8-w8a16-mtp8-c2-r21-summary.json"
+)
 DYNAMIC_MAMBA_PATCH = (
     ROOT
     / "experiments/qwen38-27b-b70/patches"
@@ -1347,6 +1353,46 @@ def main() -> int:
         "num_speculative_tokens_per_batch_size": [[1, 1, 9], [2, 128, 1]],
     }
 
+    mtp8_c2 = load(MTP8_C2_R21_NEGATIVE_SUMMARY)
+    assert mtp8_c2["classification"] == (
+        "measured-negative-aggregate-and-concurrent-quality-gates"
+    )
+    assert mtp8_c2["decision"]["status"] == "closed-negative-mtp8-at-c2"
+    assert mtp8_c2["single_user"]["gate_passed"] is True
+    assert mtp8_c2["concurrency"]["gate_passed"] is False
+    assert mtp8_c2["quality"]["c2_sequential_oracle_exact"] == "2/2"
+    assert mtp8_c2["quality"]["declared_c64_sequential_oracle_exact"] == (
+        "55/64"
+    )
+    mtp8_c2_single = load(MTP8_C2_R21_NEGATIVE_RAW / "single-p40-o128.json")
+    close(
+        mtp8_c2_single["fresh_response_validity"][
+            "headline_tok_s_after_ttft"
+        ],
+        mtp8_c2["single_user"]["fresh_response_after_ttft_tok_s"],
+    )
+    mtp8_c2_c64 = load(MTP8_C2_R21_NEGATIVE_RAW / "c64-screen.json")
+    validate_output_isolation_batch(mtp8_c2_c64["batches"][0], 64)
+    close(
+        mtp8_c2_c64["batches"][0]["aggregate_tok_s_wall"],
+        mtp8_c2["concurrency"]["declared_c64_tok_s"],
+    )
+    assert not (MTP8_C2_R21_NEGATIVE_RAW / "c64-quality-512.json").exists()
+    mtp8_c2_inspect = load(
+        MTP8_C2_R21_NEGATIVE_RAW / "docker-inspect-final.json"
+    )[0]
+    assert mtp8_c2_inspect["State"]["ExitCode"] == 0
+    assert mtp8_c2_inspect["State"]["OOMKilled"] is False
+    mtp8_c2_command = mtp8_c2_inspect["Config"]["Cmd"]
+    mtp8_c2_config = json.loads(
+        mtp8_c2_command[mtp8_c2_command.index("--speculative-config") + 1]
+    )
+    assert mtp8_c2_config == {
+        "method": "qwen3_next_mtp",
+        "num_speculative_tokens": 8,
+        "num_speculative_tokens_per_batch_size": [[1, 2, 8], [3, 128, 1]],
+    }
+
     assert mtp2["quality"]["sequential_evidence"] == [
         f"{MTP2_RAW.name}/sequential-quality.json",
         f"{MTP2_MBT768_RAW.name}/sequential-quality.json",
@@ -1498,6 +1544,8 @@ def main() -> int:
         "bench-w8a16-mtp9-latch-dynamic-mtp1-r19.sh",
         "run-w8a16-mtp9-latch2-dynamic-mtp1-r20-server.sh",
         "bench-w8a16-mtp9-latch2-dynamic-mtp1-r20.sh",
+        "run-w8a16-mtp8-c2-dynamic-mtp1-r21-server.sh",
+        "bench-w8a16-mtp8-c2-dynamic-mtp1-r21.sh",
         "run-w8a16-dynamic-mtp-server.sh",
         "bench-w8a16-dynamic-mtp.sh",
         "build-w8a16-dynamic-mamba-image.sh",

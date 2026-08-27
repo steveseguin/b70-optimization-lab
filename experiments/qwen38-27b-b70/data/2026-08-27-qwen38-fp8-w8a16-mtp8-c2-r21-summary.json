@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "classification": "measured-negative-aggregate-and-concurrent-quality-gates",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "startup_kv_cache_tokens": 4498,
+    "startup_nominal_256_token_concurrency": 17.57,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 8,
+      "num_speculative_tokens_per_batch_size": [[1, 2, 8], [3, 128, 1]]
+    }
+  },
+  "quality": {
+    "c2_sequential_oracle_exact": "2/2",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "excluded_transition_c64_sequential_oracle_exact": "55/64",
+    "declared_c64_sequential_oracle_exact": "55/64",
+    "declared_c64_complete_token_ids": true,
+    "declared_c64_cached_tokens_all_zero": true,
+    "declared_c64_cross_base_oracle_collision_count": 0,
+    "concurrent_exact_answer_canary_performed": false
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 146.82220968440728,
+    "fresh_response_wall_tok_s": 133.70063963375495,
+    "ttft_s": 0.08555995195638388,
+    "gate_tok_s": 139.473697,
+    "gate_passed": true,
+    "change_vs_promoted_mtp8_median_percent": 0.005307273065868756
+  },
+  "concurrency": {
+    "metric": "sum(completion_tokens) / synchronized HTTP batch wall time",
+    "excluded_transition_tok_s": 811.2795563849456,
+    "declared_c64_tok_s": 836.1390480808925,
+    "declared_c64_per_user_tok_s": 13.064672626263945,
+    "gate_tok_s": 1094.314767,
+    "gate_passed": false,
+    "change_vs_promoted_mtp8_median_percent": -23.59245501199633,
+    "shortfall_vs_gate_percent": -23.592454996004598
+  },
+  "shutdown": {
+    "health_before_stop": "pass",
+    "container_exit_code": 0,
+    "oom_killed": false,
+    "engine_dead_error": false
+  },
+  "decision": {
+    "status": "closed-negative-mtp8-at-c2",
+    "reason": "Extending K8 from the singleton to batch size two preserved singleton speed and passed c2 exactness, but reduced c64 by 23.59% and produced only 55/64 sequential-oracle matches. The promoted K8-at-one/K1-from-two boundary remains selected."
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp8-c2-dynamic-mtp1-20260827-r21",
+  "reporting_boundary": "Every reported rate is directly measured. No intermediate concurrency, long-context rate, or other schedule threshold is inferred, interpolated, or extrapolated."
+}
