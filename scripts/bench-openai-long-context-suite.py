@@ -59,6 +59,7 @@ def stream_chat(
     text_parts: list[str] = []
     chunk_offsets: list[float] = []
     token_id_offsets: list[float] = []
+    token_ids: list[int] = []
     content_delta_count = 0
     reasoning_delta_count = 0
     usage: dict[str, Any] = {}
@@ -79,6 +80,7 @@ def stream_chat(
                     now = time.perf_counter()
                     if first_text_at is None and choice_token_ids:
                         first_text_at = now
+                    token_ids.extend(int(token_id) for token_id in choice_token_ids)
                     token_id_offsets.extend(
                         [now - started] * len(choice_token_ids)
                     )
@@ -119,6 +121,19 @@ def stream_chat(
         "post_ttft_s": post_ttft_s,
         "chunk_count": len(chunk_offsets),
         "stream_token_id_count": len(token_id_offsets),
+        "token_ids": token_ids,
+        "token_ids_complete": (
+            isinstance(completion_tokens, int)
+            and completion_tokens > 0
+            and len(token_ids) == completion_tokens
+        ),
+        "token_ids_sha256": (
+            hashlib.sha256(
+                json.dumps(token_ids, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            if token_ids
+            else None
+        ),
         "content_delta_count": content_delta_count,
         "reasoning_delta_count": reasoning_delta_count,
         "chunk_offsets_s": chunk_offsets,
