@@ -1,0 +1,22 @@
+From 7cf216774fb3c5eabf20d1f481d6548682604c37 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 18:28:26 -0400
+Subject: [PATCH] fix(build): link core host registration to Level Zero
+
+---
+ CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4dd8547..6ac9ceb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -497,6 +497,8 @@ if(BASIC_KERNELS_ENABLED)
+     ${VLLM_GPU_ARCHES}
+     INCLUDE_DIRECTORIES
+     ${VLLM_XPU_INCLUDE_DIR}
++    LIBRARIES
++    ze_loader
+     USE_SABI
+     3
+     WITH_SOABI)

@@ -1,0 +1,139 @@
+From 2f829747503c77d4814834dffd0840fb1dd9f75a Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 02:17:53 -0400
+Subject: [PATCH] fix(moe): ignore padding sentinels during alignment
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ csrc/moe/moe_align_sum_kernels.cpp | 14 ++++----
+ tests/test_moe_align_block_size.py | 54 ++++++++++++++++++++++++++++++
+ 2 files changed, 62 insertions(+), 6 deletions(-)
+
+diff --git a/csrc/moe/moe_align_sum_kernels.cpp b/csrc/moe/moe_align_sum_kernels.cpp
+index 068f372..8aacd74 100644
+--- a/csrc/moe/moe_align_sum_kernels.cpp
++++ b/csrc/moe/moe_align_sum_kernels.cpp
+@@ -195,13 +195,13 @@ void _moe_align_block_size(
+ 
+   for (size_t i = tid; i < numel; i += stride) {
+     int expert_id = static_cast<int>(topk_ids[i]);
+-    if (expert_id >= num_experts) {
++    if (expert_id < 0 || expert_id >= num_experts) {
+       continue;
+     }
+     if (has_expert_map) {
+       expert_id = expert_map[expert_id];
+       // filter invalid experts
+-      if (expert_id == -1) continue;
++      if (expert_id < 0 || expert_id >= num_experts) continue;
+     }
+     int warp_idx = expert_id / experts_per_warp;
+     int expert_offset = expert_id % experts_per_warp;
+@@ -329,10 +329,11 @@ void _moe_align_block_size_small_batch_expert(
+   if (local_id_x >= fill_threads) {
+     for (size_t i = tid; i < numel; i += stride) {
+       int32_t expert_id = static_cast<int32_t>(topk_ids[i]);
++      if (expert_id < 0 || expert_id >= num_experts) continue;
+       if (has_expert_map) {
+         expert_id = expert_map[expert_id];
+         // filter invalid expert
+-        if (expert_id == -1) continue;
++        if (expert_id < 0 || expert_id >= num_experts) continue;
+       }
+       int mask = token_mask == nullptr ? 1 : token_mask[i / topk_num];
+       tokens_cnts[(tid + 1) * num_experts + expert_id] += mask;
+@@ -384,10 +385,11 @@ void _moe_align_block_size_small_batch_expert(
+ 
+     for (size_t i = tid; i < numel; i += stride) {
+       int32_t expert_id = static_cast<int32_t>(topk_ids[i]);
++      if (expert_id < 0 || expert_id >= num_experts) continue;
+       if (has_expert_map) {
+         expert_id = expert_map[expert_id];
+         // filter invalid expert
+-        if (expert_id == -1) continue;
++        if (expert_id < 0 || expert_id >= num_experts) continue;
+       }
+       int32_t rank_post_pad =
+           tokens_cnts[tid * num_experts + expert_id] + cumsum[expert_id];
+@@ -425,14 +427,14 @@ void _count_and_sort_expert_tokens(
+ 
+   for (size_t i = tid; i < numel; i += stride) {
+     int32_t expert_id = static_cast<int32_t>(topk_ids[i]);
+-    if (expert_id >= num_experts) {
++    if (expert_id < 0 || expert_id >= num_experts) {
+       continue;
+     }
+ 
+     if (has_expert_map) {
+       expert_id = expert_map[expert_id];
+       // filter invalid experts
+-      if (expert_id == -1) continue;
++      if (expert_id < 0 || expert_id >= num_experts) continue;
+     }
+ 
+     if (token_mask == nullptr || token_mask[i / topk_num]) {
+diff --git a/tests/test_moe_align_block_size.py b/tests/test_moe_align_block_size.py
+index 1563255..b7449f3 100644
+--- a/tests/test_moe_align_block_size.py
++++ b/tests/test_moe_align_block_size.py
+@@ -301,6 +301,60 @@ def test_moe_align_block_size_with_expert_map(m: int, topk: int,
+     )
+ 
+ 
++@pytest.mark.parametrize("mixed_valid", [False, True])
++@pytest.mark.parametrize("pass_expert_map", [False, True])
++def test_moe_align_block_size_ignores_padding_sentinel(
++        mixed_valid: bool, pass_expert_map: bool):
++    """Padding sentinel -1 must never index expert maps or count storage."""
++    m, topk, num_experts, block_size = 64, 10, 512, 16
++    topk_ids = torch.full((m, topk),
++                          -1,
++                          device="xpu",
++                          dtype=torch.int32)
++    if mixed_valid:
++        topk_ids[0, :4] = torch.tensor([0, 1, 127, 128],
++                                       device="xpu",
++                                       dtype=torch.int32)
++
++    expert_map = torch.full((num_experts, ),
++                            -1,
++                            device="xpu",
++                            dtype=torch.int32)
++    expert_map[:128] = torch.arange(128, device="xpu", dtype=torch.int32)
++    kernel_map = expert_map if pass_expert_map else None
++
++    actual_sorted_ids, actual_expert_ids, actual_num_tokens = (
++        moe_align_block_size(
++            topk_ids=topk_ids,
++            block_size=block_size,
++            num_experts=num_experts,
++            expert_map=kernel_map,
++            ignore_invalid_experts=pass_expert_map,
++        ))
++    golden_sorted_ids, golden_expert_ids, golden_num_tokens = (
++        torch_moe_align_block_size(
++            topk_ids=topk_ids,
++            block_size=block_size,
++            num_experts=num_experts,
++            expert_map=kernel_map,
++        ))
++
++    torch.testing.assert_close(actual_num_tokens,
++                               golden_num_tokens,
++                               atol=0,
++                               rtol=0)
++    _verify_expert_level_sorting(
++        actual_sorted_ids,
++        golden_sorted_ids,
++        actual_expert_ids,
++        block_size,
++        actual_num_tokens.item(),
++        m * topk,
++    )
++    if not mixed_valid:
++        assert actual_num_tokens.item() == 0
++
++
+ @pytest.mark.parametrize("m", [128])
+ @pytest.mark.parametrize("topk", [2])
+ @pytest.mark.parametrize("num_experts", [32])

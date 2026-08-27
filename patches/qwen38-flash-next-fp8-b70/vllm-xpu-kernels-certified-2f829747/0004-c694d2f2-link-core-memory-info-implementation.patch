@@ -1,0 +1,21 @@
+From c694d2f28247cec0b4389c273b8012d96dbf89ac Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 18:22:07 -0400
+Subject: [PATCH] fix(build): link core memory info implementation
+
+---
+ CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index dd0976c..4e10112 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -476,6 +476,7 @@ if(BASIC_KERNELS_ENABLED)
+       "csrc/attention/merge_attn_states.cpp"
+       "csrc/tensor_utils.cpp"
+       "csrc/utils/mem_cpy.cpp"
++      "csrc/utils/mem_info.cpp"
+       "csrc/topk_per_row.cpp")
+   include_directories("/usr/include")
+ 

@@ -2,12 +2,35 @@
 
 Exported: 2026-08-26
 
+## Certified source reconstruction
+
+The certified TP4/MTP3 runtime-stage source is reconstructed by the additive
+series in `vllm-xpu-kernels-certified-2f829747/`. Start from public fork commit
+`0fd18a7c08a64d2645bf083cfa5576200b61b02c`, apply its seven patches in
+numbered order, and require resulting Git tree
+`d8c4318a0f0d71c3c36867253ad92b377906fec9`. That is the exact tree at
+`2f829747503c77d4814834dffd0840fb1dd9f75a`, the build head for the kernel
+stage loaded by the certified Qwen3.8 Flash-Next TP4/MTP3 result.
+
+The older loose `vllm-xpu-kernels/` directory is retained as historical
+evidence, but it is **superseded and incomplete as a reconstruction series**.
+It omits certified commits `c694d2f2`, `49002d71`, and `7cf21677`; its `0003`
+also has malformed patch context and does not apply to the declared base.
+Its later exact-GDN patch represents checkout `ad25aa9f`, which was not loaded
+by the certified MTP3 runtime stage. Do not combine that loose directory with
+the certified seven-patch series.
+
+Run `verify-certified-source-series.py` with local vLLM and
+vLLM-XPU-kernels repositories before publishing or building from these source
+artifacts. The verifier uses fresh temporary clones, applies only the declared
+production sequences, and asserts both exact output tree hashes.
+
 The production vLLM series is based on
 `76cfe1cd88d30d525eec8be5bff75f8b77471c88` and applies patches
 `0001` through `0010`, `0012`, and `0014` through `0018` in that order.
 Patches `0011` and `0013` are opt-in diagnostic research artifacts and must
-not be applied to a performance or production tree. The kernel
-compatibility series is based on
+not be applied to a performance or production tree. The historical loose
+kernel artifacts are based on
 `0fd18a7c08a64d2645bf083cfa5576200b61b02c`. Its first two commits restore
 source pieces dropped by earlier local/upstream merge resolution; its third
 adds the fused block-FP8 and MXFP4 SiLU-multiply implementation translation
@@ -17,7 +40,7 @@ filters padding sentinels during MoE alignment. Its fifth changes only the
 exact speculative GDN proof path from a fixed four-row bound to the positive
 runtime row count; target-only execution is unchanged.
 
-## SHA-256
+## Historical loose-artifact SHA-256
 
 ```text
 ada51dac31d5be31f5b07396e391a2cbc855f3bf24bb751b4998ae304e544ada  vllm/0001-Merge-02f2b4c15dd987d9436e125aab29604447c77405-into-.patch
