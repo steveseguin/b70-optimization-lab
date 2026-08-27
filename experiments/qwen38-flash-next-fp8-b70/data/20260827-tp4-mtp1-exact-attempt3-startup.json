@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "closed-infrastructure-only",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-exact-recurrent-512-r1",
+  "attempt": 3,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-exact-recurrent-512-r1-attempt3",
+  "cause": "The temporary IPC path exceeded the platform path-length limit after exact mode was added to the campaign identity.",
+  "classification": "launcher-path defect before worker spawn",
+  "gates": {
+    "sealed_runtime_preflight": "pass",
+    "four_rank_collective_preflight": "pass",
+    "worker_spawn": "not-reached",
+    "model_load": "not-reached",
+    "endpoint": "not-reached",
+    "quality": "not-run",
+    "throughput": "not-run"
+  },
+  "preservation": {
+    "mtp0_claim_changed": false,
+    "candidate_runtime_changed": false,
+    "timed_rows_run": 0,
+    "residual_server_processes": 0,
+    "residual_listeners": 0
+  },
+  "correction": {
+    "next_attempt": 4,
+    "only_axis": "shorten temporary IPC path",
+    "new_path": "/tmp/q38-mtp1-exact-a4-rpc"
+  },
+  "sha256": {
+    "server.log": "7bb634a867142a057469dbc084ddbcd2e87b8d35127d5c5da1ced3e542593cea",
+    "identity.txt": "47dafe7899e6fa90d9d9b8eaffb7a9e45a58353f6548cae30a6504e0b5c0f005",
+    "staged-runtime-preflight.txt": "9607b6e69b726ae5d826ca2e1c754577eac6238cbec905c7e418c6240f44b912",
+    "xccl-tp4-preflight.log": "830dee5af8d61e4ad11ae6d10cb765dd8d1591d547082ba9e48f36c183479606",
+    "offload-log-receipt.txt": "173e1236cd82a9a7b19bb699f131baa90aabff4764049a39723658b8c72566bc",
+    "kernel-journal-since-launch.log": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e"
+  }
+}

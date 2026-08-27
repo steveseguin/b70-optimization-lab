@@ -61,3 +61,16 @@ marker from each rank.
    `5.221849709 tok/s` value; never supersede MTP0 merely because MTP1 is valid.
 5. Preserve all raw artifacts and stop normally. If parity fails again, close
    MTP1/512 as quarantined under this design and publish no speed point.
+
+## Attempt-3 harness closeout and exact rerun
+
+Attempt 3 stopped before worker spawn or model loading because the newly
+explicit exact-mode campaign name made the temporary IPC path exceed the
+platform limit. The source/runtime preflights and four-rank collective probe
+passed, but there were zero offload receipts, zero endpoint requests, and no
+timing. This is an infrastructure-only non-result, preserved in
+`data/20260827-tp4-mtp1-exact-attempt3-startup.json`.
+
+Attempt 4 changes only that temporary path to the bounded name
+`/tmp/q38-mtp1-exact-a4-rpc`. The campaign, runtime, model settings, component
+gate, quality criteria, and speed criteria above remain frozen.

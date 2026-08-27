@@ -62,6 +62,9 @@ compile_cache_dir="/tmp/${campaign}-attempt${attempt}-compile"
 server_log="${run_dir}/server.log"
 rpc_dir="/tmp/${campaign}-attempt${attempt}-rpc"
 if [[ "${mtp_exact}" == "1" ]]; then
+  rpc_dir="/tmp/q38-mtp1-exact-a${attempt}-rpc"
+fi
+if [[ "${mtp_exact}" == "1" ]]; then
   runtime_manifest="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-mtp1-exact-loadable.sha256"
   component_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-mtp1-exact-component-gates.json"
   expected_kernels_head="ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
