@@ -82,6 +82,24 @@ a new record. For MiniMax, Gemma, DeepSeek, or other lanes, keep the same
 discipline: record model, quantization, GPU count, mode, command, environment,
 throughput, correctness status, payload path, response path, and follow-up note.
 
+### Package publication review
+
+Every new or materially updated public model package must receive an explicit
+LocalMaxxing disposition. Submit it only when it passes the fixed realistic
+final gate below, improves or usefully fills a matching model/quantization/GPU
+category, and has a complete reproducible evidence packet. Validate the exact
+payload with `--server-dry-run`, submit it once, then record the public ID,
+queue, receipt, and evidence link in
+[`../results/localmaxxing-submissions.md`](../results/localmaxxing-submissions.md).
+
+Record a result as **withheld**, rather than silently omitting or force-fitting
+it, when it is aggregate-only, a context-curve point, synthetic or warmed,
+based on a short fixture instead of the fixed realistic suite, measured
+negative, superseded, duplicate, or missing a quality/provenance gate. The
+current API's scalar `tokSOut` is single-stream output throughput; never place
+multi-user aggregate throughput in that field. A result can be valuable on
+neural.download while remaining ineligible for LocalMaxxing.
+
 For Gemma/Qwen-style optimization records, synthetic or repetitive prompts may
 guide search but are not submit-worthy real-world throughput. Promotion and
 submission require the fixed realistic final gate:

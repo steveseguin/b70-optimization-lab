@@ -112,6 +112,23 @@ the conventional 99-interval field.
 Current measured-but-unsubmitted work belongs in its model packet, not this
 public-submission index.
 
+Date: 2026-08-27
+
+The current Qwen3.8 27B official-FP8/W8A16 TP2 dynamic-MTP8 result was reviewed
+and intentionally **not submitted**. Its `146.814 tok/s` singleton observation
+comes from a short HTTP service probe rather than the fixed cold realistic
+suite, while its `1,094 tok/s` c64 observation is aggregate throughput. The
+LocalMaxxing speed-test schema has no aggregate-throughput field, so publishing
+that value as scalar `tokSOut` would mislabel it as single-stream decode. The
+MTP9 follow-up is a measured negative and is also ineligible.
+
+The next eligible promotion step is a fixed cold realistic-suite capture
+through the selected MTP8 service, with the exact model/runtime/patch identity,
+`cached_tokens=0`, conventional 99-interval accounting, natural output and
+quality evidence. If that gate passes and the result adds merit in the matching
+category, run the server dry-run and submit the single-stream result once; keep
+the concurrency curve in its neural.download evidence packet.
+
 Date: 2026-08-26
 
 Five new 1x Intel Arc Pro B70 package headlines were server-dry-run validated,

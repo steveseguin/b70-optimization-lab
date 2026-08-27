@@ -1069,9 +1069,10 @@ TP1. The full quality battery then passed (seven exact canaries, 8/8
 repeats, long-context needle, `pass_all=true`) and the final-binary
 official capture is **`27.813629`/`27.824790 tok/s`** with 24/24
 oracle-exact hashes: quality-validated at `+6.8-7.0%` over the day-open
-baseline, submission pending only a LocalMaxxing 1-GPU category check
-and the provenance snapshot. The cold-weight GEMV diagnostic then
-closed the z-row question: the m=6144 kernel is healthy standalone
+baseline, and approved by LocalMaxxing as
+[`cmt9m8i0b00z3li01o1ragvte`](https://www.localmaxxing.com/runs/cmt9m8i0b00z3li01o1ragvte)
+after the 1-GPU category and provenance review. The cold-weight GEMV diagnostic
+then closed the z-row question: the m=6144 kernel is healthy standalone
 (536.7 GB/s cold vs 381.7 in-graph), and the in-graph tax is
 per-activation quantize + dispatch gap (~25 us inside each 62 us
 window; the bench's shared activation is memo-deduped, in-graph's 48
