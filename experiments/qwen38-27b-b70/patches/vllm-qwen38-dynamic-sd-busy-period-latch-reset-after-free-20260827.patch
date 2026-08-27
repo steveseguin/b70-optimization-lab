@@ -1,0 +1,60 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import itertools
++import os
+ import time
+ from collections import defaultdict, deque
+ from collections.abc import Iterable
+@@ -255,6 +256,10 @@ class Scheduler(SchedulerInterface):
+         # reserve between a chunk boundary and the prefill end.
+         self.num_prefill_lookahead = 0
+         self.dynamic_sd_lookup: list[int] | None = None
++        self.dynamic_sd_latch_peak_batch = (
++            os.getenv("VLLM_DYNAMIC_SD_LATCH_PEAK_BATCH", "0") == "1"
++        )
++        self.dynamic_sd_peak_batch_size = 0
+         if speculative_config is not None:
+             if speculative_config.num_speculative_tokens_per_batch_size:
+                 self.dynamic_sd_lookup = build_dynamic_sd_schedule_lookup(
+@@ -1268,8 +1273,23 @@ class Scheduler(SchedulerInterface):
+         # Dynamic speculative decoding: compute optimal K
+         num_spec_tokens_to_schedule = self.num_spec_tokens
+         if self.dynamic_sd_lookup is not None and len(num_scheduled_tokens) > 0:
++            dynamic_batch_size = len(num_scheduled_tokens)
++            if self.dynamic_sd_latch_peak_batch:
++                # Keep a concurrent busy period on its lower-K policy while
++                # the batch drains. Without this latch, its last request can
++                # switch to the singleton K and dominate wall-clock latency.
++                outstanding = self.get_num_unfinished_requests()
++                observed_batch_size = min(
++                    max(dynamic_batch_size, outstanding),
++                    len(self.dynamic_sd_lookup) - 1,
++                )
++                self.dynamic_sd_peak_batch_size = max(
++                    self.dynamic_sd_peak_batch_size,
++                    observed_batch_size,
++                )
++                dynamic_batch_size = self.dynamic_sd_peak_batch_size
+             num_spec_tokens_to_schedule = self.dynamic_sd_lookup[
+-                len(num_scheduled_tokens)
++                dynamic_batch_size
+             ]
+ 
+         scheduled_encoder_input_stats = None
+@@ -2431,6 +2451,11 @@ class Scheduler(SchedulerInterface):
+     def _free_blocks(self, request: Request):
+         assert request.is_finished()
+         self._free_request_blocks(request)
+         del self.requests[request.request_id]
++        if self.dynamic_sd_latch_peak_batch and not self.requests:
++            # _free_request runs before finished requests are removed from
++            # the scheduler queues, so queue counts cannot identify idle at
++            # that point. The request map is authoritative after block free.
++            self.dynamic_sd_peak_batch_size = 0
+ 
+     @property
+     def pause_state(self) -> PauseState:
