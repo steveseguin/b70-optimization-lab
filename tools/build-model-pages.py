@@ -63,9 +63,9 @@ PACKAGE_ML = {
     # first-hundred-words suites run ~128-token prompts with 100-128-token
     # answers; MiniMax and the FP8 TP2 packet record longer shapes explicitly.
     # The Q5 flagship and Q8 TP2 packets are intentionally omitted. The former
-    # does not encode its draft depth; the latter's measured rate and launcher
-    # do not share the reasoning/workload identity expected by the projection.
-    # Their measured 26.7 and 36.8 tok/s headlines remain shown unchanged.
+    # does not encode its draft depth; the latter's strict headline is a varied
+    # 512-cap suite rather than one exact 128/128 ML Bottleneck workload. Their
+    # measured 26.7 and 36.7 tok/s headlines remain shown unchanged.
     # The selected FP8 packet now uses a dynamic MTP2-at-one/MTP1-at-many
     # policy. ML Bottleneck has no configuration-exact dynamic-policy preset,
     # so omit its projection rather than binding the measured hero to MTP0 or

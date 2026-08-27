@@ -2,19 +2,15 @@
 
 This is the quality-conservative Qwen3.8 service package: Q8_0 target weights,
 F16 KV, two B70s, no draft model, and no speculative decoding. The accepted
-historical suite measured `36.772932 tok/s` conventional median with 12/12
-exact output hashes and zero cached tokens.
+strict packaged result is **`36.726447 tok/s`**, the median of two fresh-server
+class-balanced medians. Both full twelve-prompt/six-class attempts passed the
+512-token workload, cache-zero, objective-canary, and 12/12 complete-token-
+array equality gates.
 
-> **Strict package headline pending.** That historical suite ran with
-> reasoning enabled, while this package launches with reasoning off. It is
-> valid evidence for its recorded identity, but it is not the packaged
-> identity's headline. The exact package still needs the complete varied-prompt
-> 512-cap suite on two fresh servers plus its bound quality/determinism gate.
-
-> **Status: expert candidate; strict headline pending.** The model and patch identities, source build,
-> service launcher, benchmark, and semantic gates are documented. Platform
-> installation, a model download/direct-read helper, and clean-host replay are
-> still missing.
+> **Status: expert candidate; strict headline qualified.** The model and patch
+> identities, source build, service launcher, benchmark, and semantic gates are
+> documented. A tested platform installer, clean-host replay, and beginner
+> recovery flow are still missing.
 
 The [reproduction guide](../../repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 is the technical source of truth.
@@ -66,10 +62,31 @@ curl -fsS http://127.0.0.1:18088/health
 OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh
 ```
 
-The historical accepted capture was reasoning-enabled. The packaged service
-defaults to `--reasoning off`, which is intentionally a different benchmark
-identity. Do not compare the two without recording that setting, and do not use
-the historical number as this package's headline.
+To reproduce the strict headline contract rather than run the shorter service
+smoke, use two new create-only output directories:
+
+```bash
+ATTEMPT=my-q8-tp2-a \
+MODEL_DIR=/path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf \
+BUILD_DIR=/path/to/accepted-build \
+OUT_DIR=/path/to/new-attempt-a \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp2-strict-attempt.sh
+```
+
+Repeat as attempt B, then require the comparator to exit zero:
+
+```bash
+python3 scripts/compare-strict-attempt-outputs.py \
+  /path/to/new-attempt-a /path/to/new-attempt-b \
+  --output /path/to/new-comparison.json
+```
+
+The strict raw-completion outputs match the historical `36.772932 tok/s`
+oracle 12/12 by complete response hash; the new paired result is 0.126% lower.
+The launcher defaults to `--reasoning off`, while raw untemplated completion
+prompts bypass the chat template. Always record reasoning and endpoint policy;
+do not relabel this number as chat-template service throughput. See the
+[strict result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.md).
 
 ## Output-audited multi-user profile
 
@@ -124,5 +141,5 @@ used. See the [qualified replay](../../experiments/qwen38-27b-b70/data/qwen38-q8
 ## Certification gaps
 
 The remaining work is a tested host installation path, clean-host replay,
-beginner recovery guide, natural-prompt HTTP context curves, and queued
-TTFT/per-request latency.
+beginner recovery guide, natural-prompt HTTP context curves beyond the short
+headline shape, and queued TTFT/per-request latency.

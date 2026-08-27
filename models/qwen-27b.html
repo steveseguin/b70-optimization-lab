@@ -31,7 +31,7 @@
 <meta name="twitter:description" content="Alibaba&#x27;s dense 27B Qwen line (3.6 and the newer 3.8), the lab&#x27;s most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM. Every number links to its measured proof.">
 <meta name="twitter:image" content="https://neural.download/models/cards/qwen-27b.png">
 <meta name="twitter:image:alt" content="Qwen 27B · 3.6 → 3.8 measured on Intel Arc Pro B70 — neural.download">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Qwen 27B · 3.6 → 3.8", "description": "Alibaba's dense 27B Qwen line (3.6 and the newer 3.8), the lab's most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM.", "url": "https://neural.download/models/qwen-27b.html", "dateModified": "2026-08-26", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Dataset", "name": "Qwen 27B · 3.6 → 3.8", "description": "Alibaba's dense 27B Qwen line (3.6 and the newer 3.8), the lab's most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM.", "url": "https://neural.download/models/qwen-27b.html", "dateModified": "2026-08-27", "creator": {"@type": "Organization", "name": "neural.download lab"}, "isAccessibleForFree": true}</script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
 <style>
@@ -304,9 +304,10 @@
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>quality</span><span>recipe</span><span>concurrency</span></div>
 </a><a class="packet-card" href="qwen38-27b-q8-tp2-asrock-b70.html">
-  <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified measurement</b></span></div>
+  <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Qwen3.8 Q8_0 · TP2">Qwen3.8 Q8_0 · TP2</h3>
-  <p class="packet-promise">Evidence packet · candidate-with-identity-caveat</p>
+  <p class="packet-promise">Reproduce <b>36.73 tok/s</b> on 2× B70 · candidate package</p>
+  <small class="packet-workload">Median of two fresh-server class-balanced medians over the full 12-prompt/six-class, 512-cap, cache-zero raw-completion suite; target-only TP2, MTP0, packaged --reasoning off launcher, 12/12 complete token arrays exact and all objective canaries passed.</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span></div>
 </a><a class="packet-card" href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html">

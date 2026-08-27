@@ -48,6 +48,14 @@ They do not become general single-user headlines.
 | Qwen3.8 27B FP8/W8A16 MTP8, `146.814418 tok/s` | **Selected-fixture diagnostic only.** It used one 40-token high-acceptance fixture and therefore measures that fixture, not representative model speed. | Removed from public headline graphs and package speed; historical mechanism notes carry correction banners. |
 | Qwen3.8 FP8/W8A16 MTP0 c128 `1,112.570323 tok/s` and exact-32K `31.489587 tok/s` | **Retain as separately scoped capacity/context evidence.** These are output-audited target-only measurements, not substitutes for the missing varied-prompt single-user headline. | Keep explicit aggregate/context labels; never use either as the general one-user number. |
 
+Post-audit closure: Qwen3.8 Q8_0 TP2 subsequently passed the exact missing
+contract on two fresh servers. The full 12-prompt/six-class, 512-cap,
+cache-zero attempts measured `36.733956` and `36.718938 tok/s`, passed both
+objective-canary batteries, and matched complete token arrays 12/12. The
+paired **`36.726447 tok/s`** value is now the packaged headline; the historical
+row above remains the reason that number was initially withheld. See the
+[R2 result](../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.md).
+
 The LocalMaxxing submission `cmtb5n45n0021qq01n13vly2h` was built from the
 incomplete FP8 evidence and is premature. Repository surfaces mark withdrawal
 as recommended. The external service does not provide a trusted automated

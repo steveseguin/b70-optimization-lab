@@ -4,11 +4,29 @@ This is the primary quality-conservative Qwen3.8 27B service snapshot for two
 ASRock Intel Arc Pro B70 32 GiB cards. It uses Q8_0 target weights, F16 KV,
 and no MTP, DFlash, draft model, response reuse, or speculation.
 
+## Strict packaged headline
+
+The exact packaged `--reasoning off` launcher qualified at **`36.726447
+tok/s`** on 2026-08-27. This is the median of two fresh-server class-balanced
+medians (`36.733956` and `36.718938 tok/s`) from the full twelve-prompt,
+six-class, 512-cap raw-completion suite. Both workload gates and objective
+canary batteries passed, all rows had `cached_tokens=0`, and complete generated
+token arrays matched 12/12 across servers.
+
+The benchmark used raw untemplated `/completion` prompts with
+`return_tokens=true`; it did not apply the chat template. Its twelve complete
+response hashes also match the historical raw-completions oracle below. The
+new paired rate is 0.126% lower. This qualifies only short-context single-user
+TP2/MTP0 decode and must not be relabeled as chat-template, TP1, MTP,
+long-context, or aggregate throughput. See the
+[result note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.md)
+and [machine-readable comparison](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-comparison.json).
+
 ## Historical accepted identity (not the package headline)
 
 The figures in this section are valid for the recorded reasoning-enabled
-identity. The packaged launcher is reasoning-off, so its strict varied-prompt
-headline remains pending rather than borrowing this number.
+identity. They remain separate rather than replacing the newer two-attempt
+packaged headline above.
 
 - conventional 99-interval median: **`36.772932 tok/s`**
 - p10: `36.046576 tok/s`
@@ -52,7 +70,8 @@ medians were `36.900803` versus `36.552765 tok/s` (`+0.952%`). All four
 passed 7/7 semantic canaries, 8/8 repeats, the 3,829-token needle, and shut
 down at `VERIFY_MISMATCH=0`. Its reasoning-off helper converts to
 `36.760220 tok/s` conventional, slightly below the older reasoning-enabled
-absolute headline, so the historical headline remains unchanged. See the
+absolute capture. The later strict packaged pair above supersedes both as the
+public package headline. See the
 [DP4A2×SG24 decision](../../experiments/qwen38-27b-b70/notes/2026-08-17-q8-dp4a2-sg24-synergy-active.md).
 
 A fresh replay of the corrected full source stack on 2026-08-16 again passed
@@ -63,10 +82,12 @@ TTFT. That is `0.957%` below the original conventional headline and within
 the observed process-state spread. See the
 [provenance correction](../../experiments/qwen38-27b-b70/notes/2026-08-16-q8-repro-provenance-correction.md).
 
-Reasoning-mode provenance: the accepted speed capture above used
+Reasoning-mode provenance: the historical speed capture above used
 reasoning-enabled output and its stored completions contain `<think>`. The
 current launcher intentionally uses `--reasoning off`; it is the
-quality-conservative service default but is a distinct benchmark identity. A
+quality-conservative service default. Raw untemplated completions from the new
+strict pair still match the historical outputs 12/12 because they bypass the
+chat template; that does not authorize a chat-template equivalence claim. A
 position-balanced reasoning-off replay measured control medians of
 `35.841542` and `36.288690 tok/s`, with 12/12 identical hashes across both
 controls and two experimental arms. See the
@@ -181,6 +202,30 @@ terminal:
 OUT=/path/to/result.json repro/qwen38-27b-q8-tp2-asrock-b70/bench.sh
 repro/qwen38-27b-q8-tp2-asrock-b70/verify-artifacts.sh
 ```
+
+The command above is a convenient service smoke. To replay the strict public
+headline, run the create-only campaign twice with distinct output directories:
+
+```bash
+ATTEMPT=my-q8-tp2-a \
+MODEL_DIR=/path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf \
+BUILD_DIR=/path/to/accepted-build \
+OUT_DIR=/path/to/new-attempt-a \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp2-strict-attempt.sh
+
+ATTEMPT=my-q8-tp2-b \
+MODEL_DIR=/path/to/directory-containing-Qwen3.8-27B-Q8_0.gguf \
+BUILD_DIR=/path/to/accepted-build \
+OUT_DIR=/path/to/new-attempt-b \
+  experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-q8-tp2-strict-attempt.sh
+
+python3 scripts/compare-strict-attempt-outputs.py \
+  /path/to/new-attempt-a /path/to/new-attempt-b \
+  --output /path/to/new-comparison.json
+```
+
+The comparator must exit zero. A fast attempt with a failed workload, cache,
+canary, or complete-token-array gate is not a headline.
 
 Before launch, bypass the page cache and verify the model bytes against the
 pinned manifest:

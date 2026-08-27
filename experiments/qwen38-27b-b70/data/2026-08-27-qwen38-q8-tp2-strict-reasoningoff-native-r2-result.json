@@ -1,0 +1,46 @@
+{
+  "status": "strict-package-headline-qualified",
+  "profile": "Qwen3.8 27B Q8_0, F16 KV, TP2, MTP0, packaged --reasoning off launcher, raw native completions",
+  "metric": {
+    "name": "median-of-attempt-class-balanced-medians, events 1-100 over 99 intervals after TTFT",
+    "unit": "tok/s",
+    "attempt_values": [
+      36.73395609827101,
+      36.718937920747024
+    ],
+    "value": 36.726447009509016,
+    "attempt_relative_range_percent": 0.040891996767604424
+  },
+  "qualification": {
+    "fresh_server_attempts": 2,
+    "prompt_count_per_attempt": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "cached_tokens_all_zero": true,
+    "performance_gates_passed": true,
+    "objective_canaries_passed": true,
+    "complete_token_arrays_exact": "12/12"
+  },
+  "historical_oracle_comparison": {
+    "historical_profile": "2026-08-15 raw-completions capture recorded as reasoning-enabled",
+    "historical_tok_s": 36.772932224864405,
+    "current_vs_historical_percent": -0.12641150036971638,
+    "complete_text_sha256_exact": "12/12",
+    "interpretation": "The packaged launcher carries --reasoning off, but the strict benchmark deliberately uses the same raw untemplated prompts as the historical oracle. All twelve complete response hashes match. Reasoning mode must still be recorded for chat-template service comparisons."
+  },
+  "transport": {
+    "endpoint": "/completion",
+    "prompt_mode": "raw-untemplated",
+    "return_tokens": true,
+    "reason": "The native stream exposes generated token IDs; the OpenAI-compatible stream used by invalid R1A did not. Prompt bytes and sampling were unchanged."
+  },
+  "evidence": {
+    "attempt_a": "qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2a",
+    "attempt_b": "qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2b",
+    "comparison": "2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-comparison.json",
+    "historical": "2026-08-15-q8-tp2-transfer-summary.json"
+  },
+  "scope": "Single-user short-context target-only HTTP decode. No TP1, MTP, long-context, concurrency, chat-template, or alternate-quant authority transfers from this headline."
+}

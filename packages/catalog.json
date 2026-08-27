@@ -3451,9 +3451,14 @@
           "no speculation",
           "quality gated"
         ],
-        "published_at": "2026-08-22",
-        "featured_metric": null,
-        "benchmark_status": "The historical 36.772932 tok/s reasoning-enabled suite remains valid for its exact recorded identity, but the packaged launcher defaults to reasoning off. A complete varied-prompt 512-cap two-fresh-server run plus a bound quality/determinism oracle on the exact packaged tuple is required for its headline."
+        "published_at": "2026-08-27",
+        "featured_metric": {
+          "value": 36.726447009509016,
+          "unit": "tok/s",
+          "label": "strict varied-prompt decode",
+          "scope": "Median of two fresh-server class-balanced medians over the full 12-prompt/six-class, 512-cap, cache-zero raw-completion suite; target-only TP2, MTP0, packaged --reasoning off launcher, 12/12 complete token arrays exact and all objective canaries passed.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.json"
+        }
       },
       "contributors": [
         {
@@ -3709,10 +3714,16 @@
         "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-http-depth-prefill-r3-prereg.json",
         "experiments/qwen38-27b-b70/scripts/run-qwen38-q8-tp2-http-depth-prefill-r3.sh",
         "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q8-tp2-package-throughput-launch-smoke.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.json",
+        "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-comparison.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2a/performance.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2a/canaries.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2b/performance.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q8-tp2-strict-reasoningoff-native-20260827-r2b/canaries.json",
         "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
       ],
       "known_limitations": [
-        "The historical 36.772932 tok/s headline used reasoning-enabled output; the packaged service and concurrency curve use reasoning off and are a distinct identity.",
+        "The 36.726447 tok/s headline uses raw untemplated completions on the packaged --reasoning off launcher. Those outputs match the historical raw-completions oracle 12/12, but the result must not be relabeled as chat-template service throughput.",
         "Multi-user greedy token identity is batch-shape-dependent. The qualified curve proves complete isolated responses with zero cross-base oracle collisions, not sequential byte identity.",
         "The c8-to-c16 aggregate drop reproduced on both fresh servers. It is retained as measured and is not interpolated away.",
         "The concurrency profile measures aggregate batch-wall throughput, not per-request TTFT or latency under queueing."
@@ -3721,7 +3732,7 @@
         "tested platform installation",
         "clean-host replay",
         "beginner recovery flow",
-        "natural-prompt HTTP speed and TTFT context sweep",
+        "natural-prompt HTTP speed and TTFT context sweep beyond the qualified short-context headline",
         "queued TTFT and per-request latency profile"
       ]
     }

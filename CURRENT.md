@@ -919,6 +919,15 @@ JSON, factual, logic, Python-result, repeat-stability, and 3,829-token needle
 canaries. Q8 is the primary quality-conservative service identity; Q4_K_M is
 the explicitly lower-precision speed lane.
 
+The exact Q8_0/F16-KV packaged TP2 launcher now has its own strict headline.
+Two fresh full-suite servers measured `36.733956` and `36.718938 tok/s`; the
+paired class-balanced median is **`36.726447 tok/s`**. Both attempts passed the
+12-prompt/six-class, 512-cap, cache-zero workload and objective canaries, and
+their complete token arrays matched 12/12. The outputs also match all 12
+historical raw-completions response hashes. This closes the package-headline
+gap without transferring authority to chat-template, TP1, MTP, long-context,
+or concurrency workloads. See the [strict result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-q8-tp2-strict-reasoningoff-native-r2-result.md).
+
 An archived contributed one-B70 GPTQ INT4 route was validated on 2026-08-16. Native
 FP16 KV reached `34.160467 tok/s` target-only and `87.605425 tok/s` MTP4 at
 p512/g128 and 8K; both beat the FP8-KV rows. MTP4 accepted 511/540 drafts,
@@ -1034,9 +1043,10 @@ package identities without deleting their measurements: LFM2.5 2.6B, Ornith
 closed in this repository; Ornith 1.5 35B natural-response hashes matched 0/12
 across fresh stock servers; and Qwen3.8 Q8 TP1 is a raw-engine tg128 rate rather
 than a varied-prompt HTTP result. Qwen3.8 Q8 TP2's historical reasoning-enabled
-capture also cannot headline its reasoning-off package. All now render
-**strict headline pending** while their honestly scoped curves and historical
-evidence remain available. See the full
+capture could not headline its reasoning-off package at audit time; the later
+two-server R2 campaign above has now closed that one gap. The other affected
+packages remain **strict headline pending** while their honestly scoped curves
+and historical evidence remain available. See the full
 [benchmark integrity audit](docs/benchmark-integrity-audit-20260827.md).
 
 The next singleton step, MTP9, reached `158.602110 tok/s` but retained only
@@ -1367,9 +1377,11 @@ loaded service.
 
 1. Preserve the inactive Muse fleet and its source; verify service/process state
    again before every GPU launch.
-2. Continue Qwen3.8 Q8_0 target-only TP2 from the accepted source snapshot,
-   with same-binary controls, the fixed cold gate, and the semantic suite. Aim
-   for 40 tok/s without weakening weights, KV precision, or arithmetic gates.
+2. Continue Qwen3.8 Q8_0 target-only TP2 from its newly qualified
+   `36.726447 tok/s` strict package headline, with same-binary controls, the
+   fixed cold gate, and the semantic suite. Aim for 40 tok/s without weakening
+   weights, KV precision, arithmetic gates, or the two-fresh-server output
+   requirement.
    The 2026-08-16 device-local Q8 gate/up/SwiGLU experiment is closed at
    `-0.224974%` after restoring its downstream Q8 producer; retain the
    [negative packet](experiments/qwen38-27b-b70/notes/2026-08-16-q8-fused-mmvq-swiglu-negative.md)
