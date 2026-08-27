@@ -47,3 +47,25 @@ realistic-quality failure blocks promotion. A bounded failure still classifies
 the matrix cell and must be preserved; it does not lower or overwrite the 512
 result. Do not enable MTP or graph, increase cache, change binaries, or alter
 the selective placement within this arm.
+
+## Pre-request suite seal
+
+The independent launcher audit completed after model loading began but before
+the API became healthy or any model request was sent. It found the launcher
+identity unchanged except for the intended length/campaign selector and noted
+that the realistic suite path needed an explicit seal. The fixed suite is:
+
+- `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`, SHA-256
+  `cdf65eae1b63d39fdca0ae320a91535c3108a6c0bb60c337bf7a060d83f3990c`;
+- 12 prompts with IDs from `incident-retrospective` through `decision-memo`;
+- harness `scripts/bench-openai-realistic-suite.py`, SHA-256
+  `911fcd172cb3b4d2a319e34cc6ba6ca41ee7c352fcd269e93008371e45cc4fb2`;
+- chat mode, 512 maximum output tokens, 100 metric tokens, seed 20260609,
+  returned token IDs, thinking disabled, and no natural-EOS requirement.
+
+The short/needle harness is
+`scripts/qwen38-text-quality-suite.py` at SHA-256
+`67e65fc342393e5ae6903a332c929b3a2693e1f943c8a819b8447284fe835f6d`.
+The later exact-depth timing harness is
+`scripts/bench-openai-concurrency.py` at SHA-256
+`0703d8f0564cab625183a02f010d238c8456d2e9e6aac04f4b8e11f81c8d6ae0`.
