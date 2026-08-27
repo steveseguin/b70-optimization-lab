@@ -81,3 +81,49 @@ Frozen SHA-256 values:
   changing only a timeout.
 - Nothing from this arm can overwrite, lower, or withdraw a captured speed,
   quality result, packet, or prior submission.
+
+## Result
+
+Attempt 2 completed the frozen program. All four ranks loaded the exact model
+and runtime, reported 32.06 GiB of model allocation plus 12.22 GiB of selective
+host placement, admitted exactly 32 current-source cache blocks, and exposed
+7,329 cache tokens (1.68x the configured 4,352-token maximum). Peak logged
+cache use was 61.3%.
+
+The quality program matched all 26 sealed MTP0 comparisons, held one output
+hash for 16/16 repeats, passed the exact 4,096-token cache-zero needle, and
+reported zero cached and created-cache tokens on all 24 audited requests. The
+inherited target score remains 5/7. The formal p4096/o128 fixture passed all 25
+checks at `3.479239661 tok/s` conventional with `369.141154 s` TTFT.
+
+All three p4096/o256/c1 rows completed with 4,096 prompt and 256 output tokens
+and the accepted target hash. Their after-first-text rates were
+`9.893154792`, `12.078049628`, and `9.217263500 tok/s`, median
+**`9.893154792 tok/s`**. Median TTFT was `263.279224 s` and median wall output
+was `0.891381690 tok/s`. Cumulative metrics accepted 719/748 draft tokens
+(96.12%) across the two positions.
+
+The controlled cache result is positive and narrow. The prior 21-block arm
+stopped at 3,904 computed tokens and 90% cache use; this 32-block arm completed
+the same gates and all three long timing rows while changing only the fixed
+cache allocation. This establishes headroom32 as the working practical
+exact-4K selector and is consistent with a cache-headroom boundary in the
+prior arm. It does not prove causality, show a speed gain, establish that 32
+blocks is minimal, or explain the separate MTP4 boundary. The old quarantine
+remains preserved as superseded history.
+
+The 32-block formal rate was 15.69% lower and its formal TTFT was 16.32% higher
+than the prior 21-block formal row, so no cache-related speed claim is
+authorized. MTP3 remains preferred at exact 4K: this MTP2 recipe is 36.18%
+lower in decode and 28.48% lower in wall output, with 40.12% higher TTFT, than
+the separate MTP3 screen. The new MTP2 cell is therefore Grade-C support
+evidence, not a record or deployment promotion. Controlled shutdown completed for all four
+ranks; all four B70s were discoverable afterward and the run-window journal
+contains no event for a B70 address. The journal is not quiet: it retains 49
+corrected APEI records / 51 PCIe sections from the Samsung NVMe endpoint and
+associated root port, while all 51 uncorrected-status fields are zero. The
+controlled stop also retains the known shutdown-time output-handler notice and
+one shared-memory cleanup warning after worker/API shutdown.
+
+Structured receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json`.

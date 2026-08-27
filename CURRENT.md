@@ -1037,6 +1037,17 @@ at 3,904 computed and zero output tokens, so no comparison speed row or median
 is authorized. Cleanup reset all four cards. This selector is a tested Grade-C
 capability with quarantined readiness; MTP2/512 remains unchanged.
 
+A preregistered MTP2 cache-control successor changed only the fixed pool from
+21 to 32 current-source blocks. It exposed 7,329 cache tokens, passed the same
+26/26 comparisons, 16/16 repeats, exact cache-zero 4K needle, and formal gate,
+then completed all three p4096/o256 rows at `9.893155 / 12.078050 / 9.217264
+tok/s`, median `9.893155 tok/s`. Median TTFT was `263.279224 s`, median wall
+output was `0.891382 tok/s`, and cumulative acceptance was 719/748. This
+establishes headroom32 as the working practical MTP2/4K selector while retaining
+the 21-block quarantine as history. It does not prove causality, a speed gain,
+or minimum cache; the 32-block formal row was slower than the earlier formal
+row. MTP3 remains preferred.
+
 TP4/MTP1 exact-4K now closes the remaining unclassified MTP-depth cell at the
 user's practical 4K ceiling. The preregistered 32-block headroom recipe exposed
 9,284 cache tokens and passed all 26 MTP0 comparisons, 16/16 repeats, the exact
@@ -1048,7 +1059,8 @@ support recipe, not evidence that cache headroom caused the MTP2/MTP4 boundary
 and not a minimum-cache claim. MTP3 remains the preferred exact-4K recipe at
 `15.501565 tok/s`, lower TTFT, and higher wall output. The TP4 eager text matrix
 is therefore fully classified across MTP0-4 at configured 512 and active 4K:
-MTP0/MTP1/MTP3 are screened at 4K, while MTP2/MTP4 are explicitly quarantined.
+MTP0/MTP1/MTP2/MTP3 are screened at 4K, while only MTP4 is explicitly
+quarantined.
 The 51B PLE/input-embedding state remains pinned in host RAM through UVA; the
 four cards are otherwise filled to about 32.06 GiB per rank, which is the
 current 128-GiB-VRAM/4K deployment policy.

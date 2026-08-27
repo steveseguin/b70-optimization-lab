@@ -6,7 +6,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-27",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median. At exact 4K, MTP1 passed with a 32-block headroom allocation at 8.904 tok/s decode, 232.1 seconds TTFT, and 0.981 tok/s wall output; MTP3 remains the preferred evidence at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP2 and MTP4 exact-4K are separately quarantined. The lane remains research-only because strict target quality is still 5/7 and deployment stability is unqualified.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median. At exact 4K, 32-block MTP1 and MTP2 recipes passed at 8.904 and 9.893 tok/s decode; MTP3 remains preferred at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. Only MTP4 remains quarantined at exact 4K. The lane remains research-only because strict target quality is still 5/7 and deployment stability is unqualified.",
   "featured_results": [
     {
       "role": "hero",
@@ -124,7 +124,7 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; TP4 MTP1-4 at configured 512 are separate matched-quality cells. MTP4 matched all 26 bounded MTP0 outputs, passed 16/16 repeats and the small needle, accepted 1,716/1,716 cumulative draft tokens, and measured a 20.727 tok/s short-screen median. At configured 4352, MTP1 with a 32-block headroom allocation matched all 26 sealed MTP0 comparisons, passed 16/16 repeats, the exact 4K needle, a formal p4096/o128 gate, and all three p4096/o256 rows; its median was 8.904 tok/s decode, 232.1 seconds TTFT, and 0.981 tok/s wall output. TP4/MTP3 at configured 4352 remains the preferred exact-4K recipe at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP2 at active 4K passed matched quality and a formal gate before its p4096/o256 screen stalled at 3,904 computed tokens; MTP4 is separately quarantined at the same boundary. Graph, vision, clean-host qualification, and deployment remain open",
+      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; TP4 MTP1-4 at configured 512 are separate matched-quality cells. MTP4 matched all 26 bounded MTP0 outputs, passed 16/16 repeats and the small needle, accepted 1,716/1,716 cumulative draft tokens, and measured a 20.727 tok/s short-screen median. At configured 4352, 32-block MTP1 and MTP2 recipes each matched all 26 sealed MTP0 comparisons, passed 16/16 repeats, the exact 4K needle, a formal p4096/o128 gate, and all three p4096/o256 rows. MTP2 measured 9.893 tok/s decode, 263.3 seconds TTFT, and 0.891 tok/s wall output; the earlier 21-block stop is retained as superseded history. TP4/MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. MTP4 is the only exact-4K MTP-depth quarantine. Graph, vision, clean-host qualification, and deployment remain open",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -137,6 +137,7 @@
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json"
@@ -419,6 +420,58 @@
         {"metric": "decode_tok_s", "index": 0, "value": 8.904420575355882, "label": "median exact-4K MTP1 headroom32 Grade-C screen; 232.1-second TTFT and inherited short quality 5/7"}
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 2,
+        "active_context_tokens": 4096,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp2-context4k-headroom32-screen-v1",
+      "measurement_class": "research-only exact-4K HTTP service screen with 32-block cache headroom and separate formal row",
+      "promotion_status": "not promotion eligible; inherited short quality remains 5/7 and clean-boot/deployment stability are unqualified",
+      "quality_scope": "All 26 sealed MTP0 4K comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; exact 4096-token needle and formal depth gate passed; all 24 quality requests cache-zero; three deployment-shaped rows passed",
+      "workload": "Three separately salted exact p4096/o256/c1 requests with no harness-added warmups; full-output rate after first text; formal p4096/o128 99-interval row retained separately",
+      "metrics": {
+        "decode_tok_s": [9.89315479235244],
+        "ttft_ms": [263279.2244020093],
+        "wall_output_tok_s": [0.891381690144734]
+      },
+      "raw_observations": {
+        "decode_tok_s": [9.89315479235244, 12.07804962791263, 9.217263500488167],
+        "wall_output_tok_s": [0.8543969736295236, 0.8999042813260602, 0.891381690144734],
+        "ttft_ms": [273750.0517080189, 263279.2244020093, 259420.6210770062],
+        "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+        "fixed_allocation_blocks": 32,
+        "reported_cache_capacity_tokens": 7329,
+        "maximum_observed_cache_usage_percent": 61.3,
+        "formal_99_interval_tok_s": 3.4792396609382594,
+        "formal_ttft_ms": 369141.1535299849,
+        "decode_row_span_percent_of_median": 28.916823677275268,
+        "wall_output_row_span_percent_of_median": 5.105254931717019,
+        "ttft_row_span_percent_of_median": 5.442674279962402,
+        "cumulative_draft_tokens": 748,
+        "cumulative_accepted_tokens": 719,
+        "aggregation": "median of three exact-4K service observations; compared with the failed 21-block arm, only the fixed cache allocation changed. The result supports this recipe but does not prove 32 blocks is minimal or explain other MTP depths."
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 9.89315479235244, "label": "median exact-4K MTP2 headroom32 Grade-C screen; 263.3-second TTFT and inherited short quality 5/7"}
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json"
     },
     {
       "id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1",
@@ -825,16 +878,18 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP2", "eager", "text-only", "configured max 512", "matched MTP0 quality plus 16/16 repeat and small needle", "variable three-row speed screen"],
+      "coverage": ["TP4/EP4", "MTP2", "eager", "text-only", "configured max 512 and 4352/headroom32", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "short and exact-4K three-row speed screens plus a separate formal row"],
       "grades": {
         "evidence": {
           "grade": "C",
-          "scope": "exact TP4/EP4 eager MTP2 text serving at configured max 512",
-          "basis": "The exact model, MTP adapter, preserved staged runtime, 192-MiB fixed allocation resolving to 17 usable blocks, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, 770/770 cumulative draft acceptance, and three target-hash speed rows are retained. The inherited target quality remains 5/7 and speed rows span 29.61% of the median; the separate active-4K selector is quarantined after passing matched quality and a formal p4096/o128 gate but failing its p4096/o256 stability gate. Vision, clean-host replay, and deployment qualification remain missing.",
+          "scope": "exact TP4/EP4 eager MTP2 text serving at configured max 512 and configured 4352/headroom32",
+          "basis": "The exact model, MTP adapter, preserved staged runtime, healthy APIs, all 26 MTP0 baseline comparisons, 16/16 repeat stability, cache-zero needles, complete usage, positive draft acceptance, and three target-hash rows at both configured 512 and exact 4K are retained. At exact 4K, the 32-block recipe completed the formal and three-row gates at 9.893 tok/s decode, 263.3 seconds TTFT, and 0.891 tok/s wall output. The prior 21-block stop remains disclosed; the control does not prove a speed gain, minimum cache, or universal causality. Inherited quality remains 5/7, while vision, clean-host replay, and deployment qualification remain missing. MTP3 remains preferred at exact 4K.",
           "reviewed_at": "2026-08-27",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
-            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-512-attempt1-result.json"
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-512-attempt1-result.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json"
           ]
         }
       },
@@ -914,14 +969,15 @@
     {
       "id": "qwen-flash-next-context4k-mtp-tradeoff",
       "title": "Exact-4K service tradeoff by MTP depth",
-      "subtitle": "Workload-aligned p4096/o256/c1 service screens with no harness-added warmups, but from different vLLM source revisions and cache allocations. MTP1 is the 32-block headroom recipe; MTP3 remains faster with lower TTFT and higher wall output. Separate single-point series avoid implying a causal MTP-depth or cache curve; MTP2 and MTP4 are tested but quarantined.",
+      "subtitle": "Workload-aligned p4096/o256/c1 service screens with no harness-added warmups, but from different vLLM source revisions and cache allocations. MTP1 and MTP2 use 32-block headroom recipes; MTP3 remains faster with lower TTFT and higher wall output. Separate single-point series avoid implying a causal MTP-depth or cache curve; only MTP4 remains quarantined.",
       "x_label": "MTP depth",
       "discrete": true,
-      "missing_x": [2, 4],
+      "missing_x": [4],
       "metrics": ["decode_tok_s", "wall_output_tok_s", "ttft_ms"],
       "series": [
         {"label": "official FP8 · TP4 eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-context4k-service-a1"], "x_from": "config.mtp"},
         {"label": "official FP8 · TP4 eager MTP1 · headroom32", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp1-context4k-headroom32-a1"], "x_from": "config.mtp"},
+        {"label": "official FP8 · TP4 eager MTP2 · headroom32", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2"], "x_from": "config.mtp"},
         {"label": "official FP8 · TP4 eager MTP3", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp3-context4k-a1"], "x_from": "config.mtp"}
       ]
     }
@@ -1054,14 +1110,15 @@
           "retry": {"status": "needs-clean-boot-full-quality"}
         },
         {
-          "id": "mtp2-context4k-mixed-quarantine",
+          "id": "mtp2-context4k-headroom32-text-screen",
           "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "quarantined",
-          "label": "tested/quarantined · quality + formal pass · sustained shape fails",
-          "reason": "All 26 sealed MTP0 comparisons, 16/16 repeats, the exact 4K needle, and the formal p4096/o128 gate passed; the formal row measured 4.127 tok/s with 317.35 seconds TTFT. The first p4096/o256 deployment-shaped row then exceeded the worker-response deadline during prefill at 3,904 computed and zero output tokens, produced no durable row or comparison decode score, and cleanup reset all four card engines.",
-          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json",
-          "parent": "flash-next-mtp2-context4k-a1",
-          "retry": {"status": "blocked-on-runtime-fix", "trigger": "material worker-stall fix or preregistered cache/control arm plus post-reset four-rank preflight"}
+          "state": "lab-screened",
+          "label": "9.893 tok/s decode · 263.3 s TTFT · headroom32",
+          "reason": "The 32-block recipe passed all 26 sealed MTP0 comparisons, 16/16 repeats, the exact cache-zero 4096-token needle, a formal p4096/o128 gate, and all three p4096/o256 rows with one accepted-target hash. Median wall output was 0.891 tok/s and cumulative draft acceptance was 719/748. The failed 21-block arm remains linked as history; this pass does not prove a speed gain, causal cache mechanism, or minimum cache. MTP3 remains preferred.",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
+          "parent": "flash-next-mtp2-context4k-headroom32-a2",
+          "retry": {"status": "needs-clean-boot-full-quality"}
         },
         {
           "id": "mtp3-context4k-text-screen",

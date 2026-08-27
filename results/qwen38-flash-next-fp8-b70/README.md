@@ -9,8 +9,8 @@ Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
 healthy, serve cache-zero MTP0 context through a formal exact-8K screen, and
 run matched MTP1-4 configured-512 research screens at 9.372, 11.895, 14.889,
-and 20.727 tok/s. It also qualifies MTP1 with a 32-block headroom recipe and
-MTP3 at exact 4K, with `8.904` and `15.502 tok/s` decode medians respectively.
+and 20.727 tok/s. It also qualifies 32-block MTP1/MTP2 recipes and MTP3 at
+exact 4K, with `8.904`, `9.893`, and `15.502 tok/s` decode medians respectively.
 MTP3 remains the preferred 4K recipe because it also has lower TTFT and higher
 wall output. These rows remain bounded screens, not stable ceilings. The packet
 does not yet establish a production recipe, a fully quality-qualified speed,
@@ -84,8 +84,8 @@ formal depth, and three p4096/o256 rows. Its TTFT and wall-rate tradeoff, plus
 fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
-MTP1-4 grid and exact-4K MTP1/MTP3 cells are separately screened below;
-MTP2/MTP4 at exact 4K are quarantined. Graph,
+MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
+only MTP4 at exact 4K remains quarantined. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
@@ -225,7 +225,41 @@ recipe at `15.501565 tok/s` decode, `187.899186 s` TTFT, and `1.246260 tok/s`
 wall output. Receipt:
 [`20260827-tp4-mtp1-4352-headroom32-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json).
 
-## Tested/quarantined exact-4K TP4 MTP2 screen
+## Exact 4K TP4 MTP2 headroom screen
+
+The working MTP2/4K arm preserves the configured-512 source, runtime,
+placement, and eager TP4/EP4 identity while using the same exact 32-block
+allocation as the MTP1 headroom recipe: 376,569,856 bytes (359.125 MiB) per
+rank. It exposes 7,329 cache tokens at 1.68x reported concurrency, 12 blocks
+above the MTP2 admission floor. Peak logged cache use was 61.3%.
+
+All 26 sealed MTP0 comparisons matched, fixed-set repeats held one hash for
+16/16 runs, the needle passed at exactly 4,096 server prompt tokens, and all 24
+quality requests reported zero cached and created-cache tokens. The formal
+p4096/o128 fixture passed all 25 checks at `3.479239661 tok/s` conventional
+with `369.141154 s` TTFT. The inherited strict score remains 5/7.
+
+Three separately salted p4096/o256/c1 rows, with no harness-added warmups,
+returned the accepted target hash at `9.893154792`, `12.078049628`, and
+`9.217263500 tok/s` after first text, median **`9.893154792 tok/s`**. Median
+TTFT was `263.279224 s`, median wall output was `0.891381690 tok/s`, and
+cumulative metrics accepted 719/748 draft tokens (96.12%). MTP3 remains the
+preferred exact-4K recipe: MTP2 is 36.18% lower in decode and 28.48% lower in
+wall output, with 40.12% higher TTFT, than the separate MTP3 screen.
+
+This is a Grade-C support cell, not a record or deployment result. The larger
+pool completed the service workload that the prior 21-block arm did not, but
+it does not prove causality or a minimum cache and it did not improve formal
+speed: its formal decode was 15.69% lower and TTFT 16.32% higher than the
+21-block formal row. Controlled shutdown left no process or listener and all
+four B70s remained discoverable. The retained journal is not quiet: it records
+corrected Samsung NVMe endpoint/root-port link noise, with all uncorrected
+status fields zero and no B70 address involved; the log also retains the known
+shutdown-time output-handler notice and one shared-memory cleanup warning. The
+earlier quarantine is retained below as superseded history. Receipt:
+[`20260827-tp4-mtp2-4352-headroom32-attempt2-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json).
+
+## Superseded 21-block exact-4K TP4 MTP2 quarantine
 
 The additive MTP2/4K arm retained the configured-512 source, runtime,
 placement, and eager TP4/EP4 identity. Its exact 21-block allocation exposed
@@ -247,9 +281,10 @@ median is authorized. Rows two and three never started.
 
 Cleanup was followed by one compute and one copy-engine reset on each B70.
 No process or listener remained and all four cards were discoverable, but no
-post-reset collective was run. This is Grade-C exact-4K capability evidence
-with quarantined readiness, not a deployment or record result. The MTP2/512
-and MTP3/4K cells remain untouched. Receipt:
+post-reset collective was run. This remains Grade-C exact-4K capability
+evidence and failure history, but the later 32-block control now supersedes it
+as the practical selector. The MTP2/512 and MTP3/4K cells remain untouched.
+Receipt:
 [`20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-attempt1-mixed-quarantine.json).
 
 ## Quarantined exact-4K TP4 MTP4 screen
