@@ -1,0 +1,19 @@
+{
+  "schema": "neural.download.benchmark-prereg-amendment.v1",
+  "campaign": "qwen38-q8-q4mtp-tp1-depth-screen-20260827-r1",
+  "created_utc": "2026-08-27T22:34:00Z",
+  "trigger": "Both preregistered MTP depths passed the one-server screen and MTP2 won. The frozen MTP0 output oracle used an 8192-token configured context, while the fit-constrained speculative arms used 1024 tokens.",
+  "authorized_addition": {
+    "arm": "mtp0-matched-control",
+    "fresh_servers": 1,
+    "configured_context_tokens": 1024,
+    "all_other_runtime_and_suite_selectors": "identical to the frozen speculative screen, except that no draft is loaded",
+    "required_output": "12/12 complete arrays exact to the pre-existing frozen MTP0 oracle",
+    "required_gates": "full fixed realistic suite, cache zero, objective canaries, natural stop or 512-token length, complete returned token IDs"
+  },
+  "decision_boundary": {
+    "purpose": "Provide a configuration-matched speed denominator; it cannot select or alter the already observed MTP2 winner.",
+    "promotion": "Report the MTP2 speedup only against this control if the control passes every gate. Otherwise publish the MTP2 absolute rate without a matched percentage gain.",
+    "no_transfer": "No long-context, concurrency, TP2, alternate-KV, or other-model claim is authorized."
+  }
+}

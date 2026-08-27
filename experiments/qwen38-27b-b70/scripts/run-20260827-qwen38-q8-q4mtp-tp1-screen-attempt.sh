@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
-depth=${MTP_DEPTH:?set MTP_DEPTH to 1 or 2}
+depth=${MTP_DEPTH:?set MTP_DEPTH to 0, 1, or 2}
 attempt=${ATTEMPT:?set ATTEMPT to a unique attempt label}
 target_dir=${TARGET_DIR:?set TARGET_DIR to the Qwen3.8 ggml-org GGUF directory}
 draft_dir=${DRAFT_DIR:?set DRAFT_DIR to the directory containing the pinned Unsloth MTP draft}
@@ -21,7 +21,7 @@ expected_backend=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd15
 expected_oracle=b1053f19962ba5c4f6a82c92939645f41ad8542f110a0df0ff4e7cbdbfbf82a9
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
-[[ "${depth}" =~ ^(1|2)$ ]] || fail 'MTP_DEPTH must be 1 or 2'
+[[ "${depth}" =~ ^(0|1|2)$ ]] || fail 'MTP_DEPTH must be 0, 1, or 2'
 [[ ! -e "${out_dir}" ]] || fail "refusing to overwrite ${out_dir}"
 [[ -f "${target}" && -f "${draft}" && -x "${server}" && -f "${backend}" ]] || fail 'model/runtime artifact missing'
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == "${expected_server}" ]] || fail 'llama-server SHA-256 mismatch'
@@ -42,9 +42,11 @@ pgrep -af 'llama-(server|bench|batched-bench)|vllm' >/dev/null && fail 'another 
 mkdir -p "${out_dir}"
 "${repo}/repro/qwen38-27b-q8-tp1-b70/verify-model-direct.sh" "${target_dir}" \
   --json "${out_dir}/target-verification.json" >"${out_dir}/target-verification.stdout"
-python3 "${repo}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
-  "${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4mtp-draft-direct.json" "${draft_dir}" \
-  --json "${out_dir}/draft-verification.json" >"${out_dir}/draft-verification.stdout"
+if [[ "${depth}" != 0 ]]; then
+  python3 "${repo}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
+    "${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4mtp-draft-direct.json" "${draft_dir}" \
+    --json "${out_dir}/draft-verification.json" >"${out_dir}/draft-verification.stdout"
+fi
 
 python3 - "${out_dir}/campaign-identity.json" "${attempt}" "${depth}" "${target}" "${draft}" "${server}" "${backend}" "${suite}" "${prereg}" "${oracle}" <<'PY'
 import datetime as dt
@@ -69,7 +71,7 @@ value = {
         "prereg": {"path": prereg, "sha256": digest(prereg)},
         "mtp0_oracle": {"path": oracle, "sha256": digest(oracle)},
     },
-    "contract": {"mtp_depth": int(depth), "tp": 1, "gpu": 0, "target_kv": "f16", "draft_kv": "f16", "graph": "off", "reasoning": "off", "parallel_slots": 1, "configured_context_tokens": 1024, "prompt_cache": False, "prompt_count": 12, "prompt_classes": 6, "max_tokens": 512, "metric_events": 100, "metric_intervals": 99},
+    "contract": {"mtp_depth": int(depth), "draft_active": int(depth) > 0, "tp": 1, "gpu": 0, "target_kv": "f16", "draft_kv": "f16" if int(depth) > 0 else None, "graph": "off", "reasoning": "off", "parallel_slots": 1, "configured_context_tokens": 1024, "prompt_cache": False, "prompt_count": 12, "prompt_classes": 6, "max_tokens": 512, "metric_events": 100, "metric_intervals": 99},
 }
 pathlib.Path(out).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
@@ -117,10 +119,13 @@ export GGML_SYCL_MMQ_Q4K_REORDER=1
 unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
 unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
 
-server_args=("${server}" --model "${target}" --device SYCL0 --gpu-layers 99 --split-mode none --fit off
-  --model-draft "${draft}" --device-draft SYCL0 --gpu-layers-draft 99 --spec-type draft-mtp
-  --spec-draft-n-max "${depth}" --spec-draft-n-min 0 --spec-draft-p-min 0
-  --cache-type-k f16 --cache-type-v f16 --cache-type-k-draft f16 --cache-type-v-draft f16
+server_args=("${server}" --model "${target}" --device SYCL0 --gpu-layers 99 --split-mode none --fit off)
+if [[ "${depth}" != 0 ]]; then
+  server_args+=(--model-draft "${draft}" --device-draft SYCL0 --gpu-layers-draft 99 --spec-type draft-mtp
+    --spec-draft-n-max "${depth}" --spec-draft-n-min 0 --spec-draft-p-min 0
+    --cache-type-k-draft f16 --cache-type-v-draft f16)
+fi
+server_args+=(--cache-type-k f16 --cache-type-v f16
   --flash-attn on --batch-size 2048 --ubatch-size 512 --cache-ram 0 --ctx-checkpoints 0
   --reasoning off --threads 16 --poll 50 --ctx-size 1024 --parallel 1 --cont-batching
   --no-cache-prompt --slot-prompt-similarity 0 --metrics --host 127.0.0.1 --port "${port}")
@@ -151,13 +156,14 @@ python3 "${repo}/scripts/neural-download-canaries.py" \
   --out "${out_dir}/canaries.json" >"${out_dir}/canaries.stdout"
 curl -fsS "http://127.0.0.1:${port}/metrics" >"${out_dir}/metrics-after.txt" || true
 
-python3 - "${out_dir}/performance.json" "${out_dir}/canaries.json" "${oracle}" "${out_dir}/metrics-before.txt" "${out_dir}/metrics-after.txt" "${out_dir}/qualification.json" <<'PY'
+python3 - "${out_dir}/performance.json" "${out_dir}/canaries.json" "${oracle}" "${out_dir}/metrics-before.txt" "${out_dir}/metrics-after.txt" "${out_dir}/qualification.json" "${depth}" <<'PY'
 import json
 import pathlib
 import re
 import sys
 
-performance_path, canary_path, oracle_path, before_path, after_path, out_path = sys.argv[1:]
+performance_path, canary_path, oracle_path, before_path, after_path, out_path, depth_text = sys.argv[1:]
+depth = int(depth_text)
 p = json.load(open(performance_path)); c = json.load(open(canary_path)); o = json.load(open(oracle_path))
 gate = p["realistic_final_gate"]; fresh = p["fresh_response_validity"]
 metric = p["summary"]["class_balanced_tok_s_1_100_intervals_after_ttft"]["median"]
@@ -174,7 +180,8 @@ def counters(path):
 b = counters(before_path); a = counters(after_path)
 drafted = a["llamacpp:spec_decode_num_draft_tokens_total"] - b["llamacpp:spec_decode_num_draft_tokens_total"]
 accepted = a["llamacpp:spec_decode_num_accepted_tokens_total"] - b["llamacpp:spec_decode_num_accepted_tokens_total"]
-passed = gate["passed"] and fresh["valid"] and gate["cached_tokens_all_zero"] and len(p["rows"]) == 12 and c["pass_all"] and len(exact) == 12 and drafted > 0 and accepted > 0
+spec_pass = depth == 0 or (drafted > 0 and accepted > 0)
+passed = gate["passed"] and fresh["valid"] and gate["cached_tokens_all_zero"] and len(p["rows"]) == 12 and c["pass_all"] and len(exact) == 12 and spec_pass
 value = {
     "schema": "neural.download.qwen38-q8-q4mtp-tp1-screen-qualification.v1",
     "status": "passed" if passed else "failed-closed",
@@ -187,13 +194,13 @@ value = {
     "drafted_tokens": drafted,
     "accepted_tokens": accepted,
     "acceptance_rate": accepted / drafted if drafted else None,
-    "publication_authority": "single-server screen only; no headline, 32K, concurrency, or cross-profile authority",
+    "publication_authority": "matched promotion control" if depth == 0 else "single-server screen only; no headline, 32K, concurrency, or cross-profile authority",
 }
 pathlib.Path(out_path).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 if not passed: raise SystemExit("qualification failed closed")
 print(f"class_balanced_median_tok_s={metric:.12f}")
 print(f"target_oracle_exact_prompts={len(exact)}/12")
-print(f"draft_acceptance_rate={accepted / drafted:.6f}")
+print(f"draft_acceptance_rate={accepted / drafted:.6f}" if drafted else "draft_acceptance_rate=not-applicable")
 PY
 
 curl -fsS "http://127.0.0.1:${port}/health" >"${out_dir}/post-health.json"
