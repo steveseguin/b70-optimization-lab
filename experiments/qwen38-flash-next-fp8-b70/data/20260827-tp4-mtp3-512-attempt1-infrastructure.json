@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-27",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-512-r1",
+  "attempt": 1,
+  "status": "invalid-command-identity-mismatch",
+  "intended_identity": {
+    "tp": 4,
+    "ep": 4,
+    "mtp": 3,
+    "configured_max_context_tokens": 512
+  },
+  "executed_server_identity": {
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "configured_max_context_tokens": 512,
+    "reason": "The recorded server command omitted --speculative-config."
+  },
+  "boundary": {
+    "checkpoint_shards_loaded": 131,
+    "healthy_api_proven": false,
+    "model_responses": 0,
+    "quality_rows": 0,
+    "speed_rows": 0,
+    "mtp_evidence": false,
+    "promotion_eligible": false
+  },
+  "cause": "The common launcher accepted MTP0-4 in validation and static engine construction, but its final server argument builder appended speculative configuration only when MTP was exactly 1.",
+  "correction": "Create one canonical speculative-config JSON value from MTP, use it in both preflight and final command construction, and fail immediately unless MTP1-4 have exactly one matching server argument and MTP0 has none.",
+  "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-512-r1-attempt1",
+  "raw_files": [
+    "identity.txt",
+    "server-command.shell.txt",
+    "server.log",
+    "staged-runtime-preflight.txt"
+  ],
+  "preservation": "Do not resume, relabel, or derive an MTP3 result from attempt 1."
+}

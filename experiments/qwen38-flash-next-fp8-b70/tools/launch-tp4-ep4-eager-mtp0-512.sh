@@ -4,6 +4,7 @@ set -Eeuo pipefail
 max_model_len="${MAX_MODEL_LEN:-512}"
 mtp="${MTP:-0}"
 mtp_exact="${MTP_EXACT:-0}"
+speculative_config_json=""
 [[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" || "${max_model_len}" == "4352" || "${max_model_len}" == "8448" ]] || {
   printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, 4352, or 8448\n' >&2
   exit 1
@@ -24,6 +25,10 @@ mtp_exact="${MTP_EXACT:-0}"
   printf 'FAIL: MTP_EXACT=1 is preregistered only for MAX_MODEL_LEN=512\n' >&2
   exit 1
 }
+if (( mtp > 0 )); then
+  printf -v speculative_config_json \
+    '{"method":"mtp","num_speculative_tokens":%d}' "${mtp}"
+fi
 exact_suffix=""
 served_model_name="qwen38-flash-next-fp8-tp4"
 if [[ "${mtp_exact}" == "1" ]]; then
@@ -230,6 +235,7 @@ export Q38_MOE_RECEIPT="${moe_receipt}"
 export Q38_PADDING_RECEIPT="${padding_receipt}"
 export Q38_MAX_MODEL_LEN="${max_model_len}"
 export Q38_MTP="${mtp}"
+export Q38_SPECULATIVE_CONFIG_JSON="${speculative_config_json}"
 
 "${python}" - <<'PY'
 import os
@@ -327,6 +333,7 @@ for device in range(4):
 
 model = os.environ['Q38_MODEL_PATH']
 mtp = int(os.environ['Q38_MTP'])
+speculative_config_json = os.environ['Q38_SPECULATIVE_CONFIG_JSON']
 engine_kwargs = dict(
     model=model, tokenizer=model, dtype='bfloat16', tensor_parallel_size=4,
     pipeline_parallel_size=1, data_parallel_size=1,
@@ -344,9 +351,15 @@ engine_kwargs = dict(
     generation_config='vllm', load_format='safetensors', async_scheduling=False,
 )
 if mtp:
+    expected_speculative_config = json.dumps({
+        'method': 'mtp', 'num_speculative_tokens': mtp
+    }, separators=(',', ':'))
+    assert speculative_config_json == expected_speculative_config
     engine_kwargs['speculative_config'] = {
         'method': 'mtp', 'num_speculative_tokens': mtp
     }
+else:
+    assert speculative_config_json == ''
 args = EngineArgs(**engine_kwargs)
 config = args.create_engine_config(usage_context=None)
 assert config.parallel_config.tensor_parallel_size == 4
@@ -472,8 +485,25 @@ args=(
   --enable-prompt-tokens-details
   --disable-uvicorn-access-log
 )
-if [[ "${mtp}" == "1" ]]; then
-  args+=(--speculative-config '{"method":"mtp","num_speculative_tokens":1}')
+if [[ -n "${speculative_config_json}" ]]; then
+  args+=(--speculative-config "${speculative_config_json}")
+fi
+
+speculative_arg_count=0
+for ((arg_index = 0; arg_index < ${#args[@]}; arg_index++)); do
+  if [[ "${args[arg_index]}" == "--speculative-config" ]]; then
+    ((speculative_arg_count += 1))
+    (( arg_index + 1 < ${#args[@]} )) || fail "speculative config has no value"
+    [[ "${args[arg_index + 1]}" == "${speculative_config_json}" ]] || \
+      fail "server speculative config differs from the preflighted value"
+  fi
+done
+if (( mtp > 0 )); then
+  [[ "${speculative_arg_count}" == "1" ]] || \
+    fail "MTP${mtp} requires exactly one server speculative config"
+else
+  [[ "${speculative_arg_count}" == "0" ]] || \
+    fail "MTP0 must not include a server speculative config"
 fi
 printf '%q ' "${vllm_bin}" serve "${args[@]}" >"${run_dir}/server-command.shell.txt"
 printf '\n' >>"${run_dir}/server-command.shell.txt"
