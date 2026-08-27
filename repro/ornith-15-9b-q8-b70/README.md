@@ -1,10 +1,10 @@
-# Ornith 1.5 9B — neural.download packet (DRAFT: benchmarks pending)
+# Ornith 1.5 9B — neural.download one-B70 guide
 
-> **Integrity status, 2026-08-27: strict headline pending.** The two varied
-> 512-cap speeds and canary summary below are retained as measured candidate
-> observations, but their raw operating-point/canary JSON files are not closed
-> in this repository. Do not promote or submit them until those artifacts are
-> imported, hash-bound, and the quality/determinism gate is replayed.
+> **Integrity status, 2026-08-27: strict headline withheld.** Two complete
+> fresh-server 12-prompt/six-class, 512-cap attempts passed the workload,
+> cache-zero, and objective-canary gates at 49.593582 and 49.515869 tok/s.
+> Complete natural-response token arrays matched only 8/12 across servers, so
+> these rates remain scoped diagnostics rather than a public headline.
 
 Status: **intake verified (direct+ordinary I/O) and baseline PASSED**
 (2026-08-22). Lane: beginner-plus single-card.
@@ -40,13 +40,53 @@ kernel baseline. Verify the copied file against the SHA-256 above before use.
 Raw matched evidence is in
 `../../experiments/ornith-15-b70/notes/2026-08-22-decode-first-screen.md`.
 
-## Recipe, benchmarks, quality — TBD
+## Reproduce the measured identity
 
-Filled only from measured runs per
-[the packet standard](../../docs/neural-download-packet-standard.md):
-intake `verify` (direct+ordinary) -> `run-model-intake-baseline.sh`
-(1 B70, f16 KV, 8K, target-only) + diagnostic bench gate -> packet
-operating points (2 fresh-server runs each) -> canary battery.
+Clone this repository, build the pinned stock llama.cpp revision in the package
+manifest, and download the model named in `model-manifest.json`. Keep it on
+local or fast direct-attached storage; do not benchmark a network-backed mmap.
+
+```bash
+export MODEL_DIR=/path/to/ornith-1.5-9b-q8
+export BUILD_DIR=/path/to/llama.cpp/build-sycl-aot-bmg-g31
+python3 scripts/verify-neural-download-model.py \
+  repro/ornith-15-9b-q8-b70/model-manifest.json "$MODEL_DIR"
+
+source /opt/intel/oneapi/setvars.sh --force
+export ONEAPI_DEVICE_SELECTOR=level_zero:0
+export GGML_SYCL_ENABLE_GRAPH=0
+
+"$BUILD_DIR/bin/llama-server" \
+  --model "$MODEL_DIR/Ornith-1.5-9B-Q8_0.gguf" --alias ornith9b \
+  --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 \
+  --device SYCL0 --gpu-layers 99 --split-mode none --flash-attn auto \
+  --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --no-cache-prompt \
+  --slot-prompt-similarity 0 --fit off --metrics --no-webui \
+  --host 127.0.0.1 --port 18100
+```
+
+From a second shell:
+
+```bash
+python3 scripts/bench-openai-realistic-suite.py \
+  --base-url http://127.0.0.1:18100 --model ornith9b --api-mode native-raw \
+  --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
+  --max-tokens 512 --metric-tokens 100 --seed 42 --timeout 900 \
+  --return-token-ids --require-natural-eos \
+  --request-extra-json \
+  '{"cache_prompt":false,"seed":42,"temperature":0,"top_p":1}' \
+  --out performance.json
+
+python3 scripts/neural-download-canaries.py \
+  --base-url http://127.0.0.1:18100 --model ornith9b --out canaries.json
+```
+
+Run a second fresh server and compare every complete array with
+`scripts/compare-strict-attempt-outputs.py`. The lab's stricter archived-binary
+runner is `scripts/run-neural-download-stock-headline-attempt.sh`; it requires
+explicit `BUILD_DIR`, `MODEL_DIR`, `OUT_DIR`, `PROFILE_ID`, and `ATTEMPT` and
+fails closed. A future result is publishable only if both full gates pass and
+all 12 arrays match, not merely because its speed resembles the diagnostics.
 
 ## Context-depth sweep (llama-bench raw engine rates, fa on, 5 reps)
 
@@ -64,15 +104,26 @@ operating points (2 fresh-server runs each) -> canary battery.
 
 Raw engine rates run above server-suite medians by design (no HTTP/sampling); use the suite median as the serving expectation and this curve for the depth trend. Evidence: `ornith-15-9b-q8.sweep.json` + `ornith-15-9b-q8.meta.json` (model/bench shas inside).
 
-## Published operating point: standard (8K ctx, f16 KV, target-only)
+## Strict operating-point replay: failed output gate
 
-Two fresh-server runs, 12-prompt suite, 512-token responses,
-conventional 99-interval median computed from raw event offsets,
-`cached_tokens=0` verified per request:
+Two fresh-server runs, complete 12-prompt/six-class suite, 512-token cap,
+class-balanced 99-interval medians, target-only TP1/MTP0, and cache zero:
 
-- run A: **`49.588381 tok/s`**
-- run B: **`49.573292 tok/s`**
+- run A: **`49.593582 tok/s`**
+- run B: **`49.515869 tok/s`**
 
-Evidence: `ornith-15-9b-q8-std.benchA.json` / `ornith-15-9b-q8-std.benchB.json` under
-`bench-results/neural-download/operating-points-20260822/`.
-Canary battery (reasoning off, temp 0, objective checks): 8x repeat hash-stability PASS, arithmetic PASS, exact copy PASS, JSON schema PASS — **pass_all=True** (`ornith-15-9b-q8-std.canaries.json`).
+Both performance/cache gates and both objective-canary batteries passed, but
+complete arrays matched **8/12**. `code-review`, `customer-email`,
+`incident-retrospective`, and `sql-debugging` first diverged at generated token
+26, 169, 123, and 256 respectively. There is therefore no paired headline.
+
+Repository-local evidence:
+
+- `../../data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json`
+- `../../data/neural-download-stock-headline-ornith9-20260827-r1a/`
+- `../../data/neural-download-stock-headline-ornith9-20260827-r1b/`
+- `../../data/2026-08-27-neural-download-stock-headline-closure-prereg.json`
+
+The older `49.588381` / `49.573292 tok/s` observations remain historical only;
+their raw artifacts were not retained and the current strict replay does not
+retroactively qualify them.

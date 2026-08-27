@@ -34,9 +34,9 @@
    "stock upstream",
    "beginner"
   ],
-  "published_at": "2026-08-22",
+  "published_at": "2026-08-27",
   "featured_metric": null,
-  "benchmark_status": "The 49.588381/49.573292 varied-suite observations and objective canary summary are preserved in the guide, but their raw operating-point and canary JSON files are not closed in this repository. Import and hash-bind those files, then replay the quality/determinism gate before assigning a strict headline."
+  "benchmark_status": "Strict headline withheld after output-gate failure. Two complete fresh-server, cache-zero, 12-prompt/six-class attempts measured 49.593582 and 49.515869 tok/s and passed both objective-canary batteries, but complete token arrays matched only 8/12 across servers."
  },
  "contributors": [
   {
@@ -46,8 +46,8 @@
    "profile": "https://github.com/steveseguin/b70-optimization-lab",
    "contribution": "Intake verification, bring-up, baselines, depth sweep, operating point, canary battery, package.",
    "status": "integrated",
-   "validated_effect": "Stock-upstream characterization; no lab patches in this package.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-08-22-neural-download-firstwave-baselines.json"
+   "validated_effect": "Stock-upstream characterization; no lab patches in this package. The strict replay retained 49.593582 and 49.515869 tok/s as scoped diagnostics but withheld a headline after 8/12 fresh-server token-array equality.",
+   "evidence": "data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json"
   }
  ],
  "performance_profiles": [
@@ -135,7 +135,7 @@
   }
  ],
  "known_limitations": [
-  "Canary battery is objective self-consistency only; no cross-model oracle.",
+  "The 2026-08-27 strict pair passed both objective-canary batteries but matched only 8/12 complete natural-response token arrays across fresh servers; no general single-user headline is published.",
   "Clean-host beginner flow not yet executed.",
   "The measured decode rate requires local or sufficiently fast direct-attached model storage; a 100 Mb/s NFS-backed mmap reduced the matched audit-host diagnostic from 50.149 to 25.642 tok/s."
  ],
@@ -144,7 +144,7 @@
   "cards": 1,
   "host_ram_min_bytes": 34359738368,
   "host_ram_plus_swap_min_bytes": 34359738368,
-  "model_weight_bytes": 9525661696
+  "model_weight_bytes": 9527501248
  },
  "model": {
   "repository": "ornith-ai/Ornith-1.5-9B-GGUF",
@@ -163,9 +163,9 @@
  },
  "commands": {
   "preflight": "python3 scripts/verify-neural-download-model.py repro/ornith-15-9b-q8-b70/model-manifest.json \"$MODEL_DIR\" && source /opt/intel/oneapi/setvars.sh --force && export ONEAPI_DEVICE_SELECTOR=level_zero:0",
-  "launch": "BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-9B-Q8_0.gguf --alias ornith9b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
+  "launch": "$BUILD_DIR/bin/llama-server --model $MODEL_DIR/Ornith-1.5-9B-Q8_0.gguf --alias ornith9b --reasoning off --ctx-size 8192 --cache-type-k f16 --cache-type-v f16 --device SYCL0 --gpu-layers 99 --split-mode none --flash-attn auto --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --no-cache-prompt --slot-prompt-similarity 0 --fit off --metrics --no-webui --host 127.0.0.1 --port 18100",
   "health": "curl -fsS http://127.0.0.1:18100/health",
-  "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith9b --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0}' --out bench.json",
+  "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18100 --model ornith9b --api-mode native-raw --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 42 --timeout 900 --return-token-ids --require-natural-eos --request-extra-json '{\"cache_prompt\":false,\"seed\":42,\"temperature\":0,\"top_p\":1}' --out performance.json && python3 scripts/neural-download-canaries.py --base-url http://127.0.0.1:18100 --model ornith9b --out canaries.json",
   "stop": "pkill -x llama-server"
  },
  "dependencies": [
@@ -174,6 +174,11 @@
   "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json",
   "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.meta.json",
   "repro/ornith-15-9b-q8-b70/depth-sweep.svg",
+  "data/2026-08-27-neural-download-stock-headline-closure-prereg.json",
+  "data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json",
+  "data/neural-download-stock-headline-ornith9-20260827-r1a/qualification.json",
+  "data/neural-download-stock-headline-ornith9-20260827-r1b/qualification.json",
+  "scripts/run-neural-download-stock-headline-attempt.sh",
   "data/neural-download-audit-host-depth-sweeps-20260822/README.md",
   "scripts/verify-neural-download-model.py",
   "docs/neural-download-packet-standard.md"

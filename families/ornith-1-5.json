@@ -170,11 +170,12 @@
         "evidence": {
           "grade": "C",
           "scope": "Ornith 1.5 9B Q8_0 stock llama.cpp/SYCL one-card deployment",
-          "basis": "two fresh cache-zero serving runs, a seven-point measured 0–32K raw-engine profile, pinned artifact identity, and repeat/arithmetic/copy/JSON canaries are retained; the package has not had a clean-host replay and its quality evidence is scoped self-consistency rather than an external model-quality oracle",
-          "reviewed_at": "2026-08-23",
+          "basis": "two complete fresh-server 12-prompt/six-class, 512-cap, cache-zero runs and both objective-canary batteries are retained, but complete token arrays matched only 8/12 across servers; the serving rates are scoped diagnostics and no strict headline is assigned",
+          "reviewed_at": "2026-08-27",
           "evidence": [
             "repro/ornith-15-9b-q8-b70/README.md",
-            "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json"
+            "repro/ornith-15-9b-q8-b70/ornith-15-9b-q8.sweep.json",
+            "data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json"
           ]
         }
       },
@@ -249,15 +250,15 @@
         "kv": "f16",
         "configured_max_context_tokens": 8192
       },
-      "workload": "two fresh-server runs of the 12-prompt suite, up-to-512-token responses, conventional 99-interval median, target-only, cache zero",
+      "workload": "two fresh-server runs of the complete 12-prompt/six-class suite; 512-token cap; class-balanced 100-event/99-interval decode; target-only; cache zero",
       "metrics": {
         "decode_tok_s": [
-          49.588381,
-          49.573292
+          49.593582386789734,
+          49.51586866321264
         ]
       },
-      "quality": "reasoning-off 8x repeat stability, arithmetic, exact copy, and JSON-schema canaries passed",
-      "evidence": "repro/ornith-15-9b-q8-b70/README.md"
+      "quality": "both workload/cache and objective-canary gates passed, but complete natural-response token arrays matched only 8/12 across fresh servers; strict headline withheld",
+      "evidence": "data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json"
     },
     {
       "id": "ornith-35b-optimized-one-card",

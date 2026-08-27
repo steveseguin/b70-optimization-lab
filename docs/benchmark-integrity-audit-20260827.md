@@ -55,6 +55,15 @@ attempts passed cache-zero and objective-canary gates, and complete token arrays
 matched 12/12. This replaces the old untracked observations rather than
 retroactively validating them. See the [strict result](../data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json).
 
+Ornith 1.5 9B Q8_0 subsequently replayed the missing raw contract, but did not
+qualify a headline. The two complete fresh-server attempts measured
+`49.593582` and `49.515869 tok/s`; both cache/workload gates and both objective
+canary batteries passed, while complete natural-response arrays matched only
+8/12. Four prompts first diverged at generated tokens 26–256. The public cell
+therefore remains blank and is now labeled **withheld after output-gate
+failure**, with the rates retained only as scoped diagnostics. See the
+[comparison](../data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json).
+
 Post-audit closure: Qwen3.8 Q8_0 TP2 subsequently passed the exact missing
 contract on two fresh servers. The full 12-prompt/six-class, 512-cap,
 cache-zero attempts measured `36.733956` and `36.718938 tok/s`, passed both

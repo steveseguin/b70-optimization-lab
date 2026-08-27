@@ -23,7 +23,9 @@ class PublicResultSummaryTests(unittest.TestCase):
                 self.assertIn(f"models/{package['id']}.html", block)
                 metric = package["library"].get("featured_metric")
                 if metric is None:
-                    self.assertIn("strict headline pending", block)
+                    self.assertIn(
+                        MODULE.missing_headline_label(package["library"]), block
+                    )
                 else:
                     self.assertIn(
                         MODULE.format_value(float(metric["value"])), block

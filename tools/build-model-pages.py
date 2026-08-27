@@ -97,6 +97,11 @@ def fmt(value):
     return f"{value:.1f}" if value < 100 else f"{value:.0f}"
 
 
+def missing_headline_label(library):
+    status = str(library.get("benchmark_status", ""))
+    return "strict headline withheld" if "withheld" in status.lower() else "strict headline pending"
+
+
 def axis_span(values):
     values = list(values or [])
     if not values:
@@ -197,6 +202,8 @@ def page(pkg, all_pkgs, family=None):
     fm = lib.get("featured_metric") or {}
     has_featured_metric = isinstance(lib.get("featured_metric"), dict)
     benchmark_status = lib.get("benchmark_status", "Strict benchmark pending")
+    missing_label = missing_headline_label(lib)
+    missing_benchmark_label = missing_label.replace("headline", "benchmark")
     hw = pkg.get("hardware") or {}
     model = pkg.get("model") or {}
     runtime = pkg.get("runtime") or {}
@@ -205,7 +212,7 @@ def page(pkg, all_pkgs, family=None):
     title = (
         f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured — neural.download"
         if has_featured_metric
-        else f"{name} — strict benchmark pending — neural.download"
+        else f"{name} — {missing_benchmark_label} — neural.download"
     )
     url = f"{SITE}models/{pid}.html"
     status = STATUS_LABEL.get(pkg.get("status"), pkg.get("status", "").title())
@@ -311,7 +318,7 @@ def page(pkg, all_pkgs, family=None):
         )
     related = [p for p in all_pkgs if p["id"] != pid and p["library"].get("model_family") == lib.get("model_family")][:4]
     related_html = "".join(
-        f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else "strict headline pending")} · {esc(p["library"].get("runtime_label", ""))}</span></a>'
+        f'<a href="{esc(p["id"])}.html"><b>{esc(p["name"])}</b><span>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))} · {esc(p["library"].get("runtime_label", ""))}</span></a>'
         for p in related
     )
     family_href = f'{esc(family["id"])}.html' if family else ""
@@ -403,19 +410,19 @@ def page(pkg, all_pkgs, family=None):
         f'<p class="scope">{esc(fm.get("scope", ""))} {evidence_link}</p>{scope_gloss}'
         if has_featured_metric
         else (
-            '<h2 id="measured">Public headline <span class="badge todo">Pending</span></h2>'
+            f'<h2 id="measured">Public headline <span class="badge todo">{"Withheld" if "withheld" in missing_label else "Pending"}</span></h2>'
             f'<div class="placeholder"><p>{esc(benchmark_status)} Diagnostic measurements remain in the guide and evidence, but none is presented as the package headline.</p></div>'
         )
     )
     seo_title = (
         f"{name} — {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured"
         if has_featured_metric
-        else f"{name} — strict benchmark pending"
+        else f"{name} — {missing_benchmark_label}"
     )
     seo_alt = (
         f"{name}: {fmt(fm.get('value'))} {fm.get('unit', 'tok/s')} measured on Intel Arc Pro B70 — neural.download"
         if has_featured_metric
-        else f"{name}: strict benchmark pending on Intel Arc Pro B70 — neural.download"
+        else f"{name}: {missing_benchmark_label} on Intel Arc Pro B70 — neural.download"
     )
     return f"""<!doctype html>
 <html lang="en">
@@ -576,7 +583,7 @@ def index_page(pkgs, families):
     )
     rows = "".join(
         f'<a class="guide-card" href="{esc(p["id"])}.html"><div class="gc-top"><div class="gc-n">{esc(STATUS_LABEL.get(p.get("status"), p.get("status", "")))} · {esc(p["library"].get("runtime_label", ""))}</div><h3>{esc(p["name"])}</h3></div>'
-        f'<div class="gc-body"><p>{esc(p["library"].get("summary", ""))}</p><p class="gc-meta"><strong>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else "strict headline pending")}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
+        f'<div class="gc-body"><p>{esc(p["library"].get("summary", ""))}</p><p class="gc-meta"><strong>{esc((fmt((p["library"].get("featured_metric") or {}).get("value")) + " tok/s") if p["library"].get("featured_metric") else missing_headline_label(p["library"]))}</strong>{" measured" if p["library"].get("featured_metric") else ""} · {esc((p.get("hardware") or {}).get("cards", 1))}× B70 · {esc(p["library"].get("quantization", ""))}</p></div></a>'
         for p in display_pkgs
     )
     return f"""<!doctype html>

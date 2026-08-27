@@ -19,6 +19,11 @@ def format_value(value: float) -> str:
     return f"{value:,.6f}".rstrip("0").rstrip(".")
 
 
+def missing_headline_label(library: dict) -> str:
+    status = str(library.get("benchmark_status", ""))
+    return "strict headline withheld" if "withheld" in status.lower() else "strict headline pending"
+
+
 def render() -> str:
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     packages = sorted(
@@ -48,7 +53,7 @@ def render() -> str:
             f"**`{format_value(float(metric['value']))} {metric['unit']}`**<br>"
             f"{metric['label']}"
             if isinstance(metric, dict)
-            else f"**strict headline pending**<br>{library['benchmark_status']}"
+            else f"**{missing_headline_label(library)}**<br>{library['benchmark_status']}"
         )
         lines.append(
             f"| **[{package['name']}]({detail})**<br>{deployment} | "

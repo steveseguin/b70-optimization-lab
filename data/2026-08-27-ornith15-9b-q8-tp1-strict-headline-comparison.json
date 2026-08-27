@@ -1,0 +1,86 @@
+{
+  "comparison": {
+    "complete_token_arrays_exact": false,
+    "divergent_prompts": [
+      {
+        "first_divergence_token_zero_based": 26,
+        "left_token_count": 512,
+        "prompt_id": "code-review",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 169,
+        "left_token_count": 512,
+        "prompt_id": "customer-email",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 123,
+        "left_token_count": 512,
+        "prompt_id": "incident-retrospective",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 256,
+        "left_token_count": 512,
+        "prompt_id": "sql-debugging",
+        "right_token_count": 512
+      }
+    ],
+    "exact_prompts": 8,
+    "total_prompts": 12
+  },
+  "left": {
+    "artifacts": {
+      "canaries": {
+        "path": "data/neural-download-stock-headline-ornith9-20260827-r1a/canaries.json",
+        "sha256": "5c73d4f11c949b0af5e51e41a182477ee2a2ac4a99a6ed27e67fcc069e428b0b"
+      },
+      "identity": {
+        "path": "data/neural-download-stock-headline-ornith9-20260827-r1a/campaign-identity.json",
+        "sha256": "458320650fe16504794e2716d03abd823968772826d48603d50147848b977a24"
+      },
+      "performance": {
+        "path": "data/neural-download-stock-headline-ornith9-20260827-r1a/performance.json",
+        "sha256": "7309a4a1548f81a0cc229719fbf6a2c742047c0829432b61e69d3c0c49c56288"
+      }
+    },
+    "attempt": "ornith9-r1a",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 49.593582386789734,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "ornith15-9b-q8-tp1"
+  },
+  "qualification": {
+    "all_workload_and_canary_gates_passed": true,
+    "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+    "strict_pair_qualified": false
+  },
+  "right": {
+    "artifacts": {
+      "canaries": {
+        "path": "data/neural-download-stock-headline-ornith9-20260827-r1b/canaries.json",
+        "sha256": "5c73d4f11c949b0af5e51e41a182477ee2a2ac4a99a6ed27e67fcc069e428b0b"
+      },
+      "identity": {
+        "path": "data/neural-download-stock-headline-ornith9-20260827-r1b/campaign-identity.json",
+        "sha256": "68011fcbf3c98bb9ebdf6684627c1b58dfd46104400849001f5b80a5c597b54b"
+      },
+      "performance": {
+        "path": "data/neural-download-stock-headline-ornith9-20260827-r1b/performance.json",
+        "sha256": "311a1da6d4e1e09baeeeb2a2a608036943852b4c0044b634f0b003c80b009a39"
+      }
+    },
+    "attempt": "ornith9-r1b",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 49.51586866321264,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "ornith15-9b-q8-tp1"
+  },
+  "schema": "neural.download.strict-attempt-output-comparison.v1",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+}

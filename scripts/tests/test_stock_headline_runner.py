@@ -11,6 +11,8 @@ PREREG = ROOT / "data/2026-08-27-neural-download-stock-headline-closure-prereg.j
 LFM_RESULT = ROOT / "data/2026-08-27-lfm25-q8-tp1-strict-headline-result.json"
 LFM_COMPARISON = ROOT / "data/2026-08-27-lfm25-q8-tp1-strict-headline-comparison.json"
 LFM_PACKAGE = ROOT / "packages/lfm25-26b-q8-b70/package.json"
+ORNITH9_COMPARISON = ROOT / "data/2026-08-27-ornith15-9b-q8-tp1-strict-headline-comparison.json"
+ORNITH9_PACKAGE = ROOT / "packages/ornith-15-9b-q8-b70/package.json"
 
 
 class StockHeadlineRunnerTest(unittest.TestCase):
@@ -67,6 +69,17 @@ class StockHeadlineRunnerTest(unittest.TestCase):
         self.assertAlmostEqual(
             package["library"]["featured_metric"]["value"], expected, places=12
         )
+
+    def test_ornith9_failed_pair_cannot_fill_the_headline(self) -> None:
+        comparison = json.loads(ORNITH9_COMPARISON.read_text())
+        package = json.loads(ORNITH9_PACKAGE.read_text())
+        self.assertTrue(
+            comparison["qualification"]["all_workload_and_canary_gates_passed"]
+        )
+        self.assertFalse(comparison["qualification"]["strict_pair_qualified"])
+        self.assertEqual(comparison["comparison"]["exact_prompts"], 8)
+        self.assertIsNone(package["library"]["featured_metric"])
+        self.assertIn("8/12", package["library"]["benchmark_status"])
 
 
 if __name__ == "__main__":
