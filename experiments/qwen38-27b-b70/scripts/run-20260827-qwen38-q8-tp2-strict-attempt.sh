@@ -99,12 +99,13 @@ tr '\0' '\n' <"/proc/${llama_pid}/environ" \
 python3 "${repo}/scripts/bench-openai-realistic-suite.py" \
   --base-url "http://127.0.0.1:${port}" \
   --model qwen38-q8-tp2-reasoning-off \
-  --api-mode completions \
+  --api-mode native-raw \
   --suite "${suite}" \
   --max-tokens 512 --metric-tokens 100 --seed 42 --timeout 900 \
   --return-token-ids --require-natural-eos \
   --request-extra-json '{"cache_prompt":false,"seed":42,"temperature":0,"top_p":1}' \
-  --out "${out_dir}/performance.json"
+  --out "${out_dir}/performance.json" \
+  >"${out_dir}/performance.stdout"
 
 python3 "${repo}/scripts/neural-download-canaries.py" \
   --base-url "http://127.0.0.1:${port}" \

@@ -59,19 +59,26 @@ def post_stream(
     request_id: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any]
-    if api_mode == "native":
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-        template_req = urllib.request.Request(
-            f"{base_url.rstrip('/')}/apply-template",
-            data=json.dumps({"messages": messages}).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(template_req, timeout=timeout) as template_resp:
-            rendered = json.loads(template_resp.read())["prompt"]
+    native_mode = api_mode in ("native", "native-raw")
+    if native_mode:
+        if api_mode == "native":
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+            template_req = urllib.request.Request(
+                f"{base_url.rstrip('/')}/apply-template",
+                data=json.dumps({"messages": messages}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(template_req, timeout=timeout) as template_resp:
+                rendered = json.loads(template_resp.read())["prompt"]
+        else:
+            # Preserve the raw-prompt semantics of /v1/completions while using
+            # llama.cpp's native stream, which exposes one generated token ID
+            # per event when return_tokens=true.
+            rendered = prompt
         payload = {
             "prompt": rendered,
             "n_predict": max_tokens,
@@ -111,7 +118,7 @@ def post_stream(
 
     endpoint_url = (
         f"{base_url.rstrip('/')}/{endpoint}"
-        if api_mode == "native"
+        if native_mode
         else f"{base_url.rstrip('/')}/v1/{endpoint}"
     )
     req = urllib.request.Request(
@@ -152,7 +159,7 @@ def post_stream(
                 response_ids.append(event_id)
             if event.get("usage"):
                 usage = event["usage"]
-            if api_mode == "native":
+            if native_mode:
                 choice_token_ids = event.get("tokens")
                 if isinstance(choice_token_ids, list):
                     now = time.perf_counter()
@@ -172,6 +179,11 @@ def post_stream(
                     text_parts.append(token_text)
                     chunk_offsets.append(now - started)
                 if event.get("stop"):
+                    stop_type = event.get("stop_type")
+                    if stop_type == "limit":
+                        finish_reasons.append("length")
+                    elif stop_type in ("eos", "word"):
+                        finish_reasons.append("stop")
                     completion_count = event.get("tokens_predicted")
                     prompt_count = event.get("tokens_evaluated")
                     native_cached = native_cached_tokens(event)
@@ -460,7 +472,9 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:18260")
     parser.add_argument("--model", default="gemma4-26b-a4b-q8")
     parser.add_argument(
-        "--api-mode", choices=("chat", "completions", "native"), default="chat"
+        "--api-mode",
+        choices=("chat", "completions", "native", "native-raw"),
+        default="chat",
     )
     parser.add_argument(
         "--suite",

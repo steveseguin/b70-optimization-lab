@@ -1,0 +1,18 @@
+{
+  "attempt": "qwen38-q8-tp2-strict-reasoningoff-20260827-r1a",
+  "claim_status": "invalid-not-publishable",
+  "diagnostic_class_balanced_tok_s": 36.76959586731476,
+  "failure": {
+    "fresh_response_validity": false,
+    "performance_gate_passed": false,
+    "reason": "The llama.cpp OpenAI-compatible /v1/completions stream returned zero generated token IDs for every row despite return_token_ids=true.",
+    "stream_token_id_counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  },
+  "non_failures": {
+    "cached_tokens_all_zero": true,
+    "completed_prompt_count": 12,
+    "prompt_count": 12
+  },
+  "raw_evidence": "qwen38-q8-tp2-strict-reasoningoff-20260827-r1a/performance.json",
+  "retry_policy": "Do not run R1B. R2 uses create-only identities and native /completion with the same raw prompts so token IDs are observable."
+}

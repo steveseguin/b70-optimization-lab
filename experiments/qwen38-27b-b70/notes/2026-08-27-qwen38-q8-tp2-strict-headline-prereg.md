@@ -21,8 +21,11 @@ identity.
   reasoning off, XPU Graph off, one active slot, 8,192-token capacity, and
   server-side prompt caching disabled;
 - full 12-prompt/six-class suite, one request per prompt, 512-token natural
-  cap, streamed token IDs, temperature zero, prompt cache disabled per request,
-  and `cached_tokens=0` on every row;
+  cap, temperature zero, prompt cache disabled per request, and
+  `cached_tokens=0` on every row;
+- raw prompts go to llama.cpp's native `/completion` endpoint with
+  `return_tokens=true`. This is transport-equivalent to raw OpenAI completions
+  for prompt content, while exposing one generated token ID per stream event;
 - class-balanced 99-interval rate over events 1 through 100;
 - two fresh server lifetimes. No prompt, KV, response, history, or warmed-prompt
   reuse and no prompt subset.
@@ -41,3 +44,16 @@ than treated as a regression.
 
 No rate is a package headline until all gates pass. No Q8 TP1, MTP, 32K, or
 concurrency authority transfers from this short single-user TP2 result.
+
+## Transport amendment after invalid attempt R1A
+
+R1A used `/v1/completions` with `return_token_ids=true`. This llama.cpp build
+does not expose token IDs through that compatibility endpoint, so all twelve
+rows had zero captured token IDs and the freshness/performance gate rejected
+the attempt. Its diagnostic 36.769596 tok/s is retained in evidence but is not
+a claim and R1B was not run.
+
+The only amendment for R2 is the native raw-prompt transport above. It does not
+apply a chat template or alter any suite prompt. The workload, model/runtime
+identity, sampling, cache policy, metric, and two-fresh-server gates remain
+frozen. R2 uses new create-only attempt identities.

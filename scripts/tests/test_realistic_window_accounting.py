@@ -8,6 +8,7 @@ import json
 import math
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).parents[1] / "qualify_realistic_window_metrics.py"
@@ -44,6 +45,71 @@ class EventWindowRateTest(unittest.TestCase):
         self.assertEqual(MODULE.event_window_rates([0.0] * 99, 100), (None, None))
         self.assertEqual(MODULE.event_window_rates([1.0] * 100, 100), (None, None))
         self.assertEqual(MODULE.event_window_rates([0.0], 1), (None, None))
+
+
+class NativeRawTransportTest(unittest.TestCase):
+    class Response:
+        def __init__(self, lines):
+            self.lines = lines
+            self.headers = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def __iter__(self):
+            return iter(self.lines)
+
+    def test_native_raw_preserves_prompt_and_captures_token_ids(self) -> None:
+        requests = []
+        events = [
+            {"content": "A", "tokens": [101], "stop": False},
+            {
+                "content": "",
+                "tokens": [],
+                "stop": True,
+                "stop_type": "limit",
+                "tokens_predicted": 1,
+                "tokens_evaluated": 7,
+                "timings": {"cache_n": 0},
+            },
+        ]
+        response = self.Response(
+            [("data: " + json.dumps(event) + "\n").encode("utf-8") for event in events]
+        )
+
+        def fake_urlopen(request, timeout):
+            requests.append((request, timeout))
+            return response
+
+        with mock.patch.object(BENCH_MODULE.urllib.request, "urlopen", fake_urlopen):
+            row = BENCH_MODULE.post_stream(
+                base_url="http://127.0.0.1:1234",
+                model="unused-native-model-name",
+                prompt="RAW PROMPT\nwith exact whitespace",
+                max_tokens=512,
+                timeout=30,
+                api_mode="native-raw",
+                seed=42,
+                request_extra={"cache_prompt": False},
+                return_token_ids=True,
+                system_prompt=None,
+            )
+
+        self.assertEqual(len(requests), 1)
+        request, timeout = requests[0]
+        self.assertEqual(request.full_url, "http://127.0.0.1:1234/completion")
+        self.assertEqual(timeout, 30)
+        payload = json.loads(request.data)
+        self.assertEqual(payload["prompt"], "RAW PROMPT\nwith exact whitespace")
+        self.assertTrue(payload["return_tokens"])
+        self.assertFalse(payload["cache_prompt"])
+        self.assertEqual(row["token_ids"], [101])
+        self.assertEqual(row["stream_token_id_count"], 1)
+        self.assertEqual(row["finish_reasons"], ["length"])
+        self.assertEqual(row["usage"]["prompt_tokens_details"]["cached_tokens"], 0)
 
     def test_class_balancing_prevents_row_count_weighting(self) -> None:
         rows = [
