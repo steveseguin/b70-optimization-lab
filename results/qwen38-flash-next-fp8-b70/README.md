@@ -4,10 +4,11 @@ Status: **research screen; not deployment-qualified**
 
 Last updated: 2026-08-27
 
-This is the first instrumentation-free TP4/EP4 server result for the official
+This packet covers the first instrumentation-free TP4/EP4 server results for the official
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
-healthy, and serve real requests through a formal exact-8K context screen. It
+healthy, serve cache-zero MTP0 context through a formal exact-8K screen, and
+run a matched MTP1/512 research screen at 9.372 tok/s. It
 does not yet establish a production recipe, a fully quality-qualified speed,
 stable repeated serving at 8K, 16K+ behavior, or vision support.
 
@@ -77,11 +78,38 @@ and the source series is documented in the
 The next context points are 16K/24K/32K, but the 8K repeated-serving failure
 must be understood and a larger fixed-cache design is needed before they are
 responsible run targets. TP1 and TP2 require a separate fit/offload design.
-MTP1+ requires a
-performance-preserving port to the newer speculative runtime interface. Graph,
+MTP1/512 is now separately screened below. MTP1 at deeper context and MTP2-4
+remain gaps. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
+
+## Matched TP4 MTP1 screen
+
+The additive MTP1 arm uses vLLM source `1372c62d975c554f4b465c8299bc5f3295301ceb`
+with the same preserved staged XPU runtime built from kernel source `2f829747`.
+It adds one native MTP draft token while retaining TP4/EP4, eager/graph-off,
+configured maximum 512, automatic KV precision, fixed 192-MiB cache, disabled
+prefix caching, and the same selective host placement. The full 51B FP8
+n-gram embedding is resident as four host-RAM TP shards and remains
+GPU-addressable through UVA; it is not streamed from the USB checkpoint during
+decode.
+
+An audit found that the earlier apparent MTP1 parity failure had omitted the
+baseline's `enable_thinking=false` chat-template setting. With that setting
+restored, the unchanged preserved-runtime MTP1 arm matched all 26 MTP0 baseline
+comparisons, repeated one exact hash 16/16 times, passed the small cache-zero
+needle, and reported zero cached/created-cache tokens on all 24 quality
+requests. The inherited short boundary remains 5/7, so this is Grade-C research
+evidence rather than deployment qualification.
+
+Three matched p146/o256/c1 rows measured `9.773840621`, `9.372254368`, and
+`8.107468408 tok/s` after first text, median **`9.372254368 tok/s`**. Every row
+returned all 256 tokens with the MTP0 target hash. The median is 79.48% above
+the separate MTP0 `5.221849709 tok/s` control. Cumulative metrics accepted
+503/505 draft tokens. MTP0 remains the packet's primary historical cell; MTP1
+is a separate matrix result and does not replace it. Receipt:
+[`20260827-tp4-mtp1-512-attempt3-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json).
 
 ## Additive 1K context screen
 

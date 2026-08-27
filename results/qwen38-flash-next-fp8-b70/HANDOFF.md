@@ -8,20 +8,27 @@ intact while later matrix cells are added.
 
 - Model: `/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8`.
 - Model revision: `bcd9f01ddc9cff2316eb84281bebcd5b058bddce`.
-- vLLM: `/home/steve/src/vllm-current-main` at
-  `658965050f259999e635b52a850004a3771cd644`.
-- XPU kernels: `/home/steve/src/vllm-xpu-kernels` at
-  `2f829747503c77d4814834dffd0840fb1dd9f75a`.
-- Runtime: `/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70`.
+- Current vLLM source checkout: `/home/steve/src/vllm-current-main` at
+  `1372c62d975c554f4b465c8299bc5f3295301ceb`. Attempt 19 used
+  `658965050f259999e635b52a850004a3771cd644`; the later changes are the MTP
+  tests and fail-closed legacy speculative adapter, while the MTP0 target route
+  is unchanged.
+- Current XPU-kernel source checkout: `/home/steve/src/vllm-xpu-kernels` at
+  `ad25aa9f69a2171612b9c6b83dfa82c69559f9e4`.
+- Preserved runtime used by MTP0 and the accepted untreated MTP1 control:
+  `/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70`, built from
+  kernel source `2f829747503c77d4814834dffd0840fb1dd9f75a`.
 - Launcher:
   `experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp0-512.sh`.
 - Attempt-19 evidence root:
   `/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt19`.
 
-Apply vLLM patches `0001`–`0010`, `0012`, and `0014`–`0016` in order on base
+Apply vLLM patches `0001`–`0010`, `0012`, and `0014`–`0018` in order on base
 `76cfe1cd88d30d525eec8be5bff75f8b77471c88`. Do not apply diagnostic patches
-`0011` or `0013` to a qualification or timing tree. Apply all four kernel
-patches on base `0fd18a7c08a64d2645bf083cfa5576200b61b02c`. The authoritative
+`0011` or `0013` to a qualification or timing tree. Apply all five kernel
+patches on base `0fd18a7c08a64d2645bf083cfa5576200b61b02c`. Patch `0005` is the
+paused exact-runtime treatment and is not present in the accepted preserved
+stage. The authoritative
 checksums are in `patches/qwen38-flash-next-fp8-b70/README.md`.
 
 The exact pre-upstream-sync kernel tree also has a verified self-contained
@@ -72,8 +79,28 @@ stopped during row 3, so no legacy median or curve point is authorized. Commit
 Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
 
-Next, forward-port the speculative runtime for MTP1. Defer 16K+ until the 8K
-repeated-serving boundary and larger fixed-cache requirement have a bounded
-design. TP1/TP2 need a new memory design
+Next, qualify MTP1 at deeper context and audit the XPU host-lookup overlap.
+Defer 16K+ until the 8K repeated-serving boundary and larger fixed-cache
+requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.
+
+## TP4 MTP1/512 closeout
+
+The performance-preserving speculative adapter is complete at vLLM
+`1372c62d975c554f4b465c8299bc5f3295301ceb`. The matched untreated-runtime arm
+at attempt 3 passed all 26 MTP0 baseline comparisons once both clients used
+`enable_thinking=false`, held the fixed-set repeat at one hash for 16/16 runs,
+passed the small cache-zero needle, and measured `9.773841 / 9.372254 /
+8.107468 tok/s`, median `9.372254 tok/s` after first text. It accepted 503/505
+drafts in cumulative endpoint metrics. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json`.
+
+Attempt 2 remains preserved as a client-identity mismatch, not a runtime
+parity failure. The exact-runtime candidate and its component gates remain
+preserved but are paused because the unchanged runtime passed. Next qualify
+MTP1 at deeper context and audit whether the current XPU UVA lookup overlaps
+host-row transfer like the official NVIDIA PLE-prefetch design. Keep MTP0 and
+MTP1 as separate Grade-C cells; neither is deployment- or record-eligible.
+The deployment audit and bounded replacement gate are in
+`experiments/qwen38-flash-next-fp8-b70/notes/2026-08-27-ple-deployment-audit.md`.

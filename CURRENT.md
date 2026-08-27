@@ -942,8 +942,8 @@ production baseline: both short batteries passed 5/7 strict exact cases, but
 the substantive `30`/`14` miss remained and one of 16 total greedy repeats
 diverged. Its three exact-identity exploratory samples measured a median
 `5.221850 tok/s` after first text. This is an honest TP4/EP4/eager/MTP0/512
-research cell, not a deployment or record candidate. TP1, TP2, graph, MTP1+,
-deeper context, and fresh-boot determinism remain gaps. The public
+research cell, not a deployment or record candidate. TP1, TP2, graph,
+MTP2-4, deeper context, and fresh-boot determinism remain gaps. The public
 [`qwen-flash-next` family](families/qwen-flash-next.json) now accounts for the
 exact FP8 child artifact and the screened matrix without inventing estimates.
 See the
@@ -972,8 +972,19 @@ at `3.979729 tok/s`. Two secondary rows completed at `5.170404 / 5.182353
 tok/s`, but the runtime stopped during the required third row; no legacy median
 or curve point is authorized. The formal 8K cell is research-screened with a
 stability caveat, and helper commit `08a865143` now rejects incomplete streams.
-MTP1 still requires the performance-preserving runtime port; 16K+ waits on a
-bounded stability and larger-cache design.
+The performance-preserving MTP1 adapter then reached a healthy TP4/EP4 API.
+An audit found that the first quality arm had omitted the MTP0 baseline's
+`enable_thinking=false` client setting, so its visible reasoning-text mismatch
+was not valid runtime-parity evidence. The corrected unchanged-runtime arm
+matched all 26 baseline comparisons, repeated one hash 16/16 times, passed the
+small cache-zero needle, and measured `9.773841 / 9.372254 / 8.107468 tok/s`,
+median `9.372254 tok/s` after first text with 503/505 cumulative draft tokens
+accepted. This closes TP4/eager/MTP1/512 as a separate Grade-C research cell;
+it does not replace the MTP0 primary result. Deeper MTP1, MTP2-4, and 16K+
+wait on bounded context/cache work. The official deployment design keeps the
+51B n-gram lookup table in host RAM with asynchronous row prefetch; the current
+XPU lane keeps all four TP shards host-resident through selective UVA, and its
+overlap behavior remains an explicit optimization audit.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

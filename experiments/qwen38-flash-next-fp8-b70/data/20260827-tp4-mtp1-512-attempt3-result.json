@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "status": "lab-screened-quality-matched",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-512-r1",
+  "attempt": 3,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-512-r1-attempt3",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 1,
+    "num_speculative_tokens": 1,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "diagnostics": "none"
+  },
+  "placement": {
+    "backend": "selective UVA",
+    "parameters": [
+      "ple_embedding.ngram_embedding.weight",
+      "embed_tokens.weight"
+    ],
+    "reported_offload_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "interpretation": "The TP shards of the 51B FP8 PLE n-gram embedding plus input embedding remain resident in host RAM and GPU-addressable through UVA after checkpoint load; they are not streamed from the USB volume during decode."
+  },
+  "serving": {
+    "health_gate": "passed",
+    "reported_max_model_len": 512,
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "kv_cache_tokens": 870,
+    "maximum_concurrency_at_512": 1.7,
+    "shutdown": {
+      "classification": "controlled-stop",
+      "residual_processes": 0,
+      "residual_listeners": 0,
+      "api_application_shutdown_complete": true,
+      "worker_shutdown_done_ranks_logged": [0, 2],
+      "caveat": "The API and engine completed controlled shutdown and no process or listener remained; ranks 1 and 3 did not emit their final worker-complete line before the launcher cleanup bound."
+    }
+  },
+  "quality": {
+    "baseline_raw_json": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt1/quality-v2-short-and-4k.json",
+    "baseline_raw_json_sha256": "a458747f6c84b1adbfbf4dff77ab8c5ffabf5446a990fc6711a66ae1119389b4",
+    "candidate_raw_json_sha256": "884c6bc273af83486e0a63f807c13d4b1167a0e96a05ee01dc5d7b7b4b7643e6",
+    "helper_exit_code": 1,
+    "helper_exit_code_interpretation": "Expected because the inherited target baseline itself passes five of seven strict cases; the stricter baseline comparison is authoritative.",
+    "baseline_status": "passed",
+    "baseline_match_all": true,
+    "baseline_comparisons_passed": 26,
+    "baseline_comparisons_total": 26,
+    "exact_pass_count": 5,
+    "exact_case_count": 7,
+    "inherited_exact_failures": ["logic", "code_execution"],
+    "repeat_protocol": "fixed-set-v2",
+    "repeat_count": 16,
+    "repeat_unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "repeat_pass": true,
+    "small_needle_requested_filler_tokens": 300,
+    "small_needle_actual_prompt_tokens": 317,
+    "small_needle_usage_prompt_tokens": 329,
+    "small_needle_sha256": "1583fb313bb7b240d09b6419481427b0d55f5b21d4ec5c5317a343d667744ad1",
+    "small_needle_pass": true,
+    "requests_audited": 24,
+    "cached_and_created_cache_values_all_zero": true,
+    "responses_complete_by_usage": true,
+    "interpretation": "With the baseline's enable_thinking=false client setting restored, the untreated preserved-runtime MTP1 arm exactly matches every MTP0 normalized output and hash. Attempt 2's apparent regression was a client-identity mismatch, not evidence of model/runtime corruption."
+  },
+  "speculative_decode": {
+    "engaged": true,
+    "metrics_windows": 21,
+    "windows_with_positive_accepted_and_drafted_counts": 21,
+    "cumulative_drafts": 505,
+    "cumulative_draft_tokens": 505,
+    "cumulative_accepted_tokens": 503,
+    "cumulative_acceptance_percent": 99.60396039603961,
+    "counter_caveat": "The cumulative metrics include the quality suite, one untimed speed warmup, and three measured speed rows; they prove engagement but are not per-row timing counters."
+  },
+  "speed": {
+    "workload": "p146/o256/c1, three sequential measured requests after one preregistered untimed warmup, full-output rate after first text",
+    "prompt_tokens": [146, 146, 146],
+    "completion_tokens": [256, 256, 256],
+    "output_sha256": [
+      "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+      "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+      "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+    ],
+    "decode_tok_s_after_first_text": [
+      9.773840621000225,
+      9.37225436776222,
+      8.107468408397532
+    ],
+    "median_decode_tok_s_after_first_text": 9.37225436776222,
+    "wall_output_tok_s": [
+      7.0459003007659495,
+      7.1863720371487485,
+      6.255416947487481
+    ],
+    "median_wall_output_tok_s": 7.0459003007659495,
+    "ttft_s": [
+      10.140820227010408,
+      8.308315517002484,
+      9.348705686017638
+    ],
+    "mtp0_reference_median_tok_s": 5.221849709057954,
+    "absolute_gain_tok_s": 4.150404658704266,
+    "uplift_percent": 79.481503489173,
+    "accounting_caveat": "This is the same narrow after-first-text repetitive-prompt screen as the MTP0 control, not the conventional realistic-suite 99-interval final gate."
+  },
+  "qualification": {
+    "healthy_tp4_api": "pass",
+    "native_mtp1_engagement": "pass",
+    "complete_responses": "pass",
+    "matched_target_output_parity": "pass",
+    "throughput": "pass",
+    "promotion_eligible": false,
+    "site_state": "lab-screened",
+    "evidence_grade": "C",
+    "preserve_mtp0_primary": true,
+    "next_gate": "Treat TP4/eager/MTP1/512 as a separate research-screened cell. Keep MTP0 primary, leave the exact-runtime candidate paused, and qualify deeper MTP1 context before any deployment claim."
+  },
+  "sha256": {
+    "server.log": "1e5a2548dee99a9a80fc487b78b27a3cf00f3dd2b6c10adfee7b2d44b10ea976",
+    "identity.txt": "b6eb83fe80a4ec95714aed9d952030fc5d7fd466c864d3217ab72ed1c021426d",
+    "staged-runtime-preflight.txt": "ce0656203eb33063ec34c790b81c87940df559edef8d8a8fccb15b989573f060",
+    "models-after-ready.json": "ccccc83758df6750fe9c5e72bd8582c58485313dbeafb072ac80e2b062eabfdd",
+    "quality-v2-short-repeat-and-small-needle.json": "884c6bc273af83486e0a63f807c13d4b1167a0e96a05ee01dc5d7b7b4b7643e6",
+    "quality-v2-invocation.log": "e2e78f7fcb15954602cf2cc2b76cd2f26c17a75ac5b897fb61c10ffd7565366c",
+    "bench-p128-o256-c1-r1.json": "55387ffbf28cfc488694b8daec9e5326c0b98b407607d27f3a5f95bcf6fd2684",
+    "bench-p128-o256-c1-r2.json": "2fcfb76c452385882ddfcdf0e10349872df80d9d3b316c705afafe6beeb43fd1",
+    "bench-p128-o256-c1-r3.json": "e312de5f7187f7a527bf5ac68ec2857b9701c3fc37f4254775ccebbc26498eb7",
+    "speculative-metrics-windows.log": "3080e5fa208b8225c75089172a42e969549a32b519db53e6d91b394e22d6b4db",
+    "metrics-after-speed.txt": "83ab03fd076b53ccb35ed0b2285a4e24d43d0eb6b344d79b40ac84871ea9999e"
+  }
+}

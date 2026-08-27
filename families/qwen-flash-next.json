@@ -6,7 +6,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-27",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text through a formal exact-8K screen on four B70s; the lane remains research-only because short quality is still 5/7 and the third 8K comparison request exposed a runtime-stability boundary.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text through a formal exact-8K MTP0 screen plus a matched TP4/MTP1/512 screen at 9.372 tok/s on four B70s; the lane remains research-only because short quality is still 5/7 and deeper MTP1 context is unqualified.",
   "architecture": {
     "class": "Qwen4Exp hybrid Gated DeltaNet/QSA sparse MoE",
     "model_type": "qwen4_exp",
@@ -21,7 +21,7 @@
   "dimensions": {
     "weight_revision": ["qwen38-flash-next"],
     "weight_quantization": ["FP8 block-128"],
-    "runtime": ["vLLM XPU 658965050 + kernels 2f829747"],
+    "runtime": ["vLLM XPU 658965050 + kernels 2f829747", "vLLM XPU 1372c62d + staged kernels 2f829747"],
     "tp": [1, 2, 4],
     "ep": [1, 2, 4],
     "mtp": [0, 1, 2, 3, 4],
@@ -74,14 +74,15 @@
     },
     "quality_evidence": {
       "band": "research-only-context-screen",
-      "scope": "Short quality remains 5/7; the 1K arm passed its needle, repeats, and cache-zero realistic timing gate; the protocol-v2 2K retry passed its fixed-set sensitivity, repeat, needle, and formal gates; the additive 4K arm exactly matched the 2K short/repeat outputs and passed its cache-zero needle plus formal depth gate; the additive 8K arm again matched quality, passed its exact needle and formal depth gate, then stopped during the third legacy-comparison row, so deployment and a legacy 8K curve point remain blocked; the original under-specified 2K attempt remains retained as quarantined evidence; no 16K+, vision, or clean-host qualification",
+      "scope": "Short quality remains 5/7; MTP0 passed screened 1K/2K/4K and formal 8K gates; matched TP4/MTP1/512 reproduced all 26 MTP0 baseline comparisons, passed 16/16 fixed-set repeats and a small cache-zero needle, and measured 9.372 tok/s; deeper MTP1 context, MTP2-4, 16K+, vision, clean-host qualification, and deployment remain open",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-screen.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json",
-        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json"
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
       ]
     },
     "popularity": {
@@ -128,6 +129,49 @@
         {"metric": "decode_tok_s", "index": 0, "value": 5.221849709057954, "label": "median research screen; short quality failed"}
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-a3",
+      "state": "lab-screened",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 0,
+        "configured_max_context_tokens": 512,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-matched-screen-v1",
+      "measurement_class": "research-only target-matched MTP HTTP speed screen",
+      "promotion_status": "not promotion eligible; inherited short quality remains 5/7",
+      "quality_scope": "All 26 MTP0 baseline comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; small needle passed; all 24 quality requests cache-zero",
+      "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
+      "metrics": {
+        "decode_tok_s": [9.37225436776222],
+        "ttft_ms": [9348.705686017638]
+      },
+      "raw_observations": {
+        "decode_tok_s": [9.773840621000225, 9.37225436776222, 8.107468408397532],
+        "ttft_ms": [10140.820227010408, 8308.315517002484, 9348.705686017638],
+        "mtp0_reference_median_tok_s": 5.221849709057954,
+        "uplift_percent": 79.481503489173,
+        "cumulative_draft_tokens": 505,
+        "cumulative_accepted_tokens": 503,
+        "aggregation": "median of three matched same-server observations; all raw values remain in the evidence receipt"
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 9.37225436776222, "label": "median matched MTP1 research screen; inherited short quality 5/7"}
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
     },
     {
       "id": "qwen38-flash-next-fp8-tp4-context1k-a1",
@@ -361,6 +405,40 @@
         "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
       },
       "manifest": "results/qwen38-flash-next-fp8-b70/README.md"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-research",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 MTP1 research screen",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+      "cards": 4,
+      "status": "research-only-quality-caveat",
+      "evidence_level": "B70-screened",
+      "coverage": ["TP4/EP4", "MTP1", "eager", "text-only", "configured max 512", "matched MTP0 quality plus 16/16 repeat and small needle"],
+      "grades": {
+        "evidence": {
+          "grade": "C",
+          "scope": "exact TP4/EP4 eager MTP1 text serving at configured max 512",
+          "basis": "The exact model, MTP adapter, preserved staged runtime, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, positive draft acceptance, and three matched speed rows are retained. The inherited target quality remains 5/7; deeper context, vision, clean-host replay, and deployment qualification remain missing.",
+          "reviewed_at": "2026-08-27",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
+          ]
+        }
+      },
+      "featured_metric": {
+        "metric": "decode_tok_s",
+        "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-a3",
+        "sample_index": 0,
+        "value": 9.37225436776222,
+        "unit": "tok/s",
+        "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
+        "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
+      },
+      "manifest": "results/qwen38-flash-next-fp8-b70/README.md"
     }
   ],
   "views": [
@@ -373,7 +451,8 @@
       "missing_x": [1, 2],
       "metrics": ["decode_tok_s", "ttft_ms"],
       "series": [
-        {"label": "official FP8 · eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-attempt19"], "x_from": "config.tp"}
+        {"label": "official FP8 · eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-attempt19"], "x_from": "config.tp"},
+        {"label": "official FP8 · eager MTP1", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp1-a3"], "x_from": "config.tp"}
       ]
     },
     {
@@ -412,7 +491,7 @@
         "0:4": {"state": "lab-screened", "label": "5.222 tok/s; quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19", "packet_id": "qwen38-flash-next-fp8-tp4-research"},
         "1:1": {"state": "missing", "label": "not measured"},
         "1:2": {"state": "missing", "label": "not measured"},
-        "1:4": {"state": "missing", "label": "runtime port needed"},
+        "1:4": {"state": "lab-screened", "label": "9.372 tok/s; matched quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-a3", "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research"},
         "2:1": {"state": "missing", "label": "not measured"},
         "2:2": {"state": "missing", "label": "not measured"},
         "2:4": {"state": "missing", "label": "not measured"},
@@ -458,6 +537,17 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-research",
           "parent": "flash-next-attempt19",
           "retry": {"status": "needs-full-qualification"}
+        },
+        {
+          "id": "mtp1-text-screen",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 1, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "lab-screened",
+          "label": "9.372 tok/s matched MTP1 research screen",
+          "reason": "All 26 MTP0 baseline comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. Inherited short quality remains 5/7.",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-a3",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research",
+          "parent": "flash-next-mtp1-a3",
+          "retry": {"status": "needs-deeper-context-and-full-quality"}
         },
         {
           "id": "context1k-text-screen",
