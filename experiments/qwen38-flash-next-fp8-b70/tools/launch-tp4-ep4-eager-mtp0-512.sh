@@ -5,6 +5,7 @@ max_model_len="${MAX_MODEL_LEN:-512}"
 mtp="${MTP:-0}"
 mtp_exact="${MTP_EXACT:-0}"
 kv_cache_memory_bytes="${KV_CACHE_MEMORY_BYTES:-201326592}"
+reasoning_parser="${REASONING_PARSER:-}"
 speculative_config_json=""
 [[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" || "${max_model_len}" == "4352" || "${max_model_len}" == "8448" ]] || {
   printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, 4352, or 8448\n' >&2
@@ -24,6 +25,10 @@ speculative_config_json=""
 }
 [[ "${mtp_exact}" == "0" || "${max_model_len}" == "512" ]] || {
   printf 'FAIL: MTP_EXACT=1 is preregistered only for MAX_MODEL_LEN=512\n' >&2
+  exit 1
+}
+[[ -z "${reasoning_parser}" || "${reasoning_parser}" == "qwen3" ]] || {
+  printf 'FAIL: REASONING_PARSER must be absent or qwen3\n' >&2
   exit 1
 }
 if (( mtp > 0 )); then
@@ -445,6 +450,7 @@ PY
   printf 'mtp_exact_recurrent=%s\n' "${mtp_exact}"
   printf 'kv_cache_memory_bytes=%s\n' "${kv_cache_memory_bytes}"
   printf 'kv_cache_layout=BLHNC\n'
+  printf 'reasoning_parser=%s\n' "${reasoning_parser:-absent}"
   printf 'diagnostics=none\n'
 } >"${run_dir}/identity.txt"
 
@@ -492,6 +498,9 @@ args=(
 )
 if [[ -n "${speculative_config_json}" ]]; then
   args+=(--speculative-config "${speculative_config_json}")
+fi
+if [[ -n "${reasoning_parser}" ]]; then
+  args+=(--reasoning-parser "${reasoning_parser}")
 fi
 
 speculative_arg_count=0
