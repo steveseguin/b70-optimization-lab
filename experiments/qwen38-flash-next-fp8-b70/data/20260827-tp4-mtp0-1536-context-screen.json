@@ -37,7 +37,7 @@
       "worker_shutdown_done_ranks_logged": [0, 1, 2, 3],
       "api_application_shutdown_complete": true,
       "residual_processes_after_stop": 0,
-      "caveat": "All four workers logged shutdown completion. The API output handler logged EngineDeadError after the deliberately stopped engine manager, so this is not claimed as a perfectly clean API shutdown."
+      "caveat": "All four workers logged shutdown completion. At the five-second shutdown limit the manager force-ended the remaining EngineCore process, whose executor still listed three workers; the API output handler then logged EngineDeadError and the resource tracker reported one shared-memory cleanup item. The application nevertheless completed shutdown with no residual process, so this is controlled-stop evidence with an observability caveat, not a perfectly clean API shutdown."
     }
   },
   "quality_harness": {

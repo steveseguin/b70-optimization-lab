@@ -73,10 +73,11 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next qualification point is the same sealed TP4/EP4/eager/MTP0 runtime at
-1K active context under a 1,536-token configured maximum. TP1 and TP2 require a
-separate fit/offload design. MTP1+ requires a performance-preserving port to
-the newer speculative runtime interface. Graph, longer context, vision,
+The next context qualification point is the same sealed
+TP4/EP4/eager/MTP0 runtime at 2K active context under a separate configured-3K
+identity. TP1 and TP2 require a separate fit/offload design. MTP1+ requires a
+performance-preserving port to the newer speculative runtime interface. Graph,
+deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
 

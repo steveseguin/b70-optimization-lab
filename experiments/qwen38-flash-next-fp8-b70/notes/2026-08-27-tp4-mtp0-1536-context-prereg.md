@@ -98,9 +98,12 @@ median of `5.133587561 tok/s`. Median TTFT was `29.043115 s`. That harness did
 not retain cached-token detail, so no cache-zero claim is made for those three
 rows; prompt salts were unique and prefix caching remained disabled.
 
-All four workers logged shutdown completion. The API handler repeated the
-known post-manager-stop log message, so shutdown is classified as controlled
-with an API-observability caveat. The compact receipt is
+All four workers logged shutdown completion. At the five-second shutdown
+limit the manager force-ended the remaining engine process, whose executor
+still listed three workers; the API handler then repeated the known
+post-manager-stop message and the resource tracker reported one cleanup item.
+No process remained. Shutdown is therefore classified as controlled with an
+API-observability caveat. The compact receipt is
 `data/20260827-tp4-mtp0-1536-context-screen.json`.
 
 The 1K context and repeat gates pass, but the inherited substantive `30`/`14`
