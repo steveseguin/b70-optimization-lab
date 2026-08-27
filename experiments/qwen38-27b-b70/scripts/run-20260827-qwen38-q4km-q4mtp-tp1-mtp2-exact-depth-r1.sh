@@ -92,7 +92,8 @@ root, oracle_path, attempt, campaign = pathlib.Path(sys.argv[1]), pathlib.Path(s
 oracle = json.loads(oracle_path.read_text())
 expected = {row["active_context_tokens"]: row for row in oracle["points"]}
 points = []
-for path in sorted(root.glob("depth-*.json"), key=lambda p: int(p.stem.split("-")[1])):
+receipt_paths = [path for path in root.glob("depth-*.json") if not path.name.endswith(".stdout.json")]
+for path in sorted(receipt_paths, key=lambda p: int(p.stem.split("-")[1])):
     row = json.loads(path.read_text())
     depth = row["run_identity"]["active_context_tokens"]
     exact = row["response"]["output_token_ids_sha256"] == expected[depth]["output_token_ids_sha256"]
