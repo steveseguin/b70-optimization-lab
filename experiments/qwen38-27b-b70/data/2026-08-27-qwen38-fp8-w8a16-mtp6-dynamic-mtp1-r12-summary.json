@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "classification": "measured-negative-single-user-gate",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "mtp_weights": "publisher-supplied mtp.safetensors"
+  },
+  "runtime": {
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "image": "neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1",
+    "image_id": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "dynamic_mamba_allocation_patch_sha256": "3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190"
+  },
+  "service": {
+    "cards": 2,
+    "tensor_parallel_size": 2,
+    "max_model_len": 256,
+    "max_num_seqs": 128,
+    "max_num_batched_tokens": 512,
+    "block_size": 64,
+    "gpu_memory_utilization": 0.96,
+    "prefix_cache": false,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 6,
+      "num_speculative_tokens_per_batch_size": [[1, 1, 6], [2, 128, 1]]
+    }
+  },
+  "quality_before_speed_gate": {
+    "c2_output_isolation": "2/2",
+    "sequential_exact_cases": "7/7",
+    "sequential_repeat_stability": "8/8",
+    "baseline_match_all": true,
+    "cached_tokens_all_zero": true,
+    "container_exit_code": 0
+  },
+  "single_user": {
+    "prompt_tokens": 40,
+    "completion_tokens": 128,
+    "fresh_response_after_ttft_tok_s": 130.47321263908694,
+    "fresh_response_wall_tok_s": 120.00939962792432,
+    "ttft_s": 0.08553883293643594,
+    "gate_tok_s": 130.996884,
+    "gate_passed": false,
+    "absolute_gate_miss_tok_s": 0.5236713609130561,
+    "relative_gate_miss_percent": 0.3997586392307295,
+    "change_vs_promoted_mtp5_median_percent": 1.5922457219536668
+  },
+  "concurrency": {
+    "declared_c64_run_performed": false,
+    "concurrent_quality_run_performed": false,
+    "reason": "The frozen ordered gate stopped after the eligible single-user row missed its threshold."
+  },
+  "shutdown": {
+    "health_before_stop": "pass",
+    "container_exit_code": 0,
+    "oom_killed": false,
+    "engine_dead_error": false,
+    "note": "Both workers reported cleanup complete; the five-second shutdown grace expired and the already-idle EngineCore was force-killed. No measured request failed."
+  },
+  "decision": {
+    "status": "closed-negative-retain-promoted-mtp5",
+    "reason": "MTP6 improved the eligible single-user row by 1.59% over the promoted MTP5 median but missed the preregistered 2% improvement gate by 0.524 tok/s. The ordered protocol therefore did not authorize c64 or concurrent-quality measurement.",
+    "publication": "Do not replace the replicated MTP5 package or its published rates."
+  },
+  "evidence_directory": "qwen38-fp8-w8a16-mtp6-dynamic-mtp1-20260827-r12",
+  "reporting_boundary": "Every reported rate is directly measured. No c64, long-context, intermediate-concurrency, or other speculative-depth value is inferred, interpolated, or extrapolated."
+}
