@@ -48,6 +48,13 @@ if [[ -n "${DYNAMIC_MAMBA_PATCH_SHA256:-}" ]]; then
     exit 1
   }
 fi
+if [[ -n "${DYNAMIC_SD_LATCH_PATCH_SHA256:-}" ]]; then
+  [[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.vllm.dynamic-sd-latch.patch.sha256" }}')" == \
+    "${DYNAMIC_SD_LATCH_PATCH_SHA256}" ]] || {
+    printf 'dynamic SD latch patch label mismatch\n' >&2
+    exit 1
+  }
+fi
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
   printf 'container already exists: %s\n' "${container}" >&2
   exit 1
@@ -61,6 +68,11 @@ mkdir -p "${cache_dir}"
 container_lifecycle=(--rm)
 if [[ "${KEEP_CONTAINER:-0}" == "1" ]]; then
   container_lifecycle=()
+fi
+
+dynamic_sd_env=()
+if [[ "${DYNAMIC_SD_LATCH_PEAK_BATCH:-0}" == "1" ]]; then
+  dynamic_sd_env=(--env VLLM_DYNAMIC_SD_LATCH_PEAK_BATCH=1)
 fi
 
 exec docker run "${container_lifecycle[@]}" --name "${container}" \
@@ -77,6 +89,7 @@ exec docker run "${container_lifecycle[@]}" --name "${container}" \
   --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_XPU_ENABLE_XPU_GRAPH=1 \
   --env VLLM_XPU_FP8_BLOCK_W8A16=1 \
+  "${dynamic_sd_env[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
   --env CCL_ZE_IPC_EXCHANGE=pidfd \

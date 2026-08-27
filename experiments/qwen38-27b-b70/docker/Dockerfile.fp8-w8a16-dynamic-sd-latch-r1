@@ -1,0 +1,21 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1
+FROM ${BASE_IMAGE}
+
+ARG PATCH_SHA256=e15287dc97b448bc067ef7d2aa71cf2855a754ff621573470e4d643c54c7ca64
+COPY experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-sd-busy-period-latch-20260827.patch /tmp/dynamic-sd-latch.patch
+
+RUN test "$(sha256sum /tmp/dynamic-sd-latch.patch | awk '{print $1}')" = "${PATCH_SHA256}" \
+    && cd /workspace/vllm \
+    && test "$(git rev-parse HEAD)" = ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9 \
+    && test "$(sha256sum vllm/v1/core/sched/scheduler.py | awk '{print $1}')" = 6d550a8e6a5c6abf200d66fbc4fc45c8ce371a312d454c39e057a45b364994c3 \
+    && git apply --check /tmp/dynamic-sd-latch.patch \
+    && git apply /tmp/dynamic-sd-latch.patch \
+    && test "$(sha256sum vllm/v1/core/sched/scheduler.py | awk '{print $1}')" = 69b6360acfde83b58d60e2abf35c5a8bb2f743a882079af7e05c0e620252b26e \
+    && install -m 0644 vllm/v1/core/sched/scheduler.py /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py \
+    && rm -f /tmp/dynamic-sd-latch.patch
+
+LABEL neural.download.vllm.commit="ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9" \
+      neural.download.vllm.dynamic-sd-latch.patch.sha256="${PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-w8a16-dynamic-sd-latch-r1"
