@@ -7,5 +7,6 @@ export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:2b79af686423379e4418aafa92d
 export DYNAMIC_MAMBA_PATCH_SHA256=${DYNAMIC_MAMBA_PATCH_SHA256:-3334c37f33677e4a499aa5959f79fb78d2fa47a39a350ab4bd1a120169512190}
 export CONTAINER_NAME=${CONTAINER_NAME:-qwen38-fp8-w8a16-dynamic-mtp-tp2}
 export SERVED_MODEL_NAME=${SERVED_MODEL_NAME:-qwen38-fp8-w8a16-dynamic-mtp-tp2}
+export SPECULATIVE_CONFIG=${SPECULATIVE_CONFIG:-'{"method":"qwen3_next_mtp","num_speculative_tokens":3,"num_speculative_tokens_per_batch_size":[[1,1,3],[2,128,1]]}'}
 
 exec "${script_dir}/run-w8a16-mtp2-dynamic-mtp1-fixed-r2-server.sh"

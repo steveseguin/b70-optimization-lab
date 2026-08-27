@@ -2,10 +2,10 @@
 
 This is the first distribution-package front door. It uses Qwen's official
 FP8 model and digest-pinned vLLM XPU containers on two Intel Arc Pro B70
-32 GiB cards. The selected dynamic MTP2-to-MTP1 service reaches a replicated
-median of **`83.680193 tok/s`** for one fresh user and **`1,085.038992 tok/s`**
-aggregate at 64 active users while passing 512/512 concurrent exact-answer
-checks. The target-only block-W8A16 service remains the aggregate peak at
+32 GiB cards. The selected dynamic MTP3-to-MTP1 service reaches a replicated
+median of **`99.930434 tok/s`** for one fresh user and **`1,074.939939 tok/s`**
+aggregate at 64 active users while passing 1,024/1,024 concurrent exact-answer
+checks across two fresh servers. The target-only block-W8A16 service remains the aggregate peak at
 **`1,112.570323 tok/s`** with 128 active users. A separately measured
 33,024-token W8A16 service profile reaches `31.489587 tok/s` decode at an exact
 32K prompt with `13.740 s` TTFT. The target-only/MTP0 64-slot HTTP profile reaches
@@ -18,9 +18,10 @@ remains the highest-throughput mode. The site and guide keep those identities
 separate.
 
 The checkpoint has one publisher MTP layer. The dynamic service serially
-reuses it for MTP2 only at one active request, then uses MTP1 at two or more.
-Two fresh-server attempts reproduced within 0.46%; see the
-[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mamba-r5-replication-result.md).
+reuses it for MTP3 only at one active request, then uses MTP1 at two or more.
+The two fresh-server attempts measured 99.712488/100.148379 tok/s single and
+1,066.000395/1,083.879484 tok/s aggregate; see the
+[replication result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp3-r7-replication-result.md).
 
 > **Status: candidate, not a beginner install guide.** The exact model,
 > container, configuration, commands, and evidence are present. A clean Ubuntu
@@ -43,7 +44,9 @@ aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
 [W8A16 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 and the earlier [baseline evidence](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md).
 The active state allocation separately raised the dynamic service from
-`817.007910` to a replicated `1,085.038992 tok/s` median at c64.
+`817.007910` to a replicated high-throughput lane. MTP3 then raised its
+single-user median from `83.680193` to `99.930434 tok/s` while retaining
+`1,074.939939 tok/s` at c64.
 
 **vLLM XPU kernel contributors — upstream mixed-batch fix:** upstream commits
 [`4054175`](https://github.com/vllm-project/vllm-xpu-kernels/commit/40541752f4f7fdef3cab471038c775e3f8d42838)
@@ -159,7 +162,7 @@ MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 ```
 
 The benchmark requires the single-user gate, a complete output-isolated c64
-batch, at least 95% of the replicated aggregate result, sequential baseline
+batch, at least 98% of the prior replicated aggregate result, sequential baseline
 agreement, and 512/512 concurrent exact-answer checks. The service is limited
 to 256 total tokens and is not the long-context profile.
 

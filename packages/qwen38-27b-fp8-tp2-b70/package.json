@@ -10,21 +10,21 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and the lab's replicated dynamic MTP2-to-MTP1 service profiles on the block-W8A16 overlay.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and the lab's replicated dynamic MTP3-to-MTP1 service profiles on the block-W8A16 overlay.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": ["Linux"],
     "delivery": ["container"],
     "modalities": ["text"],
     "use_cases": ["general", "coding", "long context"],
-    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "dynamic MTP2 to MTP1", "W8A16"],
+    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "dynamic MTP3 to MTP1", "W8A16"],
     "published_at": "2026-08-27",
     "featured_metric": {
-      "value": 83.68019315544194,
+      "value": 99.9304336470082,
       "unit": "tok/s",
       "label": "decode",
-      "scope": "Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP2 at one active request, short-context 256-token service.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json"
+      "scope": "Median fresh-response after-TTFT decode across two preregistered fresh servers for one measured 40-token prompt and 128 generated tokens; cache zero, dynamic MTP3 at one active request and MTP1 under load, short-context 256-token service.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp3-dynamic-mtp1-r7-summary.json"
     }
   },
   "contributors": [
@@ -35,8 +35,8 @@
       "profile": "https://github.com/steveseguin/b70-optimization-lab",
       "contribution": "B70/XPU integration, graph and quality validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 dispatch, dynamic-width GDN repair, active Mamba-state allocation, and the digest-pinned package.",
       "status": "integrated",
-      "validated_effect": "Block W8A16 raised the matched target-only single/c128 shapes by 60.07%/29.30%. The later active-Mamba allocation raised the dynamic MTP c64 result from 817.007910 to a replicated 1085.038992 tok/s median while retaining 83.680193 tok/s single-user decode.",
-      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mamba-r5-replication-result.md"
+      "validated_effect": "Block W8A16 raised the matched target-only single/c128 shapes by 60.07%/29.30%. Active-Mamba allocation enabled the replicated high-throughput dynamic service; raising singleton depth from MTP2 to MTP3 then improved its single-user median by 19.42% while retaining 99.07% of aggregate c64 throughput.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp3-r7-replication-result.md"
     },
     {
       "id": "vllm-xpu-kernel-contributors",
@@ -123,6 +123,12 @@
     "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260826-r4/bench/c64-screen.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260827-r5/c64-screen.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp2-dynamic-mamba-20260827-r5/c64-quality-512.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-dynamic-mtp3-r7-replication-result.md",
+    "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp3-dynamic-mtp1-r7-summary.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp3-dynamic-mtp1-20260827-r6/bench/c64-screen.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp3-dynamic-mtp1-20260827-r6/bench/c64-quality-512.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp3-dynamic-mtp1-20260827-r7/bench/c64-screen.json",
+    "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp3-dynamic-mtp1-20260827-r7/bench/c64-quality-512.json",
     "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
     "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
     "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md",
@@ -193,12 +199,13 @@
       "unit": "tok/s",
       "x_metric": "speculative_tokens",
       "x_label": "Active speculative tokens for the one-user shape",
-      "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only, MTP1 uses the publisher's one MTP layer once, and MTP2 serially reuses it at the one-user shape. The selected dynamic service falls back to MTP1 for two or more active requests. MTP2 is the median of two preregistered fresh-server attempts; MTP0 and MTP1 retain their earlier declared samples. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json",
+      "scope": "Directly measured fresh-response after-TTFT decode for the same cache-zero 40-prompt-token/128-output-token shape on two B70s. MTP0 is target-only; MTP1 uses the publisher's one MTP layer once; MTP2 and MTP3 serially reuse it. The selected dynamic service uses MTP3 only for one active request and falls back to MTP1 for two or more. MTP2 and MTP3 are each medians of two preregistered fresh-server attempts; MTP0 and MTP1 retain their earlier declared samples. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp3-dynamic-mtp1-r7-summary.json",
       "points": [
         {"speculative_tokens": 0, "value": 35.01136892707062, "samples": 1},
         {"speculative_tokens": 1, "value": 61.69957987620137, "samples": 1},
-        {"speculative_tokens": 2, "value": 83.68019315544194, "samples": 2}
+        {"speculative_tokens": 2, "value": 83.68019315544194, "samples": 2},
+        {"speculative_tokens": 3, "value": 99.9304336470082, "samples": 2}
       ]
     },
     {
@@ -208,11 +215,11 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Two directly measured operating points from the same 256-token service on two B70s: MTP2 at one active request and MTP1 at c64. Values are medians across separately preregistered fresh-server R4/R5 attempts with cache zero. The c64 batches returned complete token IDs with no cross-base collisions, and R5 passed 512/512 synchronized exact-answer requests. The line connects measured markers only; no intermediate concurrency is claimed, interpolated, or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp2-dynamic-mamba-r5-summary.json",
+      "scope": "Two directly measured operating points from the same 256-token service on two B70s: MTP3 at one active request and MTP1 at c64. Values are medians across separately preregistered fresh-server R6/R7 attempts with cache zero. Both c64 batches returned complete token IDs with no cross-base collisions and each passed 512/512 synchronized exact-answer requests. The line connects measured markers only; no intermediate concurrency is claimed, interpolated, or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-w8a16-mtp3-dynamic-mtp1-r7-summary.json",
       "points": [
-        {"concurrent_sequences": 1, "value": 83.68019315544194, "per_user_value": 83.68019315544194, "samples": 2},
-        {"concurrent_sequences": 64, "value": 1085.0389924621618, "per_user_value": 16.953734257221278, "samples": 2}
+        {"concurrent_sequences": 1, "value": 99.9304336470082, "per_user_value": 99.9304336470082, "samples": 2},
+        {"concurrent_sequences": 64, "value": 1074.9399392842388, "per_user_value": 16.79593655131623, "samples": 2}
       ]
     },
     {
