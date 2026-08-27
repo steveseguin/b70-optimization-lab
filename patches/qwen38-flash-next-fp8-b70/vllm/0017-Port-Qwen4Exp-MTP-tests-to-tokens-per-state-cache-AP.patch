@@ -1,0 +1,36 @@
+From 44fb789db880d808161a46311a65d3eafa0e3032 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 08:10:21 -0400
+Subject: [PATCH] Port Qwen4Exp MTP tests to tokens-per-state cache API
+
+---
+ tests/v1/spec_decode/test_qwen4_exp.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tests/v1/spec_decode/test_qwen4_exp.py b/tests/v1/spec_decode/test_qwen4_exp.py
+index bd05e7a47..7bdd96667 100644
+--- a/tests/v1/spec_decode/test_qwen4_exp.py
++++ b/tests/v1/spec_decode/test_qwen4_exp.py
+@@ -72,7 +72,7 @@ def _make_specs():
+         num_kv_heads=1,
+         head_size=128,
+         dtype=torch.bfloat16,
+-        compress_ratio=64,
++        tokens_per_state=64,
+     )
+     raw_spec = CircularBufferSpec(
+         block_size=RAW_CAPACITY,
+@@ -197,8 +197,8 @@ def test_preserves_builder_slot_mapping_in_each_cache_owner_metadata(
+                     common_attn_metadata.block_table_tensor,
+                     token_to_req,
+                     logical_positions,
+-                    spec.storage_block_size,
+-                    spec.compress_ratio,
++                    spec.num_states,
++                    spec.tokens_per_state,
+                 )
+             else:
+                 slots = common_attn_metadata.slot_mapping
+-- 
+2.43.0
+

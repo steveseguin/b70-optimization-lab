@@ -2,11 +2,16 @@
 set -Eeuo pipefail
 
 max_model_len="${MAX_MODEL_LEN:-512}"
+mtp="${MTP:-0}"
 [[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" || "${max_model_len}" == "3072" || "${max_model_len}" == "4352" || "${max_model_len}" == "8448" ]] || {
   printf 'FAIL: MAX_MODEL_LEN must be 512, 1536, 3072, 4352, or 8448\n' >&2
   exit 1
 }
-campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-${max_model_len}-r1"
+[[ "${mtp}" == "0" || "${mtp}" == "1" ]] || {
+  printf 'FAIL: MTP must be 0 or 1\n' >&2
+  exit 1
+}
+campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp${mtp}-${max_model_len}-r1"
 ack="RUN ${campaign}"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../../.." && pwd)
@@ -42,7 +47,7 @@ validation_root="${repo_root}/data/model-intake/post-download-validation-2026082
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 padding_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-moe-padding-guard-gates.json"
 
-expected_vllm_head="658965050f259999e635b52a850004a3771cd644"
+expected_vllm_head="44fb789db880d808161a46311a65d3eafa0e3032"
 expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
@@ -183,6 +188,7 @@ export Q38_VALIDATION_ROOT="${validation_root}"
 export Q38_MOE_RECEIPT="${moe_receipt}"
 export Q38_PADDING_RECEIPT="${padding_receipt}"
 export Q38_MAX_MODEL_LEN="${max_model_len}"
+export Q38_MTP="${mtp}"
 
 "${python}" - <<'PY'
 import os
@@ -268,7 +274,8 @@ for device in range(4):
     assert memory < 256, (device, memory)
 
 model = os.environ['Q38_MODEL_PATH']
-args = EngineArgs(
+mtp = int(os.environ['Q38_MTP'])
+engine_kwargs = dict(
     model=model, tokenizer=model, dtype='bfloat16', tensor_parallel_size=4,
     pipeline_parallel_size=1, data_parallel_size=1,
     distributed_executor_backend='mp', enable_expert_parallel=True,
@@ -284,6 +291,11 @@ args = EngineArgs(
     kv_cache_dtype='auto', block_size=64,
     generation_config='vllm', load_format='safetensors', async_scheduling=False,
 )
+if mtp:
+    engine_kwargs['speculative_config'] = {
+        'method': 'mtp', 'num_speculative_tokens': mtp
+    }
+args = EngineArgs(**engine_kwargs)
 config = args.create_engine_config(usage_context=None)
 assert config.parallel_config.tensor_parallel_size == 4
 assert config.parallel_config.enable_expert_parallel
@@ -294,7 +306,13 @@ assert config.offload_config.uva.cpu_offload_params == {
     'ple_embedding.ngram_embedding.weight', 'embed_tokens.weight'
 }
 assert config.kernel_config.moe_backend == 'triton'
-assert config.speculative_config is None
+if mtp:
+    assert config.speculative_config is not None
+    assert config.speculative_config.method == 'mtp'
+    assert config.speculative_config.num_speculative_tokens == mtp
+    assert config.speculative_config.use_qwen4_exp_mtp()
+else:
+    assert config.speculative_config is None
 assert config.model_config.max_model_len == int(os.environ['Q38_MAX_MODEL_LEN'])
 assert config.scheduler_config.max_num_batched_tokens == 64
 assert config.cache_config.kv_cache_memory_bytes == 201326592
@@ -309,7 +327,7 @@ offload_bytes_per_rank = ple_bytes_per_rank + embed_bytes_per_rank
 offload_budget = int(12.25 * 1024**3)
 assert offload_bytes_per_rank < offload_budget
 assert offload_budget - offload_bytes_per_rank < 64 * 1024**2
-print('engine_config=tp4_ep4_triton_eager_mtp0_selective_ple_and_embed_uva')
+print(f'engine_config=tp4_ep4_triton_eager_mtp{mtp}_selective_ple_and_embed_uva')
 print(f'ple_bytes_per_rank={ple_bytes_per_rank}')
 print(f'embed_bytes_per_rank={embed_bytes_per_rank}')
 print(f'offload_bytes_per_rank={offload_bytes_per_rank}')
@@ -352,7 +370,7 @@ PY
   printf 'cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight\n'
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
-  printf 'moe_backend=triton eager=1 mtp=0 max_model_len=%s max_num_batched_tokens=64\n' "${max_model_len}"
+  printf 'moe_backend=triton eager=1 mtp=%s max_model_len=%s max_num_batched_tokens=64\n' "${mtp}" "${max_model_len}"
   printf 'kv_cache_memory_bytes=201326592\n'
   printf 'kv_cache_layout=BLHNC\n'
   printf 'diagnostics=none\n'
@@ -400,6 +418,9 @@ args=(
   --enable-prompt-tokens-details
   --disable-uvicorn-access-log
 )
+if [[ "${mtp}" == "1" ]]; then
+  args+=(--speculative-config '{"method":"mtp","num_speculative_tokens":1}')
+fi
 printf '%q ' "${vllm_bin}" serve "${args[@]}" >"${run_dir}/server-command.shell.txt"
 printf '\n' >>"${run_dir}/server-command.shell.txt"
 
