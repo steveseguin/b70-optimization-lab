@@ -1,0 +1,115 @@
+From d41e6408989a145a8f39820228ebeee48b0157ab Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 27 Aug 2026 03:05:18 -0400
+Subject: [PATCH] Normalize QSA caches from logical layout
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ tests/models/qwen4_exp/test_qsa_reference.py | 45 ++++++++++++++++++++
+ vllm/models/qwen4_exp/common/qsa_cache.py    | 16 ++++---
+ 2 files changed, 55 insertions(+), 6 deletions(-)
+
+diff --git a/tests/models/qwen4_exp/test_qsa_reference.py b/tests/models/qwen4_exp/test_qsa_reference.py
+index 9b9cc2707..3ed1ebf06 100644
+--- a/tests/models/qwen4_exp/test_qsa_reference.py
++++ b/tests/models/qwen4_exp/test_qsa_reference.py
+@@ -359,6 +359,51 @@ def _qsa_key_cache(block_size: int, compress_ratio: int) -> qsa_cache.QSAKeyStat
+     )
+ 
+ 
++@pytest.mark.parametrize(
++    "strides",
++    [
++        (512, 64, 64, 1),  # LBNHC per-layer view
++        (1024, 512, 64, 1),  # BLHNC per-layer view with two interleaved layers
++    ],
++)
++def test_qsa_side_caches_bind_logical_layout(strides: tuple[int, ...]) -> None:
++    raw_cache = _qsa_key_cache(block_size=8, compress_ratio=4)
++    raw = torch.empty_strided((3, 1, 8, 64), strides, dtype=torch.bfloat16)
++    raw_cache.bind_kv_cache(raw)
++
++    assert raw_cache.kv_cache.shape == (3, 8, 1, 64)
++    assert raw_cache.key_cache.shape == (3, 8, 1, 64)
++    assert raw_cache.kv_cache.stride() == (strides[0], strides[2], strides[1], 1)
++    assert (
++        raw_cache.kv_cache.untyped_storage().data_ptr()
++        == raw.untyped_storage().data_ptr()
++    )
++
++    compressed_cache = qsa_cache.QSACompressedKeyCache(
++        head_size=64,
++        dtype=torch.bfloat16,
++        cache_config=SimpleNamespace(block_size=8),
++        prefix=f"compressed.bind.{strides}",
++        vllm_config=SimpleNamespace(
++            compilation_config=SimpleNamespace(static_forward_context={})
++        ),
++        compress_ratio=4,
++    )
++    compressed_cache.bind_kv_cache(raw)
++
++    assert compressed_cache.kv_cache.shape == (3, 8, 1, 64)
++    assert compressed_cache.kv_cache.stride() == (
++        strides[0],
++        strides[2],
++        strides[1],
++        1,
++    )
++    assert (
++        compressed_cache.kv_cache.untyped_storage().data_ptr()
++        == raw.untyped_storage().data_ptr()
++    )
++
++
+ @pytest.mark.parametrize(
+     ("compress_ratio", "num_spec", "expected"),
+     [(4, 0, 4), (4, 1, 8), (4, 3, 8), (4, 4, 8), (4, 5, 12), (2, 3, 6)],
+diff --git a/vllm/models/qwen4_exp/common/qsa_cache.py b/vllm/models/qwen4_exp/common/qsa_cache.py
+index a60d38586..c91f64a3e 100644
+--- a/vllm/models/qwen4_exp/common/qsa_cache.py
++++ b/vllm/models/qwen4_exp/common/qsa_cache.py
+@@ -581,8 +581,7 @@ class QSAMetadataBuilder(AttentionMetadataBuilder[QSAForwardMetadata]):
+             tokens_per_state = kv_cache_spec.tokens_per_state
+             if not isinstance(tokens_per_state, int) or tokens_per_state <= 0:
+                 raise ValueError(
+-                    "QSA compressed cache requires a positive integer "
+-                    "tokens_per_state"
++                    "QSA compressed cache requires a positive integer tokens_per_state"
+                 )
+             self.compress_ratio = tokens_per_state
+         else:
+@@ -739,6 +738,11 @@ class _QSAStateCache(nn.Module, AttentionLayerBase):
+ 
+     def forward(self) -> None: ...
+ 
++    def bind_kv_cache(self, kv_cache: torch.Tensor) -> None:
++        if kv_cache.ndim != 4 or kv_cache.shape[1] != 1:
++            raise ValueError("QSA state cache must be [blocks, 1, states, width]")
++        super().bind_kv_cache(kv_cache.transpose(1, 2))
++
+     def get_attn_backend(self) -> type[AttentionBackend]:
+         return QSAStateBackend
+ 
+@@ -764,14 +768,14 @@ class QSAKeyStateCache(_QSAStateCache):
+         super().__init__(head_size=storage_head_size, **kwargs)
+ 
+     def bind_kv_cache(self, kv_cache: torch.Tensor) -> None:
+-        if kv_cache.ndim != 4 or kv_cache.shape[2] != 1:
+-            raise ValueError("QSA raw cache must be [blocks, block_size, 1, width]")
++        if kv_cache.ndim != 4 or kv_cache.shape[1] != 1:
++            raise ValueError("QSA raw cache must be [blocks, 1, block_size, width]")
+         if kv_cache.dtype != torch.bfloat16 or kv_cache.shape[3] != self.head_size:
+             raise ValueError("QSA raw cache does not match its packed BF16 cache spec")
+         super().bind_kv_cache(kv_cache)
+-        self.key_cache = kv_cache[..., : self.key_head_size]
++        self.key_cache = self.kv_cache[..., : self.key_head_size]
+         if self.cache_rope_positions:
+-            position_tail = kv_cache[..., self.rope_position_offset :]
++            position_tail = self.kv_cache[..., self.rope_position_offset :]
+             self.rope_position_cache = position_tail.view(torch.int64)
+         else:
+             self.rope_position_cache = None
+-- 
+2.43.0
+

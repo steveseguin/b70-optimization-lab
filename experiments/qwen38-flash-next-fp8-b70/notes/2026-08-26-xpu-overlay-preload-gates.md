@@ -443,7 +443,17 @@ Attempt 15 kept the same identity and again passed every layer. The explicit
 because the model mixes 53,248-byte and 851,968-byte pages while the inherited
 default layout was not block-outermost. Current vLLM explicitly requires a
 block-outermost layout for this mixed-page model and names `BLHNC` as the valid
-choice. Attempt 16 adds that declaration; cache size, model placement, kernels,
-and all other identity fields remain unchanged. If healthy, issue a real
-non-padding API canary before shutdown, then run a separate trace/capture-off
+choice. Attempt 16 added that declaration, passed all 48 MoE layers on all four
+ranks, and created all 192 bounded routed-input captures. Cache allocation then
+reached QSA binding, where the model adapter rejected vLLM's standardized
+logical `[blocks, heads, states, width]` view because it still expected the old
+kernel-facing dimension order.
+
+vLLM commit `d41e640898` normalizes both raw and compressed QSA side caches
+once at bind time with a metadata-only view transpose. It adds no per-token or
+decode-path work. The complete QSA reference file passes (`19 passed`, `27`
+platform skips), including exact stride/alias checks for both `LBNHC` and a
+cross-layer `BLHNC` view. Attempt 17 keeps the attempt-16 diagnostic identity
+and adds only this adapter correction. If healthy, issue a real non-padding API
+canary before shutdown, then remove trace/capture call sites and run a separate
 quality and performance qualification.

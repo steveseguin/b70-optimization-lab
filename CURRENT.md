@@ -920,13 +920,15 @@ attempt-13 memory placement, and the ordinary valid-route real-weight M64
 control all pass. The replacement stage changes only the MoE extension and the
 previous stage remains intact.
 
-Attempts 14 and 15 passed routed processing and combination through all 48
-layers on all four ranks. Attempt 14 established the need for an explicit small
-cache allocation; attempt 15 accepted 192 MiB and then required a block-
-outermost layout for the model's mixed page sizes. Attempt 16 adds vLLM's named
-`BLHNC` layout while leaving model execution unchanged. If healthy, require a
-real non-padding API canary, then rerun with trace and capture off for quality
-and throughput qualification. See the
+Attempts 14 through 16 passed routed processing and combination through all 48
+layers on all four ranks. Attempts 14 and 15 established the explicit 192-MiB
+cache and block-outermost `BLHNC` layout. Attempt 16 reached cache binding and
+exposed a stale QSA adapter assumption about vLLM's standardized logical cache
+view. vLLM `d41e640898` now normalizes both raw and compressed QSA side caches
+once at bind time, with both layout contracts covered by the passing reference
+suite and no per-token work added. Attempt 17 applies only that correction. If
+healthy, require a real non-padding API canary, then remove diagnostics and run
+the separate quality and throughput qualification. See the
 [bring-up ledger](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-26-xpu-overlay-preload-gates.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,

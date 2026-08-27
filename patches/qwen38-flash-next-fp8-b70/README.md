@@ -27,6 +27,7 @@ fa0d3e4ff71d51f5c5e0e318934c9a5d6aa33f68426cd0f50203073ead2bbbbd  vllm/0010-Avoi
 175c877972ac665a25b2fd75c5a07e520c233ee8c3b6a2c6ecf5575c117b3d03  vllm/0011-Add-opt-in-XPU-MoE-phase-sync-trace.patch
 37cbc03515c77cc64da7a80689865c2fde4bb96dd78f8d67491b346af0e5f190  vllm/0012-Allow-selective-UVA-offload-of-Qwen4Exp-embeddings.patch
 564fc8ff102e91c23be5aceca0e5d43fb84e3d486978340d142503c75fa651fb  vllm/0013-Capture-routed-MoE-replay-inputs-on-demand.patch
+fb7063c15743b306b218a6159f94935325bfcfd8c6db61200fa4e1cb196906f9  vllm/0014-Normalize-QSA-caches-from-logical-layout.patch
 23d25179eb7e287ca8217afac479ec0fe55736cb2e20ff8032e866ffd77b536e  vllm-xpu-kernels/0001-fix-xpu-restore-architecture-probe-bindings.patch
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch

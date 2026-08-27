@@ -39,7 +39,7 @@ validation_root="${repo_root}/data/model-intake/post-download-validation-2026082
 moe_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260826-triton-block-fp8-gate.json"
 padding_receipt="${repo_root}/experiments/qwen38-flash-next-fp8-b70/data/20260827-moe-padding-guard-gates.json"
 
-expected_vllm_head="396b4e688d02c0922761fb98fe9fb26f6df6e5ff"
+expected_vllm_head="d41e6408989a145a8f39820228ebeee48b0157ab"
 expected_kernels_head="2f829747503c77d4814834dffd0840fb1dd9f75a"
 expected_model_index_sha="0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6"
 expected_model_config_sha="99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d"
