@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1"
+max_model_len="${MAX_MODEL_LEN:-512}"
+[[ "${max_model_len}" == "512" || "${max_model_len}" == "1536" ]] || {
+  printf 'FAIL: MAX_MODEL_LEN must be 512 or 1536\n' >&2
+  exit 1
+}
+campaign="qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-${max_model_len}-r1"
 ack="RUN ${campaign}"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../../.." && pwd)
@@ -177,6 +182,7 @@ export Q38_RUN_DIR="${run_dir}"
 export Q38_VALIDATION_ROOT="${validation_root}"
 export Q38_MOE_RECEIPT="${moe_receipt}"
 export Q38_PADDING_RECEIPT="${padding_receipt}"
+export Q38_MAX_MODEL_LEN="${max_model_len}"
 
 "${python}" - <<'PY'
 import os
@@ -267,7 +273,8 @@ args = EngineArgs(
     pipeline_parallel_size=1, data_parallel_size=1,
     distributed_executor_backend='mp', enable_expert_parallel=True,
     all2all_backend='allgather_reducescatter', language_model_only=True,
-    moe_backend='triton', enforce_eager=True, max_model_len=512,
+    moe_backend='triton', enforce_eager=True,
+    max_model_len=int(os.environ['Q38_MAX_MODEL_LEN']),
     max_num_seqs=1, max_num_batched_tokens=64,
     enable_prefix_caching=False, offload_backend='uva', cpu_offload_gb=12.25,
     cpu_offload_params={
@@ -288,6 +295,7 @@ assert config.offload_config.uva.cpu_offload_params == {
 }
 assert config.kernel_config.moe_backend == 'triton'
 assert config.speculative_config is None
+assert config.model_config.max_model_len == int(os.environ['Q38_MAX_MODEL_LEN'])
 assert config.scheduler_config.max_num_batched_tokens == 64
 assert config.cache_config.kv_cache_memory_bytes == 201326592
 selector = 'ple_embedding.ngram_embedding.weight'
@@ -344,7 +352,7 @@ PY
   printf 'cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight\n'
   printf 'ple_cpu_process=absent\n'
   printf 'tp=4 ep=4 all2all=allgather_reducescatter\n'
-  printf 'moe_backend=triton eager=1 mtp=0 max_model_len=512 max_num_batched_tokens=64\n'
+  printf 'moe_backend=triton eager=1 mtp=0 max_model_len=%s max_num_batched_tokens=64\n' "${max_model_len}"
   printf 'kv_cache_memory_bytes=201326592\n'
   printf 'kv_cache_layout=BLHNC\n'
   printf 'diagnostics=none\n'
@@ -375,7 +383,7 @@ args=(
   --language-model-only
   --moe-backend triton
   --enforce-eager
-  --max-model-len 512
+  --max-model-len "${max_model_len}"
   --max-num-seqs 1
   --max-num-batched-tokens 64
   --no-enable-prefix-caching
