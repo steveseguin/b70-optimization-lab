@@ -997,9 +997,16 @@ score remains 5/7, the needle was only 317 actual prompt tokens, and the speed
 rows declined monotonically across a wide range, so this is a separate Grade-C
 research cell rather than a stable ceiling, record, or 4K qualification. MTP0
 remains primary and MTP1 is unchanged. The selected next deployment-shaped
-gate is TP4/MTP3 at configured maximum 4,352 with a 25-block fixed cache
-(`294195200` bytes), covering a 4,096-token prompt plus 256 output tokens.
-MTP2/MTP4, deeper MTP1/MTP3, graph, TP1/TP2 fit, vision, full quality, and
+gate, TP4/MTP3 at configured maximum 4,352 with a 25-block fixed cache, now
+passes all 26 sealed MTP0 4K comparisons, 16/16 repeats, an exact 4,096-token
+needle, and a formal exact-depth row. Three p4096/o256 rows measured
+`16.578976 / 15.501565 / 14.615698 tok/s`, median `15.501565 tok/s`, with the
+target hash. Median TTFT was `187.899186 s` and median wall output rate was
+`1.246260 tok/s`. Compared with the separate MTP0 4K legacy screen, decode is
+196.19% higher but TTFT is 52.28% slower and wall rate is 16.12% lower, so the
+workload-aligned comparison is descriptive, not a causal MTP-only A/B: MTP0
+used vLLM `658965050` while MTP3 used `1372c62d`. The next production work is TTFT/prefill plus fresh-boot stability rather than a
+decode-only promotion. MTP2/MTP4, deeper MTP1, graph, TP1/TP2 fit, vision, full quality, and
 clean-host replay remain open. The 51B PLE/input-embedding shards remain
 pinned in system RAM during serving; generation does not stream them from the
 external checkpoint drive.

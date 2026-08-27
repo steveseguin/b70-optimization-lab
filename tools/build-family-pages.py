@@ -36,6 +36,7 @@ GITHUB = "https://github.com/steveseguin/b70-optimization-lab/blob/main/"
 
 METRICS = {
     "decode_tok_s": ("Decode", "tok/s"),
+    "wall_output_tok_s": ("End-to-end output", "tok/s"),
     "aggregate_tok_s": ("Combined", "tok/s"),
     "prefill_tok_s": ("Prefill", "tok/s"),
     "ttft_ms": ("TTFT", "ms"),
@@ -107,6 +108,7 @@ SLUG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 SELECTOR_KEY_RE = re.compile(r"[a-z][a-z0-9_]*\Z")
 POINT_METRIC_PREFIX = {
     "decode_tok_s": "D",
+    "wall_output_tok_s": "E2E",
     "aggregate_tok_s": "A",
     "prefill_tok_s": "P",
     "ttft_ms": "T",

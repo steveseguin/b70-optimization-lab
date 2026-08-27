@@ -82,3 +82,40 @@ response, capacity miss, or service instability stops promotion and is retained
 with its exact scope. Passing fills only TP4/EP4, eager, MTP3, active-context
 4,096, text, automatic-KV. It remains Grade C while the inherited short target
 quality is 5/7 and cannot be called deployment-ready or record-eligible.
+
+## Result
+
+Attempt 1 preserved the frozen identity and passed. The server reported 4,352
+configured tokens, exactly 25 cache blocks, 4,730 cache tokens, 1.09x maximum
+concurrency, four 12.22-GiB host-placement receipts, and 32.06 GiB model-load
+accounting per rank. Target plus MTP weight loading took about 669 seconds per
+rank, consistent with the accepted configured-512 arm.
+
+The quality suite matched all 26 sealed MTP0 4K comparisons, repeated one hash
+16/16 times, passed the needle at exactly 4,096 server prompt tokens, and
+completed all 24 audited requests with zero cached and created-cache tokens.
+The inherited strict score remains 5/7, so the captured helper exit 1 is
+expected and this remains Grade C.
+
+The formal exact p4096/o128 row passed every gate at `4.669548249 tok/s`
+conventional with `266.080895 s` TTFT. That is 4.79% more decode than the
+separate MTP0 formal row but 22.11% slower TTFT. The three exact p4096/o256
+service rows returned the accepted target hash at `16.578976110 /
+15.501565106 / 14.615697889 tok/s` after first text, median
+`15.501565106 tok/s`. Median TTFT was `187.899186 s` and median wall output
+rate was `1.246260 tok/s`. Compared with the separate MTP0 legacy-comparable
+4K medians, decode is 196.19% higher, TTFT is 52.28% slower, and end-to-end
+wall output rate is 16.12% lower. Decode alone is therefore not the deployment
+score. The MTP0 reference used vLLM source `658965050`, while this MTP3 arm
+used `1372c62d`; these workload-aligned cross-run/cross-source deltas are
+descriptive and are not a causal MTP-depth A/B.
+
+The cumulative post-session endpoint reported 799 accepted of 852 draft tokens
+(93.78%) and zero cached prompt tokens. All four workers and the API completed
+the controlled stop, no process or listener remained, and only the known
+bounded engine-manager cleanup message followed. Kernel-journal messages in
+the window named only corrected Samsung NVMe link events, not a B70 address.
+
+This closes TP4/eager/MTP3/active-context-4096 as a separate research-screened
+cell without changing the MTP3/512 or any MTP0/MTP1 cell. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json`.

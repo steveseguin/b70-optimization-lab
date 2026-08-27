@@ -9,7 +9,9 @@ Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
 that the exact checkpoint and maintained XPU overlay can load, profile, become
 healthy, serve cache-zero MTP0 context through a formal exact-8K screen, and
 run matched MTP1/512 and MTP3/512 research screens at 9.372 and 14.889 tok/s.
-The MTP3 rows were variable and remain a bounded screen, not a stable ceiling. It
+It also qualifies MTP3 at exact 4K with a `15.502 tok/s` legacy-comparable
+decode median, while exposing much slower TTFT and lower wall throughput than
+MTP0. The MTP3 rows remain bounded screens, not stable ceilings. It
 does not yet establish a production recipe, a fully quality-qualified speed,
 stable repeated serving at 8K, 16K+ behavior, or vision support.
 
@@ -76,12 +78,13 @@ The full bring-up chronology is in the
 and the source series is documented in the
 [`patch packet`](../../patches/qwen38-flash-next-fp8-b70/README.md).
 
-The next service-shaped context point is TP4/MTP3 at configured maximum 4,352,
-covering up to a 4,096-token prompt plus 256 output tokens with a separately
-sized fixed cache. The 16K/24K/32K MTP0 expansion is deferred while the 8K
-repeated-serving boundary remains unresolved. TP1 and TP2 require a separate
-fit/offload design. MTP1/512 and MTP3/512 are separately screened below;
-deeper MTP1/MTP3 plus MTP2 and MTP4 remain gaps. Graph,
+The service-shaped TP4/MTP3 configured-4,352 point now passes exact 4K parity,
+formal depth, and three p4096/o256 rows. Its TTFT and wall-rate tradeoff, plus
+fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
+is deferred while the 8K repeated-serving boundary remains unresolved. TP1
+and TP2 require a separate fit/offload design. MTP1/512, MTP3/512, and
+MTP3/4K are separately screened below; deeper MTP1 plus MTP2 and MTP4 remain
+gaps. Graph,
 deeper context, vision,
 fresh-server determinism, full quality, clean-host replay, and a sealed
 deployment package remain explicit gaps.
@@ -145,6 +148,40 @@ above the separate MTP1 screen, but those cross-run differences are not a
 same-window causal A/B. MTP0 remains the packet primary and MTP1 remains an
 unchanged matrix cell. Receipt:
 [`20260827-tp4-mtp3-512-attempt4-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json).
+
+## Exact 4K TP4 MTP3 screen
+
+The deployment-shaped MTP3 arm raises only the configured maximum to 4,352 and
+the fixed cache to exactly 25 current-source blocks: 294,195,200 bytes
+(280.566406 MiB) per rank. It preserves the same model, source, runtime,
+TP4/EP4, eager/graph-off path, and selective host placement. Cache admission
+reported 4,730 tokens and 1.09x concurrency. The 51B PLE/input-embedding shards
+remained resident in pinned system RAM throughout service.
+
+This arm matched all 26 sealed MTP0 4K comparisons, held one hash for 16/16
+fixed-set repeats, passed the needle at exactly 4,096 server prompt tokens, and
+completed all 24 audited quality requests with zero cached and created-cache
+tokens. The formal p4096/o128 fixture also passed with 128 returned token IDs,
+zero cached tokens, and a conventional 99-interval rate of
+`4.669548249 tok/s` at `266.080895 s` TTFT. The inherited strict score remains
+5/7, so this is exact-depth parity and capability evidence, not full quality.
+
+Three separately salted p4096/o256/c1 service rows, with no harness-added
+warmups, returned the accepted target hash at `16.578976110`, `15.501565106`,
+and `14.615697889 tok/s` after first text, median
+**`15.501565106 tok/s`**. Their median TTFT was `187.899186 s` and median wall
+output rate was `1.246260 tok/s`. Cumulative session metrics accepted 799/852
+draft tokens (93.78%) and reported zero cached prompt tokens.
+
+The after-first-text median is 196.19% above the separate MTP0 4K
+legacy-comparable median, but this is not a universal deployment win: compared
+with that MTP0 screen, TTFT is 52.28% slower and end-to-end wall output rate is
+16.12% lower. On the formal content, decode improved only 4.79% while TTFT was
+22.11% slower. MTP0 used vLLM source `658965050`, while MTP3 used `1372c62d`,
+so both numerical comparisons are descriptive workload-aligned cross-run and
+cross-source evidence, not causal MTP-depth A/Bs. The site therefore keeps decode, TTFT, and wall throughput
+together and does not replace the MTP0 or MTP3/512 cells. Receipt:
+[`20260827-tp4-mtp3-4352-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json).
 
 ## Additive 1K context screen
 

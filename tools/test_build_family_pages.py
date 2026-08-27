@@ -3860,6 +3860,7 @@ class FamilyCoverageTest(unittest.TestCase):
         family["run_measurements"][0]["metrics"].update(
             {
                 "ttft_ms": [100.0],
+                "wall_output_tok_s": [1.2462600034136797],
                 "draft_acceptance_rate": [0.61],
                 "effective_tokens_per_verification": [2.4],
             }
@@ -3873,6 +3874,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 "discrete": True,
                 "metrics": [
                     "decode_tok_s",
+                    "wall_output_tok_s",
                     "ttft_ms",
                     "draft_acceptance_rate",
                     "effective_tokens_per_verification",
@@ -3887,7 +3889,7 @@ class FamilyCoverageTest(unittest.TestCase):
             }
         ]
         rendered = MODULE.view_card(family, family["views"][0])
-        for expected in ("30–30.2", "100", "0.61", "2.4"):
+        for expected in ("30–30.2", "1.25", "100", "0.61", "2.4"):
             self.assertIn(expected, rendered)
         self.assertNotIn("superseded", rendered.casefold())
         self.assertNotIn("full quality gate", rendered.casefold())

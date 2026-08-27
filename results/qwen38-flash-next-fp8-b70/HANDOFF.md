@@ -79,9 +79,9 @@ stopped during row 3, so no legacy median or curve point is authorized. Commit
 Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json`.
 
-Next, qualify MTP3 at configured maximum 4,352 with its exact 25-block fixed
-cache, then fill MTP2/MTP4 and deeper MTP1 cells. Audit the XPU host-lookup
-overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
+The configured-4,352 MTP3 gate now passes. Next, reduce its 4K TTFT and qualify
+fresh-boot stability, then fill MTP2/MTP4 and deeper MTP1 cells. Audit the XPU
+host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.
@@ -130,4 +130,26 @@ The next launch should therefore use configured maximum 4,352 and exactly
 `294195200` cache bytes (25 blocks) for a 4,096-token prompt plus 256 output
 tokens. Preserve the current host placement: the PLE/input-embedding shards are
 resident in pinned system RAM during service, not streamed from the USB model
-tree. Do not describe MTP3 as 4K-qualified until that separate gate passes.
+tree. The separate gate below now supplies that exact-depth evidence.
+
+## TP4 MTP3 exact-4K closeout
+
+Attempt 1 at configured maximum 4,352 passed with exactly 25 cache blocks,
+4,730 reported cache tokens, and the same source/runtime/placement as the
+configured-512 MTP3 cell. All 26 sealed MTP0 4K comparisons matched, fixed-set
+repeats held one hash for 16/16 runs, the needle passed at exactly 4,096 server
+prompt tokens, and all 24 quality usages were complete and cache-zero. The
+formal p4096/o128 fixture passed at `4.669548 tok/s` conventional with
+`266.080895 s` TTFT.
+
+Three no-warmup p4096/o256 rows returned the target hash at `16.578976 /
+15.501565 / 14.615698 tok/s`, median `15.501565 tok/s` after first text. Median
+TTFT was `187.899186 s`; median wall output rate was `1.246260 tok/s`.
+Cumulative session acceptance was 799/852 (93.78%). Relative to the separate
+MTP0 4K legacy-comparable screen, decode is 196.19% higher but TTFT is 52.28%
+slower and wall output rate is 16.12% lower. The next production problem is
+prefill/TTFT and fresh-boot stability, not proving 4K fit. These deltas are
+descriptive workload-aligned cross-run/cross-source evidence, not a causal
+MTP-only A/B: MTP0 used vLLM `658965050` and MTP3 used `1372c62d`. MTP0, MTP1, and
+MTP3/512 remain untouched. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json`.
