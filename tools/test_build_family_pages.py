@@ -5226,6 +5226,18 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         serialized = json.dumps(family, sort_keys=True)
         self.assertNotIn("mtp3-official-quality-prereg", serialized)
+        self.assertIn(
+            "20260827-tp4-mtp3-official-quality-attempt2-result.json",
+            serialized,
+        )
+        mtp3_measurement = measurements[
+            "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1"
+        ]
+        self.assertEqual(mtp3_measurement["state"], "lab-screened")
+        self.assertEqual(
+            mtp3_measurement["metrics"]["decode_tok_s"],
+            [15.50156510641242],
+        )
         self.assertIn("MTP thinking parity", family["summary"])
         self.assertIn("unqualified", family["summary"])
 
@@ -5284,6 +5296,8 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         contract_end = rendered.index("</details>", contract_disclosure)
         self.assertIn("13/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("19 of 25 required rows", rendered)
+        self.assertIn("inconclusive and unqualified", rendered)
 
     def test_collapsed_coverage_contract_flag_must_be_boolean(self) -> None:
         family = self._family()
