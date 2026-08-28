@@ -106,6 +106,8 @@
   .combo .c-dead { font-size:11.5px; color:var(--muted); font-weight:400; }
   .combo .c-val { font:700 13px var(--mono); white-space:nowrap; }
   .combo .c-links { font:11px var(--mono); white-space:nowrap; }
+  .combo-block + .combo-block { margin-top:18px; }
+  .combo-title { margin:0 0 5px; font:900 17px/1.1 var(--display); text-transform:uppercase; }
   .combo-scope { margin:0 0 8px; color:var(--muted); font-size:12px; }
   .combo-tail { margin:8px 0 0; color:var(--muted); font-size:12px; }
   .combo-none { margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }
@@ -113,6 +115,9 @@
   .combo-gaps summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
   .gap-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
   .gap-chips code { padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }
+  .full-coverage-contracts { margin-top:18px; }
+  .full-coverage-contracts > summary { cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }
+  .full-coverage-contracts > .contract-overview { margin-top:10px; }
   .view-flag { font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }
   h2, .section-head { scroll-margin-top:70px; }
   @media (max-width:520px) {
@@ -244,7 +249,7 @@
 
 
   <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
-  <div class="combo-block"><p class="combo-scope">Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps. Fixed: revision=glm-4.7-flash-0d32489 · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, UD-Q4_K_XL <code>TP1·UD-Q4_K_XL</code></span><b class="c-val">40.77 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="2 cards, UD-Q4_K_XL — no stored lane">TP2·UD-Q4_K_XL</code><code title="4 cards, UD-Q4_K_XL — no stored lane">TP4·UD-Q4_K_XL</code></div></details><a class="inline" href="../families/glm-4-7.json">Full matrix and exact selectors</a></div></div>
+  <div class="combo-block" data-coverage-view="glm-4-7-quant-by-tp"><h3 class="combo-title">quant × TP</h3><p class="combo-scope">Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps. Fixed: revision=glm-4.7-flash-0d32489 · runtime=llama.cpp SYCL fdb1db877 · mtp=0.</p><ul class="combo-list"><li class="combo is-lab-measured"><span class="c-state">✓ Measured</span><span class="c-what">1 card, UD-Q4_K_XL <code>TP1·UD-Q4_K_XL</code></span><b class="c-val">40.77 tok/s</b><span class="c-links"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md">report</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json">evidence</a></span></li></ul><div class="combo-tail"><details class="combo-gaps"><summary>2 untested combinations</summary><div class="gap-chips"><code title="2 cards, UD-Q4_K_XL — no stored lane">TP2·UD-Q4_K_XL</code><code title="4 cards, UD-Q4_K_XL — no stored lane">TP4·UD-Q4_K_XL</code></div></details><a class="inline" href="../families/glm-4-7.json">Full matrix and exact selectors</a></div></div>
 
 
   <div class="section-head" id="measured"><div><h2>Measured results</h2><p>Every number links to its proof.</p></div><a class="inline" href="../families/glm-4-7.json">family data</a></div>

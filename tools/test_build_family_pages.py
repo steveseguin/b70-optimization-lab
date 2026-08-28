@@ -5142,6 +5142,157 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(protected["metrics"]["decode_tok_s"][0], 71.9001988117144)
 
+    def test_flash_next_practical_coverage_is_compact_exact_and_runtime_bound(self) -> None:
+        family_path = MODULE.ROOT / "families/qwen-flash-next.json"
+        family = json.loads(family_path.read_text())
+        errors = MODULE.validate_family(family, family_path)
+        self.assertEqual(errors, [])
+        self.assertTrue(family["collapse_coverage_contracts"])
+        self.assertEqual(family.get("estimates"), [])
+
+        views = {view["id"]: view for view in family["coverage_views"]}
+        self.assertEqual(
+            list(views),
+            [
+                "qwen-flash-next-tp4-mtp-by-context",
+                "qwen-flash-next-tp-fit",
+                "qwen-flash-next-graph-by-modality",
+            ],
+        )
+        practical = views["qwen-flash-next-tp4-mtp-by-context"]
+        self.assertEqual(practical["rows"], [0, 1, 2, 3, 4])
+        self.assertEqual(practical["columns"], [0, 1024, 2048, 4096, 8192])
+        self.assertEqual(len(practical["cells"]), 25)
+        practical_states = Counter(
+            cell["state"] for cell in practical["cells"].values()
+        )
+        self.assertEqual(
+            practical_states,
+            Counter({"lab-screened": 12, "missing": 12, "quarantined": 1}),
+        )
+        self.assertFalse(
+            any(
+                cell.get("state") == "estimated" or "estimate_id" in cell
+                for cell in practical["cells"].values()
+            )
+        )
+
+        measurements = {
+            measurement["id"]: measurement
+            for measurement in MODULE.records(family)
+        }
+        runtime_by_mtp = {
+            0: "vLLM XPU 658965050 + kernels 2f829747",
+            1: "vLLM XPU 1372c62d + staged kernels 2f829747",
+            2: "vLLM XPU 1372c62d + staged kernels 2f829747",
+            3: "vLLM XPU 1372c62d + staged kernels 2f829747",
+            4: "vLLM XPU 1372c62d + staged kernels 2f829747",
+        }
+        for mtp in practical["rows"]:
+            for context in practical["columns"]:
+                cell = practical["cells"][f"{mtp}:{context}"]
+                selectors = MODULE.effective_cell_selectors(
+                    practical, mtp, context, cell
+                )
+                self.assertEqual(selectors["runtime"], runtime_by_mtp[mtp])
+                evidence_id = cell.get("evidence_id")
+                if evidence_id:
+                    measurement = measurements[evidence_id]
+                    for key in (
+                        "revision",
+                        "artifact_id",
+                        "runtime",
+                        "runtime_family",
+                        "tp",
+                        "ep",
+                        "parallel_profile",
+                        "mtp",
+                        "active_context_tokens",
+                        "graph_mode",
+                        "kv",
+                        "modality",
+                    ):
+                        self.assertEqual(
+                            MODULE.record_selector_value(measurement, key),
+                            selectors[key],
+                            f"{evidence_id} selector {key}",
+                        )
+
+        mtp3_4k = practical["cells"]["3:4096"]
+        self.assertEqual(mtp3_4k["state"], "lab-screened")
+        self.assertEqual(
+            mtp3_4k["evidence_id"],
+            "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1",
+        )
+        serialized = json.dumps(family, sort_keys=True)
+        self.assertNotIn("mtp3-official-quality-prereg", serialized)
+        self.assertIn("MTP thinking parity", family["summary"])
+        self.assertIn("unqualified", family["summary"])
+
+        fit = views["qwen-flash-next-tp-fit"]
+        self.assertEqual(len(fit["cells"]), 3)
+        self.assertEqual(
+            Counter(cell["state"] for cell in fit["cells"].values()),
+            Counter({"missing": 2, "lab-screened": 1}),
+        )
+        self.assertTrue(
+            all(
+                cell["state"] != "unsupported"
+                for cell in fit["cells"].values()
+            )
+        )
+
+        graph_modality = views["qwen-flash-next-graph-by-modality"]
+        self.assertEqual(len(graph_modality["cells"]), 4)
+        self.assertEqual(
+            Counter(cell["state"] for cell in graph_modality["cells"].values()),
+            Counter({"missing": 3, "lab-screened": 1}),
+        )
+        self.assertEqual(
+            graph_modality["cells"]["off:text"]["evidence_id"],
+            "qwen38-flash-next-fp8-tp4-attempt19",
+        )
+        self.assertTrue(
+            all(
+                cell["state"] != "unsupported"
+                for cell in graph_modality["cells"].values()
+            )
+        )
+
+        contract_cells, contract_errors = MODULE.expand_coverage_contract(
+            family["coverage_contracts"][0]
+        )
+        self.assertEqual(contract_errors, [])
+        self.assertEqual(len(contract_cells), 480)
+        self.assertEqual(
+            Counter(cell["state"] for cell in contract_cells),
+            Counter({"missing": 467, "lab-screened": 12, "quarantined": 1}),
+        )
+
+        rendered = MODULE.family_page(family)
+        practical_heading = rendered.index("Practical TP4 eager text coverage")
+        fit_heading = rendered.index("Card-fit summary")
+        graph_heading = rendered.index("Graph and modality summary")
+        contract_disclosure = rendered.index(
+            '<details class="full-coverage-contracts">'
+        )
+        self.assertLess(practical_heading, fit_heading)
+        self.assertLess(fit_heading, graph_heading)
+        self.assertLess(graph_heading, contract_disclosure)
+        self.assertIn(
+            "Full 480-cell coverage contract · 13 classified", rendered
+        )
+        contract_end = rendered.index("</details>", contract_disclosure)
+        self.assertIn("13/480", rendered[contract_disclosure:contract_end])
+
+    def test_collapsed_coverage_contract_flag_must_be_boolean(self) -> None:
+        family = self._family()
+        family["collapse_coverage_contracts"] = "yes"
+        self.assertIn(
+            "families/test-family.json: collapse_coverage_contracts must be boolean",
+            self._errors(family),
+        )
+
     @staticmethod
     def _family() -> dict[str, object]:
         return {

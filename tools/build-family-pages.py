@@ -930,6 +930,10 @@ def validate_family(family: dict[str, Any], source: Path) -> list[str]:
     errors: list[str] = []
     if family.get("format") != "neural-download-model-family-v1":
         errors.append(f"{label}: unsupported format")
+    if "collapse_coverage_contracts" in family and not isinstance(
+        family.get("collapse_coverage_contracts"), bool
+    ):
+        errors.append(f"{label}: collapse_coverage_contracts must be boolean")
     family_id = family.get("id")
     if not isinstance(family_id, str) or not SLUG_RE.fullmatch(family_id):
         errors.append(f"{label}: id must be a lowercase hyphenated slug")
@@ -2588,7 +2592,9 @@ def coverage_tables(family: dict[str, Any]) -> str:
             tail = ('<p class="combo-tail">Codes in the rows: D = decode tok/s · P = prefill tok/s · '
                     'T = ms to first token · AR = share of drafted tokens accepted · A = combined tok/s.</p>') + tail
         blocks.append(
-            f'<div class="combo-block"><p class="combo-scope">{esc(scope)}</p>'
+            f'<div class="combo-block" data-coverage-view="{esc(view.get("id"))}">'
+            f'<h3 class="combo-title">{esc(view.get("label"))}</h3>'
+            f'<p class="combo-scope">{esc(scope)}</p>'
             f'{classified}{tail}</div>'
         )
     return "".join(blocks)
@@ -3403,9 +3409,31 @@ def family_page(family: dict[str, Any]) -> str:
         signal_cards += f'\n    <div title="Run arms and measured series; every point links to proof"><dt>Measured results</dt><dd>{measured_count}</dd></div>'
     coverage_section = ""
     if coverage_views or coverage_contracts:
+        if family.get("collapse_coverage_contracts") and contract_coverage:
+            contract_cells = [
+                cell
+                for contract in coverage_contracts
+                for cell in expand_coverage_contract(contract)[0]
+            ]
+            contract_total = len(contract_cells)
+            contract_classified = sum(
+                cell.get("state") != "missing" for cell in contract_cells
+            )
+            contract_label = (
+                "contract" if len(coverage_contracts) == 1 else "contracts"
+            )
+            contract_coverage = (
+                '<details class="full-coverage-contracts">'
+                f'<summary>Full {fmt(contract_total, 0)}-cell coverage '
+                f'{contract_label} · {fmt(contract_classified, 0)} classified</summary>'
+                f'{contract_coverage}</details>'
+            )
+            coverage_content = coverage + contract_coverage
+        else:
+            coverage_content = contract_coverage + coverage
         coverage_section = f'''
   <div class="section-head"><div><h2>What has been classified</h2><p>Dense scorecards summarize every declared combination; measured slices retain exact evidence links.</p></div></div>
-  {contract_coverage}{coverage}
+  {coverage_content}
 '''
     closures_section = ""
     if closure_items:
@@ -3515,6 +3543,8 @@ def family_page(family: dict[str, Any]) -> str:
   .combo .c-dead {{ font-size:11.5px; color:var(--muted); font-weight:400; }}
   .combo .c-val {{ font:700 13px var(--mono); white-space:nowrap; }}
   .combo .c-links {{ font:11px var(--mono); white-space:nowrap; }}
+  .combo-block + .combo-block {{ margin-top:18px; }}
+  .combo-title {{ margin:0 0 5px; font:900 17px/1.1 var(--display); text-transform:uppercase; }}
   .combo-scope {{ margin:0 0 8px; color:var(--muted); font-size:12px; }}
   .combo-tail {{ margin:8px 0 0; color:var(--muted); font-size:12px; }}
   .combo-none {{ margin:0; padding:9px 12px; border:1px solid var(--line); color:var(--muted); font-size:12px; }}
@@ -3522,6 +3552,9 @@ def family_page(family: dict[str, Any]) -> str:
   .combo-gaps summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }}
   .gap-chips {{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }}
   .gap-chips code {{ padding:2px 5px; border:1px solid var(--line); background:var(--surface); font:9px var(--mono); }}
+  .full-coverage-contracts {{ margin-top:18px; }}
+  .full-coverage-contracts > summary {{ cursor:pointer; font:700 10px var(--mono); text-transform:uppercase; }}
+  .full-coverage-contracts > .contract-overview {{ margin-top:10px; }}
   .view-flag {{ font:700 9px var(--mono); letter-spacing:.05em; color:var(--warn); margin-left:8px; vertical-align:2px; }}
   h2, .section-head {{ scroll-margin-top:70px; }}
   @media (max-width:520px) {{
