@@ -170,3 +170,13 @@ after the exact server PID, listener, compile path, and RPC path are absent.
 The executed v1 source and result remain immutable in Git history and the
 compact receipt; the corrected file is not retroactively claimed as the code
 that ran this attempt.
+
+The corrected process-tree behavior was then exercised without a model or GPU
+load by `tools/test-descendant-aware-supervisor.sh` (SHA-256
+`afe7c54491e16e513614fe7c793e14247f3edd5fb6b1958ff61057c492a663b1`).
+The synthetic chain reproduced `timeout -> launcher -> detached listener`,
+signalled only the launcher's direct descendant, observed the bounded wrapper's
+expected rc 143, and passed only after the detached process, listener, compile
+path, and RPC path were all absent. This closes the lifecycle-helper test gate
+for future separately preregistered cells; it does not alter this attempt's
+Grade-D result.
