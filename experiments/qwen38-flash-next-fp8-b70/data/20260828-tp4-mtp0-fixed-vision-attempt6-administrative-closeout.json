@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "closed-before-supervisor-host-memory-floor",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 6,
+  "gate": {
+    "name": "pre-supervisor MemAvailable floor",
+    "sample_phase": "after sync and drop_caches",
+    "required_kib": 114294784,
+    "required_gib": 109,
+    "observed_mem_available_kib": 113701160,
+    "deficit_kib": 593624,
+    "observed_swap_free_kib": 6296432,
+    "interpretation": "The exact pre-supervisor sample was below the frozen 109-GiB floor, so the supervisor was not invoked."
+  },
+  "absent": {
+    "supervisor_process": true,
+    "state_and_sentinels": true,
+    "run_dir": true,
+    "supervisor_evidence_dir": true,
+    "cache_dir": true,
+    "compile_dir": true,
+    "rpc_dir": true,
+    "listener_19685": true,
+    "model_or_worker_process": true
+  },
+  "classification": {
+    "supervisor_invoked": false,
+    "admission_started": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "client_invoked": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "next_packet": {
+    "attempt": 7,
+    "port": 19686,
+    "initial_ram_floor_kib": 113246208,
+    "initial_ram_floor_gib": 108,
+    "ram_floor_changed": true,
+    "identity_change": "fresh attempt, state, run, evidence, cache, compile, RPC, and port",
+    "sole_treatment": "lower the initial MemAvailable admission floor by 1 GiB; preserve active-run 10-GiB MemAvailable and 5-GiB SwapFree floors"
+  }
+}
