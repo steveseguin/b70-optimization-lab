@@ -1,0 +1,91 @@
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 4fa417a1a..29e167c6a 100644
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -4,6 +4,7 @@
+ 
+ import copy
+ import functools
++import os
+ from dataclasses import dataclass
+ from typing import ClassVar
+ 
+@@ -1174,7 +1175,79 @@ class FlashAttentionImpl(AttentionImpl):
+                     )
+                     causal = not has_window
+ 
++                serial_spec = os.environ.get(
++                    "VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"
++                ).strip().lower() in ("1", "true", "yes", "on")
++                if (
++                    current_platform.is_xpu()
++                    and serial_spec
++                    and max_seqlen_q > 1
++                    and not is_dynamic_causal
++                    and mm_mask_mod is None
++                    and rswa_mask_mod_fn is None
++                    and num_actual_tokens <= int(cu_seqlens_q[-1].item())
++                ):
++                    single_cu_seqlens_q = torch.tensor(
++                        [0, 1], dtype=torch.int32, device=query.device
++                    )
++                    for req_idx in range(cu_seqlens_q.shape[0] - 1):
++                        q_start = int(cu_seqlens_q[req_idx].item())
++                        q_end = int(cu_seqlens_q[req_idx + 1].item())
++                        q_len = q_end - q_start
++                        if q_len <= 0:
++                            continue
++                        seq_len = int(seqused_k[req_idx].item())
++                        req_block_table = block_table[req_idx : req_idx + 1]
++                        req_q_descale = (
++                            q_descale[req_idx : req_idx + 1]
++                            if q_descale is not None
++                            else None
++                        )
++                        req_k_descale = k_descale[req_idx : req_idx + 1]
++                        req_v_descale = v_descale[req_idx : req_idx + 1]
++                        for rel_pos in range(q_len):
++                            token_idx = q_start + rel_pos
++                            token_seq_len = seq_len - (q_len - 1 - rel_pos)
++                            if token_seq_len <= 0:
++                                continue
++                            token_seqused_k = torch.tensor(
++                                [token_seq_len],
++                                dtype=seqused_k.dtype,
++                                device=seqused_k.device,
++                            )
++                            flash_attn_varlen_func(
++                                q=query[token_idx : token_idx + 1],
++                                k=key_cache,
++                                v=value_cache,
++                                out=output[token_idx : token_idx + 1],
++                                cu_seqlens_q=single_cu_seqlens_q,
++                                max_seqlen_q=1,
++                                seqused_k=token_seqused_k,
++                                max_seqlen_k=token_seq_len,
++                                softmax_scale=self.scale,
++                                causal=causal,
++                                alibi_slopes=self.alibi_slopes,
++                                window_size=sliding_window_size,
++                                block_table=req_block_table,
++                                softcap=self.logits_soft_cap,
++                                scheduler_metadata=None,
++                                fa_version=self.vllm_flash_attn_version,
++                                q_descale=req_q_descale,
++                                k_descale=req_k_descale,
++                                v_descale=req_v_descale,
++                                dynamic_causal=None,
++                                num_splits=0,
++                                s_aux=self.sinks,
++                                mask_mod=None,
++                                aux_tensors=None,
++                            )
++                    logger.warning_once(
++                        "VLLM_XPU_FA_SERIAL_SPEC_DECODE reached "
++                        "for progressive verifier queries (r38)"
++                    )
++                    return output
++
+                 flash_attn_varlen_func(
+                     q=query[:num_actual_tokens],
+                     k=key_cache,

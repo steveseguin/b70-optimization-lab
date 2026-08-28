@@ -1,0 +1,18 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp8-serial-flash-attn-r38
+FROM ${BASE_IMAGE}
+
+ARG FA_NOCAUSAL_PATCH_SHA256
+
+COPY experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-serial-spec-flash-attn-nocausal-r38b-20260828.patch /tmp/fa-nocausal.patch
+
+RUN test "$(sha256sum /tmp/fa-nocausal.patch | awk '{print $1}')" = "${FA_NOCAUSAL_PATCH_SHA256}" \
+    && patch -p1 -d /workspace/vllm < /tmp/fa-nocausal.patch \
+    && cp /workspace/vllm/vllm/v1/attention/backends/flash_attn.py \
+       /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py \
+    && /opt/venv/bin/python -m py_compile \
+       /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py \
+    && rm /tmp/fa-nocausal.patch
+
+LABEL neural.download.composite.base.r38="sha256:489d8947be1faba1bf9cd6f699982d9c14bfa368065f4a6477bda5cf0c1ae018" \
+      neural.download.vllm.fa-serial-nocausal.patch.sha256="${FA_NOCAUSAL_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp8-serial-flash-attn-nocausal-r38b"

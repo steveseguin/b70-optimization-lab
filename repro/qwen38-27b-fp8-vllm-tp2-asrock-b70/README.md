@@ -107,8 +107,20 @@ A one-B70 eager/default-dispatch control subsequently matched only `8/12` too,
 so TP2 and cross-rank oneCCL are not required; see the
 [TP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
 
-Dynamic-MTP single-user cells stay blank. The later qualified deterministic
-MTP1 profile directly measured all six exact depths from 2K through 32K and
+The subsequent bounded R34-R38b repair campaign did not leave that failure
+untested. Serial native GDN made rebuilt static MTP1 exact, while dynamic MTP8
+still diverged at token 128. Serial packed block-FP8 moved the first sentinel
+divergence to token 441; declaring global batch invariance was neutral; and
+progressive serial FlashAttention, with and without its redundant causal mask,
+returned the divergence to token 128. All sentinels were cache zero and fired
+their required mechanism markers. The dynamic lane is therefore rejected, not
+merely missing, and none of its diagnostic rates is public evidence. See the
+[R34-R38b structured closeout](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-dynamic-exactness-r34-r38b-summary.json).
+
+Dynamic-MTP promotion cells stay blank in the research record, and that
+rejected route is omitted from the landing-page chooser. The later qualified
+deterministic MTP1 profile directly measured all six exact depths from 2K
+through 32K and
 matched the MTP0 target arrays 6/6. Its 32K point is `46.636241 tok/s` with
 `10.487 s` HTTP TTFT. This is Grade-C repeated-token shape evidence, not a
 strict natural-prompt headline; see the [R33 result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.md).

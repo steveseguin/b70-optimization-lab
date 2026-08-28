@@ -66,15 +66,39 @@
       "receipt_sha256": "a0580025bd6f292256fd1bc48e82d7fc9832a91ad537411c9ec1c9a028bc8f7f",
       "token_array_exact_vs_r36b": true,
       "decision": "rejected; global batch invariance is neutral"
+    },
+    {
+      "id": "r38-eager-dynamic-mtp8-progressive-serial-flash-attn",
+      "rows": 1,
+      "target_exact_rows": 0,
+      "first_divergence_zero_based": 127,
+      "candidate_token": 8923,
+      "target_token": 4826,
+      "receipt_sha256": "21d61f11d451a458a3bf7b1ff373117ecb083c74a7dcad1db1734455c1a24cb0",
+      "decision": "rejected"
+    },
+    {
+      "id": "r38b-eager-dynamic-mtp8-progressive-serial-flash-attn-no-causal",
+      "rows": 1,
+      "target_exact_rows": 0,
+      "first_divergence_zero_based": 127,
+      "candidate_token": 8923,
+      "target_token": 4826,
+      "receipt_sha256": "4eb627eb2e0647a4d51eaa33c471d3407038fc9ef2b19fa4b657903bdad7b828",
+      "decision": "rejected"
     }
   ],
   "artifacts": {
     "r35_kernel_patch_sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
     "r36_fp8_patch_sha256": "0dcf24d6bb2cf23e8692ed1ec7998a96494998b3231e792b16c220410aec6303",
     "r37b_capability_patch_sha256": "73d6f9f51b5dff68ededf25fb1f4a3abaf5395435e65fff0743eb5c203156197",
+    "r38_flash_attention_patch_sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+    "r38b_no_causal_patch_sha256": "49a0fd5eb8316a3fc7d674d9f5f639a23013278fbf043e7deab6b5686a6b62cc",
     "r35_image_id": "sha256:38f737c4b5ded15709046929b89cb7cbe851708ae9c47c079ac537d9a07a7a6b",
     "r36_image_id": "sha256:f86ddd25d76925fd296f68ab6376255fc91f8fb76e803a05e57acf7b1f3161d8",
-    "r37b_image_id": "sha256:b31e78ede5a0b11d78237b6ce40103d4080b76d8239d13fed1c973826399117c"
+    "r37b_image_id": "sha256:b31e78ede5a0b11d78237b6ce40103d4080b76d8239d13fed1c973826399117c",
+    "r38_image_id": "sha256:489d8947be1faba1bf9cd6f699982d9c14bfa368065f4a6477bda5cf0c1ae018",
+    "r38b_image_id": "sha256:360f4560f6d49d7bb8446aa3296764bb36dad8dc4ec1eb041544568d1077df3b"
   },
   "public_result_effect": "none; dynamic MTP8 remains withheld"
 }

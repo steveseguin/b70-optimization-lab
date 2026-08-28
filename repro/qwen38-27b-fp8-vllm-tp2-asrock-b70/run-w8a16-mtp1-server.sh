@@ -17,6 +17,8 @@ xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
 fp8_packed_serial_exact=${VLLM_XPU_FP8_PACKED_SERIAL_EXACT:-0}
+fa_serial_spec_decode=${VLLM_XPU_FA_SERIAL_SPEC_DECODE:-0}
+fa_serial_spec_no_causal=${VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL:-0}
 batch_invariant=${VLLM_BATCH_INVARIANT:-0}
 qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}
 qwen_gemma_rmsnorm_packed_serial_exact=${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}
@@ -44,7 +46,8 @@ done
   printf 'ENFORCE_EAGER must be 0 or 1\n' >&2
   exit 1
 }
-for value_name in fp8_block_w8a16 fp8_packed_serial_exact batch_invariant \
+for value_name in fp8_block_w8a16 fp8_packed_serial_exact \
+  fa_serial_spec_decode fa_serial_spec_no_causal batch_invariant \
   qwen_gemma_rmsnorm_batch_invariant \
   qwen_gemma_rmsnorm_packed_serial_exact \
   gdn_serial_exact gdn_persistent_scratch gdn_native_fallback \
@@ -101,6 +104,8 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
   --env VLLM_XPU_FP8_BLOCK_W8A16="${fp8_block_w8a16}" \
   --env VLLM_XPU_FP8_PACKED_SERIAL_EXACT="${fp8_packed_serial_exact}" \
+  --env VLLM_XPU_FA_SERIAL_SPEC_DECODE="${fa_serial_spec_decode}" \
+  --env VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL="${fa_serial_spec_no_causal}" \
   --env VLLM_BATCH_INVARIANT="${batch_invariant}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \

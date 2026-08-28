@@ -23,6 +23,15 @@ was premature and withdrawal is recommended. Static MTP1 is now separately
 repaired and qualified by the strict suite; deeper dynamic MTP remains
 withheld.
 
+That is a tested boundary, not an uninvestigated blank. The bounded R34-R38b
+campaign exercised full strict replay, serial native GDN, serial packed
+block-FP8, global batch-invariance declaration, and progressive serial
+FlashAttention with and without its redundant causal mask. Static MTP1 became
+target-exact, but every dynamic-MTP8 treatment still diverged from the
+qualified target. None of those diagnostic rates is publishable. The
+[structured closeout](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-dynamic-exactness-r34-r38b-summary.json)
+preserves the attempts and immutable receipts.
+
 The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
 short requests, with explicit output-isolation and semantic gates. A separate

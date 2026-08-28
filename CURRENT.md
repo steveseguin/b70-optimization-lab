@@ -1560,6 +1560,18 @@ repeated-token shape evidence, not a natural-prompt headline or LocalMaxxing
 result. The first 2K request's one-time draft-kernel JIT is disclosed and its
 observed value was retained rather than replaced.
 
+Dynamic MTP8 remains rejected after the bounded R34-R38b exactness campaign.
+The full strict R34 attempt matched only 7/12 qualified target arrays. Serial
+native GDN made rebuilt static MTP1 exact but left dynamic MTP8 divergent at
+token 128; serial packed block-FP8 moved that sentinel's first divergence to
+token 441. Global batch invariance was byte-identical to that result, while
+progressive serial FlashAttention, with and without its redundant causal mask,
+returned the first divergence to token 128. Every sentinel was cache zero and
+the required mechanism markers fired. None supplies a public speed. The
+qualified user-facing FP8 speculation profile therefore remains static MTP1,
+not the empty/withdrawn dynamic row. See the
+[structured closeout](experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-dynamic-exactness-r34-r38b-summary.json).
+
 A subsequent one-B70 TP1 eager/default-dispatch control measured
 `11.405360`/`11.413057 tok/s`; every workload and canary gate passed, but the
 fresh servers again matched only `8/12` complete outputs. Divergences began at

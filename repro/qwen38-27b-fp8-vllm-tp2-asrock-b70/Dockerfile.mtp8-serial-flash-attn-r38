@@ -1,0 +1,18 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp8-serial-linear-r36
+FROM ${BASE_IMAGE}
+
+ARG FA_PATCH_SHA256
+
+COPY experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-serial-spec-flash-attn-r38-20260828.patch /tmp/fa-serial.patch
+
+RUN test "$(sha256sum /tmp/fa-serial.patch | awk '{print $1}')" = "${FA_PATCH_SHA256}" \
+    && patch -p1 -d /workspace/vllm < /tmp/fa-serial.patch \
+    && cp /workspace/vllm/vllm/v1/attention/backends/flash_attn.py \
+       /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py \
+    && /opt/venv/bin/python -m py_compile \
+       /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py \
+    && rm /tmp/fa-serial.patch
+
+LABEL neural.download.composite.base.r36="sha256:f86ddd25d76925fd296f68ab6376255fc91f8fb76e803a05e57acf7b1f3161d8" \
+      neural.download.vllm.fa-serial.patch.sha256="${FA_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp8-serial-flash-attn-r38"

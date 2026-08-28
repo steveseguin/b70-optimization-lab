@@ -26,7 +26,7 @@
       "scope": "Median of two fresh-server, empty-compile-cache class-balanced medians over the complete fixed 12-prompt/six-class, natural 512-cap, cache-zero raw-completion suite; official FP8 target, W8A16, FP16 KV, TP2, publisher MTP depth 1, Inductor deterministic mode, XPU Graph off, packed Gemma RMSNorm row replay, and explicit oneCCL Work.wait. All 12 complete token arrays matched between attempts and both qualified MTP0 target repeats; both independent canary batteries passed.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-mtp1-deterministic-r32.json"
     },
-    "benchmark_status": "Strict compiled MTP1 qualified at 51.918757 tok/s: two fresh servers with empty compile caches, all workload/canary gates passed, cache zero, and 12/12 complete token arrays exact across repeats and against both qualified MTP0 target repeats. The target-only MTP0 fallback remains qualified at 34.031596 tok/s. Dynamic MTP remains withheld. The same deterministic MTP1 profile separately measured exact 32K at 46.636241 tok/s with 10.487 s TTFT and 6/6 target-array parity; it is Grade-C shape evidence, not a headline. Aggregate measurements remain separately scoped."
+    "benchmark_status": "Strict compiled MTP1 qualified at 51.918757 tok/s: two fresh servers with empty compile caches, all workload/canary gates passed, cache zero, and 12/12 complete token arrays exact across repeats and against both qualified MTP0 target repeats. The target-only MTP0 fallback remains qualified at 34.031596 tok/s. Dynamic MTP remains withheld after the bounded R34-R38b exactness campaign; every dynamic treatment still diverged from the qualified target. The same deterministic MTP1 profile separately measured exact 32K at 46.636241 tok/s with 10.487 s TTFT and 6/6 target-array parity; it is Grade-C shape evidence, not a headline. Aggregate measurements remain separately scoped."
   },
   "contributors": [
     {
@@ -142,6 +142,7 @@
     "experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.md",
     "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
     "experiments/qwen38-27b-b70/scripts/validate-20260828-qwen38-fp8-w8a16-mtp1-exact-depth-r33.py",
+    "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-dynamic-exactness-r34-r38b-summary.json",
     "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-gemma-rmsnorm-mtp1-serial-r30-operator-proof.json",
     "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15a/performance.json",

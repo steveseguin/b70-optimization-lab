@@ -1,0 +1,23 @@
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 29e167c6a..5de8d8740 100644
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -1179,6 +1179,9 @@ class FlashAttentionImpl(AttentionImpl):
+                 serial_spec = os.environ.get(
+                     "VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"
+                 ).strip().lower() in ("1", "true", "yes", "on")
++                serial_no_causal = os.environ.get(
++                    "VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL", "0"
++                ).strip().lower() in ("1", "true", "yes", "on")
+                 if (
+                     current_platform.is_xpu()
+                     and serial_spec
+@@ -1227,7 +1230,7 @@ class FlashAttentionImpl(AttentionImpl):
+                                 max_seqlen_k=token_seq_len,
+                                 softmax_scale=self.scale,
+-                                causal=causal,
++                                causal=False if serial_no_causal else causal,
+                                 alibi_slopes=self.alibi_slopes,
+                                 window_size=sliding_window_size,
+                                 block_table=req_block_table,
+
