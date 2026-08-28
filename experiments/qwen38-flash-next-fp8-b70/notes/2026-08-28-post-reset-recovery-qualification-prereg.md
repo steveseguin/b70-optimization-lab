@@ -54,3 +54,35 @@ canary, bounded clean shutdown, and a clean journal window. Only a complete
 Stage-A plus Stage-B pass restores permission for the next matrix arm. A
 failure remains evidence and requires assessment; it does not trigger an
 automatic reload or reboot.
+
+## Stage-A result
+
+Stage A stopped at the collective gate. All four per-card checks passed with
+one visible device and the exact `2097152.0` reduction result. The helper then
+forced its historical default `FI_TCP_IFACE=eth1` and
+`CCL_KVS_IFACE=eth1`. This host has `lo`, `eno1`, `eth0`, and `docker0`, but no
+`eth1`; oneCCL therefore rejected transport initialization before the
+all-reduce. The helper returned `1`, no model canary ran, final device memory
+was 42.875-42.879 MiB, and the bounded journal contained no new B70 event.
+
+This is a failed recovery-control configuration, not a recovery pass and not
+evidence of a card failure. The attempt remains immutable at the external path
+above. Its `evidence.sha256` manifest hash is
+`c82dcf7d673d17ef0d2edb63ba3c11c1c10b719aee9e9e0b59ca09c9472c2c76`.
+
+## Separately registered Stage-A2 correction
+
+Stage A2 changes only the two transport-interface environment values to the
+Flash-Next launcher's accepted `lo` identity:
+
+```text
+FI_TCP_IFACE=lo
+CCL_KVS_IFACE=lo
+```
+
+All hashes, devices, ranks, per-card checks, OFI/P2P settings, bounds, pass
+criteria, stop rules, and evidence requirements remain unchanged. Its distinct
+output root is
+`/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/post-reset-recovery-qualification-20260828-stage-a2`.
+The first failed attempt is not overwritten. Stage A2 may authorize only the
+separately registered Stage-B known-good generation canary.
