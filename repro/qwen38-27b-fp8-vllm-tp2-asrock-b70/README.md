@@ -107,8 +107,11 @@ A one-B70 eager/default-dispatch control subsequently matched only `8/12` too,
 so TP2 and cross-rank oneCCL are not required; see the
 [TP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
 
-Dynamic-MTP single-user and MTP1 32K cells stay blank. No diagnostic rate is
-substituted, averaged into another profile, or extrapolated.
+Dynamic-MTP single-user cells stay blank. The later qualified deterministic
+MTP1 profile directly measured all six exact depths from 2K through 32K and
+matched the MTP0 target arrays 6/6. Its 32K point is `46.636241 tok/s` with
+`10.487 s` HTTP TTFT. This is Grade-C repeated-token shape evidence, not a
+strict natural-prompt headline; see the [R33 result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.md).
 
 ## Dynamic MTP8-to-MTP1 screening profile — not a headline
 
@@ -550,6 +553,24 @@ OUT_DIR=/path/to/depth-result \
 The wrapper fixes the measured 33,024-token/one-slot/4,096-prefill profile.
 Changing those values creates another operating profile and must not be
 compared as though it were the same measurement.
+
+To reproduce the qualified MTP1 exact-depth profile instead, use another new
+empty cache and the dedicated wrappers:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-mtp1-depth-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-depth-server.sh
+
+OUT_DIR=/path/to/new-mtp1-depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-depth.sh
+```
+
+The launcher inherits the fail-closed qualified image ID and deterministic
+compiler/RMS/GDN/oneCCL settings, then fixes 33,024 tokens, one slot, and
+4,096-token chunked-prefill batches. Compare every returned token array to the
+tracked MTP0 depth oracle before publishing a result. R33 passed 6/6; it did
+not manufacture an x=0 point or warm/retry its first 2K observation.
 
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that

@@ -27,14 +27,17 @@ The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
 short requests, with explicit output-isolation and semantic gates. A separate
 33,024-token target-only profile measured `31.489587 tok/s` decode at an exact
-32K prompt with `13.740 s` TTFT. These are scoped capacity/context results,
-not replacements for the strict varied-prompt single-user headline.
+32K prompt with `13.740 s` TTFT. The now-qualified deterministic MTP1 profile
+also directly measured exact 32K at **`46.636241 tok/s`** with `10.487 s`
+TTFT and matched all six MTP0 depth-oracle token arrays. These are scoped
+Grade-C capacity/context results, not replacements for the strict
+varied-prompt single-user headline.
 
 The package also retains a separate legacy publisher-MTP1 short-context
 aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
 substitute for the strict single-user result and uses the older concurrency
-service configuration. No MTP1 32K value has been measured, so that cell stays
-blank rather than borrowing the MTP0 depth result.
+service configuration. The MTP1 32K value above comes from the later strict
+deterministic profile and is not borrowed from the MTP0 or concurrency lane.
 
 The checkpoint has one publisher MTP layer. Experimental serial reuse to MTP8
 is preserved under `experiments/` for mechanism research, but its selected
@@ -325,6 +328,26 @@ and 4,096-token chunked-prefill batches. Its repeated-token fixture
 is shape evidence, not natural-prose latency evidence. The published prompt
 rate is explicitly `prompt tokens / HTTP TTFT`; it includes scheduling and
 first-token work and is not a kernel-only prefill rate.
+
+For the qualified deterministic MTP1 2K-through-32K profile, use the dedicated
+wrappers and a new empty cache:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-mtp1-depth-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-depth-server.sh
+
+OUT_DIR=/path/to/new-mtp1-depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-depth.sh
+```
+
+This fixes TP2, official FP8 plus W8A16, publisher MTP1, FP16/auto KV,
+deterministic Inductor, XPU Graph off, 33,024-token capacity, one slot, and
+4,096 max batched tokens. R33 measured `44.778323 / 54.932011 / 51.313834 /
+51.289810 / 43.715435 / 46.636241 tok/s` at exact 2K/4K/8K/16K/24K/32K and
+matched the MTP0 depth oracle 6/6. The 2K observation includes disclosed
+one-time draft-kernel JIT; it was not replaced with a warmed retry. See the
+[compact evidence](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json).
 
 For the distinct output-audited concurrency profile, start a new server with
 64 active slots:

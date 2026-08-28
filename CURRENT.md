@@ -1485,11 +1485,12 @@ TP2/MTP0/direct-P2P tuple without interpolation or extrapolation.
 The default-off block-W8A16 dispatch then raised this official-FP8 lane to
 `35.011369 tok/s` for one fresh cache-zero MTP0 response, `31.489587 tok/s` at
 the directly measured 32K point, and `1,112.570323 tok/s` conditioned median
-at c128. Publisher MTP depth 1 is a separate 256-token service identity: it
+at c128. Publisher MTP depth 1 first used a separate legacy 256-token service identity: it
 measured `61.699580 tok/s` for one user and peaked at `1,091.642460 tok/s`
 median at c64, with 7/7 sequential cases, 8/8 repeat stability, and 512/512
-concurrent semantic cases passing. MTP1 has no 32K result; MTP0 remains 3.32%
-faster at its separate c128 optimum. The concurrent MTP1 service requires XPU
+concurrent semantic cases passing. Its original service had no 32K result;
+the later strict deterministic profile closes that gap below. MTP0 remains
+3.32% faster at its separate c128 optimum. The concurrent MTP1 service requires XPU
 kernels `1e90ffa672`, whose upstream mixed speculative/non-speculative GDN
 correction replaced an older kernel that aborted at c16.
 
@@ -1539,10 +1540,25 @@ cache-zero contract. All workload and objective-canary gates passed, but every
 pair matched only `8/12` complete token arrays. Byte-identical compiled-cache
 replay (`10/12`), graph-off eager (`10/12`), and graph-off/W8A16-off eager
 (`8/12`) controls also failed. Compiled-cache identity, XPU Graph, and the lab
-W8A16 dispatch are therefore each not required for the instability. Keep all
-official-FP8 single-user headlines blank and withhold MTP1 32K while its strict
-target-parity gate fails; retain the independently scoped MTP0 32K and
-short-context aggregate results.
+W8A16 dispatch were therefore each not required for that instability. Those
+original matrix rows remain rejected.
+
+The later deterministic GDN-state and explicit oneCCL-completion treatments
+qualified compiled MTP0 at `34.031596 tok/s`. The packed-two-row Gemma RMSNorm
+replay plus deterministic Inductor then qualified static MTP1 at
+**`51.918757 tok/s`** from two fresh empty-cache attempts (`51.606902` and
+`52.230611`). Both passed the full 12-prompt/six-class, natural-512-cap,
+cache-zero workload and canary gates; all 12 complete token arrays matched
+across repeats and both qualified MTP0 target attempts. Dynamic MTP remains
+withheld.
+
+That exact deterministic MTP1 profile subsequently passed a preregistered
+2K/4K/8K/16K/24K/32K exact-depth sweep. All six cache-zero 128-token arrays
+matched the qualified MTP0 depth oracle; the directly measured 32K point is
+**`46.636241 tok/s`** with `10.487 s` HTTP TTFT. This is Grade-C
+repeated-token shape evidence, not a natural-prompt headline or LocalMaxxing
+result. The first 2K request's one-time draft-kernel JIT is disclosed and its
+observed value was retained rather than replaced.
 
 A subsequent one-B70 TP1 eager/default-dispatch control measured
 `11.405360`/`11.413057 tok/s`; every workload and canary gate passed, but the
@@ -1592,6 +1608,8 @@ Resume and evidence:
 - [official FP8 direct-P2P c64 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.md)
 - [official FP8 block-W8A16 MTP0 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md)
 - [official FP8 block-W8A16 MTP1 result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md)
+- [official FP8 deterministic MTP1 strict result](experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-mtp1-deterministic-r32-result.md)
+- [official FP8 deterministic MTP1 exact-depth result](experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.md)
 - [official FP8 strict 512-cap matrix result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
 - [official FP8 TP1 strict target-control result](experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md)
 - [official FP8 dynamic MTP2/MTP0 negative result](experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-w8a16-mtp2-dynamic-r1-result.md)

@@ -1607,6 +1607,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "qwen38-tp2-llamacpp-sycl-q4km-http-depth": 7,
             "qwen38-tp2-llamacpp-sycl-q8-http-depth": 7,
             "qwen38-tp2-vllm-xpu-fp8-http-depth": 7,
+            "qwen38-tp2-vllm-xpu-fp8-w8a16-mtp1-http-depth": 7,
             "qwen38-tp4-vllm-xpu-fp8-http-depth": 7,
             "qwen38-tp2-vllm-xpu-autoround-http-depth": 7,
             "qwen38-tp4-vllm-xpu-autoround-http-depth": 7,
@@ -1636,7 +1637,28 @@ class FamilyCoverageTest(unittest.TestCase):
             self.assertEqual(errors, [], contract_id)
             self.assertEqual(len(cells), expected_count, contract_id)
             all_cells.extend(cells)
-        self.assertEqual(len(all_cells), 2022)
+        self.assertEqual(len(all_cells), 2029)
+
+        fp8_mtp1_cells, errors = MODULE.expand_coverage_contract(
+            contracts["qwen38-tp2-vllm-xpu-fp8-w8a16-mtp1-http-depth"]
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            [
+                cell["selectors"]["active_context_tokens"]
+                for cell in fp8_mtp1_cells
+                if cell["state"] == "lab-measured"
+            ],
+            [2048, 4096, 8192, 16384, 24576, 32768],
+        )
+        self.assertEqual(
+            [
+                cell["selectors"]["active_context_tokens"]
+                for cell in fp8_mtp1_cells
+                if cell["state"] == "missing"
+            ],
+            [0],
+        )
 
         tp4_graph_mtp1_cells, errors = MODULE.expand_coverage_contract(
             contracts["qwen38-tp4-vllm-xpu-autoround-f01e-mtp1-piecewise-depth"]
@@ -3279,15 +3301,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(overview)
         overview_html = overview.group(0)
-        self.assertIn("Coverage · 32 matrices", overview_html)
-        self.assertIn("597/2,022 classified", overview_html)
+        self.assertIn("Coverage · 33 matrices", overview_html)
+        self.assertIn("603/2,029 classified", overview_html)
         for state, count, word in (
-            ("lab-measured", "378", "measured"),
+            ("lab-measured", "384", "measured"),
             ("lab-screened", "35", "screened"),
             ("quarantined", "117", "quarantined"),
             ("closed", "9", "closed"),
             ("unsupported", "58", "unsupported"),
-            ("missing", "1,425", "missing"),
+            ("missing", "1,426", "missing"),
         ):
             self.assertIn(f'class="is-{state}"><b>{count}</b> {word}', overview_html)
         self.assertNotIn('class="is-estimated"', overview_html)

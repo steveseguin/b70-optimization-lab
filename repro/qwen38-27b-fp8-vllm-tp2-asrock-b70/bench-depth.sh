@@ -6,6 +6,7 @@ repo_root=$(cd -- "${script_dir}/../.." && pwd)
 port="${PORT:-18088}"
 base_url="${BASE_URL:-http://127.0.0.1:${port}}"
 out_dir="${OUT_DIR:-${PWD}/qwen38-fp8-tp2-depth}"
+served_model="${SERVED_MODEL_NAME:-qwen38-fp8}"
 fixture="${repo_root}/data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json"
 client="${repo_root}/scripts/bench-openai-token-depth-suite.py"
 
@@ -15,7 +16,7 @@ curl -fsS "${base_url}/health" >/dev/null
 
 for depth in 2048 4096 8192 16384 24576 32768; do
   python3 "${client}" --execute --fixture "${fixture}" --depth "${depth}" \
-    --context-capacity 33024 --base-url "${base_url}" --model qwen38-fp8 \
+    --context-capacity 33024 --base-url "${base_url}" --model "${served_model}" \
     --response-adapter vllm --timeout 1800 \
     --out "${out_dir}/depth-${depth}.json" >"${out_dir}/depth-${depth}.stdout.json"
 done

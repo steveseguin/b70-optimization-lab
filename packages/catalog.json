@@ -1753,7 +1753,7 @@
           "scope": "Median of two fresh-server, empty-compile-cache class-balanced medians over the complete fixed 12-prompt/six-class, natural 512-cap, cache-zero raw-completion suite; official FP8 target, W8A16, FP16 KV, TP2, publisher MTP depth 1, Inductor deterministic mode, XPU Graph off, packed Gemma RMSNorm row replay, and explicit oneCCL Work.wait. All 12 complete token arrays matched between attempts and both qualified MTP0 target repeats; both independent canary batteries passed.",
           "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-mtp1-deterministic-r32.json"
         },
-        "benchmark_status": "Strict compiled MTP1 qualified at 51.918757 tok/s: two fresh servers with empty compile caches, all workload/canary gates passed, cache zero, and 12/12 complete token arrays exact across repeats and against both qualified MTP0 target repeats. The target-only MTP0 fallback remains qualified at 34.031596 tok/s. Dynamic MTP remains withheld. Separately scoped 32K and aggregate measurements stay labeled shape/capacity evidence."
+        "benchmark_status": "Strict compiled MTP1 qualified at 51.918757 tok/s: two fresh servers with empty compile caches, all workload/canary gates passed, cache zero, and 12/12 complete token arrays exact across repeats and against both qualified MTP0 target repeats. The target-only MTP0 fallback remains qualified at 34.031596 tok/s. Dynamic MTP remains withheld. The same deterministic MTP1 profile separately measured exact 32K at 46.636241 tok/s with 10.487 s TTFT and 6/6 target-array parity; it is Grade-C shape evidence, not a headline. Aggregate measurements remain separately scoped."
       },
       "contributors": [
         {
@@ -1843,9 +1843,11 @@
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-depth-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-depth-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-depth.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh",
@@ -1864,6 +1866,9 @@
         "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-compiled-work-wait-comparison.json",
         "experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-mtp1-deterministic-r32-result.md",
         "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-mtp1-deterministic-r32.json",
+        "experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+        "experiments/qwen38-27b-b70/scripts/validate-20260828-qwen38-fp8-w8a16-mtp1-exact-depth-r33.py",
         "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-gemma-rmsnorm-mtp1-serial-r30-operator-proof.json",
         "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch",
         "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15a/performance.json",
@@ -2227,6 +2232,129 @@
             {
               "context_tokens": 32768,
               "value": 13739.775551017374,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "http-mtp1-decode-vs-active-context",
+          "label": "Deterministic MTP1 official FP8 TP2 HTTP decode over exact active context",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Exact active prompt tokens",
+          "scope": "One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, the lab W8A16 dispatch, publisher MTP depth 1, FP16/auto KV, deterministic Inductor, XPU Graph off, exact packed-RMS replay, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server observation per measured point; all six arrays exactly matched the corresponding qualified MTP0 oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. The 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 44.77832281833947,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 54.93201141430635,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 51.31383425705685,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 51.2898098461305,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 43.715434823189355,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 46.63624110477451,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "http-mtp1-effective-prompt-proxy-vs-active-context",
+          "label": "Deterministic MTP1 effective prompt throughput (prompt tokens divided by HTTP TTFT)",
+          "metric": "prefill",
+          "unit": "tok/s",
+          "x_label": "Exact submitted prompt tokens",
+          "scope": "Derived from each exact measured deterministic-MTP1 request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not server-only or kernel-only prefill. All six cache-zero output arrays matched the MTP0 target oracle. The Grade-C fixture is repeated-token shape evidence; the 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 2562.8967557323763,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 3451.7426948674233,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 3496.528367033354,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 3365.2699083393595,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 3239.6424035593277,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 3124.5764710482604,
+              "samples": 1
+            }
+          ]
+        },
+        {
+          "id": "http-mtp1-ttft-vs-active-context",
+          "label": "Deterministic MTP1 official FP8 TP2 HTTP TTFT over exact active context",
+          "metric": "ttft",
+          "unit": "ms",
+          "x_label": "Exact active prompt tokens",
+          "scope": "Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot deterministic-MTP1 receipts. All six output arrays matched the MTP0 target oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. One fresh-server observation per point; the 2K point includes disclosed first-request Triton draft-kernel JIT. No interpolation or extrapolation.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 799.0957869915292,
+              "samples": 1
+            },
+            {
+              "context_tokens": 4096,
+              "value": 1186.646967078559,
+              "samples": 1
+            },
+            {
+              "context_tokens": 8192,
+              "value": 2342.8953350521624,
+              "samples": 1
+            },
+            {
+              "context_tokens": 16384,
+              "value": 4868.554513086565,
+              "samples": 1
+            },
+            {
+              "context_tokens": 24576,
+              "value": 7586.022448958829,
+              "samples": 1
+            },
+            {
+              "context_tokens": 32768,
+              "value": 10487.181319971569,
               "samples": 1
             }
           ]

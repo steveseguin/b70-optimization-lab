@@ -1,0 +1,126 @@
+{
+  "schema": "neural.download.exact-depth-result.v1",
+  "status": "qualified-grade-c-exact-depth",
+  "created_at_utc": "2026-08-28T16:17:27Z",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "quantization": "official block FP8 with lab W8A16 dispatch"
+  },
+  "deployment": {
+    "hardware": "2x Intel Arc Pro B70 32 GiB",
+    "tensor_parallel_size": 2,
+    "kv_cache_dtype": "auto (FP16-family)",
+    "max_model_len": 33024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 4096,
+    "mtp_depth": 1,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "torchinductor_deterministic": true,
+    "packed_gemma_rmsnorm_serial_exact": true,
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31",
+    "image_id": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b",
+    "vllm_version": "0.27.2rc1.dev77+gac7509e2b",
+    "xpu_kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783"
+  },
+  "protocol": {
+    "classification": "Grade C repeated-token context-shape evidence",
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-exact-depth-v1.json",
+    "response_tokens": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "sampler": "temperature=0, top_p=1, seed=1, ignore_eos=true",
+    "cache_requirement": "cached_tokens=0 for every request",
+    "aggregation": "one fresh-server observation at each exact depth",
+    "target_oracle": "qualified W8A16 TP2 MTP0 exact-depth receipts",
+    "no_interpolation_or_extrapolation": true
+  },
+  "gates": {
+    "direct_and_ordinary_model_identity": "66/66 passed before launch",
+    "receipt_gates": "6/6 passed",
+    "target_token_array_parity": "6/6 exact",
+    "clean_shutdown": true,
+    "public_32k_cell_eligible": true,
+    "strict_natural_prompt_headline_eligible": false,
+    "localmaxxing_eligible": false
+  },
+  "speculative_decode_totals": {
+    "draft_tokens": 429,
+    "accepted_tokens": 336,
+    "acceptance_rate": 0.7832167832167832
+  },
+  "points": [
+    {
+      "active_context_tokens": 2048,
+      "decode_tok_s": 44.77832281833947,
+      "ttft_ms": 799.0957869915292,
+      "effective_prompt_throughput_proxy_tok_s": 2562.8967557323763,
+      "cached_tokens_zero": true,
+      "target_exact": true,
+      "output_token_ids_sha256": "3bb74bfa284138d8c74d604c0d6d4c628b242167ca3e321396927a3c4c0d97c6",
+      "raw_sha256": "44684cf33dc16c48d551ce06d6c64cb52ddfa492481281932ff69d58a0da4051"
+    },
+    {
+      "active_context_tokens": 4096,
+      "decode_tok_s": 54.93201141430635,
+      "ttft_ms": 1186.646967078559,
+      "effective_prompt_throughput_proxy_tok_s": 3451.7426948674233,
+      "cached_tokens_zero": true,
+      "target_exact": true,
+      "output_token_ids_sha256": "a3ad38a28e1d0182fbe50cc8a01e5f1b2b51242c7933659b2cc1cf6a1fc99e2f",
+      "raw_sha256": "c2284a572114bfe0cde8ce12ec9d00e8c6fdfb367f08db44c355719f02a6281c"
+    },
+    {
+      "active_context_tokens": 8192,
+      "decode_tok_s": 51.31383425705685,
+      "ttft_ms": 2342.8953350521624,
+      "effective_prompt_throughput_proxy_tok_s": 3496.528367033354,
+      "cached_tokens_zero": true,
+      "target_exact": true,
+      "output_token_ids_sha256": "8fee69bdff7ba6d822ba20d1ea3484f3cf0ecdb91caccbb6aa7e1037f870af19",
+      "raw_sha256": "68b2dc2a078cb9b8eaf765cd535ae4dd44db518180fbf52aa77361dbbbad7753"
+    },
+    {
+      "active_context_tokens": 16384,
+      "decode_tok_s": 51.2898098461305,
+      "ttft_ms": 4868.554513086565,
+      "effective_prompt_throughput_proxy_tok_s": 3365.2699083393595,
+      "cached_tokens_zero": true,
+      "target_exact": true,
+      "output_token_ids_sha256": "d33b03661a70c438ffc7d55dd6c80ae850f37350ff7c24702db3423106edc2cb",
+      "raw_sha256": "2f6374bd177eca7f87d01b392e89e252edd8eac315f79a6e85045ca885ec013b"
+    },
+    {
+      "active_context_tokens": 24576,
+      "decode_tok_s": 43.715434823189355,
+      "ttft_ms": 7586.022448958829,
+      "effective_prompt_throughput_proxy_tok_s": 3239.6424035593277,
+      "cached_tokens_zero": true,
+      "target_exact": true,
+      "output_token_ids_sha256": "337399b05c321156277842c7f156227143d8649dfcc1f3d9b35a2476248f5f16",
+      "raw_sha256": "494299abfacb31719e408d27471562c29e75795f78d1e7486f51f0d1b31921ff"
+    },
+    {
+      "active_context_tokens": 32768,
+      "decode_tok_s": 46.63624110477451,
+      "ttft_ms": 10487.181319971569,
+      "effective_prompt_throughput_proxy_tok_s": 3124.5764710482604,
+      "cached_tokens_zero": true,
+      "target_exact": true,
+      "output_token_ids_sha256": "dd427b3c6d31e494da495f36df76d5e327163f35771e6936cc418b58e7fade1e",
+      "raw_sha256": "b72a8fb2649e2154947b036d204c26b7ea24c4a4b682494a0b390ac2cfcd59b8"
+    }
+  ],
+  "caveats": [
+    "The fixture is repeated-token shape evidence, not natural prose or a retrieval/task suite.",
+    "The 2K request triggered two one-time Triton draft-preparation JIT warnings during inference; its measured value is retained rather than replaced or warmed.",
+    "The prompt-throughput proxy is submitted prompt tokens divided by HTTP TTFT and includes scheduling, chunked prefill, and first-token work.",
+    "The separately qualified 51.918757 tok/s strict headline remains the natural varied-prompt result; no exact-depth point replaces it."
+  ],
+  "evidence": {
+    "raw_root": "experiments/qwen38-27b-b70/data/qwen38-fp8-w8a16-mtp1-exact-depth-20260828-r33",
+    "target_root": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2",
+    "preregistration": "experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-prereg.md"
+  }
+}
