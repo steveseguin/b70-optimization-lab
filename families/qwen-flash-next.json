@@ -769,7 +769,80 @@
       "evidence": "results/qwen38-flash-next-fp8-b70/README.md"
     }
   ],
-  "estimates": [],
+  "estimates": [
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-context24k-estimate-v1",
+      "state": "estimated",
+      "selectors": {
+        "revision": "qwen38-flash-next",
+        "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+        "quantization": "FP8 block-128",
+        "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+        "runtime_family": "vLLM XPU",
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 24576,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "metric": "decode_tok_s",
+      "unit": "tok/s",
+      "value": 3.32691,
+      "interval": {"low": 1.663455, "high": 4.990364},
+      "engine": {
+        "name": "qwen38-flash-next-mtp0-context-estimator",
+        "version": "1.0.0",
+        "snapshot_sha256": "bc903a7ee9e638a06fb700bb107d8ff1ad11cfe104c8d351dfefbe27620ff02f"
+      },
+      "generated_at": "2026-08-28T18:00:00Z",
+      "basis_measurement_ids": [
+        "qwen38-flash-next-fp8-tp4-context4k-a1",
+        "qwen38-flash-next-fp8-tp4-context8k-a1"
+      ],
+      "record": "data/qwen38-flash-next-fp8-tp4-mtp0-context-estimate-v1.json",
+      "not_for_promotion": true,
+      "limitations": "Grade-D legacy-runtime extrapolation only. No 24K boot, fit, completion, quality, speed, current-runtime, graph, MTP, TP1/TP2, vision, deployment, record, or promotion claim."
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-context32k-estimate-v1",
+      "state": "estimated",
+      "selectors": {
+        "revision": "qwen38-flash-next",
+        "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+        "quantization": "FP8 block-128",
+        "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+        "runtime_family": "vLLM XPU",
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 32768,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "metric": "decode_tok_s",
+      "unit": "tok/s",
+      "value": 3.174425,
+      "interval": {"low": 1.587212, "high": 4.761637},
+      "engine": {
+        "name": "qwen38-flash-next-mtp0-context-estimator",
+        "version": "1.0.0",
+        "snapshot_sha256": "bc903a7ee9e638a06fb700bb107d8ff1ad11cfe104c8d351dfefbe27620ff02f"
+      },
+      "generated_at": "2026-08-28T18:00:00Z",
+      "basis_measurement_ids": [
+        "qwen38-flash-next-fp8-tp4-context4k-a1",
+        "qwen38-flash-next-fp8-tp4-context8k-a1"
+      ],
+      "record": "data/qwen38-flash-next-fp8-tp4-mtp0-context-estimate-v1.json",
+      "not_for_promotion": true,
+      "limitations": "Grade-D legacy-runtime extrapolation only. No 32K boot, fit, completion, quality, speed, current-runtime, graph, MTP, TP1/TP2, vision, deployment, record, or promotion claim."
+    }
+  ],
   "packets": [
     {
       "id": "qwen38-flash-next-fp8-tp4-research",
@@ -1063,6 +1136,56 @@
       }
     },
     {
+      "id": "qwen-flash-next-legacy-mtp0-context-estimates",
+      "label": "Archived MTP0 context anchors and estimates",
+      "fixed": "Legacy vLLM 658965050 TP4/EP4 eager-text MTP0 only. The 4K/8K cells are formal exact-depth measurements; 24K/32K are deterministic Grade-D extrapolations with 50%-150% bands. They do not transfer to the latest runtime or qualify boot, fit, quality, deployment, records, or promotion.",
+      "row_axis": {"key": "mtp", "label": "MTP depth", "prefix": "MTP"},
+      "column_axis": {
+        "key": "active_context_tokens",
+        "label": "Active context",
+        "prefix": "",
+        "value_labels": {"4096": "4K", "8192": "8K", "24576": "24K", "32768": "32K"}
+      },
+      "fixed_selectors": {
+        "revision": "qwen38-flash-next",
+        "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+        "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+        "runtime_family": "vLLM XPU",
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "rows": [0],
+      "columns": [4096, 8192, 24576, 32768],
+      "cells": {
+        "0:4096": {
+          "state": "lab-screened",
+          "label": "4.456 tok/s formal exact-4K",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context4k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research"
+        },
+        "0:8192": {
+          "state": "lab-screened",
+          "label": "3.980 tok/s formal exact-8K",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context8k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research"
+        },
+        "0:24576": {
+          "state": "estimated",
+          "label": "Grade-D legacy-runtime extrapolation only",
+          "estimate_id": "qwen38-flash-next-fp8-tp4-mtp0-context24k-estimate-v1"
+        },
+        "0:32768": {
+          "state": "estimated",
+          "label": "Grade-D legacy-runtime extrapolation only",
+          "estimate_id": "qwen38-flash-next-fp8-tp4-mtp0-context32k-estimate-v1"
+        }
+      }
+    },
+    {
       "id": "qwen-flash-next-tp4-deep-context",
       "label": "TP4 eager text deeper-context coverage",
       "fixed": "Official FP8 child artifact on current-source vLLM 1372c62d plus staged kernels 2f829747, TP4/EP4 eager text, and automatic KV. Single generic requests and bounded negatives are Grade-D matrix evidence until semantic and repeat qualification exists.",
@@ -1180,9 +1303,10 @@
   ],
   "coverage_contracts": [
     {
-      "id": "flash-next-serving-space",
-      "label": "Text and vision serving coverage",
-      "fixed_selectors": {"runtime_family": "vLLM XPU", "parallel_profile": "TP=EP"},
+      "id": "flash-next-text-serving-space",
+      "label": "Text serving coverage",
+      "description": "Exact text-serving combinations across topology, MTP depth, active context, and graph mode on the latest retained runtime. Older-runtime evidence is preserved in a separate archival contract and never silently transferred into these cells.",
+      "fixed_selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747", "runtime_family": "vLLM XPU", "parallel_profile": "TP=EP"},
       "axes": [
         {"key": "revision", "label": "Weight revision", "values": ["qwen38-flash-next"]},
         {"key": "artifact_id", "label": "Artifact", "values": ["qwen38-flash-next-fp8-bcd9f01"]},
@@ -1191,7 +1315,7 @@
         {"key": "active_context_tokens", "label": "Active context", "values": [0, 1024, 2048, 4096, 8192, 16384, 24576, 32768]},
         {"key": "graph_mode", "label": "Graph mode", "values": ["off", "PIECEWISE"]},
         {"key": "kv", "label": "KV cache", "values": ["auto"]},
-        {"key": "modality", "label": "Modality", "values": ["text", "vision"]}
+        {"key": "modality", "label": "Modality", "values": ["text"]}
       ],
       "rules": [
         {
@@ -1203,14 +1327,103 @@
           "retry": {"status": "queued"}
         },
         {
-          "id": "attempt19-text-control",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "lab-screened",
-          "label": "5.222 tok/s research screen",
-          "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19",
-          "packet_id": "qwen38-flash-next-fp8-tp4-research",
-          "parent": "flash-next-attempt19",
-          "retry": {"status": "needs-full-qualification"}
+          "id": "context16k-anchor-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 16384, "graph_mode": "*", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "16K capability and quality anchor required",
+          "reason": "No unquarantined 16K cell exists. A completed request alone is insufficient: qualification needs exact depth, semantic quality, repeat stability, controlled teardown, and a clean exact-topology postflight under the exact cell identity.",
+          "parent": "flash-next-context16k-qualification-backlog",
+          "retry": {"status": "needs-qualified-16k-anchor", "trigger": "one preregistered MTP0 or MTP1 anchor after clean exact-topology recovery"}
+        },
+        {
+          "id": "context24k-anchor-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 24576, "graph_mode": "*", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "24K capability and quality anchor required",
+          "reason": "No 24K Flash-Next request has been qualified. This cell needs a measured capacity identity and exact-depth capability receipt before quality, speed, or any estimate can receive credit.",
+          "parent": "flash-next-context24k-qualification-backlog",
+          "retry": {"status": "needs-measured-24k-anchor", "trigger": "qualify TP4 eager MTP0 first, then transfer only explicitly justified bounds"}
+        },
+        {
+          "id": "context32k-anchor-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 32768, "graph_mode": "*", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "32K capability and quality anchor required",
+          "reason": "No 32K Flash-Next request has been qualified. This cell needs a measured capacity identity and exact-depth capability receipt before quality, speed, or any estimate can receive credit.",
+          "parent": "flash-next-context32k-qualification-backlog",
+          "retry": {"status": "needs-measured-32k-anchor", "trigger": "qualify TP4 eager MTP0 after the 24K anchor, then transfer only explicitly justified bounds"}
+        },
+        {
+          "id": "mtp2-context24k-treatment-blocked",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 2, "active_context_tokens": 24576, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP2 24K blocked by exhausted 16K treatment",
+          "reason": "Both bounded 16K MTP2 arms produced no output and the scheduler-32 arm failed postflight. A deeper launch would not answer a new question and is blocked until a material runtime treatment qualifies at 16K.",
+          "parent": "flash-next-mtp2-deep-context-runtime-block",
+          "retry": {"status": "blocked-on-material-runtime-treatment", "trigger": "new runtime fix that completes and cleanly tears down the 16K MTP2 gate"}
+        },
+        {
+          "id": "mtp2-context32k-treatment-blocked",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 2, "active_context_tokens": 32768, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP2 32K blocked by exhausted 16K treatment",
+          "reason": "Both bounded 16K MTP2 arms produced no output and the scheduler-32 arm failed postflight. A deeper launch would not answer a new question and is blocked until a material runtime treatment qualifies at 16K.",
+          "parent": "flash-next-mtp2-deep-context-runtime-block",
+          "retry": {"status": "blocked-on-material-runtime-treatment", "trigger": "new runtime fix that completes and cleanly tears down the 16K MTP2 gate"}
+        },
+        {
+          "id": "mtp3-context16k-runtime-treatment-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 3, "active_context_tokens": 16384, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP3 16K blocked pending shallower stability treatment",
+          "reason": "MTP3 did not complete its bounded 8K request. A 16K launch is not authorized until a material runtime treatment completes the exact 8K gate with clean postflight.",
+          "parent": "flash-next-mtp3-deep-context-runtime-block",
+          "retry": {"status": "blocked-on-qualified-8k-gate", "trigger": "material treatment plus completed exact-8K MTP3 receipt and clean postflight"}
+        },
+        {
+          "id": "mtp3-context24k-runtime-treatment-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 3, "active_context_tokens": 24576, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP3 24K blocked pending shallower stability treatment",
+          "reason": "MTP3 did not complete its bounded 8K request. Deeper launches are blocked until a material treatment qualifies 8K and 16K sequentially.",
+          "parent": "flash-next-mtp3-deep-context-runtime-block",
+          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K and exact-16K MTP3 receipts with clean postflight"}
+        },
+        {
+          "id": "mtp3-context32k-runtime-treatment-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 3, "active_context_tokens": 32768, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP3 32K blocked pending shallower stability treatment",
+          "reason": "MTP3 did not complete its bounded 8K request. Deeper launches are blocked until a material treatment qualifies 8K, 16K, and 24K sequentially.",
+          "parent": "flash-next-mtp3-deep-context-runtime-block",
+          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K, exact-16K, and exact-24K MTP3 receipts with clean postflight"}
+        },
+        {
+          "id": "mtp4-context16k-parity-treatment-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 4, "active_context_tokens": 16384, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP4 16K blocked pending parity treatment",
+          "reason": "MTP4 completed 8K only as diagnostic evidence because it diverged from the frozen authority. Deeper capability work is blocked until a same-runtime authority or material parity treatment resolves that shallower cell.",
+          "parent": "flash-next-mtp4-deep-context-parity-block",
+          "retry": {"status": "blocked-on-parity-treatment", "trigger": "same-runtime authority design or material parity treatment that qualifies exact 8K"}
+        },
+        {
+          "id": "mtp4-context24k-parity-treatment-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 4, "active_context_tokens": 24576, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP4 24K blocked pending parity treatment",
+          "reason": "MTP4 completed 8K only as diagnostic evidence because it diverged from the frozen authority. Deeper work is blocked until parity is resolved and 16K qualifies cleanly.",
+          "parent": "flash-next-mtp4-deep-context-parity-block",
+          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K and exact-16K MTP4 receipts under a same-runtime authority"}
+        },
+        {
+          "id": "mtp4-context32k-parity-treatment-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 4, "active_context_tokens": 32768, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "state": "missing",
+          "label": "MTP4 32K blocked pending parity treatment",
+          "reason": "MTP4 completed 8K only as diagnostic evidence because it diverged from the frozen authority. Deeper work is blocked until parity is resolved and all shallower depth gates qualify cleanly.",
+          "parent": "flash-next-mtp4-deep-context-parity-block",
+          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K, exact-16K, and exact-24K MTP4 receipts under a same-runtime authority"}
         },
         {
           "id": "mtp1-text-screen",
@@ -1410,49 +1623,6 @@
           "retry": {"status": "blocked-on-runtime-fix", "trigger": "material worker-stall fix plus post-reset four-rank preflight"}
         },
         {
-          "id": "context1k-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 1024, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "lab-screened",
-          "label": "5.134 tok/s exact-1K screen",
-          "evidence_id": "qwen38-flash-next-fp8-tp4-context1k-a1",
-          "packet_id": "qwen38-flash-next-fp8-tp4-research",
-          "parent": "flash-next-context1k-a1",
-          "retry": {"status": "needs-full-quality"}
-        },
-        {
-          "id": "context2k-text-repeat-v2-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "lab-screened",
-          "label": "5.228 tok/s exact-2K protocol-v2 screen",
-          "reason": "The preregistered retry passed 32/32 fixed-set first-token sensitivity requests, 16/16 full repeats, the exact cache-zero needle, and the formal exact-depth gate. The original under-specified repeat divergence remains retained as quarantined attempt-1 history.",
-          "evidence_id": "qwen38-flash-next-fp8-tp4-context2k-v2-a2",
-          "packet_id": "qwen38-flash-next-fp8-tp4-research",
-          "parent": "flash-next-context2k-a2",
-          "retry": {"status": "needs-full-quality"}
-        },
-        {
-          "id": "context4k-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "lab-screened",
-          "label": "4.456 tok/s formal exact-4K · 5.234 legacy comparison",
-          "reason": "All short and fixed-set repeat outputs matched the 2K baseline, and the exact cache-zero 4K needle plus formal depth gate passed. The coverage cell uses the formal cache-zero 4.456 tok/s rate; the context curve separately uses the 5.234 tok/s three-prompt legacy after-first-text median.",
-          "evidence_id": "qwen38-flash-next-fp8-tp4-context4k-a1",
-          "packet_id": "qwen38-flash-next-fp8-tp4-research",
-          "parent": "flash-next-context4k-a1",
-          "retry": {"status": "needs-full-quality"}
-        },
-        {
-          "id": "context8k-text-formal-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
-          "state": "lab-screened",
-          "label": "3.980 tok/s formal exact-8K · repeated comparison incomplete",
-          "reason": "The short outputs and 16/16 fixed-set repeats matched the baseline, and the exact cache-zero 8K needle plus formal depth gate passed. Two legacy rows completed with identical output hashes, but the runtime stopped during the required third row; no legacy median or curve point is authorized, and deployment remains blocked.",
-          "evidence_id": "qwen38-flash-next-fp8-tp4-context8k-a1",
-          "packet_id": "qwen38-flash-next-fp8-tp4-research",
-          "parent": "flash-next-context8k-a1",
-          "retry": {"status": "needs-runtime-stability-and-full-quality"}
-        },
-        {
           "id": "mtp4-context8k-cross-runtime-parity-quarantine",
           "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
           "state": "quarantined",
@@ -1484,6 +1654,41 @@
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json",
           "parent": "flash-next-mtp2-context16k-current-source-a2-scheduler32",
           "retry": {"status": "treatment-exhausted-no-further-mtp2-active16k-retry"}
+        }
+      ]
+    },
+    {
+      "id": "flash-next-fixed-vision-serving-space",
+      "label": "Fixed-vision serving coverage",
+      "description": "Vision capability and quality combinations under one versioned fixed-image fixture. Context depth is intentionally excluded until a vision anchor establishes meaningful image-plus-text token accounting.",
+      "fixed_selectors": {
+        "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+        "runtime_family": "vLLM XPU",
+        "parallel_profile": "TP=EP",
+        "active_context_tokens": 0,
+        "modality": "vision",
+        "workload_profile": "fixed-vision-fixture-v1-required"
+      },
+      "axes": [
+        {"key": "revision", "label": "Weight revision", "values": ["qwen38-flash-next"]},
+        {"key": "artifact_id", "label": "Artifact", "values": ["qwen38-flash-next-fp8-bcd9f01"]},
+        {"key": "tp", "label": "Tensor parallel", "values": [1, 2, 4]},
+        {"key": "mtp", "label": "MTP depth", "values": [0, 1, 2, 3, 4]},
+        {"key": "graph_mode", "label": "Graph mode", "values": ["off", "PIECEWISE"]},
+        {"key": "kv", "label": "KV cache", "values": ["auto"]}
+      ],
+      "rules": [
+        {
+          "id": "fixed-vision-anchor-required",
+          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "graph_mode": "*", "kv": "*"},
+          "state": "missing",
+          "label": "fixed-image capability and quality anchor required",
+          "reason": "No versioned fixed-image Flash-Next workload has been run on this runtime. Define one fixture and qualify TP4 eager MTP0 before measuring or estimating vision topology, graph, or MTP variants.",
+          "parent": "flash-next-fixed-vision-qualification-backlog",
+          "retry": {
+            "status": "needs-fixed-vision-anchor",
+            "trigger": "versioned fixed-image fixture plus TP4 eager MTP0 capability and quality receipt"
+          }
         }
       ]
     }

@@ -512,3 +512,19 @@ quality, parity, deployment, or headline credit. Full-contract totals remain
 27/480: 12 screened, 15 quarantined, and 453 missing. The ≤8K view and all prior
 speeds are unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json`.
+
+## 2026-08-28 coverage-contract supersession
+
+Treat the `27/480` paragraph above as historical campaign accounting. The live
+contract is now **22/270 classified**: 240 exact latest-runtime text cells (7
+screened, 15 quarantined, 218 missing) plus 30 latest-runtime fixed-fixture
+vision cells (all missing). The old denominator incorrectly crossed eight text
+contexts with vision, while its classified numerator mixed five legacy-runtime
+MTP0 screens into the latest-runtime matrix.
+
+The five legacy MTP0 screens remain in the compact practical view and the 4K/8K
+anchors now have a separate archival view with two deterministic Grade-D 24K/
+32K estimates. Those estimates have 50%-150% bands and no current-runtime,
+boot, fit, quality, deployment, record, or promotion authority. Do not move
+them into the current-runtime contract. Every measured speed, quarantine,
+packet, and protected claim remains unchanged.

@@ -1,0 +1,103 @@
+{
+  "authority": {
+    "estimated_cells": 2,
+    "headline": false,
+    "localmaxxing_submission": false,
+    "measured_cells": 0,
+    "promotion": false,
+    "protected_value_replacement": false,
+    "quality_cells": 0
+  },
+  "classification": "estimated-not-measured",
+  "engine": {
+    "arithmetic": "Python Decimal precision=50; log-linear extrapolation; output rounded to 6 decimals",
+    "id": "qwen38-flash-next-mtp0-context-estimator",
+    "script": "tools/qwen38_flash_next_mtp0_context_estimator_v1.py",
+    "sha256": "21c081659558889d26f7a78a50a33531cb4f7c8ba3ec5f9bfed4a51224f613dd",
+    "version": "1.0.0"
+  },
+  "format": "neural-download-estimate-snapshot-v1",
+  "generated_at": "2026-08-28T18:00:00Z",
+  "grades": {
+    "evidence": {
+      "grade": "D",
+      "label": "two-anchor extrapolation only"
+    },
+    "optimization_maturity": {
+      "label": "not booted or optimized at these depths",
+      "state": "unassessed"
+    }
+  },
+  "id": "qwen38-flash-next-fp8-tp4-mtp0-context-estimate-v1",
+  "limitations": [
+    "Neither 24K nor 32K has boot, fit, request-completion, quality, or speed evidence.",
+    "The central values extrapolate only the formal exact-depth MTP0 decode trend from 4K to 8K.",
+    "The 16K diagnostic completion is excluded because its quarantined receipt grants no speed or curve credit.",
+    "Do not transfer these estimates across TP, MTP, graph, modality, artifact, runtime, hardware, or workload.",
+    "Estimated cells are not packet performance, promotion, record, or deployment evidence."
+  ],
+  "method": {
+    "anchors": [
+      {
+        "active_context_tokens": 4096,
+        "decode_tok_s": 4.456026,
+        "measurement_id": "qwen38-flash-next-fp8-tp4-context4k-a1"
+      },
+      {
+        "active_context_tokens": 8192,
+        "decode_tok_s": 3.979729,
+        "measurement_id": "qwen38-flash-next-fp8-tp4-context8k-a1"
+      }
+    ],
+    "formula": "D(c)=D8K*(c/8192)^s, where s=ln(D8K/D4K)/ln(2)",
+    "slope": -0.163088,
+    "uncertainty": "50%-150% of the central extrapolation; deliberately wide because only two adjacent exact-depth anchors exist",
+    "withheld": [
+      "boot and fit",
+      "quality and parity",
+      "prefill and TTFT",
+      "VRAM and cache capacity",
+      "graph mode",
+      "MTP depths above zero",
+      "TP1 and TP2",
+      "vision",
+      "promotion and LocalMaxxing authority"
+    ]
+  },
+  "points": [
+    {
+      "active_context_tokens": 24576,
+      "decode_tok_s": {
+        "estimate": 3.32691,
+        "lower": 1.663455,
+        "uncertainty": {
+          "kind": "deterministic extrapolation band, not a statistical confidence interval",
+          "multipliers": [
+            0.5,
+            1.5
+          ]
+        },
+        "upper": 4.990364
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed"
+    },
+    {
+      "active_context_tokens": 32768,
+      "decode_tok_s": {
+        "estimate": 3.174425,
+        "lower": 1.587212,
+        "uncertainty": {
+          "kind": "deterministic extrapolation band, not a statistical confidence interval",
+          "multipliers": [
+            0.5,
+            1.5
+          ]
+        },
+        "upper": 4.761637
+      },
+      "evidence_grade": "D",
+      "optimization_maturity": "unassessed"
+    }
+  ]
+}

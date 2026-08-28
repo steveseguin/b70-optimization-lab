@@ -851,3 +851,20 @@ quality, parity, deployment, or headline credit. The full contract remains
 practical view and every prior captured speed remain unchanged. There is no
 scheduler-16, timeout-only, or further MTP2 active-16K retry. See the
 [`MTP2 scheduler-treatment receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json).
+
+## Coverage-contract supersession
+
+The `27/480` total above remains historical experiment accounting, but the
+public contract now uses **22/270 classified**. The old denominator crossed all
+eight text-context depths into vision and therefore created 240 combinations
+without a defined image fixture. It also mixed five legacy-runtime MTP0 screens
+into the latest-runtime contract.
+
+The replacement is a 240-cell latest-runtime text contract (7 screened, 15
+quarantined, 218 missing) plus a 30-cell latest-runtime fixed-fixture vision
+contract (all missing until the fixture and first TP4 eager MTP0 anchor exist).
+Legacy MTP0 4K/8K measurements remain visible in an archival view. Deterministic
+Grade-D legacy-runtime estimates at 24K and 32K are shown there with 50%-150%
+bands and no boot, fit, quality, current-runtime, deployment, record, or
+promotion authority. The practical 25/25 mixed-runtime view and every captured
+speed, packet result, quarantine, and protected claim remain unchanged.

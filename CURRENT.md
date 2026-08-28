@@ -1356,6 +1356,20 @@ screened, 15 quarantined, and 453 missing; the ≤8K view and every prior speed
 remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json`.
 
+### 2026-08-28 Flash-Next coverage-contract supersession
+
+The `27/480` total above is retained as historical campaign arithmetic but is
+superseded for the public site. It incorrectly crossed all eight text-context
+depths into vision, creating 240 artificial vision/context combinations, and it
+mixed five legacy-runtime MTP0 screens into the latest-runtime contract. The
+canonical full coverage is now **22/270 classified**: a 240-cell latest-runtime
+text contract with 7 screened, 15 quarantined, and 218 missing cells, plus a
+30-cell latest-runtime fixed-fixture vision contract whose cells remain missing.
+The legacy MTP0 4K/8K anchors and two explicit Grade-D 24K/32K estimates are
+shown separately and do not qualify latest-runtime cells. The practical 25/25
+mixed-runtime campaign view remains available for historical continuity. Every
+captured speed, packet result, quarantine, and protected claim is unchanged.
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
 protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the

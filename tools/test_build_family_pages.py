@@ -5148,13 +5148,50 @@ class FamilyCoverageTest(unittest.TestCase):
         errors = MODULE.validate_family(family, family_path)
         self.assertEqual(errors, [])
         self.assertTrue(family["collapse_coverage_contracts"])
-        self.assertEqual(family.get("estimates"), [])
+        estimates = {item["id"]: item for item in family["estimates"]}
+        self.assertEqual(len(estimates), 2)
+        self.assertTrue(
+            all(item["not_for_promotion"] for item in estimates.values())
+        )
+        estimate_record = (
+            MODULE.ROOT
+            / "data/qwen38-flash-next-fp8-tp4-mtp0-context-estimate-v1.json"
+        )
+        estimate_snapshot = json.loads(estimate_record.read_text())
+        estimator_script = (
+            MODULE.ROOT
+            / "tools/qwen38_flash_next_mtp0_context_estimator_v1.py"
+        )
+        self.assertEqual(
+            estimate_snapshot["engine"]["sha256"],
+            hashlib.sha256(estimator_script.read_bytes()).hexdigest(),
+        )
+        snapshot_sha = hashlib.sha256(estimate_record.read_bytes()).hexdigest()
+        snapshot_points = {
+            point["active_context_tokens"]: point["decode_tok_s"]
+            for point in estimate_snapshot["points"]
+        }
+        estimate_contexts = {
+            24576: "qwen38-flash-next-fp8-tp4-mtp0-context24k-estimate-v1",
+            32768: "qwen38-flash-next-fp8-tp4-mtp0-context32k-estimate-v1",
+        }
+        for context, estimate_id in estimate_contexts.items():
+            estimate = estimates[estimate_id]
+            point = snapshot_points[context]
+            self.assertEqual(estimate["engine"]["snapshot_sha256"], snapshot_sha)
+            self.assertEqual(estimate["record"], estimate_record.relative_to(MODULE.ROOT).as_posix())
+            self.assertEqual(estimate["value"], point["estimate"])
+            self.assertEqual(
+                estimate["interval"],
+                {"low": point["lower"], "high": point["upper"]},
+            )
 
         views = {view["id"]: view for view in family["coverage_views"]}
         self.assertEqual(
             list(views),
             [
                 "qwen-flash-next-tp4-mtp-by-context",
+                "qwen-flash-next-legacy-mtp0-context-estimates",
                 "qwen-flash-next-tp4-deep-context",
                 "qwen-flash-next-tp-fit",
                 "qwen-flash-next-graph-by-modality",
@@ -5422,34 +5459,104 @@ class FamilyCoverageTest(unittest.TestCase):
                 for cell in graph_modality["cells"].values()
             )
         )
-
-        contract_cells, contract_errors = MODULE.expand_coverage_contract(
-            family["coverage_contracts"][0]
-        )
-        self.assertEqual(contract_errors, [])
-        self.assertEqual(len(contract_cells), 480)
+        legacy_estimates = views["qwen-flash-next-legacy-mtp0-context-estimates"]
+        self.assertEqual(legacy_estimates["rows"], [0])
+        self.assertEqual(legacy_estimates["columns"], [4096, 8192, 24576, 32768])
         self.assertEqual(
-            Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 453, "lab-screened": 12, "quarantined": 15}),
+            Counter(cell["state"] for cell in legacy_estimates["cells"].values()),
+            Counter({"lab-screened": 2, "estimated": 2}),
+        )
+
+        contracts = {
+            contract["id"]: contract
+            for contract in family["coverage_contracts"]
+        }
+        text_cells, text_errors = MODULE.expand_coverage_contract(
+            contracts["flash-next-text-serving-space"]
+        )
+        vision_cells, vision_errors = MODULE.expand_coverage_contract(
+            contracts["flash-next-fixed-vision-serving-space"]
+        )
+        self.assertEqual(text_errors, [])
+        self.assertEqual(vision_errors, [])
+        self.assertEqual(len(text_cells), 240)
+        self.assertEqual(len(vision_cells), 30)
+        self.assertEqual(
+            contracts["flash-next-text-serving-space"]["fixed_selectors"]["runtime"],
+            "vLLM XPU 1372c62d + staged kernels 2f829747",
+        )
+        self.assertEqual(
+            {cell["selectors"]["active_context_tokens"] for cell in text_cells},
+            {0, 1024, 2048, 4096, 8192, 16384, 24576, 32768},
+        )
+        self.assertEqual(
+            {cell["selectors"]["modality"] for cell in text_cells},
+            {"text"},
+        )
+        vision_contract = contracts["flash-next-fixed-vision-serving-space"]
+        self.assertNotIn(
+            "active_context_tokens",
+            {axis["key"] for axis in vision_contract["axes"]},
+        )
+        self.assertEqual(vision_contract["fixed_selectors"]["modality"], "vision")
+        self.assertEqual(vision_contract["fixed_selectors"]["active_context_tokens"], 0)
+        self.assertEqual(
+            vision_contract["fixed_selectors"]["workload_profile"],
+            "fixed-vision-fixture-v1-required",
+        )
+        self.assertEqual(
+            Counter(cell["state"] for cell in text_cells),
+            Counter({"missing": 218, "lab-screened": 7, "quarantined": 15}),
+        )
+        self.assertEqual(
+            Counter(cell["state"] for cell in vision_cells),
+            Counter({"missing": 30}),
+        )
+        text_by_selectors = {
+            (
+                cell["selectors"]["tp"],
+                cell["selectors"]["mtp"],
+                cell["selectors"]["active_context_tokens"],
+                cell["selectors"]["graph_mode"],
+            ): cell
+            for cell in text_cells
+        }
+        self.assertIn(
+            "mtp2-context24k-treatment-blocked",
+            text_by_selectors[(4, 2, 24576, "off")]["rule_ids"],
+        )
+        self.assertNotIn(
+            "mtp2-context24k-treatment-blocked",
+            text_by_selectors[(1, 2, 24576, "off")]["rule_ids"],
+        )
+        self.assertNotIn(
+            "mtp2-context24k-treatment-blocked",
+            text_by_selectors[(4, 2, 24576, "PIECEWISE")]["rule_ids"],
         )
 
         rendered = MODULE.family_page(family)
         practical_heading = rendered.index("Practical TP4 eager text coverage")
+        estimate_heading = rendered.index("Archived MTP0 context anchors and estimates")
         deep_heading = rendered.index("TP4 eager text deeper-context coverage")
         fit_heading = rendered.index("Card-fit summary")
         graph_heading = rendered.index("Graph and modality summary")
         contract_disclosure = rendered.index(
             '<details class="full-coverage-contracts">'
         )
-        self.assertLess(practical_heading, deep_heading)
+        self.assertLess(practical_heading, estimate_heading)
+        self.assertLess(estimate_heading, deep_heading)
         self.assertLess(deep_heading, fit_heading)
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 27 classified", rendered
+            "Full 270-cell coverage contracts · 22 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("27/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("22/270", rendered[contract_disclosure:contract_end])
+        self.assertIn("22/240", rendered)
+        self.assertIn("0/30", rendered)
+        self.assertIn("≈ 3.33 tok/s (1.66–4.99)", rendered)
+        self.assertIn("≈ 3.17 tok/s (1.59–4.76)", rendered)
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
