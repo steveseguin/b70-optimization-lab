@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "closed-pre-admission-host-memory-floor",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 8,
+  "observed": {
+    "sample_phase": "after full 900-second user-manager stability window and external sync/drop_caches",
+    "mem_available_kib": 111788592,
+    "swap_free_kib": 6297564
+  },
+  "failed_gate": {
+    "name": "initial MemAvailable floor",
+    "required_kib": 113246208,
+    "required_gib": 108,
+    "deficit_kib": 1457616,
+    "supervisor_output": "FAIL: less than 108 GiB host memory is available",
+    "supervisor_exit_code": 1,
+    "ordering": "The 900-second user-manager stability gate passed. The memory gate precedes evidence creation, card/collective health, launcher, and model work."
+  },
+  "absent": {
+    "state_and_sentinels": true,
+    "run_dir": true,
+    "supervisor_evidence_dir": true,
+    "cache_dir": true,
+    "compile_dir": true,
+    "rpc_dir": true,
+    "listener_19687": true,
+    "model_or_worker_process": true
+  },
+  "classification": {
+    "supervisor_invoked": true,
+    "user_manager_stability_passed": true,
+    "admission_started": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "client_invoked": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "next_packet": {
+    "attempt": 9,
+    "port": 19688,
+    "initial_ram_floor_kib": 110100480,
+    "initial_ram_floor_gib": 105,
+    "ram_floor_change_gib": -3,
+    "identity_change": "fresh attempt, state, run, evidence, cache, compile, RPC, and port",
+    "sole_treatment": "lower the initial MemAvailable admission floor from 108 GiB to 105 GiB; preserve the active-run 10-GiB MemAvailable and 5-GiB SwapFree floors"
+  }
+}
