@@ -1015,7 +1015,7 @@ comparisons matched, repeats were 16/16, the bounded cache-zero needle passed,
 and three corrected target-hash rows measured `21.119694 / 18.576249 /
 20.727176 tok/s`, median `20.727176 tok/s`, with 1,716/1,716 cumulative draft
 acceptance. It remains a Grade-C short screen; deeper MTP1,
-graph, TP1/TP2 fit, vision, full quality, and clean-host replay remain open. The
+graph, remaining TP1/TP2 fit, vision, full quality, and clean-host replay remain open. The
 51B PLE/input-embedding shards remain
 pinned in system RAM during serving; generation does not stream them from the
 external checkpoint drive.
@@ -1362,8 +1362,8 @@ The `27/480` total above is retained as historical campaign arithmetic but is
 superseded for the public site. It incorrectly crossed all eight text-context
 depths into vision, creating 240 artificial vision/context combinations, and it
 mixed five legacy-runtime MTP0 screens into the latest-runtime contract. The
-canonical full coverage is now **22/270 classified**: a 240-cell latest-runtime
-text contract with 7 screened, 15 quarantined, and 218 missing cells, plus a
+canonical full coverage is now **25/270 classified**: a 240-cell latest-runtime
+text contract with 9 screened, 15 quarantined, 1 statically closed, and 215 missing cells, plus a
 30-cell latest-runtime fixed-fixture vision contract whose cells remain missing.
 The legacy MTP0 4K/8K anchors and two explicit Grade-D 24K/32K estimates are
 shown separately and do not qualify latest-runtime cells. The practical 25/25

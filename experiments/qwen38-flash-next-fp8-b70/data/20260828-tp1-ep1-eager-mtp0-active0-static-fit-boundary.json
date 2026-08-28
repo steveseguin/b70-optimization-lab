@@ -1,0 +1,137 @@
+{
+  "accounting": {
+    "bytes_by_dtype": {
+      "BF16": 10989448930,
+      "F8_E4M3": 174512783360,
+      "I64": 280
+    },
+    "categories": {
+      "input_embedding": {
+        "bytes": 1271398400,
+        "gib": 1.18408203125,
+        "tensor_count": 1
+      },
+      "lm_head": {
+        "bytes": 1271398400,
+        "gib": 1.18408203125,
+        "tensor_count": 1
+      },
+      "mtp": {
+        "bytes": 2698026496,
+        "gib": 2.512732982635498,
+        "tensor_count": 3101
+      },
+      "ple_ngram_embedding": {
+        "bytes": 51200245762,
+        "gib": 47.68394470401108,
+        "tensor_count": 129
+      },
+      "ple_other": {
+        "bytes": 65679640,
+        "gib": 0.06116893142461777,
+        "tensor_count": 9
+      },
+      "remaining_target": {
+        "bytes": 7286920960,
+        "gib": 6.786473989486694,
+        "tensor_count": 1059
+      },
+      "routed_experts": {
+        "bytes": 120810700800,
+        "gib": 112.51373291015625,
+        "tensor_count": 147456
+      },
+      "vision": {
+        "bytes": 897862112,
+        "gib": 0.8361992537975311,
+        "tensor_count": 333
+      }
+    },
+    "header_total_bytes": 185502232570,
+    "header_total_gib": 172.76241683401167,
+    "index_total_bytes": 185502232570,
+    "method": "safetensors headers and index only; tensor payloads not read",
+    "shards": 131,
+    "tensor_count": 152089
+  },
+  "architecture": {
+    "architecture": "Qwen4ExpForConditionalGeneration",
+    "experts": 512,
+    "experts_per_token": 10,
+    "layers": 48,
+    "model_type": "qwen4_exp",
+    "native_context_tokens": 262144,
+    "ple_layer_ids": [
+      2
+    ]
+  },
+  "date": "2026-08-28",
+  "decision": {
+    "coverage_state": "closed",
+    "gpu_model_load_required": false,
+    "packet_grade": "D",
+    "protected_results_changed": false,
+    "reason": "The exact text-only MTP0 stored target exceeds the combined physical capacity of one B70 and this host before runtime, cache, or workspace memory.",
+    "retry_status": "blocked-on-material-memory-design",
+    "retry_trigger": "At least 192 GiB host RAM with qualified expert offload, or a separately qualified compression or streaming design.",
+    "speed_claim": false
+  },
+  "fit": {
+    "combined_physical_capacity_bytes": 169160605696,
+    "combined_physical_capacity_gib": 157.5430908203125,
+    "current_selective_uva_bytes": 52471644162,
+    "current_selective_uva_gib": 48.86802673526108,
+    "exact_physical_deficit_bytes": 12745738266,
+    "exact_physical_deficit_gib": 11.870393777266145,
+    "host_memory_bytes": 134918307840,
+    "host_memory_gib": 125.6524658203125,
+    "one_b70_memory_bytes": 34242297856,
+    "one_b70_memory_gib": 31.890625,
+    "optimistic_32gib_gpu_deficit_bytes": 12628297754,
+    "optimistic_32gib_gpu_deficit_gib": 11.761018777266145,
+    "runtime_cache_workspace_headroom_included": false,
+    "target_bytes_left_for_gpu_after_current_selective_uva": 129434699800,
+    "target_gib_left_for_gpu_after_current_selective_uva": 120.54545786231756
+  },
+  "generator": {
+    "inputs": {
+      "gpu_memory_bytes": 34242297856,
+      "host_memory_bytes": 134918307840
+    },
+    "path": "experiments/qwen38-flash-next-fp8-b70/tools/classify-tp1-ep1-mtp0-static-fit.py",
+    "sha256": "b0b717b500d1a089b6cf9e94f594b8f3915272be188e0f0a49e332698d827f83"
+  },
+  "identity": {
+    "active_context_tokens": 0,
+    "config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "graph_mode": "off",
+    "index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+    "modality": "text",
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "mtp": 0,
+    "staged_runtime_build_commit": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "topology": {
+      "ep": 1,
+      "tp": 1
+    },
+    "vllm_commit": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "xpu_kernel_commit": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
+  },
+  "runtime_exclusions": {
+    "mtp": {
+      "bytes": 2698026496,
+      "gib": 2.512732982635498,
+      "mechanism": "MTP0 target loader skips mtp.*"
+    },
+    "text_mtp0_target_bytes": 181906343962,
+    "text_mtp0_target_gib": 169.41348459757864,
+    "vision": {
+      "bytes": 897862112,
+      "gib": 0.8361992537975311,
+      "mechanism": "--language-model-only omits model.visual.*"
+    }
+  },
+  "schema": "neural.download.flash-next-tp1-static-fit.v1",
+  "status": "closed-static-fit"
+}

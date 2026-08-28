@@ -255,8 +255,11 @@ boundary; do not infer readiness from device rediscovery alone. Do not retry
 stopped arms by raising only the timeout. After qualification, reduce
 MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU host-lookup overlap
 separately. Defer 16K+ until the 8K repeated-serving boundary and larger
-fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
-and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
+fixed-cache requirement have a bounded design. The exact TP1/EP1/eager/MTP0/
+active-0 cell is statically closed on this host: the text-only MTP0 target
+exceeds combined physical host plus one-card capacity before runtime headroom.
+Remaining TP1/TP2 cells need a new memory design and are not simple launch
+variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.
 
 ## TP4 MTP1/512 closeout
@@ -528,8 +531,8 @@ speeds are unchanged. Receipt:
 ## 2026-08-28 coverage-contract supersession
 
 Treat the `27/480` paragraph above as historical campaign accounting. The live
-contract is now **22/270 classified**: 240 exact latest-runtime text cells (7
-screened, 15 quarantined, 218 missing) plus 30 latest-runtime fixed-fixture
+contract is now **25/270 classified**: 240 exact latest-runtime text cells (9
+screened, 15 quarantined, 1 statically closed, 215 missing) plus 30 latest-runtime fixed-fixture
 vision cells (all missing). The old denominator incorrectly crossed eight text
 contexts with vision, while its classified numerator mixed five legacy-runtime
 MTP0 screens into the latest-runtime matrix.

@@ -1512,6 +1512,16 @@
           "retry": {"status": "queued"}
         },
         {
+          "id": "tp1-mtp0-active0-static-fit-closure",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "closed",
+          "label": "fit closed on this host · exact 169.41-GiB text target",
+          "reason": "Header accounting across all 131 shards leaves 169.413485 GiB for the text-only MTP0 target after excluding 0.836199 GiB of vision weights and 2.512733 GiB of MTP weights. One 31.890625-GiB B70 plus this host's 125.652466 GiB physical RAM is 11.870394 GiB short before runtime, cache, workspace, or operating-system headroom. This is a speedless Grade-D fit boundary, not a boot or performance estimate.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp1-ep1-eager-mtp0-active0-static-fit-boundary.json",
+          "parent": "flash-next-tp1-memory-design",
+          "retry": {"status": "blocked-on-material-memory-design", "trigger": "at least 192 GiB host RAM with qualified expert offload, or a separately qualified compression or streaming design"}
+        },
+        {
           "id": "context16k-anchor-required",
           "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 16384, "graph_mode": "*", "kv": "*", "modality": "*"},
           "state": "missing",

@@ -5588,7 +5588,14 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             Counter(cell["state"] for cell in text_cells),
-            Counter({"missing": 216, "lab-screened": 9, "quarantined": 15}),
+            Counter(
+                {
+                    "missing": 215,
+                    "lab-screened": 9,
+                    "quarantined": 15,
+                    "closed": 1,
+                }
+            ),
         )
         current_cells = {
             (
@@ -5601,6 +5608,14 @@ class FamilyCoverageTest(unittest.TestCase):
         }
         current_short = current_cells[(4, 0, 0, "off")]
         current_4k = current_cells[(4, 0, 4096, "off")]
+        tp1_static_fit = current_cells[(1, 0, 0, "off")]
+        self.assertEqual(tp1_static_fit["state"], "closed")
+        self.assertEqual(
+            tp1_static_fit["evidence"],
+            "experiments/qwen38-flash-next-fp8-b70/data/"
+            "20260828-tp1-ep1-eager-mtp0-active0-static-fit-boundary.json",
+        )
+        self.assertNotIn("speed", tp1_static_fit)
         self.assertEqual(current_short["state"], "lab-screened")
         self.assertEqual(
             current_short["evidence_id"],
@@ -5656,11 +5671,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 270-cell coverage contracts · 24 classified", rendered
+            "Full 270-cell coverage contracts · 25 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("24/270", rendered[contract_disclosure:contract_end])
-        self.assertIn("24/240", rendered)
+        self.assertIn("25/270", rendered[contract_disclosure:contract_end])
+        self.assertIn("25/240", rendered)
         self.assertIn("0/30", rendered)
         self.assertIn("≈ 3.33 tok/s (1.66–4.99)", rendered)
         self.assertIn("≈ 3.17 tok/s (1.59–4.76)", rendered)
