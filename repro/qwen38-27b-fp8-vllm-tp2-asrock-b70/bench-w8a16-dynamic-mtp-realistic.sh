@@ -49,9 +49,11 @@ if len(rows) != 12 or any((row.get("completion_tokens") or 0) < 100 for row in r
 if data["run_identity"].get("max_tokens") != 512:
     raise SystemExit("promotion requires the fixed 512-token response cap")
 
-primary = summary["tok_s_1_100_intervals_after_ttft"]
-print(f"conventional_median_tok_s={primary['median']:.12f}")
-print(f"conventional_p10_tok_s={primary['p10']:.12f}")
+primary = summary["class_balanced_tok_s_1_100_intervals_after_ttft"]
+diagnostic = summary["tok_s_1_100_intervals_after_ttft"]
+print(f"class_balanced_conventional_median_tok_s={primary['median']:.12f}")
+print(f"all_prompt_conventional_median_tok_s={diagnostic['median']:.12f}")
+print(f"all_prompt_conventional_p10_tok_s={diagnostic['p10']:.12f}")
 print(
     "full_after_ttft_median_tok_s="
     f"{summary['tok_s_after_ttft_full']['median']:.12f}"

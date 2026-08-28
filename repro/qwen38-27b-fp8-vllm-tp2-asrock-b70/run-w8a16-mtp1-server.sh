@@ -16,6 +16,7 @@ max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
 xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
+fp8_packed_serial_exact=${VLLM_XPU_FP8_PACKED_SERIAL_EXACT:-0}
 batch_invariant=${VLLM_BATCH_INVARIANT:-0}
 qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}
 qwen_gemma_rmsnorm_packed_serial_exact=${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}
@@ -43,7 +44,8 @@ done
   printf 'ENFORCE_EAGER must be 0 or 1\n' >&2
   exit 1
 }
-for value_name in fp8_block_w8a16 batch_invariant qwen_gemma_rmsnorm_batch_invariant \
+for value_name in fp8_block_w8a16 fp8_packed_serial_exact batch_invariant \
+  qwen_gemma_rmsnorm_batch_invariant \
   qwen_gemma_rmsnorm_packed_serial_exact \
   gdn_serial_exact gdn_persistent_scratch gdn_native_fallback \
   mtp_suppress_bonus mtp_draft_eager; do
@@ -98,6 +100,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
   --env VLLM_XPU_FP8_BLOCK_W8A16="${fp8_block_w8a16}" \
+  --env VLLM_XPU_FP8_PACKED_SERIAL_EXACT="${fp8_packed_serial_exact}" \
   --env VLLM_BATCH_INVARIANT="${batch_invariant}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \

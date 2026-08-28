@@ -1,0 +1,30 @@
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+index 26df6f6c7..276a1da42 100644
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -3,5 +3,6 @@
+ """Backend for GatedDeltaNet attention."""
+ 
++import os
+ from dataclasses import dataclass
+ from typing import Literal
+ 
+@@ -29,6 +30,18 @@ class GDNAttentionBackend(AttentionBackend):
+     def get_name() -> str:
+         return "GDN_ATTN"
+ 
++    @classmethod
++    def supports_batch_invariance(cls) -> bool:
++        # The production-shaped exact-native guard verifies every packed GDN
++        # row and restart count against ordered one-token execution. Keep the
++        # broad batch-invariance contract fail-closed for every other GDN path.
++        return (
++            os.environ.get(
++                "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT", "0"
++            ).strip().lower()
++            in ("1", "true", "yes", "on")
++        )
++
+     @staticmethod
+     def get_builder_cls() -> type["GDNAttentionMetadataBuilder"]:
+         return GDNAttentionMetadataBuilder

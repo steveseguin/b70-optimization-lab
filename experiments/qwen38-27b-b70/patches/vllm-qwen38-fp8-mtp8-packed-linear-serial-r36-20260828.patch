@@ -1,0 +1,45 @@
+diff --git a/vllm/model_executor/layers/quantization/fp8.py b/vllm/model_executor/layers/quantization/fp8.py
+index 9c69ff93d..0d5c4da03 100644
+--- a/vllm/model_executor/layers/quantization/fp8.py
++++ b/vllm/model_executor/layers/quantization/fp8.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from typing import TYPE_CHECKING, Any, Literal
+ 
+ import torch
+@@ -421,6 +422,32 @@ class Fp8LinearMethod(LinearMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        # Correctness-only discriminator for the nine-row MTP8 verifier pack.
++        # Reuse the selected one-row block-FP8 kernel so each target row sees
++        # the same GEMM shape as ordinary target-only decode. Keep this gate
++        # deliberately exact; broader batching remains untouched.
++        if (
++            os.getenv("VLLM_XPU_FP8_PACKED_SERIAL_EXACT", "0") == "1"
++            and self.block_quant
++            and x.ndim == 2
++            and x.shape[0] == 9
++        ):
++            logger.warning_once(
++                "VLLM_XPU_FP8_PACKED_SERIAL_EXACT reached for nine-row "
++                "MTP8 verifier pack (r36)"
++            )
++            return torch.cat(
++                [
++                    self.fp8_linear.apply_weights(
++                        layer,
++                        x.narrow(0, row, 1),
++                        bias,
++                    )
++                    for row in range(9)
++                ],
++                dim=0,
++            )
++
+         # if batch invariant mode is enabled, prefer direct FP8 path
+         # we will use BF16 dequant when direct FP8 is not supported.
+         if envs.VLLM_BATCH_INVARIANT:

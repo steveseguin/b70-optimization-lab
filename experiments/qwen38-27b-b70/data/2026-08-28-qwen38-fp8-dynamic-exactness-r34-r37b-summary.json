@@ -1,0 +1,80 @@
+{
+  "schema": "neural.download.bounded-experiment-summary.v1",
+  "date": "2026-08-28",
+  "model": "Qwen3.8-27B official FP8",
+  "runtime": "vLLM 0.27.2rc1.dev77+gac7509e2b",
+  "topology": "TP2 on two Intel Arc Pro B70 GPUs",
+  "oracle": "qwen38-fp8-deterministic-compiled-workwait-20260828-r15a/performance.json",
+  "workload": {
+    "prompt_id": "risk-register",
+    "max_tokens": 512,
+    "seed": 42,
+    "temperature": 0,
+    "top_p": 1,
+    "cached_tokens_required": 0,
+    "status": "correctness screening only; no speed is publishable"
+  },
+  "attempts": [
+    {
+      "id": "r34-A-full-strict",
+      "rows": 12,
+      "target_exact_rows": 7,
+      "class_balanced_tok_s_diagnostic": 59.96523209663053,
+      "receipt_sha256": "68f74ac9642d37d0b48ec2065502f2c79f7b199fa9647f421efabc232c4eff7d",
+      "decision": "rejected"
+    },
+    {
+      "id": "r35-static-mtp1-serial-gdn",
+      "rows": 1,
+      "target_exact_rows": 1,
+      "first_divergence_zero_based": null,
+      "receipt_sha256": "1166f3dccdce61ad8951d507fd2896fe2d522f18fa711f2a12afc0cc30e223cd",
+      "decision": "mechanism pass only"
+    },
+    {
+      "id": "r35-dynamic-mtp8-serial-gdn",
+      "rows": 1,
+      "target_exact_rows": 0,
+      "first_divergence_zero_based": 127,
+      "candidate_token": 8923,
+      "target_token": 4826,
+      "receipt_sha256": "8c42e7f249a619eaf3f5f17faba36f5905ef2072a4dce1eb08a3fc4c0ba2c21f",
+      "decision": "rejected"
+    },
+    {
+      "id": "r36b-eager-dynamic-mtp8-serial-packed-fp8",
+      "rows": 1,
+      "target_exact_rows": 0,
+      "first_divergence_zero_based": 440,
+      "candidate_token": 11447,
+      "target_token": 24679,
+      "receipt_sha256": "fd5629385653c070e6be3c0a9217ad7207f215c397ac5993015796649ec23378",
+      "decision": "rejected; one contributing surface identified"
+    },
+    {
+      "id": "r37",
+      "rows": 0,
+      "decision": "startup-negative; GDN batch-invariance capability absent"
+    },
+    {
+      "id": "r37b-eager-dynamic-mtp8-full-batch-invariant",
+      "rows": 1,
+      "target_exact_rows": 0,
+      "first_divergence_zero_based": 440,
+      "candidate_token": 11447,
+      "target_token": 24679,
+      "receipt_sha256": "a0580025bd6f292256fd1bc48e82d7fc9832a91ad537411c9ec1c9a028bc8f7f",
+      "token_array_exact_vs_r36b": true,
+      "decision": "rejected; global batch invariance is neutral"
+    }
+  ],
+  "artifacts": {
+    "r35_kernel_patch_sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+    "r36_fp8_patch_sha256": "0dcf24d6bb2cf23e8692ed1ec7998a96494998b3231e792b16c220410aec6303",
+    "r37b_capability_patch_sha256": "73d6f9f51b5dff68ededf25fb1f4a3abaf5395435e65fff0743eb5c203156197",
+    "r35_image_id": "sha256:38f737c4b5ded15709046929b89cb7cbe851708ae9c47c079ac537d9a07a7a6b",
+    "r36_image_id": "sha256:f86ddd25d76925fd296f68ab6376255fc91f8fb76e803a05e57acf7b1f3161d8",
+    "r37b_image_id": "sha256:b31e78ede5a0b11d78237b6ce40103d4080b76d8239d13fed1c973826399117c"
+  },
+  "public_result_effect": "none; dynamic MTP8 remains withheld"
+}
