@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "status": "bounded-negative-host-oom-before-health",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1",
+  "attempt": 1,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "post-load PIECEWISE graph compilation",
+    "healthy_api": false,
+    "model_requests_started": false,
+    "quality_gate_started": false,
+    "speed_gate_started": false,
+    "matrix_or_site_credit": false,
+    "interpretation": "The exact TP4 graph arm exhausted global host memory and the existing 8-GiB swap during post-load compilation. It is a pre-request infrastructure/admission negative, not graph output-quality or speed evidence."
+  },
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "eager": false,
+    "graph_mode_requested": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "max_cudagraph_capture_size": 1,
+    "cudagraph_metrics": true,
+    "graph_enable_environment": "VLLM_XPU_ENABLE_XPU_GRAPH=1",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 201326592,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "selective_uva_gib_per_rank": 12.25,
+    "selective_uva_parameters": [
+      "ple_embedding.ngram_embedding.weight",
+      "embed_tokens.weight"
+    ],
+    "reasoning_parser": null,
+    "diagnostics": "none"
+  },
+  "frozen_tools": {
+    "graph_base_launcher_sha256": "533be64e1c7584448c07a5f8895301a32288f4b0472948a91d87235e78c6f09f",
+    "wrapper_sha256": "52642fdff6a4cd208241aaee0ad3bc3c049c1b46915457dec985ab23ebeb3ec5",
+    "client_sha256": "5886f5ba6127826f1122bc8ac26d4c1b328d9ab34674051e50cb5d985dbdaaaf",
+    "supervisor_sha256": "414dd8ad9a1d07ae78b66512bdfdb1d453516a35c6528ecf0e6cc2b94bf7c3df"
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt1",
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt1-supervisor",
+    "tracked_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt1-primary-evidence.sha256",
+    "manifest_sha256": "ffc849c14bd36a66f638953f6d668d55fc61599674d85caec676c0671b964231",
+    "manifest_entries": 41,
+    "manifest_verified": true,
+    "selected_sha256": {
+      "run/server.log": "27883fec3654fa75874699a7fc0a6ae8ac5fe6e8842743bbd02d72cef1de95e8",
+      "run/health.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "run/identity.txt": "94daffe9f05c6ca327aa204e51d30270a36b91c1adfa7d0505be4b0eb9816023",
+      "run/server-command.shell.txt": "24fca14fc2f5b52be9939d9014e0440ce49f36b075dc3ee3141186f6a7a77ab4",
+      "run/staged-runtime-preflight.txt": "90c1491878e92b31bedbece12c99d17be07d1f6090e43b8ebed683a3d6e753b0",
+      "run/xccl-tp4-preflight.log": "a8fad509bdecf217553bb4888d3d6c0eb5fbfb87bb571f6727074d666b44fb66",
+      "run/filesystem-preflight.txt": "afedf40a46d147ea8909147b2f38c5c6240a42c0dafa83570a702cc054ff40e8",
+      "run/kernel-journal-since-launch.log": "2a52556eb1b9cfd71f0099864466df19547560a71b2a8210daa1a0390e500a49",
+      "supervisor/kernel-journal.log": "2a52556eb1b9cfd71f0099864466df19547560a71b2a8210daa1a0390e500a49",
+      "supervisor/listeners-after.txt": "d8140a1d0dc291fe9a59c3494b877f0c5a1d537c9be82f5dad26b14aa36a7d7c",
+      "supervisor/processes-after.txt": "b7b9b58044e61616c87718297fcba812cabf7b440997722e388787065733a3c3",
+      "supervisor/xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d"
+    }
+  },
+  "timeline": [
+    {
+      "time": "2026-08-28T10:17:13-04:00",
+      "event": "Supervisor journal window and 7,200-second lifecycle began."
+    },
+    {
+      "time": "2026-08-28T10:19:47-04:00",
+      "event": "All 131 checkpoint shards had loaded; loader reported 73.48 seconds."
+    },
+    {
+      "time": "2026-08-28T10:19:50-04:00",
+      "event": "All four ranks reported 31.27 GiB model memory and 81.881498-82.152417 seconds model-load time."
+    },
+    {
+      "time": "2026-08-28T10:20:19-04:00",
+      "event": "Rank 0 reported caching the graph of compile range (1, 64)."
+    },
+    {
+      "time": "2026-08-28T10:21:35-04:00",
+      "event": "First global host OOM invocation began during compilation; the kernel showed 252 kB free of 8,388,604 kB total swap."
+    },
+    {
+      "time": "2026-08-28T10:21:39-04:00",
+      "event": "The first OOM selection killed wireplumber."
+    },
+    {
+      "time": "2026-08-28T10:23:22-04:00",
+      "event": "A later OOM selection killed pipewire-pulse while the engine still awaited compilation work."
+    },
+    {
+      "time": "2026-08-28T10:23:25-04:00",
+      "event": "Global OOM killed PID 1852126, VLLM worker TP3; the engine immediately reported VllmWorker-3 dead and began shutdown."
+    },
+    {
+      "time": "2026-08-28T10:28:30-04:00",
+      "event": "During the prolonged failed-engine teardown, another global OOM killed PID 1852043, VLLM worker TP2; the kernel showed 196 kB free swap."
+    },
+    {
+      "time": "2026-08-28T10:28:55-04:00",
+      "event": "Supervisor evidence capture completed after controlled descendant cleanup."
+    }
+  ],
+  "host_memory": {
+    "physical_memory_bytes": 134918307840,
+    "preflight_root_available_bytes": 118545301504,
+    "preflight_root_filesystem": "/dev/nvme0n1p2",
+    "preflight_root_use_percent": 88,
+    "swap_total_kib_at_oom": 8388604,
+    "swap_free_kib_first_oom": 252,
+    "swap_free_kib_late_oom": 196,
+    "global_oom_kill_records": 4,
+    "oom_victims": [
+      "wireplumber pid 972931",
+      "pipewire-pulse pid 4071",
+      "VLLM worker TP3 pid 1852126",
+      "VLLM worker TP2 pid 1852043"
+    ],
+    "bounded_inference": "The global OOM records, exhausted swap, compilation log, and killed worker establish host-memory exhaustion during this exact boot. They do not prove a model/runtime memory leak or that swap alone will make TP4 graph correct."
+  },
+  "request_and_measurement": {
+    "health_file_bytes": 0,
+    "health_passed": false,
+    "models_receipt_present": false,
+    "client_invoked": false,
+    "model_request_count": 0,
+    "quality_response_count": 0,
+    "replay_response_count": 0,
+    "speed_rows": 0,
+    "decode_tok_s": null,
+    "ttft_s": null
+  },
+  "cleanup": {
+    "supervisor_rc": 130,
+    "kernel_journal_read_rc": 0,
+    "listener_19674_after": false,
+    "run_rpc_path_after": false,
+    "run_compile_path_after": false,
+    "vllm_or_worker_process_after": false,
+    "expected_b70_devices_after": 4,
+    "card_memory_mib_after": [42.8828125, 42.875, 42.87890625, 42.875],
+    "b70_addressed_reset_fault_timeout_fatal_events": 0,
+    "scope": "Card/listener/scratch clean after a host-global OOM. The journal records host-service disruption and OOM victims, so this is not a clean-host run."
+  },
+  "protected_results": {
+    "changed": false,
+    "eager_attempt4_short_rates_tok_s": [5.315577824, 5.22378877, 5.219404722],
+    "eager_attempt4_short_median_tok_s": 5.22378877,
+    "eager_attempt4_exact_4k_rates_tok_s": [4.72031137, 4.795324835],
+    "eager_attempt4_exact_4k_median_tok_s": 4.757818102,
+    "graph_speed_claim": null,
+    "instruction": "Preserve every eager, MTP, legacy-graph, and current-runtime speed under its original identity. Attempt 1 cannot lower or replace any value."
+  },
+  "next_step": {
+    "status": "preregistered-treatment-needed",
+    "one_variable_treatment": "Add a temporary 64-GiB swapfile on the root ext4 filesystem while preserving the complete model/runtime/graph/cache/request identity.",
+    "caveat": "Attempt 2 remains experimental and must stop on its host-memory, swap, root-space, journal, graph-mode, quality, and lifecycle gates."
+  }
+}
