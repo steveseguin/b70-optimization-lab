@@ -6,7 +6,9 @@ intact while later matrix cells are added.
 
 ## Resume identity
 
-- Model: `/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8`.
+- Active verified model: `/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8`.
+- Preserved external source copy:
+  `/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8`.
 - Model revision: `bcd9f01ddc9cff2316eb84281bebcd5b058bddce`.
 - Current vLLM source checkout: `/home/steve/src/vllm-current-main` at
   `1372c62d975c554f4b465c8299bc5f3295301ceb`. Attempt 19 used
@@ -99,8 +101,25 @@ responses. This does not certify the MTP speed rows or replace any decode
 number. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json`.
 
-Next, repeat the four-rank preflight, test MTP3 official-thinking parity without timing,
-then reduce MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU
+The preregistered MTP3 transfer attempt is now closed inconclusive rather than
+left open. Its verified local-NVMe boot and Door A passed. Door B passed the
+4/4 scout plus 15/21 grid rows; every one of the 19 completed responses passed
+semantic, structural, usage, and cache-zero gates and exactly matched the MTP0
+final answer. The twentieth response (`copy_phrase`, seed `2026082713`) stopped
+at 98 computed and 33 output tokens, then the fixed 300-second worker-response
+timeout produced API 500. This is an unqualified repeated-session stability
+result with no observed answer-quality failure and no causal claim. Forced
+post-grace cleanup reset CCS and BCS engines on all four cards; final receipts
+show an idle host, clear port, and four discoverable cards. The incident kernel
+snapshot was clean before forced stop. Corrected NVMe receiver events existed
+in the wider run window, while SMART reported zero critical warnings, media
+errors, and error-log entries. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json`.
+
+Next, design a separately preregistered bounded repeated-session stability
+gate if MTP3 quality transfer remains a priority; do not retry this arm by
+raising only the timeout. Then reduce MTP3 4K TTFT and qualify fresh-boot
+stability. Audit the XPU
 host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
 larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,

@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "status": "inconclusive-unqualified-repeated-session-stability",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-4352-r1",
+  "attempt": 2,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-4352-r1-attempt2",
+  "classification": {
+    "result": "bounded-incomplete",
+    "official_mtp3_quality_qualified": false,
+    "answer_quality_failure_observed": false,
+    "runtime_boundary": "repeated-session stability",
+    "cause_claimed": false,
+    "interpretation": "The local-NVMe boot and deterministic control passed. All 19 completed official-thinking rows passed, but the twentieth request stopped making token progress and ended in an API 500 after the fixed worker-response timeout. This is an incomplete stability result, not an answer-quality failure or a causal diagnosis."
+  },
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_tree_sha256": "4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 3,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 294195200,
+    "kv_cache_blocks": 25,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "reasoning_parser": "qwen3",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "diagnostics": "none"
+  },
+  "preflight_and_boot": {
+    "local_model_tree_verified_before_launch": true,
+    "four_rank_collective_preflight": "pass",
+    "staged_runtime_preflight": "pass",
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "healthy_api": true,
+    "cache_capacity_gate": "pass",
+    "interpretation": "The exact local NVMe model tree loaded and the frozen TP4/EP4 MTP3 service identity became healthy. This does not independently qualify repeated serving."
+  },
+  "door_a_nonthinking_control": {
+    "status": "passed",
+    "baseline_comparisons_passed": 26,
+    "baseline_comparisons_total": 26,
+    "repeat_passed": 16,
+    "repeat_total": 16,
+    "repeat_unique_hash_count": 1,
+    "long_context_server_prompt_tokens": 4096,
+    "long_context_pass": true,
+    "semantic_passed": 6,
+    "semantic_total": 7,
+    "sole_semantic_failure": {
+      "case": "code_execution",
+      "expected": "14",
+      "content": "30"
+    },
+    "cache_zero_observations": 24,
+    "usage_complete_observations": 24,
+    "model_requests_completed": 24,
+    "interpretation": "Every incremental parity, repeat, context, usage, and cache gate passed. The aggregate helper remains false only at the inherited deterministic target answer boundary."
+  },
+  "door_b_official_thinking": {
+    "status": "request-error-incomplete",
+    "required_cases": 25,
+    "completed_cases": 19,
+    "scout_passed": 4,
+    "scout_total": 4,
+    "grid_passed": 15,
+    "grid_completed": 15,
+    "grid_total": 21,
+    "completed_semantic_passed": 19,
+    "completed_structural_passed": 19,
+    "completed_cache_zero": 19,
+    "completed_usage_complete": 19,
+    "normalized_final_agreement_with_mtp0": 19,
+    "raw_final_hash_agreement_with_mtp0": 19,
+    "reasoning_hash_agreement_with_mtp0": 1,
+    "failed_request": {
+      "ordinal": 20,
+      "grid_index": 15,
+      "case": "copy_phrase",
+      "seed": 2026082713,
+      "request_id": "chatcmpl-qwen38-mtp3-official-quality-a2-grid-2026082713-15-copy_phrase-9a797c9d",
+      "last_scheduler_state": {
+        "computed_tokens": 98,
+        "output_tokens": 33,
+        "scheduled_tokens": 4,
+        "scheduled_spec_decode_tokens": [-1, -1, -1],
+        "kv_cache_usage": 0.75
+      },
+      "worker_response_timeout_seconds": 300,
+      "server_error": "RPC call to sample_tokens timed out",
+      "client_result": "HTTP 500"
+    },
+    "session_request_boundary": {
+      "completed_before_failure": 43,
+      "failure_request_ordinal": 44,
+      "breakdown": "24 Door A requests plus 19 completed Door B requests"
+    },
+    "interpretation": "Every returned answer passed the preregistered semantic and structural gates and exactly matched the corresponding MTP0 final answer. The missing six rows prevent qualification. Reasoning text is sampled and exact reasoning parity is not claimed."
+  },
+  "timing": {
+    "authorized": false,
+    "rows": 0,
+    "existing_speed_results_changed": false,
+    "interpretation": "This quality-only arm does not replace or lower the preserved MTP3/4K decode, TTFT, or wall-throughput result."
+  },
+  "shutdown": {
+    "api_application_shutdown_complete": true,
+    "normal_grace_cleared_all_workers": false,
+    "post_grace_surviving_worker_count": 4,
+    "forced_process_group_stop_required": true,
+    "forced_stop_engine_reset_messages": 8,
+    "engine_reset_classes_by_card": ["ccs", "bcs"],
+    "b70_bdfs": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+    "final_relevant_processes": 0,
+    "final_listener_19647": "clear",
+    "final_cards_discoverable": 4,
+    "final_card_memory_used_mib": [42.8828125, 42.87890625, 42.875, 42.875],
+    "interpretation": "The engine reset messages appeared at the forced post-grace stop, after the request timeout. They are cleanup evidence, not evidence of a device event at the moment token progress stopped."
+  },
+  "journal_and_storage": {
+    "incident_snapshot_before_forced_stop": "clean; -- No entries --",
+    "gpu_device_event_coincident_with_request_stop": false,
+    "full_window_corrected_pcie_receiver_events": {
+      "present": true,
+      "device": "Samsung NVMe 0000:01:00.0, vendor 144d device a80a",
+      "class": "corrected physical-layer receiver events",
+      "io_errors_observed": false,
+      "controller_reset_observed": false
+    },
+    "nvme_smart": {
+      "critical_warning": 0,
+      "media_errors": 0,
+      "num_err_log_entries": 0,
+      "percent_used": 4
+    },
+    "interpretation": "The full launch window was not journal-clean because corrected NVMe receiver events were present. SMART and the absence of I/O/controller-reset evidence do not establish a storage fault, and no storage cause is claimed."
+  },
+  "evidence": {
+    "final_manifest": {
+      "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-4352-r1-attempt2/final-evidence-sha256.txt",
+      "file_count": 52,
+      "sha256": "5bbeb441c83f35a7a4eb8ea040e862fc1e2de375216b861eeec876648a491c17"
+    },
+    "sha256": {
+      "quality-v2-control.json": "323c1d8eaf1c615daf1ed872c792404156a1b8f7023c94720aaa2c75c2d8cfd9",
+      "official-thinking-quality.json": "79cd22355ace5f76ab738f895bf4e5212c9d503121c7d54db94e5f5ec3d32f63",
+      "official-thinking-target-partial-comparison.json": "4796ba6847f4dfa69b5051210c5edc27276858bb10d35b7a5745528233f6cc7f",
+      "server.log": "764c14f712f06b3b2d9a87082235a26787aeb5021426a22ae4e06225adb1594d",
+      "identity.txt": "7d45902ac09bbaf172b2871ad132832d5f6884176a701163bf729d6b63921c5a",
+      "input-sha256sums.txt": "0d0b6039ed0f52881f4d0a417a2be844bcf702a33ca8011e4fdf2648046c409e",
+      "20260827T2019EDT-official-thinking-partial.json": "d9c968b08f4114c1652a2b5fa91fe350a988bb83dc9f27ff13dc33f18a7546c3",
+      "20260827T2019EDT-official-case20-metrics.prom": "a657913bb0e02d05d9697c6c36d0e2a2e632aa6bed432f9869031b6b09341d68",
+      "20260827T2019EDT-official-case20-processes.txt": "504d3e4e867fee89a260160ad96f6640c86bb66b6e66b1bc4212e56677753f76",
+      "20260827T2019EDT-official-case20-kernel-journal.log": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e",
+      "20260827T2023EDT-post-term-survivors.txt": "07fd09993ff59ad756d71dd9052846b5fa50c72c2465eebdd994510d37d648ac",
+      "20260827T2024EDT-postflight-processes.txt": "617f5e4f5603a93561fbf193653c2e11fbde81d80dcd43fd916ab64bc914cdc2",
+      "20260827T2024EDT-postflight-listeners.txt": "d8140a1d0dc291fe9a59c3494b877f0c5a1d537c9be82f5dad26b14aa36a7d7c",
+      "20260827T2024EDT-postflight-xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+      "20260827T2024EDT-kernel-journal-final.log": "ebf2ec60ea63733846854017458f38c8e3de2a0251ec641856bdf5ef7a0553d1",
+      "20260827T2025EDT-nvme0-smart-log.json": "da8a8fcd7e8ba5f1f39f81d285a0e4079e9aa9719c26e1e5d7354d305e63ae56",
+      "20260827T2025EDT-nvme0-pcie-events.log": "026f729070b3ecbc3bb01dd475c9f7fe90883a4f4c96b6bf71e94f548980222c"
+    }
+  },
+  "preservation": {
+    "mtp3_4k_decode_median_tok_s": 15.501565106,
+    "mtp3_4k_ttft_median_seconds": 187.899186,
+    "mtp3_4k_wall_output_median_tok_s": 1.24626,
+    "existing_result_receipt": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
+    "no_speed_claim_changed": true,
+    "no_site_promotion": true,
+    "no_submission": true
+  },
+  "next_action": "Do not retry under this preregistration or by raising only the timeout. Any follow-up needs a separately preregistered bounded repeated-session diagnostic or stability gate."
+}

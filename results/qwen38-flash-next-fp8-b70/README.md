@@ -67,6 +67,17 @@ as deployment-ready or used to lower any prior captured result. The quality
 receipt is
 [`20260827-tp4-mtp0-official-quality-attempt2-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json).
 
+The preregistered MTP3 transfer arm passed its local-NVMe boot and the complete
+deterministic control. Its official-thinking battery then passed the 4/4 scout
+and 15 of 21 grid rows: all 19 completed responses passed semantic,
+structural, usage, and cache-zero gates, and all 19 final answers exactly
+matched MTP0. The next `copy_phrase` request, seed `2026082713`, stopped at 98
+computed and 33 output tokens; the fixed 300-second worker-response timeout
+ended in API 500. The six remaining rows did not run. Official MTP3 quality is
+therefore **inconclusive and unqualified due to repeated-session stability**,
+with no answer-quality failure observed. No timing result changed. Receipt:
+[`20260827-tp4-mtp3-official-quality-attempt2-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json).
+
 ## Exact identity
 
 - Base model family: `Qwen/Qwen3.8-Flash-Next`.
@@ -104,9 +115,10 @@ is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
 MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
 only MTP4 at exact 4K remains quarantined. Target-only official-thinking
-quality now passes; MTP3 thinking parity, graph, deeper context, vision,
-fresh-server determinism, clean-host replay, and a sealed deployment package
-remain explicit gaps.
+quality now passes. The first MTP3 transfer attempt returned 19/19 correct
+completed answers but is unqualified after a repeated-session runtime stop;
+graph, deeper context, vision, fresh-server determinism, clean-host replay, and
+a sealed deployment package remain explicit gaps.
 
 ## Matched TP4 MTP1 screen
 

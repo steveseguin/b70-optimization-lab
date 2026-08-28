@@ -1077,9 +1077,25 @@ cache reuse; the code result was `14` in all four appearances. No speed row was
 run or changed. The external USB disk reset once with two read errors during
 the quality window, although every retained artifact reopened and hashed; the
 server also retained the known forced EngineCore cleanup caveat. Therefore the
-official target quality profile is screened, while MTP3 thinking parity,
+official target quality profile is screened, while MTP3 quality qualification,
 fresh-boot determinism, and clean storage/deployment remain open. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-official-quality-attempt2-result.json`.
+
+The preregistered MTP3 official-quality transfer attempt is now closed
+inconclusive and unqualified. The verified local-NVMe boot and deterministic
+Door A passed. Door B passed the 4/4 scout and 15/21 grid rows; all 19 completed
+responses passed semantic, structural, usage, and cache-zero gates, with 19/19
+exact final answers versus MTP0. Request 20 (`copy_phrase`, seed `2026082713`)
+stopped at 98 computed and 33 output tokens, and the fixed 300-second
+worker-response timeout returned API 500. No answer-quality failure or cause is
+claimed. Forced post-grace cleanup produced CCS/BCS reset messages on all four
+cards; final receipts show idle cards and a clear listener. The incident
+kernel snapshot was clean before that forced stop. The wider window contained
+corrected Samsung-NVMe receiver events, while SMART recorded zero critical
+warnings, media errors, and error-log entries. No speed number or site state
+changed. Any retry needs a new bounded preregistration rather than a timeout-
+only change. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json`.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
