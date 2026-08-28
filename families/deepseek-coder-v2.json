@@ -5,7 +5,7 @@
   "name": "DeepSeek Coder V2",
   "display_name": "DeepSeek Coder V2 · Lite Instruct",
   "summary": "DeepSeek's coding model in its small mixture-of-experts form: 16B parameters total, about 2.4B active per word, built for code completion and programming help. Fits one Arc Pro B70 with room to spare.",
-  "updated_at": "2026-08-24",
+  "updated_at": "2026-08-28",
   "architecture": {
     "class": "DeepSeek-Coder-V2 Lite sparse MoE",
     "total_parameters_approx": 16000000000,
@@ -13,7 +13,7 @@
     "evidence": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
   },
   "dimensions": {
-    "weight_revision": ["deepseek-coder-v2-lite-instruct-8f248fa"],
+    "weight_revision": ["deepseek-coder-v2-lite-instruct"],
     "weight_quantization": ["Q4_K_M"],
     "runtime": ["llama.cpp SYCL fdb1db877"],
     "tp": [1, 2, 4],
@@ -23,17 +23,27 @@
   },
   "weight_revisions": [
     {
-      "id": "deepseek-coder-v2-lite-instruct-8f248fa",
+      "id": "deepseek-coder-v2-lite-instruct",
       "label": "DeepSeek-Coder-V2 Lite Instruct",
-      "role": "measured GGUF weights",
-      "repository": "bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF",
-      "revision": "8f248fa2072348f77a8bc37754e470de1f61866e",
-      "model_manifest": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+      "role": "base post-trained weights",
+      "repository": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+      "revision_status": "The measured GGUF identifies this official parent repository, but the exact parent commit was not retained in the snapshot packet.",
+      "quantized_artifacts": [
+        {
+          "id": "deepseek-coder-v2-lite-instruct-8f248fa",
+          "label": "Bartowski Q4_K_M GGUF export",
+          "quantization": "Q4_K_M",
+          "quantization_origin": "export",
+          "repository": "bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF",
+          "revision": "8f248fa2072348f77a8bc37754e470de1f61866e",
+          "evidence": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+        }
+      ]
     }
   ],
   "model_variants": [],
   "transfer_scope": {
-    "status": "one measured Lite Instruct GGUF revision",
+    "status": "The measured Q4_K_M GGUF is a quantized child artifact of DeepSeek-Coder-V2 Lite Instruct, not a separate model.",
     "transfers": ["the stock llama.cpp model path and exact one-B70 launch controls"],
     "does_not_transfer": ["speed or quality to full DeepSeek Coder V2, another quantization, TP2/4, or longer context"],
     "evidence": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
@@ -47,7 +57,8 @@
     {
       "id": "deepseek-coder-v2-lite-q4km-tp1-rapid",
       "state": "lab-measured",
-      "revision": "deepseek-coder-v2-lite-instruct-8f248fa",
+      "revision": "deepseek-coder-v2-lite-instruct",
+      "artifact_id": "deepseek-coder-v2-lite-instruct-8f248fa",
       "variant": "Q4_K_M",
       "quantization": "Q4_K_M",
       "runtime": "llama.cpp SYCL fdb1db877",
@@ -67,7 +78,8 @@
     {
       "id": "rapid-deepseek-coder-v2-lite-q4km",
       "label": "DeepSeek-Coder-V2 Lite Q4_K_M · TP1",
-      "revision": "deepseek-coder-v2-lite-instruct-8f248fa",
+      "revision": "deepseek-coder-v2-lite-instruct",
+      "artifact_id": "deepseek-coder-v2-lite-instruct-8f248fa",
       "quantization": "Q4_K_M",
       "runtime": "llama.cpp SYCL fdb1db877",
       "cards": 1,
@@ -89,7 +101,7 @@
       "fixed": "Exact measured revision and rapid runtime; TP2/4 are unmeasured gaps.",
       "row_axis": {"key": "variant", "label": "Quantization", "prefix": ""},
       "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
-      "fixed_selectors": {"revision": "deepseek-coder-v2-lite-instruct-8f248fa", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
+      "fixed_selectors": {"revision": "deepseek-coder-v2-lite-instruct", "artifact_id": "deepseek-coder-v2-lite-instruct-8f248fa", "runtime": "llama.cpp SYCL fdb1db877", "mtp": 0},
       "rows": ["Q4_K_M"],
       "columns": [1, 2, 4],
       "cells": {

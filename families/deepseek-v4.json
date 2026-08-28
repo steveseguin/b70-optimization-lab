@@ -12,7 +12,7 @@
     "evidence": "results/deepseek-v4-flash-k160-b70/README.md"
   },
   "dimensions": {
-    "weight_revision": ["deepseek-v4-flash-180b-k160-7c360e1"],
+    "weight_revision": ["deepseek-v4-flash-180b-community"],
     "weight_quantization": ["experimental uniform-K160 FP8/MXFP4 target"],
     "runtime": ["vLLM XPU record stack 264c7f2/3131567/48fda4f"],
     "tp": [1, 2, 4],
@@ -24,17 +24,27 @@
   },
   "weight_revisions": [
     {
-      "id": "deepseek-v4-flash-180b-k160-7c360e1",
-      "label": "DeepSeek V4 Flash 180B · experimental uniform-K160",
-      "role": "measured target checkpoint",
+      "id": "deepseek-v4-flash-180b-community",
+      "label": "DeepSeek V4 Flash 180B · community base identity",
+      "role": "parent model identity",
       "repository": "0xSero/DeepSeek-V4-Flash-180B",
-      "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
-      "model_manifest": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
+      "revision_status": "The measured K160 export identifies this community model repository, but no separately pinned pre-K160 parent revision was retained.",
+      "quantized_artifacts": [
+        {
+          "id": "deepseek-v4-flash-180b-k160-7c360e1",
+          "label": "Experimental uniform-K160 FP8/MXFP4 target export",
+          "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+          "quantization_origin": "export",
+          "repository": "0xSero/DeepSeek-V4-Flash-180B",
+          "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+          "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
+        }
+      ]
     }
   ],
   "model_variants": [],
   "transfer_scope": {
-    "status": "exact experimental checkpoint and record stack only",
+    "status": "The experimental K160 export is a quantized child artifact of the DeepSeek V4 Flash community model identity, not a separate model. Measurements remain artifact- and runtime-specific.",
     "transfers": [
       "the archived vLLM, XPU-kernel, and oneCCL source bundles and the target-verified DSpark7 mechanism",
       "the fail-closed launcher and ordered exact-gate workflow"
@@ -69,7 +79,8 @@
     {
       "id": "deepseek-v4-k160-tp4-ep-dspark7-strict",
       "state": "lab-measured",
-      "revision": "deepseek-v4-flash-180b-k160-7c360e1",
+      "revision": "deepseek-v4-flash-180b-community",
+      "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
       "variant": "experimental uniform-K160 FP8/MXFP4 target",
       "quantization": "experimental uniform-K160 FP8/MXFP4 target",
       "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f",
@@ -103,7 +114,8 @@
     {
       "id": "deepseek-v4-flash-k160-b70-80tps-20260718",
       "label": "DeepSeek V4 Flash K160 · TP4+EP DSpark7",
-      "revision": "deepseek-v4-flash-180b-k160-7c360e1",
+      "revision": "deepseek-v4-flash-180b-community",
+      "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
       "quantization": "experimental uniform-K160 FP8/MXFP4 target",
       "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f",
       "cards": 4,
@@ -154,7 +166,8 @@
       "row_axis": {"key": "speculative_method", "label": "Method", "prefix": ""},
       "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
       "fixed_selectors": {
-        "revision": "deepseek-v4-flash-180b-k160-7c360e1",
+        "revision": "deepseek-v4-flash-180b-community",
+        "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
         "variant": "experimental uniform-K160 FP8/MXFP4 target",
         "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f",
         "graph_mode": "PIECEWISE"
@@ -170,7 +183,7 @@
   ],
   "family_closures": [
     {
-      "selectors": {"revision": "deepseek-v4-flash-180b-k160-7c360e1", "frontier": "configuration-sweeps"},
+      "selectors": {"revision": "deepseek-v4-flash-180b-community", "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1", "frontier": "configuration-sweeps"},
       "state": "closed",
       "reason": "The configuration frontier is paused; reopen only for a substantial EAGLE capture/training effort or a genuinely new mechanism, not another generic flag sweep.",
       "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md"

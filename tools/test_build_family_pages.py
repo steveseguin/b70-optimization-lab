@@ -489,6 +489,49 @@ class FamilyCoverageTest(unittest.TestCase):
         speculative_html = (MODULE.ROOT / "learn/speculative-methods.html").read_text()
         self.assertIn("80.8", speculative_html)
         self.assertIn("78.3 three-suite center", speculative_html)
+        deepseek_revision = deepseek["weight_revisions"][0]
+        self.assertEqual(deepseek_revision["id"], "deepseek-v4-flash-180b-community")
+        self.assertNotIn("revision", deepseek_revision)
+        self.assertIn("revision_status", deepseek_revision)
+        self.assertEqual(len(deepseek_revision["quantized_artifacts"]), 1)
+        deepseek_artifact = deepseek_revision["quantized_artifacts"][0]
+        self.assertEqual(
+            deepseek_artifact["id"], "deepseek-v4-flash-180b-k160-7c360e1"
+        )
+        self.assertEqual(deepseek_artifact["quantization_origin"], "export")
+        self.assertEqual(
+            deepseek_run["artifact_id"],
+            "deepseek-v4-flash-180b-k160-7c360e1",
+        )
+        self.assertEqual(
+            deepseek["packets"][0]["artifact_id"],
+            "deepseek-v4-flash-180b-k160-7c360e1",
+        )
+
+        deepseek_coder = json.loads(
+            (MODULE.ROOT / "families/deepseek-coder-v2.json").read_text()
+        )
+        coder_revision = deepseek_coder["weight_revisions"][0]
+        self.assertEqual(coder_revision["id"], "deepseek-coder-v2-lite-instruct")
+        self.assertEqual(
+            coder_revision["repository"],
+            "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+        )
+        coder_artifact = coder_revision["quantized_artifacts"][0]
+        self.assertEqual(
+            coder_artifact["id"],
+            "deepseek-coder-v2-lite-instruct-8f248fa",
+        )
+        self.assertEqual(coder_artifact["quantization"], "Q4_K_M")
+        self.assertEqual(coder_artifact["quantization_origin"], "export")
+        self.assertEqual(
+            deepseek_coder["run_measurements"][0]["artifact_id"],
+            "deepseek-coder-v2-lite-instruct-8f248fa",
+        )
+        self.assertEqual(
+            deepseek_coder["packets"][0]["artifact_id"],
+            "deepseek-coder-v2-lite-instruct-8f248fa",
+        )
 
         qwen35 = json.loads((MODULE.ROOT / "families/qwen-35b.json").read_text())
         qwen35_runs = {item["id"]: item for item in qwen35["run_measurements"]}
