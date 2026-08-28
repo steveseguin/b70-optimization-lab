@@ -22,7 +22,7 @@ class ReproGuideValidationTest(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         errors, counts = MODULE.validate(repo)
         self.assertEqual(errors, [])
-        self.assertEqual(sum(counts.values()), 27)
+        self.assertEqual(sum(counts.values()), 28)
 
     def test_rejects_uncertified_read_guide_promotion(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
