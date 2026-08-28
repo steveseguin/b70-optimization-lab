@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "closed-administrative-client-only-misuse",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 1,
+  "sentinel": {
+    "path": "/tmp/q38-mtp0-current-vision-a1.failed",
+    "size_bytes": 34,
+    "mtime_local": "2026-08-28 10:55:44.549350867 -0400",
+    "owner": "steve:steve",
+    "mode": "0664",
+    "inode": 29257680,
+    "device": 66306,
+    "sha256": "f01552886fae93b0d7486716913dc974f2102cf4588e80f215e965cbc2f05201",
+    "utf8_content_exact": "FAIL vision attempt-1 client rc=2\n"
+  },
+  "client_identity": {
+    "path": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-current-vision-a1-client.sh",
+    "sha256": "da5d13a5b5ec0acdfbd6297b8b17e685abc20702a951d9c540f146e3af8e2db7",
+    "rc2_site_count": 1,
+    "rc2_site": "nonzero argument count before run/evidence/supervisor checks",
+    "exit_trap_installed_before_rc2_site": true
+  },
+  "absent_sibling_state": [
+    "/tmp/q38-mtp0-current-vision-a1.pid",
+    "/tmp/q38-mtp0-current-vision-a1.child.pid",
+    "/tmp/q38-mtp0-current-vision-a1.launcher.pid",
+    "/tmp/q38-mtp0-current-vision-a1.server.pid",
+    "/tmp/q38-mtp0-current-vision-a1.server.pgid",
+    "/tmp/q38-mtp0-current-vision-a1.rc",
+    "/tmp/q38-mtp0-current-vision-a1.stop",
+    "/tmp/q38-mtp0-current-vision-a1.deadline-epoch"
+  ],
+  "absent_attempt_paths": [
+    "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt1",
+    "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt1-supervisor",
+    "/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt1",
+    "/tmp/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt1-compile",
+    "/tmp/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt1-rpc"
+  ],
+  "classification": {
+    "basis": "The frozen client has exactly one rc=2 exit: the argument-count guard. Its exit trap is installed first, so a client-only invocation with any argument writes this sentinel. No supervisor, server, run, cache, compile, RPC, or evidence path exists.",
+    "supervisor_started": false,
+    "model_load_started": false,
+    "api_request_started": false,
+    "gpu_test_started": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "deployment_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "preservation": {
+    "sentinel_deleted": false,
+    "attempt1_reuse_forbidden": true,
+    "next_packet": "fresh attempt2 state, port, run, evidence, cache, compile, and RPC paths"
+  }
+}
