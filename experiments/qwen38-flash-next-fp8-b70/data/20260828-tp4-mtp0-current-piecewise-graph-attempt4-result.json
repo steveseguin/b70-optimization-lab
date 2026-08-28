@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "status": "bounded-environmental-stop-root-nvme-corrected-rxerr",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1",
+  "attempt": 4,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "model loading, 78 of 131 shards",
+    "healthy_api": false,
+    "graph_compile_started": false,
+    "client_invoked": false,
+    "quality_or_replay_started": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The frozen broad journal gate stopped on a corrected, non-fatal RxErr from root NVMe 0000:01:00.0. The API termination preceded TP2/TP3 storage-shape tracebacks, so those are shutdown fallout rather than the initiating cause. This run does not classify model or graph correctness or speed."
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph_mode_requested": "PIECEWISE",
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 201326592
+  },
+  "stop": {
+    "primary_event_time_local": "2026-08-28T11:20:28-04:00",
+    "primary_event": "APEI corrected PCIe event for device_id 0000:01:00.0 followed by nvme 0000:01:00.0 RxErr",
+    "watchdog_stop_recorded": true,
+    "model_loading_progress": "78/131 shards (60%)",
+    "api_keyboard_interrupt_preceded_worker_tracebacks": true,
+    "oom": false,
+    "b70_event": false
+  },
+  "resource_treatment": {
+    "temporary_swap_bytes": 68719476736,
+    "priority": -1,
+    "peak_temporary_swap_used_kib": 6077232,
+    "ext4_staged_inputs_passed": true
+  },
+  "cleanup": {
+    "inner_rc": 130,
+    "outer_rc": 70,
+    "temporary_swapoff_succeeded": true,
+    "temporary_file_removed": true,
+    "original_swap_layout_restored_exactly": true,
+    "kernel_journal_read_rc": 0,
+    "listener_19678_after": false,
+    "model_or_worker_process_after": false,
+    "postflight_card_memory_mib": [42.8828125, 42.87890625, 42.87890625, 42.875]
+  },
+  "raw_evidence": {
+    "family_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70",
+    "combined_manifest": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt4-primary-evidence.sha256",
+    "combined_manifest_sha256": "ee3288b1fb0ad5b7263003ad1b2891ff56cc26ca0fa14a74e48f98577b497b6b",
+    "combined_manifest_entries": 78,
+    "combined_manifest_verified": true,
+    "resource_archive": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt4-resource-archive",
+    "resource_manifest_sha256": "e7a7c6e06fc24a6485b289e09aab35496bd31b07e1ed8de35a84f2380816451e",
+    "resource_manifest_entries": 38,
+    "resource_mirror_verified": true
+  },
+  "protected_results": {
+    "changed": false,
+    "graph_speed_claim": null
+  },
+  "next_step": {
+    "status": "fresh-attempt-required",
+    "one_variable_treatment": "Allow only an event-bound, explicitly corrected/non-fatal root-NVMe notice while preserving stops for all B70, OOM, uncorrected/fatal, I/O, reset, timeout, or unattributed storage events."
+  }
+}
