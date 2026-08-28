@@ -5570,11 +5570,24 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(graph_modality["cells"]), 4)
         self.assertEqual(
             Counter(cell["state"] for cell in graph_modality["cells"].values()),
-            Counter({"missing": 3, "lab-screened": 1}),
+            Counter({"missing": 2, "lab-screened": 1, "quarantined": 1}),
         )
         self.assertEqual(
             graph_modality["cells"]["off:text"]["evidence_id"],
-            "qwen38-flash-next-fp8-tp4-attempt19",
+            "qwen38-flash-next-fp8-tp4-mtp0-current-a4",
+        )
+        self.assertEqual(
+            graph_modality["fixed_selectors"]["runtime"],
+            "vLLM XPU 1372c62d + staged kernels 2f829747",
+        )
+        self.assertEqual(
+            graph_modality["cells"]["PIECEWISE:text"]["state"],
+            "quarantined",
+        )
+        self.assertEqual(
+            graph_modality["cells"]["PIECEWISE:text"]["evidence"],
+            "experiments/qwen38-flash-next-fp8-b70/data/"
+            "20260828-tp4-mtp0-current-piecewise-graph-attempt7-result.json",
         )
         self.assertTrue(
             all(
@@ -5631,9 +5644,9 @@ class FamilyCoverageTest(unittest.TestCase):
             Counter(cell["state"] for cell in text_cells),
             Counter(
                 {
-                    "missing": 215,
+                    "missing": 214,
                     "lab-screened": 9,
-                    "quarantined": 15,
+                    "quarantined": 16,
                     "closed": 1,
                 }
             ),
@@ -5648,6 +5661,7 @@ class FamilyCoverageTest(unittest.TestCase):
             for cell in text_cells
         }
         current_short = current_cells[(4, 0, 0, "off")]
+        current_graph_short = current_cells[(4, 0, 0, "PIECEWISE")]
         current_4k = current_cells[(4, 0, 4096, "off")]
         tp1_static_fit = current_cells[(1, 0, 0, "off")]
         self.assertEqual(tp1_static_fit["state"], "closed")
@@ -5661,6 +5675,13 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             current_short["evidence_id"],
             "qwen38-flash-next-fp8-tp4-mtp0-current-a4",
+        )
+        self.assertEqual(current_graph_short["state"], "quarantined")
+        self.assertNotIn("speed", current_graph_short)
+        self.assertEqual(
+            current_graph_short["evidence"],
+            "experiments/qwen38-flash-next-fp8-b70/data/"
+            "20260828-tp4-mtp0-current-piecewise-graph-attempt7-result.json",
         )
         self.assertEqual(current_4k["state"], "lab-screened")
         self.assertEqual(
@@ -5712,11 +5733,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 270-cell coverage contracts · 25 classified", rendered
+            "Full 270-cell coverage contracts · 26 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("25/270", rendered[contract_disclosure:contract_end])
-        self.assertIn("25/240", rendered)
+        self.assertIn("26/270", rendered[contract_disclosure:contract_end])
+        self.assertIn("26/240", rendered)
         self.assertIn("0/30", rendered)
         self.assertIn("≈ 3.33 tok/s (1.66–4.99)", rendered)
         self.assertIn("≈ 3.17 tok/s (1.59–4.76)", rendered)

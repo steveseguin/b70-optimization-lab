@@ -1451,7 +1451,7 @@
     {
       "id": "qwen-flash-next-graph-by-modality",
       "label": "Graph and modality summary",
-      "fixed": "Official FP8 child artifact, vLLM 658965050 plus kernels 2f829747, TP4/EP4, MTP0, zero prior context, and automatic KV. Only eager text is screened; graph and vision remain unmeasured rather than unsupported.",
+      "fixed": "Official FP8 child artifact, vLLM 1372c62d plus staged kernels 2f829747, TP4/EP4, MTP0, zero prior context, and automatic KV. Eager text is screened; PIECEWISE text has bounded compile-resource evidence but no API, quality, or speed result; vision remains unmeasured.",
       "row_axis": {
         "key": "graph_mode",
         "label": "Graph mode",
@@ -1467,7 +1467,7 @@
       "fixed_selectors": {
         "revision": "qwen38-flash-next",
         "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
-        "runtime": "vLLM XPU 658965050 + kernels 2f829747",
+        "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
         "runtime_family": "vLLM XPU",
         "tp": 4,
         "ep": 4,
@@ -1479,9 +1479,14 @@
       "rows": ["off", "PIECEWISE"],
       "columns": ["text", "vision"],
       "cells": {
-        "off:text": {"state": "lab-screened", "label": "5.222 tok/s; quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19", "packet_id": "qwen38-flash-next-fp8-tp4-research"},
+        "off:text": {"state": "lab-screened", "label": "5.224 tok/s; current-runtime Grade-C screen", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp0-current-a4", "packet_id": "qwen38-flash-next-fp8-tp4-mtp0-current-research"},
         "off:vision": {"state": "missing", "label": "vision serving not measured"},
-        "PIECEWISE:text": {"state": "missing", "label": "graph text serving not measured"},
+        "PIECEWISE:text": {
+          "state": "quarantined",
+          "label": "all 131 shards loaded on four ranks; graph compile began; 30-GiB host-memory guard tripped; no API, quality, or speed",
+          "reason": "Attempt 7 loaded the complete checkpoint on all four ranks and entered PIECEWISE torch.compile with one compile thread. The phase-aware guard latched below its 30-GiB host-memory floor before the later TTM/global-OOM teardown window. Graph capture did not complete, the API never became healthy, and no client, output, quality, replay, or speed row exists. This is Grade-D bounded resource evidence only.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt7-result.json"
+        },
         "PIECEWISE:vision": {"state": "missing", "label": "graph vision serving not measured"}
       }
     }
@@ -1510,6 +1515,16 @@
           "label": "not measured",
           "parent": "flash-next-qualification-backlog",
           "retry": {"status": "queued"}
+        },
+        {
+          "id": "tp4-mtp0-active0-piecewise-compile-resource-quarantine",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 0, "graph_mode": "PIECEWISE", "kv": "auto", "modality": "text"},
+          "state": "quarantined",
+          "label": "all shards loaded and graph compile began · 30-GiB host-memory guard tripped · no API, quality, or speed",
+          "reason": "Attempt 7 loaded all 131 shards on all four ranks and entered PIECEWISE graph compilation with one compile thread. The phase-aware host-memory guard latched below 30 GiB before the later TTM/global-OOM teardown window. Graph capture did not complete; no healthy API, client, output, quality result, replay result, or speed row exists. This is Grade-D bounded resource evidence only.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt7-result.json",
+          "parent": "flash-next-piecewise-host-memory-design",
+          "retry": {"status": "blocked-on-material-memory-design", "trigger": "a materially different preregistered compile-memory treatment after clean host recovery"}
         },
         {
           "id": "tp1-mtp0-active0-static-fit-closure",
