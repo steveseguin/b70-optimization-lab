@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "closed-administrative-admission-classifier-false-positive",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 2,
+  "timeline": {
+    "journal_start_epoch": 1787937461,
+    "journal_start_local": "2026-08-28T13:17:41-04:00",
+    "evidence_directory_mtime_local": "2026-08-28 13:17:42.387924500 -0400"
+  },
+  "frozen_tools": {
+    "wrapper_sha256": "f85720f0e12111febdbb290f97d50a1f3c1d24a0571b40f8712fee46a6f8b8c2",
+    "client_sha256": "7a41ca301cb3ee315cd83e0a25fe7befb3ba2838c17f3a5520bc89424f7e46dd",
+    "supervisor_sha256": "0c64ccb22b2afeecbe279d96064187ab2f517d2933911eb58e4778db76bb970e"
+  },
+  "admission_evidence": {
+    "external_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt2-supervisor",
+    "tracked_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-fixed-vision-attempt2-admission-evidence.sha256",
+    "tracked_manifest_sha256": "e41fbbcf87d57ef9da28249ca9fa2215ef6d463ed155ce539aac1dc15afbfea7",
+    "manifest_entries": 16,
+    "system_manager": "running",
+    "user_manager": "running",
+    "failed_system_units": 0,
+    "recovery_window_seconds": 900,
+    "recovery_kernel_journal": "no entries",
+    "mem_available_kib": 115544280,
+    "swap_free_kib": 6462416,
+    "processes_before_sha256": "a23aa0b889be9a13cd91aacb1091f2aa3bc1ee132073e48976323131e4c8e063"
+  },
+  "false_positive": {
+    "old_gate": "pgrep -af 'vllm|qwen38-flash-next|torch.distributed|xccl_probe'",
+    "matched_pid": 1904941,
+    "matched_argv_exact": "bash /home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp0-current-vision-a2.sh",
+    "reason": "The supervisor's own repository directory contains qwen38-flash-next, so the broad text search matched the supervising process rather than a model, worker, or collective owner."
+  },
+  "absent_lifecycle_state": [
+    "/tmp/q38-mtp0-current-vision-a2.pid",
+    "/tmp/q38-mtp0-current-vision-a2.child.pid",
+    "/tmp/q38-mtp0-current-vision-a2.launcher.pid",
+    "/tmp/q38-mtp0-current-vision-a2.server.pid",
+    "/tmp/q38-mtp0-current-vision-a2.server.pgid",
+    "/tmp/q38-mtp0-current-vision-a2.rc",
+    "/tmp/q38-mtp0-current-vision-a2.stop",
+    "/tmp/q38-mtp0-current-vision-a2.failed",
+    "/tmp/q38-mtp0-current-vision-a2.deadline-epoch"
+  ],
+  "absent_model_paths": [
+    "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt2",
+    "/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt2",
+    "/tmp/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt2-compile",
+    "/tmp/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt2-rpc"
+  ],
+  "classification": {
+    "admission_receipt_capture_started": true,
+    "card_or_collective_admission_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "api_request_started": false,
+    "gpu_test_started": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "deployment_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "next_packet": {
+    "attempt": 3,
+    "port": 19681,
+    "treatment": "ancestor-aware exact runtime-owner classifier with committed self-match and real-conflict fixtures",
+    "identity_change": "administrative admission classifier only"
+  }
+}
