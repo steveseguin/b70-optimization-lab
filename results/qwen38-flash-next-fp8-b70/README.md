@@ -380,6 +380,34 @@ rate. Future detached cells require a separately tested descendant-aware
 lifecycle helper. Receipt:
 [`20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json).
 
+## Quarantined exact-2K TP4 MTP4 no-output screen
+
+The preregistered MTP4/2K arm retained the verified local-NVMe model,
+current-source runtime, TP4/EP4 eager identity, selective placement, and exact
+29-block allocation. It passed the fresh four-rank preflight and every startup
+gate, exposing 3,563 cache tokens at 1.16x configured concurrency.
+
+The first exact p2048/o128 request reached the fixed 360-second client bound
+without producing a receipt. About five seconds later the engine independently
+reported its own sampling timeout; the fatal snapshot showed 384 computed
+prompt tokens and zero output. No HTTP status, usage, output hash, timing
+window, target-parity result, MTP counter delta, or speed exists. Request two
+was correctly blocked.
+
+The corrected descendant-aware supervisor returned zero and left no listener,
+recorded process, compile path, or RPC path. During that bounded teardown
+window, however, the journal recorded one compute- and one copy-class reset on
+each B70 plus 60 unsuccessful fault responses. All four cards were rediscovered
+at low memory use, but no post-reset collective or known-good generation canary
+was run. Seven APEI records separately contained eight corrected local-NVMe
+receiver sections; none was fatal or uncorrected.
+
+This is a Grade-D bounded quarantine with no speed, quality, parity,
+MTP-acceptance, or deployment credit. It does not alter the MTP4 configured-512
+screen, active-1K diagnostics, exact-4K quarantine, or any captured speed.
+Receipt:
+[`20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json).
+
 ## Quarantined exact-2K TP4 MTP3 parity screen
 
 The separately preregistered active-2K MTP3 arm retained the accepted source,

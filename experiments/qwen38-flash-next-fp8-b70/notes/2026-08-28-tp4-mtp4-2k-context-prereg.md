@@ -138,3 +138,37 @@ A complete pass adds only the TP4/eager/native-MTP4/active-2K cell as Grade-C
 research evidence. Any stop is retained as a bounded quarantine with its
 observed diagnostic evidence. Neither outcome changes MTP4/512, active-1K,
 exact-4K, any featured result, or any prior captured speed.
+
+## Result
+
+The single authorized boot passed every frozen startup gate: exact source and
+runtime identity, fresh four-rank collective, four 12.22-GiB placement
+receipts, exactly 29 cache blocks, 3,563 reported cache tokens, correct served
+identity, and health. Each rank reported 32.06 GiB of model allocation.
+
+Request one began at 01:19:39 with the exact p2048/o128 fixture. The client
+reached its unchanged 360-second bound and exited `2` without writing a
+receipt. No HTTP status, response body, usage, output token, parity hash,
+timing window, or speed is available. About five seconds later the engine
+independently reported its own sampling RPC timeout. Its fatal scheduler
+snapshot showed 384 computed prompt tokens, 64 scheduled tokens, zero output,
+and no speculative statistics. This proves partial prompt work and zero output
+at the engine snapshot; it is not a completed response and establishes no
+causal direction between the two timeouts. Request two was not sent.
+
+The exact stop sentinel was then used. The corrected descendant-aware
+supervisor returned zero and final passive checks found all recorded
+supervisor, launcher, server, and client PIDs absent, no port-19665 listener,
+and no compile or RPC path. The API logged application shutdown complete.
+Nevertheless, the teardown window recorded one compute- and one copy-class
+reset on each of all four B70s plus 60 unsuccessful fault responses. All four
+cards were subsequently rediscovered at low memory use, but no post-reset
+collective or known-good generation canary was run. Seven APEI records, one
+with two sections, separately retained eight corrected receiver events for the
+local NVMe; none was fatal or uncorrected.
+
+The active-2K MTP4 cell is therefore a Grade-D bounded quarantine with no
+speed, quality, parity, MTP-acceptance, or deployment credit. It must not be
+retried under this preregistration. MTP4/512, active-1K, exact-4K, every
+featured result, and every captured speed remain unchanged. Compact receipt:
+[`20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json`](../data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json).

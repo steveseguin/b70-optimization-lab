@@ -208,9 +208,24 @@ Seven corrected-only local-NVMe records separately block clean-host credit; no
 B70 event appeared. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`.
 
-Next, separately test the corrected descendant-aware detached lifecycle control,
-then continue additive practical-matrix coverage with MTP4 active-2K. Do not
-retry stopped arms by raising only the timeout. Then reduce
+The corrected descendant-aware lifecycle test then passed, and the separately
+preregistered MTP4 active-2K arm used it for one bounded boot. All startup
+gates passed with the exact 29-block allocation and 3,563 reported cache
+tokens. Request one reached the fixed 360-second client bound without a
+receipt; about five seconds later the engine independently reported its own
+sampling timeout at 384 computed prompt tokens and zero output. Request two
+was not sent. The supervisor returned zero and left no listener, recorded
+process, compile path, or RPC path, but the teardown window recorded compute-
+and copy-class resets on all four B70s plus 60 unsuccessful fault responses.
+All four cards were rediscovered at low memory use; no post-reset collective
+or known-good generation canary was run. The cell is Grade D with no speed,
+quality, parity, MTP-acceptance, or deployment credit. MTP4/512, active-1K,
+exact-4K, and all captured rates remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json`.
+
+Before any new GPU arm, follow the documented post-reset recovery qualification
+boundary; do not infer readiness from device rediscovery alone. Do not retry
+stopped arms by raising only the timeout. After qualification, reduce
 MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU host-lookup overlap
 separately. Defer 16K+ until the 8K repeated-serving boundary and larger
 fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design

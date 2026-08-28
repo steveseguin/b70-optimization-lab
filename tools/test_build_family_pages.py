@@ -5168,7 +5168,7 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "missing": 5, "quarantined": 8}),
+            Counter({"lab-screened": 12, "quarantined": 9, "missing": 4}),
         )
         mtp4_1k = practical["cells"]["4:1024"]
         self.assertEqual(mtp4_1k["state"], "quarantined")
@@ -5176,6 +5176,16 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertTrue(
             mtp4_1k["evidence"].endswith(
                 "20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json"
+            )
+        )
+        mtp4_2k = practical["cells"]["4:2048"]
+        self.assertEqual(mtp4_2k["state"], "quarantined")
+        self.assertIn("384 computed tokens", mtp4_2k["label"])
+        self.assertIn("four-card teardown resets", mtp4_2k["label"])
+        self.assertNotIn("evidence_id", mtp4_2k)
+        self.assertTrue(
+            mtp4_2k["evidence"].endswith(
+                "20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json"
             )
         )
         mtp2_1k = practical["cells"]["2:1024"]
@@ -5339,7 +5349,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 460, "lab-screened": 12, "quarantined": 8}),
+            Counter({"missing": 459, "lab-screened": 12, "quarantined": 9}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5353,10 +5363,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 20 classified", rendered
+            "Full 480-cell coverage contract · 21 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("20/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("21/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
@@ -5385,8 +5395,12 @@ class FamilyCoverageTest(unittest.TestCase):
             "Observed: exact parity twice; detached teardown gate failed; diagnostic only.",
             rendered,
         )
+        self.assertIn(
+            "Observed: 360-second client timeout; 384 computed tokens; no output; four-card teardown resets.",
+            rendered,
+        )
         self.assertNotIn("did not run..", rendered)
-        self.assertIn("5 untested combinations", rendered)
+        self.assertIn("4 untested combinations", rendered)
         self.assertIn("19 of 25 required rows", rendered)
         self.assertIn("inconclusive and unqualified", rendered)
 

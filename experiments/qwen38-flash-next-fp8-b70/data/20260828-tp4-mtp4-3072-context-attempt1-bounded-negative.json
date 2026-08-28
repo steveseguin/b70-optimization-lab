@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-client-timeout-engine-fatal-b70-teardown-events",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-3072-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-3072-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 4,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 3072,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 341266432,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp4-3072-headroom29.sh",
+    "launcher_sha256": "7ff6398a7f880c85d57f4fec3d40ca789bdde6201f887d33615b878e500923d3",
+    "client_sha256": "1c76a500c12a1f3ddaa899e1f26342d764d3076aa9b1802c43e92d5175a3de06",
+    "supervisor_sha256": "69e341ded934508d9cc0ab303cdfad95e8673e05f6932d166616af76dff38d21"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 29,
+    "cache_tokens_reported": 3563,
+    "maximum_concurrency_at_3072": 1.16,
+    "model_load_seconds_by_rank_order_as_logged": [97.859870, 97.859782, 97.861991, 97.864775],
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_block_count": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "status": "no-output-engine-response-timeout",
+    "requested_prompt_tokens": 2048,
+    "requested_completion_tokens": 128,
+    "client_timeout_seconds": 360,
+    "outer_client_timeout_seconds": 370,
+    "outer_client_timeout_triggered": false,
+    "engine_worker_response_timeout_seconds": 300,
+    "client_exit_code": 2,
+    "client_error": "timed out",
+    "request_receipt_written": false,
+    "output_tokens_returned": 0,
+    "speed_measurement": null,
+    "engine_diagnostic": {
+      "computed_prompt_tokens": 384,
+      "output_tokens": 0,
+      "scheduled_tokens": 64,
+      "kv_cache_usage_fraction": 0.7857142857142857,
+      "scheduled_spec_decode_tokens": {},
+      "num_spec_tokens_to_schedule": 4,
+      "fatal_error": "RPC call to sample_tokens timed out",
+      "interpretation": "The scheduler snapshot proves partial prompt work and zero output. It is not a completed request and grants no timing, target-parity, or MTP-acceptance credit."
+    },
+    "metrics_after_request": {
+      "status": "endpoint-unavailable-after-engine-fatal",
+      "retained_file_bytes": 0,
+      "interpretation": "The zero-byte metrics file records an unavailable endpoint, not zero counters. No completed-request or speculative-counter claim is made from it."
+    }
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "Request one did not produce a receipt, output token, or pass sentinel."
+  },
+  "shutdown": {
+    "stop_sentinel_exact": true,
+    "supervisor_exit_code": 0,
+    "api_application_shutdown_complete": true,
+    "worker_cleanup_start_receipts": 3,
+    "worker_cleanup_completion_receipts": 0,
+    "engine_resets_in_teardown_window": {
+      "time": "2026-08-28T01:26:35-04:00",
+      "addresses": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+      "compute_class_resets": 4,
+      "copy_class_resets": 4,
+      "unsuccessful_fault_responses_by_address": {
+        "0000:23:00.0": 19,
+        "0000:27:00.0": 1,
+        "0000:43:00.0": 21,
+        "0000:47:00.0": 19
+      }
+    },
+    "cards_discoverable_after_cleanup": 4,
+    "postflight_memory_used_mib": [42.88671875, 42.87890625, 42.875, 42.875],
+    "listener_present_after_cleanup": false,
+    "residual_model_processes_after_cleanup": 0,
+    "temporary_compile_and_rpc_paths_present_after_cleanup": false,
+    "post_reset_collective_run": false,
+    "post_reset_known_good_generation_run": false,
+    "classification": "bounded-no-output-stop-followed-by-four-card-engine-resets-and-device-rediscovery",
+    "recovery_limit": "Four-device discovery and idle memory passed, but no post-reset collective or known-good generation canary was run. Discovery alone does not qualify the host for another model launch."
+  },
+  "system_observations": {
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "vendor_device": "144d:a80a",
+      "unique_apei_records": 7,
+      "record_ids": [412, 413, 414, 415, 416, 417, 418],
+      "pcie_error_sections": 8,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as corrected local-storage receiver context; no causal attribution is made."
+    }
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP4/active-2K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "hard_stop_reason": "Request one produced no output and the teardown window recorded compute- and copy-class resets on all four B70s.",
+    "protected_results_unchanged": [
+      "MTP4 configured-512 matched research screen",
+      "MTP4 active-1K teardown quarantine and its diagnostic observations",
+      "MTP4 exact-4K bounded negative",
+      "all featured, captured, and certified speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material first-request completion treatment, a new preregistration, and full post-reset recovery qualification."
+  },
+  "raw_evidence": {
+    "manifest": "primary-evidence.sha256",
+    "manifest_sha256": "02c5f3c512a17720d6e712f05db8c45f70a0b1a38b8a2dcaa67e78617a3a8337"
+  },
+  "tracked_sha256": {
+    "client-request1.log": "d15d9325f3200437ff95aa3820157ed4a52c3313514483f6baa6f0b025734e14",
+    "client-request1.rc": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "filesystem-preflight.txt": "757958b711109645b10725832d6a8f55195f9108eb17ba9d6240593d14d64ac9",
+    "identity.txt": "84a596eb220986368d1babfa26dd73bcaa283c6c10c4e4ad655818f63275ea19",
+    "input-sha256sums.txt": "0d0b6039ed0f52881f4d0a417a2be844bcf702a33ca8011e4fdf2648046c409e",
+    "kernel-journal-through-request1-failure.log": "696e157986f9ddaee84dc651aa67201810e81e8b4bd0027d4fc59a2bc6542e5f",
+    "kernel-journal-through-shutdown.log": "d83f1e40ba9fb6377fc89bcf9e82291487ead28a0659bcc3128f0c612049066a",
+    "metrics-after-request1-capture.txt": "a554a1fb244831a2beb482b52d5924539ff1f11bf246996f2726c81446e43346",
+    "metrics-after-request1.prom": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metrics-before-request1.prom": "c21983e82c54fb148437326dbdf88f5a18b62ae0e2c09d363cb62df36bdebf18",
+    "models.json": "2afbbf6a12733acd4f24a7c92ad32b0af03841a15d22c813db1ef88dcb06f72a",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "postflight-final.txt": "1d4cdaff5f6827525f84740c769356d0a408c2f8b3a673d7d3488cbeac1040f2",
+    "request1-failure-summary.txt": "cd11c5cee0d3bd5f406b65145b1c13a962f1640d1102e8efc0bb79a2baf7638b",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "server-command.shell.txt": "04d38db403cc124e1b44b774c6cff8a839bec86138dc433ccbccf9038d0d20ab",
+    "server.log": "4850bb1ba748c3415109cf319f4565fc4e400ac805a99f869804cb980e925d3a",
+    "staged-runtime-preflight.txt": "a8bd11a7f4ed2debbb18ae162f2ed1f30a3ccf4670e74944f0f6cdf8b7733c67",
+    "supervisor-child.pid": "e0e716b0b8757024aa28b9da9127f099da50adcf0067bd285873896f1fc1ef3c",
+    "supervisor-launcher.pid": "c02bb06e22f668d28911adfa380807c3f7b55c97b1066439f2e55b87ddda133d",
+    "supervisor-stop.txt": "471f40c7add1d42ddc94a7b3ed11f86f3df63c0bff855e337b963e8817319bfa",
+    "supervisor.out": "18b6c74924e3fe651dd879ff1dbad5c36c3b1fd4af683fa425d54c819b3b6031",
+    "supervisor.pid": "c946513ef2f8c37830844c4638d8c5efc69b07ee87d528377b94fc90a84ed207",
+    "supervisor.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "xccl-tp4-preflight.log": "02556da856e88da70cd10ebfd977ef038b4fca0776689ffa825b9e307938be6c",
+    "xpu-discovery-postflight.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu-stats-postflight-0.json": "38f2fb185ab918b15127b2f642d32a9422f7e19fa5b42dd66dfb072cf0b1dabd",
+    "xpu-stats-postflight-1.json": "3297288153da0e4fcd48a8e23cac208e7229b5ecad276b3719b628ea122d6458",
+    "xpu-stats-postflight-2.json": "34ae2ec050df343bb0ae498371e1dce49e2a2e9533f7768aad28a2fbf82dcb19",
+    "xpu-stats-postflight-3.json": "36cf56007a1cb6b9b593d60ee11e7109ab1b00805904999321ab3139b2bfc972"
+  }
+}

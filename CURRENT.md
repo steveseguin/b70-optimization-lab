@@ -1159,6 +1159,25 @@ no B70 event appeared. The frozen teardown rule makes this a Grade-D quarantine,
 so both rates remain diagnostic and no prior speed or pass is changed. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`.
 
+The corrected descendant-aware supervisor subsequently passed its synthetic
+lifecycle test, and the separately preregistered MTP4 active-2K arm used it for
+one bounded boot. Source/runtime, fresh four-rank, placement, exact 29-block
+cache, capacity, served-model, and health gates all passed. Request one reached
+the unchanged 360-second client bound without writing a response receipt; the
+engine independently reported its own sampling timeout about five seconds
+later at 384 computed prompt tokens and zero output. Request two was not sent,
+and no timing, parity, MTP-counter, quality, or speed result exists.
+
+The supervisor returned zero and final passive checks found no listener,
+recorded process, compile path, or RPC path. The teardown window nevertheless
+recorded compute- and copy-class resets on all four B70s plus 60 unsuccessful
+fault responses. All four cards were rediscovered at low memory use, but no
+post-reset collective or known-good generation canary was run. The MTP4/2K
+cell is therefore a Grade-D quarantine. MTP4/512, active-1K, exact-4K, and all
+captured speeds remain unchanged. No new GPU model arm may start until the
+documented post-reset recovery qualification is completed. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json`.
+
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
 matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned
