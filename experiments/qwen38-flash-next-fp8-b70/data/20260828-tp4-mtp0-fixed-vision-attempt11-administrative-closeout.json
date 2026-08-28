@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "status": "closed-pre-admission-host-memory-floor-after-swap-treatment",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 11,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "derived-inner host-memory admission",
+    "outer_resource_admission_started": true,
+    "temporary_swap_created_and_activated": true,
+    "inner_state_established": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_or_model_load_started": false,
+    "healthy_api_or_client_work": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The outer layer activated the frozen 64-GiB swap treatment. The nearest persisted post-activation sample was below the derived inner supervisor's frozen 104-GiB MemAvailable floor, and exact code ordering places that gate before inner state, card, collective, launcher, model, endpoint, or client work. No immutable child stderr or child rc exists, so the gate is strongly supported rather than independently receipt-proven."
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "language_model_only": false,
+    "limit_mm_per_prompt": {"image": 1, "video": 0},
+    "mm_processor_cache_gb": 0,
+    "mm_encoder_tp_mode": "weights",
+    "kv_cache_memory_bytes": 201326592,
+    "port": 19690
+  },
+  "frozen_tools": {
+    "preregistration_sha256": "7bf5e22d035ef8c11ef18b555e79a365c415bdadb1f4511cc1ef6e9a99e619da",
+    "wrapper_sha256": "ea479239faf783956dbfa486889d85edf4817000a584616d297706189dc44a3e",
+    "client_sha256": "b9a4651b347c630bd0573a9f34b2ceb0d2cf1cc5e526f9cee8d496108fda2c20",
+    "inner_supervisor_source_sha256": "7906ec7653c51cfd6c8e4d5e601913192d951543502284ab0896172ca20bf0fd",
+    "derived_inner_supervisor_sha256": "038f0abe50639b514b2089353bd1a2f864edc0ad12efa282e8c7da1b8f809722",
+    "outer_supervisor_sha256": "eff7b1c0f3407e5e85786018568458460483ff3ca94457c2427d2e9eb9635b1b",
+    "resource_watchdog_sha256": "048481d4d4bfd2092f6fb00a7a9005b1fce027943d6fc7d7aace3a872cdaded6",
+    "resource_policy_test_sha256": "f95956c7cb6f916c1e0c980f596daedba5776005790757c90c4166e98e29f2df"
+  },
+  "timeline": {
+    "journal_start_epoch": 1787944167,
+    "journal_start_local": "2026-08-28T15:09:27-04:00",
+    "postflight_complete_local": "2026-08-28T15:09:30-04:00"
+  },
+  "admission_evidence": {
+    "external_post_drop_sample": {
+      "mem_available_kib": 107102844,
+      "source": "launch-console observation supplied at closeout; no immutable console transcript was produced"
+    },
+    "outer_meminfo_before": {"mem_available_kib": 107069268, "swap_total_kib": 8388604, "swap_free_kib": 6098736},
+    "outer_meminfo_after_temporary_swap_activation": {"mem_available_kib": 107016952, "swap_total_kib": 75497464, "swap_free_kib": 73207604},
+    "failed_gate": {
+      "name": "derived-inner initial MemAvailable floor",
+      "required_kib": 109051904,
+      "required_gib": 104,
+      "nearest_persisted_active_sample_deficit_kib": 2034952,
+      "outer_exit_code": 70,
+      "child_exit_code_persisted": false,
+      "child_stderr_persisted": false,
+      "causal_strength": "strongly supported by adjacent persisted sample and frozen code ordering"
+    }
+  },
+  "temporary_swap_evidence": {
+    "path": "/var/tmp/q38-vision-a11-64g.swap",
+    "requested_bytes": 68719476736,
+    "active_size_kib": 67108860,
+    "priority": -1,
+    "active_used_kib": 0,
+    "device_inode_owner_group_size_mode": "66306:46138408:0:0:68719476736:600",
+    "original_layout": "/swap.img file 8388604 -1",
+    "restored_layout_exact": true,
+    "inactive_after": true,
+    "file_absent_after": true,
+    "cleanup_receipt": "PASS: temporary swap inactive and exact file removed",
+    "root_available_bytes_before": 118447734784,
+    "root_available_bytes_active": 49728200704,
+    "root_available_bytes_final": 118447443968
+  },
+  "journal": {
+    "kernel_journal_sha256": "c13307adf8fd2716381e411b1d7a8e956edbc6bd28eaf4722d71a1d83b29557c",
+    "records": ["drop_caches: 3", "Adding 67108860k swap on /var/tmp/q38-vision-a11-64g.swap at priority -1"],
+    "emergency_path_ran_frozen_classifier": false,
+    "assessment": "manual closeout audit of the bounded two-record window"
+  },
+  "cleanup": {
+    "outer_rc": 70,
+    "run_cache_compile_rpc_paths_after": false,
+    "listener_19690_after": false,
+    "model_or_worker_process_after": false,
+    "inner_state_or_sentinel_after": false,
+    "runtime_scan_after": {"status": "clear", "scanned_processes": 501, "conflicts": 0, "errors": 0, "vanished_races": 0, "sha256": "fd68fb1a630bb0393986e924332100f98100027241110610b7ef669d522f6cb4"},
+    "system_manager_after": "running",
+    "user_manager_after": "running",
+    "user_manager_activation_epoch_unchanged": true,
+    "failed_system_units_after": 0,
+    "four_b70s_discovered_during_closeout": true
+  },
+  "raw_evidence": {
+    "live_resource_dir": "/var/tmp/q38-vision-a11-resource",
+    "live_resource_files_retained": 47,
+    "live_resource_bytes": 295733,
+    "resource_archive_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt11-resource-archive",
+    "resource_archive_files_including_manifest": 48,
+    "resource_manifest_sha256": "b5880749ed69d9de1d780e9c0cdaa9e80ec7f7974c16b8eb393fb6ea718c618e",
+    "resource_manifest_entries": 47,
+    "resource_manifest_verified": true,
+    "tracked_combined_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-fixed-vision-attempt11-primary-evidence.sha256",
+    "combined_manifest_entries": 47,
+    "combined_manifest_verified_from_raw_parent": true
+  },
+  "coverage_and_protected_results": {
+    "site_or_matrix_changed": false,
+    "vision_capability_claim": null,
+    "captured_eager_speed_changed": false,
+    "protected_results_changed": false,
+    "protected_family_sha256": "c378b6f584235632d5fe8d178bc756be6c6ff12309ba5ec352a9cd1369e9254d",
+    "protected_result_readme_sha256": "deb1869104c941cf784594d0bb6c8e3d1e7523075ed74d54a80f930413360a7d",
+    "protected_result_handoff_sha256": "51eb4714f9f4050fd4d49a906ee2f7e2ae83fcc081218244756812ed7cc9f63f"
+  },
+  "next_step": {
+    "status": "recover-retained-device-runtime-state-before-successor",
+    "requirements": [
+      "Keep attempt 11 as an administrative negative and all protected eager speeds unchanged.",
+      "Do not lower admission again: clean-idle MemAvailable declined across repeated runtime boots after the attempt-7 global OOM/TTM episode.",
+      "Use the documented all-card recovery path only after no-holder/display/BDF safety gates, then requalify discovery, per-card compute, peer/XCCL, and a known-good generation canary before any successor packet."
+    ]
+  }
+}
