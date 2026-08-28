@@ -195,6 +195,41 @@ class RuntimeInstallerTest(unittest.TestCase):
         self.assertEqual(receipt["status"], "pass")
         self.assertTrue(fixture.receipt_path.is_file())
 
+    def test_production_mode_rejects_substitute_contract(self) -> None:
+        fixture = self.fixture()
+        with self.assertRaisesRegex(
+            TOOL.RuntimeStageError,
+            "production install requires the tracked runtime contract",
+        ):
+            TOOL.install_runtime(
+                fixture.contract_path,
+                fixture.manifest_path,
+                fixture.parts_dir,
+                fixture.kernel_stage,
+                fixture.receipt_path,
+                fixture.work_dir,
+                require_frozen=True,
+            )
+        self.assertFalse(fixture.kernel_stage.exists())
+        self.assertFalse(fixture.receipt_path.exists())
+
+    def test_rejects_preexisting_destination(self) -> None:
+        fixture = self.fixture()
+        fixture.kernel_stage.mkdir()
+        marker = fixture.kernel_stage / "owned-by-caller"
+        marker.write_text("keep\n", encoding="utf-8")
+        with self.assertRaisesRegex(TOOL.RuntimeStageError, "already exists"):
+            fixture.install()
+        self.assertEqual(marker.read_text(encoding="utf-8"), "keep\n")
+
+    def test_rejects_preexisting_receipt(self) -> None:
+        fixture = self.fixture()
+        fixture.receipt_path.write_text("keep\n", encoding="utf-8")
+        with self.assertRaisesRegex(TOOL.RuntimeStageError, "receipt already exists"):
+            fixture.install()
+        self.assertEqual(fixture.receipt_path.read_text(encoding="utf-8"), "keep\n")
+        self.assertFalse(fixture.kernel_stage.exists())
+
     def test_rejects_traversal_member(self) -> None:
         self.assert_failure("traversal", "unsafe relative path")
 

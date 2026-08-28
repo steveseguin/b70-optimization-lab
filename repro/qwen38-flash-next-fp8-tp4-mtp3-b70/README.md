@@ -1,10 +1,11 @@
 # Qwen3.8 Flash-Next FP8 TP4/MTP3 Grade-C foundation
 
-> **Status: `pre-publication`; not a runnable guide.** This directory closes
+> **Status: `research-status` / pre-publication; not a runnable guide.** This directory closes
 > host-only model, source, and native-runtime identity checks. It deliberately
 > refuses to launch, test, or stop a service until public runtime hosting,
 > dependency installation, portable topology checks, and an artifact-only
-> replay are complete. It is not registered in the guide or package catalogs.
+> replay are complete. It is registered only as research status in the guide
+> catalog and has no model-package entry.
 
 This is the foundation for one narrowly defined four-card profile, not the full
 Flash-Next matrix:
@@ -78,9 +79,9 @@ full-tree verifier before hashing the 185 GB tree.
 ## Reconstruct the exact source trees
 
 The source helper reuses the certified patch-series verifier. It needs local
-Git repositories that contain the public bases, creates independent clones
-without Git alternates, applies only the production series, and refuses an
-existing output directory or receipt:
+Git repositories that contain the public bases, fetches each exact base at
+depth one into an independent repository without Git alternates, applies only
+the production series, and refuses an existing output directory or receipt:
 
 ```bash
 python3 repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-sources.py \
@@ -96,6 +97,13 @@ The expected outputs are vLLM tree
 the patch series remains staged on each detached public base, and `git
 write-tree` yields the recorded output identity. It does not claim to reproduce
 the measured native bytes from a clean build.
+
+This command was replayed from the two current local source repositories on
+2026-08-27 and reproduced both recorded trees. The local-only receipt is
+`/mnt/fast-ai/qwen38-runtime-publication/qwen38-flash-next-source-restore-replay-20260827.json`
+(SHA-256
+`d1490380ccdeda04e0a5732d8fc51a16b2f3b0d0f65e7e508defde2c9a692882`);
+that path is evidence from the origin host, not a public dependency.
 
 ## Verify and install the exact hybrid runtime
 
@@ -132,8 +140,19 @@ python3 repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py \
   --receipt /path/to/new-runtime-install-receipt.json
 ```
 
+The work filesystem needs about 2 GB for reassembly, while the kernel-stage
+filesystem simultaneously needs about 2 GB for extraction (about 4 GB free if
+both paths share one filesystem), plus small filesystem overhead.
+
 The tool reads and hashes payload bytes but never imports native modules or
 accesses a GPU. Installation is identity closure only, not runtime validation.
+The production command was replayed on the origin host against both real split
+parts on 2026-08-27: it installed and rehashed all 18 files. The local-only
+receipt is
+`/mnt/fast-ai/qwen38-runtime-publication/qwen38-flash-next-runtime-host-install-replay-20260827.json`
+(SHA-256
+`5f21613e1dd39bbeacfca008a9c2610ca061171ea2fab1dc29d763d050f45cfc`);
+that origin-host path is evidence, not a public dependency.
 
 ## Intentionally blocked commands
 

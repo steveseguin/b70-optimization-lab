@@ -29,6 +29,12 @@ INSTALL_RECEIPT_FORMAT = "qwen38-flash-next-runtime-install-receipt-v1"
 SCRIPT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONTRACT = SCRIPT_ROOT / "runtime-contract.json"
 DEFAULT_MANIFEST = SCRIPT_ROOT / "runtime-stage.sha256"
+FROZEN_CONTRACT_SHA256 = (
+    "2ca2f7fbf67cef90145e4d99c9223d9e9fca83fa489b2906d73b982218e53a3d"
+)
+FROZEN_MANIFEST_SHA256 = (
+    "9fa443fdb7a6d0042cf04f859cc6fd6a7bdc09943e16cafb4ea084573c892d2b"
+)
 
 
 class RuntimeStageError(RuntimeError):
@@ -44,17 +50,15 @@ def strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def load_json(path: Path) -> dict[str, Any]:
+def load_json_bytes(raw: bytes, source: Path) -> dict[str, Any]:
     try:
-        value = json.loads(
-            path.read_text(encoding="utf-8"), object_pairs_hook=strict_object
-        )
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=strict_object)
     except RuntimeStageError:
         raise
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise RuntimeStageError(f"cannot read strict JSON {path}: {exc}") from exc
+        raise RuntimeStageError(f"cannot read strict JSON {source}: {exc}") from exc
     if not isinstance(value, dict):
-        raise RuntimeStageError(f"JSON root is not an object: {path}")
+        raise RuntimeStageError(f"JSON root is not an object: {source}")
     return value
 
 
@@ -439,21 +443,57 @@ def atomic_receipt(path: Path, payload: dict[str, Any]) -> None:
     if path.exists():
         raise RuntimeStageError(f"receipt already exists: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
-    reserved = False
+    descriptor, temporary_text = tempfile.mkstemp(
+        prefix=f".{path.name}.tmp-", dir=path.parent
+    )
+    temporary = Path(temporary_text)
     try:
-        temporary.write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
-        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        os.close(descriptor)
-        reserved = True
-        os.replace(temporary, path)
-        reserved = False
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
-        if reserved:
-            path.unlink(missing_ok=True)
+
+
+def directory_identity(path: Path) -> tuple[int, int]:
+    metadata = path.lstat()
+    if not stat.S_ISDIR(metadata.st_mode):
+        raise RuntimeStageError(f"reserved destination is not a directory: {path}")
+    return metadata.st_dev, metadata.st_ino
+
+
+def remove_owned_directory(path: Path, identity: tuple[int, int]) -> None:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return
+    if (
+        stat.S_ISDIR(metadata.st_mode)
+        and (metadata.st_dev, metadata.st_ino) == identity
+    ):
+        shutil.rmtree(path)
+
+
+def verify_frozen_inputs(
+    contract_path: Path,
+    contract_raw: bytes,
+    manifest_path: Path,
+    manifest_raw: bytes,
+) -> None:
+    if contract_path != DEFAULT_CONTRACT.resolve(strict=True):
+        raise RuntimeStageError(
+            "production install requires the tracked runtime contract"
+        )
+    if manifest_path != DEFAULT_MANIFEST.resolve(strict=True):
+        raise RuntimeStageError(
+            "production install requires the tracked runtime manifest"
+        )
+    if sha256_bytes(contract_raw) != FROZEN_CONTRACT_SHA256:
+        raise RuntimeStageError("tracked runtime contract identity mismatch")
+    if sha256_bytes(manifest_raw) != FROZEN_MANIFEST_SHA256:
+        raise RuntimeStageError("tracked runtime manifest identity mismatch")
 
 
 def install_runtime(
@@ -463,6 +503,8 @@ def install_runtime(
     kernel_stage: Path,
     receipt_path: Path,
     work_dir: Path,
+    *,
+    require_frozen: bool = False,
 ) -> dict[str, Any]:
     contract_path = contract_path.resolve(strict=True)
     manifest_path = manifest_path.resolve(strict=True)
@@ -478,8 +520,10 @@ def install_runtime(
         raise RuntimeStageError("receipt must be outside the installed kernel stage")
 
     contract_raw = contract_path.read_bytes()
-    contract = validate_contract(load_json(contract_path))
+    contract = validate_contract(load_json_bytes(contract_raw, contract_path))
     manifest_raw = verify_manifest(contract, manifest_path)
+    if require_frozen:
+        verify_frozen_inputs(contract_path, contract_raw, manifest_path, manifest_raw)
     kernel_stage.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(
         prefix=".qwen38-runtime-work-", dir=work_dir
@@ -487,20 +531,16 @@ def install_runtime(
         temporary = Path(temporary_text)
         archive_path = temporary / contract["archive"]["name"]
         reassemble_parts(contract, parts_dir, archive_path)
-        install_container = Path(
-            tempfile.mkdtemp(
-                prefix=f".{kernel_stage.name}.install-", dir=kernel_stage.parent
-            )
-        )
-        installed_root = install_container / "vllm_xpu_kernels"
+        kernel_stage.mkdir(mode=0o755)
+        owned_identity = directory_identity(kernel_stage)
+        installed_root = kernel_stage / "vllm_xpu_kernels"
         try:
             installed = verify_and_extract_archive(
                 contract, manifest_raw, archive_path, installed_root
             )
             verify_installed_layout(installed_root, installed)
-            os.rename(install_container, kernel_stage)
         except Exception:
-            shutil.rmtree(install_container, ignore_errors=True)
+            remove_owned_directory(kernel_stage, owned_identity)
             raise
 
     receipt = {
@@ -521,7 +561,7 @@ def install_runtime(
     except Exception:
         # This invocation exclusively created the destination, so do not leave
         # an apparently complete install behind without its verification receipt.
-        shutil.rmtree(kernel_stage, ignore_errors=True)
+        remove_owned_directory(kernel_stage, owned_identity)
         raise
     return receipt
 
@@ -532,17 +572,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--kernel-stage", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--work-dir", type=Path, required=True)
-    parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
-    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     args = parser.parse_args(argv)
     try:
         result = install_runtime(
-            args.contract,
-            args.manifest,
+            DEFAULT_CONTRACT,
+            DEFAULT_MANIFEST,
             args.parts_dir,
             args.kernel_stage,
             args.receipt,
             args.work_dir,
+            require_frozen=True,
         )
     except (OSError, RuntimeStageError, tarfile.TarError) as exc:
         print(f"prepare-runtime: FAIL: {exc}", file=sys.stderr)

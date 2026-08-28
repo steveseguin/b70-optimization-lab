@@ -52,17 +52,23 @@ def sha256_path(path: Path) -> str:
 def full_clone(
     verifier: ModuleType, source: Path, destination: Path, base: str
 ) -> None:
-    # `--no-local` avoids Git alternates, so the reconstructed checkout does
-    # not depend on the caller's source repository remaining in place.
+    # Fetch only the certified base closure into a fresh repository. Fetching
+    # every source ref is both unnecessary and can fail when the caller has an
+    # unrelated, lazily cloned ref whose remote object is no longer available.
+    # A normal path fetch copies objects and creates no Git alternates, so the
+    # reconstructed checkout remains independent of the caller's repository.
+    verifier.run("git", "init", "--quiet", "--", str(destination))
     verifier.run(
         "git",
-        "clone",
+        "-C",
+        str(destination),
+        "fetch",
         "--quiet",
-        "--no-local",
-        "--no-checkout",
+        "--depth=1",
+        "--no-tags",
         "--",
         str(source),
-        str(destination),
+        base,
     )
     verifier.run("git", "checkout", "--quiet", "--detach", base, cwd=destination)
 
@@ -71,21 +77,42 @@ def atomic_json(path: Path, value: dict[str, Any]) -> None:
     if path.exists():
         raise SourceRestoreError(f"receipt already exists: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
-    reserved = False
+    descriptor, temporary_text = tempfile.mkstemp(
+        prefix=f".{path.name}.tmp-", dir=path.parent
+    )
+    temporary = Path(temporary_text)
     try:
-        temporary.write_text(
-            json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
-        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        os.close(descriptor)
-        reserved = True
-        os.replace(temporary, path)
-        reserved = False
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(value, indent=2, sort_keys=True) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
-        if reserved:
-            path.unlink(missing_ok=True)
+
+
+def directory_identity(path: Path) -> tuple[int, int]:
+    metadata = path.lstat()
+    if not path.is_dir() or path.is_symlink():
+        raise SourceRestoreError(f"reserved destination is not a directory: {path}")
+    return metadata.st_dev, metadata.st_ino
+
+
+def remove_owned_directory(path: Path, identity: tuple[int, int]) -> None:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return
+    if (
+        path.is_dir()
+        and not path.is_symlink()
+        and (
+            metadata.st_dev,
+            metadata.st_ino,
+        )
+        == identity
+    ):
+        shutil.rmtree(path)
 
 
 def restore(
@@ -117,12 +144,11 @@ def restore(
         verifier.PACKET_ROOT / "vllm-xpu-kernels-certified-2f829747"
     )
     output_root.parent.mkdir(parents=True, exist_ok=True)
-    temporary_root = Path(
-        tempfile.mkdtemp(prefix=f".{output_root.name}.restore-", dir=output_root.parent)
-    )
+    output_root.mkdir(mode=0o755)
+    owned_identity = directory_identity(output_root)
     try:
-        vllm_output = temporary_root / "vllm"
-        kernel_output = temporary_root / "vllm-xpu-kernels"
+        vllm_output = output_root / "vllm"
+        kernel_output = output_root / "vllm-xpu-kernels"
         full_clone(verifier, vllm_source, vllm_output, verifier.VLLM_BASE)
         full_clone(verifier, kernel_source, kernel_output, verifier.KERNEL_BASE)
         vllm_tree = verifier.apply_and_assert(
@@ -131,9 +157,8 @@ def restore(
         kernel_tree = verifier.apply_and_assert(
             kernel_output, kernel_patches, verifier.KERNEL_TREE
         )
-        os.rename(temporary_root, output_root)
     except Exception:
-        shutil.rmtree(temporary_root, ignore_errors=True)
+        remove_owned_directory(output_root, owned_identity)
         raise
 
     receipt = {
@@ -163,7 +188,7 @@ def restore(
     except Exception:
         # This invocation exclusively created output_root. Keep reconstruction
         # fail-closed if its receipt cannot be installed atomically.
-        shutil.rmtree(output_root, ignore_errors=True)
+        remove_owned_directory(output_root, owned_identity)
         raise
     return receipt
 
