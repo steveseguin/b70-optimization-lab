@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "closed-pre-admission-host-memory-floor",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 5,
+  "gate": {
+    "name": "initial MemAvailable floor",
+    "required_kib": 115343360,
+    "required_gib": 110,
+    "pre_supervisor_mem_available_kib_after_drop_caches": 116015260,
+    "supervisor_exact_sample_persisted": false,
+    "supervisor_result": "below required floor",
+    "interpretation": "The pre-supervisor sample was above the floor, but MemAvailable fell below it before the supervisor's own gate. The supervisor failed closed before creating evidence or lifecycle state; no exact internal sample was persisted."
+  },
+  "absent": {
+    "state_and_sentinels": true,
+    "run_dir": true,
+    "supervisor_evidence_dir": true,
+    "cache_dir": true,
+    "compile_dir": true,
+    "rpc_dir": true,
+    "listener_19683": true,
+    "model_or_worker_process": true
+  },
+  "classification": {
+    "supervisor_invoked": true,
+    "admission_started": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "client_invoked": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "next_packet": {
+    "attempt": 6,
+    "port": 19685,
+    "initial_ram_floor_kib": 114294784,
+    "initial_ram_floor_gib": 109,
+    "ram_floor_changed": true,
+    "identity_change": "fresh attempt, state, run, evidence, cache, compile, RPC, and port",
+    "sole_treatment": "lower the initial MemAvailable admission floor by 1 GiB; preserve live 10-GiB MemAvailable and 5-GiB SwapFree floors"
+  }
+}
