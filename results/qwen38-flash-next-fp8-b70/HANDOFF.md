@@ -116,6 +116,16 @@ in the wider run window, while SMART reported zero critical warnings, media
 errors, and error-log entries. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json`.
 
+The later preregistered MTP1 active-1K arm passed its exact source/runtime,
+four-rank, placement, cache, capacity, and health gates, then stopped during
+its first request after 768 computed prompt tokens with no output. The fixed
+300-second worker-response gate fired; request two was not sent and the
+separate active-2K boot did not run. This retains MTP1/1K as a bounded negative
+and leaves MTP1/2K missing. MTP1/512 and exact-4K remain unchanged. Do not
+retry the 1K arm without a material first-request completion fix and a fresh
+four-rank boot. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.
+
 Next, design a separately preregistered bounded repeated-session stability
 gate if MTP3 quality transfer remains a priority; do not retry this arm by
 raising only the timeout. Then reduce MTP3 4K TTFT and qualify fresh-boot

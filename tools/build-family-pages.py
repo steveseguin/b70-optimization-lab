@@ -99,7 +99,7 @@ STATE_MEANING = {
     "community-measured": "Measured by a community contributor and checked by the lab",
     "estimated": "Estimate only, no measurement behind it",
     "closed": "Closed: tried, rejected, and documented; not a blank",
-    "quarantined": "Quarantined: it ran, but failed a quality gate; kept for the record, do not use",
+    "quarantined": "Quarantined: the run did not produce usable evidence; kept for the record, do not use",
     "unsupported": "The runtime or hardware cannot run this combination",
     "missing": "Not tested yet",
 }
@@ -2462,7 +2462,7 @@ COMBO_STATE_WORDS = {
     "community-measured": "\u25d0 Community",
     "estimated": "\u2248 Estimate",
     "closed": "\u25a0 Closed",
-    "quarantined": "\u26a0 Failed quality gate",
+    "quarantined": "\u26a0 Quarantined",
     "unsupported": "\u00d7 Unsupported",
 }
 COMBO_ORDER = {"lab-measured": 0, "community-measured": 1, "lab-screened": 2, "estimated": 3, "closed": 4, "unsupported": 5, "quarantined": 9}
@@ -2544,7 +2544,9 @@ def coverage_tables(family: dict[str, Any]) -> str:
                     links.append(f'<a href="{esc(evidence_href(evidence))}">evidence</a>')
                 reason = cell.get("reason") or ""
                 if state == "quarantined":
-                    dead = f'{esc(reason or "output not usable")}. <span class="c-dead">Ran at {esc(label_text)}.</span>'
+                    reason_text = (reason or "output not usable").rstrip(". ")
+                    label_note = label_text.rstrip(". ")
+                    dead = f'{esc(reason_text)}. <span class="c-dead">Observed: {esc(label_note)}.</span>'
                     body = (
                         f'<span class="c-what">{esc(what)} <code>{esc(code)}</code> \u2014 {dead}</span>'
                     )

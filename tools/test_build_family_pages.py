@@ -5168,7 +5168,7 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "missing": 12, "quarantined": 1}),
+            Counter({"lab-screened": 12, "missing": 11, "quarantined": 2}),
         )
         self.assertFalse(
             any(
@@ -5240,6 +5240,13 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIn("MTP thinking parity", family["summary"])
         self.assertIn("unqualified", family["summary"])
+        mtp1_1k = practical["cells"]["1:1024"]
+        self.assertEqual(mtp1_1k["state"], "quarantined")
+        self.assertEqual(
+            mtp1_1k["evidence"],
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json",
+        )
+        self.assertEqual(practical["cells"]["1:2048"]["state"], "missing")
 
         fit = views["qwen-flash-next-tp-fit"]
         self.assertEqual(len(fit["cells"]), 3)
@@ -5278,7 +5285,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 467, "lab-screened": 12, "quarantined": 1}),
+            Counter({"missing": 466, "lab-screened": 12, "quarantined": 2}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5292,10 +5299,15 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 13 classified", rendered
+            "Full 480-cell coverage contract · 14 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("13/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("14/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("⚠ Quarantined", rendered)
+        self.assertIn(
+            "Observed: 768 computed prompt tokens; no output.", rendered
+        )
+        self.assertNotIn("did not run..", rendered)
         self.assertIn("19 of 25 required rows", rendered)
         self.assertIn("inconclusive and unqualified", rendered)
 

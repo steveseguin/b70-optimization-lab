@@ -2,7 +2,7 @@
 
 Status: **research screen; not deployment-qualified**
 
-Last updated: 2026-08-27
+Last updated: 2026-08-28
 
 This packet covers the first instrumentation-free TP4/EP4 server results for the official
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
@@ -14,9 +14,12 @@ exact 4K, with `8.904`, `9.893`, and `15.502 tok/s` decode medians respectively.
 MTP3 remains the preferred 4K recipe because it also has lower TTFT and higher
 wall output. These rows remain bounded screens, not stable ceilings. The packet
 now also includes a target-only official-thinking quality profile that passed
-25/25 preregistered responses. It does not yet establish a production recipe,
-a fully quality-qualified MTP speed, stable repeated serving at 8K, 16K+
-behavior, or vision support.
+25/25 preregistered responses. A later MTP1 1K arm passed every boot and
+admission gate but stopped on its first request without returning output; that
+cell is quarantined, while MTP1 512 and exact 4K remain unchanged and MTP1 2K
+remains unrun. It does not yet establish a production recipe, a fully quality-
+qualified MTP speed, stable repeated serving at 8K, 16K+ behavior, or vision
+support.
 
 ## Measured point
 
@@ -114,11 +117,12 @@ fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
 MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
-only MTP4 at exact 4K remains quarantined. Target-only official-thinking
-quality now passes. The first MTP3 transfer attempt returned 19/19 correct
-completed answers but is unqualified after a repeated-session runtime stop;
-graph, deeper context, vision, fresh-server determinism, clean-host replay, and
-a sealed deployment package remain explicit gaps.
+MTP4 at exact 4K and MTP1 at active 1K are quarantined for separate stopped-
+request events. Target-only official-thinking quality now passes. The first
+MTP3 transfer attempt returned 19/19 correct completed answers but is
+unqualified after a repeated-session runtime stop; MTP1 active 2K, graph,
+deeper context, vision, fresh-server determinism, clean-host replay, and a
+sealed deployment package remain explicit gaps.
 
 ## Matched TP4 MTP1 screen
 
@@ -254,6 +258,31 @@ the wall-rate and TTFT rows vary widely. MTP3 remains the preferred exact-4K
 recipe at `15.501565 tok/s` decode, `187.899186 s` TTFT, and `1.246260 tok/s`
 wall output. Receipt:
 [`20260827-tp4-mtp1-4352-headroom32-attempt1-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json).
+
+## Quarantined 1K TP4 MTP1 screen
+
+The separately preregistered active-1K arm retained the successful MTP1
+source, staged runtime, TP4/EP4 eager path, selective host placement, and the
+same exact 32-block cache allocation used by the passing exact-4K recipe. It
+changed the configured maximum to 1,536 and read the 131 checkpoint shards
+from the local NVMe model copy. All model/runtime hashes, staged imports,
+four-rank collective, per-rank placement, cache admission, capacity, and API
+health gates passed. All four ranks completed model loading in about 101
+seconds; the server reported 4,468 cache tokens and 2.91x capacity.
+
+The first 1K request reached the unchanged 300-second worker-response gate
+during sampling after 768 computed prompt tokens, with zero output tokens and
+no response returned. The second request was not sent, and the separate 2K
+boot was not launched under the frozen stop rule. Cleanup left no model
+process or listener and all four cards were discoverable. The host journal
+named no B70 event. Corrected local-NVMe receiver-link events are retained as
+host context without assigning causality.
+
+This is a bounded negative, not a performance row. It grants no speed or
+quality credit and does not alter either the passing MTP1 512 screen or the
+passing exact-4K headroom recipe. Active 2K remains missing rather than failed.
+Receipt:
+[`20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json).
 
 ## Exact 4K TP4 MTP2 headroom screen
 

@@ -1,0 +1,128 @@
+{
+  "attempt": 1,
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-1536-r1",
+  "identity": {
+    "async_scheduling": false,
+    "diagnostics": "none",
+    "eager": true,
+    "expert_parallel_size": 4,
+    "graph_mode": "off",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "kv_cache_layout": "BLHNC",
+    "kv_cache_memory_bytes": 376569856,
+    "max_model_len": 1536,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "mtp": 1,
+    "prefix_caching": false,
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "selective_uva_gib_reported_per_rank": 12.22,
+    "tensor_parallel_size": 4,
+    "text_only": true,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb"
+  },
+  "preregistered_program": {
+    "maximum_gpu_wall_minutes": 60,
+    "planned_boots": 2,
+    "planned_requests_per_boot": 2,
+    "preregistration": "experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-tp4-mtp1-1k-2k-context-prereg.md",
+    "result": "stopped during request 1 of the 1K boot",
+    "two_k_boot_launched": false
+  },
+  "qualification": {
+    "one_k_context_cell": "quarantined-bounded-negative",
+    "output_available": false,
+    "performance_interpretation_authorized": false,
+    "promotion_eligible": false,
+    "request_two_sent": false,
+    "site_grade_ceiling": "research",
+    "two_k_context_cell": "missing-not-run"
+  },
+  "request_1": {
+    "client_error": "completion stream returned an error event",
+    "completion_output_returned": false,
+    "expected_completion_tokens": 256,
+    "expected_mtp0_text_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "output_json_written": false,
+    "prompt_salt": "context-r1",
+    "requested_prompt_setting": 1038,
+    "seed": 20260606,
+    "server_failure_local_time": "2026-08-27T21:38:02-04:00",
+    "server_failure_phase": "sample_tokens",
+    "server_response_gate_seconds": 300,
+    "server_scheduler_at_failure": {
+      "computed_prompt_tokens": 768,
+      "kv_cache_usage_fraction": 0.3548387096774194,
+      "num_common_prefix_blocks": [0, 0, 0, 0, 0, 0],
+      "num_output_tokens": 0,
+      "num_spec_tokens_to_schedule": 1,
+      "scheduled_tokens": 64
+    },
+    "status": "failed-bounded-response-gate"
+  },
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-1536-r1-attempt1",
+  "schema_version": 1,
+  "serving": {
+    "api_became_healthy": true,
+    "application_startup_local_time": "2026-08-27T21:30:40-04:00",
+    "cache_blocks": 32,
+    "cache_tokens_reported": 4468,
+    "maximum_concurrency_at_1536": 2.91,
+    "model_load_seconds_by_rank": [
+      100.576521,
+      101.076618,
+      100.845446,
+      101.155777
+    ],
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "pre_request_metrics": {
+      "prefix_cache_hits_total": 0,
+      "prompt_tokens_cached_total": 0,
+      "spec_decode_accepted_tokens_total": 0,
+      "spec_decode_draft_tokens_total": 0,
+      "spec_decode_num_drafts_total": 0
+    },
+    "startup_gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass"
+    }
+  },
+  "shutdown": {
+    "api_application_shutdown_complete": true,
+    "cards_discoverable_after_cleanup": 4,
+    "classification": "bounded-cleanup-after-incomplete-automatic-shutdown",
+    "evidence_binding": "Operator-observed closeout facts; not covered by tracked_sha256 except where server.log records API shutdown.",
+    "launcher_cleanup_trigger": "interrupt after the failed API process remained present",
+    "listener_present_after_cleanup": false,
+    "residual_processes_after_cleanup": 0
+  },
+  "status": "bounded-negative",
+  "system_observations": {
+    "b70_event_named_in_kernel_window": false,
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "fatal_or_uncorrected": false,
+      "observed": true,
+      "times_local": ["21:25:25", "21:26:14", "21:26:19", "21:31:55", "21:32:16"]
+    },
+    "evidence_binding": "Operator-observed journal review; no journal file is covered by tracked_sha256.",
+    "interpretation": "The corrected storage-link events are disclosed as host context. This result does not assign them as the request-failure cause."
+  },
+  "tracked_sha256": {
+    "request1-failure.txt": "030dc223ddbc61d7543a729e41c8bd7be80070cd94ed96fede8441c28e4fd145",
+    "identity.txt": "a88376b71a3f94cbfb2208fd87a41eb43b78fb55ccfb418e2a6b6a7cef739d94",
+    "metrics-before-request1.prom": "20081116f231f878ab0ffb75f83d91f1feb38abb664793d6393c50deaa361ecd",
+    "models.json": "6b0f3ed2b51f4cfe9360e1282ef1ba826b18b9011a5ac223d7d0529dd9f05666",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "server-command.shell.txt": "4e987dd3f7e264edce96fe29fec73aff0bff587f8c2e5978e07f2942847106c3",
+    "server.log": "373109827305f189de18b9ea9f453387aa5a4d3a645a27f8f6518b0aba924b6f",
+    "staged-runtime-preflight.txt": "b25349539d3b3327bbfbfd27bcc77a2f09e56586417abb3b5e86868e9e76704e",
+    "xccl-tp4-preflight.log": "0c2c69d6dfca068d0efe35b08884d097288fb94cdb49ddc1683bca2e36f403f6"
+  }
+}

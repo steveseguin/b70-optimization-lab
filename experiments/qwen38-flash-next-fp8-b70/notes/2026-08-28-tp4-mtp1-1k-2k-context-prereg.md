@@ -107,3 +107,32 @@ A pass adds only two `lab-screened`, Grade-C/research context cells. It does
 not change speed claims, establish deployment readiness, or raise the MTP1
 evidence ceiling. A failure or timeout is retained as a bounded result and
 does not alter the already certified MTP0, MTP1-512, or MTP1-4K rows.
+
+## Attempt 1 result
+
+The 1K boot passed every frozen identity, import, four-rank collective,
+placement, cache, capacity, and health gate. Reading the local-NVMe model made
+the two 131-shard load phases substantially shorter than the earlier external
+disk path; every rank completed model loading in about 101 seconds. The server
+reported 32 blocks, 4,468 cache tokens, and 2.91x calculated capacity at the
+configured 1,536-token length.
+
+The first and only model request did not return output. After first-use shape
+initialization, the request reached the unchanged 300-second worker-response
+gate in `sample_tokens`. The server's preserved scheduler receipt showed 768
+computed prompt tokens, 64 scheduled tokens, zero output tokens, no common
+prefix blocks, and one speculative token selected for scheduling. The API then
+closed. Request 2 was not sent, and the separate 2K boot was not launched, as
+required by the stop rules.
+
+The API completed its own shutdown, but the launcher and workers needed the
+launcher's existing cleanup path to be triggered after they remained present.
+After cleanup there were no model processes or listeners, and all four cards
+were discoverable. The host journal named no B70 event in the run window. It
+did contain corrected receiver-link events for the local NVMe device; these
+are disclosed without assigning them as the cause.
+
+This classifies TP4/eager/native-MTP1/active-1K as a retained bounded negative
+on this exact identity. Active-2K remains missing, not failed. Existing MTP1
+512 and exact-4K passes are unchanged. Compact receipt:
+`data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.

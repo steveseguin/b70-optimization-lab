@@ -1065,6 +1065,16 @@ The 51B PLE/input-embedding state remains pinned in host RAM through UVA; the
 four cards are otherwise filled to about 32.06 GiB per rank, which is the
 current 128-GiB-VRAM/4K deployment policy.
 
+The next MTP1 active-context arm is now classified without changing either
+passing MTP1 result. Its configured-1,536 server passed all boot and admission
+gates, then the first 1K request stopped at 768 computed prompt tokens with
+zero output and reached the fixed worker-response gate. Request two was not
+sent and the separate 2K boot was skipped under the preregistered stop rule.
+Therefore MTP1/1K is quarantined, MTP1/2K remains missing, and MTP1/512 plus
+exact-4K remain unchanged. Any retry requires a material first-request
+completion fix and a fresh four-rank boot. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.
+
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
 matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned
