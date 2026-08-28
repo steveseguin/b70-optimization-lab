@@ -5148,6 +5148,38 @@ class FamilyCoverageTest(unittest.TestCase):
         errors = MODULE.validate_family(family, family_path)
         self.assertEqual(errors, [])
         self.assertTrue(family["collapse_coverage_contracts"])
+        popularity = family["model_signals"]["popularity"]
+        self.assertEqual(popularity["downloads"], 2219)
+        self.assertEqual(popularity["likes"], 139)
+        self.assertEqual(
+            popularity["artifact_revision"],
+            "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+        )
+        popularity_snapshot = json.loads(
+            (MODULE.ROOT / popularity["evidence"]).read_text()
+        )
+        self.assertEqual(
+            popularity_snapshot["repository"]["main_revision"],
+            popularity["repository_revision"],
+        )
+        self.assertEqual(
+            popularity_snapshot["repository"]["downloads"],
+            popularity["downloads"],
+        )
+        packets = {item["id"]: item for item in family["packets"]}
+        self.assertEqual(
+            {
+                packet_id: packet["grades"]["capability"]["grade"]
+                for packet_id, packet in packets.items()
+            },
+            {
+                "qwen38-flash-next-fp8-tp4-research": "C",
+                "qwen38-flash-next-fp8-tp4-mtp1-research": "D",
+                "qwen38-flash-next-fp8-tp4-mtp3-research": "C",
+                "qwen38-flash-next-fp8-tp4-mtp2-research": "D",
+                "qwen38-flash-next-fp8-tp4-mtp4-research": "D",
+            },
+        )
         estimates = {item["id"]: item for item in family["estimates"]}
         self.assertEqual(len(estimates), 2)
         self.assertTrue(
@@ -5557,6 +5589,9 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn("0/30", rendered)
         self.assertIn("≈ 3.33 tok/s (1.66–4.99)", rendered)
         self.assertIn("≈ 3.17 tok/s (1.59–4.76)", rendered)
+        self.assertIn("Capability C <small>of A–D</small>", rendered)
+        self.assertIn("Capability D <small>of A–D</small>", rendered)
+        self.assertIn("Interest</dt><dd>2.22K", rendered)
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered

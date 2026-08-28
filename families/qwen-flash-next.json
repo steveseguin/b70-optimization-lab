@@ -156,8 +156,17 @@
       ]
     },
     "popularity": {
-      "state": "not-scored",
-      "reason": "No dated popularity snapshot is stored for this exact FP8 artifact."
+      "state": "dated-repository-snapshot",
+      "captured_at": "2026-08-28T12:38:03Z",
+      "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+      "repository_revision": "970c569adaca6b35532111fd6b27351b2baefe50",
+      "artifact_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "created_at": "2026-08-24T08:25:23.000Z",
+      "last_modified": "2026-08-27T05:04:18.000Z",
+      "downloads": 2219,
+      "likes": 139,
+      "scope": "Official FP8 repository-level discovery signal captured four days after repository creation; not model quality, artifact correctness, deployment maturity, or a revision-specific count. The only later official commit after the retained artifact is titled Update README.md.",
+      "evidence": "data/neural-download-popularity/2026-08-28-qwen38-flash-next-fp8-huggingface.json"
     }
   },
   "run_measurements": [
@@ -856,6 +865,16 @@
       "evidence_level": "B70-screened",
       "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536/3072/4352/8448", "short quality plus screened 1K/2K/4K and formal 8K context"],
       "grades": {
+        "capability": {
+          "grade": "C",
+          "scope": "user-facing TP4 eager MTP0 text-serving readiness on the retained legacy runtime through exact active 8K",
+          "basis": "The packet boots, serves, repeats, and passes exact-depth gates through 8K, but direct-answer quality is 6/7 semantically, the 8K comparison sequence is incomplete, and current-runtime replay, vision, clean-host stability, and deployment sealing remain open.",
+          "reviewed_at": "2026-08-28",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json"
+          ]
+        },
         "evidence": {
           "grade": "C",
           "scope": "exact TP4/EP4 eager MTP0 text-serving source/runtime through the formal 8K context screen",
@@ -895,6 +914,16 @@
       "evidence_level": "B70-screened",
       "coverage": ["TP4/EP4", "MTP1", "eager", "text-only", "configured max 512 and 4352/headroom32", "configured max 1536 and 3072 retained as first-request bounded negatives", "configured max 8448 retained as an active-8K cross-runtime parity quarantine", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "three exact-4K deployment-shaped rows plus a separate formal row"],
       "grades": {
+        "capability": {
+          "grade": "D",
+          "scope": "user-facing TP4 eager MTP1 text-serving readiness across the packet's declared short and context cells",
+          "basis": "Configured-512 and exact-4K serving are useful screened evidence, but active 1K/2K did not complete and active 8K diverged from the cross-runtime authority. The packet is not deployment-ready even though its passing subcells remain valid.",
+          "reviewed_at": "2026-08-28",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json"
+          ]
+        },
         "evidence": {
           "grade": "C",
           "scope": "exact TP4/EP4 eager MTP1 text serving at configured max 512 and configured max 4352 with a 32-block cache allocation, including active 4096-token context; configured max 1536, 3072, and 8448 are retained separately as active-1K/2K bounded negatives and an active-8K cross-runtime parity quarantine",
@@ -933,6 +962,16 @@
       "evidence_level": "B70-screened",
       "coverage": ["TP4/EP4", "MTP3", "eager", "text-only", "configured max 512 and 4352", "configured max 1536 retained as an active-1K external-signal quarantine", "configured max 3072 retained as an active-2K target-parity quarantine", "configured max 8448 retained as an active-8K bounded no-receipt quarantine", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "variable 512-token screen plus exact-4K service and formal rows"],
       "grades": {
+        "capability": {
+          "grade": "C",
+          "scope": "user-facing TP4 eager MTP3 text-serving readiness, centered on the preferred exact-4K recipe",
+          "basis": "Exact-4K capability, parity, acceptance, and the strongest qualified 4K service rate make this the preferred current-runtime recipe. Active 1K/2K/8K remain quarantined and repeated-session, vision, clean-host, and deployment sealing are incomplete.",
+          "reviewed_at": "2026-08-28",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json"
+          ]
+        },
         "evidence": {
           "grade": "C",
           "scope": "exact TP4/EP4 eager MTP3 text serving at configured max 512 and 4352, including active 4096-token context; configured max 1536, 3072, and 8448 are retained separately as active-1024 external-signal, active-2048 target-parity, and active-8192 bounded no-receipt quarantines",
@@ -972,6 +1011,16 @@
       "evidence_level": "B70-screened",
       "coverage": ["TP4/EP4", "MTP2", "eager", "text-only", "configured max 512 and 4352/headroom32", "configured max 1536 retained as an active-1K clean-host quarantine", "configured max 3072 and 8448 retained as active-2K and active-8K target-parity quarantines", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "short and exact-4K three-row speed screens plus separate formal rows"],
       "grades": {
+        "capability": {
+          "grade": "D",
+          "scope": "user-facing TP4 eager MTP2 text-serving readiness across the packet's declared short and context cells",
+          "basis": "Configured-512 and exact-4K subcells serve, but 1K is clean-host quarantined, 2K/8K diverge from the authority, and both bounded 16K treatments produced no output with the final postflight failing. No deep-context deployment path is currently open.",
+          "reviewed_at": "2026-08-28",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json"
+          ]
+        },
         "evidence": {
           "grade": "C",
           "scope": "exact TP4/EP4 eager MTP2 text serving at configured max 512 and configured 4352/headroom32; configured max 1536, 3072, and 8448 are retained separately as active-1024 clean-host and active-2048/8192 target-parity quarantines",
@@ -1011,6 +1060,16 @@
       "evidence_level": "B70-screened",
       "coverage": ["TP4/EP4", "MTP4", "eager", "text-only", "configured max 512", "configured max 1536 retained as an active-1K teardown quarantine", "configured max 3072 retained as an active-2K no-output and reset quarantine", "configured max 4352 retained as an exact-4K runtime quarantine", "configured max 8448 retained as an exact active-8K cross-runtime parity quarantine", "matched MTP0 quality plus 16/16 repeat and small needle", "three-row speed screen"],
       "grades": {
+        "capability": {
+          "grade": "D",
+          "scope": "user-facing TP4 eager MTP4 text-serving readiness across the packet's declared short and context cells",
+          "basis": "The configured-512 screen is fast and fully engages all four draft positions, but every tested deeper context is quarantined for lifecycle, completion, parity, or clean-host reasons. The 20.727 tok/s screen remains valid evidence, not deployment readiness.",
+          "reviewed_at": "2026-08-28",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json"
+          ]
+        },
         "evidence": {
           "grade": "C",
           "scope": "exact TP4/EP4 eager MTP4 text serving at configured max 512; configured max 1536, 3072, 4352, and 8448 are retained separately as active-1K teardown, active-2K no-output/reset, exact-4K runtime, and exact active-8K cross-runtime parity quarantines",
