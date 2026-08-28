@@ -1,8 +1,8 @@
 # Qwen3.8 Flash Next FP8 + DeepSeek V4 Flash 0731 REAP post-download gate
 
-Status: the Qwen target passed its pinned full validation at
-`2026-08-26T21:25:03Z`; the DeepSeek target remains pending. This storage pass
-is not B70 runtime validation.
+Status: both targets passed their pinned full validations. Qwen completed at
+`2026-08-26T21:25:03Z`; DeepSeek completed at `2026-08-28T20:13:48Z`. These
+storage passes are not B70 runtime validation.
 
 The inert validator is
 [`scripts/validate-20260826-pinned-hf-downloads.py`](../scripts/validate-20260826-pinned-hf-downloads.py).
@@ -54,6 +54,18 @@ Its `summary.json` records `status=pass`; the hash log contains 144 passing
 file rows and the header log contains 131 passing shard rows. Qwen is therefore
 fully validated as a downloaded artifact, but no B70 load is authorized until
 the separate XPU runtime and memory gates close.
+
+The completed DeepSeek evidence root is:
+
+`data/model-intake/post-download-validation-20260826/20260828T201005Z/`
+
+Its `summary.json` records `status=pass`; the hash log contains all 80 passing
+file rows and the header log contains all 48 passing shard rows. The receipt
+binds revision `ddc04540efda3d2a0788b129f1fad828ddc19b60`, the exact
+107,818,438,413-byte tree, publisher `SHA256SUMS`, 45,821 tensors, and the
+tokenless pinned dry-run. This authorizes only the separately preregistered
+target-only B70 bring-up and revision-bound draft-pack construction; it does
+not transfer the historical K160 speed or quality result.
 
 ## Verifying a relocated Qwen copy
 

@@ -1370,9 +1370,16 @@ shown separately and do not qualify latest-runtime cells. The practical 25/25
 mixed-runtime campaign view remains available for historical continuity. Every
 captured speed, packet result, quarantine, and protected claim is unchanged.
 
-The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
-not abandoned. Their accepted results, patches, and launch identities remain
-protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the
+The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
+paused, not abandoned. The 0731 artifact itself passed its complete pinned
+storage gate on 2026-08-28 at
+`data/model-intake/post-download-validation-20260826/20260828T201005Z/summary.json`;
+its revision-bound three-stage DSpark pack also passed construction and is
+indexed by
+`experiments/deepseek-v4-flash-reap-xpu-b70/data/2026-08-28-deepseek-v4-flash-0731-dspark-draft-pack.json`.
+No historical speed or quality result transfers to either artifact. Their
+accepted results, patches, and launch identities remain protected. Accepted
+Qwen3.8 27B GGUF target-only results were measured on the
 two-ASRock-B70 reference host. Its AutoRound INT4 TP2 work used a selected pair
 from the four-B70, 125-GiB host; the two-B70, 15-GiB host remains a source/op-
 audit worker and must not run the full server. DFlash, MTP, prompt reuse, and

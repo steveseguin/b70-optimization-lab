@@ -12,11 +12,12 @@ link. The immutable historical archive remains at
 an old-checkpoint comparison must select that archive explicitly and must not
 silently use the absent historical launcher default.
 
-The download is complete by pinned name/size/index inventory and has no local
-partial file. Its one-time full hash/header/Hugging Face dry-run gate remains
-pending while the Qwen Flash-Next download owns the shared USB I/O path. A GPU
-launch is forbidden until that validator emits a passing summary bound to this
-exact revision and cached-tree hash.
+The download is complete and its one-time full hash/header/Hugging Face dry-run
+gate passed on 2026-08-28. The passing receipt is
+`../../../data/model-intake/post-download-validation-20260826/20260828T201005Z/summary.json`;
+it binds all 80 files, 48 shards, 45,821 tensors, publisher checksums, revision,
+and cached-tree identity. This closes storage integrity only. A GPU launch must
+still use the frozen target-only arm and all runtime/preflight gates below.
 
 An offline exact-source `ModelConfig` construction passed without loading
 weights or starting an XPU process. The record vLLM source resolves the new
@@ -62,12 +63,18 @@ or replace any captured value.
 
 The revision-bound builder is now
 `scripts/prepare-0731-dspark-draft-pack.py`. Its default is a metadata-only,
-no-write plan. Execution remains blocked until the completed 0731 receipt is
-available and separately requires `--execute` plus its frozen acknowledgement.
+no-write plan. The completed execution required the passing 0731 receipt,
+`--execute`, and its frozen acknowledgement.
 The builder copies the three exclusive MTP shards into sibling staging (never
 symlinks), validates all 2,977 tensors and 7,010,106,780 logical bytes, records
-source/destination hashes, and atomically promotes only a complete pack. No
-payload copy has been run.
+source/destination hashes, and atomically promotes only a complete pack. The
+copy completed on 2026-08-28 at
+`/mnt/usb-models/llm-models/DeepSeek-V4-Flash-0731-DSpark-ddc04540` and passed
+all gates. Its external manifest SHA-256 is
+`398bcdd4a8a992650a28688791d592d81f8eeaa47a5d0d379a77478557bbafca`;
+the tracked compact receipt is
+`../data/2026-08-28-deepseek-v4-flash-0731-dspark-draft-pack.json`. This is
+artifact readiness only, not an endpoint or performance result.
 
 New 0731 evidence must use the fail-closed scorer modes. Exact canaries use
 `quality/exact-canaries-0731-target-contract-v1.json`; that contract binds the
