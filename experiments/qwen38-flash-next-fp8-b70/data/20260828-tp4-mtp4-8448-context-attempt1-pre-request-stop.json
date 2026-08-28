@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "pre-request-client-supervisor-command-identity-stop",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-8448-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-8448-r1-attempt1",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 4,
+    "eager": true,
+    "max_model_len": 8448,
+    "kv_cache_memory_bytes": 423641088,
+    "port": 19671
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 36,
+    "cache_tokens_reported": 9504,
+    "maximum_concurrency_at_8448": 1.12,
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "served_identity": "passed",
+    "health": "passed"
+  },
+  "client": {
+    "status": "failed-closed-before-request",
+    "error": "supervisor command identity mismatch",
+    "cause": "The supervisor was invoked by a repository-relative path while the frozen client required the absolute supervisor path in /proc.",
+    "request_sent": false,
+    "request_count": 0,
+    "prompt_tokens_total": 0,
+    "generation_tokens_total": 0,
+    "spec_decode_num_drafts_total": 0,
+    "spec_decode_num_draft_tokens_total": 0,
+    "spec_decode_num_accepted_tokens_total": 0
+  },
+  "adjudication": {
+    "matrix_cell_classified": false,
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "interpretation": "This is launcher-protocol evidence only. No model request was sent and the MTP4/8K cell remains missing pending attempt 2."
+  },
+  "shutdown": {
+    "stop_sentinel": "STOP after failed MTP4 active-8K request",
+    "supervisor_return_code": 143,
+    "listener_present_after_cleanup": false,
+    "cards_discoverable_after_cleanup": 4,
+    "card_memory_used_mib": [42.8828125, 42.875, 42.87890625, 42.875],
+    "b70_addressed_event": false,
+    "corrected_nvme_source514_records": 2
+  },
+  "tracked_sha256": {
+    "identity.txt": "dd696a28cf8bef99c6bd8c8c45c5ba89e27345059c30cb3df9ef0a6546fb1d76",
+    "server.log": "c26b2b485ec9a5817ce9f454bacc317bc5a7211cfb87bae19c2cca3121aafd37",
+    "models.json": "730f3303f805ca63d3a9071cd639f90f54477b2aaf62bc73b7544bb829199ecd",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "supervisor-postflight/kernel-journal.log": "ef7050fd88e4b5caa76c3b083d75298076bfed14f20c1552d0ff150a7bb582d0",
+    "supervisor-postflight/q38-mtp4-8448-supervisor.rc": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396",
+    "supervisor-postflight/xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "supervisor-postflight/stop-sentinel.txt": "c1b4b729bd5f685e3362e3827c492ee9c33c82d2006f71b3c7091bf013eca45d"
+  }
+}
