@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "status": "closed-pre-admission-host-memory-floor",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 4,
+  "gate": {
+    "name": "initial MemAvailable floor",
+    "required_kib": 115343360,
+    "required_gib": 110,
+    "audit_mem_available_kib_at_2026-08-28T13:53:15-04:00": 115240688,
+    "interpretation": "The supervisor failed closed before creating its evidence directory or lifecycle state. The audit sample confirms the host remained slightly below the unchanged 110-GiB floor; it is not asserted as the exact launch sample."
+  },
+  "absent": {
+    "state_and_sentinels": true,
+    "run_dir": true,
+    "supervisor_evidence_dir": true,
+    "cache_dir": true,
+    "compile_dir": true,
+    "rpc_dir": true,
+    "listener_19682": true,
+    "model_or_worker_process": true
+  },
+  "classification": {
+    "admission_started": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "client_invoked": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "next_packet": {
+    "attempt": 5,
+    "port": 19683,
+    "ram_floor_changed": false,
+    "identity_change": "fresh attempt, state, run, evidence, cache, compile, RPC, and port only"
+  }
+}
