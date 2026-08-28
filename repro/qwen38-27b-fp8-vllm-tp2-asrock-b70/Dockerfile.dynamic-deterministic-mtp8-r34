@@ -1,0 +1,49 @@
+ARG DYNAMIC_IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31
+FROM ${DYNAMIC_IMAGE} AS dynamic
+
+FROM ${BASE_IMAGE}
+
+ARG LAYERNORM_SHA256
+ARG RMS_PATCH_SHA256
+
+# Add the already-proven active-width GDN and active-lookahead scheduler
+# artifacts to the qualified deterministic MTP1 base, then extend its bounded
+# serial RMSNorm replay from the two-row MTP1 pack to the nine-row MTP8 pack.
+COPY --from=dynamic \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so
+COPY --from=dynamic \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so
+COPY --from=dynamic \
+  /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py
+COPY --from=dynamic \
+  /opt/venv/lib/python3.12/site-packages/vllm/v1/core/single_type_kv_cache_manager.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/v1/core/single_type_kv_cache_manager.py
+COPY --from=dynamic \
+  /workspace/vllm/vllm/v1/core/sched/scheduler.py \
+  /workspace/vllm/vllm/v1/core/sched/scheduler.py
+COPY --from=dynamic \
+  /workspace/vllm/vllm/v1/core/single_type_kv_cache_manager.py \
+  /workspace/vllm/vllm/v1/core/single_type_kv_cache_manager.py
+COPY vllm/model_executor/layers/layernorm.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
+COPY vllm/model_executor/layers/layernorm.py \
+  /workspace/vllm/vllm/model_executor/layers/layernorm.py
+
+RUN test "$(sha256sum /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py | awk '{print $1}')" = "${LAYERNORM_SHA256}" \
+    && test "$(sha256sum /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so | awk '{print $1}')" = de253fa31df9acae6020b95da8d2286f5ff15d8fe3d51b59b71496cbf9311f62 \
+    && test "$(sha256sum /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so | awk '{print $1}')" = 2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355 \
+    && test "$(sha256sum /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py | awk '{print $1}')" = 6d550a8e6a5c6abf200d66fbc4fc45c8ce371a312d454c39e057a45b364994c3 \
+    && test "$(sha256sum /opt/venv/lib/python3.12/site-packages/vllm/v1/core/single_type_kv_cache_manager.py | awk '{print $1}')" = b9a100331f98882dc01dc6f6efac53b1fc1fc949ba0b8915e932336a8a521c09 \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/v1/core/single_type_kv_cache_manager.py
+
+LABEL neural.download.composite.base.r31="sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b" \
+      neural.download.composite.dynamic.r1="sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6" \
+      neural.download.vllm.rms.mtp1-mtp8.patch.sha256="${RMS_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-dynamic-deterministic-mtp8-r34"

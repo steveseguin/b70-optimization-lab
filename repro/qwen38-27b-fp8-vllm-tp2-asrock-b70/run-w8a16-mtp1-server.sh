@@ -8,6 +8,8 @@ cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new writable cache directory
 container=${CONTAINER_NAME:-qwen38-fp8-block-w8a16-mtp1-tp2-p128}
 port=${PORT:-18124}
 served_model=${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp1}
+speculative_config=${SPECULATIVE_CONFIG:-'{"method":"qwen3_next_mtp","num_speculative_tokens":1}'}
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'}
 max_num_seqs=${MAX_NUM_SEQS:-128}
 max_model_len=${MAX_MODEL_LEN:-256}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
@@ -124,5 +126,5 @@ exec docker run --rm --name "${container}" \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
   --language-model-only \
   "${eager_args[@]}" \
-  --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":1}' \
-  --compilation-config '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'
+  --speculative-config "${speculative_config}" \
+  --compilation-config "${compilation_config}"

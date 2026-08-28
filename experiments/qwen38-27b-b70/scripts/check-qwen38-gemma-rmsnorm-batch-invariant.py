@@ -20,6 +20,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="xpu:0")
     parser.add_argument("--hidden-size", type=int, default=5120)
+    parser.add_argument("--packed-rows", type=int, default=2, choices=(2, 9))
     parser.add_argument("--trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=20260828)
     args = parser.parse_args()
@@ -48,7 +49,12 @@ def main() -> int:
             row = torch.randn(
                 1, args.hidden_size, device=args.device, dtype=torch.float16
             )
-            other = torch.randn_like(row)
+            other = torch.randn(
+                args.packed_rows - 1,
+                args.hidden_size,
+                device=args.device,
+                dtype=torch.float16,
+            )
             os.environ[TREATMENT_ENV] = "0"
             native_single = layer.forward_native(row)
             os.environ[TREATMENT_ENV] = "1"
@@ -60,7 +66,7 @@ def main() -> int:
             native_plain_bad += int(not torch.equal(native_single, single))
 
             residual = torch.randn_like(row)
-            other_residual = torch.randn_like(row)
+            other_residual = torch.randn_like(other)
             os.environ[TREATMENT_ENV] = "0"
             native_out, native_residual = layer.forward_native(row, residual)
             os.environ[TREATMENT_ENV] = "1"
@@ -89,6 +95,7 @@ def main() -> int:
         "device": args.device,
         "dtype": "float16",
         "hidden_size": args.hidden_size,
+        "packed_rows": args.packed_rows,
         "trials": args.trials,
         "plain_bad": plain_bad,
         "fused_bad": fused_bad,
