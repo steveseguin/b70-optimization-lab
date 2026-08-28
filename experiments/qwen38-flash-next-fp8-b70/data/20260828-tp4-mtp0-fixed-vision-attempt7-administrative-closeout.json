@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "closed-pre-admission-user-manager-stability",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 7,
+  "observed": {
+    "sample_phase": "after external sync and drop_caches, before supervisor admission",
+    "mem_available_kib": 111501980,
+    "frozen_initial_mem_floor_kib": 113246208,
+    "mem_deficit_to_floor_kib": 1744228,
+    "swap_free_kib": 6297396
+  },
+  "failed_gate": {
+    "name": "user-manager recovery stability",
+    "required_seconds": 900,
+    "supervisor_output": "FAIL: user manager has not remained active for 900 recovery seconds",
+    "ordering": "This gate precedes the supervisor's memory, evidence, card, collective, launcher, and model work. The external memory sample was also below the frozen 108-GiB floor, but that later supervisor gate was not reached."
+  },
+  "absent": {
+    "state_and_sentinels": true,
+    "run_dir": true,
+    "supervisor_evidence_dir": true,
+    "cache_dir": true,
+    "compile_dir": true,
+    "rpc_dir": true,
+    "listener_19686": true,
+    "model_or_worker_process": true
+  },
+  "classification": {
+    "supervisor_invoked": true,
+    "admission_started": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "client_invoked": false,
+    "quality_credit": false,
+    "speed_credit": false,
+    "matrix_or_site_credit": false,
+    "protected_results_changed": false
+  },
+  "next_packet": {
+    "attempt": 8,
+    "port": 19687,
+    "initial_ram_floor_kib": 113246208,
+    "initial_ram_floor_gib": 108,
+    "ram_floor_changed": false,
+    "identity_change": "fresh attempt, state, run, evidence, cache, compile, RPC, and port",
+    "sole_treatment": "wait for the frozen 900-second user-manager stability window before invoking the fresh packet"
+  }
+}
