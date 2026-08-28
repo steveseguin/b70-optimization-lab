@@ -37,6 +37,11 @@ tok/s. The conventional p4096/o128 99-interval rate is `4.669548 tok/s`.
 Public hosting closes artifact availability only, not dependency, clean-host,
 startup, quality-replay, or deployment readiness.
 
+Publication closure is recorded at commit
+[`9041edd6c`](https://github.com/steveseguin/b70-optimization-lab/commit/9041edd6c7de03365aca68cf51912853b669d763),
+including the [unauthenticated readback receipt](https://github.com/steveseguin/b70-optimization-lab/blob/9041edd6c7de03365aca68cf51912853b669d763/repro/qwen38-flash-next-fp8-tp4-mtp3-b70/publication-readback.json)
+and [hosted runtime contract](https://github.com/steveseguin/b70-optimization-lab/blob/9041edd6c7de03365aca68cf51912853b669d763/repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-contract.json).
+
 Frozen references:
 
 - [reproduction foundation](https://github.com/steveseguin/b70-optimization-lab/blob/qwen38-flash-next-runtime-2f829747-20260827/repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md)
