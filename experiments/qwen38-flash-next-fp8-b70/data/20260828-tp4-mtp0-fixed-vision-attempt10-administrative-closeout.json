@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "status": "closed-pre-admission-host-memory-floor-after-swap-treatment",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 10,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "derived-inner host-memory admission",
+    "outer_resource_admission_started": true,
+    "temporary_swap_created_and_activated": true,
+    "inner_state_established": false,
+    "gpu_or_collective_work_started": false,
+    "launcher_started": false,
+    "model_load_started": false,
+    "healthy_api": false,
+    "client_invoked": false,
+    "vision_requests_started": false,
+    "quality_or_text_recovery_started": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The outer resource layer created and activated the preregistered 64-GiB priority-minus-1 swapfile. The unchanged derived inner supervisor then rejected its independent 105-GiB MemAvailable admission gate before creating state or evidence and before card, collective, launcher, or model work. This classifies only the administrative treatment path; it is not vision capability, quality, deployment, throughput, or model-load evidence."
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "language_model_only": false,
+    "limit_mm_per_prompt": {"image": 1, "video": 0},
+    "mm_processor_cache_gb": 0,
+    "mm_encoder_tp_mode": "weights",
+    "kv_cache_memory_bytes": 201326592,
+    "port": 19689
+  },
+  "frozen_tools": {
+    "preregistration_sha256": "7f366644845c752b7cb141239b706680bb3b0f8db0e650d210c756f83b106ec0",
+    "base_launcher_sha256": "487f088481c0c7f5e821bdce7dda41bb20aa0761c4453215a0662f23473beb46",
+    "wrapper_sha256": "4e54eb348f76e889de3fe28403addc484e70a1dac6299ceff68c8dbb262de5af",
+    "client_sha256": "1c096de3a0c94a37941517a97700100451b7347f305849490e7d8f2de9972add",
+    "inner_supervisor_source_sha256": "202bd61356347fbc49151f794a2b9a3aca7c4d827bb423c7aa1955916358099e",
+    "derived_inner_supervisor_sha256": "94a484e3392c4126a5ae9e7a4da07dde9ff2c48d0b4889a4e9fcb3cf9f949907",
+    "resource_watchdog_sha256": "893d3cff3bddee78d580d92410f24d60cb8ffb5b77c1ccb527922131e0825057",
+    "resource_policy_test_sha256": "9c3af8906fe70eb79919cadc39a4bca8d470453ee3261cc91d5cbc17f5ddb506",
+    "outer_supervisor_sha256": "44d8a826185e2f51f0eb733ec777b7b5529b36ce2723e3c3a8110ff6c385f93e",
+    "runtime_classifier_schema": "neural.download.q38-runtime-conflict-scan.v3",
+    "runtime_classifier_sha256": "ecd18d133eef946bacf2750717bc458eca8e64dc1d97beabe060bdf314bf2ab3",
+    "journal_classifier_sha256": "440d7d0636bef8b5baf9bd5603ced988e22fe64c7df912ed15e55561aea8ea16"
+  },
+  "timeline": {
+    "journal_start_epoch": 1787943512,
+    "journal_start_local": "2026-08-28T14:58:32-04:00",
+    "resource_meminfo_before_local": "2026-08-28T14:58:35-04:00",
+    "resource_meminfo_active_local": "2026-08-28T14:58:35-04:00",
+    "postflight_complete_local": "2026-08-28T14:58:36-04:00"
+  },
+  "admission_evidence": {
+    "external_post_drop_sample": {
+      "mem_available_kib": 109673724,
+      "swap_free_kib": 6093388,
+      "source": "launch-console observation supplied at closeout; no immutable console transcript was produced"
+    },
+    "outer_meminfo_before": {
+      "mem_available_kib": 109631112,
+      "swap_total_kib": 8388604,
+      "swap_free_kib": 6093536
+    },
+    "outer_meminfo_after_temporary_swap_activation": {
+      "mem_available_kib": 109592844,
+      "swap_total_kib": 75497464,
+      "swap_free_kib": 73202432
+    },
+    "failed_gate": {
+      "name": "derived-inner initial MemAvailable floor",
+      "required_kib": 110100480,
+      "required_gib": 105,
+      "external_sample_deficit_kib": 426756,
+      "nearest_persisted_active_sample_deficit_kib": 507636,
+      "supervisor_output": "FAIL: less than 105 GiB host memory is available",
+      "derived_exit_code_persisted": false,
+      "derived_exit_code_expected_from_gate": 1,
+      "outer_exit_code": 70,
+      "outer_reason": "derived supervisor did not establish exact state"
+    },
+    "ordering": "The outer activated swap and staged exact inputs before invoking the derived inner. The derived inner samples MemAvailable before creating its evidence directory, running card or collective checks, launching the server, or starting model work."
+  },
+  "temporary_swap_evidence": {
+    "path": "/var/tmp/q38-vision-a10-64g.swap",
+    "requested_bytes": 68719476736,
+    "active_size_kib": 67108860,
+    "priority": -1,
+    "active_used_kib": 0,
+    "device_inode_owner_group_size_mode": "66306:46138408:0:0:68719476736:600",
+    "original_layout": "/swap.img file 8388604 -1",
+    "active_base_layout_unchanged": true,
+    "restored_layout_exact": true,
+    "inactive_after": true,
+    "file_absent_after": true,
+    "cleanup_receipt": "PASS: temporary swap inactive and exact file removed",
+    "root_available_bytes_before": 118454296576,
+    "root_available_bytes_active": 49734762496,
+    "root_available_bytes_final": 118454005760
+  },
+  "journal": {
+    "kernel_journal_read_rc": 0,
+    "kernel_journal_sha256": "0dae22a1cbcb282b8255a71530491d08341d7034f65f930cb3ddeded08c89106",
+    "records": [
+      "drop_caches: 3",
+      "Adding 67108860k swap on /var/tmp/q38-vision-a10-64g.swap at priority -1"
+    ],
+    "oom_or_killed_process_record": false,
+    "ttm_or_eviction_record": false,
+    "rxerr_record": false,
+    "b70_addressed_event": false,
+    "assessment": "manual closeout audit of the two-record bounded window; the emergency path did not invoke the frozen classifier"
+  },
+  "cleanup": {
+    "outer_rc": 70,
+    "run_dir_after": false,
+    "supervisor_evidence_dir_after": false,
+    "cache_dir_after": false,
+    "compile_path_after": false,
+    "rpc_path_after": false,
+    "listener_19689_after": false,
+    "model_or_worker_process_after": false,
+    "inner_state_or_sentinel_after": false,
+    "runtime_scan_after": {
+      "status": "clear",
+      "rc": 0,
+      "conflicts": 0,
+      "errors": 0,
+      "vanished_races": 0,
+      "scanned_processes": 502,
+      "sha256": "f72016bbe9a16eeef8aff7d53730e9f96ae529126a1ac1df298820b9cef69652"
+    },
+    "system_manager_after": "running",
+    "user_manager_after": "running",
+    "user_manager_activation_epoch_unchanged": true,
+    "failed_system_units_after": 0,
+    "four_b70s_discovered_during_closeout": true
+  },
+  "raw_evidence": {
+    "live_resource_dir": "/var/tmp/q38-vision-a10-resource",
+    "live_resource_files_retained": 47,
+    "resource_archive_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt10-resource-archive",
+    "resource_archive_files_including_manifest": 48,
+    "resource_manifest": "raw-manifest.sha256",
+    "resource_manifest_sha256": "6ef1f9cb65e02d8074b0b3da48c7ebef68a664c4c25d293427b0d516a64b9a3b",
+    "resource_manifest_entries": 47,
+    "resource_manifest_verified": true,
+    "tracked_combined_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-fixed-vision-attempt10-primary-evidence.sha256",
+    "combined_manifest_sha256": "68470e550fcdbb667137bf5da8402647995dddc69bf06595a7b07193556b80bd",
+    "combined_manifest_entries": 47,
+    "combined_manifest_verified_from_raw_parent": true,
+    "run_files": 0,
+    "supervisor_files": 0
+  },
+  "coverage_and_protected_results": {
+    "site_or_matrix_changed": false,
+    "vision_capability_claim": null,
+    "captured_eager_speed_changed": false,
+    "protected_results_changed": false,
+    "protected_family_sha256": "c378b6f584235632d5fe8d178bc756be6c6ff12309ba5ec352a9cd1369e9254d",
+    "protected_result_readme_sha256": "deb1869104c941cf784594d0bb6c8e3d1e7523075ed74d54a80f930413360a7d",
+    "protected_result_handoff_sha256": "51eb4714f9f4050fd4d49a906ee2f7e2ae83fcc081218244756812ed7cc9f63f",
+    "reason": "The derived inner stopped before state/evidence creation, card or collective work, server launch, model load, health, client, text recovery, vision requests, quality gates, or speed measurement."
+  },
+  "next_step": {
+    "status": "no-credit-and-no-identical-retry",
+    "requirements": [
+      "Preserve attempt 10 as an administrative resource-treatment negative and keep every protected eager result unchanged.",
+      "Do not classify the vision cell or the 64-GiB treatment during model load because model loading never began.",
+      "Any successor needs a materially different preregistered admission or host-memory treatment with fresh paths and identity."
+    ]
+  }
+}
