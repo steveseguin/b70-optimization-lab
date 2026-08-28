@@ -13,6 +13,12 @@ ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
 xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
 inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
+batch_invariant="${VLLM_BATCH_INVARIANT:-0}"
+qwen_gemma_rmsnorm_batch_invariant="${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}"
+qwen_gemma_rmsnorm_packed_serial_exact="${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}"
+gdn_serial_exact="${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}"
+gdn_persistent_scratch="${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}"
+gdn_native_fallback="${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}"
 
 [[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_SEQS must be positive\n' >&2; exit 1; }
 [[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_MODEL_LEN must be positive\n' >&2; exit 1; }
@@ -21,6 +27,15 @@ inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
 [[ "${fp8_block_w8a16}" == 0 || "${fp8_block_w8a16}" == 1 ]] || { printf 'VLLM_XPU_FP8_BLOCK_W8A16 must be 0 or 1\n' >&2; exit 1; }
 [[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || { printf 'VLLM_XPU_ENABLE_XPU_GRAPH must be 0 or 1\n' >&2; exit 1; }
 [[ "${inductor_deterministic}" == 0 || "${inductor_deterministic}" == 1 ]] || { printf 'TORCHINDUCTOR_DETERMINISTIC must be 0 or 1\n' >&2; exit 1; }
+for value_name in batch_invariant qwen_gemma_rmsnorm_batch_invariant \
+  qwen_gemma_rmsnorm_packed_serial_exact \
+  gdn_serial_exact gdn_persistent_scratch gdn_native_fallback; do
+    value=${!value_name}
+    [[ "${value}" == 0 || "${value}" == 1 ]] || {
+        printf '%s must be 0 or 1\n' "${value_name^^}" >&2
+        exit 1
+    }
+done
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
@@ -39,6 +54,7 @@ if [[ "${fp8_block_w8a16}" == 1 ]]; then
 fi
 
 exec docker run --rm --name "${container}" \
+    --ulimit core=0 \
     --memory 9g --memory-swap 12g \
     --device /dev/dri:/dev/dri \
     --group-add render \
@@ -55,6 +71,12 @@ exec docker run --rm --name "${container}" \
     -e VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
     -e TORCHINDUCTOR_DETERMINISTIC="${inductor_deterministic}" \
     "${w8a16_env[@]}" \
+    -e VLLM_BATCH_INVARIANT="${batch_invariant}" \
+    -e VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
+    -e VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
+    -e VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT="${gdn_serial_exact}" \
+    -e VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
+    -e VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e CCL_ATL_TRANSPORT=ofi \
     -e FI_PROVIDER=tcp \

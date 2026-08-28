@@ -10,10 +10,43 @@
 
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
-FP16 KV, and TP2. The qualified default is target-only/MTP0 with W8A16,
-Inductor enabled, XPU Graph disabled, deterministic GDN state handling, and an
-explicit oneCCL completion dependency. MTP1 and dynamic MTP remain documented
-as research lanes rather than default recipes.
+FP16 KV, and TP2. The fastest qualified default is publisher MTP1 with W8A16,
+deterministic Inductor, XPU Graph disabled, exact two-row Gemma RMSNorm replay,
+deterministic GDN state handling, and an explicit oneCCL completion dependency.
+Target-only MTP0 remains the qualified fallback; deeper dynamic MTP remains a
+research lane.
+
+## Qualified strict MTP1 default
+
+Two fresh servers with separate empty compile caches passed the complete fixed
+12-prompt/six-class, natural 512-token suite:
+
+| attempt | class-balanced decode | cache | repeat and target parity |
+| --- | ---: | ---: | ---: |
+| `r32-A` | 51.606902 tok/s | zero on 12/12 | 12/12 |
+| `r32-B` | 52.230611 tok/s | zero on 12/12 | 12/12 |
+| two-attempt median | **51.918757 tok/s** | — | **qualified** |
+
+Both attempts passed every workload and independent-canary gate and matched
+both qualified MTP0 r15 target repeats exactly. This is a **52.56%** strict
+gain over matched MTP0, not a selected prompt or warmed response-cache result.
+
+Build and launch the fail-closed profile with portable caller-selected paths:
+
+```bash
+BUILD_ROOT=/path/to/empty-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh
+
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-empty-runtime-cache \
+MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh
+```
+
+The wrapper pins the validated image ID and all correctness-relevant compiler,
+graph, GDN, RMS, W8A16, and MTP settings. See the
+[r32 result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-mtp1-deterministic-r32-result.md)
+and [structured proof](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-mtp1-deterministic-r32.json).
 
 ## Qualified strict MTP0 baseline
 
@@ -53,7 +86,7 @@ and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38
 The eager r5 image remains a qualified fallback at `18.910242 tok/s`; its
 build script is retained for recovery and compiler regression isolation.
 
-## MTP matrix — measured, output gate failed
+## Earlier MTP matrix — measured, output gate failed
 
 Two full fresh-server attempts were completed for each main single-user
 profile. W8A16 MTP0 measured `34.772270`/`34.740755 tok/s`, static MTP1
@@ -66,16 +99,16 @@ Those original faster profiles did not qualify: each pair matched only `8/12`
 complete token arrays. Later work stabilized the GDN B/A prefill reduction,
 bound compiler-visible recurrent state, and made oneCCL completion explicit
 with `async_op=True` plus `Work.wait()`. That repaired compiled MTP0 to 12/12
-without enabling XPU Graph. The corresponding repair has not yet qualified the
-MTP1 or dynamic-MTP lanes. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
+without enabling XPU Graph. The later packed-RMS plus deterministic-Inductor
+r32 treatment separately qualified static MTP1; it does not retroactively
+qualify the original matrix or dynamic-MTP rows. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
 and [machine-readable summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-strict-profile-matrix-summary.json).
 A one-B70 eager/default-dispatch control subsequently matched only `8/12` too,
 so TP2 and cross-rank oneCCL are not required; see the
 [TP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
 
-MTP1 and dynamic-MTP single-user headlines and the MTP1 32K cell stay blank.
-No diagnostic rate is substituted, averaged into another profile, or
-extrapolated.
+Dynamic-MTP single-user and MTP1 32K cells stay blank. No diagnostic rate is
+substituted, averaged into another profile, or extrapolated.
 
 ## Dynamic MTP8-to-MTP1 screening profile — not a headline
 
@@ -230,7 +263,7 @@ directory. See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-
 [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json),
 and [raw receipts](../../experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-p128-20260826-r1/).
 
-## Publisher-MTP1 interactive profile
+## Legacy publisher-MTP1 high-concurrency profile
 
 Qwen's official checkpoint includes `mtp.safetensors`. With one speculative
 token, the W8A16 dispatch, and the corrected mixed-batch XPU GDN kernel, the
@@ -238,17 +271,19 @@ separate MTP1 service measures:
 
 | concurrent users | aggregate tok/s | per-user tok/s | samples |
 | ---: | ---: | ---: | ---: |
-| 1 | **61.699580** | 61.699580 | 1 fresh response |
 | 8 | 351.033829 | 43.879229 | 1 |
 | 16 | 585.525296 | 36.595331 | 1 |
 | 32 | 800.459961 | 25.014374 | 1 |
 | 64 | **1,091.642460** | 17.056913 | median of 3 |
 | 128 | 1,075.634155 | 8.403392 | median of 3 |
 
-MTP1 improves the one-user W8A16 result by `76.23%` and the same-c64 MTP0
-median by `19.67%`. MTP0 remains `3.32%` faster at its separate c128 optimum,
-so these are two deployment modes, not values to splice into one unnamed
-profile. MTP1 has a 256-token service limit and no measured 32K point.
+This scoped service improves the same-c64 MTP0 median by `19.67%`. MTP0
+remains `3.32%` faster at its separate c128 optimum, so these are two
+deployment modes, not values to splice into one unnamed profile. The old
+single-response 61.699580 tok/s observation is intentionally omitted here: it
+is not the varied-prompt strict headline. Use the qualified 51.918757 tok/s
+r32 result above for one-user comparisons. This concurrency profile has a
+256-token service limit and no measured 32K point.
 
 The old kernel aborts when continuous batching mixes MTP decode with new
 prefills. The selected kernel commit

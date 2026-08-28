@@ -1,0 +1,216 @@
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1,6 +1,10 @@
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+
++#include <cstdlib>
++#include <mutex>
++#include <string>
++
+ #include "utils.h"
+ #include "dispatch_utils.h"
+
+@@ -13,6 +17,21 @@
+   #include "xe_2/chunk_gated_delta_rule_xe2.h"
+ #endif
+
++namespace {
++
++bool gdn_env_truthy(const char* name) {
++  const char* value = std::getenv(name);
++  if (value == nullptr) {
++    return false;
++  }
++  const std::string text(value);
++  return !text.empty() && text != "0" && text != "false" &&
++         text != "False" && text != "FALSE" && text != "off" &&
++         text != "OFF" && text != "no" && text != "NO";
++}
++
++}  // namespace
++
+ // Conv stage of GatedDeltaNet linear attention, spec-decode path. Runs the
+ // causal conv1d (plus activation) for the spec-decode tokens, scatters z,
+ // advances the per-seq conv cache, and returns the intermediate
+@@ -182,6 +201,85 @@
+       {spec_token, num_v_heads / tp_size},
+       torch::dtype(dtype).device(device).requires_grad(false));
+
++  // Correctness-proof lane for MTP verification.  The normal speculative
++  // convolution walks all verifier rows in one special kernel.  Replay every
++  // row through the ordinary one-token convolution instead, snapshotting the
++  // selected prior cache row before publishing each checkpoint.  Together
++  // with the matching serial recurrent path below, this makes the complete
++  // GDN transaction use the same arithmetic kernels as target-only decode.
++  if (gdn_env_truthy(
++          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT")) {
++    TORCH_CHECK(
++        num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 4 &&
++            num_actual_tokens == spec_token &&
++            spec_state_indices_tensor.size(0) == 1 &&
++            spec_state_indices_tensor.size(1) == spec_token,
++        "serial-exact GDN convolution requires one pure-spec request with "
++        "two to four verifier rows and one state-cache column per row");
++    TORCH_CHECK(
++        queue.has_property<sycl::property::queue::in_order>(),
++        "serial-exact GDN convolution requires an in-order XPU queue");
++
++    static std::once_flag serial_exact_conv_marker_once;
++    std::call_once(serial_exact_conv_marker_once, [] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT reached (r21)");
++    });
++
++    auto index_options =
++        torch::dtype(torch::kInt32).device(device).requires_grad(false);
++    auto exact_query_start_loc = torch::arange(0, 2, index_options);
++    auto accepted_column =
++        torch::clamp_min(num_accepted_tokens - 1, 0).to(torch::kLong);
++    auto source_state_indices =
++        spec_state_indices_tensor
++            .gather(1, accepted_column.unsqueeze(1))
++            .select(1, 0);
++
++    for (int64_t spec_pos = 0; spec_pos < spec_token; ++spec_pos) {
++      auto current_state_indices =
++          spec_state_indices_tensor.select(1, spec_pos);
++      auto source_snapshot = conv_state.index_select(
++          0, source_state_indices.to(torch::kLong));
++      conv_state.index_copy_(
++          0, current_state_indices.to(torch::kLong), source_snapshot);
++
++      auto q_step = q.narrow(0, spec_pos, 1);
++      auto k_step = k.narrow(0, spec_pos, 1);
++      auto v_step = v.narrow(0, spec_pos, 1);
++      auto b_step = b.narrow(0, spec_pos, 1);
++      auto a_step = a.narrow(0, spec_pos, 1);
++      auto token_step = spec_token_indx.narrow(0, spec_pos, 1);
++      gdn::causal_conv1d(
++          queue,
++          q_step,
++          k_step,
++          v_step,
++          z_active,
++          b_step,
++          a_step,
++          projected_states_qkvz_active,
++          projected_states_ba_active,
++          conv_weights,
++          conv_bias,
++          conv_state,
++          exact_query_start_loc,
++          token_step,
++          current_state_indices,
++          std::nullopt,
++          std::nullopt,
++          act_mode,
++          pad_slot_id,
++          0,
++          1,
++          0,
++          reorder_input);
++      source_state_indices = current_state_indices;
++    }
++    queue.ext_oneapi_submit_barrier();
++    return {q, k, v, b, a};
++  }
++
+   gdn::causal_conv1d(
+       queue,
+       q,
+@@ -591,6 +689,87 @@
+   auto& queue = vllm::xpu::vllmGetQueue();
+   std::optional<torch::Tensor> empty_tensor{std::nullopt};
+
++  // Experimental correctness lane for a single speculative request.  The
++  // normal spec kernel carries all verifier rows in one work-group.  This
++  // lane instead reuses the ordinary one-token recurrent kernel for every
++  // verifier row and explicitly snapshots the source cache row before each
++  // destination update.  That gives the same state transaction as target-only
++  // decoding even when adjacent speculative cache columns alias physically.
++  // Keep the gate deliberately narrow until the strict target-parity suite
++  // qualifies it.
++  if (gdn_env_truthy(
++          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT")) {
++    TORCH_CHECK(
++        num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 4 &&
++            num_actual_tokens == spec_token &&
++            spec_state_indices_tensor.size(0) == 1 &&
++            spec_state_indices_tensor.size(1) == spec_token,
++        "serial-exact GDN requires one pure-spec request with two to four "
++        "verifier rows and one state-cache column per row");
++    TORCH_CHECK(
++        queue.has_property<sycl::property::queue::in_order>(),
++        "serial-exact GDN requires an in-order XPU queue");
++
++    static std::once_flag serial_exact_marker_once;
++    std::call_once(serial_exact_marker_once, [] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT reached (r21)");
++    });
++
++    auto index_options =
++        torch::dtype(torch::kInt32).device(q.device()).requires_grad(false);
++    auto exact_query_start_loc = torch::arange(0, 2, index_options);
++    auto accepted_column =
++        torch::clamp_min(num_accepted_tokens - 1, 0).to(torch::kLong);
++    auto source_state_indices =
++        spec_state_indices_tensor
++            .gather(1, accepted_column.unsqueeze(1))
++            .select(1, 0);
++
++    for (int64_t spec_pos = 0; spec_pos < spec_token; ++spec_pos) {
++      auto current_state_indices =
++          spec_state_indices_tensor.select(1, spec_pos);
++
++      // index_select materializes the complete source row before index_copy_
++      // mutates the destination.  This is intentional: the cache allocator
++      // may alias adjacent verifier columns, and an in-place device copy is
++      // not a safe snapshot in that case.
++      auto source_snapshot = ssm_state.index_select(
++          0, source_state_indices.to(torch::kLong));
++      ssm_state.index_copy_(
++          0, current_state_indices.to(torch::kLong), source_snapshot);
++
++      auto core_step = core_attn_out_active.narrow(0, spec_pos, 1);
++      auto q_step = q.narrow(0, spec_pos, 1);
++      auto k_step = k.narrow(0, spec_pos, 1);
++      auto v_step = v.narrow(0, spec_pos, 1);
++      auto b_step = b.narrow(0, spec_pos, 1);
++      auto a_step = a.narrow(0, spec_pos, 1);
++      gdn::gated_delta_rule(
++          queue,
++          core_step,
++          q_step,
++          k_step,
++          v_step,
++          b_step,
++          a_step,
++          A_log,
++          dt_bias,
++          ssm_state,
++          exact_query_start_loc,
++          std::nullopt,
++          current_state_indices,
++          std::nullopt,
++          std::nullopt,
++          0,
++          1,
++          0);
++      source_state_indices = current_state_indices;
++    }
++    queue.ext_oneapi_submit_barrier();
++    return;
++  }
++
+   gdn::gated_delta_rule(
+       queue,
+       core_attn_out_active,
+@@ -893,4 +1072,4 @@
+         num_actual_tokens,
+         tp_size);
+   }
+-}
+\ No newline at end of file
++}

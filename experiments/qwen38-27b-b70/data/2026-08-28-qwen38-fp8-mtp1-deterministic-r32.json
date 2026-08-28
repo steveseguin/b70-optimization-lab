@@ -1,0 +1,98 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-deterministic-result.v1",
+  "date": "2026-08-28",
+  "status": "qualified",
+  "model": {
+    "repository": "Qwen/Qwen3.8-27B-FP8",
+    "revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "deployment": {
+    "hardware": "2x Intel Arc Pro B70 32 GiB",
+    "tensor_parallel_size": 2,
+    "quantization": "official block FP8 weights plus lab W8A16 activation path",
+    "kv_cache_dtype": "fp16",
+    "speculative_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 1,
+    "xpu_graph": false,
+    "inductor": true,
+    "torchinductor_deterministic": true,
+    "prefix_cache": false
+  },
+  "runtime": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31",
+    "image_id": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15",
+    "base_image_id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+    "vllm_commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9",
+    "xpu_kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783"
+  },
+  "required_environment": {
+    "TORCHINDUCTOR_DETERMINISTIC": "1",
+    "VLLM_BATCH_INVARIANT": "0",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "0",
+    "VLLM_XPU_FP8_BLOCK_W8A16": "1",
+    "VLLM_XPU_GDN_NATIVE_FALLBACK": "1",
+    "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT": "0",
+    "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH": "1",
+    "VLLM_XPU_MTP_DRAFT_EAGER": "0",
+    "VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN": "0",
+    "VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT": "0",
+    "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT": "1"
+  },
+  "benchmark_contract": {
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_tokens": 100,
+    "metric_intervals": 99,
+    "aggregation": "median-of-prompt-class-medians",
+    "temperature": 0,
+    "cached_tokens_required": 0,
+    "fresh_server_per_attempt": true,
+    "empty_compile_cache_per_attempt": true,
+    "complete_token_arrays_required": true,
+    "independent_canaries_required": true
+  },
+  "attempts": [
+    {
+      "id": "r32-A",
+      "class_balanced_decode_tok_s": 51.60690235848277,
+      "workload_gate_passed": true,
+      "independent_canary_gate_passed": true,
+      "cached_tokens_zero_prompts": 12,
+      "exact_prompts_vs_r15_a": 12,
+      "exact_prompts_vs_r15_b": 12,
+      "evidence": "qwen38-fp8-mtp1-deterministic-r32a",
+      "performance_sha256": "b6bce3b3f8e233184bbd21bfe0c9a109deb50bdf125443742f4f914fa626f75b"
+    },
+    {
+      "id": "r32-B",
+      "class_balanced_decode_tok_s": 52.23061068100377,
+      "workload_gate_passed": true,
+      "independent_canary_gate_passed": true,
+      "cached_tokens_zero_prompts": 12,
+      "exact_prompts_vs_r15_a": 12,
+      "exact_prompts_vs_r15_b": 12,
+      "exact_prompts_vs_r32_a": 12,
+      "evidence": "qwen38-fp8-mtp1-deterministic-r32b",
+      "performance_sha256": "450de39c5f45edd7f415b609179e99404f54a71bdc088c7e444b72361b5be279"
+    }
+  ],
+  "result": {
+    "pair_median_decode_tok_s": 51.91875651974327,
+    "matched_mtp0_pair_median_tok_s": 34.03159619085949,
+    "gain_vs_matched_mtp0_percent": 52.56045067227282,
+    "complete_repeat_exact_prompts": 12,
+    "complete_target_exact_prompts": 12,
+    "qualified": true
+  },
+  "implementation": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch",
+    "patch_sha256": "ff5b4f33f5596efbad75112bdbbca2bbf81b6c84688476bfa1c9ec9e546c78c4",
+    "build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh",
+    "launch": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+    "operator_proof": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-gemma-rmsnorm-mtp1-serial-r30-operator-proof.json"
+  },
+  "qualification_note": "r30 A alone was a false positive; its independent B repeat matched only 6/12. r31 without deterministic Inductor matched 9/12. Promotion occurred only after r32 A/B independently matched each other and both qualified r15 target repeats on all 12 complete token arrays."
+}

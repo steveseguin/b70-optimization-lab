@@ -1,0 +1,38 @@
+diff --git a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+index 29a95caa8..0e6ca8af1 100644
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import dataclasses
++import os
+ from importlib.util import find_spec
+ from typing import TYPE_CHECKING, Any, cast
+
+@@ -11,6 +12,7 @@ import torch.nn as nn
+ from vllm.compilation.breakable_cudagraph import BreakableCUDAGraphWrapper
+ from vllm.config import (
+     CUDAGraphMode,
++    CompilationMode,
+     VllmConfig,
+     get_layers_from_vllm_config,
+     replace,
+@@ -1288,6 +1290,17 @@ class SpecDecodeBaseProposer:
+         spec_cfg = self.speculative_config
+         base = self.vllm_config
+
++        if os.environ.get("VLLM_XPU_MTP_DRAFT_EAGER", "0") == "1":
++            logger.warning_once("VLLM_XPU_MTP_DRAFT_EAGER reached (r26)")
++            base = replace(
++                base,
++                compilation_config=replace(
++                    base.compilation_config,
++                    mode=CompilationMode.NONE,
++                    cudagraph_mode=CUDAGraphMode.NONE,
++                ),
++            )
++
+         if spec_cfg.moe_backend is not None:
+             base = replace(
+                 base,

@@ -12,6 +12,12 @@ max_model_len=${MAX_MODEL_LEN:-1024}
 max_num_seqs=${MAX_NUM_SEQS:-1}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-1024}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
+batch_invariant=${VLLM_BATCH_INVARIANT:-0}
+qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}
+qwen_gemma_rmsnorm_packed_serial_exact=${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}
+gdn_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}
+gdn_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}
+gdn_native_fallback=${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -24,6 +30,15 @@ done
   printf 'VLLM_XPU_FP8_BLOCK_W8A16 must be 0 or 1\n' >&2
   exit 1
 }
+for value_name in batch_invariant qwen_gemma_rmsnorm_batch_invariant \
+  qwen_gemma_rmsnorm_packed_serial_exact \
+  gdn_serial_exact gdn_persistent_scratch gdn_native_fallback; do
+  value=${!value_name}
+  [[ "${value}" == 0 || "${value}" == 1 ]] || {
+    printf '%s must be 0 or 1\n' "${value_name^^}" >&2
+    exit 1
+  }
+done
 
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
@@ -43,6 +58,7 @@ if [[ "${fp8_block_w8a16}" == 1 ]]; then
 fi
 
 exec docker run --rm --name "${container}" \
+  --ulimit core=0 \
   --memory 9g --memory-swap 12g \
   --device /dev/dri:/dev/dri --group-add render \
   --cap-add SYS_PTRACE --security-opt label=disable \
@@ -57,6 +73,12 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_ENABLE_XPU_GRAPH=0 \
   --env VLLM_XPU_GRAPH=0 \
   "${w8a16_env[@]}" \
+  --env VLLM_BATCH_INVARIANT="${batch_invariant}" \
+  --env VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
+  --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
+  --env VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT="${gdn_serial_exact}" \
+  --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
+  --env VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
   --env CCL_ZE_IPC_EXCHANGE=pidfd \

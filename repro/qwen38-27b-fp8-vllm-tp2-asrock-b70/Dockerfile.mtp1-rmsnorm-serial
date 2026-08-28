@@ -1,0 +1,12 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15
+FROM ${BASE_IMAGE}
+
+# Preserve the qualified compiled MTP0 target path and replay only the two
+# packed MTP1 Gemma RMSNorm rows through the original one-row native operator.
+COPY vllm/model_executor/layers/layernorm.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
+COPY vllm/model_executor/layers/layernorm.py \
+  /workspace/vllm/vllm/model_executor/layers/layernorm.py
+
+LABEL neural.download.vllm.overlay="XPU Qwen/Gemma MTP1 RMSNorm serial exact" \
+      neural.download.vllm.overlay.base="sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e"

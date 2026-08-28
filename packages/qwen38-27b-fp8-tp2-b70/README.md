@@ -3,22 +3,25 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Qualified strict headline: `34.031596 tok/s`.** Two fresh servers with
-> empty compile caches measured `34.025180` and `34.038013 tok/s` on the fixed
+> **Qualified strict headline: `51.918757 tok/s` with MTP depth 1.** Two fresh
+> servers with empty compile caches measured `51.606902` and `52.230611 tok/s` on the fixed
 > 12-prompt/six-class suite with a natural 512-token cap. Every request
 > reported zero cached tokens, both independent canary batteries passed, and
-> all 12 complete token arrays matched exactly across attempts. This packaged
-> default is MTP0 with Inductor enabled, XPU Graph disabled, deterministic GDN
-> state handling, and explicit oneCCL `Work.wait()` ordering. See the
-> [qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-deterministic-eager-baseline-and-compiled-closure.md).
+> all 12 complete token arrays matched exactly across attempts and against both
+> qualified MTP0 target repeats. This packaged default uses publisher MTP1,
+> deterministic Inductor, XPU Graph disabled, exact packed Gemma RMSNorm row
+> replay, deterministic GDN state handling, and explicit oneCCL `Work.wait()`
+> ordering. It is 52.56% faster than the matched qualified MTP0 fallback at
+> `34.031596 tok/s`. See the
+> [qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-mtp1-deterministic-r32-result.md).
 
 The old `58.391033 tok/s` dynamic-MTP center used only a 128-token output cap,
 and the `146.814418 tok/s` result used a selected 40-token fixture. Neither is
 a headline. The LocalMaxxing submission
 [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
-was premature and withdrawal is recommended. MTP1 and dynamic MTP still fail
-the fresh-server complete-output gate and remain withheld until separately
-repaired and requalified.
+was premature and withdrawal is recommended. Static MTP1 is now separately
+repaired and qualified by the strict suite; deeper dynamic MTP remains
+withheld.
 
 The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
@@ -27,11 +30,11 @@ short requests, with explicit output-isolation and semantic gates. A separate
 32K prompt with `13.740 s` TTFT. These are scoped capacity/context results,
 not replacements for the strict varied-prompt single-user headline.
 
-The package also retains a separate static publisher-MTP1 short-context
+The package also retains a separate legacy publisher-MTP1 short-context
 aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
-single-user or realistic-suite headline. Its 32K cell is intentionally
-withheld while the MTP1 strict target-parity gate is failing; no value is
-interpolated from MTP0.
+substitute for the strict single-user result and uses the older concurrency
+service configuration. No MTP1 32K value has been measured, so that cell stays
+blank rather than borrowing the MTP0 depth result.
 
 The checkpoint has one publisher MTP layer. Experimental serial reuse to MTP8
 is preserved under `experiments/` for mechanism research, but its selected
@@ -70,6 +73,9 @@ The original compliant matrix measured: W8A16 MTP0
 `68.049727`/`62.432362 tok/s`. All remain diagnostics because their paired
 complete outputs matched only `8/12`. The later deterministic compiled MTP0
 repair qualified at `34.025180`/`34.038013 tok/s` with `12/12` exact outputs.
+The later packed-RMS and deterministic-Inductor repair qualified MTP1 at
+`51.606902`/`52.230611 tok/s`, with `12/12` exact outputs across repeats and
+against both MTP0 target oracles.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
@@ -133,8 +139,24 @@ then builds the repository-local Docker overlay. The model weights are not
 modified. The validated image ID is
 `sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e`.
 
-The concurrent MTP1 profile additionally needs the pinned upstream XPU-kernel
-artifact. Build the kernel image, then place the same W8A16 overlay on top:
+The qualified MTP1 profile is a small overlay on the qualified MTP0 image.
+Build it from a dedicated empty checkout after building or acquiring that
+qualified base:
+
+```bash
+BUILD_ROOT=/path/to/empty-mtp1-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh
+```
+
+The helper applies the repository's
+[packed Gemma RMSNorm patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch)
+to pinned vLLM `ac7509e2b`, verifies the qualified base image identity, and
+builds the validated overlay. Its local validated image ID is
+`sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b`.
+
+The legacy high-concurrency MTP1 profile additionally needs the pinned
+upstream XPU-kernel artifact. Build the kernel image, then place the same W8A16
+overlay on top:
 
 ```bash
 BUILD_ROOT=/path/to/dedicated-kernel-build \
@@ -181,18 +203,16 @@ container image.
 
 ## 4. Launch, check, and benchmark
 
-For the qualified strict MTP0 service:
+For the qualified strict MTP1 service:
 
 ```bash
-IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15 \
-VLLM_XPU_FP8_BLOCK_W8A16=1 VLLM_XPU_ENABLE_XPU_GRAPH=0 CCL_P2P_ACCESS=1 \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-runtime-cache \
 MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh
 
 python3 scripts/bench-openai-realistic-suite.py \
-  --base-url http://127.0.0.1:18087 --model qwen38-fp8 \
+  --base-url http://127.0.0.1:18124 --model qwen38-fp8-block-w8a16-mtp1 \
   --api-mode completions \
   --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
   --max-tokens 512 --metric-tokens 100 --seed 42 --return-token-ids \
@@ -204,7 +224,12 @@ python3 scripts/bench-openai-realistic-suite.py \
 Run the same command against a second freshly started server and another empty
 cache directory, then compare the complete token arrays with
 [`compare-strict-attempt-outputs.py`](../../scripts/compare-strict-attempt-outputs.py).
-One run alone is measurement evidence, not a promoted reproduction.
+One run alone is measurement evidence, not a promoted reproduction. Compare
+the two complete arrays to each other and to a qualified MTP0 target oracle.
+
+For the qualified target-only MTP0 fallback, use the r15 image and launcher
+documented in the reproduction guide. Its strict two-attempt median is
+`34.031596 tok/s`.
 
 To investigate the still-withheld dynamic-MTP lane under the same fixed
 varied-prompt gate, launch its 1024-token-cap one-slot profile on another fresh

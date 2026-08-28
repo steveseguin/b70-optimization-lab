@@ -11,7 +11,20 @@ served_model=${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp1}
 max_num_seqs=${MAX_NUM_SEQS:-128}
 max_model_len=${MAX_MODEL_LEN:-256}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
-kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
+xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
+enforce_eager=${ENFORCE_EAGER:-0}
+fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
+batch_invariant=${VLLM_BATCH_INVARIANT:-0}
+qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}
+qwen_gemma_rmsnorm_packed_serial_exact=${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}
+gdn_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}
+gdn_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}
+gdn_native_fallback=${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}
+mtp_suppress_bonus=${VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN:-0}
+mtp_draft_eager=${VLLM_XPU_MTP_DRAFT_EAGER:-0}
+inductor_deterministic=${TORCHINDUCTOR_DETERMINISTIC:-0}
+kernel_head=${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}
+expected_image_id=${EXPECTED_IMAGE_ID:-}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -20,6 +33,28 @@ for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
     exit 1
   }
 done
+[[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || {
+  printf 'VLLM_XPU_ENABLE_XPU_GRAPH must be 0 or 1\n' >&2
+  exit 1
+}
+[[ "${enforce_eager}" == 0 || "${enforce_eager}" == 1 ]] || {
+  printf 'ENFORCE_EAGER must be 0 or 1\n' >&2
+  exit 1
+}
+for value_name in fp8_block_w8a16 batch_invariant qwen_gemma_rmsnorm_batch_invariant \
+  qwen_gemma_rmsnorm_packed_serial_exact \
+  gdn_serial_exact gdn_persistent_scratch gdn_native_fallback \
+  mtp_suppress_bonus mtp_draft_eager; do
+  value=${!value_name}
+  [[ "${value}" == 0 || "${value}" == 1 ]] || {
+    printf '%s must be 0 or 1\n' "${value_name^^}" >&2
+    exit 1
+  }
+done
+[[ "${inductor_deterministic}" == 0 || "${inductor_deterministic}" == 1 ]] || {
+  printf 'TORCHINDUCTOR_DETERMINISTIC must be 0 or 1\n' >&2
+  exit 1
+}
 
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
@@ -27,6 +62,10 @@ docker image inspect "${image}" >/dev/null 2>&1 || {
   printf 'image is missing: %s\nBuild the kernel and W8A16 overlays first.\n' "${image}" >&2
   exit 1
 }
+if [[ -n "${expected_image_id}" && "$(docker image inspect "${image}" --format '{{.Id}}')" != "${expected_image_id}" ]]; then
+  printf 'image identity mismatch: expected %s\n' "${expected_image_id}" >&2
+  exit 1
+fi
 [[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')" == "${kernel_head}" ]] || {
   printf 'image does not contain the required mixed-batch XPU kernel: %s\n' "${kernel_head}" >&2
   exit 1
@@ -37,7 +76,13 @@ if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
 fi
 mkdir -p "${cache_dir}"
 
+eager_args=()
+if [[ "${enforce_eager}" == 1 ]]; then
+  eager_args=(--enforce-eager)
+fi
+
 exec docker run --rm --name "${container}" \
+  --ulimit core=0 \
   --memory 9g --memory-swap 12g \
   --device /dev/dri:/dev/dri --group-add render \
   --cap-add SYS_PTRACE --security-opt label=disable \
@@ -49,8 +94,17 @@ exec docker run --rm --name "${container}" \
   --env ONEAPI_DEVICE_SELECTOR=level_zero:0,1 \
   --env VLLM_TARGET_DEVICE=xpu \
   --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
-  --env VLLM_XPU_ENABLE_XPU_GRAPH=1 \
-  --env VLLM_XPU_FP8_BLOCK_W8A16=1 \
+  --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
+  --env VLLM_XPU_FP8_BLOCK_W8A16="${fp8_block_w8a16}" \
+  --env VLLM_BATCH_INVARIANT="${batch_invariant}" \
+  --env VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
+  --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
+  --env VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT="${gdn_serial_exact}" \
+  --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
+  --env VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
+  --env VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN="${mtp_suppress_bonus}" \
+  --env VLLM_XPU_MTP_DRAFT_EAGER="${mtp_draft_eager}" \
+  --env TORCHINDUCTOR_DETERMINISTIC="${inductor_deterministic}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
   --env CCL_ZE_IPC_EXCHANGE=pidfd \
@@ -69,5 +123,6 @@ exec docker run --rm --name "${container}" \
   --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens "${max_num_batched_tokens}" \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
   --language-model-only \
+  "${eager_args[@]}" \
   --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":1}' \
   --compilation-config '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'

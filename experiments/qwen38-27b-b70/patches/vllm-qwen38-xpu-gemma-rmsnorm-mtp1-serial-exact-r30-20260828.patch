@@ -1,0 +1,68 @@
+diff --git a/vllm/model_executor/layers/layernorm.py b/vllm/model_executor/layers/layernorm.py
+index 5f9e763af..c0c352b80 100644
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Custom normalization layers."""
+
++import os
++
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+@@ -147,6 +149,12 @@ class GemmaRMSNorm(CustomOp):
+         super().__init__()
+         self.weight = nn.Parameter(torch.zeros(hidden_size))
+         self.variance_epsilon = eps
++        if os.environ.get(
++            "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT", "0"
++        ) == "1":
++            logger.warning_once(
++                "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT armed (r30)"
++            )
+
+     def forward_native(
+         self,
+@@ -154,6 +162,27 @@ class GemmaRMSNorm(CustomOp):
+         residual: torch.Tensor | None = None,
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+         """PyTorch-native implementation equivalent to forward()."""
++        if (
++            os.environ.get(
++                "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT", "0"
++            )
++            == "1"
++            and x.shape[0] == 2
++        ):
++            weight = self.weight.float() + 1.0
++            if residual is not None:
++                row0 = ir.ops.fused_add_rms_norm(
++                    x[0:1], residual[0:1], weight, self.variance_epsilon
++                )
++                row1 = ir.ops.fused_add_rms_norm(
++                    x[1:2], residual[1:2], weight, self.variance_epsilon
++                )
++                return torch.cat((row0[0], row1[0])), torch.cat(
++                    (row0[1], row1[1])
++                )
++            row0 = ir.ops.rms_norm(x[0:1], weight, self.variance_epsilon)
++            row1 = ir.ops.rms_norm(x[1:2], weight, self.variance_epsilon)
++            return torch.cat((row0, row1))
+         weight = self.weight.float() + 1.0
+         if residual is None:
+             return ir.ops.rms_norm(x, weight, self.variance_epsilon)
+@@ -166,6 +195,13 @@ class GemmaRMSNorm(CustomOp):
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+         return self.forward_native(x, residual)
+
++    def forward_xpu(
++        self,
++        x: torch.Tensor,
++        residual: torch.Tensor | None = None,
++    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
++        return self.forward_native(x, residual)
++
+
+ # --8<-- [start:rms_norm_gated]
+ @CustomOp.register("rms_norm_gated")

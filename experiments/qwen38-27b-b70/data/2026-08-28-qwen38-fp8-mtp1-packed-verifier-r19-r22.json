@@ -1,0 +1,75 @@
+{
+  "schema": "neural.download.qwen38-fp8-packed-verifier-diagnostics.v1",
+  "date": "2026-08-28",
+  "decision": "withheld-unmatched-oracle-negative",
+  "public_performance_claim": false,
+  "audit_correction": {
+    "matched_environment": false,
+    "candidate_only_environment": "VLLM_BATCH_INVARIANT=1",
+    "gemma_rmsnorm_xpu_treatment_reached": false,
+    "causal_inferences_withdrawn": true,
+    "reason": "R18 MTP0 did not receive the candidate's global batch-invariance setting, and the exact XPU GemmaRMSNorm path ignored the attempted narrow setting"
+  },
+  "target_oracle": {
+    "attempt": "eager-workwait-r18-target-A",
+    "evidence_path": "/mnt/fast-ai/evidence/qwen38-fp8-mtp0-eager-workwait-r18-target-A",
+    "class_balanced_median_tok_s": 18.26978419847406,
+    "environment_matched_to_candidates": false
+  },
+  "attempts": [
+    {
+      "attempt": "r19",
+      "classification": "abi-negative-before-inference",
+      "kernel_commit": "2dd55f380df753a10a88fcd9e96192561066e713",
+      "reason": "historical 23-argument GDN schema cannot satisfy the current 29-argument call site"
+    },
+    {
+      "attempt": "r20-eager-A",
+      "classification": "withheld-unmatched-oracle-negative",
+      "kernel_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+      "treatment": "serial ordinary recurrent rows",
+      "evidence_path": "/mnt/fast-ai/evidence/qwen38-fp8-mtp1-serial-exact-r20-eager-A",
+      "class_balanced_median_tok_s": 18.30436979743692,
+      "target_exact_prompts": 7,
+      "target_total_prompts": 12,
+      "causal_isolation_valid": false
+    },
+    {
+      "attempt": "r21-eager-A",
+      "classification": "withheld-unmatched-oracle-negative",
+      "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-r21",
+      "image_id": "sha256:ef3633222902b5911a1dc20f15851fab6debcc7f1d7c571144998cd7cf44f078",
+      "xpu_c_sha256": "e1a62e8320d1b94ed78d0bdb856638a08e4edca7e05e58d8490c23e76c2b3128",
+      "libgdn_sha256": "3722e1459fcf035fd3971502872a8bc8e3d774ef93cf262dc17e4177c6e00120",
+      "libmhc_sha256": "d4c2886a0c9cbeb9aa49f38f6bb8f0f6576edc5c51d8832a0ea47c176e558e84",
+      "treatment": "serial ordinary convolution and recurrent rows",
+      "evidence_path": "/mnt/fast-ai/evidence/qwen38-fp8-mtp1-serial-exact-r21-eager-A",
+      "class_balanced_median_tok_s": 18.023346015609906,
+      "target_exact_prompts": 7,
+      "target_total_prompts": 12,
+      "exact_vs_r20_prompts": 12,
+      "causal_isolation_valid": false
+    },
+    {
+      "attempt": "r22b-eager-A",
+      "classification": "withheld-unmatched-oracle-negative",
+      "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-no-bonus-r22",
+      "image_id": "sha256:c1eb415db656ca7a55799a6c1589631b1dc8d57909b4784c34bb16b95c76a2c4",
+      "treatment": "suppress sampler bonus column while retaining verified column zero",
+      "evidence_path": "/mnt/fast-ai/evidence/qwen38-fp8-mtp1-no-bonus-r22b-eager-A",
+      "class_balanced_median_tok_s": 10.001832223262543,
+      "target_exact_prompts": 7,
+      "target_total_prompts": 12,
+      "exact_vs_r21_prompts": 12,
+      "causal_isolation_valid": false
+    }
+  ],
+  "common_divergences_vs_mtp0": [
+    {"prompt_id": "architecture-tradeoff", "first_token_zero_based": 341},
+    {"prompt_id": "bug-report-synthesis", "first_token_zero_based": 110},
+    {"prompt_id": "code-review", "first_token_zero_based": 251},
+    {"prompt_id": "incident-retrospective", "first_token_zero_based": 392},
+    {"prompt_id": "performance-hypotheses", "first_token_zero_based": 169}
+  ],
+  "conclusion": "The candidates were correctly withheld, but the unmatched target environment prevents attributing the mismatch to GDN, the bonus token, or an operation above GDN."
+}

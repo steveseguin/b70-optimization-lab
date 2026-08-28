@@ -1,0 +1,50 @@
+diff --git a/vllm/model_executor/layers/layernorm.py b/vllm/model_executor/layers/layernorm.py
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Custom normalization layers."""
+
++import os
++
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+@@ -164,8 +166,37 @@ class GemmaRMSNorm(RMSNorm):
+         x: torch.Tensor,
+         residual: torch.Tensor | None = None,
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
++        if os.environ.get(
++            "VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT", "0"
++        ) == "1":
++            logger.warning_once(
++                "VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT reached (r24)"
++            )
++            weight = self.weight.float() + 1.0
++            if residual is not None:
++                residual_out = x + residual
++                return (
++                    rms_norm_batch_invariant(
++                        residual_out,
++                        weight,
++                        self.variance_epsilon,
++                    ),
++                    residual_out,
++                )
++            return rms_norm_batch_invariant(
++                x,
++                weight,
++                self.variance_epsilon,
++            )
+         return self.forward_native(x, residual)
+
++    def forward_xpu(
++        self,
++        x: torch.Tensor,
++        residual: torch.Tensor | None = None,
++    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
++        return self.forward_cuda(x, residual)
++
+
+ # --8<-- [start:rms_norm_gated]
+ @CustomOp.register("rms_norm_gated")

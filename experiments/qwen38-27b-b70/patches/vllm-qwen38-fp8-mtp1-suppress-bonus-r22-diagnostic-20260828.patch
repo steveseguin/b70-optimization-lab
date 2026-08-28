@@ -1,0 +1,38 @@
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4,6 +4,7 @@
+ import functools
+ import gc
+ import itertools
++import os
+ import threading
+ import time
+ from collections import defaultdict
+@@ -3777,6 +3778,27 @@
+             logits,
+             sampling_metadata,
+         )
++        if os.environ.get("VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN", "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        ):
++            if sampler_output.sampled_token_ids.shape[-1] != 2:
++                raise RuntimeError(
++                    "VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN is an MTP1-only "
++                    "diagnostic and requires exactly two sampler columns"
++                )
++            # Keep the verified replacement/accepted draft in column zero but
++            # force the next step to recompute the bonus token as an ordinary
++            # target row.  This distinguishes a shape-sensitive second
++            # verifier row from corruption in the first verified row.
++            sampled_token_ids = sampler_output.sampled_token_ids.clone()
++            sampled_token_ids[:, 1].fill_(-1)
++            sampler_output.sampled_token_ids = sampled_token_ids
++            logger.warning_once(
++                "VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN reached (r22 diagnostic)"
++            )
+         return sampler_output
+
+     def _bookkeeping_sync(
