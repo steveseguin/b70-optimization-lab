@@ -143,3 +143,30 @@ diagnostic context observation.
 
 These identities are frozen before execution. Any later change requires a new
 note, attempt, and paths.
+
+## Attempt 1 pre-request protocol stop
+
+Attempt 1 brought the frozen MTP4/8K server to health with the required 36
+cache blocks, 9,504-token reported capacity, and four 12.22-GiB offload
+receipts. The client then failed closed at its supervisor-command identity
+check because the supervisor had been invoked by a repository-relative path
+rather than the required absolute path. The exact error was observed during
+execution but its client stderr/exit transcript was not durably preserved; the
+cause is structurally consistent with the frozen client's pre-network check.
+No request artifacts or metrics snapshot exist, so `request_sent=false` is a
+control-flow inference and no zero counter totals are claimed as measurements.
+
+The failed-request sentinel produced supervisor return code 143 on this bounded
+path. Application shutdown and engine drain completed; the listener, recorded
+server group, compile path, and RPC path were absent afterward, and all four
+cards were rediscovered idle. The controlled stop also emitted the known
+AsyncLLM output-handler notice and one shared-memory cleanup warning. The
+journal has two corrected Source-514 NVMe records and no B70-addressed event.
+
+The corrected receipt is
+`data/20260828-tp4-mtp4-8448-context-attempt1-pre-request-stop.json`. The two
+identical 40-entry raw manifests verify with SHA-256
+`0fab051435905586dabcc7f19b4adae37580a27d7ae21fe1cff4d7f6aa649e01`.
+This attempt is launcher-protocol evidence only: it did not classify the
+MTP4/8K cell, receive any performance or quality credit, or alter a retained
+speed.

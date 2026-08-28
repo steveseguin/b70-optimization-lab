@@ -29,14 +29,13 @@
   "client": {
     "status": "failed-closed-before-request",
     "error": "supervisor command identity mismatch",
-    "cause": "The supervisor was invoked by a repository-relative path while the frozen client required the absolute supervisor path in /proc.",
+    "error_evidence": "Operator-observed at execution time; client stderr and exit transcript were not durably preserved.",
+    "cause": "The observed error is structurally consistent with frozen client line 48: the supervisor was invoked by a repository-relative path while the client required the absolute supervisor path in /proc.",
+    "client_stderr_or_exit_transcript_preserved": false,
     "request_sent": false,
-    "request_count": 0,
-    "prompt_tokens_total": 0,
-    "generation_tokens_total": 0,
-    "spec_decode_num_drafts_total": 0,
-    "spec_decode_num_draft_tokens_total": 0,
-    "spec_decode_num_accepted_tokens_total": 0
+    "request_sent_basis": "Control-flow inference from the frozen pre-network command-identity check plus the absence of every request artifact; no metrics snapshot was captured.",
+    "metrics_captured": false,
+    "request_artifacts_present": false
   },
   "adjudication": {
     "matrix_cell_classified": false,
@@ -48,12 +47,26 @@
   "shutdown": {
     "stop_sentinel": "STOP after failed MTP4 active-8K request",
     "supervisor_return_code": 143,
+    "supervisor_return_code_interpretation": "expected failed-request controlled-stop path",
+    "api_application_shutdown_complete": true,
+    "engine_drain_completed": true,
     "listener_present_after_cleanup": false,
+    "recorded_server_group_present_after_cleanup": false,
+    "compile_path_present_after_cleanup": false,
+    "rpc_path_present_after_cleanup": false,
+    "shutdown_notices": [
+      "known AsyncLLM output-handler EngineDeadError during the intentional controlled stop",
+      "one shared-memory resource-tracker cleanup warning"
+    ],
     "cards_discoverable_after_cleanup": 4,
-    "card_memory_used_mib": [42.8828125, 42.875, 42.87890625, 42.875],
+    "card_memory_used_mib": [42.87890625, 42.875, 42.875, 42.87109375],
     "b70_addressed_event": false,
-    "corrected_nvme_source514_records": 2
+    "corrected_nvme_source514_records": 2,
+    "classification": "pre-request-protocol-stop-followed-by-controlled-owned-shutdown-passing-cleanup-gates-and-four-card-idle-rediscovery"
   },
+  "evidence_manifest": "evidence.sha256",
+  "evidence_manifest_sha256": "0fab051435905586dabcc7f19b4adae37580a27d7ae21fe1cff4d7f6aa649e01",
+  "evidence_manifest_entries": 40,
   "tracked_sha256": {
     "identity.txt": "dd696a28cf8bef99c6bd8c8c45c5ba89e27345059c30cb3df9ef0a6546fb1d76",
     "server.log": "c26b2b485ec9a5817ce9f454bacc317bc5a7211cfb87bae19c2cca3121aafd37",
