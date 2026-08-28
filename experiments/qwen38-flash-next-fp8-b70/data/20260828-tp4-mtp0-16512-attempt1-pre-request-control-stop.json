@@ -1,0 +1,58 @@
+{
+  "schema": "qwen38-flash-next-fp8-b70-bounded-run-v1",
+  "date": "2026-08-28",
+  "status": "pre-request-control-stop",
+  "matrix_credit": false,
+  "speed_credit": false,
+  "quality_credit": false,
+  "deployment_credit": false,
+  "run_identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernels_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "graph": "off",
+    "mtp": 0,
+    "max_model_len": 16512,
+    "kv_cache_memory_bytes": 358465536,
+    "attempt": 1,
+    "port": 19673
+  },
+  "startup": {
+    "healthy": true,
+    "exact_offload_receipts": 4,
+    "reported_kv_cache_tokens": 21795,
+    "reported_maximum_concurrency": 1.32,
+    "server_log_sha256": "4665325ab1be7d824594fa465564c19b374ca562043f7771faf96cebd86add06"
+  },
+  "request": {
+    "sent": false,
+    "metrics_captured": false,
+    "reason": "The client rejected the relative-path supervisor command before its first HTTP read or request because the frozen ownership check expected the absolute script path.",
+    "client_transcript_preserved": false,
+    "absence_evidence": "No request artifacts exist and the server log contains no completion request marker."
+  },
+  "shutdown": {
+    "failure_stop_sentinel": "STOP after failed MTP0 active-16K request",
+    "supervisor_rc": 143,
+    "listener_after": false,
+    "owned_process_after": false,
+    "compile_path_after": false,
+    "rpc_path_after": false,
+    "gpu_memory_mib_after": [42.8828125, 42.87890625, 42.875, 42.87890625],
+    "b70_addressed_reset_fatal_timeout_events": 0,
+    "corrected_nvme_rxerr_records": 1,
+    "corrected_nvme_bdf": "0000:01:00.0"
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-16512-r1-attempt1",
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/supervisor-qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-16512-r1-attempt1",
+    "manifest_entries": 40,
+    "manifest_sha256": "e36b0c088e959c5e6010628fbc3d06864f98cafa8ef6eb0aed96a1c09a4739e0",
+    "manifest_verified": true,
+    "kernel_journal_sha256": "437438ed3bb2a468e6e39bf60f76599c46e8a092c3e21a37f9d45e8f90d20254"
+  },
+  "interpretation": "This is a control-flow packaging failure before any inference request, not a model, context-admission, quality, or performance result."
+}
