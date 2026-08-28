@@ -470,6 +470,25 @@ class FamilyCoverageTest(unittest.TestCase):
             [80.82005189243556, 76.90017809136465, 78.28722593298039],
         )
         self.assertEqual(deepseek["packets"][0]["featured_metric"]["value"], 78.28722593298039)
+        self.assertEqual(deepseek_run["config"]["graph_mode"], "PIECEWISE")
+        self.assertEqual(
+            deepseek["coverage_views"][0]["fixed_selectors"]["graph_mode"],
+            "PIECEWISE",
+        )
+        self.assertEqual(
+            deepseek["packets"][0]["guide"],
+            "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md",
+        )
+        deepseek_rendered = MODULE.family_page(deepseek)
+        self.assertIn('data-ml-spec="dspark:7"', deepseek_rendered)
+        self.assertIn("Open reproduction guide", deepseek_rendered)
+        self.assertNotIn("not a step-by-step install guide", deepseek_rendered)
+        index_html = (MODULE.ROOT / "index.html").read_text()
+        self.assertIn("Record strict-suite high; three-suite median-of-medians 78.29", index_html)
+        self.assertNotIn("Median high", index_html)
+        speculative_html = (MODULE.ROOT / "learn/speculative-methods.html").read_text()
+        self.assertIn("80.8", speculative_html)
+        self.assertIn("78.3 three-suite center", speculative_html)
 
         qwen35 = json.loads((MODULE.ROOT / "families/qwen-35b.json").read_text())
         qwen35_runs = {item["id"]: item for item in qwen35["run_measurements"]}

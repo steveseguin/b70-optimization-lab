@@ -5,7 +5,7 @@
   "name": "DeepSeek V4",
   "display_name": "DeepSeek V4 · Flash 180B",
   "summary": "DeepSeek's large mixture-of-experts reasoning model in a community-trimmed 180B form (about 13B active per word). A research-grade deployment: it needs all four B70 cards and an experimental checkpoint, so treat it as a look at what the biggest open models can do on this hardware, not a daily driver.",
-  "updated_at": "2026-08-24",
+  "updated_at": "2026-08-28",
   "architecture": {
     "class": "DeepSeek V4 Flash 180B sparse MoE",
     "design": "experimental uniform-K160 target with DSpark7 draft",
@@ -19,6 +19,7 @@
     "ep": [4],
     "speculative_method": ["DSpark7"],
     "draft_depth": [7],
+    "graph_mode": ["PIECEWISE"],
     "kv": ["fp8"]
   },
   "weight_revisions": [
@@ -78,7 +79,7 @@
         "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
       },
       "speculative_method": "DSpark7",
-      "config": {"tp": 4, "ep": 4, "draft_depth": 7, "graph": "piecewise", "kv": "fp8"},
+      "config": {"tp": 4, "ep": 4, "draft_depth": 7, "graph": "piecewise", "graph_mode": "PIECEWISE", "kv": "fp8"},
       "profile_id": "deepseek-v4-k160-dspark7-tp4-record-v1",
       "measurement_class": "three independent strict suites",
       "promotion_status": "closed-frontier record",
@@ -127,7 +128,8 @@
         "workload": "12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; three strict suites",
         "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
       },
-      "manifest": "results/deepseek-v4-flash-k160-b70/README.md"
+      "manifest": "results/deepseek-v4-flash-k160-b70/README.md",
+      "guide": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md"
     }
   ],
   "views": [
@@ -154,7 +156,8 @@
       "fixed_selectors": {
         "revision": "deepseek-v4-flash-180b-k160-7c360e1",
         "variant": "experimental uniform-K160 FP8/MXFP4 target",
-        "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f"
+        "runtime": "vLLM XPU record stack 264c7f2/3131567/48fda4f",
+        "graph_mode": "PIECEWISE"
       },
       "rows": ["DSpark7"],
       "columns": [1, 2, 4],

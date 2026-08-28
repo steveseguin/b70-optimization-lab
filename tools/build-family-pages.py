@@ -2787,15 +2787,21 @@ def ml_quant_label(variant_text: str) -> str:
     return "q4"
 
 
-def ml_spec_label(config: dict[str, Any], variant_text: str) -> str:
+def ml_spec_label(
+    config: dict[str, Any],
+    variant_text: str,
+    speculative_method: str | None = None,
+) -> str:
     mtp = config.get("mtp")
     if isinstance(mtp, int) and mtp > 0:
         return f"mtp:{mtp}"
-    text = str(variant_text or "").lower()
+    text = f"{variant_text or ''} {speculative_method or ''}".lower()
     if "dflash" in text:
-        return "dflash:11"
+        depth = config.get("draft_depth")
+        return f"dflash:{depth if isinstance(depth, int) and depth > 0 else 11}"
     if "dspark" in text:
-        return "dspark:7"
+        depth = config.get("draft_depth")
+        return f"dspark:{depth if isinstance(depth, int) and depth > 0 else 7}"
     return "none"
 
 
@@ -2836,7 +2842,7 @@ def family_projection_attrs(family: dict[str, Any], hero: dict[str, Any] | None)
         f' data-ml-quant-label="{esc(hero.get("variant") or "")}" data-ml-runtime="{esc(ml_runtime_key(hero.get("runtime")))}"'
         f' data-ml-runtime-label="{esc(hero.get("runtime") or "")}" data-ml-cards="{esc(cards)}"'
         f' data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70"'
-        f' data-ml-spec="{esc(ml_spec_label(config, hero.get("variant")))}"'
+        f' data-ml-spec="{esc(ml_spec_label(config, hero.get("variant"), hero.get("speculative_method")))}"'
         + (' data-ml-strategy="tensor"' if int(cards or 1) > 1 and ml_runtime_key(hero.get("runtime")) == "llama_cpp" else "")
         + f' data-ml-prompt="{prompt_tokens}" data-ml-output="{output_tokens}"'
     )
