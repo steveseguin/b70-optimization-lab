@@ -121,6 +121,9 @@ def family_topology(family):
 
 
 def family_speedup(family):
+    curated = family.get("speedup_label")
+    if isinstance(curated, str) and curated.strip():
+        return curated.strip()
     dimensions = family.get("dimensions") or {}
     mtp = dimensions.get("mtp") or []
     methods = [str(value) for value in dimensions.get("speculative_method") or []]

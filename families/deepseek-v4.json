@@ -4,6 +4,7 @@
   "primary_packet_id": "deepseek-v4-flash-k160-b70-80tps-20260718",
   "name": "DeepSeek V4",
   "display_name": "DeepSeek V4 · Flash 180B",
+  "speedup_label": "target / MTP0–4 / DSpark5–8",
   "summary": "DeepSeek's large mixture-of-experts reasoning model in a community-trimmed 180B form (about 13B active per word). A research-grade deployment: it needs all four B70 cards and an experimental checkpoint, so treat it as a look at what the biggest open models can do on this hardware, not a daily driver.",
   "updated_at": "2026-08-28",
   "architecture": {
@@ -14,11 +15,16 @@
   "dimensions": {
     "weight_revision": ["deepseek-v4-flash-180b-community"],
     "weight_quantization": ["experimental uniform-K160 FP8/MXFP4 target"],
-    "runtime": ["vLLM XPU record stack 264c7f2/3131567/48fda4f"],
+    "runtime": [
+      "vLLM XPU target-only stack a681dbb/6522849/48fda4f",
+      "vLLM XPU MTP1 stack 4a6fd87/18a44f4/48fda4f",
+      "vLLM XPU record stack 264c7f2/3131567/48fda4f",
+      "vLLM XPU DSpark DEV width stack 2289554/3131567/48fda4f"
+    ],
     "tp": [1, 2, 4],
     "ep": [4],
-    "speculative_method": ["DSpark7"],
-    "draft_depth": [7],
+    "speculative_method": ["target-only", "MTP1", "MTP2", "MTP3", "MTP4", "DSpark", "DSpark7"],
+    "draft_depth": [0, 1, 2, 3, 4, 5, 6, 7, 8],
     "graph_mode": ["PIECEWISE"],
     "kv": ["fp8"]
   },
@@ -77,6 +83,68 @@
   },
   "run_measurements": [
     {
+      "id": "deepseek-v4-k160-tp4-ep-target-only-strict",
+      "state": "lab-measured",
+      "revision": "deepseek-v4-flash-180b-community",
+      "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
+      "variant": "experimental uniform-K160 FP8/MXFP4 target",
+      "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+      "runtime": "vLLM XPU target-only stack a681dbb/6522849/48fda4f",
+      "runtime_identity": {
+        "vllm": "a681dbb2b4b19c2c5a964817095b5f8c1f27ff48",
+        "xpu_kernels": "6522849b02894273b1e779b3c115527b5cdf3756",
+        "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+      },
+      "speculative_method": "target-only",
+      "config": {"tp": 4, "ep": 4, "draft_depth": 0, "verifier_width": 1, "graph": "piecewise", "graph_mode": "PIECEWISE", "kv": "fp8"},
+      "profile_id": "deepseek-v4-k160-target-only-tp4-record-v1",
+      "measurement_class": "four independent strict suites",
+      "promotion_status": "qualified historical target-only record",
+      "quality_scope": "48/48 strict rows cache-zero; 70/70 exact graph captures",
+      "workload": "12 unique cold prompts per suite, 128 output tokens, median generated tokens 1-100 after TTFT; four strict suites",
+      "metrics": {
+        "decode_tok_s": [43.766673266271965, 43.69855047858043, 43.69421019994415, 43.66790844592444],
+        "wall_output_tok_s": [39.28124709626695, 38.98299402541498],
+        "ttft_ms": [308.684051502496, 330.7663530067657]
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 0, "value": 43.766673266271965, "label": "qualified target-only high"}
+      ],
+      "aggregation": {"decode_tok_s": "four retained strict-suite medians; qualified high 43.766673266271965"},
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/m1-direct-routed-moe-wideepoch-record-20260715.json"
+    },
+    {
+      "id": "deepseek-v4-k160-tp4-ep-mtp1-strict",
+      "state": "lab-measured",
+      "revision": "deepseek-v4-flash-180b-community",
+      "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
+      "variant": "experimental uniform-K160 FP8/MXFP4 target",
+      "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+      "runtime": "vLLM XPU MTP1 stack 4a6fd87/18a44f4/48fda4f",
+      "runtime_identity": {
+        "vllm": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+        "xpu_kernels": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982",
+        "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+      },
+      "speculative_method": "MTP1",
+      "config": {"tp": 4, "ep": 4, "draft_depth": 1, "verifier_width": 2, "graph": "piecewise", "graph_mode": "PIECEWISE", "kv": "fp8"},
+      "profile_id": "deepseek-v4-k160-mtp1-tp4-record-v1",
+      "measurement_class": "candidate-control-candidate portfolio gate",
+      "promotion_status": "qualified historical MTP1 record",
+      "quality_scope": "36 qualifying rows cache-zero; 70/70 ordered exact suites; unchanged target verifies accepted tokens",
+      "workload": "12 unique cold prompts, 128 output tokens, median generated tokens 1-100 after TTFT; candidate-control-candidate portfolio gate",
+      "metrics": {
+        "decode_tok_s": [62.51566129683944, 63.85130111953857],
+        "wall_output_tok_s": [53.22380403046468],
+        "ttft_ms": [334.09914300136734]
+      },
+      "sample_annotations": [
+        {"metric": "decode_tok_s", "index": 1, "value": 63.85130111953857, "label": "qualified MTP1 record candidate"}
+      ],
+      "aggregation": {"decode_tok_s": "two candidate arms around a same-binary control; qualified high 63.85130111953857"},
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/qnorm-routeportfolio-20260716/summary.json"
+    },
+    {
       "id": "deepseek-v4-k160-tp4-ep-dspark7-strict",
       "state": "lab-measured",
       "revision": "deepseek-v4-flash-180b-community",
@@ -108,7 +176,38 @@
       "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/dspark-sharded-target-argmax-record-20260718.json"
     }
   ],
-  "series_measurements": [],
+  "series_measurements": [
+    {
+      "id": "deepseek-v4-k160-tp4-dspark-dev-width-screen",
+      "state": "lab-screened",
+      "revision": "deepseek-v4-flash-180b-community",
+      "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
+      "variant": "experimental uniform-K160 FP8/MXFP4 target",
+      "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+      "runtime": "vLLM XPU DSpark DEV width stack 2289554/3131567/48fda4f",
+      "runtime_identity": {
+        "vllm": "22895545b96c9e16a7604db925dc05b531dbc0d0",
+        "xpu_kernels": "31315673737d95da0f79179c8f755260ef02c1d6",
+        "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+      },
+      "speculative_method": "DSpark",
+      "profile_id": "deepseek-v4-k160-dspark-width-dev-v1",
+      "measurement_class": "public-plus-DEV same-binary width screen",
+      "promotion_status": "DEV-only; no held-out reveal and no record candidate",
+      "quality_scope": "20/22 prompts reached the timing window; all completed policies passed ordered exact canaries and cache-zero checks",
+      "config": {"tp": 4, "ep": 4, "graph": "piecewise", "graph_mode": "PIECEWISE", "kv": "fp8", "max_model_len": 256, "max_num_batched_tokens": 256},
+      "workload": "12 public continuity plus 10 explicitly DEV prompts; 20 rows reached the 100-token timing window; one active generation",
+      "axis": "draft_depth",
+      "points": [
+        {"x": 5, "decode_tok_s": 76.314666, "effective_tokens_per_verification": 3.265476},
+        {"x": 6, "decode_tok_s": 72.803326, "effective_tokens_per_verification": 3.465234},
+        {"x": 7, "decode_tok_s": 79.801765, "effective_tokens_per_verification": 3.507042},
+        {"x": 8, "decode_tok_s": 73.834972, "effective_tokens_per_verification": 3.470812}
+      ],
+      "quality": "DEV diagnostic only. M7 remained 1.26% below the protected 80.820052 qualified record, so no held-out candidate or submission followed.",
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-19-dspark-no-training-speculation-screen.md"
+    }
+  ],
   "estimates": [],
   "packets": [
     {
@@ -156,9 +255,55 @@
       "series": [
         {"label": "experimental K160 + DSpark7", "measurement_ids": ["deepseek-v4-k160-tp4-ep-dspark7-strict"], "x_from": "config.tp"}
       ]
+    },
+    {
+      "id": "deepseek-v4-dspark-dev-width",
+      "title": "DSpark width screen",
+      "subtitle": "Same patched DEV binary and K160 target · TP4+EP4 · PIECEWISE · FP8 KV · public+DEV prompts · screened, not promotion evidence",
+      "x_label": "DSpark draft tokens",
+      "discrete": true,
+      "metrics": ["decode_tok_s", "effective_tokens_per_verification"],
+      "series": [
+        {"label": "DSpark DEV widths", "measurement_ids": ["deepseek-v4-k160-tp4-dspark-dev-width-screen"]}
+      ]
     }
   ],
   "coverage_views": [
+    {
+      "id": "deepseek-v4-k160-mtp-by-tp",
+      "label": "attached MTP depth × TP",
+      "fixed": "Exact experimental K160 artifact · PIECEWISE · FP8 KV. Historical TP4 rows use EP4 and retain their exact differing runtime identities; rates are not transferred across them. The approximately 103.1 GB on-disk target does not fit fully resident at TP1 or TP2 on 32/64 GiB; CPU offload is outside this view.",
+      "decision_note": "MTP depth counts drafted tokens; verifier width is depth + 1. MTP3 is the rejected three-draft/four-row diagnostic. The evidence-based post-MTP3 stop decision left MTP4 unlaunched.",
+      "row_axis": {"key": "speculative_method", "label": "Method", "prefix": ""},
+      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "fixed_selectors": {
+        "revision": "deepseek-v4-flash-180b-community",
+        "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1",
+        "variant": "experimental uniform-K160 FP8/MXFP4 target",
+        "quantization": "experimental uniform-K160 FP8/MXFP4 target",
+        "graph_mode": "PIECEWISE",
+        "kv": "fp8"
+      },
+      "rows": ["target-only", "MTP1", "MTP2", "MTP3", "MTP4"],
+      "columns": [1, 2, 4],
+      "cells": {
+        "target-only:1": {"state": "unsupported", "label": "weights do not fit", "reason": "The approximately 103.1 GB on-disk K160 target cannot fit fully resident on one 32 GiB B70; CPU offload is outside this view."},
+        "target-only:2": {"state": "unsupported", "label": "weights do not fit", "reason": "The approximately 103.1 GB on-disk K160 target cannot fit fully resident on two 32 GiB B70s; CPU offload is outside this view."},
+        "target-only:4": {"state": "lab-measured", "label": "43.767 qualified high", "evidence_id": "deepseek-v4-k160-tp4-ep-target-only-strict"},
+        "MTP1:1": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds one B70 before the attached MTP layer is considered."},
+        "MTP1:2": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds two B70s before the attached MTP layer is considered."},
+        "MTP1:4": {"state": "lab-measured", "label": "63.851 qualified high", "evidence_id": "deepseek-v4-k160-tp4-ep-mtp1-strict"},
+        "MTP2:1": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds one B70; repeated-layer drafting cannot change target capacity."},
+        "MTP2:2": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds two B70s; repeated-layer drafting cannot change target capacity."},
+        "MTP2:4": {"state": "closed", "label": "no valid rate", "reason": "M=3 capture and 10/10 exact pre-hang rows passed, but the second draft accepted only 0.5–2.2% and realistic traffic stopped before a valid suite completed."},
+        "MTP3:1": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds one B70; repeated-layer drafting cannot change target capacity."},
+        "MTP3:2": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds two B70s; repeated-layer drafting cannot change target capacity."},
+        "MTP3:4": {"state": "quarantined", "label": "D46.247 · incomplete", "reason": "Only 8/10 rows reached the timing window; the third draft accepted 0–3.2%, so the 46.247281 diagnostic is not a valid endpoint result.", "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/mwidth-sequential-verifier-20260718.json"},
+        "MTP4:1": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds one B70; repeated-layer drafting cannot change target capacity."},
+        "MTP4:2": {"state": "unsupported", "label": "weights do not fit", "reason": "The fully resident target already exceeds two B70s; repeated-layer drafting cannot change target capacity."},
+        "MTP4:4": {"state": "closed", "label": "not launched", "reason": "The evidence-based post-MTP3 stop decision closed four drafted tokens after the third proposal accepted at most 3.2%. No MTP4 throughput exists."}
+      }
+    },
     {
       "id": "deepseek-v4-spec-by-tp",
       "label": "speculation × TP",
@@ -175,13 +320,31 @@
       "rows": ["DSpark7"],
       "columns": [1, 2, 4],
       "cells": {
-        "DSpark7:1": {"state": "missing", "label": "no stored lane"},
-        "DSpark7:2": {"state": "missing", "label": "no stored lane"},
+        "DSpark7:1": {"state": "unsupported", "label": "weights do not fit", "reason": "The approximately 103.1 GB on-disk K160 target cannot fit fully resident on one 32 GiB B70, before the DSpark draft pack is considered; CPU offload is outside this view."},
+        "DSpark7:2": {"state": "unsupported", "label": "weights do not fit", "reason": "The approximately 103.1 GB on-disk K160 target cannot fit fully resident on two 32 GiB B70s, before the DSpark draft pack is considered; CPU offload is outside this view."},
         "DSpark7:4": {"state": "lab-measured", "label": "78.287 MoM; 80.820 high", "evidence_id": "deepseek-v4-k160-tp4-ep-dspark7-strict", "packet_id": "deepseek-v4-flash-k160-b70-80tps-20260718"}
       }
     }
   ],
   "family_closures": [
+    {
+      "selectors": {"revision": "deepseek-v4-flash-180b-community", "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1", "speculative_method": "MTP2", "draft_depth": 2, "tp": 4},
+      "state": "closed",
+      "reason": "Repeated use of the attached single MTP layer stopped before a valid suite completed; its second proposal accepted only 0.5–2.2% on realistic traffic.",
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp2-reuse-deadlock-closure.md"
+    },
+    {
+      "selectors": {"revision": "deepseek-v4-flash-180b-community", "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1", "speculative_method": "MTP3", "draft_depth": 3, "tp": 4},
+      "state": "quarantined",
+      "reason": "The three-draft/four-row endpoint produced only eight eligible timing rows at 46.247281 tok/s; the third proposal accepted 0–3.2%, so the incomplete screen is diagnostic only.",
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/data/mwidth-sequential-verifier-20260718.json"
+    },
+    {
+      "selectors": {"revision": "deepseek-v4-flash-180b-community", "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1", "speculative_method": "MTP4", "draft_depth": 4, "tp": 4},
+      "state": "closed",
+      "reason": "True MTP4 was not launched because the evidence-based post-MTP3 decision rejected deeper repeated-layer work after near-zero third-proposal acceptance.",
+      "evidence": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sequential-mwidth-verifier-and-predictor-pivot.md"
+    },
     {
       "selectors": {"revision": "deepseek-v4-flash-180b-community", "artifact_id": "deepseek-v4-flash-180b-k160-7c360e1", "frontier": "configuration-sweeps"},
       "state": "closed",

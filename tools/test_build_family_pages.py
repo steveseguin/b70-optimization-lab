@@ -354,7 +354,6 @@ class FamilyCoverageTest(unittest.TestCase):
         # data/qwen36-35b-autoround-b70-concurrency-20260824.json), so the
         # no-invented-curves pin no longer applies to it.
         expected = {
-            "deepseek-v4",
             "deepseek-coder-v2",
             "glm-4-7",
             "mistral-small-3-2",
@@ -393,6 +392,24 @@ class FamilyCoverageTest(unittest.TestCase):
                     ),
                     "not-scored",
                 )
+
+        deepseek = json.loads(
+            (MODULE.ROOT / "families/deepseek-v4.json").read_text()
+        )
+        deepseek_series = {
+            item["id"]: item for item in deepseek["series_measurements"]
+        }
+        self.assertEqual(
+            deepseek_series["deepseek-v4-k160-tp4-dspark-dev-width-screen"][
+                "points"
+            ],
+            [
+                {"x": 5, "decode_tok_s": 76.314666, "effective_tokens_per_verification": 3.265476},
+                {"x": 6, "decode_tok_s": 72.803326, "effective_tokens_per_verification": 3.465234},
+                {"x": 7, "decode_tok_s": 79.801765, "effective_tokens_per_verification": 3.507042},
+                {"x": 8, "decode_tok_s": 73.834972, "effective_tokens_per_verification": 3.470812},
+            ],
+        )
 
     def test_new_family_measurements_and_qwen_sibling_boundary_are_exact(self) -> None:
         expected = {
@@ -464,7 +481,10 @@ class FamilyCoverageTest(unittest.TestCase):
                     self.assertEqual(by_id[measurement_id]["metrics"]["ttft_ms"], ttft)
 
         deepseek = json.loads((MODULE.ROOT / "families/deepseek-v4.json").read_text())
-        deepseek_run = deepseek["run_measurements"][0]
+        deepseek_runs = {
+            item["id"]: item for item in deepseek["run_measurements"]
+        }
+        deepseek_run = deepseek_runs["deepseek-v4-k160-tp4-ep-dspark7-strict"]
         self.assertEqual(
             deepseek_run["metrics"]["decode_tok_s"],
             [80.82005189243556, 76.90017809136465, 78.28722593298039],
@@ -476,6 +496,23 @@ class FamilyCoverageTest(unittest.TestCase):
             "PIECEWISE",
         )
         self.assertEqual(
+            deepseek_runs["deepseek-v4-k160-tp4-ep-target-only-strict"][
+                "metrics"
+            ]["decode_tok_s"][0],
+            43.766673266271965,
+        )
+        self.assertEqual(
+            deepseek_runs["deepseek-v4-k160-tp4-ep-mtp1-strict"]["metrics"]
+            ["decode_tok_s"][-1],
+            63.85130111953857,
+        )
+        mtp_cells = deepseek["coverage_views"][0]["cells"]
+        self.assertEqual(mtp_cells["MTP3:4"]["state"], "quarantined")
+        self.assertIn("46.247", mtp_cells["MTP3:4"]["label"])
+        self.assertEqual(mtp_cells["MTP4:4"]["state"], "closed")
+        self.assertEqual(mtp_cells["MTP4:4"]["label"], "not launched")
+        self.assertEqual(mtp_cells["target-only:1"]["state"], "unsupported")
+        self.assertEqual(
             deepseek["packets"][0]["guide"],
             "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md",
         )
@@ -486,6 +523,9 @@ class FamilyCoverageTest(unittest.TestCase):
         index_html = (MODULE.ROOT / "index.html").read_text()
         self.assertIn("Record strict-suite high; three-suite median-of-medians 78.29", index_html)
         self.assertNotIn("Median high", index_html)
+        model_index_html = (MODULE.ROOT / "models/index.html").read_text()
+        self.assertIn("target / MTP0–4 / DSpark5–8", model_index_html)
+        self.assertNotIn("target-only / MTP1 / MTP2 / MTP3 / MTP4", model_index_html)
         speculative_html = (MODULE.ROOT / "learn/speculative-methods.html").read_text()
         self.assertIn("80.8", speculative_html)
         self.assertIn("78.3 three-suite center", speculative_html)
