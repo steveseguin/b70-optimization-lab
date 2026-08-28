@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-client-timeout-no-output",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-3072-r1",
+  "attempt": 2,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-3072-r1-attempt2",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 1,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 3072,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 376569856,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp1-3072-headroom32-attempt2.sh",
+    "launcher_sha256": "aa6f6b17c07be9d00699da3244553f905fc2222cff189ecae61d568e86c3b893"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 32,
+    "cache_tokens_reported": 7561,
+    "maximum_concurrency_at_3072": 2.46,
+    "model_load_seconds_by_rank": [98.758287, 99.315955, 99.365658, 99.053323],
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "status": "client-timeout-zero-byte-completion-body",
+    "requested_prompt_tokens": 2048,
+    "requested_completion_tokens": 128,
+    "client_timeout_seconds": 360,
+    "completion_http_status_class": "2xx",
+    "completion_response_body_bytes": 0,
+    "completion_http_duration_seconds": 360.12530535901897,
+    "request_receipt_written": false,
+    "output_tokens_returned": 0,
+    "speed_measurement": null,
+    "post_client_bound_engine_diagnostic": {
+      "computed_prompt_tokens": 448,
+      "output_tokens": 0,
+      "scheduled_tokens": 64,
+      "spec_tokens_to_schedule": 1,
+      "kv_cache_usage_fraction": 0.32258064516129037,
+      "interpretation": "This snapshot was emitted with the fatal engine diagnostic after the client bound expired and before shutdown began. It supports partial internal prompt work and zero output, but it is not a completed request or a performance timing result."
+    },
+    "metrics_after_timeout": {
+      "prompt_tokens_total": 0,
+      "generation_tokens_total": 0,
+      "spec_decode_drafts_total": 0,
+      "spec_decode_draft_tokens_total": 0,
+      "spec_decode_accepted_tokens_total": 0,
+      "successful_or_finished_request_total": 0,
+      "interpretation": "The vLLM completed-request, token, and MTP counters contained no completed request accounting; separate HTTP instrumentation recorded one 2xx completion exchange with a zero-byte body."
+    },
+    "shared_memory_wait_markers_during_request": 5,
+    "metrics_endpoint_after_timeout": "reachable",
+    "subsequent_engine_failure": {
+      "status": "sample_tokens-rpc-timeout",
+      "observed_after_client_bound": true,
+      "interpretation": "The engine reported its own fatal timeout after the client bound expired. The evidence does not establish that either timeout caused the other."
+    }
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "The preregistered first request had no completion body or output token recorded when the fixed client bound expired."
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP1/active-2K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "protected_results_unchanged": [
+      "MTP1 configured-512 research screen",
+      "MTP1 exact-4K headroom32 research screen",
+      "MTP2 and MTP3 active-2K quarantines",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material first-request completion treatment, a new preregistration, and a fresh four-rank preflight after the recorded post-failure resets."
+  },
+  "shutdown": {
+    "api_application_shutdown_complete": true,
+    "worker_cleanups_completed": false,
+    "worker_cleanup_interpretation": "Workers entered cleanup, but no per-worker completion lines were emitted before the API and process manager completed shutdown.",
+    "engine_resets_in_post_failure_teardown_window": {
+      "addresses": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+      "compute_class_resets": 4,
+      "copy_class_resets": 4
+    },
+    "cards_discoverable_after_cleanup": 4,
+    "listener_present_after_cleanup": false,
+    "residual_processes_after_cleanup": 0,
+    "classification": "bounded-stop-followed-by-four-card-engine-resets-and-device-rediscovery",
+    "recovery_limit": "Device discovery passed, but no post-reset four-rank collective was run; the next launch must repeat that preflight."
+  },
+  "system_observations": {
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "count": 5,
+      "observed": true,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as host context; no causal attribution is made."
+    }
+  },
+  "tracked_sha256": {
+    "filesystem-preflight.txt": "74a3592f9f81a6e808af69845906ac66755e80177868f28845ea866c9ccfa0fe",
+    "health.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "identity.txt": "8b3358646a8a4bee8e2f70e27b84bd7d5698abb009b5eb17fb0dfdcf9791862d",
+    "input-sha256sums.txt": "0d0b6039ed0f52881f4d0a417a2be844bcf702a33ca8011e4fdf2648046c409e",
+    "kernel-journal-window.txt": "be21ff441672375812750c2868862417f5709918b371eb6cc015b86b7e7de158",
+    "metrics-after-request1-timeout.prom": "f8843e5251f472968d580b1a972cb2090bdf5869375a809b6e71b38b0cbdb608",
+    "metrics-before-request1.prom": "e98c15ee5d4a36ddffe6ecfe0e3c580d2fe44a0cd54a691cbcab6716b3b24561",
+    "models.json": "a2326183d2d873bee2d5679bfc3c3e8360004dfbce84e191efa3a34a16a21f97",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "postflight.txt": "9f4e71b9dfed0a829962ddef7e34df470a4362f916e6629759ffeb924363e902",
+    "request1-failure.txt": "2355620da73d803cdc7cca582504d5631761269387c63ecf42b20901e6008922",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "server-command.shell.txt": "e4b80c7926b70e482c98655b093f85bfb0951159d95a287e69e9286166c2216e",
+    "server.log": "a86a46c3967e95afb86723e754f55ba6efb3a03a65326244625ee2bc32a829eb",
+    "staged-runtime-preflight.txt": "9dd1bfbbf822645eba1f9e81ec4eac52da45d1bef2561b4cb9955d76a72ba922",
+    "xccl-tp4-preflight.log": "276541247708b429e7571d10531b99e6c6028ca9d0917fc3ccaee3176dde1d79",
+    "xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu-stats-0.json": "0a6e5e82163ef539d0d95ed3492ae3a39f9fd61e26a0feaab35b9f85f60d290b",
+    "xpu-stats-1.json": "d9099c544c0ac5115ecdb528247b3731268e20ca44250e3b2f154469e166bcb4",
+    "xpu-stats-2.json": "7347b00d52f19d1f357789a338d9399a829fffe6286830d07bca11d4e52cc55e",
+    "xpu-stats-3.json": "4bff94f6c688f2b8569519b78d5d22c8f6f9b28d088f20b3357a84a7799b725b"
+  }
+}

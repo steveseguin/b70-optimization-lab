@@ -121,10 +121,26 @@ four-rank, placement, cache, capacity, and health gates, then stopped during
 its first request after 768 computed prompt tokens with no output. The fixed
 300-second worker-response gate fired; request two was not sent and the
 separate active-2K boot did not run. This retains MTP1/1K as a bounded negative
-and leaves MTP1/2K missing. MTP1/512 and exact-4K remain unchanged. Do not
+under that combined stop rule. MTP1/512 and exact-4K remain unchanged. Do not
 retry the 1K arm without a material first-request completion fix and a fresh
 four-rank boot. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.
+
+The separately preregistered standalone MTP1 active-2K arm is now also a
+bounded negative. Its local-NVMe boot passed every source/runtime, four-rank,
+placement, 32-block cache, capacity, identity, and health gate, exposing 7,561
+cache tokens. The first exact-2K exchange had a zero-byte completion body and
+no output token recorded when the fixed 360-second client bound expired. The
+subsequent engine diagnostic reported 448 computed prompt tokens and zero
+output, and the engine independently
+reported its own sampling timeout. Request two was not sent and no speed or
+quality credit is authorized. The post-failure teardown window recorded one
+compute- and one copy-class reset on every card; all four devices were
+discoverable afterward with no listener or residual model process, but no
+post-reset collective was run. MTP1/512, exact-4K, and all captured speeds
+remain unchanged. Any repeat requires a material first-request completion
+treatment, a new preregistration, and a fresh four-rank preflight. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json`.
 
 The separately preregistered MTP3 active-2K arm also closes as a quarantine,
 for a different reason. Its local-NVMe boot passed source/runtime, four-rank,

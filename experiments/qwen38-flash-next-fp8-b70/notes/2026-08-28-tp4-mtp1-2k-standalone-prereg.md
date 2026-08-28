@@ -50,3 +50,33 @@ engine gate, change cache allocation, warm the shape, or reuse a server. The
 arm is capped at one boot, two requests, and 35 GPU wall minutes. A pass adds
 only this Grade-C cell; a stop is a retained quarantine. Neither changes MTP1
 512/4K, MTP1/1K, MTP2/2K, MTP3/2K, featured results, or captured speeds.
+
+## Outcome
+
+Bounded negative; no retry. The local-NVMe server passed every startup gate,
+loaded 32.06 GiB on each rank in 98.76--99.37 seconds, exposed exactly 32
+cache blocks / 7,561 tokens, and its metrics endpoint remained reachable at
+the client-timeout scrape. The sealed exact-2K exchange had a 2xx HTTP status
+but a zero-byte completion body and no output token recorded when the fixed
+360-second client bound expired. One second later, the engine independently
+reported its own `sample_tokens` RPC timeout. Its final scheduler diagnostic
+showed 448 computed prompt tokens and zero output; vLLM completed-request,
+token, and MTP counters remained zero. The evidence does not establish that
+either timeout caused the other. Request two was not sent, no performance
+timing result exists, and
+neither speed nor quality receives credit.
+
+API and process-manager shutdown completed, but the post-failure teardown
+window then recorded one compute-class and one copy-class engine reset on each
+of the four B70 addresses. All four cards were discoverable afterward, with no
+listener or residual process; no post-reset collective was run, so the next
+launch must repeat that preflight.
+
+Five corrected NVMe receiver-link events are retained as non-causal host
+context. This closes TP4/EP4/eager/text/native-MTP1 active 2K as a quarantine;
+configured-512 and exact-4K MTP1 passes and all captured rates remain intact.
+Any repeat requires a material first-request completion treatment, a new
+preregistration, and a fresh four-rank preflight.
+
+Compact receipt:
+`../data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json`.

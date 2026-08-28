@@ -117,12 +117,12 @@ fresh-boot stability, remain production work. The 16K/24K/32K MTP0 expansion
 is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
 MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
-MTP4 at exact 4K and MTP1 at active 1K are quarantined for separate stopped-
-request events. Target-only official-thinking quality now passes. The first
-MTP3 transfer attempt returned 19/19 correct completed answers but is
-unqualified after a repeated-session runtime stop; MTP1 active 2K, graph,
-deeper context, vision, fresh-server determinism, clean-host replay, and a
-sealed deployment package remain explicit gaps.
+MTP4 at exact 4K and MTP1 at active 1K and 2K are quarantined for separate
+stopped-request events. Target-only official-thinking quality now passes. The
+first MTP3 transfer attempt returned 19/19 correct completed answers but is
+unqualified after a repeated-session runtime stop; graph, deeper context,
+vision, fresh-server determinism, clean-host replay, and a sealed deployment
+package remain explicit gaps.
 
 ## Matched TP4 MTP1 screen
 
@@ -280,9 +280,39 @@ host context without assigning causality.
 
 This is a bounded negative, not a performance row. It grants no speed or
 quality credit and does not alter either the passing MTP1 512 screen or the
-passing exact-4K headroom recipe. Active 2K remains missing rather than failed.
+passing exact-4K headroom recipe. The later standalone active-2K arm is
+classified separately below.
 Receipt:
 [`20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json).
+
+## Quarantined exact-2K TP4 MTP1 screen
+
+The separately preregistered standalone active-2K arm retained the same
+current source, staged runtime, TP4/EP4 eager path, selective host placement,
+and 32-block allocation, while using configured maximum 3,072 and the local-
+NVMe model. Every source/runtime, four-rank, placement, cache, capacity,
+identity, and health gate passed. All four ranks loaded 32.06 GiB in
+98.76--99.37 seconds, and the server exposed 7,561 cache tokens / 2.46x
+reported capacity.
+
+The first exact-2K exchange had a 2xx HTTP status but a zero-byte completion
+body and no output token recorded when the fixed 360-second client bound
+expired. The subsequent engine diagnostic showed 448 computed prompt tokens,
+64 scheduled next, and zero output. vLLM completed-request, token, and MTP
+counters remained zero. The engine independently reported its own
+sampling RPC timeout; the evidence does not establish that either timeout
+caused the other. Request two was not sent and no speed result exists.
+
+The post-failure teardown window recorded one compute-class and one copy-class
+reset on each of the four B70 addresses. No listener or residual model process
+remained and all four devices were discoverable afterward, but no post-reset
+collective was run. Five corrected NVMe receiver-link events are retained as
+non-causal host context. This is a bounded negative with no speed, quality, or
+deployment credit. It leaves the passing MTP1 configured-512 and exact-4K
+cells and all captured rates unchanged. Any repeat requires a material first-
+request completion treatment, a new preregistration, and a fresh four-rank
+preflight. Receipt:
+[`20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json).
 
 ## Quarantined exact-2K TP4 MTP3 parity screen
 

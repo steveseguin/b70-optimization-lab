@@ -1070,10 +1070,26 @@ passing MTP1 result. Its configured-1,536 server passed all boot and admission
 gates, then the first 1K request stopped at 768 computed prompt tokens with
 zero output and reached the fixed worker-response gate. Request two was not
 sent and the separate 2K boot was skipped under the preregistered stop rule.
-Therefore MTP1/1K is quarantined, MTP1/2K remains missing, and MTP1/512 plus
-exact-4K remain unchanged. Any retry requires a material first-request
-completion fix and a fresh four-rank boot. Receipt:
+Therefore MTP1/1K is quarantined and that combined program did not classify
+MTP1/2K; MTP1/512 plus exact-4K remain unchanged. Any retry requires a
+material first-request completion fix and a fresh four-rank boot. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.
+
+The separately preregistered standalone MTP1 active-2K arm is also now
+classified without changing either passing MTP1 result. Its local-NVMe
+configured-3,072 server passed every boot gate and exposed 32 cache blocks /
+7,561 tokens, but the first exact-2K exchange had a zero-byte completion body
+and no output token recorded when the fixed 360-second client bound expired.
+The subsequent engine diagnostic showed
+448 computed prompt tokens and zero output, and the engine then independently
+reported its own sampling timeout. Request two was not sent; no speed or
+quality credit is granted. The post-failure teardown window recorded compute-
+and copy-class resets on all four cards. All devices were discoverable with no
+listener or residual model process afterward, but no post-reset collective was
+run. MTP1/1K and 2K are quarantined; MTP1/512, exact-4K, and every captured
+rate remain unchanged. Any repeat requires a material completion treatment,
+new preregistration, and fresh four-rank preflight. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json`.
 
 The next additive matrix cell, TP4/EP4/eager/MTP3 at active 2K, is also now
 classified without changing any passing or featured result. Its local-NVMe
