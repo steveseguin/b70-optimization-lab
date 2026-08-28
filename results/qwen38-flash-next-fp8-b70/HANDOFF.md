@@ -394,3 +394,31 @@ speed field. Next order: preregister MTP1/8K with the proven 32-block selector,
 then evaluate the 36-block MTP4/8K headroom candidate and freeze it only after
 its admission calculation and preregistration pass review. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json`.
+
+## 2026-08-28 MTP1 active-8K closeout
+
+The preregistered TP4/EP4/eager/MTP1 configured-8448 arm passed its frozen
+identity and 32-block/13,516-token capacity gates. Its sole p8192/o128 request
+completed all 25 generic exact-depth checks with exact usage, zero cache reuse,
+and MTP1 engagement: 51 of 76 draft tokens were accepted at position zero.
+The output first diverged from the frozen cross-runtime/cache MTP0 authority at
+zero-based generated-token index 72. The 4.151 tok/s decode observation and
+953.3-second TTFT are therefore diagnostic only; this is a Grade-D scoped
+parity quarantine, not a change to the passing 9.372 tok/s short or 8.904 tok/s
+exact-4K MTP1 rows.
+
+The owned completion shutdown passed its cleanup gates: supervisor rc 0, no
+listener/group/compile/RPC/temp residue, four exact B70s below 43 MiB, and no
+B70-addressed event. The intentional stop retained the known shutdown-time
+output-handler notice and one shared-memory cleanup warning. Seven corrected
+local-NVMe endpoint records separately block clean-host and deployment wording.
+The raw packet is sealed by a
+49-entry manifest at SHA-256
+`57929184c558e1253b6abb60ff2cc09ec94f321c67484caac9d6fe900656bd67`.
+
+The practical TP4 eager-text matrix is now 24/25 classified: 12 screened, 12
+quarantined, and only MTP4/8K missing. Preserve every existing speed field.
+Next: preregister the independently audited 36-block MTP4/8K candidate, then
+run exactly one bounded p8192/o128 request after rechecking the four-card
+preflight. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json`.

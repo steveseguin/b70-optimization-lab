@@ -1144,6 +1144,29 @@ wording. MTP2 configured-512, exact-4K, MTP0 exact-8K, and every protected
 speed remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json`.
 
+The TP4/EP4/eager/MTP1 active-8K arm is now classified without changing any
+captured speed. Its verified local-NVMe boot passed the exact source/runtime,
+fresh four-rank, placement, served-identity, health, and fixed 32-block
+capacity gates, reporting 13,516 cache tokens and four exact 12.22-GiB
+offload receipts. The sole p8192/o128 request completed in 982.7 seconds with
+exact 8192/128 usage, zero cache reuse, all 25 generic gates, and active MTP1
+counters (51 of 76 draft tokens accepted at position zero). Its output first
+diverged from the frozen cross-runtime/cache MTP0 authority at zero-based
+generated-token index 72, so the observed 4.151 tok/s and 953.3-second TTFT
+are diagnostic only. The owned completed-classification path performed a
+controlled shutdown and passed its cleanup gates, leaving no
+listener/group/compile/RPC/temp residue and returning all four cards below
+43 MiB. The intentional stop retained the known shutdown-time output-handler
+notice and one shared-memory cleanup warning. No B70-addressed event occurred;
+seven corrected APEI
+records / seven corrected endpoint sections for local NVMe block clean-host
+and deployment wording. This is a Grade-D scoped parity quarantine. MTP1
+configured-512 at 9.372 tok/s, exact-4K at 8.904 tok/s, MTP0 exact-8K, and
+every featured/captured rate remain unchanged. The practical TP4 eager-text
+grid is now 24/25 classified (12 screened, 12 quarantined, 1 missing); only
+MTP4/8K remains. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json`.
+
 The successor TP4/EP4/eager/MTP3 active-8K arm is now classified without
 changing any captured speed. Its verified local-NVMe boot passed the exact
 source/runtime, fresh four-rank, placement, served-identity, health, and fixed

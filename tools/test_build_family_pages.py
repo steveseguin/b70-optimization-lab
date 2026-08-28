@@ -5168,7 +5168,7 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "quarantined": 11, "missing": 2}),
+            Counter({"lab-screened": 12, "quarantined": 12, "missing": 1}),
         )
         mtp4_1k = practical["cells"]["4:1024"]
         self.assertEqual(mtp4_1k["state"], "quarantined")
@@ -5245,6 +5245,16 @@ class FamilyCoverageTest(unittest.TestCase):
                 "20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json"
             )
         )
+        mtp1_8k = practical["cells"]["1:8192"]
+        self.assertEqual(mtp1_8k["state"], "quarantined")
+        self.assertIn("token 73", mtp1_8k["label"])
+        self.assertIn("diagnostic only", mtp1_8k["label"])
+        self.assertNotIn("evidence_id", mtp1_8k)
+        self.assertTrue(
+            mtp1_8k["evidence"].endswith(
+                "20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json"
+            )
+        )
         self.assertFalse(
             any(
                 cell.get("state") == "estimated" or "estimate_id" in cell
@@ -5313,8 +5323,8 @@ class FamilyCoverageTest(unittest.TestCase):
             mtp3_measurement["metrics"]["decode_tok_s"],
             [15.50156510641242],
         )
-        self.assertIn("23 of the practical 25", family["summary"])
-        self.assertIn("Only MTP1/8K and MTP4/8K remain", family["summary"])
+        self.assertIn("24 of the practical 25", family["summary"])
+        self.assertIn("Only MTP4/8K remains", family["summary"])
         mtp1_1k = practical["cells"]["1:1024"]
         self.assertEqual(mtp1_1k["state"], "quarantined")
         self.assertEqual(
@@ -5369,7 +5379,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 457, "lab-screened": 12, "quarantined": 11}),
+            Counter({"missing": 456, "lab-screened": 12, "quarantined": 12}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5383,10 +5393,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 23 classified", rendered
+            "Full 480-cell coverage contract · 24 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("23/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("24/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
@@ -5401,6 +5411,10 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIn(
             "Observed: exact 8K completed; parity mismatch at token 27; 6.235 tok/s diagnostic only.",
+            rendered,
+        )
+        self.assertIn(
+            "Observed: exact 8K completed; parity mismatch at token 73; 4.151 tok/s diagnostic only.",
             rendered,
         )
         self.assertIn(
@@ -5428,8 +5442,8 @@ class FamilyCoverageTest(unittest.TestCase):
             rendered,
         )
         self.assertNotIn("did not run..", rendered)
-        self.assertIn("2 untested combinations", rendered)
-        self.assertIn("23 of the practical 25", rendered)
+        self.assertIn("1 untested combination", rendered)
+        self.assertIn("24 of the practical 25", rendered)
         self.assertIn("research-only", rendered)
 
     def test_collapsed_coverage_contract_flag_must_be_boolean(self) -> None:

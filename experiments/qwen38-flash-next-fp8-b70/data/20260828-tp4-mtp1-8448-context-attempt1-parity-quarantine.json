@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-cross-runtime-parity",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-8448-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp1-8448-r1-attempt1",
+  "evidence_manifest": "evidence.sha256",
+  "evidence_manifest_sha256": "57929184c558e1253b6abb60ff2cc09ec94f321c67484caac9d6fe900656bd67",
+  "evidence_manifest_entries": 49,
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 1,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 8448,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 376569856,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp1-8448-headroom32.sh",
+    "launcher_sha256": "b121ee84312dd0d8525f440bd37f70f3a347eb5c4f8609379e27ee33615c6f16",
+    "client_sha256": "b03a8c3b72f6e5b21562471aaeff01583a9663ab83626139a48e36e9958c7d0b",
+    "supervisor_sha256": "da65bfae43847b571070477333edb0614d58350f15dd3bb1a442489b191796e6"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 32,
+    "cache_tokens_reported": 13516,
+    "maximum_concurrency_at_8448": 1.6,
+    "model_load_seconds_by_rank": {
+      "0": 97.741681,
+      "1": 97.748513,
+      "2": 97.754391,
+      "3": 97.781703
+    },
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "status": "completed-generic-pass-cross-runtime-parity-quarantine",
+    "request_sent": true,
+    "request_count": 1,
+    "requested_prompt_tokens": 8192,
+    "requested_completion_tokens": 128,
+    "client_timeout_seconds": 1200,
+    "outer_timeout_seconds": 1210,
+    "outer_timeout_triggered": false,
+    "client_return_code": 0,
+    "elapsed_seconds": 982.7082057069929,
+    "usage": {
+      "prompt_tokens": 8192,
+      "completion_tokens": 128,
+      "total_tokens": 8320,
+      "cached_tokens": 0
+    },
+    "generic_exact_depth_gate": {
+      "passed": true,
+      "checks_passed": 25,
+      "checks_total": 25,
+      "finish_reason": "length",
+      "returned_token_ids": 128,
+      "timestamped_events": 100,
+      "inter_token_intervals": 99
+    },
+    "diagnostic_metrics": {
+      "conventional_99_interval_tok_s": 4.150862265053902,
+      "historical_100_event_tok_s": 4.192790166721113,
+      "time_to_first_token_seconds": 953.3253647889942,
+      "wall_output_tok_s": 0.13025229590701601
+    },
+    "candidate_output_token_ids_sha256": "4d8623ab9cd9d5d93ebb25faaf1de3c4847b1272664e671d477e966f7b2a86ed",
+    "candidate_text_sha256": "963954f752e5921ab40926ca90d0827cca67b10182330592b2653dbf2b48c23b",
+    "frozen_mtp0_output_token_ids_sha256": "0efd150b868d63f11cb4327bec07b02c7778d137142495924139e5221b4cebd3",
+    "frozen_mtp0_text_sha256": "7338b3a5f522b9e5f504512f52039ae8bb61e56346c6e881fd2ea90d9c01cc2b",
+    "target_parity": false,
+    "first_divergent_generated_token_index_zero_based": 72,
+    "mtp_counter_deltas": {
+      "drafts": 76,
+      "draft_tokens": 76,
+      "accepted_tokens": 51,
+      "accepted_tokens_per_position": [51],
+      "positive_positions": [0],
+      "accepted_position_sum_matches_total": true
+    },
+    "descriptive_mtp2_comparator": {
+      "output_token_ids_sha256": "d3ce0631eb382e39168ee6bbbf177b0d49fbb27bc6c6466bcf215f16db8d0220",
+      "text_sha256": "68c50214e241e6613efdd0b0bbbfea36995d917448b1db527f3dc3fb03cd8b70",
+      "candidate_output_parity": false,
+      "gating": false
+    },
+    "speed_credit": false,
+    "quality_credit": false,
+    "interpretation": "The exact active-8K request completed and passed every generic request gate with MTP1 engaged, but its output diverged from the frozen cross-runtime/cache MTP0 authority at generated token 72. The mismatch is scoped to that authority and does not isolate MTP1 as the cause."
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "The preregistration allowed exactly one request."
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP1/active-8K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "protected_results_unchanged": [
+      "MTP1 configured-512 research screen at 9.372 tok/s",
+      "MTP1 exact-4K research screen at 8.904 tok/s",
+      "MTP0 exact-8K authority",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material parity treatment, a same-runtime authority design, or a new preregistration with a distinct causal question."
+  },
+  "shutdown": {
+    "stop_sentinel": "STOP after completed MTP1 active-8K classification",
+    "supervisor_return_code": 0,
+    "api_application_shutdown_complete": true,
+    "engine_drain_completed": true,
+    "listener_present_after_cleanup": false,
+    "recorded_server_group_present_after_cleanup": false,
+    "compile_path_present_after_cleanup": false,
+    "rpc_path_present_after_cleanup": false,
+    "temporary_state_present_after_cleanup": false,
+    "shutdown_notices": [
+      "known AsyncLLM output-handler EngineDeadError during the intentional controlled stop",
+      "one shared-memory resource-tracker cleanup warning"
+    ],
+    "cards_discoverable_after_cleanup": 4,
+    "card_memory_used_mib": [42.8828125, 42.87890625, 42.87890625, 42.87109375],
+    "b70_addressed_event": false,
+    "classification": "completed-parity-quarantine-followed-by-controlled-owned-shutdown-passing-cleanup-gates-and-four-card-idle-rediscovery"
+  },
+  "system_observations": {
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "apei_records": 7,
+      "pcie_sections": 7,
+      "endpoint_sections": 7,
+      "source": 514,
+      "root_port_sections": 0,
+      "bad_dllp_or_timeout_sections": 0,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as host context. These corrected storage-link records block clean-host and deployment wording but do not name a B70 and are not attributed as the parity mismatch cause."
+    }
+  },
+  "tracked_sha256": {
+    "client-request.log": "b870c70a166f491eb2a3a760309d13422db95282ab6314c2d942fa653c0b3b40",
+    "client-request.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "identity.txt": "55f39c6ec2bec2d337ec76638835b0e5b0d13efab881e3af781ddbfd3d212b21",
+    "metrics-before-request.prom": "d58935185f527ebd78a04f06b2b60bf09ad1b2dec147f6764cd8c1721d15de79",
+    "metrics-after-request.prom": "60eacb83ee148e79907948fb0fc307acc9f79154c4e8de1fe0553c0362d18e80",
+    "models.json": "63b84af2635dc393add2cf2368484f65f8695f5f06580f5567c9f8a4daeded40",
+    "request1-adjudication.json": "7515e30cfb8a797da4c6047675e86359683af485d835304b17b2abc409ed3a3d",
+    "server.log": "7f6ea7eb44853c464fabf68aefbb098278fd418b48d4d8daae5a2485bef73a80",
+    "supervisor-postflight/kernel-journal.log": "9b2f0ffc71185146f2f46509411bf3445d74da2d1195099ce13885f563ac286c",
+    "supervisor-postflight/q38-mtp1-8448-supervisor.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "supervisor-postflight/xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d"
+  }
+}

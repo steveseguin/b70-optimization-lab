@@ -723,3 +723,29 @@ NVMe link; they separately block clean-host and deployment wording. Existing
 MTP3 configured-512 and exact-4K screens and every featured speed remain
 unchanged. See the
 [`MTP3 active-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json).
+
+## Quarantined active-8K TP4 MTP1 screen
+
+The separately preregistered current-source MTP1 arm passed its exact
+local-NVMe source/runtime, fresh four-rank, placement, served-identity, health,
+and capacity gates. The fixed 32-block allocation exposed 13,516 cache tokens,
+and all four ranks recorded the required 12.22-GiB selective offload receipt.
+
+Its sole p8192/o128 request completed with exact 8192/128 usage, zero cache
+reuse, all 25 generic exact-depth gates, and active MTP1 counters. It accepted
+51 of 76 draft tokens at position zero, but its output first diverged from the
+frozen cross-runtime/cache MTP0 authority at zero-based generated-token index
+72. The observed 4.151 tok/s decode rate and 953.3-second TTFT are diagnostic
+only, so this is a Grade-D scoped parity quarantine with no performance,
+quality, or deployment credit.
+
+The descendant-aware completed-classification path performed a controlled
+shutdown and passed its cleanup gates: no listener, process group, compile
+path, RPC path, or temporary state remained. All four cards were rediscovered
+below 43 MiB and no B70-addressed event appeared. The intentional stop retained
+the known shutdown-time output-handler notice and one shared-memory cleanup
+warning. Seven corrected local-NVMe endpoint records separately block
+clean-host and deployment wording. Existing MTP1 configured-512 at 9.372 tok/s,
+exact-4K at 8.904 tok/s, MTP0 exact-8K, and every featured speed remain
+unchanged. See the
+[`MTP1 active-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json).
