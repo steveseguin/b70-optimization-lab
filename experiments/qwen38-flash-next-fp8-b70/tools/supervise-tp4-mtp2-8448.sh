@@ -3,17 +3,17 @@ set -Eeuo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 wrapper="${script_dir}/launch-tp4-ep4-eager-mtp2-8448-headroom32.sh"
-state=/tmp/q38-mtp2-8448-supervisor
+state=/tmp/q38-mtp2-8448-attempt2-supervisor
 stop_file="${state}.stop"
 run_parent=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70
 campaign=qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-8448-r1
-attempt=1
+attempt=2
 run_dir="${run_parent}/${campaign}-attempt${attempt}"
 evidence_dir="${run_parent}/supervisor-${campaign}-attempt${attempt}"
 compile_dir="/tmp/${campaign}-attempt${attempt}-compile"
 rpc_dir="/tmp/${campaign}-attempt${attempt}-rpc"
 cache_dir="/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/${campaign}-attempt${attempt}"
-expected=03c473f8173f40d10db24b261256032f64958f05ddea0bba18e489f9f3828672
+expected=18203bcb7a2f59c685785edec5e0c6f2fb54f467fcc8cf46eff975b0d233f1a5
 child=""
 launcher=""
 recorded_server_pid=""
@@ -37,7 +37,7 @@ owned_server_pid() {
   [[ "$pid" =~ ^[1-9][0-9]*$ && -e "/proc/${pid}" ]] || return 1
   command=$(tr '\0' ' ' <"/proc/${pid}/cmdline" 2>/dev/null || true)
   [[ "$command" == *"vllm serve /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"* && \
-     "$command" == *"--port 19667"* ]] || return 1
+     "$command" == *"--port 19668"* ]] || return 1
   printf '%s\n' "$pid"
 }
 
@@ -123,7 +123,7 @@ capture_postflight() {
 postflight_is_clean() {
   local device memory
   [[ ! -e "$compile_dir" && ! -e "$rpc_dir" ]] || return 1
-  ! ss -ltn 2>/dev/null | grep -q ':19667 ' || return 1
+  ! ss -ltn 2>/dev/null | grep -q ':19668 ' || return 1
   ! owned_server_pid >/dev/null 2>&1 || return 1
   [[ "$(cat "${evidence_dir}/kernel-journal.rc" 2>/dev/null)" == 0 ]] || return 1
   [[ -s "${evidence_dir}/xpu-discovery.json" ]] || return 1

@@ -3,20 +3,20 @@ set -Eeuo pipefail
 
 repo=/home/steve/llm-optimizations
 supervisor="${repo}/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp2-8448.sh"
-state=/tmp/q38-mtp2-8448-supervisor
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-8448-r1-attempt1
+state=/tmp/q38-mtp2-8448-attempt2-supervisor
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-8448-r1-attempt2
 harness="${repo}/scripts/bench-openai-token-depth-suite.py"
 fixture="${repo}/data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json"
 reference=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-8448-r1-attempt1/exact-depth-8k-o128.json
 python=/home/steve/.venvs/vllm-xpu/bin/python
-base_url=http://127.0.0.1:19667
+base_url=http://127.0.0.1:19668
 model=qwen38-flash-next-fp8-tp4
 output="${run_dir}/exact-depth-8k-o128.json"
 expected_harness=8f162c1ab9fde7e0daffed2c4f0d6ff061ad6076c5de716e36f3d883ab4a1067
 expected_fixture=c44fccbaf600cc506d8ed0cc7357161057b86abc44469b611be71db97558061d
 expected_reference=2a8bfbb133ae4cf1b54ee31fd1c632ea8f843b7109fa72baff5b69d357e453aa
 expected_reference_output=0efd150b868d63f11cb4327bec07b02c7778d137142495924139e5221b4cebd3
-expected_supervisor=9359c89a2fdf82dac1056da621450f31b2cfe0d3735101510ed82567f32310fd
+expected_supervisor=f3eecf24f34db7d71d4f033c41ea8c894d5a50afa562d7c99dabe095ab730daa
 
 write_url() {
   local url=$1 path=$2 tmp
@@ -40,7 +40,7 @@ supervisor_command=$(tr '\0' ' ' <"/proc/${supervisor_pid}/cmdline")
 server_command=$(tr '\0' ' ' <"/proc/${server_pid}/cmdline")
 [[ "$supervisor_command" == *"${supervisor}"* ]] || { printf 'FAIL: supervisor command identity mismatch\n' >&2; exit 1; }
 [[ "$server_command" == *"vllm serve /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"* && \
-   "$server_command" == *"--port 19667"* ]] || { printf 'FAIL: server command identity mismatch\n' >&2; exit 1; }
+   "$server_command" == *"--port 19668"* ]] || { printf 'FAIL: server command identity mismatch\n' >&2; exit 1; }
 for artifact in health-before-request.json models-before-request.json \
   metrics-before-request.prom exact-depth-8k-o128.json client-request.log \
   client-request.rc metrics-after-request.prom request1-adjudication.json \
