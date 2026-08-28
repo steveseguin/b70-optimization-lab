@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Verify and install the exact split Qwen3.8 Flash-Next runtime stage.
 
-This is an offline consumer-side tool. It accepts local part files because the
-large runtime has not been publicly hosted. It never imports or executes the
-native payload.
+This is an offline consumer-side installer for previously downloaded part
+files. The frozen contract supplies their public URLs and exact identities.
+The tool never imports or executes the native payload.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import stat
 import sys
 import tarfile
 import tempfile
+import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO
@@ -30,7 +31,7 @@ SCRIPT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONTRACT = SCRIPT_ROOT / "runtime-contract.json"
 DEFAULT_MANIFEST = SCRIPT_ROOT / "runtime-stage.sha256"
 FROZEN_CONTRACT_SHA256 = (
-    "2ca2f7fbf67cef90145e4d99c9223d9e9fca83fa489b2906d73b982218e53a3d"
+    "688c48eaa12e16097a024487a7d218462a2c7483c2fda0d4b540a8835e6e3c11"
 )
 FROZEN_MANIFEST_SHA256 = (
     "9fa443fdb7a6d0042cf04f859cc6fd6a7bdc09943e16cafb4ea084573c892d2b"
@@ -123,19 +124,76 @@ def positive_size(value: Any, label: str) -> int:
     return value
 
 
+def validate_publication(contract: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    publication = contract.get("publication")
+    status = contract.get("status")
+    if status == "pre-publication":
+        if publication != {
+            "public_readback_verified": False,
+            "status": "not-hosted",
+        }:
+            raise RuntimeStageError(
+                "runtime publication state is not the local-only state"
+            )
+        return publication, False
+    if status != "published-research-artifact" or not isinstance(
+        publication, dict
+    ):
+        raise RuntimeStageError("unsupported runtime publication state")
+    expected_keys = {
+        "asset_count",
+        "public_readback_receipt",
+        "public_readback_verified",
+        "release_id",
+        "release_tag",
+        "release_url",
+        "status",
+    }
+    if set(publication) != expected_keys:
+        raise RuntimeStageError("hosted publication fields are incomplete")
+    if (
+        publication.get("status") != "hosted-prerelease"
+        or publication.get("public_readback_verified") is not True
+        or not isinstance(publication.get("release_id"), int)
+        or isinstance(publication.get("release_id"), bool)
+        or publication["release_id"] <= 0
+        or not isinstance(publication.get("asset_count"), int)
+        or isinstance(publication.get("asset_count"), bool)
+        or publication["asset_count"] < 2
+    ):
+        raise RuntimeStageError("hosted publication identity is invalid")
+    release_tag = publication.get("release_tag")
+    release_url = publication.get("release_url")
+    if not isinstance(release_tag, str) or not release_tag:
+        raise RuntimeStageError("hosted release tag is invalid")
+    if not isinstance(release_url, str):
+        raise RuntimeStageError("hosted release URL is invalid")
+    parsed = urllib.parse.urlsplit(release_url)
+    expected_suffix = f"/releases/tag/{release_tag}"
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc != "github.com"
+        or not parsed.path.endswith(expected_suffix)
+        or parsed.query
+        or parsed.fragment
+        or parsed.username
+        or parsed.password
+    ):
+        raise RuntimeStageError("hosted release URL is not canonical GitHub HTTPS")
+    readback = publication.get("public_readback_receipt")
+    if not isinstance(readback, dict) or set(readback) != {"name", "sha256"}:
+        raise RuntimeStageError("public readback receipt identity is invalid")
+    readback["name"] = clean_relative(readback.get("name"))
+    readback["sha256"] = hex_digest(
+        readback.get("sha256"), "public readback receipt"
+    )
+    return publication, True
+
+
 def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     if contract.get("format") != CONTRACT_FORMAT:
         raise RuntimeStageError("unsupported runtime contract format")
-    if contract.get("status") != "pre-publication":
-        raise RuntimeStageError("runtime contract must remain pre-publication")
-    publication = contract.get("publication")
-    if not isinstance(publication, dict) or publication != {
-        "public_readback_verified": False,
-        "status": "not-hosted",
-    }:
-        raise RuntimeStageError(
-            "runtime publication state is not the frozen local-only state"
-        )
+    publication, hosted = validate_publication(contract)
 
     archive = contract.get("archive")
     manifest = contract.get("manifest")
@@ -165,11 +223,17 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     for expected_index, raw in enumerate(parts):
         if not isinstance(raw, dict) or raw.get("index") != expected_index:
             raise RuntimeStageError("part indexes are not contiguous and ordered")
-        if raw.get("url") is not None:
-            raise RuntimeStageError(
-                "pre-publication contract must not claim a part URL"
-            )
         name = clean_relative(raw.get("name"))
+        raw_url = raw.get("url")
+        if hosted:
+            expected_url = (
+                publication["release_url"].replace("/releases/tag/", "/releases/download/")
+                + f"/{name}"
+            )
+            if raw_url != expected_url:
+                raise RuntimeStageError(f"part URL is not the frozen release asset: {name}")
+        elif raw_url is not None:
+            raise RuntimeStageError("local-only contract must not claim a part URL")
         if name in part_names:
             raise RuntimeStageError(f"duplicate part name: {name}")
         part_names.add(name)
@@ -179,7 +243,7 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
                 "name": name,
                 "size_bytes": positive_size(raw.get("size_bytes"), name),
                 "sha256": hex_digest(raw.get("sha256"), name),
-                "url": None,
+                "url": raw_url,
             }
         )
     if sum(item["size_bytes"] for item in normalized_parts) != archive["size_bytes"]:

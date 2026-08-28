@@ -1,10 +1,11 @@
 # Qwen3.8 Flash-Next FP8 TP4/MTP3 Grade-C foundation
 
-> **Status: `research-status` / pre-publication; not a runnable guide.** This directory closes
+> **Status: `research-status` / runtime hosted; not a runnable guide.** This directory closes
 > host-only model, source, and native-runtime identity checks. It deliberately
-> refuses to launch, test, or stop a service until public runtime hosting,
-> dependency installation, portable topology checks, and an artifact-only
-> replay are complete. It is registered only as research status in the guide
+> refuses to launch, test, or stop a service until dependency installation,
+> portable topology checks, and an artifact-only replay are complete. The
+> exact runtime is now publicly hosted and independently read back. This is
+> registered only as research status in the guide
 > catalog and has no model-package entry.
 
 This is the foundation for one narrowly defined four-card profile, not the full
@@ -116,11 +117,25 @@ will be byte-identical.
 
 The uncompressed archive is `1,968,250,880` bytes and has SHA-256
 `6bf1b547e3887c86007f5ef5ad7c67be365ce4888f0e2c0a1f360dde7a7b13c3`.
-Its two exact parts are frozen in [`runtime-contract.json`](runtime-contract.json).
-Their URL fields are deliberately null: the files have **not** been publicly
-hosted or verified by public readback.
+Its two exact parts and immutable release URLs are frozen in
+[`runtime-contract.json`](runtime-contract.json). The assets are published in
+the [research prerelease](https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-flash-next-runtime-2f829747-20260827).
+Both parts, the manifest, and the packaging receipt were downloaded without
+authentication, rehashed, reassembled, and installed into a fresh directory.
+The machine-readable evidence is
+[`publication-readback.json`](publication-readback.json).
 
-For an authorized local copy of both parts, the offline installer:
+Download the two parts into a new directory using the exact URLs in the
+contract. For example:
+
+```bash
+curl --fail --location --remote-name \
+  https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-flash-next-runtime-2f829747-20260827/qwen38-flash-next-runtime-stage-2f829747.tar.part-0000
+curl --fail --location --remote-name \
+  https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-flash-next-runtime-2f829747-20260827/qwen38-flash-next-runtime-stage-2f829747.tar.part-0001
+```
+
+Then the offline installer:
 
 1. rejects missing or extra matching part filenames;
 2. verifies each exact size and SHA-256 while concatenating in index order;
@@ -146,13 +161,13 @@ both paths share one filesystem), plus small filesystem overhead.
 
 The tool reads and hashes payload bytes but never imports native modules or
 accesses a GPU. Installation is identity closure only, not runtime validation.
-The production command was replayed on the origin host against both real split
-parts on 2026-08-27: it installed and rehashed all 18 files. The local-only
-receipt is
-`/mnt/fast-ai/qwen38-runtime-publication/qwen38-flash-next-runtime-host-install-replay-20260827.json`
-(SHA-256
-`5f21613e1dd39bbeacfca008a9c2610ca061171ea2fab1dc29d763d050f45cfc`);
-that origin-host path is evidence, not a public dependency.
+The production command was replayed first against the origin-host split parts,
+then against authenticated draft downloads, and finally against a completely
+unauthenticated public readback on 2026-08-28. Every replay installed and
+rehashed all 18 files. The public readback's local install receipt had SHA-256
+`9ce34cf054134b1f5146d72a23eb467cbf276e1c3c7cf6b9f599b5f1321a959e`;
+the tracked publication receipt contains the durable evidence and no local
+path is required by consumers.
 
 ## Intentionally blocked commands
 
@@ -162,19 +177,17 @@ this directory for a runnable guide.
 
 Before enabling them, the package still needs:
 
-1. durable public URLs for both runtime parts and successful independent
-   download/readback verification;
-2. an exact, installable Python/native dependency lock (the historical host
+1. an exact, installable Python/native dependency lock (the historical host
    used Python 3.12.13, Torch `2.11.0+xpu`, Triton `3.7.0`, Intel SYCL runtime
    `2025.3.2`, and source-overlaid vLLM; installed distribution version strings
    alone do not identify the source);
-3. portable four-B70/XCCL/topology, memory, shared-memory, filesystem, cache,
+2. portable four-B70/XCCL/topology, memory, shared-memory, filesystem, cache,
    and process-ownership checks without origin-host BDF or USB assumptions;
-4. a fresh origin-host startup using only the reconstructed sources, newly
+3. a fresh origin-host startup using only the reconstructed sources, newly
    installed runtime stage, pinned model, and prepared dependency environment;
-5. health, model-list, smoke, cache-zero, deterministic quality, exact-4K
+4. health, model-list, smoke, cache-zero, deterministic quality, exact-4K
    needle, MTP3 engagement, fixed benchmark, and controlled-stop receipts;
-6. a full run-identity diff against the historical result before interpreting
+5. a full run-identity diff against the historical result before interpreting
    speed. Any replay is additive evidence and must not overwrite the existing
    measurements.
 

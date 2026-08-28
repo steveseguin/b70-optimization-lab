@@ -172,6 +172,34 @@ class Fixture:
             self.work_dir,
         )
 
+    def mark_hosted(self, *, corrupt_first_url: bool = False) -> None:
+        contract = json.loads(self.contract_path.read_text(encoding="utf-8"))
+        release_tag = "fixture-runtime-v1"
+        release_url = f"https://github.com/example/project/releases/tag/{release_tag}"
+        contract["status"] = "published-research-artifact"
+        contract["publication"] = {
+            "asset_count": 2,
+            "public_readback_receipt": {
+                "name": "publication-readback.json",
+                "sha256": "a" * 64,
+            },
+            "public_readback_verified": True,
+            "release_id": 1,
+            "release_tag": release_tag,
+            "release_url": release_url,
+            "status": "hosted-prerelease",
+        }
+        for part in contract["parts"]:
+            part["url"] = (
+                release_url.replace("/releases/tag/", "/releases/download/")
+                + f"/{part['name']}"
+            )
+        if corrupt_first_url:
+            contract["parts"][0]["url"] += ".wrong"
+        self.contract_path.write_text(
+            json.dumps(contract, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
 
 class RuntimeInstallerTest(unittest.TestCase):
     def fixture(self, mutation: str = "valid") -> Fixture:
@@ -194,6 +222,20 @@ class RuntimeInstallerTest(unittest.TestCase):
         self.assertEqual((installed / "nested/b.so").read_bytes(), b"tiny-so-fixture")
         self.assertEqual(receipt["status"], "pass")
         self.assertTrue(fixture.receipt_path.is_file())
+
+    def test_hosted_contract_installs_downloaded_parts(self) -> None:
+        fixture = self.fixture()
+        fixture.mark_hosted()
+        receipt = fixture.install()
+        self.assertEqual(receipt["publication"]["status"], "hosted-prerelease")
+
+    def test_rejects_noncanonical_hosted_part_url(self) -> None:
+        fixture = self.fixture()
+        fixture.mark_hosted(corrupt_first_url=True)
+        with self.assertRaisesRegex(
+            TOOL.RuntimeStageError, "part URL is not the frozen release asset"
+        ):
+            fixture.install()
 
     def test_production_mode_rejects_substitute_contract(self) -> None:
         fixture = self.fixture()
