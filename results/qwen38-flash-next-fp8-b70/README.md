@@ -681,3 +681,23 @@ This fills the formal exact-8K capability cell as research-screened evidence,
 but repeated-serving stability, full short quality, and deployment promotion
 failed. See the
 [`exact-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json).
+
+## Quarantined active-8K TP4 MTP2 screen
+
+The separately preregistered current-source MTP2 arm used the verified model
+from local NVMe and the proven 32-block allocation. It exposed 11,264 cache
+tokens and completed exactly one p8192/o128 request with exact 8192/128/8320
+usage, zero cache reuse, a length stop, and 128 returned token IDs. MTP2 was
+active: 53 drafts produced 106 draft tokens, 76 were accepted, and both draft
+positions had positive acceptance.
+
+The output first diverged from the frozen MTP0 authority at zero-based token
+index 26. Because that authority used a different vLLM commit and cache
+allocation, the result is a scoped cross-runtime parity quarantine rather than
+proof that MTP2 caused the difference. The observed `6.234518 tok/s` and
+`649.717302 s` TTFT are diagnostic only. Controlled shutdown passed, all four
+cards returned idle, and no B70 event appeared; 22 corrected storage/root-port
+records separately block clean-host and deployment wording. Existing MTP2
+configured-512 and exact-4K screens, MTP0 exact-8K, and every featured speed
+remain unchanged. See the
+[`MTP2 active-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json).

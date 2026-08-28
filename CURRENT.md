@@ -1129,6 +1129,21 @@ both rates are diagnostic only. MTP2 configured-512, active-2K, exact-4K, and
 every captured rate remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
 
+The active-8K TP4/EP4/eager/MTP2 cell is now classified as well. The verified
+local-NVMe identity admitted 32 blocks / 11,264 tokens and completed its one
+authorized p8192/o128 request with exact 8192/128/8320 usage, zero cache reuse,
+all generic depth gates, and positive MTP2 activity: 53 drafts, 106 draft
+tokens, 76 accepted, split 41/35 across positions zero/one. Its output first
+diverged from the frozen MTP0 authority at zero-based generated-token index 26.
+That authority used a different vLLM commit and cache allocation, so this is a
+Grade-D cross-runtime parity quarantine rather than isolated proof that MTP2
+caused the difference. The `6.234518 tok/s` rate and `649.717302 s` TTFT are
+diagnostic only. Supervised teardown passed with all four cards idle and no
+B70 event; 22 corrected storage/root-port records block clean-host/deployment
+wording. MTP2 configured-512, exact-4K, MTP0 exact-8K, and every protected
+speed remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json`.
+
 The next TP4/EP4/eager/MTP3 active-1K arm passed exact identity, fresh
 four-rank, placement, 25-block cache, capacity, served-model, and health gates.
 During request one, the server received `SIGTERM` at 00:05:06 before the

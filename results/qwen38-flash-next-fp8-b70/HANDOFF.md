@@ -184,6 +184,21 @@ clean local-NVMe link or an identical verified model on a storage path with a
 clean post-cutoff host window. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
 
+The active-8K MTP2 cell is also closed. Attempt 1 was preserved as a no-request
+controller abort; attempt 2 used a persistent descendant-aware supervisor,
+passed every startup gate, exposed 32 blocks / 11,264 cache tokens, and
+completed exactly one p8192/o128 request. Usage was exactly 8192/128/8320 with
+zero cache reuse, and MTP2 counters were 53 drafts / 106 draft tokens / 76
+accepted, split 41/35 across positions zero/one. The token array first diverged
+from the frozen MTP0 authority at zero-based index 26. Since that authority
+used a different vLLM commit and cache allocation, the result is a Grade-D
+cross-runtime parity quarantine, not isolated MTP2 causality. The diagnostic
+rate/TTFT are `6.234518 tok/s` / `649.717302 s`; they receive no speed or
+quality credit. Teardown passed with four idle cards and no B70 event. The
+window retained 22 corrected APEI records / 25 corrected storage-root-port
+sections, so clean-host and deployment wording remain blocked. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json`.
+
 The subsequent MTP3 active-1K arm used the verified local-NVMe model and exact
 25-block allocation. It passed identity, fresh four-rank, placement, capacity,
 served-model, and health gates. During request one, the server received an
