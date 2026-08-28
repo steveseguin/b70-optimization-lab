@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "status": "failed-incomplete-pre-model-swap-priority-receipt-mismatch",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1",
+  "attempt": 2,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "temporary swap activation admission before inner supervisor",
+    "healthy_api": false,
+    "model_process_started": false,
+    "gpu_preflight_started": false,
+    "gpu_work_started": false,
+    "client_invoked": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The 64-GiB treatment was created and activated, but util-linux/Linux exposed priority -1 because the supported range is -1 through 32767 while the frozen packet required -2. The packet failed closed before deriving or launching the model supervisor. This is an orchestration admission mismatch, not model, graph, quality, or speed evidence."
+  },
+  "intended_identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph_mode_requested": "PIECEWISE",
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 201326592
+  },
+  "frozen_tools": {
+    "wrapper_sha256": "6ac73fbef6c98242d2e8f793ce56ecc918fc32b41bd1f00c06d7374f2cbe4ac9",
+    "client_sha256": "b1962a6e2956dba06215aa5ac966ae04a771d7fb1407c9444605d275a817047d",
+    "watchdog_sha256": "fe0723bff6c1afa40b7cae450f55270c3489bcb33bec96126daa6743161e1bc2",
+    "outer_supervisor_sha256": "da9a053e9f706c29845ab519fe68760e6d86b02b6e8be76847044c3e2b52382d"
+  },
+  "host_and_swap": {
+    "root_available_bytes_before": 118522118144,
+    "mem_available_kib_before": 114281348,
+    "ordinary_swap_free_kib_before": 6746292,
+    "temporary_swap_bytes": 68719476736,
+    "expected_priority": -2,
+    "observed_priority": -1,
+    "supported_priority_range": "-1 through 32767",
+    "kernel_activation_record": "Adding 67108860k swap; Priority:-1"
+  },
+  "cleanup": {
+    "outer_rc": 1,
+    "temporary_swapoff_succeeded": true,
+    "temporary_file_removed": true,
+    "original_swap_layout_restored_exactly": true,
+    "kernel_journal_read_rc": 0,
+    "new_oom_or_rxerr": false,
+    "model_run_dir_created": false,
+    "inner_supervisor_evidence_created": false,
+    "listener_19675_after": false,
+    "model_or_worker_process_after": false
+  },
+  "raw_evidence": {
+    "resource_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt2-resource",
+    "tracked_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt2-primary-evidence.sha256",
+    "manifest_sha256": "75effdc56560bd2322d6e34de8b4d9125d534f774c8761efe40f0b3383a2f5a8",
+    "manifest_entries": 23,
+    "manifest_verified": true
+  },
+  "protected_results": {
+    "changed": false,
+    "graph_speed_claim": null,
+    "instruction": "Attempt 2 cannot replace, lower, or relabel any retained eager, MTP, legacy-graph, or current-runtime measurement."
+  },
+  "next_step": {
+    "status": "fresh-attempt-required",
+    "one_variable_treatment": "Use the supported low priority -1 with fresh attempt, port, state, swap, run, cache, and evidence paths; preserve the complete intended serving and request identity."
+  }
+}
