@@ -28,11 +28,38 @@ class ProcessReadError(RuntimeError):
         self.detail = detail
 
 
+class ProcessVanishedRace(RuntimeError):
+    """A proc directory vanished before its first identity could be sampled."""
+
+    def __init__(self, pid: int, detail: str):
+        super().__init__(detail)
+        self.pid = pid
+        self.detail = detail
+
+
 def read_required(path: Path, pid: int, field: str) -> bytes:
     try:
         return path.read_bytes()
     except (FileNotFoundError, PermissionError, ProcessLookupError, OSError) as exc:
         raise ProcessReadError(pid, field, f"{type(exc).__name__}: {exc}") from exc
+
+
+def read_initial_identity(proc_dir: Path, pid: int) -> ProcessIdentity:
+    # stat.scan is a fixture-only hook. A broken stat.scan symlink represents
+    # disappearance after structural binding but before the full scan; live
+    # procfs cannot contain this synthetic entry.
+    scan_path = proc_dir / "stat.scan"
+    path = scan_path if scan_path.exists() or scan_path.is_symlink() else proc_dir / "stat"
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError as exc:
+        raise ProcessVanishedRace(
+            pid,
+            f"FileNotFoundError after proc-directory enumeration: {exc}",
+        ) from exc
+    except (PermissionError, ProcessLookupError, OSError) as exc:
+        raise ProcessReadError(pid, "stat", f"{type(exc).__name__}: {exc}") from exc
+    return parse_stat(raw, pid, "stat")
 
 
 def parse_stat(raw: bytes, pid: int, field: str) -> ProcessIdentity:
@@ -130,7 +157,7 @@ def structurally_bound_exclusions(
     supervisor_pid: int,
     supervisor_starttime: int,
     supervisor_script: Path,
-) -> tuple[set[int], dict[str, object]]:
+) -> tuple[set[int], dict[str, object], dict[int, ProcessIdentity]]:
     scanner = read_identity(proc_root / str(scanner_pid), scanner_pid)
     supervisor_dir = proc_root / str(supervisor_pid)
     supervisor = read_identity(supervisor_dir, supervisor_pid)
@@ -163,15 +190,36 @@ def structurally_bound_exclusions(
                           "runtime_positive": parent_positive},
         "excluded_pids": [scanner_pid, supervisor_pid, parent.pid],
     }
-    return {scanner_pid, supervisor_pid, parent.pid}, receipt
+    bound_identities = {
+        scanner_pid: scanner,
+        supervisor_pid: supervisor,
+        parent.pid: parent,
+    }
+    return set(bound_identities), receipt, bound_identities
 
 
 def scan_process(
-    proc_dir: Path, pid: int, excluded: set[int]
-) -> tuple[dict[str, object] | None, dict[str, object] | None, dict[str, object] | None]:
+    proc_dir: Path,
+    pid: int,
+    excluded: set[int],
+    bound_identities: dict[int, ProcessIdentity],
+) -> tuple[
+    dict[str, object] | None,
+    dict[str, object] | None,
+    dict[str, object] | None,
+    dict[str, object] | None,
+]:
     before: ProcessIdentity | None = None
     try:
-        before = read_identity(proc_dir, pid)
+        before = read_initial_identity(proc_dir, pid)
+        if pid in bound_identities and before != bound_identities[pid]:
+            return (None,
+                    {"pid": pid, "field": "identity-after-binding",
+                     "detail": "bound PID/PPID/starttime identity changed before full scan",
+                     "bound_identity": bound_identities[pid].__dict__,
+                     "observed_identity": before.__dict__,
+                     "was_structurally_excluded": True},
+                    None, None)
         status_ppid = read_status_ppid(proc_dir, pid)
         tokens, comm = read_command(proc_dir, pid)
         after = read_identity(proc_dir, pid, after=True)
@@ -187,13 +235,26 @@ def scan_process(
                      "comm": comm, "reason": reason, "argv": tokens,
                      "was_structurally_excluded": pid in excluded}, None,
                     {**before.__dict__, "comm": comm,
-                     "was_structurally_excluded": pid in excluded})
+                     "was_structurally_excluded": pid in excluded}, None)
         return (None, None, {**before.__dict__, "comm": comm,
-                             "was_structurally_excluded": pid in excluded})
+                             "was_structurally_excluded": pid in excluded}, None)
+    except ProcessVanishedRace as exc:
+        if pid in excluded:
+            return (None,
+                    {"pid": exc.pid, "field": "stat-after-binding",
+                     "detail": exc.detail,
+                     "bound_identity": bound_identities[pid].__dict__,
+                     "observed_identity": None,
+                     "was_structurally_excluded": True},
+                    None, None)
+        return (None, None, None,
+                {"pid": exc.pid, "classification": "vanished_race",
+                 "field": "stat", "detail": exc.detail,
+                 "was_structurally_excluded": pid in excluded})
     except ProcessReadError as exc:
         return (None, {"pid": exc.pid, "field": exc.field, "detail": exc.detail,
                        "observed_identity": before.__dict__ if before is not None else None,
-                       "was_structurally_excluded": pid in excluded}, None)
+                       "was_structurally_excluded": pid in excluded}, None, None)
 
 
 def main() -> int:
@@ -213,10 +274,12 @@ def main() -> int:
     conflicts: list[dict[str, object]] = []
     errors: list[dict[str, object]] = []
     scanned_processes: list[dict[str, object]] = []
+    vanished_races: list[dict[str, object]] = []
     binding: dict[str, object] | None = None
     excluded: set[int] = set()
+    bound_identities: dict[int, ProcessIdentity] = {}
     try:
-        excluded, binding = structurally_bound_exclusions(
+        excluded, binding, bound_identities = structurally_bound_exclusions(
             args.proc_root, scanner_pid, args.supervisor_pid,
             args.supervisor_starttime, args.supervisor_script)
     except ProcessReadError as exc:
@@ -236,13 +299,16 @@ def main() -> int:
             proc_dirs = []
         for proc_dir in proc_dirs:
             pid = int(proc_dir.name)
-            conflict, error, observed = scan_process(proc_dir, pid, excluded)
+            conflict, error, observed, vanished = scan_process(
+                proc_dir, pid, excluded, bound_identities)
             if conflict is not None:
                 conflicts.append(conflict)
             if error is not None:
                 errors.append(error)
             if observed is not None:
                 scanned_processes.append(observed)
+            if vanished is not None:
+                vanished_races.append(vanished)
 
     if errors and conflicts:
         status, rc = "error-and-conflict", 2
@@ -253,13 +319,14 @@ def main() -> int:
     else:
         status, rc = "clear", 0
     output = {
-        "schema": "neural.download.q38-runtime-conflict-scan.v2",
+        "schema": "neural.download.q38-runtime-conflict-scan.v3",
         "proc_root": str(args.proc_root),
         "binding_only": args.binding_only,
         "binding": binding,
         "conflicts": conflicts,
         "errors": errors,
         "scanned_processes": scanned_processes,
+        "vanished_races": vanished_races,
         "status": status,
     }
     print(json.dumps(output, sort_keys=True, indent=2))

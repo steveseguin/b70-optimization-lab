@@ -51,8 +51,104 @@ jq -e '.status == "clear" and (.conflicts | length) == 0 and
   (.errors | length) == 0 and .binding.supervisor.pid == 100 and
   .binding.supervisor.starttime == 1000 and
   .binding.direct_parent.pid == 50 and
-  .binding.excluded_pids == [101, 100, 50]' \
+  .binding.excluded_pids == [101, 100, 50] and
+  .schema == "neural.download.q38-runtime-conflict-scan.v3" and
+  (.vanished_races | length) == 0' \
   "${fixture_root}/self-match.json" >/dev/null
+
+# A numeric proc directory that disappears after enumeration but before its
+# first stat sample is a recorded benign race. This is the only read failure
+# that may still produce a clear scan.
+reset_fixture
+mkdir "${fixture_root}/399"
+scan_fixture "${fixture_root}/initial-stat-vanished.json"
+jq -e '.status == "clear" and (.conflicts | length) == 0 and
+  (.errors | length) == 0 and (.vanished_races | length) == 1 and
+  .vanished_races[0].pid == 399 and
+  .vanished_races[0].classification == "vanished_race" and
+  .vanished_races[0].field == "stat" and
+  (.vanished_races[0].detail | startswith("FileNotFoundError after proc-directory enumeration"))' \
+  "${fixture_root}/initial-stat-vanished.json" >/dev/null
+
+# A scanner/supervisor/parent identity that was already structurally bound may
+# not disappear through the benign race path. stat.scan is the classifier's
+# fixture-only post-binding read hook.
+reset_fixture
+ln -s missing-after-binding "${fixture_root}/50/stat.scan"
+set +e
+scan_fixture "${fixture_root}/excluded-stat-vanished.json"
+rc=$?
+set -e
+(( rc == 2 ))
+jq -e '.status == "error" and (.conflicts | length) == 0 and
+  (.vanished_races | length) == 0 and (.errors | length) == 1 and
+  .errors[0].pid == 50 and .errors[0].field == "stat-after-binding" and
+  .errors[0].bound_identity == {"pid":50,"ppid":1,"starttime":500} and
+  .errors[0].observed_identity == null and
+  .errors[0].was_structurally_excluded == true' \
+  "${fixture_root}/excluded-stat-vanished.json" >/dev/null
+
+# Bound identities are immutable across the scan. A reused starttime or a
+# changed PPID is rc=2 even when all later fields are readable and consistent.
+reset_fixture
+write_stat "${fixture_root}/100/stat.scan" 100 50 1999 supervisor
+set +e
+scan_fixture "${fixture_root}/bound-starttime-changed.json"
+rc=$?
+set -e
+(( rc == 2 ))
+jq -e '.status == "error" and (.vanished_races | length) == 0 and
+  (.errors | length) == 1 and .errors[0].pid == 100 and
+  .errors[0].field == "identity-after-binding" and
+  .errors[0].bound_identity == {"pid":100,"ppid":50,"starttime":1000} and
+  .errors[0].observed_identity == {"pid":100,"ppid":50,"starttime":1999}' \
+  "${fixture_root}/bound-starttime-changed.json" >/dev/null
+
+reset_fixture
+write_stat "${fixture_root}/50/stat.scan" 50 2 500 parent
+set +e
+scan_fixture "${fixture_root}/bound-ppid-changed.json"
+rc=$?
+set -e
+(( rc == 2 ))
+jq -e '.status == "error" and (.vanished_races | length) == 0 and
+  (.errors | length) == 1 and .errors[0].pid == 50 and
+  .errors[0].field == "identity-after-binding" and
+  .errors[0].bound_identity == {"pid":50,"ppid":1,"starttime":500} and
+  .errors[0].observed_identity == {"pid":50,"ppid":2,"starttime":500}' \
+  "${fixture_root}/bound-ppid-changed.json" >/dev/null
+
+# A benign vanished process does not hide a real runtime owner: conflict still
+# wins with rc=1 and the vanished receipt remains additive evidence.
+reset_fixture
+mkdir "${fixture_root}/398"
+add_process 399 50 3990 'VLLM::Worker'
+: >"${fixture_root}/399/cmdline"
+set +e
+scan_fixture "${fixture_root}/vanished-plus-owner.json"
+rc=$?
+set -e
+(( rc == 1 ))
+jq -e '.status == "conflict" and (.conflicts | length) == 1 and
+  .conflicts[0].pid == 399 and (.errors | length) == 0 and
+  (.vanished_races | length) == 1 and .vanished_races[0].pid == 398' \
+  "${fixture_root}/vanished-plus-owner.json" >/dev/null
+
+# A benign initial-stat race also cannot downgrade a strict later-field error.
+reset_fixture
+mkdir "${fixture_root}/397"
+add_process 398 50 3980 later_missing sleep /bin/sleep 1
+rm "${fixture_root}/398/status"
+set +e
+scan_fixture "${fixture_root}/vanished-plus-later-error.json"
+rc=$?
+set -e
+(( rc == 2 ))
+jq -e '.status == "error" and (.conflicts | length) == 0 and
+  (.vanished_races | length) == 1 and .vanished_races[0].pid == 397 and
+  (.errors | length) == 1 and .errors[0].pid == 398 and
+  .errors[0].field == "status" and .errors[0].observed_identity != null' \
+  "${fixture_root}/vanished-plus-later-error.json" >/dev/null
 
 # Exact argv owners plus worker/API/engine names with empty cmdlines and
 # 15-character Linux comm truncation variants must all be positive.
@@ -163,7 +259,46 @@ if (( rc != 0 )); then
   exit 1
 fi
 jq -e --argjson pid "$$" '.status == "clear" and .binding_only == true and
-  .binding.supervisor.pid == $pid and (.errors | length) == 0' \
+  .binding.supervisor.pid == $pid and (.errors | length) == 0 and
+  .schema == "neural.download.q38-runtime-conflict-scan.v3" and
+  (.vanished_races | length) == 0' \
   "${fixture_root}/live-proc-binding.json" >/dev/null
 
-printf 'PASS q38 runtime classifier binding, identity, read-error, and owner fixtures\n'
+# Bounded live integration: create short-lived process churn while performing
+# eight full scans. Later-field disappearance remains a documented rc=2, but
+# no initial-stat ENOENT may leak into errors; those must be vanished_races.
+(
+  for _ in $(seq 1 320); do
+    /bin/sleep 0.003 &
+    (( _ % 16 == 0 )) && wait
+  done
+  wait
+) &
+churn_pid=$!
+churn_started=$SECONDS
+live_vanished=0
+for scan in $(seq 1 8); do
+  set +e
+  "$classifier" --supervisor-pid "$$" --supervisor-starttime "$live_starttime" \
+    --supervisor-script "$test_script" \
+    >"${fixture_root}/live-churn-${scan}.json"
+  rc=$?
+  set -e
+  (( rc == 0 || rc == 1 || rc == 2 ))
+  jq -e '.schema == "neural.download.q38-runtime-conflict-scan.v3" and
+    .binding.supervisor.pid > 0 and
+    all(.vanished_races[];
+      .classification == "vanished_race" and .field == "stat" and
+      (.detail | startswith("FileNotFoundError after proc-directory enumeration"))) and
+    all(.errors[];
+      (.field != "stat") or
+      ((.detail | startswith("FileNotFoundError after proc-directory enumeration")) | not))' \
+    "${fixture_root}/live-churn-${scan}.json" >/dev/null
+  live_vanished=$((live_vanished + $(jq '.vanished_races | length' \
+    "${fixture_root}/live-churn-${scan}.json")))
+done
+wait "$churn_pid"
+(( SECONDS - churn_started <= 20 ))
+
+printf 'PASS q38 runtime classifier v3 binding, identity, vanished-race, read-error, owner, and live-churn fixtures (live vanished=%s)\n' \
+  "$live_vanished"
