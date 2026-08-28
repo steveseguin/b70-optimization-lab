@@ -11,12 +11,16 @@ max_model_len="${MAX_MODEL_LEN:-4096}"
 max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
 ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
+xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
+inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
 
 [[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_SEQS must be positive\n' >&2; exit 1; }
 [[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_MODEL_LEN must be positive\n' >&2; exit 1; }
 [[ "${max_num_batched_tokens}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_BATCHED_TOKENS must be positive\n' >&2; exit 1; }
 [[ "${ccl_p2p_access}" == 0 || "${ccl_p2p_access}" == 1 ]] || { printf 'CCL_P2P_ACCESS must be 0 or 1\n' >&2; exit 1; }
 [[ "${fp8_block_w8a16}" == 0 || "${fp8_block_w8a16}" == 1 ]] || { printf 'VLLM_XPU_FP8_BLOCK_W8A16 must be 0 or 1\n' >&2; exit 1; }
+[[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || { printf 'VLLM_XPU_ENABLE_XPU_GRAPH must be 0 or 1\n' >&2; exit 1; }
+[[ "${inductor_deterministic}" == 0 || "${inductor_deterministic}" == 1 ]] || { printf 'TORCHINDUCTOR_DETERMINISTIC must be 0 or 1\n' >&2; exit 1; }
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
@@ -48,7 +52,8 @@ exec docker run --rm --name "${container}" \
     -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 \
     -e VLLM_TARGET_DEVICE=xpu \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
-    -e VLLM_XPU_ENABLE_XPU_GRAPH=1 \
+    -e VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
+    -e TORCHINDUCTOR_DETERMINISTIC="${inductor_deterministic}" \
     "${w8a16_env[@]}" \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e CCL_ATL_TRANSPORT=ofi \

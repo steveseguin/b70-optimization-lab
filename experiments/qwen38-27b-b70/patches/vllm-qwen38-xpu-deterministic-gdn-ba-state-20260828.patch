@@ -1,0 +1,146 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index aea178589..5efc5a746 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -118,6 +118,8 @@ def _gdn_attention_core_xpu_impl(
+     z: torch.Tensor,
+     projected_states_qkvz: torch.Tensor,
+     projected_states_ba: torch.Tensor,
++    conv_state: torch.Tensor,
++    ssm_state: torch.Tensor,
+     layer_name: str,
+ ) -> None:
+     """Custom op wrapping the XPU SYCL GDN kernel for torch.compile."""
+@@ -177,8 +179,8 @@ def _gdn_attention_core_xpu_impl(
+         self.num_v_heads,
+         self.head_k_dim,
+         self.head_v_dim,
+-        conv_state=self.kv_cache[0],
+-        ssm_state=self.kv_cache[1],
++        conv_state=conv_state,
++        ssm_state=ssm_state,
+         conv_weights=conv_weights,
+         conv_bias=self.conv1d.bias,
+         activation=self.activation,
+@@ -206,6 +208,8 @@ def _gdn_attention_core_xpu_fake(
+     z: torch.Tensor,
+     projected_states_qkvz: torch.Tensor,
+     projected_states_ba: torch.Tensor,
++    conv_state: torch.Tensor,
++    ssm_state: torch.Tensor,
+     layer_name: str,
+ ) -> None:
+     return
+@@ -1259,7 +1263,7 @@ class xpu_ops:
+             direct_register_custom_op(
+                 op_name="gdn_attention_core_xpu",
+                 op_func=eager_break_during_capture(_gdn_attention_core_xpu_impl),
+-                mutates_args=["core_attn_out", "z"],
++                mutates_args=["core_attn_out", "z", "conv_state", "ssm_state"],
+                 fake_impl=_gdn_attention_core_xpu_fake,
+             )
+ 
+diff --git a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+index 27dc4d90d..d3accf542 100644
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -76,6 +76,54 @@ GDN_AITER_TRITON_AVAILABLE = (
+     or rocm_aiter_ops.is_rdna_gdn_triton_kernels_available()
+ )
+ 
++_XPU_DETERMINISTIC_BA_MIN_TOKENS = 17
++_XPU_DETERMINISTIC_BA_PAD_TOKENS = 256
++
++
++def _deterministic_xpu_ba_prefill(
++    hidden_states: torch.Tensor,
++    weight: torch.Tensor,
++) -> torch.Tensor:
++    """Compute the small GDN B/A projection in a fixed reduction order.
++
++    Intel XPU's ordinary GEMM is not bit-stable for several prefill shapes of
++    this projection (for example M=75, K=5120, N=96). The same projection is
++    stable at M=256, so execute fixed 256-row blocks and discard padded rows.
++    Padding only adds zero input rows and does not alter any real row's dot
++    product or accumulation precision.
++    """
++    pieces = []
++    for start in range(0, hidden_states.shape[0], _XPU_DETERMINISTIC_BA_PAD_TOKENS):
++        count = min(_XPU_DETERMINISTIC_BA_PAD_TOKENS, hidden_states.shape[0] - start)
++        block = hidden_states[start : start + count]
++        if count != _XPU_DETERMINISTIC_BA_PAD_TOKENS:
++            padded = torch.zeros(
++                (_XPU_DETERMINISTIC_BA_PAD_TOKENS, hidden_states.shape[-1]),
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
++            padded[:count].copy_(block)
++            block = padded
++        pieces.append(torch.nn.functional.linear(block, weight)[:count])
++    return torch.cat(pieces, dim=0) if len(pieces) > 1 else pieces[0]
++
++
++def _deterministic_xpu_ba_prefill_fake(
++    hidden_states: torch.Tensor,
++    weight: torch.Tensor,
++) -> torch.Tensor:
++    """Shape-only implementation used while tracing dynamic compile graphs."""
++    return hidden_states.new_empty((hidden_states.shape[0], weight.shape[0]))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_ba_prefill_xpu",
++    op_func=_deterministic_xpu_ba_prefill,
++    mutates_args=[],
++    fake_impl=_deterministic_xpu_ba_prefill_fake,
++)
++
++
+ if GDN_AITER_TRITON_AVAILABLE:
+     from aiter.ops.triton.causal_conv1d_update_single_token import (
+         fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
+@@ -966,7 +1014,15 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+         # Part 1: Input Projection
+         # ============================================================
+         projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if (
++            num_tokens >= _XPU_DETERMINISTIC_BA_MIN_TOKENS
++            and self.in_proj_ba.weight.dtype in (torch.float16, torch.bfloat16)
++        ):
++            projected_states_ba = torch.ops.vllm.qwen_gdn_ba_prefill_xpu(
++                hidden_states, self.in_proj_ba.weight
++            )
++        else:
++            projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -977,12 +1033,27 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+             device=hidden_states.device,
+         )
+         z = torch.empty_like(core_attn_out)
++        if hasattr(self, "kv_cache"):
++            conv_state, ssm_state = self.kv_cache
++        else:
++            # The memory-profiling dummy forward has no attention metadata and
++            # returns from the custom op before touching state. Keep explicit
++            # tensor arguments so the real path's mutation contract remains
++            # visible to the dispatcher.
++            conv_state = torch.empty(
++                0, dtype=hidden_states.dtype, device=hidden_states.device
++            )
++            ssm_state = torch.empty(
++                0, dtype=hidden_states.dtype, device=hidden_states.device
++            )
+ 
+         torch.ops.vllm.gdn_attention_core_xpu(
+             core_attn_out,
+             z,
+             projected_states_qkvz,
+             projected_states_ba,
++            conv_state,
++            ssm_state,
+             self.prefix,
+         )
+ 

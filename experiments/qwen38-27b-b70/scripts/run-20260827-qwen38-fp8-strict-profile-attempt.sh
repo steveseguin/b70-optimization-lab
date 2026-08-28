@@ -46,7 +46,7 @@ case "${profile}" in
     served_model=qwen38-fp8
     launcher=(
       env
-      IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
       VLLM_XPU_FP8_BLOCK_W8A16=1
       CCL_P2P_ACCESS=1
       MAX_MODEL_LEN=1024
@@ -65,6 +65,7 @@ case "${profile}" in
     served_model=qwen38-fp8-strict-mtp1
     launcher=(
       env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
       MAX_MODEL_LEN=1024
       MAX_NUM_SEQS=1
       MAX_NUM_BATCHED_TOKENS=1024
@@ -82,6 +83,7 @@ case "${profile}" in
     served_model=qwen38-fp8-strict-mtp0-eager
     launcher=(
       env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
       MAX_MODEL_LEN=1024
       MAX_NUM_SEQS=1
       MAX_NUM_BATCHED_TOKENS=1024
@@ -99,6 +101,7 @@ case "${profile}" in
     served_model=qwen38-fp8-strict-mtp0-eager-defaultoff
     launcher=(
       env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
       VLLM_XPU_FP8_BLOCK_W8A16=0
       MAX_MODEL_LEN=1024
       MAX_NUM_SEQS=1
@@ -117,6 +120,7 @@ case "${profile}" in
     served_model=qwen38-fp8-strict-mtp0-eager-defaultoff-tp1
     launcher=(
       env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
       MAX_MODEL_LEN=1024
       MAX_NUM_BATCHED_TOKENS=1024
       PORT="${port}"
@@ -133,6 +137,8 @@ case "${profile}" in
     served_model=qwen38-fp8-strict-dynamic-mtp8
     launcher=(
       env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-dynamic-mamba-r1}"
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:-sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6}"
       MAX_MODEL_LEN=1024
       MAX_NUM_SEQS=1
       MAX_NUM_BATCHED_TOKENS=1024
@@ -255,20 +261,23 @@ python3 "${repo}/scripts/neural-download-canaries.py" \
   --out "${out_dir}/canaries.json" \
   >"${out_dir}/canaries.stdout"
 
-python3 - "${out_dir}/performance.json" <<'PY'
+python3 - "${out_dir}/performance.json" "${out_dir}/canaries.json" <<'PY'
 import json
 import sys
 
 d = json.load(open(sys.argv[1]))
+canaries = json.load(open(sys.argv[2]))
 gate = d["realistic_final_gate"]
 fresh = d["fresh_response_validity"]
 primary = d["summary"]["class_balanced_tok_s_1_100_intervals_after_ttft"]
 assert gate["passed"] and fresh["performance_gate_eligible"]
 assert gate["cached_tokens_all_zero"]
 assert len(d["rows"]) == 12
+assert canaries["pass_all"], "independent canary gate failed"
 print(f"class_balanced_median_tok_s={primary['median']:.12f}")
 print(f"class_count={primary['count']}")
 print("performance_workload_gate_passed=true")
+print("independent_canary_gate_passed=true")
 PY
 
 curl -fsS "http://127.0.0.1:${port}/health" >"${out_dir}/post-health.json"

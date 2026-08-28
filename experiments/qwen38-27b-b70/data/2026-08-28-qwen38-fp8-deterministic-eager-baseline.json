@@ -1,0 +1,33 @@
+{
+  "schema": "neural.download.strict-pair-summary.v1",
+  "model": "Qwen/Qwen3.8-27B-FP8",
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "runtime_commit": "ac7509e2b",
+  "xpu_kernels_commit": "1e90ffa672",
+  "image": "neural-download/vllm-openai-xpu:qwen38-fp8-deterministic-state-r5",
+  "image_id": "sha256:47507a8ca2a78e83666a6f300ec94c5b5c5915740f147bf9d1565c938de8f25b",
+  "profile": "TP2, official FP8, W8A16, FP16 KV, MTP0, enforce-eager, XPU Graph off",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+  "attempts": [
+    {
+      "id": "detstate-r5-tp2-A",
+      "class_balanced_decode_tok_s": 18.850167112796285,
+      "performance_sha256": "e00cd1839109ad746bbe8768a344feb24c28fd039d9fc68a600fa0d5eae9ecad"
+    },
+    {
+      "id": "detstate-r5-tp2-B",
+      "class_balanced_decode_tok_s": 18.97031624657029,
+      "performance_sha256": "8c53b07b2881ec7aa21defc5609fb88bdb87474727941c192e6e21cc641c7e53"
+    }
+  ],
+  "two_attempt_median_tok_s": 18.910241679683286,
+  "complete_token_arrays_exact": true,
+  "exact_prompts": 12,
+  "total_prompts": 12,
+  "cached_tokens_all_zero": true,
+  "performance_gates_passed": true,
+  "independent_canaries_passed": true,
+  "strict_pair_qualified": true,
+  "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
+  "patch_sha256": "cda7dd1e42a1e0fed2dd34f3936303cb038852a46d8d00786a1c2ebae326f8eb"
+}

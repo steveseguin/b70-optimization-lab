@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards, with target-only/MTP0, publisher-MTP1, and diagnostic dynamic-MTP research profiles on the block-W8A16 overlay. A promotion-grade varied-prompt single-user headline is still pending.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic eager MTP0 with the lab W8A16 and GDN fixes; faster compiled and MTP profiles remain research-only.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": ["Linux"],
@@ -19,8 +19,14 @@
     "use_cases": ["general", "coding", "long context"],
     "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "dynamic MTP8 to MTP1", "W8A16"],
     "published_at": "2026-08-27",
-    "featured_metric": null,
-    "benchmark_status": "The compliant 12-prompt/512-cap two-server matrix is complete, but no single-user profile passed the 12/12 complete-token-array gate: MTP0, MTP1, and dynamic MTP8 each matched only 8/12. Sealed-cache, eager graph-off, eager W8A16-off, and one-B70 TP1 controls also failed. TP2 and cross-rank oneCCL are not required for the instability. Single-user headlines and MTP1 32K remain withheld; the scoped MTP0 32K and short-context aggregate results remain valid."
+    "featured_metric": {
+      "value": 18.910241679683286,
+      "unit": "tok/s",
+      "label": "strict varied-prompt decode",
+      "scope": "Median of two fresh-server class-balanced medians over the complete fixed 12-prompt/six-class, natural 512-cap, cache-zero raw-completion suite; official FP8 target, W8A16, FP16 KV, TP2, MTP0, XPU Graph off, enforce-eager. All 12 complete token arrays matched and both independent canary batteries passed.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-eager-baseline.json"
+    },
+    "benchmark_status": "Strict MTP0 eager baseline qualified at 18.910242 tok/s: two fresh servers, all workload/canary gates passed, cache zero, and 12/12 complete token arrays exact. Faster compiled MTP0 (~34.7), MTP1, and dynamic-MTP profiles remain withheld because they fail fresh-server exactness. The separately scoped MTP0 32K and aggregate measurements remain labeled shape/capacity evidence."
   },
   "contributors": [
     {
@@ -62,24 +68,27 @@
     "overlay_image_id_validated": "sha256:ced02d013fe356faac513f2598b4da1f11fd8e20a9bb8fb9a443564fda460556",
     "mtp1_overlay_image_id_validated": "sha256:61bd8edb385c03b40cdadaba068608355b144a5011722597e7ca437f37346ecd",
     "dynamic_mtp_overlay_image_id_validated": "sha256:2b79af686423379e4418aafa92d72e2248e8d09fabe609284dc7e29190cb8cd6",
+    "deterministic_eager_overlay_image_id_validated": "sha256:47507a8ca2a78e83666a6f300ec94c5b5c5915740f147bf9d1565c938de8f25b",
     "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+    "deterministic_eager_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-eager-image.sh",
     "dynamic_mtp_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh"
   },
   "project_patches": {
     "required": true,
     "items": [
       "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+      "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
       "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
       "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch"
     ],
-    "reason": "All optimized profiles use the default-off block-W8A16 dispatch. Concurrent MTP pins XPU kernels at 1e90ffa672 with the mixed-path correction. The selected dynamic MTP service additionally requires the active-width GDN patch and active-lookahead Mamba allocation patch. The original upstream-image baseline remains available by omitting the overlays."
+    "reason": "The qualified default uses block-W8A16 plus the deterministic GDN B/A and explicit recurrent-state patch, with XPU Graph disabled and enforce-eager. Concurrent MTP pins XPU kernels at 1e90ffa672 with the mixed-path correction. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches, but remains research-only."
   },
   "commands": {
     "preflight": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-    "launch": "MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh",
-    "health": "curl -fsS http://127.0.0.1:18128/health",
-    "benchmark": "OUT=/path/to/new-realistic-suite.json repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp-realistic.sh",
-    "stop": "docker stop -t 30 qwen38-fp8-w8a16-dynamic-mtp-tp2"
+    "launch": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-deterministic-state-r5 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-eager-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18134/health",
+    "benchmark": "python3 scripts/bench-openai-realistic-suite.py --base-url http://127.0.0.1:18134 --model qwen38-fp8-block-w8a16-mtp0-eager --api-mode completions --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 42 --return-token-ids --require-natural-eos --request-extra-json '{\"temperature\":0,\"top_p\":1}' --out /path/to/new-realistic-suite.json",
+    "stop": "docker stop -t 30 qwen38-fp8-block-w8a16-mtp0-eager-tp2"
   },
   "dependencies": [
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -88,7 +97,9 @@
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-concurrency-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.deterministic-eager",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-eager-image.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-dynamic-mtp-active-width-kernel-image.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh",
@@ -109,6 +120,9 @@
     "experiments/qwen38-27b-b70/scripts/summarize-20260827-qwen38-fp8-strict-matrix.py",
     "experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md",
     "experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-tp1-strict-target-control-comparison.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-deterministic-eager-baseline-and-compiled-closure.md",
+    "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-eager-baseline.json",
+    "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
     "scripts/compare-strict-attempt-outputs.py",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
