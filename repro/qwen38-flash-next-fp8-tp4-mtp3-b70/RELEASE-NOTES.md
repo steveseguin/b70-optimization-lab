@@ -34,8 +34,10 @@ unverified members directly.
 The historical MTP3 result remains Grade C. Its `15.501565 tok/s` value is an
 after-first-text screen with `187.899 s` median TTFT and `1.246260` wall output
 tok/s. The conventional p4096/o128 99-interval rate is `4.669548 tok/s`.
-Public hosting closes artifact availability only, not dependency, clean-host,
-startup, quality-replay, or deployment readiness.
+Public hosting closes artifact availability only. The added dependency
+contract is observed provenance, not a complete hash-addressed wheelhouse or a
+clean-environment replay; dependency installation, startup, quality replay,
+and deployment readiness remain open.
 
 Publication closure is recorded at commit
 [`9041edd6c`](https://github.com/steveseguin/b70-optimization-lab/commit/9041edd6c7de03365aca68cf51912853b669d763),

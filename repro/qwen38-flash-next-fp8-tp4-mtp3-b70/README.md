@@ -169,6 +169,57 @@ rehashed all 18 files. The public readback's local install receipt had SHA-256
 the tracked publication receipt contains the durable evidence and no local
 path is required by consumers.
 
+## Observed dependency state (not installable)
+
+[`dependency-contract.json`](dependency-contract.json) and
+[`pip-freeze-observed.txt`](pip-freeze-observed.txt) now record the Python side
+of the measured hybrid environment. The freeze is a read-only snapshot taken
+from the reused lab virtualenv after the measurement, not an atomic
+launch-time receipt. It is useful provenance, but it cannot establish that a
+clean host will resolve the same environment.
+
+The important distinction is explicit:
+
+- the measured process used Python `3.12.13`, Torch `2.11.0+xpu`,
+  `triton-xpu` `3.7.0`, Transformers `5.10.2`, the Intel `2025.3.2` runtime
+  wheels, and oneCCL `2021.17.2`;
+- `PYTHONPATH` put the reconstructed vLLM source and newly installed native
+  stage ahead of site-packages;
+- installed vLLM metadata still names an older editable checkout and therefore
+  does not identify the code that actually ran;
+- the measured versions conflict with several requirements at the measured
+  source commit. Installing that checkout's current requirements would drift
+  to a different Torch/Transformers/runtime stack, so this packet forbids that
+  as a reconstruction shortcut.
+
+[`requirements-runtime.lock`](requirements-runtime.lock) is the 177-entry
+non-editable exact-version candidate extracted from the 180-entry observed
+freeze. It deliberately contains no direct URLs, VCS inputs, editables, or
+hashes yet. [`wheelhouse-contract.json`](wheelhouse-contract.json) therefore
+has status `wheelhouse-unavailable`, with zero verified wheels. The packet
+remains `dependency-observed`, not `dependency-installable`.
+
+[`prepare-dependencies.py`](prepare-dependencies.py) is the fail-closed offline
+installer for the eventual completed contract. It accepts only one exact
+binary wheel per locked distribution, verifies file sizes and SHA-256 hashes,
+rejects inventory differences, uses pip with networking disabled, creates only
+a new virtualenv, verifies installed versions, and writes a receipt. With the
+tracked observed-only contracts it exits before creating the output, by
+design:
+
+```bash
+python3 repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-dependencies.py \
+  --wheelhouse /path/to/exact-wheelhouse \
+  --output-venv /path/to/new-vllm-xpu-venv \
+  --receipt /path/to/new-dependency-install-receipt.json
+```
+
+The dependency status can advance only after every candidate line has one
+verified platform wheel and hash, followed by a fresh CPU-only offline install
+and then the separately gated artifact-only runtime replay. The preparer never
+modifies the historical lab virtualenv, installs a source checkout, imports a
+native extension, or probes an accelerator.
+
 ## Intentionally blocked commands
 
 `preflight.sh`, `run-server.sh`, `quality.sh`, and `stop.sh` all exit nonzero.
@@ -177,10 +228,9 @@ this directory for a runnable guide.
 
 Before enabling them, the package still needs:
 
-1. an exact, installable Python/native dependency lock (the historical host
-   used Python 3.12.13, Torch `2.11.0+xpu`, Triton `3.7.0`, Intel SYCL runtime
-   `2025.3.2`, and source-overlaid vLLM; installed distribution version strings
-   alone do not identify the source);
+1. promote the observed 177-entry candidate into an exact hash-addressed
+   binary lock and complete one fresh offline install; installed distribution
+   version strings alone do not identify the overlaid source;
 2. portable four-B70/XCCL/topology, memory, shared-memory, filesystem, cache,
    and process-ownership checks without origin-host BDF or USB assumptions;
 3. a fresh origin-host startup using only the reconstructed sources, newly
@@ -197,13 +247,18 @@ package.
 
 ## Host-only tests
 
-The tiny-fixture tests use no model, native binary, network, or GPU:
+The tiny-fixture tests use no model, native binary, network, or GPU. The
+dependency tests build one tiny pure-Python wheel locally and perform one fresh
+offline install to exercise the completed-contract path; they do not claim the
+real 177-entry environment is closed:
 
 ```bash
 python3 -m unittest \
+  repro/qwen38-flash-next-fp8-tp4-mtp3-b70/test_prepare_dependencies.py \
   repro/qwen38-flash-next-fp8-tp4-mtp3-b70/test_prepare_runtime.py
 ```
 
-They cover valid nested installation and fail-closed behavior for traversal,
-extra members, missing members, part hash changes, reassembly mismatch, and
-wrong archive layout.
+They cover a valid offline dependency install, observed-only refusal, mutable
+lock input, wheel hash and inventory differences, plus valid nested runtime
+installation and fail-closed behavior for traversal, extra members, missing
+members, part hash changes, reassembly mismatch, and wrong archive layout.
