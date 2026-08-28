@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-external-signal",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-1536-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-1536-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 3,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 1536,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 294195200,
+    "kv_cache_blocks": 25,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "reasoning_parser": null,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp3-1536-headroom25.sh",
+    "launcher_sha256": "a851a1379e0be62de3d8ba8b4e14ce15cdf1d11456ab3bfca9a75429ff33af73"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_tokens_reported": 2021,
+    "maximum_concurrency_at_1536": 1.32,
+    "model_load_seconds_by_rank": [97.964024, 97.565149, 97.943616, 97.559825],
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "fresh_four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "status": "incomplete-external-sigterm",
+    "server_signal": "SIGTERM",
+    "server_signal_local_time": "2026-08-28T00:05:06-04:00",
+    "result_json_written": false,
+    "completed_response_available": false,
+    "usage_available": false,
+    "target_parity_available": false,
+    "performance_result_available": false,
+    "partial_server_log_observation": {
+      "draft_tokens": 6,
+      "accepted_tokens": 6,
+      "acceptance_rate_per_position": [1.0, 1.0, 1.0]
+    },
+    "interpretation": "The server received an external SIGTERM while request one was running. The retained evidence does not assign the signal source. Partial counters are transport context only and provide no parity, speed, quality, or deployment credit."
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "Request one did not complete and the preregistered stop rule blocked the repeat."
+  },
+  "system_observations": {
+    "b70_event_named_in_kernel_window": false,
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "observed": true,
+      "fatal_or_uncorrected": false,
+      "unique_apei_records": 1,
+      "record_ids": [404],
+      "local_time": "2026-08-27T23:57:42-04:00",
+      "interpretation": "Prospectively disclosed corrected-only storage-link context; it is not the hard-stop reason and no causal attribution is made."
+    }
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP3/active-1K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "protected_results_unchanged": [
+      "MTP3 configured-512 research screen",
+      "MTP3 active-2K target-parity quarantine",
+      "MTP3 exact-4K research screen",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell under the one-boot preregistration. A future retry requires a new preregistration that explicitly addresses external process-session continuity."
+  },
+  "shutdown": {
+    "api_application_shutdown_complete": true,
+    "cards_discoverable_after_cleanup": 4,
+    "b70_event_named_through_shutdown": false,
+    "listener_present_after_cleanup": false,
+    "residual_model_processes_after_cleanup": 0,
+    "classification": "externally-signalled-clean-process-teardown"
+  },
+  "tracked_sha256": {
+    "request1-failure.txt": "ce8b6ddecad3dedc1cbbcd6777dcde654a4feef620bc9895df4271b3031152bf",
+    "metrics-before-request1.prom": "64dc39ca1ad3000021c1bcca8811cb23b34256d8b469d13ccaf6e471f76f777b",
+    "identity.txt": "962ecf69b7663fe4769ad2345c0cd97f3cb8d68da74c8e9c5a5a721d69a99c2f",
+    "models.json": "eb387706ad2e1f7c53c428912bb4754dc53e2653fb6121a6dbd498dbab83b685",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "server-command.shell.txt": "576294705c50e2068b1b54f49f467d704714eb355c3e9546da6c3dfaf10f7b93",
+    "server.log": "8e50cb92b7ea62e9a04ac530a72df6705e211587fa7cc7b98fe0bc24ef35ed38",
+    "staged-runtime-preflight.txt": "3b0bff5c1e8c4b9b868a1440a30e7d05f8e23159fb5e8cdcc951931c802c112a",
+    "xccl-tp4-preflight.log": "eb43b927304bdfd256b18fd1b65dec2ad756d1e10b31528e8ad175b63c6aad9d",
+    "postflight-final.txt": "015e34c26d39e9bb658ca8b31c34bf47e7a35fb1902a64000242caffc7dba720",
+    "kernel-journal-through-shutdown.log": "74f9c906a39f3b01ace17b0c8055e2979869c4333fa400c41f3efcf5ad967aca",
+    "filesystem-preflight.txt": "02787b1185ce96748af81cda620e85240d7c698d723989f5318ea82b5b8e43ac",
+    "input-sha256sums.txt": "0d0b6039ed0f52881f4d0a417a2be844bcf702a33ca8011e4fdf2648046c409e",
+    "xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu-stats-0.json": "73b7bf7667cf033a55006372cd8ea2dab2c1fa652a96957aa721c3e1ee74188a",
+    "xpu-stats-1.json": "25324d39f6b515a7a70a120269b79472d5e76ed272e1deaa105b56cac728b0cf",
+    "xpu-stats-2.json": "e2b60f45f35fb7e4feb969f54c943b69be124fdf96adc48994a9fdc84fd397ba",
+    "xpu-stats-3.json": "a66c9b6b6fd869e2c44cce4561034cd3657705b234eb01e24a42812a0c1426d5"
+  }
+}

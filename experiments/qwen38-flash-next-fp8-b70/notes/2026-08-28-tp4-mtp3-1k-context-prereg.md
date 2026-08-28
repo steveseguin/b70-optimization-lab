@@ -149,3 +149,33 @@ A corrected-only NVMe window remains Grade C with an explicit no-clean-host and
 no-deployment caveat. Any other stop is retained as a bounded quarantine.
 Neither outcome changes MTP3/512, MTP3/active-2K, MTP3/exact-4K, MTP2, MTP4,
 any featured result, or any prior captured speed.
+
+## Outcome
+
+The single authorized boot passed exact identity, clean-source, fresh
+four-rank collective, staged import/schema, all four 12.22-GiB placement,
+25-block cache, capacity, served identity, and health gates. Model loading took
+97.56--97.96 seconds per rank, and the server reported 2,021 cache tokens and
+1.32x capacity at the 1,536-token limit.
+
+Request one began under the frozen client protocol but did not complete. At
+00:05:06 local time the server received `SIGTERM` while the request was still
+running. No request JSON, completed usage, output hash, or performance result
+exists. The last partial server metrics reported six drafted and six accepted
+tokens with 1.000 acceptance at all three positions. Those partial counters are
+transport context only; the evidence does not assign the source of the external
+signal and does not support target-parity, speed, quality, or deployment credit.
+Request two was blocked by the preregistered stop rule.
+
+The full journal window contained one corrected-only NVMe receiver record
+(`{404}` at 23:57:42) and no event naming any B70 address. The storage record is
+disclosed under the prospective policy and is not the hard-stop reason.
+Teardown completed with no listener or model process, all four cards
+discoverable, and no B70 event through shutdown.
+
+The active-1K cell is a Grade-D external-signal quarantine. It does not lower
+or reinterpret the passing MTP3 configured-512 or exact-4K results, the
+active-2K parity quarantine, or any featured/captured speed. A future retry
+requires a new preregistration that explicitly addresses external process-
+session continuity. Compact receipt:
+`../data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`.

@@ -184,9 +184,22 @@ clean local-NVMe link or an identical verified model on a storage path with a
 clean post-cutoff host window. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
 
+The subsequent MTP3 active-1K arm used the verified local-NVMe model and exact
+25-block allocation. It passed identity, fresh four-rank, placement, capacity,
+served-model, and health gates. During request one, the server received an
+external `SIGTERM` at 00:05:06 before completing a response. No request JSON,
+usage, output hash, or speed exists. Partial server metrics retained six
+drafted and six accepted tokens with 1.000 acceptance at all three positions;
+those counters are transport context only and receive no parity, speed,
+quality, or deployment credit. Request two was blocked. The journal retained
+one corrected-only NVMe receiver record and no B70 event; teardown left no
+listener/process and all four cards discoverable. MTP3 configured-512,
+active-2K, exact-4K, and all captured rates remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`.
+
 Next, continue additive practical-matrix coverage with a separately
-preregistered MTP3 or MTP4 active-1K cell while keeping the NVMe event gate
-explicit. Do not retry stopped arms by raising only the timeout. Then reduce
+preregistered MTP4 active-1K cell while keeping the NVMe event gate explicit.
+Do not retry stopped arms by raising only the timeout. Then reduce
 MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU host-lookup overlap
 separately. Defer 16K+ until the 8K repeated-serving boundary and larger
 fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design

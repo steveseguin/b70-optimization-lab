@@ -19,8 +19,10 @@ admission gate but stopped on their first requests without returning output.
 An MTP2 active-1K arm then returned the exact frozen target twice with zero
 cache reuse and perfect two-position acceptance, but corrected local-NVMe
 events after the frozen cutoff failed its strict clean-host gate. Those three
-cells are quarantined while all configured-512 and exact-4K passes remain
-unchanged. It does not yet establish a production recipe, a fully quality-
+cells are quarantined. A later MTP3 active-1K boot passed every startup gate
+but received an external SIGTERM during request one, leaving no completed
+response or speed; it is separately quarantined. All configured-512 and
+exact-4K passes remain unchanged. It does not yet establish a production recipe, a fully quality-
 qualified MTP speed, stable repeated serving at 8K, 16K+ behavior, or vision
 support.
 
@@ -318,6 +320,30 @@ cells and all captured rates unchanged. Any repeat requires a material first-
 request completion treatment, a new preregistration, and a fresh four-rank
 preflight. Receipt:
 [`20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json).
+
+## Quarantined active-1K TP4 MTP3 external stop
+
+The preregistered active-1K MTP3 arm used the verified local-NVMe model,
+current source, preserved staged runtime, TP4/EP4 eager serving, and the exact
+25-block allocation. It passed source/runtime identity, a fresh four-rank
+collective, all four 12.22-GiB placement receipts, cache/capacity/identity, and
+health. Model loading took 97.56--97.96 seconds per rank and the server exposed
+2,021 cache tokens at 1.32x the configured 1,536-token limit.
+
+Request one began under the frozen p1024/o256/cache-zero protocol. At 00:05:06
+local time, the server received an external `SIGTERM` before completing the
+response. No request JSON, usage, output hash, or performance result exists.
+The last partial server metrics showed six drafted and six accepted tokens with
+1.000 acceptance at all three positions. Those partial counters are transport
+context only and receive no target-parity, speed, quality, or deployment
+credit. The evidence does not assign the external signal's source, and request
+two was blocked by the preregistered stop rule.
+
+The full window contained one corrected-only NVMe receiver record and no event
+naming any B70 address. Shutdown left no listener or model process and all four
+cards remained discoverable. This Grade-D quarantine does not lower or replace
+MTP3/512, active-2K, exact-4K, or any featured rate. Receipt:
+[`20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json).
 
 ## Quarantined exact-2K TP4 MTP3 parity screen
 

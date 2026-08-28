@@ -1129,6 +1129,19 @@ both rates are diagnostic only. MTP2 configured-512, active-2K, exact-4K, and
 every captured rate remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
 
+The next TP4/EP4/eager/MTP3 active-1K arm passed exact identity, fresh
+four-rank, placement, 25-block cache, capacity, served-model, and health gates.
+During request one, the server received `SIGTERM` at 00:05:06 before the
+response completed. No request JSON, usage, output hash, or speed exists.
+Partial server metrics retained six drafted and six accepted tokens with 1.000
+acceptance at all three positions, but those counters grant no parity, speed,
+quality, or deployment credit and request two was blocked. The full window had
+one corrected-only NVMe receiver record and no B70 event; teardown left no
+listener/process and all four cards discoverable. The active-1K cell is a
+Grade-D external-signal quarantine. MTP3 configured-512, active-2K, exact-4K,
+and every captured rate remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`.
+
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
 matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned
