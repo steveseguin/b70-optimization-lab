@@ -794,3 +794,32 @@ The practical TP4 eager-text slice is now fully classified at 25/25: 12
 screened and 13 quarantined. The retained MTP4 configured-512 result remains
 `20.72717637199404 tok/s`, the preferred MTP3 exact-4K result remains
 `15.50156510641242 tok/s`, and every prior speed is unchanged.
+
+## Quarantined active-16K TP4 MTP0 screen
+
+The first deeper-context arm used the current-source TP4/EP4/eager MTP0
+identity with a 358,465,536-byte fixed cache. Exact 33-block admission exposed
+21,795 tokens, and every rank recorded the required 12.22-GiB selective
+offload receipt.
+
+Attempt 1 became healthy but stopped before any request because the client
+rejected a relative supervisor path; its sealed no-request receipt grants no
+matrix credit. Attempt 2 corrected only that ownership check and used fresh
+paths and port. Its one p16384/o128 request completed in 1,097.981 seconds with
+exact 16384/128/16512 usage, zero cache reuse, a length stop, 128 token IDs,
+and all 25 generic exact-depth gates. Output-token SHA-256 is
+`5706b3445c50abaaedacae0e5f52739856300701374126c23d610367c1dd1d39`.
+
+The `5.219484 tok/s` conventional diagnostic rate and `1,073.542649 s` TTFT
+receive no speed or curve credit. Semantic, repeat, and fresh-server-repeat
+gates were absent, so this is Grade-D bounded capability evidence with no
+quality or deployment credit. Controlled shutdown passed postflight and all
+cards returned below 43 MiB. Thirty-six corrected Source-514 reports and 46
+RxErr log lines named only local NVMe `0000:01:00.0`; no B70-addressed event
+appeared. The 49-entry manifest verifies at
+`d1cbe2533ca024bbadf725163a0ce22cb268a54b42d83ac65cc2dd08984d1363`.
+
+The ≤8K practical slice remains exactly 25/25 and every captured speed is
+unchanged. The full 480-cell contract is now 26 classified: 12 screened, 14
+quarantined, and 454 missing. See the
+[`MTP0 active-16K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json).

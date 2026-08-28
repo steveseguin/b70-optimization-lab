@@ -1307,6 +1307,30 @@ The practical TP4 eager-text matrix is now **25/25 classified**: 12 screened,
 `15.50156510641242 tok/s`, and every prior captured speed is unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json`.
 
+The first deeper-context Qwen3.8 Flash-Next arm is now classified. A new
+current-source TP4/EP4/eager/MTP0 identity admitted 33 blocks / 21,795 cache
+tokens at max length 16,512. Attempt 1 became healthy but failed closed before
+any request on a relative supervisor-path check and grants no matrix credit.
+Attempt 2 changed only fresh path/ownership identity. Its sole p16384/o128
+request completed all 25 generic gates with exact 16384/128/16512 usage, zero
+cache reuse, a length stop, and 128 token IDs. The output-token SHA-256 is
+`5706b3445c50abaaedacae0e5f52739856300701374126c23d610367c1dd1d39`.
+
+The observed `5.219484 tok/s` and `1073.542649 s` TTFT are diagnostic only.
+Semantic, repeat, and fresh-server-repeat gates were absent, so the cell is
+Grade-D quarantined capability with no speed, curve, quality, deployment, or
+headline credit. The completed supervisor returned zero and left no owned
+residue; all cards returned below 43 MiB. Thirty-six corrected Source-514
+reports / 46 RxErr log lines named only local NVMe `0000:01:00.0`, with no B70
+event. The 49-entry manifest verifies at
+`d1cbe2533ca024bbadf725163a0ce22cb268a54b42d83ac65cc2dd08984d1363`.
+
+The full Flash-Next contract is now **26/480 classified**: 12 screened, 14
+quarantined, and 454 missing. The completed ≤8K practical view remains exactly
+25/25 and every prior speed is unchanged. Next deep-context order: MTP2/16K,
+MTP1/16K, MTP4/16K, then MTP3/16K. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json`.
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
 protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the

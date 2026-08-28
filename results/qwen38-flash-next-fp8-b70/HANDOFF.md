@@ -457,3 +457,30 @@ quarantined, and zero missing. Preserve the MTP4 configured-512
 `20.72717637199404 tok/s`, MTP3 exact-4K `15.50156510641242 tok/s`, all prior
 cells, and every captured speed. Do not repeat MTP4/8K without a material parity
 treatment, a same-runtime authority design, or a new distinct preregistration.
+
+## 2026-08-28 MTP0 active-16K closeout
+
+The additive current-source TP4/EP4/eager/MTP0 arm admitted exactly 33 blocks
+and reported 21,795 cache tokens at max length 16,512. Attempt 1 stopped before
+any request on a relative supervisor-path ownership check and is sealed without
+matrix credit. Attempt 2 changed only fresh ownership/path identity.
+
+Its one p16384/o128 request passed all 25 generic depth gates with exact
+16384/128/16512 usage, cache zero, a length stop, and 128 token IDs. Output
+SHA-256 is `5706b3445c50abaaedacae0e5f52739856300701374126c23d610367c1dd1d39`.
+The 5.219484 tok/s rate and 1,073.542649-second TTFT are diagnostic only because
+semantic, repeat, and fresh-server-repeat gates were absent. Classify it Grade-D
+quarantined capability, not a new speed/quality/deployment result.
+
+Supervisor rc was zero; no listener/group/compile/RPC residue remained and all
+cards returned below 43 MiB. Disclose 36 corrected Source-514 records / 46
+RxErr log lines, all local NVMe `0000:01:00.0`, with no B70 event. The 49-entry
+manifest verifies at
+`d1cbe2533ca024bbadf725163a0ce22cb268a54b42d83ac65cc2dd08984d1363`.
+Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json`.
+
+The full contract is now 26/480 classified (12 screened, 14 quarantined, 454
+missing), while the existing ≤8K practical view remains exactly 25/25. The next
+deep-context order is MTP2/16K, MTP1/16K, MTP4/16K, then MTP3/16K; do not jump
+to 24K/32K before the 16K tranche is classified.

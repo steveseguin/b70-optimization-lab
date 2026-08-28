@@ -33,3 +33,30 @@ Frozen attempt-2 packet hashes:
 
 Attempt 2 may start only after syntax/hash checks, exact-source checks, four
 idle-card checks, port/path freshness checks, and an independent read-only audit.
+
+## Observed result
+
+Attempt 2 completed the one authorized request and controlled teardown.
+
+- startup reproduced 33 blocks and 21,795 reported cache tokens;
+- exact usage was 16,384 prompt, 128 completion, and 16,512 total tokens;
+- cached tokens were zero, finish reason was `length`, and all 128 token IDs
+  were returned;
+- all 25 generic exact-depth checks passed;
+- output-token SHA-256 is
+  `5706b3445c50abaaedacae0e5f52739856300701374126c23d610367c1dd1d39`;
+- text SHA-256 is
+  `efadb89d58154caa3b4c0f6e7816f75b1d4e57eae3d24fbbdb8f03d4094048d3`;
+- elapsed time was 1,097.9810 seconds, TTFT was 1,073.5426 seconds, and the
+  conventional diagnostic rate was 5.219484116949911 tok/s;
+- supervisor exit was zero, no listener/process/temp-path residue remained,
+  and all cards returned below 43 MiB;
+- the host journal contained 36 corrected Source-514 reports and 46 RxErr log
+  lines, all addressed to local NVMe `0000:01:00.0`; there was no B70-addressed
+  reset, fatal, or timeout event.
+
+The 49-entry raw manifest verifies and has SHA-256
+`d1cbe2533ca024bbadf725163a0ce22cb268a54b42d83ac65cc2dd08984d1363`.
+The cell is classified Grade-D quarantined capability: semantic oracle,
+repeat, and fresh-server-repeat gates remain absent. The rate is diagnostic
+only and receives no speed, curve, quality, deployment, or headline credit.
