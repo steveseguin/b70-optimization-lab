@@ -1,0 +1,139 @@
+{
+  "schema": "neural.download.fixed-vision-fixture.v1",
+  "fixture": {
+    "fixture_id": "qwen38-flash-next-fixed-vision-v1",
+    "description": "Synthetic high-contrast capability and bounded quality fixture with one unique OCR code, two spatially distinct colored squares, and three countable bottom-row circles.",
+    "ownership": "Generated in-repository; no external or copyrighted image input.",
+    "mime_type": "image/png",
+    "width": 256,
+    "height": 256,
+    "color_mode": "RGB",
+    "byte_count": 1112,
+    "sha256": "ffbac32956e25357b1a3985a8562da7f725dc1eb6c8f7845e73028f76553e207",
+    "rgb_sha256": "960b07dd0e3cef6418f688f24e2728ce669be2a6bbd865872c3855c7399d4acb",
+    "layout": {
+      "top_banner": "Pale yellow banner containing the black four-character code B7X9.",
+      "middle_left": "Black-bordered red square.",
+      "middle_right": "Black-bordered blue square.",
+      "bottom_row": "Exactly three isolated black circles."
+    }
+  },
+  "artifact_processing_receipt": {
+    "observed_at": "2026-08-28",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "preprocessor_config_sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+    "chat_template_sha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "transformers_version": "5.10.2",
+    "processor_class": "Qwen3VLProcessor",
+    "image_processor_class": "Qwen2VLImageProcessor",
+    "image_grid_thw": [
+      1,
+      16,
+      16
+    ],
+    "image_token_count": 64,
+    "pixel_values_shape": [
+      256,
+      1536
+    ],
+    "thinking_disabled_prompt_token_counts_by_case": {
+      "ocr_code": 102,
+      "right_square_color": 96,
+      "bottom_circle_count": 94
+    },
+    "scope": "Offline local-only processor observation; it does not prove model loading or XPU vision execution."
+  },
+  "cases": [
+    {
+      "id": "ocr_code",
+      "category": "unique OCR/code",
+      "prompt": "Read the four-character code in the pale yellow banner at the top. Answer with exactly the four characters and nothing else.",
+      "expected_answer": "B7X9",
+      "normalization": "strip",
+      "grounding": "The answer is encoded only in the image pixels and is not stated in the prompt."
+    },
+    {
+      "id": "right_square_color",
+      "category": "spatial/color",
+      "prompt": "What color is the large square on the right? Answer with exactly one lowercase color word.",
+      "expected_answer": "blue",
+      "normalization": "strip",
+      "grounding": "The image contains same-sized left and right squares with different colors, so position is required."
+    },
+    {
+      "id": "bottom_circle_count",
+      "category": "count",
+      "prompt": "How many black circles are in the bottom row? Answer with exactly one digit.",
+      "expected_answer": "3",
+      "normalization": "strip",
+      "grounding": "The count and bottom-row constraint are present only in the image pixels."
+    }
+  ],
+  "protocol": {
+    "endpoint_path": "/v1/chat/completions",
+    "content_order": [
+      "image_url",
+      "text"
+    ],
+    "image_transport": "byte-exact base64 data URL",
+    "temperature": 0,
+    "top_p": 1.0,
+    "seed": 20260828,
+    "max_tokens": 16,
+    "stream": false,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "repetitions_per_case": 3,
+    "stop_on_first_failure": true,
+    "required_response_gates": [
+      "HTTP 200 and exact served-model identity",
+      "one choice with finish_reason=stop",
+      "exact stripped answer",
+      "complete prompt/completion/total usage arithmetic",
+      "exact case-specific prompt token count including the 64 image tokens",
+      "cached_tokens=0 and created_cache_tokens=0",
+      "one request-body, answer, usage, and prompt-detail hash plus one prompt-token count across all three repetitions"
+    ]
+  },
+  "intended_cell": {
+    "revision": "qwen38-flash-next",
+    "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+    "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph_mode": "off",
+    "kv": "auto",
+    "active_context_tokens": 0,
+    "modality": "vision",
+    "workload_profile": "fixed-vision-fixture-v1-required"
+  },
+  "credit_scope": {
+    "maximum_client_credit": "necessary fixed-fixture capability and bounded quality evidence for the single intended cell",
+    "client_result_is_sufficient_for_site_credit": false,
+    "additional_required_gates": [
+      "fresh exact four-rank launcher preflight",
+      "vision-enabled server identity with language_model_only=false",
+      "one-image/video-zero limits, processor cache disabled, and encoder TP weights mode",
+      "same-boot text recovery and bounded semantic quality gates",
+      "health after the final request",
+      "descendant-aware controlled stop and clean process/listener/cache/RPC/four-card/journal postflight"
+    ],
+    "maximum_site_state_after_all_gates": "lab-screened Grade C",
+    "explicitly_no_credit": [
+      "decode or prefill performance",
+      "deployment readiness",
+      "other TP, MTP, graph, KV, context, modality, artifact, or runtime cells",
+      "protected eager-text results or headline values"
+    ]
+  },
+  "tooling": {
+    "generator_path": "experiments/qwen38-flash-next-fp8-b70/fixtures/fixed_vision_fixture_v1.py",
+    "generator_sha256": "82bc70952db0b00368d7142569f239763d07075aed270b8b7fa14b1062066345",
+    "client_path": "experiments/qwen38-flash-next-fp8-b70/tools/run-fixed-vision-fixture-v1.py",
+    "client_sha256": "f84e7f02d98c611095b2bae9582fc1056c3e042969733d1ef4290910cd40e0a1"
+  }
+}
