@@ -69,9 +69,9 @@ run_parent="${RUN_PARENT:-/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b7
 cache_parent="${CACHE_PARENT:-/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70}"
 run_dir="${run_parent}/${campaign}-attempt${attempt}"
 cache_dir="${cache_parent}/${campaign}-attempt${attempt}"
-compile_cache_dir="/tmp/${campaign}-attempt${attempt}-compile"
+compile_cache_dir="${COMPILE_CACHE_DIR:-/tmp/${campaign}-attempt${attempt}-compile}"
 server_log="${run_dir}/server.log"
-rpc_dir="/tmp/${campaign}-attempt${attempt}-rpc"
+rpc_dir="${RPC_DIR:-/tmp/${campaign}-attempt${attempt}-rpc}"
 if [[ "${mtp_exact}" == "1" ]]; then
   rpc_dir="/tmp/q38-mtp1-exact-a${attempt}-rpc"
 fi
@@ -111,6 +111,8 @@ fi
 [[ ! -e "${cache_dir}" ]] || fail "refusing to reuse ${cache_dir}"
 [[ ! -e "${compile_cache_dir}" ]] || fail "refusing to reuse ${compile_cache_dir}"
 [[ ! -e "${rpc_dir}" ]] || fail "refusing to reuse ${rpc_dir}"
+[[ "${compile_cache_dir}" == /tmp/* && "${rpc_dir}" == /tmp/* ]] || \
+  fail "compile and RPC paths must remain absolute under /tmp"
 [[ -z "${VLLM_PLE_CPU_OFFLOAD+x}" ]] || fail "VLLM_PLE_CPU_OFFLOAD must be absent"
 
 [[ "$(git -C "${vllm_src}" rev-parse HEAD)" == "${expected_vllm_head}" ]] || fail "vLLM overlay head changed"
@@ -150,6 +152,33 @@ mkdir -p "${run_dir}" "${cache_dir}/vllm" "${cache_dir}/xdg" \
   "${compile_cache_dir}/torchinductor" "${compile_cache_dir}/triton" "${rpc_dir}"
 chmod 700 "${rpc_dir}"
 df -B1 / /tmp /dev/shm /mnt/usb-models >"${run_dir}/filesystem-preflight.txt"
+"${python}" - "${rpc_dir}" "${run_dir}/ipc-path-preflight.json" <<'PY'
+import json
+import os
+import pathlib
+import sys
+
+import zmq
+
+root = pathlib.Path(sys.argv[1])
+output = pathlib.Path(sys.argv[2])
+uuid_fixture = "ffffffff-ffff-4fff-bfff-ffffffffffff"
+derived_path = root / uuid_fixture
+limit = int(getattr(zmq, "IPC_PATH_MAX_LEN", 107))
+path_bytes = len(os.fsencode(derived_path))
+assert limit == 107, limit
+assert len(uuid_fixture) == 36
+assert path_bytes <= limit, (derived_path, path_bytes, limit)
+output.write_text(json.dumps({
+    "schema": "neural.download.zmq-ipc-path-preflight.v1",
+    "rpc_root": str(root),
+    "uuid_fixture": uuid_fixture,
+    "derived_ipc_path": str(derived_path),
+    "derived_ipc_path_bytes": path_bytes,
+    "zmq_ipc_path_max_bytes": limit,
+    "passed": True,
+}, sort_keys=True, indent=2) + "\n")
+PY
 
 server_pid=""
 cleanup() {
@@ -629,6 +658,15 @@ for _ in $(seq 1 720); do
 done
 if (( healthy == 0 )); then
   capture_failure_journal
+  if grep -Fq 'zmq.error.ZMQError: ipc path' "${server_log}" && \
+     grep -Fq 'is longer than 107 characters' "${server_log}"; then
+    tail -n 160 "${server_log}" >&2 || true
+    fail "RPC IPC path exceeded the 107-byte limit before engine workers initialized"
+  fi
+  if ! grep -Fq 'Worker_TP' "${server_log}"; then
+    tail -n 160 "${server_log}" >&2 || true
+    fail "server stopped before engine workers initialized; inspect server.log"
+  fi
   verify_offload_receipt || fail "workers did not each report exact 12.22-GiB selective offload"
   tail -n 160 "${server_log}" >&2 || true
   fail "server did not become healthy within the bounded startup window"
