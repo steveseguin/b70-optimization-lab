@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "status": "failed-incomplete-host-swap-floor-during-model-load",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1",
+  "attempt": 9,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "checkpoint shard loading",
+    "checkpoint_shards_completed": 5,
+    "checkpoint_shards_total": 131,
+    "loaded_rank_count": 0,
+    "healthy_api": false,
+    "client_invoked": false,
+    "vision_requests_started": false,
+    "quality_or_text_recovery_started": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The administrative 105-GiB admission treatment passed and the exact TP4 eager vision server reached checkpoint loading. The active-run guard stopped at 5/131 shards when SwapFree crossed below its frozen 5-GiB floor. This is bounded host-resource evidence, not vision capability, quality, deployment, or throughput evidence."
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 512,
+    "max_num_batched_tokens": 64,
+    "language_model_only": false,
+    "limit_mm_per_prompt": {"image": 1, "video": 0},
+    "mm_processor_cache_gb": 0,
+    "mm_encoder_tp_mode": "weights",
+    "kv_cache_memory_bytes": 201326592,
+    "port": 19688
+  },
+  "frozen_tools": {
+    "preregistration_sha256": "4fbd96ded8b36366161221a0e67e8500c63311ca4b3da1d7f9150f25a7494db0",
+    "wrapper_sha256": "781779523bbf4429b0fd8658055a99a8fb81b0b7cbf0de7285566a8edf87df64",
+    "client_sha256": "0e6cdb7302db7126afd24e972af63a41b128909fa8456de548f5162855b3953c",
+    "supervisor_sha256": "3a665f1a4ec79372e4caaecff808053946a065b64a0b444bfbc7da8b3fff4eab",
+    "runtime_classifier_schema": "neural.download.q38-runtime-conflict-scan.v3",
+    "runtime_classifier_sha256": "ecd18d133eef946bacf2750717bc458eca8e64dc1d97beabe060bdf314bf2ab3"
+  },
+  "timeline": {
+    "journal_start_epoch": 1787942608,
+    "journal_start_local": "2026-08-28T14:43:28-04:00",
+    "server_pid_written_local": "2026-08-28T14:44:30-04:00",
+    "model_loading_started_local": "2026-08-28T14:45:12-04:00",
+    "shard_loading_started_local": "2026-08-28T14:45:18-04:00",
+    "last_above_swap_floor_epoch": 1787942722,
+    "last_above_swap_floor_local": "2026-08-28T14:45:22-04:00",
+    "swap_floor_trip_epoch": 1787942724,
+    "swap_floor_trip_local": "2026-08-28T14:45:24-04:00",
+    "postflight_complete_local": "2026-08-28T14:45:50-04:00"
+  },
+  "resource_evidence": {
+    "initial_mem_available_kib": 110868468,
+    "initial_mem_floor_kib": 110100480,
+    "initial_swap_free_kib": 6297672,
+    "initial_swap_floor_kib": 6291456,
+    "active_mem_floor_kib": 10485760,
+    "active_swap_floor_kib": 5242880,
+    "last_above_floor": {
+      "epoch": 1787942722,
+      "mem_available_kib": 21955644,
+      "swap_free_kib": 5433272
+    },
+    "trip_sample": {
+      "epoch": 1787942724,
+      "mem_available_kib": 23995596,
+      "swap_free_kib": 3414672,
+      "swap_floor_deficit_kib": 1828208
+    },
+    "failure_receipt": "FAIL vision resource floor MemAvailable=23995596KiB SwapFree=3414672KiB",
+    "failure_receipt_sha256": "9a07905986993c707719cf08c4425d659f397214bea1c76851d568fb576d122b",
+    "health_artifact_bytes": 0,
+    "server_log_sha256": "2dc0b78c878fbae8ddf07e671720293f4b73fc82304359c291d19cd457001ff0",
+    "resource_watch_sha256": "e9269691050105a9fe3df26e70d4a216fde4ed2332a86e4995f2f4b13f87b270"
+  },
+  "journal": {
+    "kernel_journal_read_rc": 0,
+    "kernel_journal_sha256": "74c6fb261ee73fbe498aba776096a7ca998bd83539a73cc2f337156de786c983",
+    "records": ["drop_caches: 3"],
+    "oom_or_killed_process_record": false,
+    "ttm_or_eviction_record": false,
+    "rxerr_record": false,
+    "b70_addressed_event": false
+  },
+  "cleanup": {
+    "child_rc": 143,
+    "supervisor_rc": 143,
+    "listener_19688_after": false,
+    "model_or_worker_process_after": false,
+    "compile_path_after": false,
+    "rpc_path_after": false,
+    "runtime_scan_after": {
+      "status": "clear",
+      "rc": 0,
+      "conflicts": 0,
+      "errors": 0,
+      "vanished_races": 0,
+      "scanned_processes": 550,
+      "sha256": "d9df358ee7c180e37ad7b116ab2ad0865f321d8cc643a2697f29dd5c6662e6a3"
+    },
+    "system_manager_after": "running",
+    "user_manager_after": "running",
+    "failed_system_units_after": 0,
+    "muse_glimmer_bf16_fleet_service_after": "inactive",
+    "muse_glimmer_frontdoor_service_after": "inactive",
+    "postflight_card_memory_mib": [42.8828125, 42.875, 42.875, 42.87109375]
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt9",
+    "run_file_count": 16,
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-vision-512-r1-attempt9-supervisor",
+    "supervisor_file_count": 70,
+    "admission_manifest": "admission-recovery.sha256",
+    "admission_manifest_sha256": "8dc596c0247a714ca39bec704276b4c0c5df073def4fe1feedb1ac59474ba844",
+    "admission_manifest_entries": 31,
+    "admission_manifest_verified": true,
+    "tracked_combined_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-fixed-vision-attempt9-primary-evidence.sha256",
+    "combined_manifest_sha256": "c7daeced21a50cdf7fae02531b845fec4dd17ccdb98b495a4e9b3faffd947b06",
+    "combined_manifest_entries": 86,
+    "combined_manifest_verified_from_raw_parent": true
+  },
+  "coverage_and_protected_results": {
+    "site_or_matrix_changed": false,
+    "vision_capability_claim": null,
+    "captured_eager_speed_changed": false,
+    "protected_results_changed": false,
+    "protected_family_sha256": "c378b6f584235632d5fe8d178bc756be6c6ff12309ba5ec352a9cd1369e9254d",
+    "protected_result_readme_sha256": "deb1869104c941cf784594d0bb6c8e3d1e7523075ed74d54a80f930413360a7d",
+    "protected_result_handoff_sha256": "51eb4714f9f4050fd4d49a906ee2f7e2ae83fcc081218244756812ed7cc9f63f",
+    "reason": "Only 5/131 checkpoint shards loaded; the API never became healthy and no client, text recovery, vision request, quality gate, or speed row ran."
+  },
+  "next_step": {
+    "status": "no-credit-and-no-identical-retry",
+    "requirements": [
+      "Preserve attempt 9 as bounded host-resource evidence and keep every protected eager result unchanged.",
+      "Do not classify the vision cell from a partial model load.",
+      "Any successor needs a materially different preregistered host-memory or swap treatment with fresh paths and identity."
+    ]
+  }
+}
