@@ -80,7 +80,7 @@ def site_card(path: Path) -> None:
     d.text((150, 62), "NEURAL.DOWNLOAD", font=mono(30), fill=WHITE)
     d.text((72, 150), "RUN AI AT HOME.", font=font(82), fill=WHITE)
     d.text((72, 242), "WE MAKE IT FASTER.", font=font(82), fill=WHITE)
-    body = "Measured speeds for open AI models on an Intel Arc Pro B70 — every number links to its proof."
+    body = "Tuned recipes for open AI models on an Intel Arc Pro B70 — every number links to its measured proof."
     y = 380
     for line in wrap(d, body, font(32, bold=False), 1000):
         d.text((72, y), line, font=font(32, bold=False), fill=WHITE)
