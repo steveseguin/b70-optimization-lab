@@ -213,6 +213,11 @@ argv=(
   printf 'process_start_ticks=%s\n' "$(awk '{print $22}' "/proc/$$/stat")"
   printf 'host=%s\n' "${HOST:-127.0.0.1}"
   printf 'port=%s\n' "${port}"
+  printf 'run_preflight=%s\n' "${RUN_PREFLIGHT:-1}"
+  if [[ "${RUN_PREFLIGHT:-1}" == "1" ]]; then
+    printf 'preflight_log_sha256=%s\n' \
+      "$(sha256sum "${run_dir}/preflight.log" | awk '{print $1}')"
+  fi
   printf 'model=%s\n' "$(readlink -f "${model}")"
   printf 'model_revision=%s\n' "${revision}"
   printf 'served_model_name=%s\n' "${served_model_name}"
@@ -226,8 +231,19 @@ argv=(
   printf 'verify_manifest=%s\n' "${VERIFY_MANIFEST:-0}"
   printf 'vllm_tree=%s\n' "${vllm_tree}"
   printf 'vllm_commit=%s\n' "${vllm_commit}"
+  printf 'vllm_cli=%s\n' "${vllm}"
+  printf 'vllm_cli_sha256=%s\n' "$(sha256sum "${vllm}" | awk '{print $1}')"
+  printf 'python_executable=%s\n' "${python}"
+  printf 'python_executable_sha256=%s\n' \
+    "$(sha256sum "${python}" | awk '{print $1}')"
   printf 'kernel_tree=%s\n' "${kernel_tree}"
   printf 'kernel_commit=%s\n' "${kernel_commit}"
+  if [[ -f "${kernel_tree}/vllm_xpu_kernels/_xpu_C.abi3.so" ]]; then
+    printf 'kernel_binary_sha256=%s\n' \
+      "$(sha256sum "${kernel_tree}/vllm_xpu_kernels/_xpu_C.abi3.so" | awk '{print $1}')"
+  else
+    printf 'kernel_binary_sha256=unavailable\n'
+  fi
   printf 'oneapi_device_selector=%s\n' "${ONEAPI_DEVICE_SELECTOR}"
   printf 'ze_affinity_mask=%s\n' "${ZE_AFFINITY_MASK}"
   printf 'xpu_graph=%s\n' "${XPU_GRAPH}"
@@ -262,6 +278,10 @@ argv=(
   printf 'vllm_xpu_v4_m1_router_norm=%s\n' "${VLLM_XPU_V4_M1_ROUTER_NORM}"
   printf 'vllm_xpu_v4_m2_router_norm=%s\n' "${VLLM_XPU_V4_M2_ROUTER_NORM}"
   printf 'vllm_xpu_v4_m1_direct_routed_moe=%s\n' "${VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE}"
+  printf 'vllm_xpu_v4_direct_routed_moe_allow_256_expert_fallback=%s\n' \
+    "${VLLM_XPU_V4_DIRECT_ROUTED_MOE_ALLOW_256_EXPERT_FALLBACK:-unset}"
+  printf 'vllm_xpu_v4_router_norm_max_m=%s\n' \
+    "${VLLM_XPU_V4_ROUTER_NORM_MAX_M:-unset}"
   printf 'vllm_xpu_v4_m2_route_direct_compact=%s\n' "${VLLM_XPU_V4_M2_ROUTE_DIRECT_COMPACT}"
   printf 'vllm_xpu_v4_native_dual_rmsnorm=%s\n' "${VLLM_XPU_V4_NATIVE_DUAL_RMSNORM}"
   printf 'vllm_xpu_v4_fused_qnorm_rope_kv_insert=%s\n' "${VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT}"
@@ -281,7 +301,6 @@ argv=(
   printf 'vllm_xpu_v4_divergence_mode=%s\n' "${VLLM_XPU_V4_DIVERGENCE_MODE}"
   printf 'vllm_xpu_v4_divergence_max_records=%s\n' "${VLLM_XPU_V4_DIVERGENCE_MAX_RECORDS}"
   printf 'vllm_xpu_expert_map_round_robin=%s\n' "${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN}"
-  printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'vllm_xpu_log_fp8_linear_shapes=%s\n' "${VLLM_XPU_LOG_FP8_LINEAR_SHAPES}"
   printf 'vllm_xpu_use_sampler_kernel=%s\n' "${VLLM_XPU_USE_SAMPLER_KERNEL}"
   printf 'vllm_xpu_v4_block_fp8_w8a16=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16}"
@@ -325,6 +344,9 @@ argv=(
   printf 'dspark_spec_tokens=%s\n' "${DSPARK_SPEC_TOKENS:-unset}"
   printf 'dspark_kv_cache_memory_bytes=%s\n' "${DSPARK_KV_CACHE_MEMORY_BYTES:-unset}"
   printf 'enforce_eager=%s\n' "${ENFORCE_EAGER:-1}"
+  printf 'deepseek_0731_target_profile=%s\n' \
+    "${DEEPSEEK_0731_TARGET_PROFILE:-unset}"
+  printf 'vllm_target_device=%s\n' "${VLLM_TARGET_DEVICE}"
   printf 'expert_parallel=1\n'
   printf 'tensor_parallel_size=%s\n' "${tp_size}"
   printf 'pipeline_parallel_size=%s\n' "${pp_size}"
@@ -350,6 +372,10 @@ argv=(
     "$(sha256sum "${oneccl_lib}/libccl.so.1" | awk '{print $1}')"
   printf 'oneccl_force_preload=%s\n' "${ONECCL_FORCE_PRELOAD}"
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
+  printf 'ld_library_path=%s\n' "${LD_LIBRARY_PATH:-}"
+  printf 'pythonpath=%s\n' "${PYTHONPATH:-}"
+  printf 'ccl_worker_count=%s\n' "${CCL_WORKER_COUNT:-unset}"
+  printf 'ccl_ze_ipc_exchange=%s\n' "${CCL_ZE_IPC_EXCHANGE:-unset}"
   printf 'ccl_atl_transport=%s\n' "${CCL_ATL_TRANSPORT}"
   printf 'ccl_topo_p2p_access=%s\n' "${CCL_TOPO_P2P_ACCESS}"
   printf 'ccl_enable_sycl_kernels=%s\n' "${CCL_ENABLE_SYCL_KERNELS:-default}"

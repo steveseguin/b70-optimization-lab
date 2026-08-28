@@ -85,14 +85,24 @@ mode rejects corruption, cache reuse, missing/reordered/extra rows, prompt or
 suite drift, and decoding mismatches. Historical scorer behavior remains
 available only to interpret old evidence and is not a promotion gate.
 
-The endpoint-driver scaffold is
-`scripts/qualify-0731-reap-target-endpoint.sh`, but it is deliberately
-fail-closed after independent review found that its first version did not bind
-the queried listener to the run identity and lacked an atomic attempt
-directory. Do not use it until those gates are implemented and tested. The
-server identity now records the launcher PID, boot ID, process start ticks,
-host, and port so a corrected driver can prove that it is querying the intended
-process rather than a stale endpoint.
+The endpoint driver is
+`scripts/qualify-0731-reap-target-endpoint.sh`. Its earlier fail-closed stub was
+replaced only after the process-binding and attempt-isolation gates were
+implemented and tested. The driver now requires the exact pinned artifact and
+validation hashes, complete frozen runtime/selector identity, literal
+`127.0.0.1`, exact listener ownership by the recorded process tree, stable PID
+start time and boot ID, before/after binding receipts for every request phase,
+cross-phase continuity, an exclusive per-run lock, private unique attempt
+directories, and no-clobber atomic final reports. The realistic full gate uses
+the required 512-token cap. Synthetic process/listener tests cover replacement,
+wrong-address, ambiguous-owner, duplicate-identity, receipt-drift, context, and
+overwrite failures.
+
+The 256/256 smoke arm remains the default of
+`scripts/serve-0731-reap-tp4-target-canary.sh`. The separately named
+`scripts/serve-0731-reap-tp4-target-full.sh` selects the frozen 2048/2048 arm;
+it does not change the first-boot default. No GPU launch or speed measurement
+was made while enabling these gates.
 
 The intended deliverable is a candidate neural.download package with exact
 model/runtime/patch identities, target-only and target-verified-speculation

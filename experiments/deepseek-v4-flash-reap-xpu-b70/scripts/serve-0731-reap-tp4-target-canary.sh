@@ -7,6 +7,22 @@ model="${MODEL_PATH:-/mnt/usb-models/llm-models/DeepSeek-V4-Flash-0731-REAP}"
 revision="ddc04540efda3d2a0788b129f1fad828ddc19b60"
 verify="${root}/experiments/deepseek-v4-flash-reap-xpu-b70/scripts/verify-0731-reap-artifact.py"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+profile="${DEEPSEEK_0731_TARGET_PROFILE:-smoke}"
+case "${profile}" in
+  smoke)
+    run_label=canary
+    context_tokens=256
+    ;;
+  full)
+    run_label=full
+    context_tokens=2048
+    ;;
+  *)
+    printf 'DEEPSEEK_0731_TARGET_PROFILE must be smoke or full\n' >&2
+    exit 2
+    ;;
+esac
+export DEEPSEEK_0731_TARGET_PROFILE="${profile}"
 vllm_tree="/home/steve/src/deepseek-v4-vllm-record-baseline-264c7f2f7"
 kernel_tree="/home/steve/src/deepseek-v4-xpu-kernels-record-313156737"
 oneccl_tree="/home/steve/src/oneccl-2021.17.2-b70-sizegate"
@@ -16,6 +32,8 @@ vllm="/home/steve/.venvs/deepseek-v4-xpu/bin/vllm"
 
 test -n "${DEEPSEEK_0731_VALIDATION_SUMMARY:-}"
 test -f "${DEEPSEEK_0731_VALIDATION_SUMMARY}"
+test ! -L "${DEEPSEEK_0731_VALIDATION_SUMMARY}"
+export DEEPSEEK_0731_VALIDATION_SUMMARY="$(realpath -e -- "${DEEPSEEK_0731_VALIDATION_SUMMARY}")"
 "${verify}" "${model}" --full-validation-summary "${DEEPSEEK_0731_VALIDATION_SUMMARY}"
 test "$(git -C "${vllm_tree}" rev-parse HEAD)" = 264c7f2f7df21ddeeab32ecca0353133344f1ac9
 test -z "$(git -C "${vllm_tree}" status --porcelain)"
@@ -76,14 +94,14 @@ unset CCL_REDUCE_SCATTER CCL_ENABLE_SYCL_KERNELS CCL_WORKER_COUNT CCL_ZE_IPC_EXC
 unset B70_ONECCL_MHC_THREADS B70_ONECCL_MHC_EXPLICIT_BARRIER
 unset CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK
 
-export RUN_DIR="/mnt/fast-ai/bench-results/deepseek-v4-flash-0731-reap/target-eager-canary-${stamp}"
+export RUN_DIR="/mnt/fast-ai/bench-results/deepseek-v4-flash-0731-reap/target-eager-${run_label}-${stamp}"
 export VLLM_CACHE_ROOT="/mnt/fast-ai/vllm-cache-exp/deepseek-v4-flash-0731-reap-${revision}/target-eager-${stamp}/vllm"
 export TORCHINDUCTOR_CACHE_DIR="/mnt/fast-ai/vllm-cache-exp/deepseek-v4-flash-0731-reap-${revision}/target-eager-${stamp}/torchinductor"
 test ! -e "${RUN_DIR}"
 test ! -e "${VLLM_CACHE_ROOT}"
 test ! -e "${TORCHINDUCTOR_CACHE_DIR}"
-export MAX_MODEL_LEN=256
-export MAX_NUM_BATCHED_TOKENS=256
+export MAX_MODEL_LEN="${context_tokens}"
+export MAX_NUM_BATCHED_TOKENS="${context_tokens}"
 export GPU_MEMORY_UTILIZATION=0.95
 export TP_SIZE=4
 export PP_SIZE=1
@@ -173,7 +191,7 @@ unset VLLM_XPU_DSPARK_IPC_EVENT_SOCKET DSPARK_SPEC_TOKENS
 export DSPARK_KV_CACHE_MEMORY_BYTES=125829120
 export VLLM_EXTRA_ARGS="--enable-prompt-tokens-details --kv-cache-memory 125829120"
 
-printf 'DeepSeek V4 Flash 0731 REAP K160 target-only eager canary\n'
+printf 'DeepSeek V4 Flash 0731 REAP K160 target-only eager %s arm\n' "${profile}"
 printf 'model_revision=%s\n' "${revision}"
 printf 'run_dir=%s\n' "${RUN_DIR}"
 printf 'crypto_receipt=%s\n' "${DEEPSEEK_0731_VALIDATION_SUMMARY}"

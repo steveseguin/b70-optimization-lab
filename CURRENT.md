@@ -1377,6 +1377,13 @@ storage gate on 2026-08-28 at
 its revision-bound three-stage DSpark pack also passed construction and is
 indexed by
 `experiments/deepseek-v4-flash-reap-xpu-b70/data/2026-08-28-deepseek-v4-flash-0731-dspark-draft-pack.json`.
+Its fail-closed target qualification driver and separate 256-token smoke / 2K
+full launch arms now pass CPU-side contract tests; see the
+[prelaunch gate note](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-08-28-deepseek-v4-flash-0731-prelaunch-gate-readiness.md).
+No GPU launch occurred. The host still sits below the frozen 105-GiB
+`MemAvailable` recovery threshold, so the next device-lane action remains a
+user-authorized reboot followed by a fresh four-card preflight; do not lower
+the floor or repeat the driver reload.
 No historical speed or quality result transfers to either artifact. Their
 accepted results, patches, and launch identities remain protected. Accepted
 Qwen3.8 27B GGUF target-only results were measured on the
