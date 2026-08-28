@@ -13,7 +13,11 @@ and 20.727 tok/s. It also qualifies 32-block MTP1/MTP2 recipes and MTP3 at
 exact 4K, with `8.904`, `9.893`, and `15.502 tok/s` decode medians respectively.
 MTP3 remains the preferred 4K recipe because it also has lower TTFT and higher
 wall output. These rows remain bounded screens, not stable ceilings. The packet
-now also includes a target-only official-thinking quality profile that passed
+now classifies all 25 cells in the practical TP4 eager-text MTP/context slice:
+12 screened and 13 quarantined, with no blank practical cell. MTP1, MTP2, and
+MTP4 completed exact active-8K requests under scoped cross-runtime parity
+quarantines, while MTP3 reached its fixed 8K bound without a completed receipt.
+It also includes a target-only official-thinking quality profile that passed
 25/25 preregistered responses. Later MTP1 1K and 2K arms passed every boot and
 admission gate but stopped on their first requests without returning output.
 An MTP2 active-1K arm then returned the exact frozen target twice with zero
@@ -129,7 +133,9 @@ MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
 MTP4 at exact 4K and MTP1 at active 1K and 2K are quarantined for separate
 stopped-request events. MTP2 active-1K is separately quarantined only because
 the local-NVMe lane failed the strict clean-host gate after two otherwise exact
-requests. Target-only official-thinking quality now passes. The
+requests. Active-8K MTP1, MTP2, and MTP4 are separately quarantined against
+the frozen cross-runtime/cache MTP0 authority; the MTP3 active-8K arm retained
+no completed receipt. Target-only official-thinking quality now passes. The
 first MTP3 transfer attempt returned 19/19 correct completed answers but is
 unqualified after a repeated-session runtime stop; graph, deeper context,
 vision, fresh-server determinism, clean-host replay, and a sealed deployment
@@ -749,3 +755,42 @@ clean-host and deployment wording. Existing MTP1 configured-512 at 9.372 tok/s,
 exact-4K at 8.904 tok/s, MTP0 exact-8K, and every featured speed remain
 unchanged. See the
 [`MTP1 active-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json).
+
+## Quarantined active-8K TP4 MTP4 screen
+
+The final practical-slice arm retained the current-source TP4/EP4/eager MTP4
+identity and used a 423,641,088-byte fixed cache. Its exact 36-block admission
+reported 9,504 tokens / 1.12x maximum concurrency at the configured 8,448-token
+cap, and every rank recorded the required 12.22-GiB selective offload receipt.
+
+Its sole p8192/o128 request completed in 948.095 seconds with exact
+8192/128/8320 usage, zero cache reuse, a length stop, 128 token IDs, and all 25
+generic exact-depth gates. MTP4 was active at every position: 41 drafts produced
+164 draft tokens, 86 were accepted, and the positive accepted-position deltas
+`[30, 24, 18, 14]` sum exactly to 86. The candidate output first diverged from
+the frozen cross-runtime/cache MTP0 authority at zero-based generated-token
+index 26 (one-based token 27). The observed `4.025629 tok/s` conventional
+99-interval rate and `918.432851 s` TTFT are diagnostic only. This is a Grade-D
+scoped parity quarantine; it does not isolate MTP4 as the cause and grants no
+speed, quality, or deployment credit.
+
+The completed-classification supervisor returned zero and passed postflight:
+no listener, recorded group, compile path, or RPC path remained, and all four
+cards were rediscovered below 43 MiB. The five-second grace expired before the
+remaining EngineCore and workers were stopped; the known shutdown-time
+output-handler notice and one shared-memory cleanup warning also remain
+disclosed. Six corrected Source-514 records named only local NVMe
+`0000:01:00.0`; no B70-addressed event appeared.
+
+Attempt 1 is retained as a superseded launcher-protocol artifact. It reached a
+healthy server but failed closed at the client's pre-network supervisor-command
+identity check, sent no model request by control-flow inference, and grants no
+matrix or performance credit. Its corrected receipt is the
+[`attempt-1 pre-request stop`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt1-pre-request-stop.json).
+The classified attempt-2 receipt is the
+[`MTP4 active-8K parity quarantine`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json).
+
+The practical TP4 eager-text slice is now fully classified at 25/25: 12
+screened and 13 quarantined. The retained MTP4 configured-512 result remains
+`20.72717637199404 tok/s`, the preferred MTP3 exact-4K result remains
+`15.50156510641242 tok/s`, and every prior speed is unchanged.

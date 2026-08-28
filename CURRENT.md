@@ -1281,6 +1281,32 @@ changed. Any retry needs a new bounded preregistration rather than a timeout-
 only change. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json`.
 
+The final practical Qwen3.8 Flash-Next cell, TP4/EP4/eager/MTP4 active-8K, is
+now classified. Its corrected absolute-path attempt retained the current-source
+identity and admitted 36 blocks / 9,504 cache tokens. The sole p8192/o128
+request completed in 948.095 seconds with exact 8192/128/8320 usage, zero cache
+reuse, all 25 generic gates, and positive MTP4 activity at all four positions:
+41 drafts, 164 draft tokens, 86 accepted, split `[30,24,18,14]`. Its output
+first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based
+generated-token index 26. The `4.025629 tok/s` rate and `918.432851 s` TTFT are
+diagnostic only; this is a Grade-D scoped parity quarantine and does not isolate
+MTP4 as the cause.
+
+The completed-classification supervisor returned zero and postflight passed:
+no listener, recorded group, compile path, or RPC path, four exact B70s below
+43 MiB, and no B70-addressed event. The five-second shutdown grace expired
+before the remaining EngineCore and workers were stopped; the known output-
+handler notice and one shared-memory cleanup warning remain disclosed. Six
+corrected Source-514 records named only local NVMe `0000:01:00.0`. Attempt 1 is
+retained separately as a corrected, sealed pre-request command-identity stop;
+it sent no model request by control-flow inference and grants no matrix credit.
+
+The practical TP4 eager-text matrix is now **25/25 classified**: 12 screened,
+13 quarantined, zero missing. MTP4 configured-512 remains
+`20.72717637199404 tok/s`, MTP3 exact-4K remains
+`15.50156510641242 tok/s`, and every prior captured speed is unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json`.
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain
 protected. Accepted Qwen3.8 27B GGUF target-only results were measured on the

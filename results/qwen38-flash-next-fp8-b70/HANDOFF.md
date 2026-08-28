@@ -422,3 +422,38 @@ Next: preregister the independently audited 36-block MTP4/8K candidate, then
 run exactly one bounded p8192/o128 request after rechecking the four-card
 preflight. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json`.
+
+## 2026-08-28 MTP4 active-8K closeout
+
+Attempt 1 reached a healthy 36-block / 9,504-token MTP4 server but failed
+closed at the client's pre-network supervisor-command identity check because
+the supervisor had been invoked by a relative path. No request artifacts or
+metrics snapshot exist. The no-request conclusion is a control-flow inference,
+and the corrected 40-entry raw packet is retained only as superseded launcher-
+protocol evidence:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt1-pre-request-stop.json`.
+
+The absolute-path attempt 2 retained every model, source, runtime, cache,
+request, timeout, and authority gate. Its sole p8192/o128 request completed all
+25 generic gates with exact 8192/128/8320 usage and zero cache reuse. MTP4
+mechanism evidence passed at all positions: 41 drafts, 164 draft tokens, 86
+accepted, split `[30,24,18,14]`. The output first differed from the frozen
+cross-runtime/cache MTP0 authority at zero-based generated-token index 26, so
+the `4.025629 tok/s` rate and `918.432851 s` TTFT are diagnostic only. This is
+a Grade-D scoped parity quarantine and does not isolate MTP4 as the cause.
+
+The completed-classification supervisor returned zero. No listener, recorded
+group, compile path, or RPC path remained, and four exact B70s returned below
+43 MiB. Disclose the five-second EngineCore/worker shutdown-grace expiry, the
+known output-handler notice, one shared-memory cleanup warning, and six
+corrected local-NVMe Source-514 records. No B70-addressed event appeared. The
+49-entry manifests verify at
+`c786f83af22b6350533464230188f701418522667ab78048d45ab1a15a7e2f55`.
+Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json`.
+
+The practical TP4 eager-text matrix is now 25/25 classified: 12 screened, 13
+quarantined, and zero missing. Preserve the MTP4 configured-512
+`20.72717637199404 tok/s`, MTP3 exact-4K `15.50156510641242 tok/s`, all prior
+cells, and every captured speed. Do not repeat MTP4/8K without a material parity
+treatment, a same-runtime authority design, or a new distinct preregistration.

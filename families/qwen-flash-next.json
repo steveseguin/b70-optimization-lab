@@ -7,7 +7,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-28",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and 24 of the practical 25 TP4 eager-text MTP/context cells are now classified. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. MTP1 and MTP2 completed exact 8K under scoped cross-runtime parity quarantines, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. Only MTP4/8K remains blank in the practical slice. Deterministic direct-answer quality is 6/7 semantically, the official-thinking MTP0 target profile passed 25/25, and deeper MTP/deployment qualification remains research-only.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells are now classified. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. MTP1, MTP2, and MTP4 completed exact 8K under scoped cross-runtime parity quarantines, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. Deterministic direct-answer quality is 6/7 semantically, the official-thinking MTP0 target profile passed 25/25, and deeper MTP/deployment qualification remains research-only.",
   "featured_results": [
     {
       "role": "hero",
@@ -125,7 +125,7 @@
     },
     "quality_evidence": {
       "band": "official-target-quality-pass-research-deployment",
-      "scope": "The deterministic direct-answer target profile is 6/7 semantically, and the separate official-thinking MTP0 target profile passed 25/25. MTP0 has screened 1K/2K/4K and formal 8K gates; MTP1-4 have separate configured-512 and exact-4K evidence with MTP3 preferred at 4K. Active-context quarantines remain explicit: MTP1 and MTP2 completed 8K but differ from the cross-runtime MTP0 authority, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. No quarantined arm receives speed, quality, or deployment credit. Graph, vision, clean-host qualification, repeated-session stability, and production deployment remain open.",
+      "scope": "The deterministic direct-answer target profile is 6/7 semantically, and the separate official-thinking MTP0 target profile passed 25/25. MTP0 has screened 1K/2K/4K and formal 8K gates; MTP1-4 have separate configured-512 and exact-4K evidence with MTP3 preferred at 4K. Active-context quarantines remain explicit: MTP1, MTP2, and MTP4 completed 8K but differ from the cross-runtime MTP0 authority, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. No quarantined arm receives speed, quality, or deployment credit. Graph, vision, clean-host qualification, repeated-session stability, and production deployment remain open.",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -144,6 +144,8 @@
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt1-pre-request-stop.json",
+        "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
@@ -934,19 +936,21 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP4", "eager", "text-only", "configured max 512", "configured max 1536 retained as an active-1K teardown quarantine", "configured max 3072 retained as an active-2K no-output and reset quarantine", "configured max 4352 retained as an exact-4K runtime quarantine", "matched MTP0 quality plus 16/16 repeat and small needle", "three-row speed screen"],
+      "coverage": ["TP4/EP4", "MTP4", "eager", "text-only", "configured max 512", "configured max 1536 retained as an active-1K teardown quarantine", "configured max 3072 retained as an active-2K no-output and reset quarantine", "configured max 4352 retained as an exact-4K runtime quarantine", "configured max 8448 retained as an exact active-8K cross-runtime parity quarantine", "matched MTP0 quality plus 16/16 repeat and small needle", "three-row speed screen"],
       "grades": {
         "evidence": {
           "grade": "C",
-          "scope": "exact TP4/EP4 eager MTP4 text serving at configured max 512; configured max 1536, 3072, and 4352 are retained separately as active-1K teardown, active-2K no-output/reset, and exact-4K runtime quarantines",
-          "basis": "The exact model, MTP adapter, preserved staged runtime, exact 24-block fixed allocation, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, 1,716/1,716 cumulative draft acceptance, and three corrected target-hash speed rows are retained. A separate 29-block active-1K boot returned the frozen MTP0 hash twice with zero cache reuse and perfect 204/204 acceptance across all four positions on each request, but its detached supervisor did not forward the exact stop to the server group. Direct recovery shut it down cleanly, yet the frozen teardown rule gives the cell no speed, quality, or deployment credit. The successor active-2K boot passed every startup gate but returned no receipt or output before the bounded client and engine timeouts; its teardown window recorded compute- and copy-class resets on all four cards. It also grants no speed, quality, parity, MTP-acceptance, or deployment credit. Corrected-only local-NVMe records block clean-host qualification in both context arms. The inherited target quality remains 5/7; exact-4K MTP4 is separately quarantined, while vision, clean-host replay, and deployment qualification remain missing.",
+          "scope": "exact TP4/EP4 eager MTP4 text serving at configured max 512; configured max 1536, 3072, 4352, and 8448 are retained separately as active-1K teardown, active-2K no-output/reset, exact-4K runtime, and exact active-8K cross-runtime parity quarantines",
+          "basis": "The exact model, MTP adapter, preserved staged runtime, exact 24-block fixed allocation, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, small cache-zero needle, complete usage, 1,716/1,716 cumulative draft acceptance, and three corrected target-hash speed rows are retained. A separate 29-block active-1K boot returned the frozen MTP0 hash twice with zero cache reuse and perfect 204/204 acceptance across all four positions on each request, but its detached supervisor did not forward the exact stop to the server group. Direct recovery shut it down cleanly, yet the frozen teardown rule gives the cell no speed, quality, or deployment credit. The successor active-2K boot passed every startup gate but returned no receipt or output before the bounded client and engine timeouts; its teardown window recorded compute- and copy-class resets on all four cards. The exact active-8K boot then passed all generic request and four-position MTP4 mechanism gates, but first diverged from the frozen cross-runtime/cache MTP0 authority at generated token 27. Its 4.026 tok/s observation is diagnostic only and does not isolate MTP4 as the cause. The first active-8K launch was a superseded pre-request command-identity stop with no matrix credit. Corrected-only local-NVMe records block clean-host qualification in these context arms. The inherited target quality remains 5/7; exact-4K MTP4 is separately quarantined, while vision, clean-host replay, and deployment qualification remain missing.",
           "reviewed_at": "2026-08-28",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json",
             "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json",
             "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json",
-            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json"
+            "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt1-pre-request-stop.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json"
           ]
         }
       },
@@ -1055,7 +1059,7 @@
         "4:1024": {"state": "quarantined", "label": "exact parity twice; detached teardown gate failed; diagnostic only", "reason": "Both exact active-1K requests returned the frozen MTP0 text hash with zero cache reuse, identical text, and perfect MTP4 acceptance at positions zero through three. Request one observed 13.326 tok/s after first text and the repeat sentinel 17.291 tok/s. The exact stop sentinel terminated the timeout supervisor without reaching the detached server group; direct recovery produced an orderly shutdown, but the frozen teardown rule quarantines the cell. Seven corrected-only local-NVMe records separately block clean-host qualification. Existing MTP4 configured-512 and exact-4K results remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "4:2048": {"state": "quarantined", "label": "360-second client timeout; 384 computed tokens; no output; four-card teardown resets", "reason": "The exact 29-block configured-3072 identity passed source, runtime, fresh four-rank, placement, cache, capacity, served-identity, and health gates. Request one reached the fixed 360-second client bound without a response receipt; about five seconds later the engine independently reported its own sampling timeout at 384 computed prompt tokens and zero output. No HTTP status, usage, parity hash, MTP counter delta, or speed exists, and request two was not sent. The corrected supervisor returned zero and left no listener, recorded process, compile path, or RPC path, but the teardown window recorded compute- and copy-class resets on all four B70s. All four cards were rediscovered at low memory use; no post-reset collective or known-good generation canary was run. Existing MTP4 configured-512, active-1K, exact-4K, and all captured speeds remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "4:4096": {"state": "quarantined", "label": "worker timeout at 3,904 computed tokens; no speed", "reason": "The exact 29-block configuration admitted 4,352 tokens but stopped during the 4K quality request; no durable quality or timing result was produced", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "4:8192": {"state": "missing", "label": "deeper-context stability not measured", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}}
+        "4:8192": {"state": "quarantined", "label": "exact 8K completed; parity mismatch at token 27; 4.026 tok/s diagnostic only", "reason": "The exact 36-block current-source identity exposed 9,504 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all 25 generic depth gates, and positive MTP4 counters at all four positions. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 4.026 tok/s rate and 918.4-second TTFT receive no speed or quality credit. Controlled teardown passed its cleanup gates and returned all four cards idle; the five-second grace expired before the remaining EngineCore and workers were stopped, and the intentional stop retained the known output-handler and shared-memory cleanup notices. Six corrected local-NVMe endpoint records block clean-host wording, but no B70 event appears. The superseded attempt-1 command-identity stop sent no request and grants no matrix credit.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}}
       }
     },
     {
@@ -1394,6 +1398,19 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-research",
           "parent": "flash-next-context8k-a1",
           "retry": {"status": "needs-runtime-stability-and-full-quality"}
+        },
+        {
+          "id": "mtp4-context8k-cross-runtime-parity-quarantine",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "quarantined",
+          "label": "exact 8K completed · MTP4 mechanism passed · parity mismatch at token 27 · diagnostic only",
+          "reason": "The exact 36-block current-source identity completed one p8192/o128 request with exact 8192/128/8320 usage, zero cache reuse, all 25 generic depth gates, and positive MTP4 accepted-token deltas [30,24,18,14] whose sum equals 86. Its output first differs from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 4.026 tok/s rate and 918.4-second TTFT are diagnostic only and do not isolate MTP4 as the cause. The owned completed-classification path passed postflight and returned all four cards idle; shutdown warnings and six corrected local-NVMe endpoint records remain disclosed, with no B70-addressed event.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json",
+          "parent": "flash-next-mtp4-context8k-a2",
+          "retry": {
+            "status": "blocked-on-parity-treatment-or-same-runtime-authority",
+            "trigger": "material parity treatment, a same-runtime authority design, or a separately preregistered distinct causal question"
+          }
         }
       ]
     }

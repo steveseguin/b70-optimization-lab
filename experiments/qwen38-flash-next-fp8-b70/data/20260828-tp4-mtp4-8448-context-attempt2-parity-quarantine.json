@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-cross-runtime-parity",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-8448-r1",
+  "attempt": 2,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-8448-r1-attempt2",
+  "supervisor_evidence_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/supervisor-qwen38-flash-next-fp8-tp4-ep4-eager-mtp4-8448-r1-attempt2",
+  "evidence_manifest": "evidence.sha256",
+  "evidence_manifest_sha256": "c786f83af22b6350533464230188f701418522667ab78048d45ab1a15a7e2f55",
+  "evidence_manifest_entries": 49,
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 4,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 8448,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 423641088,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp4-8448-headroom36-a2.sh",
+    "launcher_sha256": "e7f4d8c8dd2950ab5d6a1b32e729f1f5da1d9cc320bde320431723120d9b172b",
+    "client_sha256": "147b8910e8a219f2b743edfe433e75ba29ef7c3cc4fce4da1b883d7595536e7d",
+    "supervisor_sha256": "ccdc31ce4876c0dc3a97fb436cc6fb5ad01da9b15e363a985497beecc5deefa9"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 36,
+    "cache_tokens_reported": 9504,
+    "maximum_concurrency_at_8448": 1.12,
+    "model_load_seconds_by_rank": {
+      "0": 100.308585,
+      "1": 100.230459,
+      "2": 100.099478,
+      "3": 100.125501
+    },
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "status": "completed-generic-pass-cross-runtime-parity-quarantine",
+    "request_sent": true,
+    "request_count": 1,
+    "requested_prompt_tokens": 8192,
+    "requested_completion_tokens": 128,
+    "client_timeout_seconds": 1200,
+    "outer_timeout_seconds": 1210,
+    "outer_timeout_triggered": false,
+    "client_return_code": 0,
+    "response_elapsed_seconds": 948.0950894730049,
+    "usage": {
+      "prompt_tokens": 8192,
+      "completion_tokens": 128,
+      "total_tokens": 8320,
+      "cached_tokens": 0
+    },
+    "generic_exact_depth_gate": {
+      "passed": true,
+      "checks_passed": 25,
+      "checks_total": 25,
+      "finish_reason": "length",
+      "returned_token_ids": 128,
+      "timestamped_events": 100,
+      "inter_token_intervals": 99
+    },
+    "diagnostic_metrics": {
+      "conventional_99_interval_tok_s": 4.02562915156999,
+      "historical_100_event_tok_s": 4.066292072292919,
+      "time_to_first_token_seconds": 918.432851015008
+    },
+    "candidate_output_token_ids_sha256": "a1890c804678cbc523d2e070c60bd0446bf05091ab205aad651c0b00278d1e8c",
+    "candidate_text_sha256": "5b0d093aa8ad2a8db2d35da034db2a75b68f96c9f0254c4bced116165a66d83f",
+    "frozen_mtp0_output_token_ids_sha256": "0efd150b868d63f11cb4327bec07b02c7778d137142495924139e5221b4cebd3",
+    "frozen_mtp0_text_sha256": "7338b3a5f522b9e5f504512f52039ae8bb61e56346c6e881fd2ea90d9c01cc2b",
+    "target_parity": false,
+    "first_divergent_generated_token_index_zero_based": 26,
+    "mtp_counter_deltas": {
+      "drafts": 41,
+      "draft_tokens": 164,
+      "accepted_tokens": 86,
+      "accepted_tokens_per_position": [30, 24, 18, 14],
+      "positive_positions": [0, 1, 2, 3],
+      "accepted_position_sum_matches_total": true
+    },
+    "descriptive_mtp2_comparator": {
+      "output_token_ids_sha256": "d3ce0631eb382e39168ee6bbbf177b0d49fbb27bc6c6466bcf215f16db8d0220",
+      "text_sha256": "68c50214e241e6613efdd0b0bbbfea36995d917448b1db527f3dc3fb03cd8b70",
+      "candidate_output_parity": false,
+      "gating": false
+    },
+    "speed_credit": false,
+    "quality_credit": false,
+    "interpretation": "The exact active-8K request completed and passed every generic request gate with MTP4 engaged at all four accepted-token positions, but its output diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26 (one-based token 27). The mismatch is scoped to that authority and does not isolate MTP4 as the cause."
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "The preregistration allowed exactly one request."
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP4/active-8K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "protected_results_unchanged": [
+      "MTP4 configured-512 research screen at 20.72717637199404 tok/s",
+      "MTP4 exact-4K runtime quarantine",
+      "MTP3 exact-4K preferred result at 15.50156510641242 tok/s",
+      "MTP0 exact-8K authority",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material parity treatment, a same-runtime authority design, or a new preregistration with a distinct causal question."
+  },
+  "shutdown": {
+    "stop_sentinel": "STOP after completed MTP4 active-8K classification",
+    "supervisor_return_code": 0,
+    "api_application_shutdown_complete": true,
+    "engine_drain_completed": true,
+    "listener_present_after_cleanup": false,
+    "recorded_server_group_present_after_cleanup": false,
+    "compile_path_present_after_cleanup": false,
+    "rpc_path_present_after_cleanup": false,
+    "shutdown_notices": [
+      "the five-second shutdown grace expired and the process manager force-killed the remaining EngineCore process",
+      "the executor sent SIGTERM to four workers still running after its grace period",
+      "known AsyncLLM output-handler EngineDeadError during the intentional controlled stop",
+      "one shared-memory resource-tracker cleanup warning"
+    ],
+    "cards_discoverable_after_cleanup": 4,
+    "card_memory_used_mib": [42.88671875, 42.875, 42.875, 42.875],
+    "b70_addressed_event": false,
+    "classification": "completed-parity-quarantine-followed-by-controlled-owned-shutdown-passing-cleanup-gates-and-four-card-idle-rediscovery"
+  },
+  "system_observations": {
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "apei_records": 6,
+      "pcie_sections": 6,
+      "endpoint_sections": 6,
+      "source": 514,
+      "root_port_sections": 0,
+      "bad_dllp_or_timeout_sections": 0,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as host context. These corrected storage-link records block clean-host and deployment wording but do not name a B70 and are not attributed as the parity mismatch cause."
+    }
+  },
+  "tracked_sha256": {
+    "client-request.log": "ca9e7d1527fa9b900bf997f485fc4820c9af1a70bcfba5b5f0b24579e4297b1a",
+    "client-request.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "exact-depth-8k-o128.json": "ca9e7d1527fa9b900bf997f485fc4820c9af1a70bcfba5b5f0b24579e4297b1a",
+    "identity.txt": "ffc114bc0a32a494bdc69ef0e5a280dcf389bed88467c77c0d6eb2da997b87df",
+    "metrics-before-request.prom": "a0f25e4fb2172c911abc2f1e06c9ba4d34bc1ee9cdffb38d448399c729aa8dcd",
+    "metrics-after-request.prom": "ccc1e492d39dbd3cdbd2bf414502d7484dc37f4cbf1aceabf657fb22e2861aa4",
+    "models.json": "cfd038b3206d62d44c082679c5e7e636a4e16907aaaa6439f6146e25f962b910",
+    "request1-adjudication.json": "e6d42f3448724ffaec453c317712334bd96722ed152c2843d11159466e1a10f6",
+    "request1-classified.txt": "292257ae0f68e5743c80651a3e3392909675fb053589cc0cbdf9ff9a7537281a",
+    "server.log": "331625ddbb41b74898addae02236cd83a1ba28d78ecfdd71d578745c6ca99243",
+    "supervisor-postflight/kernel-journal.log": "7b8fea71637ca68da463e18b6536ddb5a43b93caf902d0a08d7756fed9d4bb0a",
+    "supervisor-postflight/q38-mtp4-8448-supervisor-a2.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "supervisor-postflight/xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d"
+  }
+}
