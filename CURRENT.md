@@ -1142,6 +1142,23 @@ Grade-D external-signal quarantine. MTP3 configured-512, active-2K, exact-4K,
 and every captured rate remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`.
 
+The final missing active-1K depth, TP4/EP4/eager/MTP4, is now also classified.
+Its exact 29-block local-NVMe boot passed source/runtime identity, fresh four-
+rank, placement, cache, capacity, served-model, and health gates. Both exact
+p1024/o256 requests returned the frozen MTP0 text hash with zero cache reuse,
+identical text, and perfect 204/204 acceptance split 51/51/51/51 across all
+four MTP4 positions. Request one observed `13.326165 tok/s` after first text;
+the determinism repeat observed `17.290937 tok/s`.
+
+The exact stop sentinel then exposed a control-plane defect: it terminated the
+timeout supervisor without reaching the already-detached server group. Direct
+recovery produced an orderly API/engine/four-worker shutdown and final checks
+found no listener or model process with all four cards idle and discoverable.
+Seven corrected-only local-NVMe records independently block clean-host credit;
+no B70 event appeared. The frozen teardown rule makes this a Grade-D quarantine,
+so both rates remain diagnostic and no prior speed or pass is changed. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`.
+
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
 matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned

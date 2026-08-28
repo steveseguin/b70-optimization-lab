@@ -118,3 +118,55 @@ Stop after any request-one mismatch; do not send request two, change bounds,
 add warmup, change storage/cache, or start a second boot. A pass adds only the
 MTP4 active-1K Grade-C cell. A stop is retained as quarantine. MTP4/512,
 MTP4/exact-4K, all other depths, and all prior captured speeds remain unchanged.
+
+## Outcome
+
+The single authorized boot passed the exact model/source/runtime identity,
+fresh four-rank collective, four 12.22-GiB placement receipts, staged schema,
+29-block cache, 1,936-token capacity, served identity, and health gates. Model
+loading took 100.11--100.53 seconds per rank.
+
+Both authorized p1024/o256 requests completed with exact 1,024/256 usage, 52
+stream chunks, the frozen MTP0 completion hash, zero prefix-cache queries or
+hits, and identical output. Each request added 51 drafts, 204 draft tokens,
+204 accepted tokens, and exactly 51 accepted tokens at each MTP4 position zero
+through three. Request one observed `13.326165 tok/s` after first text with
+`114.399 s` TTFT; the repeat sentinel observed `17.290937 tok/s` with
+`105.444 s` TTFT. These are retained diagnostic observations only.
+
+The frozen teardown gate failed. The exact stop sentinel caused the supervisor
+to terminate its `timeout` process with rc 143, but the already-detached server
+group remained alive. A direct `SIGTERM` to the exact server process group then
+produced an orderly API, engine, and four-worker shutdown. Final checks found
+no listener or model process, all four cards discoverable and idle, and the
+orphaned compile/RPC temporary paths removed. This is a control-plane lifecycle
+defect, not a request or model failure, but the preregistration made every
+teardown mismatch a Grade-D stop.
+
+The journal also retained seven corrected-only local-NVMe APEI records
+(`{405}`--`{411}`), all with zero uncorrected status, and no event naming a B70
+address. They separately prevent clean-host/deployment qualification but are
+not the Grade-D hard-stop reason.
+
+The active-1K MTP4 cell is therefore a Grade-D teardown quarantine with two
+exact request passes and no speed, quality, or deployment credit. It does not
+lower or replace MTP4/512, MTP4/exact-4K, or any captured result. Future
+detached cells must use a separately tested descendant-aware lifecycle helper;
+this one-boot cell is not retried. Compact receipt:
+`../data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`.
+The external run directory now preserves a hash-verified primary-evidence
+manifest covering the exact stop sentinel, supervisor exit/IDs/output, both
+client receipts and logs, final server and journal logs, the bounded recovery
+record, and the passive final process/listener/path census. The receipt binds
+that manifest by SHA-256 so the teardown failure is not dependent on `/tmp`.
+
+After preserving the executed supervisor at commit `e5bdd2a37` and SHA-256
+`67e4962a...`, the tracked helper was corrected for future derivations. The
+post-run version SHA-256 is
+`6f018a3bf94af84f2da2f4459145bfd24e5b0726674f1e83d27b65cbc8784fe2`.
+It resolves the direct child of the bounded process, signals that launcher so
+its cleanup trap reaches the detached server group, and returns success only
+after the exact server PID, listener, compile path, and RPC path are absent.
+The executed v1 source and result remain immutable in Git history and the
+compact receipt; the corrected file is not retroactively claimed as the code
+that ran this attempt.

@@ -21,7 +21,11 @@ cache reuse and perfect two-position acceptance, but corrected local-NVMe
 events after the frozen cutoff failed its strict clean-host gate. Those three
 cells are quarantined. A later MTP3 active-1K boot passed every startup gate
 but received an external SIGTERM during request one, leaving no completed
-response or speed; it is separately quarantined. All configured-512 and
+response or speed; it is separately quarantined. The MTP4 active-1K arm then
+passed both exact target-parity requests with perfect four-position acceptance,
+but its detached supervisor failed to forward the exact stop to the server
+group; the frozen teardown gate quarantines its diagnostic 13.326 and 17.291
+tok/s observations. All configured-512 and
 exact-4K passes remain unchanged. It does not yet establish a production recipe, a fully quality-
 qualified MTP speed, stable repeated serving at 8K, 16K+ behavior, or vision
 support.
@@ -344,6 +348,37 @@ naming any B70 address. Shutdown left no listener or model process and all four
 cards remained discoverable. This Grade-D quarantine does not lower or replace
 MTP3/512, active-2K, exact-4K, or any featured rate. Receipt:
 [`20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json).
+
+## Quarantined active-1K TP4 MTP4 teardown screen
+
+The preregistered active-1K MTP4 arm used the verified local-NVMe model,
+current source, preserved staged runtime, TP4/EP4 eager serving, and the exact
+29-block allocation. It passed the fresh four-rank collective, all four
+12.22-GiB placement receipts, source/runtime identity, cache, capacity, served
+model, and health gates. Model loading took 100.11--100.53 seconds per rank and
+the server exposed 1,936 cache tokens at 1.26x the configured 1,536-token limit.
+
+Both authorized p1024/o256 requests returned exact 1,024/256 usage, 52 stream
+chunks, the frozen MTP0 completion hash, zero cache queries or hits, and
+identical text. Each added 51 drafts, 204 draft tokens, and 204 accepted tokens,
+split 51/51/51/51 across positions zero through three. Request one observed
+`13.326165 tok/s` after first text with `114.399 s` TTFT; the determinism repeat
+observed `17.290937 tok/s` with `105.444 s` TTFT.
+
+The attempt nevertheless failed its frozen teardown gate. The exact stop
+sentinel ended the `timeout` supervisor with rc 143 without reaching the
+already-detached server group. Direct recovery then produced a complete API,
+engine, and four-worker shutdown; final checks found no listener or model
+process and all four cards idle and discoverable. Seven corrected-only local-
+NVMe APEI records, all with zero uncorrected status, also block clean-host
+qualification; no event named a B70 address.
+
+Because the preregistration made every teardown mismatch a Grade-D stop, the
+cell receives no speed, quality, or deployment credit despite two exact request
+passes. It does not lower or replace MTP4/512, MTP4/exact-4K, or any featured
+rate. Future detached cells require a separately tested descendant-aware
+lifecycle helper. Receipt:
+[`20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json).
 
 ## Quarantined exact-2K TP4 MTP3 parity screen
 

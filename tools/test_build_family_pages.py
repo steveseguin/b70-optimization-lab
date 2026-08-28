@@ -5168,7 +5168,15 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "missing": 6, "quarantined": 7}),
+            Counter({"lab-screened": 12, "missing": 5, "quarantined": 8}),
+        )
+        mtp4_1k = practical["cells"]["4:1024"]
+        self.assertEqual(mtp4_1k["state"], "quarantined")
+        self.assertIn("detached teardown gate failed", mtp4_1k["label"])
+        self.assertTrue(
+            mtp4_1k["evidence"].endswith(
+                "20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json"
+            )
         )
         mtp2_1k = practical["cells"]["2:1024"]
         self.assertEqual(mtp2_1k["state"], "quarantined")
@@ -5331,7 +5339,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 461, "lab-screened": 12, "quarantined": 7}),
+            Counter({"missing": 460, "lab-screened": 12, "quarantined": 8}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5345,10 +5353,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 19 classified", rendered
+            "Full 480-cell coverage contract · 20 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("19/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("20/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
@@ -5373,8 +5381,12 @@ class FamilyCoverageTest(unittest.TestCase):
             "Observed: external SIGTERM during request one; six accepted draft tokens; no completed response or speed.",
             rendered,
         )
+        self.assertIn(
+            "Observed: exact parity twice; detached teardown gate failed; diagnostic only.",
+            rendered,
+        )
         self.assertNotIn("did not run..", rendered)
-        self.assertIn("6 untested combinations", rendered)
+        self.assertIn("5 untested combinations", rendered)
         self.assertIn("19 of 25 required rows", rendered)
         self.assertIn("inconclusive and unqualified", rendered)
 

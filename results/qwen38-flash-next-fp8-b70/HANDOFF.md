@@ -197,9 +197,20 @@ listener/process and all four cards discoverable. MTP3 configured-512,
 active-2K, exact-4K, and all captured rates remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json`.
 
-Next, continue additive practical-matrix coverage with a separately
-preregistered MTP4 active-1K cell while keeping the NVMe event gate explicit.
-Do not retry stopped arms by raising only the timeout. Then reduce
+The successor MTP4 active-1K arm passed every startup gate and both exact
+p1024/o256 requests. Both matched the frozen MTP0 text with zero cache reuse,
+and each accepted 204/204 draft tokens split 51/51/51/51 across all four MTP4
+positions. Its `13.326165` and `17.290937 tok/s` after-first-text observations
+remain diagnostic only: the detached supervisor ended its timeout wrapper but
+did not forward the exact stop to the server group. Direct recovery produced
+an orderly shutdown, yet the frozen teardown contract makes the cell Grade D.
+Seven corrected-only local-NVMe records separately block clean-host credit; no
+B70 event appeared. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json`.
+
+Next, separately test the corrected descendant-aware detached lifecycle control,
+then continue additive practical-matrix coverage with MTP4 active-2K. Do not
+retry stopped arms by raising only the timeout. Then reduce
 MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU host-lookup overlap
 separately. Defer 16K+ until the 8K repeated-serving boundary and larger
 fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
