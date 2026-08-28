@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "status": "passed-with-corrected-storage-caveat",
+  "purpose": "Requalify the four B70s after the TP4 MTP4 active-2K teardown window reset all four cards.",
+  "repository_commit": "52c6302dbbd5",
+  "stage_a": {
+    "status": "failed-control-configuration",
+    "result": "All four isolated device checks passed; the collective stopped before all-reduce because the historical helper forced absent interface eth1.",
+    "model_or_server_started": false,
+    "evidence_manifest_sha256": "c82dcf7d673d17ef0d2edb63ba3c11c1c10b719aee9e9e0b59ca09c9472c2c76"
+  },
+  "stage_a2": {
+    "status": "passed",
+    "only_change": "FI_TCP_IFACE=lo and CCL_KVS_IFACE=lo",
+    "per_card_results": [
+      2097152.0,
+      2097152.0,
+      2097152.0,
+      2097152.0
+    ],
+    "collective": "ranks 0-3 each returned allreduce ok 4.0",
+    "new_b70_events": 0,
+    "evidence_manifest_sha256": "71ad49fa601ebe90516997c35aefc1357a3a0d5727dda8f0e5d2d99733ae0478"
+  },
+  "stage_b": {
+    "status": "passed-with-corrected-storage-caveat",
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/post-reset-recovery-qualification-20260828-stage-b/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-512-r1-attempt28",
+    "identity": {
+      "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+      "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+      "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+      "tensor_parallel_size": 4,
+      "expert_parallel_size": 4,
+      "eager": true,
+      "mtp": 0,
+      "max_model_len": 512,
+      "max_num_batched_tokens": 64,
+      "kv_cache_memory_bytes": 201326592,
+      "kv_cache_tokens_reported": 1536,
+      "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+      "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+      "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+      "selective_uva_offload_gib_per_rank": 12.22
+    },
+    "canary": {
+      "request_count": 1,
+      "http_status": 200,
+      "model": "qwen38-flash-next-fp8-tp4",
+      "finish_reason": "stop",
+      "normalized": "OK",
+      "normalized_sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "prompt_tokens": 17,
+      "completion_tokens": 2,
+      "total_tokens": 19,
+      "cached_tokens": 0,
+      "created_cache_tokens": 0,
+      "elapsed_s_diagnostic_only": 6.743679445993621,
+      "speed_credit": false,
+      "quality_credit": false,
+      "matrix_credit": false
+    },
+    "shutdown": {
+      "supervisor_rc": 0,
+      "all_four_worker_done_lines": true,
+      "api_application_shutdown_complete": true,
+      "server_process_group_absent": true,
+      "listener_absent": true,
+      "compile_path_absent": true,
+      "rpc_path_absent": true,
+      "final_memory_mib": [
+        42.87890625,
+        42.88671875,
+        42.87890625,
+        42.875
+      ],
+      "known_observability_caveat": "The deliberate drain still logs the known EngineDeadError and one shared-memory resource-tracker warning after complete API and four-worker shutdown."
+    },
+    "journal": {
+      "capture_rc": 0,
+      "b70_reset_or_fatal_lines": 0,
+      "apei_records": 1,
+      "corrected_storage_sections": 2,
+      "storage_device": "Samsung NVMe endpoint 0000:01:00.0",
+      "storage_classification": "corrected physical-layer receiver event; not a B70 event and not hidden by the recovery pass"
+    },
+    "raw_evidence_manifest_sha256": "ead08469683d6af825924dbdec8975d9af8ce5f024f247956464b69a93de22da"
+  },
+  "adjudication": {
+    "b70_recovery_qualification": "pass",
+    "zero-event-host-journal": "fail-corrected-storage-only",
+    "next_matrix_arm_authorized": true,
+    "authorization_scope": "One separately preregistered matrix arm with its own storage and B70 event rules.",
+    "protected_results_unchanged": true,
+    "captured_speed_rows_changed": false,
+    "featured_tp4_result_changed": false,
+    "featured_tp4_tok_s": 71.7
+  },
+  "tracked_sha256": {
+    "identity.txt": "c1f3780a23ccdba8d8454191802a79991daf0db5b144b0ad2ba62580452d23cb",
+    "staged-runtime-preflight.txt": "d1f49cb635e129f2a97877e588fe58cd190922ab2eaa426862210152e195eb42",
+    "xccl-tp4-preflight.log": "a931c7db10e455df7bbe17b82578597e620853aacaae975a5ab0dff5c46f8765",
+    "server.log": "4ba1aa148c1b0b8908b58e21ce9a1522654782813887c66cd0f798070536bcad",
+    "post-reset-canary-raw-response.json": "cb422b825531d74708f030817aeb957b27f95f931fa297aac538cf2d76131b22",
+    "post-reset-canary.json": "a1417a49870640ccb0b455b78595ad75810ce4515cd2dc80fdf8a7781b0a6624",
+    "supervisor-postflight/kernel-journal.log": "45d25b008235e4789054757b5afff0ee6be9244985e4003e8df14ab98380fac4",
+    "evidence.sha256": "ead08469683d6af825924dbdec8975d9af8ce5f024f247956464b69a93de22da"
+  }
+}

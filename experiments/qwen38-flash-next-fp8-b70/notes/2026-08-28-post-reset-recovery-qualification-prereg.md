@@ -50,7 +50,8 @@ workload ownership.
 
 Stage B must use a known-good Flash-Next TP4/EP4/eager/MTP0 configured-512
 identity, a fresh lifecycle controller, one cache-zero deterministic generation
-canary, bounded clean shutdown, and a clean journal window. Only a complete
+canary, bounded clean shutdown, and a bounded journal window meeting the
+frozen B70 criterion. Only a complete
 Stage-A plus Stage-B pass restores permission for the next matrix arm. A
 failure remains evidence and requires assessment; it does not trigger an
 automatic reload or reboot.
@@ -143,3 +144,31 @@ They are frozen after review and before execution. A complete pass restores
 permission only for a separately preregistered next matrix arm. Any failed
 gate remains evidence and stops the program without an automatic reload or
 reboot.
+
+## Stage-B result and adjudication
+
+Stage B passed the frozen B70 recovery gates. The accepted current-source
+TP4/EP4/eager/MTP0 server loaded all 131 local-NVMe shards, reported exact
+12.22-GiB selective offload on all four ranks, exposed 1,536 cache tokens, and
+became healthy. Its sole authorized request returned HTTP 200, normal stop,
+exact `OK`, the frozen output hash, exact 17/2/19 usage, and zero cache reuse in
+6.743679 seconds. That elapsed value is diagnostic only and grants no speed,
+quality, matrix, or deployment credit.
+
+The exact stop sentinel reached launcher cleanup. The supervisor returned
+zero; all four workers logged shutdown completion; the API logged application
+shutdown completion; and the recorded server process group, listener, compile
+path, and RPC path were absent. Exact four-card rediscovery passed at
+42.875-42.887 MiB. The journal capture returned zero and contained no B70
+reset or fatal event.
+
+The journal was not literally event-free: one APEI record contained two
+corrected physical-layer receiver sections for Samsung root-NVMe endpoint
+`0000:01:00.0` during checkpoint loading. This is preserved as a storage
+caveat, not mislabeled as a clean-host pass. The preregistered B70 recovery
+criterion nevertheless passes and authorizes one separately preregistered
+matrix arm with its own explicit storage rule. It does not authorize changing
+or lowering any captured result. The raw Stage-B manifest SHA-256 is
+`ead08469683d6af825924dbdec8975d9af8ce5f024f247956464b69a93de22da`;
+the compact tracked receipt is
+`data/20260828-post-reset-recovery-qualification-result.json`.

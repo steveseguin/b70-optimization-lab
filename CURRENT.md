@@ -20,7 +20,7 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-08-27:
+Verified on 2026-08-28:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
@@ -1177,6 +1177,21 @@ cell is therefore a Grade-D quarantine. MTP4/512, active-1K, exact-4K, and all
 captured speeds remain unchanged. No new GPU model arm may start until the
 documented post-reset recovery qualification is completed. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json`.
+
+The required post-reset recovery program is now complete. The first control
+attempt preserved an invalid historical `eth1` interface stop; corrected
+Stage A2 passed all four isolated checks and the four-rank all-reduce. Stage B
+then loaded the accepted current-source TP4/EP4/eager/MTP0 identity and passed
+one cache-zero exact-OK canary with normal stop and exact 17/2/19 usage. The
+descendant-aware supervisor returned zero; all four worker completions, API
+shutdown, process-group removal, listener removal, exact four-card rediscovery,
+and idle memory passed. No B70 reset or fatal event appeared. One APEI record
+did contain two corrected physical-layer sections for root NVMe
+`0000:01:00.0`; this remains an explicit storage caveat rather than a hidden
+clean-host claim. B70 recovery is qualified and one separately preregistered
+matrix arm is authorized. The canary grants no speed, quality, or matrix credit
+and the featured **71.7 tok/s** TP4 result is unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-post-reset-recovery-qualification-result.json`.
 
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
