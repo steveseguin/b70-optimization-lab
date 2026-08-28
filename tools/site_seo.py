@@ -19,7 +19,7 @@ SITE = "https://neural.download/"
 SITE_NAME = "neural.download"
 TWITTER_SITE = "@xyster"
 DEFAULT_IMAGE = SITE + "og-image.png"
-DEFAULT_IMAGE_ALT = "neural.download — Run AI at home. We measure how fast. Measured LLM speeds on Intel Arc Pro B70, every number linked to its proof."
+DEFAULT_IMAGE_ALT = "neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof."
 IMAGE_W = 1200
 IMAGE_H = 630
 

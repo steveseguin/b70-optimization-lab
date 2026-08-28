@@ -79,7 +79,7 @@ def site_card(path: Path) -> None:
     brand_mark(d, 72, 56, 64)
     d.text((150, 62), "NEURAL.DOWNLOAD", font=mono(30), fill=WHITE)
     d.text((72, 150), "RUN AI AT HOME.", font=font(82), fill=WHITE)
-    d.text((72, 242), "WE MEASURE HOW FAST.", font=font(82), fill=WHITE)
+    d.text((72, 242), "WE MAKE IT FASTER.", font=font(82), fill=WHITE)
     body = "Measured speeds for open AI models on an Intel Arc Pro B70 — every number links to its proof."
     y = 380
     for line in wrap(d, body, font(32, bold=False), 1000):
@@ -149,7 +149,7 @@ def manifest(path: Path) -> None:
     path.write_text(json.dumps({
         "name": "neural.download",
         "short_name": "neural.download",
-        "description": "Measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.",
+        "description": "Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.",
         "start_url": "/",
         "display": "browser",
         "background_color": "#f6f1e5",
