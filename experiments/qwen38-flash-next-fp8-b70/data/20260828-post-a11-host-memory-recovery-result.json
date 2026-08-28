@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "failed-post-reload-memory-stability-gate",
+  "purpose": "Recover the clean-idle host-memory baseline after graph attempt 7's TTM/global-OOM window and the subsequent decline across vision admissions.",
+  "decision_window": {
+    "duration_minutes": 15,
+    "samples": 16,
+    "required_mem_available_kib": 110100480,
+    "final_mem_available_kib": 105109064,
+    "threshold_reached": false,
+    "reload_authorized": true
+  },
+  "preflight_attempt_1": {
+    "status": "aborted-before-device-action",
+    "reason": "The standalone runtime classifier lacked an exact supervisor-script binding.",
+    "device_action_started": false,
+    "evidence_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/post-a11-host-memory-recovery-20260828",
+    "evidence_manifest_entries": 31,
+    "evidence_manifest_sha256": "f4d3afc31ff584d4ae5b50acac239442e81b1a6d4ae355161fb4c98bd2a2d90a"
+  },
+  "bounded_recovery": {
+    "status": "module-reinserted-automatically; explicit post-remove absence assertion failed",
+    "preflight_gates": "pass",
+    "bdfs": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+    "root_node_holders": 0,
+    "display_manager": "inactive",
+    "ast_console_connected": true,
+    "all_b70_connectors_disconnected": true,
+    "xe_disable_display": true,
+    "runtime_conflicts": 0,
+    "original_swap_layout_exact": true,
+    "mem_available_before_kib": 105058988,
+    "all_four_unbind_writes_completed": true,
+    "modprobe_remove_returned_zero_inference": "The strict command sequence advanced past modprobe -r xe; no stderr was recorded.",
+    "explicit_modprobe_insert_reached": false,
+    "automatic_reinsert_evidence": "The kernel journal records teardown of all four xe NVM instances followed by one fresh initialization of each B70 before the module-absence assertion.",
+    "module_loaded_after": true,
+    "four_devices_rediscovered": true,
+    "idle_memory_mib_after": [42.87890625, 42.8828125, 42.875, 42.87109375],
+    "repeat_reload_or_flr_or_reboot": false
+  },
+  "post_reinsert_memory_gate": {
+    "settle_duration_minutes": 10,
+    "samples": 11,
+    "required_each_kib": 110100480,
+    "minimum_kib": 102234248,
+    "maximum_kib": 103202884,
+    "final_kib": 102894676,
+    "threshold_reached": false,
+    "result": "fail",
+    "active_card_tests_authorized": false
+  },
+  "journal": {
+    "new_oom_or_killed_process": false,
+    "new_ttm_buffer_eviction_failure": false,
+    "new_guc_timeout_or_reset": false,
+    "expected_device_teardown_and_reinitialization_present": true
+  },
+  "evidence": {
+    "primary_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/post-a11-host-memory-recovery-20260828-r2",
+    "manifest_entries": 61,
+    "manifest_sha256": "1aa761b4f93866d8db49b276268c9c228b57f02c4be7e95744b7c634138ea196"
+  },
+  "adjudication": {
+    "recovery_qualification": "fail-memory-stability",
+    "successor_vision_attempt_authorized": false,
+    "lower_admission_floor_authorized": false,
+    "repeat_reload_authorized": false,
+    "reboot_performed": false,
+    "reboot_requires_explicit_user_authorization": true,
+    "protected_results_unchanged": true,
+    "captured_speed_rows_changed": false,
+    "matrix_or_site_credit": false
+  }
+}
