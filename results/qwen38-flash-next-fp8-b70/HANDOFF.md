@@ -484,3 +484,26 @@ The full contract is now 26/480 classified (12 screened, 14 quarantined, 454
 missing), while the existing ≤8K practical view remains exactly 25/25. The next
 deep-context order is MTP2/16K, MTP1/16K, MTP4/16K, then MTP3/16K; do not jump
 to 24K/32K before the 16K tranche is classified.
+
+## 2026-08-28 MTP2 active-16K bounded negative
+
+The separately committed normal-MTP2 packet admitted exact 40-block /
+470,712,320-byte cache capacity and reported 20,014 tokens. Its sole
+p16384/o128 request stopped after 697.697 seconds with 3,200 computed prompt
+tokens and no output on one runtime response timeout. Client rc was 2; generic
+completion, MTP-counter, and parity gates were unavailable.
+
+The sealed shutdown window contains eight card engine-reset records and 40
+card fault-response records across all four B70 BDFs, so postflight and
+supervisor rc are 70. Current checks are residue-free and all cards are below
+43 MiB, but the preregistered card-event rule stops the 16K tranche. Do not
+launch the committed MTP1/16K packet until a material treatment is
+preregistered and independently audited.
+
+The 46-entry manifest verifies at
+`fca3af5d66368c6319afaddb651a56975ed8440a37d96b27179d44de713fbc7f`.
+Classify MTP2/16K Grade-D bounded negative with no speed, curve, quality,
+parity, deployment, or headline credit. Full-contract totals are now 27/480:
+12 screened, 15 quarantined, and 453 missing. The ≤8K view and all prior speeds
+are unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json`.

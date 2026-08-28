@@ -823,3 +823,25 @@ The ≤8K practical slice remains exactly 25/25 and every captured speed is
 unchanged. The full 480-cell contract is now 26 classified: 12 screened, 14
 quarantined, and 454 missing. See the
 [`MTP0 active-16K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json).
+
+## Quarantined active-16K TP4 MTP2 bounded negative
+
+The normal current-source MTP2 identity admitted exactly 40 blocks /
+470,712,320 bytes and reported 20,014 cache tokens. Its only p16384/o128
+request stopped after 697.697 seconds at 3,200 computed prompt tokens with no
+output when the runtime response timed out. Generic completion, MTP counters,
+and same-runtime MTP0 parity were therefore unavailable.
+
+During shutdown, the sealed host window recorded eight card engine resets (two
+per card) and 40 card fault responses. This fails the preregistered postflight
+rule: supervisor rc was 70 and the remaining 16K tranche is stopped pending a
+material runtime treatment. Current checks show no listener, owned process,
+compile path, or RPC path, and all cards below 43 MiB. The 46-entry manifest
+verifies at
+`fca3af5d66368c6319afaddb651a56975ed8440a37d96b27179d44de713fbc7f`.
+
+This is a Grade-D bounded negative with no speed, curve, quality, parity,
+deployment, or headline credit. The full contract is now 27/480: 12 screened,
+15 quarantined, and 453 missing. The completed ≤8K practical view and every
+prior captured speed remain unchanged. See the
+[`MTP2 active-16K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json).

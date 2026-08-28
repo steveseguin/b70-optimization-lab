@@ -7,7 +7,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-28",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. Current-source MTP0 also completed one exact 16K generic-depth request as Grade-D diagnostic capability evidence; 24K/32K and semantic/repeat qualification remain pending. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. MTP1, MTP2, and MTP4 completed exact 8K under scoped cross-runtime parity quarantines, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. Deterministic direct-answer quality is 6/7 semantically, the official-thinking MTP0 target profile passed 25/25, and deeper MTP/deployment qualification remains research-only.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. At 16K, current-source MTP0 completed one exact generic-depth request as Grade-D diagnostic capability evidence, while MTP2 stopped at 3,200 computed prompt tokens on a bounded runtime response timeout and failed its card-event postflight gate. The deeper tranche is paused pending treatment; 24K/32K and semantic/repeat qualification remain pending. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. Deterministic direct-answer quality is 6/7 semantically, the official-thinking MTP0 target profile passed 25/25, and deeper MTP/deployment qualification remains research-only.",
   "featured_results": [
     {
       "role": "hero",
@@ -1063,9 +1063,9 @@
       }
     },
     {
-      "id": "qwen-flash-next-tp4-mtp0-deep-context",
-      "label": "TP4 eager text MTP0 deeper-context coverage",
-      "fixed": "Official FP8 child artifact on current-source vLLM 1372c62d plus staged kernels 2f829747, TP4/EP4 eager MTP0 text, and automatic KV. Single generic requests are bounded Grade-D capability evidence until semantic and repeat qualification exists.",
+      "id": "qwen-flash-next-tp4-deep-context",
+      "label": "TP4 eager text deeper-context coverage",
+      "fixed": "Official FP8 child artifact on current-source vLLM 1372c62d plus staged kernels 2f829747, TP4/EP4 eager text, and automatic KV. Single generic requests and bounded negatives are Grade-D matrix evidence until semantic and repeat qualification exists.",
       "row_axis": {"key": "mtp", "label": "MTP depth", "prefix": "MTP"},
       "column_axis": {
         "key": "active_context_tokens",
@@ -1085,7 +1085,7 @@
         "kv": "auto",
         "modality": "text"
       },
-      "rows": [0],
+      "rows": [0, 1, 2, 3, 4],
       "columns": [16384, 24576, 32768],
       "cells": {
         "0:16384": {
@@ -1095,7 +1095,24 @@
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json"
         },
         "0:24576": {"state": "missing", "label": "not yet tested"},
-        "0:32768": {"state": "missing", "label": "not yet tested"}
+        "0:32768": {"state": "missing", "label": "not yet tested"},
+        "1:16384": {"state": "missing", "label": "not yet tested"},
+        "1:24576": {"state": "missing", "label": "not yet tested"},
+        "1:32768": {"state": "missing", "label": "not yet tested"},
+        "2:16384": {
+          "state": "quarantined",
+          "label": "exact 16K stopped at 3,200 computed prompt tokens; no output; four-card teardown events; diagnostic only",
+          "reason": "The current-source MTP2 identity admitted exactly 40 blocks / 20,014 cache tokens and began its one p16384/o128 request. It stopped after 697.7 seconds at 3,200 computed prompt tokens with no output when the runtime response timed out. Shutdown was followed by eight card engine-reset records and 40 card fault-response records, so the frozen postflight rule stops the tranche. No speed, quality, parity, deployment, or headline credit is granted; current host checks found no listener or owned residue and all cards are below 43 MiB.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json"
+        },
+        "2:24576": {"state": "missing", "label": "not yet tested"},
+        "2:32768": {"state": "missing", "label": "not yet tested"},
+        "3:16384": {"state": "missing", "label": "not yet tested"},
+        "3:24576": {"state": "missing", "label": "not yet tested"},
+        "3:32768": {"state": "missing", "label": "not yet tested"},
+        "4:16384": {"state": "missing", "label": "not yet tested"},
+        "4:24576": {"state": "missing", "label": "not yet tested"},
+        "4:32768": {"state": "missing", "label": "not yet tested"}
       }
     },
     {
@@ -1457,6 +1474,16 @@
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json",
           "parent": "flash-next-mtp0-context16k-current-source-a2",
           "retry": {"status": "needs-semantic-and-repeat-qualification"}
+        },
+        {
+          "id": "mtp2-context16k-current-source-runtime-timeout-quarantine",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 16384, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "quarantined",
+          "label": "MTP2 stopped at 3,200/16,384 computed prompt tokens · runtime response timeout · card-event postflight failed",
+          "reason": "The current-source MTP2 identity admitted exactly 40 blocks / 20,014 cache tokens and began its one p16384/o128 request. It stopped after 697.7 seconds at 3,200 computed prompt tokens with no output when the runtime response timed out. Shutdown was followed by eight card engine-reset records and 40 card fault-response records, so the frozen postflight rule stops the tranche. No speed, quality, parity, deployment, or headline credit is granted; current host checks found no listener or owned residue and all cards are below 43 MiB.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json",
+          "parent": "flash-next-mtp2-context16k-current-source-a1",
+          "retry": {"status": "blocked-by-runtime-timeout-and-b70-postflight-events"}
         }
       ]
     }

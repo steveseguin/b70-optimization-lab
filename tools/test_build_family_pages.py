@@ -5155,7 +5155,7 @@ class FamilyCoverageTest(unittest.TestCase):
             list(views),
             [
                 "qwen-flash-next-tp4-mtp-by-context",
-                "qwen-flash-next-tp4-mtp0-deep-context",
+                "qwen-flash-next-tp4-deep-context",
                 "qwen-flash-next-tp-fit",
                 "qwen-flash-next-graph-by-modality",
             ],
@@ -5273,13 +5273,13 @@ class FamilyCoverageTest(unittest.TestCase):
             )
         )
 
-        deep = views["qwen-flash-next-tp4-mtp0-deep-context"]
-        self.assertEqual(deep["rows"], [0])
+        deep = views["qwen-flash-next-tp4-deep-context"]
+        self.assertEqual(deep["rows"], [0, 1, 2, 3, 4])
         self.assertEqual(deep["columns"], [16384, 24576, 32768])
-        self.assertEqual(len(deep["cells"]), 3)
+        self.assertEqual(len(deep["cells"]), 15)
         self.assertEqual(
             Counter(cell["state"] for cell in deep["cells"].values()),
-            Counter({"missing": 2, "quarantined": 1}),
+            Counter({"missing": 13, "quarantined": 2}),
         )
         self.assertEqual(
             deep["fixed_selectors"]["runtime"],
@@ -5296,6 +5296,21 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(deep["cells"]["0:24576"]["state"], "missing")
         self.assertEqual(deep["cells"]["0:32768"]["state"], "missing")
+        deep_mtp2_16k = deep["cells"]["2:16384"]
+        self.assertIn("3,200 computed prompt tokens", deep_mtp2_16k["label"])
+        self.assertIn("four-card teardown events", deep_mtp2_16k["label"])
+        self.assertNotIn("evidence_id", deep_mtp2_16k)
+        self.assertNotIn("packet_id", deep_mtp2_16k)
+        self.assertTrue(
+            deep_mtp2_16k["evidence"].endswith(
+                "20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json"
+            )
+        )
+        self.assertEqual(deep["cells"]["2:24576"]["state"], "missing")
+        self.assertEqual(deep["cells"]["2:32768"]["state"], "missing")
+        for mtp in (1, 3, 4):
+            for context in (16384, 24576, 32768):
+                self.assertEqual(deep["cells"][f"{mtp}:{context}"]["state"], "missing")
 
         measurements = {
             measurement["id"]: measurement
@@ -5414,14 +5429,12 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 454, "lab-screened": 12, "quarantined": 14}),
+            Counter({"missing": 453, "lab-screened": 12, "quarantined": 15}),
         )
 
         rendered = MODULE.family_page(family)
         practical_heading = rendered.index("Practical TP4 eager text coverage")
-        deep_heading = rendered.index(
-            "TP4 eager text MTP0 deeper-context coverage"
-        )
+        deep_heading = rendered.index("TP4 eager text deeper-context coverage")
         fit_heading = rendered.index("Card-fit summary")
         graph_heading = rendered.index("Graph and modality summary")
         contract_disclosure = rendered.index(
@@ -5432,10 +5445,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 26 classified", rendered
+            "Full 480-cell coverage contract · 27 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("26/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("27/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
@@ -5486,6 +5499,10 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIn(
             "Observed: exact 16K generic-depth request completed; quality and repeat stability unqualified; diagnostic only.",
+            rendered,
+        )
+        self.assertIn(
+            "Observed: exact 16K stopped at 3,200 computed prompt tokens; no output; four-card teardown events; diagnostic only.",
             rendered,
         )
         self.assertNotIn("did not run..", rendered)

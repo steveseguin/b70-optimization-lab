@@ -95,3 +95,34 @@ index.
 
 The arm may start only after syntax/hash checks, an exact-source and idle-host
 preflight, a fresh-path check, and an independent read-only packet audit.
+
+## Observed result
+
+The frozen attempt admitted exactly 40 blocks / 470,712,320 bytes and reported
+20,014 cache tokens. All four ranks loaded and recorded the required selective
+offload receipt. The sole p16384/o128 request then stopped after 697.697 seconds
+with 3,200 computed prompt tokens, no generated token, and one runtime
+`sample_tokens` response timeout after five response-wait notices. Sixteen of
+25 generic checks were true, but the overall completion gate failed; MTP
+counters and parity remained unavailable. Client rc was 2, not an outer
+request timeout.
+
+The runtime began shutdown, after which the sealed host window recorded eight
+card engine-reset records (two per card) and 40 card fault-response records.
+That fails the frozen postflight rule and stops the 16K tranche without a
+request retry. Supervisor rc was 70. The current host check found no listener,
+owned model process, compile path, or RPC path, and the sealed postflight
+snapshots show all four cards below 43 MiB.
+
+The same window also contains 12 corrected Source-514 local-NVMe records, 13
+corrected PCIe sections, and 14 RxErr log lines naming only `0000:01:00.0`;
+they are separate from the card postflight failure. Resource cleanup is
+currently complete, but discovery alone is not post-reset launch
+qualification: require a new treatment and a fresh four-rank collective before
+another model launch.
+
+The 46-entry raw manifest verifies and has SHA-256
+`fca3af5d66368c6319afaddb651a56975ed8440a37d96b27179d44de713fbc7f`.
+Classify the cell as a Grade-D quarantined bounded negative with no speed,
+curve, semantic-quality, deployment, or headline credit. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json`.
