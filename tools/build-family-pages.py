@@ -245,10 +245,13 @@ def safe_repo_path(value: Any) -> Path | None:
 
 
 def source_label(source: Path) -> str:
+    # Always forward slashes: these labels are compared verbatim by the tests and
+    # printed in CI output, so a Windows checkout must not report
+    # "families\family.json" where Linux reports "families/family.json".
     try:
-        return str(source.resolve().relative_to(ROOT.resolve()))
+        return source.resolve().relative_to(ROOT.resolve()).as_posix()
     except ValueError:
-        return str(source)
+        return Path(source).as_posix()
 
 
 def json_for_html_script(value: Any) -> str:
