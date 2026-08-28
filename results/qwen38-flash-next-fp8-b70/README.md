@@ -14,10 +14,13 @@ exact 4K, with `8.904`, `9.893`, and `15.502 tok/s` decode medians respectively.
 MTP3 remains the preferred 4K recipe because it also has lower TTFT and higher
 wall output. These rows remain bounded screens, not stable ceilings. The packet
 now also includes a target-only official-thinking quality profile that passed
-25/25 preregistered responses. A later MTP1 1K arm passed every boot and
-admission gate but stopped on its first request without returning output; that
-cell is quarantined, while MTP1 512 and exact 4K remain unchanged and MTP1 2K
-remains unrun. It does not yet establish a production recipe, a fully quality-
+25/25 preregistered responses. Later MTP1 1K and 2K arms passed every boot and
+admission gate but stopped on their first requests without returning output.
+An MTP2 active-1K arm then returned the exact frozen target twice with zero
+cache reuse and perfect two-position acceptance, but corrected local-NVMe
+events after the frozen cutoff failed its strict clean-host gate. Those three
+cells are quarantined while all configured-512 and exact-4K passes remain
+unchanged. It does not yet establish a production recipe, a fully quality-
 qualified MTP speed, stable repeated serving at 8K, 16K+ behavior, or vision
 support.
 
@@ -118,7 +121,9 @@ is deferred while the 8K repeated-serving boundary remains unresolved. TP1
 and TP2 require a separate fit/offload design. The complete configured-512
 MTP1-4 grid and exact-4K MTP1/MTP2/MTP3 cells are separately screened below;
 MTP4 at exact 4K and MTP1 at active 1K and 2K are quarantined for separate
-stopped-request events. Target-only official-thinking quality now passes. The
+stopped-request events. MTP2 active-1K is separately quarantined only because
+the local-NVMe lane failed the strict clean-host gate after two otherwise exact
+requests. Target-only official-thinking quality now passes. The
 first MTP3 transfer attempt returned 19/19 correct completed answers but is
 unqualified after a repeated-session runtime stop; graph, deeper context,
 vision, fresh-server determinism, clean-host replay, and a sealed deployment
@@ -343,6 +348,31 @@ The MTP0 authority used vLLM `658965050`, while this MTP3 arm used `1372c62d`,
 and their cache allocations also differ. Controlled shutdown left no listener
 or model process and all four cards remained discoverable. Receipt:
 [`20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json).
+
+## Quarantined active-1K TP4 MTP2 clean-host screen
+
+The preregistered active-1K MTP2 arm used the verified model from local NVMe,
+the current vLLM source, the preserved staged runtime, TP4/EP4 eager serving,
+and the exact 32-block headroom allocation. It passed the fresh four-rank
+collective, all four 12.22-GiB placement receipts, cache/capacity/identity
+checks, and health. The model loaded in 97.54--97.92 seconds per rank and the
+server exposed 3,276 cache tokens.
+
+Both authorized requests returned exactly 1,024 prompt and 256 output tokens,
+the frozen MTP0 text hash, zero cached prompt tokens, and identical text. Each
+request added 85 drafts, 170 draft tokens, and 170 accepted tokens, split
+85/85 across MTP2 positions zero and one. Request one observed
+`10.682699 tok/s` after first text with `126.042 s` TTFT; the repeat sentinel
+observed `12.641866 tok/s` with `110.997 s` TTFT.
+
+The final journal artifact contained no event naming a B70 address, but it did
+contain 11 corrected APEI records for local NVMe `0000:01:00.0` after the
+frozen cutoff. The preregistered clean-host rule therefore quarantines this
+cell despite its exact transport, parity, determinism, cache-zero, and MTP2
+results. Both rates are diagnostic only and do not lower or replace MTP2/512,
+active-2K, exact-4K, or any featured rate. Shutdown left no listener or model
+process and all four cards remained discoverable. Receipt:
+[`20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json).
 
 ## Quarantined exact-2K TP4 MTP2 parity screen
 

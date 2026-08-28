@@ -1116,6 +1116,19 @@ different vLLM commit and cache allocation. MTP2/512, MTP2/exact-4K,
 MTP3/active-2K, and all protected rates remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json`.
 
+The separately preregistered TP4/EP4/eager/MTP2 active-1K cell then passed the
+fresh four-rank collective and every startup gate from the verified local-NVMe
+model. Both authorized requests returned exactly 1,024 prompt and 256 output
+tokens, the frozen MTP0 text hash, zero cache reuse, identical text, and perfect
+85/85 acceptance at both MTP2 positions. Request one observed
+`10.682699 tok/s` after first text and the repeat sentinel `12.641866 tok/s`.
+The final journal artifact nevertheless retained 11 corrected records for
+local NVMe `0000:01:00.0` after the frozen cutoff. No event named a B70 address,
+but the preregistered clean-host rule failed, so the cell is quarantined and
+both rates are diagnostic only. MTP2 configured-512, active-2K, exact-4K, and
+every captured rate remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
+
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
 matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned

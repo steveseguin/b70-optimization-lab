@@ -5168,7 +5168,16 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "missing": 8, "quarantined": 5}),
+            Counter({"lab-screened": 12, "missing": 7, "quarantined": 6}),
+        )
+        mtp2_1k = practical["cells"]["2:1024"]
+        self.assertEqual(mtp2_1k["state"], "quarantined")
+        self.assertIn("corrected local-NVMe events", mtp2_1k["label"])
+        self.assertNotIn("evidence_id", mtp2_1k)
+        self.assertTrue(
+            mtp2_1k["evidence"].endswith(
+                "20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json"
+            )
         )
         mtp2_2k = practical["cells"]["2:2048"]
         self.assertEqual(mtp2_2k["state"], "quarantined")
@@ -5312,7 +5321,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 463, "lab-screened": 12, "quarantined": 5}),
+            Counter({"missing": 462, "lab-screened": 12, "quarantined": 6}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5326,10 +5335,10 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 17 classified", rendered
+            "Full 480-cell coverage contract · 18 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("17/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("18/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
@@ -5346,8 +5355,12 @@ class FamilyCoverageTest(unittest.TestCase):
             "Observed: 360-second client timeout; 448 computed tokens; no output or speed.",
             rendered,
         )
+        self.assertIn(
+            "Observed: exact parity twice; corrected local-NVMe events; diagnostic only.",
+            rendered,
+        )
         self.assertNotIn("did not run..", rendered)
-        self.assertIn("8 untested combinations", rendered)
+        self.assertIn("7 untested combinations", rendered)
         self.assertIn("19 of 25 required rows", rendered)
         self.assertIn("inconclusive and unqualified", rendered)
 

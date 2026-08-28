@@ -118,3 +118,36 @@ A pass adds only TP4/eager/native-MTP2/active-1K as Grade-C research evidence.
 A stop is retained as a bounded quarantine. Neither outcome changes MTP2/512,
 MTP2/active-2K, MTP2/exact-4K, MTP1, MTP3, any featured result, or any prior
 captured speed.
+
+## Outcome
+
+The single authorized boot passed source/runtime identity, the fresh four-rank
+collective, all four 12.22-GiB placement receipts, the exact 32-block cache,
+capacity, served identity, and health gates. The local-NVMe model loaded in
+97.54--97.92 seconds per rank and the server reported 3,276 cache tokens.
+
+Both authorized requests completed with exactly 1,024 prompt and 256 output
+tokens. They returned the frozen MTP0 completion-text hash
+`5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0`,
+used zero cached prompt tokens, and produced identical text. Each request added
+85 drafts, 170 draft tokens, and 170 accepted tokens, split 85/85 across MTP2
+positions zero and one. Request one's diagnostic after-first-text rate was
+10.682699 tok/s with 126.042 seconds TTFT; the preregistered repeat sentinel was
+12.641866 tok/s with 110.997 seconds TTFT.
+
+The final journal review found no event naming any of the four B70 addresses,
+but it did retain 11 corrected APEI records for local NVMe `0000:01:00.0`
+between 23:21:42 and 23:34:51. Those events began after the frozen journal
+cutoff. Under the stricter stop rule, this fails the clean-host gate even though
+transport, target parity, determinism, cache-zero behavior, and MTP2 activity
+all passed twice. The active-1K cell is therefore a Grade-D host-health
+quarantine, not the otherwise-authorized Grade-C pass. The two measured rates
+are diagnostic only and do not lower, replace, or reinterpret any existing
+MTP2/512, active-2K, exact-4K, featured, or captured speed.
+
+Shutdown was controlled: the listener and model processes are absent, all four
+cards are discoverable, and no B70 event appeared through teardown. The compact
+receipt is
+`../data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
+A retry requires either a clean local-NVMe link or an identical verified model
+read from storage with a clean post-cutoff host window.

@@ -169,12 +169,27 @@ MTP2/exact-4K, MTP3/active-2K, and all featured speeds remain unchanged.
 Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json`.
 
-Next, design a separately preregistered bounded repeated-session stability
-gate if MTP3 quality transfer remains a priority; do not retry this arm by
-raising only the timeout. Then reduce MTP3 4K TTFT and qualify fresh-boot
-stability. Audit the XPU
-host-lookup overlap separately. Defer 16K+ until the 8K repeated-serving boundary and
-larger fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
+The separately preregistered MTP2 active-1K arm used the verified local-NVMe
+model and the same 32-block headroom allocation. Its fresh four-rank boot passed
+all startup gates. Both authorized requests returned exactly 1,024 prompt and
+256 output tokens, the frozen MTP0 text hash, zero cache reuse, identical text,
+and perfect 85/85 acceptance at both MTP2 positions. Request one measured
+`10.682699 tok/s` after first text and the repeat sentinel `12.641866 tok/s`.
+However, the bounded journal contained 11 corrected records for local NVMe
+`0000:01:00.0` after the frozen cutoff. No event named a B70 address, but the
+strict clean-host gate still failed, so the cell is a Grade-D host-health
+quarantine and both rates remain diagnostic only. MTP2 configured-512,
+active-2K, exact-4K, and all captured rates are unchanged. Retry only with a
+clean local-NVMe link or an identical verified model on a storage path with a
+clean post-cutoff host window. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json`.
+
+Next, continue additive practical-matrix coverage with a separately
+preregistered MTP3 or MTP4 active-1K cell while keeping the NVMe event gate
+explicit. Do not retry stopped arms by raising only the timeout. Then reduce
+MTP3 4K TTFT and qualify fresh-boot stability. Audit the XPU host-lookup overlap
+separately. Defer 16K+ until the 8K repeated-serving boundary and larger
+fixed-cache requirement have a bounded design. TP1/TP2 need a new memory design
 and are not simple launch variants. Never overwrite the 512 or 1,536 attempts,
 remove the accepted runtime, or replace a captured rate with an estimate.
 

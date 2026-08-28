@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-host-health",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-1536-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-1536-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_filesystem": "EXT4 local NVMe",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 2,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 1536,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 376569856,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp2-1536-headroom32.sh",
+    "launcher_sha256": "0723a802f2a5779e6577d33b8aa682da4c44218c19657e1bbeed706cf84aad27"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 32,
+    "cache_tokens_reported": 3276,
+    "maximum_concurrency_at_1536": 2.13,
+    "model_load_seconds_by_rank": [97.921143, 97.583801, 97.543150, 97.558047],
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "fresh_four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "frozen_target_authority": {
+    "source": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-1536-r1-attempt1/bench-context1k-o256-c1-r1.json",
+    "source_sha256": "ad8de7521078654fe12f0f0c247b6c4f34897faa188e3ccd993e9dc04a07c874",
+    "completion_text_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "cross_lane_caveat": "The authority used vLLM 658965050 and a smaller cache allocation; this current-source MTP2 cell used vLLM 1372c62d and 32 blocks."
+  },
+  "requests": [
+    {
+      "id": 1,
+      "status": "passed",
+      "prompt_tokens": 1024,
+      "completion_tokens": 256,
+      "cached_tokens_delta": 0,
+      "chunks": 86,
+      "text_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+      "target_parity": true,
+      "ttft_s": 126.04216111899586,
+      "decode_tok_s_after_first_text": 10.68269868442693,
+      "wall_output_tok_s": 1.7065967734053218,
+      "mtp_counter_deltas": {
+        "drafts": 85,
+        "draft_tokens": 170,
+        "accepted_tokens": 170,
+        "accepted_tokens_per_position": [85, 85]
+      }
+    },
+    {
+      "id": 2,
+      "status": "passed-determinism-sentinel",
+      "prompt_tokens": 1024,
+      "completion_tokens": 256,
+      "cached_tokens_delta": 0,
+      "chunks": 86,
+      "text_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+      "exact_text_equal_to_request_1": true,
+      "target_parity": true,
+      "ttft_s": 110.9974807589897,
+      "decode_tok_s_after_first_text": 12.641866428146233,
+      "wall_output_tok_s": 1.950511037139894,
+      "mtp_counter_deltas": {
+        "drafts": 85,
+        "draft_tokens": 170,
+        "accepted_tokens": 170,
+        "accepted_tokens_per_position": [85, 85]
+      },
+      "performance_role": "determinism sentinel, not a second promoted sample"
+    }
+  ],
+  "system_observations": {
+    "b70_event_named_in_kernel_window": false,
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "vendor_device": "Samsung 0x144d:0xa80a NVMe",
+      "observed": true,
+      "fatal_or_uncorrected": false,
+      "unique_apei_records": 11,
+      "first_local_time": "2026-08-27T23:21:42-04:00",
+      "last_local_time": "2026-08-27T23:34:51-04:00",
+      "interpretation": "The corrected events occurred after the preregistered journal cutoff while the local-NVMe model lane was active. They do not invalidate the exact output facts, but they fail the frozen clean-host gate; no causal claim about model behavior is made."
+    }
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP2/active-1K",
+    "state": "quarantined",
+    "grade": "D",
+    "transport_gate": "passed twice",
+    "target_parity_gate": "passed twice",
+    "determinism_gate": "passed",
+    "mtp_activity_gate": "passed twice with perfect acceptance at positions zero and one",
+    "cache_zero_gate": "passed twice",
+    "clean_host_gate": "failed on corrected local-NVMe link events",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "captured_rates_are_diagnostic_only": true,
+    "protected_results_unchanged": [
+      "MTP2 configured-512 research screen",
+      "MTP2 active-2K target-parity quarantine",
+      "MTP2 exact-4K headroom32 research screen",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Repeat only after the local-NVMe link is clean or the identical verified model is read from a storage path with a clean post-cutoff host window."
+  },
+  "shutdown": {
+    "cards_discoverable_after_cleanup": 4,
+    "b70_event_named_through_shutdown": false,
+    "listener_present_after_cleanup": false,
+    "residual_model_processes_after_cleanup": 0,
+    "classification": "controlled-preregistered-closeout"
+  },
+  "tracked_sha256": {
+    "bench-context1k-o256-c1-r1.json": "6702b1ba01aedd1c02ac484cc1bf85853205427437f9c232e523dad404a8bfc9",
+    "bench-context1k-o256-c1-r2.json": "39605b2874b4670cd568e1c9fc9d1c460ae03bcb7026041d760f66b4a0635cf2",
+    "metrics-before-request1.prom": "a621492d224896f78f597110d4a6bc80ef3a03e44bb2b9ce4343aa52aa895059",
+    "metrics-after-request1.prom": "dfafe853cc06d23afb7409a5e5d137a9536dbee5f8f16f1e949edfc2442c9c6c",
+    "metrics-before-request2.prom": "9c857562938a5d029ecdb4f7885ea92b3bae70e6a7d21e349ff337f07f26fa14",
+    "metrics-after-request2.prom": "9077614fa6dc59e1b2d005f08a6b698bf35cf79ee727567d15cac8805cc23f20",
+    "identity.txt": "0f2e967086ce46bbaec238ce81c18893d9fc78225c3ced6aeb7579988cd151ac",
+    "models.json": "cf1caf4440e17b31759ecd95f77b82fea00fd7b95b35aa2ae25134f0ddece135",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "server-command.shell.txt": "e800198bf6402ea479b45ae0d0b8eccd6f84fd120e5f15a89bd47ef173a7a00d",
+    "server.log": "513197b5d318ec81434401d44bbcf9be9a842fc1138854d8d81ebdbe5f568aa6",
+    "staged-runtime-preflight.txt": "85cfa6744c14c7619388adcd252387eaf336924207898ff9e44894f307ca2ffb",
+    "xccl-tp4-preflight.log": "a96cc15fb4b9cb7751a16ddd2d66bcdb8b8eac874d542a859344b58c25773cdd",
+    "postflight-final.txt": "b80df8928ddb5fb11dd93c367793a4ca17903338e0010342a7d44be9e299f636",
+    "kernel-journal-through-shutdown.log": "d1f1a0c61e34a686faa06f71be7f05937da36ed1cbcd5c877681b495608eb33b"
+  }
+}
