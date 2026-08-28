@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-client-timeout-no-receipt",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-8448-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-8448-r1-attempt1",
+  "evidence_manifest": "evidence.sha256",
+  "evidence_manifest_sha256": "1f9dd8dcf27c928d9023d1a6ecc817e054ac0c33e20e6b60c8daa5ebcc76a053",
+  "evidence_manifest_entries": 45,
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 3,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 8448,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 376569856,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp3-8448-headroom32.sh",
+    "launcher_sha256": "fbf4e826b86d644aa5cf5421d86b406f115023cce8b1892a198d6b84de970d3b",
+    "client_sha256": "83e18abc031fccc7f5023258dd656852ca7ef5ec437c9c64e478da74b4a20674",
+    "supervisor_sha256": "94292d12f8de643cbe62c114dcf2f906450e7e04c75ffa914ddb18df3cc48ef1"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 32,
+    "cache_tokens_reported": 9654,
+    "maximum_concurrency_at_8448": 1.1428571428571428,
+    "model_load_seconds_by_rank": {
+      "0": 100.437015,
+      "1": 100.231059,
+      "2": 99.901569,
+      "3": 99.435082
+    },
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "status": "client-timeout-no-completed-response",
+    "request_sent": true,
+    "request_count": 1,
+    "requested_prompt_tokens": 8192,
+    "requested_completion_tokens": 128,
+    "client_timeout_seconds": 900,
+    "outer_timeout_seconds": 910,
+    "outer_timeout_triggered": false,
+    "client_return_code": 2,
+    "client_error": "timed out",
+    "request_receipt_written": false,
+    "output_tokens_recorded": 0,
+    "output_tokens_returned": null,
+    "usage": null,
+    "cache_result": null,
+    "speed_measurement": null,
+    "quality_result": null,
+    "mtp_counter_result": null,
+    "metrics_before_request": {
+      "prompt_tokens_total": 0,
+      "generation_tokens_total": 0,
+      "spec_decode_drafts_total": 0,
+      "spec_decode_draft_tokens_total": 0,
+      "spec_decode_accepted_tokens_total": 0,
+      "kv_cache_usage_fraction": 0.0
+    },
+    "metrics_after_request": {
+      "status": "not_written",
+      "reason": "The frozen client exits immediately after a nonzero harness return code. No completed-request or mechanism delta is claimed."
+    },
+    "interpretation": "The exact request entered model execution and reached the unchanged 900-second client bound without a completed response receipt or any durably recorded output token. This is a bounded no-receipt result, not a throughput or target-parity measurement."
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "The preregistration allowed exactly one request, and request one did not complete."
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP3/active-8K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "protected_results_unchanged": [
+      "MTP3 configured-512 research screen",
+      "MTP3 exact-4K research screen",
+      "MTP2 active-8K parity quarantine",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material completion treatment or separately justified progress evidence, a new preregistration, fresh paths, and a fresh four-rank preflight. A longer bound alone is not sufficient."
+  },
+  "shutdown": {
+    "stop_sentinel": "STOP after failed MTP3 active-8K request",
+    "supervisor_return_code": 143,
+    "supervisor_return_code_interpretation": "The failed-request sentinel deliberately terminates the owned launcher; because no valid completed classification exists, the supervisor preserves the child SIGTERM status instead of converting it to success.",
+    "api_application_shutdown_complete": true,
+    "engine_drain_completed": true,
+    "listener_present_after_cleanup": false,
+    "recorded_server_group_present_after_cleanup": false,
+    "compile_path_present_after_cleanup": false,
+    "rpc_path_present_after_cleanup": false,
+    "cards_discoverable_after_cleanup": 4,
+    "card_memory_used_mib": [42.8828125, 42.87890625, 42.875, 42.87109375],
+    "b70_addressed_event": false,
+    "classification": "bounded-client-timeout-followed-by-owned-clean-shutdown-and-four-card-idle-rediscovery"
+  },
+  "system_observations": {
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "apei_records": 33,
+      "pcie_sections": 34,
+      "endpoint_sections": 34,
+      "source": 514,
+      "root_port_sections": 0,
+      "bad_dllp_or_timeout_sections": 0,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as host context. These corrected storage-link records block clean-host and deployment wording but do not name a B70 and are not attributed as the request timeout cause."
+    }
+  },
+  "tracked_sha256": {
+    "client-request.log": "d15d9325f3200437ff95aa3820157ed4a52c3313514483f6baa6f0b025734e14",
+    "client-request.rc": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "identity.txt": "3c74e8580f5b24601e732457543e8573c87cecaa9d3abbebeadeac19b2224ac4",
+    "metrics-before-request.prom": "0836cf4d71e0b54575ac18bc9cfef52c8b222d3225f4dcb32f0af297cf3a7f8c",
+    "server.log": "fee9944ef471e95a58a62de5ec15063a6a481c26818937e982cb1a949af1cd42",
+    "supervisor-postflight/kernel-journal.log": "1305cf1e41c18b5b2e6069b549fa09089515ba6f2161530b48d6a7e5f0fca3d3",
+    "supervisor-postflight/q38-mtp3-8448-supervisor.rc": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396",
+    "supervisor-postflight/xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d"
+  }
+}

@@ -107,3 +107,32 @@ remain unchanged.
 
 These identities are frozen before execution. Any later change requires a new
 note, attempt, and paths.
+
+## Attempt 1 result
+
+Attempt 1 passed the exact source/runtime, fresh four-rank, placement, served
+identity, health, and capacity gates. The frozen 32-block allocation reported
+9,654 tokens, and all four ranks recorded the required 12.22-GiB selective
+offload receipt. The sole p8192/o128 request then reached the unchanged
+900-second client bound without a completed response receipt or any durably
+recorded output token. No second request was sent, no parity or MTP-counter
+result exists, and no speed,
+quality, or deployment credit is granted.
+
+The failed-request sentinel reached the owned server group. The server drained
+request processing, completed API shutdown, left no listener or recorded
+process group, removed the compile and RPC paths, and returned all four cards
+below 43 MiB. The supervisor retained return code 143 because this was
+the explicitly failed path, not a completed classification; that code is
+evidence of the deliberate launcher termination, not a teardown failure.
+There was no B70-addressed event. The bounded window retained 33 corrected
+APEI records / 34 corrected PCIe endpoint sections for local NVMe
+`0000:01:00.0`; they block clean-host and deployment wording without proving
+the request cause.
+
+The 45-entry evidence manifest verifies and has SHA-256
+`1f9dd8dcf27c928d9023d1a6ecc817e054ac0c33e20e6b60c8daa5ebcc76a053`.
+This active-8K cell is a Grade-D bounded no-receipt quarantine. Existing MTP3
+configured-512 and exact-4K results and every captured speed remain unchanged.
+Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json`.

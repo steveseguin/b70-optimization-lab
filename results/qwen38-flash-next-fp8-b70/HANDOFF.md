@@ -376,3 +376,21 @@ descriptive workload-aligned cross-run/cross-source evidence, not a causal
 MTP-only A/B: MTP0 used vLLM `658965050` and MTP3 used `1372c62d`. MTP0, MTP1, and
 MTP3/512 remain untouched. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json`.
+
+## 2026-08-28 MTP3 active-8K closeout
+
+The preregistered TP4/EP4/eager/MTP3 configured-8448 arm passed its frozen
+identity and 32-block/9,654-token capacity gates, but its sole p8192/o128
+request reached the fixed 900-second client bound without a completed receipt
+or durably recorded output token. It is a Grade-D bounded no-receipt
+quarantine, with no speed, quality, parity, or deployment credit. The owned
+failure shutdown passed postflight: no listener/group/temp paths, four exact
+B70s idle below 43 MiB, and no B70-addressed event. Corrected local-NVMe events
+remain a clean-host caveat.
+
+The practical TP4 eager-text matrix is now 23/25 classified: 12 screened, 11
+quarantined, and only MTP1/8K plus MTP4/8K missing. Preserve every existing
+speed field. Next order: preregister MTP1/8K with the proven 32-block selector,
+then evaluate the 36-block MTP4/8K headroom candidate and freeze it only after
+its admission calculation and preregistration pass review. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json`.

@@ -701,3 +701,25 @@ records separately block clean-host and deployment wording. Existing MTP2
 configured-512 and exact-4K screens, MTP0 exact-8K, and every featured speed
 remain unchanged. See the
 [`MTP2 active-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json).
+
+## Quarantined active-8K TP4 MTP3 screen
+
+The separately preregistered current-source MTP3 arm passed its exact
+local-NVMe source/runtime, fresh four-rank, placement, served-identity, health,
+and capacity gates. The fixed 32-block allocation exposed 9,654 cache tokens,
+and all four ranks recorded the required 12.22-GiB selective offload receipt.
+
+Its sole p8192/o128 request entered inference but reached the frozen 900-second
+client bound without a completed response receipt or any durably recorded
+output token. No exact usage, cache-zero, MTP-counter, parity, rate, TTFT, or
+quality result exists, so this is a Grade-D bounded no-receipt quarantine with
+no performance, quality, or deployment credit.
+
+The descendant-aware failed-request path shut down the exact server group and
+left no listener, process group, compile path, or RPC path. All four cards were
+rediscovered below 43 MiB and no B70-addressed event appeared. The host window
+contained 33 corrected records / 34 corrected endpoint sections for the local
+NVMe link; they separately block clean-host and deployment wording. Existing
+MTP3 configured-512 and exact-4K screens and every featured speed remain
+unchanged. See the
+[`MTP3 active-8K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json).

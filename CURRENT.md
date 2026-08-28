@@ -1144,6 +1144,24 @@ wording. MTP2 configured-512, exact-4K, MTP0 exact-8K, and every protected
 speed remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json`.
 
+The successor TP4/EP4/eager/MTP3 active-8K arm is now classified without
+changing any captured speed. Its verified local-NVMe boot passed the exact
+source/runtime, fresh four-rank, placement, served-identity, health, and fixed
+32-block capacity gates, reporting 9,654 cache tokens and four exact
+12.22-GiB offload receipts. The sole p8192/o128 request entered inference but
+reached the fixed 900-second client bound without a completed response receipt
+or any durably recorded output token. No usage, cache-zero, MTP-counter,
+parity, TTFT, quality, or speed result exists. The owned failed-request path
+drained and shut down the server, left no listener/group/compile/RPC residue,
+and returned all four cards below 43 MiB. No B70-addressed event occurred; 33
+corrected APEI records / 34 corrected endpoint sections for local NVMe block
+clean-host and deployment wording. This is a Grade-D bounded no-receipt
+quarantine. MTP3 configured-512, active-2K, exact-4K, MTP0 exact-8K, and every
+featured/captured rate remain unchanged. The practical TP4 eager-text grid is
+now 23/25 classified (12 screened, 11 quarantined, 2 missing); MTP1/8K and
+MTP4/8K remain. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json`.
+
 The next TP4/EP4/eager/MTP3 active-1K arm passed exact identity, fresh
 four-rank, placement, 25-block cache, capacity, served-model, and health gates.
 During request one, the server received `SIGTERM` at 00:05:06 before the
