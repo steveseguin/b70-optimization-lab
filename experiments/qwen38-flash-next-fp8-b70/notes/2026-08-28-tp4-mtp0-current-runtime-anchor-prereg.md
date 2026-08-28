@@ -74,3 +74,17 @@ TP4/eager/MTP0 short and exact-4K coverage. The two 4K requests establish
 same-boot repeat evidence only. A failed gate is a bounded negative with its
 artifacts preserved; all existing website rows and speed records remain
 unchanged.
+
+## Attempt 3 closeout
+
+Attempt 3 reached a healthy exact server after the four-rank preflight. Local
+NVMe checkpoint loading took 73.67 seconds versus 552.92 seconds in the prior
+external-disk quality run. Before the recovery canary or any model request,
+the client rejected the live supervisor because it had been invoked with a
+relative path while the check expected an absolute path. The failure sentinel
+performed the intended controlled stop. Final supervisor rc was 143; journal
+read rc was zero; all four cards returned to 42.88 MiB; no listener, server,
+worker, scratch path, or B70-addressed event remained. This is a no-request
+harness negative and grants no quality, speed, matrix, or recovery-canary
+credit. Attempt 4 supersedes only the supervisor-path check and uses fresh
+paths and a fresh port.
