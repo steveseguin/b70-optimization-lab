@@ -1331,22 +1331,30 @@ quarantined, and 454 missing. The completed ≤8K practical view remains exactly
 MTP1/16K, MTP4/16K, then MTP3/16K. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json`.
 
-The next normal-MTP2 active-16K arm admitted exact 40-block /
-470,712,320-byte cache capacity (20,014 reported tokens), but its only request
-stopped after 697.697 seconds at 3,200 computed prompt tokens with no output on
-a runtime response timeout. Shutdown produced eight card engine-reset records
-and 40 card fault-response records across all four B70s. Supervisor/postflight
-rc is 70, so the frozen safety rule stops the 16K tranche; the committed
-MTP1/16K packet is not authorized to launch yet.
+The normal-MTP2 active-16K arm admitted exact 40-block / 470,712,320-byte
+capacity (20,014 reported tokens), but its request stopped at 3,200 computed
+prompt tokens with no output on the 300-second runtime response deadline. The
+sole preregistered material treatment halved max batched/scheduled tokens from
+64 to 32 while preserving that deadline and every other identity. It passed a
+fresh four-rank collective, became healthy, and extended the same p16384/o128
+request to 5,440 computed prompt tokens after 958.552 seconds, but still
+returned no output before the same runtime deadline. This 2,240-token / 70%
+extension is one bounded treatment observation, not repeat-confirmed causality
+or capability.
 
-Current checks are residue-free and all cards are below 43 MiB. The verified
-46-entry raw manifest is
-`fca3af5d66368c6319afaddb651a56975ed8440a37d96b27179d44de713fbc7f`.
-Classify MTP2/16K as a Grade-D bounded negative with no speed, curve, quality,
-parity, deployment, or headline credit. The full contract is now **27/480**:
-12 screened, 15 quarantined, and 453 missing; the ≤8K view and every prior
-speed remain unchanged. Receipt:
-`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json`.
+Treatment shutdown produced eight card reset records and 58 unsuccessful card
+responses across all four B70s, so supervisor/postflight rc is 70. Current
+checks are residue-free and all cards are below 43 MiB. The verified 47-entry
+raw manifest is
+`62895c7066ae52f33e937c93c2a9b173908a1fcd03135460385ca968f41a01ba`.
+MTP2/16K remains a Grade-D bounded negative with no capability, speed, curve,
+quality, parity, deployment, or headline credit. The treatment tranche is
+exhausted: no scheduler-16, timeout increase, MTP1 launch, or further MTP2/16K
+retry is authorized in it. Any later TP4 launch requires a separately justified
+lane and fresh four-rank preflight. The full contract remains **27/480**: 12
+screened, 15 quarantined, and 453 missing; the ≤8K view and every prior speed
+remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json`.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP qualification are paused,
 not abandoned. Their accepted results, patches, and launch identities remain

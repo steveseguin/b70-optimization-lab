@@ -485,25 +485,30 @@ missing), while the existing ≤8K practical view remains exactly 25/25. The nex
 deep-context order is MTP2/16K, MTP1/16K, MTP4/16K, then MTP3/16K; do not jump
 to 24K/32K before the 16K tranche is classified.
 
-## 2026-08-28 MTP2 active-16K bounded negative
+## 2026-08-28 MTP2 active-16K treatment exhausted
 
 The separately committed normal-MTP2 packet admitted exact 40-block /
-470,712,320-byte cache capacity and reported 20,014 tokens. Its sole
-p16384/o128 request stopped after 697.697 seconds with 3,200 computed prompt
-tokens and no output on one runtime response timeout. Client rc was 2; generic
-completion, MTP-counter, and parity gates were unavailable.
+470,712,320-byte cache capacity and reported 20,014 tokens. Its scheduler-64
+p16384/o128 request stopped at 3,200 computed prompt tokens with no output. The
+sole preregistered treatment kept the 300-second runtime response deadline and
+all other identities fixed while halving max batched/scheduled tokens to 32.
+It passed a fresh four-rank preflight and became healthy, then stopped at 5,440
+computed prompt tokens after 958.552 seconds with no output on the same runtime
+deadline. This is 2,240 tokens / 70% farther, but generic completion, MTP
+counters, and parity remain unavailable.
 
-The sealed shutdown window contains eight card engine-reset records and 40
-card fault-response records across all four B70 BDFs, so postflight and
+The treatment shutdown window contains eight card reset records and 58
+unsuccessful card responses across all four B70 addresses, so postflight and
 supervisor rc are 70. Current checks are residue-free and all cards are below
-43 MiB, but the preregistered card-event rule stops the 16K tranche. Do not
-launch the committed MTP1/16K packet until a material treatment is
-preregistered and independently audited.
+43 MiB. The preregistered treatment tranche is exhausted: do not launch the
+committed MTP1/16K packet, scheduler-16, a timeout-only arm, or another MTP2/16K
+retry under it. Any future TP4 lane needs its own justification and fresh
+four-rank preflight.
 
-The 46-entry manifest verifies at
-`fca3af5d66368c6319afaddb651a56975ed8440a37d96b27179d44de713fbc7f`.
-Classify MTP2/16K Grade-D bounded negative with no speed, curve, quality,
-parity, deployment, or headline credit. Full-contract totals are now 27/480:
-12 screened, 15 quarantined, and 453 missing. The ≤8K view and all prior speeds
-are unchanged. Receipt:
-`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json`.
+The 47-entry manifest verifies at
+`62895c7066ae52f33e937c93c2a9b173908a1fcd03135460385ca968f41a01ba`.
+Classify MTP2/16K Grade-D bounded negative with no capability, speed, curve,
+quality, parity, deployment, or headline credit. Full-contract totals remain
+27/480: 12 screened, 15 quarantined, and 453 missing. The ≤8K view and all prior
+speeds are unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json`.

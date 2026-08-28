@@ -20,7 +20,7 @@ MTP2 configuration, exact 40-block cache budget, request, harness, comparator,
 and all gates are unchanged.
 
 This diagnostic is Grade D only. It cannot replace, reduce, or qualify the
-protected <=8K quality-certified rows or the protected TP4 MTP0 20.72717637199404
+protected <=8K quality-certified rows or the protected TP4 MTP4 20.72717637199404
 tok/s result. It cannot create speed, quality, deployment, curve, headline, or
 LocalMaxxing credit.
 
@@ -89,3 +89,35 @@ follow-up, no MTP1 launch, and no second scheduler-32 repetition in this tranche
 The dependency order is base -> wrapper -> supervisor -> client. Any edit changes
 the applicable hash and requires updating every downstream binding and this note
 before execution.
+
+## Observed result
+
+The committed packet passed its source, model, runtime-stage, fresh four-rank
+collective, health, exact 40-block / 20,014-token cache, four-rank selective
+offload, scheduler-32, and unchanged 300-second response-deadline gates. The
+sole p16,384/o128 request then ended after 958.552 seconds at 5,440 computed
+prompt tokens with zero output when the runtime `sample_tokens` response timed
+out. Sixteen of 25 generic receipt checks were true, but empty usage, zero token
+IDs, and the failed overall gate prove this was not a completion. MTP counters
+and same-runtime MTP0 parity were therefore unavailable.
+
+The scheduler-32 arm's observed boundary was 2,240 tokens / 70% farther than
+the scheduler-64 attempt's 3,200 tokens. This is one bounded treatment
+observation, not repeat-confirmed causality or active-16K capability. The
+unchanged scheduler unit at failure
+was 32 tokens and cache use was 20/39 usable blocks (`0.5128205128205128`).
+
+Shutdown returned the endpoint, owned processes, compile/RPC paths, and all four
+cards to clean idle state at 42.875--42.879 MiB. The postflight nevertheless
+failed because the shutdown window recorded eight card reset records and 58
+unsuccessful card responses across all four B70 addresses, 23 seconds after the
+runtime deadline. This is the frozen bounded-negative outcome: the existing
+MTP2/16K quarantine cell gains treatment evidence but no new matrix cell and no
+capability, speed, quality, parity, deployment, curve, or headline credit.
+
+The 47-entry raw manifest verifies at
+`62895c7066ae52f33e937c93c2a9b173908a1fcd03135460385ca968f41a01ba`.
+The tracked adjudication is
+`data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json`.
+Per preregistration, there is no scheduler-16 arm, timeout increase, MTP1 launch,
+or further MTP2 active-16K retry in this tranche.

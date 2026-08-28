@@ -5297,13 +5297,14 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(deep["cells"]["0:24576"]["state"], "missing")
         self.assertEqual(deep["cells"]["0:32768"]["state"], "missing")
         deep_mtp2_16k = deep["cells"]["2:16384"]
-        self.assertIn("3,200 computed prompt tokens", deep_mtp2_16k["label"])
+        self.assertIn("5,440 computed prompt tokens", deep_mtp2_16k["label"])
+        self.assertIn("scheduler-32 treatment", deep_mtp2_16k["label"])
         self.assertIn("four-card teardown events", deep_mtp2_16k["label"])
         self.assertNotIn("evidence_id", deep_mtp2_16k)
         self.assertNotIn("packet_id", deep_mtp2_16k)
         self.assertTrue(
             deep_mtp2_16k["evidence"].endswith(
-                "20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json"
+                "20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json"
             )
         )
         self.assertEqual(deep["cells"]["2:24576"]["state"], "missing")
@@ -5502,7 +5503,7 @@ class FamilyCoverageTest(unittest.TestCase):
             rendered,
         )
         self.assertIn(
-            "Observed: exact 16K stopped at 3,200 computed prompt tokens; no output; four-card teardown events; diagnostic only.",
+            "Observed: exact 16K stopped at 5,440 computed prompt tokens after scheduler-32 treatment; no output; four-card teardown events; diagnostic only.",
             rendered,
         )
         self.assertNotIn("did not run..", rendered)

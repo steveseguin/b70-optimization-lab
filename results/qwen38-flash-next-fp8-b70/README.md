@@ -824,24 +824,30 @@ unchanged. The full 480-cell contract is now 26 classified: 12 screened, 14
 quarantined, and 454 missing. See the
 [`MTP0 active-16K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json).
 
-## Quarantined active-16K TP4 MTP2 bounded negative
+## Quarantined active-16K TP4 MTP2 treatment exhausted
 
 The normal current-source MTP2 identity admitted exactly 40 blocks /
-470,712,320 bytes and reported 20,014 cache tokens. Its only p16384/o128
-request stopped after 697.697 seconds at 3,200 computed prompt tokens with no
-output when the runtime response timed out. Generic completion, MTP counters,
-and same-runtime MTP0 parity were therefore unavailable.
+470,712,320 bytes and reported 20,014 cache tokens. Its scheduler-64 request
+stopped at 3,200 computed prompt tokens with no output. The sole material
+treatment preserved the model, source, stage, topology, cache, request,
+comparator, and 300-second runtime response deadline while halving max batched
+and scheduled tokens to 32. It passed a fresh four-rank preflight and became
+healthy, then reached 5,440 computed prompt tokens after 958.552 seconds before
+the same runtime deadline ended it with no output. The 2,240-token / 70%
+extension is treatment evidence, not repeat-confirmed causality or active-16K
+capability. Generic completion, MTP counters, and same-runtime MTP0 parity
+remain unavailable.
 
-During shutdown, the sealed host window recorded eight card engine resets (two
-per card) and 40 card fault responses. This fails the preregistered postflight
-rule: supervisor rc was 70 and the remaining 16K tranche is stopped pending a
-material runtime treatment. Current checks show no listener, owned process,
-compile path, or RPC path, and all cards below 43 MiB. The 46-entry manifest
-verifies at
-`fca3af5d66368c6319afaddb651a56975ed8440a37d96b27179d44de713fbc7f`.
+During treatment shutdown, the sealed host window recorded eight card resets
+(two per card) and 58 unsuccessful card responses. This fails the preregistered
+postflight rule: supervisor rc was 70 and the treatment tranche is exhausted.
+Current checks show no listener, owned process, compile path, or RPC path, and
+all cards below 43 MiB. The 47-entry manifest verifies at
+`62895c7066ae52f33e937c93c2a9b173908a1fcd03135460385ca968f41a01ba`.
 
-This is a Grade-D bounded negative with no speed, curve, quality, parity,
-deployment, or headline credit. The full contract is now 27/480: 12 screened,
-15 quarantined, and 453 missing. The completed ≤8K practical view and every
-prior captured speed remain unchanged. See the
-[`MTP2 active-16K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-attempt1-runtime-timeout-quarantine.json).
+This remains a Grade-D bounded negative with no capability, speed, curve,
+quality, parity, deployment, or headline credit. The full contract remains
+27/480: 12 screened, 15 quarantined, and 453 missing. The completed ≤8K
+practical view and every prior captured speed remain unchanged. There is no
+scheduler-16, timeout-only, or further MTP2 active-16K retry. See the
+[`MTP2 scheduler-treatment receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json).
