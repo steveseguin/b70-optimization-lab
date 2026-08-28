@@ -81,3 +81,25 @@ A pass adds only the TP4/eager/native-MTP2/active-2K cell as `lab-screened`,
 Grade-C research evidence. A stop is retained as a bounded quarantine. Neither
 outcome changes MTP2/512, MTP2/exact-4K, MTP3/active-2K, any featured result,
 or any prior captured speed.
+
+## Outcome
+
+The one authorized boot passed every startup gate and exposed 5,782 cache
+tokens from the exact 32-block allocation. Request one completed with exactly
+2,048 prompt tokens, 128 output tokens, zero cached tokens, a length stop, and
+a complete 100-event/99-interval window. Native MTP2 was active: endpoint
+counters increased by 54 drafts, 108 draft tokens, and 74 accepted tokens.
+The diagnostic conventional rate was `4.526752826691104 tok/s`, with
+`310.712871198979 s` TTFT.
+
+The frozen target-parity gate failed. The candidate token-array hash was
+`82471f1aca91fbd29d2c779a54bae5b9caa8c262a7353f78e0b6ec316df285e8`,
+not the sealed MTP0 hash; the arrays first differ at zero-based generated-token
+index 12. Request two was not sent. This closes MTP2/active-2K as a Grade-D
+quarantine with no speed, quality, or deployment credit. It is a scoped cross-
+lane parity mismatch, not isolated proof that MTP2 caused the divergence: the
+MTP0 authority used a different vLLM commit and cache allocation. Controlled
+shutdown left no listener or residual process and all four cards discoverable.
+MTP2/512, MTP2/exact-4K, MTP3/active-2K, and every captured speed remain
+unchanged. Structured receipt:
+`../data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json`.

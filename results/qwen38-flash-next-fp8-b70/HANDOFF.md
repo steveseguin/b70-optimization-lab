@@ -140,6 +140,19 @@ the run does not isolate MTP3 as the cause or establish a universal semantic-
 quality failure. MTP3/512 and exact-4K remain unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`.
 
+The successor MTP2 active-2K arm used the proven 32-block headroom allocation
+and passed the same startup gates. Request one completed with exactly 2,048
+prompt and 128 output tokens, zero cached tokens, and positive MTP2 counters.
+Its generic exact-depth gate measured `4.526753 tok/s` conventional with
+`310.712871 s` TTFT, but its token array first diverged from the frozen MTP0
+authority at generated token 13. Request two was not sent and the diagnostic
+rate receives no speed or quality credit. As with MTP3, this is a scoped cross-
+lane parity mismatch rather than isolated MTP causality because the MTP0
+authority used a different vLLM commit and cache allocation. MTP2/512,
+MTP2/exact-4K, MTP3/active-2K, and all featured speeds remain unchanged.
+Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json`.
+
 Next, design a separately preregistered bounded repeated-session stability
 gate if MTP3 quality transfer remains a priority; do not retry this arm by
 raising only the timeout. Then reduce MTP3 4K TTFT and qualify fresh-boot

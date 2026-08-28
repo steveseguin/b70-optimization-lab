@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-target-parity-mismatch",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-3072-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp2-3072-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 2,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 3072,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 376569856,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp2-3072-headroom32.sh",
+    "launcher_sha256": "0d2c6acfba44fe4dced88a024e5d75b80aa21f6bb3f03d9b65f9a124a99b3124"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 32,
+    "cache_tokens_reported": 5782,
+    "maximum_concurrency_at_3072": 1.88,
+    "model_load_seconds_by_rank": [97.512613, 98.472738, 97.868615, 97.593877],
+    "model_memory_gib_by_rank": [32.06, 32.06, 32.06, 32.06],
+    "offload_receipt_gib_by_rank": [12.22, 12.22, 12.22, 12.22],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "transport_and_depth_gate": "passed",
+    "prompt_tokens": 2048,
+    "completion_tokens": 128,
+    "cached_tokens": 0,
+    "finish_reason": "length",
+    "returned_token_ids": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "conventional_99_interval_tok_s": 4.526752826691104,
+    "historical_100_event_tok_s": 4.572477602718287,
+    "ttft_s": 310.712871198979,
+    "elapsed_s": 340.3581977839931,
+    "output_token_ids_sha256": "82471f1aca91fbd29d2c779a54bae5b9caa8c262a7353f78e0b6ec316df285e8",
+    "text_sha256": "92dc7fd3599873bc69fe4bdf64aeb03eeedb8beb008b8bac846a4f7b14c1af1a",
+    "mtp_counter_deltas": {
+      "drafts": 54,
+      "draft_tokens": 108,
+      "accepted_tokens": 74,
+      "accepted_tokens_per_position": [44, 30]
+    },
+    "frozen_mtp0_reference": {
+      "receipt": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json",
+      "raw_receipt": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-3072-r1-attempt2/exact-depth-2k-o128.json",
+      "raw_receipt_sha256": "3875376d98843afa201390b7837686dd9be8c2d645df968a474c704bae236e81",
+      "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+      "kv_cache_memory_bytes": 201326592,
+      "output_token_ids_sha256": "5fd297f79da317b0741140cccb52fb710f89dfd1444effe9068b806b0300e57e",
+      "text_sha256": "5b45a7cafe1c4b0327d661353ff72691842a70610e6786fd8a2bbeb9febb465f"
+    },
+    "target_parity": {
+      "passed": false,
+      "first_divergent_generated_token_index_zero_based": 12,
+      "reference_token_id": 39242,
+      "candidate_token_id": 16899,
+      "same_position_token_count": 14,
+      "interpretation": "The generic exact-depth transport gate passed, but the output failed the separately frozen MTP0 token-array authority. This is a scoped deterministic cross-lane target-parity mismatch, not a universal semantic-quality claim or isolated proof that MTP2 caused the divergence; the reference used a different vLLM commit and cache allocation."
+    }
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "The preregistered request-one MTP0 output-hash gate failed."
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP2/active-2K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "captured_rate_is_diagnostic_only": true,
+    "protected_results_unchanged": [
+      "MTP2 configured-512 research screen",
+      "MTP2 exact-4K headroom32 research screen",
+      "MTP3 active-2K quarantine",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material target-parity treatment and a new preregistration."
+  },
+  "shutdown": {
+    "api_application_shutdown_complete": true,
+    "cards_discoverable_after_cleanup": 4,
+    "listener_present_after_cleanup": false,
+    "residual_processes_after_cleanup": 0,
+    "classification": "controlled-preregistered-stop-after-completed-request"
+  },
+  "system_observations": {
+    "b70_event_named_in_kernel_window": false,
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "observed": true,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as host context; no causal attribution is made."
+    }
+  },
+  "tracked_sha256": {
+    "exact-depth-2048-request1.json": "deb5502c2b26afbc6ab56b01bb2d9be9dc2bb1014a98b0b0983414fb5b1e771f",
+    "filesystem-preflight.txt": "c54711469012ef8af3a14f923cec63e854a4315697b1489c2c6ceb9f83237acf",
+    "health.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "identity.txt": "a76f5f7b9a032414b691d9d8e8f2700e0a91f59e2a59d7763b5779fd5191f69e",
+    "input-sha256sums.txt": "0d0b6039ed0f52881f4d0a417a2be844bcf702a33ca8011e4fdf2648046c409e",
+    "kernel-journal-window.txt": "f5553127d66617dda8fb75a21e7cf2c2178f62f2d7d38e477325fb90cb6e60ae",
+    "metrics-after-request1.prom": "79c77cc27326e16d68448c803136fb712d600a9fe321d52ef8054e07cc20a5e3",
+    "metrics-before-request1.prom": "aab9a45de3a5ecec8c9808023f9442931477d3bec2a35b054c82b2d337a2d7b4",
+    "models.json": "5a1bc624b26d7457b217b84bfafb2a00dea5a61c1512ddd3d1c469cc074afbe6",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "postflight.txt": "731ddb236b1480a0da405e77e281cb8e4c72d22134a547e2d76e682b40ebdcd6",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "server-command.shell.txt": "42aaff4d17b91e825e573d3e5f41ab509eb24723d1a2a77d950970b8f764e250",
+    "server.log": "353c52b6430ac8cd6f686376c95ac89d30e07cd33a143485cfa6132516d5a5e8",
+    "staged-runtime-preflight.txt": "2573608b79b66d725155356484e1e7052ba661b33d9cb64bcec8e6313ca6f5fa",
+    "xccl-tp4-preflight.log": "9344ee04930e832ea55532f5c6353903e9485287a2c6a3af8f061984564b349b",
+    "xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu-stats-0.json": "abd717c696b26293b6e7694be68c1c7c670db6c16c3955ce6dee1b5cc04d89f1",
+    "xpu-stats-1.json": "0a26a58ded5846e5c2b6fe4aa227671b83176e301d0738b547f997bbea15e476",
+    "xpu-stats-2.json": "393f4ee9323c75bffca2a79ee5b0791b084586047b11fd19c9e2696696fe9aed",
+    "xpu-stats-3.json": "3822686a316237433863000c8ea3e19364aa6d3f674b98f1f0641f63a9bdc601"
+  }
+}

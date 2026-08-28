@@ -1089,6 +1089,17 @@ allocation. MTP3/512, MTP3/exact-4K, and all captured speed rows remain
 unchanged. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`.
 
+The successor TP4/EP4/eager/MTP2 active-2K cell used the proven 32-block
+headroom allocation and also completed the generic exact-depth contract, at a
+diagnostic `4.526753 tok/s` conventional rate and `310.712871 s` TTFT. Its
+token array diverged from the same frozen MTP0 authority at generated token 13,
+so request two was not sent and no speed or quality credit is granted. This
+second cross-lane result makes an MTP3-only explanation insufficient, but it
+still does not isolate native MTP as the cause because the authority used a
+different vLLM commit and cache allocation. MTP2/512, MTP2/exact-4K,
+MTP3/active-2K, and all protected rates remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json`.
+
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control
 matched all 26 sealed MTP0 comparisons, repeated 16/16 with one hash, returned

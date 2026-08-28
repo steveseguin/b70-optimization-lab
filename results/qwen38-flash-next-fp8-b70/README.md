@@ -314,6 +314,26 @@ and their cache allocations also differ. Controlled shutdown left no listener
 or model process and all four cards remained discoverable. Receipt:
 [`20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json).
 
+## Quarantined exact-2K TP4 MTP2 parity screen
+
+The successor active-2K arm used native MTP2 and the proven exact 32-block
+headroom allocation. Its local-NVMe boot passed all identity, four-rank,
+placement, cache, capacity, and health gates and exposed 5,782 cache tokens.
+Request one completed with exactly 2,048 prompt and 128 output tokens, zero
+cached tokens, a length stop, and a complete 100-event/99-interval window.
+Endpoint counters increased by 54 drafts, 108 draft tokens, and 74 accepted
+tokens. The generic exact-depth measurement was `4.526752827 tok/s`
+conventional with `310.712871 s` TTFT.
+
+The frozen MTP0 token array first diverged at zero-based generated-token index
+12, so request two was not sent. The observed rate receives no speed, quality,
+or deployment credit and does not lower the passing MTP2 configured-512 or
+exact-4K rows. This is cross-lane parity evidence rather than isolated MTP2
+causality because the authority used a different vLLM commit and cache
+allocation. Controlled shutdown left no listener or model process and all four
+cards discoverable. Receipt:
+[`20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json).
+
 ## Exact 4K TP4 MTP2 headroom screen
 
 The working MTP2/4K arm preserves the configured-512 source, runtime,

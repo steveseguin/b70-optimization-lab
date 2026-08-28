@@ -5168,7 +5168,16 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "missing": 10, "quarantined": 3}),
+            Counter({"lab-screened": 12, "missing": 9, "quarantined": 4}),
+        )
+        mtp2_2k = practical["cells"]["2:2048"]
+        self.assertEqual(mtp2_2k["state"], "quarantined")
+        self.assertIn("token 13", mtp2_2k["label"])
+        self.assertNotIn("evidence_id", mtp2_2k)
+        self.assertTrue(
+            mtp2_2k["evidence"].endswith(
+                "20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json"
+            )
         )
         mtp3_2k = practical["cells"]["3:2048"]
         self.assertEqual(mtp3_2k["state"], "quarantined")
@@ -5294,7 +5303,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 465, "lab-screened": 12, "quarantined": 3}),
+            Counter({"missing": 464, "lab-screened": 12, "quarantined": 4}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5308,16 +5317,20 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 15 classified", rendered
+            "Full 480-cell coverage contract · 16 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("15/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("16/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
         )
         self.assertIn(
             "Observed: completed; target-parity mismatch at token five; no speed credit.",
+            rendered,
+        )
+        self.assertIn(
+            "Observed: completed; target-parity mismatch at token 13; no speed credit.",
             rendered,
         )
         self.assertNotIn("did not run..", rendered)
