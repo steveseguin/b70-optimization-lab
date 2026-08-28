@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "status": "failed-incomplete-pre-model-runtime-scan-vanished-race",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1",
+  "attempt": 6,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "derived-launcher pre-model runtime-conflict scan",
+    "model_process_started": false,
+    "model_shards_loaded": "0/131",
+    "graph_compile_started": false,
+    "healthy_api": false,
+    "client_invoked": false,
+    "quality_or_replay_started": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The v2 fail-closed runtime scan enumerated PID 1922600, then observed initial /proc/1922600/stat ENOENT after that short-lived process had exited. It recorded no runtime conflict, but correctly returned rc=2 under its frozen policy. The launcher stopped before the model, compile-thread treatment, API, client, or any performance work."
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph_mode_requested": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 201326592,
+    "port": 19680,
+    "declared_treatment": "TORCHINDUCTOR_COMPILE_THREADS=1",
+    "treatment_reached": false
+  },
+  "frozen_tools": {
+    "preregistration_sha256": "ce8ae8d8d06aa3b67d17d93cb9f92f11dd8d1b9daf0c823813c4463fa59325fc",
+    "wrapper_sha256": "1c85dfbafabb9348cbef9f1cd08cdc4e2efba81935e352389ef4f4fc2c9e860c",
+    "derived_launcher_sha256": "252e8ad668edef075e1f957f09b79b94d79fffdaf5544201c68763babd00d713",
+    "client_sha256": "6be2e474f1d077890e2b5ce1d8ce21bfcffcad145f2ec8760fde27202b103a71",
+    "derived_client_sha256": "6124378a02578b95948ccd04cad92aab806a9a25cf23e1f7d0d24a949b7d2ce6",
+    "watchdog_sha256": "bf731e482e5721aa0ac12c5eae696158f5174d1be4391fba70146e64135220c8",
+    "derived_supervisor_sha256": "03c9d7d2a6ec489a54c2383e43609c60f6d7c207f7725c5e8e99007e3da81fb8",
+    "outer_supervisor_sha256": "f67297f1eb9f8ade7d83e284cf1bb8e5887b321d2c4231cf438baac2987274ea",
+    "runtime_classifier_schema": "neural.download.q38-runtime-conflict-scan.v2",
+    "runtime_classifier_sha256": "c6f9ee76fec1f3343c223ac8264312b6ec3ae6ad6c242e8154fb5d3e3d0ae390",
+    "runtime_classifier_fixture_sha256": "fe146ba53bf0eb2f0c0ea60647fbdace353a39a564317e6375574815c2c2dd85",
+    "attempt6_runtime_fixture_sha256": "72bdbb09a4a3eaf9291f8019ea349784265f2cb81e2b5268cdb2c9d8fca6813a",
+    "resource_fixture_sha256": "c8363033273411b97daa9699dbc7d7d9559558b7f790965098922fe67569163b"
+  },
+  "timeline": {
+    "journal_start_epoch": 1787939775,
+    "journal_start_local": "2026-08-28T13:56:15-04:00",
+    "prelaunch_scan_receipt_epoch": 1787939778,
+    "prelaunch_scan_receipt_local": "2026-08-28T13:56:18-04:00",
+    "outer_final_epoch": 1787939786,
+    "outer_final_local": "2026-08-28T13:56:26-04:00"
+  },
+  "runtime_scan": {
+    "status": "error",
+    "rc": 2,
+    "conflicts": 0,
+    "errors": 1,
+    "scanned_processes": 506,
+    "error_pid": 1922600,
+    "error_field": "stat",
+    "observed_identity": null,
+    "error_detail": "FileNotFoundError: [Errno 2] No such file or directory: '/proc/1922600/stat'",
+    "bounded_adjudication": "Because the initial stat never succeeded, no process identity or later required field was observed. This is a normal procfs enumeration-to-read disappearance race, not evidence of a hidden runtime. The prospective v3 rule records exactly this one window as vanished_race; later-field loss, unreadable data, or identity change remains rc=2."
+  },
+  "resource_and_cleanup": {
+    "temporary_swap_bytes": 68719476736,
+    "temporary_swap_priority": -1,
+    "watchdog_samples": 8,
+    "minimum_mem_available_kib": 114619512,
+    "maximum_temporary_swap_used_kib": 0,
+    "watchdog_rc": 0,
+    "inner_rc": 1,
+    "outer_rc": 1,
+    "kernel_journal_read_rc": 0,
+    "terminal_runtime_scan_rc": 0,
+    "final_runtime_scan_rc": 0,
+    "temporary_swapoff_succeeded": true,
+    "temporary_file_removed": true,
+    "original_swap_layout_restored_exactly": true,
+    "listener_19680_after": false,
+    "model_or_worker_process_after": false,
+    "graph_run_dir_created": false,
+    "compile_path_after": false,
+    "rpc_path_after": false,
+    "postflight_card_memory_mib": [42.8828125, 42.87890625, 42.875, 42.875]
+  },
+  "raw_evidence": {
+    "live_ext4_resource_dir": "/var/tmp/q38-piecewise-graph-a6-resource",
+    "resource_archive": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt6-resource-archive",
+    "resource_manifest": "raw-manifest.sha256",
+    "resource_manifest_sha256": "213afac1e10bfdb67c3fb4d1edd7b631ee625619b25505ba427705bb1692eea1",
+    "resource_manifest_entries": 50,
+    "resource_source_and_mirror_verified": true,
+    "run_dir": null,
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt6-supervisor",
+    "combined_manifest": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt6-primary-evidence.sha256",
+    "tracked_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt6-primary-evidence.sha256",
+    "combined_manifest_sha256": "dbb0bd2f9549e96e8acef9a423bb2ea3b6357299cb7d5e2f525f8b93f65b3b29",
+    "combined_manifest_entries": 73,
+    "combined_manifest_verified": true
+  },
+  "coverage_and_protected_results": {
+    "site_or_matrix_changed": false,
+    "captured_speed_changed": false,
+    "graph_speed_claim": null,
+    "reason": "No model, healthy API, client receipt, output, quality result, replay result, or speed row exists."
+  },
+  "next_step": {
+    "status": "fresh-attempt-required",
+    "requirements": [
+      "Use shared classifier schema v3, which records only initial-stat ENOENT after enumeration as vanished_race and still returns clear when no conflict or strict read error exists.",
+      "Keep every post-initial-stat read failure and PID identity change fail closed at rc=2.",
+      "Use a fresh attempt, port, state, resource, swap, run, cache, archive, and supervisor identity while preserving compile_threads=1 as the sole model-performance treatment.",
+      "Do not change any captured eager or historical graph speed."
+    ]
+  }
+}
