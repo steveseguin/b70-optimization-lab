@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "status": "quarantined-target-parity-mismatch",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-3072-r1",
+  "attempt": 1,
+  "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp3-3072-r1-attempt1",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "served_model_name": "qwen38-flash-next-fp8-tp4",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 3,
+    "num_speculative_tokens": 3,
+    "eager": true,
+    "graph_mode": "off",
+    "max_model_len": 3072,
+    "max_num_batched_tokens": 64,
+    "max_num_seqs": 1,
+    "kv_cache_memory_bytes": 294195200,
+    "kv_cache_memory_mib": 280.56640625,
+    "kv_cache_layout": "BLHNC",
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "cpu_offload_params": [
+      "ple_embedding.ngram_embedding.weight",
+      "embed_tokens.weight"
+    ],
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp3-3072-headroom25.sh",
+    "launcher_sha256": "4912beb2980049c89b3f66f59669fbcb414284dc0e215d722a0206fd9ebca9b3"
+  },
+  "startup": {
+    "status": "passed",
+    "cache_blocks": 25,
+    "cache_tokens_reported": 3657,
+    "maximum_concurrency_at_3072": 1.19,
+    "model_load_seconds_by_rank": [
+      97.45778,
+      97.456966,
+      97.464157,
+      96.551036
+    ],
+    "model_memory_gib_by_rank": [
+      32.06,
+      32.06,
+      32.06,
+      32.06
+    ],
+    "offload_receipt_gib_by_rank": [
+      12.22,
+      12.22,
+      12.22,
+      12.22
+    ],
+    "gates": {
+      "four_rank_collective": "pass",
+      "model_source_runtime_hashes": "pass",
+      "staged_import_and_schema": "pass",
+      "placement_receipts": "pass",
+      "cache_capacity": "pass",
+      "served_identity": "pass",
+      "health": "pass"
+    }
+  },
+  "request_1": {
+    "transport_and_depth_gate": "passed",
+    "prompt_tokens": 2048,
+    "completion_tokens": 128,
+    "cached_tokens": 0,
+    "finish_reason": "length",
+    "returned_token_ids": 128,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "conventional_99_interval_tok_s": 5.931661200811598,
+    "historical_100_event_tok_s": 5.991576970516765,
+    "ttft_s": 150.76991040899884,
+    "elapsed_s": 172.40069640701404,
+    "output_token_ids_sha256": "4a56559f49ea6e38b09a24bb7bb2888f81237de4b4cb0acbd9a3fd400d943f71",
+    "text_sha256": "dff990519b719c10c95d45c2df01c8becf75fb1aa58f4949a2e3f3d4882035bf",
+    "mtp_counter_deltas": {
+      "drafts": 54,
+      "draft_tokens": 162,
+      "accepted_tokens": 76,
+      "accepted_tokens_per_position": [
+        32,
+        24,
+        20
+      ]
+    },
+    "frozen_mtp0_reference": {
+      "receipt": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json",
+      "raw_receipt": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-3072-r1-attempt2/exact-depth-2k-o128.json",
+      "raw_receipt_sha256": "3875376d98843afa201390b7837686dd9be8c2d645df968a474c704bae236e81",
+      "vllm_head": "658965050f259999e635b52a850004a3771cd644",
+      "kv_cache_memory_bytes": 201326592,
+      "output_token_ids_sha256": "5fd297f79da317b0741140cccb52fb710f89dfd1444effe9068b806b0300e57e",
+      "text_sha256": "5b45a7cafe1c4b0327d661353ff72691842a70610e6786fd8a2bbeb9febb465f"
+    },
+    "target_parity": {
+      "passed": false,
+      "first_divergent_generated_token_index_zero_based": 4,
+      "reference_token_id": 17404,
+      "candidate_token_id": 39242,
+      "interpretation": "The generic exact-depth transport gate passed, but the output failed the separately frozen MTP0 token-array authority. This is a scoped deterministic cross-lane target-parity mismatch, not a universal semantic-quality claim or isolated proof that MTP3 caused the divergence; the reference used a different vLLM commit and cache allocation."
+    }
+  },
+  "request_2": {
+    "status": "not_sent",
+    "reason": "The preregistered request-one MTP0 output-hash gate failed."
+  },
+  "adjudication": {
+    "matrix_cell": "TP4/EP4/eager/text/native-MTP3/active-2K",
+    "state": "quarantined",
+    "grade": "D",
+    "speed_credit": false,
+    "quality_credit": false,
+    "deployment_credit": false,
+    "captured_rate_is_diagnostic_only": true,
+    "protected_results_unchanged": [
+      "MTP3 configured-512 research screen",
+      "MTP3 exact-4K research screen",
+      "all featured and captured speed rows"
+    ],
+    "retry_rule": "Do not repeat this cell without a material target-parity treatment and a new preregistration."
+  },
+  "shutdown": {
+    "api_application_shutdown_complete": true,
+    "cards_discoverable_after_cleanup": 4,
+    "listener_present_after_cleanup": false,
+    "residual_processes_after_cleanup": 0,
+    "classification": "controlled-preregistered-stop-after-completed-request"
+  },
+  "system_observations": {
+    "b70_event_named_in_kernel_window": false,
+    "corrected_nvme_link_events": {
+      "device": "0000:01:00.0",
+      "observed": true,
+      "fatal_or_uncorrected": false,
+      "interpretation": "Retained as host context; no causal attribution is made."
+    }
+  },
+  "tracked_sha256": {
+    "exact-depth-2048-request1.json": "c349a142bf9c7d407c4cea88adf91fa20270bb4400bfa4c1dd346a6a3f9682ee",
+    "filesystem-preflight.txt": "31fb9f5ef61a7dd18e48d8f9b2e8cf29847c4f38d84afbf72e1895be73c6f9a3",
+    "health.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "identity.txt": "8baf04a71e5d9eb2654c24d3729f43dc8357b0c6a6726f733901a799492e9e64",
+    "input-sha256sums.txt": "0d0b6039ed0f52881f4d0a417a2be844bcf702a33ca8011e4fdf2648046c409e",
+    "kernel-journal-window.txt": "37f3a5afaf470ef63375386d078ba139f18089d62dbe67da086ee2fabdd7e85e",
+    "metrics-after-request1.prom": "4e6719254b081cc05c4c601a665c19adbc0207353e5e96f1b4cfd05db1270437",
+    "metrics-before-request1.prom": "5adde4caa61d6c0c441f24491958a7e07240ca31e80e17aa30534e3af4c7ac89",
+    "models.json": "2c2a274ba30b3d5bbd0f44c219e740bc8c7c8688d8e84925c7b3aa9d9d000dc1",
+    "offload-log-receipt.txt": "caad77781ed80a2873d33941c00407172c9d61b064c7317e1ee28ccb8668f031",
+    "postflight.txt": "bbe1fbd444068d82c2c04b0a83d96598ef7ea558ad5eda0cfcfea66d8b9fa841",
+    "runtime-versions.txt": "9212e2589e79672c6d2689455ef9014368d7ff7405b7db1a045d3ccde4d6abcc",
+    "server-command.shell.txt": "6e209ff77f5d3f1c58128f8c94e2d5d6c249b72438771876f9529d6655ec6d73",
+    "server.log": "a35295fdc82432b07010a858e386e2a1f05575c421d4c309de3b5dca3c23d039",
+    "staged-runtime-preflight.txt": "3ec67f2ae8638f14f76cd0360ab12d737a6774e5471d543062462f0fc33831fd",
+    "xccl-tp4-preflight.log": "4aa53b71b0b0e290843a9d5a4e14fcecaaa3a5c07c0e4beb2509162b430dec22",
+    "xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu-stats-0.json": "9754f89a46997f168c3980ce4cd87f7a97957ab5c378aeea2f5c91ed96000d80",
+    "xpu-stats-1.json": "a8b898e415d0237f1e0b7af4548b684b33ea190b769214e18d1848faa476bbe8",
+    "xpu-stats-2.json": "e0cbc54bd3ea72ffe59bbb60677abe188db1996e3e60eb483c2eb429f1dd9c1a",
+    "xpu-stats-3.json": "5e44be65696ca44266eebef096c78b193ccf420f31b5c0859903895110f5dc51"
+  }
+}

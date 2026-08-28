@@ -284,6 +284,36 @@ passing exact-4K headroom recipe. Active 2K remains missing rather than failed.
 Receipt:
 [`20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json).
 
+## Quarantined exact-2K TP4 MTP3 parity screen
+
+The separately preregistered active-2K MTP3 arm retained the accepted source,
+staged runtime, TP4/EP4 eager path, selective host placement, and the same exact
+25-block allocation used by the passing exact-4K MTP3 recipe. Its local-NVMe
+boot passed all source/runtime, four-rank, placement, cache, capacity, identity,
+and health gates and reported 3,657 cache tokens.
+
+Request one completed normally with exactly 2,048 prompt tokens, 128 output
+tokens, zero cached tokens, a length stop, and a complete 100-event/99-interval
+window. MTP3 counters increased by 54 drafts, 162 draft tokens, and 76 accepted
+tokens. The generic exact-depth measurement was `5.931661201 tok/s`
+conventional with `150.769910 s` TTFT.
+
+The frozen lane-specific oracle nevertheless failed: the returned token-array
+hash was `4a56559f49ea6e38b09a24bb7bb2888f81237de4b4cb0acbd9a3fd400d943f71`,
+not the sealed MTP0 hash
+`5fd297f79da317b0741140cccb52fb710f89dfd1444effe9068b806b0300e57e`.
+The first difference is zero-based generated-token index 4. The preregistered
+stop rule therefore blocked request two. The observed rate is diagnostic only:
+it receives no speed, quality, or deployment credit and does not change the
+passing MTP3 configured-512 or exact-4K results.
+
+This proves a scoped failure of the frozen cross-lane parity gate, not that
+MTP3 alone caused the divergence or that the output is universally low quality.
+The MTP0 authority used vLLM `658965050`, while this MTP3 arm used `1372c62d`,
+and their cache allocations also differ. Controlled shutdown left no listener
+or model process and all four cards remained discoverable. Receipt:
+[`20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json).
+
 ## Exact 4K TP4 MTP2 headroom screen
 
 The working MTP2/4K arm preserves the configured-512 source, runtime,

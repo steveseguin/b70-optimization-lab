@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-27**
+Last reviewed: **2026-08-28**
 
 ## Authority And Update Rule
 
@@ -1074,6 +1074,20 @@ Therefore MTP1/1K is quarantined, MTP1/2K remains missing, and MTP1/512 plus
 exact-4K remain unchanged. Any retry requires a material first-request
 completion fix and a fresh four-rank boot. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.
+
+The next additive matrix cell, TP4/EP4/eager/MTP3 at active 2K, is also now
+classified without changing any passing or featured result. Its local-NVMe
+boot passed every identity, four-rank, placement, 25-block cache, capacity, and
+health gate. Request one completed the generic exact-depth contract with 2,048
+prompt and 128 output tokens, zero cached tokens, positive MTP3 counters, and a
+diagnostic `5.931661 tok/s` conventional rate. It failed the separately frozen
+MTP0 token-array authority beginning at generated token five, so request two
+was not sent and the rate receives no speed or quality credit. This is a
+bounded cross-lane parity quarantine, not isolated proof that MTP3 caused the
+divergence; the MTP0 authority used a different vLLM commit and cache
+allocation. MTP3/512, MTP3/exact-4K, and all captured speed rows remain
+unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`.
 
 A separate preregistered target-only official-quality arm now passes. On the
 same TP4/EP4/eager/MTP0/current-source/4,352 identity, the non-thinking control

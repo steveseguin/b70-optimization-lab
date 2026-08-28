@@ -5168,7 +5168,16 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             practical_states,
-            Counter({"lab-screened": 12, "missing": 11, "quarantined": 2}),
+            Counter({"lab-screened": 12, "missing": 10, "quarantined": 3}),
+        )
+        mtp3_2k = practical["cells"]["3:2048"]
+        self.assertEqual(mtp3_2k["state"], "quarantined")
+        self.assertIn("no speed credit", mtp3_2k["label"])
+        self.assertNotIn("evidence_id", mtp3_2k)
+        self.assertTrue(
+            mtp3_2k["evidence"].endswith(
+                "20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json"
+            )
         )
         self.assertFalse(
             any(
@@ -5285,7 +5294,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(len(contract_cells), 480)
         self.assertEqual(
             Counter(cell["state"] for cell in contract_cells),
-            Counter({"missing": 466, "lab-screened": 12, "quarantined": 2}),
+            Counter({"missing": 465, "lab-screened": 12, "quarantined": 3}),
         )
 
         rendered = MODULE.family_page(family)
@@ -5299,13 +5308,17 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 480-cell coverage contract · 14 classified", rendered
+            "Full 480-cell coverage contract · 15 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("14/480", rendered[contract_disclosure:contract_end])
+        self.assertIn("15/480", rendered[contract_disclosure:contract_end])
         self.assertIn("⚠ Quarantined", rendered)
         self.assertIn(
             "Observed: 768 computed prompt tokens; no output.", rendered
+        )
+        self.assertIn(
+            "Observed: completed; target-parity mismatch at token five; no speed credit.",
+            rendered,
         )
         self.assertNotIn("did not run..", rendered)
         self.assertIn("19 of 25 required rows", rendered)

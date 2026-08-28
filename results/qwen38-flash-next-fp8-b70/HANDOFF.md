@@ -126,6 +126,20 @@ retry the 1K arm without a material first-request completion fix and a fresh
 four-rank boot. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json`.
 
+The separately preregistered MTP3 active-2K arm also closes as a quarantine,
+for a different reason. Its local-NVMe boot passed source/runtime, four-rank,
+placement, 25-block cache, capacity, identity, and health gates. Request one
+completed with exactly 2,048 prompt and 128 output tokens, zero cached tokens,
+a length stop, and positive MTP3 counters. Its generic exact-depth gate passed
+at `5.931661 tok/s` conventional with `150.769910 s` TTFT, but the returned
+token-array hash differed from the frozen MTP0 authority beginning at generated
+token five. Under the frozen rule, request two was not sent and the observed
+rate receives no speed or quality credit. This is a scoped cross-lane parity
+mismatch; MTP0 and MTP3 used different vLLM commits and cache allocations, so
+the run does not isolate MTP3 as the cause or establish a universal semantic-
+quality failure. MTP3/512 and exact-4K remain unchanged. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`.
+
 Next, design a separately preregistered bounded repeated-session stability
 gate if MTP3 quality transfer remains a priority; do not retry this arm by
 raising only the timeout. Then reduce MTP3 4K TTFT and qualify fresh-boot

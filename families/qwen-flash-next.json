@@ -7,7 +7,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-28",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median. At exact 4K, 32-block MTP1 and MTP2 recipes passed at 8.904 and 9.893 tok/s decode; MTP3 remains preferred at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. A bounded MTP1 1K arm passed all boot and admission gates but stopped on its first request with no output, so MTP1 1K is quarantined and 2K remains unrun. MTP4 remains quarantined at exact 4K. Deterministic direct-answer quality is 6/7 semantically, while the separate official-thinking target profile passed 25/25. The MTP3 transfer completed and matched MTP0 on 19 required rows before the repeated-session boundary stopped the remaining six, so MTP thinking parity at depth 3 and deployment stability remain inconclusive and unqualified.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. Its 51B n-gram embedding enables selective host placement, and the official FP8 export now serves cache-zero text across the complete configured-512 MTP0-4 depth grid on four B70s. MTP4 reached a 20.727 tok/s short-screen decode median. At exact 4K, 32-block MTP1 and MTP2 recipes passed at 8.904 and 9.893 tok/s decode; MTP3 remains preferred at 15.502 tok/s decode, 187.9 seconds TTFT, and 1.246 tok/s wall output. A bounded MTP1 1K arm passed all boot and admission gates but stopped on its first request with no output, so MTP1 1K is quarantined and 2K remains unrun. The MTP3 active-2K request completed its generic depth gate at 5.932 tok/s but diverged from the frozen MTP0 token array at generated token five, so that diagnostic receives no speed or quality credit and the cell is quarantined. MTP4 remains quarantined at exact 4K. Deterministic direct-answer quality is 6/7 semantically, while the separate official-thinking target profile passed 25/25. The MTP3 transfer completed and matched MTP0 on 19 required rows before the repeated-session boundary stopped the remaining six, so MTP thinking parity at depth 3 and deployment stability remain inconclusive and unqualified.",
   "featured_results": [
     {
       "role": "hero",
@@ -847,16 +847,17 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP3", "eager", "text-only", "configured max 512 and 4352", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "variable 512-token screen plus exact-4K service and formal rows"],
+      "coverage": ["TP4/EP4", "MTP3", "eager", "text-only", "configured max 512 and 4352", "configured max 3072 retained as an active-2K target-parity quarantine", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "variable 512-token screen plus exact-4K service and formal rows"],
       "grades": {
         "evidence": {
           "grade": "C",
-          "scope": "exact TP4/EP4 eager MTP3 text serving at configured max 512 and 4352, including active 4096-token context",
-          "basis": "The exact model, MTP adapter, preserved staged runtime, fixed cache allocations, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, exact cache-zero 4K needle and formal gate, complete usage, cumulative draft engagement, and both short and exact-4K speed rows are retained. The inherited target quality remains 5/7; the 4K service median pairs 15.502 tok/s decode with 187.9-second TTFT and 1.246 tok/s wall output. The official-thinking transfer completed 19 of 25 required rows; all 19 passed and matched MTP0 final answers, but request 20 stopped at the repeated-session boundary and six rows did not run. Quality remains inconclusive and unqualified, with no answer-quality failure or timing change observed; deployment stability, fresh-boot replay, and vision remain missing.",
-          "reviewed_at": "2026-08-27",
+          "scope": "exact TP4/EP4 eager MTP3 text serving at configured max 512 and 4352, including active 4096-token context; configured max 3072 is retained separately as an active-2048 target-parity quarantine",
+          "basis": "The exact model, MTP adapter, preserved staged runtime, fixed cache allocations, healthy API, all 26 MTP0 baseline comparisons, 16/16 repeat stability, exact cache-zero 4K needle and formal gate, complete usage, cumulative draft engagement, and both short and exact-4K speed rows are retained. The inherited target quality remains 5/7; the 4K service median pairs 15.502 tok/s decode with 187.9-second TTFT and 1.246 tok/s wall output. A separate active-2K request passed its generic exact-depth gate and engaged MTP3, but its token array diverged from the frozen MTP0 oracle at generated token five; it therefore grants no speed or quality credit. The official-thinking transfer completed 19 of 25 required rows; all 19 passed and matched MTP0 final answers, but request 20 stopped at the repeated-session boundary and six rows did not run. Quality remains inconclusive and unqualified; deployment stability, fresh-boot replay, and vision remain missing.",
+          "reviewed_at": "2026-08-28",
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json",
             "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-official-quality-attempt2-result.json"
           ]
@@ -1030,7 +1031,7 @@
         "2:8192": {"state": "missing", "label": "deeper-context stability not measured", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "3:0": {"state": "lab-screened", "label": "14.889 tok/s; variable matched-quality screen", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-a4", "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "3:1024": {"state": "missing", "label": "not measured", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "3:2048": {"state": "missing", "label": "not measured", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
+        "3:2048": {"state": "quarantined", "label": "completed; target-parity mismatch at token five; no speed credit", "reason": "The exact 25-block configured-3072 identity passed source, runtime, four-rank, placement, cache, capacity, and health gates. Its first exact-2K request returned 128 tokens with zero cache reuse and active MTP3 counters, but the token array diverged from the frozen MTP0 authority at zero-based generated-token index 4. Request two was not sent. The observed 5.932 tok/s is diagnostic only and does not alter the passing MTP3 512 or exact-4K results.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "3:4096": {"state": "lab-screened", "label": "15.502 tok/s decode; exact-4K", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1", "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "3:8192": {"state": "missing", "label": "deeper-context stability not measured", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
         "4:0": {"state": "lab-screened", "label": "20.727 tok/s; matched quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp4-a1", "packet_id": "qwen38-flash-next-fp8-tp4-mtp4-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
@@ -1212,6 +1213,16 @@
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
           "parent": "flash-next-mtp2-context4k-headroom32-a2",
           "retry": {"status": "needs-clean-boot-full-quality"}
+        },
+        {
+          "id": "mtp3-context2k-target-parity-quarantine",
+          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "state": "quarantined",
+          "label": "completed exact-2K request · target-parity mismatch at token five · no speed credit",
+          "reason": "The exact source/runtime identity booted from local NVMe, passed four-rank preflight, reported all four 12.22-GiB placements, admitted the 25-block cache and became healthy. Request one completed the generic exact-depth gate with 2,048 prompt and 128 output tokens, zero cache reuse, and positive MTP3 counters, but its token array diverged from the frozen MTP0 authority at zero-based generated-token index 4. The preregistered rule blocked request two. This is a scoped cross-lane parity mismatch, not isolated proof that MTP3 caused the divergence or a universal semantic-quality failure.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json",
+          "parent": "flash-next-mtp3-context2k-a1",
+          "retry": {"status": "blocked-on-parity-fix", "trigger": "material target-parity treatment plus a new preregistration"}
         },
         {
           "id": "mtp3-context4k-text-screen",

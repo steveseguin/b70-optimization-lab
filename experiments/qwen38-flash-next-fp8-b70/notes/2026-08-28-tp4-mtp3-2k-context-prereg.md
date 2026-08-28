@@ -80,3 +80,31 @@ A pass adds only the TP4/eager/native-MTP3/active-2K cell as `lab-screened`,
 Grade-C research evidence. A stop is retained as a bounded quarantine. Neither
 outcome changes MTP3/512, MTP3/exact-4K, any featured result, or any prior
 captured speed.
+
+## Outcome
+
+The single authorized boot passed every startup gate and exposed 3,657 cache
+tokens from the exact 25-block allocation. Request one completed with exactly
+2,048 prompt tokens, 128 output tokens, zero cached tokens, a length stop, and
+a complete 100-event/99-interval window. Native MTP3 was active: endpoint
+counters increased by 54 drafts, 162 draft tokens, and 76 accepted tokens.
+The diagnostic conventional rate was `5.931661200811598 tok/s`, with
+`150.76991040899884 s` TTFT.
+
+The lane-specific frozen target-parity gate failed. The candidate token-array
+hash was
+`4a56559f49ea6e38b09a24bb7bb2888f81237de4b4cb0acbd9a3fd400d943f71`,
+not the sealed MTP0 hash
+`5fd297f79da317b0741140cccb52fb710f89dfd1444effe9068b806b0300e57e`;
+the arrays first differ at zero-based generated-token index 4. The generic
+depth/transport harness correctly passed its own checks, but that does not
+override the separately preregistered MTP0 oracle. Request two was therefore
+not sent.
+
+This closes TP4/eager/native-MTP3/active-2K as a Grade-D quarantine with no
+speed, quality, or deployment credit. It is a scoped deterministic target-
+parity mismatch, not a universal semantic-quality claim. Controlled shutdown
+left no listener or residual model process, and all four cards remained
+discoverable. MTP3/512, MTP3/exact-4K, and every captured speed remain
+unchanged. Structured receipt:
+`../data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json`.
