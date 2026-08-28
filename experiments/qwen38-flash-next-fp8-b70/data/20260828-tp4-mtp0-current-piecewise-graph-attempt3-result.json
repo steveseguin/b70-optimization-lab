@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "failed-incomplete-pre-model-derived-supervisor-path",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1",
+  "attempt": 3,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "derived inner-supervisor wrapper hash admission",
+    "resource_treatment_admitted": true,
+    "inner_state_created": false,
+    "gpu_preflight_started": false,
+    "model_process_started": false,
+    "client_invoked": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "The supported priority -1 treatment passed exact activation. The derived supervisor then resolved its wrapper/client relative to the isolated resource directory, where those pinned files had not been staged, and failed before inner state, GPU preflight, wrapper, model, or request work. This is a harness-path defect, not graph evidence."
+  },
+  "frozen_tools": {
+    "wrapper_sha256": "d3ca914ddfb494ee55e75dca6342d83357b402f60bb028d523ea6df16b37b915",
+    "client_sha256": "901ff0f33d43588a0b746af25ecf32feb396709c94ea9282b32a140975cb5f31",
+    "watchdog_sha256": "6e721c58c0cd0c0e00b25c9ae5c0bdb71fbd362de45050696e74603f248e0651",
+    "outer_supervisor_sha256": "5e318162789b56bcb83d43e6212c58c336850bea46958eee8727acbd18e1ae32",
+    "derived_supervisor_sha256": "7e2d20bc20294da07c524f7e60196c4b0ef3b555d9aa79572e2c9cd7a46544ca"
+  },
+  "cleanup": {
+    "outer_rc": 70,
+    "temporary_swapoff_succeeded": true,
+    "temporary_file_removed": true,
+    "original_swap_layout_restored_exactly": true,
+    "kernel_journal_read_rc": 0,
+    "new_adverse_journal_event": false,
+    "listener_19677_after": false,
+    "model_or_worker_process_after": false
+  },
+  "raw_evidence": {
+    "resource_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt3-resource",
+    "tracked_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt3-primary-evidence.sha256",
+    "manifest_sha256": "7f1abf63d1c57d14cacaf67eaad957ff2ecf85e467d717b3bbcf0a47f4e73fc3",
+    "manifest_entries": 28,
+    "manifest_verified": true
+  },
+  "protected_results": {
+    "changed": false,
+    "graph_speed_claim": null
+  },
+  "next_step": {
+    "status": "fresh-attempt-required",
+    "one_variable_treatment": "Stage exact hash-pinned wrapper and client bytes beside the derived supervisor before it starts, using fresh attempt/port/path identities; preserve all serving and request settings."
+  }
+}
