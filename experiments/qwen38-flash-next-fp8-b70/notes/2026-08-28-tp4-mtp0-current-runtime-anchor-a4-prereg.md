@@ -19,9 +19,9 @@ Fresh identity deltas:
 - wrapper SHA-256:
   `adb0b7dc7a0f2aa21a4d2dd217a3107a579c42a921e1139bc1eda8801d46219d`;
 - client SHA-256:
-  `09d2d2cc84a58d66886086c4519f566df697fc133cf0e2e623cae45576b1a48c`;
+  `28957596b743e068c50c65ceaa716bb79a47908167ab7ac3ec4fb629346135e0`;
 - supervisor SHA-256:
-  `772f17e064a1a78d7e9a6a970695b1524d64a3362e0ef0fef617b63315b25137`.
+  `4397290c337fa88c8131904b55f045d9b781a9d91213b84a637cb32f8ca25bad`.
 
 All attempt-3 artifacts are immutable. Attempt 4 remains additive and cannot
 replace, lower, or relabel any prior speed or qualification.

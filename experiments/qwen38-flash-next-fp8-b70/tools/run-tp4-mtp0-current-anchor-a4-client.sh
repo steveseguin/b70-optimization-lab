@@ -224,7 +224,7 @@ depth = [json.loads((root / f"exact-depth-4k-r{i}.json").read_text()) for i in r
 for item in depth:
     assert item["status"] == "passed" and item["gate"]["passed"] is True
     assert item["request"]["prompt_token_ids_sha256"] == "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0"
-    assert item["request"]["request_payload_sha256"] == "2d92a2857d5cf45c3dcbc9d856cba714e2a46003295159fb5fcf1a8effb930be"
+    assert item["request"]["request_payload_sha256"] == "2d92a2857d5cf45c3dcbc9d856cba714e2a36003295159fb5fcf1a8effb930be"
     usage = item["response"]["usage"]
     assert (usage["prompt_tokens"], usage["completion_tokens"], usage["total_tokens"]) == (4096, 128, 4224)
     assert usage["prompt_tokens_details"]["cached_tokens"] == 0

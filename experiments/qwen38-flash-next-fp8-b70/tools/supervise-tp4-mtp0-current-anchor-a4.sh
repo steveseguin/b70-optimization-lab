@@ -5,7 +5,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 wrapper="${script_dir}/launch-tp4-mtp0-current-anchor-a4.sh"
 expected_wrapper=adb0b7dc7a0f2aa21a4d2dd217a3107a579c42a921e1139bc1eda8801d46219d
 client="${script_dir}/run-tp4-mtp0-current-anchor-a4-client.sh"
-expected_client=09d2d2cc84a58d66886086c4519f566df697fc133cf0e2e623cae45576b1a48c
+expected_client=28957596b743e068c50c65ceaa716bb79a47908167ab7ac3ec4fb629346135e0
 state=/tmp/q38-mtp0-current-anchor-a4
 stop_file="${state}.stop"
 failure_file="${state}.failed"
@@ -239,4 +239,3 @@ fi
 write_atomic "${evidence_dir}/final.rc" "$rc"
 finished=1
 exit "$rc"
-
