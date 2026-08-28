@@ -5174,6 +5174,7 @@ class FamilyCoverageTest(unittest.TestCase):
             },
             {
                 "qwen38-flash-next-fp8-tp4-research": "C",
+                "qwen38-flash-next-fp8-tp4-mtp0-current-research": "C",
                 "qwen38-flash-next-fp8-tp4-mtp1-research": "D",
                 "qwen38-flash-next-fp8-tp4-mtp3-research": "C",
                 "qwen38-flash-next-fp8-tp4-mtp2-research": "D",
@@ -5386,6 +5387,55 @@ class FamilyCoverageTest(unittest.TestCase):
             measurement["id"]: measurement
             for measurement in MODULE.records(family)
         }
+        current_receipt = json.loads((
+            MODULE.ROOT
+            / "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-runtime-anchor-attempt4-result.json"
+        ).read_text())
+        current_short_measurement = measurements[
+            "qwen38-flash-next-fp8-tp4-mtp0-current-a4"
+        ]
+        current_4k_measurement = measurements[
+            "qwen38-flash-next-fp8-tp4-mtp0-current-context4k-a4"
+        ]
+        self.assertEqual(
+            current_short_measurement["metrics"]["decode_tok_s"],
+            [current_receipt["measurements"]["short"]["median_decode_tok_s_after_first_text"]],
+        )
+        self.assertEqual(
+            current_4k_measurement["metrics"]["decode_tok_s"],
+            [current_receipt["measurements"]["exact_4k"]["median_decode_tok_s_conventional_99_interval"]],
+        )
+        self.assertEqual(
+            current_4k_measurement["metrics"]["ttft_ms"],
+            [current_receipt["measurements"]["exact_4k"]["median_ttft_seconds"] * 1000],
+        )
+        self.assertFalse(
+            current_receipt["publication_decision"]["protected_results_changed"]
+        )
+        self.assertEqual(
+            current_receipt["external_evidence"]["primary_evidence_manifest"]["entries"],
+            67,
+        )
+        self.assertEqual(
+            current_receipt["external_evidence"]["primary_evidence_manifest"]["sha256"],
+            "2d1188a349843a3764f0f1f874aed42e7d72368bff8b515f8f55033ecc7e9b59",
+        )
+        tracked_manifest = (
+            MODULE.ROOT
+            / current_receipt["external_evidence"]["primary_evidence_manifest"]["tracked_copy"]
+        )
+        self.assertEqual(
+            hashlib.sha256(tracked_manifest.read_bytes()).hexdigest(),
+            current_receipt["external_evidence"]["primary_evidence_manifest"]["sha256"],
+        )
+        self.assertEqual(
+            measurements["qwen38-flash-next-fp8-tp4-attempt19"]["metrics"]["decode_tok_s"],
+            [5.221849709057954],
+        )
+        self.assertEqual(
+            measurements["qwen38-flash-next-fp8-tp4-context4k-a1"]["metrics"]["decode_tok_s"],
+            [4.4560264746397324],
+        )
         runtime_by_mtp = {
             0: "vLLM XPU 658965050 + kernels 2f829747",
             1: "vLLM XPU 1372c62d + staged kernels 2f829747",
@@ -5538,7 +5588,32 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(
             Counter(cell["state"] for cell in text_cells),
-            Counter({"missing": 218, "lab-screened": 7, "quarantined": 15}),
+            Counter({"missing": 216, "lab-screened": 9, "quarantined": 15}),
+        )
+        current_cells = {
+            (
+                cell["selectors"]["tp"],
+                cell["selectors"]["mtp"],
+                cell["selectors"]["active_context_tokens"],
+                cell["selectors"]["graph_mode"],
+            ): cell
+            for cell in text_cells
+        }
+        current_short = current_cells[(4, 0, 0, "off")]
+        current_4k = current_cells[(4, 0, 4096, "off")]
+        self.assertEqual(current_short["state"], "lab-screened")
+        self.assertEqual(
+            current_short["evidence_id"],
+            "qwen38-flash-next-fp8-tp4-mtp0-current-a4",
+        )
+        self.assertEqual(current_4k["state"], "lab-screened")
+        self.assertEqual(
+            current_4k["evidence_id"],
+            "qwen38-flash-next-fp8-tp4-mtp0-current-context4k-a4",
+        )
+        self.assertEqual(
+            current_4k["packet_id"],
+            "qwen38-flash-next-fp8-tp4-mtp0-current-research",
         )
         self.assertEqual(
             Counter(cell["state"] for cell in vision_cells),
@@ -5581,11 +5656,11 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertLess(fit_heading, graph_heading)
         self.assertLess(graph_heading, contract_disclosure)
         self.assertIn(
-            "Full 270-cell coverage contracts · 22 classified", rendered
+            "Full 270-cell coverage contracts · 24 classified", rendered
         )
         contract_end = rendered.index("</details>", contract_disclosure)
-        self.assertIn("22/270", rendered[contract_disclosure:contract_end])
-        self.assertIn("22/240", rendered)
+        self.assertIn("24/270", rendered[contract_disclosure:contract_end])
+        self.assertIn("24/240", rendered)
         self.assertIn("0/30", rendered)
         self.assertIn("≈ 3.33 tok/s (1.66–4.99)", rendered)
         self.assertIn("≈ 3.17 tok/s (1.59–4.76)", rendered)

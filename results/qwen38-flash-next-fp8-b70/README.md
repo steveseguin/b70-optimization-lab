@@ -34,6 +34,14 @@ exact-4K passes remain unchanged. It does not yet establish a production recipe,
 qualified MTP speed, stable repeated serving at 8K, 16K+ behavior, or vision
 support.
 
+The retained current runtime has now also passed an independent additive MTP0
+anchor at short context and exact active 4K. It measured `5.223789 tok/s` on
+the established short screen and `4.757818 tok/s` conventional at exact 4K,
+while passing 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K
+needle, and card-clean teardown. This closes two current-runtime website cells;
+it does not replace the legacy-runtime rows or establish clean-host,
+fresh-server, graph, vision, or deployment qualification.
+
 ## Measured point
 
 The exact attempt-19 identity was text-only, TP4 + EP4, eager/graph-off, MTP0,
@@ -52,6 +60,33 @@ completed 256 tokens with the same output hash. This is a narrow research
 speed screen, not the lab's conventional realistic-suite 99-interval metric
 and not an optimized ceiling; the runtime reported that no model-specific MoE
 tuning table was available.
+
+## Current-runtime MTP0 anchor
+
+The additive attempt-4 profile used vLLM `1372c62d975c554f4b465c8299bc5f3295301ceb`,
+XPU-kernel source `ad25aa9f69a2171612b9c6b83dfa82c69559f9e4`, and
+the preserved staged runtime built at `2f829747503c77d4814834dffd0840fb1dd9f75a`.
+It retained TP4/EP4, eager graph-off, MTP0, automatic KV precision, disabled
+prefix caching, and selective host placement, with a configured maximum of
+4,352 tokens and 201,326,592 cache bytes.
+
+The fresh four-rank preflight and exact cache-zero `OK` recovery canary passed.
+The direct battery passed 6/7 with only the known `30` versus `14` miss,
+repeated one hash 16/16 times, and passed the exact cache-zero 4K needle. Three
+established p146/o256/c1 rows measured `5.315578`, `5.223789`, and
+`5.219405 tok/s` after first text, median **`5.223789 tok/s`**. The short
+harness does not retain per-row cache detail or finish reason, so neither is
+claimed.
+
+Two exact p4096/o128 rows then measured `4.720311` and `4.795325 tok/s` under
+conventional 99-interval accounting, median **`4.757818 tok/s`**. TTFT was
+`149.330` and `145.607 s`; both responses returned exact 4096/128/4224 usage,
+zero cached tokens, length stops, 128 token IDs, and one output-token hash. The
+hash matches the retained legacy target-only authority. Client and supervisor
+both exited zero, all four cards returned below 43 MiB, and no B70-addressed
+event appeared. This is same-boot Grade-C evidence, not clean-host or
+deployment qualification. Receipt:
+[`20260828-tp4-mtp0-current-runtime-anchor-attempt4-result.json`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-runtime-anchor-attempt4-result.json).
 
 ## Quality profiles
 
@@ -102,8 +137,11 @@ with no answer-quality failure observed. No timing result changed. Receipt:
 - Artifact tree: 144 files, 131 safetensor shards, 185,563,783,127 bytes,
   152,089 indexed tensors, tree SHA-256
   `4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2`.
-- vLLM source: `658965050f259999e635b52a850004a3771cd644`.
-- vLLM XPU-kernel source: `2f829747503c77d4814834dffd0840fb1dd9f75a`.
+- Retained legacy MTP0 vLLM source: `658965050f259999e635b52a850004a3771cd644`.
+- Current MTP0 and MTP1-4 vLLM source: `1372c62d975c554f4b465c8299bc5f3295301ceb`.
+- Current XPU-kernel source: `ad25aa9f69a2171612b9c6b83dfa82c69559f9e4`;
+  the staged runtime used here was built at
+  `2f829747503c77d4814834dffd0840fb1dd9f75a`.
 - Runtime stage:
   `/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70`.
 - Selective UVA placement: PLE n-gram embedding plus input embedding,

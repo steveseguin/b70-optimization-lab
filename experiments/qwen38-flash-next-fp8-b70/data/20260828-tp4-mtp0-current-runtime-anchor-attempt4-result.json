@@ -1,0 +1,159 @@
+{
+  "schema": "neural.download.flash-next-current-anchor-result.v1",
+  "date": "2026-08-28",
+  "status": "passed-research-screen",
+  "purpose": "Additive current-runtime TP4/EP4 eager MTP0 short and exact-4K coverage; no prior result is replaced, lowered, or relabeled.",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_commit": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "xpu_kernel_commit": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "staged_runtime_build_commit": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "staged_runtime": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph_mode": "off",
+    "max_model_len": 4352,
+    "max_num_sequences": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_bytes": 201326592,
+    "prefix_cache": false,
+    "async_scheduling": false,
+    "placement": "selective UVA PLE/input embeddings; 12.22 GiB reported per rank"
+  },
+  "source_protocol": {
+    "preregistration": "experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-tp4-mtp0-current-runtime-anchor-a4-prereg.md",
+    "launcher": "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-mtp0-current-anchor-a4.sh",
+    "client": "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp0-current-anchor-a4-client.sh",
+    "supervisor": "experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp0-current-anchor-a4.sh",
+    "attempt_3_boundary": "Attempt 3 reached a healthy server but sent no model request because its client rejected a relative supervisor path. It grants no measurement credit and remains preserved in the original preregistration closeout.",
+    "attempt_4_change": "The supervisor basename check was the only substantive gate change. Required fresh-attempt substitutions also changed attempt 3 to 4, port 19672 to 19673, all state/run/cache/temporary paths, and request-ID prefixes. The model, runtime, placement, quality, timing, exact-depth, deadline, teardown, and interpretation gates remained frozen."
+  },
+  "startup": {
+    "fresh_four_rank_xccl_preflight": "passed",
+    "load_source": "local NVMe",
+    "tp0_weight_loader_seconds": 84.56,
+    "model_loading_seconds_by_rank": {
+      "tp0_ep0": 93.302213,
+      "tp1_ep1": 92.410582,
+      "tp2_ep2": 93.30575,
+      "tp3_ep3": 93.650635
+    },
+    "reported_model_gib_per_card": 31.27,
+    "reported_host_offload_gib_per_rank": 12.22,
+    "cache_tokens": 7121,
+    "recovery_canary": {
+      "status": "passed",
+      "text": "OK",
+      "usage": {
+        "prompt_tokens": 17,
+        "completion_tokens": 2,
+        "total_tokens": 19
+      },
+      "cached_tokens": 0,
+      "created_cache_tokens": 0,
+      "finish_reason": "stop"
+    }
+  },
+  "quality": {
+    "semantic": "6/7",
+    "sole_known_miss": "code_execution returned 30 instead of 14",
+    "repeat_determinism": "16/16 one output hash",
+    "long_context": "exact 4096-token needle passed",
+    "cache_boundary": "cache-zero where retained by the quality and exact-depth harnesses",
+    "classification": "Grade-C same-boot research evidence; not a clean-host or deployment qualification"
+  },
+  "measurements": {
+    "short": {
+      "workload": "established p146/o256/c1 after-first-text screen; row 1 follows one conditioning request in its invocation and rows 2-3 have no warmup",
+      "decode_tok_s_after_first_text": [
+        5.315577823568996,
+        5.223788770075911,
+        5.2194047220586395
+      ],
+      "median_decode_tok_s_after_first_text": 5.223788770075911,
+      "usage_each": {
+        "prompt_tokens": 146,
+        "completion_tokens": 256,
+        "total_tokens": 402
+      },
+      "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+      "boundary": "The established short harness does not retain per-row cache-detail or finish-reason fields, so neither is claimed."
+    },
+    "exact_4k": {
+      "workload": "two exact p4096/o128 requests; conventional 100-event/99-interval decode metric",
+      "decode_tok_s_conventional_99_interval": [
+        4.720311369546584,
+        4.795324834729452
+      ],
+      "median_decode_tok_s_conventional_99_interval": 4.7578181021380175,
+      "ttft_seconds": [
+        149.329680180992,
+        145.6069908440113
+      ],
+      "median_ttft_seconds": 147.46833551250165,
+      "usage_each": {
+        "prompt_tokens": 4096,
+        "completion_tokens": 128,
+        "total_tokens": 4224
+      },
+      "cached_tokens": [0, 0],
+      "finish_reason": "length",
+      "returned_token_ids_each": 128,
+      "output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "same_boot_output_repeat": true,
+      "legacy_comparison": "The output-token hash matches the retained legacy-runtime target-only authority. The current-runtime median is additive and does not replace the legacy formal 4K row."
+    }
+  },
+  "teardown": {
+    "client_exit_code": 0,
+    "supervisor_exit_code": 0,
+    "journal_read_exit_code": 0,
+    "listener_or_owned_process_remaining": false,
+    "scratch_path_remaining": false,
+    "all_four_cards_discoverable": true,
+    "idle_memory_mib_per_card_range": [42.875, 42.883],
+    "b70_addressed_event_in_frozen_window": false,
+    "boundary": "The gate excludes a B70-addressed event; it does not establish a clean-host storage window."
+  },
+  "external_evidence": {
+    "root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt4",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt4-supervisor",
+    "summary": "current-anchor-summary.json",
+    "summary_sha256": "c557f2a6bd2113ebfcb98bc655c7d83490b48f85091007181abd9352f54569a0",
+    "primary_evidence_manifest": {
+      "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt4-primary-evidence.sha256",
+      "tracked_copy": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-runtime-anchor-attempt4-primary-evidence.sha256",
+      "entries": 67,
+      "sha256": "2d1188a349843a3764f0f1f874aed42e7d72368bff8b515f8f55033ecc7e9b59",
+      "verification": "sha256sum -c passed 67/67 after manifest creation"
+    },
+    "artifact_sha256": {
+      "recovery-canary.json": "a99bee89cb0626629fa6e3add3188306aa20af92428a03dade74b27c117001c3",
+      "quality-current.json": "c0c76ab19bb93963fd2817930b0ce4a3edfd73861bdab75377ad03f6a5be5c83",
+      "bench-short-r1.json": "00458295bd3ee27b4706c8b2d4e66737bb5fdcdc846b1d35a8f9249e9ad93e9d",
+      "bench-short-r2.json": "2368e4f80044b2291a46b0f58bc4648376164b334a5de60e9e8ccadc3d5c6e1d",
+      "bench-short-r3.json": "947fa49c311b5da334a05e23c432655be3d1b8a3b6f8296a38b9b05098aee883",
+      "exact-depth-4k-r1.json": "b026fc4b60b84132f8b4b94d928f6343ea18eba4d95a37cd39ee1515f947061f",
+      "exact-depth-4k-r2.json": "80f1900256faa63f1b72269c6399239d06ad1f6fd88d7fdec17f0a0613b24b53"
+    }
+  },
+  "publication_decision": {
+    "current_contract_cells_added": [
+      "TP4 / MTP0 / active context 0 / graph off / text",
+      "TP4 / MTP0 / active context 4096 / graph off / text"
+    ],
+    "state": "lab-screened",
+    "packet_grade": "C",
+    "protected_results_changed": false,
+    "not_authorized": [
+      "deployment-ready wording",
+      "clean-host wording",
+      "LocalMaxxing submission",
+      "replacement or lowering of any retained legacy-runtime rate",
+      "interpolation or extrapolation to unmeasured contexts"
+    ]
+  }
+}

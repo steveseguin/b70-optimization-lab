@@ -49,6 +49,18 @@ text on p146/o256/c1. Both short batteries passed 5/7 strict cases and one of
 16 greedy repeats diverged. This is Grade-C research evidence and a
 `lab-screened` operating point. It is not record-eligible.
 
+The additive current-runtime attempt-4 anchor is also complete. Under vLLM
+`1372c62d`, current kernel source `ad25aa9f`, and staged runtime build
+`2f829747`, its direct battery passed 6/7 semantically, repeats passed 16/16,
+and the exact cache-zero 4K needle passed. Three established short rows had a
+`5.223789 tok/s` after-first-text median. Two exact p4096/o128 rows measured
+`4.720311 / 4.795325 tok/s` conventional, median `4.757818 tok/s`, with one
+output-token hash, exact usage, cache zero, and length stops. Controlled
+teardown passed its B70 postflight, but fresh-server and clean-host storage
+qualification remain open. This is additive current-runtime Grade-C evidence;
+it neither replaces nor lowers attempt 19 or any MTP result. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-runtime-anchor-attempt4-result.json`.
+
 The additive TP4/EP4/eager/MTP0 1,536-token-cap arm is complete. It passed the
 987-token needle, 16/16 repeats, and the formal realistic-suite validity gate;
 three exact-1K samples had a `5.133588 tok/s` median after first text. The same
