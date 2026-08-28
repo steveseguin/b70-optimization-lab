@@ -86,3 +86,60 @@ output root is
 `/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/post-reset-recovery-qualification-20260828-stage-a2`.
 The first failed attempt is not overwritten. Stage A2 may authorize only the
 separately registered Stage-B known-good generation canary.
+
+## Stage-A2 result
+
+Stage A2 passed every recovery-control gate. Each of the four isolated card
+checks again returned exactly `2097152.0`. The corrected four-rank collective
+reached the barrier on ranks 0 through 3 and every rank returned exactly
+`allreduce ok 4.0`. The helper returned `0`; the bounded journal contained no
+new B70 event; no check process or listener remained; and final device memory
+was 42.875-42.891 MiB. The immutable external evidence manifest has SHA-256
+`71ad49fa601ebe90516997c35aefc1357a3a0d5727dda8f0e5d2d99733ae0478`.
+
+Stage A2 authorizes only Stage B below.
+
+## Frozen Stage-B identity and gates
+
+Stage B is a functional recovery canary, not a performance, matrix, quality,
+or deployment measurement. It cannot replace, lower, or add to any captured
+throughput row.
+
+- base launcher:
+  `tools/launch-tp4-ep4-eager-mtp0-512.sh`, SHA-256
+  `62b40c9268a665727ff3946a621e4fcd2db072ed0bd4595dde7a6a006083ccb7`;
+- model: local-NVMe `Qwen3.8-Flash-Next-FP8`, sealed revision
+  `bcd9f01ddc9cff2316eb84281bebcd5b058bddce`;
+- accepted current overlays: vLLM `1372c62d975c554f4b465c8299bc5f3295301ceb`,
+  kernel source `ad25aa9f69a2171612b9c6b83dfa82c69559f9e4`, and staged
+  MTP0 runtime build `2f829747503c77d4814834dffd0840fb1dd9f75a`;
+- server identity: TP4/EP4, Triton MoE, eager, MTP0, configured length 512,
+  cache 201326592 bytes, one sequence, 64 batched tokens, selective UVA
+  offload of PLE embedding and token embedding at 12.25 GiB per rank;
+- unique output identity: attempt 28 below the Stage-B recovery root, port
+  19666, and fresh compile, runtime-cache, and RPC paths;
+- one request only: `Reply with exactly: OK`, thinking disabled, temperature
+  0, top-p 1, seed 20260609, and at most 8 output tokens;
+- required oracle: HTTP 200, model identity match, normal stop, normalized
+  `OK`, SHA-256
+  `565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3`,
+  exact usage 17 prompt / 2 completion / 19 total, and zero cached or created
+  cache tokens;
+- the oracle comes from the MTP0 official-quality attempt 2 control on the
+  same accepted vLLM overlay, whose exact-OK case recorded the same output,
+  hash, usage, and cache counters. This Stage-B canary does not inherit that
+  run's benchmark or quality credit;
+- client request bound: 180 seconds; overall server lifecycle bound: 1500
+  seconds; stop only after the complete canary receipt is durable;
+- require descendant-aware clean shutdown, no process/listener/temporary-path
+  residue, four-card rediscovery at idle memory, and no new B70 reset or fatal
+  event in the kernel-journal window.
+
+The descendant-aware supervisor SHA-256 is
+`2b2a172a94fc23d910e99ea7bbf73200aeb59ee902176e660cb9c1e8fcfe28c4` and
+the one-request client SHA-256 is
+`5790945842fd3a6c6c7e599df7fbbc6b69b1de40d46d9848ed53939508410f6e`.
+They are frozen after review and before execution. A complete pass restores
+permission only for a separately preregistered next matrix arm. Any failed
+gate remains evidence and stops the program without an automatic reload or
+reboot.
