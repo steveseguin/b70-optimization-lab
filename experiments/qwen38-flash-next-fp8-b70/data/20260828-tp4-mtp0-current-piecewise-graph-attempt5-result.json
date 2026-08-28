@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "status": "failed-incomplete-host-oom-during-post-load-graph-compilation",
+  "campaign": "qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1",
+  "attempt": 5,
+  "classification": {
+    "evidence_grade": "D",
+    "phase": "post-load PIECEWISE graph compilation",
+    "model_shards_loaded": "131/131",
+    "graph_compile_started": true,
+    "healthy_api": false,
+    "client_invoked": false,
+    "quality_or_replay_started": false,
+    "speed_rows": 0,
+    "matrix_or_site_credit": false,
+    "interpretation": "All four workers loaded the complete checkpoint and rank 0 entered torch.compile, but global host memory exhausted before API health or any client work. This is a host-resource and bounded-lifecycle negative, not graph correctness, output quality, or throughput evidence."
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_checkout_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp": 0,
+    "graph_mode_requested": "PIECEWISE",
+    "graph_capture_sizes": [1],
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 201326592,
+    "port": 19679
+  },
+  "frozen_tools": {
+    "wrapper_sha256": "19f08177b2d12bd25e9b2c21f96fb5ee81aec7b8bd6c8c8e37af00b289631487",
+    "client_sha256": "8da39d3c001651c05ca1d534c8e80f7f326207a61ead89a3be1499e1c14203b9",
+    "watchdog_sha256": "8cd82a5fd68ceaaf2fee28232996c24051c53902f247eebc50d623a667c1e40f",
+    "outer_supervisor_sha256": "5096072f1097bd3d0ef0e80525247f6685473ad6e1aa94ceaef09f1318556649",
+    "journal_classifier_sha256": "440d7d0636bef8b5baf9bd5603ced988e22fe64c7df912ed15e55561aea8ea16",
+    "journal_fixture_test_sha256": "f705d5210bd7041528e05223b571fdc7a59cf29a13b8f4373e7f288b6af75191",
+    "derived_client_sha256": "0b7606190d48dea05d48660de9971bc7b76b64c0eb58a48c507fd60b22d40fc4",
+    "derived_supervisor_sha256": "a3344488b98afc4d7ce7010a3da36a58ec6fbeee38e0f9061d188e08baf03aac"
+  },
+  "timeline": {
+    "journal_start_epoch": 1787931602,
+    "journal_start_local": "2026-08-28T11:40:02-04:00",
+    "first_temporary_swap_use_epoch": 1787931683,
+    "first_temporary_swap_use_local": "2026-08-28T11:41:23-04:00",
+    "allowed_root_nvme_corrected_event_local": "2026-08-28T11:41:37-04:00",
+    "all_shards_loaded_local": "2026-08-28T11:42:46-04:00",
+    "rank0_graph_compile_cache_event_local": "2026-08-28T11:43:16-04:00",
+    "low_memory_sample_epoch": 1787931859,
+    "low_memory_sample_local": "2026-08-28T11:44:19-04:00",
+    "resource_failure_mtime_local": "2026-08-28T11:44:20-04:00",
+    "first_global_oom_local": "2026-08-28T11:44:21-04:00",
+    "worker_kill_oom_local": "2026-08-28T12:56:35-04:00",
+    "final_rc_mtime_local": "2026-08-28T12:57:04-04:00"
+  },
+  "model_and_compile_evidence": {
+    "per_rank_model_loading_memory_gib": 31.27,
+    "per_rank_model_loading_seconds": [87.012550, 86.904099, 86.969959, 86.976346],
+    "rank0_dynamo_transform_seconds": 8.20,
+    "rank0_compile_range_cache_log": "Cache the graph of compile range (1, 64) for later use",
+    "graph_capture_completed": false,
+    "client_absence_basis": "The server never became healthy and no health-before-client, quality, replay, benchmark, or client-gates artifact exists."
+  },
+  "resource_treatment": {
+    "temporary_swap_bytes": 68719476736,
+    "temporary_swap_priority": -1,
+    "watchdog_samples": 240,
+    "watchdog_elapsed_seconds": 256,
+    "initial_mem_available_kib": 115055792,
+    "minimum_mem_available_kib": 9070068,
+    "mem_available_stop_floor_kib": 12582912,
+    "peak_temporary_swap_used_kib": 6400744,
+    "peak_temporary_swap_used_epoch": 1787931712,
+    "final_sample_temporary_swap_used_kib": 6392412,
+    "final_sample_total_swap_used_kib": 13435652,
+    "final_sample_memory_psi_some_avg10": 7.33,
+    "final_sample_memory_psi_full_avg10": 7.14,
+    "resource_failure": "MemAvailable below 12 GiB: 9070068 KiB"
+  },
+  "journal": {
+    "kernel_journal_read_rc": 0,
+    "oom_invocation_records": 9,
+    "oom_killed_process_records": 9,
+    "first_wave_killed_worker": false,
+    "later_killed_worker_pids": [1886391, 1886618],
+    "later_killed_worker_ranks": [2, 3],
+    "corrected_apei_source_records": 42,
+    "rxerr_lines": 43,
+    "corrected_root_port_sections_0000_00_03_1": 2,
+    "b70_addressed_event": false,
+    "fatal_or_uncorrected_pcie_event": false,
+    "bounded_inference": "The 12-GiB guard latched before the first OOM record, but TERM did not yield a timely descendant exit under severe pressure. The later OOM killed TP2 and TP3. The evidence establishes host-memory exhaustion during this boot; it does not isolate a runtime leak or prove that adding more swap would make graph mode viable."
+  },
+  "cleanup": {
+    "inner_rc": 130,
+    "outer_rc": 70,
+    "temporary_swapoff_succeeded": true,
+    "temporary_file_removed": true,
+    "original_swap_layout_restored_exactly": true,
+    "listener_19679_after": false,
+    "model_or_worker_process_after": false,
+    "compile_path_after": false,
+    "rpc_path_after": false,
+    "postflight_card_memory_mib": [42.890625, 42.87890625, 42.87890625, 42.87109375]
+  },
+  "raw_evidence": {
+    "live_ext4_resource_dir": "/var/tmp/q38-piecewise-graph-a5-resource",
+    "resource_archive": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt5-resource-archive",
+    "resource_manifest": "raw-manifest.sha256",
+    "resource_manifest_sha256": "a06e8546638bf540d05dd3f99190cd496e35e7f635ab142554f599f51d0484f4",
+    "resource_manifest_entries": 39,
+    "resource_source_and_mirror_verified": true,
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt5",
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt5-supervisor",
+    "combined_manifest": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-piecewise-mtp0-4352-r1-attempt5-primary-evidence.sha256",
+    "tracked_manifest": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt5-primary-evidence.sha256",
+    "combined_manifest_sha256": "b2ddc4323c2b76da507736495fa81f2968bce29b5ba75bf7b5ce66d23622de4f",
+    "combined_manifest_entries": 79,
+    "combined_manifest_verified": true
+  },
+  "coverage_and_protected_results": {
+    "live_contract_before": "25/270 classified",
+    "live_contract_after": "25/270 classified",
+    "site_or_matrix_changed": false,
+    "captured_speed_changed": false,
+    "graph_speed_claim": null,
+    "reason": "No healthy API, client receipt, output, quality result, replay result, or speed row exists."
+  },
+  "next_step": {
+    "status": "no-further-swap-only-retry",
+    "requirements": [
+      "Use a material design that lowers post-load compilation host-memory pressure rather than adding only more swap.",
+      "Replace iteration-count TERM waiting with a monotonic wall-clock deadline and owned-descendant escalation that remains bounded under swap thrash.",
+      "Use a fresh preregistration, attempt, port, and evidence tree; preserve all eager and historical graph speeds unchanged."
+    ]
+  }
+}
