@@ -3,32 +3,29 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Strict single-user headline pending.** The previously published
-> `58.391033 tok/s` center used the full varied 12-prompt suite and zero cached
-> tokens, but only a 128-token output cap. The repository's promotion policy
-> required a 512-token natural-completion cap. The old harness mislabeled that
-> screening run as a final gate, so the number has been removed from package
-> and site headline surfaces. The LocalMaxxing submission
-> [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
-> was premature and withdrawal is recommended. The `146.814418 tok/s`
-> selected high-acceptance fixture is diagnostic only and is also excluded
-> from public headline graphs. The replacement strict matrix completed two
-> full 12-prompt/512-cap attempts per profile, but fresh-server complete-token
-> agreement was only `8/12` for MTP0, `8/12` for MTP1, and `8/12` for dynamic
-> MTP8. Sealed compiled-cache (`10/12`), eager graph-off (`10/12`), and eager
-> W8A16-off (`8/12`) controls also failed. The headline remains blank because
-> the output gate failed—not because speed was unmeasured. See the
-> [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md).
-> A separate one-B70 TP1 eager/default-dispatch pair also matched only `8/12`,
-> proving TP2 and cross-rank oneCCL are not required; see the
-> [TP1 control](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-tp1-strict-target-control-result.md).
+> **Qualified strict headline: `34.031596 tok/s`.** Two fresh servers with
+> empty compile caches measured `34.025180` and `34.038013 tok/s` on the fixed
+> 12-prompt/six-class suite with a natural 512-token cap. Every request
+> reported zero cached tokens, both independent canary batteries passed, and
+> all 12 complete token arrays matched exactly across attempts. This packaged
+> default is MTP0 with Inductor enabled, XPU Graph disabled, deterministic GDN
+> state handling, and explicit oneCCL `Work.wait()` ordering. See the
+> [qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-deterministic-eager-baseline-and-compiled-closure.md).
+
+The old `58.391033 tok/s` dynamic-MTP center used only a 128-token output cap,
+and the `146.814418 tok/s` result used a selected 40-token fixture. Neither is
+a headline. The LocalMaxxing submission
+[`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
+was premature and withdrawal is recommended. MTP1 and dynamic MTP still fail
+the fresh-server complete-output gate and remain withheld until separately
+repaired and requalified.
 
 The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
 short requests, with explicit output-isolation and semantic gates. A separate
 33,024-token target-only profile measured `31.489587 tok/s` decode at an exact
 32K prompt with `13.740 s` TTFT. These are scoped capacity/context results,
-not replacements for the missing varied-prompt single-user headline.
+not replacements for the strict varied-prompt single-user headline.
 
 The package also retains a separate static publisher-MTP1 short-context
 aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
@@ -54,8 +51,9 @@ The machine-readable front door is [`package.json`](package.json).
 
 **neural.download lab — integrated and optimized:** B70/XPU integration,
 graph and quality validation, direct-I/O model verification, direct-P2P
-concurrency tuning, block-W8A16 dispatch, dynamic-width GDN repair, and active
-Mamba-state allocation. Against the exact same
+concurrency tuning, block-W8A16 dispatch, deterministic compiler-visible GDN
+state, explicit oneCCL completion ordering, dynamic-width GDN repair, and
+active Mamba-state allocation. Against the exact same
 overlay image with its environment gate omitted, W8A16 improved fresh
 single-user decode from `21.872717` to `35.011369 tok/s` (+60.07%) and c128
 aggregate decode from `860.460981` to `1,112.570323 tok/s` (+29.30%). See the
@@ -66,11 +64,12 @@ mechanism evidence. None of their selected-fixture singleton rates is a
 package headline. The incomplete 128-cap varied-prompt repeat measured
 `58.537756`/`58.244309 tok/s`; it remains a screening result pending the
 compliant 512-cap two-server suite and independent quality/determinism gate.
-That compliant suite now exists: W8A16 MTP0 measured
+The original compliant matrix measured: W8A16 MTP0
 `34.772270`/`34.740755 tok/s`, MTP1 measured
 `55.760069`/`55.782147 tok/s`, and dynamic MTP8 measured
 `68.049727`/`62.432362 tok/s`. All remain diagnostics because their paired
-complete outputs matched only `8/12`.
+complete outputs matched only `8/12`. The later deterministic compiled MTP0
+repair qualified at `34.025180`/`34.038013 tok/s` with `12/12` exact outputs.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
@@ -118,18 +117,21 @@ weights.
 docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
 ```
 
-No project patch is required for the baseline. To build the faster
-default-off W8A16 overlay from its pinned vLLM source commit:
+Build the qualified deterministic compiled default from the pinned vLLM
+source commit and the three repository patches:
 
 ```bash
-BUILD_ROOT=/path/to/dedicated-build-root \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh
+BUILD_ROOT=/path/to/empty-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh
 ```
 
 The helper applies the exact
-[patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch)
-and builds the repository-local Docker overlay. The model weights are not
-modified.
+[W8A16 patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch),
+[deterministic GDN patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch),
+and [compiled-state/oneCCL patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch),
+then builds the repository-local Docker overlay. The model weights are not
+modified. The validated image ID is
+`sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e`.
 
 The concurrent MTP1 profile additionally needs the pinned upstream XPU-kernel
 artifact. Build the kernel image, then place the same W8A16 overlay on top:
@@ -179,25 +181,33 @@ container image.
 
 ## 4. Launch, check, and benchmark
 
-For the selected dynamic MTP service:
+For the qualified strict MTP0 service:
 
 ```bash
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15 \
+VLLM_XPU_FP8_BLOCK_W8A16=1 VLLM_XPU_ENABLE_XPU_GRAPH=0 CCL_P2P_ACCESS=1 \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
-VLLM_CACHE_DIR=/path/to/new-dynamic-mtp-cache \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-dynamic-mtp-server.sh
+VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh
 
-OUT_DIR=/path/to/new-dynamic-mtp-attempt \
-MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-dynamic-mtp.sh
+python3 scripts/bench-openai-realistic-suite.py \
+  --base-url http://127.0.0.1:18087 --model qwen38-fp8 \
+  --api-mode completions \
+  --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
+  --max-tokens 512 --metric-tokens 100 --seed 42 --return-token-ids \
+  --require-natural-eos \
+  --request-extra-json '{"temperature":0,"top_p":1}' \
+  --out /path/to/new-realistic-suite.json
 ```
 
-The short-context diagnostic benchmark requires its single-user fixture gate, a complete output-isolated c64
-batch, at least 98% of the prior replicated aggregate result, sequential baseline
-agreement, and 512/512 concurrent exact-answer checks. The service is limited
-to 256 total tokens and is not the long-context profile.
+Run the same command against a second freshly started server and another empty
+cache directory, then compare the complete token arrays with
+[`compare-strict-attempt-outputs.py`](../../scripts/compare-strict-attempt-outputs.py).
+One run alone is measurement evidence, not a promoted reproduction.
 
-For the fixed varied-prompt single-user gate required before a package
-headline, launch the following 1024-token-cap one-slot profile on another fresh
+To investigate the still-withheld dynamic-MTP lane under the same fixed
+varied-prompt gate, launch its 1024-token-cap one-slot profile on another fresh
 server with another empty cache directory and run:
 
 ```bash
@@ -217,7 +227,7 @@ window, and fails unless every request reports `cached_tokens=0`. The prior
 not satisfy this command's final gate. See the
 [audit correction](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
 
-For the original portable target-only baseline, in the serving terminal:
+For the original official-image target-only baseline, in the serving terminal:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \

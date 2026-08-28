@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards — 18.9 tok/s measured — neural.download</title>
-<meta name="description" content="Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic eager MTP0 with the lab W8A16 and GDN fixes; faster compiled and MTP profiles remain research-only. Measured 18.9 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB with vLLM">
+<title>Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards — 34.0 tok/s measured — neural.download</title>
+<meta name="description" content="Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic compiled MTP0 with the lab W8A16, GDN-state, and oneCCL completion fixes; MTP profiles remain research-only. Measured 34.0 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB w">
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -15,24 +15,24 @@
 <meta property="og:site_name" content="neural.download">
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">
-<meta property="og:title" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards — 18.9 tok/s measured">
-<meta property="og:description" content="Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic eager MTP0 with the lab W8A16 and GDN fixes; faster compiled and MTP profiles remain research-only. Measured 18.9 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB with vLLM">
+<meta property="og:title" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards — 34.0 tok/s measured">
+<meta property="og:description" content="Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic compiled MTP0 with the lab W8A16, GDN-state, and oneCCL completion fixes; MTP profiles remain research-only. Measured 34.0 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB w">
 <meta property="og:image" content="https://neural.download/models/cards/qwen38-27b-fp8-vllm-tp2-asrock-b70.png">
 <meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-27b-fp8-vllm-tp2-asrock-b70.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards: 18.9 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta property="og:image:alt" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards: 34.0 tok/s measured on Intel Arc Pro B70 — neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@xyster">
 <meta name="twitter:creator" content="@xyster">
 <meta name="twitter:url" content="https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html">
-<meta name="twitter:title" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards — 18.9 tok/s measured">
-<meta name="twitter:description" content="Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic eager MTP0 with the lab W8A16 and GDN fixes; faster compiled and MTP profiles remain research-only. Measured 18.9 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB with vLLM">
+<meta name="twitter:title" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards — 34.0 tok/s measured">
+<meta name="twitter:description" content="Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic compiled MTP0 with the lab W8A16, GDN-state, and oneCCL completion fixes; MTP profiles remain research-only. Measured 34.0 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB w">
 <meta name="twitter:image" content="https://neural.download/models/cards/qwen38-27b-fp8-vllm-tp2-asrock-b70.png">
-<meta name="twitter:image:alt" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards: 18.9 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:image:alt" content="Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards: 34.0 tok/s measured on Intel Arc Pro B70 — neural.download">
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards", "description": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic eager MTP0 with the lab W8A16 and GDN fixes; faster compiled and MTP profiles remain research-only. Measured 18.9 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB with vLLM ", "url": "https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html", "dateModified": "2026-08-27", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards", "description": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic compiled MTP0 with the lab W8A16, GDN-state, and oneCCL completion fixes; MTP profiles remain research-only. Measured 34.0 tok/s strict varied-prompt decode on 2× Intel Arc Pro B70 32 GiB w", "url": "https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html", "dateModified": "2026-08-27", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
 </script>
 <script type="application/ld+json">
 {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen 27B · 3.6 → 3.8", "item": "https://neural.download/models/qwen-27b.html"}, {"@type": "ListItem", "position": 4, "name": "Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards", "item": "https://neural.download/models/qwen38-27b-fp8-vllm-tp2-asrock-b70.html"}]}
@@ -108,12 +108,12 @@
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="qwen-27b.html">Qwen 27B · 3.6 → 3.8</a> / 27B official FP8</p>
   <p class="eyebrow">Candidate package · vLLM XPU · 2× Intel Arc Pro B70</p>
   <h1>Qwen3.8 27B official FP8 on two Intel Arc Pro B70 cards</h1>
-  <p>Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic eager MTP0 with the lab W8A16 and GDN fixes; faster compiled and MTP profiles remain research-only.</p>
+  <p>Alibaba&#x27;s Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The strict default is deterministic compiled MTP0 with the lab W8A16, GDN-state, and oneCCL completion fixes; MTP profiles remain research-only.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page">
 
-  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">18.9</span><span class="unit">tok/s strict varied-prompt decode</span></div><p class="scope">Median of two fresh-server class-balanced medians over the complete fixed 12-prompt/six-class, natural 512-cap, cache-zero raw-completion suite; official FP8 target, W8A16, FP16 KV, TP2, MTP0, XPU Graph off, enforce-eager. All 12 complete token arrays matched and both independent canary batteries passed. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-eager-baseline.json">proof file</a></p><p class="scope-gloss">cache-zero = a fresh start, nothing pre-computed · MTP = multi-token prediction, a small draft the main model verifies</p>
+  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">34.0</span><span class="unit">tok/s strict varied-prompt decode</span></div><p class="scope">Median of two fresh-server, empty-compile-cache class-balanced medians over the complete fixed 12-prompt/six-class, natural 512-cap, cache-zero raw-completion suite; official FP8 target, W8A16, FP16 KV, TP2, MTP0, Inductor, XPU Graph off, and explicit oneCCL Work.wait. All 12 complete token arrays matched and both independent canary batteries passed. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-compiled-work-wait.json">proof file</a></p><p class="scope-gloss">cache-zero = a fresh start, nothing pre-computed · MTP = multi-token prediction, a small draft the main model verifies</p>
   <div class="actions">
     <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>

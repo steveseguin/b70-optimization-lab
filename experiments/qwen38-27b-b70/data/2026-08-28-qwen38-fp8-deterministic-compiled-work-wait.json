@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.strict-pair-summary.v1",
+  "model": "Qwen/Qwen3.8-27B-FP8",
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "runtime_commit": "ac7509e2b",
+  "xpu_kernels_commit": "1e90ffa672",
+  "image": "neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15",
+  "image_id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e",
+  "profile": "TP2, official FP8, W8A16, FP16 KV, MTP0, Inductor, XPU Graph off, explicit oneCCL Work.wait",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+  "attempts": [
+    {
+      "id": "workwait-r15-A",
+      "class_balanced_decode_tok_s": 34.02517960445618,
+      "artifact_dir": "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15a",
+      "performance_sha256": "44eb1331b1a1255501698cfaac938e90d95ff373070dea878203bba0c958b935",
+      "canaries_sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+    },
+    {
+      "id": "workwait-r15-B",
+      "class_balanced_decode_tok_s": 34.03801277726281,
+      "artifact_dir": "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15b",
+      "performance_sha256": "52b54b25a90cd95f3eaf79ccc92f1b5cfa7852a428393574e3481e1ea87f139c",
+      "canaries_sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+    }
+  ],
+  "two_attempt_median_tok_s": 34.03159619085949,
+  "comparison_sha256": "fffc1130b08a50d5f7a3620510fa382c466c308633a11c1a886345d94bf92743",
+  "comparison_path": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-compiled-work-wait-comparison.json",
+  "complete_token_arrays_exact": true,
+  "exact_prompts": 12,
+  "total_prompts": 12,
+  "cached_tokens_all_zero": true,
+  "performance_gates_passed": true,
+  "independent_canaries_passed": true,
+  "strict_pair_qualified": true,
+  "patches": [
+    {
+      "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
+      "sha256": "cda7dd1e42a1e0fed2dd34f3936303cb038852a46d8d00786a1c2ebae326f8eb"
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch",
+      "sha256": "8f8febcd0abc59bc9b69830827cd7607c00870414b17bd02cf32e2d879858ac8"
+    }
+  ]
+}

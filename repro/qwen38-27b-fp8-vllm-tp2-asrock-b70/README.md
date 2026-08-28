@@ -11,43 +11,49 @@
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
 FP16 KV, and TP2. The qualified default is target-only/MTP0 with W8A16,
-XPU Graph disabled, and eager execution. MTP1, dynamic MTP, and compiled target
-profiles remain documented as research lanes rather than default recipes.
+Inductor enabled, XPU Graph disabled, deterministic GDN state handling, and an
+explicit oneCCL completion dependency. MTP1 and dynamic MTP remain documented
+as research lanes rather than default recipes.
 
 ## Qualified strict MTP0 baseline
 
-The deterministic GDN patch and eager graph-off launcher passed the full
-promotion contract on two fresh servers:
+The deterministic GDN/oneCCL patches and graph-off compiled launcher passed the
+full promotion contract on two fresh servers with empty compile caches:
 
 | attempt | class-balanced decode | cache | complete output match |
 | --- | ---: | ---: | ---: |
-| `detstate-r5-tp2-A` | 18.850167 tok/s | zero on 12/12 | 12/12 |
-| `detstate-r5-tp2-B` | 18.970316 tok/s | zero on 12/12 | 12/12 |
-| two-attempt median | **18.910242 tok/s** | — | **qualified** |
+| `workwait-r15-A` | 34.025180 tok/s | zero on 12/12 | 12/12 |
+| `workwait-r15-B` | 34.038013 tok/s | zero on 12/12 | 12/12 |
+| two-attempt median | **34.031596 tok/s** | — | **qualified** |
 
 Both attempts used the complete fixed 12-prompt/six-class suite, the natural
 512-token cap, raw streamed token IDs, and independent repeat, arithmetic,
 copy, and JSON canaries. Apply the repository-contained
 [deterministic GDN patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch),
+[compiled-state/oneCCL patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch),
 build the overlay described below, and launch:
 
 ```bash
 BUILD_ROOT=/path/to/empty-build-root \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-eager-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh
 
-IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-deterministic-state-r5 \
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15 \
+VLLM_XPU_FP8_BLOCK_W8A16=1 VLLM_XPU_ENABLE_XPU_GRAPH=0 CCL_P2P_ACCESS=1 \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-runtime-cache \
 MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-eager-server.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh
 ```
 
 The validated image ID is
-`sha256:47507a8ca2a78e83666a6f300ec94c5b5c5915740f147bf9d1565c938de8f25b`.
+`sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e`.
 See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-deterministic-eager-baseline-and-compiled-closure.md)
-and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-eager-baseline.json).
+and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-compiled-work-wait.json).
 
-## Faster compiled/MTP matrix — measured, output gate failed
+The eager r5 image remains a qualified fallback at `18.910242 tok/s`; its
+build script is retained for recovery and compiler regression isolation.
+
+## MTP matrix — measured, output gate failed
 
 Two full fresh-server attempts were completed for each main single-user
 profile. W8A16 MTP0 measured `34.772270`/`34.740755 tok/s`, static MTP1
@@ -56,11 +62,12 @@ measured `55.760069`/`55.782147 tok/s`, and dynamic MTP8 measured
 classes, a 512-token natural-completion cap, the first 100 streamed token
 events, and zero cached tokens. All workload and objective-canary gates passed.
 
-None of those faster profiles qualifies: each pair matched only `8/12`
-complete token arrays. Later work fixed the eager target by stabilizing the GDN
-B/A prefill reduction and exposing recurrent-state mutations, but the compiled
-path still matched only `7/12` with XPU Graph disabled and `5/12` with
-`TORCHINDUCTOR_DETERMINISTIC=1`. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
+Those original faster profiles did not qualify: each pair matched only `8/12`
+complete token arrays. Later work stabilized the GDN B/A prefill reduction,
+bound compiler-visible recurrent state, and made oneCCL completion explicit
+with `async_op=True` plus `Work.wait()`. That repaired compiled MTP0 to 12/12
+without enabling XPU Graph. The corresponding repair has not yet qualified the
+MTP1 or dynamic-MTP lanes. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
 and [machine-readable summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-strict-profile-matrix-summary.json).
 A one-B70 eager/default-dispatch control subsequently matched only `8/12` too,
 so TP2 and cross-rank oneCCL are not required; see the

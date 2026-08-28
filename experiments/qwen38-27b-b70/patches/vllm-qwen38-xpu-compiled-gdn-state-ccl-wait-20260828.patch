@@ -1,0 +1,85 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -538,6 +538,25 @@
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
+         self.gdn_decode_kernel = envs.VLLM_GDN_DECODE_KERNEL.strip().lower()
++        conv_state_dtype, ssm_state_dtype = self.get_state_dtype()
++        self.register_buffer(
++            "_xpu_conv_state",
++            torch.empty(
++                0,
++                dtype=conv_state_dtype,
++                device=current_platform.current_device(),
++            ),
++            persistent=False,
++        )
++        self.register_buffer(
++            "_xpu_ssm_state",
++            torch.empty(
++                0,
++                dtype=ssm_state_dtype,
++                device=current_platform.current_device(),
++            ),
++            persistent=False,
++        )
+         if self.gdn_decode_kernel == "cuda":
+             reason = self._fused_gdn_decode_unsupported_reason(vllm_config)
+             if reason is not None:
+@@ -557,6 +576,12 @@
+             raise ValueError(f"Duplicate layer name: {prefix}")
+         compilation_config.static_forward_context[prefix] = self
+ 
++    def bind_kv_cache(self, kv_cache: torch.Tensor) -> None:
++        """Bind compiler-visible XPU views to the allocated recurrent cache."""
++        super().bind_kv_cache(kv_cache)
++        self._xpu_conv_state.set_(self.kv_cache[0])
++        self._xpu_ssm_state.set_(self.kv_cache[1])
++
+     def _fused_gdn_decode_unsupported_reason(
+         self, vllm_config: VllmConfig
+     ) -> str | None:
+@@ -1033,27 +1058,13 @@
+             device=hidden_states.device,
+         )
+         z = torch.empty_like(core_attn_out)
+-        if hasattr(self, "kv_cache"):
+-            conv_state, ssm_state = self.kv_cache
+-        else:
+-            # The memory-profiling dummy forward has no attention metadata and
+-            # returns from the custom op before touching state. Keep explicit
+-            # tensor arguments so the real path's mutation contract remains
+-            # visible to the dispatcher.
+-            conv_state = torch.empty(
+-                0, dtype=hidden_states.dtype, device=hidden_states.device
+-            )
+-            ssm_state = torch.empty(
+-                0, dtype=hidden_states.dtype, device=hidden_states.device
+-            )
+-
+         torch.ops.vllm.gdn_attention_core_xpu(
+             core_attn_out,
+             z,
+             projected_states_qkvz,
+             projected_states_ba,
+-            conv_state,
+-            ssm_state,
++            self._xpu_conv_state,
++            self._xpu_ssm_state,
+             self.prefix,
+         )
+ 
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -47,7 +47,8 @@
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
+         output = input_.clone()
+-        dist.all_reduce(output, group=self.device_group)
++        work = dist.all_reduce(output, group=self.device_group, async_op=True)
++        work.wait()
+         return output
+ 
+     def reduce_scatter(self, input_: torch.Tensor, dim: int = -1):

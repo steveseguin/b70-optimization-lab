@@ -1,0 +1,13 @@
+ARG BASE_IMAGE=vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
+FROM ${BASE_IMAGE}
+
+# Install the default-off W8A16 dispatch, deterministic XPU GDN state
+# contract, and explicit oneCCL completion dependency from the pinned source.
+COPY vllm/model_executor/kernels/linear/scaled_mm/xpu.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+COPY vllm/_xpu_ops.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+COPY vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+COPY vllm/distributed/device_communicators/xpu_communicator.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py
