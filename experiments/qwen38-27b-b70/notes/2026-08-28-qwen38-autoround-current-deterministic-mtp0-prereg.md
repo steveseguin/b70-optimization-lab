@@ -1,6 +1,6 @@
 # Qwen3.8 AutoRound current-runtime deterministic MTP0 preregistration
 
-Date: 2026-08-28  
+Date: 2026-08-28
 Status: frozen before execution
 
 ## Question
