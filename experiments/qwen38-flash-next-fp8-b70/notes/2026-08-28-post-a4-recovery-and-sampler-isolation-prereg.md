@@ -97,6 +97,11 @@ boundary. Its two exact-4K rows measured `5.405351634035985` and
 byte-identical requests returned different 128-token hashes. The second
 matches the retained authority; the first does not.
 
+Post-result source audit found the intended treatment was not active for these
+greedy requests: `temperature=0` takes the `all_greedy` return before either
+top-k/top-p implementation is called. The faster rows are therefore
+unattributed diagnostics, not sampler-selector causality.
+
 The frozen client rejected the candidate before either 16K request. Sampler
 native therefore receives no promotion or speed/quality/deployment credit, and
 no protected result changes. The complete result and immutable evidence

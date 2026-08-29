@@ -15,7 +15,12 @@
     "cpu_offload_gb": 12.25,
     "offload_backend": "uva",
     "xpu_sampler_kernel": false,
-    "changed_selector": "VLLM_XPU_USE_SAMPLER_KERNEL=0"
+    "changed_selector": "VLLM_XPU_USE_SAMPLER_KERNEL=0",
+    "treatment_activation": {
+      "active_for_frozen_requests": false,
+      "reason": "temperature=0 made all_greedy true; Sampler.sample returned greedy argmax before TopKTopPSampler could dispatch to the XPU-specific or native implementation",
+      "source_path": "vllm/v1/sample/sampler.py:260-272"
+    }
   },
   "recovery_gate_a5": {
     "status": "passed",
@@ -78,7 +83,8 @@
       "frozen_95_percent_floor_decode_tok_s": 4.519927197031117,
       "diagnostic_change_percent": 12.989042612149703,
       "speed_floor_passed": true,
-      "identical_request_output_repeat_passed": false
+      "identical_request_output_repeat_passed": false,
+      "speed_attribution": "unattributed run-to-run diagnostic variation because the configured selector was not active on the all-greedy path"
     },
     "active_16k_phase": {
       "authorized_after_4k_gate": false,
@@ -109,5 +115,5 @@
     "headline": false
   },
   "protected_results_changed": false,
-  "decision": "Reject sampler-native as a deployment recipe because identical exact-4K requests returned different token arrays. Preserve the faster diagnostic rows. Do not run 16K until a bounded report-only 4K trace locates whether divergence first appears in logits or token selection."
+  "decision": "Reject the candidate because its selector was inert on the all-greedy path and identical exact-4K requests still returned different token arrays. Preserve the faster rows as unattributed diagnostics only. Do not run 16K until a bounded report-only 4K trace records top-logit IDs, values, margins, and selected argmax."
 }

@@ -10,6 +10,13 @@ attempt, port, and IPC path. It retained the accepted model, source, staged
 runtime, TP4/EP4/eager/MTP0, offload, cache, scheduling, and request identities
 and changed only `VLLM_XPU_USE_SAMPLER_KERNEL=0`.
 
+Post-result source-path audit found that this selector was inert for the frozen
+requests. They use `temperature=0`, so `Sampler.sample()` computes greedy
+argmax and returns on its `all_greedy` branch before `TopKTopPSampler.forward()`
+can dispatch to either the XPU-specific or native implementation. The A7 arm
+therefore changed configuration identity but did not activate a different
+token-selection implementation for these requests.
+
 The A7 server loaded all 131 external checkpoint shards in 592.60 seconds,
 reported 31.27 GiB per rank and exact 21,795-token cache capacity, and became
 healthy. The established short quality battery retained its known 6/7 exact
@@ -28,6 +35,9 @@ cached tokens, and passed every transport/timing gate:
 
 The diagnostic median is `5.375813122833296 tok/s`, 12.989% above the protected
 current-runtime median `4.7578181021380175` and above the frozen 95% floor.
+Because the configured treatment was not on the greedy execution path, this
+speed difference is run-to-run diagnostic variation and cannot be attributed
+to the selector.
 However, the two output hashes differ despite request payload SHA-256
 `2d92a2857d5cf45c3dcbc9d856cba714e2a36003295159fb5fcf1a8effb930be`
 and prompt-token SHA-256
@@ -36,10 +46,10 @@ matching exactly. Row 2 matches the retained output authority; row 1 does not.
 
 The frozen client therefore failed closed before writing a Phase-1 pass receipt
 and before sending either 16K request. This is a bounded negative, not a 16K
-sampler result. The sampler-native selector is faster in these two diagnostic
-rows but is rejected as a deployment recipe because exact same-server output
-repeatability failed. It receives no speed, quality, deployment, curve, or
-headline credit, and no protected value changes.
+sampler result. The candidate is rejected because it supplied no active
+treatment and exact same-server output repeatability still failed. It receives
+no speed, quality, deployment, curve, or headline credit, and no protected
+value changes.
 
 Controlled shutdown left no owned model process, listener, IPC path, or device
 allocation; all four cards returned below 43 MiB. The corrected bounded journal
@@ -56,6 +66,6 @@ Its 46-entry manifest verifies, and the manifest-file SHA-256 is
 `3076e07b004f2bba8b439eb44c21cff4ed1fa19a1368f4188bb288a4715f5651`.
 
 The next useful experiment is a report-only, bounded trace on identical 4K
-requests. Record compact fingerprints at model output and token selection so
-the first divergence can be assigned to changing logits or to selection from
-otherwise identical logits. Do not retry 16K until that shorter gate is stable.
+requests. Record compact top-logit IDs/values, margins, and selected argmax so
+the first divergence can be located without changing the greedy decision. Do
+not retry 16K until that shorter gate is stable.
