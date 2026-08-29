@@ -1828,6 +1828,19 @@ any Q64K32 use. The launch harness fails closed unless
 the model's complete direct-I/O and ordinary cached views both match the
 manifest immediately before vLLM starts.
 
+The same host completed a fresh post-reboot recovery chain on 2026-08-28.
+Stage A3 passed per-card compute, all twelve directed peer checks, four-rank
+XCCL, storage/source/memory gates, and the bounded B70 journal rule. Stage B1
+then loaded the known-good Flash-Next TP4/EP4 eager MTP0 canary and returned
+exact cache-cold `OK` with 17/2/19 usage before a clean supervised teardown;
+all cards ended at 42.875--42.879 MiB and all locks were free. Four corrected
+NVMe/APEI receiver events occurred during local-NVMe loading, including one
+`NonFatalErr`, but there was no I/O error or B70 event. The host recovery
+prerequisite is complete and authorizes one separately preregistered AutoRound
+INT4 correctness diagnostic; the canary carries no performance or quality
+credit. See the
+[Stage B1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-post-reboot-recovery-stage-b1-result.md).
+
 - [lane setup and rationale](repro/qwen38-27b-autoround-int4-b70/README.md)
 - [baseline evidence](data/qwen38-27b-autoround-int4-baseline-20260818.json)
 - [measuring-host recovery](experiments/qwen38-27b-b70/notes/2026-08-20-measuring-host-xe-recovery-and-health-gate.md)

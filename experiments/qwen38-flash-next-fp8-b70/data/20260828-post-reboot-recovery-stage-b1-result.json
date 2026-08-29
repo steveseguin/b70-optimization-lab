@@ -1,0 +1,57 @@
+{
+  "date": "2026-08-28",
+  "status": "passed",
+  "classification": "recovery-diagnostic-only",
+  "stage_a3": {
+    "status": "passed",
+    "evidence_manifest_sha256": "72513c03f8c14744d61c1c6d14af385a8028d57eba7699b2e4b3d01f57786f53"
+  },
+  "stage_b1": {
+    "supervisor_rc": 0,
+    "model": "qwen38-flash-next-fp8-tp4",
+    "http_status": 200,
+    "finish_reason": "stop",
+    "normalized_output": "OK",
+    "normalized_output_sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+    "usage": {
+      "prompt_tokens": 17,
+      "completion_tokens": 2,
+      "total_tokens": 19,
+      "cached_tokens": 0,
+      "created_cache_tokens": 0
+    },
+    "elapsed_s_diagnostic_only": 6.584559604999868,
+    "postflight_gpu_memory_mib": [
+      42.87890625,
+      42.87890625,
+      42.875,
+      42.875
+    ],
+    "listener_absent": true,
+    "server_process_group_absent": true,
+    "compile_path_absent": true,
+    "rpc_path_absent": true,
+    "b70_reset_or_fatal_event": false,
+    "storage_caveat": "Four corrected APEI/NVMe receiver-event records occurred while loading the local-NVMe checkpoint; one included NonFatalErr. No I/O error or B70 event was recorded."
+  },
+  "artifact_sha256": {
+    "post_reboot_canary_json": "1dcc6763e29919cb4f071f5713e24756bb250aa524a471327c136d6fabe88834",
+    "post_reboot_canary_raw_response_json": "3302c9b85e3ce0d2c7b2838066d19e9d2c3225fedc7162ae4c4679caa2361167",
+    "post_reboot_canary_gates_passed_txt": "653b0e90875c28635e3d9d5d43403d4deb172bb7cdb5c3d66012750835fa0733",
+    "server_log": "4291025cd160424c83ceb1c224e8c44ee2a75a796baab18c7da399c6acfa157c",
+    "kernel_journal_log": "310c70836487df258546c1fe1baec60d0d365c0eb1beab6cbb3c2544749edba2",
+    "xpu_discovery_json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+    "xpu_stats_0_json": "07576b3cb61bfee4ef4dfbceb537f421ab4fe1b4931dd2a44857d31168b61102",
+    "xpu_stats_1_json": "15c2bd2b03e624cd7259c4a4cf8687f20529a9bc85ce401f2519b6fb9e21e188",
+    "xpu_stats_2_json": "d9bcbb30079895abd2b3e5e700d97293aa93720e32e481d7f55eead1d2e4eadf",
+    "xpu_stats_3_json": "a0ee561b0f6bcea31dfec5151989d81e6f73cee4ce0635973a088eceb6383b9d"
+  },
+  "credit": {
+    "speed": false,
+    "quality": false,
+    "coverage": false,
+    "matrix": false,
+    "deployment": false
+  },
+  "next_authority": "One separately preregistered Qwen3.8 AutoRound INT4 correctness diagnostic."
+}

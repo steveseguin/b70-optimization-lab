@@ -1,7 +1,10 @@
 # Flash-Next post-reboot recovery Stage B1 preregistration
 
 Date: 2026-08-28
-Status: frozen before execution
+Status: completed; passed
+
+Result:
+[`2026-08-28-post-reboot-recovery-stage-b1-result.md`](2026-08-28-post-reboot-recovery-stage-b1-result.md)
 
 ## Authority and purpose
 
