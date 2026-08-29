@@ -25,7 +25,7 @@ case "$mode" in eager|compiled) ;; *) printf 'EXECUTION_MODE must be eager or co
   printf 'kernel source identity mismatch\n' >&2; exit 1;
 }
 [[ "$(docker image inspect "$image" --format '{{ index .Config.Labels "neural.download.kernel.patch.sha256" }}')" == \
-  8a2f1cc49d516eeb9093e0b99c4c5ed6b74f76196417fa8951e1f8c3e7405168 ]] || {
+  8237fd2a5f11c772269275598bc005d7a146f86de741cef753fc0ec74cb1a408 ]] || {
   printf 'INT4 determinism patch identity mismatch\n' >&2; exit 1;
 }
 [[ "$(docker image inspect "$image" --format '{{ index .Config.Labels "neural.download.kernel.xpu-extension.sha256" }}')" == \

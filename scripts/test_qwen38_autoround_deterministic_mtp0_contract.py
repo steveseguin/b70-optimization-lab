@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SERVER = ROOT / "repro/qwen38-27b-autoround-int4-b70/scripts/run-current-deterministic-mtp0-server.sh"
 ATTEMPT = ROOT / "experiments/qwen38-27b-b70/scripts/run-20260828-qwen38-autoround-deterministic-mtp0-strict-attempt.sh"
+PATCH = ROOT / "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-kernel1e90-20260828.patch"
 
 
 class DeterministicMtp0ContractTest(unittest.TestCase):
@@ -17,6 +18,13 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.server = SERVER.read_text()
         cls.attempt = ATTEMPT.read_text()
+        cls.patch = PATCH.read_text()
+
+    def test_int4_patch_is_context_anchored_inside_function(self) -> None:
+        self.assertIn("@@ -25,4 +28,32 @@", self.patch)
+        self.assertIn(" const int k = *(src_sz.end() - 1);", self.patch)
+        self.assertIn("   // get joint dtypes", self.patch)
+        self.assertNotIn("@@ -24,0", self.patch)
 
     def test_server_pins_correctness_treatment(self) -> None:
         for required in (

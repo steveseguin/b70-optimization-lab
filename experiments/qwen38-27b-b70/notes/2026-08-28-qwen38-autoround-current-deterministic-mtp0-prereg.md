@@ -89,3 +89,11 @@ compilation because that host exposes oneAPI 2026.0.0 rather than the frozen
 2026.1.1 compiler. The builder now fails closed on the complete compiler
 version string. The 2026.1.1 local artifacts must be transferred by hash and
 used only to construct the remote overlay on the byte-matched R31 image.
+
+The first full XPU/GDN local build compiled all 709 prerequisite tasks, then
+failed at `onednn_matmul.cpp`: the earlier zero-context patch had applied after
+the function closing brace. The compiler rejected it, and no wheel or image
+was created. The replacement patch has ordinary source context, explicit
+standard-library includes, and a contract test that forbids the ambiguous
+zero-context hunk. Its applied body is checked to sit between the derived
+`m/n/k` dimensions and the original dtype dispatch before another clean build.

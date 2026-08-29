@@ -1,8 +1,20 @@
 diff --git a/csrc/xpu/onednn/int4_gemm_w4a16.h b/csrc/xpu/onednn/int4_gemm_w4a16.h
-index 88cff6b..f04adc4 100644
+index 88cff6b..86ab90f 100644
 --- a/csrc/xpu/onednn/int4_gemm_w4a16.h
 +++ b/csrc/xpu/onednn/int4_gemm_w4a16.h
-@@ -24,0 +25,27 @@ static inline void dnnl_matmul_w4a16_int4(
+@@ -1,3 +1,6 @@
+ #pragma once
+-
++
++#include <cstdlib>
++#include <string_view>
++
+ #include <c10/xpu/XPUStream.h>
+@@ -25,4 +28,32 @@ static inline void dnnl_matmul_w4a16_int4(
+   const int n = o_sz.back();  // presume channel last format
+   const int k = *(src_sz.end() - 1);
+-
++
 +  // Determinism pad (BMG): oneDNN selects a race-prone int4 kernel for
 +  // 128 < M < 512; outputs differ bitwise between identical calls
 +  // (measured: qkv 5120x1408 dirty for M in [129, 448], down 8704x5120 for
@@ -30,3 +42,5 @@ index 88cff6b..f04adc4 100644
 +    result.copy_(result_pad.narrow(0, 0, m));
 +    return;
 +  }
++
+   // get joint dtypes
