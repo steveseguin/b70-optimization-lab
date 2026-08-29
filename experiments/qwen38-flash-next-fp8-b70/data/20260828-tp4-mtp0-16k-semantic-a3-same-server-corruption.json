@@ -1,0 +1,56 @@
+{
+  "schema": "neural.download.qwen38-flash-next.semantic-16k-repeat.v1",
+  "date": "2026-08-28",
+  "status": "quarantined-same-server-semantic-corruption",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "topology": "TP4/EP4/eager/MTP0",
+    "max_model_len": 16512,
+    "kv_cache_memory_bytes": 358465536,
+    "num_gpu_blocks": 33,
+    "prefix_caching": false
+  },
+  "request_1": {
+    "semantic_pass": true,
+    "prompt_tokens": 16213,
+    "completion_tokens": 62,
+    "cached_tokens": 0,
+    "ttft_s": 954.7944316099993,
+    "tok_s_after_ttft_diagnostic_only": 5.43914996386052,
+    "text_sha256": "4a607a7526ec5a996e6f8b7c744c7afeb3721d33e2bff3a688c13dcc772249e5",
+    "token_ids_sha256": "380723446d56b37cb63699dac78b6fd57b0df2f6b68103c66d780e333db25bab"
+  },
+  "request_2_same_server": {
+    "semantic_pass": false,
+    "failure": "128-token repeated 'duct' output; no JSON object; all five fields failed",
+    "prompt_tokens": 16213,
+    "completion_tokens": 128,
+    "cached_tokens": 0,
+    "ttft_s": 81.99173575399982,
+    "tok_s_after_ttft_diagnostic_only": 5.6215001358949985,
+    "text_sha256": "e1db08ff3f11ede1e8cfc4ce038f9f19064d9e35ed4a72504193dae7aea49fc2",
+    "token_ids_sha256": "95a9f6ba187c8b4241b8db643af403b4b6462b442d481e0e8f569eedb98d3cc0"
+  },
+  "same_server_repeat": "failed",
+  "fresh_server_repeat": "blocked-by-phase1-failure",
+  "postflight": {
+    "supervisor_rc": 70,
+    "b70_reset_or_fatal_event": false,
+    "cards_idle": true,
+    "local_nvme_corrected_apei_records": 6,
+    "local_nvme_rxerr_lines": 7
+  },
+  "classification": "grade-d-quarantined-capability",
+  "evidence_manifest_sha256": "03be182441d7e23a6b49bc02303628347b81fa46a22c1c41e145adb9cac949b0",
+  "credit": {
+    "speed": false,
+    "quality": false,
+    "deployment": false,
+    "headline": false
+  },
+  "decision": "Preserve request 1 as first-request semantic evidence and request 2 as a same-server corruption result; do not launch 24K/32K or the preregistered dependent Phase 2."
+}

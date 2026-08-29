@@ -1,7 +1,10 @@
 # Qwen3.8 Flash-Next FP8 TP4 MTP0 active-16K semantic A3 preregistration
 
 Date: 2026-08-28
-Status: frozen before execution
+Status: completed at Phase 1; same-server semantic corruption quarantine
+
+Result:
+[`2026-08-28-tp4-mtp0-16k-semantic-a3-result.md`](2026-08-28-tp4-mtp0-16k-semantic-a3-result.md)
 
 ## Purpose and protected boundary
 
