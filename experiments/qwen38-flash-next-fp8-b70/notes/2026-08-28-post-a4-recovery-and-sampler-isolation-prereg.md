@@ -72,3 +72,18 @@ Frozen candidate launcher SHA-256:
 `e7773a62cce32aa5e649bd16b8958789a4ad2a4b0d359d808119863ee1aad616`.
 Frozen ordered client SHA-256:
 `942e886f1726220f04e706f27a8a63eb252e8b7632b7636f1ea1d2f1c8dc71e1`.
+
+## A6 pre-model launcher correction
+
+A6 stopped before worker creation or model loading. The descriptive campaign
+suffix made its default IPC path exceed the platform's 107-character Unix
+socket limit. No sampler, quality, speed, or model result exists. The complete
+attempt-6 directory is retained; no protected result changed.
+
+A7 changes only attempt `6` to `7`, port `19678` to `19679`, and the runtime
+IPC directory to the short `/tmp/q38-sn-a7-rpc`. The descriptive campaign,
+sampler-native treatment, model/runtime/cache selectors, ordered client, gates,
+and frozen interpretations are unchanged. Derived launcher SHA-256:
+`4cf10e045028f8a079ebf0940395eef51952a3f20eca1fc07ba73827a64bf334`.
+Derived client SHA-256:
+`718b9493ed44b22ce1b2495dbdd64dcd5f8522af43e1a6af4f9347ef3f309564`.
