@@ -1393,6 +1393,19 @@ fresh four-card health gate and a material runtime treatment, with the protected
 short/4K identity checked before deeper context. See the
 [combined A3/A4 receipt](experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json).
 
+The first material runtime treatment is also closed. Stage A5 passed full
+four-card recovery; A6 stopped before model load on an overlong IPC path; and
+A7 changed only to the existing native sampling path plus a short corrected
+IPC path. A7 retained the known short quality boundary and exact-4K needle and
+measured a diagnostic exact-4K median of `5.375813122833296 tok/s` (12.989%
+above the protected `4.7578181021380175`). It was nevertheless rejected:
+two byte-identical cache-zero exact-4K requests returned different 128-token
+hashes. The frozen gate sent no 16K request. This is additive diagnostic
+evidence only; all protected speeds and the public coverage classification are
+unchanged. The next useful arm is a bounded report-only 4K trace that separates
+model-output divergence from final token-selection divergence. See the
+[A7 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-tp4-mtp0-sampler-native-a7-result.md).
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
 storage gate on 2026-08-28 at

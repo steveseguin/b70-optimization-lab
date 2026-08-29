@@ -1,7 +1,7 @@
 # Flash-Next post-A4 recovery and sampler-isolation preregistration
 
 Date: 2026-08-28
-Status: Stage A5 passed; sampler-native candidate frozen before execution
+Status: closed; sampler-native candidate rejected at exact-4K repeat gate
 
 ## Evidence-driven question
 
@@ -87,3 +87,20 @@ and frozen interpretations are unchanged. Derived launcher SHA-256:
 `4cf10e045028f8a079ebf0940395eef51952a3f20eca1fc07ba73827a64bf334`.
 Derived client SHA-256:
 `718b9493ed44b22ce1b2495dbdd64dcd5f8522af43e1a6af4f9347ef3f309564`.
+
+## A7 result
+
+A7 loaded and passed the established short semantic/repeat and exact-4K needle
+boundary. Its two exact-4K rows measured `5.405351634035985` and
+`5.346274611630608 tok/s`, a diagnostic median of
+`5.375813122833296 tok/s`. That clears the frozen speed floor, but the two
+byte-identical requests returned different 128-token hashes. The second
+matches the retained authority; the first does not.
+
+The frozen client rejected the candidate before either 16K request. Sampler
+native therefore receives no promotion or speed/quality/deployment credit, and
+no protected result changes. The complete result and immutable evidence
+binding are in
+[`2026-08-28-tp4-mtp0-sampler-native-a7-result.md`](2026-08-28-tp4-mtp0-sampler-native-a7-result.md)
+and
+[`../data/20260828-tp4-mtp0-sampler-native-a7-4k-repeat-negative.json`](../data/20260828-tp4-mtp0-sampler-native-a7-4k-repeat-negative.json).

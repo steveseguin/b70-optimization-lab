@@ -1,0 +1,113 @@
+{
+  "schema": "neural.download.qwen38-flash-next.sampler-native-4k-repeat.v1",
+  "date": "2026-08-28",
+  "status": "rejected-at-exact-4k-repeat-gate",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "1372c62d975c554f4b465c8299bc5f3295301ceb",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "topology": "TP4/EP4/eager/MTP0",
+    "max_model_len": 16512,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 358465536,
+    "reported_cache_tokens": 21795,
+    "cpu_offload_gb": 12.25,
+    "offload_backend": "uva",
+    "xpu_sampler_kernel": false,
+    "changed_selector": "VLLM_XPU_USE_SAMPLER_KERNEL=0"
+  },
+  "recovery_gate_a5": {
+    "status": "passed",
+    "isolated_card_expected_value": 2097152.0,
+    "isolated_cards_passed": 4,
+    "directed_peer_links_passed": 12,
+    "xccl_ranks_passed": 4,
+    "xccl_allreduce_expected_value": 4.0,
+    "manifest_file_sha256": "566d3f7a12384c2bd984ff11419307a4999bec4aad3423cbe5bf5a69b7466ac3"
+  },
+  "attempt_6": {
+    "status": "pre-model-launcher-failure",
+    "reason": "default IPC socket path exceeded the platform limit",
+    "worker_created": false,
+    "model_loaded": false,
+    "credit": false
+  },
+  "attempt_7": {
+    "server": {
+      "model_load_seconds": 592.6,
+      "model_gib_per_rank": 31.27,
+      "health_passed": true
+    },
+    "quality": {
+      "exact_cases_passed": 6,
+      "exact_cases_total": 7,
+      "known_code_execution_output": "30",
+      "repeat_passed": true,
+      "repeat_count": 16,
+      "repeat_unique_output_hashes": 1,
+      "long_context_needle_prompt_tokens": 4096,
+      "long_context_needle_passed": true,
+      "cached_tokens": 0,
+      "created_cache_tokens": 0,
+      "classification": "established-quality-boundary-retained"
+    },
+    "exact_4k": {
+      "request_payload_sha256": "2d92a2857d5cf45c3dcbc9d856cba714e2a36003295159fb5fcf1a8effb930be",
+      "prompt_token_ids_sha256": "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0",
+      "prompt_tokens": 4096,
+      "completion_tokens": 128,
+      "cached_tokens": 0,
+      "finish_reason": "length",
+      "rows": [
+        {
+          "decode_tok_s_conventional_99_interval": 5.405351634035985,
+          "ttft_s": 120.46753009900021,
+          "output_token_ids_sha256": "da6b0b03c49f8f13284ea6f34100e4958fa779e910e22f99a6f648aed44ea79c",
+          "matches_retained_output_authority": false
+        },
+        {
+          "decode_tok_s_conventional_99_interval": 5.346274611630608,
+          "ttft_s": 134.64540737100106,
+          "output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+          "matches_retained_output_authority": true
+        }
+      ],
+      "diagnostic_median_decode_tok_s": 5.375813122833296,
+      "protected_current_runtime_median_decode_tok_s": 4.7578181021380175,
+      "frozen_95_percent_floor_decode_tok_s": 4.519927197031117,
+      "diagnostic_change_percent": 12.989042612149703,
+      "speed_floor_passed": true,
+      "identical_request_output_repeat_passed": false
+    },
+    "active_16k_phase": {
+      "authorized_after_4k_gate": false,
+      "requests_sent": 0,
+      "result": "not-run"
+    },
+    "postflight": {
+      "owned_model_residue": false,
+      "cards_idle_below_mib": 43,
+      "b70_failure_records": 0,
+      "system_memory_failure_records": 0,
+      "local_nvme_corrected_receiver_records": 6,
+      "io_error": false,
+      "journal_caveat": "The initial NTFS-birth-epoch window captured the full boot because the birth epoch was zero; corrected bounded files are preserved separately."
+    },
+    "evidence": {
+      "external_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-16512-sampler-native-r1-attempt7",
+      "manifest_entry_count": 46,
+      "manifest_file_sha256": "3076e07b004f2bba8b439eb44c21cff4ed1fa19a1368f4188bb288a4715f5651"
+    }
+  },
+  "classification": "grade-d-bounded-negative-optimization-candidate",
+  "credit": {
+    "speed": false,
+    "quality": false,
+    "deployment": false,
+    "curve": false,
+    "headline": false
+  },
+  "protected_results_changed": false,
+  "decision": "Reject sampler-native as a deployment recipe because identical exact-4K requests returned different token arrays. Preserve the faster diagnostic rows. Do not run 16K until a bounded report-only 4K trace locates whether divergence first appears in logits or token selection."
+}
