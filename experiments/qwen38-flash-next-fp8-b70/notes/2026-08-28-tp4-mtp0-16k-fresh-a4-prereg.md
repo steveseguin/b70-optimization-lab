@@ -1,7 +1,10 @@
 # Qwen3.8 Flash-Next FP8 TP4 MTP0 active-16K fresh-server A4 preregistration
 
 Date: 2026-08-28
-Status: frozen before execution
+Status: completed; fresh-server runtime timeout quarantine
+
+Result:
+[`2026-08-28-tp4-mtp0-16k-fresh-a4-result.md`](2026-08-28-tp4-mtp0-16k-fresh-a4-result.md)
 
 ## Question and boundary
 

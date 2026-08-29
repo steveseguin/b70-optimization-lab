@@ -31,7 +31,7 @@ but its detached supervisor failed to forward the exact stop to the server
 group; the frozen teardown gate quarantines its diagnostic 13.326 and 17.291
 tok/s observations. All configured-512 and
 exact-4K passes remain unchanged. It does not yet establish a production recipe, a fully quality-
-qualified MTP speed, stable repeated serving at 8K, 16K+ behavior, or vision
+qualified MTP speed, stable repeated serving at 8K or 16K, usable 24K/32K behavior, or vision
 support.
 
 The retained current runtime has now also passed an independent additive MTP0
@@ -861,6 +861,19 @@ The ≤8K practical slice remains exactly 25/25 and every captured speed is
 unchanged. The full 480-cell contract is now 26 classified: 12 screened, 14
 quarantined, and 454 missing. See the
 [`MTP0 active-16K receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json).
+
+The later semantic qualification program retained that generic result but
+failed the deployment gates. A3's first 16,213-token request returned all five
+retrieval fields correctly with zero reported cache use; the identical second
+request on the same server instead returned repeated `duct` text and failed
+every field. A separately started A4 server then stopped its only identical
+request at 1,600 computed prompt tokens before first output when the sampling
+RPC timed out. Its cleanup recorded eight B70 engine resets and 61 unsuccessful
+responses before all four cards re-enumerated idle. This is nondeterministic
+long-context runtime-stability evidence, not a speed or quality result. It
+blocks unchanged 16K retries and 24K/32K serving until a material runtime
+treatment passes a fresh four-card gate. See the
+[`combined A3/A4 receipt`](../../experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json).
 
 ## Quarantined active-16K TP4 MTP2 treatment exhausted
 

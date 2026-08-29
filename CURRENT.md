@@ -1377,12 +1377,21 @@ the known-good Flash-Next TP4/EP4/eager/MTP0 canary and returned exact
 cache-cold `OK` with 17/2/19 usage before a clean supervised teardown; all
 cards ended at 42.875--42.879 MiB. Four corrected APEI/NVMe receiver records
 occurred during local-NVMe loading, including one `NonFatalErr`, but there was
-no I/O error or B70 event. The recovery chain passes its frozen B70 criterion
-with a continuing local-storage-link caveat and authorizes one separately
-preregistered Flash-Next TP4 MTP0 active-16K semantic and repeat
-qualification. The successor will use the byte-identical external checkpoint
-copy. The canary carries no speed, quality, coverage, or matrix credit. See the
+no I/O error or B70 event. The recovery chain passed its frozen B70 criterion
+with a continuing local-storage-link caveat. See the
 [Stage B1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-post-reboot-recovery-stage-b1-result.md).
+
+The authorized MTP0 active-16K semantic program is now closed. A3 returned one
+correct fresh response and corrupted its identical same-server repeat despite
+zero reported cache use. A4 then stopped the identical sole request on a
+separately started server at 1,600 computed prompt tokens before first output;
+cleanup recorded eight B70 engine resets and 61 unsuccessful card responses
+before all four cards re-enumerated idle. This is nondeterministic long-context
+runtime-stability evidence, not speed or deployment evidence. Unchanged 16K
+retries and 24K/32K serving are blocked. The next admissible GPU arm requires a
+fresh four-card health gate and a material runtime treatment, with the protected
+short/4K identity checked before deeper context. See the
+[combined A3/A4 receipt](experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

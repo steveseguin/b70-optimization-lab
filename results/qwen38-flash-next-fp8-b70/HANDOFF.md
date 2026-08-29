@@ -543,3 +543,22 @@ anchors now have a separate archival view with two deterministic Grade-D 24K/
 boot, fit, quality, deployment, record, or promotion authority. Do not move
 them into the current-runtime contract. Every measured speed, quarantine,
 packet, and protected claim remains unchanged.
+
+## 2026-08-28 MTP0 active-16K semantic A3/A4 closeout
+
+A3 completed one correct 16,213-token semantic request with zero reported
+cache use, then corrupted the identical same-server repeat into 128 repeated
+`duct` tokens. A4 used a distinct fresh server, attempt 5, port 19677, and
+otherwise identical model/runtime/cache selectors. It stopped its sole request
+after 400.014 seconds at 1,600 computed prompt tokens with no first output when
+the sampling RPC timed out. Cleanup retained eight B70 engine resets and 61
+unsuccessful responses; all four cards later re-enumerated below 43 MiB with
+no owned residue.
+
+This is a nondeterministic active-16K runtime-stability boundary, not a
+same-server-only state bug and not a speed or quality result. Preserve A3's
+correct first response, A3's corrupted repeat, and A4's fresh-server timeout.
+Do not run an unchanged retry or 24K/32K. The next arm requires a material GDN
+request-boundary treatment and a fresh four-card health gate, with the known-
+good short/4K identity checked before deeper context. Receipt:
+`experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json`.

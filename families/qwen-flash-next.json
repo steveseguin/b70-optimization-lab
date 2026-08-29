@@ -7,7 +7,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-08-28",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. The retained current runtime now independently qualifies TP4 eager MTP0 at short context and exact active 4K: 5.224 tok/s on the established short screen and 4.758 tok/s conventional at exact 4K, with 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K needle, and card-clean teardown. At 16K, current-source MTP0 completed one exact generic-depth request as Grade-D diagnostic capability evidence. MTP2's bounded 16K treatment tranche is exhausted, while 24K/32K and semantic/repeat qualification remain pending. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. The target-only official-thinking MTP0 profile passed 25/25, and graph, vision, other topologies, clean-host replay, and deployment qualification remain open.",
+  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. The retained current runtime now independently qualifies TP4 eager MTP0 at short context and exact active 4K: 5.224 tok/s on the established short screen and 4.758 tok/s conventional at exact 4K, with 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K needle, and card-clean teardown. At 16K, current-source MTP0 completed one exact generic-depth request, then the semantic program produced one correct fresh response, a corrupted same-server repeat, and a separate fresh-server worker timeout at 1,600 computed prompt tokens. This is Grade-D quarantined capability and nondeterministic runtime-stability evidence; it does not authorize 24K/32K. MTP2's bounded 16K treatment tranche is exhausted. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. The target-only official-thinking MTP0 profile passed 25/25, and graph, vision, other topologies, clean-host replay, and deployment qualification remain open.",
   "featured_results": [
     {
       "role": "hero",
@@ -125,7 +125,7 @@
     },
     "quality_evidence": {
       "band": "official-target-quality-pass-research-deployment",
-      "scope": "The deterministic direct-answer target profile is 6/7 semantically, and the separate official-thinking MTP0 target profile passed 25/25. A current-runtime MTP0 replay independently passed short quality, 16/16 repeats, an exact cache-zero 4K needle, two repeat-identical exact-4K formal rows, and card-clean teardown. The retained legacy MTP0 profile has screened 1K/2K/4K and formal 8K gates; MTP1-4 have separate configured-512 and exact-4K evidence with MTP3 preferred at 4K. Active-context quarantines remain explicit: MTP1, MTP2, and MTP4 completed 8K but differ from the cross-runtime MTP0 authority, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. No quarantined arm receives speed, quality, or deployment credit. Graph, vision, other topologies, clean-host qualification, fresh-server stability, and production deployment remain open.",
+      "scope": "The deterministic direct-answer target profile is 6/7 semantically, and the separate official-thinking MTP0 target profile passed 25/25. A current-runtime MTP0 replay independently passed short quality, 16/16 repeats, an exact cache-zero 4K needle, two repeat-identical exact-4K formal rows, and card-clean teardown. The retained legacy MTP0 profile has screened 1K/2K/4K and formal 8K gates; MTP1-4 have separate configured-512 and exact-4K evidence with MTP3 preferred at 4K. Active-context quarantines remain explicit: MTP1, MTP2, and MTP4 completed 8K but differ from the cross-runtime MTP0 authority, while MTP3 reached its fixed 900-second 8K bound without a completed receipt. The current-runtime 16K semantic program also failed same-server and fresh-server stability. No quarantined arm receives speed, quality, or deployment credit. Graph, vision, other topologies, clean-host qualification, and production deployment remain open.",
       "evidence": [
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json",
         "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json",
@@ -1398,9 +1398,9 @@
       "cells": {
         "0:16384": {
           "state": "quarantined",
-          "label": "exact 16K generic-depth request completed; quality and repeat stability unqualified; diagnostic only",
-          "reason": "The current-source 33-block identity completed one p16384/o128 request with exact 16384/128/16512 usage, zero cache reuse, length stop, 128 returned token IDs, and all 25 generic exact-depth gates. Semantic oracle, repeat, and fresh-server-repeat gates were absent. The 5.219 tok/s rate and 1073.5-second TTFT are diagnostic only and receive no speed, curve, quality, deployment, or headline credit. Controlled teardown passed postflight and returned all four cards idle. The host window contained corrected local-NVMe records but no B70-addressed event.",
-          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json"
+          "label": "16K sometimes completes; same-server corruption and fresh-server timeout; diagnostic only",
+          "reason": "The current-source 33-block identity first completed one generic p16384/o128 request at a diagnostic-only 5.219 tok/s. The semantic program then returned one correct 16,213-token fresh response, corrupted the identical same-server repeat into repeated text despite zero reported cache use, and stopped a separate fresh-server attempt at 1,600 computed prompt tokens with no first output after an RPC sampling timeout. Cleanup of the latter recorded eight B70 engine resets and 61 unsuccessful responses before all four cards re-enumerated idle. The cell is nondeterministically unstable and receives no speed, curve, quality, deployment, or headline credit; unchanged retries and 24K/32K serving remain blocked pending a material runtime treatment.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json"
         },
         "0:24576": {"state": "missing", "label": "not yet tested"},
         "0:32768": {"state": "missing", "label": "not yet tested"},
@@ -1871,11 +1871,11 @@
           "id": "mtp0-context16k-current-source-generic-quarantine",
           "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "auto", "modality": "text"},
           "state": "quarantined",
-          "label": "exact 16K generic-depth request completed · quality and repeat stability unqualified · diagnostic only",
-          "reason": "The current-source 33-block identity completed one p16384/o128 request with exact 16384/128/16512 usage, zero cache reuse, length stop, 128 returned token IDs, and all 25 generic exact-depth gates. Semantic oracle, repeat, and fresh-server-repeat gates were absent. The 5.219 tok/s rate and 1073.5-second TTFT are diagnostic only and receive no speed, curve, quality, deployment, or headline credit. Controlled teardown passed postflight and returned all four cards idle. The host window contained corrected local-NVMe records but no B70-addressed event.",
-          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json",
+          "label": "16K generic request completed once · semantic repeat corrupted · separate fresh server timed out · diagnostic only",
+          "reason": "The current-source 33-block identity completed one generic p16384/o128 request at a diagnostic-only 5.219 tok/s. A semantic successor then completed its first 16,213-token request correctly, returned corrupted repeated text on the identical same-server request despite zero reported cache use, and a separately started fresh server stopped at 1,600 computed prompt tokens before first output with an RPC sampling timeout. Cleanup of the fresh-server failure recorded eight B70 engine resets and 61 unsuccessful responses before all four cards re-enumerated idle. This is nondeterministic long-context runtime-stability evidence, not a speed or quality result.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json",
           "parent": "flash-next-mtp0-context16k-current-source-a2",
-          "retry": {"status": "needs-semantic-and-repeat-qualification"}
+          "retry": {"status": "blocked-on-material-runtime-treatment-and-fresh-four-card-health-gate"}
         },
         {
           "id": "mtp2-context16k-current-source-scheduler-treatment-exhausted-quarantine",

@@ -5480,12 +5480,15 @@ class FamilyCoverageTest(unittest.TestCase):
             "vLLM XPU 1372c62d + staged kernels 2f829747",
         )
         deep_16k = deep["cells"]["0:16384"]
-        self.assertIn("exact 16K generic-depth request completed", deep_16k["label"])
+        self.assertIn("same-server corruption", deep_16k["label"])
+        self.assertIn("fresh-server timeout", deep_16k["label"])
+        self.assertIn("nondeterministically unstable", deep_16k["reason"])
+        self.assertIn("eight B70 engine resets", deep_16k["reason"])
         self.assertNotIn("evidence_id", deep_16k)
         self.assertNotIn("packet_id", deep_16k)
         self.assertTrue(
             deep_16k["evidence"].endswith(
-                "20260828-tp4-mtp0-16512-attempt2-generic-quarantine.json"
+                "20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json"
             )
         )
         self.assertEqual(deep["cells"]["0:24576"]["state"], "missing")
@@ -5876,7 +5879,7 @@ class FamilyCoverageTest(unittest.TestCase):
             rendered,
         )
         self.assertIn(
-            "Observed: exact 16K generic-depth request completed; quality and repeat stability unqualified; diagnostic only.",
+            "Observed: 16K sometimes completes; same-server corruption and fresh-server timeout; diagnostic only.",
             rendered,
         )
         self.assertIn(
