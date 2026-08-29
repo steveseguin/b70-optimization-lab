@@ -24,9 +24,14 @@ than calling the host literally event-free.
 
 This result grants no speed, quality, coverage, matrix, deployment, package, or
 LocalMaxxing credit. It completes the post-reboot host recovery prerequisite
-and authorizes only one separately preregistered Qwen3.8 AutoRound INT4
-correctness diagnostic with its own source, model, storage, output, and stop
-rules.
+and authorizes only one separately preregistered Qwen3.8 Flash-Next FP8
+TP4/EP4/eager/MTP0 active-16K semantic and repeat qualification with its own
+source, model, storage, output, and stop rules. That successor will read the
+byte-identical external checkpoint copy so its model load does not traverse
+the local-NVMe link named by this caveat.
+
+The 71-entry external manifest verifies and has SHA-256
+`677be5ea95ad26115eb9e3e818f18125dc105a2613a8e995ea49bcafa994df4f`.
 
 Structured receipt:
 [`../data/20260828-post-reboot-recovery-stage-b1-result.json`](../data/20260828-post-reboot-recovery-stage-b1-result.json).
