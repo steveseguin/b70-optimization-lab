@@ -56,9 +56,10 @@ docker run --rm --memory 16g --memory-swap 28g \
   --volume "${dist_dir}:/out" \
   --volume "${host_oneapi_root}:/opt/intel/oneapi:ro" \
   --entrypoint /bin/bash "${base_image}" -lc '
-    set -euo pipefail
+    set -eo pipefail
     git config --global --add safe.directory /src
     source /opt/intel/oneapi/setvars.sh >/dev/null 2>&1
+    set -u
     cd /src
     MAX_JOBS=1 CMAKE_BUILD_TYPE=Release \
     BASIC_KERNELS_ENABLED=1 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=0 \
