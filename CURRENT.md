@@ -1408,6 +1408,10 @@ evidence only; all protected speeds and the public coverage classification are
 unchanged. The next useful arm is a bounded report-only 4K trace of top-logit
 IDs/values, margins, and selected greedy argmax. See the
 [A7 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-tp4-mtp0-sampler-native-a7-result.md).
+That exact A8 trace is now source-tested and preregistered with two identical
+4K requests and no deeper-context authorization; its synchronized diagnostic
+rates cannot receive performance credit. See the
+[A8 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-tp4-mtp0-greedy-decision-trace-a8-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
