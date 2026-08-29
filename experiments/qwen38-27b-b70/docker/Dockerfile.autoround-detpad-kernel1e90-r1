@@ -1,0 +1,28 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31
+FROM ${BASE_IMAGE}
+
+ARG BASE_IMAGE_ID
+ARG KERNEL_HEAD
+ARG PATCH_SHA256
+ARG CORE_EXTENSION_SHA256
+
+COPY _C.abi3.so /tmp/_C.abi3.so
+RUN test -n "${BASE_IMAGE_ID}" \
+    && test -n "${KERNEL_HEAD}" \
+    && test -n "${PATCH_SHA256}" \
+    && test "$(sha256sum /tmp/_C.abi3.so | awk '{print $1}')" = \
+        "${CORE_EXTENSION_SHA256}" \
+    && install -m 0755 /tmp/_C.abi3.so \
+        /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_C.abi3.so \
+    && rm -f /tmp/_C.abi3.so \
+    && strings /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_C.abi3.so \
+        | grep -Fq VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD \
+    && /opt/venv/bin/python -c \
+        'import torch, vllm_xpu_kernels._C; assert hasattr(torch.ops._C, "int4_gemm_w4a16")'
+
+LABEL neural.download.base.image.id="${BASE_IMAGE_ID}" \
+      neural.download.kernel.head="${KERNEL_HEAD}" \
+      neural.download.kernel.patch="qwen38-onednn-int4-determinism-pad-kernel1e90-r1" \
+      neural.download.kernel.patch.sha256="${PATCH_SHA256}" \
+      neural.download.kernel.core-extension.sha256="${CORE_EXTENSION_SHA256}" \
+      neural.download.build.lane="qwen38-autoround-current-deterministic-r1"

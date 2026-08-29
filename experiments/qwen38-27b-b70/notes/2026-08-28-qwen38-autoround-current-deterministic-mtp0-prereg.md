@@ -1,7 +1,7 @@
 # Qwen3.8 AutoRound current-runtime deterministic MTP0 preregistration
 
 Date: 2026-08-28
-Status: frozen before execution
+Status: amended before execution; composite image build pending
 
 ## Question
 
@@ -24,12 +24,20 @@ anchor remains quarantined.
 - model revision `bce40cacab0a4535b92fb3d57615c2bea9adf3d1`;
 - vLLM `ac7509e2b`, base image
   `f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f`;
-- rebuilt deterministic image tag
+- composite deterministic image tag
+  `neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1`;
+- base image
   `neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31`, remote
   manifest ID `2f153c9e603f1dd28120b31fc1980edfaf01853d3db1b55c444c387d0631aa15`;
 - the remote manifest ID differs from the locally validated ID because the
   remote builder emitted attestations, but all five installed patched file
   SHA-256 identities match the validated local image exactly;
+- XPU-kernels source `1e90ffa672ba02f17a909da11838a4c55b199783`
+  plus the repository oneDNN W4A16 determinism pad. This was added to the
+  frozen treatment before execution after preflight proved that the FP8 base
+  did not contain the required INT4 binary marker; the composite image ID and
+  core-extension SHA-256 will be frozen here after the clean build and before
+  the first attempt;
 - AutoRound/INC W4A16, FP16 activations and KV, MTP0, XPU Graph off,
   compiler `cudagraph_mode=NONE`, deterministic Inductor on, prefix caching
   off, seed 42, one sequence;

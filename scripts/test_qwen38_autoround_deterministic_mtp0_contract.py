@@ -26,6 +26,7 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "--env VLLM_XPU_GRAPH=0",
             "--env TORCHINDUCTOR_DETERMINISTIC=1",
             "--env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1",
+            "VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD",
             "--compilation-config '{\"cudagraph_mode\":\"NONE\"}'",
             "--no-enable-prefix-caching",
         ):
@@ -39,6 +40,7 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "MODEL_DIR must be on ext4",
             "cache path must be new",
             "patched image file identities mismatch",
+            "INT4 determinism patch identity mismatch",
             "/tmp/b70-benchmark.lock",
             "/tmp/b70-gpu2.lock",
             "/tmp/b70-gpu3.lock",

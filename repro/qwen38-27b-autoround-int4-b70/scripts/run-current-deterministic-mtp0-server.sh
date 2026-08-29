@@ -2,8 +2,9 @@
 set -euo pipefail
 
 mode=${EXECUTION_MODE:?set EXECUTION_MODE to eager or compiled}
-image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
+image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
 expected_image_id=${EXPECTED_IMAGE_ID:?set EXPECTED_IMAGE_ID to the locally rebuilt image ID}
+expected_core_extension_sha256=${EXPECTED_CORE_EXTENSION_SHA256:?set EXPECTED_CORE_EXTENSION_SHA256}
 model=${MODEL_DIR:?set MODEL_DIR to the verified AutoRound model directory}
 cache=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new empty cache directory}
 container=${CONTAINER_NAME:?set CONTAINER_NAME to a unique name}
@@ -18,6 +19,18 @@ case "$mode" in eager|compiled) ;; *) printf 'EXECUTION_MODE must be eager or co
 [[ "$(docker image inspect "$image" --format '{{.Id}}')" == "$expected_image_id" ]] || {
   printf 'image identity mismatch\n' >&2; exit 1;
 }
+[[ "$(docker image inspect "$image" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')" == \
+  1e90ffa672ba02f17a909da11838a4c55b199783 ]] || {
+  printf 'kernel source identity mismatch\n' >&2; exit 1;
+}
+[[ "$(docker image inspect "$image" --format '{{ index .Config.Labels "neural.download.kernel.patch.sha256" }}')" == \
+  8a2f1cc49d516eeb9093e0b99c4c5ed6b74f76196417fa8951e1f8c3e7405168 ]] || {
+  printf 'INT4 determinism patch identity mismatch\n' >&2; exit 1;
+}
+[[ "$(docker image inspect "$image" --format '{{ index .Config.Labels "neural.download.kernel.core-extension.sha256" }}')" == \
+  "$expected_core_extension_sha256" ]] || {
+  printf 'core extension label mismatch\n' >&2; exit 1;
+}
 
 expected_files=$(mktemp)
 actual_files=$(mktemp)
@@ -30,14 +43,23 @@ f3273ccfb41be44c3c02080c26df10e8b200060366b900d940803f4221224c59  /opt/venv/lib/
 5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d  /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py
 50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
 EOF
+printf '%s  %s\n' "$expected_core_extension_sha256" \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_C.abi3.so \
+  >>"$expected_files"
 docker run --rm --entrypoint sha256sum "$image" \
   /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py \
   /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py \
   /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
   /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py \
   /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_C.abi3.so \
   >"$actual_files"
 cmp -s "$expected_files" "$actual_files" || { printf 'patched image file identities mismatch\n' >&2; exit 1; }
+docker run --rm --entrypoint strings "$image" \
+  /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_C.abi3.so \
+  | grep -Fq VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD || {
+    printf 'INT4 determinism marker missing\n' >&2; exit 1;
+  }
 
 docker ps -a --format '{{.Names}}' | grep -Fxq "$container" && { printf 'container exists\n' >&2; exit 1; }
 ss -ltn | grep -Eq ":${port}[[:space:]]" && { printf 'port occupied\n' >&2; exit 1; }
@@ -69,6 +91,7 @@ exec docker run --rm --name "$container" \
   --env VLLM_NO_USAGE_STATS=1 --env PYTHONHASHSEED=0 \
   --env VLLM_XPU_ENABLE_XPU_GRAPH=0 --env VLLM_XPU_GRAPH=0 \
   --env VLLM_XPU_FP8_BLOCK_W8A16=0 \
+  --env VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD=1 \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1 \
   --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 \
   --env VLLM_XPU_GDN_NATIVE_FALLBACK=1 \
