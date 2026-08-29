@@ -60,6 +60,11 @@ docker run --rm --memory 16g --memory-swap 28g \
     git config --global --add safe.directory /src
     source /opt/intel/oneapi/setvars.sh >/dev/null 2>&1
     set -u
+    expected_compiler="Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)"
+    [[ "$(icpx --version | sed -n "1p")" == "${expected_compiler}" ]] || {
+      printf "compiler identity mismatch\n" >&2
+      exit 1
+    }
     cd /src
     MAX_JOBS=1 CMAKE_BUILD_TYPE=Release \
     BASIC_KERNELS_ENABLED=0 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=0 \

@@ -83,3 +83,9 @@ GDN targets, overlays the paired `_xpu_C.abi3.so` and
 `libgdn_attn_kernels_xe_2.so`, and requires the marker and both operator
 registrations before it can create the image. Those build-only failures are
 not benchmark attempts or performance evidence.
+
+An independent measuring-host build was also rejected before kernel
+compilation because that host exposes oneAPI 2026.0.0 rather than the frozen
+2026.1.1 compiler. The builder now fails closed on the complete compiler
+version string. The 2026.1.1 local artifacts must be transferred by hash and
+used only to construct the remote overlay on the byte-matched R31 image.
