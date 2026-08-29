@@ -62,9 +62,9 @@ docker run --rm --memory 16g --memory-swap 28g \
     set -u
     cd /src
     MAX_JOBS=1 CMAKE_BUILD_TYPE=Release \
-    BASIC_KERNELS_ENABLED=1 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=0 \
-    GDN_KERNELS_ENABLED=0 MQA_LOGITS_KERNELS_ENABLED=0 \
-    MHC_KERNELS_ENABLED=0 XPU_SPECIFIC_KERNELS_ENABLED=0 \
+    BASIC_KERNELS_ENABLED=0 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=0 \
+    GDN_KERNELS_ENABLED=1 MQA_LOGITS_KERNELS_ENABLED=0 \
+    MHC_KERNELS_ENABLED=0 XPU_SPECIFIC_KERNELS_ENABLED=1 \
     XPUMEM_ALLOCATOR_ENABLED=0 BUILD_SYCL_TLA_KERNELS=0 \
     VLLM_XPU_ENABLE_XE2=0 VLLM_XPU_ENABLE_XE_DEFAULT=0 \
     /opt/venv/bin/python setup.py bdist_wheel \
@@ -77,16 +77,21 @@ mapfile -t wheels < <(find "${dist_dir}" -maxdepth 1 -type f -name '*.whl')
   exit 1
 }
 unzip -t "${wheels[0]}" >/dev/null
-unzip -j "${wheels[0]}" vllm_xpu_kernels/_C.abi3.so -d "${context_dir}"
-core_extension_sha256=$(sha256sum "${context_dir}/_C.abi3.so" | awk '{print $1}')
-strings "${context_dir}/_C.abi3.so" | grep -Fq VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD
+unzip -j "${wheels[0]}" \
+  vllm_xpu_kernels/_xpu_C.abi3.so \
+  vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
+  -d "${context_dir}"
+xpu_extension_sha256=$(sha256sum "${context_dir}/_xpu_C.abi3.so" | awk '{print $1}')
+gdn_library_sha256=$(sha256sum "${context_dir}/libgdn_attn_kernels_xe_2.so" | awk '{print $1}')
+strings "${context_dir}/_xpu_C.abi3.so" | grep -Fq VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD
 
 docker build --pull=false \
   --build-arg "BASE_IMAGE=${base_image}" \
   --build-arg "BASE_IMAGE_ID=${expected_base_image_id}" \
   --build-arg "KERNEL_HEAD=${kernel_head}" \
   --build-arg "PATCH_SHA256=${patch_sha256}" \
-  --build-arg "CORE_EXTENSION_SHA256=${core_extension_sha256}" \
+  --build-arg "XPU_EXTENSION_SHA256=${xpu_extension_sha256}" \
+  --build-arg "GDN_LIBRARY_SHA256=${gdn_library_sha256}" \
   --file "${dockerfile}" --tag "${image}" "${context_dir}"
 
 [[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')" == "${kernel_head}" ]] || {
@@ -97,8 +102,12 @@ docker build --pull=false \
   printf 'built image patch label mismatch\n' >&2
   exit 1
 }
-[[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.core-extension.sha256" }}')" == "${core_extension_sha256}" ]] || {
-  printf 'built image extension label mismatch\n' >&2
+[[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.xpu-extension.sha256" }}')" == "${xpu_extension_sha256}" ]] || {
+  printf 'built image XPU-extension label mismatch\n' >&2
+  exit 1
+}
+[[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.gdn-library.sha256" }}')" == "${gdn_library_sha256}" ]] || {
+  printf 'built image GDN-library label mismatch\n' >&2
   exit 1
 }
 
@@ -107,7 +116,8 @@ printf '%s\n' \
   "patch_sha256=${patch_sha256}" \
   "wheel=$(basename -- "${wheels[0]}")" \
   "wheel_sha256=$(sha256sum "${wheels[0]}" | awk '{print $1}')" \
-  "core_extension_sha256=${core_extension_sha256}" \
+  "xpu_extension_sha256=${xpu_extension_sha256}" \
+  "gdn_library_sha256=${gdn_library_sha256}" \
   "base_image=${base_image}" \
   "base_image_id=${expected_base_image_id}" \
   "image=${image}" \

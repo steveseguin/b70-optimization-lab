@@ -36,6 +36,8 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
     def test_server_fails_closed_on_identity_and_shared_state(self) -> None:
         for required in (
             "EXPECTED_IMAGE_ID:?",
+            "EXPECTED_XPU_EXTENSION_SHA256:?",
+            "EXPECTED_GDN_LIBRARY_SHA256:?",
             "MODEL_DIR must be a real directory",
             "MODEL_DIR must be on ext4",
             "cache path must be new",
@@ -46,6 +48,9 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "/tmp/b70-gpu3.lock",
         ):
             self.assertIn(required, self.server)
+        self.assertIn("vllm_xpu_kernels/_xpu_C.abi3.so", self.server)
+        self.assertIn("libgdn_attn_kernels_xe_2.so", self.server)
+        self.assertNotIn("vllm_xpu_kernels/_C.abi3.so", self.server)
 
     def test_attempt_enforces_full_strict_workload(self) -> None:
         for required in (

@@ -35,9 +35,9 @@ anchor remains quarantined.
 - XPU-kernels source `1e90ffa672ba02f17a909da11838a4c55b199783`
   plus the repository oneDNN W4A16 determinism pad. This was added to the
   frozen treatment before execution after preflight proved that the FP8 base
-  did not contain the required INT4 binary marker; the composite image ID and
-  core-extension SHA-256 will be frozen here after the clean build and before
-  the first attempt;
+  did not contain the required INT4 binary marker; the composite image ID,
+  `_xpu_C.abi3.so` SHA-256, and paired GDN-library SHA-256 will be frozen here
+  after the clean build and before the first attempt;
 - AutoRound/INC W4A16, FP16 activations and KV, MTP0, XPU Graph off,
   compiler `cudagraph_mode=NONE`, deterministic Inductor on, prefix caching
   off, seed 42, one sequence;
@@ -71,3 +71,15 @@ Executables:
 
 - `../../../repro/qwen38-27b-autoround-int4-b70/scripts/run-current-deterministic-mtp0-server.sh`
 - `../scripts/run-20260828-qwen38-autoround-deterministic-mtp0-strict-attempt.sh`
+
+## Pre-execution build qualification
+
+No model request has run under this preregistration. Two preserved local build
+roots failed closed before image creation: the first exposed Bash nounset in
+Intel's `setvars.sh`; the second compiled successfully but the wrapper then
+caught that it had extracted `_C.abi3.so`, while oneDNN W4A16 is registered in
+`_xpu_C.abi3.so`. The corrected builder compiles the lane's XPU-specific and
+GDN targets, overlays the paired `_xpu_C.abi3.so` and
+`libgdn_attn_kernels_xe_2.so`, and requires the marker and both operator
+registrations before it can create the image. Those build-only failures are
+not benchmark attempts or performance evidence.

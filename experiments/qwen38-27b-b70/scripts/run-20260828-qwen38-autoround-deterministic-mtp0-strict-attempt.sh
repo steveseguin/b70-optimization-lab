@@ -8,7 +8,8 @@ out=${OUT_DIR:?set OUT_DIR to a new evidence directory}
 cache=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new cache directory}
 port=${PORT:?set PORT to a unique port}
 expected_image_id=${EXPECTED_IMAGE_ID:?set EXPECTED_IMAGE_ID}
-expected_core_extension_sha256=${EXPECTED_CORE_EXTENSION_SHA256:?set EXPECTED_CORE_EXTENSION_SHA256}
+expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:?set EXPECTED_XPU_EXTENSION_SHA256}
+expected_gdn_library_sha256=${EXPECTED_GDN_LIBRARY_SHA256:?set EXPECTED_GDN_LIBRARY_SHA256}
 model=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-devan}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
 suite=${SUITE:-$repo/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}
@@ -37,9 +38,9 @@ trap 'exit 130' INT TERM HUP
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$out/model-verify.json" >"$out/model-verify.log"
 
-python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_core_extension_sha256" <<'PY'
+python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" <<'PY'
 import datetime as dt, hashlib, json, pathlib, sys
-path, mode, attempt, model, cache, suite, port, container, image, image_id, core_sha = sys.argv[1:]
+path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha = sys.argv[1:]
 s = pathlib.Path(suite)
 value = {
   "schema": "neural.download.qwen38-autoround-deterministic-mtp0-strict-attempt.v1",
@@ -47,7 +48,8 @@ value = {
   "attempt": attempt, "model_dir": model, "fresh_compile_cache": cache,
   "suite": str(s), "suite_sha256": hashlib.sha256(s.read_bytes()).hexdigest(),
   "port": int(port), "container": container, "image": image,
-  "image_id": image_id, "core_extension_sha256": core_sha,
+  "image_id": image_id, "xpu_extension_sha256": xpu_sha,
+  "gdn_library_sha256": gdn_sha,
   "tensor_parallel": 2, "physical_gpus": [2, 3],
   "mtp_depth": 0, "xpu_graph": False, "inductor_deterministic": True,
   "prefix_cache": False, "prompt_or_response_reuse": False,
@@ -60,7 +62,8 @@ pathlib.Path(path).write_text(json.dumps(value, indent=2, sort_keys=True)+"\n")
 PY
 
 env EXECUTION_MODE="$mode" IMAGE="$image" EXPECTED_IMAGE_ID="$expected_image_id" \
-  EXPECTED_CORE_EXTENSION_SHA256="$expected_core_extension_sha256" \
+  EXPECTED_XPU_EXTENSION_SHA256="$expected_xpu_extension_sha256" \
+  EXPECTED_GDN_LIBRARY_SHA256="$expected_gdn_library_sha256" \
   MODEL_DIR="$model" VLLM_CACHE_DIR="$cache" CONTAINER_NAME="$container" \
   PORT="$port" SERVED_MODEL_NAME="$served" \
   "$repo/repro/qwen38-27b-autoround-int4-b70/scripts/run-current-deterministic-mtp0-server.sh" \
