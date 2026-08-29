@@ -1,7 +1,7 @@
 # Flash-Next post-A4 recovery and sampler-isolation preregistration
 
 Date: 2026-08-28
-Status: frozen before execution
+Status: Stage A5 passed; sampler-native candidate frozen before execution
 
 ## Evidence-driven question
 
@@ -29,6 +29,12 @@ quality, or deployment credit. Failure stops the program.
 
 Frozen helper SHA-256:
 `396175754ee32352bdc61bd3e9c6ffc234fbe30701296e0a4ea9541322f1c491`.
+
+Stage A5 passed. All four isolated checks returned `2097152.0`, all twelve
+directed peer checks returned true, and ranks 0--3 each returned exact XCCL
+all-reduce `4.0`. The bounded journal contained no matching B70, system-memory,
+or I/O failure. Its immutable external manifest-file SHA-256 is
+`566d3f7a12384c2bd984ff11419307a4999bec4aad3423cbe5bf5a69b7466ac3`.
 
 ## Candidate treatment and frozen order
 
@@ -61,3 +67,8 @@ Interpretations are frozen:
 - stable first 16K plus corrupted repeat means the repeated-output mechanism
   remains upstream of or independent from sampler selection;
 - any new B70 event stops the lane and requires another health decision.
+
+Frozen candidate launcher SHA-256:
+`e7773a62cce32aa5e649bd16b8958789a4ad2a4b0d359d808119863ee1aad616`.
+Frozen ordered client SHA-256:
+`942e886f1726220f04e706f27a8a63eb252e8b7632b7636f1ea1d2f1c8dc71e1`.
