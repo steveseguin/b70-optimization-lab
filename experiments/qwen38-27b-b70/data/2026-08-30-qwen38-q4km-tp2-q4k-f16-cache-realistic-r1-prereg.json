@@ -1,0 +1,23 @@
+{
+  "campaign": "qwen38-q4km-tp2-q4k-f16-cache-realistic-20260830-r1",
+  "status": "preregistered-before realistic control or candidate measurement",
+  "purpose": "Qualify the exact-arithmetic Q4_K ffn_down F16 cache on the established diverse realistic-prompt suite, independent of the unresolved c64 admission/batch nondeterminism.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, tuned profile, Q4_K reorder enabled in both arms, WDC off, one slot, context 8192, batch 2048, ubatch 256, temperature 0, prompt cache off.",
+  "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json; diverse prose, code, math, reasoning, JSON, and structured prompts; 512-token cap with natural-EOS gate.",
+  "oracle": "The pre-existing frozen TP2 Q4_K_M realistic output hashes are used unchanged for both arms.",
+  "arms": [
+    "Fresh same-binary control with Q4_K F16 cache unset.",
+    "Fresh candidate with GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down."
+  ],
+  "required_gates": [
+    "every realistic-suite output hash exactly matches the frozen oracle",
+    "fresh-response and natural-EOS gates pass",
+    "all cached token counts are zero",
+    "candidate cache liveness is present and control liveness is absent",
+    "WDC is absent",
+    "no GPU fault, reset, device loss, OOM, segfault, or unclean shutdown"
+  ],
+  "advance_rule": "Promote for single-user use only if candidate output is exact and measured median throughput improves repeatably against the same-binary control. c64 aggregate promotion remains blocked until its baseline replay is deterministic.",
+  "publication_policy": "No prompt/output caching, fixture gaming, interpolation, extrapolation, or output-changing result. Model-weight warm state is allowed equally in both arms."
+}
