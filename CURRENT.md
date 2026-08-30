@@ -1550,6 +1550,19 @@ bounded same-server positive, A15 is the required reliability negative, and no
 protected result changed. The next bounded work is diagnosis of the QSA
 score/reduction path before another full model load. See the
 [A15 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a15-qsa-stable-reliability-negative.md).
+A16 then captured a valid 51-record/149-digest late-prefill trace while
+retaining all ordinary gates. Its first exact-4K row matched authority and the
+second diverged at generated token 62, so it remained diagnostic-only. The
+fresh A17 peer passed all preflights but the host stopped during four-worker
+initialization, before any shard, endpoint, request, output, trace, or timing.
+No OOM kill or B70 event was recorded; the prior boot did have substantial
+residual swap/memory pressure and corrected local-NVMe PCIe receive events.
+A17 is preserved as an infrastructure interruption. A18 is the exact fresh-
+reboot trace replica on new paths and port; it changes no model or performance
+selector and leaves every protected result intact. See the
+[A17 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a17-host-freeze-interruption.md)
+and
+[A18 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a18-post-reboot-trace-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
