@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "status": "external_load_and_full_battery_passed_trace_compared",
+  "classification": "external_storage_workaround_positive_diagnostic_trace_positive",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_tree_sha256": "4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2",
+    "vllm_head": "9f720cd4aa6c8a8b045f54dfa10f5b8611caccbd",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "kv_cache_memory_bytes": 134217728
+  },
+  "external_load": {
+    "checkpoint_shards": "131/131",
+    "model_loading_seconds_by_rank": [582.984894, 582.688646, 582.693255, 583.017494],
+    "model_memory_gib_per_rank": 31.57,
+    "endpoint_healthy": true,
+    "clean_teardown": true,
+    "supervisor_final_rc": 0,
+    "kernel_journal_errors": 0,
+    "decision": "Use the validated external checkpoint path for subsequent full loads while the local Samsung NVMe path is quarantined."
+  },
+  "gates": {
+    "recovery_canary": "passed",
+    "semantic_quality": "6/7; sole inherited code_execution response 30 instead of 14",
+    "repeat": "16/16 one hash",
+    "quality_long_context": "4096 prompt tokens, exact needle pass, zero cached tokens",
+    "short_output_authority": "3/3 exact",
+    "exact_4k_transport": "2/2 passed",
+    "exact_4k_output_authority": "2/2 exact",
+    "exact_4k_same_server_repeat": true,
+    "client_gates": "passed",
+    "client_rc": 0
+  },
+  "performance": {
+    "short_rates_tok_s": [5.496023810481999, 5.541725808030289, 5.494044629038615],
+    "short_diagnostic_median_tok_s": 5.496023810481999,
+    "short_output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "exact_4k_rates_tok_s": [5.268946787692239, 5.234645905012521],
+    "exact_4k_diagnostic_median_tok_s": 5.25179634635238,
+    "exact_4k_ttft_s": [112.0737298539998, 106.31299595900009],
+    "exact_4k_output_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+    "cached_tokens": [0, 0],
+    "credit": "none; report-only trace synchronization makes timing diagnostic"
+  },
+  "trace": {
+    "rank": 0,
+    "position_min": 3968,
+    "position_max": 4031,
+    "records": 51,
+    "tensor_records": 149,
+    "artifact_sha256": "ee9c778456917cb16df436f00ebe24b6c36980c3b5f7ebb27540704bf6d08806",
+    "model_output_sha256": "e992a091bc43801c968ac43848b1e1e00521e278c0eecfbcc5b03bbbf40b1b7e",
+    "a16_comparison": {
+      "matching_tensor_records": 6,
+      "differing_tensor_records": 143,
+      "matching_boundaries": [
+        "model_positions.positions",
+        "model_input.hidden_states",
+        "model_input.input_ids",
+        "layer_0_output.hidden_states",
+        "layer_0_output.block_output",
+        "layer_0_output.injection"
+      ],
+      "first_differing_boundary": "layer_1_output",
+      "layer_1_zero_based": 1,
+      "layer_1_type": "linear_attention",
+      "layer_1_is_only_ple_bearing_layer": true,
+      "evidence_boundary": "The first difference is localized to the sole PLE-bearing decoder-layer invocation. This trace does not yet distinguish PLE lookup/addition from that layer's hyperconnection, linear-attention, or MLP operations."
+    }
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt21",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt21-supervisor",
+    "sha256": {
+      "quality-current.json": "7e7f42a0d2fa18bcf0a584c1e7119f5aee63b2dd8fd4d60dd42cdbfa8fcfce9d",
+      "bench-short-r1.json": "52330c9104e0427183e2cc3214d55444d9cf87f25479600017532e3065e4543c",
+      "bench-short-r2.json": "067925283b4d1c2872be9b372d300622c7b3cdd55af01661b02fa233f5054d1f",
+      "bench-short-r3.json": "ccd8fc23e9a04e0a5c2c4c63c4432bf84475d57187a5dac38c1f51eedab941f8",
+      "exact-depth-4k-r1.json": "18952d7f48218250c584ded094b6b5d9d2755f8da4f151ff93a3357071bc96bb",
+      "exact-depth-4k-r2.json": "ee2f39a4c069ec2cb6431f93ef620cb95031c8557af50d0ecdabbcad0ec6f197",
+      "identity.txt": "570fab608b31a1e8bf43ae8fd9a5cd4e16a1061f0ae35140559e9f1ace912f68",
+      "server.log": "e09c305ea89ba716313180a260f59a1568850955dabeeafbf2fdcc68b08b8554",
+      "ple-only-qsa-stable-summary.json": "c7a7cb79c3dcf9a1ecf8007a2cdd81484611c4bf94af758323af0b4721086928",
+      "kernel-journal.log": "34ea4d39cd95b6ea8a69d49a6bba70ac0e669b40dd2d4ccf1f14f471a31e5279"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "Preserve A21 as the successful external-storage load and full-battery replica. Add a report-only inner-layer trace before another full load; do not infer an arithmetic fix from the existing layer-boundary trace."
+}

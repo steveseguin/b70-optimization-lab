@@ -1590,6 +1590,18 @@ the
 [A20 stop](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a20-supervisor-path-stop.md)
 and
 [A21 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a21-external-model-prereg.md).
+A21 then loaded all 131 shards of the exact validated external checkpoint on
+all four ranks, became healthy, completed the full frozen battery, and tore
+down cleanly without a kernel-window error. Recovery, the inherited 6/7
+semantic boundary, 16/16 repeatability, exact 4K needle, all three short
+authority hashes, and both cache-zero exact-4K authority rows passed. The
+report-only trace timings receive no performance credit and no protected result
+changed. A16/A21 match through model input and all layer-0 outputs, then first
+differ at `layer_1_output`; zero-based layer 1 is the sole PLE-bearing decoder
+layer. This localizes the next trace to that layer invocation but does not yet
+prove whether PLE lookup/addition or the layer's later operations differ. See
+the
+[A21 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a21-external-trace-result.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
