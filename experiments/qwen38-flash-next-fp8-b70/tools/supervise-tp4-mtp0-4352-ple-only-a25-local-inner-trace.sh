@@ -4,7 +4,7 @@ set -Eeuo pipefail
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 base="${script_dir}/supervise-tp4-mtp0-current-anchor-a4.sh"
 expected_base=4397290c337fa88c8131904b55f045d9b781a9d91213b84a637cb32f8ca25bad
-expected_derived=70c8817b85041481380f4d1db52c9fc2974dbbb5b3b6d5e1e43593335b9af102
+expected_derived=1cd0b1a2079b66857147c8e8fb15bf30173a59f0cf0d51e71b329f6bd467f70a
 
 derive() {
   awk '
@@ -13,13 +13,13 @@ $0 == "wrapper=\"${script_dir}/launch-tp4-mtp0-current-anchor-a4.sh\"" {
   print "wrapper=\"${script_dir}/launch-tp4-mtp0-4352-ple-only-a25-local-inner-trace.sh\""; next
 }
 $0 == "expected_wrapper=adb0b7dc7a0f2aa21a4d2dd217a3107a579c42a921e1139bc1eda8801d46219d" {
-  print "expected_wrapper=68ca964ac3a8dc62041f84067906b4ac06c5e4bd93a6b3c3eabb2c9786e6b391"; next
+  print "expected_wrapper=170f5d282c52188f803e7112c9d9ca77595a1bb29963a3457b7fe8d03d32e77f"; next
 }
 $0 == "client=\"${script_dir}/run-tp4-mtp0-current-anchor-a4-client.sh\"" {
   print "client=\"${script_dir}/run-tp4-mtp0-4352-ple-only-a25-local-inner-trace-client.sh\""; next
 }
 $0 == "expected_client=28957596b743e068c50c65ceaa716bb79a47908167ab7ac3ec4fb629346135e0" {
-  print "expected_client=6fdac7ed447c4857a146f0975e13c40370ab5bc9383ccc68e09b39d731227858"; next
+  print "expected_client=be4cd1d7f15669a71061e3a7567d796431bc37a624f9026e12eb3418a5818f65"; next
 }
 $0 == "state=/tmp/q38-mtp0-current-anchor-a4" { print "state=/tmp/q38-mtp0-ple-only-a25"; next }
 $0 == "run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-r1-attempt4" {
@@ -50,7 +50,7 @@ index($0, "PASS recovery quality short-repeat exact-4K-repeat current-runtime MT
   gsub(/PASS recovery quality short-repeat exact-4K-repeat current-runtime MTP0 anchor/, "PASS recovery quality short-repeat exact-4K-repeat PLE-only 4K MTP0 QSA-stable treatment"); print; next
 }
 index($0, ".identity.vllm_head == \"1372c62d975c554f4b465c8299bc5f3295301ceb\"") {
-  gsub(/1372c62d975c554f4b465c8299bc5f3295301ceb/, "6955105032d99c22d4ffbdfea9b48a1940655b47"); print; next
+  gsub(/1372c62d975c554f4b465c8299bc5f3295301ceb/, "ca20c4465ca34fc733aac70416b75d7cb8a1c46f"); print; next
 }
 $0 == "         .identity.graph == \"off\" and .identity.max_model_len == 4352 and" {
   print

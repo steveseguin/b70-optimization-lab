@@ -1,0 +1,436 @@
+From 7083ae72cc021b78c07eadbbf8d31bbb575f72eb Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 17:05:56 -0400
+Subject: [PATCH] Filter PLE offload weights before materialization
+
+---
+ .../model_loader/test_filtered_safetensors.py | 159 ++++++++++++++++++
+ tests/v1/worker/test_ple_offload_worker.py    |  14 +-
+ .../model_loader/default_loader.py            | 117 ++++++++++++-
+ .../model_loader/weight_utils.py              |  23 ++-
+ vllm/v1/ple_offload/worker.py                 |  13 +-
+ 5 files changed, 319 insertions(+), 7 deletions(-)
+ create mode 100644 tests/model_executor/model_loader/test_filtered_safetensors.py
+
+diff --git a/tests/model_executor/model_loader/test_filtered_safetensors.py b/tests/model_executor/model_loader/test_filtered_safetensors.py
+new file mode 100644
+index 000000000..f01a9d23d
+--- /dev/null
++++ b/tests/model_executor/model_loader/test_filtered_safetensors.py
+@@ -0,0 +1,159 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import json
++from types import SimpleNamespace
++
++import pytest
++import torch
++from safetensors.torch import save_file
++
++from vllm.config.load import LoadConfig
++from vllm.model_executor.model_loader import default_loader, weight_utils
++from vllm.model_executor.model_loader.default_loader import DefaultModelLoader
++
++
++def test_filtered_loader_prunes_files_and_names(
++    monkeypatch: pytest.MonkeyPatch,
++    tmp_path,
++) -> None:
++    files = [tmp_path / f"model-{index}.safetensors" for index in range(3)]
++    for path in files:
++        path.touch()
++    (tmp_path / "model.safetensors.index.json").write_text(
++        json.dumps(
++            {
++                "weight_map": {
++                    "selected.a": files[0].name,
++                    "unrelated": files[1].name,
++                    "selected.c": files[2].name,
++                }
++            }
++        ),
++        encoding="utf-8",
++    )
++    calls = []
++
++    def fake_iterator(selected_files, _use_tqdm, _strategy, **kwargs):
++        calls.append((selected_files, kwargs["weight_names"]))
++        for name in sorted(kwargs["weight_names"]):
++            yield name, torch.ones(1)
++
++    loader = DefaultModelLoader(LoadConfig(load_format="safetensors"))
++    monkeypatch.setattr(
++        loader,
++        "_prepare_weights",
++        lambda *args: (str(tmp_path), [str(path) for path in files], True),
++    )
++    monkeypatch.setattr(
++        default_loader,
++        "safetensors_weights_iterator",
++        fake_iterator,
++    )
++    model = SimpleNamespace()
++    model_config = SimpleNamespace(model=str(tmp_path), revision=None)
++
++    loaded = list(
++        loader.get_filtered_weights(
++            model_config,
++            model,
++            weight_name_filter=lambda name: name.startswith("selected."),
++        )
++    )
++
++    assert [name for name, _ in loaded] == ["selected.a", "selected.c"]
++    assert calls == [
++        (
++            [str(files[0]), str(files[2])],
++            {"selected.a", "selected.c"},
++        )
++    ]
++
++
++def test_safetensors_name_filter_precedes_materialization(
++    monkeypatch: pytest.MonkeyPatch,
++    tmp_path,
++) -> None:
++    path = tmp_path / "model.safetensors"
++    save_file(
++        {
++            "selected": torch.arange(4),
++            "unrelated": torch.arange(8),
++        },
++        path,
++    )
++    opened_names = []
++    real_safe_open = weight_utils.safe_open
++
++    class TrackingSafeOpen:
++        def __init__(self, filename, **kwargs):
++            self._context = real_safe_open(filename, **kwargs)
++
++        def __enter__(self):
++            self._reader = self._context.__enter__()
++            return self
++
++        def __exit__(self, *args):
++            return self._context.__exit__(*args)
++
++        def keys(self):
++            return self._reader.keys()
++
++        def get_tensor(self, name):
++            opened_names.append(name)
++            return self._reader.get_tensor(name)
++
++    monkeypatch.setattr(weight_utils, "safe_open", TrackingSafeOpen)
++
++    loaded = dict(
++        weight_utils.safetensors_weights_iterator(
++            [str(path)],
++            False,
++            weight_names={"selected"},
++        )
++    )
++
++    assert set(loaded) == {"selected"}
++    assert opened_names == ["selected"]
++
++
++def test_filtered_loader_requires_valid_index(
++    monkeypatch: pytest.MonkeyPatch,
++    tmp_path,
++) -> None:
++    path = tmp_path / "model.safetensors"
++    path.touch()
++    loader = DefaultModelLoader(LoadConfig(load_format="safetensors"))
++    monkeypatch.setattr(
++        loader,
++        "_prepare_weights",
++        lambda *args: (str(tmp_path), [str(path)], True),
++    )
++    model_config = SimpleNamespace(model=str(tmp_path), revision=None)
++
++    with pytest.raises(RuntimeError, match="requires a valid index"):
++        list(
++            loader.get_filtered_weights(
++                model_config,
++                SimpleNamespace(),
++                weight_name_filter=lambda _name: True,
++            )
++        )
++
++
++def test_filtered_loader_rejects_unsupported_strategy() -> None:
++    loader = DefaultModelLoader(
++        LoadConfig(
++            load_format="safetensors",
++            safetensors_load_strategy="eager",
++        )
++    )
++
++    with pytest.raises(ValueError, match="lazy safetensors"):
++        list(
++            loader.get_filtered_weights(
++                SimpleNamespace(model="unused", revision=None),
++                SimpleNamespace(),
++                weight_name_filter=lambda _name: True,
++            )
++        )
+diff --git a/tests/v1/worker/test_ple_offload_worker.py b/tests/v1/worker/test_ple_offload_worker.py
+index 1b525f2be..03d75b037 100644
+--- a/tests/v1/worker/test_ple_offload_worker.py
++++ b/tests/v1/worker/test_ple_offload_worker.py
+@@ -59,10 +59,20 @@ class _TestDefaultModelLoader:
+     def __init__(self, checkpoint_names: list[str]) -> None:
+         self.checkpoint_names = checkpoint_names
+ 
+-    def get_all_weights(self, model_config, model):
++    def get_filtered_weights(
++        self,
++        model_config,
++        model,
++        *,
++        weight_name_filter,
++    ):
+         """Return a small streamed checkpoint for weight-filtering tests."""
+         del model_config, model
+-        return ((name, torch.ones(2)) for name in self.checkpoint_names)
++        return (
++            (name, torch.ones(2))
++            for name in self.checkpoint_names
++            if weight_name_filter(name)
++        )
+ 
+ 
+ def _load_test_ple_weights(
+diff --git a/vllm/model_executor/model_loader/default_loader.py b/vllm/model_executor/model_loader/default_loader.py
+index 039a577f8..591c36a3a 100644
+--- a/vllm/model_executor/model_loader/default_loader.py
++++ b/vllm/model_executor/model_loader/default_loader.py
+@@ -2,9 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import dataclasses
+ import glob
++import json
+ import os
+ import time
+-from collections.abc import Generator, Iterable
++from collections.abc import Callable, Generator, Iterable
+ from typing import cast
+ 
+ import torch
+@@ -339,6 +340,120 @@ class DefaultModelLoader(BaseModelLoader):
+         for source in secondary_weights:
+             yield from self._get_weights_iterator(source)
+ 
++    def _get_filtered_safetensors_iterator(
++        self,
++        source: "Source",
++        weight_name_filter: Callable[[str], bool],
++    ) -> Generator[tuple[str, torch.Tensor], None, None]:
++        """Read an index-selected lazy-safetensors subset without fallback."""
++        extra_config = self.load_config.model_loader_extra_config
++        if self.load_config.load_format != "safetensors":
++            raise ValueError(
++                "Filtered weight loading requires load_format='safetensors'"
++            )
++        if self.load_config.safetensors_load_strategy not in (None, "lazy"):
++            raise ValueError(
++                "Filtered weight loading requires the lazy safetensors strategy"
++            )
++        if extra_config.get("enable_multithread_load"):
++            raise ValueError(
++                "Filtered weight loading does not support multithread load"
++            )
++
++        hf_folder, hf_weights_files, use_safetensors = self._prepare_weights(
++            source.model_or_path,
++            source.subfolder,
++            source.revision,
++            source.fall_back_to_pt,
++            source.allow_patterns_overrides,
++        )
++        if not use_safetensors:
++            raise ValueError("Filtered weight loading requires safetensors files")
++
++        index_path = os.path.join(hf_folder, SAFE_WEIGHTS_INDEX_NAME)
++        try:
++            with open(index_path, encoding="utf-8") as index_file:
++                index = json.load(index_file)
++        except (OSError, json.JSONDecodeError) as error:
++            raise RuntimeError(
++                f"Filtered weight loading requires a valid index: {index_path}"
++            ) from error
++        weight_map = index.get("weight_map")
++        if not isinstance(weight_map, dict) or not all(
++            isinstance(name, str) and isinstance(filename, str)
++            for name, filename in weight_map.items()
++        ):
++            raise RuntimeError(f"Invalid safetensors weight map: {index_path}")
++
++        selected_names = {
++            name for name in weight_map if weight_name_filter(source.prefix + name)
++        }
++        if not selected_names:
++            raise RuntimeError(
++                f"Filtered weight loading selected no indexed weights from {index_path}"
++            )
++
++        selected_paths = {
++            os.path.normpath(os.path.join(hf_folder, weight_map[name]))
++            for name in selected_names
++        }
++        available_paths = {os.path.normpath(path) for path in hf_weights_files}
++        missing_paths = sorted(selected_paths.difference(available_paths))
++        if missing_paths:
++            raise RuntimeError(
++                f"Safetensors index selected missing checkpoint files: {missing_paths}"
++            )
++
++        logger.info(
++            "Filtered checkpoint index selected %d weight(s) across %d/%d file(s).",
++            len(selected_names),
++            len(selected_paths),
++            len(hf_weights_files),
++        )
++        iterator = safetensors_weights_iterator(
++            sorted(selected_paths),
++            self.load_config.use_tqdm_on_load,
++            self.load_config.safetensors_load_strategy,
++            weight_names=selected_names,
++            safetensors_prefetch_num_threads=(
++                self.load_config.safetensors_prefetch_num_threads
++            ),
++            safetensors_prefetch_block_size=(
++                self.load_config.safetensors_prefetch_block_size
++            ),
++        )
++        yield from ((source.prefix + name, tensor) for name, tensor in iterator)
++
++    def get_filtered_weights(
++        self,
++        model_config: ModelConfig,
++        model: nn.Module,
++        *,
++        weight_name_filter: Callable[[str], bool],
++    ) -> Generator[tuple[str, torch.Tensor], None, None]:
++        """Load an exact index-filtered subset for specialized CPU workers."""
++        secondary_weights = tuple(
++            cast(
++                Iterable[DefaultModelLoader.Source],
++                getattr(model, "secondary_weights", ()),
++            )
++        )
++        if secondary_weights:
++            raise ValueError(
++                "Filtered weight loading does not support secondary weight sources"
++            )
++        primary_weights = DefaultModelLoader.Source(
++            model_config.model,
++            model_config.revision,
++            prefix="",
++            fall_back_to_pt=getattr(model, "fall_back_to_pt_during_load", True),
++            allow_patterns_overrides=getattr(model, "allow_patterns_overrides", None),
++        )
++        yield from self._get_filtered_safetensors_iterator(
++            primary_weights,
++            weight_name_filter,
++        )
++
+     def download_model(self, model_config: ModelConfig) -> None:
+         self._prepare_weights(
+             model_name_or_path=model_config.model,
+diff --git a/vllm/model_executor/model_loader/weight_utils.py b/vllm/model_executor/model_loader/weight_utils.py
+index 60cbfb4ee..c2ac76e8d 100644
+--- a/vllm/model_executor/model_loader/weight_utils.py
++++ b/vllm/model_executor/model_loader/weight_utils.py
+@@ -838,15 +838,20 @@ def safetensors_weights_iterator(
+     safetensors_load_strategy: str | None = None,
+     local_expert_ids: set[int] | None = None,
+     *,
++    weight_names: set[str] | None = None,
+     safetensors_prefetch_num_threads: int = DEFAULT_SAFETENSORS_PREFETCH_NUM_THREADS,
+     safetensors_prefetch_block_size: int = DEFAULT_SAFETENSORS_PREFETCH_BLOCK_SIZE,
+ ) -> Generator[tuple[str, torch.Tensor], None, None]:
+     """Iterate over the weights in the model safetensor files.
+ 
+-    When *local_expert_ids* is provided, expert weights not belonging to
+-    this rank are skipped **before** reading from disk, which drastically
+-    reduces storage I/O for MoE models under EP.
++    When *local_expert_ids* or *weight_names* is provided, excluded tensors are
++    skipped **before** reading from disk. ``weight_names`` is intentionally
++    supported only by the ordinary lazy safetensors path.
+     """
++    if weight_names is not None and safetensors_load_strategy not in (None, "lazy"):
++        raise ValueError(
++            "weight_names filtering requires the lazy safetensors load strategy"
++        )
+     loading_desc = "Loading safetensors checkpoint shards"
+     if safetensors_load_strategy == "eager":
+         loading_desc += " (eager)"
+@@ -920,6 +925,7 @@ def safetensors_weights_iterator(
+         )
+ 
+     leftover_state_dict: dict[str, torch.Tensor] = {}
++    observed_weight_names: set[str] = set()
+     for st_file in tqdm(
+         sorted_files,
+         desc=loading_desc,
+@@ -965,11 +971,22 @@ def safetensors_weights_iterator(
+         else:
+             with safe_open(st_file, framework="pt") as f:
+                 for name in f.keys():  # noqa: SIM118
++                    if weight_names is not None and name not in weight_names:
++                        continue
+                     if should_skip_weight(name, local_expert_ids):
+                         continue
+                     param = f.get_tensor(name)
++                    observed_weight_names.add(name)
+                     yield name, param
+ 
++    if weight_names is not None and observed_weight_names != weight_names:
++        missing = sorted(weight_names.difference(observed_weight_names))
++        unexpected = sorted(observed_weight_names.difference(weight_names))
++        raise RuntimeError(
++            "Filtered safetensors iterator did not emit the indexed weight set: "
++            f"missing={missing}, unexpected={unexpected}"
++        )
++
+ 
+ def multi_thread_safetensors_weights_iterator(
+     hf_weights_files: list[str],
+diff --git a/vllm/v1/ple_offload/worker.py b/vllm/v1/ple_offload/worker.py
+index 5251460e1..bdbb56ea0 100644
+--- a/vllm/v1/ple_offload/worker.py
++++ b/vllm/v1/ple_offload/worker.py
+@@ -410,6 +410,13 @@ class PleOffloadRunner:
+         mapper = getattr(model, "hf_to_vllm_mapper", None)
+         matched_checkpoint_tensors = 0
+ 
++        def is_offload_checkpoint_weight(weight_name: str) -> bool:
++            mapped_name: str | None = weight_name
++            if mapper is not None:
++                mapped_names = mapper.apply_list([weight_name])
++                mapped_name = mapped_names[0] if mapped_names else None
++            return mapped_name is not None and mapped_name.startswith(offload_prefixes)
++
+         def offload_only_iter(
+             weights: Iterable[tuple[str, torch.Tensor]],
+         ) -> Iterable[tuple[str, torch.Tensor]]:
+@@ -432,7 +439,11 @@ class PleOffloadRunner:
+             for layer in offload_layers.values():
+                 initialize_dummy_weights(layer, model_config)
+         elif isinstance(loader, DefaultModelLoader):
+-            all_weights = loader.get_all_weights(model_config, model)
++            all_weights = loader.get_filtered_weights(
++                model_config,
++                model,
++                weight_name_filter=is_offload_checkpoint_weight,
++            )
+             loaded_params = model.load_weights(offload_only_iter(all_weights))
+             if matched_checkpoint_tensors == 0:
+                 raise RuntimeError(
+-- 
+2.43.0
+

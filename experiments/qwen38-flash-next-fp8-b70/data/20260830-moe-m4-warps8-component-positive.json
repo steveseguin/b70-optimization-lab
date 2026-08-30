@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "qualified_component_positive_pending_endpoint",
+  "scope": "one-B70 exact-shape Qwen3.8 Flash-Next FP8 local MoE; not endpoint tok/s",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "ca20c4465ca34fc733aac70416b75d7cb8a1c46f",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "device": "Intel Arc Pro B70",
+    "tokens": 4,
+    "local_experts": 128,
+    "global_experts": 512,
+    "hidden": 2560,
+    "intermediate": 640,
+    "topk": 10,
+    "block_shape": [128, 128],
+    "routing": "balanced-global",
+    "local_valid_routes": 11,
+    "weights": "layer-0 rank-0 checkpoint",
+    "script_sha256": "505ac4b230456bd5eb9d83d14d54b31dec88e0ec607cf557f434b4184ca71aa8",
+    "config_sha256": "f93b5e1d5863e04268eb96877ab2ef6ba0990c42c62f1dff27bc36676c30bf7f"
+  },
+  "default_config": {
+    "BLOCK_SIZE_M": 16,
+    "BLOCK_SIZE_N": 64,
+    "BLOCK_SIZE_K": 128,
+    "GROUP_SIZE_M": 1,
+    "SPLIT_K": 1,
+    "num_warps": 4,
+    "num_stages": 4
+  },
+  "candidate_delta": {
+    "num_warps": 8
+  },
+  "measurements": [
+    {
+      "hidden_seed": 20260826,
+      "default_median_us": 600.0696,
+      "candidate_median_us": 473.19792,
+      "latency_reduction_pct": 21.14282743201789,
+      "default_output_sha256": "d166b04b943df8cc660ad3d638927249194adacc59cce96f245b4734726716e5",
+      "candidate_output_sha256": "d166b04b943df8cc660ad3d638927249194adacc59cce96f245b4734726716e5",
+      "candidate_repeat_unique_hashes": 1,
+      "candidate_repeats": 100
+    },
+    {
+      "hidden_seed": 20260827,
+      "default_before_median_us": 593.21912,
+      "default_after_median_us": 593.84104,
+      "default_bracket_mean_us": 593.53008,
+      "candidate_median_us": 473.60872,
+      "latency_reduction_pct": 20.204765359154166,
+      "default_output_sha256": "661c40dfc1df7261ce709e9dd6235a9f33f9b7faa2f1f59a34b9da7318b0551c",
+      "candidate_output_sha256": "661c40dfc1df7261ce709e9dd6235a9f33f9b7faa2f1f59a34b9da7318b0551c",
+      "candidate_repeat_unique_hashes": 1,
+      "candidate_repeats": 100
+    }
+  ],
+  "selection_check": {
+    "tuned_config_folder_selected": true,
+    "resolved_m4_num_warps": 8,
+    "median_us": 473.60872,
+    "output_sha256": "661c40dfc1df7261ce709e9dd6235a9f33f9b7faa2f1f59a34b9da7318b0551c"
+  },
+  "rejected_diagnostic": {
+    "candidate_delta": {
+      "BLOCK_SIZE_K": 64,
+      "num_warps": 8
+    },
+    "reason": "faster but changed exact bytes on hidden seed 20260827",
+    "median_us": 506.44776,
+    "output_sha256": "ba5447ae309467ed64d6d9df5550054d5058948414018b87e68d827fb42e58df"
+  },
+  "protected_results_changed": false,
+  "next_gate": "A25 fresh-start control first, then matched TP4 endpoint arm with exact short/4K authorities"
+}

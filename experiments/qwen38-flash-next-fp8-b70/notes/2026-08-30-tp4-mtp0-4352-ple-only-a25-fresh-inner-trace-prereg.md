@@ -29,20 +29,22 @@ swap, and 220000000000 free NVMe bytes. An atomic per-boot marker rejects a
 second full load.
 
 The vLLM identity is
-`6955105032d99c22d4ffbdfea9b48a1940655b47`, one commit after A24's
-`f69a0ef46338f93636671c87caa527b3ac2ca129`. The sole delta is patch 0027,
-which skips PLE checkpoint-coverage bookkeeping only on a process-offload GPU
-placeholder when `VLLM_PLE_CPU_OFFLOAD` is enabled. A25 does not set that
-environment variable and remains on the A24 UVA path, so this branch is
-dormant and changes no A25 inference arithmetic, scheduling, placement, or
+`ca20c4465ca34fc733aac70416b75d7cb8a1c46f`, four commits after A24's
+`f69a0ef46338f93636671c87caa527b3ac2ca129`. Patches 0027--0030 repair the
+separate process-offload candidate: GPU-placeholder coverage, bounded XPU host
+semaphores, index-filtered CPU-worker checkpoint loading, and strict isolation
+of filtered-mode bookkeeping from ordinary loading. A25 explicitly
+requires `VLLM_PLE_CPU_OFFLOAD` to be absent and remains on the A24 UVA path.
+The new placeholder, host-semaphore, and filtered-loader paths are therefore
+dormant and change no A25 inference arithmetic, scheduling, placement, or
 performance selector. The source-identity difference is nevertheless recorded
 rather than described as byte-identical.
 
 ## Frozen files
 
-- launcher SHA-256: `68ca964ac3a8dc62041f84067906b4ac06c5e4bd93a6b3c3eabb2c9786e6b391`;
-- client SHA-256: `6fdac7ed447c4857a146f0975e13c40370ab5bc9383ccc68e09b39d731227858`;
-- supervisor SHA-256: `9a7b805d54c2d64a1494ef56d9c9e0515c17bd4b108374b48d8fa83117c479d4`;
+- launcher SHA-256: `170f5d282c52188f803e7112c9d9ca77595a1bb29963a3457b7fe8d03d32e77f`;
+- client SHA-256: `be4cd1d7f15669a71061e3a7567d796431bc37a624f9026e12eb3418a5818f65`;
+- supervisor SHA-256: `b5679192ae6a965ef78196bbad24b17494a8080241d0dab42de39e6e55af3fd3`;
 - comparator: `tools/compare-qwen4-exp-inner-traces.py`, SHA-256
   `62fda53f04bb5ace7d489b61862b655d649dd19f3aa4b0a6d949966eec26cb2f`.
 

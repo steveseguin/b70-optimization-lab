@@ -4,7 +4,7 @@ set -Eeuo pipefail
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 base="${script_dir}/run-tp4-mtp0-current-anchor-a4-client.sh"
 expected_base=28957596b743e068c50c65ceaa716bb79a47908167ab7ac3ec4fb629346135e0
-expected_derived=e1069805d08fc994063e934d17c4955b47a831d1ef1fead0b8b4c078c408a1c3
+expected_derived=95a22f0710908b2a47d27ac23d8b6239bb6ea4706f0df0edeb270535fb0bbb62
 
 derive() {
   awk '
@@ -19,7 +19,7 @@ $0 == "base_url=http://127.0.0.1:19673" { print "base_url=http://127.0.0.1:19697
 index($0, "supervise-tp4-mtp0-current-anchor-a4.sh") { gsub(/supervise-tp4-mtp0-current-anchor-a4\.sh/, "supervise-tp4-mtp0-4352-ple-only-a25-local-inner-trace.sh"); print; next }
 index($0, "--port 19673") { gsub(/--port 19673/, "--port 19697"); print; next }
 $0 == "  '\''vllm_head=1372c62d975c554f4b465c8299bc5f3295301ceb'\'' \\" {
-  print "  '\''vllm_head=6955105032d99c22d4ffbdfea9b48a1940655b47'\'' \\"; next
+  print "  '\''vllm_head=ca20c4465ca34fc733aac70416b75d7cb8a1c46f'\'' \\"; next
 }
 $0 == "  '\''tp=4 ep=4 all2all=allgather_reducescatter'\'' \\" {
   print "  '\''cpu_offload_gb=12.0'\'' '\''cpu_offload_params=ple_embedding.ngram_embedding.weight'\'' \\"
@@ -41,7 +41,7 @@ $0 == "assert len(set(depth_hashes)) == 1" {
   next
 }
 index($0, "\"vllm_head\": \"1372c62d975c554f4b465c8299bc5f3295301ceb\"") {
-  gsub(/1372c62d975c554f4b465c8299bc5f3295301ceb/, "6955105032d99c22d4ffbdfea9b48a1940655b47"); print; next
+  gsub(/1372c62d975c554f4b465c8299bc5f3295301ceb/, "ca20c4465ca34fc733aac70416b75d7cb8a1c46f"); print; next
 }
 $0 == "        \"tp\": 4, \"ep\": 4, \"mtp\": 0, \"graph\": \"off\", \"max_model_len\": 4352," {
   print

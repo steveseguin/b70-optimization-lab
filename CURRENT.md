@@ -1668,12 +1668,33 @@ boot. See the
 A25 is the flattened fresh-start control for A24's rank-0 inner PLE trace. It
 must be the first and only Flash-Next full load after a separately authorized
 reboot, then compare exactly 64 records and 171 tensor tuples against A24.
-Its vLLM head is `6955105032d99c22d4ffbdfea9b48a1940655b47`; the only delta
-from A24 is an inactive process-offload placeholder guard, while A25 retains
-the UVA path and every inference selector. The wrappers validate in about one
-second, reject this already-used boot, and preserve all protected results. See
+Its vLLM head is `ca20c4465ca34fc733aac70416b75d7cb8a1c46f`; the four
+post-A24 changes are inactive process-offload placeholder, liveness, filtered
+loading, and ordinary-loader isolation paths, while A25 retains the UVA path
+and every inference selector. An independent audit caught and removed
+unconditional selected-name bookkeeping from the ordinary iterator before
+this re-freeze. The wrappers validate in about one second, reject this already-
+used boot, and preserve all protected results. See
 the
 [A25 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a25-fresh-inner-trace-prereg.md).
+The separate XPU PLE process-offload candidate is now source-safe enough for a
+later bounded A/B: GPU-placeholder coverage is correct, host waits have a
+terminal failure signal and finite deadline, and index-first loading selects
+exactly 132 PLE entries in 33/131 checkpoint files before materialization. The
+focused gates passed, but no process-offload model launch or speed claim exists
+yet; A25 must run first. The initial XPU transport is synchronous and is a
+correctness candidate, not the finished official asynchronous-overlap design.
+See the
+[process-offload hardening note](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-ple-process-offload-prelaunch-hardening.md).
+An exact-shape one-B70 MoE screen also found a lossless M4 component win:
+raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
+latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
+100/100 repeats on each. The tuned-folder selection check passed. The seemingly
+faster `BLOCK_SIZE_K=64` family changed bytes on the second seed and is rejected
+from lossless promotion. The warps-8 result is component-only; A25 still runs
+first, then a separate TP4 endpoint arm must pass every short/4K authority and
+quality/reliability gate before any tok/s credit. See the
+[M4 MoE component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m4-warps8-component-positive.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

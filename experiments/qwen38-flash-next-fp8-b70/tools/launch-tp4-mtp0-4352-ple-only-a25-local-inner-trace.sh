@@ -5,7 +5,7 @@ script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/t
 base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple4k-a25-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
-expected_derived=3b49e0209c8454de482154eb0e194fbc10844aa807f8194f87a1132a01bcb6c1
+expected_derived=b1048e3204d67d13944226f2714afb44f06a68f0c4d92477fbe0f49e1951b150
 campaign=qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1
 
 cleanup() { rm -f -- "$derived"; }
@@ -41,7 +41,7 @@ $0 == "rpc_dir=\"/tmp/${campaign}-attempt${attempt}-rpc\"" {
   next
 }
 $0 == "expected_vllm_head=\"1372c62d975c554f4b465c8299bc5f3295301ceb\"" {
-  print "expected_vllm_head=\"6955105032d99c22d4ffbdfea9b48a1940655b47\""
+  print "expected_vllm_head=\"ca20c4465ca34fc733aac70416b75d7cb8a1c46f\""
   next
 }
 /^[[:space:]]*'\''ple_embedding.ngram_embedding.weight'\'', '\''embed_tokens.weight'\''$/ {
@@ -90,7 +90,7 @@ grep -Fxq '  --cpu-offload-gb 12.0' "$derived"
 grep -Fxq '  --cpu-offload-params ple_embedding.ngram_embedding.weight' "$derived"
 grep -Fxq '  printf '\''cpu_offload_gb=12.0\n'\''' "$derived"
 grep -Fxq '  printf '\''cpu_offload_params=ple_embedding.ngram_embedding.weight\n'\''' "$derived"
-grep -Fxq 'expected_vllm_head="6955105032d99c22d4ffbdfea9b48a1940655b47"' "$derived"
+grep -Fxq 'expected_vllm_head="ca20c4465ca34fc733aac70416b75d7cb8a1c46f"' "$derived"
 grep -Fxq "  printf 'diagnostics=qwen4exp-ple-inner-trace-rank-all\n'" "$derived"
 ! grep -Fq "diagnostics=none" "$derived"
 grep -Fxq 'rpc_dir=/tmp/q38-ple4k-a25-rpc' "$derived"

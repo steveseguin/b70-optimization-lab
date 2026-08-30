@@ -1,0 +1,275 @@
+From 26aa0899a7cbf0bd2df70f0c33e4897c8047283a Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 17:03:32 -0400
+Subject: [PATCH] Bound XPU PLE offload waits
+
+---
+ tests/v1/worker/test_gpu_model_runner.py      | 36 ++++++++++++++
+ tests/v1/worker/test_ple_offload_worker.py    | 49 +++++++++++++++++++
+ vllm/envs.py                                  |  6 +++
+ .../layers/ple_offload_layer.py               | 33 +++++++++++--
+ vllm/v1/ple_offload/worker.py                 | 12 +++++
+ vllm/v1/worker/gpu_worker.py                  |  4 ++
+ 6 files changed, 136 insertions(+), 4 deletions(-)
+
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index be9135a78..c54ce0c57 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -113,6 +113,42 @@ def test_ple_offload_host_semaphore_cross_thread_round_trip() -> None:
+     semaphore.wait_reset()
+ 
+ 
++@pytest.mark.parametrize(
++    ("initial_value", "wait_method"),
++    [
++        (CpuGpuSemaphore.RESET_VALUE, "wait_done"),
++        (CpuGpuSemaphore.DONE_VALUE, "wait_reset"),
++    ],
++)
++def test_ple_offload_host_semaphore_wait_is_bounded(
++    monkeypatch: pytest.MonkeyPatch,
++    initial_value: int,
++    wait_method: str,
++) -> None:
++    semaphore = CpuGpuSemaphore(torch.device("xpu"))
++    semaphore.flag_tensor.fill_(initial_value)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT",
++        0.001,
++    )
++
++    with pytest.raises(TimeoutError, match="PLE offload timed out"):
++        getattr(semaphore, wait_method)()
++
++
++@pytest.mark.parametrize("wait_method", ["wait_done", "wait_reset"])
++def test_ple_offload_host_semaphore_failure_wakes_waiter(wait_method: str) -> None:
++    semaphore = CpuGpuSemaphore(torch.device("xpu"))
++    semaphore.signal_failure()
++
++    with pytest.raises(RuntimeError, match="PLE offload worker failed"):
++        getattr(semaphore, wait_method)()
++
++    semaphore.reset()
++    assert semaphore.flag_tensor.item() == CpuGpuSemaphore.FAILED_VALUE
++
++
+ def test_ple_offload_h2h_uses_bound_input_buffers() -> None:
+     """Stage MRV1 inputs from allocations bound during connector setup."""
+     source_input_ids = torch.tensor([7, -1, 11, -1], dtype=torch.int32)
+diff --git a/tests/v1/worker/test_ple_offload_worker.py b/tests/v1/worker/test_ple_offload_worker.py
+index f9e990116..1b525f2be 100644
+--- a/tests/v1/worker/test_ple_offload_worker.py
++++ b/tests/v1/worker/test_ple_offload_worker.py
+@@ -380,6 +380,55 @@ def test_ple_offload_accepts_xpu_eager_transport(
+     worker._validate_ple_offload_config()
+ 
+ 
++@pytest.mark.parametrize("timeout", [0.0, -1.0, float("inf"), float("nan")])
++def test_ple_offload_rejects_invalid_runtime_timeout(
++    monkeypatch: pytest.MonkeyPatch,
++    timeout: float,
++) -> None:
++    worker = Worker.__new__(Worker)
++    worker.parallel_config = SimpleNamespace(
++        nnodes=1,
++        data_parallel_backend="mp",
++        data_parallel_size_local=1,
++        data_parallel_size=1,
++        pipeline_parallel_size=1,
++        prefill_context_parallel_size=1,
++        decode_context_parallel_size=1,
++        use_ubatching=False,
++    )
++    worker.model_config = SimpleNamespace(architecture="Qwen4ExpForCausalLM")
++    worker.vllm_config = SimpleNamespace(weight_transfer_config=None)
++    monkeypatch.setattr(gpu_worker_module.current_platform, "is_cuda", lambda: False)
++    monkeypatch.setattr(gpu_worker_module.current_platform, "is_xpu", lambda: True)
++    monkeypatch.setattr(envs, "VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT", timeout)
++
++    with pytest.raises(ValueError, match="VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT"):
++        worker._validate_ple_offload_config()
++
++
++def test_ple_offload_runner_signals_every_host_target() -> None:
++    class FakeSemaphore:
++        is_host_synchronized = True
++
++        def __init__(self) -> None:
++            self.failures = 0
++
++        def signal_failure(self) -> None:
++            self.failures += 1
++
++    semaphores = [FakeSemaphore() for _ in range(4)]
++    runner = ple_offload_worker.PleOffloadRunner.__new__(
++        ple_offload_worker.PleOffloadRunner
++    )
++    runner._worker_targets = {
++        0: {"ple": [SimpleNamespace(sem=semaphore) for semaphore in semaphores]}
++    }
++
++    runner.signal_failure()
++
++    assert [semaphore.failures for semaphore in semaphores] == [1, 1, 1, 1]
++
++
+ @pytest.mark.parametrize(
+     ("dp_rank", "expected_calls"),
+     [(0, 1), (1, 0)],
+diff --git a/vllm/envs.py b/vllm/envs.py
+index dad07c2f1..723c5532a 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -299,6 +299,7 @@ if TYPE_CHECKING:
+     VLLM_USE_V2_MODEL_RUNNER: bool | None = None
+     VLLM_PLE_CPU_OFFLOAD: bool = False
+     VLLM_PLE_OFFLOAD_READY_TIMEOUT: float = 600.0
++    VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT: float = 600.0
+     VLLM_LOG_MODEL_INSPECTION: bool = False
+     VLLM_DEBUG_MFU_METRICS: bool = False
+     VLLM_WEIGHT_OFFLOADING_DISABLE_PIN_MEMORY: bool = False
+@@ -2050,6 +2051,11 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_PLE_OFFLOAD_READY_TIMEOUT": lambda: float(
+         os.getenv("VLLM_PLE_OFFLOAD_READY_TIMEOUT", "600")
+     ),
++    # Upper bound for a host-synchronized XPU PLE request or buffer release.
++    # CUDA uses device-stream waits and is intentionally unaffected.
++    "VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT": lambda: float(
++        os.getenv("VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT", "600")
++    ),
+     # Log model inspection after loading.
+     # If enabled, logs a transformers-style hierarchical view of the model
+     # with quantization methods and attention backends.
+diff --git a/vllm/model_executor/layers/ple_offload_layer.py b/vllm/model_executor/layers/ple_offload_layer.py
+index e3716e7b8..40adc2387 100644
+--- a/vllm/model_executor/layers/ple_offload_layer.py
++++ b/vllm/model_executor/layers/ple_offload_layer.py
+@@ -81,6 +81,7 @@ class CpuGpuSemaphore:
+ 
+     RESET_VALUE = 0
+     DONE_VALUE = 1
++    FAILED_VALUE = -1
+ 
+     def __init__(self, device: torch.device) -> None:
+         if device.type == "xpu":
+@@ -108,6 +109,8 @@ class CpuGpuSemaphore:
+     def reset(self, stream: torch.cuda.Stream | None = None) -> None:
+         """Enqueue ``WriteValue32(flag=0)`` on ``stream``."""
+         if self.is_host_synchronized:
++            if self._flag_tensor.item() == self.FAILED_VALUE:
++                return
+             self._flag_tensor.fill_(self.RESET_VALUE)
+             return
+         _require_cuda_driver()
+@@ -141,11 +144,34 @@ class CpuGpuSemaphore:
+             "CpuGpuSemaphore.signal",
+         )
+ 
++    def signal_failure(self) -> None:
++        """Wake host-synchronized waiters after a terminal worker failure."""
++        if not self.is_host_synchronized:
++            raise RuntimeError("signal_failure is only valid for host synchronization")
++        self._flag_tensor.fill_(self.FAILED_VALUE)
++
++    def _wait_host_value(self, expected: int, operation: str) -> None:
++        timeout = envs.VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT
++        deadline = time.monotonic() + timeout
++        while True:
++            value = self._flag_tensor.item()
++            if value == expected:
++                return
++            if value == self.FAILED_VALUE:
++                raise RuntimeError(
++                    f"PLE offload worker failed while waiting to {operation}"
++                )
++            if time.monotonic() >= deadline:
++                raise TimeoutError(
++                    f"PLE offload timed out after {timeout}s while waiting "
++                    f"to {operation} (semaphore value={value})"
++                )
++            time.sleep(0.0001)
++
+     def wait_reset(self, stream: torch.cuda.Stream | None = None) -> None:
+         """Enqueue ``WaitValue32(flag==0)`` on ``stream``."""
+         if self.is_host_synchronized:
+-            while self._flag_tensor.item() != self.RESET_VALUE:
+-                time.sleep(0.0001)
++            self._wait_host_value(self.RESET_VALUE, "reuse the output buffer")
+             return
+         _require_cuda_driver()
+         if stream is None:
+@@ -164,8 +190,7 @@ class CpuGpuSemaphore:
+         """Block the host until a shared-host result is ready."""
+         if not self.is_host_synchronized:
+             raise RuntimeError("wait_done is only valid for host synchronization")
+-        while self._flag_tensor.item() != self.DONE_VALUE:
+-            time.sleep(0.0001)
++        self._wait_host_value(self.DONE_VALUE, "receive the CPU result")
+ 
+ 
+ # ---------------------------------------------------------------------------
+diff --git a/vllm/v1/ple_offload/worker.py b/vllm/v1/ple_offload/worker.py
+index 47606f2b6..5251460e1 100644
+--- a/vllm/v1/ple_offload/worker.py
++++ b/vllm/v1/ple_offload/worker.py
+@@ -269,6 +269,7 @@ class PleOffloadWorker:
+ 
+         zmq_context: zmq.Context | None = None
+         pull_socket: zmq.Socket | None = None
++        runner: PleOffloadRunner | None = None
+         try:
+             # The flag lets PleOffloadLayer subclasses execute their complete
+             # constructors instead of becoming empty GPU-worker placeholders.
+@@ -307,6 +308,9 @@ class PleOffloadWorker:
+             runner.busy_loop(pull_socket, shutdown_event)
+         except Exception as error:
+             logger.exception("Unexpected failure in PLE offload worker.")
++            if runner is not None:
++                with contextlib.suppress(Exception):
++                    runner.signal_failure()
+             if ready_writer is not None:
+                 with contextlib.suppress(Exception):
+                     ready_writer.send({"status": "FAILURE", "error": repr(error)})
+@@ -346,6 +350,14 @@ class PleOffloadRunner:
+         """Return PleOffloadLayer names in model traversal order."""
+         return list(self._layers)
+ 
++    def signal_failure(self) -> None:
++        """Wake every host-synchronized TP target after a terminal failure."""
++        for layer_targets in self._worker_targets.values():
++            for targets in layer_targets.values():
++                for target in targets:
++                    if target.sem.is_host_synchronized:
++                        target.sem.signal_failure()
++
+     def _load_weights(self) -> None:
+         """Load only :class:`PleOffloadLayer` subtrees into CPU memory.
+ 
+diff --git a/vllm/v1/worker/gpu_worker.py b/vllm/v1/worker/gpu_worker.py
+index 8cf4039cf..233a6ceca 100644
+--- a/vllm/v1/worker/gpu_worker.py
++++ b/vllm/v1/worker/gpu_worker.py
+@@ -3,6 +3,7 @@
+ """A GPU worker class."""
+ 
+ import gc
++import math
+ import os
+ import time
+ from collections.abc import Callable
+@@ -244,6 +245,9 @@ class Worker(WorkerBase):
+             unsupported.append("architecture")
+         if self.vllm_config.weight_transfer_config is not None:
+             unsupported.append("weight transfer")
++        runtime_timeout = envs.VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT
++        if not math.isfinite(runtime_timeout) or runtime_timeout <= 0:
++            unsupported.append(f"VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT={runtime_timeout!r}")
+ 
+         if unsupported:
+             raise ValueError(
+-- 
+2.43.0
+

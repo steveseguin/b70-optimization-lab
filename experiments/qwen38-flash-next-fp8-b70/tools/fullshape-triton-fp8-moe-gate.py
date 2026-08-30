@@ -4,7 +4,9 @@
 import argparse
 import hashlib
 import json
+import statistics
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 import torch
@@ -24,8 +26,10 @@ from vllm.model_executor.layers.fused_moe.experts.triton_moe import TritonExpert
 from vllm.model_executor.layers.fused_moe.fused_moe import (
     fused_experts,
     get_default_config,
+    try_get_optimal_moe_config,
 )
 from vllm.model_executor.layers.fused_moe.modular_kernel import FusedMoEKernel
+from vllm.model_executor.layers.fused_moe import override_config
 from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
 from vllm.v1.worker.workspace import init_workspace_manager
 
@@ -33,7 +37,7 @@ from vllm.v1.worker.workspace import init_workspace_manager
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--tokens", type=int, choices=(1, 64, 128, 256, 512), required=True
+        "--tokens", type=int, choices=(1, 4, 64, 128, 256, 512), required=True
     )
     parser.add_argument(
         "--ep-rank",
@@ -50,7 +54,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--routing",
-        choices=("cyclic", "all-padding"),
+        choices=("cyclic", "balanced-global", "all-padding"),
         default="cyclic",
         help="Use ordinary valid routing or the captured profile-run padding sentinel",
     )
@@ -60,6 +64,21 @@ def main() -> None:
         default=1,
         help="Repeat the same initialized MoE invocation and report raw output hashes",
     )
+    parser.add_argument(
+        "--candidate-config-json",
+        help="JSON object merged over the default Triton MoE configuration",
+    )
+    parser.add_argument("--warmups", type=int, default=10)
+    parser.add_argument(
+        "--timed-batches",
+        type=int,
+        default=0,
+        help="Enable event timing with this many independent batches",
+    )
+    parser.add_argument("--iterations-per-batch", type=int, default=50)
+    parser.add_argument("--hidden-seed", type=int, default=20260826)
+    parser.add_argument("--hidden-scale", type=float, default=0.01)
+    parser.add_argument("--routing-offset", type=int, default=17)
     parser.add_argument(
         "--model-path",
         type=Path,
@@ -85,8 +104,25 @@ def main() -> None:
     args = parser.parse_args()
     if not 1 <= args.repeats <= 100:
         raise ValueError("repeats must be between 1 and 100")
+    if not 0 <= args.warmups <= 100:
+        raise ValueError("warmups must be between 0 and 100")
+    if not 0 <= args.timed_batches <= 25:
+        raise ValueError("timed-batches must be between 0 and 25")
+    if not 1 <= args.iterations_per_batch <= 200:
+        raise ValueError("iterations-per-batch must be between 1 and 200")
+    if args.routing == "balanced-global" and args.ep_rank is None:
+        raise ValueError("balanced-global routing requires --ep-rank")
+    if not 0.0 < args.hidden_scale <= 10.0:
+        raise ValueError("hidden-scale must be in (0, 10]")
 
-    torch.manual_seed(20260826)
+    candidate_config = None
+    if args.candidate_config_json:
+        candidate_delta = json.loads(args.candidate_config_json)
+        if not isinstance(candidate_delta, dict):
+            raise ValueError("candidate-config-json must decode to an object")
+        candidate_config = None  # Filled after the default is resolved.
+
+    torch.manual_seed(args.hidden_seed)
     device = torch.device("xpu:0")
     dtype = torch.bfloat16
     weight_dtype = torch.float8_e4m3fn
@@ -100,6 +136,16 @@ def main() -> None:
         hidden,
         topk,
         "fp8_w8a8",
+        block_shape,
+    )
+    if args.candidate_config_json:
+        candidate_config = config | candidate_delta
+    resolved_config = try_get_optimal_moe_config(
+        (experts, 2 * intermediate, hidden),
+        (experts, hidden, intermediate),
+        topk,
+        "fp8_w8a8",
+        args.tokens,
         block_shape,
     )
     identity = {
@@ -121,6 +167,14 @@ def main() -> None:
         "input_dtype": str(dtype),
         "weight_dtype": str(weight_dtype),
         "config": config,
+        "candidate_config": candidate_config,
+        "resolved_config": candidate_config or resolved_config,
+        "warmups": args.warmups,
+        "timed_batches": args.timed_batches,
+        "iterations_per_batch": args.iterations_per_batch,
+        "hidden_seed": args.hidden_seed,
+        "hidden_scale": args.hidden_scale,
+        "routing_offset": args.routing_offset,
     }
     print(json.dumps({"event": "start", "identity": identity}), flush=True)
 
@@ -148,7 +202,7 @@ def main() -> None:
             flush=True,
         )
     hidden_states = torch.randn((args.tokens, hidden), device=device, dtype=dtype).mul_(
-        0.01
+        args.hidden_scale
     )
     w1 = torch.empty(
         (experts, 2 * intermediate, hidden),
@@ -281,6 +335,20 @@ def main() -> None:
         topk_weights = torch.zeros(
             (args.tokens, topk), device=device, dtype=torch.float32
         )
+    elif args.routing == "balanced-global":
+        topk_ids = (
+            torch.arange(args.tokens * topk, device=device, dtype=torch.int32)
+            .mul_(131)
+            .add_(args.routing_offset)
+            .remainder_(global_experts)
+            .reshape(args.tokens, topk)
+        )
+        topk_weights = torch.full(
+            (args.tokens, topk),
+            1.0 / topk,
+            device=device,
+            dtype=torch.float32,
+        )
     else:
         topk_ids = (
             torch.arange(args.tokens * topk, device=device, dtype=torch.int32)
@@ -363,10 +431,59 @@ def main() -> None:
                 apply_router_weight_on_input=False,
             )
 
+    if args.ep_rank is not None:
+        first_local_expert = args.ep_rank * experts
+        local_valid_routes = int(
+            (
+                (topk_ids >= first_local_expert)
+                & (topk_ids < first_local_expert + experts)
+            )
+            .sum()
+            .item()
+        )
+    else:
+        local_valid_routes = int((topk_ids >= 0).sum().item())
+    identity["local_valid_routes"] = local_valid_routes
+
     started = time.monotonic()
     output_hashes = []
-    for _ in range(args.repeats):
-        output = invoke()
+    timing_us_per_invoke = []
+    compile_seconds = None
+    config_context = (
+        override_config(candidate_config)
+        if candidate_config is not None
+        else nullcontext()
+    )
+    with config_context:
+        if args.timed_batches:
+            compile_started = time.monotonic()
+            output = invoke()
+            torch.xpu.synchronize()
+            compile_seconds = time.monotonic() - compile_started
+            for _ in range(args.warmups):
+                output = invoke()
+            torch.xpu.synchronize()
+            torch.xpu.reset_peak_memory_stats()
+            for _ in range(args.timed_batches):
+                start_event = torch.xpu.Event(enable_timing=True)
+                end_event = torch.xpu.Event(enable_timing=True)
+                start_event.record()
+                for _ in range(args.iterations_per_batch):
+                    output = invoke()
+                end_event.record()
+                end_event.synchronize()
+                timing_us_per_invoke.append(
+                    start_event.elapsed_time(end_event)
+                    * 1000.0
+                    / args.iterations_per_batch
+                )
+        for _ in range(args.repeats):
+            output = invoke()
+            torch.xpu.synchronize()
+            raw = output.contiguous().view(torch.uint8).cpu().numpy().tobytes()
+            output_hashes.append(hashlib.sha256(raw).hexdigest())
+
+    if not output_hashes:
         torch.xpu.synchronize()
         raw = output.contiguous().view(torch.uint8).cpu().numpy().tobytes()
         output_hashes.append(hashlib.sha256(raw).hexdigest())
@@ -382,6 +499,32 @@ def main() -> None:
         "output_sha256_first": output_hashes[0],
         "output_sha256_unique_values": sorted(set(output_hashes)),
         "unique_output_sha256": len(set(output_hashes)),
+        "compile_seconds": compile_seconds,
+        "timing_us_per_invoke": timing_us_per_invoke,
+        "timing_median_us": (
+            statistics.median(timing_us_per_invoke) if timing_us_per_invoke else None
+        ),
+        "timing_p10_us": (
+            sorted(timing_us_per_invoke)[
+                max(0, int(0.1 * (len(timing_us_per_invoke) - 1)))
+            ]
+            if timing_us_per_invoke
+            else None
+        ),
+        "timing_p90_us": (
+            sorted(timing_us_per_invoke)[
+                min(
+                    len(timing_us_per_invoke) - 1,
+                    int(0.9 * (len(timing_us_per_invoke) - 1)),
+                )
+            ]
+            if timing_us_per_invoke
+            else None
+        ),
+        "memory_allocated": torch.xpu.memory_allocated(),
+        "memory_reserved": torch.xpu.memory_reserved(),
+        "max_memory_allocated": torch.xpu.max_memory_allocated(),
+        "max_memory_reserved": torch.xpu.max_memory_reserved(),
     }
     if not result["finite"]:
         raise RuntimeError(f"non-finite MoE output: {result}")
