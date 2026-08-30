@@ -1,0 +1,15 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-base-determinism-20260830-r1",
+  "status": "replay-preregistered-after-pilot-and-before-replay-measurement",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp1-base-oracle-digests.json",
+    "sha256": "6a82ff9e68031d5232ff9dc656d26a3262a727db8f0f0b6fded9a0963e0cc827",
+    "source_result_sha256": "f0d82bdd488a71ec667999aa1f3ff1c2a11684f8c7d24feb2b2ba44ced6735a5",
+    "rows": 16,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": "Identical deep-base TP1 profile: Q4_K_M, MTP0, c16, context 8192, batch 2048, ubatch 256, 750 ms cohort, no cache, temperature 0, seed 42, with optimization/DNN/fusion/MMQ/Q8-dedup/MMVQ-pad/MMVQ-split/MKL-direct/immediate-command-list doors all zero.",
+  "gate": "Fresh replay must match 16/16 token-ID digests and pass completion, cache, isolation, collision, WDC-negative, kernel, and cleanup gates.",
+  "interpretation": "A pass establishes the deterministic floor and starts feature reintroduction. A failure proves the issue lies below the configurable integration optimization doors and triggers base-kernel/runtime investigation.",
+  "publication_policy": "The pilot's 12.803593777759481 tok/s and replay speed are diagnostic only."
+}
