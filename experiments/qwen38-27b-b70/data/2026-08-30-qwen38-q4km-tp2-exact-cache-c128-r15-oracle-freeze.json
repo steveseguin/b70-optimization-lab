@@ -1,0 +1,22 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-c128-20260830-r15",
+  "status": "fresh c128 same-shape control-batch oracle frozen before candidate measurement",
+  "oracle_file": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-c128-batch-oracle-r15.json",
+  "oracle_sha256": "66033c1ba90dbcce02335772b2467dbbbfd5c1e920b03917e4cebfb1f23e72ff",
+  "pilot_result_sha256": "c242d2defeafdaeed40f34fb42e119606a1837dfe2c54489c85631d6f2719453",
+  "pilot_qualification_sha256": "4c9154355cedbb5035ea737754d4775dc20ced594a4ecbe68950dceb04c2e133",
+  "pilot_summary_sha256": "3e2f999f350df37bef34b2c0e9e58c8c466a69b4b75cce1f893e1ee49c718755",
+  "pilot_vram_monitor_sha256": "b8623361133fe42aeec61b3dccfb56db69c6b0796a75c520a39206e665c61c6b",
+  "pilot_batch": {
+    "aggregate_tok_s_nonpublishable": 194.4232879828338,
+    "complete_128_token_rows": "128/128",
+    "exported_oracle_digest_exact_to_batch": "128/128",
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collisions": 0,
+    "sequential_reference_exact": "67/128",
+    "gpu0_peak_used_mib": 21677.977,
+    "gpu1_peak_used_mib": 21549.863
+  },
+  "runtime_context": "Requested and observed 32768-token pool, exactly 128x256; no llama.cpp context rounding.",
+  "quality_boundary": "The committed oracle is verified against all 128 synchronized control-batch token arrays and tests candidate-vs-control identity. The separate 67/128 sequential comparison prevents a batch-invariant-text claim."
+}
