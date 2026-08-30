@@ -1563,6 +1563,16 @@ selector and leaves every protected result intact. See the
 [A17 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a17-host-freeze-interruption.md)
 and
 [A18 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a18-post-reboot-trace-prereg.md).
+A18 completed load, placement, warmup, and health, then stopped before its
+first request because concurrent mainline work had changed the frozen quality-
+helper hash. The change only adds an optional argument that this client does
+not pass, but the no-drift gate correctly refused it. A18 is a clean pre-
+request contract stop, not a model result. A19 moves to new paths/port and
+freezes the reviewed current helper hash; all model and performance selectors
+and the A16 trace-comparison interpretation remain exact. See the
+[A18 stop](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a18-helper-hash-stop.md)
+and
+[A19 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a19-current-helper-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
