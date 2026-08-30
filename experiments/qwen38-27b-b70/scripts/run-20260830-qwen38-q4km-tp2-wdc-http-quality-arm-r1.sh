@@ -7,6 +7,7 @@ profile=${PROFILE:?set PROFILE to realistic or concurrency}
 arm=${ARM:?set ARM to control or candidate}
 attempt=${ATTEMPT:-1}
 baseline_mode=${BASELINE_MODE:-0}
+pilot_mode=${PILOT_MODE:-0}
 q4k_reorder=${Q4K_REORDER:-1}
 batch_size=${BATCH_SIZE:-2048}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
@@ -43,7 +44,11 @@ case ${profile} in realistic|concurrency) ;; *) fail 'PROFILE must be realistic 
 case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be control or candidate' ;; esac
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${baseline_mode}" == 0 || "${baseline_mode}" == 1 ]] || fail 'BASELINE_MODE must be 0 or 1'
+[[ "${pilot_mode}" == 0 || "${pilot_mode}" == 1 ]] || fail 'PILOT_MODE must be 0 or 1'
 [[ "${baseline_mode}" == 0 || "${arm}" == control ]] || fail 'BASELINE_MODE is control-only'
+[[ "${pilot_mode}" == 0 || "${arm}" == control ]] || fail 'PILOT_MODE is control-only'
+[[ "${pilot_mode}" == 0 || "${profile}" == concurrency ]] || fail 'PILOT_MODE is concurrency-only'
+[[ "${baseline_mode}" == 0 || "${pilot_mode}" == 0 ]] || fail 'BASELINE_MODE and PILOT_MODE are mutually exclusive'
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || fail 'Q4K_REORDER must be 0 or 1'
 [[ "${arm}" == control || "${q4k_reorder}" == 1 ]] || fail 'candidate requires Q4K_REORDER=1'
 [[ "${batch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'BATCH_SIZE must be positive'
@@ -180,7 +185,6 @@ if baseline_mode:
     }
     (root / "realistic-oracle.json").write_text(json.dumps(baseline, indent=2) + "\n")
 print(json.dumps(summary, indent=2))
-if not summary["quality_qualified"]: raise SystemExit(3)
 PY
 else
   harness_cmd=(python3 "${concurrency_harness}"
@@ -194,24 +198,30 @@ else
   "${harness_cmd[@]}" | tee "${run_dir}/harness-summary.txt"
   qualifier_cmd=(python3 "${concurrency_qualifier}" --result "${run_dir}/result.json"
     --out "${run_dir}/qualification.json" --active-slots 64)
-  if [[ "${baseline_mode}" == 1 ]]; then
+  if [[ "${baseline_mode}" == 1 || "${pilot_mode}" == 1 ]]; then
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${batch_size}" "${queue_settle_ms}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
-batch_size, queue_settle_ms = int(sys.argv[4]), int(sys.argv[5])
+pilot_mode = sys.argv[4] == "1"
+batch_size, queue_settle_ms = int(sys.argv[5]), int(sys.argv[6])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
+quality_qualified = quality.get("batch_gates_passed") is True and (baseline_mode or pilot_mode or oracle_exact_all)
 summary = {
     "profile": "concurrency",
     "arm": arm,
     "baseline_generation": baseline_mode,
-    "publishable_measurement": not baseline_mode,
-    "quality_qualified": quality.get("batch_gates_passed") is True and (baseline_mode or oracle_exact_all),
+    "pilot_generation": pilot_mode,
+    "publishable_measurement": not baseline_mode and not pilot_mode and quality_qualified,
+    "quality_qualified": quality_qualified,
+    "pinned_oracle_exact_all": oracle_exact_all,
+    "pinned_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
+    "pinned_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
     "sequential_oracle_exact_all": oracle_exact_all,
     "sequential_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
     "sequential_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
@@ -224,7 +234,6 @@ summary = {
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))
-if not summary["quality_qualified"]: raise SystemExit(3)
 PY
 fi
 
@@ -239,4 +248,7 @@ if [[ "${profile}" == concurrency && "${arm}" == candidate && "${engaged}" != 1 
 if [[ "${arm}" == control && "${engaged}" != 0 ]]; then fail 'control WDC negative control failed'; fi
 printf '%s\n' "${engaged}" >"${run_dir}/wdc-engaged.txt"
 sha256sum "${run_dir}/result.json" "${run_dir}/summary.json" >"${run_dir}/result-sha256sums.txt"
+if ! jq -e '.quality_qualified == true' "${run_dir}/summary.json" >/dev/null; then
+  fail 'strict output-quality gate failed'
+fi
 printf 'PASS: %s\n' "${run_dir}"

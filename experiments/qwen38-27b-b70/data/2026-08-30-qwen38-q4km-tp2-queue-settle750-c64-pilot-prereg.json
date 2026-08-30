@@ -1,0 +1,42 @@
+{
+  "campaign": "qwen38-q4km-tp2-queue-settle750-c64-pilot-20260830-r1",
+  "status": "preregistered-before-measurement",
+  "purpose": "Generate a new non-publishable c64 control oracle with an admission window longer than the measured 451 ms request-arrival split.",
+  "prior_result": {
+    "settle_ms": 50,
+    "fresh_replay_exact": "55/64",
+    "first_admission_count": 4,
+    "delay_before_remaining_admissions_ms": 451,
+    "conclusion": "50 ms did not form one stable c64 admission cohort."
+  },
+  "fixed_configuration": {
+    "topology": "TP2 tensor split 1,1",
+    "quant": "Q4_K_M",
+    "MTP": 0,
+    "parallel_slots": 64,
+    "context": 32768,
+    "batch_size": 4096,
+    "ubatch_size": 256,
+    "concurrency": 64,
+    "generated_tokens_per_request": 128,
+    "queue_settle_ms": 750,
+    "Q4K_REORDER": 1,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset",
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "arm_runner_sha256": "2f1a2c0a03ba354792dd753680c7b0dc2f139d9cc994a61aa4db8f51040add5f",
+    "comparison_oracle_sha256": "4be8f8fbd18f2469ab3d0769ad0f1e36bd14ac880236d672f375785d72d3e437"
+  },
+  "pilot_policy": "PILOT_MODE=1. Aggregate throughput and comparison-oracle match count are diagnostic only and never publishable. The run may generate a new c64 oracle only if all 64 responses are complete, cache counts are zero, token-ID isolation is complete, collisions are zero, WDC is absent, and kernel/server gates are clean.",
+  "next_gate": "Freeze the new c64 oracle hash, then preregister two fresh strict replays at the identical 750 ms shape. Any replay below 64/64 rejects this scheduler approach."
+}
