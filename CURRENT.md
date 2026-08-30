@@ -1524,6 +1524,12 @@ reused. This is an infrastructure interruption, neither a reliability pass nor
 a model failure, and it changes no protected result. The exact contract must
 move to a new attempt identity. See the
 [A14 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a14-host-reboot-interruption.md).
+The exact recovery successor is frozen as A15 on a new attempt, port, and set
+of lifecycle/evidence paths. It retains every A14 model, source, placement,
+cache, prompt, authority, and interpretation field. A full pass completes the
+two-server reliability/losslessness contract; any failure preserves A13 and
+all older results unchanged. See the
+[A15 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a15-recovery-replica-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
