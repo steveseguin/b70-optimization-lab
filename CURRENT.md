@@ -1648,6 +1648,10 @@ this bounded retry in the recovered A22 boot; hard gates require at least
 NVMe bytes before the one-shot claim. All inference, tracing, quality, and
 performance selectors remain A23-exact. See the
 [A24 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a24-local-inner-trace-prereg.md).
+Its first supervisor invocation stopped before the launch wrapper because the
+generated wrapper/client names omitted the new `-local` suffix. No attempt
+marker, model read, run directory, or GPU process existed. Those two references
+and dependent hashes were corrected before retry; inference identity is exact.
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
