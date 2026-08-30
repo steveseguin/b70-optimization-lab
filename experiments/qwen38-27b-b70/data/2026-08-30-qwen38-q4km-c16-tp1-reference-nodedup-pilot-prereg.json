@@ -1,0 +1,20 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-reference-nodedup-determinism-20260830-r1",
+  "status": "pilot-preregistered-before-measurement",
+  "purpose": "Isolate Q8 quantization dedup as a source of one-GPU run-to-run nondeterminism.",
+  "only_change_from_failed_intermediate_reference": "Set GGML_SYCL_Q8_QUANT_DEDUP=0 via Q8_DEDUP_OVERRIDE=0. All other model, topology, HTTP, batching, seed, cache, admission, and feature-profile settings remain identical.",
+  "fixed_configuration": "TP1, Q4_K_M, MTP0, FEATURE_PROFILE=reference, Q4K_REORDER=0, c16, context 8192, batch 2048, ubatch 256, 750 ms one-cohort admission, 128 tokens, zero cache, temperature 0, seed 42.",
+  "pilot_policy": "Generate a non-publishable 16-row no-dedup oracle only after completion, cache, isolation, collision, WDC-negative, kernel, and cleanup gates pass.",
+  "next_gate": "Freeze the no-dedup oracle and require a fresh 16/16 replay. A pass identifies Q8 dedup as causal enough for a source audit; a failure moves to remaining base integration defaults.",
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "launcher_sha256": "fee6515297b72f5381793c43b8858d8af77fb432dc3b96d34fed118f487c1ca3",
+    "arm_runner_sha256": "d862ff7382cb8549162b7c9c7e652503841e271d7b15c5a7d44a5a9702f0bf9d",
+    "comparison_reference_oracle_sha256": "1e399956c836d5e46f58a664639341899c275f70aa85c446e4876c89ffa3ea66"
+  }
+}

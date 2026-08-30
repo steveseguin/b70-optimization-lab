@@ -15,6 +15,7 @@ tp_size=${TP_SIZE:-2}
 concurrency=${CONCURRENCY:-64}
 context_override=${CONTEXT_SIZE:-}
 feature_profile=${FEATURE_PROFILE:-tuned}
+q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -62,6 +63,7 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ -z "${context_override}" || "${context_override}" =~ ^[1-9][0-9]*$ ]] || fail 'CONTEXT_SIZE must be positive'
 [[ "${feature_profile}" == tuned || "${feature_profile}" == reference ]] || fail 'FEATURE_PROFILE must be tuned or reference'
 [[ "${feature_profile}" == tuned || "${arm}" == control ]] || fail 'FEATURE_PROFILE=reference is control-only'
+[[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || fail 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
 
@@ -137,6 +139,7 @@ timeout --signal=INT --kill-after=30s 3600s env \
   ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
   TP_SIZE="${tp_size}" \
   FEATURE_PROFILE="${feature_profile}" \
+  Q8_DEDUP_OVERRIDE="${q8_dedup_override}" \
   CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE="${batch_size}" \
   QUEUE_SETTLE_MS="${queue_settle_ms}" \
   UBATCH_SIZE=256 THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
@@ -213,7 +216,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -221,6 +224,7 @@ pilot_mode = sys.argv[4] == "1"
 batch_size, queue_settle_ms = int(sys.argv[5]), int(sys.argv[6])
 tp_size, concurrency, context = map(int, sys.argv[7:10])
 feature_profile = sys.argv[10]
+q8_dedup_override = None if sys.argv[11] == "" else int(sys.argv[11])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -248,6 +252,7 @@ summary = {
     "concurrency": concurrency,
     "context": context,
     "feature_profile": feature_profile,
+    "q8_dedup_override": q8_dedup_override,
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))

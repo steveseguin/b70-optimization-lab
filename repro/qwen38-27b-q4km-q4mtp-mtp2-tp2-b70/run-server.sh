@@ -17,6 +17,7 @@ q4k_reorder=${Q4K_REORDER:-0}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 tp_size=${TP_SIZE:-2}
 feature_profile=${FEATURE_PROFILE:-tuned}
+q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || { printf 'MTP_DEPTH must be 0 or 2\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K must be 0 or 1\n' >&2; exit 2; }
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
@@ -24,6 +25,7 @@ feature_profile=${FEATURE_PROFILE:-tuned}
 [[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 1000\n' >&2; exit 2; }
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
 [[ "${feature_profile}" == tuned || "${feature_profile}" == reference ]] || { printf 'FEATURE_PROFILE must be tuned or reference\n' >&2; exit 2; }
+[[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || { printf 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2\n' >&2; exit 2; }
 for value in "${ctx_size}" "${parallel_slots}" "${batch_size}" "${ubatch_size}" "${threads}"; do
   [[ "${value}" =~ ^[1-9][0-9]*$ ]] || { printf 'numeric settings must be positive integers\n' >&2; exit 2; }
 done
@@ -63,6 +65,9 @@ if [[ "${feature_profile}" == reference ]]; then
   export GGML_SYCL_FUSED_QK_NORM_ROPE=0 GGML_SYCL_FUSED_ROPE_SET_ROWS=0 GGML_SYCL_FUSED_SWIGLU_Q8=0
   export GGML_SYCL_FUSE_EXT=0 GGML_SYCL_MMQ_Q4K_REORDER=0 GGML_SYCL_QDEDUP_STATS=0
   unset GGML_SYCL_REORDER_IN_GEMM GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
+fi
+if [[ -n "${q8_dedup_override}" ]]; then
+  export GGML_SYCL_Q8_QUANT_DEDUP="${q8_dedup_override}"
 fi
 unset GGML_SYCL_FORCE_REORDER
 if [[ "${feature_profile}" == tuned && "${q4k_reorder}" == 1 ]]; then
