@@ -1,0 +1,20 @@
+{
+  "campaign": "qwen38-q4km-tp2-c112-down-20260830-r21",
+  "status": "closed negative after attempt 1",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, exact F16 cache only for ffn_down, c112, effective total context 57344, batch 2048, ubatch 256, prompt cache off",
+  "attempt_1": {
+    "aggregate_tok_s_nonpublishable": 182.09751041530376,
+    "same_shape_batch_oracle_exact": "90/112",
+    "quality_qualified": false,
+    "gpu0_peak_used_mib": 26600.125,
+    "gpu1_peak_used_mib": 26474.238281,
+    "result_sha256": "0eced58e8c5392dc629d073da3df80c333321ee7c694babd8ba3c38cad1b394d",
+    "summary_sha256": "80915576a7d1e0f4ec108c1c4b05c73aa6cadd97dfd60b40638bdab7fb65644a",
+    "qualification_sha256": "2a02fa892dcc929129a7fedd745f2bf5b7da0fd2106654b0f8734b710a0f823a",
+    "server_log_sha256": "a4b81c4ddad2575501195e8b2dc767c3ef9f9bd43a22b12b5ffce70412aee555",
+    "runtime_environment_sha256": "d198c39e4605c13c9c244e1850ded98e52101e8bc6c8e1af26d32916a916c17b",
+    "vram_monitor_sha256": "a39030adea02d443eac44eea998b249078dfc3ee36c9c4be0075df8aa4aca40e"
+  },
+  "decision": "Closed without repeat. The single-family cache retained about 6 GiB/card headroom but was slower than the c112 cache-off pilot and changed 22/112 outputs. c112 is closed; the qualified c96 pair remains the aggregate optimum.",
+  "scope": "Negative shape-specific evidence only; no r21 rate is public."
+}

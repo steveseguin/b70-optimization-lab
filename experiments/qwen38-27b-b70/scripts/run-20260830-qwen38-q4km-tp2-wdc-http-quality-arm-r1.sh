@@ -205,7 +205,7 @@ tr '\0' ' ' <"/proc/${pid}/cmdline" >"${run_dir}/server-command.txt"; printf '\n
 grep -Eq -- "--ubatch-size[[:space:]]+${ubatch_size}([[:space:]]|$)" "${run_dir}/server-command.txt" || \
   fail "launched server does not carry requested UBATCH_SIZE=${ubatch_size}"
 tr '\0' '\n' <"/proc/${pid}/environ" | \
-  grep -E '^(GGML_|LLAMA_SERVER_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | sort >"${run_dir}/runtime-environment.txt"
+  grep -E '^(GGML_|LLAMA_SERVER_|DNNL_VERBOSE=|ONEDNN_VERBOSE=|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | sort >"${run_dir}/runtime-environment.txt"
 curl -fsS "http://127.0.0.1:${port}/props" >"${run_dir}/props.json"
 curl -fsS "http://127.0.0.1:${port}/slots" >"${run_dir}/slots-before.json"
 

@@ -1,0 +1,13 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-onednn-profile-20260830-r22",
+  "status": "preregistered before diagnostic run",
+  "purpose": "Replace further flag/shape guessing with measured primitive-level timing from the qualified c96 exact-cache path, then use the dominant primitive or shape to choose the next code candidate.",
+  "classification": "diagnostic-only; profiling overhead makes every endpoint rate nonpublishable",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qualified Qwen3.8-27B Q4_K_M llama.cpp SYCL TP2 MTP0 path, exact F16 cache for ffn_down and ffn_gate, c96, effective total context 49152, batch 2048, ubatch 256, FUSE_EXT=31, prompt cache off, frozen same-shape oracle. Add only ONEDNN_VERBOSE=profile_exec.",
+  "oracle_sha256": "f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1",
+  "runner_sha256": "b518ea5c0611afc43accdbd2b7fc67f2af8b6eea15cc1a5a5fe43ff77df40789",
+  "analysis_plan": "Archive the server log and runtime environment, parse oneDNN primitive exec records, aggregate execution time and call count by primitive implementation and problem descriptor, and report coverage/limitations. Do not compare the profiled wall rate with an unprofiled endpoint rate.",
+  "success_gate": "The live runtime environment contains ONEDNN_VERBOSE=profile_exec, the log contains parseable oneDNN exec timing records, the strict harness completes with zero cached tokens and complete token IDs, and both GPUs remain healthy.",
+  "failure_policy": "If verbose timing is absent, malformed, or destabilizes the run, retain the diagnostic failure and do not infer a bottleneck. No r22 throughput is eligible for promotion."
+}

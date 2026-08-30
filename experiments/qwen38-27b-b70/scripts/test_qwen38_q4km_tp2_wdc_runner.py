@@ -33,6 +33,10 @@ class Qwen38Q4kmRunnerTests(unittest.TestCase):
         self.assertIn('"ubatch_size": ubatch_size', source)
         self.assertNotIn('UBATCH_SIZE=256 THREADS=8', source)
 
+    def test_onednn_profile_environment_is_archived(self) -> None:
+        source = RUNNER.read_text()
+        self.assertIn('DNNL_VERBOSE=|ONEDNN_VERBOSE=', source)
+
 
 if __name__ == "__main__":
     unittest.main()
