@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "status": "rejected_at_exact_4k_repeat_and_authority_gate",
+  "classification": "grade_d_bounded_reliability_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "f68c9386fe5af54055bdf20684b269b9c1340e44",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes_per_rank": 134217728,
+    "cache_tokens_reported": 4747,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "ple_host_bytes_all_ranks": 51200245760,
+    "input_embedding": "device",
+    "model_memory_reported_gib_per_rank": 31.57,
+    "treatment": "stable score-descending, logical-index-ascending XPU QSA group selection"
+  },
+  "gates": {
+    "four_rank_collective": "passed",
+    "offload_receipts": "4/4 exact 11.92 GiB",
+    "recovery_canary": "passed",
+    "semantic_quality": "6/7; sole inherited code_execution response 30 instead of 14",
+    "repeat": "16/16 one hash",
+    "exact_4k_needle": "passed with zero cached and created-cache tokens",
+    "short_output_authority": "3/3 exact",
+    "exact_4k_transport": "2/2 passed with exact usage, length stops, 128 token IDs, and zero cached tokens",
+    "exact_4k_output_authority": "0/2",
+    "exact_4k_same_server_repeat": false,
+    "first_difference_between_exact_4k_rows_zero_based": 2,
+    "different_generated_tokens_between_exact_4k_rows": 125,
+    "client_rc": 1,
+    "supervisor_final_rc": 143,
+    "postflight": "no owned residue or listener; four cards discoverable and below 43 MiB",
+    "b70_addressed_journal_event": false
+  },
+  "performance": {
+    "short": {
+      "protocol": "p146/o256/c1 after first text; row 1 includes one conditioning request and rows 2-3 do not",
+      "rates_tok_s": [5.4491653923492684, 5.339399321562923, 5.381339929841032],
+      "diagnostic_median_tok_s": 5.381339929841032,
+      "protected_prior_median_tok_s": 5.223788770075911,
+      "diagnostic_uplift_percent": 3.016032361,
+      "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+      "credit": "diagnostic only because fresh-server qualification failed later"
+    },
+    "exact_4k": {
+      "protocol": "p4096/o128; conventional 99 inter-token intervals",
+      "rates_tok_s": [5.226537298953697, 5.272195767963965],
+      "diagnostic_median_tok_s": 5.249366533458831,
+      "protected_prior_median_tok_s": 4.7578181021380175,
+      "diagnostic_uplift_percent": 10.331383436,
+      "ttft_s": [113.29206263200012, 108.36557240699995],
+      "output_token_ids_sha256": [
+        "b55aa3abdbe77dd7dffb39b5c33ed023bdb90f1c31fcb93860de17f7a69c19e0",
+        "f2829dab720e8e1b8f1473625d51c9d298dfad41599d6c15a66568a573cf645d"
+      ],
+      "retained_authority_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "cached_tokens": [0, 0],
+      "credit": "none"
+    }
+  },
+  "host_caveat": {
+    "clean_host_credit": false,
+    "reason": "The run window retained corrected APEI/NVMe receiver records for local NVMe 0000:01:00.0. No event named a B70 address and no I/O error was recorded."
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt15",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt15-supervisor",
+    "sha256": {
+      "quality-current.json": "0e2d9ed5231be503ef1512fa0f48584c7dedb7667de079b682130b567e3149a5",
+      "bench-short-r1.json": "ff819d6fe357fb7c0d78ab511f5332eed2afbd0272e56f387a2c356c4ff5eb4e",
+      "bench-short-r2.json": "b7b949bbc869ccacffc008fb398f5e084925341f26b9d9b6d71499ee3cfbafbc",
+      "bench-short-r3.json": "ef960973cadb5bbb0c6fea9bbbca6188e17d81926f93423f93b950d429ecab7b",
+      "exact-depth-4k-r1.json": "0d21e807fac3e2824d409973eecf6d2e7acd1eafa6b04e35f6c17329368aa500",
+      "exact-depth-4k-r2.json": "2524e17a870cfd1892f8ffaf79094125a5c7513fd2aaea2f17826edc3dcebd37",
+      "identity.txt": "91874644ee25924a4e06cf51f12048ccf7a4533de3c42ce09be205e7f060f9d7",
+      "offload-log-receipt.txt": "d078cb68beb7c0705535a045ffd657adcadf9eed5cbb526fffffcba3056360cf",
+      "server.log": "339b45a3dc1386298a8ea69e5e35b8a1d4201381001ec26927efbb84a4e2bac1",
+      "supervisor-final.rc": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396",
+      "kernel-journal.log": "355cc3a91f309405a730b9777573d17b5291b2e597d424298b8f55d87e383039"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "Do not promote the deterministic QSA selection patch or PLE-only placement as reliable/lossless. The patch closes a real tie-order mechanism but is insufficient: residual exact-4K forward/score variability remains. Preserve A13 as a bounded same-server positive and A15 as the required reliability negative. Diagnose the QSA score/reduction path before another full model load."
+}

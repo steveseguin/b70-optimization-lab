@@ -1530,6 +1530,17 @@ cache, prompt, authority, and interpretation field. A full pass completes the
 two-server reliability/losslessness contract; any failure preserves A13 and
 all older results unchanged. See the
 [A15 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a15-recovery-replica-prereg.md).
+A15 passed bring-up, recovery, the inherited 6/7 semantic boundary, 16/16
+repeat, cache-zero exact-4K needle, and all three protected short hashes. Its
+short median was `5.381340 tok/s`, essentially identical to A13. Both exact-4K
+rows passed transport at `5.226537 / 5.272196 tok/s`, but returned different
+non-authority hashes and first diverged at generated token 2. The stable QSA
+selection treatment therefore closes a real tie-order mechanism but is not
+sufficient for reliable/lossless 4K inference. It remains unpromoted; A13 is a
+bounded same-server positive, A15 is the required reliability negative, and no
+protected result changed. The next bounded work is diagnosis of the QSA
+score/reduction path before another full model load. See the
+[A15 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a15-qsa-stable-reliability-negative.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
