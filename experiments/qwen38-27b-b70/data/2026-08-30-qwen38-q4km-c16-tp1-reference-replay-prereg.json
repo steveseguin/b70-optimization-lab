@@ -1,0 +1,15 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-reference-determinism-20260830-r1",
+  "status": "replay-preregistered-after-pilot-and-before-replay-measurement",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp1-reference-oracle-digests.json",
+    "sha256": "1e399956c836d5e46f58a664639341899c275f70aa85c446e4876c89ffa3ea66",
+    "source_result_sha256": "72ea82597a3eba190e63075358a7a063f3178ce9516667fdce87328b9d9babfc",
+    "rows": 16,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": "Identical to the reference pilot: TP1, Q4_K_M, MTP0, c16, context 8192, batch 2048, ubatch 256, 750 ms one-cohort admission, zero cache, temperature 0, seed 42, FEATURE_PROFILE=reference, Q4K_REORDER=0.",
+  "gate": "Fresh replay must match 16/16 token-ID digests and pass completion, cache, isolation, collision, WDC-negative, kernel, and cleanup gates.",
+  "known_profile_boundary": "The first reference profile disables all explicit lab fusion/Q8-handoff/reorder doors but live census showed ENABLE_OPT/DNN/FUSION/MMQ, Q8 quantization dedup, MMVQ pad/split, and MKL direct still at integration defaults. A replay failure therefore triggers a deeper reference profile; a pass triggers feature-group bisection.",
+  "publication_policy": "Pilot and replay rates are diagnostic only."
+}
