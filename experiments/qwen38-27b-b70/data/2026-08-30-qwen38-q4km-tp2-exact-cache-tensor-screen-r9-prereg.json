@@ -1,0 +1,17 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-tensor-screen-20260830-r9",
+  "status": "preregistered before either candidate measurement",
+  "purpose": "Determine whether caching the exact incumbent F16 representation of ffn_gate or ffn_up individually beats the qualified ffn_down c64 aggregate profile.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 64 pinned slots, total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs per request, inference admission target 64 with 1000 ms fail-safe ceiling.",
+  "frozen_oracle": {
+    "source": "/mnt/fast-ai/bench-results/qwen38-q4km-tp2-public-profile-cache-c64-20260830-r8-pilot-concurrency-control-attempt1/oracle-digests.json",
+    "sha256": "060137a9b3338353cfafeae38fbcf22881fa4eac6816939f33cdc3b78bc465ff"
+  },
+  "ordered_arms": [
+    "One fresh ffn_gate-only exact-cache candidate.",
+    "One fresh ffn_up-only exact-cache candidate."
+  ],
+  "advance_rule": "Each arm must independently pass 64/64 complete token identity, zero cached tokens, zero cross-base collisions, cache liveness, clean shutdown, and kernel-health gates. Repeat only a candidate that exceeds 168.344562 tok/s, the higher of the two already-qualified ffn_down runs. A one-run screen cannot replace the public result.",
+  "publication_policy": "Failed, slower, OOM, or single-run speeds remain scoped screening evidence. No interpolation, extrapolation, best-run promotion, prompt/output caching, or transfer to single-user decode."
+}
