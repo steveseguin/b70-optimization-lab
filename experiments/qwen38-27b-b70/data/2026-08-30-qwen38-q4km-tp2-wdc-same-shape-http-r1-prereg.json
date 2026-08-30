@@ -1,0 +1,41 @@
+{
+  "campaign": "qwen38-q4km-tp2-wdc-same-shape-http-20260830-r1",
+  "status": "preregistered-before-candidate-measurement",
+  "purpose": "Require WDC to preserve the exact output of the same c64 control shape and the exact diverse single-user control outputs.",
+  "known_boundary": "This backend is batch-shape-sensitive: the WDC-off control matched 38/64 sequential outputs with reorder on and 36/64 with reorder off. This campaign does not call that sequential-to-c64 boundary exact. It tests fresh-server determinism and candidate parity at the deployment shape.",
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "realistic_oracle_sha256": "cc2c44acaa8f8ffc8faaf67ddb63a1764f9ad39ad22690db96b9b87ac8b8d6ce",
+    "c64_shaped_oracle_sha256": "eb6ced9b1a86e6324525249f873f7f046aca54eb39e3ce315bf557c21fa0aa5b"
+  },
+  "fixed_common_identity": {
+    "topology": "TP2 tensor 1,1",
+    "quant": "Q4_K_M",
+    "MTP": 0,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_REORDER_IN_GEMM": 1,
+    "GGML_SYCL_FORCE_REORDER_Q4K": 1,
+    "GGML_SYCL_DISABLE_REORDER_Q6K": 1
+  },
+  "arms": {
+    "control": "GGML_SYCL_WDC_Q4K unset",
+    "candidate": "GGML_SYCL_WDC_Q4K=1"
+  },
+  "run_order": [
+    "concurrency-control-attempt1",
+    "realistic-candidate-attempt1",
+    "concurrency-candidate-attempt1",
+    "concurrency-candidate-attempt2"
+  ],
+  "gates": {
+    "control_c64_replay": "Fresh control matches all 64 retained c64-shaped token-ID digests.",
+    "candidate_realistic": "All 12 diverse 512-token responses exactly match the two-run current control oracle; workload/cache/kernel gates pass.",
+    "candidate_c64": "Both fresh candidate servers match all 64 c64-shaped control token-ID digests, cache counts are zero, collisions are zero, and WDC engagement is visible.",
+    "performance": "Candidate median c64 HTTP aggregate throughput is reported only if all exact-output gates pass."
+  },
+  "publication_policy": "A pass supports a c64 deployment-shape result with the batch-shape-sensitivity caveat. It does not make raw batched-bench speed or sequential-to-c64 equality a headline."
+}
