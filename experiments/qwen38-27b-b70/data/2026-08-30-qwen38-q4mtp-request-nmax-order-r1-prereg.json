@@ -1,0 +1,84 @@
+{
+  "schema": "neural.download.qwen38-q4mtp-request-nmax-order-prereg.v1",
+  "campaign_id": "qwen38-q4mtp-request-nmax-order-20260830-r1",
+  "created_utc": "2026-08-30T15:04:21Z",
+  "status": "preregistered-before-execution",
+  "question": "Is the replicated users=2 slowdown caused by the explicit request field or by measuring low concurrency after sustained high-load work on the same server?",
+  "hardware": {
+    "host": "steve-TURIND8-2L2T",
+    "accelerators": "2x Intel Arc Pro B70 32 GiB",
+    "remote_hosts_authorized": false
+  },
+  "identities": {
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "408e3b3cc1e4f48e5d955d5acf72444e0f1ddfaf5802c19f3d69b181bb8eecb9",
+    "libggml_sycl_sha256": "256312e871752d4ba3af09704843eb08efbd46e35d42ee04dfe4ec81d17e687f",
+    "libllama_server_impl_sha256": "c8c0e5d701445f6f8ca43f3cc0dfcfd6de5d70b2314b77d3bdf88ace6e6314fb",
+    "candidate_patch_sha256": "4091ebd53fcae8dd952a3b8f96b5df2248e2d363d92ff7350694df56be6fbdc3",
+    "runner_sha256": "ae5ea89386283229c763fa3523ad21f3065230b2ced999a678fcd3601dda670f",
+    "human_preregistration_sha256": "066203425ef6c1c6a0830737507f1695ab3bf0e54c8fb1740c4875ba7622b8c0",
+    "launcher_sha256": "cf5dae1ac33ef6c1d332d4e9f85bf52b34baffd63ab3941d9869b3f79387b37c",
+    "harness_sha256": "1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle_sha256": "0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33",
+    "repo_parent_commit": "c2d4c525a897fb7c0b1379c4aad0a768b14e6586"
+  },
+  "server_contract": {
+    "cards": 2,
+    "target_topology": "TP2 equal tensor split across SYCL0,SYCL1",
+    "draft_device": "SYCL0",
+    "server_mtp_depth": 2,
+    "parallel_slots": 64,
+    "configured_context_tokens_total": 32768,
+    "configured_context_tokens_per_slot": 512,
+    "prompt_cache": false,
+    "graph": "off"
+  },
+  "arms": [
+    {
+      "id": "explicit-default",
+      "order": ["explicit nmax2 users 1,2", "omitted/default nmax2 users 1,2"],
+      "fresh_servers": 1
+    },
+    {
+      "id": "default-explicit",
+      "order": ["omitted/default nmax2 users 1,2", "explicit nmax2 users 1,2"],
+      "fresh_servers": 1
+    },
+    {
+      "id": "pre-stress-post",
+      "order": ["default users 1,2", "explicit nmax0 users 64", "default users 1,2"],
+      "fresh_servers": 1
+    }
+  ],
+  "workload": {
+    "prompt_count": 8,
+    "max_output_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "cache_prompt": false,
+    "complete_token_ids_required": true
+  },
+  "gates": {
+    "completion_tokens_exact_per_response": 128,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "accepted_classifications": [
+      "output-identity-qualified",
+      "output-isolation-qualified-shape-variant"
+    ],
+    "server_cleanup_required": true
+  },
+  "fixed_interpretation": {
+    "request_field_not_cause_max_difference_percent": 5.0,
+    "persistent_post_stress_regression_min_percent": 10.0,
+    "explicit_path_rejection_regression_min_percent": 5.0
+  },
+  "publication_rules": [
+    "This diagnostic cannot authorize a public speed claim.",
+    "No failed or partial arm is used.",
+    "No interpolation or extrapolation is permitted.",
+    "Interpretation thresholds are fixed before execution."
+  ]
+}
