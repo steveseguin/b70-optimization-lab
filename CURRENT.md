@@ -1498,6 +1498,17 @@ gate unchanged; it must reproduce both retained short and exact-4K authorities
 before its ordinary timing receives any credit, and a fresh-server repeat will
 still be required. See the
 [diagnosis and A13 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-qsa-topk-diagnosis-and-a13-prereg.md).
+A13 then passed the complete frozen gate. Recovery, the inherited 6/7 semantic
+boundary, 16/16 repeat, and the cache-zero exact-4K needle all held. All three
+short rows retained the protected output at `5.452158 / 5.312499 / 5.380076`,
+median **`5.380076 tok/s`**. More importantly, both byte-identical exact-4K
+rows returned the retained authority at `5.226466 / 5.226935`, median
+**`5.226701 tok/s`**, with exact usage and zero cached tokens. Teardown was
+clean on all four cards and no B70-addressed event occurred. This is the first
+full-model positive for the deterministic QSA treatment, but the patch remains
+unpromoted and the placement remains Grade C until a separately started A14
+server passes the same full battery. No protected result changed. See the
+[A13 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a13-qsa-stable-positive.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "status": "passed_pending_fresh_server_replica",
+  "classification": "grade_c_bounded_treatment_positive",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "f68c9386fe5af54055bdf20684b269b9c1340e44",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes_per_rank": 134217728,
+    "cache_tokens_reported": 4747,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "ple_host_bytes_all_ranks": 51200245760,
+    "input_embedding": "device",
+    "model_memory_reported_gib_per_rank": 31.57,
+    "treatment": "stable score-descending, logical-index-ascending XPU QSA group selection"
+  },
+  "gates": {
+    "four_rank_collective": "passed",
+    "offload_receipts": "4/4 exact 11.92 GiB",
+    "recovery_canary": "passed",
+    "semantic_quality": "6/7; sole inherited code_execution response 30 instead of 14",
+    "repeat": "16/16 one hash",
+    "exact_4k_needle": "passed with zero cached and created-cache tokens",
+    "short_output_authority": "3/3 exact",
+    "exact_4k_output_authority": "2/2 exact",
+    "exact_4k_same_boot_repeat": true,
+    "client_rc": 0,
+    "supervisor_final_rc": 0,
+    "postflight": "no owned residue or listener; four cards discoverable and below 43 MiB",
+    "b70_addressed_journal_event": false
+  },
+  "performance": {
+    "short": {
+      "protocol": "p146/o256/c1 after first text; row 1 includes one conditioning request and rows 2-3 do not",
+      "rates_tok_s": [
+        5.4521581848378124,
+        5.312499288272943,
+        5.380076206899367
+      ],
+      "median_tok_s": 5.380076206899367,
+      "protected_prior_median_tok_s": 5.223788770075911,
+      "uplift_over_protected_percent": 2.991840668,
+      "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+    },
+    "exact_4k": {
+      "protocol": "p4096/o128; conventional 99 inter-token intervals",
+      "rates_tok_s": [
+        5.226466286176312,
+        5.226935375968195
+      ],
+      "median_tok_s": 5.226700831072254,
+      "protected_prior_median_tok_s": 4.7578181021380175,
+      "uplift_over_protected_percent": 9.85499485,
+      "ttft_s": [
+        116.12746755300032,
+        110.63672559100087
+      ],
+      "output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "cached_tokens": [
+        0,
+        0
+      ]
+    }
+  },
+  "host_caveat": {
+    "clean_host_credit": false,
+    "reason": "The run window retained corrected APEI/NVMe receiver records for local NVMe 0000:01:00.0. No event named a B70 address and no I/O error was recorded."
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt13",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt13-supervisor",
+    "sha256": {
+      "ple-only-qsa-stable-summary.json": "a3399e86983f6994e388cdca432bbc2caff12008d48676380b8054127c0aec2b",
+      "identity.txt": "4da586d70ba91999c760254ef38c0a6626dc15abb5ed6fff1f7504d0709e0f97",
+      "offload-log-receipt.txt": "d078cb68beb7c0705535a045ffd657adcadf9eed5cbb526fffffcba3056360cf",
+      "server-command.shell.txt": "f823332f3ccc3ce363534052080991eec6b4d35dbcb7ab082a1c08771f669bd6",
+      "server.log": "cde306a267e35fab671d272c270ef036f13f917d055acc07687c0df3815dd0bb",
+      "supervisor-final.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "kernel-journal.log": "59d93578f07c10e2e1fcadf67a6b668fc1412d055e1df938615913eb1c95b2fd"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "The deterministic XPU QSA treatment is a bounded positive and restores same-server exact-4K authority repeatability without lowering protected speed. It remains a candidate until one separately started A14 replica passes the same full gate."
+}
