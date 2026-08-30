@@ -197,11 +197,17 @@ def run_group(
     concurrency: int,
     request: Callable[[dict[str, str], str], dict[str, Any]],
     request_prefix: str,
+    launch_stagger_ms: int = 0,
 ) -> tuple[float, list[dict[str, Any]]]:
     barrier = threading.Barrier(concurrency)
 
     def one(index: int, item: dict[str, str]) -> dict[str, Any]:
         barrier.wait()
+        # Preserve a concurrent cohort while making prompt-to-server-slot
+        # ordering reproducible. The server's admission window must exceed
+        # (concurrency - 1) * launch_stagger_ms.
+        if launch_stagger_ms:
+            time.sleep(index * launch_stagger_ms / 1000.0)
         row = request(item, f"{request_prefix}-{index:03d}")
         row["prompt_id"] = item["id"]
         row["prompt_sha256"] = hashlib.sha256(
@@ -229,6 +235,7 @@ def main() -> int:
     parser.add_argument("--max-tokens", type=int, default=256)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument("--launch-stagger-ms", type=int, default=0)
     parser.add_argument("--request-extra-json", default="{}")
     parser.add_argument(
         "--request-id-prefix",
@@ -243,8 +250,8 @@ def main() -> int:
     )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    if args.repeats < 1 or args.max_tokens < 1:
-        raise SystemExit("--repeats and --max-tokens must be positive")
+    if args.repeats < 1 or args.max_tokens < 1 or args.launch_stagger_ms < 0:
+        raise SystemExit("--repeats/max-tokens must be positive and --launch-stagger-ms nonnegative")
     request_extra = json.loads(args.request_extra_json)
     if not isinstance(request_extra, dict):
         raise SystemExit("--request-extra-json must be an object")
@@ -304,6 +311,7 @@ def main() -> int:
                 request_prefix=(
                     f"{request_id_prefix}-c{concurrency}-r{repeat}"
                 ),
+                launch_stagger_ms=args.launch_stagger_ms,
             )
             batches.append(
                 summarize_batch(
@@ -355,6 +363,7 @@ def main() -> int:
             "seed": args.seed,
             "request_extra": request_extra,
             "request_id_prefix": request_id_prefix,
+            "launch_stagger_ms": args.launch_stagger_ms,
             "return_token_ids": args.return_token_ids,
             "oracle_digests": str(args.oracle_digests) if args.oracle_digests else None,
             "oracle_digests_sha256": oracle_digest_sha256,

@@ -1,0 +1,22 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-base-ordered-determinism-20260830-r1",
+  "status": "pilot-preregistered-before-measurement",
+  "purpose": "Remove prompt-to-slot assignment order as the final known concurrency confounder before attributing nondeterminism to base kernels/runtime.",
+  "only_change_from_deep_base": "The client sleeps index * 10 ms after the common barrier and before issuing each request. For c16 this creates a deterministic 0..150 ms arrival order inside the unchanged 750 ms server admission window.",
+  "fixed_configuration": "TP1, Q4_K_M, MTP0, FEATURE_PROFILE=base, Q4K_REORDER=0, c16, context 8192, batch 2048, ubatch 256, queue settle 750 ms, launch stagger 10 ms, 128 tokens, zero cache, temperature 0, seed 42.",
+  "pilot_gates": "One 16-request server cohort; request-start order follows prompt index 0..15; 16/16 complete token-ID outputs; zero cached tokens; zero collisions; WDC absent; kernel and cleanup gates clean.",
+  "next_gate": "Freeze the ordered deep-base oracle and require a fresh replay with the same indexed arrival order. A 16/16 pass establishes a deterministic floor. A failure is valid evidence of nondeterminism below request admission/order controls.",
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "launcher_sha256": "7d80c6b34b553a4b3015155b66525ce077c802953712d8dbfd92a7e320133fee",
+    "concurrency_harness_sha256": "2eb36c12a477cb726c59659f8499d4383042e6b0895b61f4816e97eebca492ca",
+    "arm_runner_sha256": "969599fe3b02eae849ab6d9769c10e7ce89ab13895ef4a8fe4ec1f6d7ab95deb",
+    "comparison_base_oracle_sha256": "6a82ff9e68031d5232ff9dc656d26a3262a727db8f0f0b6fded9a0963e0cc827"
+  },
+  "harness_test": "An 8-thread local fake-request unit check observed exact index order 0..7 with a 2 ms stagger."
+}

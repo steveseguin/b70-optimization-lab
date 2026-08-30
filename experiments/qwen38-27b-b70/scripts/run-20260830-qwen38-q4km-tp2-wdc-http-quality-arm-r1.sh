@@ -16,6 +16,7 @@ concurrency=${CONCURRENCY:-64}
 context_override=${CONTEXT_SIZE:-}
 feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
+launch_stagger_ms=${LAUNCH_STAGGER_MS:-0}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -43,6 +44,7 @@ expected_concurrency_oracle_sha256=${EXPECTED_CONCURRENCY_ORACLE_SHA256:-0a9095d
 expected_server_sha256=${EXPECTED_SERVER_SHA256:-7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c}
 expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-fd649584afe51a708728bcb4da6b415d60b3c6cb8a6203f5d7ae38fb6272cc05}
 expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926}
+expected_concurrency_harness_sha256=${EXPECTED_CONCURRENCY_HARNESS_SHA256:-1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case ${profile} in realistic|concurrency) ;; *) fail 'PROFILE must be realistic or concurrency' ;; esac
@@ -64,6 +66,8 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${feature_profile}" == tuned || "${feature_profile}" == reference || "${feature_profile}" == base ]] || fail 'FEATURE_PROFILE must be tuned, reference, or base'
 [[ "${feature_profile}" == tuned || "${arm}" == control ]] || fail 'non-tuned FEATURE_PROFILE is control-only'
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || fail 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2'
+[[ "${launch_stagger_ms}" =~ ^[0-9]+$ ]] || fail 'LAUNCH_STAGGER_MS must be a nonnegative integer'
+(( concurrency <= 1 || launch_stagger_ms * (concurrency - 1) < queue_settle_ms )) || fail 'launch stagger span must be shorter than queue settle window'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
 
@@ -80,7 +84,7 @@ check_hash "${expected_server_impl_sha256}" "${server_impl}"
 check_hash ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52 "${realistic_harness}"
 check_hash df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac "${realistic_suite}"
 check_hash "${expected_realistic_oracle_sha256}" "${realistic_oracle}"
-check_hash 1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2 "${concurrency_harness}"
+check_hash "${expected_concurrency_harness_sha256}" "${concurrency_harness}"
 check_hash 9f2a50dbc5c5cdabfee742429fc3e2531044a262691e28e1a2da5469ba4696b1 "${concurrency_qualifier}"
 check_hash 2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4 "${concurrency_suite}"
 check_hash "${expected_concurrency_oracle_sha256}" "${concurrency_oracle}"
@@ -205,6 +209,7 @@ else
     --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-tp2-wdc-${arm}"
     --api-mode native --suite "${concurrency_suite}" --concurrency "${concurrency}" --repeats 1
     --max-tokens 128 --seed 42 --timeout 1200 --return-token-ids
+    --launch-stagger-ms "${launch_stagger_ms}"
     --request-id-prefix "qwen38-q4km-tp2-wdc-${arm}-a${attempt}"
     --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}'
     --out "${run_dir}/result.json")
@@ -216,7 +221,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -225,6 +230,7 @@ batch_size, queue_settle_ms = int(sys.argv[5]), int(sys.argv[6])
 tp_size, concurrency, context = map(int, sys.argv[7:10])
 feature_profile = sys.argv[10]
 q8_dedup_override = None if sys.argv[11] == "" else int(sys.argv[11])
+launch_stagger_ms = int(sys.argv[12])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -253,6 +259,7 @@ summary = {
     "context": context,
     "feature_profile": feature_profile,
     "q8_dedup_override": q8_dedup_override,
+    "launch_stagger_ms": launch_stagger_ms,
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))
