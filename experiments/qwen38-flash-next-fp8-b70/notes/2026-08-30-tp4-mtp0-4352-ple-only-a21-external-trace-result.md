@@ -7,8 +7,12 @@ A21 loaded the exact validated checkpoint from the external NTFS drive after
 the local Samsung NVMe path had twice coincided with a host stop before shard
 1. All 131 shards loaded on all four ranks in about 583 seconds, the endpoint
 became healthy, the client completed, and the supervisor tore down cleanly.
-The captured kernel window contains no error. This validates the external
-checkpoint as the operational workaround; it does not change model identity.
+The journal classifier found no blocking or fatal event. One corrected APEI
+PCIe RxErr/NonFatalErr for the local Samsung NVMe endpoint did occur during
+external shard loading; its uncorrected status was masked and A21 continued to
+completion. This validates the external checkpoint as an operational
+workaround, not proof that the NVMe endpoint alone caused the earlier resets,
+and it does not change model identity.
 
 The unchanged battery passed recovery, the inherited 6/7 semantic boundary,
 16/16 repeatability, the exact 4K needle, all three protected short hashes, and

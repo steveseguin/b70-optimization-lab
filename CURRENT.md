@@ -1592,8 +1592,12 @@ and
 [A21 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a21-external-model-prereg.md).
 A21 then loaded all 131 shards of the exact validated external checkpoint on
 all four ranks, became healthy, completed the full frozen battery, and tore
-down cleanly without a kernel-window error. Recovery, the inherited 6/7
-semantic boundary, 16/16 repeatability, exact 4K needle, all three short
+down cleanly. Its journal classifier found no blocking event, although one
+corrected local-Samsung-NVMe PCIe RxErr/NonFatalErr occurred during the
+successful external load. A19's reset was a confirmed uncorrected data-fabric
+event and the NVMe remains the leading correlated suspect, not a proven sole
+cause. Recovery, the inherited 6/7 semantic boundary, 16/16 repeatability,
+exact 4K needle, all three short
 authority hashes, and both cache-zero exact-4K authority rows passed. The
 report-only trace timings receive no performance credit and no protected result
 changed. A16/A21 match through model input and all layer-0 outputs, then first

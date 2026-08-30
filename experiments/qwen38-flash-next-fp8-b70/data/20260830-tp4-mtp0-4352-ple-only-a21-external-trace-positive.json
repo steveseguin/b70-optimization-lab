@@ -26,7 +26,12 @@
     "endpoint_healthy": true,
     "clean_teardown": true,
     "supervisor_final_rc": 0,
-    "kernel_journal_errors": 0,
+    "kernel_journal": {
+      "classifier_rc": 0,
+      "blocking_or_fatal_events": 0,
+      "corrected_event": "One corrected APEI PCIe RxErr/NonFatalErr for the local Samsung NVMe endpoint 0000:01:00.0 occurred during external shard loading; the uncorrected status bit was masked and A21 continued to completion.",
+      "causal_boundary": "A19's next boot confirms an uncorrected data-fabric sync-flood reset, and its final prior-boot record was a corrected event from the same NVMe endpoint at launch. Because the same corrected event class also occurred in successful A18/A21, the NVMe path is the leading correlated suspect, not a proven sole cause."
+    },
     "decision": "Use the validated external checkpoint path for subsequent full loads while the local Samsung NVMe path is quarantined."
   },
   "gates": {
