@@ -1,0 +1,78 @@
+{
+  "schema": "neural.download.qwen38-q4km-tp2-scheduler-screen-preregistration.v1",
+  "campaign_id": "qwen38-q4km-tp2-scheduler-screen-20260830-r1",
+  "created_at_utc": "2026-08-30T15:16:13Z",
+  "state": "preregistered-not-launched",
+  "classification": "diagnostic-screen-not-publishable",
+  "purpose": "Measure untested llama.cpp scheduler shapes for Qwen3.8-27B Q4_K_M target-only TP2 at 64 simultaneous users on the two local B70 GPUs.",
+  "identity": {
+    "model": "Qwen3.8-27B-Q4_K_M.gguf",
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "cards": 2,
+    "topology": "TP2 equal tensor split",
+    "generation": "target-only / no MTP",
+    "kv_cache": "F16",
+    "llama_cpp_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "llama_server_sha256": "408e3b3cc1e4f48e5d955d5acf72444e0f1ddfaf5802c19f3d69b181bb8eecb9",
+    "libggml_sycl_sha256": "256312e871752d4ba3af09704843eb08efbd46e35d42ee04dfe4ec81d17e687f",
+    "libllama_server_impl_sha256": "c8c0e5d701445f6f8ca43f3cc0dfcfd6de5d70b2314b77d3bdf88ace6e6314fb",
+    "candidate_source_patch": "experiments/qwen38-27b-b70/patches/llama-cpp-request-spec-nmax-candidate-20260830.patch",
+    "candidate_source_patch_sha256": "4091ebd53fcae8dd952a3b8f96b5df2248e2d363d92ff7350694df56be6fbdc3"
+  },
+  "frozen_inputs": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle_digests": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-oracle-digests.json",
+    "oracle_digests_sha256": "0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33",
+    "harness": "scripts/bench-openai-concurrency-oracle.py",
+    "harness_sha256": "1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2",
+    "qualifier": "scripts/qualify-openai-concurrency-attempt.py",
+    "qualifier_sha256": "9f2a50dbc5c5cdabfee742429fc3e2531044a262691e28e1a2da5469ba4696b1",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260830-qwen38-q4km-tp2-scheduler-screen-r1.sh",
+    "runner_sha256": "7b38041d0f5106ad1f3bfe52fd29499c9b7877112d2c1b987125aaf8113ee836"
+  },
+  "fixed_server": {
+    "parallel_slots": 64,
+    "flash_attention": true,
+    "continuous_batching": true,
+    "prompt_cache": false,
+    "reasoning": false,
+    "poll": 50,
+    "gpu_layers": 99,
+    "split": "tensor 1,1",
+    "runtime_profile": "the existing candidate build and promoted Q4_K/TP2 environment"
+  },
+  "arms_in_frozen_run_order": [
+    {"arm": "b1024-u256-c32768-t8", "batch_size": 1024, "ubatch_size": 256, "total_context": 32768, "threads": 8},
+    {"arm": "b2048-u256-c32768-t8", "batch_size": 2048, "ubatch_size": 256, "total_context": 32768, "threads": 8},
+    {"arm": "b4096-u256-c32768-t8", "batch_size": 4096, "ubatch_size": 256, "total_context": 32768, "threads": 8},
+    {"arm": "b2048-u512-c32768-t8", "batch_size": 2048, "ubatch_size": 512, "total_context": 32768, "threads": 8},
+    {"arm": "b2048-u256-c16384-t8", "batch_size": 2048, "ubatch_size": 256, "total_context": 16384, "threads": 8},
+    {"arm": "b2048-u256-c32768-t16", "batch_size": 2048, "ubatch_size": 256, "total_context": 32768, "threads": 16}
+  ],
+  "measurement": {
+    "fresh_servers_per_arm": 1,
+    "concurrent_users": 64,
+    "max_output_tokens": 128,
+    "prompt_set": "eight short, varied, unique natural-language prompts expanded to 64 requests",
+    "temperature": 0,
+    "ignore_eos": true,
+    "cache_prompt": false,
+    "primary_metric": "aggregate completion tok/s from synchronized HTTP batch wall time",
+    "required_output_gate": "64 complete 128-token responses, zero cached prompt tokens, complete returned token IDs, no cross-base oracle collision, and output-isolation-qualified classification"
+  },
+  "selection": {
+    "control_arm": "b2048-u256-c32768-t8",
+    "minimum_gain_over_fresh_control_percent": 3.0,
+    "winner_if_multiple_pass": "highest exact measured c64 aggregate tok/s",
+    "screen_publication": "none",
+    "confirmation_if_promising": "two new fresh-server full 1,2,4,8,16,32,64 curves plus the strict mixed-content target-only suite and two-round c64 concurrent semantic canary; all cache, output, stability, and deterministic-parity gates must pass",
+    "no_interpolation_or_extrapolation": true,
+    "failed_or_unsupported_arm_is_a_result": true
+  },
+  "stop_rules": [
+    "Stop an arm on model/runtime identity mismatch, another model workload, GPU fault, OOM, incomplete output, nonzero cached prompt tokens, or output-isolation failure.",
+    "Do not promote or publish a one-attempt screen result.",
+    "Do not loosen the quality gates after seeing throughput."
+  ]
+}
