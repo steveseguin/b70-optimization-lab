@@ -1652,6 +1652,19 @@ Its first supervisor invocation stopped before the launch wrapper because the
 generated wrapper/client names omitted the new `-local` suffix. No attempt
 marker, model read, run directory, or GPU process existed. Those two references
 and dependent hashes were corrected before retry; inference identity is exact.
+A24 then loaded all 131 local shards in about 84.38 seconds, became healthy,
+and completed the full battery without a host freeze or GPU fault. The inherited
+6/7 semantic boundary, 16/16 repeat, 4K needle, and three protected short hashes
+passed; short median was 5.515783 tok/s. Both exact-4K rows were same-server
+stable at 5.394570 / 5.347805 tok/s but shared the same non-authority hash, so
+the client failed closed and nothing was promoted. The rank-0 inner trace has
+64 records and 171 tensor digests; despite requested rank mode `all`, no rank
+1--3 files appeared, so no all-rank receipt is claimed. A matching fresh-start
+rank-0 trace is required to identify the first internal PLE difference. Five
+NVMe PCIe events occurred during the otherwise successful local load/warmup;
+there was no reset, OOM, or reboot. Do not perform another local load in this
+boot. See the
+[A24 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a24-local-inner-trace-result.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
