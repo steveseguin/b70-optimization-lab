@@ -1,0 +1,44 @@
+{
+  "campaign": "qwen38-q4km-c16-tp2-wdc-ordered40-quality-20260830-r1",
+  "status": "preregistered-before-candidate-measurement",
+  "purpose": "Qualify the measured Q4_K weight-decompression candidate against the corrected ordered TP2 token-ID oracle before treating its raw +23.96% engine gain as a usable optimization.",
+  "frozen_control_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp2-tuned-ordered40-oracle-digests.json",
+    "sha256": "726743320526a3feecdb3dbcd9103e3d2643016e4f715199d56793676a6db5b5",
+    "rows": 16,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": {
+    "model": "Qwen3.8-27B Q4_K_M",
+    "tensor_split": "1,1",
+    "tp_size": 2,
+    "mtp_depth": 0,
+    "feature_profile": "tuned",
+    "concurrency": 16,
+    "context": 8192,
+    "batch": 2048,
+    "ubatch": 256,
+    "queue_settle_ms": 750,
+    "launch_stagger_ms": 40,
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "sole_candidate_delta": "Enable GGML_SYCL_WDC_Q4K with the already-required scoped Q4_K reorder; all other runtime, binary, model, prompt, order, and measurement settings remain fixed.",
+  "prior_mechanism_screen": {
+    "classification": "raw-engine-mechanism-evidence-only",
+    "control_median_tok_s": 194.67923000000002,
+    "candidate_median_tok_s": 241.3222805,
+    "relative_improvement_percent": 23.958924894042365
+  },
+  "required_gates": [
+    "16/16 complete 128-token responses",
+    "16/16 token-ID digests exactly equal the frozen ordered control oracle",
+    "all cached-token counts are zero",
+    "all complete-token-ID and cross-request isolation gates pass",
+    "weight-decompression GEMM engagement is present",
+    "no GPU fault, reset, device loss, OOM, or model-process segfault evidence",
+    "clean server shutdown"
+  ],
+  "publication_policy": "The candidate is not promoted from the raw engine screen. Its HTTP rate remains diagnostic until this exact-output gate and the separate diverse realistic-prompt gate both pass."
+}
