@@ -1,0 +1,33 @@
+{
+  "campaign": "qwen38-q4km-tp2-q4k-f16-cache-c64-exact-20260830-r1",
+  "status": "preregistered-before-control-or-candidate measurement",
+  "purpose": "Test whether retaining the incumbent Q4_K ffn_down dequantized F16 bytes on each local B70 removes repeated dequantization work without changing any generated token.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "frozen_output_oracle": {
+    "source": "/mnt/fast-ai/bench-results/qwen38-q4km-q4mtp-tp2-c64-ordered40-exact-control-pilot-20260830-r2-concurrency-control-attempt1/oracle-digests.json",
+    "sha256": "60218662bf89b6f80ec9c7008bc2b0ab9b756a9758e259d41bda78f50746d5aa",
+    "rows": 64
+  },
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M target, TP2 tensor 1,1, MTP0, tuned target profile, Q4_K reorder enabled in both arms, WDC disabled, 64 slots, 32768 total context, batch 2048, ubatch 256, cache-prompt off, temperature 0, seed 42, 128 output tokens per request.",
+  "admission_contract": {
+    "launch_stagger_ms": 40,
+    "queue_settle_ms": 3000,
+    "required_client_order": "c000 through c063 exactly in one initial cohort"
+  },
+  "arms": [
+    "Fresh same-binary control with GGML_SYCL_Q4K_F16_CACHE_FILTER unset.",
+    "Fresh candidate with GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down."
+  ],
+  "candidate_delta": "For Q4_K ffn_down tensors only, allocate a per-tensor/per-device persistent F16 buffer, fill it once with the incumbent to_fp16_sycl routine, and reuse those exact bytes in the unchanged oneDNN GEMM. No prompt, KV, token, or output cache is enabled.",
+  "required_gates": [
+    "control and candidate each complete all 64 requests at 128 tokens",
+    "control and candidate token-ID digests match the frozen ordered MTP0 oracle 64/64",
+    "all cached token counts are zero",
+    "complete token-ID identity and collision gates pass",
+    "candidate cache liveness marker is present and control marker is absent",
+    "WDC is absent in both arms",
+    "no GPU fault, reset, device loss, OOM, model-process segfault, or unclean shutdown"
+  ],
+  "advance_rule": "Promote only if the candidate is 64/64 exact and repeatably improves aggregate throughput against the same-binary control. If ffn_down passes, wider role sets require separate preregistered exact gates.",
+  "publication_policy": "The fresh-server cohort includes model-weight cache construction; only output-qualified measured rates may be reported. No interpolation, fixture gaming, prompt/output caching, or extrapolation. A realistic diverse-prompt exact suite remains required before a headline promotion."
+}

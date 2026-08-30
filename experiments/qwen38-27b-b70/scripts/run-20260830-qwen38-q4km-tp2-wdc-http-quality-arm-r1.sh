@@ -19,6 +19,8 @@ feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 launch_stagger_ms=${LAUNCH_STAGGER_MS:-0}
 wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
+candidate_kind=${CANDIDATE_KIND:-wdc}
+q4k_f16_cache_filter=${Q4K_F16_CACHE_FILTER:-}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -52,7 +54,12 @@ expected_concurrency_qualifier_sha256=${EXPECTED_CONCURRENCY_QUALIFIER_SHA256:-9
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case ${profile} in realistic|concurrency) ;; *) fail 'PROFILE must be realistic or concurrency' ;; esac
-case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be control or candidate' ;; esac
+case ${candidate_kind} in wdc|q4k-f16-cache) ;; *) fail 'CANDIDATE_KIND must be wdc or q4k-f16-cache' ;; esac
+case ${arm} in
+  control) wdc=0 ;;
+  candidate) [[ "${candidate_kind}" == wdc ]] && wdc=1 || wdc=0 ;;
+  *) fail 'ARM must be control or candidate' ;;
+esac
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${baseline_mode}" == 0 || "${baseline_mode}" == 1 ]] || fail 'BASELINE_MODE must be 0 or 1'
 [[ "${pilot_mode}" == 0 || "${pilot_mode}" == 1 ]] || fail 'PILOT_MODE must be 0 or 1'
@@ -74,6 +81,11 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${launch_stagger_ms}" =~ ^[0-9]+$ ]] || fail 'LAUNCH_STAGGER_MS must be a nonnegative integer'
 [[ "${wdc_q4k_name_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || fail 'WDC_Q4K_NAME_FILTER contains unsupported characters'
 [[ -z "${wdc_q4k_name_filter}" || "${arm}" == candidate ]] || fail 'WDC_Q4K_NAME_FILTER is candidate-only'
+[[ "${q4k_f16_cache_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || fail 'Q4K_F16_CACHE_FILTER contains unsupported characters'
+[[ -z "${q4k_f16_cache_filter}" || "${arm}" == candidate ]] || fail 'Q4K_F16_CACHE_FILTER is candidate-only'
+[[ -z "${q4k_f16_cache_filter}" || "${candidate_kind}" == q4k-f16-cache ]] || fail 'Q4K_F16_CACHE_FILTER requires CANDIDATE_KIND=q4k-f16-cache'
+[[ "${candidate_kind}" != q4k-f16-cache || "${arm}" == control || -n "${q4k_f16_cache_filter}" ]] || fail 'q4k-f16-cache candidate requires Q4K_F16_CACHE_FILTER'
+[[ "${candidate_kind}" != q4k-f16-cache || -z "${wdc_q4k_name_filter}" ]] || fail 'cache candidate cannot set WDC_Q4K_NAME_FILTER'
 (( concurrency <= 1 || launch_stagger_ms * (concurrency - 1) < queue_settle_ms )) || fail 'launch stagger span must be shorter than queue settle window'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
@@ -149,6 +161,7 @@ timeout --signal=INT --kill-after=30s 3600s env \
   TARGET_DIR="${target_dir}" DRAFT_DIR="${draft_dir}" BUILD_DIR="${build_dir}" \
   ALLOW_REBUILT_BINARIES=1 MTP_DEPTH="${mtp_depth}" WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
   WDC_Q4K_NAME_FILTER="${wdc_q4k_name_filter}" \
+  Q4K_F16_CACHE_FILTER="${q4k_f16_cache_filter}" \
   TP_SIZE="${tp_size}" \
   FEATURE_PROFILE="${feature_profile}" \
   Q8_DEDUP_OVERRIDE="${q8_dedup_override}" \
@@ -231,7 +244,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -243,6 +256,8 @@ q8_dedup_override = None if sys.argv[11] == "" else int(sys.argv[11])
 launch_stagger_ms = int(sys.argv[12])
 wdc_q4k_name_filter = sys.argv[13] or None
 mtp_depth = int(sys.argv[14])
+candidate_kind = sys.argv[15]
+q4k_f16_cache_filter = sys.argv[16] or None
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -274,6 +289,8 @@ summary = {
     "launch_stagger_ms": launch_stagger_ms,
     "wdc_q4k_name_filter": wdc_q4k_name_filter,
     "mtp_depth": mtp_depth,
+    "candidate_kind": candidate_kind,
+    "q4k_f16_cache_filter": q4k_f16_cache_filter,
 }
 if concurrency == 64:
     summary["aggregate_tok_s_c64"] = result["batches"][0]["aggregate_tok_s_wall"]
@@ -289,9 +306,13 @@ journalctl -k -b --since "${start}" --no-pager | \
   >"${run_dir}/kernel-errors.txt" || true
 [[ ! -s "${run_dir}/kernel-errors.txt" ]] || fail 'kernel error evidence found'
 engaged=0; grep -q 'weight-decompression GEMM ENGAGED' "${run_dir}/server.log" && engaged=1
-if [[ "${profile}" == concurrency && "${arm}" == candidate && "${engaged}" != 1 ]]; then fail 'candidate WDC liveness failed'; fi
+cache_engaged=0; grep -q 'Q4K-F16-CACHE: incumbent dequant bytes cached' "${run_dir}/server.log" && cache_engaged=1
+if [[ "${profile}" == concurrency && "${arm}" == candidate && "${candidate_kind}" == wdc && "${engaged}" != 1 ]]; then fail 'candidate WDC liveness failed'; fi
 if [[ "${arm}" == control && "${engaged}" != 0 ]]; then fail 'control WDC negative control failed'; fi
+if [[ "${profile}" == concurrency && "${arm}" == candidate && "${candidate_kind}" == q4k-f16-cache && "${cache_engaged}" != 1 ]]; then fail 'candidate Q4_K F16 cache liveness failed'; fi
+if [[ "${arm}" == control && "${cache_engaged}" != 0 ]]; then fail 'control Q4_K F16 cache negative control failed'; fi
 printf '%s\n' "${engaged}" >"${run_dir}/wdc-engaged.txt"
+printf '%s\n' "${cache_engaged}" >"${run_dir}/q4k-f16-cache-engaged.txt"
 sha256sum "${run_dir}/result.json" "${run_dir}/summary.json" >"${run_dir}/result-sha256sums.txt"
 if ! jq -e '.quality_qualified == true' "${run_dir}/summary.json" >/dev/null; then
   fail 'strict output-quality gate failed'
