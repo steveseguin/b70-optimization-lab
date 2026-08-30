@@ -1,0 +1,28 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-c128-20260830-r15",
+  "status": "closed negative after candidate attempt 1",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, c128, exact 32768-token pool (128x256), batch 2048, ubatch 256, pinned slots, prompt cache off, exact F16 cache filter ffn_down,ffn_gate",
+  "nonpublishable_control_pilot": {
+    "aggregate_tok_s": 194.4232879828338,
+    "complete_rows": "128/128",
+    "sequential_reference_exact": "67/128",
+    "gpu0_peak_used_mib": 21677.977,
+    "gpu1_peak_used_mib": 21549.863
+  },
+  "candidate_attempt_1": {
+    "aggregate_tok_s_nonpublishable": 184.5650299768715,
+    "same_shape_batch_oracle_exact": "100/128",
+    "quality_qualified": false,
+    "gpu0_peak_used_mib": 32554.832,
+    "gpu0_min_free_mib": 101.168,
+    "gpu1_peak_used_mib": 32431.0,
+    "gpu1_min_free_mib": 225.0,
+    "result_sha256": "4bc895b06e68cdf16f5e5fd165f73735e6eaee529462a883570004299f97c316",
+    "summary_sha256": "5cb317b360b039ae6793eb7c5d96ff32104efc5a6db132e73ac2e05c9ced4701",
+    "qualification_sha256": "dca7832faa715d6ab612e6bafc4438c7151ea60538b596400756d44b26e29623",
+    "server_log_sha256": "9083d47107cbc18a60e40e291a9a0c4b1d788f127ac021cb51f0e9a1c038cdeb",
+    "vram_monitor_sha256": "709ed474a56aad3e39daa184b9fe97e3e2bfdcd54b82287b7d80fab345b5c169"
+  },
+  "decision": "Closed without a repeat: the first candidate was slower than the c96 threshold, changed 28/128 same-shape outputs, and left effectively no device-memory headroom. The qualified c96 center of 192.34195380893704 tok/s remains public.",
+  "scope": "Negative fit, speed and identity evidence only. Neither the pilot nor failed candidate is a public performance result."
+}

@@ -1,0 +1,12 @@
+{
+  "campaign": "qwen38-q4km-tp2-cacheoff-c128-20260830-r16",
+  "status": "preregistered after closing the cached c128 arm and before cache-off c128 confirmation",
+  "purpose": "Determine whether the simpler cache-off c128 configuration can reproducibly exceed the qualified cached c96 endpoint without the c128 cache arm's output changes or near-zero VRAM headroom.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact cache disabled, WDC paths off, 128 pinned slots, exact total context 32768 (128x256), batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 128 with 1000 ms ceiling.",
+  "oracle": "Reuse the already committed fresh cache-off c128 pilot-from-batch oracle with SHA-256 66033c1ba90dbcce02335772b2467dbbbfd5c1e920b03917e4cebfb1f23e72ff. Its batch rows are complete 128/128; sequential-vs-batch identity is separately 67/128.",
+  "runner_sha256": "85c21bd18dd59c5982239c43169fa7facd565d44d32766f22d54785e3e7b3266",
+  "advance_rule": "Measured attempt 1 must match the frozen same-shape oracle 128/128, return all tokens with cache zero, zero collisions, clean health, and exceed the higher qualified c96 observation of 192.350949 tok/s. Only then run attempt 2. Promotion requires both measured attempts 128/128 and their two-run center above 192.341954 tok/s; the earlier oracle pilot is never included in the center.",
+  "quality_boundary": "This tests fresh-server repeatability of the cache-off c128 batch and never relabels the separate 67/128 sequential comparison.",
+  "failure_policy": "Any mismatch, health failure or first rate at or below 192.350949 closes r16. No pilot, failed-arm or single-run rate is promoted and no rate transfers to another shape."
+}
