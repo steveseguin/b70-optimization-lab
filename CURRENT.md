@@ -1421,6 +1421,16 @@ The active objective is now trace-free TP4/MTP0 at 4,352 configured tokens,
 with the PLE/ngram table in host RAM and maximum safe weight residency in VRAM.
 See the [A8 closeout](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-greedy-trace-a8-worker-init-freeze.md).
 
+The next bounded arm is preregistered as A9. It keeps exactly the 51.200-GB
+PLE table host-resident across TP4, moves the 317,849,600-byte/rank input
+embedding back to VRAM, and reduces the fixed cache to 128 MiB/rank at the
+4,352-token ceiling. The net increase is 239.125 MiB/card versus the passing
+current-runtime anchor; static scaling predicts about 4,747 cache tokens, but
+fit and admission remain live gates. The frozen client requires the protected
+short and exact-4K output authorities, 16/16 repeats, the known semantic
+boundary, two exact-4K rows, and clean owned teardown before any speed credit.
+See the [A9 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a9-prereg.md).
+
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
 storage gate on 2026-08-28 at

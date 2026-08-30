@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "preregistered_static_candidate",
+  "model": {
+    "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "local_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"
+  },
+  "runtime": {
+    "vllm_head": "e5137bfd8ca2ca718c4fd93d86d54bb843e2999b",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a"
+  },
+  "serving_identity": {
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "mtp_depth": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes_per_rank": 134217728,
+    "prefix_cache": false,
+    "async_scheduling": false
+  },
+  "placement": {
+    "backend": "uva",
+    "host_resident_parameter": "ple_embedding.ngram_embedding.weight",
+    "host_resident_bytes_per_rank": 12800061440,
+    "host_resident_bytes_all_ranks": 51200245760,
+    "host_resident_gib_per_rank": 11.920986176,
+    "cpu_offload_gb_budget_per_rank": 12.0,
+    "input_embedding": "device",
+    "input_embedding_bytes_per_rank": 317849600
+  },
+  "comparison_to_proven_4352_anchor": {
+    "prior_kv_cache_memory_bytes_per_rank": 201326592,
+    "kv_cache_reduction_bytes_per_rank": 67108864,
+    "device_embedding_increase_bytes_per_rank": 317849600,
+    "net_device_increase_bytes_per_rank": 250740736,
+    "net_device_increase_mib_per_rank": 239.125,
+    "prior_reported_cache_tokens": 7121,
+    "linearly_estimated_candidate_cache_tokens": 4747.333333333333,
+    "required_total_tokens_for_exact_4k_gate": 4224,
+    "configured_max_model_len": 4352
+  },
+  "protected_results": {
+    "short_median_tok_s_after_ttft": 5.223788770075911,
+    "short_output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "exact_4k_median_tok_s_conventional_99_interval": 4.7578181021380175,
+    "exact_4k_output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+    "changed": false
+  },
+  "decision_boundary": "The arithmetic establishes a narrow, plausible fit candidate, not measured fit. Startup failure is a bounded fit negative. Any output-authority, repeatability, quality, lifecycle, or postflight failure rejects lossless qualification. The prior PLE-plus-input-embedding placement remains the fallback and every protected result remains unchanged."
+}
