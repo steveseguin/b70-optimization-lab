@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "status": "completed_mechanism_positive",
+  "classification": "grade_d_report_only_mechanism_evidence",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "e5137bfd8ca2ca718c4fd93d86d54bb843e2999b",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes_per_rank": 134217728,
+    "cache_tokens_reported": 4747,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "ple_host_bytes_all_ranks": 51200245760,
+    "input_embedding": "device",
+    "model_memory_reported_gib_per_rank": 31.57
+  },
+  "request": {
+    "protocol": "four byte-identical p4096/o128 greedy streaming completions with API top-eight logprobs",
+    "temperature": 0,
+    "top_p": 1,
+    "seed": 1,
+    "prompt_tokens": 4096,
+    "completion_tokens": 128,
+    "top_logprobs": 8,
+    "prompt_token_ids_sha256": "aedf2eb779bfa4aad8f533c644ca94646977deae1c10221bff592f06785c76d0",
+    "diagnostic_request_payload_sha256": "3fb48f788ccee7337e7fbc9924ced628c419afd31dfa281846af747b287d44c1"
+  },
+  "gates": {
+    "four_rank_collective": "passed",
+    "offload_receipts": "4/4 exact 11.92 GiB",
+    "transport": "4/4 exact 4096/128/4224 usage, cached_tokens=0, length stop, 128 token IDs, and 128 score decisions",
+    "selected_token_equals_reported_top1": "512/512",
+    "identical_request_output_repeat": "failed; 4/4 output hashes unique",
+    "client_rc": 0,
+    "supervisor_final_rc": 0,
+    "postflight": "no owned residue or listener; four cards discoverable at 42.875-42.879 MiB",
+    "b70_addressed_journal_event": false
+  },
+  "output_evidence": {
+    "retained_authority_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+    "authority_match_count": 1,
+    "output_token_ids_sha256": [
+      "bf25b9d14a6d1618be82d5b0be902c83d786f4830d207482665d8d00d9cbe58c",
+      "b55aa3abdbe77dd7dffb39b5c33ed023bdb90f1c31fcb93860de17f7a69c19e0",
+      "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "0ef136f381a9957ff1ac245c23edc230d7d5a0b3d21ab6d7bfbd5fcdad95d207"
+    ],
+    "pairwise_first_different_generated_token_index_zero_based": {
+      "1-2": 7,
+      "1-3": 7,
+      "1-4": 7,
+      "2-3": 36,
+      "2-4": 11,
+      "3-4": 11
+    }
+  },
+  "score_evidence": {
+    "score_vectors_already_different_at_generated_position_zero": true,
+    "position_zero_selected_token_id_all_rows": 763,
+    "position_zero_top1_logprobs": [
+      -0.00020525732543319464,
+      -0.00010954733443213627,
+      -0.0000773638384998776,
+      -0.00009274052717955783
+    ],
+    "position_zero_top_token_id_orders": [
+      [763, 271, 1, 198, 3147, 13573, 2200, 85],
+      [763, 1, 3147, 271, 13573, 198, 2200, 85],
+      [763, 1, 271, 3147, 13573, 198, 2200, 85],
+      [763, 1, 271, 3147, 198, 13573, 2200, 487]
+    ],
+    "generated_position_seven": [
+      {
+        "row": 1,
+        "selected_token_id": 1,
+        "top1_token_id": 1,
+        "top1_logprob": -1.4103577136993408,
+        "top2_token_id": 487,
+        "top2_logprob": -1.4103577136993408,
+        "margin": 0.0
+      },
+      {
+        "row": 2,
+        "selected_token_id": 487,
+        "top1_token_id": 487,
+        "top1_logprob": -1.1307260990142822,
+        "top2_token_id": 1,
+        "top2_logprob": -1.5057260990142822,
+        "margin": 0.375
+      },
+      {
+        "row": 3,
+        "selected_token_id": 487,
+        "top1_token_id": 487,
+        "top1_logprob": -0.9085987210273743,
+        "top2_token_id": 1,
+        "top2_logprob": -1.6585986614227295,
+        "margin": 0.7499999403953552
+      },
+      {
+        "row": 4,
+        "selected_token_id": 487,
+        "top1_token_id": 487,
+        "top1_logprob": -0.9871726632118225,
+        "top2_token_id": 1,
+        "top2_logprob": -1.6121726036071777,
+        "margin": 0.6249999403953552
+      }
+    ]
+  },
+  "diagnostic_timing": {
+    "elapsed_s": [
+      219.47407252100038,
+      148.452358173,
+      135.26084663099937,
+      131.89143633999993
+    ],
+    "performance_credit": "none; API logprobs alter instrumentation and the preregistration forbids speed credit"
+  },
+  "mechanism_decision": {
+    "post_selection_sampler_substitution": "ruled out for all 512 decisions because selected token always equals reported top one",
+    "repeated_forward_or_score_path_variability": "supported because score values and top-token ordering differ at generated position zero, before the first selected-token difference",
+    "qsa_causality": "not established; the exact-4K server log shows six QSA Triton kernels first compiling during inference, making that long-context-only route the next bounded locality to audit",
+    "placement_causality": "not established; A7 reproduced exact-4K output variability under the older selective placement"
+  },
+  "host_caveat": {
+    "clean_host_credit": false,
+    "reason": "The bounded journal retains corrected APEI/NVMe receiver records for local NVMe 0000:01:00.0. No event named a B70 address and no I/O error was recorded."
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt12",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt12-supervisor",
+    "sha256": {
+      "identity.txt": "856e9ed49b391c2a6f9fea8add4f0ab2891766000e245145b538f19f6c303be7",
+      "server-command.shell.txt": "7fee3d892044b5d967ce662a98fd980450411f7de10675ed9aa32b87d647ac07",
+      "server.log": "ee170ddb628455aedf63e85a5c2f094d32991d8d622871f6b05d087a8cb412ad",
+      "exact-4k-logprob-repeat.json": "caef173eae7bc0528cdab5f6c49ce14008878d647c9844158d16bfa475bb9b6b",
+      "exact-4k-logprob-repeat.log": "71ee93b1379ab9f3359dfce805df7ccef2c2119af71fba704b86a12bd3e758b3",
+      "exact-4k-logprob-repeat.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "client-gates-passed.txt": "92c990492ebd3669c992804c7077f9e33be24e083659bfea3f01f1c7b964667d",
+      "supervisor-final.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "kernel-journal.log": "9dbd1e1bca12d6fce31aadbfc0a575e482ec2da8e6f479feddeca8e656177cc7"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "Keep A9 Grade C and every protected speed unchanged. Before further MTP0 speed promotion, audit the exact-4K QSA route and run one separately preregistered deterministic treatment; require byte-identical repeated outputs and retained-authority parity before any treatment receives performance credit."
+}

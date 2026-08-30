@@ -1469,6 +1469,22 @@ length, validates each decision separately, and adds a focused batched-delta
 test. It uses a new attempt and port with every server/request interpretation
 unchanged. See the [A11 closeout](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a11-client-format-negative.md)
 and [A12 retry](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a12-api-logprob-prereg.md).
+A12 then completed all four exact-4K report-only rows. Every request had exact
+4096/128/4224 usage, zero cached tokens, a length stop, 128 returned token IDs,
+and 128 score decisions; the selected token equaled the reported top one in
+all 512 decisions. Nevertheless, all four output hashes were unique, and only
+one matched the retained authority. More importantly, the top-eight score
+values and token ordering already differed at generated position 0, before the
+first selected-token difference. At token 7 one row had an exact ID-1/ID-487
+tie and selected ID 1, while the other rows preferred and selected ID 487.
+This rules out a post-selection sampler substitution and locates the failure in
+the repeated forward/score path. The run is mechanism evidence only and earns
+no speed credit; A9 remains Grade C and all protected speeds remain unchanged.
+The server first compiled six QSA kernels on the exact-4K request, so the next
+bounded work is a source audit and deterministic treatment of that
+long-context attention/indexing route, without claiming QSA causality before a
+controlled result. See the
+[A12 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a12-logprob-mechanism-result.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
