@@ -1,0 +1,12 @@
+{
+  "campaign": "qwen38-q4km-tp2-realistic-feature-bisect-20260830-r1",
+  "status": "preregistered-after two identical tuned-control failures and before profile bisect",
+  "trigger": "Current tuned controls at batch 2048/FUSE31 and batch 1024/FUSE15 produced the same 12 output hashes, but all 12 differ from the frozen promoted oracle. The drift is therefore stable and not caused by those two settings.",
+  "purpose": "Locate the accumulated runtime feature that changed the promoted output surface, restore exactness, then resume cache optimization.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, one slot, context 8192, batch 1024, ubatch 256, temperature 0, prompt cache off, unchanged 12-prompt realistic suite and frozen oracle.",
+  "first_arm": "FEATURE_PROFILE=reference disables all lab fusions, reorder, collective doors, and dedup while retaining the same binary and model.",
+  "advance_rule": "If reference is 12/12 exact, bisect tuned feature groups against the frozen oracle. If reference is not exact, compare it to the historical source/binary identities before changing any oracle.",
+  "required_gates": "12/12 hashes, zero cached tokens, fresh-response and natural-EOS gates, clean GPU/kernel log and shutdown.",
+  "publication_policy": "Diagnostic profiles are not speed claims. The frozen oracle is not replaced."
+}
