@@ -1637,6 +1637,17 @@ the trace. See the
 [A22 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a22-loader-stream-boundary-negative.md)
 and
 [A23 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a23-root-stream-trace-prereg.md).
+A 2026-08-30 verified storage reclaim then removed three older local model
+copies, preserved their USB-backed compatibility paths, and increased internal
+free space from 94 GiB to 231 GiB without changing the active Flash-Next
+checkpoint. Because the external load took about 583 seconds versus roughly
+71--80 seconds locally, A24 returns only the checkpoint path to the verified
+local tree on new attempt/port/lifecycle paths. The user explicitly authorized
+this bounded retry in the recovered A22 boot; hard gates require at least
+120000000 KiB available memory, 8000000 KiB free swap, and 220000000000 free
+NVMe bytes before the one-shot claim. All inference, tracing, quality, and
+performance selectors remain A23-exact. See the
+[A24 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a24-local-inner-trace-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
