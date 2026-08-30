@@ -25,6 +25,14 @@ class Qwen38Q4kmRunnerTests(unittest.TestCase):
         self.assertIn('"same_shape_batch_oracle_exact_all"', source)
         self.assertIn('if oracle_kind == "sequential" else None', source)
 
+    def test_ubatch_is_configurable_recorded_and_launch_verified(self) -> None:
+        source = RUNNER.read_text()
+        self.assertIn('ubatch_size=${UBATCH_SIZE:-256}', source)
+        self.assertIn('UBATCH_SIZE="${ubatch_size}" THREADS=8', source)
+        self.assertIn('--ubatch-size[[:space:]]+${ubatch_size}', source)
+        self.assertIn('"ubatch_size": ubatch_size', source)
+        self.assertNotIn('UBATCH_SIZE=256 THREADS=8', source)
+
 
 if __name__ == "__main__":
     unittest.main()

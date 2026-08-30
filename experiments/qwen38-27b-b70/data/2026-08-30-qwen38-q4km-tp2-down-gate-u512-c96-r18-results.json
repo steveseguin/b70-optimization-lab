@@ -1,0 +1,20 @@
+{
+  "campaign": "qwen38-q4km-tp2-down-gate-u512-c96-20260830-r18",
+  "status": "invalid setup; no u512 measurement occurred",
+  "intended_configuration": "Qualified ffn_down+ffn_gate exact cache at c96 with batch 2048 and ubatch 512.",
+  "observed_configuration": "The strict runner accepted UBATCH_SIZE=512 from the campaign environment but hard-coded UBATCH_SIZE=256 when launching llama-server. The captured server command proves --ubatch-size 256.",
+  "excluded_observation": {
+    "aggregate_tok_s_not_an_r18_result": 193.04346619696517,
+    "same_shape_batch_oracle_exact": "96/96",
+    "reason_excluded": "It measured another ubatch-256 incumbent repeat under an incorrectly labeled run directory, not the preregistered ubatch-512 arm.",
+    "result_sha256": "537f9285e4a36d0000d593e4bd96d2f3ca028bb4aab7fc108dec2400a7c13b06",
+    "summary_sha256": "4fb53daf48e3975428f4eaa35fb89194061326ef380fffd8b2f7681c2048ae41",
+    "qualification_sha256": "7e209513a927346e21c4beded52fa78ba8b1a164bb4f6e64bce2d36fb31458c1",
+    "server_log_sha256": "e3f3b9bb85411cccaa8673c7776fb56343721bd70e6996cc330671920d6dfd7d",
+    "server_command_sha256": "23ee32fe360e59974444a2d71572ae0c35725d364eaa8f3fe836ca62f3f52684",
+    "vram_monitor_sha256": "32523fb5737fd210a876450a5761f39b099a24941e590c4b04c98d367ef0a5e2"
+  },
+  "runner_fix": "UBATCH_SIZE is now parsed, validated as positive and no larger than BATCH_SIZE, forwarded to the launcher, checked against the captured live server command, and recorded in the summary. A regression test forbids restoring the hard-coded launch value.",
+  "fixed_runner_sha256": "c1067501df55e1949603d70e2fb216dc02820b1d079140fafd0e0c09ccfd5a8c",
+  "decision": "Quarantine r18 and preregister a fresh r19. No r18 rate is promoted or used in an optimization center."
+}

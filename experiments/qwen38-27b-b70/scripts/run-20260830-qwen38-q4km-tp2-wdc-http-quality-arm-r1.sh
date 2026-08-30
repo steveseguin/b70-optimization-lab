@@ -13,6 +13,7 @@ pilot_mode=${PILOT_MODE:-0}
 # tuned profile. Defaulting it on changed both output and decode speed.
 q4k_reorder=${Q4K_REORDER:-0}
 batch_size=${BATCH_SIZE:-2048}
+ubatch_size=${UBATCH_SIZE:-256}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 queue_settle_target=${QUEUE_SETTLE_TARGET:-0}
 mtp_depth=${MTP_DEPTH:-0}
@@ -78,6 +79,8 @@ esac
 [[ "${arm}" == control || "${candidate_kind}" != wdc || "${q4k_reorder}" == 1 ]] || \
   fail 'WDC candidate requires Q4K_REORDER=1'
 [[ "${batch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'BATCH_SIZE must be positive'
+[[ "${ubatch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'UBATCH_SIZE must be positive'
+(( ubatch_size <= batch_size )) || fail 'UBATCH_SIZE must not exceed BATCH_SIZE'
 [[ "${queue_settle_ms}" =~ ^[0-9]+$ ]] && (( queue_settle_ms <= 5000 )) || fail 'QUEUE_SETTLE_MS must be 0..5000'
 [[ "${queue_settle_target}" =~ ^[0-9]+$ ]] && (( queue_settle_target <= 1024 )) || fail 'QUEUE_SETTLE_TARGET must be 0..1024'
 (( queue_settle_target == 0 || queue_settle_ms > 0 )) || fail 'QUEUE_SETTLE_TARGET requires QUEUE_SETTLE_MS > 0'
@@ -185,7 +188,7 @@ timeout --signal=INT --kill-after=30s 3600s env \
   CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE="${batch_size}" \
   QUEUE_SETTLE_MS="${queue_settle_ms}" \
   QUEUE_SETTLE_TARGET="${queue_settle_target}" \
-  UBATCH_SIZE=256 THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
+  UBATCH_SIZE="${ubatch_size}" THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
 server_job=$!
 
 healthy=0
@@ -199,6 +202,8 @@ done
 pid=$(pgrep -n -x llama-server || true)
 [[ -n "${pid}" ]] || fail 'healthy endpoint has no llama-server process'
 tr '\0' ' ' <"/proc/${pid}/cmdline" >"${run_dir}/server-command.txt"; printf '\n' >>"${run_dir}/server-command.txt"
+grep -Eq -- "--ubatch-size[[:space:]]+${ubatch_size}([[:space:]]|$)" "${run_dir}/server-command.txt" || \
+  fail "launched server does not carry requested UBATCH_SIZE=${ubatch_size}"
 tr '\0' '\n' <"/proc/${pid}/environ" | \
   grep -E '^(GGML_|LLAMA_SERVER_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | sort >"${run_dir}/runtime-environment.txt"
 curl -fsS "http://127.0.0.1:${port}/props" >"${run_dir}/props.json"
@@ -269,23 +274,23 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${concurrency_oracle_kind}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${ubatch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${concurrency_oracle_kind}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
 pilot_mode = sys.argv[4] == "1"
-batch_size, queue_settle_ms, queue_settle_target = map(int, sys.argv[5:8])
-tp_size, concurrency, context = map(int, sys.argv[8:11])
-feature_profile = sys.argv[11]
-q8_dedup_override = None if sys.argv[12] == "" else int(sys.argv[12])
-launch_stagger_ms = int(sys.argv[13])
-wdc_q4k_name_filter = sys.argv[14] or None
-mtp_depth = int(sys.argv[15])
-candidate_kind = sys.argv[16]
-q4k_f16_cache_filter = sys.argv[17] or None
-pin_slots = sys.argv[18] == "1"
-fuse_ext = int(sys.argv[19])
-oracle_kind = sys.argv[20]
+batch_size, ubatch_size, queue_settle_ms, queue_settle_target = map(int, sys.argv[5:9])
+tp_size, concurrency, context = map(int, sys.argv[9:12])
+feature_profile = sys.argv[12]
+q8_dedup_override = None if sys.argv[13] == "" else int(sys.argv[13])
+launch_stagger_ms = int(sys.argv[14])
+wdc_q4k_name_filter = sys.argv[15] or None
+mtp_depth = int(sys.argv[16])
+candidate_kind = sys.argv[17]
+q4k_f16_cache_filter = sys.argv[18] or None
+pin_slots = sys.argv[19] == "1"
+fuse_ext = int(sys.argv[20])
+oracle_kind = sys.argv[21]
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -312,6 +317,7 @@ summary = {
     "complete_token_id_identity_all": quality.get("complete_token_id_identity_all"),
     "cross_base_oracle_collision_count": quality.get("cross_base_oracle_collision_count"),
     "batch_size": batch_size,
+    "ubatch_size": ubatch_size,
     "queue_settle_ms": queue_settle_ms,
     "queue_settle_target": queue_settle_target,
     "tp_size": tp_size,
