@@ -8,6 +8,8 @@ arm=${ARM:?set ARM to control or candidate}
 attempt=${ATTEMPT:-1}
 baseline_mode=${BASELINE_MODE:-0}
 q4k_reorder=${Q4K_REORDER:-1}
+batch_size=${BATCH_SIZE:-2048}
+queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -32,6 +34,9 @@ concurrency_suite=${repo}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km
 concurrency_oracle=${CONCURRENCY_ORACLE:-${repo}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-oracle-digests.json}
 expected_realistic_oracle_sha256=${EXPECTED_REALISTIC_ORACLE_SHA256:-f8e7e4040d653ef6250ed99362221f68a349ddb003f52769560b87877c0e34af}
 expected_concurrency_oracle_sha256=${EXPECTED_CONCURRENCY_ORACLE_SHA256:-0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33}
+expected_server_sha256=${EXPECTED_SERVER_SHA256:-7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c}
+expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-fd649584afe51a708728bcb4da6b415d60b3c6cb8a6203f5d7ae38fb6272cc05}
+expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case ${profile} in realistic|concurrency) ;; *) fail 'PROFILE must be realistic or concurrency' ;; esac
@@ -41,6 +46,8 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${baseline_mode}" == 0 || "${arm}" == control ]] || fail 'BASELINE_MODE is control-only'
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || fail 'Q4K_REORDER must be 0 or 1'
 [[ "${arm}" == control || "${q4k_reorder}" == 1 ]] || fail 'candidate requires Q4K_REORDER=1'
+[[ "${batch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'BATCH_SIZE must be positive'
+[[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || fail 'QUEUE_SETTLE_MS must be 0..1000'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
 
@@ -51,9 +58,9 @@ check_hash() {
   [[ "${actual}" == "${expected}" ]] || fail "identity mismatch: ${path}"
 }
 check_hash 31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34 "${target}"
-check_hash 7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c "${server}"
+check_hash "${expected_server_sha256}" "${server}"
 check_hash 72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf "${backend}"
-check_hash fd649584afe51a708728bcb4da6b415d60b3c6cb8a6203f5d7ae38fb6272cc05 "${server_impl}"
+check_hash "${expected_server_impl_sha256}" "${server_impl}"
 check_hash ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52 "${realistic_harness}"
 check_hash df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac "${realistic_suite}"
 check_hash "${expected_realistic_oracle_sha256}" "${realistic_oracle}"
@@ -63,7 +70,7 @@ check_hash 2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4 "${c
 check_hash "${expected_concurrency_oracle_sha256}" "${concurrency_oracle}"
 [[ -f "${prereg}" ]] || fail "missing ${prereg}"
 [[ "$(git -C "${source_dir}" rev-parse HEAD)" == 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126 ]] || fail 'source commit mismatch'
-[[ "$(git -C "${source_dir}" diff --binary | sha256sum | awk '{print $1}')" == 9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926 ]] || fail 'source diff mismatch'
+[[ "$(git -C "${source_dir}" diff --binary | sha256sum | awk '{print $1}')" == "${expected_source_diff_sha256}" ]] || fail 'source diff mismatch'
 
 exec 8>/tmp/b70-benchmark.lock
 flock -n 8 || fail 'host-wide benchmark lock is held'
@@ -114,7 +121,8 @@ trap cleanup EXIT INT TERM
 timeout --signal=INT --kill-after=30s 3600s env \
   TARGET_DIR="${target_dir}" DRAFT_DIR="${draft_dir}" BUILD_DIR="${build_dir}" \
   ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
-  CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE=2048 \
+  CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE="${batch_size}" \
+  QUEUE_SETTLE_MS="${queue_settle_ms}" \
   UBATCH_SIZE=256 THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
 server_job=$!
 
@@ -130,7 +138,7 @@ pid=$(pgrep -n -x llama-server || true)
 [[ -n "${pid}" ]] || fail 'healthy endpoint has no llama-server process'
 tr '\0' ' ' <"/proc/${pid}/cmdline" >"${run_dir}/server-command.txt"; printf '\n' >>"${run_dir}/server-command.txt"
 tr '\0' '\n' <"/proc/${pid}/environ" | \
-  grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | sort >"${run_dir}/runtime-environment.txt"
+  grep -E '^(GGML_|LLAMA_SERVER_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | sort >"${run_dir}/runtime-environment.txt"
 curl -fsS "http://127.0.0.1:${port}/props" >"${run_dir}/props.json"
 curl -fsS "http://127.0.0.1:${port}/slots" >"${run_dir}/slots-before.json"
 
@@ -190,16 +198,20 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${batch_size}" "${queue_settle_ms}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
+baseline_mode = sys.argv[3] == "1"
+batch_size, queue_settle_ms = int(sys.argv[4]), int(sys.argv[5])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
 summary = {
     "profile": "concurrency",
     "arm": arm,
-    "quality_qualified": quality.get("batch_gates_passed") is True and oracle_exact_all,
+    "baseline_generation": baseline_mode,
+    "publishable_measurement": not baseline_mode,
+    "quality_qualified": quality.get("batch_gates_passed") is True and (baseline_mode or oracle_exact_all),
     "sequential_oracle_exact_all": oracle_exact_all,
     "sequential_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
     "sequential_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
@@ -207,6 +219,8 @@ summary = {
     "cached_tokens_all_zero": quality.get("cached_tokens_all_zero"),
     "complete_token_id_identity_all": quality.get("complete_token_id_identity_all"),
     "cross_base_oracle_collision_count": quality.get("cross_base_oracle_collision_count"),
+    "batch_size": batch_size,
+    "queue_settle_ms": queue_settle_ms,
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))

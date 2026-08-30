@@ -1,0 +1,40 @@
+{
+  "campaign": "qwen38-q4km-tp2-queue-settle50-c64-pilot-20260830-r1",
+  "status": "preregistered-before-measurement",
+  "purpose": "Generate a non-publishable c64-shaped control oracle after an explicit 50 ms burst-admission window, then use that frozen oracle for fresh-server determinism replays.",
+  "hypothesis": "The prior 54/64 same-shape replay was caused by variable HTTP arrival-to-slot assignment. A fixed admission window should make all 64 requests visible before slot assignment and stabilize batch composition.",
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "queue_patch_sha256": "1c499d603e5dfb2b66c1a0698bb7d85c5b2f9df612ca1bf666c6aa4eb32c5bf9",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf"
+  },
+  "fixed_configuration": {
+    "topology": "TP2 tensor split 1,1",
+    "quant": "Q4_K_M",
+    "MTP": 0,
+    "parallel_slots": 64,
+    "context": 32768,
+    "batch_size": 4096,
+    "ubatch_size": 256,
+    "concurrency": 64,
+    "generated_tokens_per_request": 128,
+    "queue_settle_ms": 50,
+    "Q4K_REORDER": 1,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset"
+  },
+  "pilot_policy": "This run exists only to freeze a deployment-shape token-ID oracle. Its throughput is diagnostic and cannot be published or used as a speed claim.",
+  "pilot_gates": [
+    "64 of 64 requests complete with 128 retained token IDs",
+    "all cached-token counts are zero",
+    "cross-base token-ID collision count is zero",
+    "WDC engagement is absent",
+    "server log confirms a 50 ms settle window",
+    "no kernel, GPU, OOM, or server fault"
+  ],
+  "validation_after_pilot": "Freeze the pilot's 64 token-ID digests, preregister their hash, then require two fresh control servers to match 64/64 exactly. A candidate optimization remains blocked until both replays pass."
+}

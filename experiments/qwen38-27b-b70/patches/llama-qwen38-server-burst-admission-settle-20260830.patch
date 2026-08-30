@@ -1,0 +1,63 @@
+diff --git a/tools/server/server-queue.cpp b/tools/server/server-queue.cpp
+index 5d37c3453..b27f0b5bb 100644
+--- a/tools/server/server-queue.cpp
++++ b/tools/server/server-queue.cpp
+@@ -3,7 +3,10 @@
+ 
+ #include "log.h"
+ 
++#include <cerrno>
+ #include <chrono>
++#include <cinttypes>
++#include <cstdlib>
+ 
+ #define QUE_INF(fmt, ...) LOG_INF("que  %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+ #define QUE_WRN(fmt, ...) LOG_WRN("que  %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+@@ -126,6 +129,24 @@ void server_queue::start_loop(int64_t idle_sleep_ms) {
+     running = true;
+     time_last_task = ggml_time_ms();
+ 
++    const int64_t queue_settle_ms = []() -> int64_t {
++        const char * value = std::getenv("LLAMA_SERVER_QUEUE_SETTLE_MS");
++        if (value == nullptr || *value == '\0') {
++            return 0;
++        }
++        char * end = nullptr;
++        errno = 0;
++        const long long parsed = std::strtoll(value, &end, 10);
++        if (errno != 0 || end == value || *end != '\0' || parsed < 0 || parsed > 1000) {
++            QUE_WRN("ignoring invalid LLAMA_SERVER_QUEUE_SETTLE_MS=%s (expected 0..1000)\n", value);
++            return 0;
++        }
++        return parsed;
++    }();
++    if (queue_settle_ms > 0) {
++        QUE_INF("burst admission settle window = %" PRId64 " ms\n", queue_settle_ms);
++    }
++
+     constexpr auto max_wait_time = std::chrono::seconds(1);
+     auto should_sleep = [&]() -> bool {
+         // caller must hold mutex_tasks
+@@ -139,6 +160,22 @@ void server_queue::start_loop(int64_t idle_sleep_ms) {
+     while (true) {
+         QUE_DBG("%s", "processing new tasks\n");
+ 
++        // The HTTP workers enqueue independently. Without a short, explicit
++        // burst window the first arrival wakes this loop and can begin GPU
++        // work before the rest of a synchronized client burst is visible.
++        // That makes the effective batch composition timing-dependent. This
++        // default-off window releases the queue mutex while waiting, allowing
++        // the remaining requests to accumulate before slots are assigned.
++        if (queue_settle_ms > 0) {
++            std::unique_lock<std::mutex> lock(mutex_tasks);
++            if (!queue_tasks.empty() && running) {
++                condition_tasks.wait_for(
++                    lock,
++                    std::chrono::milliseconds(queue_settle_ms),
++                    [&]() { return !running; });
++            }
++        }
++
+         while (true) {
+             std::unique_lock<std::mutex> lock(mutex_tasks);
+             if (!running) {
