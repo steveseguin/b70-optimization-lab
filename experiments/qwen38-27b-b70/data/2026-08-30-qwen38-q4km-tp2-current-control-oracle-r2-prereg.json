@@ -1,0 +1,27 @@
+{
+  "campaign": "qwen38-q4km-tp2-current-control-oracle-20260830-r2",
+  "status": "preregistered-before-r2-control-measurement",
+  "candidate_enabled": false,
+  "purpose": "Freeze and repeat the exact raw-screen control identity over strict HTTP workloads.",
+  "identity": {
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset",
+    "GGML_SYCL_REORDER_IN_GEMM": 1,
+    "GGML_SYCL_FORCE_REORDER_Q4K": 1,
+    "GGML_SYCL_DISABLE_REORDER_Q6K": 1
+  },
+  "r1_disposition": "Aborted during the first model load/request boundary when its control log exposed default q8_0 WDC engagement. No complete result or oracle was produced.",
+  "run_order": [
+    "realistic-control-attempt1-generate",
+    "realistic-control-attempt2-repeat",
+    "concurrency-control-attempt1-generate",
+    "concurrency-control-attempt2-repeat"
+  ],
+  "gates": {
+    "realistic": "Both fresh servers pass the fixed 12-prompt 512-token cache-zero workload; attempt2 matches all 12 attempt1 output hashes.",
+    "concurrency": "Attempt1 creates a complete 64-row sequential token-ID oracle and matches it at c64; attempt2 matches all 64 compact digests.",
+    "negative_control": "No weight-decompression GEMM engagement warning of any quant type.",
+    "kernel_health": "No GPU reset/fault/device-lost/OOM/model-process segfault evidence."
+  },
+  "publication_policy": "Control-oracle generation only; no WDC candidate and no headline promotion."
+}

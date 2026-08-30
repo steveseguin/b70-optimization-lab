@@ -44,13 +44,14 @@ export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT=31 GGML_SYCL_QDEDUP_STA
 # variable; Q6_K remains outside this route.
 export GGML_SYCL_REORDER_IN_GEMM=1 GGML_SYCL_FORCE_REORDER_Q4K=1
 export GGML_SYCL_DISABLE_REORDER_Q6K=1
+export GGML_SYCL_WDC=off
 unset GGML_SYCL_FORCE_REORDER
 if [[ "${wdc_q4k}" == 1 ]]; then
   # Default-off candidate: oneDNN consumes the scoped Q4_K reordered layout.
   # GGML_SYCL_WDC remains off because this screen enables only the Q4_K door.
-  export GGML_SYCL_WDC=off GGML_SYCL_WDC_Q4K=1
+  export GGML_SYCL_WDC_Q4K=1
 else
-  unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K
+  unset GGML_SYCL_WDC_Q4K
 fi
 args=(
   --model "${target_dir}/Qwen3.8-27B-Q4_K_M.gguf"

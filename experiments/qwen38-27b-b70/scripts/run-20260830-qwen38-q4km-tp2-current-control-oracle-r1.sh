@@ -5,8 +5,8 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
 runner=${script_dir}/run-20260830-qwen38-q4km-tp2-wdc-http-quality-arm-r1.sh
 out_parent=${OUT_DIR:-/mnt/fast-ai/bench-results}
-campaign=qwen38-q4km-tp2-current-control-oracle-20260830-r1
-prereg=${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-current-control-oracle-r1-prereg.json
+campaign=${CAMPAIGN:-qwen38-q4km-tp2-current-control-oracle-20260830-r1}
+prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-current-control-oracle-r1-prereg.json}
 
 common=(CAMPAIGN="${campaign}" PREREG="${prereg}" ARM=control)
 
