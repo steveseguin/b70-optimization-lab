@@ -1,0 +1,16 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-tuned-ordered40-determinism-20260830-r1",
+  "status": "replay-preregistered-after-pilot-and-before-replay-measurement",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp1-tuned-ordered40-oracle-digests.json",
+    "sha256": "f15799f5c2003fd7cad068f3a44fd162be9af85b7924772a00f0af3a181b305d",
+    "source_result_sha256": "a80eb1886cfd10549c11b37dc558ef1823e4511a5f56a603c21f4ae9499a677e",
+    "rows": 16,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": "TP1 full tuned profile, Q4_K_M, MTP0, c16, context 8192, batch 2048, ubatch 256, queue settle 750 ms, indexed launch stagger 40 ms, no cache, temperature 0, seed 42.",
+  "order_gates": "Client timestamps sort c000..c015 exactly within the admission window; server assignments form one monotonic cohort.",
+  "output_gate": "Fresh server must match 16/16 token-ID digests and pass completion, cache, isolation, collision, WDC-negative, kernel, and cleanup gates.",
+  "interpretation": "A pass clears the tuned feature stack at c16 under controlled order and permits scaling concurrency/topology. A failure requires feature bisection from the passing deep-base ordered control.",
+  "publication_policy": "The pilot's 15.502510071178278 tok/s and replay rate remain diagnostic until the replay passes."
+}
