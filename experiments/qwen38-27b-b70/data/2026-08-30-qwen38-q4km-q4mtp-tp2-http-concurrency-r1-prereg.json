@@ -1,0 +1,80 @@
+{
+  "schema": "neural.download.qwen38-q4km-q4mtp-tp2-http-concurrency-prereg.v1",
+  "campaign_id": "qwen38-q4km-q4mtp-tp2-http-concurrency-20260830-r1",
+  "created_utc": "2026-08-30T05:20:47Z",
+  "status": "preregistered-before-execution",
+  "question": "Does the qualified two-B70 Q4_K_M plus Q4_0 MTP2 deployment retain an aggregate advantage over a fresh matched MTP0 control under synchronized HTTP concurrency?",
+  "hardware": {
+    "host": "steve-TURIND8-2L2T",
+    "accelerators": "2x Intel Arc Pro B70 32 GiB",
+    "remote_hosts_authorized": false
+  },
+  "identities": {
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle_digests_sha256": "0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33",
+    "harness_sha256": "1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2",
+    "semantic_canary_sha256": "0292dd4d2e73d7cec84eaf6b9148131f4143ba5516517843f140c934daa75bc0",
+    "package_launcher_sha256": "cf5dae1ac33ef6c1d332d4e9f85bf52b34baffd63ab3941d9869b3f79387b37c",
+    "package_preflight_sha256": "7c477137305e7dd7dd0cf9dac025d3f64c6f98d81ddbe221c3a476581bf1d9c1",
+    "campaign_runner_sha256": "d9ea9a27560210ac8ea170121cdac79bbef066af622c3613fa2376844a154180",
+    "human_preregistration_sha256": "1a65824e10f2c850a32da950826e880128f08db4f90a94ea55c12f4bf10016b8",
+    "repo_commit_at_preregistration": "a9422d80cafb738b55d2121371d19a181c15a0b4"
+  },
+  "server_contract": {
+    "target_topology": "TP2 equal tensor split across SYCL0,SYCL1",
+    "draft_device": "SYCL0 when MTP2",
+    "mtp_depths": [0, 2],
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "graph": "off",
+    "reasoning": "off",
+    "prompt_cache": false,
+    "parallel_slots": 64,
+    "configured_context_tokens_total": 32768,
+    "configured_context_tokens_per_slot": 512,
+    "batch_size": 1024,
+    "ubatch_size": 256,
+    "threads": 8
+  },
+  "workload": {
+    "prompt_count": 8,
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "repeats_per_point": 1,
+    "max_output_tokens": 128,
+    "api_mode": "native",
+    "temperature": 0,
+    "ignore_eos": true,
+    "cache_prompt": false
+  },
+  "arms": [
+    {"id": "mtp0-r1", "mtp_depth": 0, "fresh_servers": 1, "role": "matched control"},
+    {"id": "mtp2-r1", "mtp_depth": 2, "fresh_servers": 1, "role": "candidate replication A"},
+    {"id": "mtp2-r2", "mtp_depth": 2, "fresh_servers": 1, "role": "candidate replication B"}
+  ],
+  "metric": "Aggregate completion tokens divided by synchronized HTTP batch wall time. Candidate publication uses the median of the two fresh MTP2 servers at each measured concurrency.",
+  "gates": {
+    "completion_tokens_exact_per_response": 128,
+    "complete_token_ids_required": true,
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "accepted_classifications": [
+      "output-identity-qualified",
+      "output-isolation-qualified-shape-variant"
+    ],
+    "semantic_canary_concurrency": 64,
+    "semantic_canary_rounds": 2,
+    "candidate_relative_range_max_percent_each_point": 10.0,
+    "server_cleanup_required": true
+  },
+  "publication_rules": [
+    "No failed arm contributes a speed value.",
+    "No point may be interpolated or extrapolated.",
+    "Batch-shape token variation must be disclosed; isolation qualification is not token identity.",
+    "The older target-only TP2 curve is context only and cannot replace the fresh matched MTP0 arm.",
+    "Results authorize only this 64-slot, 32768-total-context service profile."
+  ]
+}
