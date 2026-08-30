@@ -1,0 +1,50 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-tp2-determinism-20260830-r1",
+  "status": "replay-stage-preregistered-after-pilots-and-before-replay-measurement",
+  "purpose": "Replay each topology against its own frozen c16 oracle to localize run-to-run nondeterminism.",
+  "tp1_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp1-oracle-digests.json",
+    "sha256": "63f76b4518228c14620d5214556ec651737af69fd21d11662fba5569bf7a7699",
+    "source_result_sha256": "6fd53b4ea5b4a7e7f97e01c67ee777b93e1fa6b7f72c36bef43563b8f6ac85e3"
+  },
+  "tp2_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp2-oracle-digests.json",
+    "sha256": "e0fd85fe21a1b6d023d0de4274664d3a800f0e0135bd2f78c30be800d9aae9b2",
+    "source_result_sha256": "015c6c805b4d790bdf4c285ecb4ec881603d9a347a152a4b01d5336864af5b8a"
+  },
+  "pilot_observations": {
+    "tp1_diagnostic_tok_s": 15.502239899072196,
+    "tp2_diagnostic_tok_s": 17.659748646572798,
+    "tp2_gain_percent": 13.9174,
+    "tp1_vs_tp2_exact_outputs": "2/16",
+    "tp1_vs_tp2_boundary": "Topology changes numerical trajectories and is not itself a determinism test. Each replay uses its own topology-specific oracle."
+  },
+  "fixed_common_configuration": {
+    "model": "Qwen3.8-27B-Q4_K_M.gguf",
+    "MTP": 0,
+    "context": 8192,
+    "parallel_slots": 16,
+    "concurrency": 16,
+    "generated_tokens_per_request": 128,
+    "batch_size": 2048,
+    "ubatch_size": 256,
+    "queue_settle_ms": 750,
+    "Q4K_REORDER": 1,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset",
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "run_order": [
+    "TP1 fresh replay",
+    "TP2 fresh replay"
+  ],
+  "gate": "Each replay must match its own frozen oracle 16/16, form one admission cohort, complete all token IDs, use zero cached tokens, have zero cross-base collisions, remain WDC-negative, and pass kernel/cleanup gates.",
+  "failure_interpretation": {
+    "TP1_fail": "Nondeterminism exists without cross-GPU collectives; prioritize shared SYCL kernels/fusions.",
+    "TP1_pass_TP2_fail": "Prioritize the TP2 collective/all-reduce/fusion stack.",
+    "both_pass": "The original defect requires higher concurrency/pressure; scale upward without changing other variables."
+  },
+  "publication_policy": "All rates remain diagnostic during localization. Exactness is mandatory before optimization or publication."
+}
