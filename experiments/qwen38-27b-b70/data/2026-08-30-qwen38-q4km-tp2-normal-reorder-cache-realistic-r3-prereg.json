@@ -1,0 +1,16 @@
+{
+  "campaign": "qwen38-q4km-tp2-normal-reorder-cache-realistic-20260830-r3",
+  "status": "preregistered-after retained-known-good environment comparison and before r3 measurements",
+  "trigger": "The retained 2026-08-30 known-good 12/12 run used GGML_SYCL_MMQ_Q4K_REORDER=1 but did not set REORDER_IN_GEMM, FORCE_REORDER_Q4K, or DISABLE_REORDER_Q6K. The newer strict runner incorrectly defaulted that WDC-only pre-reorder bundle on, producing 0/12 historical hashes and a 50.329 to 41.508 tok/s regression.",
+  "purpose": "Restore the known-good normal tuned environment, prove 12/12 output identity and recovered speed, then qualify the exact ffn_down F16 cache as the sole candidate delta.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, one slot, context 8192, batch 1024, ubatch 256, normal MMQ Q4_K reorder on, WDC pre-reorder off, WDC off, temperature 0, prompt cache off.",
+  "oracle": "Unchanged retained 2026-08-15/30 promoted 12-prompt output hashes.",
+  "arms": [
+    "Fresh current-binary control with WDC pre-reorder and F16 cache unset.",
+    "Only if control is 12/12 exact: fresh ffn_down F16-cache candidate with the same normal environment."
+  ],
+  "required_gates": "12/12 hashes, zero cached tokens, full diverse realistic suite, natural-EOS and metric-window gates, candidate liveness only in candidate, no GPU/kernel faults, and clean shutdown.",
+  "advance_rule": "Candidate runs only after control exactness. Promotion requires candidate 12/12 exact and repeatable same-binary improvement.",
+  "publication_policy": "The WDC-pre-reordered controls are rejected diagnostics. No new oracle, prompt/output caching, fixture gaming, interpolation, or extrapolation."
+}

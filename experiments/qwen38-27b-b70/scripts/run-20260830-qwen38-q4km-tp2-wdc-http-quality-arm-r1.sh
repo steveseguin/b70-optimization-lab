@@ -8,7 +8,10 @@ arm=${ARM:?set ARM to control or candidate}
 attempt=${ATTEMPT:-1}
 baseline_mode=${BASELINE_MODE:-0}
 pilot_mode=${PILOT_MODE:-0}
-q4k_reorder=${Q4K_REORDER:-1}
+# This switch is the WDC-only pre-reorder path (REORDER_IN_GEMM + force Q4_K),
+# not the independently qualified GGML_SYCL_MMQ_Q4K_REORDER used by the normal
+# tuned profile. Defaulting it on changed both output and decode speed.
+q4k_reorder=${Q4K_REORDER:-0}
 batch_size=${BATCH_SIZE:-2048}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 mtp_depth=${MTP_DEPTH:-0}
