@@ -1,0 +1,81 @@
+{
+  "schema": "neural.download.qwen38-q4mtp-request-spec-nmax-result.v1",
+  "campaign_id": "qwen38-q4mtp-request-spec-nmax-20260830-r1",
+  "status": "qualified-safety-control-no-performance-promotion",
+  "promotion_authorized": false,
+  "strict_validation": {
+    "mtp0_class_balanced_tok_s": 49.75334866928654,
+    "mtp2_class_balanced_tok_s": 64.32014440326168,
+    "mtp2_gain_percent": 29.278020723391897,
+    "complete_token_arrays_exact": "12/12",
+    "cached_tokens_all_zero": true,
+    "standard_canaries_passed": true,
+    "natural_eos_policy": true
+  },
+  "hybrid_replications": {
+    "fresh_servers": 2,
+    "both_qualified": true,
+    "explicit_nmax0_pointwise_medians": [
+      {"concurrency": 4, "aggregate_tok_s": 83.66126346549441, "relative_range_percent": 2.1269480252475574},
+      {"concurrency": 8, "aggregate_tok_s": 101.15476075104297, "relative_range_percent": 1.2965923414279192},
+      {"concurrency": 16, "aggregate_tok_s": 103.39609682652966, "relative_range_percent": 2.531500376563357},
+      {"concurrency": 32, "aggregate_tok_s": 118.78006798052314, "relative_range_percent": 1.4436870558340207},
+      {"concurrency": 64, "aggregate_tok_s": 154.1295790365727, "relative_range_percent": 0.2858818433500805}
+    ],
+    "explicit_nmax2_post_long_sequence_pointwise_medians": [
+      {"concurrency": 1, "aggregate_tok_s": 55.65212922908679, "relative_range_percent": 0.4079907573541844},
+      {"concurrency": 2, "aggregate_tok_s": 49.237389959223734, "relative_range_percent": 0.359150827641314}
+    ],
+    "semantic_canary_passes": "256/256",
+    "semantic_canary_failures": 0,
+    "cached_tokens_all_zero": true,
+    "nmax0_draft_counter_delta": [0, 0],
+    "nmax2_draft_counter_increased_both": true
+  },
+  "order_diagnostic": {
+    "status": "qualified-diagnostic",
+    "promotion_authorized": false,
+    "explicit_default_users2": {
+      "explicit_first_tok_s": 67.26467522150848,
+      "default_second_tok_s": 68.46316145356431,
+      "absolute_difference_percent_of_mean": 1.7660139016655183
+    },
+    "default_explicit_users2": {
+      "default_first_tok_s": 66.39789704008312,
+      "explicit_second_tok_s": 69.13385639384552,
+      "absolute_difference_percent_of_mean": 4.037370261126546
+    },
+    "pre_stress_post_users2": {
+      "before_tok_s": 67.41630813354699,
+      "after_one_nmax0_c64_batch_tok_s": 69.51520416770312,
+      "change_percent": 3.1133357673611473
+    },
+    "interpretation": "The explicit request field is not the cause of the post-sequence users=2 slowdown. A single 64-user MTP0-request batch also does not reproduce it. The ~49 tok/s observation is confined to the longer combined sweep plus semantic-canary sequence and remains an unresolved long-sequence state effect."
+  },
+  "decision": {
+    "patch_behavior": "correct and fail-closed for request-level MTP reduction",
+    "public_recipe_change": false,
+    "reason": "A loaded draft model makes explicit-MTP0 users=64 approximately 6.41% slower than the already qualified separate target-only server, and the long combined sequence exposes unresolved state-dependent low-concurrency performance. Separate MTP2-interactive and MTP0-throughput profiles remain faster and simpler.",
+    "existing_target_only_users64_tok_s": 164.69145242430238,
+    "loaded_draft_explicit_nmax0_users64_tok_s": 154.1295790365727,
+    "loaded_draft_penalty_percent": -6.413127841339716
+  },
+  "evidence": {
+    "archive_manifest": "experiments/qwen38-27b-b70/data/qwen38-q4mtp-request-spec-nmax-20260830-r1/manifest.json",
+    "archive_manifest_sha256": "3148955f0883f57d260cfebc51ad5ed6ac4cffe00e71f7c6179b0aba800f81fa",
+    "artifact_count": 65,
+    "strict_mtp0_performance_sha256": "e2773f6a646bf43ba88fa43634f8b6205c4b779c3b9d151725e92c3fe43889e5",
+    "strict_mtp2_performance_sha256": "958601b48b9d96a7923b02988a66964c0fae3bbcdff60aae97624bb9e8c28dc5",
+    "hybrid_r1_qualification_sha256": "3a17ba0d566ad715c6a2f28f1bd81f5ab31fe75a24f04aa39c6afa9fa5ac8701",
+    "hybrid_r2_qualification_sha256": "c1a8173edcc9f7c5b3874f7870e114e36a31ceeeadcc556191672848652ae3a1",
+    "order_explicit_default_qualification_sha256": "7b2484703ea38054ddefa3a5ce1c75c4a7317338f722743d5a76449214b43765",
+    "order_default_explicit_qualification_sha256": "f8d7fe7ec54e21fbac94502f21d76cde43b18b52ad31fe4b36c61ceec90395ac",
+    "order_pre_stress_post_qualification_sha256": "f11bd68750f9b78e990df0184bb3a1f06654895fd9d1bf837c78706b5db59b7c"
+  },
+  "boundaries": [
+    "No failed global-MTP2 high-concurrency value is rehabilitated by this result.",
+    "The order diagnostic cannot authorize a public speed claim.",
+    "No value is interpolated or extrapolated.",
+    "The patch can only reduce the server-configured speculative depth; it cannot increase it."
+  ]
+}
