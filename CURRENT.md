@@ -1509,6 +1509,13 @@ full-model positive for the deterministic QSA treatment, but the patch remains
 unpromoted and the placement remains Grade C until a separately started A14
 server passes the same full battery. No protected result changed. See the
 [A13 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a13-qsa-stable-positive.md).
+The exact A14 fresh-server replica is now frozen. It changes only attempt,
+port, state/cache/compile/RPC, and evidence paths, while retaining the A13
+source, placement, cache, prompts, authority hashes, and complete battery. A
+full pass promotes the deterministic QSA treatment plus PLE-only placement to
+the reliable/lossless MTP0 optimization base; any failure preserves A13 as a
+bounded Grade-C positive and changes no protected result. See the
+[A14 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a14-fresh-server-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
