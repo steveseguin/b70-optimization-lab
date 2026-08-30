@@ -1677,6 +1677,23 @@ this re-freeze. The wrappers validate in about one second, reject this already-
 used boot, and preserve all protected results. See
 the
 [A25 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a25-fresh-inner-trace-prereg.md).
+A25 produced the required well-formed fresh trace but is lifecycle-negative:
+the launch wrapper's source-only mode unexpectedly executed the derived server
+without the frozen supervisor. The frozen client correctly refused that
+endpoint. A diagnostic client that removed only supervisor admission retained
+all server identity, request, trace, quality, hash, and assertion gates, so the
+result is useful for localization but cannot be promoted. The inherited 6/7
+semantic boundary, repeat suite, 4K needle, and all three short hashes passed;
+short median was `5.419691 tok/s`. The two exact-4K rows completed at
+`5.312945 / 5.273093 tok/s` with distinct non-authority hashes and failed
+closed. A24/A25 each contain 64 records and 171 tensors. Their first 23 tensors
+match; the first difference is zero-based layer 1's GatedDeltaNet
+`attn_out`, after the complete PLE lookup/dequant/projection/gate/convolution,
+PLE addition, and attention hyperconnection inputs match exactly. PLE is not
+the first fresh-start divergence. Reliability diagnosis now moves inside the
+layer-1 GDN path while async-UVA PLE remains a valid speed candidate. The
+server tore down cleanly; all protected results are unchanged. See the
+[A25 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a25-fresh-inner-trace-result.md).
 The separate XPU PLE process-offload candidate is now source-safe enough for a
 later bounded A/B: GPU-placeholder coverage is correct, host waits have a
 terminal failure signal and finite deadline, and index-first loading selects

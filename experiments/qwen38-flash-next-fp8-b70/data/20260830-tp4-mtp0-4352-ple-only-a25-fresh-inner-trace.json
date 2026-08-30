@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "status": "diagnostic_trace_positive_lifecycle_negative",
+  "classification": "fresh_start_first_inner_mismatch_localized",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "vllm_head": "ca20c4465ca34fc733aac70416b75d7cb8a1c46f",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "eager": true,
+    "mtp": 0,
+    "max_model_len": 4352,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 134217728,
+    "offload_backend": "uva",
+    "cpu_offload_gb_per_rank": 12.0,
+    "cpu_offload_params": "ple_embedding.ngram_embedding.weight",
+    "boot_id": "5995806a-8465-43be-94aa-5c14ea1d9348"
+  },
+  "lifecycle": {
+    "frozen_supervisor_present": false,
+    "cause": "The launch wrapper's source-only mode unexpectedly executed the derived A25 launcher while its output was being inspected.",
+    "frozen_client_result": "failed_closed_supervisor_absent",
+    "diagnostic_client_change": "Removed only the supervisor PID/deadline admission block; retained server identity, requests, hashes, trace, quality gates, and assertions.",
+    "diagnostic_client_sha256": "c0ffb1110564180173a13d3ec711be336eb47309cb3bf6847005b8bb4a2ddcb5",
+    "promotion_allowed": false,
+    "teardown": "clean"
+  },
+  "quality": {
+    "semantic_exact_passes": 6,
+    "semantic_exact_total": 7,
+    "known_code_case_pass": false,
+    "repeat_pass": true,
+    "long_context_needle_pass": true
+  },
+  "short_decode": {
+    "tok_s": [
+      5.4196911570816955,
+      5.408572006345214,
+      5.551165993212543
+    ],
+    "median_tok_s": 5.4196911570816955,
+    "all_output_hashes_match": true,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "performance_credit": false
+  },
+  "exact_4k": [
+    {
+      "row": 1,
+      "tok_s": 5.3129448296265,
+      "ttft_s": 115.37174021800001,
+      "output_sha256": "b2638c77b630673d733b9ba733f05df4e4817802cf49b610c9fee2bffeef7958"
+    },
+    {
+      "row": 2,
+      "tok_s": 5.2730928965444,
+      "ttft_s": 107.06906270800005,
+      "output_sha256": "bf25b9d14a6d1618be82d5b0be902c83d786f4830d207482665d8d00d9cbe58c"
+    }
+  ],
+  "trace": {
+    "left_attempt": 24,
+    "right_attempt": 25,
+    "record_count_each": 64,
+    "tensor_count_each": 171,
+    "matching_tensor_prefix": 23,
+    "first_mismatch": {
+      "record_index": 13,
+      "label": "layer_1_attn_output",
+      "tensor_name": "attn_out",
+      "dtype": "torch.bfloat16",
+      "shape": [64, 2560],
+      "left_sha256": "1c3cd27e11c3927cf6663eb01345f06a03938423a1def150c0777307a34e0352",
+      "right_sha256": "9aa9a30aaad4647bdc956761b54973a6cb35acbe64dedb4f4f6d46e4afa0ef9a"
+    },
+    "left_trace_sha256": "1f729de92da4f4355d1009c185300a95255978fb1a0222e457330eb5e6e6be23",
+    "right_trace_sha256": "e595f32348c86972a586bf989a72e0a7301513370d40be4a8bf328207ee330c5",
+    "comparison_sha256": "a746430610a30d92f787a80f9175db9a1476b2433cdca28a027203058569bae4"
+  },
+  "interpretation": "A24 and A25 are exact through the PLE input, lookup, dequantization, projection, gate, convolution, PLE output/addition, and layer-1 hyperconnection mix. The first difference is the zero-based layer-1 GatedDeltaNet attention output. PLE is not the first cross-boot divergence. Trace the GDN projection, convolution/state inputs, recurrent output, norm, and output projection before changing PLE arithmetic.",
+  "protected_results_unchanged": {
+    "target_only_short_median_tok_s": 5.515783,
+    "mtp4_tok_s": 20.727
+  }
+}
