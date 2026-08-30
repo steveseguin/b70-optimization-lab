@@ -1439,6 +1439,17 @@ change. It repeats the full quality, 16/16 determinism, short, exact-4K, and
 owned-teardown gates; a full pass promotes the placement to the reliable MTP0
 optimization base, while any failure leaves A9 Grade C. See the
 [A10 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a10-fresh-server-prereg.md).
+That replica is now closed as the required bounded reliability negative. It
+repeated the exact 11.92-GiB/rank PLE placement, 31.57-GiB/card load, 4,747-token
+cache, 6/7 semantic boundary, 16/16 fixed repeat, exact 4K needle, and three
+protected short hashes. Its short median was a diagnostic `5.378285 tok/s`.
+Both byte-identical exact-4K rows passed usage, cache-zero, length-stop, and
+timing gates, but only row 1 matched the retained token authority; row 2 first
+diverged at generated token 7. A9 therefore remains Grade C and is not a
+reliable/lossless deployment base. No protected result changed. The next arm
+uses only existing API top-score reporting on the frozen 4K request; the A8
+worker trace must not be reapplied. See the
+[A10 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a10-fresh-server-negative.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
