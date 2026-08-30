@@ -1,0 +1,19 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-c96-20260830-r14",
+  "status": "fresh c96 same-shape batch oracle frozen before candidate measurement",
+  "oracle_file": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-c96-batch-oracle-r14.json",
+  "oracle_sha256": "f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1",
+  "pilot_result_sha256": "73fdab8c9a26e81bddd5e1463fed64021d34edaaab495552620fbbd6bebdd763",
+  "pilot_qualification_sha256": "cca87d4d3ac83d09de6aa81aa1a5935d03a5b163899adaf8f0bf63b77ae7eca5",
+  "pilot_summary_sha256": "302302d01b56e0704c0116926f14b830e2c631380973d1c60146e8f4aa699c95",
+  "pilot_batch": {
+    "aggregate_tok_s_nonpublishable": 186.52315946934993,
+    "complete_128_token_rows": "96/96",
+    "exported_oracle_digest_exact_to_batch": "96/96",
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collisions": 0,
+    "sequential_reference_exact": "50/96"
+  },
+  "runtime_context": "Requested 32768; llama.cpp used an effective 49152-token pool (96x512).",
+  "quality_boundary": "The committed oracle is cryptographically verified against all 96 synchronized control-batch token arrays. It tests candidate-vs-control identity at c96. The separate 50/96 sequential comparison is retained and prevents a sequential-determinism claim."
+}
