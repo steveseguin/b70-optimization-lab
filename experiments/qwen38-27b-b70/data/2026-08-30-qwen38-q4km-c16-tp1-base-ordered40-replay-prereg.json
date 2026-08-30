@@ -1,0 +1,16 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-base-ordered40-determinism-20260830-r1",
+  "status": "replay-preregistered-after-pilot-and-before-replay-measurement",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp1-base-ordered40-oracle-digests.json",
+    "sha256": "1a463357bf6ecea7a58249836b98ed6d37d0b67322c1bd5d22694e07d7068e87",
+    "source_result_sha256": "a85d487ed3b606df0eefabf6a3c3c040cf60f3ebac33880e4aaebc7cc9cf1472",
+    "rows": 16,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": "TP1 deep-base profile, Q4_K_M, MTP0, c16, context 8192, batch 2048, ubatch 256, queue settle 750 ms, indexed launch stagger 40 ms, no cache, temperature 0, seed 42.",
+  "order_gates": "Client request timestamps must sort as c000..c015 exactly, with total span below 750 ms. Server tasks must be monotonically assigned in one cohort.",
+  "output_gate": "Fresh server must match all 16 frozen token-ID digests and pass completion, cache, isolation, collision, WDC-negative, kernel, and cleanup gates.",
+  "interpretation": "A 16/16 pass establishes prompt-to-slot order as the missing determinism control and permits testing the tuned profile with the same ordered client. A failure establishes nondeterminism below controlled order/admission and deep-base feature doors.",
+  "publication_policy": "The pilot's 12.779908775862932 tok/s and replay rate are diagnostic only."
+}
