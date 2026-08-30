@@ -1,0 +1,36 @@
+diff --git a/tools/server/server-schema.cpp b/tools/server/server-schema.cpp
+index 01a6ab870..b4f8f7171 100644
+--- a/tools/server/server-schema.cpp
++++ b/tools/server/server-schema.cpp
+@@ -194,13 +194,15 @@ std::vector<std::unique_ptr<field>> make_llama_cmpl_schema(const common_params &
+     // Speculative decoding params
+     //
+ 
+-    // TODO: to keep things simple, we disable speculative parameter adjustments for now
+-#if 0
+-    // TODO: for now, be able to adjust only the draft-model based speculative parameters
++    // Requests may reduce the global draft depth, including setting it to zero.
++    // They may not exceed the server's configured maximum.
+     add((new field_num("speculative.n_max", params.speculative.draft.n_max))
+-        ->set_hard_limits(0, INT32_MAX)
++        ->set_hard_limits(0, params_base.speculative.draft.n_max)
+         ->set_desc("Maximum number of tokens to draft during speculative decoding"));
+ 
++    // TODO: to keep things simple, other speculative parameter adjustments
++    // remain disabled for now.
++#if 0
+     add((new field_num("speculative.n_min", params.speculative.draft.n_min))
+         ->set_hard_limits(0, INT32_MAX)
+         ->set_desc("Minimum number of draft tokens to use for speculative decoding");
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 3b475f317..e20f1d060 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -464,6 +464,7 @@ struct server_slot {
+         // note: slot.prompt is not yet expanded with the `id` token sampled above
+         //       also, need to leave space for 1 extra token to allow context shifts
+         int n_draft_max = n_ctx - prompt.n_tokens() - 2;
++        n_draft_max = std::min(n_draft_max, task->params.speculative.draft.n_max);
+ 
+         if (n_remaining > 0) {
+             n_draft_max = std::min(n_draft_max, n_remaining - 1);

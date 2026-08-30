@@ -1,0 +1,143 @@
+{
+  "schema": "neural.download.qwen38-q4mtp-request-spec-nmax-prereg.v1",
+  "campaign_id": "qwen38-q4mtp-request-spec-nmax-20260830-r1",
+  "created_utc": "2026-08-30T14:46:43Z",
+  "status": "preregistered-before-performance-execution",
+  "question": "Can a two-B70 Qwen3.8-27B TP2 service preserve qualified default MTP2 for interactive requests while explicit request-level MTP0 restores semantic safety at high synchronized concurrency?",
+  "hardware": {
+    "host": "steve-TURIND8-2L2T",
+    "accelerators": "2x Intel Arc Pro B70 32 GiB",
+    "remote_hosts_authorized": false
+  },
+  "candidate": {
+    "base_llama_cpp_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "0e791be3b5a66bcd37e0bcf4b905ef609c4456c2cb5e5b8b6d12123f15af6864",
+    "request_depth_contract": "literal JSON field speculative.n_max; integer 0..server configured maximum; omitted field preserves server default",
+    "automatic_policy": false,
+    "nonperformance_api_diagnostic": {
+      "summary_sha256": "3989e001987a4347a5e7ec03e1f477eed427699f89d7dd01433b66ea9f0a9726",
+      "default_draft_tokens": 48,
+      "default_accepted_tokens": 38,
+      "explicit_nmax0_draft_tokens": 0,
+      "complete_token_arrays_identical": true,
+      "nmax3_http_status": 400,
+      "eligible_as_performance_evidence": false
+    }
+  },
+  "identities": {
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "408e3b3cc1e4f48e5d955d5acf72444e0f1ddfaf5802c19f3d69b181bb8eecb9",
+    "libggml_sycl_sha256": "256312e871752d4ba3af09704843eb08efbd46e35d42ee04dfe4ec81d17e687f",
+    "libllama_server_impl_sha256": "c8c0e5d701445f6f8ca43f3cc0dfcfd6de5d70b2314b77d3bdf88ace6e6314fb",
+    "candidate_patch_sha256": "4091ebd53fcae8dd952a3b8f96b5df2248e2d363d92ff7350694df56be6fbdc3",
+    "campaign_runner_sha256": "047c261e84fa0f461e7e86da17e349d424dead7e8e814255f05de269fdf8899b",
+    "human_preregistration_sha256": "4bd52304a16ffd04451d4a1e1e3107c1ef44afebb5bb9b8bae2bc857c495b4cd",
+    "semantic_canary_sha256": "072e2362a773c6335a507675715d10b5501150f352d71101138c051e446a1117",
+    "quality_suite_helper_sha256": "268f6de4a3e4353191d4f75c48b6b0f243ca30196fcb4c582e1db2e2935db656",
+    "quality_helper_test_sha256": "cc4df8c78c2dcedaf1e52c3912be3bd976ea3777c9f1aa1a4941b6b48ccd6ae3",
+    "package_launcher_sha256": "cf5dae1ac33ef6c1d332d4e9f85bf52b34baffd63ab3941d9869b3f79387b37c",
+    "package_bench_sha256": "0d09a36b06b07b3f23f4c0842675d7a24df0c29db80838a23526d7ede7b533f8",
+    "concurrency_suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "concurrency_oracle_sha256": "0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33",
+    "concurrency_harness_sha256": "1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2",
+    "sequential_canary_sha256": "b04d6f33d52904780937bf7f74eac09582f2635852108d9b0d30cb46261b58a7",
+    "repo_parent_commit": "c2ac86aa0a8d2a4f0c5e3c5305f2dcb265e402e3"
+  },
+  "server_contract": {
+    "target_topology": "TP2 equal tensor split across SYCL0,SYCL1",
+    "draft_device": "SYCL0",
+    "server_mtp_depth": 2,
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "graph": "off",
+    "reasoning": "off",
+    "prompt_cache": false,
+    "batch_size": 1024,
+    "ubatch_size": 256,
+    "threads": 8
+  },
+  "arms": [
+    {
+      "id": "strict-mtp0",
+      "fresh_servers": 1,
+      "parallel_slots": 1,
+      "configured_context_tokens_total": 8192,
+      "role": "fresh target-only strict oracle"
+    },
+    {
+      "id": "strict-mtp2",
+      "fresh_servers": 1,
+      "parallel_slots": 1,
+      "configured_context_tokens_total": 8192,
+      "role": "fresh default-MTP2 strict candidate"
+    },
+    {
+      "id": "hybrid-r1",
+      "fresh_servers": 1,
+      "parallel_slots": 64,
+      "configured_context_tokens_total": 32768,
+      "role": "request-policy replication A"
+    },
+    {
+      "id": "hybrid-r2",
+      "fresh_servers": 1,
+      "parallel_slots": 64,
+      "configured_context_tokens_total": 32768,
+      "role": "request-policy replication B"
+    }
+  ],
+  "strict_workload": {
+    "prompt_classes": 12,
+    "max_output_tokens": 512,
+    "metric_window_tokens_after_ttft": 100,
+    "natural_eos_required": true,
+    "temperature": 0,
+    "cache_prompt": false,
+    "complete_token_array_identity_required": "12/12 between fresh MTP0 and fresh default MTP2"
+  },
+  "concurrency_workload": {
+    "prompt_count": 8,
+    "explicit_nmax2_concurrency": [1, 2],
+    "explicit_nmax0_concurrency": [4, 8, 16, 32, 64],
+    "repeats_per_point_per_fresh_server": 1,
+    "fresh_server_replications": 2,
+    "max_output_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "cache_prompt": false,
+    "semantic_canary": {
+      "explicit_nmax": 0,
+      "concurrency": 64,
+      "rounds": 2,
+      "total_requests_per_replication": 128
+    }
+  },
+  "gates": {
+    "strict_realistic_final_gate": true,
+    "strict_cached_tokens_all_zero": true,
+    "strict_standard_canaries_pass": true,
+    "strict_complete_token_arrays_exact": 12,
+    "concurrency_completion_tokens_exact_per_response": 128,
+    "concurrency_complete_token_ids_required": true,
+    "concurrency_cached_tokens_all_zero": true,
+    "concurrency_cross_base_oracle_collision_count": 0,
+    "accepted_concurrency_classifications": [
+      "output-identity-qualified",
+      "output-isolation-qualified-shape-variant"
+    ],
+    "semantic_canary_passes_required_per_replication": 128,
+    "nmax0_draft_counter_delta_required": 0,
+    "nmax2_draft_counter_must_increase": true,
+    "server_cleanup_required": true
+  },
+  "publication_rules": [
+    "No failed arm or partial point contributes a speed value.",
+    "No point may be interpolated or extrapolated.",
+    "Pointwise medians require both fresh hybrid replications to pass every gate.",
+    "The prior failed global-MTP2 64-way value remains ineligible.",
+    "The API diagnostic is functionality evidence only and cannot qualify performance or quality.",
+    "Any public recipe must disclose that workload policy is explicit, not automatically inferred.",
+    "Results authorize only the exact model, binary, patch, topology, and context boundaries recorded here."
+  ]
+}

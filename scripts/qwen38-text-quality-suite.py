@@ -84,6 +84,7 @@ def chat_completion(
     seed: int,
     chat_template_kwargs: dict[str, Any] | None,
     request_id: str | None = None,
+    request_extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -95,6 +96,15 @@ def chat_completion(
     }
     if chat_template_kwargs is not None:
         payload["chat_template_kwargs"] = chat_template_kwargs
+    if request_extra:
+        protected = {"model", "messages", "max_tokens", "temperature", "top_p", "seed"}
+        overlap = protected.intersection(request_extra)
+        if overlap:
+            raise ValueError(
+                "request_extra may not override required fields: "
+                + ", ".join(sorted(overlap))
+            )
+        payload.update(request_extra)
     started = time.perf_counter()
     data = post_json(
         f"{base_url.rstrip('/')}/v1/chat/completions",

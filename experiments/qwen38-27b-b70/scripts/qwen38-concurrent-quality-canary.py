@@ -41,6 +41,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=20260609)
     parser.add_argument("--request-id-prefix", default="qwen38-concurrent-quality")
     parser.add_argument(
+        "--speculative-n-max",
+        type=int,
+        choices=(0, 1, 2),
+        help="explicit per-request speculative depth; omitted preserves server default",
+    )
+    parser.add_argument(
         "--chat-template-kwargs-json", default='{"enable_thinking":false}'
     )
     parser.add_argument("--output-json", type=Path, required=True)
@@ -55,6 +61,11 @@ def main() -> int:
     quality = load_quality_module()
     cases = quality.make_exact_cases()
     template_kwargs = json.loads(args.chat_template_kwargs_json)
+    request_extra = (
+        {"speculative.n_max": args.speculative_n_max}
+        if args.speculative_n_max is not None
+        else None
+    )
     all_rounds: list[dict[str, Any]] = []
 
     for round_index in range(args.rounds):
@@ -78,6 +89,7 @@ def main() -> int:
                     f"{args.request_id_prefix}-r{round_index:02d}-"
                     f"s{slot:03d}-{case['name']}"
                 ),
+                request_extra=request_extra,
             )
             if "expected" in case:
                 passed = result["normalized"] == case["expected"]
@@ -140,6 +152,7 @@ def main() -> int:
         "concurrency": args.concurrency,
         "rounds": args.rounds,
         "total_requests": args.concurrency * args.rounds,
+        "speculative_n_max": args.speculative_n_max,
         "pass_all": all(row["pass"] for row in all_rounds),
         "no_extrapolation": True,
         "results": all_rounds,
