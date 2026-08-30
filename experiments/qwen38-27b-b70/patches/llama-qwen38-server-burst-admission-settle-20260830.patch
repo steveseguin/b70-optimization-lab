@@ -32,8 +32,9 @@ index 5d37c3453..b27f0b5bb 100644
 +        return parsed;
 +    }();
 +    if (queue_settle_ms > 0) {
-+        QUE_INF("burst admission settle window = %" PRId64 " ms\n", queue_settle_ms);
++        QUE_INF("one-shot burst admission settle window = %" PRId64 " ms\n", queue_settle_ms);
 +    }
++    bool queue_settle_pending = queue_settle_ms > 0;
 +
      constexpr auto max_wait_time = std::chrono::seconds(1);
      auto should_sleep = [&]() -> bool {
@@ -48,13 +49,14 @@ index 5d37c3453..b27f0b5bb 100644
 +        // That makes the effective batch composition timing-dependent. This
 +        // default-off window releases the queue mutex while waiting, allowing
 +        // the remaining requests to accumulate before slots are assigned.
-+        if (queue_settle_ms > 0) {
++        if (queue_settle_pending) {
 +            std::unique_lock<std::mutex> lock(mutex_tasks);
 +            if (!queue_tasks.empty() && running) {
 +                condition_tasks.wait_for(
 +                    lock,
 +                    std::chrono::milliseconds(queue_settle_ms),
 +                    [&]() { return !running; });
++                queue_settle_pending = false;
 +            }
 +        }
 +
