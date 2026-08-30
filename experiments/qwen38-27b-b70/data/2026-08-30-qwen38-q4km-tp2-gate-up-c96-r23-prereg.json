@@ -1,0 +1,13 @@
+{
+  "campaign": "qwen38-q4km-tp2-gate-up-c96-20260830-r23",
+  "status": "preregistered after r22 profile and before measurement",
+  "purpose": "Test the only unmeasured two-family exact-cache pair: ffn_gate+ffn_up. It trades the incumbent ffn_down cache for ffn_up at the same weight-element count and device-memory class.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact F16 cache for ffn_gate and ffn_up, 96 pinned slots, effective total context 49152, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 96 with 1000 ms ceiling.",
+  "profile_rationale": "r22 measured the gate/up GEMM shape at 42.5-42.7% of oneDNN time and exactly twice the down-projection call count. Cache selection does not change those GEMM times; this arm only measures whether eliminating the remaining gate/up Q4_K-to-F16 dequantization beats caching down instead.",
+  "oracle": "Frozen c96 same-shape batch oracle SHA-256 f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1; 96 rows.",
+  "runner_sha256": "b518ea5c0611afc43accdbd2b7fc67f2af8b6eea15cc1a5a5fe43ff77df40789",
+  "incumbent": "ffn_down+ffn_gate rates 192.35094949480367 and 192.3329581230704 tok/s; center 192.34195380893704 tok/s.",
+  "advance_rule": "Attempt 1 must match the frozen c96 oracle 96/96, pass all gates and exceed 192.35094949480367 tok/s. Only then repeat. Promotion requires both attempts 96/96 and their center above 192.34195380893704 tok/s.",
+  "failure_policy": "Any output mismatch, OOM/health failure or first rate at or below 192.35094949480367 closes r23. No failed-arm or single-run rate is promoted."
+}

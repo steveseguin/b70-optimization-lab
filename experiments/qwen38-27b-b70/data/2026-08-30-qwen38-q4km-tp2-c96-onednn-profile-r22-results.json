@@ -1,0 +1,47 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-onednn-profile-20260830-r22",
+  "status": "completed diagnostic; no throughput claim",
+  "configuration": "Qualified c96 ffn_down+ffn_gate exact-cache path plus ONEDNN_VERBOSE=profile_exec",
+  "quality": "96/96 same-shape token streams exact, zero cached tokens, complete token IDs, clean GPU health",
+  "profiled_rate_tok_s_excluded": 122.11611157971582,
+  "profiled_rate_exclusion_reason": "Writing 129280 post-request primitive records perturbed endpoint timing. The generic runner's mechanical publishable flag is overridden by the preregistered diagnostic-only classification.",
+  "primitive_coverage": {
+    "post_request_exec_records": 129280,
+    "gpu0_summed_onednn_ms": 9028.948064920036,
+    "gpu1_summed_onednn_ms": 9132.146655419801,
+    "boundary": "Per-GPU primitive sums rank oneDNN work but do not include non-oneDNN kernels, host work, or guarantee no overlap."
+  },
+  "dominant_shapes": [
+    {
+      "role": "dense FFN gate and up projections (two calls/layer/step)",
+      "problem": "1x8704x5120:1x5120x96",
+      "calls_per_gpu": 16256,
+      "gpu0_share_percent": 42.51142064835871,
+      "gpu1_share_percent": 42.70831964448681
+    },
+    {
+      "role": "dense FFN down projection (one call/layer/step)",
+      "problem": "1x5120x8704:1x8704x96",
+      "calls_per_gpu": 8128,
+      "gpu0_share_percent": 17.91746795272244,
+      "gpu1_share_percent": 17.722810397919517
+    },
+    {
+      "role": "output head",
+      "problem": "1x124160x5120:1x5120x96",
+      "calls_per_gpu": 126,
+      "gpu0_share_percent": 3.4353441593613487,
+      "gpu1_share_percent": 3.406938387431073
+    }
+  ],
+  "decision": "Dense FFN owns about 60.4% of measured oneDNN time per GPU; the output head is only about 3.4%. Test the unmeasured gate+up exact-cache pair before attempting a larger gate/up fusion patch. This cache swap cannot reduce the oneDNN GEMM durations themselves; it tests only whether removing the remaining gate/up dequantization is a measurable endpoint win.",
+  "evidence": {
+    "summary_sha256": "d16fde98ca6e158b4054e893a71e0b723ea6b6424887d38dd93c8eced1a977d3",
+    "raw_server_log_sha256": "fb57b0cf82d71cf795439e080ff6b69bf7bd2c020c814d58ffcc8fb9b334be99",
+    "compressed_log_sha256": "35ca651a244be9275ba59a312cbc5abe7fdb16e6bf57a8e773256270ac0bba83",
+    "result_sha256": "ca7e74751df0665fa7197806d6f702bb4fc167adda2c43bb80ecda6e3f7a6c3d",
+    "qualification_sha256": "8ef2d6b299f97af64c929d89925bdc1fbdb756091eb7103a2532b47124c6cbe7",
+    "runtime_environment_sha256": "21954c07ddaa31142311e49caf87bcbbbc8574778cf428fbc4b5e5941872beb6",
+    "vram_monitor_sha256": "b43794fdd30814a9e5ab06fadc37a728b7968676bf642de4f497f614d54f4f08"
+  }
+}
