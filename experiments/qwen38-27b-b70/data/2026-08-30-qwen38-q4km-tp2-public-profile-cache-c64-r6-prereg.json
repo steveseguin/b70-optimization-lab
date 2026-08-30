@@ -1,0 +1,17 @@
+{
+  "campaign": "qwen38-q4km-tp2-public-profile-cache-c64-20260830-r6",
+  "status": "closed after control pilot; not promotion evidence",
+  "disposition": "The 1000 ms window was a fixed client-visible delay in this implementation. The control pilot was valid for its preregistered configuration but measured only 159.15 tok/s, so no candidate was run and no speed was promoted. R8 replaced the fixed delay with target-triggered admission.",
+  "purpose": "Test the exact ffn_down Q4_K-to-F16 cache on the same c64, 32K-total-context, batch-2048 profile underlying the existing 165.387286 tok/s public aggregate row.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 64 pinned slots, total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated tokens per request, 1000 ms inference-only cohort settle window.",
+  "ordered_arms": [
+    "Fresh candidate-off fixed-cohort pilot and frozen complete-token batch oracle.",
+    "Fresh candidate-off replay; require 64/64 exact complete token IDs.",
+    "Fresh ffn_down exact-cache candidate; require 64/64 exact complete token IDs.",
+    "Fresh candidate repeat; require 64/64 exact complete token IDs."
+  ],
+  "advance_rule": "The candidate is not run unless the control replay is 64/64. Promotion requires both candidates 64/64, cache liveness only in candidates, zero cached tokens, no cross-base collisions, clean GPU/process health, and a candidate center above both the matched control center and the existing 165.387286 tok/s public profile.",
+  "quality_boundary": "The fixed batched oracle isolates the optimization from ordinary batch-shape drift. The candidate already passed the independent cold realistic suite 12/12 and the smaller fixed c64 profile twice at 64/64.",
+  "publication_policy": "No fixture-gamed single-user claim, prompt/output cache, interpolation, extrapolation, failed-arm speed, or best-run cherry-pick. Report the two-run candidate center and its exact profile."
+}

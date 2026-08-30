@@ -131,3 +131,41 @@ median of exactly two new attempts, and no point is interpolated or
 extrapolated. See the
 [result note](../../experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.md)
 and [structured result](../../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json).
+
+### Exact-cache c64 increment
+
+The original 1→64 curve above remains a single, internally consistent profile.
+A later default-off, exact-arithmetic cache improved its c64 endpoint without
+changing the one-user route. Two fresh candidate servers measured
+`168.344562` and `167.933317 tok/s`; their **`168.138940 tok/s`** center was
+`+4.45%` above same-binary controls centered at `160.981046 tok/s` and `+1.66%`
+above the earlier public c64 result. Each candidate matched the frozen
+64-request batch oracle 64/64 with prompt caching disabled.
+
+After applying the prerequisite TP2 patches above, apply the
+[exact Q4_K F16 cache patch](../../experiments/qwen38-27b-b70/patches/llama-qwen38-q4k-f16-exact-weight-cache-candidate-20260830.patch).
+The [fixed-cohort admission patch](../../experiments/qwen38-27b-b70/patches/llama-server-fixed-inference-cohort-admission-20260830.patch)
+is a validation aid: it makes the complete 64-request batch visible before GPU
+work begins, so output identity can be replayed against a stable batch shape.
+It is default-off and is not the source of the throughput gain.
+
+For the qualified c64 validation profile, launch through
+[`repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/run-server.sh`](../qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/run-server.sh)
+with:
+
+```bash
+MTP_DEPTH=0 PARALLEL_SLOTS=64 CTX_SIZE=32768 \
+BATCH_SIZE=2048 UBATCH_SIZE=256 FUSE_EXT_OVERRIDE=31 \
+Q4K_F16_CACHE_FILTER=ffn_down \
+QUEUE_SETTLE_MS=1000 QUEUE_SETTLE_TARGET=64 \
+TARGET_DIR=/path/to/qwen3.8-27b-gguf \
+DRAFT_DIR=/path/to/unused-draft-directory \
+BUILD_DIR=/path/to/patched/build \
+repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/run-server.sh
+```
+
+The cache uses approximately 6.5 GiB of additional device memory per B70. It
+did not improve the cold 12-prompt single-user suite, which remained 12/12
+output-exact, so it must not replace the package's one-user headline. Complete
+preregistration, artifact hashes, controls, candidates, and qualification gates
+are in the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c64-result.md).

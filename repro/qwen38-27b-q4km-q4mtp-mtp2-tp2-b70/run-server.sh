@@ -17,6 +17,7 @@ wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 q4k_f16_cache_filter=${Q4K_F16_CACHE_FILTER:-}
 q4k_reorder=${Q4K_REORDER:-0}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
+queue_settle_target=${QUEUE_SETTLE_TARGET:-0}
 tp_size=${TP_SIZE:-2}
 feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
@@ -30,6 +31,8 @@ fuse_ext=${FUSE_EXT_OVERRIDE:-15}
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
 [[ "${queue_settle_ms}" =~ ^[0-9]+$ ]] && (( queue_settle_ms <= 5000 )) || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 5000\n' >&2; exit 2; }
+[[ "${queue_settle_target}" =~ ^[0-9]+$ ]] && (( queue_settle_target <= 1024 )) || { printf 'QUEUE_SETTLE_TARGET must be an integer from 0 through 1024\n' >&2; exit 2; }
+(( queue_settle_target == 0 || queue_settle_ms > 0 )) || { printf 'QUEUE_SETTLE_TARGET requires QUEUE_SETTLE_MS > 0\n' >&2; exit 2; }
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
 [[ "${feature_profile}" == tuned || "${feature_profile}" == reference || "${feature_profile}" == base ]] || { printf 'FEATURE_PROFILE must be tuned, reference, or base\n' >&2; exit 2; }
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || { printf 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2\n' >&2; exit 2; }
@@ -63,6 +66,7 @@ export GGML_SYCL_COMM_DIRECT_Q8=2 GGML_SYCL_FUSED_ROPE_SET_ROWS=1 GGML_SYCL_COMM
 export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT="${fuse_ext}" GGML_SYCL_QDEDUP_STATS=1 GGML_SYCL_MMQ_Q4K_REORDER=1
 export GGML_SYCL_WDC=off
 export LLAMA_SERVER_QUEUE_SETTLE_MS="${queue_settle_ms}"
+export LLAMA_SERVER_QUEUE_SETTLE_TARGET="${queue_settle_target}"
 if [[ "${feature_profile}" == reference || "${feature_profile}" == base ]]; then
   # Diagnostic control: disable every lab fusion/reorder/collective door so a
   # strict replay can distinguish shared optimized kernels from the base path.

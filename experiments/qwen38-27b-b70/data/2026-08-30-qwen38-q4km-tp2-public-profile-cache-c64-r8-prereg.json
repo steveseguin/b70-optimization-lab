@@ -1,0 +1,16 @@
+{
+  "campaign": "qwen38-q4km-tp2-public-profile-cache-c64-20260830-r8",
+  "status": "preregistered before r8 pilot, replay, or candidate",
+  "purpose": "Qualify the exact ffn_down cache on the public c64 profile with an inference-count admission gate instead of a guessed fixed delay.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 64 pinned slots, total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated tokens per request.",
+  "admission_gate": "LLAMA_SERVER_QUEUE_SETTLE_TARGET=64 releases as soon as 64 new inference tasks are queued; LLAMA_SERVER_QUEUE_SETTLE_MS=1000 is only a fail-safe ceiling. Internal NEXT_RESPONSE tasks are excluded. All 64 launch_slot timestamps must span <=20 ms.",
+  "ordered_arms": [
+    "Fresh candidate-off fixed-cohort pilot and frozen complete-token batch oracle.",
+    "Fresh candidate-off replay; require 64/64 exact complete token IDs.",
+    "Fresh ffn_down exact-cache candidate; require 64/64 exact complete token IDs.",
+    "Fresh candidate repeat; require 64/64 exact complete token IDs."
+  ],
+  "advance_rule": "Do not run the candidate unless the pilot cohort span is <=20 ms and control replay is 64/64. Promotion requires both candidates 64/64, cache liveness only in candidates, zero cached tokens, no collisions or health failures, and a two-run candidate center above both the matched control center and 165.387286 tok/s.",
+  "publication_policy": "Use directly measured client-wall rates only. Do not subtract admission time, interpolate, extrapolate, cherry-pick, or reuse failed r6/r7 arms. Scope any result to this c64 aggregate profile."
+}

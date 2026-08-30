@@ -1,0 +1,62 @@
+{
+  "campaign": "qwen38-q4km-tp2-fixed-cohort-cache-c64-20260830-r5b",
+  "status": "qualified aggregate-only optimization",
+  "model": {
+    "name": "Qwen3.8-27B Q4_K_M",
+    "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+  },
+  "hardware": "2x local Intel Arc Pro B70",
+  "configuration": "llama.cpp SYCL TP2 tensor 1,1; MTP0; c64; context 8192; batch 1024; ubatch 256; 128 generated tokens/request; prompt cache off; pinned slots; 1000 ms inference-admission settle window",
+  "candidate": "Exact incumbent Q4_K-to-F16 bytes cached for ffn_down weights and reused by the unchanged oneDNN GEMM path",
+  "binary_identities": {
+    "llama_server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "libllama_server_impl_sha256": "830c5e119aa512e6f6e171fac7e5904144d86f76ed2b3d1a8ae0685fc579ed07",
+    "libggml_sycl_sha256": "8fc845e0974dafd999286c525a427d55c1028ea21425d8d2a21e7149d83c6aa1",
+    "source_diff_sha256": "9c1c1dbea06fceacdfe8edd3c9e6534d1baa1b11f3834c8e165baf74e389504c"
+  },
+  "batched_oracle_sha256": "2aec9b7d66ced42224d539c550fcd4ad6719da7335498b54af9169043b8cb602",
+  "runs": [
+    {
+      "arm": "control pilot",
+      "aggregate_tok_s": 159.0392491825017,
+      "complete_token_identity": "pilot output frozen after batch gates",
+      "result_sha256": "e0cccc4f2dc678ee4d62e5b4b7abf01ba3f73d6f3cb48f7a702276625f1817a9",
+      "summary_sha256": "671fefff2a19aa6fc4b3b2eb3ff1cab1c6375062db8dcb7d869dced34184ac68"
+    },
+    {
+      "arm": "control replay",
+      "aggregate_tok_s": 157.0527265974407,
+      "complete_token_identity": "64/64",
+      "result_sha256": "68df31cf11e4e5991f9e395bc1493d3b105de061d56c005f5eb3a8c821aa4038",
+      "summary_sha256": "73b31f7233a666c312827f9c490522518b4830b8cf37547c556f1f7d147dfda1"
+    },
+    {
+      "arm": "candidate 1",
+      "aggregate_tok_s": 164.40674106657755,
+      "complete_token_identity": "64/64",
+      "result_sha256": "5c352a7c8b3b003064f0fb2df5aac1133f28bb895989c94733b684d50ca40765",
+      "summary_sha256": "e1de6dea31085f70f1b4fffc9d76f1b052437edd6ba50e1ce9b9a4434c542955"
+    },
+    {
+      "arm": "candidate 2",
+      "aggregate_tok_s": 163.7489400790023,
+      "complete_token_identity": "64/64",
+      "result_sha256": "9382ee72e3599e9ae50a8dd998c103ef592ac0a451265b9a12dc7ae7b74710d7",
+      "summary_sha256": "ca4df62cc0764f3c1e5ed996d9f45ded7f9efe18872c5b5a4cac1cc49ce58094"
+    }
+  ],
+  "control_center_tok_s": 158.0459878899712,
+  "candidate_center_tok_s": 164.0778405727899,
+  "aggregate_gain_percent": 3.8165174347975173,
+  "quality_gates": {
+    "control_replay_complete_token_identity": "64/64",
+    "candidate_1_complete_token_identity": "64/64",
+    "candidate_2_complete_token_identity": "64/64",
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collisions": 0,
+    "kernel_errors": 0,
+    "clean_shutdowns": true,
+    "independent_cold_realistic_suite": "12/12 exact; candidate 50.3165 tok/s versus replay control 50.6324 tok/s, therefore no single-user speed claim"
+  },
+  "scope": "Promote only as a c64 aggregate optimization. It is exact but neutral/slightly slower in the single-user MMVQ path, where the cached F16 weights are not used for decode. No extrapolation to other concurrency, context, quantization, card count, or MTP depth."
+}

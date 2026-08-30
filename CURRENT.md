@@ -1754,6 +1754,15 @@ output isolation and service capacity rather than sequential byte identity.
 The pilot rates remain excluded and no point is interpolated. See the
 [R2 result](experiments/qwen38-27b-b70/notes/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.md).
 
+On 2026-08-30, a default-off exact F16 `ffn_down` cache qualified a higher c64
+endpoint on the same two-B70 Q4_K_M target-only lane. Same-binary controls
+centered at `160.981046 tok/s`; two fresh candidates measured `168.344562` and
+`167.933317 tok/s`, for **`168.138940 tok/s`** (`+4.45%`). Both candidates
+matched the preregistered fixed 64-request batch oracle 64/64, all cached-token
+counts were zero, and no output collision or kernel error occurred. The cache
+costs about 6.5 GiB/device and did not improve single-user MMVQ decode, so the
+single-user headline is unchanged. See the [qualified result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c64-result.md).
+
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2

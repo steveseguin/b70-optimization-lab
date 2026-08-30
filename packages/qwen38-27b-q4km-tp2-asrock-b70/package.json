@@ -91,8 +91,8 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "llama.cpp native HTTP /completion on two B70s with 64 slots, 32K total F16 KV context, prompt cache and slot similarity disabled, unique short prompts, and 128 returned raw token IDs per request. Each marker is the median of two preregistered fresh-server attempts whose relative range was at most 1.72%. Output isolation passed with no cross-base oracle collision, but multi-user greedy token identity is batch-shape-dependent. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json",
+      "scope": "Best qualified llama.cpp native HTTP aggregate results on two B70s with 32K total F16 KV context, prompt caching disabled, unique short prompts, and 128 returned token IDs per request. The 1–32 markers are the medians of the original two-attempt preregistered curve. The c64 marker is a later aggregate-only exact F16 ffn_down-cache profile: two fresh candidates centered at 168.138940 tok/s, each matching the fixed-cohort token oracle 64/64; same-binary controls centered at 160.981046 tok/s. It adds about 6.5 GiB/device and did not improve one-user decode. No point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-public-profile-cache-c64-r8-results.json",
       "points": [
         {"concurrent_sequences": 1, "value": 42.694235799361806, "per_user_value": 42.694235799361806, "samples": 2},
         {"concurrent_sequences": 2, "value": 61.88466425158718, "per_user_value": 30.94233212579359, "samples": 2},
@@ -100,7 +100,7 @@
         {"concurrent_sequences": 8, "value": 108.37157051235434, "per_user_value": 13.546446314044292, "samples": 2},
         {"concurrent_sequences": 16, "value": 109.14655327814907, "per_user_value": 6.821659579884317, "samples": 2},
         {"concurrent_sequences": 32, "value": 127.49980108773008, "per_user_value": 3.984368783991565, "samples": 2},
-        {"concurrent_sequences": 64, "value": 165.3872859472557, "per_user_value": 2.58417634292587, "samples": 2}
+        {"concurrent_sequences": 64, "value": 168.1389395428977, "per_user_value": 2.6271709303577765, "samples": 2}
       ]
     }
   ],
@@ -148,6 +148,10 @@
     "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
     "experiments/qwen38-27b-b70/data/2026-08-15-q4km-tp2-q4k-glu-summary.json",
     "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json",
+    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-public-profile-cache-c64-r8-results.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c64-result.md",
+    "experiments/qwen38-27b-b70/patches/llama-qwen38-q4k-f16-exact-weight-cache-candidate-20260830.patch",
+    "experiments/qwen38-27b-b70/patches/llama-server-fixed-inference-cohort-admission-20260830.patch",
     "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
   ],
   "known_limitations": [
@@ -155,6 +159,7 @@
     "The 49.717503 tok/s headline is a TP2 target-only reasoning-off result and must not be compared as a TP1, speculative, or alternate-accounting row.",
     "The optional large-batch mode improves prefill on a short probe while slightly reducing decode; it is not the headline configuration.",
     "Multi-user greedy token identity is batch-shape-dependent. The qualified HTTP curve proves complete isolated responses with zero cross-base oracle collisions, not sequential byte identity.",
+    "The 168.138940 tok/s c64 profile requires the default-off exact F16 ffn_down cache, uses about 6.5 GiB of additional device memory per card, and is not a single-user speed claim.",
     "No active-context prefill, VRAM, or power curve has been captured for this TP2 identity."
   ],
   "missing": [

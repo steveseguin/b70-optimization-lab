@@ -1,0 +1,90 @@
+diff --git a/tools/server/server-queue.cpp b/tools/server/server-queue.cpp
+--- a/tools/server/server-queue.cpp
++++ b/tools/server/server-queue.cpp
+@@ -3,7 +3,11 @@
+
+ #include "log.h"
+
++#include <algorithm>
++#include <cerrno>
+ #include <chrono>
++#include <cinttypes>
++#include <cstdlib>
+
+ #define QUE_INF(fmt, ...) LOG_INF("que  %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+ #define QUE_WRN(fmt, ...) LOG_WRN("que  %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+@@ -126,6 +130,39 @@ void server_queue::start_loop(int64_t idle_sleep_ms) {
+     running = true;
+     time_last_task = ggml_time_ms();
+
++    const int64_t queue_settle_ms = []() -> int64_t {
++        const char * value = std::getenv("LLAMA_SERVER_QUEUE_SETTLE_MS");
++        if (value == nullptr || *value == '\0') {
++            return 0;
++        }
++        char * end = nullptr;
++        errno = 0;
++        const long long parsed = std::strtoll(value, &end, 10);
++        if (errno != 0 || end == value || *end != '\0' || parsed < 0 || parsed > 5000) {
++            QUE_WRN("ignoring invalid LLAMA_SERVER_QUEUE_SETTLE_MS=%s (expected 0..5000)\n", value);
++            return 0;
++        }
++        return parsed;
++    }();
++    const size_t queue_settle_target = []() -> size_t {
++        const char * value = std::getenv("LLAMA_SERVER_QUEUE_SETTLE_TARGET");
++        if (value == nullptr || *value == '\0') {
++            return 0;
++        }
++        char * end = nullptr;
++        errno = 0;
++        const unsigned long long parsed = std::strtoull(value, &end, 10);
++        if (errno != 0 || end == value || *end != '\0' || parsed > 1024) {
++            QUE_WRN("ignoring invalid LLAMA_SERVER_QUEUE_SETTLE_TARGET=%s (expected 0..1024)\n", value);
++            return 0;
++        }
++        return static_cast<size_t>(parsed);
++    }();
++    if (queue_settle_ms > 0) {
++        QUE_INF("burst admission settle window = %" PRId64 " ms, target = %zu\n",
++                queue_settle_ms, queue_settle_target);
++    }
++
+     constexpr auto max_wait_time = std::chrono::seconds(1);
+     auto should_sleep = [&]() -> bool {
+         // caller must hold mutex_tasks
+@@ -139,6 +176,34 @@ void server_queue::start_loop(int64_t idle_sleep_ms) {
+     while (true) {
+         QUE_DBG("%s", "processing new tasks\n");
+
++        // The HTTP workers enqueue independently. Without a short, explicit
++        // burst window the first arrival wakes this loop and can begin GPU
++        // work before the rest of a synchronized client burst is visible.
++        // That makes the effective batch composition timing-dependent. This
++        // default-off window releases the queue mutex while waiting, allowing
++        // the remaining requests to accumulate before slots are assigned.
++        if (queue_settle_ms > 0) {
++            std::unique_lock<std::mutex> lock(mutex_tasks);
++            const auto count_new_inference = [&]() {
++                return static_cast<size_t>(std::count_if(
++                    queue_tasks.begin(), queue_tasks.end(), [](const server_task & task) {
++                    return task.type == SERVER_TASK_TYPE_COMPLETION ||
++                           task.type == SERVER_TASK_TYPE_INFILL ||
++                           task.type == SERVER_TASK_TYPE_EMBEDDING ||
++                           task.type == SERVER_TASK_TYPE_RERANK;
++                    }));
++            };
++            if (count_new_inference() > 0 && running) {
++                condition_tasks.wait_for(
++                    lock,
++                    std::chrono::milliseconds(queue_settle_ms),
++                    [&]() {
++                        return !running ||
++                               (queue_settle_target > 0 && count_new_inference() >= queue_settle_target);
++                    });
++            }
++        }
++
+         while (true) {
+             std::unique_lock<std::mutex> lock(mutex_tasks);
+             if (!running) {

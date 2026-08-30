@@ -14,6 +14,7 @@ pilot_mode=${PILOT_MODE:-0}
 q4k_reorder=${Q4K_REORDER:-0}
 batch_size=${BATCH_SIZE:-2048}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
+queue_settle_target=${QUEUE_SETTLE_TARGET:-0}
 mtp_depth=${MTP_DEPTH:-0}
 tp_size=${TP_SIZE:-2}
 concurrency=${CONCURRENCY:-64}
@@ -51,11 +52,11 @@ concurrency_oracle=${CONCURRENCY_ORACLE:-${repo}/experiments/qwen38-27b-b70/data
 expected_realistic_oracle_sha256=${EXPECTED_REALISTIC_ORACLE_SHA256:-f8e7e4040d653ef6250ed99362221f68a349ddb003f52769560b87877c0e34af}
 expected_concurrency_oracle_sha256=${EXPECTED_CONCURRENCY_ORACLE_SHA256:-0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33}
 expected_server_sha256=${EXPECTED_SERVER_SHA256:-7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c}
-expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf}
-expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-fd649584afe51a708728bcb4da6b415d60b3c6cb8a6203f5d7ae38fb6272cc05}
-expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926}
-expected_concurrency_harness_sha256=${EXPECTED_CONCURRENCY_HARNESS_SHA256:-1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2}
-expected_concurrency_qualifier_sha256=${EXPECTED_CONCURRENCY_QUALIFIER_SHA256:-9f2a50dbc5c5cdabfee742429fc3e2531044a262691e28e1a2da5469ba4696b1}
+expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-8fc845e0974dafd999286c525a427d55c1028ea21425d8d2a21e7149d83c6aa1}
+expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-e873e18e080f00533fc7e73089f20df2b4303278c5353bb07fc467267fbb1f64}
+expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-af1cc9e6e8f1634c7fdfd25a0664dab379bf3676bd6eda71ffd8bbcf106b4439}
+expected_concurrency_harness_sha256=${EXPECTED_CONCURRENCY_HARNESS_SHA256:-53a998b7e31a2626ae27bd58e955746822dd1816a302c854f6b8b1bb0fb147d5}
+expected_concurrency_qualifier_sha256=${EXPECTED_CONCURRENCY_QUALIFIER_SHA256:-e76b9e1d450515d937e60972b43f33be9d911c610fe4a3fa601034031d77e0aa}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case ${profile} in realistic|concurrency) ;; *) fail 'PROFILE must be realistic or concurrency' ;; esac
@@ -73,9 +74,12 @@ esac
 [[ "${pilot_mode}" == 0 || "${profile}" == concurrency ]] || fail 'PILOT_MODE is concurrency-only'
 [[ "${baseline_mode}" == 0 || "${pilot_mode}" == 0 ]] || fail 'BASELINE_MODE and PILOT_MODE are mutually exclusive'
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || fail 'Q4K_REORDER must be 0 or 1'
-[[ "${arm}" == control || "${q4k_reorder}" == 1 ]] || fail 'candidate requires Q4K_REORDER=1'
+[[ "${arm}" == control || "${candidate_kind}" != wdc || "${q4k_reorder}" == 1 ]] || \
+  fail 'WDC candidate requires Q4K_REORDER=1'
 [[ "${batch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'BATCH_SIZE must be positive'
 [[ "${queue_settle_ms}" =~ ^[0-9]+$ ]] && (( queue_settle_ms <= 5000 )) || fail 'QUEUE_SETTLE_MS must be 0..5000'
+[[ "${queue_settle_target}" =~ ^[0-9]+$ ]] && (( queue_settle_target <= 1024 )) || fail 'QUEUE_SETTLE_TARGET must be 0..1024'
+(( queue_settle_target == 0 || queue_settle_ms > 0 )) || fail 'QUEUE_SETTLE_TARGET requires QUEUE_SETTLE_MS > 0'
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || fail 'MTP_DEPTH must be 0 or 2'
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || fail 'TP_SIZE must be 1 or 2'
 [[ "${concurrency}" =~ ^[1-9][0-9]*$ ]] || fail 'CONCURRENCY must be positive'
@@ -177,6 +181,7 @@ timeout --signal=INT --kill-after=30s 3600s env \
   FUSE_EXT_OVERRIDE="${fuse_ext}" \
   CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE="${batch_size}" \
   QUEUE_SETTLE_MS="${queue_settle_ms}" \
+  QUEUE_SETTLE_TARGET="${queue_settle_target}" \
   UBATCH_SIZE=256 THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
 server_job=$!
 
@@ -255,22 +260,22 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
 pilot_mode = sys.argv[4] == "1"
-batch_size, queue_settle_ms = int(sys.argv[5]), int(sys.argv[6])
-tp_size, concurrency, context = map(int, sys.argv[7:10])
-feature_profile = sys.argv[10]
-q8_dedup_override = None if sys.argv[11] == "" else int(sys.argv[11])
-launch_stagger_ms = int(sys.argv[12])
-wdc_q4k_name_filter = sys.argv[13] or None
-mtp_depth = int(sys.argv[14])
-candidate_kind = sys.argv[15]
-q4k_f16_cache_filter = sys.argv[16] or None
-pin_slots = sys.argv[17] == "1"
-fuse_ext = int(sys.argv[18])
+batch_size, queue_settle_ms, queue_settle_target = map(int, sys.argv[5:8])
+tp_size, concurrency, context = map(int, sys.argv[8:11])
+feature_profile = sys.argv[11]
+q8_dedup_override = None if sys.argv[12] == "" else int(sys.argv[12])
+launch_stagger_ms = int(sys.argv[13])
+wdc_q4k_name_filter = sys.argv[14] or None
+mtp_depth = int(sys.argv[15])
+candidate_kind = sys.argv[16]
+q4k_f16_cache_filter = sys.argv[17] or None
+pin_slots = sys.argv[18] == "1"
+fuse_ext = int(sys.argv[19])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -294,6 +299,7 @@ summary = {
     "cross_base_oracle_collision_count": quality.get("cross_base_oracle_collision_count"),
     "batch_size": batch_size,
     "queue_settle_ms": queue_settle_ms,
+    "queue_settle_target": queue_settle_target,
     "tp_size": tp_size,
     "concurrency": concurrency,
     "context": context,

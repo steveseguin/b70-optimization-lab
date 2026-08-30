@@ -1,0 +1,17 @@
+{
+  "campaign": "qwen38-q4km-tp2-public-profile-cache-c64-20260830-r7",
+  "status": "invalidated at the preregistered cohort gate; no result used",
+  "disposition": "One request launched 861 ms before the remaining cohort, exceeding the preregistered 20 ms maximum. The arm was stopped, its speed was discarded, and no replay or candidate was run. R8 replaced the guessed 50 ms window with explicit inference-task target admission.",
+  "purpose": "Qualify the exact ffn_down cache on the public c64 profile without the 1000 ms admission delay contaminating client-wall aggregate throughput.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 64 pinned slots, total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated tokens per request, 50 ms inference-only cohort settle window.",
+  "cohort_gate": "All 64 launch_slot timestamps must fall within 20 ms. Otherwise the arm is invalid and no timing or oracle is used.",
+  "ordered_arms": [
+    "Fresh candidate-off fixed-cohort pilot and frozen complete-token batch oracle.",
+    "Fresh candidate-off replay; require 64/64 exact complete token IDs.",
+    "Fresh ffn_down exact-cache candidate; require 64/64 exact complete token IDs.",
+    "Fresh candidate repeat; require 64/64 exact complete token IDs."
+  ],
+  "advance_rule": "Do not run the candidate unless the pilot cohort span is <=20 ms and control replay is 64/64. Promotion requires both candidates 64/64, cache liveness only in candidates, zero cached tokens, no collisions or health failures, and a two-run candidate center above both the matched control center and 165.387286 tok/s.",
+  "publication_policy": "Use directly measured client-wall rates only. Do not subtract the settle window, interpolate, extrapolate, cherry-pick, or reuse a failed arm. Scope any result to this c64 aggregate profile."
+}

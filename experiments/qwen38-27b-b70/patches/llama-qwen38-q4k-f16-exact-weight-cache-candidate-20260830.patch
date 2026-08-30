@@ -1,0 +1,83 @@
+diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
+--- a/ggml/src/ggml-sycl/common.hpp
++++ b/ggml/src/ggml-sycl/common.hpp
+@@ -466,5 +466,9 @@ struct ggml_tensor_extra_gpu {
+   void * wdc_mins_t = nullptr;
+   int    wdc_scales_dev = -1;
++  // Optional exact-arithmetic Q4_K cache. Each device keeps the same F16
++  // bytes produced by the incumbent dequantizer, then reuses them in the
++  // unchanged oneDNN GEMM. Unlike WDC this does not alter the math surface.
++  void * q4k_f16_cache[GGML_SYCL_MAX_DEVICES] = {};
+ };
+
+ extern int g_ggml_sycl_use_level_zero_api;
+diff --git a/ggml/src/ggml-sycl/common.cpp b/ggml/src/ggml-sycl/common.cpp
+--- a/ggml/src/ggml-sycl/common.cpp
++++ b/ggml/src/ggml-sycl/common.cpp
+@@ -148,6 +148,11 @@ void release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> str
+             ggml_sycl_set_device(i);
+             SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(extra->data_device[i], *(streams[i]))));
+         }
++        if (extra->q4k_f16_cache[i] != nullptr && streams.size() > (size_t) i) {
++            ggml_sycl_set_device(i);
++            SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(extra->q4k_f16_cache[i], *(streams[i]))));
++            extra->q4k_f16_cache[i] = nullptr;
++        }
+         if (extra->wdc_scales_t != nullptr && extra->wdc_scales_dev == i && streams.size() > (size_t) i) {
+             ggml_sycl_set_device(i);
+             SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(extra->wdc_scales_t, *(streams[i]))));
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -3586,18 +3586,48 @@ inline void ggml_sycl_op_mul_mat_sycl(
+     if ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && use_fp16 && ggml_is_contiguous(src0) &&
+         row_diff == src0->ne[1] && dst->op_params[0] == GGML_PREC_DEFAULT) {
+         ggml_sycl_pool_alloc<sycl::half> src0_as_f16(ctx.pool());
++        sycl::half * src0_cached_f16 = nullptr;
+         if (src0->type != GGML_TYPE_F16) {
+             scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
+                                                  " : converting src0 to fp16");
+             const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src0->type, dst);
+             GGML_ASSERT(to_fp16_sycl != nullptr);
+             size_t ne = row_diff*ne00;
+-            src0_as_f16.alloc(ne);
+-            to_fp16_sycl(src0_dd_i, src0_as_f16.get(), ne, stream);
++            const char * cache_filter = getenv("GGML_SYCL_Q4K_F16_CACHE_FILTER");
++            const bool cache_this = src0->type == GGML_TYPE_Q4_K && cache_filter != nullptr &&
++                                    *cache_filter != '\0' && strstr(src0->name, cache_filter) != nullptr;
++            if (cache_this) {
++                auto * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
++                if (extra != nullptr) {
++                    src0_cached_f16 = static_cast<sycl::half *>(extra->q4k_f16_cache[id]);
++                    if (src0_cached_f16 == nullptr) {
++                        try {
++                            src0_cached_f16 = static_cast<sycl::half *>(
++                                ggml_sycl_malloc_device(ne * sizeof(sycl::half), *stream));
++                        } catch (const sycl::exception &) {
++                            src0_cached_f16 = nullptr;
++                        }
++                        if (src0_cached_f16 != nullptr) {
++                            to_fp16_sycl(src0_dd_i, src0_cached_f16, ne, stream);
++                            extra->q4k_f16_cache[id] = src0_cached_f16;
++                            static std::atomic_flag cache_live = ATOMIC_FLAG_INIT;
++                            if (!cache_live.test_and_set()) {
++                                GGML_LOG_WARN("Q4K-F16-CACHE: incumbent dequant bytes cached "
++                                              "(first tensor: %s, %.1f MiB)\n",
++                                              src0->name, ne * sizeof(sycl::half) / 1048576.0);
++                            }
++                        }
++                    }
++                }
++            }
++            if (src0_cached_f16 == nullptr) {
++                src0_as_f16.alloc(ne);
++                to_fp16_sycl(src0_dd_i, src0_as_f16.get(), ne, stream);
++            }
+         }
+         const sycl::half *src0_ptr = src0->type == GGML_TYPE_F16
+                                          ? (const sycl::half *)src0_dd_i
+-                                         : src0_as_f16.get();
++                                         : (src0_cached_f16 != nullptr ? src0_cached_f16 : src0_as_f16.get());
+
+         ggml_sycl_pool_alloc<sycl::half> src1_as_f16(ctx.pool());
+         if (src1->type != GGML_TYPE_F16) {

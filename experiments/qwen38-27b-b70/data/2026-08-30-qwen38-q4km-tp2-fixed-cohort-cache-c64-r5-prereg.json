@@ -1,0 +1,17 @@
+{
+  "campaign": "qwen38-q4km-tp2-fixed-cohort-cache-c64-20260830-r5",
+  "status": "preregistered before r5 pilot, replay, or cache candidate",
+  "purpose": "Qualify the exact ffn_down Q4_K-to-F16 weight cache at c64 against a reproducible same-binary batched control surface.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 64 pinned slots, context 8192, batch 1024, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated tokens per request.",
+  "admission_fix": "LLAMA_SERVER_QUEUE_SETTLE_MS is default-off. In the r5 binary it applies to every nonempty queue burst; the prior one-shot implementation was consumed by a startup/internal task and admitted one HTTP request before the other 63.",
+  "ordered_arms": [
+    "Fresh candidate-off fixed-cohort pilot; freeze its complete token-ID outputs only after cache, completion, collision, GPU-health, and cleanup gates pass.",
+    "Fresh candidate-off replay against the frozen batched oracle; require 64/64 exact complete token-ID identity.",
+    "Fresh ffn_down exact-cache candidate against that already-frozen oracle; require 64/64 exact complete token-ID identity.",
+    "Repeat the candidate once before promotion."
+  ],
+  "advance_rule": "Do not run the candidate unless the control replay is 64/64 exact. Do not promote unless both candidate runs are 64/64 exact, cache liveness is present only in candidates, all cached-token counts are zero, all health gates pass, and aggregate throughput improves over controls.",
+  "quality_boundary": "The fixed batched control oracle isolates the default-off optimization from ordinary batch-shape numerical drift. The independent 12-prompt cold realistic suite must also remain 12/12 exact; it passed for the cache candidate before this preregistration.",
+  "publication_policy": "No fixture-gamed headline, prompt/output cache, interpolation, extrapolation, failed-arm speed, or sequential-oracle relabeling. This is an aggregate c64 result only."
+}

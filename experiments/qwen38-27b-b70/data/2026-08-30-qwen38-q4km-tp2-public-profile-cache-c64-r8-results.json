@@ -1,0 +1,79 @@
+{
+  "campaign": "qwen38-q4km-tp2-public-profile-cache-c64-20260830-r8",
+  "status": "qualified and promoted aggregate optimization",
+  "model": {
+    "name": "Qwen3.8-27B Q4_K_M",
+    "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+  },
+  "hardware": "2x local Intel Arc Pro B70",
+  "configuration": "llama.cpp SYCL TP2 tensor 1,1; MTP0; c64; total context 32768; batch 2048; ubatch 256; 128 generated token IDs/request; prompt cache off; pinned slots; inference admission target 64 with 1000 ms fail-safe ceiling",
+  "candidate": "Exact incumbent Q4_K-to-F16 bytes cached for ffn_down weights and reused by the unchanged oneDNN GEMM path",
+  "binary_identities": {
+    "llama_server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "libllama_server_impl_sha256": "e873e18e080f00533fc7e73089f20df2b4303278c5353bb07fc467267fbb1f64",
+    "libggml_sycl_sha256": "8fc845e0974dafd999286c525a427d55c1028ea21425d8d2a21e7149d83c6aa1",
+    "source_diff_sha256": "af1cc9e6e8f1634c7fdfd25a0664dab379bf3676bd6eda71ffd8bbcf106b4439"
+  },
+  "batched_oracle_sha256": "060137a9b3338353cfafeae38fbcf22881fa4eac6816939f33cdc3b78bc465ff",
+  "runs": [
+    {
+      "arm": "control pilot",
+      "aggregate_tok_s": 161.09558737534948,
+      "launch_span_ms": 1.117,
+      "complete_token_identity": "pilot output frozen after batch gates",
+      "result_sha256": "323a17b2e055506cf677af3f3950e38b053fdbadd5aeabce34709dca37dd8810",
+      "summary_sha256": "27e5ebb3a8bfc81fb9c205c9d86bd8f491bb4e6d4249f60ff7299fa0fa58212e"
+    },
+    {
+      "arm": "control replay",
+      "aggregate_tok_s": 160.86650413492123,
+      "launch_span_ms": 0.556,
+      "complete_token_identity": "64/64",
+      "result_sha256": "65319e52855040955c367be7037a1047a024068d8bc841f308de7fddb31911fd",
+      "summary_sha256": "967e5d3b3ac56bb2662d399ecff786a095a82102b43cf714c1ddf116dc0f270a"
+    },
+    {
+      "arm": "candidate 1",
+      "aggregate_tok_s": 168.34456204029235,
+      "launch_span_ms": 0.563,
+      "complete_token_identity": "64/64",
+      "result_sha256": "189cc6232df290370a61da9556eb75dd74771ec563ebe07e8eabffbe183278fd",
+      "summary_sha256": "638abf459b164c9666734f7883380c0e164a8ff03471e149e7062a263452f7f2"
+    },
+    {
+      "arm": "candidate 2",
+      "aggregate_tok_s": 167.93331704550306,
+      "launch_span_ms": 0.524,
+      "complete_token_identity": "64/64",
+      "result_sha256": "a937f747655914f9ec6ca69035c17135427f93170c943b33bd593fb7bd55306f",
+      "summary_sha256": "0916e00e9c75d10521d2a2c90ae254a6704fa8b185587f682b4c156279a8df53"
+    }
+  ],
+  "control_center_tok_s": 160.98104575513537,
+  "candidate_center_tok_s": 168.1389395428977,
+  "matched_gain_percent": 4.4464202317644475,
+  "previous_public_profile_tok_s": 165.387286,
+  "previous_public_profile_evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-r2-result.json",
+  "best_qualified_aggregate_curve": [
+    {"concurrent_sequences": 1, "aggregate_tok_s": 42.694235799361806, "profile": "original R2"},
+    {"concurrent_sequences": 2, "aggregate_tok_s": 61.88466425158718, "profile": "original R2"},
+    {"concurrent_sequences": 4, "aggregate_tok_s": 87.56640520423115, "profile": "original R2"},
+    {"concurrent_sequences": 8, "aggregate_tok_s": 108.37157051235434, "profile": "original R2"},
+    {"concurrent_sequences": 16, "aggregate_tok_s": 109.14655327814907, "profile": "original R2"},
+    {"concurrent_sequences": 32, "aggregate_tok_s": 127.49980108773008, "profile": "original R2"},
+    {"concurrent_sequences": 64, "aggregate_tok_s": 168.1389395428977, "profile": "exact F16 ffn_down cache R8"}
+  ],
+  "gain_over_previous_public_profile_percent": 1.6637636480096196,
+  "candidate_range_percent": 0.24488588805631206,
+  "quality_gates": {
+    "control_replay_complete_token_identity": "64/64",
+    "candidate_1_complete_token_identity": "64/64",
+    "candidate_2_complete_token_identity": "64/64",
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collisions": 0,
+    "kernel_errors": 0,
+    "clean_shutdowns": true,
+    "independent_cold_realistic_suite": "12/12 exact; no single-user speed promotion"
+  },
+  "scope": "Measured client-wall c64 aggregate result only. The cache is not a single-user optimization and no rate is extrapolated to another concurrency, context, quantization, card count, or MTP depth."
+}
