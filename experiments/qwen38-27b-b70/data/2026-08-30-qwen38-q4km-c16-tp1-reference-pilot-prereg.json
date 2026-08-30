@@ -1,0 +1,40 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-reference-determinism-20260830-r1",
+  "status": "pilot-preregistered-before-measurement",
+  "purpose": "Determine whether run-to-run nondeterminism remains when all lab fusion, Q8 handoff, reorder, and collective feature doors are disabled on one B70.",
+  "fixed_configuration": {
+    "topology": "TP1 on SYCL0",
+    "model": "Qwen3.8-27B-Q4_K_M.gguf",
+    "feature_profile": "reference",
+    "MTP": 0,
+    "context": 8192,
+    "parallel_slots": 16,
+    "concurrency": 16,
+    "generated_tokens_per_request": 128,
+    "batch_size": 2048,
+    "ubatch_size": 256,
+    "queue_settle_ms": 750,
+    "WDC": "off",
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "reference_profile": "Explicitly sets every GGML_META_FUSE_*, GGML_SYCL_COMM_*, GGML_SYCL_FUSED_*, GGML_SYCL_FUSE_EXT, GGML_SYCL_MMQ_Q4K_REORDER, and GGML_SYCL_QDEDUP_STATS door used by the tuned launcher to zero; unsets forced Q4_K/Q6_K reorder variables.",
+  "pilot_policy": "Generate a non-publishable reference-profile 16-row token-ID oracle only if completion, zero-cache, isolation, collision, WDC-negative, kernel, and cleanup gates pass.",
+  "next_gate": "Freeze the oracle, then require a fresh reference-profile replay to match 16/16 before bisecting tuned features back in.",
+  "interpretation": {
+    "reference_replay_passes": "At least one disabled lab feature door causes nondeterminism; bisect feature groups.",
+    "reference_replay_fails": "The defect remains in the base/shared SYCL path or another uncontrolled runtime source."
+  },
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "launcher_sha256": "df0585eac86301a75d79a6a2e514f4e02cc0a0ae4b59757f883527b85eadc55b",
+    "arm_runner_sha256": "3cd5990641dae24de2da036be184e97b62948f74ac6035109fd2a6054c538b18",
+    "comparison_tuned_tp1_oracle_sha256": "63f76b4518228c14620d5214556ec651737af69fd21d11662fba5569bf7a7699"
+  }
+}

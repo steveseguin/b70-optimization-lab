@@ -16,12 +16,14 @@ wdc_q4k=${WDC_Q4K:-0}
 q4k_reorder=${Q4K_REORDER:-0}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 tp_size=${TP_SIZE:-2}
+feature_profile=${FEATURE_PROFILE:-tuned}
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || { printf 'MTP_DEPTH must be 0 or 2\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K must be 0 or 1\n' >&2; exit 2; }
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
 [[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 1000\n' >&2; exit 2; }
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
+[[ "${feature_profile}" == tuned || "${feature_profile}" == reference ]] || { printf 'FEATURE_PROFILE must be tuned or reference\n' >&2; exit 2; }
 for value in "${ctx_size}" "${parallel_slots}" "${batch_size}" "${ubatch_size}" "${threads}"; do
   [[ "${value}" =~ ^[1-9][0-9]*$ ]] || { printf 'numeric settings must be positive integers\n' >&2; exit 2; }
 done
@@ -49,8 +51,21 @@ export GGML_SYCL_COMM_DIRECT_Q8=2 GGML_SYCL_FUSED_ROPE_SET_ROWS=1 GGML_SYCL_COMM
 export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT=31 GGML_SYCL_QDEDUP_STATS=1 GGML_SYCL_MMQ_Q4K_REORDER=1
 export GGML_SYCL_WDC=off
 export LLAMA_SERVER_QUEUE_SETTLE_MS="${queue_settle_ms}"
+if [[ "${feature_profile}" == reference ]]; then
+  # Diagnostic control: disable every lab fusion/reorder/collective door so a
+  # strict replay can distinguish shared optimized kernels from the base path.
+  export GGML_META_FUSE_ALLREDUCE_ADD=0 GGML_META_FUSE_ALLREDUCE_ADD_RMS_MUL=0
+  export GGML_SYCL_COMM_DIRECT_Q8=0 GGML_SYCL_COMM_FUSED_Q8=0 GGML_SYCL_COMM_REDUCE_VEC4=0 GGML_SYCL_COMM_SINGLE_KERNEL=0
+  export GGML_SYCL_FUSED_ATTN_Q8=0 GGML_SYCL_FUSED_CONCAT_STATE=0 GGML_SYCL_FUSED_CONV_SILU_L2=0 GGML_SYCL_FUSED_CONV_STATE_IO=0
+  export GGML_SYCL_FUSED_GDN_BETA_SIGMOID=0 GGML_SYCL_FUSED_GDN_Q8=0 GGML_SYCL_FUSED_GDN_STATE_IO=0
+  export GGML_SYCL_FUSED_MMVQ_PAIR=0 GGML_SYCL_FUSED_MMVQ_PAIR_GDN=0 GGML_SYCL_FUSED_MMVQ_QUAD_GDN=0
+  export GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K=0 GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN=0 GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN=0
+  export GGML_SYCL_FUSED_QK_NORM_ROPE=0 GGML_SYCL_FUSED_ROPE_SET_ROWS=0 GGML_SYCL_FUSED_SWIGLU_Q8=0
+  export GGML_SYCL_FUSE_EXT=0 GGML_SYCL_MMQ_Q4K_REORDER=0 GGML_SYCL_QDEDUP_STATS=0
+  unset GGML_SYCL_REORDER_IN_GEMM GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
+fi
 unset GGML_SYCL_FORCE_REORDER
-if [[ "${q4k_reorder}" == 1 ]]; then
+if [[ "${feature_profile}" == tuned && "${q4k_reorder}" == 1 ]]; then
   # WDC comparisons set this in both arms, keeping WDC as the only variable.
   export GGML_SYCL_REORDER_IN_GEMM=1 GGML_SYCL_FORCE_REORDER_Q4K=1
   export GGML_SYCL_DISABLE_REORDER_Q6K=1
@@ -58,7 +73,10 @@ else
   unset GGML_SYCL_REORDER_IN_GEMM GGML_SYCL_FORCE_REORDER_Q4K
   unset GGML_SYCL_DISABLE_REORDER_Q6K
 fi
-if [[ "${wdc_q4k}" == 1 ]]; then
+if [[ "${feature_profile}" == reference && "${wdc_q4k}" == 1 ]]; then
+  printf 'WDC_Q4K=1 is incompatible with FEATURE_PROFILE=reference\n' >&2
+  exit 2
+elif [[ "${wdc_q4k}" == 1 ]]; then
   # Default-off candidate: oneDNN consumes the scoped Q4_K reordered layout.
   # GGML_SYCL_WDC remains off because this screen enables only the Q4_K door.
   export GGML_SYCL_WDC_Q4K=1
