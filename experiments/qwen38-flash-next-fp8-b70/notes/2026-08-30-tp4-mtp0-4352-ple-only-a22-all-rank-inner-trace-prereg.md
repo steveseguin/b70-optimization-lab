@@ -61,3 +61,14 @@ Frozen wrappers and generated sources:
 - supervisor `3fc2400b9fd3d7c872175165b22e4ca2871a0639ce31899663cda4e49b5dd13d`,
   generated `b51a3b05b9927460585040f66b03150387fa99c444e0854ddf77cd58f1c3473e`,
   inner derived `8494ab627ffa8b8e07f73120388ce779cafb89da0f65d487b220318d585df031`.
+
+## Post-launch correction
+
+A22 failed before the endpoint because “require all 128 PLE checkpoint shard
+indices before boot” placed validation at a child-call boundary. The checkpoint
+is complete; `AutoWeightsLoader` delivered the table as 0-125 and 126-127
+around a sibling weight. Preserve the wording above as the frozen preregistered
+belief, but use the
+[A22 result](2026-08-30-tp4-mtp0-4352-ple-only-a22-loader-stream-boundary-negative.md)
+for the corrected interpretation. Source `f69a0ef46338f93636671c87caa527b3ac2ca129`
+accumulates child deliveries and validates after the root checkpoint stream.

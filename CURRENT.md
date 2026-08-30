@@ -1620,17 +1620,23 @@ host selective-UVA lookup with the real PLE output geometry, 64 sequential
 short-convolution chunks plus dirty valid-slot reset, and 4K n-gram context
 progression. Each returned exact repeatability/oracle agreement. The first
 short-conv harness used reserved null slot 0 and is explicitly invalid; the
-corrected slot-1 gate passed. The loader now also requires all 128 logical PLE
-shard indices before boot. No arithmetic or protected result changed. See the
+corrected slot-1 gate passed. No arithmetic or protected result changed. See the
 [PLE isolation](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-ple-fixed-input-isolation.md).
-A22 is frozen as the first all-rank internal-trace member on source
-`613afcc501331aa6ff7d5a238a6c9a5d45777b3e`. It records raw/dequantized PLE
-lookup, projection/gate, convolution, attention, and MLP boundaries on all four
-ranks while retaining A21's external model and full launch identity. It is
-diagnostic-only and must run after a fresh boot under the one-full-load rule;
-an internally consistent A22 still requires the exact A23 fresh-start peer.
-See the
-[A22 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a22-all-rank-inner-trace-prereg.md).
+A22 passed every pre-endpoint gate and produced all four exact PLE placement
+receipts, then failed closed while loading because patch 0023 finalized shard
+coverage after the first of two valid child-prefix deliveries. Shards 126/127
+are present; a sibling weight separates them from 0-125. No endpoint, request,
+trace, quality, or performance evidence exists, no host/GPU fault occurred, and
+all protected results remain unchanged. Source
+`f69a0ef46338f93636671c87caa527b3ac2ca129` moves validation to the root stream,
+accepts the real 126+2 grouping, and passes 25 focused tests. A23 is frozen on
+new paths/port with the exact A22 inference identity, an explicit all-rank trace
+receipt, and an atomic one-load boot claim. The A22 boot is consumed; A23 needs
+another explicit reboot and becomes the first trace-pair member only if it emits
+the trace. See the
+[A22 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a22-loader-stream-boundary-negative.md)
+and
+[A23 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a23-root-stream-trace-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

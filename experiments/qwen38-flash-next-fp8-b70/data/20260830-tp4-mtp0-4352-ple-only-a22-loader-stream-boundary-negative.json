@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "status": "pre_endpoint_loader_stream_boundary_gate_negative",
+  "classification": "fail_closed_validation_patch_defect_bounded_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_tree_sha256": "4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2",
+    "model_path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "filesystem": "fuseblk",
+    "attempt": 22,
+    "port": 19694,
+    "boot_id": "c9c86120-4735-4f7a-9500-d7e49f0d2f63",
+    "vllm_head": "613afcc501331aa6ff7d5a238a6c9a5d45777b3e",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 134217728,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "seed": 0,
+    "async_scheduling": false,
+    "prefix_cache": false
+  },
+  "frozen_wrappers_sha256": {
+    "launcher": "18889ab0e8a8602bd02a22f775a903eafcc9ac4d2bd01db2ac0f102a9edc3c60",
+    "client": "65c5dd11b4beb5d2d5796700cb071d25edcffe28dbe00c3b719ac3cb4602da84",
+    "supervisor": "3fc2400b9fd3d7c872175165b22e4ca2871a0639ce31899663cda4e49b5dd13d"
+  },
+  "trace": {
+    "configured": true,
+    "rank_filter": "all",
+    "emitted": false,
+    "raw_identity_diagnostics_field": "none",
+    "identity_defect": "The inherited identity.txt line is stale. The launcher exported the attempt-22 rank-templated trace path and all-rank filter, but model loading failed before any trace-eligible request. The successor must record trace configuration in its identity receipt."
+  },
+  "passed_pre_endpoint_gates": [
+    "artifact",
+    "filesystem",
+    "staged_runtime",
+    "four_gpu_discovery",
+    "tp4_xccl",
+    "four_worker_initialization",
+    "four_exact_11.92_GiB_UVA_receipts"
+  ],
+  "failure": {
+    "supervisor_started_local": "2026-08-30T13:12:26-04:00",
+    "server_identity_written_local": "2026-08-30T13:13:26-04:00",
+    "load_started_local": "2026-08-30T13:14:11-04:00",
+    "exception_local": "2026-08-30T13:16:58-04:00",
+    "teardown_receipt_local": "2026-08-30T13:17:28-04:00",
+    "first_failing_rank": 3,
+    "message": "PLE embedding checkpoint shard coverage is incomplete: missing=[126, 127], unexpected=[]",
+    "launcher_rc": 70,
+    "supervisor_rc": 70,
+    "rank0_display_progress": "12/131",
+    "endpoint_healthy": false,
+    "client_started": false,
+    "requests": 0,
+    "quality_evidence": false,
+    "performance_evidence": false
+  },
+  "mechanism": {
+    "checkpoint_index_logical_ple_shards": "128/128",
+    "file_36_ple_shards": "122-125",
+    "file_37_order": [
+      "model.language_model.layers.1.ple.conv1d.weight",
+      "model.language_model.layers.1.ple.ple_embedding.ngram_embedding.shard_126.weight",
+      "model.language_model.layers.1.ple.ple_embedding.ngram_embedding.shard_127.weight"
+    ],
+    "cause": "AutoWeightsLoader groups contiguous child prefixes. The sibling conv1d weight split one logical PLE table into calls carrying shards 0-125 and 126-127. Patch 0023 validated at the end of the first child call and therefore rejected a valid streamed checkpoint before the second call.",
+    "checkpoint_corruption": false,
+    "failed_patch": "patches/qwen38-flash-next-fp8-b70/vllm/0023-Require-complete-Qwen4Exp-PLE-shard-coverage.patch",
+    "failed_patch_sha256": "684dd381d0975de7e6e6e872dd3e3d2e275cba3b594b498a8c765e3758acbd19",
+    "corrected_source_head": "f69a0ef46338f93636671c87caa527b3ac2ca129",
+    "corrected_patch": "patches/qwen38-flash-next-fp8-b70/vllm/0026-Validate-Qwen4Exp-PLE-shards-after-root-load.patch",
+    "corrected_patch_sha256": "d19e69c13e52ad7cbf97ebabcb00fe697d3924621d64baaf0f0d1310253a0394"
+  },
+  "cleanup": {
+    "oom": false,
+    "host_reset": false,
+    "storage_error": false,
+    "gpu_fault": false,
+    "server_or_workers_remain": false,
+    "listener_19694_remains": false,
+    "four_gpus_rediscovered": true,
+    "one_load_boot_marker_retained": true,
+    "same_boot_retry_allowed": false
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt22",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt22-supervisor",
+    "sha256": {
+      "identity.txt": "992fff3d7373b47426ba6d9923005f07d9da947750fccbfdad53391febc313c3",
+      "input-sha256sums.txt": "d3e2dc265e4832149f048dcaceb35a1a14f273aa690602106113c60381a707ff",
+      "server-command.shell.txt": "a3416b5b7dcbca4393a34fb8ffee03138ddbb9a61f9c9e873dbc5d4e566bdfeb",
+      "server.log": "586bfeeede55d8b0126f0f229c27313efc9650170609ce433db46f1b732fb4b3",
+      "kernel-journal-since-launch.log": "f721d204013297fc81b666b4525de4138747073187b3441d4d3984ddcb8d09ef",
+      "offload-log-receipt.txt": "d078cb68beb7c0705535a045ffd657adcadf9eed5cbb526fffffcba3056360cf",
+      "staged-runtime-preflight.txt": "943c04129a28995c4cd5b861a05bfe850daccb1caba0a5c42a3407954163f6ae",
+      "xccl-tp4-preflight.log": "3ff6f871d659969d70d9c1d6a621506a082a85e2fc3174e864c1ccb3c51eb5a0",
+      "xpu-discovery.json": "ea5644e1f9353572c23f9db9f9856f35b1a2bc6d6b7528d3b362df2f1d255d4d",
+      "processes-after.txt": "1a0267b183be224af6b492ef000f94167827775b13f7a3e59b5ab0ebc1279d67",
+      "listeners-after.txt": "792cd318abf1ca3fb1a77efc4bf047b68f058358f50d4764d2f22e94ee6996cc",
+      "q38-mtp0-ple-only-a22.rc": "6442bc26a7c562f5afe6467dab36365c709909f6a81afcecfc0c25cff0f1bab0"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "Preserve A22 as a validation-patch negative. It is not the first internal trace-pair member. Use corrected root-stream validation on a new attempt and fresh boot; never reuse A22 paths."
+}
