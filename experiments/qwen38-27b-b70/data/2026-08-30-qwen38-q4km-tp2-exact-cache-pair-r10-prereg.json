@@ -1,0 +1,17 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-pair-20260830-r10",
+  "status": "preregistered after the comma-list build and before candidate measurement",
+  "purpose": "Test whether retaining exact incumbent F16 bytes for both ffn_down and ffn_gate composes the individually qualified dequantization savings at c64.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 64 pinned slots, total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs per request, inference admission target 64 with 1000 ms fail-safe ceiling.",
+  "candidate": "GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down,ffn_gate using allocation-free comma-list matching; the underlying cached bytes and GEMM arithmetic are unchanged.",
+  "frozen_oracle_sha256": "060137a9b3338353cfafeae38fbcf22881fa4eac6816939f33cdc3b78bc465ff",
+  "binary_identities": {
+    "llama_server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "libllama_server_impl_sha256": "e873e18e080f00533fc7e73089f20df2b4303278c5353bb07fc467267fbb1f64",
+    "libggml_sycl_sha256": "815b017d931942e6e5004719782ee5c7cdd15a5adb18ec54f7decf5412a6a659",
+    "source_diff_sha256": "30c2d91efc4b33779f9c8122efaf8c39df226fa769837cbc0d06e2252309fa67"
+  },
+  "advance_rule": "The first candidate must pass 64/64 complete token identity, zero cached tokens, zero cross-base collisions, cache liveness, clean shutdown, and kernel-health gates and exceed 168.344562 tok/s. Only then run one fresh repeat. Promotion requires both candidates 64/64 and their two-run center above 168.138940 tok/s.",
+  "failure_policy": "An OOM, health failure, output mismatch, or slower first candidate closes this pair without a repeat. No failed-arm or single-run speed is promoted; no rate transfers to another concurrency, context, quant, card count, MTP depth, or one-user route."
+}
