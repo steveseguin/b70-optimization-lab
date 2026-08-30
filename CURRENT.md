@@ -1582,6 +1582,14 @@ runtime, placement, request, authority, and trace identity fixed. See the
 [A19 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a19-nvme-correlated-reboot.md)
 and
 [A20 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a20-external-model-prereg.md).
+A20 stopped before model load because its supervisor ownership check still
+required the former local checkpoint path. A21 corrects that report-only
+contract on fresh attempt/port paths; launcher, client, and supervisor now all
+bind the validated external artifact, with no inference selector change. See
+the
+[A20 stop](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a20-supervisor-path-stop.md)
+and
+[A21 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a21-external-model-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
