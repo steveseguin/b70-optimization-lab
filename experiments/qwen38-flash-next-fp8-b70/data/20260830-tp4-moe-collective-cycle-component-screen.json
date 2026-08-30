@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "status": "bit_exact_component_positive_small",
+  "classification": "bounded_tp4_xccl_component_screen",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "ca20c4465ca34fc733aac70416b75d7cb8a1c46f",
+    "device": "Intel Arc Pro B70",
+    "tp": 4,
+    "ep": 4,
+    "rows_per_rank": 1,
+    "global_rows": 4,
+    "hidden_size": 2560,
+    "topk": 10,
+    "layers_per_batch": 48,
+    "collective_transport": "XCCL/oneCCL over four local peer-accessible PCIe devices",
+    "interface_for_oneccl_bootstrap": "eth1"
+  },
+  "cycle": {
+    "dispatch": [
+      "FP8 activation all-gather",
+      "FP32 top-k weight all-gather",
+      "int32 top-k id all-gather",
+      "FP32 activation-scale all-gather"
+    ],
+    "combine": "BF16 reduce-scatter",
+    "current_pattern": "allocate outputs for each cycle and copy reduce-scatter result to final output",
+    "preallocated_pattern": "reuse collective outputs but retain the final copy",
+    "direct_reduce_scatter_pattern": "reuse collective outputs and reduce-scatter directly into the final output"
+  },
+  "correctness": {
+    "all_modes_rank_order_oracle": "passed",
+    "all_modes_reduce_scatter_oracle": "passed",
+    "stability_repeats_per_trial": 100,
+    "output_sha256": "60f7b33ee5321cd7a3945da1e3f812ab79ba6038e814b0978fbca1ad5e2d34c8",
+    "unique_output_hashes_across_modes_and_trials": 1
+  },
+  "initial_screen": {
+    "batches_per_mode": 11,
+    "max_rank_us_per_layer": {
+      "allocating": 793.8655833333332,
+      "preallocated": 739.1843333333333,
+      "direct_rs": 718.4980833333333
+    }
+  },
+  "three_process_start_bracket": {
+    "batches_per_trial": 21,
+    "allocating_us_per_layer": [
+      753.1344166666668,
+      741.6651666666667,
+      748.4641666666666
+    ],
+    "preallocated_us_per_layer": [
+      757.3735,
+      736.6623333333333,
+      725.9156666666668
+    ],
+    "direct_rs_us_per_layer": [
+      722.7772500000001,
+      710.1845833333332,
+      744.7223333333333
+    ],
+    "median_us_per_layer": {
+      "allocating": 748.4641666666666,
+      "preallocated": 736.6623333333333,
+      "direct_rs": 722.7772500000001
+    },
+    "median_reduction_percent_vs_allocating": {
+      "preallocated": 1.5768067275543123,
+      "direct_rs": 3.4319500933578273
+    },
+    "projected_direct_rs_savings_ms_per_48_layer_target_step": 1.2329719999999944
+  },
+  "decision": {
+    "classification": "small exact candidate, not a primary bottleneck solution",
+    "promotion": "not promoted",
+    "next_gate": "implement only as an opt-in endpoint candidate after the A25 fresh-start trace; require the full exact-output, semantic, needle, repeat, and fresh-server gates",
+    "protected_results_changed": false
+  },
+  "tool": {
+    "path": "experiments/qwen38-flash-next-fp8-b70/tools/tp4-moe-collective-cycle-gate.py",
+    "sha256": "b74e58343bdb2107788604d5348f8041983ecee0f8ba6a544b68691fa8e2f515"
+  }
+}

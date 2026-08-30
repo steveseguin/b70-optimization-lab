@@ -1695,6 +1695,15 @@ from lossless promotion. The warps-8 result is component-only; A25 still runs
 first, then a separate TP4 endpoint arm must pass every short/4K authority and
 quality/reliability gate before any tok/s credit. See the
 [M4 MoE component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m4-warps8-component-positive.md).
+A matched four-rank decode-shape collective screen also passed exact rank-order,
+reduce-scatter, and 100-repeat hash gates. Across three process starts, reusing
+buffers and reducing directly into the final output lowered the slowest-rank
+median from `748.464` to `722.777 us/layer`, a 3.43% component reduction or
+about 1.23 ms per 48-layer target step if it transfers. This is a small
+candidate, not the primary bottleneck answer, and no endpoint/source selector
+changed. Any opt-in runtime arm remains ordered after A25 and the same full
+losslessness gate. See the
+[TP4 collective screen](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-moe-collective-cycle-component-screen.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
