@@ -1,0 +1,36 @@
+{
+  "campaign": "qwen38-q4km-tp2-down-up-c96-20260830-r17",
+  "status": "closed negative after the required fresh repeat",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, c96, requested context 32768 and effective pool 49152 (96x512), batch 2048, ubatch 256, prompt cache off, exact F16 cache for ffn_down and ffn_up",
+  "frozen_same_shape_batch_oracle_sha256": "f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1",
+  "attempts": [
+    {
+      "attempt": 1,
+      "aggregate_tok_s_nonpromoted": 192.4616662250231,
+      "same_shape_batch_oracle_exact": "96/96",
+      "quality_qualified": true,
+      "gpu0_peak_used_mib": 30478.179688,
+      "gpu1_peak_used_mib": 30352.347656,
+      "result_sha256": "041dca63a9c299e7cce78ccfeb9bb28551e834d529e464f4649569c9c560958b",
+      "summary_sha256": "8ad6bbac2d4317948b63e085b9b89df1308cc6f52deedec63ce34b341abaf388",
+      "qualification_sha256": "80b4bfb93f586641ff924331a8e6ce6510079a832b2e35df519b4743945acbc2",
+      "server_log_sha256": "e589fa1bc5d29c9662eabea47668c09d6fb0806d0b0abd7d237cb0b11d856443",
+      "vram_monitor_sha256": "657e9d67bef02e256352812781fd3f4959c00b3246f61e19159756bdaa356703"
+    },
+    {
+      "attempt": 2,
+      "aggregate_tok_s_nonpublishable": 179.87435957352142,
+      "same_shape_batch_oracle_exact": "81/96",
+      "quality_qualified": false,
+      "gpu0_peak_used_mib": 30480.832031,
+      "gpu1_peak_used_mib": 30352.785156,
+      "result_sha256": "996fb6ae4775d85af99944734a4416cec70b9d25725b2e80432ac6aff8150372",
+      "summary_sha256": "49b7101579f54f197b6009ddadee8d2fb0966cee5d666e3b1de6009e84f21ba7",
+      "qualification_sha256": "e65e163b546cee47720e508f219e0249c864778191ff84ff9993ada1cb34b13c",
+      "server_log_sha256": "8f0a25dfa102287229c862cb1c65afef2c11d7d52dddd6cd60c3809e8ca0e70a",
+      "vram_monitor_sha256": "a37432c9d8a4a6ee8fd5db9afb2133ff1b80a815616fbe01d2f7411ef2f0601f"
+    }
+  ],
+  "decision": "Reject and do not promote. Attempt 1 crossed the speed gate and matched 96/96, authorizing the preregistered repeat; attempt 2 then changed 15/96 outputs and was 6.54% slower. The qualified ffn_down+ffn_gate c96 center of 192.34195380893704 tok/s remains the aggregate optimum.",
+  "scope": "Negative repeatability evidence only. Neither r17 rate is a public result."
+}

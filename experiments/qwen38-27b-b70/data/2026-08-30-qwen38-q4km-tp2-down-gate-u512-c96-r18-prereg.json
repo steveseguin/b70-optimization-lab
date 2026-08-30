@@ -1,0 +1,12 @@
+{
+  "campaign": "qwen38-q4km-tp2-down-gate-u512-c96-20260830-r18",
+  "status": "preregistered before measurement",
+  "purpose": "Test whether ubatch 512 improves the qualified exact-cache c96 endpoint while preserving all 96 same-shape outputs. A prior cache-off c64 diagnostic saw a nonpromoted +1.76% signal at ubatch 512; this experiment does not transfer that rate and measures the distinct c96 cached shape directly.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact F16 cache for ffn_down and ffn_gate, 96 pinned slots, requested context 32768 and effective pool 49152 (96x512), batch 2048, ubatch 512, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 96 with 1000 ms ceiling.",
+  "oracle": "Committed c96 same-shape control-batch oracle SHA-256 f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1. This is aggregate-capacity identity evidence, not sequential determinism.",
+  "runner_sha256": "85c21bd18dd59c5982239c43169fa7facd565d44d32766f22d54785e3e7b3266",
+  "incumbent": "ubatch 256 attempt rates 192.35094949480367 and 192.3329581230704 tok/s; center 192.34195380893704 tok/s.",
+  "advance_rule": "Attempt 1 must match the frozen c96 batch oracle 96/96, pass completeness/cache/liveness/health gates and exceed 192.35094949480367 tok/s. Only then repeat. Promotion requires both attempts 96/96 and their center above 192.34195380893704 tok/s.",
+  "failure_policy": "Any mismatch, OOM/health failure or first rate at or below 192.35094949480367 closes r18. No failed-arm or single-run rate is promoted and no rate transfers to another shape."
+}
