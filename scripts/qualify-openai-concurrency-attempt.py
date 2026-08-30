@@ -39,6 +39,7 @@ def qualify(
     active_slots: int,
     expected_oracle_rows: int = 64,
     pilot_require_batch_gates: bool = False,
+    pilot_from_batch: bool = False,
 ) -> dict[str, Any]:
     oracle = result["oracle"]["rows"]
     batches = result["batches"]
@@ -55,8 +56,19 @@ def qualify(
         and re.fullmatch(r"[0-9a-f]{64}", row["token_ids_sha256"])
         for row in oracle
     )
+    batch_pilot_complete = (
+        len(batches) == 1
+        and len(batch_rows) == expected_oracle_rows
+        and all(
+            row.get("completion_tokens") == 128
+            and len(row.get("token_ids", [])) == 128
+            for row in batch_rows
+        )
+    )
     oracle_evidence_complete = (
-        oracle_raw_complete if pilot else oracle_compact_complete
+        batch_pilot_complete
+        if pilot_from_batch
+        else (oracle_raw_complete if pilot else oracle_compact_complete)
     )
     counts_complete = all(row.get("completion_tokens") == 128 for row in all_rows)
     batch_ids_complete = all(
@@ -107,6 +119,7 @@ def qualify(
         ),
         "pilot": pilot,
         "pilot_require_batch_gates": pilot_require_batch_gates,
+        "pilot_from_batch": pilot_from_batch,
         "batch_gates_passed": batch_gates_passed,
         "expected_oracle_rows": expected_oracle_rows,
         "oracle_rows_expected_complete": oracle_evidence_complete,
@@ -127,11 +140,15 @@ def qualify(
     }
 
 
-def compact_oracle(result: dict[str, Any]) -> dict[str, Any]:
-    rows = result["oracle"]["rows"]
+def compact_oracle(result: dict[str, Any], *, from_batch: bool = False) -> dict[str, Any]:
+    rows = result["batches"][0]["rows"] if from_batch else result["oracle"]["rows"]
     return {
         "schema": "neural.download.concurrency-token-oracle-digests.v1",
-        "cached_tokens_zero": result["oracle"]["cached_tokens_all_zero"],
+        "cached_tokens_zero": (
+            result["batches"][0]["cached_tokens_all_zero"]
+            if from_batch
+            else result["oracle"]["cached_tokens_all_zero"]
+        ),
         "rows": [
             {
                 "base_prompt_id": re.sub(r"-c[0-9]+$", "", row["prompt_id"]),
@@ -157,6 +174,7 @@ def main() -> int:
     parser.add_argument("--active-slots", type=int, required=True)
     parser.add_argument("--expected-oracle-rows", type=int, default=64)
     parser.add_argument("--pilot-require-batch-gates", action="store_true")
+    parser.add_argument("--pilot-from-batch", action="store_true")
     parser.add_argument("--oracle-out", type=Path)
     args = parser.parse_args()
     if args.active_slots < 1:
@@ -167,6 +185,8 @@ def main() -> int:
         raise SystemExit("pilot mode requires --oracle-out and publication mode forbids it")
     if args.pilot_require_batch_gates and not args.pilot:
         raise SystemExit("--pilot-require-batch-gates requires --pilot")
+    if args.pilot_from_batch and not args.pilot:
+        raise SystemExit("--pilot-from-batch requires --pilot")
 
     result = json.loads(args.result.read_text())
     qualification = qualify(
@@ -175,12 +195,17 @@ def main() -> int:
         active_slots=args.active_slots,
         expected_oracle_rows=args.expected_oracle_rows,
         pilot_require_batch_gates=args.pilot_require_batch_gates,
+        pilot_from_batch=args.pilot_from_batch,
     )
     args.out.write_text(json.dumps(qualification, indent=2, sort_keys=True) + "\n")
     if args.pilot and qualification["classification"] == "qualified-oracle-pilot":
         assert args.oracle_out is not None
         args.oracle_out.write_text(
-            json.dumps(compact_oracle(result), indent=2, sort_keys=True) + "\n"
+            json.dumps(
+                compact_oracle(result, from_batch=args.pilot_from_batch),
+                indent=2,
+                sort_keys=True,
+            ) + "\n"
         )
     return 0 if qualification["classification"] != "failed-closed" else 3
 

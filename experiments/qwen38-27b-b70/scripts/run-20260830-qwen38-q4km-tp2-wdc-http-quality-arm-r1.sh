@@ -48,6 +48,7 @@ expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-72beceb1906a130c3f5d064fb68a8
 expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-fd649584afe51a708728bcb4da6b415d60b3c6cb8a6203f5d7ae38fb6272cc05}
 expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926}
 expected_concurrency_harness_sha256=${EXPECTED_CONCURRENCY_HARNESS_SHA256:-1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2}
+expected_concurrency_qualifier_sha256=${EXPECTED_CONCURRENCY_QUALIFIER_SHA256:-9f2a50dbc5c5cdabfee742429fc3e2531044a262691e28e1a2da5469ba4696b1}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case ${profile} in realistic|concurrency) ;; *) fail 'PROFILE must be realistic or concurrency' ;; esac
@@ -91,7 +92,7 @@ check_hash ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52 "${r
 check_hash df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac "${realistic_suite}"
 check_hash "${expected_realistic_oracle_sha256}" "${realistic_oracle}"
 check_hash "${expected_concurrency_harness_sha256}" "${concurrency_harness}"
-check_hash 9f2a50dbc5c5cdabfee742429fc3e2531044a262691e28e1a2da5469ba4696b1 "${concurrency_qualifier}"
+check_hash "${expected_concurrency_qualifier_sha256}" "${concurrency_qualifier}"
 check_hash 2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4 "${concurrency_suite}"
 check_hash "${expected_concurrency_oracle_sha256}" "${concurrency_oracle}"
 [[ -f "${prereg}" ]] || fail "missing ${prereg}"
@@ -226,6 +227,8 @@ else
     --out "${run_dir}/qualification.json" --active-slots "${parallel}" --expected-oracle-rows "${concurrency}")
   if [[ "${baseline_mode}" == 1 ]]; then
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
+  elif [[ "${pilot_mode}" == 1 ]]; then
+    qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
   python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" <<'PY'
