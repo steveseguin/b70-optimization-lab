@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "trace_captured_battery_failed_closed_at_exact_4k_authority",
+  "classification": "diagnostic_trace_positive_reliability_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "9f720cd4aa6c8a8b045f54dfa10f5b8611caccbd",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "placement": "ple_only_uva"
+  },
+  "trace": {
+    "rank": 0,
+    "position_min": 3968,
+    "position_max": 4031,
+    "records": 51,
+    "tensor_records": 149,
+    "model_input_sha256": "9d95b2fb2cda793ef33666adcfe78e5e87399b5d1e60e9b3a0e770ae75ded7b1",
+    "model_output_sha256": "31ac4338581c362f12959165c50c2abfea4a43a8c74a9b17eb168c31aa0b2561",
+    "artifact_sha256": "2f832e5f9b5f57ced2a66da10b9b494d83f8a8fc2a19bb5f0992d11163075256"
+  },
+  "gates": {
+    "semantic_quality": "6/7; sole inherited code_execution response 30 instead of 14",
+    "repeat": "16/16 one hash",
+    "quality_long_context": "4096 prompt tokens, exact needle pass, zero cached tokens",
+    "short_output_authority": "3/3 exact",
+    "exact_4k_transport": "2/2 passed",
+    "exact_4k_row_1_authority": true,
+    "exact_4k_row_2_authority": false,
+    "exact_4k_same_server_repeat": false,
+    "first_difference_between_exact_4k_rows_zero_based": 62,
+    "different_generated_tokens_between_exact_4k_rows": 66,
+    "client_rc": 1,
+    "supervisor_final_rc": 143,
+    "postflight": "clean teardown; all four cards discoverable"
+  },
+  "performance": {
+    "short_rates_tok_s": [5.39041541440914, 5.3936360676225386, 5.339013410484072],
+    "short_diagnostic_median_tok_s": 5.39041541440914,
+    "short_output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "exact_4k_rates_tok_s": [5.094437740551145, 5.1589434983726505],
+    "exact_4k_ttft_s": [114.25018532800004, 106.71650422599987],
+    "exact_4k_output_sha256": [
+      "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "7bb6cc4feb8a22d6ca73909cde8ff235e6ee26795bd9968c556425fa5907c755"
+    ],
+    "credit": "none; trace synchronization makes timing diagnostic and authority failed"
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt16",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt16-supervisor",
+    "sha256": {
+      "quality-current.json": "9088eaed0500abe538a87749a32343818e095b0212acfbae41b92c781a08879b",
+      "bench-short-r1.json": "4f9a9514dc8c118c3d8c78b97c30144303c54abae44bcefc8d36f10852f8df3d",
+      "bench-short-r2.json": "944fc48f19a116b385ea1f1a2c3ec9470bb75a63bf3d361fd1810c9f96264871",
+      "bench-short-r3.json": "69f18dd4f75f3a4d509c51b4ab5f5ada6e4e64b8fec859ff14d4f82c60d3b6b4",
+      "exact-depth-4k-r1.json": "388151cf03c52ec8a72ad385536d55a50276803a64cf13bd109899aee03bd12d",
+      "exact-depth-4k-r2.json": "304136eb3065516dc4a25db4fcb79e67d03b35d93b2f5a2f75ad6ac223f7c9e4",
+      "identity.txt": "e0b0673cd4db7455a87dda4f3d2fe61c952f9120c9170c19a2d31adadec1be9c",
+      "server.log": "5d948313a2531799eafe20d8581c856aff051524e64b082093f6ce0c3968f8c6",
+      "kernel-journal.log": "785a79c0dc422d36fc919f3ba90554c9b6a0f8a8416de04f2e0662a782893f0e"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "Preserve the valid A16 trace and reliability-negative battery. Run one exact fresh-start replica with the same trace and request order, then compare the 149 tensor digests to locate the first differing boundary."
+}
