@@ -1,0 +1,23 @@
+{
+  "campaign": "qwen38-q4km-tp2-current-control-oracle-20260830-r1",
+  "status": "preregistered-before-corrected-control-measurement",
+  "candidate_enabled": false,
+  "purpose": "Freeze and independently repeat the exact current-binary control outputs after the historical oracle rejected the current source identity.",
+  "identity_correction": "Both runs force the scoped Q4_K reordered layout used by the raw WDC control. WDC remains disabled. This fixes the HTTP r1 comparison error where reorder was enabled only in the candidate launcher branch.",
+  "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+  "source_diff_sha256": "9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926",
+  "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+  "run_order": [
+    "realistic-control-attempt2-generate",
+    "realistic-control-attempt3-repeat",
+    "concurrency-control-attempt2-generate",
+    "concurrency-control-attempt3-repeat"
+  ],
+  "gates": {
+    "realistic": "Both fresh servers pass the 12-prompt/512-token/cache-zero promotion workload and attempt3 exactly matches all 12 attempt2 output hashes.",
+    "concurrency": "The pilot generates complete token IDs for the 64-prompt sequential oracle and matches them under c64; the second fresh server then matches all 64 compact oracle digests.",
+    "negative_control": "No WDC engagement warning in any run.",
+    "kernel_health": "No GPU reset/fault/device-lost/OOM/model-process segfault evidence."
+  },
+  "publication_policy": "This campaign only establishes a current control oracle. It does not measure or approve WDC and does not replace the older promoted headline."
+}
