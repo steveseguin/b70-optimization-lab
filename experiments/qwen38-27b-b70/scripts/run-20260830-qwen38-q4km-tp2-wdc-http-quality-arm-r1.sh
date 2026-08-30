@@ -18,6 +18,7 @@ context_override=${CONTEXT_SIZE:-}
 feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 launch_stagger_ms=${LAUNCH_STAGGER_MS:-0}
+pin_slots=${PIN_SLOTS:-0}
 wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 candidate_kind=${CANDIDATE_KIND:-wdc}
 q4k_f16_cache_filter=${Q4K_F16_CACHE_FILTER:-}
@@ -79,6 +80,7 @@ esac
 [[ "${feature_profile}" == tuned || "${arm}" == control ]] || fail 'non-tuned FEATURE_PROFILE is control-only'
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || fail 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2'
 [[ "${launch_stagger_ms}" =~ ^[0-9]+$ ]] || fail 'LAUNCH_STAGGER_MS must be a nonnegative integer'
+[[ "${pin_slots}" == 0 || "${pin_slots}" == 1 ]] || fail 'PIN_SLOTS must be 0 or 1'
 [[ "${wdc_q4k_name_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || fail 'WDC_Q4K_NAME_FILTER contains unsupported characters'
 [[ -z "${wdc_q4k_name_filter}" || "${arm}" == candidate ]] || fail 'WDC_Q4K_NAME_FILTER is candidate-only'
 [[ "${q4k_f16_cache_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || fail 'Q4K_F16_CACHE_FILTER contains unsupported characters'
@@ -234,6 +236,7 @@ else
     --request-id-prefix "qwen38-q4km-tp2-wdc-${arm}-a${attempt}"
     --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}'
     --out "${run_dir}/result.json")
+  if [[ "${pin_slots}" == 1 ]]; then harness_cmd+=(--pin-slots); fi
   if [[ "${baseline_mode}" == 0 ]]; then harness_cmd+=(--oracle-digests "${concurrency_oracle}"); fi
   "${harness_cmd[@]}" | tee "${run_dir}/harness-summary.txt"
   qualifier_cmd=(python3 "${concurrency_qualifier}" --result "${run_dir}/result.json"
@@ -244,7 +247,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -258,6 +261,7 @@ wdc_q4k_name_filter = sys.argv[13] or None
 mtp_depth = int(sys.argv[14])
 candidate_kind = sys.argv[15]
 q4k_f16_cache_filter = sys.argv[16] or None
+pin_slots = sys.argv[17] == "1"
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -291,6 +295,7 @@ summary = {
     "mtp_depth": mtp_depth,
     "candidate_kind": candidate_kind,
     "q4k_f16_cache_filter": q4k_f16_cache_filter,
+    "pin_slots": pin_slots,
 }
 if concurrency == 64:
     summary["aggregate_tok_s_c64"] = result["batches"][0]["aggregate_tok_s_wall"]

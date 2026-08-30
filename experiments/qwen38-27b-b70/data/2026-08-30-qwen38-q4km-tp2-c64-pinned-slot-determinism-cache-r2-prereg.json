@@ -1,0 +1,25 @@
+{
+  "campaign": "qwen38-q4km-tp2-c64-pinned-slot-determinism-cache-20260830-r2",
+  "status": "preregistered-after-unpinned-control failure and before pinned measurements",
+  "trigger": "The fresh same-binary MTP0 control matched the prior ordered c64 oracle only 56/64. Server logs showed timing-dependent task arrival groups despite launch staggering; the ffn_down F16 cache candidate was faster but cannot qualify against a nondeterministic control mapping.",
+  "purpose": "Hold prompt-to-slot mapping fixed, prove that the MTP0 TP2 baseline replays exactly, then evaluate the exact-arithmetic ffn_down F16 cache against that frozen pinned-slot oracle.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, tuned profile, Q4_K reorder on, WDC off, c64, context 32768, batch 2048, ubatch 256, 128 output tokens, temperature 0, seed 42, cache-prompt off.",
+  "slot_contract": "Expanded prompt i is explicitly assigned id_slot=63-i. This changes scheduling only; prompt text, tokenization, model arithmetic, concurrency, and cache policy are unchanged.",
+  "ordered_arms": [
+    "Fresh pinned-slot control pilot; batch isolation gates must pass before its 64 compact token-ID digests are frozen.",
+    "Fresh pinned-slot control replay against the frozen pilot; must match 64/64.",
+    "Fresh pinned-slot candidate with GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down; must match the same oracle 64/64."
+  ],
+  "required_gates": [
+    "all 64 responses complete at exactly 128 tokens",
+    "all cached token counts are zero",
+    "complete token-ID identity and collision gates pass",
+    "control replay and candidate each match the frozen pinned-slot oracle 64/64",
+    "candidate cache liveness is present; control liveness is absent",
+    "WDC is absent in every arm",
+    "no GPU fault, reset, device loss, OOM, segfault, or unclean shutdown"
+  ],
+  "advance_rule": "Only after the control replay is 64/64 exact may candidate throughput be compared. Candidate promotion additionally requires 64/64 exactness, repeatable improvement, and a diverse realistic-prompt exact-output suite.",
+  "publication_policy": "No unpinned result or pilot becomes a headline. No prompt/output caching, fixture gaming, interpolation, extrapolation, or regenerated oracle after observing candidate output."
+}

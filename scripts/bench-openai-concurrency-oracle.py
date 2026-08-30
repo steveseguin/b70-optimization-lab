@@ -195,9 +195,10 @@ def run_group(
     *,
     prompts: list[dict[str, str]],
     concurrency: int,
-    request: Callable[[dict[str, str], str], dict[str, Any]],
+    request: Callable[[dict[str, str], str, int], dict[str, Any]],
     request_prefix: str,
     launch_stagger_ms: int = 0,
+    pin_slots: bool = False,
 ) -> tuple[float, list[dict[str, Any]]]:
     barrier = threading.Barrier(concurrency)
 
@@ -208,7 +209,13 @@ def run_group(
         # (concurrency - 1) * launch_stagger_ms.
         if launch_stagger_ms:
             time.sleep(index * launch_stagger_ms / 1000.0)
-        row = request(item, f"{request_prefix}-{index:03d}")
+        # The server normally assigns slots by HTTP arrival order. At high
+        # concurrency that order is timing-dependent even with staggered
+        # clients, and some optimized TP paths are not bit-equivalent across
+        # slots. Pinning makes a correctness replay compare the same prompt in
+        # the same slot while preserving a fully concurrent cohort.
+        slot_id = concurrency - 1 - index if pin_slots else -1
+        row = request(item, f"{request_prefix}-{index:03d}", slot_id)
         row["prompt_id"] = item["id"]
         row["prompt_sha256"] = hashlib.sha256(
             item["prompt"].encode("utf-8")
@@ -236,6 +243,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--launch-stagger-ms", type=int, default=0)
+    parser.add_argument(
+        "--pin-slots",
+        action="store_true",
+        help="Pin expanded prompt i to slot concurrency-1-i for deterministic replay.",
+    )
     parser.add_argument("--request-extra-json", default="{}")
     parser.add_argument(
         "--request-id-prefix",
@@ -263,7 +275,10 @@ def main() -> int:
     prompts = expand_prompts(base_prompts, max(args.concurrency))
     system_prompt = suite_meta.get("system_prompt")
 
-    def request(item: dict[str, str], request_id: str) -> dict[str, Any]:
+    def request(item: dict[str, str], request_id: str, slot_id: int = -1) -> dict[str, Any]:
+        request_options = dict(request_extra)
+        if slot_id >= 0:
+            request_options["id_slot"] = slot_id
         return _BASE.post_stream(
             base_url=args.base_url,
             model=args.model,
@@ -272,7 +287,7 @@ def main() -> int:
             timeout=args.timeout,
             api_mode=args.api_mode,
             seed=args.seed,
-            request_extra=request_extra,
+            request_extra=request_options,
             return_token_ids=args.return_token_ids,
             system_prompt=system_prompt,
             request_id=request_id,
@@ -312,6 +327,7 @@ def main() -> int:
                     f"{request_id_prefix}-c{concurrency}-r{repeat}"
                 ),
                 launch_stagger_ms=args.launch_stagger_ms,
+                pin_slots=args.pin_slots,
             )
             batches.append(
                 summarize_batch(
@@ -364,6 +380,7 @@ def main() -> int:
             "request_extra": request_extra,
             "request_id_prefix": request_id_prefix,
             "launch_stagger_ms": args.launch_stagger_ms,
+            "pin_slots": args.pin_slots,
             "return_token_ids": args.return_token_ids,
             "oracle_digests": str(args.oracle_digests) if args.oracle_digests else None,
             "oracle_digests_sha256": oracle_digest_sha256,
