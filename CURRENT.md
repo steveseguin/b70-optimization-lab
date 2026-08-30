@@ -1782,6 +1782,15 @@ counts were zero, and no output collision or kernel error occurred. The cache
 costs about 6.5 GiB/device and did not improve single-user MMVQ decode, so the
 single-user headline is unchanged. See the [qualified result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c64-result.md).
 
+The follow-on comma-list build then composed exact `ffn_down` and `ffn_gate`
+caches. Two fresh candidates measured `175.798577` and `175.449010 tok/s`,
+for a new **`175.623794 tok/s`** c64 center. Both matched the same frozen batch
+oracle 64/64 with cache zero, no output collision, clean shutdown, and no
+kernel errors. This is `+4.45%` over the one-family record and `+9.10%` over
+the matched cache-off controls. The tradeoff rises to approximately 13
+GiB/device; exact peak VRAM remains open, and the result does not change the
+one-user headline. See the [pair result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-pair-c64-result.md).
+
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2

@@ -23,13 +23,15 @@ and metric identity.
 Additional measured profiles now cover exact 2K→32K native HTTP decode/TTFT
 and output-audited 1→64-user HTTP aggregate decode. At exactly 32K the package
 measured `44.437281 tok/s`; at 64 simultaneous users it measured
-`168.138940 tok/s` aggregate with the default-off exact F16 `ffn_down` cache.
-The two candidate servers measured `168.344562` and `167.933317 tok/s`, each
+`175.623794 tok/s` aggregate with the default-off exact F16
+`ffn_down,ffn_gate` cache. The two candidate servers measured `175.798577`
+and `175.449010 tok/s`, each
 matching the preregistered fixed-cohort token oracle 64/64 with prompt caching
-disabled. Same-binary controls centered at `160.981046 tok/s` (`+4.45%`).
+disabled. Same-binary cache-off controls centered at `160.981046 tok/s`
+(`+9.10%`); the result is `+4.45%` above the prior one-family cache record.
 
 The aggregate optimization retains the incumbent dequantized F16 bytes on each
-device; it adds about 6.5 GiB of device memory per card and did not improve the
+device; the pair adds approximately 13 GiB of device memory per card and did not improve the
 single-user MMVQ route. The `49.717503 tok/s` one-user headline therefore stays
-unchanged. See the [qualified c64 result](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c64-result.md), including the
+unchanged. See the [qualified c64 result](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-pair-c64-result.md), including the
 patches, preregistration, hashes, and strict runner.

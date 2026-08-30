@@ -1,0 +1,25 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-tensor-screen-20260830-r9",
+  "status": "closed; both alternatives exact but below the preregistered advancement threshold",
+  "configuration": "Qwen3.8-27B Q4_K_M, TP2, MTP0, c64, total context 32768, batch 2048, ubatch 256, 128 token IDs/request, prompt cache off, fixed r8 batch oracle",
+  "threshold_tok_s": 168.34456204029235,
+  "runs": [
+    {
+      "filter": "ffn_gate",
+      "aggregate_tok_s": 168.2415786861497,
+      "complete_token_identity": "64/64",
+      "cached_tokens_all_zero": true,
+      "result_sha256": "1b7ceae4581ed7ed4878a6054e2efd03950bd0ee8bfe532a9871b5923d78a953",
+      "summary_sha256": "b6014325bf8b523c1c92bd58fe09c5e6291e3e169be79d5440f5d5a1690f381c"
+    },
+    {
+      "filter": "ffn_up",
+      "aggregate_tok_s": 168.22958432990038,
+      "complete_token_identity": "64/64",
+      "cached_tokens_all_zero": true,
+      "result_sha256": "056bb9e55a89641ad496ab27ff0082596cce186f30c9971cc26304f42504fdd9",
+      "summary_sha256": "3365eae801b175570791ac0823b33a749fdb1d5c17e02bf7ab538eae8a12e6c8"
+    }
+  ],
+  "decision": "Do not repeat or promote either individual alternative. Their near-identical speeds support testing a separately built two-filter composition, but do not establish that composition's result."
+}

@@ -1,0 +1,36 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -19,5 +19,6 @@
+ #include <cinttypes>
+ #include <string>
++#include <string_view>
+ #include <cstddef>
+ #include <cstdint>
+ #include <cstdlib>
+@@ -3594,8 +3595,24 @@ inline void ggml_sycl_op_mul_mat_sycl(
+             GGML_ASSERT(to_fp16_sycl != nullptr);
+             size_t ne = row_diff*ne00;
+             const char * cache_filter = getenv("GGML_SYCL_Q4K_F16_CACHE_FILTER");
+             const bool cache_this = src0->type == GGML_TYPE_Q4_K && cache_filter != nullptr &&
+-                                    *cache_filter != '\0' && strstr(src0->name, cache_filter) != nullptr;
++                                    *cache_filter != '\0' && [&]() {
++                const std::string_view name(src0->name);
++                const std::string_view filters(cache_filter);
++                size_t begin = 0;
++                while (begin < filters.size()) {
++                    const size_t end = filters.find(',', begin);
++                    const size_t count = (end == std::string_view::npos ? filters.size() : end) - begin;
++                    if (count > 0 && name.find(filters.substr(begin, count)) != std::string_view::npos) {
++                        return true;
++                    }
++                    if (end == std::string_view::npos) {
++                        break;
++                    }
++                    begin = end + 1;
++                }
++                return false;
++            }();
+             if (cache_this) {
+                 auto * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
+                 if (extra != nullptr) {

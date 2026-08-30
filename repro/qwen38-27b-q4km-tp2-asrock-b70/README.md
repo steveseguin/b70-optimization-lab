@@ -169,3 +169,18 @@ did not improve the cold 12-prompt single-user suite, which remained 12/12
 output-exact, so it must not replace the package's one-user headline. Complete
 preregistration, artifact hashes, controls, candidates, and qualification gates
 are in the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c64-result.md).
+
+The subsequently qualified two-family setting is now the c64 record:
+
+```bash
+Q4K_F16_CACHE_FILTER=ffn_down,ffn_gate
+```
+
+Fresh candidates measured `175.798577` and `175.449010 tok/s`, for a
+**`175.623794 tok/s`** center. Both matched the fixed batch oracle 64/64 with
+cache zero. This is `+4.45%` over the one-family record and `+9.10%` over the
+matched cache-off controls. Apply the
+[comma-filter increment](../../experiments/qwen38-27b-b70/patches/llama-qwen38-q4k-f16-cache-comma-filter-20260830.patch)
+after the base cache patch. The pair uses approximately 13 GiB of additional
+device memory per card; exact peak VRAM remains to be captured. See the
+[pair result](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-pair-c64-result.md).

@@ -106,7 +106,7 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">216.5&dagger;</a>", index_html)
         self.assertIn(">83.8&dagger;</a>", index_html)
         self.assertIn(">68.6&dagger;</a>", index_html)
-        self.assertIn(">168.1&dagger;</a>", index_html)
+        self.assertIn(">175.6&dagger;</a>", index_html)
         self.assertIn(">163.6&dagger;</a>", index_html)
         self.assertIn(">1,112.6&dagger;</a>", index_html)
         self.assertIn(">68.3&dagger;</a>", index_html)
