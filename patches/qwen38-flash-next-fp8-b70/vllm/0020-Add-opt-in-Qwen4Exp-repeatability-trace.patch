@@ -1,0 +1,276 @@
+From 9f720cd4aa6c8a8b045f54dfa10f5b8611caccbd Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 01:19:39 -0400
+Subject: [PATCH 20/20] Add opt-in Qwen4Exp repeatability trace
+
+---
+ .../qwen4_exp/test_repeatability_trace.py     | 62 ++++++++++++
+ vllm/models/qwen4_exp/amd/model.py            | 30 +++++-
+ .../qwen4_exp/amd/repeatability_trace.py      | 96 +++++++++++++++++++
+ 3 files changed, 187 insertions(+), 1 deletion(-)
+ create mode 100644 tests/models/qwen4_exp/test_repeatability_trace.py
+ create mode 100644 vllm/models/qwen4_exp/amd/repeatability_trace.py
+
+diff --git a/tests/models/qwen4_exp/test_repeatability_trace.py b/tests/models/qwen4_exp/test_repeatability_trace.py
+new file mode 100644
+index 000000000..3d5d9c267
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_repeatability_trace.py
+@@ -0,0 +1,62 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import json
++
++import pytest
++import torch
++
++from vllm.models.qwen4_exp.amd.repeatability_trace import (
++    Qwen4ExpRepeatabilityTrace,
++)
++
++
++def test_trace_is_disabled_without_path(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.delenv("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", raising=False)
++    trace = Qwen4ExpRepeatabilityTrace()
++    assert not trace.begin(torch.tensor([4095]), rank=0)
++
++
++def test_trace_captures_one_threshold_forward(
++    monkeypatch: pytest.MonkeyPatch, tmp_path
++) -> None:
++    path = tmp_path / "trace-{rank}.json"
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", str(path))
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_MIN_POSITION", "4000")
++    trace = Qwen4ExpRepeatabilityTrace()
++
++    assert not trace.begin(torch.tensor([0, 3999]), rank=0)
++    assert trace.begin(torch.tensor([4032, 4095]), rank=0)
++    tensor = torch.tensor([[1.0, 2.0]], dtype=torch.bfloat16)
++    trace.record("layer_0_output", hidden_states=tensor, block_output=None)
++    trace.finish()
++
++    report = json.loads((tmp_path / "trace-0.json").read_text())
++    assert report["position_min"] == 4032
++    assert report["position_max"] == 4095
++    assert [record["label"] for record in report["records"]] == [
++        "model_positions",
++        "layer_0_output",
++    ]
++    tensor_record = report["records"][1]["tensors"]["hidden_states"]
++    assert tensor_record["shape"] == [1, 2]
++    assert len(tensor_record["sha256"]) == 64
++    assert not trace.begin(torch.tensor([4096]), rank=0)
++
++
++def test_trace_rank_filter(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
++    monkeypatch.setenv(
++        "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", str(tmp_path / "trace.json")
++    )
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK", "1")
++    trace = Qwen4ExpRepeatabilityTrace()
++    assert not trace.begin(torch.tensor([4095]), rank=0)
++
++
++def test_trace_accepts_launcher_safe_path_alias(
++    monkeypatch: pytest.MonkeyPatch, tmp_path
++) -> None:
++    monkeypatch.delenv("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", raising=False)
++    monkeypatch.setenv("Q38_REPEATABILITY_TRACE_FILE", str(tmp_path / "trace.json"))
++    trace = Qwen4ExpRepeatabilityTrace()
++    assert trace.begin(torch.tensor([4095]), rank=0)
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index 96298b2fc..a37f1ad82 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -10,7 +10,7 @@ from torch import nn
+ 
+ from vllm.compilation.decorators import support_torch_compile
+ from vllm.config import VllmConfig
+-from vllm.distributed import get_pp_group
++from vllm.distributed import get_pp_group, get_tensor_model_parallel_rank
+ from vllm.model_executor.layers.logits_processor import LogitsProcessor
+ from vllm.model_executor.layers.mamba.gdn.qwen_gdn_linear_attn import (
+     QwenGatedDeltaNetAttention,
+@@ -86,6 +86,7 @@ if current_platform.is_xpu():
+ else:
+     from .ple_layer import Qwen4ExpPLELayer
+ from .qsa import Qwen4ExpQSAAttention
++from .repeatability_trace import Qwen4ExpRepeatabilityTrace
+ 
+ 
+ def _maybe_offload_embed_tokens(module: nn.Module, prefix: str) -> None:
+@@ -473,6 +474,7 @@ class Qwen4ExpModel(nn.Module):
+             )
+         else:
+             self._mtp_hidden_buffer = None
++        self._repeatability_trace = Qwen4ExpRepeatabilityTrace()
+ 
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.embed_tokens(input_ids)
+@@ -487,6 +489,8 @@ class Qwen4ExpModel(nn.Module):
+         ngram_context: torch.Tensor | None = None,
+         deepstack_input_embeds: IntermediateTensors | None = None,
+     ) -> torch.Tensor | IntermediateTensors:
++        trace = self._repeatability_trace
++        trace_active = trace.begin(positions, get_tensor_model_parallel_rank())
+         if get_pp_group().is_first_rank:
+             if inputs_embeds is not None:
+                 hidden_states = inputs_embeds
+@@ -500,6 +504,13 @@ class Qwen4ExpModel(nn.Module):
+                 raise ValueError("pipeline stage requires intermediate tensors")
+             hidden_states = intermediate_tensors["hidden_states"]
+ 
++        if trace_active:
++            trace.record(
++                "model_input",
++                hidden_states=hidden_states,
++                input_ids=input_ids,
++            )
++
+         block_output = None
+         injection = None
+         last_layer = None
+@@ -516,6 +527,13 @@ class Qwen4ExpModel(nn.Module):
+                 query_start_loc=query_start_loc,
+                 ngram_context=ngram_context,
+             )
++            if trace_active:
++                trace.record(
++                    f"layer_{layer_idx}_output",
++                    hidden_states=hidden_states,
++                    block_output=block_output,
++                    injection=injection,
++                )
+             if deepstack_input_embeds is not None and layer_idx < len(
+                 deepstack_input_embeds
+             ):
+@@ -547,6 +565,9 @@ class Qwen4ExpModel(nn.Module):
+                 hidden_states = last_layer.mlp_hyper_connection.combine(
+                     hidden_states, block_output, injection
+                 )
++            if trace_active:
++                trace.record("pipeline_output", hidden_states=hidden_states)
++                trace.finish()
+             return IntermediateTensors({"hidden_states": hidden_states})
+ 
+         # The final mixer consumes the last pending combine and returns both
+@@ -562,6 +583,13 @@ class Qwen4ExpModel(nn.Module):
+             # this tensor is needed by the final mixer regardless).
+             num_tokens = multi_hidden.shape[0]
+             self._mtp_hidden_buffer[:num_tokens].copy_(multi_hidden)
++        if trace_active:
++            trace.record(
++                "model_output",
++                multi_hidden=multi_hidden,
++                sample_hidden_states=sample_hidden_states,
++            )
++            trace.finish()
+         return sample_hidden_states
+ 
+     def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+diff --git a/vllm/models/qwen4_exp/amd/repeatability_trace.py b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+new file mode 100644
+index 000000000..39a7ede98
+--- /dev/null
++++ b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+@@ -0,0 +1,96 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Opt-in, report-only tensor trace for Qwen4Exp late-prefill diagnosis."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import os
++from pathlib import Path
++
++import torch
++
++
++class Qwen4ExpRepeatabilityTrace:
++    """Capture one selected rank's first forward at or beyond a position."""
++
++    def __init__(self) -> None:
++        self.raw_path = os.environ.get(
++            "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", ""
++        ) or os.environ.get("Q38_REPEATABILITY_TRACE_FILE", "")
++        self.rank = int(
++            os.environ.get("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK", "0")
++        )
++        self.min_position = int(
++            os.environ.get(
++                "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_MIN_POSITION", "4000"
++            )
++        )
++        self.active = False
++        self.complete = False
++        self._records: list[dict[str, object]] = []
++        self._position_min: int | None = None
++        self._position_max: int | None = None
++
++    @staticmethod
++    def tensor_record(tensor: torch.Tensor | None) -> dict[str, object] | None:
++        if tensor is None:
++            return None
++        detached = tensor.detach().contiguous()
++        raw = detached.view(torch.uint8).cpu().numpy().tobytes()
++        head = detached.flatten()[:8].float().cpu().tolist()
++        return {
++            "dtype": str(detached.dtype),
++            "head": head,
++            "numel": detached.numel(),
++            "sha256": hashlib.sha256(raw).hexdigest(),
++            "shape": list(detached.shape),
++        }
++
++    def begin(self, positions: torch.Tensor, rank: int) -> bool:
++        if self.complete or not self.raw_path or rank != self.rank:
++            return False
++        position_min = int(positions.min().item())
++        position_max = int(positions.max().item())
++        if position_max < self.min_position:
++            return False
++        self.active = True
++        self._position_min = position_min
++        self._position_max = position_max
++        self.record("model_positions", positions=positions)
++        return True
++
++    def record(self, label: str, **tensors: torch.Tensor | None) -> None:
++        if not self.active:
++            return
++        self._records.append(
++            {
++                "label": label,
++                "tensors": {
++                    name: self.tensor_record(tensor) for name, tensor in tensors.items()
++                },
++            }
++        )
++
++    def finish(self) -> None:
++        if not self.active:
++            return
++        path = Path(self.raw_path.format(rank=self.rank))
++        path.parent.mkdir(parents=True, exist_ok=True)
++        report = {
++            "min_position_gate": self.min_position,
++            "position_max": self._position_max,
++            "position_min": self._position_min,
++            "rank": self.rank,
++            "records": self._records,
++            "schema_version": 1,
++        }
++        with path.open("x", encoding="utf-8") as handle:
++            json.dump(report, handle, indent=2, sort_keys=True)
++            handle.write("\n")
++        self.active = False
++        self.complete = True
++
++
++__all__ = ["Qwen4ExpRepeatabilityTrace"]
+-- 
+2.43.0
+
