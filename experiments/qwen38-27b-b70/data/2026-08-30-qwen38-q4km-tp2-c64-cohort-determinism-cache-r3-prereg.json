@@ -1,0 +1,29 @@
+{
+  "campaign": "qwen38-q4km-tp2-c64-cohort-determinism-cache-20260830-r3",
+  "status": "preregistered-after pinned-slot replay failure and before r3 measurements",
+  "trigger": "Explicit slot pinning still replayed only 59/64 because the 3000 ms admission window released timing-dependent prefill subgroups. HTTP-side tokenization can finish after the client launch stagger, so slot identity alone does not freeze batch composition.",
+  "purpose": "Combine fixed prompt-to-slot mapping with a longer one-shot admission window and simultaneous clients so the initial c64 prefill/decode cohort is identical across fresh servers, then qualify the ffn_down exact F16 cache.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, tuned profile, Q4_K reorder on, WDC off, c64, context 32768, batch 2048, ubatch 256, 128 output tokens, temperature 0, seed 42, cache-prompt off.",
+  "admission_contract": {
+    "pin_slots": "prompt i -> id_slot 63-i",
+    "launch_stagger_ms": 0,
+    "one_shot_queue_settle_ms": 5000,
+    "required_server_log": "all 64 pinned slot selections occur before the first inference update"
+  },
+  "ordered_arms": [
+    "Fresh control pilot freezes a 64-row batch oracle after isolation gates pass.",
+    "Fresh control replay must equal the pilot 64/64.",
+    "Fresh ffn_down F16-cache candidate must equal the same pilot 64/64."
+  ],
+  "required_gates": [
+    "64 complete 128-token responses per arm",
+    "zero cached prompt tokens",
+    "complete token-ID isolation and zero cross-prompt collisions",
+    "control replay and candidate each match 64/64",
+    "candidate cache liveness only in candidate",
+    "no WDC, GPU fault, reset, device loss, OOM, segfault, or unclean shutdown"
+  ],
+  "advance_rule": "A deterministic 64/64 control replay is required before comparing candidate speed. Headline promotion still requires a repeat and the diverse realistic-prompt exact suite.",
+  "publication_policy": "No failed or pilot rate is promoted. No prompt/output caching, fixture gaming, oracle replacement after candidate observation, interpolation, or extrapolation."
+}
