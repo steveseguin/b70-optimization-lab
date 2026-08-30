@@ -1726,6 +1726,13 @@ exact component pass, not a speed result; one trace-off full endpoint load and
 the complete short/4K gate are next. The protected `5.515783 tok/s` target-only
 and approximately `20.727 tok/s` MTP4 results remain unchanged. See the
 [component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-async-uva-ple-component-pass.md).
+A26 is the frozen trace-off endpoint arm on attempt 26/port 19698. Its client
+verifies the live server environment contains the async selector and retains
+the complete semantic, repeat, short, exact-4K needle, cached-zero, and
+authority-hash gates. The current A25 boot is already consumed, so the guarded
+A26 launch is the first and only full Flash-Next load after the next reboot.
+See the
+[A26 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a26-async-uva-endpoint-prereg.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
