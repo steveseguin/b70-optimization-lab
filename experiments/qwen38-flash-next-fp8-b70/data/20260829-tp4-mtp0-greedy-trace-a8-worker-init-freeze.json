@@ -1,0 +1,64 @@
+{
+  "schema": "neural.download.qwen38-flash-next.greedy-trace-worker-init-freeze.v1",
+  "date": "2026-08-29",
+  "status": "infrastructure-negative-host-freeze-during-worker-init",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_trace_head": "5d5081b2b1e145067bce6ec99492eac7ce042e23",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "topology": "TP4/EP4/eager/MTP0",
+    "max_model_len": 16512,
+    "attempt": 8,
+    "port": 19680
+  },
+  "preflight": {
+    "model_identity": "passed",
+    "runtime_stage": "passed",
+    "four_cards_idle": "passed",
+    "four_rank_xccl": "passed"
+  },
+  "last_progress": {
+    "api_started": true,
+    "engine_coordinator_started": true,
+    "rank_0_distributed_init": "2026-08-28T23:28:26-04:00",
+    "rank_1_distributed_init": "2026-08-28T23:28:31-04:00",
+    "rank_2_distributed_init": null,
+    "rank_3_distributed_init": null,
+    "checkpoint_shard_load_started": false,
+    "server_health_passed": false,
+    "client_started": false,
+    "trace_records": 0,
+    "model_requests": 0
+  },
+  "post_reboot": {
+    "boot_id": "ed69c13a-c6c6-4f1c-8053-f9e9c15a0ca2",
+    "cards_enumerated": 4,
+    "card_memory_used_mib": [42.8828125, 42.87890625, 42.87890625, 42.875],
+    "model_process_residue": false,
+    "port_19680_listener": false,
+    "host_memory_available_gib_approx": 120,
+    "external_drive_remounted": true
+  },
+  "evidence": {
+    "external_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-16512-greedy-trace-r1-attempt8",
+    "server_log_sha256": "69d3fed4e5af6b3e89c4350a0cfb1cf066cadf14662ccbca45fab869f1d48b7c",
+    "identity_sha256": "eb43eeee0e72ffb368f25909a792e71f3b89d67a8a30b0c157a72c54d92bfe3b",
+    "xccl_preflight_sha256": "ac3aa63d1840c12432839085087b22e1ca15e5c3a014d7ef60aedd479b67c5d2",
+    "staged_runtime_preflight_sha256": "7ea286e60b946c6d5ed9caaad0090a41b3f94ac52c2c32b16547983250f6a004",
+    "empty_health_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "active_runtime": {
+    "trace_revert_head": "e5137bfd8",
+    "trace_changed_paths_match_pre_trace_head": "1372c62d975c554f4b465c8299bc5f3295301ceb"
+  },
+  "credit": {
+    "speed": false,
+    "quality": false,
+    "deployment": false,
+    "coverage": false,
+    "headline": false
+  },
+  "protected_results_changed": false,
+  "decision": "Do not retry A8 unchanged. Preserve it as an infrastructure-negative worker-initialization freeze and return to a trace-free TP4 4K MTP0 placement campaign."
+}

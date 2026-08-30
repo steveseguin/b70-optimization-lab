@@ -1412,6 +1412,14 @@ That exact A8 trace is now source-tested and preregistered with two identical
 4K requests and no deeper-context authorization; its synchronized diagnostic
 rates cannot receive performance credit. See the
 [A8 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-28-tp4-mtp0-greedy-decision-trace-a8-prereg.md).
+The launch subsequently closed as infrastructure-negative: the host stopped
+after worker ranks 0 and 1 initialized but before ranks 2/3, checkpoint load,
+health, trace output, or any request. No result or coverage changed. The trace
+patch remains preserved but was removed from the active runtime at
+`e5137bfd8`, restoring the changed source paths exactly to pre-trace content.
+The active objective is now trace-free TP4/MTP0 at 4,352 configured tokens,
+with the PLE/ngram table in host RAM and maximum safe weight residency in VRAM.
+See the [A8 closeout](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-greedy-trace-a8-worker-init-freeze.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

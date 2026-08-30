@@ -1,7 +1,7 @@
 # Qwen3.8 Flash-Next FP8 TP4 MTP0 greedy-decision trace A8 preregistration
 
 Date: 2026-08-28
-Status: frozen before GPU execution
+Status: closed; host stopped during worker initialization before model load
 
 ## Question and source control
 
@@ -68,3 +68,11 @@ Frozen artifacts:
   stays stable. They are diagnostic drift evidence, not correctness failures.
 - Any request timeout, incomplete trace, owned residue, or new B70 event closes
   A8 without retry. No historical throughput or public coverage cell changes.
+
+## Closeout
+
+A8 passed preflight but the host stopped after only worker ranks 0 and 1
+reported distributed initialization. No shard load, health pass, trace record,
+or request occurred. The opt-in trace was removed from the active runtime by a
+normal revert commit, while its patch remains preserved. See the
+[A8 closeout](2026-08-29-tp4-mtp0-greedy-trace-a8-worker-init-freeze.md).
