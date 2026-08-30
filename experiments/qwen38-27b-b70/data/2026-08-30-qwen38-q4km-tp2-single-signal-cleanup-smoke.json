@@ -1,0 +1,23 @@
+{
+  "schema": "neural.download.qwen38-q4km-tp2-cleanup-smoke.v1",
+  "date": "2026-08-30",
+  "classification": "non-performance runner-hygiene diagnostic",
+  "server_profile": "Qwen3.8-27B Q4_K_M, target-only, TP2, one slot, 8192 total context",
+  "method": "reach /health, send one SIGINT directly to llama-server, wait up to 60 seconds, and search the same-boot kernel log from smoke start for server segfault, Xe fault/reset/hang, device loss, CAT fault, OOM, or out-of-memory",
+  "result": {
+    "health_reached": true,
+    "server_exited": true,
+    "wrapper_status": 0,
+    "kernel_error_matches": 0,
+    "passed": true
+  },
+  "local_artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-q4km-tp2-single-signal-cleanup-smoke-20260830",
+    "health_json_sha256": "a29ee2b15c494311c52521766e44af56a3ad2248e7a8ab465e5206463c13d288",
+    "kernel_errors_txt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "result_txt_sha256": "34207b27e28c8e983c1db00ba2d48ab2f4081eea40c854a9e6fe1c68de10503c",
+    "server_log_sha256": "c0224bf5dafba306ce2768dadbd7bead0c779aee3b17fafdc8e42d1e235ad18d",
+    "start_utc_sha256": "0abd4541206f3679ba7f952bb25cf4acd5216e8637659f6a7d976527f8f11e46"
+  },
+  "publication_boundary": "No throughput was requested, computed, or authorized from this smoke."
+}

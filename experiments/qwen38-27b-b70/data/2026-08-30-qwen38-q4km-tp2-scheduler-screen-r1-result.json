@@ -64,6 +64,15 @@
     "complete_returned_token_ids": true,
     "cross_base_oracle_collisions": 0
   },
+  "shutdown_hygiene": {
+    "measurement_impact": "none; every result and qualification file was written and hashed before shutdown",
+    "observed": "the wrapper raced a second interrupt through teardown; all six processes logged a post-result CPU-side segfault or immediate second-interrupt termination",
+    "gpu_health_afterward": "both B70 devices normal; no Xe fault, reset, hang, CAT fault, device loss, or OOM",
+    "runner_fix": "future runs signal llama-server exactly once, wait up to 60 seconds, and only then escalate",
+    "runner_fix_verification": "passed a non-performance TP2 load/health/single-SIGINT smoke with wrapper status 0 and zero new kernel error matches",
+    "runner_fix_verification_receipt": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-single-signal-cleanup-smoke.json",
+    "publication_effect": "none; this campaign was diagnostic-only and no arm advanced"
+  },
   "decision": {
     "selected_candidate": null,
     "reason": "The best arm, ubatch 512, improved the one-attempt fresh control by only 1.76%, below the preregistered 3% advancement threshold.",

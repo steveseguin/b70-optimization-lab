@@ -80,15 +80,25 @@ xpu-smi dump --device 0,1 --metrics MEMORY,POWER --number 1 >"${run_dir}/xpu-bef
 server_job=
 cleanup() {
   set +e
-  if [[ -n "${server_job}" ]] && kill -0 "${server_job}" 2>/dev/null; then
-    kill -INT "${server_job}" 2>/dev/null
-    wait "${server_job}" 2>/dev/null
-  fi
+  cleanup_status=clean
   pid=$(pgrep -n -x llama-server 2>/dev/null || true)
   if [[ -n "${pid}" ]]; then
-    kill -TERM "${pid}" 2>/dev/null
-    for _ in $(seq 1 60); do kill -0 "${pid}" 2>/dev/null || break; sleep 0.5; done
+    # Signal the server exactly once. Signalling the outer timeout first and
+    # then the server raced two interrupts through llama.cpp teardown and made
+    # otherwise complete diagnostics segfault after their results were saved.
+    kill -INT "${pid}" 2>/dev/null
+    for _ in $(seq 1 120); do kill -0 "${pid}" 2>/dev/null || break; sleep 0.5; done
+    if kill -0 "${pid}" 2>/dev/null; then
+      cleanup_status=escalated-term
+      kill -TERM "${pid}" 2>/dev/null
+      for _ in $(seq 1 60); do kill -0 "${pid}" 2>/dev/null || break; sleep 0.5; done
+    fi
+    kill -0 "${pid}" 2>/dev/null && cleanup_status=process-survived
   fi
+  if [[ -n "${server_job}" ]] && kill -0 "${server_job}" 2>/dev/null; then
+    wait "${server_job}" 2>/dev/null
+  fi
+  printf '%s\n' "${cleanup_status}" >"${run_dir}/cleanup-status.txt"
   free -b >"${run_dir}/memory-after.txt" 2>/dev/null || true
   xpu-smi dump --device 0,1 --metrics MEMORY,POWER --number 1 >"${run_dir}/xpu-after.txt" 2>&1 || true
 }
