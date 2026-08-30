@@ -13,7 +13,7 @@ where the weights happen to live.
 **For the maintainer:** this is the map of what sits where, and which storage
 has to be mounted before a lane will run.
 
-Last verified: 2026-08-27 19:55 EDT.
+Last verified: 2026-08-30 EDT.
 
 ## Internal NVMe
 
@@ -25,7 +25,7 @@ Last verified: 2026-08-27 19:55 EDT.
 | `/mnt/fast-ai/llm-models/laguna-s-2.1` | 70 G | Active campaign model: 68 G `int4` target, 2.1 G `dflash-int4` draft |
 | `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf` | symlink | Compatibility path to the Gemma 4 Q8 tree now on USB |
 | `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-hf-tokenizer` | 62 M | Tokenizer for the above |
-| `/mnt/fast-ai/llm-cache/hf` | 46 G+ | Hugging Face cache |
+| `/mnt/fast-ai/llm-cache/hf` | compatibility metadata | The old Qwen3.6-27B snapshot path now resolves to its verified USB copy |
 | `/mnt/fast-ai/bench-results` | 205 G | Run evidence; several `CURRENT.md` record identities point here |
 | `/mnt/fast-ai/llm-optimization-artifacts` | 23 G | Sealed run roots |
 | `/mnt/fast-ai/deepseek-v4-corpora` | 25 G | Prompt corpora |
@@ -119,8 +119,32 @@ Verified or repaired on 2026-08-08:
 Stable aliases under `/mnt/fast-ai/llm-models/` are
 `qwen3.6-27b-mtp-gguf`, `qwen3.6-35b-a3b-fp8-qwen`,
 `qwen3.6-27b-bf16-qwen`, and `qwen3.6-35b-a3b-bf16-qwen`. The first two
-require the USB mount; the BF16 aliases point to the internal sources, whose
-verified backups are on USB.
+require the USB mount. As of the 2026-08-30 reclaim below, the BF16 aliases
+also resolve to the verified USB copies.
+
+## 2026-08-30 Internal-NVMe Reclaim
+
+The following older local copies were removed after their external copies were
+verified. Lightweight compatibility paths preserve existing recipes, but all
+three now require `/mnt/usb-models` to be mounted.
+
+| Removed local copy | Retained external copy | Compatibility treatment |
+| --- | --- | --- |
+| `/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B` | `/mnt/usb-models/llm-models/Qwen-Qwen3.6-27B-6a9e13bd6` | Recreated the pinned `snapshots/6a9e13bd...` path as a symlink |
+| `/mnt/fast-ai/model-staging/Qwen-Qwen3.6-35B-A3B-995ad96e` | `/mnt/usb-models/llm-models/Qwen-Qwen3.6-35B-A3B-995ad96e` | Replaced the old staging path with a symlink |
+| `/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-devan` | `/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan` | Replaced the old model path with a symlink |
+
+The two Qwen3.6 destinations retain their full-copy `BACKUP-VERIFIED.md`
+receipts. The Qwen3.8-27B INT4 source and destination passed a fresh full-tree
+`rsync -nrcL` comparison immediately before deletion. The operation reclaimed
+146,530,455,552 bytes: internal free space increased from 100,875,149,312 to
+247,405,604,864 bytes (`94 GiB` to `231 GiB` as reported by `df -h`).
+
+The active `/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8` tree was not moved.
+Its config and index hashes were checked before and after the reclaim and still
+match the pinned values in the Flash-Next section below. Keeping it on NVMe is
+intentional: recent measured model loading from USB took about 583 seconds,
+whereas the localized checkpoint has loaded in roughly 71--80 seconds.
 
 ## 2026-08-27 Cold-Tree Relocation
 
