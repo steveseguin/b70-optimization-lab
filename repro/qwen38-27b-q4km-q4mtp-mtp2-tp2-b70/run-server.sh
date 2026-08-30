@@ -13,6 +13,7 @@ batch_size=${BATCH_SIZE:-1024}
 ubatch_size=${UBATCH_SIZE:-256}
 threads=${THREADS:-8}
 wdc_q4k=${WDC_Q4K:-0}
+wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 q4k_reorder=${Q4K_REORDER:-0}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 tp_size=${TP_SIZE:-2}
@@ -20,6 +21,8 @@ feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || { printf 'MTP_DEPTH must be 0 or 2\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K must be 0 or 1\n' >&2; exit 2; }
+[[ "${wdc_q4k_name_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || { printf 'WDC_Q4K_NAME_FILTER contains unsupported characters\n' >&2; exit 2; }
+[[ -z "${wdc_q4k_name_filter}" || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K_NAME_FILTER requires WDC_Q4K=1\n' >&2; exit 2; }
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
 [[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 1000\n' >&2; exit 2; }
@@ -90,8 +93,13 @@ elif [[ "${wdc_q4k}" == 1 ]]; then
   # Default-off candidate: oneDNN consumes the scoped Q4_K reordered layout.
   # GGML_SYCL_WDC remains off because this screen enables only the Q4_K door.
   export GGML_SYCL_WDC_Q4K=1
+  if [[ -n "${wdc_q4k_name_filter}" ]]; then
+    export GGML_SYCL_WDC_Q4K_NAME_FILTER="${wdc_q4k_name_filter}"
+  else
+    unset GGML_SYCL_WDC_Q4K_NAME_FILTER
+  fi
 else
-  unset GGML_SYCL_WDC_Q4K
+  unset GGML_SYCL_WDC_Q4K GGML_SYCL_WDC_Q4K_NAME_FILTER
 fi
 args=(--model "${target_dir}/Qwen3.8-27B-Q4_K_M.gguf")
 if [[ "${tp_size}" == 2 ]]; then

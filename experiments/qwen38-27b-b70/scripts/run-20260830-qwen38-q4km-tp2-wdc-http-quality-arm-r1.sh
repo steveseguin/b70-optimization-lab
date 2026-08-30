@@ -17,6 +17,7 @@ context_override=${CONTEXT_SIZE:-}
 feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 launch_stagger_ms=${LAUNCH_STAGGER_MS:-0}
+wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -42,6 +43,7 @@ concurrency_oracle=${CONCURRENCY_ORACLE:-${repo}/experiments/qwen38-27b-b70/data
 expected_realistic_oracle_sha256=${EXPECTED_REALISTIC_ORACLE_SHA256:-f8e7e4040d653ef6250ed99362221f68a349ddb003f52769560b87877c0e34af}
 expected_concurrency_oracle_sha256=${EXPECTED_CONCURRENCY_ORACLE_SHA256:-0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33}
 expected_server_sha256=${EXPECTED_SERVER_SHA256:-7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c}
+expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf}
 expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-fd649584afe51a708728bcb4da6b415d60b3c6cb8a6203f5d7ae38fb6272cc05}
 expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926}
 expected_concurrency_harness_sha256=${EXPECTED_CONCURRENCY_HARNESS_SHA256:-1ea05f6332e2153be408d2df126546705ea559b0364a368df297d58787e356d2}
@@ -67,6 +69,8 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${feature_profile}" == tuned || "${arm}" == control ]] || fail 'non-tuned FEATURE_PROFILE is control-only'
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || fail 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2'
 [[ "${launch_stagger_ms}" =~ ^[0-9]+$ ]] || fail 'LAUNCH_STAGGER_MS must be a nonnegative integer'
+[[ "${wdc_q4k_name_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || fail 'WDC_Q4K_NAME_FILTER contains unsupported characters'
+[[ -z "${wdc_q4k_name_filter}" || "${arm}" == candidate ]] || fail 'WDC_Q4K_NAME_FILTER is candidate-only'
 (( concurrency <= 1 || launch_stagger_ms * (concurrency - 1) < queue_settle_ms )) || fail 'launch stagger span must be shorter than queue settle window'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
@@ -79,7 +83,7 @@ check_hash() {
 }
 check_hash 31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34 "${target}"
 check_hash "${expected_server_sha256}" "${server}"
-check_hash 72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf "${backend}"
+check_hash "${expected_backend_sha256}" "${backend}"
 check_hash "${expected_server_impl_sha256}" "${server_impl}"
 check_hash ee0d3998adaac33405e3b5536bf6d7b7b04a014e37eedbd628b6968a23895f52 "${realistic_harness}"
 check_hash df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac "${realistic_suite}"
@@ -141,6 +145,7 @@ trap cleanup EXIT INT TERM
 timeout --signal=INT --kill-after=30s 3600s env \
   TARGET_DIR="${target_dir}" DRAFT_DIR="${draft_dir}" BUILD_DIR="${build_dir}" \
   ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
+  WDC_Q4K_NAME_FILTER="${wdc_q4k_name_filter}" \
   TP_SIZE="${tp_size}" \
   FEATURE_PROFILE="${feature_profile}" \
   Q8_DEDUP_OVERRIDE="${q8_dedup_override}" \
@@ -221,7 +226,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -231,6 +236,7 @@ tp_size, concurrency, context = map(int, sys.argv[7:10])
 feature_profile = sys.argv[10]
 q8_dedup_override = None if sys.argv[11] == "" else int(sys.argv[11])
 launch_stagger_ms = int(sys.argv[12])
+wdc_q4k_name_filter = sys.argv[13] or None
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -260,6 +266,7 @@ summary = {
     "feature_profile": feature_profile,
     "q8_dedup_override": q8_dedup_override,
     "launch_stagger_ms": launch_stagger_ms,
+    "wdc_q4k_name_filter": wdc_q4k_name_filter,
 }
 if concurrency == 64:
     summary["aggregate_tok_s_c64"] = result["batches"][0]["aggregate_tok_s_wall"]

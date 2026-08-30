@@ -1,0 +1,19 @@
+{
+  "campaign": "qwen38-q4km-c16-tp2-wdc-role-bisect-20260830-r1",
+  "status": "preregistered-after-full-WDC-failure-and-before-role measurements",
+  "trigger": "Full eligible-tensor WDC matched only 7/16 ordered control token streams and is rejected.",
+  "purpose": "Find the largest Q4_K WDC tensor-role subset that remains 16/16 exact against the frozen ordered TP2 control oracle, then measure whether that exact subset retains a material speed gain.",
+  "frozen_control_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp2-tuned-ordered40-oracle-digests.json",
+    "sha256": "726743320526a3feecdb3dbcd9103e3d2643016e4f715199d56793676a6db5b5"
+  },
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, tuned profile, c16, context 8192, batch 2048, ubatch 256, queue settle 750 ms, launch stagger 40 ms, cache off, temperature 0, seed 42.",
+  "ordered_arms": [
+    {"name": "down-only", "filter": "ffn_down"},
+    {"name": "gate-only", "filter": "ffn_gate"},
+    {"name": "up-only", "filter": "ffn_up"}
+  ],
+  "required_gate_per_arm": "16/16 complete token streams exactly equal the frozen oracle, zero cached tokens, complete token-ID identity, zero cross-request collisions, WDC engagement present, clean kernel log and shutdown.",
+  "advance_rule": "Only exact arms advance to raw same-shape performance measurement. If multiple roles pass, test their union before promotion.",
+  "publication_policy": "No role is promoted from correctness alone; it also needs repeatable raw throughput improvement and the diverse realistic-prompt exact-output suite."
+}
