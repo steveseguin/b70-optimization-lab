@@ -1573,6 +1573,15 @@ and the A16 trace-comparison interpretation remain exact. See the
 [A18 stop](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a18-helper-hash-stop.md)
 and
 [A19 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a19-current-helper-prereg.md).
+A19 then repeated the host failure before shard 1. Its launch coincided exactly
+with another corrected PCIe receive event from the local Samsung NVMe, which
+was also the final journal event before the host rebooted. No request or model
+result exists. A20 therefore changes the checkpoint/tokenizer path to the
+original fully validated external intake artifact while holding the entire
+runtime, placement, request, authority, and trace identity fixed. See the
+[A19 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a19-nvme-correlated-reboot.md)
+and
+[A20 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a20-external-model-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
