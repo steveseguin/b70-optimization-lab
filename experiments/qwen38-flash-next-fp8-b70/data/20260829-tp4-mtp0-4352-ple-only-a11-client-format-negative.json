@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "status": "client_format_negative_before_diagnostic_receipt",
+  "classification": "infrastructure_negative_no_model_inference",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "e5137bfd8ca2ca718c4fd93d86d54bb843e2999b",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "topology": "TP4/EP4/eager/MTP0",
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes_per_rank": 134217728,
+    "placement": "ple_only_uva",
+    "attempt": 11,
+    "port": 19683
+  },
+  "server": {
+    "artifact_and_four_rank_preflight": "passed",
+    "model_load_gib_per_rank": 31.57,
+    "cache_tokens_reported": 4747,
+    "healthy": true
+  },
+  "client_failure": {
+    "error": "ValueError: each token event must expose one integer token ID",
+    "cause": "The diagnostic helper assumed every streaming completion event contained exactly one token ID. The pinned vLLM completion serving path exposes output.token_ids as a delta list and may legally batch multiple generated tokens with equally sized logprob arrays.",
+    "client_rc": 1,
+    "diagnostic_json_written": false,
+    "completed_four_request_rows": 0,
+    "output_hash_available": false,
+    "quality_or_determinism_inference": false,
+    "speed_credit": false
+  },
+  "postflight": {
+    "supervisor_final_rc": 143,
+    "owned_residue": false,
+    "listener_residue": false,
+    "cards_idle_below_mib": 43,
+    "b70_addressed_event": false
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt11",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt11-supervisor",
+    "sha256": {
+      "identity.txt": "48bd9ba86e326b1c3fd86d20406231756cddafbcf640c614cccde908a564532a",
+      "server-command.shell.txt": "38643fd24f7b97b4312a121a4eb846630576de533005cce05fecff5646cd8bae",
+      "server.log": "d6bdf1b394870deec13f4f93f1edc637d9306bd430b4eb60a7ddbcf27ea8abe8",
+      "exact-4k-logprob-repeat.log": "43dc0dc7d8c9d268f7d196b7526c0d1f1d096ad7bd2361cb9749562648364b27",
+      "exact-4k-logprob-repeat.rc": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "supervisor-final.rc": "9d9b18720961e9b4689fd763b85e7b6f36160ccd3a8a1c9ddc5103bb0f66c396",
+      "kernel-journal.log": "3faa6728c41fbd0aa7e30b400ad27011873ef993e4751e5902e5a54298db59ed"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "Close A11 without model inference. Correct only the response parser to accept one or more token IDs paired with equally sized logprob arrays, cover that contract with a focused test, and retry under a new immutable A12 identity."
+}

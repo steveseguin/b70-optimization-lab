@@ -1459,6 +1459,16 @@ zero cache reuse. This replaces neither A9 nor the A7/A10 negative evidence;
 it is designed only to locate whether the first differing greedy token already
 has a different top-one ranking. See the
 [A11 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a11-api-logprob-prereg.md).
+A11 passed server bring-up but closed before a diagnostic receipt because its
+client incorrectly required every streaming delta to contain exactly one token
+ID. The pinned API permits a delta list with multiple generated IDs and paired
+logprob arrays. No four-row JSON, output hash, model inference, or speed credit
+exists. Cleanup was complete and no B70 event appeared. A12 changes only that
+parser contract, requires all four token/score arrays to have equal nonzero
+length, validates each decision separately, and adds a focused batched-delta
+test. It uses a new attempt and port with every server/request interpretation
+unchanged. See the [A11 closeout](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a11-client-format-negative.md)
+and [A12 retry](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a12-api-logprob-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

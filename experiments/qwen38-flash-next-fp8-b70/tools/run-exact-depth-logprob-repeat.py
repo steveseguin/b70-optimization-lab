@@ -119,6 +119,36 @@ def normalize_logprob_step(
     }
 
 
+def normalize_logprob_batch(
+    logprobs: dict[str, Any], selected_token_ids: list[int]
+) -> list[dict[str, Any]]:
+    tokens = logprobs.get("tokens")
+    selected_scores = logprobs.get("token_logprobs")
+    top_rows = logprobs.get("top_logprobs")
+    if not (
+        selected_token_ids
+        and isinstance(tokens, list)
+        and isinstance(selected_scores, list)
+        and isinstance(top_rows, list)
+        and len(tokens)
+        == len(selected_scores)
+        == len(top_rows)
+        == len(selected_token_ids)
+    ):
+        raise ValueError("token and logprob arrays must have the same nonzero length")
+    return [
+        normalize_logprob_step(
+            {
+                "tokens": [tokens[index]],
+                "token_logprobs": [selected_scores[index]],
+                "top_logprobs": [top_rows[index]],
+            },
+            token_id,
+        )
+        for index, token_id in enumerate(selected_token_ids)
+    ]
+
+
 def first_diff(left: list[int], right: list[int]) -> int | None:
     for index, (a, b) in enumerate(zip(left, right)):
         if a != b:
@@ -176,17 +206,26 @@ def post_stream(
                     continue
                 if not (
                     isinstance(event_ids, list)
-                    and len(event_ids) == 1
-                    and isinstance(event_ids[0], int)
-                    and not isinstance(event_ids[0], bool)
+                    and event_ids
+                    and all(
+                        isinstance(token_id, int) and not isinstance(token_id, bool)
+                        for token_id in event_ids
+                    )
                 ):
                     raise ValueError(
-                        "each token event must expose one integer token ID"
+                        "each token event must expose one or more integer token IDs"
                     )
-                decision = normalize_logprob_step(choice.get("logprobs"), event_ids[0])
-                decision["index"] = len(token_ids)
-                token_ids.append(event_ids[0])
-                decisions.append(decision)
+                logprobs = choice.get("logprobs")
+                if not isinstance(logprobs, dict):
+                    raise ValueError("token event is missing its logprob object")
+                for token_id, decision in zip(
+                    event_ids,
+                    normalize_logprob_batch(logprobs, event_ids),
+                    strict=True,
+                ):
+                    decision["index"] = len(token_ids)
+                    token_ids.append(token_id)
+                    decisions.append(decision)
     except urllib.error.HTTPError as error:
         body = error.read().decode("utf-8", errors="replace")
         raise RuntimeError(f"HTTP {error.code}: {body[:2000]}") from error

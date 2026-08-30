@@ -50,6 +50,18 @@ class LogprobRepeatTest(unittest.TestCase):
         self.assertEqual(MODULE.first_diff([1, 2], [1, 2, 3]), 2)
         self.assertIsNone(MODULE.first_diff([1, 2], [1, 2]))
 
+    def test_normalize_batched_steps(self) -> None:
+        source = {
+            "tokens": ["token_id:7", "token_id:9"],
+            "token_logprobs": [-0.25, -0.5],
+            "top_logprobs": [
+                {"token_id:7": -0.25, "token_id:9": -1.5},
+                {"token_id:9": -0.5, "token_id:7": -1.75},
+            ],
+        }
+        rows = MODULE.normalize_logprob_batch(source, [7, 9])
+        self.assertEqual([row["top1_token_id"] for row in rows], [7, 9])
+
 
 if __name__ == "__main__":
     unittest.main()
