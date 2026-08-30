@@ -1713,6 +1713,19 @@ and leave synchronous UVA as the control. The broad draft is not being
 cherry-picked, and the blocking process worker is now a fallback comparison.
 A25 remains first. See the
 [async-UVA alignment plan](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-async-uva-ple-alignment-plan.md).
+The default-off XPU async-UVA candidate is now implemented at vLLM
+`d14396e27247c1b251da0ce24a0942772c4b002f` and preserved as patch 0031.
+It starts the sole raw FP8 PLE lookup before layer 0 on a dedicated XPU stream,
+joins at the layer-1 boundary, and retains the exact main-stream int8 TP
+reduction and all later arithmetic. The actual-source TP4 gate cycled
+`64 -> 1 -> 42 -> 2` tokens for 100 repetitions per rank; every async result
+matched the synchronous embedding bytes and every generation retained one
+cross-rank hash. Failure cleanup, selector guards, non-FP8 masking, and
+default-off scheduling were independently reviewed and tested. This is an
+exact component pass, not a speed result; one trace-off full endpoint load and
+the complete short/4K gate are next. The protected `5.515783 tok/s` target-only
+and approximately `20.727 tok/s` MTP4 results remain unchanged. See the
+[component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-async-uva-ple-component-pass.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for

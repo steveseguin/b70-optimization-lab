@@ -1,0 +1,752 @@
+From d14396e27247c1b251da0ce24a0942772c4b002f Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 19:06:54 -0400
+Subject: [PATCH] Add opt-in XPU async UVA PLE prefetch
+
+---
+ .../test_repeatability_trace_boundaries.py    | 129 +++++++++++-
+ .../qwen4_exp/test_xpu_ple_uva_prefetch.py    | 174 ++++++++++++++++
+ vllm/envs.py                                  |   4 +
+ vllm/models/qwen4_exp/amd/model.py            |  98 ++++++++-
+ vllm/models/qwen4_exp/nvidia/ple_layer.py     | 188 +++++++++++++++++-
+ 5 files changed, 577 insertions(+), 16 deletions(-)
+ create mode 100644 tests/models/qwen4_exp/test_xpu_ple_uva_prefetch.py
+
+diff --git a/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py b/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+index d701dda6e..ae65cae55 100644
+--- a/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
++++ b/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+@@ -1,12 +1,14 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++from types import SimpleNamespace
++
+ import pytest
+ import torch
+ import torch.nn as nn
+ 
+ from vllm.models.qwen4_exp.amd import model as model_module
+-from vllm.models.qwen4_exp.amd.model import Qwen4ExpDecoderLayer
++from vllm.models.qwen4_exp.amd.model import Qwen4ExpDecoderLayer, Qwen4ExpModel
+ 
+ 
+ class _FakePLE(nn.Module):
+@@ -124,3 +126,128 @@ def test_non_ple_layer_records_no_inner_boundaries() -> None:
+     kwargs.update(input_ids=None, query_start_loc=None, ngram_context=None)
+     layer(**kwargs, repeatability_trace=trace)
+     assert trace.labels == []
++
++
++def test_model_starts_only_present_ple_layer() -> None:
++    calls = []
++
++    class _PLE:
++        def start_xpu_uva_prefetch(self, *args) -> None:
++            calls.append(args)
++
++    tensors = (
++        torch.empty(1, 4),
++        torch.tensor([1]),
++        torch.tensor([0, 1]),
++        torch.tensor([[0, 0]]),
++    )
++    model_module.Qwen4ExpModel._start_layer_ple_prefetch(
++        SimpleNamespace(ple=None), *tensors
++    )
++    model_module.Qwen4ExpModel._start_layer_ple_prefetch(
++        SimpleNamespace(ple=_PLE()), *tensors
++    )
++    assert calls == [tensors]
++
++
++class _NoTrace:
++    def begin(self, _positions, _rank) -> bool:
++        return False
++
++
++class _OrderedPLE(nn.Module):
++    def __init__(self, calls: list[str]) -> None:
++        super().__init__()
++        self.calls = calls
++
++    def start_xpu_uva_prefetch(self, *_args) -> None:
++        self.calls.append("prefetch")
++
++    def abort_xpu_uva_prefetch(self) -> None:
++        self.calls.append("abort")
++
++
++class _OrderedLayer(nn.Module):
++    def __init__(
++        self, label: str, calls: list[str], *, ple: nn.Module | None = None
++    ) -> None:
++        super().__init__()
++        self.label = label
++        self.calls = calls
++        self.ple = ple
++        self.mlp_hyper_connection = _FakeHyperConnection()
++
++    def forward(self, *, hidden_states: torch.Tensor, **_kwargs):
++        self.calls.append(self.label)
++        return hidden_states + 1, None, None
++
++
++class _FailingLayer(_OrderedLayer):
++    def forward(self, **_kwargs):
++        self.calls.append(self.label)
++        raise RuntimeError("injected earlier-layer failure")
++
++
++class _FinalMixer(nn.Module):
++    def combine_and_mix(self, hidden_states, _block_output, _injection):
++        return hidden_states, hidden_states, None
++
++
++def _make_ordered_model(calls: list[str], *, fail_layer_zero: bool) -> Qwen4ExpModel:
++    model = Qwen4ExpModel.__new__(Qwen4ExpModel)
++    nn.Module.__init__(model)
++    ple = _OrderedPLE(calls)
++    layer_cls = _FailingLayer if fail_layer_zero else _OrderedLayer
++    model.layers = nn.ModuleList(
++        [layer_cls("layer0", calls), _OrderedLayer("layer1", calls, ple=ple)]
++    )
++    model.start_layer = 0
++    model.end_layer = 2
++    model._xpu_ple_uva_prefetch_layers = (model.layers[1],)
++    model._repeatability_trace = _NoTrace()
++    model.config = SimpleNamespace(hc_count=1)
++    model.embed_tokens = nn.Identity()
++    model.hyper_connection_mixer = _FinalMixer()
++    model._mtp_hidden_buffer = None
++    return model
++
++
++def test_model_prefetches_before_layer_zero(monkeypatch: pytest.MonkeyPatch) -> None:
++    calls: list[str] = []
++    model = _make_ordered_model(calls, fail_layer_zero=False)
++    monkeypatch.setattr(
++        model_module,
++        "get_pp_group",
++        lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
++    )
++    monkeypatch.setattr(model_module, "get_tensor_model_parallel_rank", lambda: 0)
++    Qwen4ExpModel.forward(
++        model,
++        input_ids=torch.tensor([1]),
++        positions=torch.tensor([0]),
++        query_start_loc=torch.tensor([0, 1]),
++        ngram_context=torch.tensor([[0, 0]]),
++    )
++    assert calls == ["prefetch", "layer0", "layer1"]
++
++
++def test_model_aborts_prefetch_after_earlier_layer_failure(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    calls: list[str] = []
++    model = _make_ordered_model(calls, fail_layer_zero=True)
++    monkeypatch.setattr(
++        model_module,
++        "get_pp_group",
++        lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
++    )
++    monkeypatch.setattr(model_module, "get_tensor_model_parallel_rank", lambda: 0)
++    with pytest.raises(RuntimeError, match="injected earlier-layer failure"):
++        Qwen4ExpModel.forward(
++            model,
++            input_ids=torch.tensor([1]),
++            positions=torch.tensor([0]),
++            query_start_loc=torch.tensor([0, 1]),
++            ngram_context=torch.tensor([[0, 0]]),
++        )
++    assert calls == ["prefetch", "layer0", "abort"]
+diff --git a/tests/models/qwen4_exp/test_xpu_ple_uva_prefetch.py b/tests/models/qwen4_exp/test_xpu_ple_uva_prefetch.py
+new file mode 100644
+index 000000000..61e03168e
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_xpu_ple_uva_prefetch.py
+@@ -0,0 +1,174 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++from types import SimpleNamespace
++
++import pytest
++import torch
++import torch.nn as nn
++
++from vllm.models.qwen4_exp.nvidia import ple_layer as ple_module
++from vllm.models.qwen4_exp.nvidia.ple_layer import Qwen4ExpNGramEmbedding
++
++
++def _make_prefetch_module(
++    *, tp_size: int = 2, dtype: torch.dtype = torch.float8_e4m3fn
++) -> Qwen4ExpNGramEmbedding:
++    module = Qwen4ExpNGramEmbedding.__new__(Qwen4ExpNGramEmbedding)
++    nn.Module.__init__(module)
++    module.embedding_dim = 4
++    module.ngram_heads = 2
++    module.head_dim = 2
++    weight = nn.Parameter(
++        torch.tensor(
++            [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]],
++            dtype=dtype,
++        ),
++        requires_grad=False,
++    )
++    weight._vllm_is_uva_offloaded = True
++    module.ngram_embedding = SimpleNamespace(
++        weight=weight,
++        tp_size=tp_size,
++        shard_indices=SimpleNamespace(
++            org_vocab_start_index=0,
++            org_vocab_end_index=4,
++            num_org_vocab_padding=0,
++            added_vocab_start_index=8,
++            added_vocab_end_index=8,
++        ),
++    )
++    module._xpu_uva_prefetch_enabled = True
++    module._xpu_uva_prefetch_stream = None
++    module._xpu_uva_prefetch_input_ready = None
++    module._xpu_uva_prefetch_lookup_done = None
++    module._xpu_uva_prefetch_buffer = torch.empty(8, 4, dtype=dtype)
++    module._xpu_uva_prefetch_ids = None
++    module._xpu_uva_prefetch_num_tokens = 0
++    return module
++
++
++def test_xpu_uva_local_lookup_preserves_raw_fp8_owner_bytes(monkeypatch) -> None:
++    module = _make_prefetch_module()
++
++    def mask_ids(input_ids, start, end, _padding, _added_start, _added_end):
++        valid = (input_ids >= start) & (input_ids < end)
++        return torch.where(valid, input_ids - start, 0), ~valid
++
++    monkeypatch.setattr(ple_module, "get_masked_input_and_mask", mask_ids)
++    ids = torch.tensor([[0, 5], [2, 7]])
++    output = torch.full((8, 4), -1, dtype=torch.float8_e4m3fn)
++    module._xpu_uva_lookup_local(ids, output)
++
++    expected = torch.tensor(
++        [[1.0, 2.0, 0.0, 0.0], [5.0, 6.0, 0.0, 0.0]],
++        dtype=torch.float8_e4m3fn,
++    )
++    assert torch.equal(output[:2].view(torch.int8), expected.view(torch.int8))
++    assert torch.all(output[2:].view(torch.int8) == -72)
++
++
++def test_xpu_uva_finalize_reduces_raw_fp8_as_int8(monkeypatch) -> None:
++    module = _make_prefetch_module()
++    module._xpu_uva_prefetch_ids = torch.tensor([[0, 1], [2, 3]])
++    module._xpu_uva_prefetch_num_tokens = 2
++    module._xpu_uva_prefetch_lookup_done = object()
++    module._xpu_uva_prefetch_buffer[:2].copy_(
++        torch.tensor(
++            [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]],
++            dtype=torch.float8_e4m3fn,
++        )
++    )
++    waited = []
++    reduced_dtypes = []
++
++    class _CurrentStream:
++        def wait_event(self, event) -> None:
++            waited.append(event)
++
++    monkeypatch.setattr(torch.xpu, "current_stream", lambda: _CurrentStream())
++
++    def all_reduce(value):
++        reduced_dtypes.append(value.dtype)
++        return value
++
++    monkeypatch.setattr(ple_module, "tensor_model_parallel_all_reduce", all_reduce)
++    result = module._finalize_xpu_uva_prefetch(2)
++
++    assert waited == [module._xpu_uva_prefetch_lookup_done]
++    assert reduced_dtypes == [torch.int8]
++    assert result.dtype == torch.float8_e4m3fn
++    assert module._xpu_uva_prefetch_ids is None
++    assert module._xpu_uva_prefetch_num_tokens == 0
++
++
++def test_xpu_uva_local_lookup_masks_non_fp8_in_native_dtype(monkeypatch) -> None:
++    module = _make_prefetch_module(dtype=torch.float32)
++
++    def mask_ids(input_ids, start, end, _padding, _added_start, _added_end):
++        valid = (input_ids >= start) & (input_ids < end)
++        return torch.where(valid, input_ids - start, 0), ~valid
++
++    monkeypatch.setattr(ple_module, "get_masked_input_and_mask", mask_ids)
++    output = torch.full((8, 4), -1.0)
++    module._xpu_uva_lookup_local(torch.tensor([[0, 5], [2, 7]]), output)
++    expected = torch.tensor([[1.0, 2.0, 0.0, 0.0], [5.0, 6.0, 0.0, 0.0]])
++    torch.testing.assert_close(output[:2], expected)
++    assert torch.all(output[2:] == -1)
++
++
++def test_xpu_uva_prefetch_lifecycle_fails_closed() -> None:
++    module = _make_prefetch_module()
++    with pytest.raises(RuntimeError, match="was not started"):
++        module._finalize_xpu_uva_prefetch(2)
++
++    module._xpu_uva_prefetch_ids = torch.tensor([[0]])
++    module._xpu_uva_prefetch_num_tokens = 1
++    with pytest.raises(RuntimeError, match="started twice"):
++        module.start_xpu_uva_prefetch(
++            torch.empty(1, 4),
++            torch.tensor([1]),
++            torch.tensor([0, 1]),
++            torch.tensor([[0, 0]]),
++        )
++
++
++def test_xpu_uva_prefetch_mismatch_drains_and_recovers(monkeypatch) -> None:
++    module = _make_prefetch_module()
++    module._xpu_uva_prefetch_ids = torch.tensor([[0]])
++    module._xpu_uva_prefetch_num_tokens = 1
++    module._xpu_uva_prefetch_lookup_done = object()
++    waited = []
++
++    class _CurrentStream:
++        def wait_event(self, event) -> None:
++            waited.append(event)
++
++    monkeypatch.setattr(torch.xpu, "current_stream", lambda: _CurrentStream())
++    with pytest.raises(RuntimeError, match="token count changed"):
++        module._finalize_xpu_uva_prefetch(2)
++    assert waited == [module._xpu_uva_prefetch_lookup_done]
++    assert module._xpu_uva_prefetch_ids is None
++    assert module._xpu_uva_prefetch_num_tokens == 0
++
++
++def test_xpu_uva_prefetch_reduction_failure_clears_state(monkeypatch) -> None:
++    module = _make_prefetch_module()
++    module._xpu_uva_prefetch_ids = torch.tensor([[0]])
++    module._xpu_uva_prefetch_num_tokens = 1
++    module._xpu_uva_prefetch_lookup_done = object()
++
++    class _CurrentStream:
++        def wait_event(self, _event) -> None:
++            pass
++
++    monkeypatch.setattr(torch.xpu, "current_stream", lambda: _CurrentStream())
++
++    def fail_reduce(_value):
++        raise RuntimeError("injected reduction failure")
++
++    monkeypatch.setattr(ple_module, "tensor_model_parallel_all_reduce", fail_reduce)
++    with pytest.raises(RuntimeError, match="injected reduction failure"):
++        module._finalize_xpu_uva_prefetch(1)
++    assert module._xpu_uva_prefetch_ids is None
++    assert module._xpu_uva_prefetch_num_tokens == 0
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 723c5532a..23149679e 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -298,6 +298,7 @@ if TYPE_CHECKING:
+     VLLM_COMPILE_CACHE_SAVE_FORMAT: Literal["binary", "unpacked"] = "binary"
+     VLLM_USE_V2_MODEL_RUNNER: bool | None = None
+     VLLM_PLE_CPU_OFFLOAD: bool = False
++    VLLM_XPU_PLE_UVA_PREFETCH: bool = False
+     VLLM_PLE_OFFLOAD_READY_TIMEOUT: float = 600.0
+     VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT: float = 600.0
+     VLLM_LOG_MODEL_INSPECTION: bool = False
+@@ -2047,6 +2048,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_PLE_CPU_OFFLOAD": lambda: (
+         os.getenv("VLLM_PLE_CPU_OFFLOAD", "False").lower() in ("true", "1")
+     ),
++    "VLLM_XPU_PLE_UVA_PREFETCH": lambda: (
++        os.getenv("VLLM_XPU_PLE_UVA_PREFETCH", "False").lower() in ("true", "1")
++    ),
+     # Timeout for PLE weight loading and TP worker registration.
+     "VLLM_PLE_OFFLOAD_READY_TIMEOUT": lambda: float(
+         os.getenv("VLLM_PLE_OFFLOAD_READY_TIMEOUT", "600")
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index 7f9f337ec..2a633de0b 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -9,6 +9,7 @@ from typing import Protocol, cast
+ import torch
+ from torch import nn
+ 
++import vllm.envs as envs
+ from vllm.compilation.decorators import support_torch_compile
+ from vllm.config import VllmConfig
+ from vllm.distributed import get_pp_group, get_tensor_model_parallel_rank
+@@ -492,7 +493,40 @@ class Qwen4ExpModel(nn.Module):
+ 
+     def __init__(self, *, vllm_config: VllmConfig, prefix: str = "") -> None:
+         super().__init__()
++        if envs.VLLM_XPU_PLE_UVA_PREFETCH:
++            if not current_platform.is_xpu():
++                raise ValueError("VLLM_XPU_PLE_UVA_PREFETCH is supported only on XPU")
++            if envs.VLLM_PLE_CPU_OFFLOAD:
++                raise ValueError(
++                    "VLLM_XPU_PLE_UVA_PREFETCH cannot be combined with "
++                    "VLLM_PLE_CPU_OFFLOAD"
++                )
++            if envs.VLLM_WEIGHT_OFFLOADING_DISABLE_UVA:
++                raise ValueError(
++                    "VLLM_XPU_PLE_UVA_PREFETCH requires UVA to remain enabled"
++                )
++            if not vllm_config.model_config.enforce_eager:
++                raise ValueError(
++                    "VLLM_XPU_PLE_UVA_PREFETCH is initially supported only "
++                    "with --enforce-eager"
++                )
++            offload = vllm_config.offload_config
++            if offload.offload_backend != "uva":
++                raise ValueError(
++                    "VLLM_XPU_PLE_UVA_PREFETCH requires --offload-backend uva"
++                )
++            if "ple_embedding.ngram_embedding.weight" not in (
++                offload.uva.cpu_offload_params
++            ):
++                raise ValueError(
++                    "VLLM_XPU_PLE_UVA_PREFETCH requires selective UVA offload "
++                    "of ple_embedding.ngram_embedding.weight"
++                )
+         config: Qwen4ExpTextConfig = vllm_config.model_config.hf_text_config
++        if envs.VLLM_XPU_PLE_UVA_PREFETCH and len(set(config.ple_layer_ids)) != 1:
++            raise ValueError(
++                "VLLM_XPU_PLE_UVA_PREFETCH initially supports exactly one PLE layer"
++            )
+         self.config = config
+         self.num_redundant_experts = (
+             vllm_config.parallel_config.eplb_config.num_redundant_experts
+@@ -518,6 +552,14 @@ class Qwen4ExpModel(nn.Module):
+         self.start_layer, self.end_layer, self.layers = make_layers(
+             config.num_hidden_layers, get_layer, prefix=f"{prefix}.layers"
+         )
++        if envs.VLLM_XPU_PLE_UVA_PREFETCH:
++            self._xpu_ple_uva_prefetch_layers = tuple(
++                layer
++                for layer in self.layers[self.start_layer : self.end_layer]
++                if getattr(layer, "ple", None) is not None
++            )
++        else:
++            self._xpu_ple_uva_prefetch_layers = ()
+         intermediate_size = config.hidden_size * config.hc_count
+         self.make_empty_intermediate_tensors = make_empty_intermediate_tensors_factory(
+             ["hidden_states"], intermediate_size
+@@ -565,6 +607,27 @@ class Qwen4ExpModel(nn.Module):
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.embed_tokens(input_ids)
+ 
++    @staticmethod
++    def _start_layer_ple_prefetch(
++        layer: nn.Module,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor | None,
++        query_start_loc: torch.Tensor | None,
++        ngram_context: torch.Tensor | None,
++    ) -> None:
++        """Start a layer's optional XPU PLE lookup when inputs are ready."""
++        ple: Qwen4ExpPLELayer | None = getattr(layer, "ple", None)
++        if ple is None:
++            return
++        if input_ids is None or query_start_loc is None or ngram_context is None:
++            raise RuntimeError("PLE inputs were not prepared")
++        ple.start_xpu_uva_prefetch(
++            hidden_states,
++            input_ids,
++            query_start_loc,
++            ngram_context,
++        )
++
+     def forward(
+         self,
+         input_ids: torch.Tensor | None,
+@@ -600,20 +663,35 @@ class Qwen4ExpModel(nn.Module):
+         block_output = None
+         injection = None
+         last_layer = None
++        for ple_layer in self._xpu_ple_uva_prefetch_layers:
++            self._start_layer_ple_prefetch(
++                ple_layer,
++                hidden_states,
++                input_ids,
++                query_start_loc,
++                ngram_context,
++            )
+         for layer_idx, layer in islice(
+             enumerate(self.layers), self.start_layer, self.end_layer
+         ):
+             last_layer = layer
+-            hidden_states, block_output, injection = layer(
+-                hidden_states=hidden_states,
+-                prev_block_output=block_output,
+-                prev_injection=injection,
+-                positions=positions,
+-                input_ids=input_ids,
+-                query_start_loc=query_start_loc,
+-                ngram_context=ngram_context,
+-                repeatability_trace=trace if trace_active else None,
+-            )
++            try:
++                hidden_states, block_output, injection = layer(
++                    hidden_states=hidden_states,
++                    prev_block_output=block_output,
++                    prev_injection=injection,
++                    positions=positions,
++                    input_ids=input_ids,
++                    query_start_loc=query_start_loc,
++                    ngram_context=ngram_context,
++                    repeatability_trace=trace if trace_active else None,
++                )
++            except BaseException:
++                for prefetched_layer in self._xpu_ple_uva_prefetch_layers:
++                    ple = getattr(prefetched_layer, "ple", None)
++                    if ple is not None:
++                        ple.abort_xpu_uva_prefetch()
++                raise
+             if trace_active:
+                 trace.record(
+                     f"layer_{layer_idx}_output",
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index 0a3c634b1..abae68244 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -12,6 +12,7 @@ from torch import nn
+ 
+ import vllm.envs as envs
+ from vllm.config import CacheConfig, ModelConfig, VllmConfig, get_current_vllm_config
++from vllm.distributed import tensor_model_parallel_all_reduce
+ from vllm.forward_context import get_forward_context
+ from vllm.model_executor.layers.linear import ReplicatedLinear
+ from vllm.model_executor.layers.mamba.abstract import MambaBase
+@@ -39,9 +40,11 @@ from vllm.model_executor.layers.quantization.utils.quant_utils import (
+ )
+ from vllm.model_executor.layers.vocab_parallel_embedding import (
+     VocabParallelEmbedding,
++    get_masked_input_and_mask,
+ )
+ from vllm.model_executor.models.utils import AutoWeightsLoader
+ from vllm.model_executor.parameter import PerTensorScaleParameter
++from vllm.platforms import current_platform
+ from vllm.transformers_utils.configs.qwen4_exp import (
+     Qwen4ExpTextConfig,
+ )
+@@ -313,6 +316,25 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+             ),
+             persistent=False,
+         )
++        self._xpu_uva_prefetch_enabled = (
++            current_platform.is_xpu() and envs.VLLM_XPU_PLE_UVA_PREFETCH
++        )
++        self._xpu_uva_prefetch_stream = None
++        self._xpu_uva_prefetch_input_ready = None
++        self._xpu_uva_prefetch_lookup_done = None
++        self._xpu_uva_prefetch_buffer: torch.Tensor | None = None
++        self._xpu_uva_prefetch_ids: torch.Tensor | None = None
++        self._xpu_uva_prefetch_num_tokens = 0
++        if self._xpu_uva_prefetch_enabled:
++            self._xpu_uva_prefetch_stream = torch.xpu.Stream()
++            self._xpu_uva_prefetch_input_ready = torch.xpu.Event()
++            self._xpu_uva_prefetch_lookup_done = torch.xpu.Event()
++            self._xpu_uva_prefetch_buffer = torch.empty(
++                max_total_tokens,
++                self.embedding_dim,
++                dtype=self.ngram_embedding.weight.dtype,
++                device=self.ngram_embedding.weight.device,
++            )
+ 
+     @staticmethod
+     def _shift_precompute(
+@@ -349,15 +371,13 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+         valid = (source.unsqueeze(0) >= 0) & (position_in_segment >= shift)
+         return torch.where(valid, shifted, tokens.new_full((), eos_token_id))
+ 
+-    def forward_impl(  # type: ignore[override]
++    def _compute_ngram_ids(
+         self,
+-        hidden_states: torch.Tensor,
+         input_ids: torch.Tensor,
+         query_start_loc: torch.Tensor,
+         ngram_context: torch.Tensor,
+-        output_buffer: torch.Tensor | None = None,
+     ) -> torch.Tensor:
+-        del hidden_states
++        """Compute global PLE row IDs without reading the embedding table."""
+         input_ids = input_ids.reshape(-1).long()
+         query_start_loc = query_start_loc.long()
+         num_reqs = query_start_loc.numel() - 1
+@@ -435,7 +455,146 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+             offsets = self.ngram_heads_offsets[start:end]
+             ids = torch.remainder(mixed.unsqueeze(-1), sizes) + offsets
+             id_blocks.append(ids[request_indices, adjusted_columns])
+-        ngram_ids = torch.cat(id_blocks, dim=-1)
++        return torch.cat(id_blocks, dim=-1)
++
++    def _xpu_uva_lookup_local(
++        self,
++        ngram_ids: torch.Tensor,
++        output: torch.Tensor,
++    ) -> None:
++        """Copy this TP rank's raw PLE rows from UVA into ``output``."""
++        embedding = self.ngram_embedding
++        if not getattr(embedding.weight, "_vllm_is_uva_offloaded", False):
++            raise RuntimeError(
++                "VLLM_XPU_PLE_UVA_PREFETCH requires the PLE table to use "
++                "selective UVA offload"
++            )
++        if embedding.tp_size > 1:
++            masked_ids, input_mask = get_masked_input_and_mask(
++                ngram_ids,
++                embedding.shard_indices.org_vocab_start_index,
++                embedding.shard_indices.org_vocab_end_index,
++                embedding.shard_indices.num_org_vocab_padding,
++                embedding.shard_indices.added_vocab_start_index,
++                embedding.shard_indices.added_vocab_end_index,
++            )
++        else:
++            masked_ids = ngram_ids
++            input_mask = None
++        active = output[: ngram_ids.shape[0], : self.embedding_dim]
++        torch.index_select(
++            embedding.weight,
++            0,
++            masked_ids.reshape(-1).long(),
++            out=active.reshape(-1, self.head_dim),
++        )
++        if input_mask is not None:
++            mask_target = active.view(torch.int8) if is_fp8(active) else active
++            mask_target.unflatten(-1, (self.ngram_heads, self.head_dim)).masked_fill_(
++                input_mask.unsqueeze(-1), 0
++            )
++
++    def start_xpu_uva_prefetch(
++        self,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor,
++        query_start_loc: torch.Tensor,
++        ngram_context: torch.Tensor,
++    ) -> None:
++        """Start the raw UVA lookup on a dedicated XPU stream."""
++        del hidden_states
++        if not getattr(self, "_xpu_uva_prefetch_enabled", False):
++            return
++        if self._xpu_uva_prefetch_ids is not None:
++            raise RuntimeError("PLE UVA prefetch was started twice without finalize")
++        ngram_ids = self._compute_ngram_ids(
++            input_ids,
++            query_start_loc,
++            ngram_context,
++        )
++        stream = self._xpu_uva_prefetch_stream
++        input_ready = self._xpu_uva_prefetch_input_ready
++        lookup_done = self._xpu_uva_prefetch_lookup_done
++        output = self._xpu_uva_prefetch_buffer
++        if (
++            stream is None
++            or input_ready is None
++            or lookup_done is None
++            or output is None
++        ):
++            raise RuntimeError("PLE UVA prefetch workspace is not initialized")
++        current = torch.xpu.current_stream()
++        input_ready.record(current)
++        stream.wait_event(input_ready)
++        ngram_ids.record_stream(stream)
++        with torch.xpu.stream(stream):
++            self._xpu_uva_lookup_local(ngram_ids, output)
++            lookup_done.record(stream)
++        self._xpu_uva_prefetch_ids = ngram_ids
++        self._xpu_uva_prefetch_num_tokens = input_ids.numel()
++
++    def _finalize_xpu_uva_prefetch(self, num_tokens: int) -> torch.Tensor:
++        """Join the lookup stream and run the accepted TP owner reduction."""
++        if self._xpu_uva_prefetch_ids is None:
++            raise RuntimeError("PLE UVA prefetch was not started")
++        if num_tokens != self._xpu_uva_prefetch_num_tokens:
++            started_tokens = self._xpu_uva_prefetch_num_tokens
++            self.abort_xpu_uva_prefetch()
++            raise RuntimeError(
++                "PLE UVA prefetch token count changed before finalize: "
++                f"started={started_tokens}, got={num_tokens}"
++            )
++        lookup_done = self._xpu_uva_prefetch_lookup_done
++        output = self._xpu_uva_prefetch_buffer
++        if lookup_done is None or output is None:
++            raise RuntimeError("PLE UVA prefetch workspace is not initialized")
++        torch.xpu.current_stream().wait_event(lookup_done)
++        active = output[:num_tokens, : self.embedding_dim]
++        try:
++            if self.ngram_embedding.tp_size > 1:
++                if is_fp8(active):
++                    active = tensor_model_parallel_all_reduce(
++                        active.view(torch.int8)
++                    ).view(active.dtype)
++                else:
++                    active = tensor_model_parallel_all_reduce(active)
++            return active
++        finally:
++            self._xpu_uva_prefetch_ids = None
++            self._xpu_uva_prefetch_num_tokens = 0
++
++    def abort_xpu_uva_prefetch(self) -> None:
++        """Drain and forget an in-flight lookup after an earlier-layer failure."""
++        if self._xpu_uva_prefetch_ids is None:
++            return
++        lookup_done = self._xpu_uva_prefetch_lookup_done
++        if lookup_done is None:
++            raise RuntimeError("PLE UVA prefetch workspace is not initialized")
++        torch.xpu.current_stream().wait_event(lookup_done)
++        self._xpu_uva_prefetch_ids = None
++        self._xpu_uva_prefetch_num_tokens = 0
++
++    def forward_impl(  # type: ignore[override]
++        self,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor,
++        query_start_loc: torch.Tensor,
++        ngram_context: torch.Tensor,
++        output_buffer: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        del hidden_states
++        num_tokens = input_ids.numel()
++        if getattr(self, "_xpu_uva_prefetch_enabled", False):
++            if output_buffer is not None:
++                raise RuntimeError(
++                    "PLE UVA prefetch does not accept a cross-process output buffer"
++                )
++            return self._finalize_xpu_uva_prefetch(num_tokens)
++        ngram_ids = self._compute_ngram_ids(
++            input_ids,
++            query_start_loc,
++            ngram_context,
++        )
+         if output_buffer is not None:
+             output = output_buffer[:num_tokens, : self.embedding_dim]
+             torch.index_select(
+@@ -669,6 +828,25 @@ class Qwen4ExpPLELayer(nn.Module, MambaBase):
+             raise ValueError(f"Duplicate layer name: {prefix}")
+         compilation_config.static_forward_context[prefix] = self
+ 
++    def start_xpu_uva_prefetch(
++        self,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor,
++        query_start_loc: torch.Tensor,
++        ngram_context: torch.Tensor,
++    ) -> None:
++        """Start the optional XPU PLE lookup before this decoder layer."""
++        self.ple_embedding.start_xpu_uva_prefetch(
++            hidden_states,
++            input_ids,
++            query_start_loc,
++            ngram_context,
++        )
++
++    def abort_xpu_uva_prefetch(self) -> None:
++        """Drain an optional lookup that its decoder layer did not consume."""
++        self.ple_embedding.abort_xpu_uva_prefetch()
++
+     def _get_embedding_weight_scale(self) -> torch.Tensor | None:
+         embedding = getattr(self.ple_embedding, "ngram_embedding", None)
+         weight_scale = getattr(embedding, "weight_scale", None)
+-- 
+2.43.0
+
