@@ -1,0 +1,19 @@
+{
+  "campaign": "qwen38-q4km-tp2-cacheoff-c128-20260830-r16",
+  "status": "closed negative after measured attempt 1",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, cache off, c128, exact 32768-token pool (128x256), batch 2048, ubatch 256, pinned slots and prompt cache off",
+  "attempt_1": {
+    "aggregate_tok_s_nonpublishable": 177.01403312838985,
+    "same_shape_batch_oracle_exact": "106/128",
+    "quality_qualified": false,
+    "gpu0_peak_used_mib": 21675.57,
+    "gpu1_peak_used_mib": 21549.574,
+    "result_sha256": "6198cfbb18f962a5b18b6ae1a8cdd61ad2794b8593f536d1c72fa9c06069c01a",
+    "summary_sha256": "dc9aabdb7162b0099c868cb38c37777c4bea35b1226c522f6982e44c65b2d0fa",
+    "qualification_sha256": "b30dd620d032dad71e01170cb2d43a79314ad0c12078a28376181df5e3240c12",
+    "server_log_sha256": "58ee3d9083117c9c0ce96196b53488615895e6b354d017917de39c20e8f60816",
+    "vram_monitor_sha256": "7d89c7d4404293059f620c1062fbf3e8df5311b7342d3a5634cc6b24d6009d9a"
+  },
+  "decision": "Closed without repeat. The nonpublishable 194.423288 tok/s oracle pilot did not reproduce: the fresh arm was 177.014033 tok/s and changed 22/128 batch outputs. c96 at 192.34195380893704 tok/s remains the qualified aggregate optimum.",
+  "scope": "Negative repeatability evidence only; no c128 rate is public."
+}

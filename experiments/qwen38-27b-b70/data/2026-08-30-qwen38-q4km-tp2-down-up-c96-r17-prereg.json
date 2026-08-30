@@ -1,0 +1,12 @@
+{
+  "campaign": "qwen38-q4km-tp2-down-up-c96-20260830-r17",
+  "status": "preregistered after c128 closure and before down+up c96 measurement",
+  "purpose": "Test whether replacing the qualified ffn_down+ffn_gate exact-cache pair with ffn_down+ffn_up improves the stable c96 endpoint without adding device memory.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, 96 pinned slots, requested context 32768 and effective pool 49152 (96x512), batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 96 with 1000 ms ceiling.",
+  "candidate": "GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down,ffn_up; exact incumbent Q4_K-to-F16 bytes and unchanged GEMM arithmetic. Memory family count remains two.",
+  "oracle": "Committed c96 same-shape control-batch oracle SHA-256 f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1; report its separate 50/96 sequential identity without relabeling it.",
+  "runner_sha256": "85c21bd18dd59c5982239c43169fa7facd565d44d32766f22d54785e3e7b3266",
+  "advance_rule": "Attempt 1 must match the frozen c96 batch oracle 96/96, pass completeness/cache/liveness/health gates and exceed the higher qualified down+gate observation of 192.350949 tok/s. Only then repeat. Promotion requires both attempts 96/96 and their center above the down+gate center of 192.341954 tok/s.",
+  "failure_policy": "Any mismatch, OOM/health failure or first rate at or below 192.350949 closes r17. No failed-arm or single-run rate is promoted and no rate transfers to another shape."
+}
