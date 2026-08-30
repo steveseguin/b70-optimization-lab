@@ -1,0 +1,21 @@
+{
+  "campaign": "qwen38-q4km-tp2-down-gate-u512-c96-20260830-r19",
+  "status": "closed negative after corrected attempt 1",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, exact F16 cache for ffn_down and ffn_gate, c96, requested context 32768 and effective pool 49152 (96x512), batch 2048, ubatch 512, prompt cache off",
+  "live_command_verified": "Captured server command contains --batch-size 2048 --ubatch-size 512.",
+  "attempt_1": {
+    "aggregate_tok_s_nonpublishable": 184.2230642019368,
+    "same_shape_batch_oracle_exact": "79/96",
+    "quality_qualified": false,
+    "gpu0_peak_used_mib": 30529.40625,
+    "gpu1_peak_used_mib": 30403.601562,
+    "result_sha256": "f5b0ce9971ccd1bc9b6f127710b6c5e7f0741750865537ee33878778c431646c",
+    "summary_sha256": "543d0970f1d6427332706696513e65422c86b3d9a4c7f7e1dfc4f7abe7a19092",
+    "qualification_sha256": "734e8e89f251fe2e75a54f0c8cca123530d9029b60ae65e7c222fcd873c18c2d",
+    "server_log_sha256": "9cdf07d0e0c178fab457163219ff91108e2aad99c1b316037d83ab19b14cee9a",
+    "server_command_sha256": "8b646baa3110d9aae4e74536015b0450296fa9403ea402ac8f869b7602a2ba29",
+    "vram_monitor_sha256": "3014ed9c4f44c9ffecbc3acf38788a62e947588b988417000c20729746ef6faf"
+  },
+  "decision": "Closed without repeat. The corrected u512 arm was 4.22% below the qualified u256 center and changed 17/96 outputs. Keep ubatch 256.",
+  "scope": "Negative shape-specific evidence only; no r19 rate is public."
+}

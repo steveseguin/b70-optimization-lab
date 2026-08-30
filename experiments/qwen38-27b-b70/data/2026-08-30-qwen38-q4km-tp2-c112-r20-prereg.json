@@ -1,0 +1,13 @@
+{
+  "campaign": "qwen38-q4km-tp2-c112-20260830-r20",
+  "status": "preregistered before c112 pilot or candidate measurement",
+  "purpose": "Measure the untested concurrency point between the qualified c96 optimum and the unstable c128 negative. No rate or output oracle is transferred across shapes.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, 112 pinned slots, requested total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 112 with 1000 ms ceiling. The exact effective context is recorded from the live server and must not be inferred in advance.",
+  "stage_1_oracle_pilot": "A fresh cache-off control server runs the complete c112 batch with PILOT_MODE=1. Its rate is diagnostic/nonpublic. It must pass completeness, zero-cache, liveness and health gates before its 112-row same-shape batch oracle is frozen and committed.",
+  "stage_2_candidate": "A fresh server enables the qualified exact F16 cache pair ffn_down,ffn_gate and runs against the frozen c112 oracle.",
+  "runner_sha256": "c1067501df55e1949603d70e2fb216dc02820b1d079140fafd0e0c09ccfd5a8c",
+  "incumbent": "Qualified c96 rates 192.35094949480367 and 192.3329581230704 tok/s; center 192.34195380893704 tok/s. c128 is closed and supplies neither a rate nor an oracle.",
+  "advance_rule": "Candidate attempt 1 must match the frozen c112 batch oracle 112/112, pass all gates and exceed 192.35094949480367 tok/s. Only then repeat. Promotion requires both candidate attempts 112/112 and their center above 192.34195380893704 tok/s.",
+  "failure_policy": "Any pilot gate failure, candidate mismatch, OOM/health failure or first candidate rate at or below 192.35094949480367 closes r20. Pilot and failed-arm rates are never promoted."
+}
