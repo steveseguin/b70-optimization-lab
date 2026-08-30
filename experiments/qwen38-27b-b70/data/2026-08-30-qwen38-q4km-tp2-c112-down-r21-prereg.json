@@ -1,0 +1,12 @@
+{
+  "campaign": "qwen38-q4km-tp2-c112-down-20260830-r21",
+  "status": "preregistered before measurement",
+  "purpose": "Test whether the individually qualified ffn_down exact cache lifts c112 above the c96 aggregate optimum without the two-family arm's near-capacity VRAM pressure.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact F16 cache only for ffn_down, 112 pinned slots, live 512 tokens/slot and effective total context 57344, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 112 with 1000 ms ceiling.",
+  "oracle": "Frozen c112 same-shape batch oracle SHA-256 6cea47893733cdec2cdd2f4bb9d5058700687b3b93e0739838dd35ef421f335a; 112 rows verified against the r20 pilot batch. Sequential identity is separate (63/112) and not the candidate gate.",
+  "runner_sha256": "c1067501df55e1949603d70e2fb216dc02820b1d079140fafd0e0c09ccfd5a8c",
+  "rationale": "At c64 the ffn_down-only cache produced a qualified +4.45% center over its matched control. Applying that percentage to c112 is forbidden; it only justifies measuring this arm. One family should recover roughly half of the two-family cache's approximately 13 GiB/card allocation.",
+  "advance_rule": "Attempt 1 must match the frozen c112 oracle 112/112, pass all gates and exceed 192.35094949480367 tok/s. Only then repeat. Promotion requires both attempts 112/112 and their center above the qualified c96 center 192.34195380893704 tok/s.",
+  "failure_policy": "Any output mismatch, OOM/health failure or first rate at or below 192.35094949480367 closes r21. No failed-arm or single-run rate is promoted."
+}

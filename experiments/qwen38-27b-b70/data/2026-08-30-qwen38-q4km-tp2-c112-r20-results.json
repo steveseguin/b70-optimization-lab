@@ -1,0 +1,30 @@
+{
+  "campaign": "qwen38-q4km-tp2-c112-20260830-r20",
+  "status": "closed negative after candidate attempt 1",
+  "shape": "112 pinned slots, live 512 tokens/slot and effective total context 57344, batch 2048, ubatch 256, TP2, MTP0, prompt cache off",
+  "pilot": {
+    "configuration": "cache off; oracle-generation stage",
+    "aggregate_tok_s_nonpublic": 190.4669217946073,
+    "sequential_reference_identity": "63/112",
+    "same_shape_batch_oracle_sha256": "6cea47893733cdec2cdd2f4bb9d5058700687b3b93e0739838dd35ef421f335a",
+    "same_shape_oracle_verified": "112/112",
+    "gpu0_peak_used_mib": 21160.363281,
+    "gpu1_peak_used_mib": 21034.46875
+  },
+  "candidate": {
+    "configuration": "exact F16 cache for ffn_down and ffn_gate",
+    "aggregate_tok_s_nonpublishable": 185.39268985396535,
+    "same_shape_batch_oracle_exact": "91/112",
+    "quality_qualified": false,
+    "gpu0_peak_used_mib": 32040.050781,
+    "gpu1_peak_used_mib": 31912.21875,
+    "result_sha256": "3dfb7f500d27dd432bdcce91ce5ad2b715e5f0d818dff55063720857c663768f",
+    "summary_sha256": "786f467d34795d8769fad4e30daaa557436d6ecf31605dbf90ecd8f61f845488",
+    "qualification_sha256": "3b37384e25a8b18c36fa5043686e358a8457162944d5ea97a9e665f39ae20d66",
+    "server_log_sha256": "2bcece3fd5dfc869f5880e3bcc8ad16529d8235592cb3e55827e979ba151ecdf",
+    "runtime_environment_sha256": "17e5b7d900efbd6b0881df3c36c347fa539f747aa64d137cb1314616790f1918",
+    "vram_monitor_sha256": "8bd19d67cc5600e366c364ae3874363fab1e33c82bf8ee87c221cd6e750c0f10"
+  },
+  "decision": "Closed without repeat. The two-family cache was slower than both the c112 pilot and the qualified c96 center, changed 21/112 outputs, and left only about 616 MiB on GPU0 at peak. c96 two-family remains qualified; c112 may still be screened with a single cache family.",
+  "scope": "No c112 throughput value from r20 is public."
+}
