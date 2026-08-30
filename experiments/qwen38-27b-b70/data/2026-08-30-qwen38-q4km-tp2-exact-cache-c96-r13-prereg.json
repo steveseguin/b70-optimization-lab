@@ -1,0 +1,18 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-c96-20260830-r13",
+  "status": "preregistered after closing r12 and before r13 pilot or candidate measurement",
+  "purpose": "Correctly test c96 aggregate throughput by freezing a fresh same-shape concurrent control batch with the runner's explicit PILOT_MODE/pilot-from-batch path, then comparing a fresh exact-cache candidate to it.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC and WDC pre-reorder off, 96 pinned slots, requested total context 32768 and observed effective pool 49152 (96x512), batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs per request, admission target 96 with 1000 ms fail-safe ceiling.",
+  "oracle_rule": "Run one fresh cache-off control with PILOT_MODE=1, which instructs the qualifier to export the concurrent batch token IDs via pilot-from-batch. Commit and hash that 96-row oracle before candidate measurement. The pilot speed is nonpublishable.",
+  "candidate": "GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down,ffn_gate; exact incumbent Q4_K-to-F16 bytes and unchanged GEMM arithmetic.",
+  "binary_identities": {
+    "llama_server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "libllama_server_impl_sha256": "e873e18e080f00533fc7e73089f20df2b4303278c5353bb07fc467267fbb1f64",
+    "libggml_sycl_sha256": "815b017d931942e6e5004719782ee5c7cdd15a5adb18ec54f7decf5412a6a659",
+    "source_diff_sha256": "30c2d91efc4b33779f9c8122efaf8c39df226fa769837cbc0d06e2252309fa67"
+  },
+  "advance_rule": "The pilot batch must contain 96 complete 128-token rows, zero cached tokens, zero collisions, and clean health. Candidate attempt 1 must match the frozen same-shape pilot 96/96, pass all cache/health gates, and exceed 175.798577 tok/s. Only then run one repeat. Promotion requires both candidates 96/96 and a two-run center above 175.623794 tok/s.",
+  "quality_boundary": "Same-shape batch identity proves the optimization changes no generated token in the tested concurrent workload. It does not prove sequential-vs-batch identity; c96 must remain labeled aggregate capacity evidence and not sequentially deterministic unless a separate 96/96 sequential gate is achieved.",
+  "failure_policy": "Any pilot failure, candidate OOM/health failure, output mismatch, or first rate at or below 175.798577 closes r13. No pilot, failed-arm, or single-run rate is promoted and no rate transfers to another shape."
+}

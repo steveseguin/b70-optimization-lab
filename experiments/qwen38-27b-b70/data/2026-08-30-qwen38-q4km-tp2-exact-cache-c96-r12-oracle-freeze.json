@@ -1,6 +1,6 @@
 {
   "campaign": "qwen38-q4km-tp2-exact-cache-c96-20260830-r12",
-  "status": "c96 cache-off batch oracle frozen before candidate measurement",
+  "status": "superseded procedural negative: baseline mode exported sequential-reference digests, not the intended c96 batch digests",
   "oracle_file": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-c96-control-oracle-digests.json",
   "oracle_sha256": "1bf6a89e88fcaf33a7de7bb1762b03cd979ade862f59ae57a625168e305a269f",
   "control_result_sha256": "48ef6d0c14699f4138b65de8495855b244400c55fd57c0903274684449dfdaaf",
@@ -14,5 +14,5 @@
     "sequential_reference_exact": "50/96"
   },
   "runtime_context_correction": "The command requested total context 32768, but llama.cpp rounded the effective pool to 49152 so that 96 slots each received 512 tokens. All c96 reporting must use the observed 49152-token effective pool and must not describe it as the c64 memory shape.",
-  "quality_boundary": "This oracle freezes the exact same-shape concurrent control outputs so candidate-vs-control changes can be detected. Because only 50/96 concurrent control rows matched isolated sequential generation, neither this control nor a matching candidate may be described as sequentially deterministic."
+  "quality_boundary": "Correction recorded after candidate attempt 1: despite the filename and original intent, BASELINE_MODE exported the isolated sequential references rather than the same-shape concurrent batch. The candidate therefore failed this oracle at 50/96 and r12 is closed. Offline prompt-ID comparison found the raw control and candidate batches 96/96 identical, but that diagnostic does not retroactively qualify r12. Neither arm may be described as sequentially deterministic."
 }

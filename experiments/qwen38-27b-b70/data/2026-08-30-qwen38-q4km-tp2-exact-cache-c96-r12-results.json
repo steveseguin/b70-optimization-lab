@@ -1,0 +1,30 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-c96-20260830-r12",
+  "status": "closed procedural negative: candidate failed the frozen sequential-reference oracle",
+  "effective_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, c96, effective context pool 49152 (96x512 after llama.cpp rounding), batch 2048, ubatch 256, FUSE_EXT=31, pinned slots, prompt cache off, exact F16 cache filter ffn_down,ffn_gate",
+  "control_oracle_arm": {
+    "aggregate_tok_s_nonpublishable": 186.66415687267983,
+    "complete_rows": "96/96",
+    "sequential_reference_exact": "50/96",
+    "result_sha256": "48ef6d0c14699f4138b65de8495855b244400c55fd57c0903274684449dfdaaf",
+    "qualification_sha256": "8282aef5a19aff72525d9024bb562416deb4928f02de4eeab3bfee6445d55f84"
+  },
+  "candidate_attempt_1": {
+    "aggregate_tok_s_nonpublishable": 192.45007185402977,
+    "complete_rows": "96/96",
+    "frozen_oracle_exact": "50/96",
+    "quality_qualified": false,
+    "gpu0_peak_used_mib": 30478.176,
+    "gpu0_min_free_mib": 2177.824,
+    "gpu1_peak_used_mib": 30354.352,
+    "gpu1_min_free_mib": 2301.648,
+    "result_sha256": "4bb8f2916d8efd5bab4f6d33c7c34ce8252a4a4ee7eaceb241efc4a65c0a2dae",
+    "summary_sha256": "b4f37157e36afda6122e6220292617c3dad0c9d562f5508397e436604617d7f3",
+    "qualification_sha256": "55a024edd5a201f6578d34408150422618bfe368911dd7a76f2ee17d6b25c218",
+    "server_log_sha256": "c08b22c06c78b2f568f270000e0d56e8d31211aad438252a5e66ca9078c6066c",
+    "vram_monitor_sha256": "2e060b2b31bb312a504db97c258ac746ef2db24c5b0c55a1f0f7745bc1a63ed8"
+  },
+  "diagnostic_only": "Prompt-ID comparison of the raw concurrent control and candidate batch token arrays was 96/96 exact. This shows the exact cache did not change this measured batch, but it does not override the preregistered frozen-oracle failure.",
+  "decision": "No repeat and no promotion. The qualified c64 center remains 175.6237938170031 tok/s. A new preregistration is required to test the explicit pilot-from-batch oracle path.",
+  "scope": "Failed-arm and diagnostic evidence only; 186.664 and 192.450 tok/s are not public performance claims."
+}
