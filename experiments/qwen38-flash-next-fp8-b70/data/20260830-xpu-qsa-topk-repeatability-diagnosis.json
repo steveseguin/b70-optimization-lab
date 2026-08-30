@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "mechanism_reproduced_and_treatment_source_tested",
+  "classification": "cpu_source_audit_plus_bounded_xpu_microtest",
+  "scope": "Qwen3.8 Flash-Next FP8 QSA block selection on XPU",
+  "source_identity": {
+    "vllm_before": "e5137bfd8ca2ca718c4fd93d86d54bb843e2999b",
+    "vllm_treatment": "f68c9386fe5af54055bdf20684b269b9c1340e44",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "torch": "2.11.0+xpu",
+    "triton": "3.7.0"
+  },
+  "model_threshold": {
+    "indexer_budget_tokens": 2048,
+    "indexer_compress_ratio": 4,
+    "selected_compressed_blocks": 512,
+    "short_path_behavior": "at or below 2,048 visible tokens, every complete compressed block is retained and no subset selection is required",
+    "exact_4k_behavior": "at 4,096 visible tokens, 512 of approximately 1,024 complete compressed blocks must be selected"
+  },
+  "source_finding": {
+    "operation": "vllm_xpu_kernels top_k_per_row_decode",
+    "strict_winner_order": "written through local atomic reservations",
+    "threshold_tie_order": "resolved by local reservation position rather than logical input index",
+    "qsa_consequence": "QSA consumes the returned order directly, so both a varying tie set and a varying strict-winner order can change sparse-attention selection or reduction order"
+  },
+  "microtest": {
+    "device": "B70 device 0",
+    "shape": [
+      1,
+      1024
+    ],
+    "top_k": 512,
+    "input": "400 strict winners at score 2.0 plus 624 exact cutoff ties at score 1.0",
+    "repeats": 100,
+    "existing_xpu_topk_unique_output_hashes": 32,
+    "torch_topk_unique_output_hashes": 1,
+    "stable_argsort_unique_output_hashes": 1,
+    "isolated_latency_us": {
+      "existing_xpu_topk": 20.040600999891467,
+      "stable_argsort": 24.78138000060426,
+      "torch_topk_sorted": 28.560081000250648
+    },
+    "interpretation": "The existing operation is directly non-repeatable at a tied selection boundary. Stable score-descending, logical-index-ascending ordering removes that mechanism without changing score values."
+  },
+  "treatment": {
+    "commit": "f68c9386fe5af54055bdf20684b269b9c1340e44",
+    "behavior": "XPU QSA only uses stable descending argsort, masks ranks beyond each row's visible block count, and leaves CUDA and ROCm dispatch unchanged",
+    "score_perturbation": false,
+    "quantization_change": false,
+    "model_weight_change": false,
+    "patch_artifact": "patches/qwen38-flash-next-fp8-b70/vllm/0019-Make-Qwen4Exp-XPU-QSA-selection-deterministic.patch",
+    "patch_sha256": "df44c39f0c25cb6b05365d5de31afa9e0d3b251b070b371ae71d96080979afcd"
+  },
+  "validation": {
+    "qwen4_exp_xpu_tests": "5 passed",
+    "new_exact_tie_test_repeats": 32,
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "full_model_gpu_qualification": "pending A13"
+  },
+  "protected_results_changed": false,
+  "decision": "Treat f68c9386f as an unpromoted deterministic candidate. A13 must pass the unchanged semantic, 16-repeat, short-output, exact-4K needle, and two-row exact-4K retained-authority gates before ordinary timing is interpreted. A separately started repeat remains required for deployment-grade reliability."
+}

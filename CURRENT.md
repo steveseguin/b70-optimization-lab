@@ -1485,6 +1485,19 @@ bounded work is a source audit and deterministic treatment of that
 long-context attention/indexing route, without claiming QSA causality before a
 controlled result. See the
 [A12 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a12-logprob-mechanism-result.md).
+The bounded source/XPU follow-up reproduced a concrete QSA mechanism. The
+checkpoint selects 512 compressed groups: short contexts retain every visible
+group, while exact 4K must choose 512 of roughly 1,024. On a tied 1x1,024
+microtest, the existing XPU top-k returned 32 distinct outputs in 100 identical
+launches because winner order and cutoff ties depend on local reservation
+order. Stable ordering returned one and added about `4.74 us` in isolation.
+Candidate vLLM commit `f68c9386f` changes only XPU QSA selection to stable
+score-descending/logical-index-ascending order and passes all five focused XPU
+tests. It is not promoted. A13 is frozen on a new server identity with every A10
+gate unchanged; it must reproduce both retained short and exact-4K authorities
+before its ordinary timing receives any credit, and a fresh-server repeat will
+still be required. See the
+[diagnosis and A13 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-qsa-topk-diagnosis-and-a13-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

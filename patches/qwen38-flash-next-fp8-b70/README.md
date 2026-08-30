@@ -40,6 +40,13 @@ filters padding sentinels during MoE alignment. Its fifth changes only the
 exact speculative GDN proof path from a fixed four-row bound to the positive
 runtime row count; target-only execution is unchanged.
 
+Patch `0019` is a post-series QSA repeatability candidate based on vLLM commit
+`e5137bfd8`. It is not yet part of the production reconstruction sequence.
+It replaces the order-varying XPU QSA block selection with stable score and
+logical-index ordering, while leaving score values and non-XPU dispatch
+unchanged. Promote it into a new certified series only after the linked
+full-model exact-4K and fresh-server gates pass.
+
 ## Historical loose-artifact SHA-256
 
 ```text
@@ -61,6 +68,7 @@ fb7063c15743b306b218a6159f94935325bfcfd8c6db61200fa4e1cb196906f9  vllm/0014-Norm
 e9d2ed0234695954ea8c1bdb0edb1b18cc00c0be8c1bfb8e7d021abb0e80795e  vllm/0016-Fail-closed-on-XPU-GDN-schema-mismatches.patch
 cdd9631a9480ab333fb4340812adf856ad65e22b0c4da1b1a8ef91bb04d7fa3c  vllm/0017-Port-Qwen4Exp-MTP-tests-to-tokens-per-state-cache-AP.patch
 7d5328a5d5175fdd0c97ac83b9cb826e8e3dce5d30c755a26c4f732000f41937  vllm/0018-Route-legacy-XPU-GDN-speculative-decode.patch
+df44c39f0c25cb6b05365d5de31afa9e0d3b251b070b371ae71d96080979afcd  vllm/0019-Make-Qwen4Exp-XPU-QSA-selection-deterministic.patch
 23d25179eb7e287ca8217afac479ec0fe55736cb2e20ff8032e866ffd77b536e  vllm-xpu-kernels/0001-fix-xpu-restore-architecture-probe-bindings.patch
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch
