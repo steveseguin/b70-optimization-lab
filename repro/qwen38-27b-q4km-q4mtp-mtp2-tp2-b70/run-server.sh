@@ -12,7 +12,9 @@ parallel_slots=${PARALLEL_SLOTS:-1}
 batch_size=${BATCH_SIZE:-1024}
 ubatch_size=${UBATCH_SIZE:-256}
 threads=${THREADS:-8}
+wdc_q4k=${WDC_Q4K:-0}
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || { printf 'MTP_DEPTH must be 0 or 2\n' >&2; exit 2; }
+[[ "${wdc_q4k}" == 0 || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K must be 0 or 1\n' >&2; exit 2; }
 for value in "${ctx_size}" "${parallel_slots}" "${batch_size}" "${ubatch_size}" "${threads}"; do
   [[ "${value}" =~ ^[1-9][0-9]*$ ]] || { printf 'numeric settings must be positive integers\n' >&2; exit 2; }
 done
@@ -38,7 +40,17 @@ export GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN=1 GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN=1 GGML
 export GGML_SYCL_FUSED_GDN_BETA_SIGMOID=1 GGML_SYCL_FUSED_CONCAT_STATE=1 GGML_SYCL_FUSED_GDN_STATE_IO=1 GGML_SYCL_FUSED_CONV_STATE_IO=1
 export GGML_SYCL_COMM_DIRECT_Q8=2 GGML_SYCL_FUSED_ROPE_SET_ROWS=1 GGML_SYCL_COMM_REDUCE_VEC4=1 GGML_SYCL_FUSED_QK_NORM_ROPE=1
 export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT=31 GGML_SYCL_QDEDUP_STATS=1 GGML_SYCL_MMQ_Q4K_REORDER=1
-unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
+unset GGML_SYCL_FORCE_REORDER
+if [[ "${wdc_q4k}" == 1 ]]; then
+  # Default-off candidate: oneDNN consumes the scoped Q4_K reordered layout.
+  # GGML_SYCL_WDC remains off because this screen enables only the Q4_K door.
+  export GGML_SYCL_WDC=off GGML_SYCL_WDC_Q4K=1
+  export GGML_SYCL_REORDER_IN_GEMM=1 GGML_SYCL_FORCE_REORDER_Q4K=1
+  export GGML_SYCL_DISABLE_REORDER_Q6K=1
+else
+  unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
+  unset GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
+fi
 args=(
   --model "${target_dir}/Qwen3.8-27B-Q4_K_M.gguf"
   --device SYCL0,SYCL1 --split-mode tensor --tensor-split 1,1 --gpu-layers 99 --fit off

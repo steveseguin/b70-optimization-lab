@@ -1,0 +1,64 @@
+{
+  "campaign": "qwen38-q4km-tp2-wdc-http-quality-20260830-r1",
+  "status": "preregistered-before-http-measurement",
+  "purpose": "Qualify the TP2 Q4_K WDC mechanism for correctness, determinism, cache isolation, and realistic HTTP service before promotion.",
+  "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+  "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+  "source_diff_sha256": "9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926",
+  "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+  "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+  "arms": {
+    "control": "GGML_SYCL_WDC_Q4K disabled",
+    "candidate": "GGML_SYCL_WDC_Q4K=1 with scoped Q4_K reorder"
+  },
+  "run_order": [
+    "realistic-control-attempt1",
+    "realistic-candidate-attempt1",
+    "concurrency-control-attempt1",
+    "concurrency-candidate-attempt1",
+    "concurrency-candidate-attempt2"
+  ],
+  "realistic_profile": {
+    "parallel_slots": 1,
+    "total_context": 8192,
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "prompts": 12,
+    "classes": ["operations", "code", "prose", "analysis", "documentation", "structured-writing"],
+    "max_tokens": 512,
+    "cache_prompt": false,
+    "required": [
+      "realistic_final_gate.passed",
+      "fresh_response_validity.valid",
+      "cached_tokens_all_zero",
+      "12/12 output text SHA-256 values exactly equal the promoted target-only Q4_K oracle"
+    ]
+  },
+  "concurrency_profile": {
+    "parallel_slots": 64,
+    "total_context": 32768,
+    "batch": 2048,
+    "ubatch": 256,
+    "unique_requests": 64,
+    "max_tokens": 128,
+    "cache_prompt": false,
+    "ignore_eos": true,
+    "required": [
+      "64/64 responses complete",
+      "128 generated token IDs per response",
+      "all token-ID digests exactly equal the pinned sequential oracle",
+      "cached tokens zero",
+      "cross-request oracle collisions zero",
+      "candidate engagement warning present and control warning absent"
+    ]
+  },
+  "determinism_rule": "The candidate concurrency profile must pass the complete 64-response token-ID oracle on two independent fresh servers.",
+  "system_rules": [
+    "one model server at a time",
+    "fresh server for every listed run",
+    "exit status zero",
+    "no GPU reset, fault, device-lost, OOM, or model-process segfault evidence",
+    "no prompt cache or reused response",
+    "do not use oneDNN verbose or debugger instrumentation in measured runs"
+  ],
+  "publication_policy": "The prior batched-bench speed is not a headline. Only output-qualified HTTP results may be promoted, and the realistic diverse-prompt rate remains the single-user headline metric."
+}
