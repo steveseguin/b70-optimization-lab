@@ -20,6 +20,7 @@ queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 tp_size=${TP_SIZE:-2}
 feature_profile=${FEATURE_PROFILE:-tuned}
 q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
+fuse_ext=${FUSE_EXT_OVERRIDE:-15}
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || { printf 'MTP_DEPTH must be 0 or 2\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k_name_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || { printf 'WDC_Q4K_NAME_FILTER contains unsupported characters\n' >&2; exit 2; }
@@ -32,6 +33,7 @@ q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
 [[ "${feature_profile}" == tuned || "${feature_profile}" == reference || "${feature_profile}" == base ]] || { printf 'FEATURE_PROFILE must be tuned, reference, or base\n' >&2; exit 2; }
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || { printf 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2\n' >&2; exit 2; }
+[[ "${fuse_ext}" =~ ^[0-9]+$ ]] && (( fuse_ext <= 31 )) || { printf 'FUSE_EXT_OVERRIDE must be 0..31\n' >&2; exit 2; }
 for value in "${ctx_size}" "${parallel_slots}" "${batch_size}" "${ubatch_size}" "${threads}"; do
   [[ "${value}" =~ ^[1-9][0-9]*$ ]] || { printf 'numeric settings must be positive integers\n' >&2; exit 2; }
 done
@@ -56,7 +58,9 @@ export GGML_SYCL_FUSED_MMVQ_PAIR=1 GGML_SYCL_FUSED_MMVQ_SWIGLU_Q4K=1 GGML_SYCL_F
 export GGML_SYCL_FUSED_MMVQ_TRIPLE_ATTN=1 GGML_SYCL_FUSED_MMVQ_TRIPLE_GDN=1 GGML_SYCL_FUSED_MMVQ_QUAD_GDN=1
 export GGML_SYCL_FUSED_GDN_BETA_SIGMOID=1 GGML_SYCL_FUSED_CONCAT_STATE=1 GGML_SYCL_FUSED_GDN_STATE_IO=1 GGML_SYCL_FUSED_CONV_STATE_IO=1
 export GGML_SYCL_COMM_DIRECT_Q8=2 GGML_SYCL_FUSED_ROPE_SET_ROWS=1 GGML_SYCL_COMM_REDUCE_VEC4=1 GGML_SYCL_FUSED_QK_NORM_ROPE=1
-export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT=31 GGML_SYCL_QDEDUP_STATS=1 GGML_SYCL_MMQ_Q4K_REORDER=1
+# Bits 0..3 are qualified. Bit 4 is an experimental recurrent-tail fusion and
+# must remain default-off until it independently passes the output oracle.
+export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT="${fuse_ext}" GGML_SYCL_QDEDUP_STATS=1 GGML_SYCL_MMQ_Q4K_REORDER=1
 export GGML_SYCL_WDC=off
 export LLAMA_SERVER_QUEUE_SETTLE_MS="${queue_settle_ms}"
 if [[ "${feature_profile}" == reference || "${feature_profile}" == base ]]; then

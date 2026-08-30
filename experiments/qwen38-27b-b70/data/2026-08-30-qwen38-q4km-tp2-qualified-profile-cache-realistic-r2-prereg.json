@@ -1,0 +1,22 @@
+{
+  "campaign": "qwen38-q4km-tp2-qualified-profile-cache-realistic-20260830-r2",
+  "status": "preregistered-after current-profile control failure and before corrected-profile measurements",
+  "trigger": "The first realistic control used batch 2048 and GGML_SYCL_FUSE_EXT=31, while the frozen oracle's promoted configuration used batch 1024. Bit 4 is explicitly experimental/default-off in source but had been enabled by the launcher; that control failed 0/12 output hashes and is rejected.",
+  "purpose": "Restore the qualified runtime surface before judging the exact Q4_K cache: batch 1024 and FUSE_EXT bits 0..3 only, then compare a same-binary cache candidate.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, tuned profile, Q4_K reorder on, WDC off, one slot, context 8192, batch 1024, ubatch 256, GGML_SYCL_FUSE_EXT=15, temperature 0, prompt cache off.",
+  "suite_and_oracle": "The unchanged 12-prompt diverse realistic-suite-v1 and frozen 2026-08-15 TP2 Q4_K_M output hashes.",
+  "arms": [
+    "Fresh corrected-profile control with F16 cache unset.",
+    "Fresh corrected-profile candidate with GGML_SYCL_Q4K_F16_CACHE_FILTER=ffn_down."
+  ],
+  "required_gates": [
+    "12/12 complete output hashes equal the frozen oracle",
+    "fresh-response, natural-EOS, and metric-window gates pass",
+    "cached tokens are zero for all prompts",
+    "candidate cache liveness only in candidate",
+    "no WDC, GPU fault, reset, OOM, segfault, or unclean shutdown"
+  ],
+  "advance_rule": "Candidate comparison occurs only if the corrected control is 12/12 exact. Promotion requires candidate 12/12 exact and repeatable same-binary speed improvement.",
+  "publication_policy": "The failed batch2048/FUSE_EXT31 control is diagnostic only. No prompt/output caching, fixture gaming, oracle replacement, interpolation, or extrapolation."
+}
