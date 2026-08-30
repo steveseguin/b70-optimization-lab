@@ -1,0 +1,24 @@
+{
+  "campaign": "qwen38-q4km-tp2-same-binary-cache-realistic-20260830-r4",
+  "status": "preregistered-before r4 baseline generation, replay, or candidate",
+  "trigger": "The retained known-good backend reproduces the historical hashes, while the fully rebuilt current backend recovers the same ~50 tok/s class after removing WDC pre-reorder but follows a different stable greedy trajectory. Cross-binary hashes therefore cannot isolate a default-off cache compiled into the new backend.",
+  "purpose": "Use a candidate-off control from the exact same compiled backend as the independent expected-output surface, prove it replays on a fresh server, then require the default-off exact F16 cache to reproduce it 12/12.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, TP2 tensor 1,1, MTP0, normal MMQ Q4_K reorder, WDC pre-reorder off, WDC off, one slot, context 8192, batch 1024, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, current backend SHA256 8fc845e0974dafd999286c525a427d55c1028ea21425d8d2a21e7149d83c6aa1.",
+  "ordered_arms": [
+    "Fresh candidate-off control baseline: full 12-prompt suite; freeze hashes only after workload/cache/health gates pass.",
+    "Fresh candidate-off control replay against that frozen same-binary oracle; must match 12/12.",
+    "Fresh ffn_down F16-cache candidate against the already frozen oracle; must match 12/12."
+  ],
+  "required_gates": [
+    "12 unique diverse prompts, each run once with 512-token natural-completion cap",
+    "all cached token counts zero and no history/response reuse",
+    "fresh-response and metric-window gates pass",
+    "control replay and candidate complete-output hashes each match 12/12",
+    "cache liveness appears only in candidate and WDC remains absent",
+    "no GPU fault, reset, device loss, OOM, segfault, or unclean shutdown"
+  ],
+  "advance_rule": "The candidate is not run unless the independent fresh control replay is 12/12. Promotion additionally requires a second candidate repeat and a measured gain over same-binary controls.",
+  "quality_boundary": "This gate proves the optimization does not change the current backend's unoptimized outputs. Historical cross-binary hash drift remains documented separately and is not relabeled as a cache result.",
+  "publication_policy": "No candidate-derived oracle, prompt/output caching, fixture gaming, interpolation, extrapolation, or failed-arm speed promotion."
+}
