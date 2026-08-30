@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "fixed_input_components_repeatable",
+  "classification": "bounded_xpu_component_isolation",
+  "scope": "Residual exact-4K variability after the stable QSA selection treatment",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "f68c9386fe5af54055bdf20684b269b9c1340e44",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "device": "Intel Arc Pro B70"
+  },
+  "checks": {
+    "qsa_score_kernel": {
+      "shape": "real 4K QSA dimensions",
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "output_sha256": "51ad6f369db5381e3f481488e921fd08533da9c2979f17a9c2ec24d7c2526e2a"
+    },
+    "qsa_stable_selection": {
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "output_sha256": "34b55ef76e7053e3eee2fa1a3dff54110fdb0254f24f9df53b684e51b9cdd4"
+    },
+    "qsa_sparse_attention": {
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "output_sha256": "73e9b15c24b278bd4ae04e3d94ba254d5d403d474ea676cc7ae27344fb63885a"
+    },
+    "local_fp8_moe_constant_weights": {
+      "shape": "64x2560, 128 local experts, 640 intermediate, top-k 10",
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "output_sha256": "7b5fea7e05caf38b817dcc593ef64325fc543972dc268fe3ce74e00dc108ba13"
+    },
+    "local_fp8_moe_checkpoint_weights": {
+      "weights": "layer 0, EP rank 0 checkpoint experts",
+      "shape": "64x2560, 128 local experts, 640 intermediate, top-k 10",
+      "repeats": 100,
+      "unique_output_sha256": 1,
+      "output_sha256": "8cae590d34f1ad33ac3e574694ffea91a8bb4151cbd53ff06d8b48f876604fbb"
+    },
+    "tp4_xccl_allreduce_bfloat16": {
+      "shape": "64x2560",
+      "repeats": 100,
+      "ranks": 4,
+      "unique_hashes_per_rank": 1,
+      "same_hash_all_ranks": true,
+      "output_sha256": "23f34123d0e2345cf30ca0d22ecb5a2486ec1e49ee80d154860d384508ffd378"
+    },
+    "tp4_xccl_allreduce_float32": {
+      "shape": "64x2560",
+      "repeats": 100,
+      "ranks": 4,
+      "unique_hashes_per_rank": 1,
+      "same_hash_all_ranks": true,
+      "output_sha256": "5894d22733902b6aaee4302d4ba8a98c9827c28db692b19625b6e16d76cc33db"
+    }
+  },
+  "tools": {
+    "fullshape-triton-fp8-moe-gate.py": "5a56bc50e024d69b85b00e4636e78572c25b7a48789e33f9badc9fe5ffe55044",
+    "repeat-xccl-allreduce-gate.py": "0f34e3aa88beeed8e36e704e5984a72521bae6557ba53d6172b000bd66faa57f"
+  },
+  "protected_results_changed": false,
+  "decision": "Do not launch another blind treatment. The isolated QSA score/select/attention path, local FP8 MoE path, and TP4 reduction path are repeatable for fixed inputs. Trace one bounded late-prefill full-model request across two fresh starts to locate the first layer boundary whose input or output changes."
+}

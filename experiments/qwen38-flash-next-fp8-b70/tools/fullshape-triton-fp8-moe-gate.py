@@ -2,6 +2,7 @@
 """Isolate the Flash-Next local FP8 MoE shape on one XPU."""
 
 import argparse
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -54,6 +55,12 @@ def main() -> None:
         help="Use ordinary valid routing or the captured profile-run padding sentinel",
     )
     parser.add_argument(
+        "--repeats",
+        type=int,
+        default=1,
+        help="Repeat the same initialized MoE invocation and report raw output hashes",
+    )
+    parser.add_argument(
         "--model-path",
         type=Path,
         default=Path("/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"),
@@ -76,6 +83,8 @@ def main() -> None:
         help="Raise and retain the allocator reservation after ballast is ready",
     )
     args = parser.parse_args()
+    if not 1 <= args.repeats <= 100:
+        raise ValueError("repeats must be between 1 and 100")
 
     torch.manual_seed(20260826)
     device = torch.device("xpu:0")
@@ -104,6 +113,7 @@ def main() -> None:
         "path": args.path,
         "weights": args.weights,
         "routing": args.routing,
+        "repeats": args.repeats,
         "ple_uva": args.map_ple_uva,
         "target_allocated_gib": args.target_allocated_gib,
         "target_reserved_gib": args.target_reserved_gib,
@@ -267,9 +277,7 @@ def main() -> None:
             flush=True,
         )
     if args.routing == "all-padding":
-        topk_ids = torch.full(
-            (args.tokens, topk), -1, device=device, dtype=torch.int32
-        )
+        topk_ids = torch.full((args.tokens, topk), -1, device=device, dtype=torch.int32)
         topk_weights = torch.zeros(
             (args.tokens, topk), device=device, dtype=torch.float32
         )
@@ -299,18 +307,19 @@ def main() -> None:
             experts, device=device, dtype=torch.int32
         )
 
-    started = time.monotonic()
     if args.path == "functional":
-        output = fused_experts(
-            hidden_states,
-            w1,
-            w2,
-            topk_weights,
-            topk_ids,
-            global_num_experts=routed_experts,
-            expert_map=expert_map,
-            quant_config=quant_config,
-        )
+
+        def invoke() -> torch.Tensor:
+            return fused_experts(
+                hidden_states,
+                w1,
+                w2,
+                topk_weights,
+                topk_ids,
+                global_num_experts=routed_experts,
+                expert_map=expert_map,
+                quant_config=quant_config,
+            )
     else:
         moe_config = FusedMoEConfig(
             num_experts=routed_experts,
@@ -340,18 +349,27 @@ def main() -> None:
             prepare_finalize,
             TritonExperts(moe_config, quant_config),
         )
-        output = kernel.apply(
-            hidden_states,
-            w1,
-            w2,
-            topk_weights,
-            topk_ids,
-            activation=MoEActivation.SILU,
-            global_num_experts=routed_experts,
-            expert_map=expert_map,
-            apply_router_weight_on_input=False,
-        )
-    torch.xpu.synchronize()
+
+        def invoke() -> torch.Tensor:
+            return kernel.apply(
+                hidden_states,
+                w1,
+                w2,
+                topk_weights,
+                topk_ids,
+                activation=MoEActivation.SILU,
+                global_num_experts=routed_experts,
+                expert_map=expert_map,
+                apply_router_weight_on_input=False,
+            )
+
+    started = time.monotonic()
+    output_hashes = []
+    for _ in range(args.repeats):
+        output = invoke()
+        torch.xpu.synchronize()
+        raw = output.contiguous().view(torch.uint8).cpu().numpy().tobytes()
+        output_hashes.append(hashlib.sha256(raw).hexdigest())
     output_float = output.float().cpu()
     result = {
         "status": "pass",
@@ -361,6 +379,9 @@ def main() -> None:
         "finite": bool(torch.isfinite(output_float).all()),
         "max_abs": float(output_float.abs().max()),
         "mean_abs": float(output_float.abs().mean()),
+        "output_sha256_first": output_hashes[0],
+        "output_sha256_unique_values": sorted(set(output_hashes)),
+        "unique_output_sha256": len(set(output_hashes)),
     }
     if not result["finite"]:
         raise RuntimeError(f"non-finite MoE output: {result}")
