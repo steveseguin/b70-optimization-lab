@@ -88,7 +88,9 @@ esac
 [[ -z "${q4k_f16_cache_filter}" || "${candidate_kind}" == q4k-f16-cache ]] || fail 'Q4K_F16_CACHE_FILTER requires CANDIDATE_KIND=q4k-f16-cache'
 [[ "${candidate_kind}" != q4k-f16-cache || "${arm}" == control || -n "${q4k_f16_cache_filter}" ]] || fail 'q4k-f16-cache candidate requires Q4K_F16_CACHE_FILTER'
 [[ "${candidate_kind}" != q4k-f16-cache || -z "${wdc_q4k_name_filter}" ]] || fail 'cache candidate cannot set WDC_Q4K_NAME_FILTER'
-(( concurrency <= 1 || launch_stagger_ms * (concurrency - 1) < queue_settle_ms )) || fail 'launch stagger span must be shorter than queue settle window'
+if [[ "${profile}" == concurrency && "${queue_settle_ms}" != 0 ]]; then
+  (( concurrency <= 1 || launch_stagger_ms * (concurrency - 1) < queue_settle_ms )) || fail 'launch stagger span must be shorter than queue settle window'
+fi
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
 
