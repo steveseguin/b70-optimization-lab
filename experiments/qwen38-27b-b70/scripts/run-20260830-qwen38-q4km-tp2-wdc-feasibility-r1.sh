@@ -9,7 +9,7 @@ model_dir=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-gguf}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
 out_parent=${OUT_DIR:-/mnt/fast-ai/bench-results}
-campaign=qwen38-q4km-tp2-wdc-feasibility-20260830-r1
+campaign=${CAMPAIGN:-qwen38-q4km-tp2-wdc-feasibility-20260830-r1}
 run_dir=${out_parent}/${campaign}-${arm}-attempt${attempt}
 model=${model_dir}/Qwen3.8-27B-Q4_K_M.gguf
 bench=${build_dir}/bin/llama-batched-bench
@@ -19,7 +19,17 @@ libllama=${build_dir}/bin/libllama.so.0.1.0
 libggml=${build_dir}/bin/libggml.so.0.19.0
 libbase=${build_dir}/bin/libggml-base.so.0.19.0
 libcpu=${build_dir}/bin/libggml-cpu.so.0.19.0
-prereg=${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-wdc-feasibility-r1-prereg.json
+prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-wdc-feasibility-r1-prereg.json}
+expected_model_sha256=${EXPECTED_MODEL_SHA256:-31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34}
+expected_bench_sha256=${EXPECTED_BENCH_SHA256:-c2d55d3c7d55f0f309bc381ca9ca35b0d57193b8d64f8c2fb4bd98e631bd7248}
+expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-2549cb97c9789a8a70c6f5187119c1bfe73a211b6312fbe396c05e288517cdeb}
+expected_bench_impl_sha256=${EXPECTED_BENCH_IMPL_SHA256:-4a7094e725a42c8425dbd5f48b2fd9c5e4dc7a5e84044801e7db10d879fbe5d6}
+expected_libllama_sha256=${EXPECTED_LIBLLAMA_SHA256:-fef127ab3ce7fa5d530ca641a4e618622ddda31c9d765b0efb7557742b7ed291}
+expected_libggml_sha256=${EXPECTED_LIBGGML_SHA256:-d81df5455db5a4c28452b82ed88149fa0e0b2cfef19191d4da0751de5875db4e}
+expected_libbase_sha256=${EXPECTED_LIBBASE_SHA256:-86ba1569de3f0222b8939f518eac3a04a9c4285deb42184cb7f7159ca4e774b0}
+expected_libcpu_sha256=${EXPECTED_LIBCPU_SHA256:-14a864bb492541497ba201a6c8c2a7b0c3dee7ae19eb7f4eab18170ec9bc99ab}
+expected_source_commit=${EXPECTED_SOURCE_COMMIT:-4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126}
+expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-6a6b49a22e09738f5de7bd04f1ac71b4a39d764091c5cf4f02ee0c526dce170f}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 case ${arm} in control|candidate) ;; *) fail 'ARM must be control or candidate' ;; esac
@@ -33,17 +43,17 @@ check_hash() {
   actual=$(sha256sum "${path}" | awk '{print $1}')
   [[ "${actual}" == "${expected}" ]] || fail "identity mismatch: ${path}"
 }
-check_hash 31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34 "${model}"
-check_hash c2d55d3c7d55f0f309bc381ca9ca35b0d57193b8d64f8c2fb4bd98e631bd7248 "${bench}"
-check_hash 2549cb97c9789a8a70c6f5187119c1bfe73a211b6312fbe396c05e288517cdeb "${backend}"
-check_hash 4a7094e725a42c8425dbd5f48b2fd9c5e4dc7a5e84044801e7db10d879fbe5d6 "${bench_impl}"
-check_hash fef127ab3ce7fa5d530ca641a4e618622ddda31c9d765b0efb7557742b7ed291 "${libllama}"
-check_hash d81df5455db5a4c28452b82ed88149fa0e0b2cfef19191d4da0751de5875db4e "${libggml}"
-check_hash 86ba1569de3f0222b8939f518eac3a04a9c4285deb42184cb7f7159ca4e774b0 "${libbase}"
-check_hash 14a864bb492541497ba201a6c8c2a7b0c3dee7ae19eb7f4eab18170ec9bc99ab "${libcpu}"
+check_hash "${expected_model_sha256}" "${model}"
+check_hash "${expected_bench_sha256}" "${bench}"
+check_hash "${expected_backend_sha256}" "${backend}"
+check_hash "${expected_bench_impl_sha256}" "${bench_impl}"
+check_hash "${expected_libllama_sha256}" "${libllama}"
+check_hash "${expected_libggml_sha256}" "${libggml}"
+check_hash "${expected_libbase_sha256}" "${libbase}"
+check_hash "${expected_libcpu_sha256}" "${libcpu}"
 [[ -f "${prereg}" ]] || fail "missing ${prereg}"
-[[ "$(git -C "${source_dir}" rev-parse HEAD)" == 4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126 ]] || fail 'source commit mismatch'
-[[ "$(git -C "${source_dir}" diff --binary | sha256sum | awk '{print $1}')" == 6a6b49a22e09738f5de7bd04f1ac71b4a39d764091c5cf4f02ee0c526dce170f ]] || fail 'source diff mismatch'
+[[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${expected_source_commit}" ]] || fail 'source commit mismatch'
+[[ "$(git -C "${source_dir}" diff --binary | sha256sum | awk '{print $1}')" == "${expected_source_diff_sha256}" ]] || fail 'source diff mismatch'
 
 exec 7>/run/lock/muse-glimmer-gpu-exclusive.lock
 flock -n 7 || fail 'host-wide GPU campaign lock is held'

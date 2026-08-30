@@ -1,0 +1,60 @@
+{
+  "campaign": "qwen38-q4km-tp2-wdc-feasibility-20260830-r2",
+  "status": "preregistered-before-r2-measurement",
+  "classification": "raw-engine-mechanism-screen-only",
+  "model": {
+    "path_role": "local-fast-storage copy",
+    "filename": "Qwen3.8-27B-Q4_K_M.gguf",
+    "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"
+  },
+  "hardware": "2x Intel Arc Pro B70",
+  "software": {
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "9cee85631ded5eca3dd4576100496f147468f69aa99e0df147f54c0f64f49926",
+    "llama_batched_bench_sha256": "c2d55d3c7d55f0f309bc381ca9ca35b0d57193b8d64f8c2fb4bd98e631bd7248",
+    "libggml_sycl_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "libggml_base_sha256": "c02e31736ede0af9867afb89d4f234a9908cd8c419d0962addf7a4d98adb2e5d"
+  },
+  "fixed_shape": {
+    "devices": "SYCL0,SYCL1",
+    "split_mode": "tensor",
+    "tensor_split": "1,1",
+    "quant": "Q4_K_M",
+    "speculation": "none",
+    "kv": "F16/F16",
+    "context": 32768,
+    "batch": 2048,
+    "ubatch": 256,
+    "prompt_tokens_per_sequence": 128,
+    "generated_tokens_per_sequence": 128,
+    "parallel_sequences": 64
+  },
+  "arms": {
+    "control": "GGML_SYCL_WDC_Q4K=0; scoped Q4_K reorder remains enabled",
+    "candidate": "GGML_SYCL_WDC_Q4K=1; scoped Q4_K reorder remains enabled"
+  },
+  "run_order": [
+    "control-attempt1",
+    "candidate-attempt1",
+    "candidate-attempt2",
+    "control-attempt2"
+  ],
+  "gates": {
+    "fresh_process_each_arm": true,
+    "exit_status_zero": true,
+    "kernel_error_lines_zero": true,
+    "candidate_positive_control": "warning contains 'weight-decompression GEMM ENGAGED'",
+    "control_negative_control": "engagement warning absent",
+    "performance_statistic": "median aggregate speed_tg across two attempts per arm",
+    "minimum_relative_improvement_percent": 5.0
+  },
+  "prior_observation": {
+    "campaign": "qwen38-q4km-tp2-wdc-feasibility-20260830-r1",
+    "control_speed_tg": 195.239441,
+    "candidate_speed_tg": 240.983658,
+    "relative_improvement_percent": 23.43,
+    "promotion_status": "not promoted because the preregistered INFO-level liveness message was filtered",
+    "followup_evidence": "oneDNN verbose and debugger traces proved u4 WDC execution; r8 smoke proved the warning-level liveness signal"
+  },
+  "publication_policy": "Passing this screen only advances WDC to a diverse, output-qualified HTTP determinism and quality comparison. Raw batched-bench throughput is not a neural.download headline."
+}
