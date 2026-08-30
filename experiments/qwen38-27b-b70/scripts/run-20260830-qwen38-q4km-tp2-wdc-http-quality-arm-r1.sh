@@ -11,6 +11,9 @@ pilot_mode=${PILOT_MODE:-0}
 q4k_reorder=${Q4K_REORDER:-1}
 batch_size=${BATCH_SIZE:-2048}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
+tp_size=${TP_SIZE:-2}
+concurrency=${CONCURRENCY:-64}
+context_override=${CONTEXT_SIZE:-}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -53,6 +56,9 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${arm}" == control || "${q4k_reorder}" == 1 ]] || fail 'candidate requires Q4K_REORDER=1'
 [[ "${batch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'BATCH_SIZE must be positive'
 [[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || fail 'QUEUE_SETTLE_MS must be 0..1000'
+[[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || fail 'TP_SIZE must be 1 or 2'
+[[ "${concurrency}" =~ ^[1-9][0-9]*$ ]] || fail 'CONCURRENCY must be positive'
+[[ -z "${context_override}" || "${context_override}" =~ ^[1-9][0-9]*$ ]] || fail 'CONTEXT_SIZE must be positive'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
 
@@ -96,7 +102,7 @@ done
 if [[ "${profile}" == realistic ]]; then
   context=8192; parallel=1
 else
-  context=32768; parallel=64
+  context=${context_override:-32768}; parallel=${concurrency}
 fi
 
 server_job=
@@ -126,6 +132,7 @@ trap cleanup EXIT INT TERM
 timeout --signal=INT --kill-after=30s 3600s env \
   TARGET_DIR="${target_dir}" DRAFT_DIR="${draft_dir}" BUILD_DIR="${build_dir}" \
   ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
+  TP_SIZE="${tp_size}" \
   CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE="${batch_size}" \
   QUEUE_SETTLE_MS="${queue_settle_ms}" \
   UBATCH_SIZE=256 THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
@@ -189,7 +196,7 @@ PY
 else
   harness_cmd=(python3 "${concurrency_harness}"
     --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-tp2-wdc-${arm}"
-    --api-mode native --suite "${concurrency_suite}" --concurrency 64 --repeats 1
+    --api-mode native --suite "${concurrency_suite}" --concurrency "${concurrency}" --repeats 1
     --max-tokens 128 --seed 42 --timeout 1200 --return-token-ids
     --request-id-prefix "qwen38-q4km-tp2-wdc-${arm}-a${attempt}"
     --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}'
@@ -197,17 +204,18 @@ else
   if [[ "${baseline_mode}" == 0 ]]; then harness_cmd+=(--oracle-digests "${concurrency_oracle}"); fi
   "${harness_cmd[@]}" | tee "${run_dir}/harness-summary.txt"
   qualifier_cmd=(python3 "${concurrency_qualifier}" --result "${run_dir}/result.json"
-    --out "${run_dir}/qualification.json" --active-slots 64)
+    --out "${run_dir}/qualification.json" --active-slots "${parallel}" --expected-oracle-rows "${concurrency}")
   if [[ "${baseline_mode}" == 1 ]]; then
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
 pilot_mode = sys.argv[4] == "1"
 batch_size, queue_settle_ms = int(sys.argv[5]), int(sys.argv[6])
+tp_size, concurrency, context = map(int, sys.argv[7:10])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -231,6 +239,9 @@ summary = {
     "cross_base_oracle_collision_count": quality.get("cross_base_oracle_collision_count"),
     "batch_size": batch_size,
     "queue_settle_ms": queue_settle_ms,
+    "tp_size": tp_size,
+    "concurrency": concurrency,
+    "context": context,
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))

@@ -1,0 +1,46 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-tp2-determinism-20260830-r1",
+  "status": "pilot-stage-preregistered-before-measurement",
+  "purpose": "Localize exact-output nondeterminism by comparing one-GPU and two-GPU executions at the same short c16 HTTP shape.",
+  "reason_for_shape": "c64 reproduced nondeterminism but a fully synchronized batch required about 148 seconds. c16 retains diverse simultaneous prompts and 128-token trajectories while making topology isolation substantially cheaper.",
+  "common_configuration": {
+    "model": "Qwen3.8-27B-Q4_K_M.gguf",
+    "MTP": 0,
+    "context": 8192,
+    "parallel_slots": 16,
+    "concurrency": 16,
+    "generated_tokens_per_request": 128,
+    "batch_size": 2048,
+    "ubatch_size": 256,
+    "queue_settle_ms": 750,
+    "Q4K_REORDER": 1,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset",
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "pilot_order": [
+    "TP1 control pilot: generate a non-publishable 16-row token-ID oracle",
+    "TP2 control pilot: generate a non-publishable 16-row token-ID oracle"
+  ],
+  "pilot_gates": "Each pilot must form one admission cohort, complete 16/16 128-token responses, use zero cached prompt tokens, preserve complete token-ID isolation, have zero cross-base collisions, remain WDC-negative, and have clean kernel/server evidence.",
+  "post_pilot_policy": "Freeze each topology's oracle and its SHA-256, then preregister one fresh replay per topology. Stop a topology on any result below 16/16. Pilot and replay throughput are diagnostic until exactness passes.",
+  "interpretation": {
+    "TP1_pass_TP2_fail": "Prioritize TP2 collective/all-reduce/fusion toggles.",
+    "TP1_fail_TP2_fail": "Prioritize kernels and numerical paths shared by both topologies.",
+    "TP1_pass_TP2_pass": "The issue may require c64 pressure; increase concurrency only after preserving exactness.",
+    "TP1_fail_TP2_pass": "Investigate the TP1 placement/kernel selection independently."
+  },
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "launcher_sha256": "d34835738e36a7adfd8391e8e2e9443b8d46c5b5b194c39c216e67987205b4c7",
+    "arm_runner_sha256": "2f77d39730f3f70a7f49c449188346db5f70cbec659d0b2e0bb2e31081cd0b98",
+    "comparison_oracle_sha256": "4d4a067856c8372fad601f4874d2aa728db59c4217bb40cd164976d319a19504"
+  }
+}

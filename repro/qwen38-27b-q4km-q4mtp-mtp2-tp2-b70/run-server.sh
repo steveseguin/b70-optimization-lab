@@ -15,11 +15,13 @@ threads=${THREADS:-8}
 wdc_q4k=${WDC_Q4K:-0}
 q4k_reorder=${Q4K_REORDER:-0}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
+tp_size=${TP_SIZE:-2}
 [[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || { printf 'MTP_DEPTH must be 0 or 2\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K must be 0 or 1\n' >&2; exit 2; }
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
 [[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 1000\n' >&2; exit 2; }
+[[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
 for value in "${ctx_size}" "${parallel_slots}" "${batch_size}" "${ubatch_size}" "${threads}"; do
   [[ "${value}" =~ ^[1-9][0-9]*$ ]] || { printf 'numeric settings must be positive integers\n' >&2; exit 2; }
 done
@@ -63,10 +65,12 @@ if [[ "${wdc_q4k}" == 1 ]]; then
 else
   unset GGML_SYCL_WDC_Q4K
 fi
-args=(
-  --model "${target_dir}/Qwen3.8-27B-Q4_K_M.gguf"
-  --device SYCL0,SYCL1 --split-mode tensor --tensor-split 1,1 --gpu-layers 99 --fit off
-)
+args=(--model "${target_dir}/Qwen3.8-27B-Q4_K_M.gguf")
+if [[ "${tp_size}" == 2 ]]; then
+  args+=(--device SYCL0,SYCL1 --split-mode tensor --tensor-split 1,1 --gpu-layers 99 --fit off)
+else
+  args+=(--device SYCL0 --gpu-layers 99 --fit off)
+fi
 if [[ "${mtp_depth}" == 2 ]]; then
   args+=(
     --model-draft "${draft_dir}/mtp-Qwen3.8-27B-Q4_0.gguf" --device-draft SYCL0 --gpu-layers-draft 99
