@@ -1791,6 +1791,15 @@ the matched cache-off controls. The tradeoff rises to approximately 13
 GiB/device; exact peak VRAM remains open, and the result does not change the
 one-user headline. See the [pair result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-pair-c64-result.md).
 
+The same exact two-family cache then qualified a near-capacity c96 endpoint.
+Two fresh candidates measured `192.350949` and `192.332958 tok/s`, for
+**`192.341954 tok/s`** with `0.0094%` range and 96/96 complete same-shape
+control-batch oracle identity in both attempts. The requested 32K pool became
+an effective 49,152-token pool (96x512), and peak used VRAM was about
+30.48/30.35 GiB per card. The separate isolated sequential comparison was
+50/96, so this qualifies candidate-vs-control identity and aggregate capacity,
+not batch-invariant text. See the [c96 result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c96-result.md).
+
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2

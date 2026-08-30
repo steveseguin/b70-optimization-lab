@@ -184,3 +184,27 @@ matched cache-off controls. Apply the
 after the base cache patch. The pair uses approximately 13 GiB of additional
 device memory per card; exact peak VRAM remains to be captured. See the
 [pair result](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-pair-c64-result.md).
+
+### Exact-cache c96 endpoint
+
+The same two-family cache was then measured at 96 pinned users. Two fresh
+servers returned **`192.350949`** and **`192.332958 tok/s`**, for a qualified
+**`192.341954 tok/s`** center. Each matched a separately frozen same-shape c96
+control-batch oracle 96/96 with all 128 token IDs present, prompt caching off,
+and no cross-base collision.
+
+Use the c64 command above with these replacements:
+
+```bash
+PARALLEL_SLOTS=96 CTX_SIZE=32768 \
+QUEUE_SETTLE_MS=1000 QUEUE_SETTLE_TARGET=96 \
+Q4K_F16_CACHE_FILTER=ffn_down,ffn_gate
+```
+
+llama.cpp rounded the requested context pool to 49,152 tokens (96x512). Peak
+used VRAM was approximately 30,480 MiB on GPU 0 and 30,354 MiB on GPU 1, so
+this is a near-capacity profile. The control batch matched isolated sequential
+references only 50/96; the result proves the cache changed no same-shape c96
+outputs, not that greedy text is batch-invariant. See the
+[c96 result](../../experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c96-result.md)
+and [frozen batch oracle](../../experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-c96-batch-oracle-r14.json).

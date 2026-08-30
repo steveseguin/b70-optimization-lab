@@ -18,6 +18,13 @@ class Qwen38Q4kmRunnerTests(unittest.TestCase):
             source,
         )
 
+    def test_oracle_provenance_is_not_mislabeled(self) -> None:
+        source = RUNNER.read_text()
+        self.assertIn("CONCURRENCY_ORACLE_KIND", source)
+        self.assertIn('"oracle_kind": oracle_kind', source)
+        self.assertIn('"same_shape_batch_oracle_exact_all"', source)
+        self.assertIn('if oracle_kind == "sequential" else None', source)
+
 
 if __name__ == "__main__":
     unittest.main()

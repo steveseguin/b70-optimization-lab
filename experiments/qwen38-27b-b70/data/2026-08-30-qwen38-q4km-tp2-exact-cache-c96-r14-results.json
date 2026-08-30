@@ -1,0 +1,60 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-c96-20260830-r14",
+  "status": "qualified aggregate-capacity endpoint with same-shape output identity",
+  "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+  "hardware": "2x local Intel Arc Pro B70 32 GiB",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, c96, requested context 32768 and observed effective pool 49152 (96x512), batch 2048, ubatch 256, FUSE_EXT=31, pinned slots, 128 generated token IDs/request, prompt cache off, exact F16 cache filter ffn_down,ffn_gate",
+  "oracle": {
+    "kind": "fresh same-shape concurrent control batch",
+    "sha256": "f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1",
+    "batch_digest_exact": "96/96",
+    "sequential_reference_exact": "50/96",
+    "boundary": "Candidate-vs-control identity is qualified. Sequential-vs-concurrent identity is not; do not call this batch-invariant or sequentially deterministic."
+  },
+  "nonpublishable_control_pilot_tok_s": 186.52315946934993,
+  "runs": [
+    {
+      "attempt": 1,
+      "aggregate_tok_s": 192.35094949480367,
+      "same_shape_oracle_exact": "96/96",
+      "gpu0_peak_used_mib": 30480.156,
+      "gpu0_min_free_mib": 2175.844,
+      "gpu1_peak_used_mib": 30352.316,
+      "gpu1_min_free_mib": 2303.684,
+      "result_sha256": "978904d8198b135a222cd8e16bc94779e1af66d4490af12ff9ab99392efc4fbf",
+      "summary_sha256": "c58ab1ccfc0b4d8d55902e43a977cc79ce6d7a2e031ee517d30c160c9dd7e275",
+      "qualification_sha256": "337d2ab70796adecb728f600779b804f12f6bb3957906fce1cb9f4e856566dfc",
+      "server_log_sha256": "177d4f4fe21d5eea54dadd574987abac2271910b61eb8cdc7b207454223702d2",
+      "vram_monitor_sha256": "e99dd9bc6561529fc1c31bf7b5e6bb55223dd5565dbbfd981df00b02570727fd"
+    },
+    {
+      "attempt": 2,
+      "aggregate_tok_s": 192.3329581230704,
+      "same_shape_oracle_exact": "96/96",
+      "gpu0_peak_used_mib": 30478.211,
+      "gpu0_min_free_mib": 2177.789,
+      "gpu1_peak_used_mib": 30354.359,
+      "gpu1_min_free_mib": 2301.641,
+      "result_sha256": "ea955572547015ac6da4892145fdfdb2a5bfbe2a626a51dcec7a183675c88ef6",
+      "summary_sha256": "f8c013155a1b301336908eb2066bc50ff208c53e624248b741c0c54aeeab15e4",
+      "qualification_sha256": "b5b612f77c2bbabc384659312bc891021c126830bf4e0bc2122bee0dfdd58283",
+      "server_log_sha256": "30ffeb8c1937878e2787d23e968c9ca3ba8ca1c5c552fbaee6ba5e57a833d63f",
+      "vram_monitor_sha256": "a4e92dafcb885d2fdd4d1d259c021f2d18848182126080d92a4b07373f6b5fbc"
+    }
+  ],
+  "center_tok_s": 192.34195380893704,
+  "candidate_range_percent": 0.009353846821763,
+  "gain_over_qualified_c64_center_percent": 9.519302384137053,
+  "gain_over_nonpublishable_r14_control_pilot_percent": 3.119609573492799,
+  "quality_gates": {
+    "attempt_1_same_shape_token_identity": "96/96",
+    "attempt_2_same_shape_token_identity": "96/96",
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collisions": 0,
+    "kernel_errors": 0,
+    "clean_shutdowns": true
+  },
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-exact-cache-c96-r14-prereg.json",
+  "oracle_freeze": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-exact-cache-c96-r14-oracle-freeze.json",
+  "scope": "Measured client-wall c96 aggregate endpoint only. No interpolation or extrapolation and no transfer to one-user, another context pool, quant, card count or MTP depth."
+}

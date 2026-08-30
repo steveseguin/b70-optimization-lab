@@ -49,6 +49,7 @@ concurrency_harness=${repo}/scripts/bench-openai-concurrency-oracle.py
 concurrency_qualifier=${repo}/scripts/qualify-openai-concurrency-attempt.py
 concurrency_suite=${repo}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json
 concurrency_oracle=${CONCURRENCY_ORACLE:-${repo}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-concurrency-oracle-digests.json}
+concurrency_oracle_kind=${CONCURRENCY_ORACLE_KIND:-sequential}
 expected_realistic_oracle_sha256=${EXPECTED_REALISTIC_ORACLE_SHA256:-f8e7e4040d653ef6250ed99362221f68a349ddb003f52769560b87877c0e34af}
 expected_concurrency_oracle_sha256=${EXPECTED_CONCURRENCY_ORACLE_SHA256:-0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33}
 expected_server_sha256=${EXPECTED_SERVER_SHA256:-7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c}
@@ -97,6 +98,8 @@ esac
 [[ -z "${q4k_f16_cache_filter}" || "${candidate_kind}" == q4k-f16-cache ]] || fail 'Q4K_F16_CACHE_FILTER requires CANDIDATE_KIND=q4k-f16-cache'
 [[ "${candidate_kind}" != q4k-f16-cache || "${arm}" == control || -n "${q4k_f16_cache_filter}" ]] || fail 'q4k-f16-cache candidate requires Q4K_F16_CACHE_FILTER'
 [[ "${candidate_kind}" != q4k-f16-cache || -z "${wdc_q4k_name_filter}" ]] || fail 'cache candidate cannot set WDC_Q4K_NAME_FILTER'
+[[ "${concurrency_oracle_kind}" == sequential || "${concurrency_oracle_kind}" == same-shape-batch ]] || \
+  fail 'CONCURRENCY_ORACLE_KIND must be sequential or same-shape-batch'
 if [[ "${profile}" == concurrency && "${queue_settle_ms}" != 0 ]]; then
   (( concurrency <= 1 || launch_stagger_ms * (concurrency - 1) < queue_settle_ms )) || fail 'launch stagger span must be shorter than queue settle window'
 fi
@@ -266,7 +269,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${concurrency_oracle_kind}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -282,6 +285,7 @@ candidate_kind = sys.argv[16]
 q4k_f16_cache_filter = sys.argv[17] or None
 pin_slots = sys.argv[18] == "1"
 fuse_ext = int(sys.argv[19])
+oracle_kind = sys.argv[20]
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -296,9 +300,13 @@ summary = {
     "pinned_oracle_exact_all": oracle_exact_all,
     "pinned_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
     "pinned_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
-    "sequential_oracle_exact_all": oracle_exact_all,
-    "sequential_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
-    "sequential_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
+    "oracle_kind": oracle_kind,
+    "sequential_oracle_exact_all": oracle_exact_all if oracle_kind == "sequential" else None,
+    "sequential_oracle_exact_count": result["batches"][0].get("oracle_exact_count") if oracle_kind == "sequential" else None,
+    "sequential_oracle_exact_total": result["batches"][0].get("oracle_exact_total") if oracle_kind == "sequential" else None,
+    "same_shape_batch_oracle_exact_all": oracle_exact_all if oracle_kind == "same-shape-batch" else None,
+    "same_shape_batch_oracle_exact_count": result["batches"][0].get("oracle_exact_count") if oracle_kind == "same-shape-batch" else None,
+    "same_shape_batch_oracle_exact_total": result["batches"][0].get("oracle_exact_total") if oracle_kind == "same-shape-batch" else None,
     "aggregate_tok_s": result["batches"][0]["aggregate_tok_s_wall"],
     "cached_tokens_all_zero": quality.get("cached_tokens_all_zero"),
     "complete_token_id_identity_all": quality.get("complete_token_id_identity_all"),
