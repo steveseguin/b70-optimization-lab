@@ -1,0 +1,15 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-reference-nodedup-determinism-20260830-r1",
+  "status": "replay-preregistered-after-pilot-and-before-replay-measurement",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-c16-tp1-reference-nodedup-oracle-digests.json",
+    "sha256": "295a5193acd9078bacf5bb75ae51422731488f2002da4d285d748ea7bb548674",
+    "source_result_sha256": "5931c3df87365475b8299fbb1cce30f7d3b3bba99d45a967a1d6224cc2321bd7",
+    "rows": 16,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": "TP1, Q4_K_M, MTP0, FEATURE_PROFILE=reference, Q8_DEDUP_OVERRIDE=0, Q4K_REORDER=0, c16, context 8192, batch 2048, ubatch 256, 750 ms cohort, no cache, temperature 0, seed 42.",
+  "gate": "Fresh server must match all 16 token-ID digests and pass completion, cache, isolation, collision, WDC-negative, kernel, and cleanup gates.",
+  "interpretation": "A 16/16 replay makes Q8 dedup the leading causal feature and triggers source-level audit plus tuned-profile no-dedup confirmation. Any lower result rejects dedup-only as sufficient and moves to the deeper base profile.",
+  "publication_policy": "The pilot's 15.80102261204573 tok/s and replay speed are diagnostic only."
+}
