@@ -1,0 +1,30 @@
+{
+  "campaign": "qwen38-q4km-tp2-exact-cache-triple-20260830-r11",
+  "status": "closed negative: out of device memory before any completed response",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, c64, total context 32768, batch 2048, ubatch 256, FUSE_EXT=31, pinned slots, prompt cache off, exact F16 cache filter ffn_down,ffn_gate,ffn_up",
+  "attempts": [
+    {
+      "attempt": 1,
+      "aggregate_tok_s": 0.0,
+      "completed_responses": 0,
+      "oracle_exact": "0/64",
+      "failure": "UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY in ggml_sycl_pool_vmm::alloc during the first prompt-processing batch",
+      "gpu0_peak_used_mib": 31653.699,
+      "gpu0_min_free_mib": 1002.301,
+      "gpu1_peak_used_mib": 31529.008,
+      "gpu1_min_free_mib": 1126.992,
+      "cleanup": "clean; both GPUs returned to the unloaded state and the kernel journal showed no reset or device fault"
+    }
+  ],
+  "decision": "Closed after attempt 1 under the preregistered failure policy. Do not repeat or promote. The qualified ffn_down+ffn_gate c64 center of 175.6237938170031 tok/s remains the public result.",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-exact-cache-triple-r11-prereg.json",
+  "local_evidence_directory": "/mnt/fast-ai/bench-results/qwen38-q4km-tp2-exact-cache-triple-20260830-r11-concurrency-candidate-attempt1",
+  "artifact_sha256": {
+    "result.json": "925fd20b84ff41737a86ea2c45a53221e5229f97686ed86a25632657159a6b73",
+    "harness-summary.txt": "f21aace7bba9e58ecb84bed8bb8a93eb50ea6e8ee674d33526b3c5c6bbda1334",
+    "server.log": "e15ab0585cfe8c0fa3caa2b771e8aa97b0cdd72714477db606ac15f02e596f9c",
+    "runtime-environment.txt": "f3ee5158d47daa8e8761ef81dd765f69d9ab8839073fe6c33f561aece218993f",
+    "vram-monitor.csv": "d7570ea0d6e8b645c6de750bf8aec9fbb0a71dfba8c2d11cb51b11f863a55cc7"
+  },
+  "scope": "Negative fit/health evidence only. No throughput, quality, concurrency, context, quantization, card-count, or MTP claim is derived from this failed arm."
+}
