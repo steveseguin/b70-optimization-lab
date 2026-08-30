@@ -1450,6 +1450,15 @@ reliable/lossless deployment base. No protected result changed. The next arm
 uses only existing API top-score reporting on the frozen 4K request; the A8
 worker trace must not be reapplied. See the
 [A10 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a10-fresh-server-negative.md).
+The bounded A11 diagnostic is now frozen. It retains the exact A10 server and
+prompt identity but uses the existing completion API to report the top eight
+token scores for four exact-4K repeats. It changes no worker source or server
+selector and cannot receive speed credit. The gate requires every selected
+token to equal its reported top one, exact usage, 128 complete score rows, and
+zero cache reuse. This replaces neither A9 nor the A7/A10 negative evidence;
+it is designed only to locate whether the first differing greedy token already
+has a different top-one ranking. See the
+[A11 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a11-api-logprob-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
