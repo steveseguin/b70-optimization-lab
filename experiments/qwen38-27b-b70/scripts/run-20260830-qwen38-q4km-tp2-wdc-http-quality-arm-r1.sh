@@ -250,7 +250,13 @@ else
     --request-extra-json '{"cache_prompt":false,"ignore_eos":true,"temperature":0}'
     --out "${run_dir}/result.json")
   if [[ "${pin_slots}" == 1 ]]; then harness_cmd+=(--pin-slots); fi
-  if [[ "${baseline_mode}" == 0 ]]; then harness_cmd+=(--oracle-digests "${concurrency_oracle}"); fi
+  # Baseline generation builds a sequential oracle and PILOT_MODE deliberately
+  # builds a same-shape oracle from the measured batch.  Injecting a prior
+  # shape's oracle into either mode makes a new concurrency fail before it can
+  # create its own frozen reference.
+  if [[ "${baseline_mode}" == 0 && "${pilot_mode}" == 0 ]]; then
+    harness_cmd+=(--oracle-digests "${concurrency_oracle}")
+  fi
   "${harness_cmd[@]}" | tee "${run_dir}/harness-summary.txt"
   qualifier_cmd=(python3 "${concurrency_qualifier}" --result "${run_dir}/result.json"
     --out "${run_dir}/qualification.json" --active-slots "${parallel}" --expected-oracle-rows "${concurrency}")
