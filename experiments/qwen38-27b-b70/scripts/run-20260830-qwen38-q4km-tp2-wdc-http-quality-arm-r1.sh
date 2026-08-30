@@ -248,7 +248,7 @@ summary = {
     "sequential_oracle_exact_all": oracle_exact_all,
     "sequential_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
     "sequential_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
-    "aggregate_tok_s_c64": result["batches"][0]["aggregate_tok_s_wall"],
+    "aggregate_tok_s": result["batches"][0]["aggregate_tok_s_wall"],
     "cached_tokens_all_zero": quality.get("cached_tokens_all_zero"),
     "complete_token_id_identity_all": quality.get("complete_token_id_identity_all"),
     "cross_base_oracle_collision_count": quality.get("cross_base_oracle_collision_count"),
@@ -261,6 +261,8 @@ summary = {
     "q8_dedup_override": q8_dedup_override,
     "launch_stagger_ms": launch_stagger_ms,
 }
+if concurrency == 64:
+    summary["aggregate_tok_s_c64"] = result["batches"][0]["aggregate_tok_s_wall"]
 (root / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))
 PY
