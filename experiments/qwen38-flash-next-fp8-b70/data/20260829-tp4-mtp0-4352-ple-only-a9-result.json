@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "status": "passed_same_server_lossless_screen_with_storage_caveat",
+  "classification": "grade_c_additive_preferred_mtp0_placement_candidate",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "e5137bfd8ca2ca718c4fd93d86d54bb843e2999b",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes_per_rank": 134217728,
+    "cache_tokens_reported": 4747,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "ple_host_bytes_all_ranks": 51200245760,
+    "input_embedding": "device",
+    "model_memory_reported_gib_per_rank": 31.57
+  },
+  "gates": {
+    "four_rank_collective": "passed",
+    "offload_receipts": "4/4 exact 11.92 GiB",
+    "recovery_canary": "passed",
+    "semantic_quality": "6/7; sole inherited code_execution response 30 instead of 14",
+    "repeat": "16/16 one hash",
+    "exact_4k_needle": "passed with zero cached and created-cache tokens",
+    "short_output_authority": "3/3 exact",
+    "exact_4k_output_authority": "2/2 exact",
+    "supervisor_rc": 0,
+    "client_rc": 0,
+    "postflight": "passed; no owned residue, four cards discoverable and below 43 MiB",
+    "b70_addressed_journal_event": false,
+    "fresh_server_repeat": "pending"
+  },
+  "performance": {
+    "short": {
+      "protocol": "p146/o256/c1 after first text; row 1 includes one conditioning request and rows 2-3 do not",
+      "rates_tok_s": [
+        5.466103633400652,
+        5.402373303540544,
+        5.46135622547447
+      ],
+      "median_tok_s": 5.46135622547447,
+      "row_span_percent_of_median": 1.166932301,
+      "protected_prior_median_tok_s": 5.223788770075911,
+      "uplift_percent": 4.547799803,
+      "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+    },
+    "exact_4k": {
+      "protocol": "p4096/o128; conventional 99 inter-token intervals",
+      "rates_tok_s": [
+        5.258322965451046,
+        5.286666537537832
+      ],
+      "median_tok_s": 5.272494751494439,
+      "row_span_percent_of_median": 0.537574212,
+      "protected_prior_median_tok_s": 4.7578181021380175,
+      "uplift_percent": 10.817493193,
+      "ttft_s": [
+        110.06168159699973,
+        100.75267576900023
+      ],
+      "median_ttft_s": 105.407178683,
+      "protected_prior_median_ttft_s": 147.46833551250165,
+      "ttft_reduction_percent": 28.522161509,
+      "output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "cached_tokens": [0, 0]
+    }
+  },
+  "host_caveat": {
+    "clean_host_credit": false,
+    "reason": "The run window retained six corrected APEI sections and nine NVMe AER status records for local NVMe 0000:01:00.0. No event named a B70 address and all serving, output, lifecycle, and card-idle gates passed."
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt9",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt9-supervisor",
+    "sha256": {
+      "ple-only-summary.json": "3c58a448cf9f641e7714c25106d54571e89789f15f33719a89c2801c81fe44e5",
+      "quality-current.json": "fdcdc18b537268800f8d61fc0ebb1f8ae084f1408ffad30f99ec6a0e2ce261ff",
+      "identity.txt": "51bcca4beef79966ec719866d97bb9683ea85020bb49558cb835b73ec380a4ab",
+      "offload-log-receipt.txt": "d078cb68beb7c0705535a045ffd657adcadf9eed5cbb526fffffcba3056360cf",
+      "server-command.shell.txt": "cdab57afdb002b4c95dd7300af45ab6bfda696d6f32931f4e2b84ac43e9074ab",
+      "server.log": "8f46580ac6e826b564f4450c354925bd26bbbdb55b3305e188cdfdbdde56f21c",
+      "supervisor-final.rc": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "kernel-journal.log": "e958cac60ef73859dbf26c9ae5ef380d4a37194a1f6e88f950037fc542ac2609"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "This is the preferred current-runtime MTP0 placement candidate because it passed every preregistered lossless and B70 lifecycle gate while improving both short and exact-4K medians. It is not deployment-qualified until a separately preregistered fresh-server repeat passes; the prior placement and every prior speed remain preserved."
+}

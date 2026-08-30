@@ -1421,15 +1421,19 @@ The active objective is now trace-free TP4/MTP0 at 4,352 configured tokens,
 with the PLE/ngram table in host RAM and maximum safe weight residency in VRAM.
 See the [A8 closeout](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-greedy-trace-a8-worker-init-freeze.md).
 
-The next bounded arm is preregistered as A9. It keeps exactly the 51.200-GB
-PLE table host-resident across TP4, moves the 317,849,600-byte/rank input
-embedding back to VRAM, and reduces the fixed cache to 128 MiB/rank at the
-4,352-token ceiling. The net increase is 239.125 MiB/card versus the passing
-current-runtime anchor; static scaling predicts about 4,747 cache tokens, but
-fit and admission remain live gates. The frozen client requires the protected
-short and exact-4K output authorities, 16/16 repeats, the known semantic
-boundary, two exact-4K rows, and clean owned teardown before any speed credit.
-See the [A9 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a9-prereg.md).
+A9 then passed every preregistered lossless and B70 lifecycle gate. The exact
+51.200-GB PLE state remained host-resident, the input embedding moved to VRAM,
+model load reported 31.57 GiB/card, and the 128-MiB cache exposed exactly the
+predicted 4,747 tokens. The short rows were `5.466104 / 5.402373 / 5.461356`,
+median **`5.461356 tok/s`** (+4.55% over the protected current-runtime anchor),
+and both exact-4K rows returned the protected token authority at `5.258323 /
+5.286667`, median **`5.272495 tok/s`** (+10.82%). Quality remained 6/7 with
+only the inherited `30`/`14` miss, repeats were 16/16, cache reuse was zero,
+and owned teardown returned four cards below 43 MiB with no B70-addressed
+event. This is the preferred MTP0 placement candidate, not deployment-ready:
+a fresh-server repeat remains required, and corrected local-NVMe link events
+block clean-host wording. Every prior result remains protected. See the
+[A9 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a9-result.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
