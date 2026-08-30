@@ -1686,6 +1686,16 @@ yet; A25 must run first. The initial XPU transport is synchronous and is a
 correctness candidate, not the finished official asynchronous-overlap design.
 See the
 [process-offload hardening note](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-ple-process-offload-prelaunch-hardening.md).
+The hardware-aligned speed path is now clearer. Qwen specifies that the 51B
+table remain in host memory with its sparse row lookup asynchronously
+prefetched. Draft upstream vLLM PR 54371 implements the closest current pattern
+for CUDA: pinned UVA, a dedicated side stream, persistent output, and layer-1
+lookup started before layer 0. The B70 port will preserve the proven XPU UVA
+lookup and TP4 reduction, add a separate default-off XPU side-stream selector,
+and leave synchronous UVA as the control. The broad draft is not being
+cherry-picked, and the blocking process worker is now a fallback comparison.
+A25 remains first. See the
+[async-UVA alignment plan](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-async-uva-ple-alignment-plan.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
