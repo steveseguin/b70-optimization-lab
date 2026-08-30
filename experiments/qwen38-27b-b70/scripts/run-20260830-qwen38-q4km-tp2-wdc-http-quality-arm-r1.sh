@@ -61,8 +61,8 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || fail 'TP_SIZE must be 1 or 2'
 [[ "${concurrency}" =~ ^[1-9][0-9]*$ ]] || fail 'CONCURRENCY must be positive'
 [[ -z "${context_override}" || "${context_override}" =~ ^[1-9][0-9]*$ ]] || fail 'CONTEXT_SIZE must be positive'
-[[ "${feature_profile}" == tuned || "${feature_profile}" == reference ]] || fail 'FEATURE_PROFILE must be tuned or reference'
-[[ "${feature_profile}" == tuned || "${arm}" == control ]] || fail 'FEATURE_PROFILE=reference is control-only'
+[[ "${feature_profile}" == tuned || "${feature_profile}" == reference || "${feature_profile}" == base ]] || fail 'FEATURE_PROFILE must be tuned, reference, or base'
+[[ "${feature_profile}" == tuned || "${arm}" == control ]] || fail 'non-tuned FEATURE_PROFILE is control-only'
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || fail 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'

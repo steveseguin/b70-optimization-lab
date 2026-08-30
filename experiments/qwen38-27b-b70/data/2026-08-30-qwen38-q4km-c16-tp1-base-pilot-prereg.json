@@ -1,0 +1,31 @@
+{
+  "campaign": "qwen38-q4km-c16-tp1-base-determinism-20260830-r1",
+  "status": "pilot-preregistered-before-measurement",
+  "purpose": "Establish whether the local SYCL backend has an exact deterministic TP1 floor when integration optimization defaults are disabled.",
+  "fixed_configuration": "TP1, Q4_K_M, MTP0, FEATURE_PROFILE=base, Q4K_REORDER=0, c16, context 8192, batch 2048, ubatch 256, 750 ms one-cohort admission, 128 tokens, zero cache, temperature 0, seed 42.",
+  "base_profile": {
+    "GGML_SYCL_ENABLE_OPT": 0,
+    "GGML_SYCL_ENABLE_DNN": 0,
+    "GGML_SYCL_ENABLE_FUSION": 0,
+    "GGML_SYCL_ENABLE_MMQ": 0,
+    "GGML_SYCL_Q8_QUANT_DEDUP": 0,
+    "GGML_SYCL_MMVQ_PAD": 0,
+    "GGML_SYCL_MMVQ_SPLIT": 0,
+    "GGML_SYCL_MKL_DIRECT": 0,
+    "UR_L0_USE_IMMEDIATE_COMMANDLISTS": 0,
+    "explicit_lab_fusion_reorder_collective_doors": 0
+  },
+  "pilot_policy": "Speed is non-publishable. Freeze an oracle only if all 16 responses complete with zero cache, complete token-ID isolation, zero collisions, WDC absent, and clean kernel/cleanup evidence.",
+  "next_gate": "Fresh replay must match 16/16. A pass starts controlled feature reintroduction; a failure moves below configurable optimization doors into base kernel/runtime determinism.",
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "launcher_sha256": "7d80c6b34b553a4b3015155b66525ce077c802953712d8dbfd92a7e320133fee",
+    "arm_runner_sha256": "82b2c8afc862aa17cf6cee439e13fd987780c1ecd9ce88b1c0c637a8d50640f0",
+    "comparison_no_dedup_oracle_sha256": "295a5193acd9078bacf5bb75ae51422731488f2002da4d285d748ea7bb548674"
+  }
+}

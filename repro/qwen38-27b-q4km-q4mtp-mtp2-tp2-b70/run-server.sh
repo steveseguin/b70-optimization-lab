@@ -24,7 +24,7 @@ q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
 [[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 1000\n' >&2; exit 2; }
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
-[[ "${feature_profile}" == tuned || "${feature_profile}" == reference ]] || { printf 'FEATURE_PROFILE must be tuned or reference\n' >&2; exit 2; }
+[[ "${feature_profile}" == tuned || "${feature_profile}" == reference || "${feature_profile}" == base ]] || { printf 'FEATURE_PROFILE must be tuned, reference, or base\n' >&2; exit 2; }
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || { printf 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2\n' >&2; exit 2; }
 for value in "${ctx_size}" "${parallel_slots}" "${batch_size}" "${ubatch_size}" "${threads}"; do
   [[ "${value}" =~ ^[1-9][0-9]*$ ]] || { printf 'numeric settings must be positive integers\n' >&2; exit 2; }
@@ -53,7 +53,7 @@ export GGML_SYCL_COMM_DIRECT_Q8=2 GGML_SYCL_FUSED_ROPE_SET_ROWS=1 GGML_SYCL_COMM
 export GGML_SYCL_FUSED_CONV_SILU_L2=1 GGML_SYCL_FUSE_EXT=31 GGML_SYCL_QDEDUP_STATS=1 GGML_SYCL_MMQ_Q4K_REORDER=1
 export GGML_SYCL_WDC=off
 export LLAMA_SERVER_QUEUE_SETTLE_MS="${queue_settle_ms}"
-if [[ "${feature_profile}" == reference ]]; then
+if [[ "${feature_profile}" == reference || "${feature_profile}" == base ]]; then
   # Diagnostic control: disable every lab fusion/reorder/collective door so a
   # strict replay can distinguish shared optimized kernels from the base path.
   export GGML_META_FUSE_ALLREDUCE_ADD=0 GGML_META_FUSE_ALLREDUCE_ADD_RMS_MUL=0
@@ -65,6 +65,11 @@ if [[ "${feature_profile}" == reference ]]; then
   export GGML_SYCL_FUSED_QK_NORM_ROPE=0 GGML_SYCL_FUSED_ROPE_SET_ROWS=0 GGML_SYCL_FUSED_SWIGLU_Q8=0
   export GGML_SYCL_FUSE_EXT=0 GGML_SYCL_MMQ_Q4K_REORDER=0 GGML_SYCL_QDEDUP_STATS=0
   unset GGML_SYCL_REORDER_IN_GEMM GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
+fi
+if [[ "${feature_profile}" == base ]]; then
+  export GGML_SYCL_ENABLE_OPT=0 GGML_SYCL_ENABLE_DNN=0 GGML_SYCL_ENABLE_FUSION=0 GGML_SYCL_ENABLE_MMQ=0
+  export GGML_SYCL_Q8_QUANT_DEDUP=0 GGML_SYCL_MMVQ_PAD=0 GGML_SYCL_MMVQ_SPLIT=0 GGML_SYCL_MKL_DIRECT=0
+  export UR_L0_USE_IMMEDIATE_COMMANDLISTS=0
 fi
 if [[ -n "${q8_dedup_override}" ]]; then
   export GGML_SYCL_Q8_QUANT_DEDUP="${q8_dedup_override}"
@@ -78,8 +83,8 @@ else
   unset GGML_SYCL_REORDER_IN_GEMM GGML_SYCL_FORCE_REORDER_Q4K
   unset GGML_SYCL_DISABLE_REORDER_Q6K
 fi
-if [[ "${feature_profile}" == reference && "${wdc_q4k}" == 1 ]]; then
-  printf 'WDC_Q4K=1 is incompatible with FEATURE_PROFILE=reference\n' >&2
+if [[ "${feature_profile}" != tuned && "${wdc_q4k}" == 1 ]]; then
+  printf 'WDC_Q4K=1 is incompatible with a non-tuned FEATURE_PROFILE\n' >&2
   exit 2
 elif [[ "${wdc_q4k}" == 1 ]]; then
   # Default-off candidate: oneDNN consumes the scoped Q4_K reordered layout.
