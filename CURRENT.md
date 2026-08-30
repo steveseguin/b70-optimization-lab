@@ -1516,6 +1516,14 @@ full pass promotes the deterministic QSA treatment plus PLE-only placement to
 the reliable/lossless MTP0 optimization base; any failure preserves A13 as a
 bounded Grade-C positive and changes no protected result. See the
 [A14 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a14-fresh-server-prereg.md).
+A14 passed preflight but the host rebooted while workers were entering
+distributed initialization. It produced no checkpoint-load receipt, healthy
+endpoint, client request, model output, or timing. All four cards recovered
+idle after reboot; the partial evidence is preserved and its paths will not be
+reused. This is an infrastructure interruption, neither a reliability pass nor
+a model failure, and it changes no protected result. The exact contract must
+move to a new attempt identity. See the
+[A14 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a14-host-reboot-interruption.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

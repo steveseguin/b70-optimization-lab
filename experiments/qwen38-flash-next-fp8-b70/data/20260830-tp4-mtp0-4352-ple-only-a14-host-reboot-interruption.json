@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "infrastructure_interrupted_before_model_load",
+  "classification": "no_model_result_no_performance_credit",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "f68c9386fe5af54055bdf20684b269b9c1340e44",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "attempt": 14,
+    "port": 19686
+  },
+  "observed": {
+    "filesystem_preflight": "passed",
+    "four_rank_collective_preflight": "passed",
+    "source_and_staged_runtime_preflight": "passed",
+    "last_model_log": "rank 0 entered distributed initialization; no checkpoint shard, offload receipt, health, or request was recorded",
+    "health_file_bytes": 0,
+    "client_started": false,
+    "host_boot_before": "2026-08-29 22:11",
+    "host_boot_after": "2026-08-30 00:42",
+    "orderly_shutdown_record": false,
+    "model_or_runtime_exception_recorded": false
+  },
+  "post_reboot": {
+    "gpu_discovery": "4/4 expected B70 devices",
+    "gpu_memory_mib": [42.87890625, 42.875, 42.87890625, 42.875],
+    "owned_process_or_listener": false,
+    "external_ntfs": "manually remounted read-write before evidence inspection"
+  },
+  "raw_evidence": {
+    "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt14",
+    "supervisor_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt14-supervisor",
+    "sha256": {
+      "identity.txt": "0c595274b94fd58d0427e7c4e9a82d71282ca368573ac0d021b143229c852e14",
+      "server-command.shell.txt": "63bc4c93b24c4ac55a9acec444c443e5617adc1136c3e5a6d69fdfafc937f4c4",
+      "server.log": "552f970b6b0058f38b707f66e1beef551f48f8e78a3771232c342a2d986819b2",
+      "xccl-tp4-preflight.log": "6fecb5c33d6c952b37568bf53286e8f32cf0bba12dfe6c2ccff414e072aa800c",
+      "supervisor-journal-start-epoch.txt": "not separately hashed; retained in supervisor root"
+    }
+  },
+  "protected_results_changed": false,
+  "decision": "A14 is neither a reliability pass nor a model failure. Preserve it, do not reuse its paths, and repeat the frozen A14 contract under a new attempt identity after post-reboot health and storage recovery."
+}
