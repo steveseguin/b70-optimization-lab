@@ -1665,6 +1665,15 @@ NVMe PCIe events occurred during the otherwise successful local load/warmup;
 there was no reset, OOM, or reboot. Do not perform another local load in this
 boot. See the
 [A24 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a24-local-inner-trace-result.md).
+A25 is the flattened fresh-start control for A24's rank-0 inner PLE trace. It
+must be the first and only Flash-Next full load after a separately authorized
+reboot, then compare exactly 64 records and 171 tensor tuples against A24.
+Its vLLM head is `6955105032d99c22d4ffbdfea9b48a1940655b47`; the only delta
+from A24 is an inactive process-offload placeholder guard, while A25 retains
+the UVA path and every inference selector. The wrappers validate in about one
+second, reject this already-used boot, and preserve all protected results. See
+the
+[A25 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a25-fresh-inner-trace-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
