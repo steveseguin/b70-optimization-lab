@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "status": "fixed_input_ple_components_repeatable",
+  "classification": "bounded_xpu_component_isolation",
+  "scope": "Qwen3.8 Flash-Next FP8 residual 4K variability at the sole PLE-bearing layer",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head_for_gpu_gates": "2722a891374de99bba4aca9ffbe6776a620569a5",
+    "device": "Intel Arc Pro B70",
+    "active_placement": "selective per-rank UVA; VLLM_PLE_CPU_OFFLOAD absent"
+  },
+  "checks": {
+    "tp4_fp8_owner_sparse_int8_reduce": {
+      "shape": [64, 2560],
+      "repeats": 100,
+      "ranks": 4,
+      "unique_hashes_per_rank": 1,
+      "same_hash_all_ranks": true,
+      "cpu_byte_oracle_match_all": true,
+      "output_sha256": "708c32b43a27934f51cd5b8484191fe1871dc8c639073fed6382bee6894866e5"
+    },
+    "tp4_selective_uva_fp8_lookup": {
+      "shape": [64, 16, 160],
+      "storage": "pinned CPU table with accelerator UVA view",
+      "local_vocab_rows_per_rank": 4096,
+      "repeats": 100,
+      "ranks": 4,
+      "unique_hashes_per_rank": 1,
+      "same_hash_all_ranks": true,
+      "cpu_byte_oracle_match_all": true,
+      "output_sha256": "c10d82e5a99acceaa8c181eaaee4ad006e7806d96fb35eb3b5ccd07e836e7893"
+    },
+    "ple_short_conv_4k_state_progression": {
+      "chunks": 64,
+      "tokens_per_chunk": 64,
+      "hidden": 10240,
+      "conv_state_len": 9,
+      "dilation": 3,
+      "repeats": 2,
+      "output_sha256": "08320df5cf5e157ce402b78a1bea44cc7c7c6e45f2c1d11eac3dcdd72a448105",
+      "final_state_sha256": "11be42f9076423d7c8bb542f37a6d6ca8f06e29cc115ed13ca64f81ed18d05b3",
+      "dirty_valid_slot_reset_matches_clean": true,
+      "differing_values": 0
+    },
+    "ngram_context_4k_progression": {
+      "boundaries": "0,64,...,4032",
+      "repeat_each_boundary": 2,
+      "reused_request_slot": true,
+      "status": "passed"
+    },
+    "ple_checkpoint_shard_inventory": {
+      "logical_shards_in_model_index": "128/128, indices 0-127",
+      "new_loader_gate": "fail closed unless every observed split checkpoint provides all 128 indices",
+      "focused_tests": "15/15 passed"
+    }
+  },
+  "invalid_gate_attempt": {
+    "classification": "harness_error_no_model_evidence",
+    "description": "The first short-conv harness used cache slot 0, which is NULL_BLOCK_ID. The unchanged dirty null slot was expected padding behavior. The gate was corrected to valid slot 1 in a two-slot cache before interpretation.",
+    "raw_log_sha256": "eb99c3d6ba6c91c304cc97eb4dc5d997403e95b06660a288e49292ee96984da2"
+  },
+  "tools": {
+    "repeat-xccl-allreduce-gate.py": "491484f98c45af2ea9bc9054f9764489de7f2b328aea8d0c8e99dd0e7d7b838a",
+    "repeat-ple-short-conv-state-gate.py": "fd4c00d920f272b3af0aa7e520ff6efe0842f722d5c5661cc53f0d76e273e4be",
+    "repeat-ple-uva-fp8-lookup-gate.py": "f24db9b0f966294f0d6739f552e5e758cfbf0a15c6c44c024b6773c5f9447b2e"
+  },
+  "raw_evidence": {
+    "tp4_int8_reduce_log": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/component-gates/20260830-fp8-owner-sparse-int8-tp4/run.log",
+    "tp4_int8_reduce_log_sha256": "07d95b33b74e8b4049d547912e7264c853d743b36156066b9f4c62f272db3643",
+    "short_conv_valid_slot_log": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/component-gates/20260830-ple-short-conv-state/run-valid-slot.log",
+    "short_conv_valid_slot_log_sha256": "6db2d9f338970c61b99e75ed78d86c1c92d6a3a3844c14b66b851b90a1bba6fb",
+    "uva_lookup_log": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/component-gates/20260830-ple-uva-fp8-lookup-tp4/run.log",
+    "uva_lookup_log_sha256": "eea19fdfb054d0389a61e8396de6fb456274b0253ae48c81ed0827a27a002abf"
+  },
+  "protected_results_changed": false,
+  "decision": "Fixed-input PLE transport, lookup, reduction, short-conv state, and ngram-context progression are repeatable. Do not change arithmetic. Use the all-rank internal trace pair to distinguish actual checkpoint-table/content or request-derived value differences."
+}

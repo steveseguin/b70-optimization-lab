@@ -1596,16 +1596,41 @@ down cleanly. Its journal classifier found no blocking event, although one
 corrected local-Samsung-NVMe PCIe RxErr/NonFatalErr occurred during the
 successful external load. A19's reset was a confirmed uncorrected data-fabric
 event and the NVMe remains the leading correlated suspect, not a proven sole
-cause. Recovery, the inherited 6/7 semantic boundary, 16/16 repeatability,
-exact 4K needle, all three short
+cause. A17/A19 were also each the second full load in a boot after severe
+memory/swap pressure, whereas A21 was the next boot's first; storage and
+second-load pressure remain confounded. Use the external artifact and at most
+one full load per fresh boot until separated safely. Recovery, the inherited
+6/7 semantic boundary, 16/16 repeatability, exact 4K needle, all three short
 authority hashes, and both cache-zero exact-4K authority rows passed. The
 report-only trace timings receive no performance credit and no protected result
-changed. A16/A21 match through model input and all layer-0 outputs, then first
+changed. During A21's first external load, physical free memory fell to about
+1.03 GiB and essentially all 8 GiB of swap was occupied while about 47.8 GiB
+remained reclaimable/available. The observed SSH/UI stall therefore has direct
+host-pressure evidence: external reads overlapped heavy reclaim/swap-out and
+high-latency local-NVMe swap writes. No OOM, hung-task event, runtime failure,
+or new reset occurred, and the host recovered after teardown. A16/A21 match through model
+input and all layer-0 outputs, then first
 differ at `layer_1_output`; zero-based layer 1 is the sole PLE-bearing decoder
 layer. This localizes the next trace to that layer invocation but does not yet
 prove whether PLE lookup/addition or the layer's later operations differ. See
 the
 [A21 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a21-external-trace-result.md).
+Fixed-input isolation then closed the active FP8-byte TP4 reduction, a pinned-
+host selective-UVA lookup with the real PLE output geometry, 64 sequential
+short-convolution chunks plus dirty valid-slot reset, and 4K n-gram context
+progression. Each returned exact repeatability/oracle agreement. The first
+short-conv harness used reserved null slot 0 and is explicitly invalid; the
+corrected slot-1 gate passed. The loader now also requires all 128 logical PLE
+shard indices before boot. No arithmetic or protected result changed. See the
+[PLE isolation](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-ple-fixed-input-isolation.md).
+A22 is frozen as the first all-rank internal-trace member on source
+`613afcc501331aa6ff7d5a238a6c9a5d45777b3e`. It records raw/dequantized PLE
+lookup, projection/gate, convolution, attention, and MLP boundaries on all four
+ranks while retaining A21's external model and full launch identity. It is
+diagnostic-only and must run after a fresh boot under the one-full-load rule;
+an internally consistent A22 still requires the exact A23 fresh-start peer.
+See the
+[A22 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-4352-ple-only-a22-all-rank-inner-trace-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned

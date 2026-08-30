@@ -1,0 +1,68 @@
+From d45edd18bda54675504635ada4048cf077df0ed6 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 12:13:22 -0400
+Subject: [PATCH] Cover Qwen4Exp 4K ngram context progression
+
+---
+ tests/models/qwen4_exp/test_config.py | 45 +++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
+
+diff --git a/tests/models/qwen4_exp/test_config.py b/tests/models/qwen4_exp/test_config.py
+index 10e486ccc..dccd6d64d 100644
+--- a/tests/models/qwen4_exp/test_config.py
++++ b/tests/models/qwen4_exp/test_config.py
+@@ -370,6 +370,51 @@ def test_qwen4_exp_model_state_prepares_ngram_context() -> None:
+     )
+ 
+ 
++def test_qwen4_exp_ngram_context_progresses_across_4k_and_reused_slot() -> None:
++    model_state = object.__new__(Qwen4ExpModelState)
++    model_state.ngram_context_len = 2
++    model_state.ngram_eos_token_id = 99
++    model_state.ngram_context = torch.empty((2, 2), dtype=torch.int32)
++    model_state.ngram_context_offsets = torch.arange(-2, 0, dtype=torch.int64)
++
++    input_batch = SimpleNamespace(
++        num_reqs=1,
++        num_reqs_after_padding=1,
++        idx_mapping=torch.tensor([0]),
++    )
++    token_ids = torch.arange(4096, dtype=torch.int32).repeat(2, 1)
++    token_ids[1] += 10000
++    req_states = SimpleNamespace(
++        num_computed_tokens=SimpleNamespace(gpu=torch.tensor([0, 0])),
++        all_token_ids=SimpleNamespace(gpu=token_ids),
++    )
++
++    for boundary in range(0, 4096, 64):
++        req_states.num_computed_tokens.gpu[0] = boundary
++        context = model_state._prepare_ngram_context(input_batch, req_states).clone()
++        expected = (
++            torch.tensor([[99, 99]], dtype=torch.int32)
++            if boundary == 0
++            else torch.tensor([[boundary - 2, boundary - 1]], dtype=torch.int32)
++        )
++        torch.testing.assert_close(context, expected)
++        torch.testing.assert_close(
++            model_state._prepare_ngram_context(input_batch, req_states), expected
++        )
++
++    input_batch.idx_mapping[0] = 1
++    req_states.num_computed_tokens.gpu[1] = 0
++    torch.testing.assert_close(
++        model_state._prepare_ngram_context(input_batch, req_states),
++        torch.tensor([[99, 99]], dtype=torch.int32),
++    )
++    req_states.num_computed_tokens.gpu[1] = 64
++    torch.testing.assert_close(
++        model_state._prepare_ngram_context(input_batch, req_states),
++        torch.tensor([[10062, 10063]], dtype=torch.int32),
++    )
++
++
+ def test_qwen4_exp_model_state_prepares_stable_dummy_ngram_inputs() -> None:
+     model_state = object.__new__(Qwen4ExpModelState)
+     model_state.uses_ngram_embedding = True
+-- 
+2.43.0
+

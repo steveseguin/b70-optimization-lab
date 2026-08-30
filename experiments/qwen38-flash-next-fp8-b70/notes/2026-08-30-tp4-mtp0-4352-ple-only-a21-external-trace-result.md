@@ -14,6 +14,26 @@ completion. This validates the external checkpoint as an operational
 workaround, not proof that the NVMe endpoint alone caused the earlier resets,
 and it does not change model identity.
 
+A17 and A19 were also each the second full model load in their respective
+boots, after successful A16/A18 loads and substantial memory/swap pressure.
+A21 was the first full load after the next boot. Storage path and second-load
+host pressure are therefore confounded. Until separated safely, subsequent
+full loads use the external artifact and a one-full-load-per-fresh-boot rule.
+
+A21 itself also caused a temporary interactive stall during its first-load
+window. The 11:40 sysstat sample recorded only `1,084,060 KiB` physically free,
+all but `40 KiB` of the 8 GiB swap occupied, and `50,117,188 KiB` still
+estimated available through reclaim. There was no OOM, hung-task record, or
+runtime failure. In the same interval, sysstat recorded about 40.9% recent I/O
+pressure, 3,384 swap-out pages/s, 281 MiB/s from the external drive, and 115.5
+ms average wait on local-NVMe writes. The endpoint became healthy at 11:43, the
+battery completed at 11:54, and memory/swap recovered after teardown. This
+strongly explains the observed SSH/UI "freeze" as overlapping external reads,
+page reclaim, and local-NVMe swap writes. It is not evidence that A16/A17
+tracing code failed, nor proof of another hardware reset. A future full load
+should be announced as a possible 10–15 minute interactive-stall window and
+allowed to reach its bounded supervisor outcome.
+
 The unchanged battery passed recovery, the inherited 6/7 semantic boundary,
 16/16 repeatability, the exact 4K needle, all three protected short hashes, and
 both exact-4K authority rows. The short diagnostic median was `5.496024 tok/s`.

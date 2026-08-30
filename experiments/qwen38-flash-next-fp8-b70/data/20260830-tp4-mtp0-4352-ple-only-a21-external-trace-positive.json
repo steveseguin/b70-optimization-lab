@@ -23,6 +23,21 @@
     "checkpoint_shards": "131/131",
     "model_loading_seconds_by_rank": [582.984894, 582.688646, 582.693255, 583.017494],
     "model_memory_gib_per_rank": 31.57,
+    "host_pressure": {
+      "observed_interactive_stall": true,
+      "sysstat_sample_time_local": "2026-08-30T11:40:16-04:00",
+      "physical_free_kib": 1084060,
+      "available_kib": 50117188,
+      "swap_used_kib": 8388564,
+      "swap_total_kib": 8388604,
+      "io_pressure_some_percent": 40.88,
+      "swap_out_pages_per_second": 3384.18,
+      "external_read_kib_per_second": 287857.54,
+      "local_nvme_write_await_ms": 115.53,
+      "oom_or_hung_task_event": false,
+      "recovered_after_teardown": true,
+      "interpretation": "The external first-load arm temporarily made SSH/UI appear frozen while the USB checkpoint read, page reclaim, swap-out, and local-NVMe swap writes overlapped. The endpoint later became healthy and the battery completed. This is severe host-pressure evidence, not an OOM or proof of a hardware stop."
+    },
     "endpoint_healthy": true,
     "clean_teardown": true,
     "supervisor_final_rc": 0,
@@ -30,9 +45,9 @@
       "classifier_rc": 0,
       "blocking_or_fatal_events": 0,
       "corrected_event": "One corrected APEI PCIe RxErr/NonFatalErr for the local Samsung NVMe endpoint 0000:01:00.0 occurred during external shard loading; the uncorrected status bit was masked and A21 continued to completion.",
-      "causal_boundary": "A19's next boot confirms an uncorrected data-fabric sync-flood reset, and its final prior-boot record was a corrected event from the same NVMe endpoint at launch. Because the same corrected event class also occurred in successful A18/A21, the NVMe path is the leading correlated suspect, not a proven sole cause."
+      "causal_boundary": "A19's next boot confirms an uncorrected data-fabric sync-flood reset, and its final prior-boot record was a corrected event from the same NVMe endpoint at launch. Because the same corrected event class also occurred in successful A18/A21, and A17/A19 were each the second full load in a boot after severe memory/swap pressure, NVMe path and second-load host pressure are confounded. The NVMe endpoint is a leading correlated suspect, not a proven sole cause."
     },
-    "decision": "Use the validated external checkpoint path for subsequent full loads while the local Samsung NVMe path is quarantined."
+    "decision": "Use the validated external checkpoint path and at most one full model load per fresh boot while the local Samsung NVMe path and second-load memory-pressure confound remain quarantined."
   },
   "gates": {
     "recovery_canary": "passed",

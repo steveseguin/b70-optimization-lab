@@ -1,0 +1,74 @@
+From 555024c905afff94fd48d6e4fd4c92f9e2e26ae1 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 12:12:34 -0400
+Subject: [PATCH] Require complete Qwen4Exp PLE shard coverage
+
+---
+ tests/models/qwen4_exp/test_ple.py        | 11 +++++++++++
+ vllm/models/qwen4_exp/nvidia/ple_layer.py | 14 ++++++++++++++
+ 2 files changed, 25 insertions(+)
+
+diff --git a/tests/models/qwen4_exp/test_ple.py b/tests/models/qwen4_exp/test_ple.py
+index 562faea51..e1dcb1a94 100644
+--- a/tests/models/qwen4_exp/test_ple.py
++++ b/tests/models/qwen4_exp/test_ple.py
+@@ -177,6 +177,17 @@ def test_ngram_embedding_rejects_mismatched_checkpoint_shard() -> None:
+         module.load_weights([("ngram_embedding.shard_0.weight", torch.zeros(3, 2))])
+ 
+ 
++def test_ngram_embedding_rejects_incomplete_checkpoint_shard_coverage() -> None:
++    module = _make_ngram_embedding_for_load_test()
++    shard_0 = torch.arange(8, dtype=torch.float32).reshape(4, 2)
++
++    with pytest.raises(
++        RuntimeError,
++        match=r"PLE embedding checkpoint shard coverage is incomplete: missing=\[1\]",
++    ):
++        module.load_weights([("ngram_embedding.shard_0.weight", shard_0)])
++
++
+ def test_ngram_embedding_loads_fp8_shards_and_global_scale() -> None:
+     module = _make_fp8_ngram_embedding_for_load_test()
+     shard_0 = torch.arange(8, dtype=torch.float32).reshape(4, 2).to(torch.float8_e4m3fn)
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index b7c96de4b..2dfdd3f25 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -483,6 +483,7 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+         loaded: set[str] = set()
+         regular_weights: list[tuple[str, torch.Tensor]] = []
+         shard_prefix = "ngram_embedding.shard_"
++        observed_shard_indices: set[int] = set()
+ 
+         for name, loaded_weight in weights:
+             leaf_name = name.rsplit(".", 1)[-1]
+@@ -509,6 +510,9 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+                         f"PLE embedding shard index {shard_index} exceeds "
+                         f"split_ngram_parts={self.split_ngram_parts}"
+                     )
++                if shard_index in observed_shard_indices:
++                    raise ValueError(f"Duplicate PLE embedding shard {shard_index}")
++                observed_shard_indices.add(shard_index)
+                 embedding = self.ngram_embedding
+                 shard_size = (
+                     embedding.org_vocab_size + self.split_ngram_parts - 1
+@@ -536,6 +540,16 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+                 continue
+             regular_weights.append((name, loaded_weight))
+ 
++        if observed_shard_indices:
++            expected_shard_indices = set(range(self.split_ngram_parts))
++            if observed_shard_indices != expected_shard_indices:
++                missing = sorted(expected_shard_indices - observed_shard_indices)
++                unexpected = sorted(observed_shard_indices - expected_shard_indices)
++                raise RuntimeError(
++                    "PLE embedding checkpoint shard coverage is incomplete: "
++                    f"missing={missing}, unexpected={unexpected}"
++                )
++
+         if regular_weights:
+             loaded.update(AutoWeightsLoader(self).load_weights(regular_weights))
+         return loaded
+-- 
+2.43.0
+
