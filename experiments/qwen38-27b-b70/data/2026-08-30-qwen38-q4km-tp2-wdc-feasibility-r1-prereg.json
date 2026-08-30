@@ -1,0 +1,58 @@
+{
+  "schema": "neural.download.qwen38-q4km-tp2-wdc-feasibility-preregistration.v1",
+  "campaign_id": "qwen38-q4km-tp2-wdc-feasibility-20260830-r1",
+  "created_at_utc": "2026-08-30T15:37:57Z",
+  "state": "preregistered-not-launched",
+  "classification": "raw-engine-mechanism-evidence-only",
+  "purpose": "Determine whether Q4_K oneDNN weight-decompression-on-compute fits and materially improves the TP2 c64 route that otherwise dequantizes weights to F16 before GEMM.",
+  "why_not_redundant": "Prior attempts were TP1 and failed from per-card reorder residency before an engaged B64 WDC result. TP2 halves weight residency per card and has not been tested.",
+  "identity": {
+    "model": "Qwen3.8-27B-Q4_K_M.gguf",
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "6a6b49a22e09738f5de7bd04f1ac71b4a39d764091c5cf4f02ee0c526dce170f",
+    "llama_batched_bench_sha256": "c2d55d3c7d55f0f309bc381ca9ca35b0d57193b8d64f8c2fb4bd98e631bd7248",
+    "libggml_sycl_sha256": "2549cb97c9789a8a70c6f5187119c1bfe73a211b6312fbe396c05e288517cdeb",
+    "cards": 2,
+    "topology": "TP2 equal tensor split",
+    "build_features": ["GGML_SYCL_DNN=ON", "GGML_SYCL_Q4K_NIBBLE_PLANE=1"]
+  },
+  "matched_runtime": {
+    "common": [
+      "GGML_SYCL_WDC=off",
+      "GGML_SYCL_REORDER_IN_GEMM=1",
+      "GGML_SYCL_FORCE_REORDER_Q4K=1",
+      "GGML_SYCL_DISABLE_REORDER_Q6K=1",
+      "Q4_K_M target-only, F16 KV, flash attention, batch 2048, ubatch 256, context 32768, 8 threads, poll 50"
+    ],
+    "control": "GGML_SYCL_WDC_Q4K=0",
+    "candidate": "GGML_SYCL_WDC_Q4K=1",
+    "isolation_reason": "Both arms pay identical Q4_K plane-reorder residency and both suppress q6_K reorder; only the Q4_K matmul implementation differs."
+  },
+  "frozen_run_order": ["control", "candidate"],
+  "runner": {
+    "path": "experiments/qwen38-27b-b70/scripts/run-20260830-qwen38-q4km-tp2-wdc-feasibility-r1.sh",
+    "sha256": "debb2c3fb00321d9127542930a2c503a7832d372df7926ffec602a567699da6d"
+  },
+  "measurement": {
+    "parallel_sequences": 64,
+    "prompt_tokens_per_sequence": 128,
+    "generated_tokens_per_sequence": 128,
+    "fresh_processes_per_arm": 1,
+    "primary_metric": "raw aggregate speed_tg",
+    "candidate_liveness": "resolved WDC q4_K banner is on and a non-mutant WDC-CENSUS ENGAGED line is present",
+    "control_liveness": "resolved WDC q4_K banner is off and no WDC-CENSUS ENGAGED line is present"
+  },
+  "advance_if": {
+    "candidate_completes_without_device_or_host_oom": true,
+    "candidate_liveness_passes": true,
+    "minimum_gain_over_control_percent": 5.0,
+    "next_stage": "build the same candidate's llama-server target, then preregister two fresh output-qualified HTTP c64 replications and strict mixed-content parity before any package change"
+  },
+  "stop_rules": [
+    "Stop and retain unsupported evidence on OOM, device loss, Xe fault/reset/hang, missing row, missing liveness, or source/binary identity mismatch.",
+    "Do not publish raw batched-bench throughput or infer HTTP throughput from it.",
+    "Do not weaken output or quality gates if the mechanism screen passes."
+  ],
+  "no_interpolation_or_extrapolation": true
+}
