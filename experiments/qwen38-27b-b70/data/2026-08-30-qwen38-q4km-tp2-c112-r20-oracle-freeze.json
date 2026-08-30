@@ -1,0 +1,24 @@
+{
+  "campaign": "qwen38-q4km-tp2-c112-20260830-r20",
+  "status": "stage-1 pilot passed; same-shape batch oracle frozen before candidate measurement",
+  "pilot_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, cache off, 112 pinned slots, requested context 32768, live 512 tokens/slot and effective total context 57344, batch 2048, ubatch 256, FUSE_EXT=31, prompt cache off",
+  "pilot_rate_tok_s_nonpublic": 190.4669217946073,
+  "sequential_reference_identity": "63/112; reported separately and not treated as the same-shape candidate oracle",
+  "same_shape_batch_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-c112-batch-oracle-r20.json",
+    "sha256": "6cea47893733cdec2cdd2f4bb9d5058700687b3b93e0739838dd35ef421f335a",
+    "rows": 112,
+    "verified_against_pilot_batch": "112/112 complete token-ID digests"
+  },
+  "pilot_evidence": {
+    "result_sha256": "ac3515938335f16901d94cd0261f03b7c42f0e7eccb637b48d567a08ee767fe6",
+    "summary_sha256": "c2b38ccd8d59567a5cc86d02d0f43b33c8ebcb51a1302fc34944d81c72595a74",
+    "qualification_sha256": "97c7de63480808b10e187812bf21bfa0210348f578772ebe135582b889df20ae",
+    "server_log_sha256": "1459978495dea31bcf250726089dcfb414d2875eeb29f9d3c124cfbc701afa1e",
+    "server_command_sha256": "353e3df8f37cf1c81507cb7e6dad99c3a3105d878ffdd9813ffbc61e349bc540",
+    "vram_monitor_sha256": "763d61a846dd19fec357aced47cd1649c6d502f7a0ef12f5764fcac900e66fe3",
+    "gpu0_peak_used_mib": 21160.363281,
+    "gpu1_peak_used_mib": 21034.46875
+  },
+  "candidate_gate": "A fresh ffn_down+ffn_gate cache attempt must match this frozen oracle 112/112 and exceed 192.35094949480367 tok/s before any repeat."
+}
