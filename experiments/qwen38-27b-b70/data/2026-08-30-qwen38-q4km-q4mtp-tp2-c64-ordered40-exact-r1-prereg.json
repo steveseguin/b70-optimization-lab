@@ -1,0 +1,28 @@
+{
+  "campaign": "qwen38-q4km-q4mtp-tp2-c64-ordered40-exact-20260830-r1",
+  "status": "preregistered-before-control-or-candidate measurement",
+  "purpose": "Measure whether the exact-qualified TP2 MTP2 deployment retains an aggregate advantage at 64 concurrent users under corrected deterministic admission and exact output identity.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M target, TP2 tensor 1,1, tuned target profile, Q4_K reorder enabled in both arms, WDC disabled, 64 slots, 32768 total context, batch 2048, ubatch 256, cache off, temperature 0, seed 42, 128 tokens per request.",
+  "admission_contract": {
+    "launch_stagger_ms": 40,
+    "queue_settle_ms": 3000,
+    "required_client_order": "c000 through c063 exactly",
+    "reason": "The 2520 ms launch span remains within one server admission window, removing request-to-slot mapping as an output confound."
+  },
+  "arms": [
+    "Fresh MTP0 control generates the sole c64 ordered oracle after all batch gates pass.",
+    "Fresh MTP2 candidate must match that frozen oracle 64/64 exactly."
+  ],
+  "candidate_delta": "Enable the external Q4_0 MTP draft at depth 2; target model, target arithmetic, server binary, admission order, workload, and all other runtime settings remain fixed.",
+  "required_gates": [
+    "64/64 complete 128-token responses",
+    "candidate token-ID digests exactly match the frozen MTP0 c64 oracle 64/64",
+    "all cached token counts are zero",
+    "complete token-ID identity and collision gates pass",
+    "no WDC engagement",
+    "no GPU fault, reset, device loss, OOM, or model-process segfault",
+    "clean server shutdown"
+  ],
+  "publication_policy": "Publish only measured output-qualified aggregate throughput. No interpolation, extrapolation, fixture reuse, or shape-variant output allowance."
+}

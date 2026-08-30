@@ -25,8 +25,8 @@ index 5d37c3453..b27f0b5bb 100644
 +        char * end = nullptr;
 +        errno = 0;
 +        const long long parsed = std::strtoll(value, &end, 10);
-+        if (errno != 0 || end == value || *end != '\0' || parsed < 0 || parsed > 1000) {
-+            QUE_WRN("ignoring invalid LLAMA_SERVER_QUEUE_SETTLE_MS=%s (expected 0..1000)\n", value);
++        if (errno != 0 || end == value || *end != '\0' || parsed < 0 || parsed > 5000) {
++            QUE_WRN("ignoring invalid LLAMA_SERVER_QUEUE_SETTLE_MS=%s (expected 0..5000)\n", value);
 +            return 0;
 +        }
 +        return parsed;

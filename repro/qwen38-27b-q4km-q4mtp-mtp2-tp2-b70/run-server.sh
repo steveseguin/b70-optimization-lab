@@ -25,7 +25,7 @@ q8_dedup_override=${Q8_DEDUP_OVERRIDE:-}
 [[ -z "${wdc_q4k_name_filter}" || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K_NAME_FILTER requires WDC_Q4K=1\n' >&2; exit 2; }
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
-[[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 1000\n' >&2; exit 2; }
+[[ "${queue_settle_ms}" =~ ^[0-9]+$ ]] && (( queue_settle_ms <= 5000 )) || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 5000\n' >&2; exit 2; }
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || { printf 'TP_SIZE must be 1 or 2\n' >&2; exit 2; }
 [[ "${feature_profile}" == tuned || "${feature_profile}" == reference || "${feature_profile}" == base ]] || { printf 'FEATURE_PROFILE must be tuned, reference, or base\n' >&2; exit 2; }
 [[ -z "${q8_dedup_override}" || "${q8_dedup_override}" == 0 || "${q8_dedup_override}" == 1 || "${q8_dedup_override}" == 2 ]] || { printf 'Q8_DEDUP_OVERRIDE must be empty, 0, 1, or 2\n' >&2; exit 2; }

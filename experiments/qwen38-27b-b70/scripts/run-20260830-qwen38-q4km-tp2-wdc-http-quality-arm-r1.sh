@@ -11,6 +11,7 @@ pilot_mode=${PILOT_MODE:-0}
 q4k_reorder=${Q4K_REORDER:-1}
 batch_size=${BATCH_SIZE:-2048}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
+mtp_depth=${MTP_DEPTH:-0}
 tp_size=${TP_SIZE:-2}
 concurrency=${CONCURRENCY:-64}
 context_override=${CONTEXT_SIZE:-}
@@ -61,7 +62,8 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || fail 'Q4K_REORDER must be 0 or 1'
 [[ "${arm}" == control || "${q4k_reorder}" == 1 ]] || fail 'candidate requires Q4K_REORDER=1'
 [[ "${batch_size}" =~ ^[1-9][0-9]*$ ]] || fail 'BATCH_SIZE must be positive'
-[[ "${queue_settle_ms}" =~ ^([0-9]|[1-9][0-9]{1,2}|1000)$ ]] || fail 'QUEUE_SETTLE_MS must be 0..1000'
+[[ "${queue_settle_ms}" =~ ^[0-9]+$ ]] && (( queue_settle_ms <= 5000 )) || fail 'QUEUE_SETTLE_MS must be 0..5000'
+[[ "${mtp_depth}" == 0 || "${mtp_depth}" == 2 ]] || fail 'MTP_DEPTH must be 0 or 2'
 [[ "${tp_size}" == 1 || "${tp_size}" == 2 ]] || fail 'TP_SIZE must be 1 or 2'
 [[ "${concurrency}" =~ ^[1-9][0-9]*$ ]] || fail 'CONCURRENCY must be positive'
 [[ -z "${context_override}" || "${context_override}" =~ ^[1-9][0-9]*$ ]] || fail 'CONTEXT_SIZE must be positive'
@@ -144,7 +146,7 @@ trap cleanup EXIT INT TERM
 
 timeout --signal=INT --kill-after=30s 3600s env \
   TARGET_DIR="${target_dir}" DRAFT_DIR="${draft_dir}" BUILD_DIR="${build_dir}" \
-  ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
+  ALLOW_REBUILT_BINARIES=1 MTP_DEPTH="${mtp_depth}" WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
   WDC_Q4K_NAME_FILTER="${wdc_q4k_name_filter}" \
   TP_SIZE="${tp_size}" \
   FEATURE_PROFILE="${feature_profile}" \
@@ -226,7 +228,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${queue_settle_ms}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -237,6 +239,7 @@ feature_profile = sys.argv[10]
 q8_dedup_override = None if sys.argv[11] == "" else int(sys.argv[11])
 launch_stagger_ms = int(sys.argv[12])
 wdc_q4k_name_filter = sys.argv[13] or None
+mtp_depth = int(sys.argv[14])
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -267,6 +270,7 @@ summary = {
     "q8_dedup_override": q8_dedup_override,
     "launch_stagger_ms": launch_stagger_ms,
     "wdc_q4k_name_filter": wdc_q4k_name_filter,
+    "mtp_depth": mtp_depth,
 }
 if concurrency == 64:
     summary["aggregate_tok_s_c64"] = result["batches"][0]["aggregate_tok_s_wall"]
