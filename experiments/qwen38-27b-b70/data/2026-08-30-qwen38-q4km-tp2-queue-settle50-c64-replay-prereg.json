@@ -1,0 +1,55 @@
+{
+  "campaign": "qwen38-q4km-tp2-queue-settle50-c64-replay-20260830-r1",
+  "status": "preregistered-after-pilot-and-before-replay-measurement",
+  "purpose": "Test whether the explicit burst-admission window makes a frozen c64 Q4_K_M control output exactly reproducible across fresh servers.",
+  "pilot_result": {
+    "result_sha256": "3cd934c787241b5ad247f8aad6a059246745944be1589dc238242ec86a399432",
+    "classification": "output-isolation-qualified-shape-variant",
+    "requests_complete": "64/64",
+    "cached_tokens_all_zero": true,
+    "cross_base_oracle_collision_count": 0,
+    "sequential_oracle_exact": "38/64",
+    "diagnostic_only_aggregate_tok_s": 147.44371676357042
+  },
+  "frozen_c64_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-queue-settle50-c64-oracle-digests.json",
+    "sha256": "4be8f8fbd18f2469ab3d0769ad0f1e36bd14ac880236d672f375785d72d3e437",
+    "rows": 64,
+    "tokens_per_row": 128
+  },
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "launcher_sha256": "2e723db1f96a3327f14666f133f7a9e99ad520b09cc373ef1181b30060f43253",
+    "arm_runner_sha256": "cf6a6a6f09223b193dba0a71233cdb7005cff2beea75057de91d6603a044c0e9"
+  },
+  "fixed_configuration": {
+    "topology": "TP2 tensor split 1,1",
+    "quant": "Q4_K_M",
+    "MTP": 0,
+    "parallel_slots": 64,
+    "context": 32768,
+    "batch_size": 4096,
+    "ubatch_size": 256,
+    "concurrency": 64,
+    "generated_tokens_per_request": 128,
+    "queue_settle_ms": 50,
+    "Q4K_REORDER": 1,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset",
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "run_order": [
+    "concurrency-control-attempt1",
+    "concurrency-control-attempt2"
+  ],
+  "pass_gate": "Both fresh servers must match all 64 frozen token-ID digests, complete every 128-token response, report zero cached tokens and zero cross-base collisions, show the 50 ms settle window, remain WDC-negative, and have no kernel/server fault.",
+  "failure_policy": "Any 63/64-or-worse replay fails the scheduler fix. Throughput remains diagnostic and no WDC candidate may run.",
+  "publication_policy": "Passing this campaign establishes a deterministic c64 control shape only. It does not qualify WDC or create a headline speed result."
+}
