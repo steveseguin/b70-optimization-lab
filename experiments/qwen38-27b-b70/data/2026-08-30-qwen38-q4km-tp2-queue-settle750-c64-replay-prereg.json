@@ -1,0 +1,46 @@
+{
+  "campaign": "qwen38-q4km-tp2-queue-settle750-c64-replay-20260830-r1",
+  "status": "preregistered-after-pilot-and-before-replay-measurement",
+  "purpose": "Determine whether a single 64-request admission cohort is token-exact across fresh servers, separating request-scheduling variation from lower-level GPU nondeterminism.",
+  "frozen_oracle": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-tp2-queue-settle750-c64-oracle-digests.json",
+    "sha256": "4d4a067856c8372fad601f4874d2aa728db59c4217bb40cd164976d319a19504",
+    "source_result_sha256": "214f8e0588c0eca2fc1f6d61ab56d9bf3581079ec188682f927a01964192885e",
+    "rows": 64,
+    "tokens_per_row": 128
+  },
+  "fixed_configuration": {
+    "topology": "TP2 tensor split 1,1",
+    "quant": "Q4_K_M",
+    "MTP": 0,
+    "parallel_slots": 64,
+    "context": 32768,
+    "batch_size": 4096,
+    "ubatch_size": 256,
+    "concurrency": 64,
+    "generated_tokens_per_request": 128,
+    "queue_settle_ms": 750,
+    "Q4K_REORDER": 1,
+    "GGML_SYCL_WDC": "off",
+    "GGML_SYCL_WDC_Q4K": "unset",
+    "cache_prompt": false,
+    "temperature": 0,
+    "seed": 42
+  },
+  "identities": {
+    "model_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "source_commit": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "source_diff_sha256": "5de9b2e1cf16a43d62cb8823e42444424597ac09fe82400cc839781d857ed3ac",
+    "server_sha256": "7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c",
+    "server_impl_sha256": "ecc061232cd681d3b311d65bdab2a9e6cffd16dc352695c062d0807c57021913",
+    "backend_sha256": "72beceb1906a130c3f5d064fb68a844b792ecdc28d3230935cdea9be259f4daf",
+    "arm_runner_sha256": "6e16a60b24b12e8a510b741ded8992254f8f207bc17406c72942b178ad940c58"
+  },
+  "run_order": [
+    "concurrency-control-attempt1",
+    "concurrency-control-attempt2-if-attempt1-passes"
+  ],
+  "pass_gate": "Each fresh server must launch all 64 requests within one admission cohort and match all 64 frozen token-ID digests. Completion, zero-cache, isolation, collision, WDC-negative, cleanup, and kernel gates must all pass.",
+  "failure_policy": "The first replay below 64/64 stops the campaign and establishes nondeterminism below HTTP admission scheduling. No WDC candidate runs.",
+  "performance_boundary": "The pilot measured only 55.22982837146928 tok/s and is unsuitable as a deployment profile. Replay speed is diagnostic only even if exactness passes."
+}

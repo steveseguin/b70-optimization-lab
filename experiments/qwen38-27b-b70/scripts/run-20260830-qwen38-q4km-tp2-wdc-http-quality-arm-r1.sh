@@ -198,7 +198,7 @@ else
   "${harness_cmd[@]}" | tee "${run_dir}/harness-summary.txt"
   qualifier_cmd=(python3 "${concurrency_qualifier}" --result "${run_dir}/result.json"
     --out "${run_dir}/qualification.json" --active-slots 64)
-  if [[ "${baseline_mode}" == 1 || "${pilot_mode}" == 1 ]]; then
+  if [[ "${baseline_mode}" == 1 ]]; then
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
