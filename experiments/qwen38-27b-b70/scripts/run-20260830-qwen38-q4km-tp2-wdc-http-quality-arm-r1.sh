@@ -7,6 +7,7 @@ profile=${PROFILE:?set PROFILE to realistic or concurrency}
 arm=${ARM:?set ARM to control or candidate}
 attempt=${ATTEMPT:-1}
 baseline_mode=${BASELINE_MODE:-0}
+q4k_reorder=${Q4K_REORDER:-1}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -38,6 +39,8 @@ case ${arm} in control) wdc=0 ;; candidate) wdc=1 ;; *) fail 'ARM must be contro
 [[ "${attempt}" =~ ^[1-9][0-9]*$ ]] || fail 'ATTEMPT must be positive'
 [[ "${baseline_mode}" == 0 || "${baseline_mode}" == 1 ]] || fail 'BASELINE_MODE must be 0 or 1'
 [[ "${baseline_mode}" == 0 || "${arm}" == control ]] || fail 'BASELINE_MODE is control-only'
+[[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || fail 'Q4K_REORDER must be 0 or 1'
+[[ "${arm}" == control || "${q4k_reorder}" == 1 ]] || fail 'candidate requires Q4K_REORDER=1'
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ "$(findmnt -no FSTYPE --target "${out_parent}")" == ext4 ]] || fail 'OUT_DIR must be ext4'
 
@@ -110,7 +113,7 @@ trap cleanup EXIT INT TERM
 
 timeout --signal=INT --kill-after=30s 3600s env \
   TARGET_DIR="${target_dir}" DRAFT_DIR="${draft_dir}" BUILD_DIR="${build_dir}" \
-  ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" PORT="${port}" \
+  ALLOW_REBUILT_BINARIES=1 MTP_DEPTH=0 WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
   CTX_SIZE="${context}" PARALLEL_SLOTS="${parallel}" BATCH_SIZE=2048 \
   UBATCH_SIZE=256 THREADS=8 "${launcher}" >"${run_dir}/server.log" 2>&1 &
 server_job=$!
@@ -192,10 +195,14 @@ import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
+oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
 summary = {
     "profile": "concurrency",
     "arm": arm,
-    "quality_qualified": quality.get("batch_gates_passed") is True,
+    "quality_qualified": quality.get("batch_gates_passed") is True and oracle_exact_all,
+    "sequential_oracle_exact_all": oracle_exact_all,
+    "sequential_oracle_exact_count": result["batches"][0].get("oracle_exact_count"),
+    "sequential_oracle_exact_total": result["batches"][0].get("oracle_exact_total"),
     "aggregate_tok_s_c64": result["batches"][0]["aggregate_tok_s_wall"],
     "cached_tokens_all_zero": quality.get("cached_tokens_all_zero"),
     "complete_token_id_identity_all": quality.get("complete_token_id_identity_all"),

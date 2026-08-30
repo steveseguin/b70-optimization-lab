@@ -1,0 +1,23 @@
+{
+  "campaign": "qwen38-q4km-tp2-reorder-off-c64-determinism-20260830-r1",
+  "status": "preregistered-before-measurement",
+  "purpose": "Isolate whether scoped Q4_K reorder caused the current control's 38/64 sequential-to-c64 token mismatch.",
+  "arm": {
+    "WDC": "all types off",
+    "Q4K_REORDER": 0,
+    "MTP": 0,
+    "topology": "TP2 tensor 1,1",
+    "parallel_slots": 64,
+    "context": 32768,
+    "batch": 2048,
+    "ubatch": 256
+  },
+  "reference": {
+    "reorder_on_exact": "38/64",
+    "reorder_on_aggregate_tok_s": 166.48867462453802,
+    "artifact": "/mnt/fast-ai/bench-results/qwen38-q4km-tp2-current-control-oracle-20260830-r2-concurrency-control-attempt1/result.json"
+  },
+  "advance_rule": "The fresh reorder-off server must generate 64 complete sequential oracle rows, reproduce all 64 token sequences under c64, report zero cached tokens/cross-request collisions, and show no kernel or WDC engagement evidence.",
+  "interpretation": "64/64 isolates scoped reorder as the divergence source; less than 64/64 means the current backend has a broader batching-shape output divergence.",
+  "publication_policy": "Diagnostic only. No headline or package change follows without a separate performance and quality campaign."
+}
