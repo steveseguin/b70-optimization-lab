@@ -1434,6 +1434,11 @@ event. This is the preferred MTP0 placement candidate, not deployment-ready:
 a fresh-server repeat remains required, and corrected local-NVMe link events
 block clean-host wording. Every prior result remains protected. See the
 [A9 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a9-result.md).
+The exact A10 fresh-server replica is now preregistered with no serving-selector
+change. It repeats the full quality, 16/16 determinism, short, exact-4K, and
+owned-teardown gates; a full pass promotes the placement to the reliable MTP0
+optimization base, while any failure leaves A9 Grade C. See the
+[A10 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-29-tp4-mtp0-4352-ple-only-a10-fresh-server-prereg.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are
 paused, not abandoned. The 0731 artifact itself passed its complete pinned
