@@ -1,0 +1,81 @@
+{
+  "schema": "neural.download.qwen38-q4km-tp2-scheduler-screen-result.v1",
+  "campaign_id": "qwen38-q4km-tp2-scheduler-screen-20260830-r1",
+  "status": "completed-no-candidate-advanced",
+  "classification": "qualified-diagnostic-screen-not-publishable",
+  "promotion_authorized": false,
+  "fresh_control": {
+    "arm": "b2048-u256-c32768-t8",
+    "aggregate_tok_s_c64": 162.63424443664948
+  },
+  "advance_threshold": {
+    "minimum_gain_percent": 3.0,
+    "minimum_aggregate_tok_s_c64": 167.51327176974897
+  },
+  "arms": [
+    {
+      "arm": "b1024-u256-c32768-t8",
+      "aggregate_tok_s_c64": 160.7451038803791,
+      "relative_to_control_percent": -1.1615884236522156,
+      "qualified": true,
+      "advanced": false
+    },
+    {
+      "arm": "b2048-u256-c32768-t8",
+      "aggregate_tok_s_c64": 162.63424443664948,
+      "relative_to_control_percent": 0.0,
+      "qualified": true,
+      "advanced": false
+    },
+    {
+      "arm": "b4096-u256-c32768-t8",
+      "aggregate_tok_s_c64": 162.03201782241496,
+      "relative_to_control_percent": -0.3702950853435527,
+      "qualified": true,
+      "advanced": false
+    },
+    {
+      "arm": "b2048-u512-c32768-t8",
+      "aggregate_tok_s_c64": 165.5017291980408,
+      "relative_to_control_percent": 1.7631494346864285,
+      "qualified": true,
+      "advanced": false
+    },
+    {
+      "arm": "b2048-u256-c16384-t8",
+      "aggregate_tok_s_c64": 162.41846339830025,
+      "relative_to_control_percent": -0.13267872279708604,
+      "qualified": true,
+      "advanced": false
+    },
+    {
+      "arm": "b2048-u256-c32768-t16",
+      "aggregate_tok_s_c64": 161.49997666967136,
+      "relative_to_control_percent": -0.6974347689855387,
+      "qualified": true,
+      "advanced": false
+    }
+  ],
+  "quality_gates": {
+    "qualified_arms": "6/6",
+    "classification_all": "output-isolation-qualified-shape-variant",
+    "completion_tokens": "128 for all 384 measured responses",
+    "cached_prompt_tokens": "zero for all arms",
+    "complete_returned_token_ids": true,
+    "cross_base_oracle_collisions": 0
+  },
+  "decision": {
+    "selected_candidate": null,
+    "reason": "The best arm, ubatch 512, improved the one-attempt fresh control by only 1.76%, below the preregistered 3% advancement threshold.",
+    "public_matrix_change": "none",
+    "existing_qualified_c64_value_replaced": false,
+    "next_work": "Profile the qualified c64 target-only path and screen a kernel or communication change tied to measured time rather than continuing scheduler tuning."
+  },
+  "evidence": {
+    "archive": "experiments/qwen38-27b-b70/data/qwen38-q4km-tp2-scheduler-screen-20260830-r1",
+    "manifest_sha256": "44f85aefa70648f06ff2635a11070a360c1ee9c68acacec14bd3df851b4857e5",
+    "artifact_count": 102,
+    "archive_verification": "102/102 gzip payloads match their recorded uncompressed SHA-256"
+  },
+  "reporting_boundary": "One fresh server per arm. These exact c64 values are diagnostic only; no interpolation, extrapolation, public headline replacement, or external submission is authorized."
+}
