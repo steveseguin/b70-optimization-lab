@@ -5,7 +5,7 @@
   "name": "Qwen 27B",
   "display_name": "Qwen 27B · 3.6 → 3.8",
   "publisher": "Qwen / Alibaba",
-  "updated_at": "2026-08-28",
+  "updated_at": "2026-08-30",
   "summary": "Alibaba's dense 27B Qwen line (3.6 and the newer 3.8), the lab's most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM.",
   "featured_results": [
     {
@@ -464,6 +464,19 @@
       "coverage": ["decode", "context", "prefill", "TTFT", "quality", "recipe", "concurrency"],
       "projection": {"model": "qwen3.8_27b", "quant": "Q4_K_M", "runtime": "llama_cpp", "spec": "none", "strategy": "tensor", "prompt_tokens": 128, "output_tokens": 128},
       "manifest": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
+      "label": "Qwen3.8 Q4_K_M + Q4_0 MTP2 · TP2",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-ggmlorg-q4-k-m-0669b98",
+      "quantization": "Q4_K_M",
+      "runtime": "llama.cpp SYCL",
+      "cards": 2,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": ["strict short-context decode", "MTP0/2", "quality", "target oracle", "fresh-server repeat", "recipe"],
+      "manifest": "packages/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/package.json"
     },
     {
       "id": "qwen38-27b-q8-tp1-b70",

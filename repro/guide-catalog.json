@@ -532,6 +532,42 @@
       ]
     },
     {
+      "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
+      "guide": "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md",
+      "package": "packages/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/package.json",
+      "classification": "candidate-portable-repro",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": true,
+        "source_restore": true,
+        "build": true,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/manifest.sha256",
+        "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
+        "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+        "patches/qwen36-27b-q8-tp2-asrock-b70/README.md",
+        "patches/qwen38-27b-q4km-tp2-asrock-b70/README.md",
+        "patches/qwen38-27b-q4km-tp1-b70s/README.md",
+        "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promotion-attestation.json",
+        "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-result.json",
+        "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp2-mtp2-20260830/manifest.json"
+      ],
+      "missing": [
+        "measured 32K active-context profile for this exact MTP2 deployment",
+        "output-qualified HTTP concurrency profile for this exact MTP2 deployment",
+        "tested clean-host Intel driver and oneAPI installation",
+        "clean-host source build and endpoint replay",
+        "beginner recovery replay"
+      ]
+    },
+    {
       "id": "qwen38-27b-q4km-tp2-asrock-b70",
       "guide": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md",
       "package": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json",

@@ -25,6 +25,36 @@ SPEC.loader.exec_module(MODULE)
 
 
 class FamilyCoverageTest(unittest.TestCase):
+    def test_qwen38_tp2_mtp2_package_is_synchronized_without_invented_cells(self) -> None:
+        index_html = (MODULE.ROOT / "index.html").read_text()
+        row = re.search(
+            r"2&times; B70 &middot; Q4_K_M \+ Q4_0 draft &middot; MTP depth 2.*?</tr>",
+            index_html,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(row)
+        self.assertIn(">64.24</a>", row.group(0))
+        self.assertEqual(row.group(0).count("not measured"), 2)
+        self.assertIn(
+            'data-copy-markdown="repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md"',
+            row.group(0),
+        )
+        package = json.loads(
+            (
+                MODULE.ROOT
+                / "packages/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/package.json"
+            ).read_text()
+        )
+        self.assertAlmostEqual(
+            package["library"]["featured_metric"]["value"],
+            64.23730130993152,
+        )
+        self.assertEqual(len(package["performance_profiles"]), 1)
+        self.assertEqual(
+            [point["speculative_tokens"] for point in package["performance_profiles"][0]["points"]],
+            [0, 2],
+        )
+
     def test_home_benchmark_tables_separate_weights_from_generation_mode(self) -> None:
         index_html = (MODULE.ROOT / "index.html").read_text()
         self.assertNotIn("Compression &amp; speed-up", index_html)

@@ -1,0 +1,107 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "created_utc": "2026-08-30T05:03:00Z",
+  "profile_id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70-short-context",
+  "decision": "promote",
+  "promotion_authorized": true,
+  "headline": {
+    "value": 64.23730130993152,
+    "unit": "tok/s",
+    "aggregation": "median of two fresh-server class-balanced medians",
+    "candidate_values": [64.18064352599666, 64.2939590938664],
+    "matched_oracle_value": 49.78736600126793,
+    "gain_percent": 29.023297413033667,
+    "metric_events": 100,
+    "metric_intervals": 99
+  },
+  "performance_evidence": {
+    "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-result.json",
+    "sha256": "9456e65e657edb7d9a32f64aa4e6be9ae20e6ea6987e9a587c962f2942663791"
+  },
+  "performance_receipts": {
+    "oracle_performance_sha256": "b7b11e16845b716bd3b4787e9ac153bd5c108a094fa11bd5d1e1d0603ee3719d",
+    "candidate_r1_performance_sha256": "ce6a70669aec04cc9fadd7c47c98d9dc16f81ee627681cb88b4546fcc6f5d69c",
+    "candidate_r2_performance_sha256": "64e1afcf0a34300fa2998032588b336b357e55808eb166fa5ee122ef51247a99",
+    "archive_manifest": "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp2-mtp2-20260830/manifest.json",
+    "archive_manifest_sha256": "28bc902e94a2ddebd62a867707a6a3ded5cba395a54de44f25c90b031f693d89"
+  },
+  "identity": {
+    "model_revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "runtime_revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "optimization_identity": "qwen38-q4km-target-tp2-equal-split-q4mtp-sycl0-depth2-f16kv-b1024-u256-t8",
+    "target_sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34",
+    "draft_sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e",
+    "llama_server_sha256": "35f2d2327f05f42feb40f1a015ff46791e7277771ed97653f085be05a6f2c545",
+    "libggml_sycl_sha256": "0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd154",
+    "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+    "screen_validator_sha256": "50baeb1c3c041cbac5582ffc3e4d8a3149efa407b0f5b39e33480f8ef2d1a4ed",
+    "replication_validator_sha256": "74caa81297ed6b29dfa1e5c56696c616dfc64f64076f582e89ac9803610a5c32"
+  },
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-screen-r1-result.json",
+      "sha256": "a5246b1d3c590867d016b169aadf1314248e33502d973c21e04fb09be1db5012",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    },
+    {
+      "path": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-result.json",
+      "sha256": "9456e65e657edb7d9a32f64aa4e6be9ae20e6ea6987e9a587c962f2942663791",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    }
+  ],
+  "fresh_server_evidence": {
+    "distinct_attempts": [
+      "qwen38-q4km-q4mtp-tp2-mtp0-20260830-r1",
+      "qwen38-q4km-q4mtp-tp2-mtp2-20260830-r1",
+      "qwen38-q4km-q4mtp-tp2-mtp2-20260830-r2"
+    ],
+    "candidate_rate_delta_percent": 0.17655723228118259,
+    "fresh_candidate_servers": 2
+  },
+  "scope": {
+    "cards": 2,
+    "target_devices": ["SYCL0", "SYCL1"],
+    "target_split": "tensor 1,1",
+    "draft_devices": ["SYCL0"],
+    "mtp_depth": 2,
+    "configured_context_tokens": 8192,
+    "parallel_slots": 1,
+    "batch_size": 1024,
+    "ubatch_size": 256,
+    "threads": 8,
+    "target_kv": "f16",
+    "draft_kv": "f16",
+    "prompt_cache": false,
+    "reasoning": "off",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512
+  },
+  "boundaries": [
+    "No long-context value transfers from the target-only TP2 or one-card MTP2 profiles.",
+    "No concurrency value transfers from the target-only TP2 or one-card MTP2 profiles.",
+    "No MTP depth above 2 is authorized.",
+    "Clean-host Intel driver, oneAPI installation, source build, and beginner recovery remain pending."
+  ]
+}

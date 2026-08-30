@@ -69,6 +69,15 @@ package and replay are in
 and
 [`repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/`](repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/).
 
+The two-card Q4_K_M target now also has a separately qualified short-context
+Q4_0-draft MTP2 package. Two fresh candidate servers measured `64.180644` and
+`64.293959 tok/s`; their class-balanced median is **`64.237301 tok/s`**, or
+29.02% above the matched fresh MTP0 oracle at `49.787366 tok/s`. All 24/24
+complete candidate arrays matched the unchanged oracle, cache stayed zero, and
+every objective canary passed. This result does not inherit the target-only
+32K or concurrency profiles. The exact replay is in
+[`repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/`](repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/).
+
 The preserved Muse source/build remains under
 `/home/steve/src/llama.cpp-muse-100`. Do not reset, clean, rebuild, restart, or
 repurpose that tree without first checking service ownership and the canonical

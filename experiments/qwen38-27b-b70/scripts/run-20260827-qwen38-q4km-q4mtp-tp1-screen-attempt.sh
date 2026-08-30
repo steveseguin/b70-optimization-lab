@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
 depth=${MTP_DEPTH:?set MTP_DEPTH to 0, 1, 2, 3, or 5}
+tp_size=${TP_SIZE:-1}
 attempt=${ATTEMPT:?set ATTEMPT to a unique attempt label}
 target_dir=${TARGET_DIR:?set TARGET_DIR to the Qwen3.8 ggml-org GGUF directory}
 draft_dir=${DRAFT_DIR:?set DRAFT_DIR to the directory containing the pinned Unsloth MTP draft}
@@ -10,7 +11,10 @@ build_dir=${BUILD_DIR:?set BUILD_DIR to the accepted TP1 build directory}
 out_dir=${OUT_DIR:?set OUT_DIR to a new evidence directory}
 port=${PORT:-18139}
 suite=${SUITE:-${repo}/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}
-prereg=${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-depth-screen-r1-prereg.json
+prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/data/2026-08-27-qwen38-q4km-q4mtp-tp1-depth-screen-r1-prereg.json}
+batch_size=${BATCH_SIZE:-2048}
+ubatch_size=${UBATCH_SIZE:-512}
+threads=${THREADS:-16}
 target=${target_dir}/Qwen3.8-27B-Q4_K_M.gguf
 draft=${draft_dir}/mtp-Qwen3.8-27B-Q4_0.gguf
 server=${build_dir}/bin/llama-server
@@ -22,6 +26,8 @@ expected_backend=0e7789313ac5776b197da813d482f78e2f396620cc745af0f9c1bb2ec39bd15
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${depth}" =~ ^(0|1|2|3|5)$ ]] || fail 'MTP_DEPTH must be 0, 1, 2, 3, or 5'
+[[ "${tp_size}" =~ ^(1|2)$ ]] || fail 'TP_SIZE must be 1 or 2'
+[[ -f "${prereg}" ]] || fail "missing preregistration ${prereg}"
 [[ ! -e "${out_dir}" ]] || fail "refusing to overwrite ${out_dir}"
 [[ -f "${target}" && -f "${draft}" && -x "${server}" && -f "${backend}" ]] || fail 'model/runtime artifact missing'
 [[ "$(sha256sum "${server}" | awk '{print $1}')" == "${expected_server}" ]] || fail 'llama-server SHA-256 mismatch'
@@ -33,6 +39,10 @@ exec 8>/tmp/b70-benchmark.lock
 flock -n 8 || fail 'host-wide benchmark lock is held'
 exec 9>/tmp/b70-gpu0.lock
 flock -n 9 || fail 'GPU0 lock is held'
+if [[ "${tp_size}" == 2 ]]; then
+  exec 10>/tmp/b70-gpu1.lock
+  flock -n 10 || fail 'GPU1 lock is held'
+fi
 pgrep -af 'llama-(server|bench|batched-bench)|vllm' >/dev/null && fail 'another model process is running'
 
 mkdir -p "${out_dir}"
@@ -45,20 +55,20 @@ if [[ "${depth}" != 0 ]]; then
     --json "${out_dir}/draft-verification.json" >"${out_dir}/draft-verification.stdout"
 fi
 
-python3 - "${out_dir}/campaign-identity.json" "${attempt}" "${depth}" "${target}" "${draft}" "${server}" "${backend}" "${suite}" "${prereg}" <<'PY'
+python3 - "${out_dir}/campaign-identity.json" "${attempt}" "${depth}" "${tp_size}" "${target}" "${draft}" "${server}" "${backend}" "${suite}" "${prereg}" "${batch_size}" "${ubatch_size}" "${threads}" <<'PY'
 import datetime as dt
 import hashlib
 import json
 import pathlib
 import sys
 
-out, attempt, depth, target, draft, server, backend, suite, prereg = sys.argv[1:]
+out, attempt, depth, tp_size, target, draft, server, backend, suite, prereg, batch_size, ubatch_size, threads = sys.argv[1:]
 def digest(path): return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
 value = {
-    "schema": "neural.download.qwen38-q4km-q4mtp-tp1-screen-attempt.v1",
+    "schema": f"neural.download.qwen38-q4km-q4mtp-tp{tp_size}-screen-attempt.v1",
     "created_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
     "attempt": attempt,
-    "profile": f"q4km-target-q4mtp-tp1-depth{depth}-reasoning-off",
+    "profile": f"q4km-target-q4mtp-tp{tp_size}-depth{depth}-reasoning-off",
     "artifacts": {
         "target": {"path": target, "sha256": "31629f53165ab6a7dad8c9847dcfd1fdf55829dac1e6e748f4a68581b0033d34"},
         "draft": {"path": draft, "sha256": "50d9ce5a6da381bbcfb31061cf73df94a90e6faf8efeddee379a9cb8f1501c6e"},
@@ -67,7 +77,15 @@ value = {
         "suite": {"path": suite, "sha256": digest(suite)},
         "prereg": {"path": prereg, "sha256": digest(prereg)},
     },
-    "contract": {"mtp_depth": int(depth), "draft_active": int(depth) > 0, "tp": 1, "gpu": 0, "target_kv": "f16", "draft_kv": "f16" if int(depth) > 0 else None, "graph": "off", "reasoning": "off", "parallel_slots": 1, "configured_context_tokens": 8192, "prompt_cache": False, "prompt_count": 12, "prompt_classes": 6, "max_tokens": 512, "metric_events": 100, "metric_intervals": 99},
+    "contract": {"mtp_depth": int(depth), "draft_active": int(depth) > 0,
+      "tp": int(tp_size), "gpus": list(range(int(tp_size))),
+      "draft_gpus": [0] if int(depth) > 0 else [],
+      "target_kv": "f16", "draft_kv": "f16" if int(depth) > 0 else None,
+      "graph": "off", "reasoning": "off", "parallel_slots": 1,
+      "configured_context_tokens": 8192, "prompt_cache": False,
+      "batch_size": int(batch_size), "ubatch_size": int(ubatch_size),
+      "threads": int(threads), "prompt_count": 12, "prompt_classes": 6,
+      "max_tokens": 512, "metric_events": 100, "metric_intervals": 99},
 }
 pathlib.Path(out).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
@@ -83,7 +101,12 @@ set +u
 # shellcheck disable=SC1091
 source /opt/intel/oneapi/setvars.sh --force >/dev/null 2>&1
 set -u
-export ONEAPI_DEVICE_SELECTOR=level_zero:0
+if [[ "${tp_size}" == 1 ]]; then
+  export ONEAPI_DEVICE_SELECTOR=level_zero:0
+else
+  export ONEAPI_DEVICE_SELECTOR=level_zero:1,0
+fi
+export LD_LIBRARY_PATH="${build_dir}/bin${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export GGML_SYCL_ENABLE_GRAPH=0
 export UR_L0_USE_IMMEDIATE_COMMANDLISTS=1
 export UR_L0_V2_FORCE_DISABLE_COPY_OFFLOAD=1
@@ -115,14 +138,19 @@ export GGML_SYCL_MMQ_Q4K_REORDER=1
 unset GGML_SYCL_WDC GGML_SYCL_WDC_Q4K GGML_SYCL_REORDER_IN_GEMM
 unset GGML_SYCL_FORCE_REORDER GGML_SYCL_FORCE_REORDER_Q4K GGML_SYCL_DISABLE_REORDER_Q6K
 
-server_args=("${server}" --model "${target}" --device SYCL0 --gpu-layers 99 --split-mode none --fit off)
+if [[ "${tp_size}" == 1 ]]; then
+  target_device_args=(--device SYCL0 --split-mode none)
+else
+  target_device_args=(--device SYCL0,SYCL1 --split-mode tensor --tensor-split 1,1)
+fi
+server_args=("${server}" --model "${target}" "${target_device_args[@]}" --gpu-layers 99 --fit off)
 if [[ "${depth}" != 0 ]]; then
   server_args+=(--model-draft "${draft}" --device-draft SYCL0 --gpu-layers-draft 99 --spec-type draft-mtp
     --spec-draft-n-max "${depth}" --spec-draft-n-min 0 --spec-draft-p-min 0
     --cache-type-k-draft f16 --cache-type-v-draft f16)
 fi
-server_args+=(--cache-type-k f16 --cache-type-v f16 --flash-attn on --batch-size 2048 --ubatch-size 512
-  --cache-ram 0 --ctx-checkpoints 0 --reasoning off --threads 16 --poll 50 --ctx-size 8192
+server_args+=(--cache-type-k f16 --cache-type-v f16 --flash-attn on --batch-size "${batch_size}" --ubatch-size "${ubatch_size}"
+  --cache-ram 0 --ctx-checkpoints 0 --reasoning off --threads "${threads}" --poll 50 --ctx-size 8192
   --parallel 1 --cont-batching --no-cache-prompt --slot-prompt-similarity 0 --metrics
   --host 127.0.0.1 --port "${port}")
 systemd-run --user --scope --quiet --property=MemoryHigh=11G --property=MemoryMax=13G --property=MemorySwapMax=12G \
@@ -142,13 +170,13 @@ tr '\0' ' ' <"/proc/${llama_pid}/cmdline" >"${out_dir}/server-command.txt"; prin
 tr '\0' '\n' <"/proc/${llama_pid}/environ" | grep -E '^(GGML_|UR_L0_|ONEAPI_DEVICE_SELECTOR=|SYCL_UR_USE_LEVEL_ZERO_V2=|ONEAPI_ROOT=|LD_LIBRARY_PATH=)' | LC_ALL=C sort >"${out_dir}/runtime-environment.txt"
 
 python3 "${repo}/scripts/bench-openai-realistic-suite.py" \
-  --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-q4mtp-tp1-mtp${depth}" \
+  --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-q4mtp-tp${tp_size}-mtp${depth}" \
   --api-mode native-raw --suite "${suite}" --max-tokens 512 --metric-tokens 100 \
   --seed 42 --timeout 900 --return-token-ids --require-natural-eos \
   --request-extra-json '{"cache_prompt":false,"seed":42,"temperature":0,"top_p":1}' \
   --out "${out_dir}/performance.json" >"${out_dir}/performance.stdout"
 python3 "${repo}/scripts/neural-download-canaries.py" \
-  --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-q4mtp-tp1-mtp${depth}" \
+  --base-url "http://127.0.0.1:${port}" --model "qwen38-q4km-q4mtp-tp${tp_size}-mtp${depth}" \
   --out "${out_dir}/canaries.json" >"${out_dir}/canaries.stdout"
 curl -fsS "http://127.0.0.1:${port}/metrics" >"${out_dir}/metrics-after.txt" || true
 

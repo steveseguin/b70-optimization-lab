@@ -1,0 +1,145 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
+  "name": "Qwen3.8 27B Q4_K_M + MTP2 on two Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "Alibaba / Qwen",
+    "variant": "27B Q4_K_M target + Q4_0 MTP2 TP2",
+    "summary": "Two-B70 Qwen3.8 27B Q4_K_M with target-exact Q4_0 MTP2.",
+    "quantization": "Q4_K_M target + Q4_0 MTP draft / F16 KV",
+    "runtime_label": "llama.cpp SYCL",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "interactive", "two-card throughput"],
+    "tags": ["two cards", "TP2", "MTP2", "speculative decoding", "cache zero", "source build"],
+    "published_at": "2026-08-30",
+    "featured_metric": {
+      "value": 64.23730130993152,
+      "unit": "tok/s",
+      "label": "strict varied-prompt decode",
+      "scope": "Median of two fresh-server class-balanced medians over the fixed 12-prompt/six-class, 512-cap native HTTP suite; two B70s, equal target split, draft on SYCL0, MTP2, F16 target/draft KV, cache zero, and 24/24 complete candidate arrays exact to the fresh target-only oracle.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promotion-attestation.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Qwen3.8 Q4_K_M two-card kernel stack, external-MTP TP2 composition, preregistered strict oracle/replication campaign, exact-output validation, and package.",
+      "status": "integrated",
+      "validated_effect": "MTP2 measured a two-server median of 64.237301 tok/s versus 49.787366 tok/s for the matched fresh target-only oracle (+29.02%), with 24/24 complete candidate outputs target-exact.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promoted-result.md"
+    },
+    {
+      "id": "mndodd",
+      "name": "mndodd",
+      "kind": "external",
+      "profile": "https://github.com/mndodd",
+      "contribution": "Optimized Intel SYCL llama.cpp fork used as the pinned runtime base beneath the lab patch stack.",
+      "status": "integrated",
+      "validated_effect": "Credited only for the separately matched fork contribution documented by the base Q4 package; the TP2/MTP2 composition and gain are this lab's measurements.",
+      "evidence": "community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md"
+    }
+  ],
+  "performance_profiles": [
+    {
+      "id": "strict-decode-vs-mtp-depth",
+      "label": "Strict TP2 decode with and without MTP2",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_metric": "speculative_tokens",
+      "x_label": "Maximum MTP draft depth",
+      "scope": "Same target, runtime, two-card equal split, F16 KV, cache-zero suite, and short-context contract. MTP0 is one fresh oracle; MTP2 is the median of two fresh servers and all 24 candidate arrays were target-exact. Only depths 0 and 2 were measured in this TP2 campaign; no point is interpolated or extrapolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promotion-attestation.json",
+      "points": [
+        {"speculative_tokens": 0, "value": 49.78736600126793, "samples": 1},
+        {"speculative_tokens": 2, "value": 64.23730130993152, "samples": 2}
+      ]
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "host_ram_min_bytes": 16106127360,
+    "host_ram_plus_swap_min_bytes": 25769803776,
+    "model_weight_bytes": 20343461088
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.8-27B-GGUF",
+    "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+    "manifest": "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/manifest.sha256"
+  },
+  "runtime": {
+    "kind": "native",
+    "project": "mndodd/llama.cpp",
+    "revision": "4302fb59969a5d8cf9f8e5f55fdd4506d0ed2126",
+    "build": "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/restore-and-build.sh"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/qwen36-27b-q8-tp2-asrock-b70/llama-cpp-mndodd-4302fb599-lab-tp2-dp4a2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp2-asrock-b70/llama-cpp-q4k-mmvq-swiglu-tp2-20260815.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-gdn-state-io-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-conv-qk-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-qk-norm-rope-src-widen-20260821.diff.gz.b64",
+      "patches/qwen38-27b-q4km-tp1-b70s/llama-cpp-tp1-q8out-rejected-memo320-20260821.diff.gz.b64"
+    ],
+    "reason": "The exact measured runtime uses the complete lab source stack. The guide links every patch directly and the preflight binds the measured runtime hashes."
+  },
+  "commands": {
+    "preflight": "TARGET_DIR=/path/to/target DRAFT_DIR=/path/to/draft/MTP BUILD_DIR=/path/to/build repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/preflight.sh",
+    "launch": "TARGET_DIR=/path/to/target DRAFT_DIR=/path/to/draft/MTP BUILD_DIR=/path/to/build MTP_DEPTH=2 repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/run-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18142/health",
+    "benchmark": "MTP_DEPTH=2 ORACLE_JSON=/path/to/fresh-mtp0/performance.json OUT_DIR=/path/to/new-result repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/bench.sh",
+    "stop": "Ctrl-C in the foreground server terminal; then pgrep -x llama-server must return no process"
+  },
+  "dependencies": [
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/README.md",
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/manifest.sha256",
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/preflight.sh",
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/restore-and-build.sh",
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/run-server.sh",
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/bench.sh",
+    "repro/qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/verify-evidence.sh",
+    "repro/qwen38-27b-q4km-mtp2-tp1-b70/draft-model-direct.json",
+    "repro/qwen38-27b-q4km-mtp2-tp1-b70/verify-models.sh",
+    "repro/qwen38-27b-q4km-tp1-b70/model-direct.json",
+    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-screen-r1-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-screen-r1-result.json",
+    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2-result.json",
+    "experiments/qwen38-27b-b70/data/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promotion-attestation.json",
+    "experiments/qwen38-27b-b70/data/qwen38-q4km-q4mtp-tp2-mtp2-20260830/manifest.json",
+    "experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-q4mtp-tp2-mtp2-promoted-result.md",
+    "experiments/qwen38-27b-b70/scripts/validate-20260830-qwen38-q4km-q4mtp-tp2-mtp2-screen-r1.py",
+    "experiments/qwen38-27b-b70/scripts/validate-20260830-qwen38-q4km-q4mtp-tp2-mtp2-replication-r2.py",
+    "experiments/qwen38-27b-b70/scripts/verify-20260830-qwen38-q4km-q4mtp-tp2-mtp2-archive.py",
+    "scripts/bench-openai-realistic-suite.py",
+    "scripts/neural-download-canaries.py",
+    "scripts/promotion_evidence.py"
+  ],
+  "known_limitations": [
+    "The 64.237301 tok/s headline is short-context, one-user evidence with 8K configured context. Target-only TP2 and one-card MTP2 context or concurrency values do not transfer.",
+    "Only MTP0 and MTP2 were measured under this exact TP2 campaign. No deeper MTP mode is supported by this package.",
+    "The tested 16 GiB host used swap and a 13 GiB process memory cap. A clean-host Intel/oneAPI install and source-build replay remain pending.",
+    "The target and MTP draft come from two pinned repositories/revisions and both downloads are required.",
+    "A locally rebuilt binary is a distinct identity until the paired full-suite oracle and MTP2 validation pass."
+  ],
+  "missing": [
+    "measured 32K active-context profile for this exact MTP2 deployment",
+    "output-qualified HTTP concurrency profile for this exact MTP2 deployment",
+    "standard 512-token prompt TTFT and prefill measurement",
+    "tested clean-host Intel driver and oneAPI installation",
+    "clean-host source build and endpoint replay",
+    "beginner recovery replay"
+  ]
+}

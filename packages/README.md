@@ -51,6 +51,7 @@ evidence and remaining gates):
 | Qwen3.8 27B | [official FP8 vLLM two-B70](qwen38-27b-fp8-tp2-b70/) |
 | Qwen3.8 27B | [Q4_K_M one-B70](qwen38-27b-q4km-tp1-b70/) |
 | Qwen3.8 27B | [Q4_K_M + Q4_0 MTP2 one-B70](qwen38-27b-q4km-mtp2-tp1-b70/) |
+| Qwen3.8 27B | [Q4_K_M + Q4_0 MTP2 two-B70](qwen38-27b-q4km-q4mtp-mtp2-tp2-b70/) |
 | Qwen3.8 27B | [Q8_0 one-B70](qwen38-27b-q8-tp1-b70/) |
 | Qwen3.8 27B | [Q4_K_M two-B70](qwen38-27b-q4km-tp2-asrock-b70/) |
 | Qwen3.8 27B | [Q8_0 two-B70](qwen38-27b-q8-tp2-b70/) |
