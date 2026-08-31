@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-autoround-deterministic-mtp0-campaign.v1",
+  "campaign": "qwen38-autoround-detpad-mtp0-local-tp2-20260830-r2",
+  "classification": "failed-closed-compiled-vs-eager-token-drift",
+  "image": "neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1",
+  "image_id": "sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136",
+  "eager_class_balanced_median_tok_s": 17.967660778330625,
+  "compiled_a_class_balanced_median_tok_s": 31.8273384407571,
+  "provisional_compiled_gain_percent": 77.13679500862757,
+  "compiled_a_exact_vs_eager": {
+    "exact": 4,
+    "total": 12
+  },
+  "exact_prompt_ids": [
+    "incident-retrospective",
+    "architecture-tradeoff",
+    "bug-report-synthesis",
+    "technical-guide"
+  ],
+  "first_divergent_token_by_prompt": {
+    "code-review": 450,
+    "customer-email": 182,
+    "sql-debugging": 60,
+    "release-plan": 9,
+    "benchmark-analysis": 275,
+    "risk-register": 437,
+    "performance-hypotheses": 223,
+    "decision-memo": 335
+  },
+  "arm_gates": {
+    "eager_oracle": "passed",
+    "compiled_a": "passed"
+  },
+  "performance_sha256": {
+    "eager_oracle": "216efe21ec193ed50fc3fa453fcf2161c864aac5431d579ece24a35e5dc05d2a",
+    "compiled_a": "3a8ffa399c64d3a34d8703eb2a9f4cee2d2076cef8d7b79d74c822953914f6ed"
+  },
+  "canaries_sha256": {
+    "eager_oracle": "806dacb340f8f4b8362c9e0dc3159e30010fec6f2c2d59cf605c070cb674d2f5",
+    "compiled_a": "71e90facb64468b0f768c7adc767b9341ffe9eab0efb1f1c3f37d907ca7842c8"
+  },
+  "raw_evidence_roots": {
+    "eager_oracle": "/mnt/fast-ai/bench-results/qwen38-autoround-detpad-mtp0-local-tp2-20260830-r2-eager-oracle",
+    "compiled_a": "/mnt/fast-ai/bench-results/qwen38-autoround-detpad-mtp0-local-tp2-20260830-r2-compiled-A"
+  },
+  "reporting_boundary": "Rejected correctness-recovery candidate. The 31.827 tok/s measurement is descriptive only and must not be promoted, submitted, or used to authorize MTP. R2 does not distinguish within-mode repeat nondeterminism from deterministic compiled-vs-eager semantic drift."
+}
