@@ -9,7 +9,9 @@ ws = torch.randn(5120//128, 1408, dtype=torch.float16, device=DEV).abs()
 out_rows=[]
 for m in (6, 8, 16, 32, 64, 128, 256, 341, 512, 1024):
     x = torch.randn(m, 5120, dtype=torch.float16, device=DEV)
-    fn = lambda: torch.ops._xpu_C.int4_gemm_w4a16(x, w_nt, None, ws, zp8, 128, None, False)
+    fn = lambda: torch.ops._xpu_C.int4_gemm_w4a16(
+        x, w_nt, None, ws, zp8, 128, None
+    )
     ref = fn(); torch.xpu.synchronize(); ref = ref.clone()
     bad = 0
     for i in range(200):

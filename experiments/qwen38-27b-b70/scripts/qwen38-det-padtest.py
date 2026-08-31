@@ -11,7 +11,10 @@ M_REAL, M_PAD = 341, 512
 real = torch.randn(M_REAL, K, dtype=torch.float16, device=DEV)
 junk_a = torch.randn(M_PAD-M_REAL, K, dtype=torch.float16, device=DEV)
 junk_b = torch.randn(M_PAD-M_REAL, K, dtype=torch.float16, device=DEV) * 100
-def gemm(x): return torch.ops._xpu_C.int4_gemm_w4a16(x, w_nt, None, ws, zp8, 128, None, False)
+def gemm(x):
+    return torch.ops._xpu_C.int4_gemm_w4a16(
+        x, w_nt, None, ws, zp8, 128, None
+    )
 xa = torch.cat([real, junk_a]); xb = torch.cat([real, junk_b])
 oa = gemm(xa)[:M_REAL]; ob = gemm(xb)[:M_REAL]
 torch.xpu.synchronize()
