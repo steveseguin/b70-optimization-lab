@@ -1,0 +1,101 @@
+Base: 9636514e6f9b885cfeecca141811433e2cb8affb
+Scope: one-file, default-off Qwen3.8 Flash-Next TP4 component candidate
+
+diff --git a/src/coll/algorithms/allreduce/sycl/allreduce_sycl.cpp b/src/coll/algorithms/allreduce/sycl/allreduce_sycl.cpp
+index 6c02665ef..20546a532 100644
+--- a/src/coll/algorithms/allreduce/sycl/allreduce_sycl.cpp
++++ b/src/coll/algorithms/allreduce/sycl/allreduce_sycl.cpp
+@@ -36,12 +36,19 @@ namespace v1 {
+ // PyTorch queue supplied by the XPU extension.
+ static ccl_comm* b70_m2_event_chain_comm = nullptr;
+ static ccl_stream* b70_m2_event_chain_stream = nullptr;
++static ccl_comm* b70_q38_count2560_event_chain_comm = nullptr;
++static ccl_stream* b70_q38_count2560_event_chain_stream = nullptr;
+ 
+ static bool b70_m2_event_chain_enabled() {
+     const char* value = std::getenv("B70_ONECCL_ENABLE_M2_EVENT_CHAIN");
+     return value != nullptr && std::strcmp(value, "1") == 0;
+ }
+ 
++static bool b70_q38_count2560_event_chain_enabled() {
++    const char* value = std::getenv("B70_ONECCL_ENABLE_Q38_COUNT2560_EVENT_CHAIN");
++    return value != nullptr && std::strcmp(value, "1") == 0;
++}
++
+ ccl::event allreduce_sycl_single_node(sycl::queue& q,
+                                       const void* send_buf,
+                                       void* recv_buf,
+@@ -741,6 +748,13 @@ event allreduce_sycl(sycl::queue q,
+         b70_m2_event_chain_comm = global_comm;
+         b70_m2_event_chain_stream = global_stream;
+     }
++    if (b70_q38_count2560_event_chain_enabled() && count == 2560 &&
++        dtype == ccl::datatype::bfloat16 && reduction == ccl::reduction::sum &&
++        global_comm != nullptr && global_stream != nullptr &&
++        global_comm->get_node_comm()->size() == 4) {
++        b70_q38_count2560_event_chain_comm = global_comm;
++        b70_q38_count2560_event_chain_stream = global_stream;
++    }
+     bool is_single_node = false;
+     if (ccl::global_data::env().backend == backend_mode::native) {
+         const ccl::topo_manager& topo_manager = global_comm->get_topo_manager();
+@@ -812,5 +826,59 @@ extern "C" CCL_API int ccl_b70_replay_last_bf16_allreduce_m2_event_chain(
+ #endif
+ }
+ 
++extern "C" CCL_API int ccl_b70_replay_last_bf16_allreduce_q38_count2560_event_chain(
++    const void* send_buf,
++    void* recv_buf,
++    size_t count,
++    void* queue,
++    const void* producer_event,
++    void* allreduce_event) {
++#if defined(CCL_ENABLE_ZE) || defined(CCL_ENABLE_SYCL)
++    if (!b70_q38_count2560_event_chain_enabled()) {
++        return 1;
++    }
++    if (b70_q38_count2560_event_chain_comm == nullptr ||
++        b70_q38_count2560_event_chain_stream == nullptr || send_buf == nullptr ||
++        recv_buf == nullptr || queue == nullptr || producer_event == nullptr ||
++        allreduce_event == nullptr || count != 2560 ||
++        reinterpret_cast<uintptr_t>(send_buf) % 4 != 0 ||
++        reinterpret_cast<uintptr_t>(recv_buf) % 4 != 0 ||
++        b70_q38_count2560_event_chain_comm->get_node_comm()->size() != 4 ||
++        ccl::global_data::env().sycl_enable_arc_allreduce ||
++        !is_arc_card(ccl::ze::get_device_family(
++            b70_q38_count2560_event_chain_stream->get_ze_device()))) {
++        return 2;
++    }
++
++    auto* current_queue = static_cast<sycl::queue*>(queue);
++    const auto recorded_queue =
++        b70_q38_count2560_event_chain_stream->get_native_stream();
++    if (!current_queue->has_property<sycl::property::queue::in_order>() ||
++        current_queue->get_context() != recorded_queue.get_context() ||
++        current_queue->get_device() != recorded_queue.get_device()) {
++        return 3;
++    }
++
++    vector_class<event> deps;
++    sycl::event producer = *static_cast<const sycl::event*>(producer_event);
++    deps.push_back(ccl::event::create_from_native(producer));
++    bool done = false;
++    auto ring_event = allreduce_ll_ring(send_buf,
++                                        recv_buf,
++                                        count,
++                                        ccl::datatype::bfloat16,
++                                        ccl::reduction::sum,
++                                        b70_q38_count2560_event_chain_comm,
++                                        b70_q38_count2560_event_chain_stream,
++                                        current_queue,
++                                        deps,
++                                        done);
++    *static_cast<sycl::event*>(allreduce_event) = ring_event.get_native();
++    return done ? 0 : 4;
++#else
++    return 5;
++#endif
++}
++
+ } // namespace v1
+ } // namespace ccl

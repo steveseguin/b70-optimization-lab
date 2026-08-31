@@ -2927,3 +2927,12 @@ loaded service.
     Ignore aggregate C5/C32 rows as single-stream leads. See the
     [feed audit](experiments/qwen38-27b-b70/notes/2026-08-20-localmaxxing-qwen38-external-lever-intake.md)
     and [blocked operator design](experiments/qwen38-27b-b70/notes/2026-08-21-qwen38-mtp-fc-int4-operator-prereg.md).
+Qwen3.8 Flash-Next TP4 target optimization now has a frozen, default-off
+count-2560 combined clone-elision/event-chain component arm. It compares the
+exact current XPU communicator against a direct same-queue path using the same
+newly built candidate runtime, across two fresh four-rank processes, 97
+reductions, and the unchanged 96 HC consumers. Per-epoch analytic SUM parity,
+consumer exactness, protocol receipts, and conservative paired speed gates must
+pass twice before any full-model load. The accepted runtime and protected
+`5.515783 tok/s` MTP0 result are untouched. See the
+[A1 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-event-chain-a1-prereg.md).

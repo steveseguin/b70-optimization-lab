@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "frozen_before_gpu_execution",
+  "classification": "qwen38_flash_next_tp4_count2560_event_chain_component_prereg",
+  "scope": "Two fresh-process combined clone-elision plus event-chain component replicas; not model throughput",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "xpu_kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "oneccl_base_head": "9636514e6f9b885cfeecca141811433e2cb8affb",
+    "candidate_libccl_sha256": "164091ac6aced05bfc658ae1e1cd722153f099714e9cee6f437c62bdd3731c1c",
+    "candidate_xpu_extension_sha256": "776a080846bfe26c92f10ecb80982f45137802cf10af4a7d66b9c0d6af1cd339",
+    "candidate_stage_manifest_sha256": "d74343884d156298e4a386304bffc3f0a38c840ee5bdc229a0ecc5db361a6d8a",
+    "oneccl_kernel_bundle_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "gate_sha256": "27bf56ef24f2fc09694525256583e6db6beafb97a85d0e4c2c82c1e9f91f03f5",
+    "runner_sha256": "d747a3f1227cb92c973e4391d9d489ee3fc049d66e10eddbcb28af8adcd45daa"
+  },
+  "workload": {
+    "world_size": 4,
+    "shape": [1, 2560],
+    "dtype": "bfloat16",
+    "collectives_per_cycle": 97,
+    "hc_consumer_invocations_per_cycle": 96,
+    "hc_combine_norm_invocations": 95,
+    "plain_hc_combine_ordinal": 2,
+    "warmup_cycles": 8,
+    "measured_paired_cycles": 40,
+    "fresh_process_replicas": 2,
+    "launch_order": "AB/BA alternating within each replica",
+    "input_corpus": "mutually distinct exactly representable integer-valued BF16 corpus in every one of the 40 measured epochs",
+    "candidate_delta": "jointly removes the production out-of-place clone and replaces ordinary XCCL submission with the guarded same-queue event chain"
+  },
+  "performance_gate_each_replica": {
+    "minimum_median_saved_ms": 4.0,
+    "minimum_p90_saved_ms": 3.0,
+    "minimum_saved_percent": 10.0,
+    "minimum_positive_pairs_of_40": 32,
+    "minimum_median_saved_ms_in_each_order_stratum": 3.0
+  },
+  "correctness_gate": {
+    "collective_elements": "bitwise exact for all 97 outputs on all four ranks in every epoch",
+    "analytic_sum_oracle": "control and candidate each equal an independently computed exact four-rank SUM in every epoch",
+    "consumer_elements": "bitwise exact for all 191 returned tensors from the 96 HC invocations in every epoch",
+    "cross_replica_output_hashes": "exact",
+    "protocol_receipt": "each rank's untimed Kineto trace contains Rt64_128_PCIE and does not contain the neutral Rt64_PCIE path"
+  },
+  "paths": {
+    "candidate_stage": "/mnt/fast-ai/qwen38-build/runtime-q38-count2560-eventchain-a1",
+    "candidate_oneccl": "/mnt/fast-ai/qwen38-build/oneccl-q38-count2560-eventchain-a1-runtime",
+    "build_receipt": "experiments/qwen38-flash-next-fp8-b70/data/20260831-tp4-count2560-event-chain-a1-build-receipt.json",
+    "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-event-chain-a1"
+  },
+  "frozen_interpretation": {
+    "both_replicas_pass": "eligible for one separately preregistered full endpoint A/B; not yet a throughput claim",
+    "any_correctness_failure": "reject the candidate",
+    "any_performance_failure": "close before a full model load",
+    "threshold_changes_after_execution": "prohibited",
+    "abnormal_replica_exit": "abort without launching the next replica and require no surviving gate or torchrun process"
+  }
+}

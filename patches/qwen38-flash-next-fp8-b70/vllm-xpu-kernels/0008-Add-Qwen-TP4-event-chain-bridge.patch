@@ -1,0 +1,133 @@
+From e421889999bc1e5a5f11044d14548b9afdba644d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 31 Aug 2026 13:48:14 -0400
+Subject: [PATCH] Add Qwen TP4 event-chain bridge
+
+---
+ CMakeLists.txt                         |  1 +
+ csrc/xpu/ops.h                         |  3 ++
+ csrc/xpu/q38_count2560_event_chain.cpp | 67 ++++++++++++++++++++++++++
+ csrc/xpu/torch_bindings.cpp            |  7 +++
+ 4 files changed, 78 insertions(+)
+ create mode 100644 csrc/xpu/q38_count2560_event_chain.cpp
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6ac9ceb..7789ad2 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -555,6 +555,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
+       "csrc/xpu/quantization/int8_quant.cpp"
++      "csrc/xpu/q38_count2560_event_chain.cpp"
+       "csrc/xpu/qwen_gemma_rms_norm.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index c0666f1..1a85335 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -2,6 +2,9 @@
+ 
+ #include <torch/all.h>
+ 
++torch::Tensor q38_tp4_oneccl_allreduce_count2560(
++    const torch::Tensor& input);
++
+ torch::Tensor qwen_gemma_rms_norm_f32_weight_out(
+     const torch::Tensor& input,
+     const torch::Tensor& weight,
+diff --git a/csrc/xpu/q38_count2560_event_chain.cpp b/csrc/xpu/q38_count2560_event_chain.cpp
+new file mode 100644
+index 0000000..ce93637
+--- /dev/null
++++ b/csrc/xpu/q38_count2560_event_chain.cpp
+@@ -0,0 +1,67 @@
++#include <ATen/ATen.h>
++#include <torch/all.h>
++
++#include <dlfcn.h>
++#include <cstdint>
++#include <sycl/sycl.hpp>
++
++#include "utils.h"
++
++torch::Tensor q38_tp4_oneccl_allreduce_count2560(
++    const torch::Tensor& input) {
++  constexpr const char* op = "q38_tp4_oneccl_allreduce_count2560";
++  const at::DeviceGuard device_guard(input.device());
++  TORCH_CHECK(input.is_xpu(), op, ": input must be on XPU");
++  TORCH_CHECK(
++      input.scalar_type() == at::kBFloat16,
++      op,
++      ": input must be bfloat16");
++  TORCH_CHECK(input.is_contiguous(), op, ": input must be contiguous");
++  TORCH_CHECK(
++      input.sizes() == at::IntArrayRef({1, 2560}),
++      op,
++      ": input must have exact shape [1, 2560]");
++
++  using hook_t = int (*)(
++      const void*, void*, size_t, void*, const void*, void*);
++  static hook_t hook = [op]() {
++    dlerror();
++    auto* symbol = dlsym(
++        RTLD_DEFAULT,
++        "ccl_b70_replay_last_bf16_allreduce_q38_count2560_event_chain");
++    TORCH_CHECK(
++        symbol != nullptr,
++        op,
++        ": Qwen count-2560 oneCCL hook is not loaded: ",
++        dlerror());
++    return reinterpret_cast<hook_t>(symbol);
++  }();
++
++  auto output = at::empty_like(input);
++  TORCH_CHECK(
++      output.data_ptr() != input.data_ptr(),
++      op,
++      ": output storage must be distinct from input");
++  TORCH_CHECK(
++      reinterpret_cast<uintptr_t>(input.data_ptr()) % 4 == 0 &&
++          reinterpret_cast<uintptr_t>(output.data_ptr()) % 4 == 0,
++      op,
++      ": input and output storage must be 4-byte aligned");
++  auto& queue = vllm::xpu::vllmGetQueue(input.device().index());
++  TORCH_CHECK(
++      queue.has_property<sycl::property::queue::in_order>(),
++      op,
++      ": current XPU queue must be in-order");
++  sycl::event producer_event = queue.ext_oneapi_submit_barrier();
++  sycl::event ring_event;
++  const int status = hook(
++      input.data_ptr(),
++      output.data_ptr(),
++      static_cast<size_t>(input.numel()),
++      static_cast<void*>(&queue),
++      static_cast<const void*>(&producer_event),
++      static_cast<void*>(&ring_event));
++  TORCH_CHECK(status == 0, op, ": oneCCL hook failed with status ", status);
++  queue.ext_oneapi_submit_barrier({ring_event});
++  return output;
++}
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index e0fdce3..ae932cc 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -11,6 +11,13 @@
+ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+   at::Tag stride_tag = at::Tag::needs_fixed_stride_order;
+ 
++  xpu_ops.def(
++      "q38_tp4_oneccl_allreduce_count2560(Tensor input) -> Tensor");
++  xpu_ops.impl(
++      "q38_tp4_oneccl_allreduce_count2560",
++      torch::kXPU,
++      &q38_tp4_oneccl_allreduce_count2560);
++
+   // fp8_gemm is exposed as two schemas sharing one C++ implementation:
+   // a pure functional variant, and an explicit out-variant. Keeping the
+   // mutable `out` out of the functional schema is required for
+-- 
+2.43.0
+

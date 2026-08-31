@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "status": "builds_passed_and_staged",
+  "classification": "isolated_native_build_receipt",
+  "source": {
+    "oneccl_base_head": "9636514e6f9b885cfeecca141811433e2cb8affb",
+    "oneccl_patch": "patches/qwen38-flash-next-fp8-b70/oneccl/0001-Add-Qwen-count2560-event-chain.patch",
+    "oneccl_patch_sha256": "e3ccd56b0c9127a8d87c48cac46882ee430cf451cbca183159b3ba640ee7fc85",
+    "oneccl_result_file_sha256": "f499e46985d3b791bcf79131ac799f59a7fdf1284f06bd6a4b369251a3da9142",
+    "xpu_kernel_parent_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "xpu_kernel_candidate_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "xpu_kernel_patch": "patches/qwen38-flash-next-fp8-b70/vllm-xpu-kernels/0008-Add-Qwen-TP4-event-chain-bridge.patch",
+    "xpu_kernel_patch_sha256": "9203a6c598ec00e771d019b186e0bb88ebc79ed4070c6c5331fc434861a98294"
+  },
+  "oneccl_build": {
+    "source_path": "/mnt/fast-ai/qwen38-build/oneccl-q38-count2560-eventchain-a1-src",
+    "build_path": "/mnt/fast-ai/qwen38-build/oneccl-q38-count2560-eventchain-a1-build",
+    "install_path": "/mnt/fast-ai/qwen38-build/oneccl-q38-count2560-eventchain-a1-runtime",
+    "cmake_cache_sha256": "242f3c537001515137a57888608a1bebe048dfc5f4e230b796f068dfd464a2e5",
+    "libccl_sha256": "164091ac6aced05bfc658ae1e1cd722153f099714e9cee6f437c62bdd3731c1c",
+    "kernel_bundle_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "exported_symbol": "ccl_b70_replay_last_bf16_allreduce_q38_count2560_event_chain",
+    "build_result": "100_percent_built_and_installed"
+  },
+  "xpu_build": {
+    "build_path": "/mnt/fast-ai/qwen38-build/build-xpu-q38-count2560-eventchain-a1",
+    "install_path": "/mnt/fast-ai/qwen38-build/install-xpu-q38-count2560-eventchain-a1",
+    "stage_path": "/mnt/fast-ai/qwen38-build/runtime-q38-count2560-eventchain-a1",
+    "cmake_cache_sha256": "0acabd35189645c60485e23bb560359cab83025c42a4d152d74946d977681f96",
+    "compile_commands_sha256": "74162b2ee66af9e794906eb2203071327149d142a03e84672cd04e9686ea1ce4",
+    "ninja_log_sha256": "9efb76472daa87da18fcef35fd7321f684c18c487e338a61a06f5672978765c0",
+    "installed_xpu_extension_sha256": "776a080846bfe26c92f10ecb80982f45137802cf10af4a7d66b9c0d6af1cd339",
+    "installed_gdn_library_sha256": "249cd714ca6976346b40a31d260c66149c48e1fe5e7c15df9277db6b155f2ed0",
+    "built_grouped_library_sha256": "ef81dd90441346671220e55f57e8b1f682394d24aeb70c79c444003e8b40ed64",
+    "stage_manifest_sha256": "d74343884d156298e4a386304bffc3f0a38c840ee5bdc229a0ecc5db361a6d8a",
+    "stage_file_count": 18,
+    "build_result": "712_of_712_steps_passed_and_installed"
+  },
+  "verification": {
+    "oneccl_patch_applies_to_base": true,
+    "xpu_patch_reverse_applies_to_candidate": true,
+    "stage_manifest_verifies": true,
+    "stage_inventory_matches_accepted_runtime": true,
+    "dynamic_dependencies_resolve": true,
+    "candidate_python_imports": true,
+    "candidate_torch_schema": "_xpu_C::q38_tp4_oneccl_allreduce_count2560(Tensor input) -> Tensor",
+    "loaded_libccl_path_under_candidate_import": "/mnt/fast-ai/qwen38-build/oneccl-q38-count2560-eventchain-a1-runtime/lib/libccl.so.1.0"
+  }
+}
