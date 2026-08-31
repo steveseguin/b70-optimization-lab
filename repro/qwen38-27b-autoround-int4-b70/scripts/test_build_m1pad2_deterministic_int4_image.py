@@ -17,9 +17,9 @@ class Contract(unittest.TestCase):
         self.assertIn('sha256sum "${patch}"', self.base)
 
     def test_wrapper_freezes_patch_and_new_image(self):
-        self.assertIn("vllm-xpu-kernels-qwen38-onednn-int4-m1pad2-determinism-20260831.patch", self.wrapper)
-        self.assertIn("1ffbdc4b0e1220011dfa77d859c2c625d5d4896117c0fe221a5f163bc2ba044e", self.wrapper)
-        self.assertIn("qwen38-autoround-m1pad2-deterministic-r1", self.wrapper)
+        self.assertIn("vllm-xpu-kernels-qwen38-onednn-int4-m1pad2-view-determinism-20260831.patch", self.wrapper)
+        self.assertIn("f2218adbacd8ae331b4c1a25eeca4f4e6529dcdfdb6629949220da1fbb973f88", self.wrapper)
+        self.assertIn("qwen38-autoround-m1pad2-view-deterministic-r1", self.wrapper)
 
 
 if __name__ == "__main__":

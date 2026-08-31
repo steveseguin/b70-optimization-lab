@@ -1,0 +1,51 @@
+diff --git a/csrc/xpu/onednn/int4_gemm_w4a16.h b/csrc/xpu/onednn/int4_gemm_w4a16.h
+index 88cff6b..c5d381c 100644
+--- a/csrc/xpu/onednn/int4_gemm_w4a16.h
++++ b/csrc/xpu/onednn/int4_gemm_w4a16.h
+@@ -1,5 +1,8 @@
+ #pragma once
+ 
++#include <cstdlib>
++#include <string_view>
++
+ #include <c10/xpu/XPUStream.h>
+ #include <dnnl.hpp>
+ #include <torch/torch.h>
+@@ -25,6 +28,37 @@ static inline void dnnl_matmul_w4a16_int4(
+   const int n = o_sz.back();  // presume channel last format
+   const int k = *(src_sz.end() - 1);
+ 
++  // Determinism pad (BMG): oneDNN selects race-prone int4 kernels for M=1
++  // with production weights and for 128 < M < 512; outputs differ bitwise
++  // (measured: qkv 5120x1408 dirty for M in [129, 448], down 8704x5120 for
++  // M in [129, 248]; M <= 128 and M >= 449 clean; gate_up 5120x8704 clean).
++  // GEMM rows are independent (proven bitwise: real rows identical under
++  // arbitrary padding content), so pad M=1 to M=2 and the prefill band to
++  // M=512 with zeros, then slice back.
++  // Opt-out: VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD=0.
++  static const bool det_pad = []() {
++    const char* e = std::getenv("VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD");
++    return e == nullptr || std::string_view(e) != "0";
++  }();
++  if (det_pad && (m == 1 || (m > 128 && m < 512))) {
++    TORCH_WARN_ONCE("VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD reached");
++    // The quantized linear integration flattens its leading dimensions
++    // before calling this operator. Assert that contract instead of silently
++    // changing a future batched layout.
++    TORCH_CHECK(mat1.dim() == 2,
++                "determinism pad expects 2D src, got ", mat1.dim());
++    const int padded_m = m == 1 ? 2 : 512;
++    torch::Tensor mat1_pad = mat1.new_zeros({padded_m, src_sz.back()});
++    mat1_pad.narrow(0, 0, m).copy_(mat1);
++    torch::Tensor result_pad = result.new_empty({padded_m, o_sz.back()});
++    dnnl_matmul_w4a16_int4(
++        result_pad, mat1_pad, mat2, bias, scale, zp, group_size);
++    // Rebind the caller's tensor to a view of the padded destination. A
++    // separate torch copy can race oneDNN's asynchronous write on XPU.
++    result = result_pad.narrow(0, 0, m);
++    return;
++  }
++
+   // get joint dtypes
+   joint_dtypes_t jd;
+   auto in_dtype = mat1.scalar_type();
