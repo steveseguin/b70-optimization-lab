@@ -4,9 +4,13 @@ set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
 runner=${script_dir}/run-20260830-qwen38-fp8-w8a16-mtp1-c64-deterministic-r39-arm.sh
-campaign=qwen38-fp8-w8a16-mtp1-c64-batch-invariant-20260830-r40
-prereg=${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-fp8-w8a16-mtp1-c64-batch-invariant-r40-prereg.json
+campaign=${CAMPAIGN:-qwen38-fp8-w8a16-mtp1-c64-batch-invariant-20260830-r40}
+prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-fp8-w8a16-mtp1-c64-batch-invariant-r40-prereg.json}
 out_parent=${OUT_DIR:-/mnt/fast-ai/bench-results}
+control_image=${CONTROL_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15}
+control_image_id=${CONTROL_IMAGE_ID:-sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e}
+candidate_image=${CANDIDATE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
+candidate_image_id=${CANDIDATE_IMAGE_ID:-sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b}
 common=(
   CAMPAIGN="${campaign}"
   PREREG="${prereg}"
@@ -14,6 +18,10 @@ common=(
   BATCH_INVARIANT=1
   RMSNORM_BATCH_INVARIANT=1
   GDN_SERIAL_EXACT=1
+  CONTROL_IMAGE="${control_image}"
+  CONTROL_IMAGE_ID="${control_image_id}"
+  CANDIDATE_IMAGE="${candidate_image}"
+  CANDIDATE_IMAGE_ID="${candidate_image_id}"
 )
 
 env "${common[@]}" ARM=control ATTEMPT=A PILOT=1 "${runner}"
@@ -50,7 +58,7 @@ candidate_median = statistics.median(candidate)
 all_passed = all(row["quality_passed"] for group in arms.values() for row in group.values())
 qualified = all_passed and candidate_median > control_median
 result = {
-    "schema": "neural.download.qwen38-fp8-w8a16-mtp1-c64-batch-invariant-r40-result.v1",
+    "schema": "neural.download.qwen38-fp8-w8a16-mtp1-c64-batch-invariant-result.v1",
     "created_utc": dt.datetime.now(dt.UTC).isoformat(),
     "campaign": campaign,
     "classification": "qualified" if qualified else "failed-closed",

@@ -26,10 +26,10 @@ qualifier=${repo}/scripts/qualify-openai-concurrency-attempt.py
 verifier=${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh
 control_launcher=${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh
 candidate_launcher=${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh
-control_image=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15
-control_image_id=sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e
-candidate_image=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31
-candidate_image_id=sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b
+control_image=${CONTROL_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15}
+control_image_id=${CONTROL_IMAGE_ID:-sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e}
+candidate_image=${CANDIDATE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
+candidate_image_id=${CANDIDATE_IMAGE_ID:-sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${arm}" == control || "${arm}" == candidate ]] || fail 'ARM must be control or candidate'
