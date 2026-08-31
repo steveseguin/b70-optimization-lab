@@ -13,6 +13,11 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
     from vllm.model_executor.models.qwen3_next import Qwen3NextAttention
 
     PAD_TOKENS = 512
+    SMALL_PAD_TOKENS = int(
+        os.environ.get("VLLM_XPU_QWEN38_PREFILL_SMALL_PAD_TOKENS", "512")
+    )
+    if SMALL_PAD_TOKENS not in (128, 512):
+        raise RuntimeError("small prefill pad must be 128 or 512 tokens")
     SYNCHRONIZE = (
         os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE", "1")
         != "0"
@@ -31,16 +36,22 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
         if SYNCHRONIZE:
             torch.xpu.synchronize()
 
+    def _target_tokens(num_tokens):
+        if num_tokens <= SMALL_PAD_TOKENS:
+            return SMALL_PAD_TOKENS
+        return PAD_TOKENS
+
     def _mlp_forward_with_deterministic_down(self, x):
         if not _in_repair_band(x) or self.expert_gate is not None:
             return _original_mlp_forward(self, x)
         num_tokens = x.shape[0]
+        target_tokens = _target_tokens(num_tokens)
         _sync()
         gate_up, _ = self.gate_up_proj(x)
         _sync()
         activated = self.act_fn(gate_up)
         padded = torch.zeros(
-            (PAD_TOKENS, activated.shape[-1]),
+            (target_tokens, activated.shape[-1]),
             dtype=activated.dtype,
             device=activated.device,
         )
@@ -56,8 +67,9 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
         if not _in_repair_band(hidden_states):
             return _original_attention_forward(self, positions, hidden_states)
         num_tokens = hidden_states.shape[0]
+        target_tokens = _target_tokens(num_tokens)
         padded_hidden = torch.zeros(
-            (PAD_TOKENS, hidden_states.shape[-1]),
+            (target_tokens, hidden_states.shape[-1]),
             dtype=hidden_states.dtype,
             device=hidden_states.device,
         )
@@ -71,7 +83,7 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
         if gate is not None:
             attention_output = attention_output * torch.sigmoid(gate)
         padded_attention = torch.zeros(
-            (PAD_TOKENS, attention_output.shape[-1]),
+            (target_tokens, attention_output.shape[-1]),
             dtype=attention_output.dtype,
             device=attention_output.device,
         )
