@@ -1,0 +1,14 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-onednn-primitive-reuse-20260830-r29",
+  "status": "preregistered before benchmark implementation, compilation, or measurement",
+  "purpose": "Measure whether reusing the oneDNN primitive descriptor and matmul primitive materially reduces the dominant c96 Qwen3.8-27B gate/up GEMM cost before changing the llama.cpp backend.",
+  "scope": "Mechanism-only real-shape microbenchmark; no timing or rate from this test is an endpoint or publishable model result.",
+  "hardware": "Each of the two local Intel Arc Pro B70 cards tested separately; no remote host.",
+  "shape": "Deterministic f16xf16->f32 oneDNN matmul with A=[1,8704,5120], B=[1,5120,96], C=[1,8704,96], matching the dominant c96 ffn_gate/ffn_up group in the r22 endpoint profile.",
+  "arms": "Reconstruct the memory descriptors, primitive attributes, primitive descriptor and matmul primitive for every execution versus reuse only the descriptors, primitive descriptor and matmul primitive; both arms still construct pointer-bound memory objects, the scratchpad memory wrapper and argument map per execution, as a backend cache cannot assume stable tensor pointers.",
+  "method": "Allocate and initialize once; prewarm oneDNN; alternate arm order across timed blocks; include submission and an explicit queue wait; execute multiple invocations per sample; report per-invocation median and interquartile ranges.",
+  "correctness_gate": "The cached-plan and reconstruct-every-call output buffers must be byte-identical after timed execution on each card.",
+  "advance_rule": "Only implement a default-off backend primitive cache if both local cards pass byte identity and cached-plan median time is at least 5% lower than reconstruct-every-call. Otherwise close primitive reuse as unsupported by this evidence.",
+  "profile_basis": "r22 recorded 16,256 gate/up calls per GPU at median 0.236816 ms on GPU0 and attributed 42.51% of its oneDNN execution time to this group; GPU1 was comparable. Wrapper-side object construction is not included in oneDNN execution records.",
+  "claim_policy": "Even a passing mechanism result only authorizes a scoped endpoint candidate. Promotion still requires fresh-server, prompt-cache-off, 96/96 exact-oracle endpoint repeats under the strict c96 policy."
+}
