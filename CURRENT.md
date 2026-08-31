@@ -1791,6 +1791,13 @@ Next, analyze the already captured collective ordinal/layer arrival timeline
 offline before selecting another endpoint arm.
 Protected results remain unchanged. See the
 [A28 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-target-step-profile-result.md).
+That offline timeline is complete. Every cycle has 97 BF16 `[1,2560]`
+allreduces (5,120 bytes), just above the pinned oneCCL 4,096-byte low-latency
+threshold. The normalized submission-arrival proxy is most often latest on
+ranks 2 and 3 and reaches 16.362 ms, but it is not wire latency. The next
+bounded no-model test compares the exact shape at thresholds 4,096 and 8,192,
+with exact hashes and protocol receipts. See the
+[A28 collective timeline](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-collective-timeline.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win,
 but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
@@ -1801,14 +1808,13 @@ from lossless promotion. The M4 result remains a valid component measurement,
 but the production decode kernel uses M1; re-screen M1 before any endpoint arm.
 See the
 [M4 MoE component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m4-warps8-component-positive.md).
-A matched four-rank decode-shape collective screen also passed exact rank-order,
+A four-rank synthetic dispatch/combine collective screen also passed exact rank-order,
 reduce-scatter, and 100-repeat hash gates. Across three process starts, reusing
 buffers and reducing directly into the final output lowered the slowest-rank
 median from `748.464` to `722.777 us/layer`, a 3.43% component reduction or
-about 1.23 ms per 48-layer target step if it transfers. This is a small
-candidate, not the primary bottleneck answer, and no endpoint/source selector
-changed. Any opt-in runtime arm remains ordered after A25 and the same full
-losslessness gate. See the
+about 1.23 ms per 48-layer cycle. A28 later proved that production decode does
+not use this per-layer all-gather/reduce-scatter shape, so the endpoint
+projection is withdrawn and no runtime arm should use it. See the
 [TP4 collective screen](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-moe-collective-cycle-component-screen.md).
 
 The prior Qwen3.8 27B matrix and DeepSeek 0731 REAP GPU qualification are

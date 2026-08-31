@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "bit_exact_component_positive_small",
-  "classification": "bounded_tp4_xccl_component_screen",
+  "status": "bit_exact_component_positive_nonproduction_dispatch_shape",
+  "classification": "bounded_tp4_xccl_allgather_reduce_scatter_screen_not_current_decode_path",
   "identity": {
     "model": "Qwen/Qwen3.8-Flash-Next-FP8",
     "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
@@ -73,9 +73,10 @@
     "projected_direct_rs_savings_ms_per_48_layer_target_step": 1.2329719999999944
   },
   "decision": {
-    "classification": "small exact candidate, not a primary bottleneck solution",
+    "classification": "small exact component result for an allgather_reduce_scatter cycle that A28 proved is not the current single-sequence decode path",
     "promotion": "not promoted",
-    "next_gate": "implement only as an opt-in endpoint candidate after the A25 fresh-start trace; require the full exact-output, semantic, needle, repeat, and fresh-server gates",
+    "post_a28_correction": "production decode uses M1 local expert work followed by a 5120-byte BF16 allreduce; it does not perform this per-layer M1-to-M4 dispatch and reduce-scatter cycle",
+    "next_gate": "do not implement this component in the current endpoint; test the actual 5120-byte allreduce protocol and production M1 MoE shape instead",
     "protected_results_changed": false
   },
   "tool": {

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "status": "offline_timeline_complete",
+  "classification": "submission_arrival_skew_proxy_and_5120_byte_collective_threshold_hypothesis",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "d14396e27247c1b251da0ce24a0942772c4b002f",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "attempt": 28,
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "retained_decode_cycles": 3
+  },
+  "collectives": {
+    "allreduces_per_cycle": 97,
+    "dtype": "bfloat16",
+    "shape": [
+      1,
+      2560
+    ],
+    "bytes": 5120,
+    "ordinal_map": {
+      "0": "embedding tensor-parallel reduction",
+      "2L+1": "layer L attention reduction for L=0..47",
+      "2L+2": "layer L MoE reduction for L=0..47"
+    },
+    "observations": 291,
+    "trace_kernel_protocol": "Rt64_128_PCIE"
+  },
+  "submission_arrival_proxy": {
+    "semantic_warning": "normalized Kineto args.submitted is host submission arrival, not collective wire latency or a direct device-arrival timestamp",
+    "latest_rank_counts": {
+      "0": 9,
+      "1": 12,
+      "2": 128,
+      "3": 142
+    },
+    "cycles_ms": [
+      {
+        "cycle": 0,
+        "mean": 2.749,
+        "median": 2.895,
+        "p90": 4.877,
+        "max": 5.64
+      },
+      {
+        "cycle": 1,
+        "mean": 8.312,
+        "median": 9.645,
+        "p90": 10.61,
+        "max": 11.059
+      },
+      {
+        "cycle": 2,
+        "mean": 9.228,
+        "median": 11.266,
+        "p90": 15.167,
+        "max": 16.362
+      }
+    ],
+    "worst": {
+      "cycle": 2,
+      "ordinal": 94,
+      "layer": 46,
+      "stage": "moe_reduction",
+      "skew_ms": 16.362,
+      "latest_rank": 3
+    },
+    "largest_single_increase": {
+      "cycle": 1,
+      "ordinal": 22,
+      "layer": 10,
+      "stage": "moe_reduction",
+      "increase_ms": 2.908,
+      "interpretation": "preceding MoE and GEMM device durations are nearly equal across ranks; queue or collective scheduling is the stronger bounded hypothesis"
+    }
+  },
+  "oneccl_selection": {
+    "library": "/home/steve/.venvs/vllm-xpu/lib/libccl.so.1",
+    "library_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+    "source_tree": "/home/steve/src/oneccl-2021.17.2-b70-deps",
+    "default_ll_threshold_bytes": 4096,
+    "selection_rule": "count_times_dtype_size_less_than_or_equal_to_threshold_selects_Rt64_PCIE_otherwise_Rt64_128_PCIE",
+    "current_5120_byte_path": "Rt64_128_PCIE",
+    "candidate_threshold_bytes": 8192,
+    "candidate_expected_path": "Rt64_PCIE"
+  },
+  "production_moe_shape_correction": {
+    "routed_kernel_m": 1,
+    "per_layer_ep_allgather": false,
+    "a27_modified_m4_key_selected": false,
+    "a27_config_file_loaded": true
+  },
+  "next": "Run fresh-process TP4 exact-shape BF16 allreduce controls at LL thresholds 4096 and 8192. Require exact all-rank hashes, protocol receipts, slowest-rank median/p95/p99, and clean lifecycle. Separately repeat the real-weight MoE component screen at M1. Neither requires a model load or reboot.",
+  "protected_results_changed": false
+}
