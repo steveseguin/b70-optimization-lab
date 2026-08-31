@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "native_build_passed_finalization_failed_closed",
+  "classification": "procedural_negative_with_reusable_complete_build",
+  "date": "2026-08-31",
+  "boot_id": "c36480de-9150-4182-9888-08c85d2d9de4",
+  "identity": {
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "a1_driver_sha256": "b5c29a50c3e6e3b737312fcb2392df9e5b252ef38cd038674c1bf11d4c3bd336",
+    "build_log_sha256": "6bcaad7fc092af76468c82ba881a62f3e7e0a9da15b186a7a032e7e99b6871c3",
+    "cmake_cache_sha256": "94f11621328ba1cc2e46c81c0f6ce15e2bce24695c861375e600b80ac394a698",
+    "compile_commands_sha256": "04090a0c4a969cd83eedcc2db77c4a108ca241af2cb1cd44c29b54f9e3be5818"
+  },
+  "pipeline": {
+    "native_builder_exit_code": 0,
+    "log_capture_exit_code": 0,
+    "ninja_steps": 711,
+    "final_link_receipt": "[711/711] Linking CXX shared module _xpu_C.abi3.so"
+  },
+  "candidate_outputs": {
+    "_xpu_C.abi3.so": "8d6d41a2259b4d4eda53edd9524d113d9190ae1b093a150fd79aa72a5c28dd76",
+    "libgdn_attn_kernels_xe_2.so": "249cd714ca6976346b40a31d260c66149c48e1fe5e7c15df9277db6b155f2ed0",
+    "libgrouped_gemm_xe_2.so": "ef81dd90441346671220e55f57e8b1f682394d24aeb70c79c444003e8b40ed64"
+  },
+  "failure": {
+    "phase": "post_build_cache_assertion",
+    "cause": "A1 expected the user-local CMake path and ONEDNN UNINITIALIZED cache type; the activated build venv recorded its packaged CMake and ONEDNN PATH type.",
+    "actual_cmake_command": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/cmake/data/bin/cmake",
+    "actual_cmake_sha256": "2cb2b2ed8a79eb5612bd611d010c882bf467feb51ad69dac288a245519080408",
+    "actual_ninja": "/home/steve/.venvs/vllm-xpu/bin/ninja",
+    "actual_ninja_sha256": "696f9628a79d9ce50314cf9556d7cd1a1d1ec52b8fd52828f6f9db1719565b67",
+    "failure_message_captured": false,
+    "classification_basis": "A1 driver source plus exact post-build CMake cache; the outer-shell failure text was not part of build.log.",
+    "a1_stage_created": false
+  },
+  "authority": {
+    "native_build": "passed",
+    "a1_serving_stage": "not_created",
+    "endpoint_or_performance": "not_run_not_authorized",
+    "next": "assembly-only A2 finalizer may consume only this exact build closure"
+  }
+}

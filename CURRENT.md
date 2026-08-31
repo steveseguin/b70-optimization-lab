@@ -1990,6 +1990,26 @@ performs no reboot or full model load and must pass a separate loader/schema,
 HC, GDN, MoE, and collective qualification before any composite A30 endpoint
 arm is frozen. See the
 [full-stage preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a1-prereg.md).
+A1 completed all 711 native build steps with both captured exit codes zero,
+then failed closed before stage assembly because its first post-build CMake
+path assertion described the user-local tool rather than the activated vLLM
+venv. The later oneDNN cache-type mismatch was reconstructed from the frozen
+driver and exact cache; A1's outer failure text was not separately captured.
+Preserve A1 as a procedural negative, not a kernel failure. The assembly-only
+A2 successor consumed the exact hash-bound A1 outputs without recompiling and
+produced a closed 18-file candidate: all 15 untreated files match the accepted
+stage, and the matched `_xpu_C`/GDN/grouped trio resolves candidate-locally with
+`$ORIGIN`. A2's runtime-manifest SHA-256 is `a4e83ec3...`; its finalizer
+evidence is `2c049273...`. The separate A2 qualification is now frozen and
+independently reviewed: validation-only and 5/5 CPU contract tests pass. It
+must next pass accepted/candidate schema parity, 5/5 HC and 25/25 config tests,
+two fresh retained GDN-history qualifications, the exact real-weight M1 MoE
+gate, and TP4 collective repeatability. It performs no server or full model
+load; a pass authorizes only freezing composite A30. The current boot remains
+unconsumed by a full model load and no reboot is required. See the
+[A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a1-result.md),
+[A2 finalizer result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a2-finalizer-result.md),
+and [A2 qualification preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a2-qualification-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

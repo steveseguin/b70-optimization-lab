@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "classification": "assembly_only_candidate_stage_positive",
+  "date": "2026-08-31",
+  "boot_id": "c36480de-9150-4182-9888-08c85d2d9de4",
+  "identity": {
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "a1_build_log_sha256": "6bcaad7fc092af76468c82ba881a62f3e7e0a9da15b186a7a032e7e99b6871c3",
+    "a2_finalizer_sha256": "d23491b666d83e7f57008239cf17d54f11e77674ec25164c8ea560750cfe1e76"
+  },
+  "stage": {
+    "path": "/mnt/fast-ai/qwen38-build/runtime-serving-hcgrouped-eeee7d6-a2/vllm_xpu_kernels",
+    "file_count": 18,
+    "untreated_files_byte_identical": 15,
+    "runtime_manifest": "/mnt/fast-ai/qwen38-build/runtime-serving-hcgrouped-eeee7d6-a2-evidence/runtime-stage.sha256",
+    "runtime_manifest_sha256": "a4e83ec34d91b70a666dc170fcc3bda75562592c58fce198f29cfa4d25755d0d",
+    "finalizer_evidence_manifest_sha256": "2c049273bfc9e8dd429e2f74969cb9c4917a6e23833fcb8e8584ba8944a62aee",
+    "replaced_files": {
+      "_xpu_C.abi3.so": "8d6d41a2259b4d4eda53edd9524d113d9190ae1b093a150fd79aa72a5c28dd76",
+      "libgdn_attn_kernels_xe_2.so": "6c9ba1f12838b3eaa27e91610f0344fbf11671bfee204c6a9a68564fc654c17e",
+      "libgrouped_gemm_xe_2.so": "c8ba41d4978b0095648acee6782b7fd300ebc26403b5d1f2f7bcfb87b3430c42"
+    },
+    "native_dependencies_present": [
+      "libgdn_attn_kernels_xe_2.so",
+      "libgrouped_gemm_xe_2.so"
+    ],
+    "native_runpath": "$ORIGIN",
+    "candidate_local_dependency_resolution": true,
+    "sycl_runtime_sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f"
+  },
+  "authority": {
+    "serving_stage_qualification": "not_run",
+    "gpu_work": "not_run",
+    "endpoint_or_performance": "not_run_not_authorized",
+    "next": "run the separately frozen A2 qualification packet after independent review"
+  }
+}
