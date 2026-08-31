@@ -1750,6 +1750,15 @@ quality and authority battery. It must be the next boot's only full load. A
 passing speed observation remains a candidate until separately booted matched
 control and repeat arms establish attribution. See the
 [A27 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a27-moe-warps8-endpoint-prereg.md).
+A27 completed as a bounded endpoint speed and reliability negative. The exact
+config-selection receipt, recovery, accepted 6/7 semantics, 16/16 repeat,
+needle, and cache-zero transport checks passed. Short decode measured
+`5.561458 / 5.473329 / 5.501703 tok/s`, median `5.501703`, or 0.255% below the
+protected frontier. Exact-4K row 1 matched authority, but row 2 did not. The
+component-exact 20% M4 kernel gain therefore does not transfer as a dominant
+endpoint win and is not promoted. Teardown was clean; protected results remain
+unchanged. See the
+[A27 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a27-moe-warps8-endpoint-negative.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
