@@ -4,13 +4,13 @@ set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
 attempt_runner=${script_dir}/run-20260828-qwen38-autoround-deterministic-mtp0-strict-attempt.sh
-campaign=qwen38-autoround-allreduce-sync-tp2-20260830-r4
+campaign=${CAMPAIGN:-qwen38-autoround-allreduce-sync-tp2-20260830-r4}
 out_parent=/mnt/fast-ai/bench-results
 cache_parent=/mnt/fast-ai/vllm-cache
 image=neural-download/vllm-openai-xpu:qwen38-autoround-allreduce-sync-diagnostic-r4
 image_id=sha256:aa212832d5ba6d88d2fa47d1ce9b08ce3862e90bbd4aa57156d6eaafef14f1d2
 communicator_sha=c9a356a5a11006206ae83da9c09fd6cee86e9cd6f65e8d8d877bfe08d0762373
-prereg=${repo}/experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-autoround-allreduce-sync-tp2-r4-prereg.md
+prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-autoround-allreduce-sync-tp2-r4-prereg.md}
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ -f "$prereg" && -x "$attempt_runner" ]] || fail 'missing preregistration or runner'

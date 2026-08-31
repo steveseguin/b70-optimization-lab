@@ -67,8 +67,8 @@ docker run --rm --entrypoint sha256sum "$image" \
   /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py \
   /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py \
   /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
-  /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py \
   /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py \
   /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so \
   /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
   >"$actual_files"

@@ -1,0 +1,14 @@
+{
+  "schema": "neural.download.qwen38-autoround-allreduce-sync-diagnostic.v1",
+  "campaign": "qwen38-autoround-allreduce-sync-tp2-20260830-r4",
+  "classification": "preflight-failed-no-model-request",
+  "failed_arm": "sync-A",
+  "model_direct_verification": "passed-19-of-19",
+  "server_started": false,
+  "model_loaded": false,
+  "requests_sent": 0,
+  "cause": "The parameterized expected-file manifest appended the communicator after layernorm, while the image-side sha256sum command emitted communicator before layernorm. cmp rejected the line-order mismatch even though the expected hashes were correct.",
+  "corrective_action": "Emit image-side hashes in the same deterministic order as the expected manifest and use a new R5 cache/evidence namespace.",
+  "raw_evidence_root": "/mnt/fast-ai/bench-results/qwen38-autoround-allreduce-sync-tp2-20260830-r4-sync-A",
+  "reporting_boundary": "No server startup, model load, request, or performance evidence occurred."
+}
