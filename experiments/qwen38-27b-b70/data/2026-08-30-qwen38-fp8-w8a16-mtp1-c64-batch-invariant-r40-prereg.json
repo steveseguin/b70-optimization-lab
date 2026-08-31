@@ -1,0 +1,15 @@
+{
+  "campaign": "qwen38-fp8-w8a16-mtp1-c64-batch-invariant-20260830-r40",
+  "status": "preregistered after r39 control A/B failed 56/64 repeat identity and before any r40 server or request",
+  "diagnosis": "r39 used deterministic Inductor but allowed batch-shape-dependent target kernels. Eight of 64 MTP0 outputs diverged across fresh, same-c64 servers, with first differences at tokens 21 through 97. The failure occurred before candidate execution and withheld all MTP1 rates.",
+  "question": "Does the repository's full supported batch-invariant target profile repair c64 MTP0 repeat identity, and if so does static MTP1 retain that complete output above 875 aggregate tok/s?",
+  "hardware": "Only local physical Intel Arc Pro B70 devices 0 and 1.",
+  "model": "Qwen/Qwen3.8-27B-FP8 revision 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a on local ext4 NVMe with direct-I/O verification.",
+  "single_mechanism_change_from_r39": "Set VLLM_BATCH_INVARIANT=1, VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=1, and VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1 on both control and candidate. The GDN serial setting is required for the backend to advertise supported batch-invariant behavior.",
+  "fixed_service_shape": "Same as r39: official FP8 plus W8A16, TP2, c64, p128, max model length 256, max sequences 128, max batched tokens 512, FP16 KV, XPU Graph off, deterministic Inductor, oneCCL P2P plus explicit waits, prefix cache off, temperature 0, ignore_eos true, 0.95 GPU memory utilization.",
+  "ordered_method": "Fresh control A is the first and only same-shape batch and freezes 64 complete token arrays. Fresh control B must match 64/64. Only then run fresh MTP1 candidate A and B against that oracle. Every attempt gets a new empty compile cache and a direct-verified model load.",
+  "correctness_gate": "All validation attempts must match 64/64 complete 128-token arrays, report cached_tokens=0 on every row, have no cross-prompt collision, pass post-health and bounded cleanup, and show no xe reset/fault/OOM. Control failure stops before candidate.",
+  "performance_gate": "If all correctness gates pass, use the median of candidate A/B batch-wall aggregate rates. It must exceed the control median and reach at least 875 tok/s; 1000 tok/s is preferred.",
+  "failure_policy": "Any mismatch or unsupported backend rejects r40. No isolated rate, pilot rate, or shape-variant rate is publishable.",
+  "reporting_boundary": "Directly measured c64 short-context TP2 only; no single-user, 32K, other concurrency, or extrapolated claim."
+}

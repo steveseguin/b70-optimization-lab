@@ -7,7 +7,7 @@ arm=${ARM:?set ARM to control or candidate}
 attempt=${ATTEMPT:?set ATTEMPT to A or B}
 pilot=${PILOT:-0}
 oracle=${ORACLE_DIGESTS:-}
-campaign=qwen38-fp8-w8a16-mtp1-c64-deterministic-20260830-r39
+campaign=${CAMPAIGN:-qwen38-fp8-w8a16-mtp1-c64-deterministic-20260830-r39}
 out_parent=${OUT_DIR:-/mnt/fast-ai/bench-results}
 run_dir=${out_parent}/${campaign}-${arm}-${attempt}
 cache_dir=${CACHE_DIR:-/mnt/fast-ai/vllm-cache/${campaign}-${arm}-${attempt}}
@@ -16,7 +16,10 @@ port=${PORT:-18159}
 container=${CONTAINER_NAME:-qwen38-fp8-r39-${arm}-${attempt}}
 served_model=qwen38-fp8-r39
 suite=${repo}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json
-prereg=${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-fp8-w8a16-mtp1-c64-deterministic-r39-prereg.json
+prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-fp8-w8a16-mtp1-c64-deterministic-r39-prereg.json}
+batch_invariant=${BATCH_INVARIANT:-0}
+rmsnorm_batch_invariant=${RMSNORM_BATCH_INVARIANT:-0}
+gdn_serial_exact=${GDN_SERIAL_EXACT:-0}
 harness=${repo}/scripts/bench-openai-concurrency-oracle.py
 pilot_harness=${repo}/scripts/bench-openai-concurrency-batch-oracle-pilot.py
 qualifier=${repo}/scripts/qualify-openai-concurrency-attempt.py
@@ -34,6 +37,10 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ "${pilot}" == 0 || "${pilot}" == 1 ]] || fail 'PILOT must be 0 or 1'
 [[ "${pilot}" == 0 || ( "${arm}" == control && "${attempt}" == A ) ]] || fail 'only control A may generate the oracle'
 [[ "${pilot}" == 1 || -f "${oracle}" ]] || fail 'validation arms require ORACLE_DIGESTS'
+for value_name in batch_invariant rmsnorm_batch_invariant gdn_serial_exact; do
+  value=${!value_name}
+  [[ "${value}" == 0 || "${value}" == 1 ]] || fail "${value_name} must be 0 or 1"
+done
 [[ ! -e "${run_dir}" ]] || fail "refusing to overwrite ${run_dir}"
 [[ ! -e "${cache_dir}" ]] || fail "fresh compile cache already exists: ${cache_dir}"
 [[ -d "${model_dir}" ]] || fail "model directory missing: ${model_dir}"
@@ -117,10 +124,10 @@ common_env=(
   SERVED_MODEL_NAME="${served_model}"
   VLLM_XPU_ENABLE_XPU_GRAPH=0
   VLLM_XPU_FP8_BLOCK_W8A16=1
-  VLLM_BATCH_INVARIANT=0
-  VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=0
+  VLLM_BATCH_INVARIANT="${batch_invariant}"
+  VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${rmsnorm_batch_invariant}"
   VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1
-  VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
+  VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT="${gdn_serial_exact}"
   VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
   VLLM_XPU_GDN_NATIVE_FALLBACK=1
   TORCHINDUCTOR_DETERMINISTIC=1
@@ -180,7 +187,8 @@ journalctl -k -b --since "${start}" --no-pager | \
   >"${run_dir}/kernel-errors.txt" || true
 [[ ! -s "${run_dir}/kernel-errors.txt" ]] || fail 'kernel/GPU/OOM error evidence found'
 
-python3 - "${run_dir}" "${arm}" "${attempt}" "${pilot}" "${image}" "${expected_image_id}" <<'PY'
+python3 - "${run_dir}" "${arm}" "${attempt}" "${pilot}" "${image}" "${expected_image_id}" \
+  "${batch_invariant}" "${rmsnorm_batch_invariant}" "${gdn_serial_exact}" <<'PY'
 import json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
 arm, attempt, pilot = sys.argv[2], sys.argv[3], sys.argv[4] == "1"
@@ -212,6 +220,9 @@ summary = {
     "cross_base_oracle_collision_count": quality["cross_base_oracle_collision_count"],
     "image": sys.argv[5],
     "image_id": sys.argv[6],
+    "batch_invariant": sys.argv[7] == "1",
+    "rmsnorm_batch_invariant": sys.argv[8] == "1",
+    "gdn_serial_exact": sys.argv[9] == "1",
     "scope": "directly measured TP2 c64 p128 official FP8/W8A16; no extrapolation",
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
