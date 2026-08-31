@@ -1,0 +1,23 @@
+{
+  "attempt_exit_code": 130,
+  "classification": "xe-device-lost-before-serving",
+  "container_oom_killed": false,
+  "failed_rank": 1,
+  "gpu0_bcs_engine_resets_observed": 1,
+  "gpu1_fault_responses_in_attempt_log": 478,
+  "gpu1_pci_address": "0000:e3:00.0",
+  "gpu1_post_flr_state": "wedged-needs-recovery",
+  "gpu1_recovery_attempt": "isolated-pci-function-level-reset",
+  "gpu1_recovery_succeeded": false,
+  "max_num_batched_tokens": 256,
+  "num_speculative_tokens": 1,
+  "projection_repair_hook_sha256": "f6d86e8e1e5bb6337c04d8342f762a42972835ca0e1e5a497e6dc803b4bba73a",
+  "requests_served": 0,
+  "requires_full_driver_reinitialization_or_host_reboot": true,
+  "schema": "neural.download.qwen38-prefill-projection-repair.tp2-mtp1-strict-attempt.v1",
+  "stage": "vllm-determine-available-memory-dummy-sampler",
+  "status": "failed-before-serving-no-performance-result",
+  "tensor_parallel_size": 2,
+  "worker_error": "UR_RESULT_ERROR_DEVICE_LOST",
+  "worker_operation": "SpecDecodeMetadata.make_dummy torch.tensor"
+}
