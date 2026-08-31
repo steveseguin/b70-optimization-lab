@@ -1981,6 +1981,15 @@ yet authorized. See the
 [S4g result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-grouped-s4g-result.md)
 and
 [source result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-grouped-dynamic-m-source-result.md).
+The component-only grouped stage cannot serve Flash-Next because its extension
+was intentionally built without GDN. A separate full-serving A1 build is now
+frozen: it retains the accepted 18-file stage, rebuilds `_xpu_C` with both GDN
+and grouped/MoE at clean kernel head `eeee7d6`, and replaces exactly the matched
+extension, GDN library, and grouped library in a new local-NVMe stage. It
+performs no reboot or full model load and must pass a separate loader/schema,
+HC, GDN, MoE, and collective qualification before any composite A30 endpoint
+arm is frozen. See the
+[full-stage preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a1-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

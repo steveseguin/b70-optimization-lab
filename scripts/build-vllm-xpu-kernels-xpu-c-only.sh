@@ -6,6 +6,9 @@ VENV_DIR="${VENV_DIR:-/home/steve/.venvs/vllm-xpu}"
 ONEAPI_VARS="${ONEAPI_VARS:-/opt/intel/oneapi/compiler/2025.3/env/vars.sh}"
 BUILD_DIR="${BUILD_DIR:-${KERNELS_DIR}/build/xpu-c-only-2025}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/tmp/vllm-xpu-xpu-c-only-2025}"
+FETCHCONTENT_DIR="${FETCHCONTENT_DIR:-${KERNELS_DIR}/.deps}"
+ONEDNN_SOURCE="${ONEDNN_SOURCE:-}"
+CUTLASS_SOURCE="${CUTLASS_SOURCE:-}"
 AOT_DEVICES="${AOT_DEVICES:-bmg-g21-a0}"
 JOBS="${JOBS:-4}"
 GDN_KERNELS="${GDN_KERNELS:-ON}"
@@ -18,6 +21,14 @@ source "${VENV_DIR}/bin/activate"
 
 export VLLM_XPU_AOT_DEVICES="${AOT_DEVICES}"
 export VLLM_XPU_XE2_AOT_DEVICES="${AOT_DEVICES}"
+if [[ -n "${CUTLASS_SOURCE}" ]]; then
+  export VLLM_CUTLASS_SRC_DIR="${CUTLASS_SOURCE}"
+fi
+
+dependency_args=()
+if [[ -n "${ONEDNN_SOURCE}" ]]; then
+  dependency_args+=("-DFETCHCONTENT_SOURCE_DIR_ONEDNN=${ONEDNN_SOURCE}")
+fi
 
 if [[ "${CLEAN:-0}" == "1" ]]; then
   rm -rf "${BUILD_DIR}" "${INSTALL_PREFIX}"
@@ -36,7 +47,8 @@ cmake -S . -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain.cmake \
   -DVLLM_PYTHON_EXECUTABLE="$(which python3)" \
   -DVLLM_PYTHON_PATH="${python_path}" \
-  -DFETCHCONTENT_BASE_DIR="${KERNELS_DIR}/.deps" \
+  -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_DIR}" \
+  "${dependency_args[@]}" \
   -DBUILD_SYCL_TLA_KERNELS=ON \
   -DVLLM_XPU_ENABLE_XE2=ON \
   -DVLLM_XPU_ENABLE_XE_DEFAULT=OFF \
