@@ -10,6 +10,7 @@ port=${PORT:?set PORT to a unique port}
 expected_image_id=${EXPECTED_IMAGE_ID:?set EXPECTED_IMAGE_ID}
 expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:?set EXPECTED_XPU_EXTENSION_SHA256}
 expected_gdn_library_sha256=${EXPECTED_GDN_LIBRARY_SHA256:?set EXPECTED_GDN_LIBRARY_SHA256}
+expected_xpu_communicator_sha256=${EXPECTED_XPU_COMMUNICATOR_SHA256:-5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d}
 model=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-devan}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
 gpu_ids=${GPU_IDS:-2,3}
@@ -42,9 +43,9 @@ trap 'exit 130' INT TERM HUP
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$out/model-verify.json" >"$out/model-verify.log"
 
-python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" "$gpu_ids" "$min_host_memory_gib" "$container_memory" "$container_memory_swap" <<'PY'
+python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" "$expected_xpu_communicator_sha256" "$gpu_ids" "$min_host_memory_gib" "$container_memory" "$container_memory_swap" <<'PY'
 import datetime as dt, hashlib, json, pathlib, sys
-path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha, gpu_ids, min_mem, container_mem, container_swap = sys.argv[1:]
+path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha, communicator_sha, gpu_ids, min_mem, container_mem, container_swap = sys.argv[1:]
 s = pathlib.Path(suite)
 value = {
   "schema": "neural.download.qwen38-autoround-deterministic-mtp0-strict-attempt.v1",
@@ -53,7 +54,7 @@ value = {
   "suite": str(s), "suite_sha256": hashlib.sha256(s.read_bytes()).hexdigest(),
   "port": int(port), "container": container, "image": image,
   "image_id": image_id, "xpu_extension_sha256": xpu_sha,
-  "gdn_library_sha256": gdn_sha,
+  "gdn_library_sha256": gdn_sha, "xpu_communicator_sha256": communicator_sha,
   "tensor_parallel": 2, "physical_gpus": [int(item) for item in gpu_ids.split(",")],
   "host_memory_gate_gib": int(min_mem), "container_memory": container_mem,
   "container_memory_swap": container_swap,
@@ -70,6 +71,7 @@ PY
 env EXECUTION_MODE="$mode" IMAGE="$image" EXPECTED_IMAGE_ID="$expected_image_id" \
   EXPECTED_XPU_EXTENSION_SHA256="$expected_xpu_extension_sha256" \
   EXPECTED_GDN_LIBRARY_SHA256="$expected_gdn_library_sha256" \
+  EXPECTED_XPU_COMMUNICATOR_SHA256="$expected_xpu_communicator_sha256" \
   MODEL_DIR="$model" VLLM_CACHE_DIR="$cache" CONTAINER_NAME="$container" \
   PORT="$port" SERVED_MODEL_NAME="$served" \
   GPU_IDS="$gpu_ids" MIN_HOST_MEMORY_GIB="$min_host_memory_gib" \
