@@ -13,6 +13,10 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
     from vllm.model_executor.models.qwen3_next import Qwen3NextAttention
 
     PAD_TOKENS = 512
+    SYNCHRONIZE = (
+        os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE", "1")
+        != "0"
+    )
     _original_mlp_forward = Qwen2MoeMLP.forward
     _original_attention_forward = Qwen3NextAttention.forward
 
@@ -23,13 +27,17 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
             and 32 < tensor.shape[0] < PAD_TOKENS
         )
 
+    def _sync():
+        if SYNCHRONIZE:
+            torch.xpu.synchronize()
+
     def _mlp_forward_with_deterministic_down(self, x):
         if not _in_repair_band(x) or self.expert_gate is not None:
             return _original_mlp_forward(self, x)
         num_tokens = x.shape[0]
-        torch.xpu.synchronize()
+        _sync()
         gate_up, _ = self.gate_up_proj(x)
-        torch.xpu.synchronize()
+        _sync()
         activated = self.act_fn(gate_up)
         padded = torch.zeros(
             (PAD_TOKENS, activated.shape[-1]),
@@ -37,9 +45,9 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
             device=activated.device,
         )
         padded[:num_tokens].copy_(activated)
-        torch.xpu.synchronize()
+        _sync()
         padded_output, _ = self.down_proj(padded)
-        torch.xpu.synchronize()
+        _sync()
         return padded_output[:num_tokens]
 
     def _attention_forward_with_deterministic_projections(
@@ -54,9 +62,9 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
             device=hidden_states.device,
         )
         padded_hidden[:num_tokens].copy_(hidden_states)
-        torch.xpu.synchronize()
+        _sync()
         padded_qkv, _ = self.qkv_proj(padded_hidden)
-        torch.xpu.synchronize()
+        _sync()
         qkv = padded_qkv[:num_tokens]
         q, k, v, gate = self._project_qkv_gate(qkv, positions)
         attention_output = self.attn(q, k, v)
@@ -68,9 +76,9 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
             device=attention_output.device,
         )
         padded_attention[:num_tokens].copy_(attention_output)
-        torch.xpu.synchronize()
+        _sync()
         padded_output, _ = self.o_proj(padded_attention)
-        torch.xpu.synchronize()
+        _sync()
         return padded_output[:num_tokens]
 
     Qwen2MoeMLP.forward = _mlp_forward_with_deterministic_down

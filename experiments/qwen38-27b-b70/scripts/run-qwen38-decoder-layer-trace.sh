@@ -19,6 +19,7 @@ root="/mnt/fast-ai/bench-results/${CAMPAIGN_ID}"
 cache_root="/mnt/fast-ai/vllm-cache/${CAMPAIGN_ID}"
 : "${TRACE_IMAGE:=neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}"
 : "${TRACE_IMAGE_ID:=sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136}"
+: "${REPAIR_MODULE_PATH:=}"
 image=$TRACE_IMAGE
 image_id=$TRACE_IMAGE_ID
 served=qwen38-layer-trace
@@ -38,6 +39,17 @@ exec 7>/tmp/b70-benchmark.lock; flock -n 7 || fail 'benchmark lock held'
 exec 8>/tmp/b70-gpu0.lock; flock -n 8 || fail 'GPU0 lock held'
 mkdir -p "$root" "$cache_root"
 sha256sum "$hook" "$prereg" "$suite" "$bench" >"$root/input-sha256sums.txt"
+extra_mount=()
+extra_env=()
+if [[ -n "$REPAIR_MODULE_PATH" ]]; then
+  [[ -f "$REPAIR_MODULE_PATH" ]] || fail 'repair module is absent'
+  sha256sum "$REPAIR_MODULE_PATH" >>"$root/input-sha256sums.txt"
+  extra_mount=(--volume "$REPAIR_MODULE_PATH:/instrument/qwen38_projection_repair.py:ro")
+  extra_env=(
+    --env VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=1
+    --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE=${VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE:-1}"
+  )
+fi
 "$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$root/model-verify.json" >"$root/model-verify.log"
@@ -49,7 +61,8 @@ for process in 1 2 3 4; do
     --group-add video --group-add render --security-opt label=disable --ipc=host --shm-size=16g \
     --publish "127.0.0.1:${port}:8000" --volume "$model:/model:ro" \
     --volume "$cache:/run-cache" --volume "$active_dir:/out" \
-    --volume "$hook:/instrument/sitecustomize.py:ro" --env PYTHONPATH=/instrument \
+    --volume "$hook:/instrument/sitecustomize.py:ro" "${extra_mount[@]}" --env PYTHONPATH=/instrument \
+    "${extra_env[@]}" \
     --env VLLM_XPU_DECODER_LAYER_TRACE_OUT=/out/trace.json \
     --env VLLM_XPU_DECODER_LAYER_TRACE_CALL="$TARGET_CALL" --env VLLM_XPU_DECODER_LAYER_TRACE_LAYER="$TARGET_LAYER" \
     --env ZE_AFFINITY_MASK=0 --env ONEAPI_DEVICE_SELECTOR=level_zero:0 \
