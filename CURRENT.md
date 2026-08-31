@@ -2029,6 +2029,15 @@ and a fresh evidence path; every device, retained-output, and promotion boundary
 is otherwise unchanged. See the
 [A3 schema result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a3-schema-contract-negative.md)
 and [A4 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a4-qualification-prereg.md).
+A4 passed the full stage qualification in about 130 seconds. It preserved all
+32 accepted schemas with zero removals and exactly 14 pinned additions, passed
+5/5 grouped-HC and 25/25 Qwen config tests, reproduced two exact 6,400-call GDN
+history arms, retained the exact M1 real-weight hash across 100 repeats, and
+passed four-card health plus 100 identical TP4 BF16 reductions. Postflight card,
+loader, stage, journal, and render-owner closure also passed. The external
+evidence-manifest SHA-256 is `ca218488...`. This authorizes freezing A30 only;
+no full model, endpoint speed, quality, or promotion claim exists yet. See the
+[A4 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a4-qualification-positive.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-31",
+  "status": "passed",
+  "classification": "grouped_full_serving_stage_component_qualified",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "scope": "A2 hybrid serving package, qualification attempt A4",
+  "boot_id": "c36480de-9150-4182-9888-08c85d2d9de4",
+  "elapsed_seconds_approx": 129.93,
+  "identity": {
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "stage_manifest_sha256": "a4e83ec34d91b70a666dc170fcc3bda75562592c58fce198f29cfa4d25755d0d",
+    "finalizer_evidence_sha256": "2c049273bfc9e8dd429e2f74969cb9c4917a6e23833fcb8e8584ba8944a62aee",
+    "native_sha256": "8d6d41a2259b4d4eda53edd9524d113d9190ae1b093a150fd79aa72a5c28dd76",
+    "gdn_sha256": "6c9ba1f12838b3eaa27e91610f0344fbf11671bfee204c6a9a68564fc654c17e",
+    "grouped_sha256": "c8ba41d4978b0095648acee6782b7fd300ebc26403b5d1f2f7bcfb87b3430c42"
+  },
+  "schema_gate": {
+    "accepted": 32,
+    "candidate": 46,
+    "accepted_preserved": 32,
+    "removed": 0,
+    "exact_additions": 14,
+    "gdn_argument_count": 23
+  },
+  "focused_tests": {
+    "grouped_hc_passed": 5,
+    "qwen_config_passed": 25
+  },
+  "gdn_history": {
+    "fresh_process_arms": 2,
+    "trajectories_per_arm": 100,
+    "calls_per_arm": 6400,
+    "all_canonical_chunk_digests_equal": true
+  },
+  "moe_m1": {
+    "selected_key": 1,
+    "num_warps": 8,
+    "repeats": 100,
+    "unique_output_sha256": 1,
+    "output_sha256": "eb1a25f96c14a3343494d2c240b9033b9dffd386d295c73b588b5e5b08d3b718"
+  },
+  "tp4_collective": {
+    "world_size": 4,
+    "shape": [
+      1,
+      2560
+    ],
+    "dtype": "bfloat16",
+    "repeats": 100,
+    "all_ranks_single_hash": true,
+    "output_sha256": "a994fba89a2fb994b06ba865d156020e4b7a2eab06d6f72f5702164123b3afc0"
+  },
+  "postflight": {
+    "four_cards_unchanged": true,
+    "render_node_owners": 0,
+    "kernel_journal_clean": true,
+    "full_model_loaded": false,
+    "reboot_performed": false
+  },
+  "evidence_directory": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/grouped-serving-stage-eeee7d6-a2-qualification-a4",
+  "qualification_evidence_manifest_sha256": "ca218488129510e0bc29175f96fd17f0572ecbc2e0f7913ce3c576d25b5b3591",
+  "authorization": "freeze_A30_endpoint_candidate_only",
+  "protected_results_changed": false
+}
