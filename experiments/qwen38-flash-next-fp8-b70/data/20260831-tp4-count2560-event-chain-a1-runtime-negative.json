@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "closed",
+  "classification": "component_runtime_failure_reject_candidate",
+  "scope": "Combined clone-elision plus same-queue event-chain component; no model loaded and no throughput measured",
+  "identity": {
+    "model_lane": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "boot_id": "c36480de-9150-4182-9888-08c85d2d9de4",
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "xpu_kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "gate_sha256": "27bf56ef24f2fc09694525256583e6db6beafb97a85d0e4c2c82c1e9f91f03f5",
+    "runner_sha256": "10494f17e6405a9b2c7d054438b4df22aa76effd083bdb8944f22b842c5fa88d",
+    "candidate_libccl_sha256": "164091ac6aced05bfc658ae1e1cd722153f099714e9cee6f437c62bdd3731c1c",
+    "candidate_xpu_extension_sha256": "776a080846bfe26c92f10ecb80982f45137802cf10af4a7d66b9c0d6af1cd339"
+  },
+  "execution": {
+    "replica_1_exit_code": 1,
+    "replica_1_result_present": false,
+    "replica_2_started": false,
+    "protocol_receipt_present_all_ranks": true,
+    "protocol": "oneccl_allreduce_pcie<bfloat16, Rt64_128_PCIE, 16>",
+    "failure_point": "first measured-cycle synchronization after protocol receipt and warmup",
+    "observed_error": "UR_RESULT_ERROR_DEVICE_LOST on all four ranks",
+    "model_checkpoint_loaded": false,
+    "performance_result_available": false
+  },
+  "evidence": {
+    "root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-event-chain-a1",
+    "torchrun_log_sha256": "fffc97505e1386983d160d69c38ad240b2fb13125ddb25a2f206bf37c4563a0b",
+    "rank_trace_sha256": {
+      "0": "b314ab131caabdba59edc6d0ac812690e77f00d9f954926df503e9f025ecb8ff",
+      "1": "1df3c58d8e7b23ea1e88590cf35c5caac1b2a54a0641f7036c8b826c2fb99a96",
+      "2": "1b801b3e9d460931be585b3e452a89201364030c2dbe3847273dcbdc83509e69",
+      "3": "f4220503c118d3d1d0da8e28eae78765f47bc4e3ee99d18c4add758089b797c1"
+    }
+  },
+  "postflight": {
+    "component_processes_remaining": 0,
+    "host_memory_pressure": false,
+    "all_four_devices_enumerate": true,
+    "single_device_compute_probe": "stalled_on_device_0_and_was_terminated",
+    "gpu_runtime_usable_for_more_work_this_boot": false,
+    "reboot_performed": false
+  },
+  "decision": {
+    "candidate": "rejected",
+    "retry_same_candidate": false,
+    "full_endpoint_test_authorized": false,
+    "protected_mtp0_tok_s": 5.515783,
+    "protected_results_changed": false,
+    "next_action": "Preserve the negative, reboot only when attended, then use the accepted runtime and a safer optimization lever"
+  }
+}
