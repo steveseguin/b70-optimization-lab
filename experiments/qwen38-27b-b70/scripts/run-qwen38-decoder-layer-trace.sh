@@ -17,8 +17,10 @@ bench="$repo/scripts/bench-openai-realistic-suite.py"
 model=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround
 root="/mnt/fast-ai/bench-results/${CAMPAIGN_ID}"
 cache_root="/mnt/fast-ai/vllm-cache/${CAMPAIGN_ID}"
-image=neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1
-image_id=sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136
+: "${TRACE_IMAGE:=neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}"
+: "${TRACE_IMAGE_ID:=sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136}"
+image=$TRACE_IMAGE
+image_id=$TRACE_IMAGE_ID
 served=qwen38-layer-trace
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 container=; active_dir=

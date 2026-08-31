@@ -20,4 +20,7 @@ class Contract(unittest.TestCase):
  def test_trace_hook_is_explicit_and_generalized(self):
   self.assertIn(': "${TRACE_HOOK_NAME:=qwen38-decoder-layer-trace-sitecustomize.py}"',self.r)
   self.assertIn('hook="$script_dir/$TRACE_HOOK_NAME"',self.r)
+ def test_image_is_hash_bound_and_generalized(self):
+  self.assertIn(': "${TRACE_IMAGE:=',self.r); self.assertIn(': "${TRACE_IMAGE_ID:=sha256:',self.r)
+  self.assertIn('docker image inspect "$image"',self.r)
 if __name__=='__main__': unittest.main()
