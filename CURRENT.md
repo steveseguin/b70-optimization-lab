@@ -1798,6 +1798,12 @@ ranks 2 and 3 and reaches 16.362 ms, but it is not wire latency. The next
 bounded no-model test compares the exact shape at thresholds 4,096 and 8,192,
 with exact hashes and protocol receipts. See the
 [A28 collective timeline](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-collective-timeline.md).
+That six-process A/B passed exact hashes and protocol receipts. Raising the
+threshold selected `Rt64_PCIE` and reduced p95/p99, but combined median improved
+only 1.13% (`91.522` to `90.490 us`), below the frozen 5% gate. It is preserved
+as lossless component neutral and does not justify an endpoint load. Next,
+screen the actual production M1 real-weight MoE shape. See the
+[threshold result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-bf16-allreduce-ll-threshold-neutral.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win,
 but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median

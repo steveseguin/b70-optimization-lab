@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "lossless_component_neutral",
+  "classification": "ll_protocol_selected_but_combined_median_below_preregistered_gain",
+  "identity": {
+    "shape": [
+      1,
+      2560
+    ],
+    "dtype": "bfloat16",
+    "bytes": 5120,
+    "world_size": 4,
+    "libccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+    "warmup": 50,
+    "iterations_per_process_start": 500,
+    "fresh_process_starts_per_arm": 3
+  },
+  "correctness": {
+    "all_rank_oracles": "passed",
+    "all_rank_and_cross_arm_hashes_identical": true,
+    "output_sha256": "0c2887a177ba1823e59c9b8ce63c4bd034b9959bafd2408bc4b44fa8d066fcd6",
+    "control_kernel": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+    "candidate_kernel": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_PCIE, 16>",
+    "protocol_receipts_per_rank_per_start": "passed"
+  },
+  "control_4096": {
+    "slowest_rank_samples": 1500,
+    "median_us": 91.522,
+    "p95_us": 110.818,
+    "p99_us": 132.929,
+    "max_us": 342.864,
+    "trial_medians_us": [
+      91.987,
+      91.2715,
+      91.3915
+    ]
+  },
+  "candidate_8192": {
+    "slowest_rank_samples": 1500,
+    "median_us": 90.49,
+    "p95_us": 105.278,
+    "p99_us": 124.634,
+    "max_us": 235.332,
+    "trial_medians_us": [
+      89.989,
+      89.769,
+      91.011
+    ]
+  },
+  "candidate_change_percent": {
+    "median_reduction": 1.1275977360634717,
+    "p95_reduction": 4.999187857568258,
+    "p99_reduction": 6.240173325609914,
+    "max_reduction": 31.362872742545143,
+    "candidate_trial_medians_better": "3/3"
+  },
+  "decision": {
+    "preregistered_component_positive_median_threshold_percent": 5.0,
+    "component_positive": false,
+    "endpoint_arm_authorized_by_this_result": false,
+    "interpretation": "The candidate is exact and improves tail statistics, but the 1.13 percent combined-median reduction is too small to justify a full model load. Preserve as neutral; do not add the threshold to the endpoint launcher.",
+    "protected_results_changed": false,
+    "next": "Screen the actual production M1 real-weight MoE kernel and continue source-backed scheduling analysis of rank-2/rank-3 submission skew."
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/tp4-bf16-allreduce-ll-threshold-ab-20260830-a1",
+    "comparison_sha256": "494a144bf84e7135209e8b5703259342db395662caac1028bc460bd04fbecd19",
+    "launch_order_sha256": "6eb274b4bb40c40ed7791c603f813534cd5011eba22a4cd8e67e772bca176663"
+  }
+}
