@@ -34,7 +34,6 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "--env VLLM_XPU_GRAPH=0",
             "--env TORCHINDUCTOR_DETERMINISTIC=1",
             "--env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1",
-            "--env VLLM_XPU_GDN_SYNC_AFTER_NATIVE=\"$gdn_sync_after_native\"",
             "VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD",
             "--compilation-config '{\"cudagraph_mode\":\"NONE\"}'",
             "--no-enable-prefix-caching",
@@ -53,7 +52,7 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "cache path must be new",
             "patched image file identities mismatch",
             "INT4 determinism patch identity mismatch",
-            "GDN_SYNC_AFTER_NATIVE must be 0 or 1",
+            "GDN fallback/sync environment treatments are unsupported by this pinned image",
             "/tmp/b70-benchmark.lock",
             'exec 8>"/tmp/b70-gpu${gpu_a}.lock"',
             'exec 9>"/tmp/b70-gpu${gpu_b}.lock"',
@@ -62,6 +61,8 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
         self.assertIn("vllm_xpu_kernels/_xpu_C.abi3.so", self.server)
         self.assertIn("libgdn_attn_kernels_xe_2.so", self.server)
         self.assertNotIn("vllm_xpu_kernels/_C.abi3.so", self.server)
+        self.assertNotIn("--env VLLM_XPU_GDN_NATIVE_FALLBACK", self.server)
+        self.assertNotIn("--env VLLM_XPU_GDN_SYNC_AFTER_NATIVE", self.server)
 
     def test_attempt_enforces_full_strict_workload(self) -> None:
         for required in (

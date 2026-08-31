@@ -18,8 +18,6 @@ tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
 min_host_memory_gib=${MIN_HOST_MEMORY_GIB:-80}
 container_memory=${CONTAINER_MEMORY:-96g}
 container_memory_swap=${CONTAINER_MEMORY_SWAP:-104g}
-gdn_native_fallback=${GDN_NATIVE_FALLBACK:-1}
-gdn_sync_after_native=${GDN_SYNC_AFTER_NATIVE:-0}
 suite=${SUITE:-$repo/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}
 container="q38-ar-det-mtp0-${mode}-${attempt}"
 served="qwen38-autoround-deterministic-mtp0"
@@ -27,6 +25,10 @@ journal_start=$(date +%s)
 server_pid=""
 
 [[ "$mode" == eager || "$mode" == compiled ]] || { printf 'invalid mode\n' >&2; exit 2; }
+if [[ -v GDN_NATIVE_FALLBACK || -v GDN_SYNC_AFTER_NATIVE ]]; then
+  printf 'GDN fallback/sync environment treatments are unsupported by this pinned image\n' >&2
+  exit 2
+fi
 [[ ! -e "$out" && ! -e "$cache" ]] || { printf 'output and cache paths must be new\n' >&2; exit 1; }
 mkdir -p "$out"
 
@@ -46,9 +48,9 @@ trap 'exit 130' INT TERM HUP
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$out/model-verify.json" >"$out/model-verify.log"
 
-python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" "$expected_xpu_communicator_sha256" "$gpu_ids" "$tensor_parallel_size" "$min_host_memory_gib" "$container_memory" "$container_memory_swap" "$gdn_native_fallback" "$gdn_sync_after_native" <<'PY'
+python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" "$expected_xpu_communicator_sha256" "$gpu_ids" "$tensor_parallel_size" "$min_host_memory_gib" "$container_memory" "$container_memory_swap" <<'PY'
 import datetime as dt, hashlib, json, pathlib, sys
-path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha, communicator_sha, gpu_ids, tp_size, min_mem, container_mem, container_swap, gdn_fallback, gdn_sync = sys.argv[1:]
+path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha, communicator_sha, gpu_ids, tp_size, min_mem, container_mem, container_swap = sys.argv[1:]
 s = pathlib.Path(suite)
 value = {
   "schema": "neural.download.qwen38-autoround-deterministic-mtp0-strict-attempt.v1",
@@ -61,8 +63,7 @@ value = {
   "tensor_parallel": int(tp_size), "physical_gpus": [int(item) for item in gpu_ids.split(",")],
   "host_memory_gate_gib": int(min_mem), "container_memory": container_mem,
   "container_memory_swap": container_swap,
-  "gdn_native_fallback": gdn_fallback,
-  "gdn_sync_after_native": gdn_sync,
+  "gdn_path": "pinned-image-default-native-xpu",
   "mtp_depth": 0, "xpu_graph": False, "inductor_deterministic": True,
   "prefix_cache": False, "prompt_or_response_reuse": False,
   "performance_contract": {"complete_fixed_suite": True, "max_tokens": 512,
@@ -82,8 +83,6 @@ env EXECUTION_MODE="$mode" IMAGE="$image" EXPECTED_IMAGE_ID="$expected_image_id"
   GPU_IDS="$gpu_ids" MIN_HOST_MEMORY_GIB="$min_host_memory_gib" \
   TENSOR_PARALLEL_SIZE="$tensor_parallel_size" \
   CONTAINER_MEMORY="$container_memory" CONTAINER_MEMORY_SWAP="$container_memory_swap" \
-  GDN_NATIVE_FALLBACK="$gdn_native_fallback" \
-  GDN_SYNC_AFTER_NATIVE="$gdn_sync_after_native" \
   "$repo/repro/qwen38-27b-autoround-int4-b70/scripts/run-current-deterministic-mtp0-server.sh" \
   >"$out/server.log" 2>&1 &
 server_pid=$!
@@ -100,8 +99,6 @@ grep -Fq 'quantization=inc' "$out/server.log"
 grep -Fq 'TORCHINDUCTOR_DETERMINISTIC' "$out/container-inspect.json"
 grep -Fq 'VLLM_XPU_FP8_BLOCK_W8A16=0' "$out/container-inspect.json"
 grep -Fq 'VLLM_XPU_ENABLE_XPU_GRAPH=0' "$out/container-inspect.json"
-grep -Fq "VLLM_XPU_GDN_NATIVE_FALLBACK=${gdn_native_fallback}" "$out/container-inspect.json"
-grep -Fq "VLLM_XPU_GDN_SYNC_AFTER_NATIVE=${gdn_sync_after_native}" "$out/container-inspect.json"
 if [[ "$mode" == eager ]]; then grep -Fq 'enforce_eager=True' "$out/server.log"; else grep -Fq 'enforce_eager=False' "$out/server.log"; fi
 if grep -Fq 'Graph capturing finished' "$out/server.log"; then
   printf 'unexpected XPU Graph capture\n' >&2

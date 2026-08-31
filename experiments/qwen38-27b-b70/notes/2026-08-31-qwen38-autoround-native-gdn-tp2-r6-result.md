@@ -4,8 +4,13 @@ Date: 2026-08-31
 
 Status: **rejected; 10/12 exact fresh-server repeat**
 
-R6 changed only `VLLM_XPU_GDN_NATIVE_FALLBACK` from `1` to `0`, retaining
-the repaired native XPU GDN implementation and persistent scratch. Both fresh
+Correction (2026-08-31): the pinned image does not implement
+`VLLM_XPU_GDN_NATIVE_FALLBACK`. The recorded environment variable was inert.
+R6 is a valid native-path repeatability measurement, but it did not compare
+fallback and native paths. Any earlier causal wording about that toggle is
+withdrawn.
+
+R6 requested a fallback toggle that the pinned image ignored. Both fresh
 compiled servers passed the complete fixed workload and canary gates. Their
 strict class-balanced rates were 31.9525 and 31.9263 tok/s.
 
