@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "bounded_component_negative",
+  "classification": "no_stable_partition_1_device_1_interaction",
+  "date": "2026-08-31",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "checkpoint_layer": 0,
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "runtime_stage_manifest_sha256": "9fa443fdb7a6d0042cf04f859cc6fd6a7bdc09943e16cafb4ea084573c892d2b",
+    "gate_script_sha256": "bc01e4c51a8a389fc6af4d050bf490e1819fa92469fe9f6ae920c1e957a08e92",
+    "runner_sha256": "4c601a3455e20dec0b47ccb0c84375b13606287616784a32955028bb59dedd06",
+    "shard_2_sha256": "6841fe21fa8a8a7a693c585efe65cd2732889095b696da88bda0cb287366910b",
+    "shard_3_sha256": "974a2a2ab551f8f1405a4955ab32a8721c68c73dd85b382491d9f0e6a34ee752",
+    "tokens": 1,
+    "fixed_expert_ids": [10, 60, 109, 148, 189, 251, 265, 408, 475, 482],
+    "warmups": 20,
+    "timed_batches": 15,
+    "iterations_per_batch": 200,
+    "hidden_seed": 20260826,
+    "hidden_scale": 1.0,
+    "device_0": {
+      "pci_bdf": "0000:23:00.0",
+      "uuid": "00000000-0000-0023-0000-0000e2238086"
+    },
+    "device_1": {
+      "pci_bdf": "0000:27:00.0",
+      "uuid": "00000000-0000-0027-0000-0000e2238086"
+    }
+  },
+  "cells": {
+    "partition_1_device_1_us": [406.6868, 415.89496, 418.17958, 415.71816],
+    "partition_1_device_0_us": [415.30554, 411.99392, 414.1202, 408.4353],
+    "partition_0_device_1_us": [414.29726, 440.25176, 414.52554, 413.88854]
+  },
+  "medians_us": {
+    "partition_1_device_1": 415.80656,
+    "partition_1_device_0": 413.05706,
+    "partition_0_device_1": 414.4114
+  },
+  "frozen_gate": {
+    "rule": "partition-1/device-1 exceeds the slower matched control by more than 5% in at least 3 of 4 cycles",
+    "penalty_percent_by_cycle": [-2.0752769154, -5.5324707844, 0.8814993643, 0.4420562116],
+    "median_penalty_percent": -0.8166103519,
+    "cycles_above_five_percent": 0,
+    "passed": false
+  },
+  "correctness": {
+    "cross_cell_partition_output_parity": true,
+    "partition_0_output_sha256": "ad24be94adb9437888c162f27cf15fecebf983a467912bdaa0a4fb7bc3dce4ae",
+    "partition_1_output_sha256": "33bdca7fb3edb35df7d745a3ec01d5b15c78886f01d321de4fe3552eab80bb8c"
+  },
+  "evidence": {
+    "attempt_1_status": "pre_tensor_selector_orchestration_negative",
+    "attempt_1_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-ep4-partition-device-interaction-replicate-a1",
+    "attempt_2_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-ep4-partition-device-interaction-replicate-a2",
+    "attempt_2_manifest_sha256": "06fbfe9ae4939fa7605a4544eba134e51ea291af3b53c53bfaed0823a100152d",
+    "attempt_2_manifest_entries": 29
+  },
+  "decision": {
+    "try_rank_reordering_at_endpoint": false,
+    "promotion_eligible": false,
+    "protected_results_changed": false,
+    "reason": "The original suspect mapping did not reproduce: zero of four matched cycles exceeded the frozen 5% interaction penalty."
+  }
+}

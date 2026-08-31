@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "status": "bounded_component_negative",
+  "classification": "native_tp4_no_ep_faster_but_below_gate_and_not_byte_exact",
+  "date": "2026-08-31",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "checkpoint_layer": 0,
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "repo_parent": "c9f1a17ef3c5130b5e98cef43a40a818b7d8a88c",
+    "boot_id": "c36480de-9150-4182-9888-08c85d2d9de4",
+    "gpus": 4,
+    "tokens": 1,
+    "hidden_size": 2560,
+    "global_experts": 512,
+    "top_k": 10,
+    "fixed_expert_ids": [10, 60, 109, 148, 189, 251, 265, 408, 475, 482],
+    "hidden_seed": 20260826,
+    "hidden_scale": 1.0,
+    "weights": "exact_layer0_checkpoint",
+    "collective": "four_rank_xccl_bf16_allreduce_5120_bytes"
+  },
+  "layouts": {
+    "ep4_control": {
+      "experts_per_rank": 128,
+      "intermediate_per_expert": 640,
+      "weight_block_shape": [128, 128],
+      "local_valid_routes": [3, 3, 1, 3],
+      "config": {
+        "BLOCK_SIZE_M": 16,
+        "BLOCK_SIZE_N": 64,
+        "BLOCK_SIZE_K": 128,
+        "GROUP_SIZE_M": 1,
+        "SPLIT_K": 1,
+        "num_warps": 8,
+        "num_stages": 4
+      },
+      "median_us_by_rank": [528.63824, 528.86184, 529.43124, 529.0974],
+      "p90_us_by_rank": [556.6886, 557.61316, 556.48528, 557.64228],
+      "critical_median_us": 529.43124,
+      "memory_allocated_bytes_by_rank": [629312512, 629312512, 629312512, 629312512],
+      "reduced_output_sha256": "429ccef065cc7cdd4ba7cc9c1e624d3f54f30f2e2dc83e417633a4df55aa9e1f",
+      "repeat_unique_hashes_by_rank": [1, 1, 1, 1]
+    },
+    "tp4_no_ep_default": {
+      "experts_per_rank": 512,
+      "intermediate_per_expert": 160,
+      "weight_block_shape": [32, 32],
+      "local_valid_routes": [10, 10, 10, 10],
+      "config": {
+        "BLOCK_SIZE_M": 16,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 32,
+        "GROUP_SIZE_M": 1,
+        "SPLIT_K": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "median_us_by_rank": [487.669, 487.89832, 487.55174, 487.66068],
+      "p90_us_by_rank": [510.63428, 509.10964, 508.92296, 508.92192],
+      "critical_median_us": 487.89832,
+      "critical_median_delta_percent": -7.844819,
+      "memory_allocated_bytes_by_rank": [631614464, 631614464, 631614464, 631614464],
+      "reduced_output_sha256": "4303a8962424577796c13d3211bbb1b5ee42ed752eec8ce7e406fb02153b978e",
+      "repeat_unique_hashes_by_rank": [1, 1, 1, 1]
+    },
+    "tp4_no_ep_tuned": {
+      "config": {
+        "BLOCK_SIZE_M": 16,
+        "BLOCK_SIZE_N": 64,
+        "BLOCK_SIZE_K": 32,
+        "GROUP_SIZE_M": 1,
+        "SPLIT_K": 1,
+        "num_warps": 8,
+        "num_stages": 4
+      },
+      "median_us_by_rank": [478.28144, 484.10986, 479.9574, 478.78298],
+      "p90_us_by_rank": [512.10588, 511.3498, 511.08044, 510.9936],
+      "critical_median_us": 484.10986,
+      "critical_median_delta_percent": -8.56039,
+      "reduced_output_sha256": "4303a8962424577796c13d3211bbb1b5ee42ed752eec8ce7e406fb02153b978e",
+      "repeat_unique_hashes_by_rank": [1, 1, 1, 1]
+    }
+  },
+  "parity": {
+    "each_layout_same_hash_on_all_four_ranks": true,
+    "each_layout_unique_hashes_across_five_repeats": 1,
+    "ep4_vs_tp4_byte_equal": false,
+    "differing_bf16_elements": 2436,
+    "total_bf16_elements": 2560,
+    "max_abs_difference": 0.0087890625,
+    "mean_abs_difference": 0.001304608537,
+    "ep4_max_abs": 0.19140625,
+    "tp4_no_ep_max_abs": 0.189453125
+  },
+  "memory": {
+    "routed_fp8_weight_bytes_per_layer_per_rank_both_layouts": 629145600,
+    "observed_no_ep_net_extra_allocated_bytes_per_layer_per_rank": 2301952,
+    "observed_no_ep_net_extra_mib_per_rank_over_48_layers": 105.375,
+    "refined_scale_extra_bytes_per_layer_per_rank": 2304000,
+    "refined_scale_extra_mib_per_rank_over_48_layers": 105.46875,
+    "ep_expert_map_bytes_removed_per_layer_per_rank": 2048,
+    "cause": "lossless_128_to_32_block_scale_refinement_metadata"
+  },
+  "screening": {
+    "configurations_tested": 12,
+    "screening_threshold_percent": 15.0,
+    "threshold_preregistered": false,
+    "best_constant_weight_compute_config_median_us": 365.12866,
+    "best_config_confirmed_with_real_weights_and_xccl": true,
+    "threshold_pass": false,
+    "internal_byte_parity_pass": false
+  },
+  "evidence": {
+    "xccl_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-ep4-vs-tp4-noep-xccl-layer0-a3",
+    "xccl_manifest_sha256": "c7b0088501b3cd75198f3d36499398ec50b44a8e893bb32605d2fc8611ec1712",
+    "sweep_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-noep-m1-config-sweep-a1",
+    "sweep_manifest_sha256": "a63c2135b17552cc5fc9d9f29e8bd497c0bb1cf58df3fcd947e09e3e313e354d",
+    "gate_script_sha256": "bc01e4c51a8a389fc6af4d050bf490e1819fa92469fe9f6ae920c1e957a08e92"
+  },
+  "decision": {
+    "run_full_model_endpoint": false,
+    "promotion_eligible": false,
+    "protected_results_changed": false,
+    "reason": "The tuned real-layer MoE-plus-XCCL critical path improved only 8.56%, below the screening threshold, while the native TP layout changed 2436 of 2560 reduced BF16 elements and added about 105 MiB per rank at full depth. This does not justify another full-model load."
+  }
+}

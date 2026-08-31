@@ -4,12 +4,14 @@
 import argparse
 import hashlib
 import json
+import os
 import statistics
 import time
 from contextlib import nullcontext
 from pathlib import Path
 
 import torch
+import torch.distributed as dist
 from safetensors import safe_open
 
 from vllm.model_executor.layers.fused_moe.config import FusedMoEQuantConfig
@@ -47,16 +49,44 @@ def main() -> None:
         help="Exercise the production 512-global/128-local EP expert map",
     )
     parser.add_argument(
+        "--tp-rank",
+        type=int,
+        choices=range(4),
+        default=None,
+        help=(
+            "Exercise the native no-EP TP4 expert shape: all 512 experts with "
+            "a 160-wide intermediate shard and losslessly refined 32x32 scales"
+        ),
+    )
+    parser.add_argument(
+        "--distributed-mode",
+        choices=("ep4", "tp4-noep"),
+        help=(
+            "Initialize a four-rank XCCL process group, infer the EP/TP rank, "
+            "and include the exact BF16 output all-reduce in each invocation"
+        ),
+    )
+    parser.add_argument(
         "--path", choices=("functional", "modular"), default="functional"
     )
     parser.add_argument(
-        "--weights", choices=("constant", "layer0-rank0-checkpoint"), default="constant"
+        "--weights",
+        choices=("constant", "layer0-checkpoint", "layer0-rank0-checkpoint"),
+        default="constant",
+        help=(
+            "Use constant weights or the exact layer-0 checkpoint shard for the "
+            "selected EP/TP rank; the rank0 spelling is retained for compatibility"
+        ),
     )
     parser.add_argument(
         "--routing",
-        choices=("cyclic", "balanced-global", "all-padding"),
+        choices=("cyclic", "balanced-global", "fixed-ids", "all-padding"),
         default="cyclic",
         help="Use ordinary valid routing or the captured profile-run padding sentinel",
+    )
+    parser.add_argument(
+        "--fixed-topk-ids",
+        help="Comma-separated set of exactly ten global expert IDs for fixed-ids",
     )
     parser.add_argument(
         "--repeats",
@@ -85,6 +115,16 @@ def main() -> None:
         default=Path("/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"),
     )
     parser.add_argument(
+        "--save-output",
+        type=Path,
+        help="Save the final CPU output tensor for cross-layout parity checks",
+    )
+    parser.add_argument(
+        "--result-dir",
+        type=Path,
+        help="Write one final JSON result per distributed rank",
+    )
+    parser.add_argument(
         "--map-ple-uva",
         action="store_true",
         help="Keep the exact TP4-local 11.92 GiB PLE host-USM view live",
@@ -102,6 +142,20 @@ def main() -> None:
         help="Raise and retain the allocator reservation after ballast is ready",
     )
     args = parser.parse_args()
+    distributed_rank = None
+    local_rank = 0
+    if args.distributed_mode is not None:
+        if args.ep_rank is not None or args.tp_rank is not None:
+            raise ValueError("distributed mode infers rank; omit --ep-rank/--tp-rank")
+        dist.init_process_group("xccl")
+        distributed_rank = dist.get_rank()
+        local_rank = int(os.environ["LOCAL_RANK"])
+        if dist.get_world_size() != 4 or not 0 <= distributed_rank < 4:
+            raise ValueError("distributed mode requires exactly four ranks")
+        if args.distributed_mode == "ep4":
+            args.ep_rank = distributed_rank
+        else:
+            args.tp_rank = distributed_rank
     if not 1 <= args.repeats <= 100:
         raise ValueError("repeats must be between 1 and 100")
     if not 0 <= args.warmups <= 100:
@@ -111,7 +165,21 @@ def main() -> None:
     if not 1 <= args.iterations_per_batch <= 200:
         raise ValueError("iterations-per-batch must be between 1 and 200")
     if args.routing == "balanced-global" and args.ep_rank is None:
-        raise ValueError("balanced-global routing requires --ep-rank")
+        if args.tp_rank is None:
+            raise ValueError("balanced-global routing requires --ep-rank or --tp-rank")
+    fixed_topk_ids = None
+    if args.routing == "fixed-ids":
+        if args.fixed_topk_ids is None:
+            raise ValueError("fixed-ids routing requires --fixed-topk-ids")
+        fixed_topk_ids = [int(value) for value in args.fixed_topk_ids.split(",")]
+        if len(fixed_topk_ids) != 10 or len(set(fixed_topk_ids)) != 10:
+            raise ValueError("fixed top-k IDs must contain exactly ten unique values")
+        if not all(0 <= value < 512 for value in fixed_topk_ids):
+            raise ValueError("fixed top-k IDs must be between 0 and 511")
+    elif args.fixed_topk_ids is not None:
+        raise ValueError("--fixed-topk-ids requires --routing fixed-ids")
+    if args.ep_rank is not None and args.tp_rank is not None:
+        raise ValueError("--ep-rank and --tp-rank are mutually exclusive")
     if not 0.0 < args.hidden_scale <= 10.0:
         raise ValueError("hidden-scale must be in (0, 10]")
 
@@ -123,11 +191,20 @@ def main() -> None:
         candidate_config = None  # Filled after the default is resolved.
 
     torch.manual_seed(args.hidden_seed)
-    device = torch.device("xpu:0")
+    device = torch.device(f"xpu:{local_rank}")
+    torch.xpu.set_device(device)
     dtype = torch.bfloat16
     weight_dtype = torch.float8_e4m3fn
-    experts, global_experts, intermediate, hidden, topk = 128, 512, 640, 2560, 10
-    block_shape = [128, 128]
+    global_experts, hidden, topk = 512, 2560, 10
+    if args.tp_rank is not None:
+        experts, intermediate, block_shape = 512, 160, [32, 32]
+        parallel_mode = "tp4_no_ep"
+    elif args.ep_rank is not None:
+        experts, intermediate, block_shape = 128, 640, [128, 128]
+        parallel_mode = "ep4"
+    else:
+        experts, intermediate, block_shape = 128, 640, [128, 128]
+        parallel_mode = "single_rank_local"
 
     config = get_default_config(
         args.tokens,
@@ -154,8 +231,17 @@ def main() -> None:
         "intermediate": intermediate,
         "hidden": hidden,
         "topk": topk,
-        "global_experts": global_experts if args.ep_rank is not None else experts,
+        "global_experts": (
+            global_experts
+            if args.ep_rank is not None or args.tp_rank is not None
+            else experts
+        ),
         "ep_rank": args.ep_rank,
+        "tp_rank": args.tp_rank,
+        "parallel_mode": parallel_mode,
+        "distributed_mode": args.distributed_mode,
+        "distributed_rank": distributed_rank,
+        "distributed_world_size": dist.get_world_size() if dist.is_initialized() else 1,
         "path": args.path,
         "weights": args.weights,
         "routing": args.routing,
@@ -175,6 +261,8 @@ def main() -> None:
         "hidden_seed": args.hidden_seed,
         "hidden_scale": args.hidden_scale,
         "routing_offset": args.routing_offset,
+        "fixed_topk_ids": fixed_topk_ids,
+        "save_output": str(args.save_output) if args.save_output is not None else None,
     }
     print(json.dumps({"event": "start", "identity": identity}), flush=True)
 
@@ -215,12 +303,20 @@ def main() -> None:
         dtype=weight_dtype,
     )
     w1_scale = torch.empty(
-        (experts, 2 * intermediate // 128, hidden // 128),
+        (
+            experts,
+            2 * intermediate // block_shape[0],
+            hidden // block_shape[1],
+        ),
         device=device,
         dtype=torch.float32,
     )
     w2_scale = torch.empty(
-        (experts, hidden // 128, intermediate // 128),
+        (
+            experts,
+            hidden // block_shape[0],
+            intermediate // block_shape[1],
+        ),
         device=device,
         dtype=torch.float32,
     )
@@ -240,24 +336,54 @@ def main() -> None:
             safe_open(gate_up_shard, framework="pt", device="cpu") as gate_up,
             safe_open(down_shard, framework="pt", device="cpu") as down,
         ):
-            for expert in range(experts):
-                expert_prefix = f"{prefix}.{expert}"
-                w1[expert, :intermediate].copy_(
-                    gate_up.get_tensor(f"{expert_prefix}.gate_proj.weight")
+            first_expert = args.ep_rank * experts if args.ep_rank is not None else 0
+            shard_start = args.tp_rank * intermediate if args.tp_rank is not None else 0
+            for local_expert in range(experts):
+                global_expert = first_expert + local_expert
+                expert_prefix = f"{prefix}.{global_expert}"
+                gate_weight = gate_up.get_tensor(f"{expert_prefix}.gate_proj.weight")
+                up_weight = gate_up.get_tensor(f"{expert_prefix}.up_proj.weight")
+                down_weight = down.get_tensor(f"{expert_prefix}.down_proj.weight")
+                gate_scale = gate_up.get_tensor(
+                    f"{expert_prefix}.gate_proj.weight_scale_inv"
                 )
-                w1[expert, intermediate:].copy_(
-                    gate_up.get_tensor(f"{expert_prefix}.up_proj.weight")
+                up_scale = gate_up.get_tensor(
+                    f"{expert_prefix}.up_proj.weight_scale_inv"
                 )
-                w2[expert].copy_(down.get_tensor(f"{expert_prefix}.down_proj.weight"))
-                w1_scale[expert, : intermediate // 128].copy_(
-                    gate_up.get_tensor(f"{expert_prefix}.gate_proj.weight_scale_inv")
+                down_scale = down.get_tensor(
+                    f"{expert_prefix}.down_proj.weight_scale_inv"
                 )
-                w1_scale[expert, intermediate // 128 :].copy_(
-                    gate_up.get_tensor(f"{expert_prefix}.up_proj.weight_scale_inv")
-                )
-                w2_scale[expert].copy_(
-                    down.get_tensor(f"{expert_prefix}.down_proj.weight_scale_inv")
-                )
+                if args.tp_rank is not None:
+                    gate_weight = gate_weight.narrow(0, shard_start, intermediate)
+                    up_weight = up_weight.narrow(0, shard_start, intermediate)
+                    down_weight = down_weight.narrow(1, shard_start, intermediate)
+                    refine = 128 // block_shape[0]
+                    gate_scale = gate_scale.repeat_interleave(
+                        refine, dim=0
+                    ).repeat_interleave(refine, dim=1)
+                    up_scale = up_scale.repeat_interleave(
+                        refine, dim=0
+                    ).repeat_interleave(refine, dim=1)
+                    down_scale = down_scale.repeat_interleave(
+                        refine, dim=0
+                    ).repeat_interleave(refine, dim=1)
+                    scale_start = args.tp_rank * (intermediate // block_shape[0])
+                    gate_scale = gate_scale.narrow(
+                        0, scale_start, intermediate // block_shape[0]
+                    )
+                    up_scale = up_scale.narrow(
+                        0, scale_start, intermediate // block_shape[0]
+                    )
+                    down_scale = down_scale.narrow(
+                        1, scale_start, intermediate // block_shape[1]
+                    )
+                w1[local_expert, :intermediate].copy_(gate_weight)
+                w1[local_expert, intermediate:].copy_(up_weight)
+                w2[local_expert].copy_(down_weight)
+                scale_rows = intermediate // block_shape[0]
+                w1_scale[local_expert, :scale_rows].copy_(gate_scale)
+                w1_scale[local_expert, scale_rows:].copy_(up_scale)
+                w2_scale[local_expert].copy_(down_scale)
         torch.xpu.synchronize()
         print(
             json.dumps(
@@ -270,7 +396,11 @@ def main() -> None:
             ),
             flush=True,
         )
-    routed_experts = global_experts if args.ep_rank is not None else experts
+    routed_experts = (
+        global_experts
+        if args.ep_rank is not None or args.tp_rank is not None
+        else experts
+    )
     ballast = None
     if args.target_allocated_gib is not None:
         if not 1.0 <= args.target_allocated_gib <= 31.75:
@@ -343,6 +473,18 @@ def main() -> None:
             .remainder_(global_experts)
             .reshape(args.tokens, topk)
         )
+        topk_weights = torch.full(
+            (args.tokens, topk),
+            1.0 / topk,
+            device=device,
+            dtype=torch.float32,
+        )
+    elif args.routing == "fixed-ids":
+        topk_ids = torch.tensor(
+            fixed_topk_ids,
+            device=device,
+            dtype=torch.int32,
+        ).repeat(args.tokens, 1)
         topk_weights = torch.full(
             (args.tokens, topk),
             1.0 / topk,
@@ -431,6 +573,14 @@ def main() -> None:
                 apply_router_weight_on_input=False,
             )
 
+    local_invoke = invoke
+
+    def invoke() -> torch.Tensor:
+        output = local_invoke()
+        if dist.is_initialized():
+            dist.all_reduce(output)
+        return output
+
     if args.ep_rank is not None:
         first_local_expert = args.ep_rank * experts
         local_valid_routes = int(
@@ -488,6 +638,14 @@ def main() -> None:
         raw = output.contiguous().view(torch.uint8).cpu().numpy().tobytes()
         output_hashes.append(hashlib.sha256(raw).hexdigest())
     output_float = output.float().cpu()
+    if args.save_output is not None:
+        output_path = args.save_output
+        if distributed_rank is not None:
+            output_path = output_path.with_name(
+                f"{output_path.stem}-rank{distributed_rank}{output_path.suffix}"
+            )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(output.cpu(), output_path)
     result = {
         "status": "pass",
         "identity": identity,
@@ -528,7 +686,16 @@ def main() -> None:
     }
     if not result["finite"]:
         raise RuntimeError(f"non-finite MoE output: {result}")
+    if args.result_dir is not None:
+        args.result_dir.mkdir(parents=True, exist_ok=True)
+        rank_label = distributed_rank if distributed_rank is not None else 0
+        (args.result_dir / f"rank{rank_label}.json").write_text(
+            json.dumps(result, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     print(json.dumps(result, sort_keys=True), flush=True)
+    if dist.is_initialized():
+        dist.destroy_process_group()
 
 
 if __name__ == "__main__":

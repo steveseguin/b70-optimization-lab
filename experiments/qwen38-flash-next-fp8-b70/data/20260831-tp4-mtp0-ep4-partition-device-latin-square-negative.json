@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "status": "bounded_component_negative",
+  "classification": "no_stable_physical_device_or_expert_partition_slow_rank",
+  "date": "2026-08-31",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "checkpoint_layer": 0,
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "eeee7d671abfa964626baa18da2174bb92cac80a",
+    "gpus": 4,
+    "layout": "ep4_128_complete_experts_per_rank",
+    "tokens": 1,
+    "hidden_size": 2560,
+    "fixed_expert_ids": [10, 60, 109, 148, 189, 251, 265, 408, 475, 482],
+    "local_valid_routes_by_expert_partition": [3, 3, 1, 3],
+    "hidden_seed": 20260826,
+    "hidden_scale": 1.0,
+    "timing": "local_moe_only_no_collective",
+    "rotations": "physical_device=(expert_partition+rotation)%4"
+  },
+  "median_us_matrix": {
+    "rotation_0": [411.4773, 446.73356, 411.13878, 412.0467],
+    "rotation_1": [415.7595, 410.0668, 415.44074, 411.10186],
+    "rotation_2": [413.42262, 409.52106, 414.73276, 413.00012],
+    "rotation_3": [414.13554, 407.92882, 413.09684, 420.49592]
+  },
+  "by_expert_partition": {
+    "partition_0": {
+      "values_us": [411.4773, 415.7595, 413.42262, 414.13554],
+      "median_us": 413.77908,
+      "range_us": 4.2822
+    },
+    "partition_1": {
+      "values_us": [446.73356, 410.0668, 409.52106, 407.92882],
+      "median_us": 409.79393,
+      "range_us": 38.80474
+    },
+    "partition_2": {
+      "values_us": [411.13878, 415.44074, 414.73276, 413.09684],
+      "median_us": 413.9148,
+      "range_us": 4.30196
+    },
+    "partition_3": {
+      "values_us": [412.0467, 411.10186, 413.00012, 420.49592],
+      "median_us": 412.52341,
+      "range_us": 9.39406
+    }
+  },
+  "by_physical_device": {
+    "device_0": {
+      "values_us": [411.4773, 411.10186, 414.73276, 407.92882],
+      "median_us": 411.28958,
+      "range_us": 6.80394
+    },
+    "device_1": {
+      "values_us": [446.73356, 415.7595, 413.00012, 413.09684],
+      "median_us": 414.42817,
+      "range_us": 33.73344
+    },
+    "device_2": {
+      "values_us": [411.13878, 410.0668, 413.42262, 420.49592],
+      "median_us": 412.2807,
+      "range_us": 10.42912
+    },
+    "device_3": {
+      "values_us": [412.0467, 415.44074, 409.52106, 414.13554],
+      "median_us": 413.09112,
+      "range_us": 5.91968
+    }
+  },
+  "repeatability": {
+    "unique_output_hashes_per_cell": 1,
+    "same_partition_hash_preserved_across_all_devices": true,
+    "global_median_us": 413.04848,
+    "global_min_us": 407.92882,
+    "global_max_us": 446.73356,
+    "initial_suspect_cell": "rotation0_partition1_device1",
+    "initial_interaction_inference": "inconclusive_without_cell_replication"
+  },
+  "evidence": {
+    "root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-ep4-partition-device-latin-square-a1",
+    "manifest_sha256": "01e53b5072c783273160079313367bfe72e06aff7c32ed8a9f1d13381816b899",
+    "manifest_entries": 32,
+    "gate_script_sha256": "bc01e4c51a8a389fc6af4d050bf490e1819fa92469fe9f6ae920c1e957a08e92",
+    "corrective_replicate": "20260831-tp4-mtp0-ep4-partition-device-interaction-replicate-negative.json"
+  },
+  "decision": {
+    "try_rank_reordering_at_endpoint": false,
+    "promotion_eligible": false,
+    "protected_results_changed": false,
+    "reason": "The original marginal medians did not resolve the partition-1/device-1 interaction. A separate four-cycle matched replicate found zero cycles above the frozen 5% penalty and a -0.817% median penalty, closing the mapping opportunity."
+  }
+}

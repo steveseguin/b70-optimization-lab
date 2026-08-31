@@ -2062,6 +2062,25 @@ teardown failure. The composite does not justify matched control/repeat loads.
 Keep grouped HC default-off and preserve `5.515783` MTP0 and approximately
 `20.727` MTP4 unchanged. See the
 [A30 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a30-hc-grouped-m1-endpoint-negative.md).
+The next no-full-load screen tested native TP4 MoE without expert parallelism.
+With exact layer-0 checkpoint weights and the real four-rank 5,120-byte BF16
+XCCL reduction, EP4's critical median was `529.431 us`; tuned no-EP TP4 reached
+`484.110 us`, an `8.560%` component improvement. That is below the conservative
+15% screen, and the layouts differed in 2,436/2,560 reduced BF16 elements.
+No-EP's observed net allocation projects about 105.375 MiB/card at 48 layers,
+dominated by 105.469 MiB of extra refined-scale metadata and net of EP's small
+expert map. Do not spend a full-model load on this layout. The gate tooling and
+negative result are preserved in the
+[EP4/no-EP component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-ep4-vs-noep-component-negative.md).
+A four-rotation real-layer EP4 Latin square then mapped every 128-expert
+partition onto every physical B70. Partition medians were `409.794-413.915 us`
+and device medians `411.290-414.428 us`, but independent review correctly
+classified its single `446.734-us` partition-1/device-1 cell as an unresolved
+interaction rather than a transient outlier. A frozen four-cycle matched
+replicate then measured penalties of `-2.075 / -5.532 / +0.881 / +0.442%`,
+zero above its 5% gate, with exact partition hashes. Static rank/device
+reordering is now closed without an endpoint load. See the
+[partition/device result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-ep4-partition-device-latin-square-negative.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
