@@ -1804,6 +1804,14 @@ only 1.13% (`91.522` to `90.490 us`), below the frozen 5% gate. It is preserved
 as lossless component neutral and does not justify an endpoint load. Next,
 screen the actual production M1 real-weight MoE shape. See the
 [threshold result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-bf16-allreduce-ll-threshold-neutral.md).
+That M1 screen is a lossless component positive. Across three real-weight
+default/candidate/default brackets, changing only `num_warps` from 4 to 8
+reduced median latency by 9.27%, 9.20%, and 8.46%, with one exact hash per seed
+across 300 candidate/control repeats. A separate tuned-folder run proved key
+M1 and effective warps 8 were selected. A fresh endpoint arm must use that
+effective-key receipt and the full quality/reliability battery; A27's
+file-load-only receipt is forbidden. See the
+[M1 component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m1-warps8-component-positive.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win,
 but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median

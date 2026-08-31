@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "status": "qualified_component_positive_pending_endpoint",
+  "classification": "production_m1_real_weight_lossless_warps8_gain",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "d14396e27247c1b251da0ce24a0942772c4b002f",
+    "runtime_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "device": "Intel Arc Pro B70",
+    "tokens": 1,
+    "local_experts": 128,
+    "global_experts": 512,
+    "hidden": 2560,
+    "intermediate": 640,
+    "topk": 10,
+    "block_shape": [
+      128,
+      128
+    ],
+    "routing": "balanced-global",
+    "local_valid_routes": 3,
+    "weights": "layer-0 rank-0 checkpoint",
+    "gate_script_sha256": "505ac4b230456bd5eb9d83d14d54b31dec88e0ec607cf557f434b4184ca71aa8",
+    "tuned_config_sha256": "91e5d8b692da3febbba7cb07ee4fdab319909da0c82c1fda95b92dc42d680464"
+  },
+  "default_config": {
+    "BLOCK_SIZE_M": 16,
+    "BLOCK_SIZE_N": 64,
+    "BLOCK_SIZE_K": 128,
+    "GROUP_SIZE_M": 1,
+    "SPLIT_K": 1,
+    "num_warps": 4,
+    "num_stages": 4
+  },
+  "candidate_delta": {
+    "num_warps": 8
+  },
+  "measurements": [
+    {
+      "hidden_seed": 20260826,
+      "default_before_median_us": 449.5998,
+      "default_after_median_us": 449.2826,
+      "default_bracket_mean_us": 449.4412,
+      "candidate_median_us": 407.75904,
+      "latency_reduction_percent": 9.274218740961,
+      "output_sha256": "cd502fa5b68fe76e31cf018ed8b12a26825d1b6c82fb64a2ffb28c0950a30d65",
+      "all_300_hashes_within_seed_exact": true
+    },
+    {
+      "hidden_seed": 20260827,
+      "default_before_median_us": 449.63932,
+      "default_after_median_us": 449.56496,
+      "default_bracket_mean_us": 449.60214,
+      "candidate_median_us": 408.26032,
+      "latency_reduction_percent": 9.195200894728835,
+      "output_sha256": "eb1a25f96c14a3343494d2c240b9033b9dffd386d295c73b588b5e5b08d3b718",
+      "all_300_hashes_within_seed_exact": true
+    },
+    {
+      "hidden_seed": 20260830,
+      "default_before_median_us": 449.08396,
+      "default_after_median_us": 449.15624,
+      "default_bracket_mean_us": 449.1201,
+      "candidate_median_us": 411.1042,
+      "latency_reduction_percent": 8.464528752999474,
+      "output_sha256": "89ffc488d521c0af4c0c3f39650cea59bbfc37009162295aa561cb1ee593de3d",
+      "all_300_hashes_within_seed_exact": true
+    }
+  ],
+  "aggregate": {
+    "seeds_passing_five_percent_gate": "3/3",
+    "median_latency_reduction_percent": 9.195200894728835,
+    "candidate_repeats_per_seed": 100,
+    "control_repeats_per_seed": 200,
+    "unique_hashes_per_seed": 1
+  },
+  "selection_check": {
+    "tuned_config_folder_selected": true,
+    "resolved_m": 1,
+    "resolved_num_warps": 8,
+    "candidate_override": null,
+    "median_us": 418.43256,
+    "output_sha256": "eb1a25f96c14a3343494d2c240b9033b9dffd386d295c73b588b5e5b08d3b718",
+    "log_sha256": "66fa004ea59859824b63526e10c71e1db402563ca3f72c649756fe31e6e03e21"
+  },
+  "failed_preexecution_attempt": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/moe-m1-warps8-screen-20260830-a1",
+    "classification": "environment_selector_conflict_before_weight_load_or_compile",
+    "performance_credit": false
+  },
+  "decision": {
+    "component_positive": true,
+    "endpoint_config_promoted": false,
+    "protected_results_changed": false,
+    "next": "Build a fresh M1-specific endpoint arm with a selected-key/effective-config receipt and the full short, semantic, repeat, cache-zero, needle, and exact-4K gates. Do not reuse A27's file-load-only receipt."
+  },
+  "raw_evidence": {
+    "screen_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/moe-m1-warps8-screen-20260830-a2",
+    "screen_manifest_sha256": "e0d31c7e6a570149f119801c16f7d0f600d18e4d610ee9ffebb0dd367f2a9464",
+    "selection_log": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/moe-m1-warps8-selection-20260830-a1.log"
+  }
+}
