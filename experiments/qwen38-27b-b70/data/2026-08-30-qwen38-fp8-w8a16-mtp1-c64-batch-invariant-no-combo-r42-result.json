@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-mtp1-c64-batch-invariant-no-combo-result.v1",
+  "campaign": "qwen38-fp8-w8a16-mtp1-c64-batch-invariant-no-combo-20260830-r42",
+  "classification": "failed-closed-control-nondeterminism",
+  "preregistration_sha256": "4f7e3cff33556383bf7f56d3380643954bb06137db8db7ff3d5e65253463f17c",
+  "control_a": {
+    "aggregate_tok_s_c64": 426.46023479164114,
+    "complete_outputs": "64/64",
+    "cached_tokens_all_zero": true,
+    "result_sha256": "df951f0374fff28586be801ff0248a4043dfd6731acd2081cebbdf062ad85dde",
+    "qualification_sha256": "642fe81881b520f3f37e8358479c727d63101b226b4a1f4ba599d6a79be00495",
+    "summary_sha256": "553d696f2382154098952bab1d90e07bc0277cac0470731d2e08e7f141c4aa12"
+  },
+  "control_b": {
+    "aggregate_tok_s_c64": 433.40551855664813,
+    "exact_vs_control_a": "55/64",
+    "complete_outputs": "64/64",
+    "cached_tokens_all_zero": true,
+    "result_sha256": "472c665ff3e6cb74a56397b15d471135110b432895b524f01af0bb50a5951ee5",
+    "qualification_sha256": "eacb11c60ee162157369ee174930acc6367a957e8798df2236c93fbba165e9f2",
+    "summary_sha256": "6e6e6c7b0392d7baef05d598535f192a3130569d30a86d20f146213c0f61cf78"
+  },
+  "first_divergence_by_prompt": {
+    "benchmark-c019": 60,
+    "evidence-c047": 93,
+    "evidence-c063": 88,
+    "index-c009": 79,
+    "index-c017": 49,
+    "index-c025": 49,
+    "index-c033": 49,
+    "index-c041": 46,
+    "monitoring-c052": 1
+  },
+  "mechanism_result": "The conditional GDN capability overlay plus global/RMS/GDN batch-invariant modes and deterministic Inductor with combo kernels disabled did not make fresh MTP0 servers token-exact.",
+  "performance_result": "The mechanism reduced control aggregate throughput from the r39 818.904338/839.902698 tok/s observations to 426.460235/433.405519 tok/s, so it is rejected independently of correctness.",
+  "candidate_status": "not run because control B failed the preregistered 64/64 exact-output gate",
+  "objective_status": "not achieved; no r42 rate is publishable",
+  "artifact_roots": [
+    "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-mtp1-c64-batch-invariant-no-combo-20260830-r42-control-A",
+    "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-mtp1-c64-batch-invariant-no-combo-20260830-r42-control-B"
+  ],
+  "reporting_boundary": "Direct TP2 c64 p128 short-context diagnostic only; no interpolation, extrapolation, promotion, or LocalMaxxing submission."
+}
