@@ -1968,6 +1968,19 @@ Independent static review passed S4g as launchable. It also tightened the later
 source guard to require the scheduled-token override remain unset, making the
 effective scheduler cap exactly 64 before any weight treatment; this does not
 change the frozen S4g component run.
+S4g passed all 640 arms: grouped was byte-exact in all 320 five-sentinel/M1--64
+cells, with complete row/input/weight and evidence closure. Together with the
+all-97 M1/M64 passes, production component correctness is closed. The
+default-off dynamic-M source candidate then passed 5/5 focused tests against
+the real staged operation and 25/25 Qwen configuration tests, including native
+all-M, two-stream, official reload/post-reload, and malformed-state coverage.
+It is preserved as vLLM `797769b34` and patch `0033`. A first 3-pass/2-fail
+test invocation is retained as an invalid-harness negative (fake-oracle and
+extension-preload errors, no runtime failure). No build, endpoint, or claim is
+yet authorized. See the
+[S4g result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-grouped-s4g-result.md)
+and
+[source result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-grouped-dynamic-m-source-result.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "all_production_m_exact_component_pass",
+  "classification": "real_weight_hc_up_grouped_m1_m64_component_positive",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "scope": {
+    "sentinels": ["00-attn", "00-mlp", "24-attn", "47-mlp", "final"],
+    "m_values": "every integer 1 through 64",
+    "providers": ["authority", "grouped"],
+    "cell_count": 320,
+    "arm_count": 640,
+    "run_attempt": 2,
+    "repeat": "r1"
+  },
+  "correctness": {
+    "all_outputs_finite_and_repeatable": true,
+    "authority_exact_cells": 320,
+    "grouped_exact_cells": 320,
+    "grouped_mismatch_cells": 0,
+    "failed_receipts": 0,
+    "rows_input_and_weight_mutations": 0
+  },
+  "descriptive_timing": {
+    "classification": "fixed_provider_order_not_endpoint_attribution",
+    "authority_cross_cell_median_us": 37.956344,
+    "grouped_cross_cell_median_us": 22.895437,
+    "median_per_cell_reduction_percent": 41.246,
+    "minimum_per_cell_reduction_percent": 6.543,
+    "maximum_per_cell_reduction_percent": 64.991,
+    "grouped_faster_cell_count": 320,
+    "grouped_slower_cell_count": 0,
+    "sum_of_per_cell_median_savings_us": 5152.65274
+  },
+  "summary": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s4g-r1-a2-seed20260831/summary.json",
+    "sha256": "23d7e1bfa8683b8dbaf7d8bac2664477010d84bf1b8e6c6746a5da8027dd4122"
+  },
+  "source_candidate_testing_authorized": true,
+  "runtime_rebuild_authorized": false,
+  "endpoint_launch_authorized": false,
+  "endpoint_claim_authorized": false
+}

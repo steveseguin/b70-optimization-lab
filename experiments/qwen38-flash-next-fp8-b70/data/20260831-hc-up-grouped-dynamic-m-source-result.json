@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "status": "default_off_source_candidate_qualified_for_later_build_preregistration",
+  "classification": "source_and_focused_xpu_test_positive",
+  "vllm_commit": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+  "source_sha256": "5d9f99945f2f01396afdece710e69b719139bf57fb2232cb831b467b8f64737f",
+  "test_sha256": "b3ae2f1ea20f7262a31f61130ed77e2d164db88b7517b9dd8e1333c016987e42",
+  "patch": {
+    "path": "patches/qwen38-flash-next-fp8-b70/vllm/0033-Qualify-Qwen-HC-grouped-up-dynamic-shapes.patch",
+    "sha256": "1944280fa2f3debf684d1ade665b8d40237edf866fc0415bb53f43b1f1ea71bb"
+  },
+  "treatment": {
+    "default_off": true,
+    "target_count": 97,
+    "scheduler": {
+      "max_num_seqs": 1,
+      "max_num_batched_tokens": 64,
+      "max_num_scheduled_tokens": null
+    },
+    "qualified_m": "1 through 64",
+    "rows": "immutable nonpersistent XPU int32 arange(65) plus zero-copy registered identity alias",
+    "weight_storage": "one packed allocation shared with the original logical Parameter view",
+    "output": "fresh per call with exact return binding"
+  },
+  "tests": {
+    "focused": {
+      "passed": 5,
+      "failed": 0,
+      "runtime_stage_manifest_sha256": "71e263f19ccc1313bbdc21604b4de5171891454fb7e8e35877af083505522951",
+      "coverage": "default-off/config census, all M1-M64 native exactness, two-stream M7/M37, reload and post-reload M37, malformed input/output/state"
+    },
+    "qwen_config": {"passed": 25, "failed": 0}
+  },
+  "initial_test_attempt": {
+    "status": "invalid_harness_negative",
+    "passed": 3,
+    "failed": 2,
+    "causes": [
+      "the synchronized fake packed-matmul implementation was incorrectly compared to contiguous authority beyond M1",
+      "the real staged extension was not preloaded into the pytest process"
+    ],
+    "source_runtime_failure_observed": false
+  },
+  "independent_source_review": "passed_no_blocker",
+  "runtime_rebuild_authorized": false,
+  "endpoint_launch_authorized": false,
+  "endpoint_claim_authorized": false,
+  "next": "Freeze a treated runtime build and endpoint A/B packet before any full model load."
+}
