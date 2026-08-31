@@ -1873,6 +1873,12 @@ frozen family gate because its linear controls drifted 5.26% / 7.04%, above
 frozen same-process alternating discriminator to remove process-to-process
 control drift without weakening the output or speed gates. See the
 [repeat result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-repeat-result.md).
+The follow-up discriminator is frozen as two fresh same-process alternating
+runs per sampled layer. Each run uses 31 paired cycles with reversed order on
+alternate cycles, requires exact full outputs, at least 50% median and 20%
+minimum per-cycle reduction, and no more than 10 points of order bias. All four
+must pass before the 48-layer screen is allowed. See the
+[alternating preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-alternating-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
