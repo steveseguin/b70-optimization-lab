@@ -6,6 +6,7 @@ image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-determin
 expected_image_id=${EXPECTED_IMAGE_ID:?set EXPECTED_IMAGE_ID to the locally rebuilt image ID}
 expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:?set EXPECTED_XPU_EXTENSION_SHA256}
 expected_gdn_library_sha256=${EXPECTED_GDN_LIBRARY_SHA256:?set EXPECTED_GDN_LIBRARY_SHA256}
+expected_xpu_communicator_sha256=${EXPECTED_XPU_COMMUNICATOR_SHA256:-5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d}
 model=${MODEL_DIR:?set MODEL_DIR to the verified AutoRound model directory}
 cache=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new empty cache directory}
 container=${CONTAINER_NAME:?set CONTAINER_NAME to a unique name}
@@ -51,9 +52,11 @@ cat >"$expected_files" <<'EOF'
 7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
 f3273ccfb41be44c3c02080c26df10e8b200060366b900d940803f4221224c59  /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
 7afb4de8b87d7f180d696f7cadad8b9d48d9ab7b706ae19616425c4f9456fb19  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
-5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d  /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py
 50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
 EOF
+printf '%s  %s\n' "$expected_xpu_communicator_sha256" \
+  /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py \
+  >>"$expected_files"
 printf '%s  %s\n' "$expected_xpu_extension_sha256" \
   /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so \
   >>"$expected_files"

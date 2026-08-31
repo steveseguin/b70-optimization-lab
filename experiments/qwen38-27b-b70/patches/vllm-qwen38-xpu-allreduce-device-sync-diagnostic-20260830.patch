@@ -1,0 +1,15 @@
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -49,6 +49,11 @@ class XpuCommunicator(DeviceCommunicatorBase):
+         output = input_.clone()
+         work = dist.all_reduce(output, group=self.device_group, async_op=True)
+         work.wait()
++        # Diagnostic only: determine whether Work.wait() leaves an XPU device
++        # dependency incomplete for the AutoRound TP2 lane. This deliberately
++        # expensive whole-device drain is a causal screen, not a production
++        # optimization.
++        torch.xpu.synchronize()
+         return output
+ 
+     def reduce_scatter(self, input_: torch.Tensor, dim: int = -1):

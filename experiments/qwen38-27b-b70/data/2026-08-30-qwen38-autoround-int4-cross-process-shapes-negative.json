@@ -1,0 +1,22 @@
+{
+  "schema": "neural.download.raw-operator-cross-process-repeatability.v1",
+  "date": "2026-08-30",
+  "classification": "negative-causal-screen",
+  "image_id": "sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136",
+  "device": "local B70 GPU 0",
+  "m": 65,
+  "seed": 20260830,
+  "fresh_processes": 8,
+  "within_process_exact_all": true,
+  "results": {
+    "gdn_qkv_tp2": {"k": 5120, "n": 5120, "unique_hashes": 1, "sha256": "26a15cefd54f1c8c4212d8ac6de1a552ea216266656dc6f2b0ad43f8bd74b30e"},
+    "gdn_z_tp2": {"k": 5120, "n": 3072, "unique_hashes": 1, "sha256": "ab10c1a1a76e123679f88316f2edab25537417f0e191399d060663abf36fdc49"},
+    "gdn_out_tp2": {"k": 3072, "n": 5120, "unique_hashes": 1, "sha256": "bb97a0d3b2f576b7c18ccf797b82196a7e70a821c25fc2d3dec6678af36a7ed3"},
+    "mlp_gate_up_tp2": {"k": 5120, "n": 8704, "unique_hashes": 1, "sha256": "24001d6c08c3483c1c218b461d89895373fc28aaf9eef911c64e0bf1816ad883"},
+    "mlp_down_tp2": {"k": 8704, "n": 5120, "unique_hashes": 1, "sha256": "cd9b7a7b204b74903011c7935da4eaa50527499931942b018f46b40f734bd74b"},
+    "attention_q_tp2": {"k": 5120, "n": 3072, "unique_hashes": 1, "sha256": "5b75116f36c99d01a8b6cebfe1643f0e75a80bb64c110ccc8542d439dce6c3d8"},
+    "attention_kv_tp2": {"k": 5120, "n": 512, "unique_hashes": 1, "sha256": "597ff752ff57155f06ac362e976edd2c23205a1b40832d7af9858e78b1b23635"},
+    "attention_out_tp2": {"k": 3072, "n": 5120, "unique_hashes": 1, "sha256": "f5c3f207fe8eed1375a42b977c71f5d8f9f1428061f448a62a6ac45532f607e5"}
+  },
+  "decision": "Do not change the production INT4 kernels on this evidence. Continue at the TP2 collective/recurrent-state ordering boundary."
+}
