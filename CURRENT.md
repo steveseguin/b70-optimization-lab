@@ -1897,6 +1897,19 @@ component's duplicate 1.271 GB layout is endpoint-ineligible; integration must
 replace or release the original 635.7 MB bank and still pass a full endpoint
 A/B. See the
 [97-weight result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-round-robin-result.md).
+The guarded single-storage source integration is now preserved as vLLM commit
+`8c247a52f` and patch `0032`. It is default-off, exact-97/TP4/PP1/MTP0/eager
+only, binds the existing selective PLE-only UVA contract, preserves the
+logical parameter and loader through a shared packed allocation, and passed
+the official layerwise reload cycle. M1 grouped execution is exact and uses a
+fresh returned output. A focused XPU test also proved that the ordinary
+packed-view linear fallback is not byte-exact at M2, so every non-M1 input
+currently fails closed and the treatment is endpoint-ineligible. The frozen
+S1 discriminator now tests one real weight at M2 and M64 through contiguous
+authority, packed-view linear, packed matmul, and grouped E=1 in eight isolated
+one-card arms. It performs no reboot or full-model load and cannot authorize a
+source or endpoint claim. See the
+[S1 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

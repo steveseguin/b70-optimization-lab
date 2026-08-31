@@ -1,0 +1,629 @@
+From 8c247a52fc6003629184b38b29ab6e68a91d265f Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 31 Aug 2026 02:05:53 -0400
+Subject: [PATCH] Add guarded Qwen HC grouped-up integration
+
+---
+ .../qwen4_exp/test_amd_hc_grouped_up.py       | 312 ++++++++++++++++++
+ vllm/envs.py                                  |   6 +
+ vllm/models/qwen4_exp/amd/low_latency_gemm.py | 223 ++++++++++++-
+ vllm/models/qwen4_exp/amd/model.py            |   4 +-
+ vllm/models/qwen4_exp/amd/mtp.py              |   4 +-
+ 5 files changed, 544 insertions(+), 5 deletions(-)
+ create mode 100644 tests/models/qwen4_exp/test_amd_hc_grouped_up.py
+
+diff --git a/tests/models/qwen4_exp/test_amd_hc_grouped_up.py b/tests/models/qwen4_exp/test_amd_hc_grouped_up.py
+new file mode 100644
+index 000000000..5195cd0fd
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_amd_hc_grouped_up.py
+@@ -0,0 +1,312 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++from types import SimpleNamespace
++
++import pytest
++import torch
++import torch.nn.functional as F
++from torch import nn
++
++import vllm.envs as envs
++from vllm.config.compilation import CompilationMode, CUDAGraphMode
++from vllm.model_executor.layers.linear import UnquantizedLinearMethod
++from vllm.model_executor.model_loader.reload.layerwise import (
++    finalize_layerwise_reload,
++    initialize_layerwise_reload,
++    record_metadata_for_reloading,
++)
++from vllm.models.qwen4_exp.amd import low_latency_gemm
++from vllm.models.qwen4_exp.amd.hyperconnection import (
++    GatedResidual,
++    HyperConnectionConfig,
++)
++
++
++def test_grouped_up_env_defaults_off(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.delenv("VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP", raising=False)
++    assert envs.VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP is False
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP", "1")
++    assert envs.VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP is True
++
++
++def test_grouped_up_disabled_does_not_inspect_model(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.delenv("VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP", raising=False)
++    low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++        object(), torch.float32, object()
++    )
++
++
++def _fake_vllm_config() -> SimpleNamespace:
++    return SimpleNamespace(
++        speculative_config=None,
++        lora_config=None,
++        parallel_config=SimpleNamespace(
++            tensor_parallel_size=4,
++            pipeline_parallel_size=1,
++        ),
++        compilation_config=SimpleNamespace(
++            mode=CompilationMode.NONE,
++            cudagraph_mode=CUDAGraphMode.NONE,
++        ),
++        offload_config=SimpleNamespace(
++            offload_backend="uva",
++            uva=SimpleNamespace(
++                cpu_offload_gb=12.0,
++                cpu_offload_params={"ple_embedding.ngram_embedding.weight"},
++            ),
++            prefetch=SimpleNamespace(offload_group_size=0),
++        ),
++        model_config=SimpleNamespace(
++            hf_text_config=SimpleNamespace(
++                num_hidden_layers=48,
++                hidden_size=2560,
++                hc_count=4,
++                hc_lowrank=320,
++            )
++        ),
++    )
++
++
++def test_grouped_up_selects_exact_97_and_rejects_draft(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    class FakeLinear(nn.Module):
++        def __init__(self) -> None:
++            super().__init__()
++            self.quant_method = UnquantizedLinearMethod()
++
++    class FakeGatedResidual(nn.Module):
++        def __init__(self) -> None:
++            super().__init__()
++            self.input_mix_weight_up = FakeLinear()
++
++    class FakeLayer(nn.Module):
++        def __init__(self) -> None:
++            super().__init__()
++            self.attn_hyper_connection = FakeGatedResidual()
++            self.mlp_hyper_connection = FakeGatedResidual()
++
++    class FakeModel(nn.Module):
++        def __init__(self) -> None:
++            super().__init__()
++            self.layers = nn.ModuleList([FakeLayer() for _ in range(48)])
++            self.hyper_connection_mixer = FakeGatedResidual()
++
++    Qwen4ExpForCausalLM = type(
++        "Qwen4ExpForCausalLM",
++        (nn.Module,),
++        {"__init__": lambda self: nn.Module.__init__(self)},
++    )
++    target = Qwen4ExpForCausalLM()
++    target.model = FakeModel()
++
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP", "1")
++    monkeypatch.setattr(low_latency_gemm, "GatedResidual", FakeGatedResidual)
++    monkeypatch.setattr(low_latency_gemm.current_platform, "is_xpu", lambda: True)
++    monkeypatch.setattr(
++        torch.ops._xpu_C,
++        "cutlass_grouped_gemm_interface",
++        lambda *args: args[4],
++        raising=False,
++    )
++
++    graph_config = _fake_vllm_config()
++    graph_config.compilation_config.cudagraph_mode = CUDAGraphMode.FULL
++    with pytest.raises(RuntimeError, match="fully eager"):
++        low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++            target, torch.bfloat16, graph_config
++        )
++
++    lora_config = _fake_vllm_config()
++    lora_config.lora_config = object()
++    with pytest.raises(RuntimeError, match="does not support LoRA"):
++        low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++            target, torch.bfloat16, lora_config
++        )
++
++    pp_config = _fake_vllm_config()
++    pp_config.parallel_config.pipeline_parallel_size = 2
++    with pytest.raises(RuntimeError, match="TP4 and PP1"):
++        low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++            target, torch.bfloat16, pp_config
++        )
++
++    mtp_config = _fake_vllm_config()
++    mtp_config.speculative_config = object()
++    with pytest.raises(RuntimeError, match="MTP0-only"):
++        low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++            target, torch.bfloat16, mtp_config
++        )
++
++    broad_offload_config = _fake_vllm_config()
++    broad_offload_config.offload_config.uva.cpu_offload_params = set()
++    with pytest.raises(RuntimeError, match="selective PLE-only"):
++        low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++            target, torch.bfloat16, broad_offload_config
++        )
++
++    low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++        target, torch.bfloat16, _fake_vllm_config()
++    )
++    methods = [
++        child.quant_method
++        for child in target.modules()
++        if isinstance(child, FakeLinear)
++    ]
++    assert len(methods) == 97
++    assert all(
++        isinstance(method, low_latency_gemm.Qwen4ExpXPUGroupedUpLinearMethod)
++        for method in methods
++    )
++
++    Qwen4ExpMTP = type(
++        "Qwen4ExpMTP",
++        (nn.Module,),
++        {"__init__": lambda self: nn.Module.__init__(self)},
++    )
++    with pytest.raises(RuntimeError, match="target-model-only"):
++        low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++            Qwen4ExpMTP(), torch.bfloat16, _fake_vllm_config()
++        )
++
++
++@pytest.mark.skipif(
++    not torch.xpu.is_available(),
++    reason="requires one XPU",
++)
++def test_grouped_up_shared_storage_exact_fallback_and_reload(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setattr(
++        "vllm.model_executor.parameter.get_tensor_model_parallel_rank", lambda: 0
++    )
++    monkeypatch.setattr(
++        "vllm.model_executor.parameter.get_tensor_model_parallel_world_size",
++        lambda: 1,
++    )
++    monkeypatch.setattr(
++        "vllm.model_executor.layers.linear.get_tensor_model_parallel_rank", lambda: 0
++    )
++    monkeypatch.setattr(
++        "vllm.model_executor.layers.linear.get_tensor_model_parallel_world_size",
++        lambda: 1,
++    )
++
++    def grouped_gemm(
++        input_value,
++        packed_weight,
++        scales,
++        bias,
++        output,
++        rows,
++        n,
++        k,
++        experts,
++        is_int4,
++        is_mxfp4,
++    ):
++        assert scales is None and bias is None
++        assert rows.shape == (1,) and rows.dtype == torch.int32
++        assert (n, k, experts, is_int4, is_mxfp4) == (
++            10240,
++            320,
++            1,
++            False,
++            False,
++        )
++        output.copy_(input_value @ packed_weight[0])
++        return output
++
++    monkeypatch.setattr(
++        torch.ops._xpu_C,
++        "cutlass_grouped_gemm_interface",
++        grouped_gemm,
++        raising=False,
++    )
++    config = HyperConnectionConfig(
++        hc_count=4,
++        hidden_size=2560,
++        params_dtype=torch.bfloat16,
++        hc_lowrank=320,
++        rms_norm_eps=1e-6,
++        hc_per_branch_norm=True,
++    )
++    module = GatedResidual(config).to("xpu")
++    linear = module.input_mix_weight_up
++    method = low_latency_gemm.Qwen4ExpXPUGroupedUpLinearMethod()
++    linear.quant_method = method
++    with torch.device("xpu"):
++        record_metadata_for_reloading(linear)
++    generator = torch.Generator(device="cpu").manual_seed(20260831)
++    weight_cpu = (
++        torch.randn((10240, 320), dtype=torch.bfloat16, generator=generator) * 0.01
++    ).contiguous()
++    linear.weight_loader(linear.weight, weight_cpu)
++    x1 = (torch.randn((1, 320), dtype=torch.bfloat16, generator=generator) * 0.01).to(
++        "xpu"
++    )
++    x2 = (torch.randn((2, 320), dtype=torch.bfloat16, generator=generator) * 0.01).to(
++        "xpu"
++    )
++    authority1 = F.linear(x1, linear.weight)
++    torch.xpu.synchronize()
++
++    original_parameter = linear.weight
++    method.process_weights_after_loading(linear)
++    method.process_weights_after_loading(linear)
++    packed = linear._qwen4_exp_xpu_grouped_up_weight
++    assert linear.weight is original_parameter
++    assert packed.shape == (1, 320, 10240)
++    assert packed.is_contiguous()
++    assert (
++        packed.untyped_storage().data_ptr()
++        == original_parameter.untyped_storage().data_ptr()
++    )
++    assert torch.equal(packed[0].t().cpu(), weight_cpu)
++    assert not any("qwen4_exp_xpu_grouped" in name for name in linear.state_dict())
++
++    candidate1 = linear(x1)
++    candidate1_second = linear(x1)
++    torch.xpu.synchronize()
++    assert torch.equal(candidate1.cpu(), authority1.cpu())
++    assert torch.equal(candidate1_second.cpu(), authority1.cpu())
++    assert (
++        candidate1.untyped_storage().data_ptr()
++        != candidate1_second.untyped_storage().data_ptr()
++    )
++    with pytest.raises(RuntimeError, match="non-M1 dispatch is not qualified"):
++        linear(x2)
++
++    monkeypatch.setattr(torch.compiler, "is_compiling", lambda: True)
++    with pytest.raises(RuntimeError, match="does not support compilation"):
++        linear(x1)
++    monkeypatch.setattr(torch.compiler, "is_compiling", lambda: False)
++
++    replacement_cpu = (
++        torch.randn((10240, 320), dtype=torch.bfloat16, generator=generator) * 0.01
++    ).contiguous()
++    linear.weight_loader(original_parameter, replacement_cpu)
++    assert torch.equal(packed[0].t().cpu(), replacement_cpu)
++    replacement_authority = F.linear(x1, replacement_cpu.to("xpu"))
++    replacement_output = linear(x1)
++    torch.xpu.synchronize()
++    assert torch.equal(replacement_output.cpu(), replacement_authority.cpu())
++
++    official_reload_cpu = (
++        torch.randn((10240, 320), dtype=torch.bfloat16, generator=generator) * 0.01
++    ).contiguous()
++    kernel_parameter = linear.weight
++    kernel_packed = linear._qwen4_exp_xpu_grouped_up_weight
++    kernel_storage = kernel_packed.untyped_storage().data_ptr()
++    initialize_layerwise_reload(linear)
++    reload_parameter = linear.weight
++    reload_parameter.weight_loader(reload_parameter, official_reload_cpu)
++    finalize_layerwise_reload(linear, model_config=None)
++    assert linear.weight is kernel_parameter
++    assert linear._qwen4_exp_xpu_grouped_up_weight is kernel_packed
++    assert linear.weight.untyped_storage().data_ptr() == kernel_storage
++    assert kernel_packed.untyped_storage().data_ptr() == kernel_storage
++    assert torch.equal(kernel_packed[0].t().cpu(), official_reload_cpu)
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 23149679e..f672d28da 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -299,6 +299,7 @@ if TYPE_CHECKING:
+     VLLM_USE_V2_MODEL_RUNNER: bool | None = None
+     VLLM_PLE_CPU_OFFLOAD: bool = False
+     VLLM_XPU_PLE_UVA_PREFETCH: bool = False
++    VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP: bool = False
+     VLLM_PLE_OFFLOAD_READY_TIMEOUT: float = 600.0
+     VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT: float = 600.0
+     VLLM_LOG_MODEL_INSPECTION: bool = False
+@@ -2051,6 +2052,11 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_PLE_UVA_PREFETCH": lambda: (
+         os.getenv("VLLM_XPU_PLE_UVA_PREFETCH", "False").lower() in ("true", "1")
+     ),
++    # Opt in to the packed Xe2 grouped-GEMM path for Qwen4Exp HC up
++    # projections. Only separately qualified token shapes may dispatch it.
++    "VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP": lambda: (
++        os.getenv("VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP", "False").lower() in ("true", "1")
++    ),
+     # Timeout for PLE weight loading and TP worker registration.
+     "VLLM_PLE_OFFLOAD_READY_TIMEOUT": lambda: float(
+         os.getenv("VLLM_PLE_OFFLOAD_READY_TIMEOUT", "600")
+diff --git a/vllm/models/qwen4_exp/amd/low_latency_gemm.py b/vllm/models/qwen4_exp/amd/low_latency_gemm.py
+index e8c5c2f91..191fc0cf1 100644
+--- a/vllm/models/qwen4_exp/amd/low_latency_gemm.py
++++ b/vllm/models/qwen4_exp/amd/low_latency_gemm.py
+@@ -1,15 +1,232 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+-"""Qwen4Exp low-latency GEMM hook for AMD ROCm."""
++"""Opt-in Qwen4Exp low-latency GEMM hooks for XPU."""
+ 
+ import torch
+ from torch import nn
+ 
++import vllm.envs as envs
++from vllm.config.compilation import CompilationMode, CUDAGraphMode
++from vllm.model_executor.layers.linear import (
++    LinearBase,
++    UnquantizedLinearMethod,
++)
++from vllm.platforms import current_platform
++
++from .hyperconnection import GatedResidual
++
++_HC_UP_INPUT_SIZE = 320
++_HC_UP_OUTPUT_SIZE = 10240
++_HC_UP_LAYER_COUNT = 48
++_HC_UP_TARGET_COUNT = 2 * _HC_UP_LAYER_COUNT + 1
++
++
++class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
++    """M=1 grouped GEMM over one packed HC-up weight bank."""
++
++    _PACKED_BUFFER = "_qwen4_exp_xpu_grouped_up_weight"
++    _ROWS_BUFFER = "_qwen4_exp_xpu_grouped_up_rows"
++
++    def process_weights_after_loading(self, layer: nn.Module) -> None:
++        super().process_weights_after_loading(layer)
++        weight = layer.weight
++        packed = getattr(layer, self._PACKED_BUFFER, None)
++        rows = getattr(layer, self._ROWS_BUFFER, None)
++
++        if packed is None:
++            if (
++                weight.device.type != "xpu"
++                or weight.dtype != torch.bfloat16
++                or weight.shape != (_HC_UP_OUTPUT_SIZE, _HC_UP_INPUT_SIZE)
++                or getattr(layer, "bias", None) is not None
++                or getattr(weight, "_vllm_is_uva_offloaded", False)
++            ):
++                raise RuntimeError(
++                    "Qwen4Exp grouped HC-up requires resident XPU BF16 "
++                    "[10240,320] without bias"
++                )
++            packed = weight.detach().t().contiguous().unsqueeze(0)
++            rows = torch.ones((1,), dtype=torch.int32, device=weight.device)
++            weight.data = packed[0].t()
++            layer.register_buffer(self._PACKED_BUFFER, packed, persistent=False)
++            layer.register_buffer(self._ROWS_BUFFER, rows, persistent=False)
++
++        self._validate_packed_state(layer, packed, rows)
++
++    @staticmethod
++    def _validate_packed_state(
++        layer: nn.Module,
++        packed: torch.Tensor,
++        rows: torch.Tensor | None,
++    ) -> None:
++        weight = layer.weight
++        if (
++            packed.shape != (1, _HC_UP_INPUT_SIZE, _HC_UP_OUTPUT_SIZE)
++            or packed.stride()
++            != (_HC_UP_INPUT_SIZE * _HC_UP_OUTPUT_SIZE, _HC_UP_OUTPUT_SIZE, 1)
++            or packed.dtype != torch.bfloat16
++            or packed.device.type != "xpu"
++            or not packed.is_contiguous()
++            or rows is None
++            or rows.shape != (1,)
++            or rows.dtype != torch.int32
++            or rows.device != packed.device
++            or int(rows.item()) != 1
++            or weight.shape != (_HC_UP_OUTPUT_SIZE, _HC_UP_INPUT_SIZE)
++            or weight.stride() != (1, _HC_UP_OUTPUT_SIZE)
++            or weight.dtype != packed.dtype
++            or weight.device != packed.device
++            or weight.untyped_storage().data_ptr()
++            != packed.untyped_storage().data_ptr()
++        ):
++            raise RuntimeError("Qwen4Exp grouped HC-up packed state drifted")
++
++    def apply(
++        self,
++        layer: nn.Module,
++        x: torch.Tensor,
++        bias: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        packed = getattr(layer, self._PACKED_BUFFER, None)
++        rows = getattr(layer, self._ROWS_BUFFER, None)
++        if packed is None or rows is None:
++            raise RuntimeError("Qwen4Exp grouped HC-up weight was not prepared")
++        if torch.compiler.is_compiling():
++            raise RuntimeError("Qwen4Exp grouped HC-up does not support compilation")
++        if (
++            bias is not None
++            or x.device.type != "xpu"
++            or x.device != packed.device
++            or x.dtype != torch.bfloat16
++            or x.ndim != 2
++            or x.shape != (1, _HC_UP_INPUT_SIZE)
++            or not x.is_contiguous()
++        ):
++            raise RuntimeError(
++                "Qwen4Exp grouped HC-up non-M1 dispatch is not qualified"
++            )
++
++        output = torch.empty((1, _HC_UP_OUTPUT_SIZE), dtype=x.dtype, device=x.device)
++        result = torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            x,
++            packed,
++            None,
++            None,
++            output,
++            rows,
++            _HC_UP_OUTPUT_SIZE,
++            _HC_UP_INPUT_SIZE,
++            1,
++            False,
++            False,
++        )
++        if (
++            not isinstance(result, torch.Tensor)
++            or result.shape != output.shape
++            or result.dtype != output.dtype
++            or result.device != output.device
++            or result.untyped_storage().data_ptr()
++            != output.untyped_storage().data_ptr()
++        ):
++            raise RuntimeError("Qwen4Exp grouped HC-up returned unexpected output")
++        return result
++
++
++def _expected_hc_up_names() -> set[str]:
++    names = {
++        f"model.layers.{layer}.{family}_hyper_connection.input_mix_weight_up"
++        for layer in range(_HC_UP_LAYER_COUNT)
++        for family in ("attn", "mlp")
++    }
++    names.add("model.hyper_connection_mixer.input_mix_weight_up")
++    return names
++
++
++def _validate_grouped_up_config(
++    module: nn.Module,
++    dtype: torch.dtype,
++    vllm_config: object,
++) -> dict[str, LinearBase]:
++    if module.__class__.__name__ != "Qwen4ExpForCausalLM":
++        raise RuntimeError("Qwen4Exp grouped HC-up is initially target-model-only")
++    if not current_platform.is_xpu() or dtype != torch.bfloat16:
++        raise RuntimeError("Qwen4Exp grouped HC-up requires XPU BF16")
++    if getattr(vllm_config, "speculative_config", None) is not None:
++        raise RuntimeError("Qwen4Exp grouped HC-up is initially MTP0-only")
++    if getattr(vllm_config, "lora_config", None) is not None:
++        raise RuntimeError("Qwen4Exp grouped HC-up does not support LoRA")
++    if envs.VLLM_PLE_CPU_OFFLOAD:
++        raise RuntimeError("Qwen4Exp grouped HC-up rejects PLE worker offload")
++
++    parallel_config = vllm_config.parallel_config
++    if (
++        parallel_config.tensor_parallel_size != 4
++        or parallel_config.pipeline_parallel_size != 1
++    ):
++        raise RuntimeError("Qwen4Exp grouped HC-up requires TP4 and PP1")
++
++    compilation_config = vllm_config.compilation_config
++    if (
++        compilation_config.mode != CompilationMode.NONE
++        or compilation_config.cudagraph_mode != CUDAGraphMode.NONE
++    ):
++        raise RuntimeError("Qwen4Exp grouped HC-up requires fully eager execution")
++
++    offload_config = vllm_config.offload_config
++    if (
++        offload_config.offload_backend != "uva"
++        or offload_config.uva.cpu_offload_gb != 12.0
++        or offload_config.uva.cpu_offload_params
++        != {"ple_embedding.ngram_embedding.weight"}
++        or offload_config.prefetch.offload_group_size != 0
++    ):
++        raise RuntimeError(
++            "Qwen4Exp grouped HC-up requires the exact selective PLE-only "
++            "UVA offload contract"
++        )
++
++    config = vllm_config.model_config.hf_text_config
++    if (
++        config.num_hidden_layers != _HC_UP_LAYER_COUNT
++        or config.hidden_size != 2560
++        or config.hc_count != 4
++        or config.hc_lowrank != _HC_UP_INPUT_SIZE
++    ):
++        raise RuntimeError("Qwen4Exp grouped HC-up model dimensions do not match")
++    if not hasattr(torch.ops._xpu_C, "cutlass_grouped_gemm_interface"):
++        raise RuntimeError("XPU runtime lacks the grouped-GEMM interface")
++
++    targets: dict[str, LinearBase] = {}
++    for name, child in module.named_modules():
++        if not isinstance(child, GatedResidual):
++            continue
++        linear = child.input_mix_weight_up
++        targets[f"{name}.input_mix_weight_up"] = linear
++    expected = _expected_hc_up_names()
++    if set(targets) != expected or len(targets) != _HC_UP_TARGET_COUNT:
++        missing = sorted(expected - set(targets))
++        extra = sorted(set(targets) - expected)
++        raise RuntimeError(
++            "Qwen4Exp grouped HC-up target census mismatch: "
++            f"missing={missing}, extra={extra}"
++        )
++    if any(
++        type(linear.quant_method) is not UnquantizedLinearMethod
++        for linear in targets.values()
++    ):
++        raise RuntimeError("Qwen4Exp grouped HC-up requires unquantized HC linears")
++    return targets
++
+ 
+ def enable_qwen4_exp_low_latency_gemm(
+     module: nn.Module,
+     dtype: torch.dtype,
++    vllm_config: object,
+ ) -> None:
+-    """Keep the standard vLLM linear methods on AMD ROCm."""
++    """Install the opt-in grouped method on the exact target HC-up census."""
+ 
+-    del module, dtype
++    if not envs.VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP:
++        return
++    targets = _validate_grouped_up_config(module, dtype, vllm_config)
++    for linear in targets.values():
++        linear.quant_method = Qwen4ExpXPUGroupedUpLinearMethod()
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index 2a633de0b..250c6e968 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -841,7 +841,9 @@ class Qwen4ExpForCausalLM(
+             self.model.make_empty_intermediate_tensors
+         )
+         self.set_moe_parameters(self.model.layers)
+-        enable_qwen4_exp_low_latency_gemm(self, self.model_config.dtype)
++        enable_qwen4_exp_low_latency_gemm(
++            self, self.model_config.dtype, self.vllm_config
++        )
+ 
+     @staticmethod
+     def get_model_state_cls():
+diff --git a/vllm/models/qwen4_exp/amd/mtp.py b/vllm/models/qwen4_exp/amd/mtp.py
+index 1fe63096d..c130395d8 100644
+--- a/vllm/models/qwen4_exp/amd/mtp.py
++++ b/vllm/models/qwen4_exp/amd/mtp.py
+@@ -401,7 +401,9 @@ class Qwen4ExpMTP(nn.Module, SupportsPP, Qwen4ExpMixtureOfExperts):
+             self.model.make_empty_intermediate_tensors
+         )
+         self.set_moe_parameters(self.model.layers)
+-        enable_qwen4_exp_low_latency_gemm(self, vllm_config.model_config.dtype)
++        enable_qwen4_exp_low_latency_gemm(
++            self, vllm_config.model_config.dtype, vllm_config
++        )
+ 
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.model.embed_input_ids(input_ids)
+-- 
+2.43.0
+
