@@ -2038,6 +2038,18 @@ loader, stage, journal, and render-owner closure also passed. The external
 evidence-manifest SHA-256 is `ca218488...`. This authorizes freezing A30 only;
 no full model, endpoint speed, quality, or promotion claim exists yet. See the
 [A4 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a4-qualification-positive.md).
+A30 is now frozen as the composite endpoint candidate on attempt 30/port
+19702. It derives from A29's complete M1 eight-warp battery, adds only the
+qualified grouped-HC selector and full-serving stage identities, and binds the
+live server environment, exact source chain, manifests, and A4 evidence before
+inference. The postflight rejects any new internal-NVMe event during the run.
+Six static contract tests and all generated-source/validation-only
+checks pass without consuming the boot marker. A quality/speed pass remains
+candidate-only: matched same-stage flag-off control and a fresh flag-on repeat
+are required for attribution. The current boot followed an unexplained
+overnight unclean reset with no model process active; its mounts, memory, swap,
+and source state are healthy, so no additional reboot is required. See the
+[A30 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a30-hc-grouped-m1-endpoint-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
