@@ -1,0 +1,17 @@
+{
+  "campaign": "qwen38-fp8-w8a16-mtp1-c64-deterministic-20260830-r39",
+  "status": "preregistered before runner implementation or measurement",
+  "question": "Does the strictly qualified deterministic MTP1 treatment retain its complete MTP0 token output at c64 while exceeding the requested 875 tok/s two-B70 aggregate objective?",
+  "hardware": "The two local Intel Arc Pro B70 32 GiB cards, physical devices 0 and 1; no remote host.",
+  "model": "Qwen/Qwen3.8-27B-FP8 revision 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a on local ext4 NVMe, verified through the repository direct-I/O manifest gate.",
+  "control": "MTP0 image neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15, immutable local ID sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e, W8A16 on, XPU Graph off, deterministic Inductor on, persistent deterministic GDN state and explicit oneCCL Work.wait treatment.",
+  "candidate": "Static publisher MTP1 image neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31, immutable local ID sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b, all control settings fixed plus one speculative token and the qualified packed-two-row Gemma RMSNorm serial-exact treatment.",
+  "service_shape": "TP2; max model length 256; max sequences 128; max batched tokens 512; c64 synchronized requests; 128 returned token IDs per request; block size 64; FP16 KV; prefix caching off; temperature 0; ignore_eos true.",
+  "inputs": "The frozen small-context suite is expanded deterministically to 64 unique request rows. Prompt cache is disabled and every request must report zero cached tokens. No user request, selected fixture, or repeated input is used for warmup or shape conditioning.",
+  "ordered_method": "Run fresh control A and B with distinct empty compile-cache directories. Continue only if all workload/isolation gates pass and the 64 complete token arrays match A-to-B. Freeze that same-shape MTP0 batch oracle. Then run fresh candidate A and B, again with distinct empty caches, and compare every complete token array to both controls and to the other candidate.",
+  "correctness_gate": "Control A/B, candidate A/B, and each candidate versus each control must be 64/64 exact by complete token array; all four attempts must return 128 tokens on every row, cached_tokens=0 on every row, preserve request/output isolation, pass post-run health and bounded cleanup, and show no new xe reset/fault/OOM event.",
+  "performance_metric": "For each attempt, sum 64*128 completion tokens divided by synchronized client batch wall time. The candidate headline statistic is the median of candidate A and B only after every correctness gate passes.",
+  "promotion_rule": "Qualify the MTP1 c64 profile only if every correctness gate passes and the candidate median exceeds the matched MTP0 control median. Mark the requested aggregate objective achieved only if the qualified candidate median is at least 875 tok/s; 1000 tok/s remains the preferred target.",
+  "failure_policy": "Any control nondeterminism stops before candidate execution. Any candidate mismatch, cache use, short row, health failure, or cleanup failure rejects the profile and withholds every candidate rate. A single passing or fast attempt cannot be promoted.",
+  "reporting_boundary": "This experiment can establish only the directly measured c64, 256-token short-context, TP2, official-FP8/W8A16, static-MTP1 deployment. It grants no single-user, 32K, other concurrency, other quantization, dynamic-MTP, or interpolated claim."
+}
