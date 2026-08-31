@@ -1918,6 +1918,15 @@ evidence root without changing any provider or interpretation rule. See the
 [attempt-1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-a1-preflight-negative.md)
 and
 [attempt-2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-a2-prereg.md).
+S1 attempt 2 then passed twice: all 16 arms were finite, repeatable, and
+byte-exact across contiguous authority, packed-view linear, packed matmul, and
+grouped E=1 at M2/M64. Grouped was directionally fastest, reducing the fixed-
+order descriptive medians by `60.64 / 60.82%` at M2 and `46.84 / 42.53%` at
+M64. This authorizes only the S2 correctness expansion across five real
+weights and M2--4096; no source, endpoint, or speed claim is promoted. See the
+[S1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-result.md)
+and
+[S2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s2-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

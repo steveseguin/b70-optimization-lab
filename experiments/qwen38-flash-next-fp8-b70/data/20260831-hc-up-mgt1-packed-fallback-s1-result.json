@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "s1_two_repeat_exact_pass",
+  "classification": "real_weight_packed_fallback_component_positive",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "scope": {
+    "slot": "00-attn",
+    "m_values": [2, 64],
+    "providers": ["authority", "packed_view", "matmul", "grouped"],
+    "repeat_count": 2,
+    "arm_count": 16
+  },
+  "correctness": {
+    "all_providers_byte_exact": true,
+    "all_outputs_finite_and_repeatable": true,
+    "input_or_weight_mutations": 0,
+    "mismatch_count": 0
+  },
+  "descriptive_medians_us": {
+    "r1": {
+      "m2": {"authority": 35.510904, "packed_view": 46.07954, "matmul": 39.281164, "grouped": 13.976196},
+      "m64": {"authority": 40.074125, "packed_view": 42.358063, "matmul": 36.4585, "grouped": 21.304563}
+    },
+    "r2": {
+      "m2": {"authority": 38.28448, "packed_view": 44.282316, "matmul": 39.515788, "grouped": 14.998412},
+      "m64": {"authority": 37.468031, "packed_view": 41.915656, "matmul": 36.500344, "grouped": 21.533688}
+    }
+  },
+  "grouped_reduction_percent_vs_authority": {
+    "r1_m2": 60.643,
+    "r2_m2": 60.824,
+    "r1_m64": 46.837,
+    "r2_m64": 42.528
+  },
+  "timing_classification": "descriptive_fixed_provider_order",
+  "summaries": {
+    "r1": {
+      "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s1-r1-a2-seed20260831/summary.json",
+      "sha256": "dde7b9aaeda8bb564d64f2259aeb3e825ad01416afea506098ef49e25d3f6a37"
+    },
+    "r2": {
+      "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s1-r2-a2-seed20260831/summary.json",
+      "sha256": "38cf8bb5af172aacbf632f943136d6a14ea83182f7d70a2f6ba642249527e969"
+    }
+  },
+  "source_integration_authorized": false,
+  "endpoint_claim_authorized": false,
+  "next": "S2 five-sentinel wide-M exactness matrix"
+}
