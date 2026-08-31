@@ -17,11 +17,14 @@ min_host_memory_gib=${MIN_HOST_MEMORY_GIB:-80}
 container_memory=${CONTAINER_MEMORY:-96g}
 container_memory_swap=${CONTAINER_MEMORY_SWAP:-104g}
 gdn_native_fallback=${GDN_NATIVE_FALLBACK:-1}
+gdn_sync_after_native=${GDN_SYNC_AFTER_NATIVE:-0}
 
 case "$mode" in eager|compiled) ;; *) printf 'EXECUTION_MODE must be eager or compiled\n' >&2; exit 2;; esac
 [[ "$port" =~ ^[1-9][0-9]*$ ]] || { printf 'PORT must be positive\n' >&2; exit 2; }
 [[ "$gpu_ids" =~ ^[0-9]+,[0-9]+$ ]] || { printf 'GPU_IDS must contain two comma-separated device indices\n' >&2; exit 2; }
 [[ "$min_host_memory_gib" =~ ^[1-9][0-9]*$ ]] || { printf 'MIN_HOST_MEMORY_GIB must be positive\n' >&2; exit 2; }
+[[ "$gdn_native_fallback" =~ ^[01]$ ]] || { printf 'GDN_NATIVE_FALLBACK must be 0 or 1\n' >&2; exit 2; }
+[[ "$gdn_sync_after_native" =~ ^[01]$ ]] || { printf 'GDN_SYNC_AFTER_NATIVE must be 0 or 1\n' >&2; exit 2; }
 [[ -d "$model" && ! -L "$model" ]] || { printf 'MODEL_DIR must be a real directory\n' >&2; exit 1; }
 [[ "$(findmnt -n -o FSTYPE -T "$model")" == ext4 ]] || { printf 'MODEL_DIR must be on ext4\n' >&2; exit 1; }
 [[ ! -e "$cache" ]] || { printf 'cache path must be new: %s\n' "$cache" >&2; exit 1; }
@@ -115,6 +118,7 @@ exec docker run --rm --name "$container" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1 \
   --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 \
   --env VLLM_XPU_GDN_NATIVE_FALLBACK="$gdn_native_fallback" \
+  --env VLLM_XPU_GDN_SYNC_AFTER_NATIVE="$gdn_sync_after_native" \
   --env TORCHINDUCTOR_DETERMINISTIC=1 \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
