@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "closed_without_execution",
+  "classification": "trace_and_source_bounded_low_priority",
+  "scope": "Potential removal of the XPU communicator's out-of-place BF16 [1,2560] clone",
+  "source": {
+    "communicator": "vllm/distributed/device_communicators/xpu_communicator.py",
+    "behavior": "output = input_.clone(); dist.all_reduce(output)",
+    "functional_custom_op": "vllm/distributed/parallel_state.py",
+    "alias_contract": "all_reduce fake implementation returns a fresh empty_like tensor"
+  },
+  "a28_trace": {
+    "summary": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28/profile-summary-recovered-v3.json",
+    "same_copy_kernel_calls_per_cycle": 99,
+    "communicator_clones_per_cycle": 97,
+    "same_copy_kernel_family_ms_per_cycle": {
+      "rank0": 0.185792,
+      "rank1": 0.178914333,
+      "rank2": 0.181865333,
+      "rank3": 0.181445333
+    },
+    "warning": "The 99-call family contains the 97 communicator clones plus two other copies; its full duration is a conservative clone-elision ceiling, not attributable clone time."
+  },
+  "performance_bound": {
+    "protected_target_tok_s": 5.515783,
+    "protected_target_ms_per_token": 181.2979,
+    "conservative_full_copy_family_saving_ms": 0.185792,
+    "conservative_upper_bound_tok_s": 5.521441,
+    "conservative_upper_bound_gain_percent": 0.1026,
+    "profiler_host_clone_sum_ms": "6.45-6.65 per cycle, not transferable because the profiled host contexts inflated to 570-595 ms"
+  },
+  "risk": {
+    "global_in_place_communicator": "would violate the registered functional custom-op alias contract",
+    "correct_implementation": "requires a separately registered mutating operation and Qwen-specific disposable-input routing",
+    "all_97_inputs_disposable_in_a28": true,
+    "input_lifetimes": "48 fresh row-parallel attention projection outputs, 48 final local MoE outputs, and one fresh synchronous-PLE embedding output"
+  },
+  "decision": {
+    "priority": "defer",
+    "endpoint_arm_justified": false,
+    "component_arm_justified_now": false,
+    "next": "Test CPU/L3 process affinity with ordinary accepted XCCL because it directly targets the measured rank-arrival imbalance without changing collective semantics."
+  },
+  "protected_results_changed": false
+}
