@@ -2018,6 +2018,17 @@ frozen as the exact successor, adding only an explicit successful return and a
 fresh evidence path while retaining every device test and interpretation. See
 the [A2 procedural result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a2-qualification-procedural-negative.md)
 and [A3 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a3-qualification-prereg.md).
+A3 reached its first runtime import gate and exposed a second harness error:
+the accepted native extension was required to expose/map the grouped operator
+that only the candidate adds. No tensor test or model load ran. Direct clean
+imports show the actual pinned contract is stronger and coherent: all 32
+accepted schemas are preserved byte-for-byte, none is removed, and the
+candidate adds exactly 14 frozen schemas from its four-commit kernel chain.
+A4 is frozen with that exact additive-schema gate, the retained A3 shell fix,
+and a fresh evidence path; every device, retained-output, and promotion boundary
+is otherwise unchanged. See the
+[A3 schema result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a3-schema-contract-negative.md)
+and [A4 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a4-qualification-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
