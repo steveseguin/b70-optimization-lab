@@ -10,6 +10,8 @@ expected_base_image_id=${EXPECTED_BASE_IMAGE_ID:?set EXPECTED_BASE_IMAGE_ID to t
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
 max_jobs=${MAX_JOBS:-1}
 resume_build=${RESUME_BUILD:-0}
+build_container_memory=${BUILD_CONTAINER_MEMORY:-12g}
+build_container_memory_swap=${BUILD_CONTAINER_MEMORY_SWAP:-28g}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 source_url=https://github.com/vllm-project/vllm-xpu-kernels.git
 patch=${repo_root}/experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-kernel1e90-20260828.patch
@@ -79,7 +81,11 @@ mapfile -t source_changes < <(git -C "${source_dir}" status --porcelain --untrac
 }
 mkdir -p "${dist_dir}" "${context_dir}"
 
-docker run --rm --memory 16g --memory-swap 28g \
+# Keep the cgroup RAM ceiling below physical host RAM. The largest Xe2
+# translation unit needs roughly 15 GiB of anonymous memory; the separate swap
+# ceiling lets it finish without forcing the host itself into a global OOM.
+docker run --rm --memory "${build_container_memory}" \
+  --memory-swap "${build_container_memory_swap}" \
   --volume "${source_dir}:/src" \
   --volume "${dist_dir}:/out" \
   --volume "${host_oneapi_root}:/opt/intel/oneapi:ro" \
