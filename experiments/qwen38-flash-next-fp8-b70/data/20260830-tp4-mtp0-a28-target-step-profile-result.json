@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "status": "profile_request_and_raw_capture_completed_client_failed_closed_before_quality_battery",
+  "classification": "report_only_capture_positive_offline_timestamp_contract_failure_endpoint_battery_incomplete_exact4k_non_authority",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "d14396e27247c1b251da0ce24a0942772c4b002f",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "placement": "ple_only_synchronous_uva",
+    "moe_config": "default",
+    "attempt": 28,
+    "port": 19700,
+    "boot_id": "b998940e-4b8c-481e-92cb-2844f8a6b389"
+  },
+  "profile_request": {
+    "status": "passed_generic_exact_depth_gate",
+    "prompt_tokens": 4096,
+    "completion_tokens": 128,
+    "cached_tokens": 0,
+    "output_token_ids_sha256": "f9ba25862eda272df1d81bb935db7499bf26336c9709605371863419cd18fe20",
+    "retained_authority_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+    "authority_match": false,
+    "known_family": "byte-identical to A10 row 2",
+    "first_generated_token_divergence_from_authority": 7,
+    "timing_is_permanently_ineligible_for_speed_credit": true
+  },
+  "capture": {
+    "rank_traces": 4,
+    "rank_tables": 4,
+    "gzip_valid": true,
+    "execute_contexts_per_rank": 4,
+    "dropped_initial_contexts_per_rank": 1,
+    "retained_contexts_per_rank": 3,
+    "device_events_per_context_per_rank": 5586,
+    "device_events_outside_contexts_per_rank": 56,
+    "all_device_events_have_submission_anchors": true,
+    "rank_context_start_skew_us_max": 907.8603515625
+  },
+  "offline_contract_failure": {
+    "frozen_summarizer_sha256": "53620dc6bf658a9bda63b4077a00bfc9710b6856e428116c3ff8237f1abc60a8",
+    "failure": "absolute-nanosecond submitted/appended timestamps were compared directly with Kineto-relative microsecond execute_context timestamps",
+    "trace_base_time_nanoseconds": 1782967788000000000,
+    "normalization": "(raw_anchor_ns - baseTimeNanoseconds) / 1000",
+    "corrected_summarizer_sha256": "a4d4c54cce53e1a2c1c3795caf742e7216e8d646ed0ca002f517cf09bd4ab7b6",
+    "corrected_tests_sha256": "b58b76dde857ec3f3d67a677a45a2f18c8ce7ee92503c7ed4a2d61c802b89ed8",
+    "corrected_tests": "5/5 passed",
+    "recovered_summary_sha256": "13549ec9be6d923960b0e7d654560e0a56097e8e2f226ca6b9aa660d13cf0fa1",
+    "second_latent_helper_defect": "the post-summary manifest asserted created_cache_tokens was present and zero, but this response schema omits it; the helper would have failed before the ordinary battery even after the timestamp fix"
+  },
+  "profiled_context_host_ms": {
+    "rank_mean": {
+      "0": 582.8303401692709,
+      "1": 575.7862324218751,
+      "2": 585.4390706380209,
+      "3": 585.32660546875
+    },
+    "warning": "Kineto inflated host execution; these values and request throughput are diagnostic only"
+  },
+  "device_buckets_mean_ms_per_retained_cycle_across_rank_means": {
+    "routed_shared_moe": 26.084405249999996,
+    "dense_projection": 10.031396499999982,
+    "quantization_cast": 4.185420250000002,
+    "elementwise": 2.943273999999997,
+    "qsa": 2.207827,
+    "other_noncollective": 1.6976240000000005,
+    "moe_router": 0.7893190000000003,
+    "gdn": 0.40854875,
+    "device_memory_operation": 0.16254233333333334,
+    "normalization": 0.05060733333333331,
+    "ple": 0.001866,
+    "collective_allreduce_distorted": 197.06545533333332
+  },
+  "per_cycle_multiplicity": {
+    "bf16_allreduce": 97,
+    "fused_moe": 96,
+    "gemm": 532,
+    "qsa_bucket_device_events": 86,
+    "qsa_sparse_splitk_kernel": 12,
+    "gdn_bucket_device_events": 72,
+    "gdn_causal_conv_kernel": 36,
+    "gdn_gated_delta_rule_kernel": 36
+  },
+  "interpretation": {
+    "profile_capture_credit": true,
+    "speed_credit": false,
+    "quality_credit": false,
+    "reliability_credit": false,
+    "endpoint_config_promoted": false,
+    "protected_results_changed": false,
+    "primary_bottleneck_class": "collective_critical_path_and_cross_rank_arrival_imbalance",
+    "strongest_concrete_noncollective_target": "the production decode MoE path (M1 local input expanded to M4 by EP all-gather) and dense projections; A27 rejected one uniform M4 warps-8 treatment, not the entire path",
+    "not_supported_as_primary_speed_targets": [
+      "GatedDeltaNet",
+      "QSA",
+      "PLE lookup"
+    ],
+    "next": "Use the captured aligned timelines to classify all 97 BF16 allreduces per token by ordinal/layer, rank arrival, message size, and preceding compute. Only then select collective-count/fusion, rank placement, or production M4 MoE tail-latency work. No additional model load is required for this discriminator."
+  },
+  "battery": {
+    "recovery_canary": "passed",
+    "semantic_repeat_short_and_ordinary_exact_4k": "not run after offline analyzer failure",
+    "client_exit_code": 2,
+    "supervisor_exit_code": 143
+  },
+  "lifecycle": {
+    "listener_after": false,
+    "model_process_after": false,
+    "post_mem_available_kib": 126642212,
+    "post_swap_free_kib": 8326428,
+    "b70_fault_or_reset": false,
+    "nvme_pcie_events": "corrected RxErr reports during load; no B70 event"
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28",
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28-supervisor",
+    "local_trace_dir": "/mnt/fast-ai/q38-profiles/attempt28",
+    "verified_trace_copy": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28-supervisor/profiler-traces",
+    "recovered_summary": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28/profile-summary-recovered-v3.json",
+    "profile_request_sha256": "c4e3c77f1edf2424f111761d6b094839c8fb4bcb1cd8282948b258152e0995c9",
+    "trace_checksum_manifest_sha256": "64b1d8f4678964642a13a71c9f05b4a2adc937b44b2b84be3d5ae5b5c5d69c96"
+  }
+}

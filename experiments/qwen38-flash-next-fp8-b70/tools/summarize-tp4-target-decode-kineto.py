@@ -70,22 +70,43 @@ def _float(value: Any, *, field: str, path: Path) -> float:
     try:
         parsed = float(value)
     except (TypeError, ValueError) as error:
-        raise TraceContractError(
-            f"invalid {field}={value!r} in {path}"
-        ) from error
+        raise TraceContractError(f"invalid {field}={value!r} in {path}") from error
     if not math.isfinite(parsed):
         raise TraceContractError(f"non-finite {field}={value!r} in {path}")
     return parsed
 
 
-def _event_anchor(args: dict[str, Any]) -> tuple[float | None, str | None]:
+def _trace_base_time_ns(path: Path) -> int:
+    """Read Kineto's absolute-nanosecond origin without loading the trace."""
+
+    _require_ijson()
+    with gzip.open(path, "rb") as handle:
+        try:
+            value = next(ijson.items(handle, "baseTimeNanoseconds"))
+        except StopIteration as error:
+            raise TraceContractError(
+                f"trace has no baseTimeNanoseconds origin: {path}"
+            ) from error
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise TraceContractError(
+            f"invalid baseTimeNanoseconds={value!r} in {path}"
+        ) from error
+
+
+def _event_anchor(
+    args: dict[str, Any], *, base_time_ns: int
+) -> tuple[float | None, str | None]:
+    """Normalize an absolute-nanosecond XPU submission time to trace microseconds."""
+
     for field in ("submitted", "appended", "sycl_enqk_begin"):
         value = args.get(field)
         if value is None:
             continue
         try:
-            parsed = float(value)
-        except (TypeError, ValueError):
+            parsed = (int(value) - base_time_ns) / 1000.0
+        except (TypeError, ValueError, OverflowError):
             continue
         if math.isfinite(parsed):
             return parsed, field
@@ -117,9 +138,7 @@ def _json_key(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
 
 
-def classify_device_event(
-    name: str, category: str, operator_name: str | None
-) -> str:
+def classify_device_event(name: str, category: str, operator_name: str | None) -> str:
     """Apply conservative, inspectable Qwen target-decode classifications."""
 
     if category in ("gpu_memcpy", "gpu_memset"):
@@ -152,7 +171,9 @@ def classify_device_event(
         )
     ):
         return "qsa"
-    if any(term in text for term in ("flash_attn", "flash_attention", "paged_attention")):
+    if any(
+        term in text for term in ("flash_attn", "flash_attention", "paged_attention")
+    ):
         return "full_attention"
     if any(
         term in text
@@ -216,10 +237,14 @@ def _collect_contexts(
         start = _float(event.get("ts"), field="annotation ts", path=path)
         duration = _float(event.get("dur"), field="annotation dur", path=path)
         if duration <= 0.0:
-            raise TraceContractError(f"non-positive decode annotation duration in {path}")
+            raise TraceContractError(
+                f"non-positive decode annotation duration in {path}"
+            )
         expected.append((start, start + duration))
 
-    foreign = {name: count for name, count in observed_names.items() if name != context_name}
+    foreign = {
+        name: count for name, count in observed_names.items() if name != context_name
+    }
     if foreign:
         raise TraceContractError(
             f"non-target execute_context annotations in {path}: {foreign}"
@@ -255,6 +280,7 @@ def summarize_trace(
             f"{DEFAULT_CONTEXT!r}; got {context_name!r}"
         )
     rank = extract_rank(path)
+    base_time_ns = _trace_base_time_ns(path)
     all_intervals, intervals, observed_names = _collect_contexts(
         path, context_name, drop_first, expected_retained
     )
@@ -297,7 +323,7 @@ def summarize_trace(
             continue
         device_counts["total"] += 1
         args = event.get("args") or {}
-        anchor, anchor_field = _event_anchor(args)
+        anchor, anchor_field = _event_anchor(args, base_time_ns=base_time_ns)
         if anchor is None:
             device_counts["without_host_anchor"] += 1
             continue
@@ -317,7 +343,9 @@ def summarize_trace(
         name = str(event.get("name", "<unnamed>"))
         duration_us = _float(event.get("dur", 0), field="device dur", path=path)
         if duration_us < 0.0:
-            raise TraceContractError(f"negative device-event duration in {path}: {name}")
+            raise TraceContractError(
+                f"negative device-event duration in {path}: {name}"
+            )
 
         external_id = args.get("External id")
         try:
@@ -359,7 +387,9 @@ def summarize_trace(
             f"device host-anchor coverage {anchor_coverage:.6f} is below "
             f"{minimum_anchor_coverage:.6f} in {path}"
         )
-    empty_cycles = [index for index, row in enumerate(per_cycle_bucket_calls) if not row]
+    empty_cycles = [
+        index for index, row in enumerate(per_cycle_bucket_calls) if not row
+    ]
     if empty_cycles:
         raise TraceContractError(
             f"retained decode annotations without anchored device events in {path}: "
@@ -376,12 +406,20 @@ def summarize_trace(
         for bucket in bucket_names
     }
     noncollective_ms = [
-        sum(duration for bucket, duration in row.items() if not bucket.startswith(COLLECTIVE_PREFIX))
+        sum(
+            duration
+            for bucket, duration in row.items()
+            if not bucket.startswith(COLLECTIVE_PREFIX)
+        )
         / 1000.0
         for row in per_cycle_buckets
     ]
     collective_ms = [
-        sum(duration for bucket, duration in row.items() if bucket.startswith(COLLECTIVE_PREFIX))
+        sum(
+            duration
+            for bucket, duration in row.items()
+            if bucket.startswith(COLLECTIVE_PREFIX)
+        )
         / 1000.0
         for row in per_cycle_buckets
     ]
@@ -411,6 +449,7 @@ def summarize_trace(
         "rank": rank,
         "trace": str(path),
         "compressed_bytes": path.stat().st_size,
+        "base_time_nanoseconds": base_time_ns,
         "observed_execute_context_annotations": dict(observed_names),
         "dropped_initial_contexts": drop_first,
         "retained_contexts": len(intervals),
@@ -545,8 +584,7 @@ def summarize_directory(
                 f"{MAXIMUM_RANK_CONTEXT_START_SKEW_US} us"
             )
         samples = [
-            (rank["cycles"][cycle]["host_duration_ms"], rank["rank"])
-            for rank in ranks
+            (rank["cycles"][cycle]["host_duration_ms"], rank["rank"]) for rank in ranks
         ]
         duration = max(sample[0] for sample in samples)
         slowest_ranks = sorted(
@@ -575,8 +613,10 @@ def summarize_directory(
         "retained_contexts_per_rank": expected_retained,
         "timestamp_method": (
             "associate XPU kernels/memcpy/memset with host execute_context by "
-            "args.submitted, falling back to appended then sycl_enqk_begin; use "
-            "the device event's own dur for bucket timing"
+            "normalizing args.submitted from absolute nanoseconds to Kineto trace "
+            "microseconds with baseTimeNanoseconds, falling back to similarly "
+            "normalized appended then sycl_enqk_begin; use the device event's own "
+            "dur for bucket timing"
         ),
         "interpretation_warnings": [
             "Profiler-run throughput and host duration are diagnostic only because Kineto adds material overhead.",
@@ -592,9 +632,13 @@ def summarize_directory(
 
 def _parse_expected_ranks(value: str) -> tuple[int, ...]:
     try:
-        ranks = tuple(sorted(int(item.strip()) for item in value.split(",") if item.strip()))
+        ranks = tuple(
+            sorted(int(item.strip()) for item in value.split(",") if item.strip())
+        )
     except ValueError as error:
-        raise argparse.ArgumentTypeError("expected comma-separated integer ranks") from error
+        raise argparse.ArgumentTypeError(
+            "expected comma-separated integer ranks"
+        ) from error
     if not ranks or len(set(ranks)) != len(ranks):
         raise argparse.ArgumentTypeError("expected non-empty unique ranks")
     return ranks

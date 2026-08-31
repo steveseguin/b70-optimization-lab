@@ -1775,6 +1775,22 @@ ineligible for speed credit. A28 must be the next boot's only full model load;
 the profile will choose the next optimization rather than spending another
 boot on a sub-noise component projection. See the
 [A28 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-target-step-profile-prereg.md).
+A28 captured four valid rank traces and four rank tables, but its frozen
+offline analyzer failed closed before the ordinary quality/speed battery due
+to a timestamp-unit contract defect. The raw capture was recovered without a
+rerun by normalizing absolute-nanosecond XPU submission anchors with Kineto's
+`baseTimeNanoseconds`; all four ranks then expose exactly 5,586 device events
+in each captured context. The p4096/o128 request passed generic depth and cache
+gates but returned the known A10-row-2 non-authority hash, so A28 has no speed,
+quality, reliability, or promotion credit. The valid profile identifies 97
+BF16 allreduces per token with severe rank-arrival asymmetry; the production
+decode MoE path (M1 local input expanded to M4 by EP all-gather, ~26.08 ms
+across rank means) and dense projections (~10.03 ms) are the largest concrete
+noncollective buckets, while GDN, QSA, and PLE are not primary speed targets.
+Next, analyze the already captured collective ordinal/layer arrival timeline
+offline before selecting another endpoint arm.
+Protected results remain unchanged. See the
+[A28 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-target-step-profile-result.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
