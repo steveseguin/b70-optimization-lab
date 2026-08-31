@@ -41,12 +41,22 @@ and 36 gated-delta kernels. Across rank means, the concrete noncollective
 buckets are approximately:
 
 - routed/shared MoE: 26.08 ms/token;
-- dense projections: 10.03 ms/token;
+- dense projections: 10.03 ms/token raw cross-rank mean, but approximately
+  7.58 ms/token robust steady value after excluding one isolated rank-3
+  profiler/scheduling episode;
 - quantization/casts: 4.19 ms/token;
 - elementwise work: 2.94 ms/token;
 - QSA: 2.21 ms/token;
 - GDN: 0.41 ms/token;
 - PLE lookup: 0.0019 ms/token.
+
+The dense mean needs that explicit qualification. Eleven of twelve rank-cycles
+clustered between 7.528 and 7.632 ms (mean 7.5745, median 7.5795 ms). Rank 3's
+second retained cycle alone measured 37.0568 ms because four unrelated layer-7
+GEMM shapes slowed consecutively. Its other two cycles were 7.598 and 7.632 ms.
+This is a rank-local profiler or scheduling episode, not evidence that four
+steady kernels regress together. Use about 7.58 ms/token for component
+projections while preserving 10.03 ms as the raw captured mean.
 
 Collective kernel residence varies from 39.87 to 366.64 ms/token across rank
 means, while the rank-3 noncollective sum is materially higher than the other

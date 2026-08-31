@@ -1785,8 +1785,12 @@ gates but returned the known A10-row-2 non-authority hash, so A28 has no speed,
 quality, reliability, or promotion credit. The valid profile identifies 97
 BF16 allreduces per token with severe rank-arrival asymmetry; the production
 decode MoE path (M1 routed-kernel input, ~26.08 ms across rank means) and dense
-projections (~10.03 ms) are the largest concrete noncollective buckets, while
+projections are the largest concrete noncollective buckets, while
 GDN, QSA, and PLE are not primary speed targets.
+The raw dense cross-rank mean was `10.0314 ms`, but an offline stability audit
+localized that inflation to one rank-3 cycle where four unrelated layer-7 GEMMs
+slowed together. The other 11 rank-cycles form a tight `7.5745 ms` mean /
+`7.5795 ms` median; use about `7.58 ms/token` as the steady dense baseline.
 Next, analyze the already captured collective ordinal/layer arrival timeline
 offline before selecting another endpoint arm.
 Protected results remain unchanged. See the
@@ -1825,6 +1829,12 @@ folder, async PLE, tracing/profiling, MTP, and source drift. Static validation
 and independent review pass. The current boot is consumed; A29 is prepared but
 will not reboot or launch without a later explicit decision. See the
 [A29 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a29-moe-m1-warps8-endpoint-prereg.md).
+The 512-expert top-k path also had an unused FP32 scoring workspace. A
+default-off treatment removed it with exact outputs and 7.19--9.12% lower
+synchronized component latency across three fresh-process brackets. At 48
+calls/token this projects to only about 0.143 ms/token, far below endpoint
+noise, so it does not displace A29 or justify another model load by itself. See
+the [component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-topk-512-workspace-component-positive.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win,
 but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median

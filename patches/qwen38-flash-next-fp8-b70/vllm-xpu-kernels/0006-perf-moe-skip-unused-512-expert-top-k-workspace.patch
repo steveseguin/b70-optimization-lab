@@ -1,0 +1,113 @@
+From 359466a262489bdf4e1774e3572202dc82a00718 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 23:05:19 -0400
+Subject: [PATCH] perf(moe): skip unused 512-expert top-k workspace
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ csrc/moe/topk.cpp | 54 +++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 43 insertions(+), 11 deletions(-)
+
+diff --git a/csrc/moe/topk.cpp b/csrc/moe/topk.cpp
+index cf660f0..85fc990 100644
+--- a/csrc/moe/topk.cpp
++++ b/csrc/moe/topk.cpp
+@@ -1,5 +1,8 @@
+ #include <sycl/sycl.hpp>
+ 
++#include <cstdlib>
++#include <cstring>
++
+ #include "../utils.h"
+ #include "../dispatch_utils.h"
+ 
+@@ -7,6 +10,25 @@
+ #define MIN(a, b) ((a) < (b) ? (a) : (b))
+ static constexpr int WARP_SIZE = 32;
+ 
++static bool skip_unused_topk_512_workspace() {
++  static const bool enabled = [] {
++    const char* value = std::getenv("VLLM_XPU_TOPK_512_SKIP_UNUSED_WORKSPACE");
++    return value != nullptr && std::strcmp(value, "1") == 0;
++  }();
++  return enabled;
++}
++
++static bool needs_topk_scoring_workspace(const int num_experts) {
++  const bool is_pow_2 =
++      num_experts != 0 && (num_experts & (num_experts - 1)) == 0;
++  // The specialized 512-expert TopKGating case consumes gating_output
++  // directly. Keep the historical allocation by default while the opt-in
++  // path proves that removing its unused FP32 workspace transfers end to end.
++  const bool skip_unused_workspace =
++      num_experts == 512 && skip_unused_topk_512_workspace();
++  return (!is_pow_2 || num_experts > 256) && !skip_unused_workspace;
++}
++
+ namespace vllm {
+ namespace moe {
+ enum class ScoringFunc {
+@@ -857,7 +879,7 @@ void topk_gating_kernel_launcher(
+       topk_weights.data_ptr<float>(),                                        \
+       topk_indices.data_ptr<INDTYPE>(),                                      \
+       token_expert_indices.data_ptr<int>(),                                  \
+-      scoring_workspace.data_ptr<float>(),                                   \
++      scoring_workspace_ptr,                                                 \
+       num_tokens,                                                            \
+       num_experts,                                                           \
+       topk,                                                                  \
+@@ -900,15 +922,20 @@ void topk_softmax(
+   const int topk = topk_weights.size(-1);
+   check_is_padding(is_padding, num_tokens);
+ 
+-  const bool is_pow_2 =
+-      (num_experts != 0) && ((num_experts & (num_experts - 1)) == 0);
+-  const bool needs_workspace = !is_pow_2 || num_experts > 256;
++  const bool needs_workspace = needs_topk_scoring_workspace(num_experts);
+   const int64_t workspace_size = needs_workspace ? num_tokens * num_experts : 0;
++  const bool skip_workspace_tensor =
++      num_experts == 512 && skip_unused_topk_512_workspace();
+ 
+   const at::DeviceGuard device_guard(gating_output.device());
+   auto& queue = vllm::xpu::vllmGetQueue();
+-  torch::Tensor scoring_workspace = torch::empty(
+-      {workspace_size}, gating_output.options().dtype(torch::kFloat));
++  torch::Tensor scoring_workspace;
++  float* scoring_workspace_ptr = nullptr;
++  if (!skip_workspace_tensor) {
++    scoring_workspace = torch::empty(
++        {workspace_size}, gating_output.options().dtype(torch::kFloat));
++    scoring_workspace_ptr = scoring_workspace.data_ptr<float>();
++  }
+ 
+   if (topk_indices.scalar_type() == at::ScalarType::Int) {
+     if (gating_output.scalar_type() == at::ScalarType::Float)
+@@ -954,15 +981,20 @@ void topk_sigmoid(
+   const int topk = topk_weights.size(-1);
+   check_is_padding(is_padding, num_tokens);
+ 
+-  const bool is_pow_2 =
+-      (num_experts != 0) && ((num_experts & (num_experts - 1)) == 0);
+-  const bool needs_workspace = !is_pow_2 || num_experts > 256;
++  const bool needs_workspace = needs_topk_scoring_workspace(num_experts);
+   const int64_t workspace_size = needs_workspace ? num_tokens * num_experts : 0;
++  const bool skip_workspace_tensor =
++      num_experts == 512 && skip_unused_topk_512_workspace();
+ 
+   const at::DeviceGuard device_guard(gating_output.device());
+   auto& queue = vllm::xpu::vllmGetQueue();
+-  torch::Tensor scoring_workspace = torch::empty(
+-      {workspace_size}, gating_output.options().dtype(torch::kFloat));
++  torch::Tensor scoring_workspace;
++  float* scoring_workspace_ptr = nullptr;
++  if (!skip_workspace_tensor) {
++    scoring_workspace = torch::empty(
++        {workspace_size}, gating_output.options().dtype(torch::kFloat));
++    scoring_workspace_ptr = scoring_workspace.data_ptr<float>();
++  }
+ 
+   if (topk_indices.scalar_type() == at::ScalarType::Int) {
+     if (gating_output.scalar_type() == at::ScalarType::Float)
+-- 
+2.43.0
+

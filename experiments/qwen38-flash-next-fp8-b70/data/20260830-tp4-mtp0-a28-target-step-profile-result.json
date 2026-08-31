@@ -77,6 +77,31 @@
     "ple": 0.001866,
     "collective_allreduce_distorted": 197.06545533333332
   },
+  "dense_projection_stability_audit": {
+    "raw_cross_rank_mean_ms": 10.031396499999982,
+    "rank_means_ms": {
+      "0": 7.550090000000016,
+      "1": 7.5733483333333504,
+      "2": 7.573449000000019,
+      "3": 17.428698666666545
+    },
+    "rank_medians_ms": {
+      "0": 7.531124000000018,
+      "1": 7.57945600000002,
+      "2": 7.57653400000002,
+      "3": 7.631546000000021
+    },
+    "clean_rank_cycles": 11,
+    "clean_mean_ms": 7.574546000000018,
+    "clean_median_ms": 7.57945600000002,
+    "excluded_outlier": {
+      "rank": 3,
+      "retained_cycle": 1,
+      "dense_projection_ms": 37.05675199999959,
+      "classification": "one isolated profiler or rank-local scheduling episode spanning four consecutive unrelated layer-7 GEMM shapes; not a steady kernel baseline"
+    },
+    "interpretation": "Use approximately 7.58 ms/token as the robust stable dense-projection bucket. Preserve 10.0314 ms as the raw cross-rank mean, not the component-screen target."
+  },
   "per_cycle_multiplicity": {
     "bf16_allreduce": 97,
     "fused_moe": 96,

@@ -40,6 +40,13 @@ filters padding sentinels during MoE alignment. Its fifth changes only the
 exact speculative GDN proof path from a fixed four-row bound to the positive
 runtime row count; target-only execution is unchanged.
 
+Loose kernel patch `0006` is a post-series, default-off component candidate at
+local kernel commit `359466a262489bdf4e1774e3572202dc82a00718`. It skips the
+unused FP32 scoring-workspace tensor only for the specialized 512-expert top-k
+path when explicitly selected. Exact component hashes pass and latency falls,
+but the projected endpoint effect is below noise; it is not part of the
+certified or production reconstruction sequence.
+
 Patch `0019` is a post-series QSA repeatability candidate based on vLLM commit
 `e5137bfd8`. It is not yet part of the production reconstruction sequence.
 It replaces the order-varying XPU QSA block selection with stable score and
@@ -74,6 +81,7 @@ df44c39f0c25cb6b05365d5de31afa9e0d3b251b070b371ae71d96080979afcd  vllm/0019-Make
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch
 ecc1cb5c84b148e96755b0b834408ae5ffaf9e497d2c1eb7d46735b4cf850a88  vllm-xpu-kernels/0004-fix-moe-ignore-padding-sentinels-during-alignment.patch
 7cbadf00a334404507ea730ea8281db203d4de7613785b599aa7f9800d523a46  vllm-xpu-kernels/0005-Generalize-exact-GDN-replay-to-MTP-row-count.patch
+d4a7d9934e21a37ed21e812355e4241690992d5b81c27fe818dc9302f19d0ef9  vllm-xpu-kernels/0006-perf-moe-skip-unused-512-expert-top-k-workspace.patch
 ```
 
 These are source artifacts only. A deployment package must additionally pin

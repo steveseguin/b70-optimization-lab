@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "status": "lossless_component_positive_below_endpoint_threshold",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "kernel_base": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "kernel_candidate": "359466a262489bdf4e1774e3572202dc82a00718",
+    "candidate_library_sha256": "f2d98d47b1aacecb1b9c335c71f5e3000912526e65d9bbd9349bec0333ec157b",
+    "selector": "VLLM_XPU_TOPK_512_SKIP_UNUSED_WORKSPACE=1",
+    "shape": {
+      "tokens": 1,
+      "experts": 512,
+      "topk": 10,
+      "dtype": "bfloat16",
+      "renormalize": true,
+      "bias": false
+    }
+  },
+  "measurements": [
+    {
+      "seed": 20260826,
+      "control_bracket_submission_us": 7.63175,
+      "candidate_submission_us": 6.101,
+      "submission_reduction_percent": 20.057653880171657,
+      "control_bracket_synchronized_us": 34.565,
+      "candidate_synchronized_us": 31.414,
+      "synchronized_reduction_percent": 9.11615796325762,
+      "outputs_match_exactly": true
+    },
+    {
+      "seed": 20260827,
+      "control_bracket_submission_us": 7.684,
+      "candidate_submission_us": 6.072,
+      "submission_reduction_percent": 20.978656949505467,
+      "control_bracket_synchronized_us": 34.4595,
+      "candidate_synchronized_us": 31.489,
+      "synchronized_reduction_percent": 8.620264368316423,
+      "outputs_match_exactly": true
+    },
+    {
+      "seed": 20260830,
+      "control_bracket_submission_us": 7.509,
+      "candidate_submission_us": 6.152,
+      "submission_reduction_percent": 18.07164735650553,
+      "control_bracket_synchronized_us": 34.0595,
+      "candidate_synchronized_us": 31.61,
+      "synchronized_reduction_percent": 7.191826069084985,
+      "outputs_match_exactly": true
+    }
+  ],
+  "correctness": {
+    "fresh_processes": 9,
+    "bracket": "control/candidate/control for each seed",
+    "hash_repeats_per_process": 100,
+    "one_output_tuple_per_process": true,
+    "candidate_control_weights_ids_and_source_rows_match_per_seed": true,
+    "sigmoid_regression_guard": {
+      "scope": "one short control/candidate/control correctness bracket; not a performance measurement and not used by Qwen3.8 Flash-Next",
+      "seed": 20260830,
+      "hash_repeats_per_process": 20,
+      "one_output_tuple_per_process": true,
+      "candidate_control_weights_ids_and_source_rows_match_exactly": true,
+      "file_sha256": {
+        "control-before.json": "3c15e800808da885ad87d3b68f95c97b3ea5db34e96092eceea6327cdbf68386",
+        "candidate.json": "3a22fd0b0668bb9349ed26d0e719440f92c3361035514d386b6fd28c019259c6",
+        "control-after.json": "dc057274eb4a6cfc746bf89cb1240b107e7f27b525948dd544ca0e209dec7eb0"
+      }
+    }
+  },
+  "projection": {
+    "calls_per_target_token": 48,
+    "median_synchronized_saving_us_per_call": 2.9705,
+    "projected_saving_ms_per_token_if_fully_critical": 0.142584,
+    "protected_target_only_tok_s": 5.5157825,
+    "mechanical_projected_tok_s_not_measured": 5.520123869491219,
+    "mechanical_projected_gain_percent_not_measured": 0.0787081341807605
+  },
+  "decision": {
+    "component_positive": true,
+    "endpoint_arm_justified": false,
+    "default_enabled": false,
+    "reason": "The exact component win is much smaller than endpoint noise after multiplying by 48 calls per token. Preserve the patch default-off and do not spend a full-model boot on it alone.",
+    "protected_results_changed": false
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/topk-512-workspace-screen-20260830-a1",
+    "sha256_manifest_sha256": "c7a98f9edbbca930949ed3f42dabd47044c149375e733bbc68b2776022e7dd82",
+    "sigmoid_regression_guard_subdir": "sigmoid-regression-guard"
+  }
+}
