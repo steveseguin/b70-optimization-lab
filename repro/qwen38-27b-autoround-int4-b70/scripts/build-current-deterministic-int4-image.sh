@@ -8,7 +8,8 @@ host_oneapi_root=${HOST_ONEAPI_ROOT:-/opt/intel/oneapi}
 base_image=${BASE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
 expected_base_image_id=${EXPECTED_BASE_IMAGE_ID:?set EXPECTED_BASE_IMAGE_ID to the local base image ID}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
-max_jobs=${MAX_JOBS:-2}
+max_jobs=${MAX_JOBS:-1}
+resume_build=${RESUME_BUILD:-0}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 source_url=https://github.com/vllm-project/vllm-xpu-kernels.git
 patch=${repo_root}/experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-kernel1e90-20260828.patch
@@ -31,8 +32,8 @@ done
 for required in "${patch}" "${dockerfile}" "${host_oneapi_root}/setvars.sh"; do
   [[ -e "${required}" ]] || { printf 'missing %s\n' "${required}" >&2; exit 1; }
 done
-[[ ! -e "${build_root}" ]] || {
-  printf 'BUILD_ROOT must be absent: %s\n' "${build_root}" >&2
+[[ "${resume_build}" == 0 || "${resume_build}" == 1 ]] || {
+  printf 'RESUME_BUILD must be 0 or 1\n' >&2
   exit 1
 }
 [[ "$(sha256sum "${patch}" | awk '{print $1}')" == "${patch_sha256}" ]] || {
@@ -44,16 +45,38 @@ done
   exit 1
 }
 
-mkdir -p "${build_root}"
-git clone --filter=blob:none --no-checkout "${source_url}" "${source_dir}"
-git -C "${source_dir}" checkout --detach "${kernel_head}"
+if [[ "${resume_build}" == 0 ]]; then
+  [[ ! -e "${build_root}" ]] || {
+    printf 'BUILD_ROOT must be absent: %s\n' "${build_root}" >&2
+    exit 1
+  }
+  mkdir -p "${build_root}"
+  git clone --filter=blob:none --no-checkout "${source_url}" "${source_dir}"
+  git -C "${source_dir}" checkout --detach "${kernel_head}"
+  git -C "${source_dir}" apply --check "${patch}"
+  git -C "${source_dir}" apply "${patch}"
+else
+  [[ -d "${source_dir}/.git" ]] || {
+    printf 'resume source checkout missing: %s\n' "${source_dir}" >&2
+    exit 1
+  }
+  git -C "${source_dir}" apply --reverse --check "${patch}" || {
+    printf 'resume source does not contain exactly the required patch\n' >&2
+    exit 1
+  }
+fi
 [[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${kernel_head}" ]] || {
   printf 'source checkout identity mismatch\n' >&2
   exit 1
 }
-git -C "${source_dir}" apply --check "${patch}"
-git -C "${source_dir}" apply "${patch}"
 git -C "${source_dir}" diff --check
+mapfile -t source_changes < <(git -C "${source_dir}" status --porcelain --untracked-files=all)
+[[ "${#source_changes[@]}" == 1 && \
+  "${source_changes[0]}" == ' M csrc/xpu/onednn/int4_gemm_w4a16.h' ]] || {
+  printf 'source checkout contains changes outside the required patch\n' >&2
+  printf '%s\n' "${source_changes[@]}" >&2
+  exit 1
+}
 mkdir -p "${dist_dir}" "${context_dir}"
 
 docker run --rm --memory 16g --memory-swap 28g \
