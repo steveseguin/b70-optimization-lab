@@ -1,0 +1,24 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1
+FROM ${BASE_IMAGE}
+
+ARG BASE_IMAGE_ID
+ARG PATCH_SHA256
+
+COPY vllm-qwen38-gdn-int4-prefill-pad512-determinism-20260831.patch /tmp/gdn-prefill.patch
+RUN test -n "${BASE_IMAGE_ID}" \
+    && test -n "${PATCH_SHA256}" \
+    && test "$(sha256sum /tmp/gdn-prefill.patch | awk '{print $1}')" = "${PATCH_SHA256}" \
+    && cd /opt/venv/lib/python3.12/site-packages \
+    && patch --batch --forward -p1 < /tmp/gdn-prefill.patch \
+    && rm -f /tmp/gdn-prefill.patch \
+    && /opt/venv/bin/python -m py_compile \
+        vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
+    && grep -Fq VLLM_XPU_QWEN_GDN_INT4_PREFILL_PAD512 \
+        vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+
+ENV VLLM_XPU_QWEN_GDN_INT4_PREFILL_PAD512=1
+
+LABEL neural.download.base.image.id="${BASE_IMAGE_ID}" \
+      neural.download.vllm.patch="qwen38-gdn-int4-prefill-pad512-determinism-20260831" \
+      neural.download.vllm.patch.sha256="${PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-autoround-gdn-int4-prefill-pad512-r1"
