@@ -1,0 +1,64 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+index 1111111..2222222 100644
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -86,6 +86,8 @@ GDN_AITER_TRITON_AVAILABLE = (
+ 
+ _XPU_DETERMINISTIC_BA_MIN_TOKENS = 17
+ _XPU_DETERMINISTIC_BA_PAD_TOKENS = 256
++_XPU_DETERMINISTIC_INT4_MIN_TOKENS = 33
++_XPU_DETERMINISTIC_INT4_PAD_TOKENS = 512
+ 
+ 
+ def _deterministic_xpu_ba_prefill(
+@@ -126,6 +128,30 @@ def _deterministic_xpu_ba_prefill_fake(
+     return hidden_states.new_empty((hidden_states.shape[0], weight.shape[0]))
+ 
+ 
++def _deterministic_xpu_quantized_prefill(
++    linear: nn.Module,
++    hidden_states: torch.Tensor,
++) -> torch.Tensor:
++    """Run a quantized projection at a stable, dispatcher-ordered M=512."""
++    num_tokens = hidden_states.shape[0]
++    padded = torch.zeros(
++        (_XPU_DETERMINISTIC_INT4_PAD_TOKENS, hidden_states.shape[-1]),
++        dtype=hidden_states.dtype,
++        device=hidden_states.device,
++    )
++    padded[:num_tokens].copy_(hidden_states)
++    projected, _ = linear(padded)
++    return projected[:num_tokens]
++
++
++def _use_deterministic_xpu_quantized_prefill(num_tokens: int) -> bool:
++    return (
++        os.environ.get("VLLM_XPU_QWEN_GDN_INT4_PREFILL_PAD512") == "1"
++        and _XPU_DETERMINISTIC_INT4_MIN_TOKENS <= num_tokens
++        < _XPU_DETERMINISTIC_INT4_PAD_TOKENS
++    )
++
++
+ direct_register_custom_op(
+     op_name="qwen_gdn_ba_prefill_xpu",
+     op_func=_deterministic_xpu_ba_prefill,
+@@ -1045,6 +1068,10 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+             projected_states_ba = torch.ops.vllm.qwen_gdn_ba_prefill_xpu(
+                 hidden_states, self.in_proj_ba.weight
+             )
++        elif _use_deterministic_xpu_quantized_prefill(num_tokens):
++            projected_states_ba = _deterministic_xpu_quantized_prefill(
++                self.in_proj_ba, hidden_states
++            )
+         else:
+             projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+@@ -1077,6 +1104,10 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+         core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
++        if _use_deterministic_xpu_quantized_prefill(num_tokens):
++            return _deterministic_xpu_quantized_prefill(
++                self.out_proj, core_attn_out
++            )
+         out, _ = self.out_proj(core_attn_out)
+         return out

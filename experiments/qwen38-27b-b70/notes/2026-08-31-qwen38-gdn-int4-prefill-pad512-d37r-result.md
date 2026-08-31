@@ -1,13 +1,11 @@
 # Qwen3.8 packaged GDN pad D37r result
 
-D37r is a valid negative package gate. The non-invasive wrapper supplied the
-same hidden input hash to the packaged production forward in four fresh
-processes, but received four different output hashes. The first generated
-token difference remained at index 60.
+D37r is **not** a candidate-repair result. The non-invasive wrapper supplied
+the same hidden input hash in four fresh processes and received four different
+outputs, but a later traceback and neutral-directory import audit proved r2's
+server runtime did not contain the patch. It measured the unmodified baseline.
 
-Thus the packaged BA/output pad is active but insufficient for the true active
-editable vLLM path. Earlier stage hooks reconstructed a different seven-argument
-GDN core call, whereas active source head `ac7509e2b` calls the XPU core with
-five arguments. D38 mirrors that exact active forward, including the packaged
-helpers, and hashes QKVZ, padded BA, five-argument core, norm, and padded output
-to locate the remaining source without making a package claim.
+The attempted D38 active-source trace then failed because the server imported
+the site-packages module, which lacked r2's helper. This evidence resolves the
+path: the actual server uses the seven-argument site-packages GDN source that
+D36 traced successfully. D39 tests r1, which patches that runtime copy.
