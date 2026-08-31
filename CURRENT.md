@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-28**
+Last reviewed: **2026-08-31**
 
 ## Authority And Update Rule
 
@@ -20,7 +20,7 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-08-28:
+Verified on 2026-08-31:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
@@ -28,7 +28,30 @@ Verified on 2026-08-28:
 - no Qwen benchmark listeners on `18110`-`18129`;
 - no `llama-server`, vLLM, or frontdoor process or container is running.
 
-## Active Qwen3.8 One-Card Package Work
+## Active Qwen3.8 AutoRound INT4 Two-B70 Optimization
+
+The active local lane is the dense Qwen3.8-27B AutoRound INT4 checkpoint on
+the two B70s. Medium-prefill nondeterminism was localized to INT4 projection
+shapes and repaired with the repository-owned M=512 projection hook. Four
+fresh traced processes matched at every decoder boundary. Two strict TP1/MTP0
+runs then reproduced all 12 complete varied-prompt token streams; removing the
+diagnostic device-wide barriers reduced median TTFT from 380.687 ms to
+310.378 ms (18.47%) without changing any token. The corrected MTP0 rates,
+24.80 tok/s TP1 and 18.07 tok/s TP2, are correctness baselines—not promoted
+speed recommendations.
+
+TP2/MTP1 attempt D61 loaded the target and drafter but the second B70 began
+issuing CCS page faults and engine-memory CAT errors during vLLM's profile
+run. The error surfaced as `UR_RESULT_ERROR_DEVICE_LOST` before any request was
+served. An isolated function-level reset did not recover that device; Xe
+declared PCI function `0000:e3:00.0` wedged. **Do not launch another GPU job in
+this boot.** Reboot the host, independently gate basic compute on both B70s,
+then run the synchronized D62 MTP1 localization arm. A passing D62 authorizes a
+fresh no-barrier MTP1 replay; a new Xe fault stops the lane for driver/runtime
+analysis. The exact D61 failure is recorded in
+[`experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-strict-d61-result.md`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-strict-d61-result.md).
+
+## Qualified Qwen3.8 One-Card Package Work
 
 The strict Q4_K_M target plus external Q4_0 MTP-draft screen is complete.
 MTP2 is the qualified one-card mode at **42.636988 tok/s**, the median of two
