@@ -1,0 +1,22 @@
+{
+  "campaign_id": "qwen38-layer1-gdn-state-prefill-20260831-d43",
+  "classification": "localization-only-input-already-divergent",
+  "first_output_difference_zero_based": 60,
+  "fresh_processes": 4,
+  "image_id": "sha256:03da963d9d9b3b2cfc5cb7d9f1bc0aeb9ebd7e1b9495e3cad4e5b9e5dd4fc493",
+  "stage_distinct_sha256": {
+    "hidden_input": 4,
+    "projected_qkvz": 4,
+    "projected_ba": 4,
+    "conv_state_before": 2,
+    "ssm_state_before": 2,
+    "core_pre_norm": 4,
+    "output_gate": 4,
+    "conv_state_after": 2,
+    "ssm_state_after": 4
+  },
+  "target_call_index": 2,
+  "target_layer": 1,
+  "valid_for_production_causality": false,
+  "reason": "The selected-call hook reconstructs GDN forward and bypasses the packaged projection padding; layer-1 input was already four-way divergent."
+}
