@@ -124,6 +124,7 @@ common_env=(
   VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
   VLLM_XPU_GDN_NATIVE_FALLBACK=1
   TORCHINDUCTOR_DETERMINISTIC=1
+  CCL_P2P_ACCESS=1
 )
 if [[ "${arm}" == candidate ]]; then
   common_env+=(EXPECTED_IMAGE_ID="${candidate_image_id}")
