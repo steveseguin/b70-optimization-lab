@@ -32,19 +32,19 @@ def digest(value: torch.Tensor) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--m", type=int, default=65)
+    parser.add_argument("--m", type=int, action="append", dest="m_values")
     parser.add_argument("--seed", type=int, default=20260830)
     args = parser.parse_args()
 
     torch.set_num_threads(1)
     device = "xpu:0"
+    m_values = args.m_values or [65]
+    if any(m < 1 for m in m_values):
+        parser.error("every --m must be positive")
     results = []
     for index, (name, (k, n)) in enumerate(SHAPES.items()):
         generator = torch.Generator(device="cpu")
         generator.manual_seed(args.seed + index)
-        x = torch.randn(
-            args.m, k, dtype=torch.float16, generator=generator
-        ).to(device)
         qweight = nt_pack(
             torch.randint(
                 -(2**31),
@@ -59,30 +59,36 @@ def main() -> None:
         ).abs().to(device)
         zero = torch.tensor([8], dtype=torch.int8, device=device)
 
-        def run() -> torch.Tensor:
-            return torch.ops._xpu_C.int4_gemm_w4a16(
-                x, qweight, None, scales, zero, 128, None
-            )
+        for m in m_values:
+            x_generator = torch.Generator(device="cpu")
+            x_generator.manual_seed(args.seed + index * 1000 + m)
+            x = torch.randn(m, k, dtype=torch.float16, generator=x_generator).to(device)
 
-        first = run()
-        torch.xpu.synchronize()
-        first = first.clone()
-        second = run()
-        torch.xpu.synchronize()
-        results.append(
-            {
-                "name": name,
-                "m": args.m,
-                "k": k,
-                "n": n,
-                "within_process_exact": bool(torch.equal(first, second)),
-                "sha256": digest(first),
-            }
-        )
-        del x, qweight, scales, zero, first, second
+            def run() -> torch.Tensor:
+                return torch.ops._xpu_C.int4_gemm_w4a16(
+                    x, qweight, None, scales, zero, 128, None
+                )
+
+            first = run()
+            torch.xpu.synchronize()
+            first = first.clone()
+            second = run()
+            torch.xpu.synchronize()
+            results.append(
+                {
+                    "name": name,
+                    "m": m,
+                    "k": k,
+                    "n": n,
+                    "within_process_exact": bool(torch.equal(first, second)),
+                    "sha256": digest(first),
+                }
+            )
+            del x, first, second
+        del qweight, scales, zero
         torch.xpu.empty_cache()
 
-    print(json.dumps({"seed": args.seed, "results": results}, sort_keys=True))
+    print(json.dumps({"seed": args.seed, "m_values": m_values, "results": results}, sort_keys=True))
 
 
 if __name__ == "__main__":
