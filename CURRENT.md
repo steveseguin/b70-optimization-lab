@@ -1759,6 +1759,22 @@ component-exact 20% M4 kernel gain therefore does not transfer as a dominant
 endpoint win and is not promoted. Teardown was clean; protected results remain
 unchanged. See the
 [A27 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a27-moe-warps8-endpoint-negative.md).
+The exact-shape layer-1 GatedDeltaNet history replay then passed two independent
+qualification processes: 100 full 4K trajectories and 6,400 native calls per
+process, with identical canonical digests at all 64 chunks and no mismatch.
+This is a bounded synthetic negative, not a production reliability clearance;
+it weakens basic native recurrent-kernel nondeterminism and moves the next
+reliability discriminator to production QKVZ/BA and state-slot/cache capture.
+See the
+[GDN history result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-gdn-history-replay-qualification.md).
+A28 is now frozen as a report-only full target-step profile on synchronous PLE
+and the default MoE configuration. It captures four pure decode contexts after
+the exact 4K fixture's 64 chunked-prefill iterations, discards the first for
+analysis, and aggregates three across all four ranks. Its timing is permanently
+ineligible for speed credit. A28 must be the next boot's only full model load;
+the profile will choose the next optimization rather than spending another
+boot on a sub-noise component projection. See the
+[A28 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-target-step-profile-prereg.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
