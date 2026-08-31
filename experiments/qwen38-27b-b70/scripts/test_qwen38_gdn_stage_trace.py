@@ -28,6 +28,10 @@ class Contract(unittest.TestCase):
         ):
             self.assertIn(f'"{boundary}"', self.hook)
 
+    def test_current_xpu_core_signature_includes_state(self):
+        self.assertIn("self._xpu_conv_state", self.hook)
+        self.assertIn("self._xpu_ssm_state", self.hook)
+
 
 if __name__ == "__main__":
     unittest.main()

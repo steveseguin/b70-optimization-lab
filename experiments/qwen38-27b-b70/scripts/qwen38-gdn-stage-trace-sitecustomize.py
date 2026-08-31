@@ -45,6 +45,8 @@ if OUTPUT:
             output_gate,
             projected_qkvz,
             projected_ba,
+            self._xpu_conv_state,
+            self._xpu_ssm_state,
             self.prefix,
         )
         original_shape = output_gate.shape
