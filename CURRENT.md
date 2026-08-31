@@ -1947,6 +1947,14 @@ rejects excluded providers before evidence or device work. Independent review
 passed the exact frozen hashes and fail-closed contract, so S3g is launchable;
 a complete pass can authorize only a separate source-dispatch design. See the
 [S3g preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-grouped-s3g-prereg.md).
+S3g then passed all 194 arms: grouped E=1 was byte-exact to authority for all
+97 real M64 HC-up weights, with finite/repeatable output and complete evidence
+closure. Grouped was descriptively faster on 97/97 weights; cross-weight
+medians were `21.588938` versus `37.978688 us`, and the median per-weight
+reduction was `42.822%`. These remain fixed-order component timings. The pass
+authorizes only a separately guarded default-off dynamic-M source-dispatch
+design and focused tests, not a rebuild, endpoint, or claim. See the
+[S3g result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-grouped-s3g-result.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

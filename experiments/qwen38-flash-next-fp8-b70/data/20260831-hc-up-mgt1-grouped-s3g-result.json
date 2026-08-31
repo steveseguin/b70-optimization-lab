@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "status": "all_97_m64_exact_component_pass",
+  "classification": "real_weight_hc_up_grouped_m64_component_positive",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "scope": {
+    "weight_count": 97,
+    "m": 64,
+    "providers": ["authority", "grouped"],
+    "cell_count": 97,
+    "arm_count": 194,
+    "run_attempt": 2,
+    "repeat": "r1"
+  },
+  "correctness": {
+    "all_outputs_finite_and_repeatable": true,
+    "authority_exact_cells": 97,
+    "grouped_exact_cells": 97,
+    "grouped_mismatch_cells": 0,
+    "failed_receipts": 0
+  },
+  "descriptive_timing": {
+    "classification": "fixed_provider_order_not_endpoint_attribution",
+    "authority_cross_weight_median_us": 37.978688,
+    "grouped_cross_weight_median_us": 21.588938,
+    "median_per_weight_reduction_percent": 42.822,
+    "minimum_per_weight_reduction_percent": 8.807,
+    "maximum_per_weight_reduction_percent": 55.103,
+    "grouped_faster_weight_count": 97,
+    "grouped_slower_weight_count": 0,
+    "sum_of_per_weight_median_savings_us": 1363.429844
+  },
+  "summary": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s3g-r1-a2-seed20260831/summary.json",
+    "sha256": "2d85c185d6cf4b9e431da55b602bfb54b7fa26b67c0fe5eff963716107502c0a"
+  },
+  "source_dispatch_design_authorized": true,
+  "source_integration_authorized": false,
+  "runtime_rebuild_authorized": false,
+  "endpoint_launch_authorized": false,
+  "endpoint_claim_authorized": false,
+  "next": "Design and test a default-off dynamic-M grouped dispatch over the existing single-storage integration."
+}
