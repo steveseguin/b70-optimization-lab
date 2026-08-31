@@ -1910,6 +1910,14 @@ authority, packed-view linear, packed matmul, and grouped E=1 in eight isolated
 one-card arms. It performs no reboot or full-model load and cannot authorize a
 source or endpoint claim. See the
 [S1 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-prereg.md).
+S1 attempt 1 failed safely before Torch/XPU import because its worker inherited
+`/usr/bin/python3`, which lacks `safetensors`; the receipt and empty arm set are
+preserved as an orchestration negative. Attempt 2 binds the exact `vllm-xpu`
+interpreter and prefix, verifies the dependency, and moves to a new no-clobber
+evidence root without changing any provider or interpretation rule. See the
+[attempt-1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-a1-preflight-negative.md)
+and
+[attempt-2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-a2-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

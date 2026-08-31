@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 import secrets
 import subprocess
-import sys
 import time
 
 
@@ -28,7 +27,8 @@ AUTHORITY = Path(
 )
 AUTHORITY_SHA256 = "15af5344c259fa83ffc16ca1755c621a83cce01651119b2c5234c4276a2fcab9"
 WORKER = Path(__file__).with_name("benchmark-hc-up-mgt1-packed-fallback.py")
-WORKER_SHA256 = "68e6ce3c8fff671764805773c5502288839f6434273f42a0ca6cdc09b219cb8a"
+WORKER_SHA256 = "153a51f4a742f461f6bd1a5d4e4e289ca2f91415d11f66e65580d1221d2891c4"
+WORKER_PYTHON = Path("/home/steve/.venvs/vllm-xpu/bin/python")
 STAGE = Path(
     "/mnt/usb-models/qwen38-build/hc-grouped-stage-eeee7d6-sycl8/vllm_xpu_kernels"
 )
@@ -37,6 +37,7 @@ STAGE_MANIFEST_SHA256 = (
 )
 EVIDENCE_BASE = Path("/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70")
 SEED = 20260831
+RUN_ATTEMPT = 2
 M_VALUES = (2, 8, 64, 256, 1024, 4096)
 PROVIDERS = ("authority", "packed_view", "matmul", "grouped")
 SENTINELS = ("00-attn", "00-mlp", "24-attn", "47-mlp", "final")
@@ -126,6 +127,8 @@ def plan(scope: str) -> dict[str, object]:
         "model_revision": MODEL_REVISION,
         "weight_manifest_sha256": WEIGHT_MANIFEST_SHA256,
         "seed": SEED,
+        "run_attempt": RUN_ATTEMPT,
+        "worker_python": str(WORKER_PYTHON),
         "all_97_m64": scope == "s3",
         "sentinels": list(SENTINELS) if scope == "s2" else ["00-attn"],
         "sentinel_m_values": (
@@ -291,6 +294,7 @@ def validate_cell(arms: list[dict[str, object]], slot: str, m: int) -> dict[str,
     identity_fields = (
         "repeat",
         "scope",
+        "run_attempt",
         "slot",
         "slot_index",
         "weight_name",
@@ -359,11 +363,14 @@ def main() -> None:
     if args.scope == "smoke":
         if args.repeat is not None:
             raise RuntimeError("smoke uses a distinct unlabeled evidence path")
-        run_name = f"hc-up-mgt1-packed-fallback-smoke-seed{SEED}"
+        run_name = f"hc-up-mgt1-packed-fallback-smoke-a{RUN_ATTEMPT}-seed{SEED}"
     else:
         if args.repeat is None:
             raise RuntimeError("staged scopes require --repeat r1 or r2")
-        run_name = f"hc-up-mgt1-packed-fallback-{args.scope}-{args.repeat}-seed{SEED}"
+        run_name = (
+            f"hc-up-mgt1-packed-fallback-{args.scope}-{args.repeat}-"
+            f"a{RUN_ATTEMPT}-seed{SEED}"
+        )
 
     locks = []
     for lock_path in LOCK_PATHS:
@@ -383,6 +390,8 @@ def main() -> None:
         raise RuntimeError("model index digest drift")
     if sha256(MODEL / "config.json") != MODEL_CONFIG_SHA256:
         raise RuntimeError("model config digest drift")
+    if not WORKER_PYTHON.is_file() or not os.access(WORKER_PYTHON, os.X_OK):
+        raise RuntimeError(f"frozen worker Python is unavailable: {WORKER_PYTHON}")
 
     run_dir = EVIDENCE_BASE / run_name
     arms_dir = run_dir / "arms"
@@ -419,7 +428,7 @@ def main() -> None:
             stderr_path = streams_dir / f"{slot}-m{m}-{provider}.stderr.txt"
             receipt_path = receipts_dir / f"{slot}-m{m}-{provider}.json"
             command = [
-                sys.executable,
+                str(WORKER_PYTHON),
                 str(WORKER),
                 "--scope",
                 args.scope,
@@ -451,6 +460,7 @@ def main() -> None:
                 "schema_version": 1,
                 "scope": args.scope,
                 "repeat": args.repeat,
+                "run_attempt": RUN_ATTEMPT,
                 "slot": slot,
                 "m": m,
                 "provider": provider,
@@ -545,6 +555,7 @@ def main() -> None:
         "classification": "real_weight_hc_up_mgt1_packed_fallback_gate",
         "scope": args.scope,
         "repeat": args.repeat,
+        "run_attempt": RUN_ATTEMPT,
         "model": str(MODEL),
         "model_revision": MODEL_REVISION,
         "model_index_sha256": MODEL_INDEX_SHA256,

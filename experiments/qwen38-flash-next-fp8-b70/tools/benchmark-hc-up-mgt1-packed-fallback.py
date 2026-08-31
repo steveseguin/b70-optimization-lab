@@ -15,6 +15,7 @@ import re
 import secrets
 import statistics
 import subprocess
+import sys
 import time
 
 from safetensors import safe_open
@@ -50,6 +51,8 @@ RUNTIME_MANIFEST = {
 }
 EVIDENCE_BASE = Path("/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70")
 SEED = 20260831
+RUN_ATTEMPT = 2
+EXPECTED_PYTHON_PREFIX = Path("/home/steve/.venvs/vllm-xpu")
 M_VALUES = (2, 8, 64, 256, 1024, 4096)
 PROVIDERS = ("authority", "packed_view", "matmul", "grouped")
 HASH_REPEATS = {2: 100, 8: 100, 64: 30, 256: 10, 1024: 5, 4096: 3}
@@ -261,7 +264,7 @@ def main() -> None:
     if args.scope == "smoke":
         if args.repeat is not None or args.slot != "00-attn" or args.m != 2:
             raise RuntimeError("smoke is frozen to 00-attn M2 without a repeat label")
-        run_name = f"hc-up-mgt1-packed-fallback-smoke-seed{SEED}"
+        run_name = f"hc-up-mgt1-packed-fallback-smoke-a{RUN_ATTEMPT}-seed{SEED}"
     else:
         if args.repeat is None:
             raise RuntimeError("staged scope requires --repeat r1 or r2")
@@ -273,7 +276,10 @@ def main() -> None:
         }
         if not allowed[args.scope]:
             raise RuntimeError(f"cell is outside frozen {args.scope} scope")
-        run_name = f"hc-up-mgt1-packed-fallback-{args.scope}-{args.repeat}-seed{SEED}"
+        run_name = (
+            f"hc-up-mgt1-packed-fallback-{args.scope}-{args.repeat}-"
+            f"a{RUN_ATTEMPT}-seed{SEED}"
+        )
     expected_output = (
         EVIDENCE_BASE
         / run_name
@@ -285,6 +291,8 @@ def main() -> None:
         raise RuntimeError(f"unexpected arm evidence path: {output}")
     if output.exists():
         raise RuntimeError(f"refusing to overwrite arm evidence: {output}")
+    if Path(sys.prefix) != EXPECTED_PYTHON_PREFIX:
+        raise RuntimeError(f"worker must use frozen Python prefix: {sys.prefix}")
     evidence_storage_before = verify_evidence_storage()
     if os.environ.get("ONEAPI_DEVICE_SELECTOR") != "level_zero:0":
         raise RuntimeError("ONEAPI_DEVICE_SELECTOR must be exactly level_zero:0")
@@ -497,6 +505,7 @@ def main() -> None:
         "classification": "real_weight_hc_up_mgt1_packed_fallback_arm",
         "scope": args.scope,
         "repeat": args.repeat,
+        "run_attempt": RUN_ATTEMPT,
         "provider": args.provider,
         "slot": args.slot,
         "slot_index": slot_index,
@@ -569,6 +578,8 @@ def main() -> None:
             "torch": torch.__version__,
         },
         "process_identity": {
+            "python_executable": sys.executable,
+            "python_prefix": sys.prefix,
             "boot_id": Path("/proc/sys/kernel/random/boot_id")
             .read_text(encoding="utf-8")
             .strip(),

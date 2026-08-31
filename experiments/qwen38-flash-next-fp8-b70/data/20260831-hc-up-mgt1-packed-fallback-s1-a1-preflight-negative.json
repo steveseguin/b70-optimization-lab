@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "pre_xpu_interpreter_binding_negative",
+  "classification": "orchestration_preflight_negative",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "scope": "s1",
+  "repeat": "r1",
+  "run_attempt": 1,
+  "failed_arm": {
+    "slot": "00-attn",
+    "m": 2,
+    "provider": "authority"
+  },
+  "cause": "driver used /usr/bin/python3 instead of the frozen vllm-xpu virtual environment; safetensors import failed before torch import",
+  "xpu_work_started": false,
+  "arm_evidence_count": 0,
+  "protected_result_changed": false,
+  "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s1-r1-seed20260831",
+  "receipt": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s1-r1-seed20260831/receipts/00-attn-m2-authority.json",
+    "sha256": "1a16da1da1d94ea5874fa17218505fc67941c44a459a174fcd93519ef8b4d144"
+  },
+  "stderr": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s1-r1-seed20260831/streams/00-attn-m2-authority.stderr.txt",
+    "sha256": "6504b763377568920c80a3d0dbf060de111721a0d389ce1ce2e8a8b3985f0be7"
+  },
+  "stdout": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s1-r1-seed20260831/streams/00-attn-m2-authority.stdout.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "successor": "S1 attempt 2 binds /home/steve/.venvs/vllm-xpu/bin/python and uses a new no-clobber evidence root"
+}
