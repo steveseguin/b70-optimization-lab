@@ -1,0 +1,35 @@
+{
+  "campaign": "qwen38-fp8-w8a16-mtp1-c64-batch-invariant-no-combo-20260830-r42",
+  "status": "preregistered after r41 failed during startup profiling; before any r42 server or request",
+  "lineage": {
+    "r39": "MTP0 c64 A/B was isolated and complete but repeated only 56/64 token arrays; candidate was not run.",
+    "r40": "Full batch invariance was rejected at startup because GDN_ATTN did not advertise support; no request existed.",
+    "r41": "Matched conditional GDN capability overlays passed the selector, then deterministic Inductor rejected combo-kernel benchmarking during startup profiling; no endpoint or request existed.",
+    "r42_change": "Keep the matched r41 overlay images and set both torch Inductor combo_kernels and benchmark_combo_kernel false in both arms. No model, arithmetic patch, scheduler setting, workload, or quality rule changes."
+  },
+  "control_image": {
+    "tag": "neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-bi-r41",
+    "id": "sha256:468026784df774c83b5e1aea18596ccb91a48903ae6e8cc88a414e020a16491c",
+    "base_id": "sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e"
+  },
+  "candidate_image": {
+    "tag": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-bi-r41",
+    "id": "sha256:bad84355dec6fb70757fd48001df7eebb5e4dd8ef23a1f9d24e338fe663fcec1",
+    "base_id": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b"
+  },
+  "compilation_config": {
+    "cudagraph_mode": "PIECEWISE",
+    "cudagraph_capture_sizes": [1],
+    "max_cudagraph_capture_size": 1,
+    "inductor_compile_config": {
+      "combo_kernels": false,
+      "benchmark_combo_kernel": false
+    }
+  },
+  "fixed_profile": "Both arms: local B70 devices 0,1 only; official FP8 plus W8A16; TP2; c64; p128; max length 256; max sequences 128; max batched tokens 512; FP16 KV; XPU Graph off; deterministic Inductor; global batch invariant on; RMS batch invariant on; serial-exact GDN on; persistent GDN scratch; oneCCL P2P and explicit waits; 0.95 GPU reservation; prefix cache off; temperature 0; ignore_eos true.",
+  "ordered_method": "Fresh control A first-and-only same-shape batch freezes 64 arrays. Fresh control B must match 64/64 before fresh candidate A/B run against the same oracle. Every attempt uses an empty compile cache and direct-I/O model verification.",
+  "correctness_gate": "All validation attempts must match 64/64 complete 128-token arrays with cached_tokens=0, no cross-base collision, post-health, bounded cleanup, and no xe reset/fault/OOM. Candidate must match the deterministic MTP0 control exactly.",
+  "performance_gate": "Candidate A/B median must exceed control A/B median and reach at least 875 aggregate tok/s; 1000 is preferred.",
+  "failure_policy": "Any mismatch, startup issue, or missing liveness/correctness evidence fails closed. No individual attempt rate is publishable.",
+  "reporting_boundary": "Direct c64 short-context TP2 measurement only; no extrapolation. Aggregate concurrency evidence is not a single-user or LocalMaxxing headline."
+}

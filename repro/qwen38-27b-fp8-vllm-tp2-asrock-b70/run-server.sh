@@ -7,6 +7,7 @@ cache_dir="${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a writable cache directory}"
 container="${CONTAINER_NAME:-qwen38-fp8-tp2}"
 port="${PORT:-18087}"
 served_model="${SERVED_MODEL_NAME:-qwen38-fp8}"
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'}
 max_num_seqs="${MAX_NUM_SEQS:-4}"
 max_model_len="${MAX_MODEL_LEN:-4096}"
 max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
@@ -96,6 +97,7 @@ exec docker run --rm --name "${container}" \
     -e REPRO_MAX_BATCHED_TOKENS="${max_num_batched_tokens}" \
     -e REPRO_GPU_MEMORY_UTILIZATION="${gpu_memory_utilization}" \
     -e REPRO_SERVED_MODEL_NAME="${served_model}" \
+    -e REPRO_COMPILATION_CONFIG="${compilation_config}" \
     --entrypoint bash \
     "${image}" -lc \
-    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config '\''{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'\'''
+    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'

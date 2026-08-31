@@ -20,6 +20,7 @@ prereg=${PREREG:-${repo}/experiments/qwen38-27b-b70/data/2026-08-30-qwen38-fp8-w
 batch_invariant=${BATCH_INVARIANT:-0}
 rmsnorm_batch_invariant=${RMSNORM_BATCH_INVARIANT:-0}
 gdn_serial_exact=${GDN_SERIAL_EXACT:-0}
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'}
 harness=${repo}/scripts/bench-openai-concurrency-oracle.py
 pilot_harness=${repo}/scripts/bench-openai-concurrency-batch-oracle-pilot.py
 qualifier=${repo}/scripts/qualify-openai-concurrency-attempt.py
@@ -132,6 +133,7 @@ common_env=(
   VLLM_XPU_GDN_NATIVE_FALLBACK=1
   TORCHINDUCTOR_DETERMINISTIC=1
   CCL_P2P_ACCESS=1
+  COMPILATION_CONFIG="${compilation_config}"
 )
 if [[ "${arm}" == candidate ]]; then
   common_env+=(EXPECTED_IMAGE_ID="${candidate_image_id}")
@@ -188,7 +190,8 @@ journalctl -k -b --since "${start}" --no-pager | \
 [[ ! -s "${run_dir}/kernel-errors.txt" ]] || fail 'kernel/GPU/OOM error evidence found'
 
 python3 - "${run_dir}" "${arm}" "${attempt}" "${pilot}" "${image}" "${expected_image_id}" \
-  "${batch_invariant}" "${rmsnorm_batch_invariant}" "${gdn_serial_exact}" <<'PY'
+  "${batch_invariant}" "${rmsnorm_batch_invariant}" "${gdn_serial_exact}" \
+  "${compilation_config}" <<'PY'
 import json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
 arm, attempt, pilot = sys.argv[2], sys.argv[3], sys.argv[4] == "1"
@@ -223,6 +226,7 @@ summary = {
     "batch_invariant": sys.argv[7] == "1",
     "rmsnorm_batch_invariant": sys.argv[8] == "1",
     "gdn_serial_exact": sys.argv[9] == "1",
+    "compilation_config": json.loads(sys.argv[10]),
     "scope": "directly measured TP2 c64 p128 official FP8/W8A16; no extrapolation",
 }
 (root / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")

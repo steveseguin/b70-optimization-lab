@@ -11,6 +11,7 @@ control_image=${CONTROL_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-collec
 control_image_id=${CONTROL_IMAGE_ID:-sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e}
 candidate_image=${CANDIDATE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
 candidate_image_id=${CANDIDATE_IMAGE_ID:-sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b}
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'}
 common=(
   CAMPAIGN="${campaign}"
   PREREG="${prereg}"
@@ -22,6 +23,7 @@ common=(
   CONTROL_IMAGE_ID="${control_image_id}"
   CANDIDATE_IMAGE="${candidate_image}"
   CANDIDATE_IMAGE_ID="${candidate_image_id}"
+  COMPILATION_CONFIG="${compilation_config}"
 )
 
 env "${common[@]}" ARM=control ATTEMPT=A PILOT=1 "${runner}"
