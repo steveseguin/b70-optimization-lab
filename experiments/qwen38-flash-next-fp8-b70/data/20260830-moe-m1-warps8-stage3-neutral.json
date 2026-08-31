@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "lossless_component_neutral",
+  "classification": "stage3_did_not_improve_qualified_m1_warps8_candidate",
+  "identity": {
+    "tokens": 1,
+    "hidden": 2560,
+    "intermediate": 640,
+    "local_experts": 128,
+    "global_experts": 512,
+    "topk": 10,
+    "weights": "layer-0 rank-0 checkpoint",
+    "control": {
+      "num_warps": 8,
+      "num_stages": 4
+    },
+    "candidate": {
+      "num_warps": 8,
+      "num_stages": 3
+    }
+  },
+  "measurements": [
+    {
+      "hidden_seed": 20260826,
+      "stage4_before_us": 408.24056,
+      "stage4_after_us": 404.11488,
+      "stage4_bracket_mean_us": 406.17772,
+      "stage3_us": 409.08816,
+      "candidate_reduction_percent": -0.7165434874172939,
+      "output_sha256": "cd502fa5b68fe76e31cf018ed8b12a26825d1b6c82fb64a2ffb28c0950a30d65"
+    },
+    {
+      "hidden_seed": 20260827,
+      "stage4_before_us": 409.04708,
+      "stage4_after_us": 409.24312,
+      "stage4_bracket_mean_us": 409.1451,
+      "stage3_us": 404.46172,
+      "candidate_reduction_percent": 1.1446745909947214,
+      "output_sha256": "eb1a25f96c14a3343494d2c240b9033b9dffd386d295c73b588b5e5b08d3b718"
+    },
+    {
+      "hidden_seed": 20260830,
+      "stage4_before_us": 433.88488,
+      "stage4_after_us": 412.66576,
+      "stage4_bracket_mean_us": 423.27532,
+      "stage3_us": 431.2516,
+      "candidate_reduction_percent": -1.884418869496121,
+      "output_sha256": "89ffc488d521c0af4c0c3f39650cea59bbfc37009162295aa561cb1ee593de3d"
+    }
+  ],
+  "correctness": {
+    "finite": true,
+    "unique_hashes_per_arm": 1,
+    "candidate_control_hashes_match_per_seed": true,
+    "repeats_per_arm": 100
+  },
+  "decision": {
+    "preregistered_improvement_threshold_percent": 3.0,
+    "seeds_passing_threshold": "0/3",
+    "median_candidate_reduction_percent": -0.7165434874172939,
+    "promoted": false,
+    "keep_qualified_stage4": true,
+    "next": "Do not change the M1 map from stage 4. Preserve the result and stop the stage-depth refinement until a materially new source-backed reason appears.",
+    "protected_results_changed": false
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/moe-m1-warps8-stage3-screen-20260830-a1",
+    "manifest_sha256": "af030223f698f46065bc8a2d5cb9bb75ccb9ca64a0810dc7621fa65d9b45eb3a"
+  }
+}

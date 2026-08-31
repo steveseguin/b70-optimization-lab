@@ -1812,6 +1812,19 @@ M1 and effective warps 8 were selected. A fresh endpoint arm must use that
 effective-key receipt and the full quality/reliability battery; A27's
 file-load-only receipt is forbidden. See the
 [M1 component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m1-warps8-component-positive.md).
+The bounded stage-3 refinement retained exact bytes but was neutral: seed
+changes were -0.72%, +1.14%, and -1.88% versus stage-4 brackets, with 0/3
+clearing the frozen 3% gate. Keep eight warps and four stages; stop the
+stage-depth sweep. See the
+[stage-3 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m1-warps8-stage3-neutral.md).
+A29 is the frozen endpoint candidate for the qualified M1 map. It derives the
+last synchronous full-battery path at isolated attempt 29/port 19701, preserves
+every quality and protected-hash gate, and adds an official-resolver receipt
+for requested M1, selected key 1, and effective warps 8. It rejects the old M4
+folder, async PLE, tracing/profiling, MTP, and source drift. Static validation
+and independent review pass. The current boot is consumed; A29 is prepared but
+will not reboot or launch without a later explicit decision. See the
+[A29 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a29-moe-m1-warps8-endpoint-prereg.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win,
 but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
