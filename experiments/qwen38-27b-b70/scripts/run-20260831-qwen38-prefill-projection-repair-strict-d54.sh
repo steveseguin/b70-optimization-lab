@@ -18,6 +18,10 @@ container=${CONTAINER_NAME:-q38-prefill-projection-repair-d54}
 port=${PORT:-18354}
 reference_performance=${REFERENCE_PERFORMANCE:-}
 projection_synchronize=${VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE:-1}
+tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-1}
+gpu_mask=${GPU_MASK:-0}
+device_selector=${ONEAPI_SELECTOR:-level_zero:0}
+container_memory=${CONTAINER_MEMORY:-12g}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -42,6 +46,12 @@ git -C "$repo" fetch origin main --quiet
 ! pgrep -af '[E]ngineCore|[v]llm serve|[l]lama-server' >/dev/null || fail 'another model server is running'
 exec 7>/tmp/b70-benchmark.lock; flock -n 7 || fail 'benchmark lock held'
 exec 8>/tmp/b70-gpu0.lock; flock -n 8 || fail 'GPU0 lock held'
+if [[ "$tensor_parallel_size" == 2 ]]; then
+  [[ "$gpu_mask" == 0,1 && "$device_selector" == level_zero:0,1 ]] || fail 'TP2 requires local GPUs 0,1'
+  exec 9>/tmp/b70-gpu1.lock; flock -n 9 || fail 'GPU1 lock held'
+elif [[ "$tensor_parallel_size" != 1 ]]; then
+  fail 'only TP1 and TP2 are supported by this local runner'
+fi
 mkdir -p "$root" "$cache"
 sha256sum "$0" "$hook" "$prereg" "$suite" "$bench" "$canaries" >"$root/input-sha256sums.txt"
 if [[ -n "$reference_performance" ]]; then
@@ -52,14 +62,14 @@ fi
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$root/model-verify.json" >"$root/model-verify.log"
 
-docker run -d --name "$container" --ulimit core=0 --memory 12g --memory-swap 36g \
+docker run -d --name "$container" --ulimit core=0 --memory "$container_memory" --memory-swap 36g \
   --device /dev/dri:/dev/dri --volume /dev/dri/by-path:/dev/dri/by-path:ro \
   --group-add video --group-add render --security-opt label=disable --ipc=host --shm-size=16g \
   --publish "127.0.0.1:${port}:8000" --volume "$model:/model:ro" \
   --volume "$cache:/run-cache" --volume "$hook:/instrument/sitecustomize.py:ro" \
   --env PYTHONPATH=/instrument --env VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=1 \
   --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE=$projection_synchronize" \
-  --env ZE_AFFINITY_MASK=0 --env ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+  --env "ZE_AFFINITY_MASK=$gpu_mask" --env "ONEAPI_DEVICE_SELECTOR=$device_selector" \
   --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_NO_USAGE_STATS=1 --env PYTHONHASHSEED=0 \
   --env VLLM_XPU_ENABLE_XPU_GRAPH=0 --env VLLM_XPU_GRAPH=0 \
@@ -67,7 +77,7 @@ docker run -d --name "$container" --ulimit core=0 --memory 12g --memory-swap 36g
   --env VLLM_CACHE_ROOT=/run-cache/vllm --env XDG_CACHE_HOME=/run-cache/xdg \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True --env CCL_ZE_IPC_EXCHANGE=sockets \
   "$image" /model --host 0.0.0.0 --port 8000 --trust-remote-code \
-  --served-model-name "$served" --tensor-parallel-size 1 --pipeline-parallel-size 1 \
+  --served-model-name "$served" --tensor-parallel-size "$tensor_parallel_size" --pipeline-parallel-size 1 \
   --data-parallel-size 1 --dtype float16 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.80 --max-model-len 2048 --block-size 64 \
   --max-num-seqs 1 --max-num-batched-tokens 2048 --no-enable-prefix-caching \
