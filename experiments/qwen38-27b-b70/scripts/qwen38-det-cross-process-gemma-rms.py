@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Cross-process Gemma RMSNorm screen at Qwen3.8 production row counts."""
 
+import argparse
 import hashlib
 import json
+from pathlib import Path
 
 import torch
 from vllm import ir
@@ -40,6 +42,9 @@ def invoke_twice(fn):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out", type=Path)
+    args = parser.parse_args()
     torch.set_num_threads(1)
     device = torch.device("xpu:0")
     generator = torch.Generator(device="cpu")
@@ -75,7 +80,11 @@ def main() -> None:
                 "direct_vs_serial_exact":all(torch.equal(a,b) for a,b in zip(d1,s1)),
                 "direct_vs_padded_exact":all(torch.equal(a,b) for a,b in zip(d1,p1))})
         del x,residual
-    print(json.dumps({"seed":SEED,"hidden":HIDDEN,"rows":rows},sort_keys=True))
+    payload = json.dumps({"seed":SEED,"hidden":HIDDEN,"rows":rows},sort_keys=True)
+    if args.out is not None:
+        args.out.write_text(payload + "\n")
+    else:
+        print(payload)
 
 
 if __name__ == "__main__":

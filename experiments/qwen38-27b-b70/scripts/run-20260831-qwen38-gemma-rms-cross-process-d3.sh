@@ -4,8 +4,8 @@ set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
 harness=${script_dir}/qwen38-det-cross-process-gemma-rms.py
-prereg=${repo}/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-gemma-rms-cross-process-d3-prereg.md
-root=/mnt/fast-ai/bench-results/qwen38-gemma-rms-cross-process-20260831-d3
+prereg=${PREREG_PATH:-${repo}/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-gemma-rms-cross-process-d3-prereg.md}
+root=${RESULT_ROOT:-/mnt/fast-ai/bench-results/qwen38-gemma-rms-cross-process-20260831-d3}
 image=neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1
 image_id=sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136
 
@@ -23,8 +23,9 @@ for process in 1 2 3 4; do
     --ipc=host --memory 8g --memory-swap 12g \
     --env ZE_AFFINITY_MASK=0 --env ONEAPI_DEVICE_SELECTOR=level_zero:0 \
     --volume "$harness:/work/harness.py:ro" \
+    --volume "$root:/out" \
     --entrypoint /opt/venv/bin/python "$image" /work/harness.py \
-    >"$root/process-${process}.json"
+    --out "/out/process-${process}.json" >"$root/process-${process}.log"
 done
 python3 - "$root" "$prereg" "$image" "$image_id" <<'PY'
 import datetime as dt,hashlib,json,pathlib,sys
