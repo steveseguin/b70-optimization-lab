@@ -54,10 +54,31 @@ SEED = 20260831
 RUN_ATTEMPT = 2
 EXPECTED_PYTHON_PREFIX = Path("/home/steve/.venvs/vllm-xpu")
 M_VALUES = (2, 8, 64, 256, 1024, 4096)
+PRODUCTION_M_VALUES = tuple(range(1, 65))
+ALL_M_VALUES = tuple(sorted(set((*M_VALUES, *PRODUCTION_M_VALUES))))
 PROVIDERS = ("authority", "packed_view", "matmul", "grouped")
-HASH_REPEATS = {2: 100, 8: 100, 64: 30, 256: 10, 1024: 5, 4096: 3}
-WARMUPS = {2: 20, 8: 20, 64: 10, 256: 5, 1024: 3, 4096: 2}
-ITERATIONS = {2: 1000, 8: 512, 64: 128, 256: 32, 1024: 8, 4096: 2}
+HASH_REPEATS = {
+    m: 100 if m <= 8 else 30 if m <= 64 else 10 if m == 256 else 5 if m == 1024 else 3
+    for m in ALL_M_VALUES
+}
+WARMUPS = {
+    m: 20 if m <= 8 else 10 if m <= 64 else 5 if m == 256 else 3 if m == 1024 else 2
+    for m in ALL_M_VALUES
+}
+ITERATIONS = {
+    m: 1000
+    if m <= 2
+    else 512
+    if m <= 8
+    else 128
+    if m <= 64
+    else 32
+    if m == 256
+    else 8
+    if m == 1024
+    else 2
+    for m in ALL_M_VALUES
+}
 TIMED_BATCHES = 11
 MIN_XPU_FREE_BYTES = 1024**3
 MAX_ARM_PEAK_DELTA_BYTES = 512 * 1024**2
@@ -249,18 +270,23 @@ def validate_parent() -> tuple[int, str]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--scope", choices=("smoke", "s1", "s2", "s3", "s3g"), required=True
+        "--scope",
+        choices=("smoke", "s1", "s2", "s3", "s3g", "s4g"),
+        required=True,
     )
     parser.add_argument("--repeat", choices=("r1", "r2"))
     parser.add_argument(
         "--slot", choices=tuple(slot for slot, _ in production_slots()), required=True
     )
-    parser.add_argument("--m", type=int, choices=M_VALUES, required=True)
+    parser.add_argument("--m", type=int, choices=ALL_M_VALUES, required=True)
     parser.add_argument("--provider", choices=PROVIDERS, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    if args.scope == "s3g" and args.provider not in ("authority", "grouped"):
-        raise RuntimeError("s3g accepts only authority and grouped providers")
+    if args.scope in ("s3g", "s4g") and args.provider not in (
+        "authority",
+        "grouped",
+    ):
+        raise RuntimeError(f"{args.scope} accepts only authority and grouped providers")
 
     script = Path(__file__).resolve()
     script_sha256 = sha256(script)
@@ -278,6 +304,8 @@ def main() -> None:
             and args.m in M_VALUES,
             "s3": args.m == 64,
             "s3g": args.m == 64,
+            "s4g": args.slot in ("00-attn", "00-mlp", "24-attn", "47-mlp", "final")
+            and args.m in PRODUCTION_M_VALUES,
         }
         if not allowed[args.scope]:
             raise RuntimeError(f"cell is outside frozen {args.scope} scope")
@@ -405,6 +433,7 @@ def main() -> None:
     torch.xpu.synchronize()
     physical_weight_sha256_before = tensor_sha256(physical_weight)
     input_device_sha256_before = tensor_sha256(x)
+    rows_sha256_before = tensor_sha256(rows) if rows is not None else None
     if input_device_sha256_before != input_sha256:
         raise RuntimeError("host-to-XPU input transfer changed bytes")
 
@@ -497,6 +526,8 @@ def main() -> None:
         rows_cpu = rows.cpu()
         if rows_cpu.tolist() != [args.m] or int(rows_cpu.sum()) != args.m:
             raise RuntimeError("grouped rows-per-expert identity drift")
+        if tensor_sha256(rows) != rows_sha256_before:
+            raise RuntimeError("grouped rows-per-expert tensor mutated")
     peak_allocated = int(torch.xpu.max_memory_allocated(0))
     peak_delta = peak_allocated - baseline_allocated
     if peak_delta > MAX_ARM_PEAK_DELTA_BYTES:
@@ -533,6 +564,8 @@ def main() -> None:
         "physical_weight_layout": physical_layout,
         "physical_weight_shape": list(physical_weight.shape),
         "physical_weight_stride": list(physical_weight.stride()),
+        "grouped_rows": [args.m] if rows is not None else None,
+        "grouped_rows_sha256": rows_sha256_before,
         "output_sha256": next(iter(output_hashes)),
         "unique_output_sha256": len(output_hashes),
         "finite": True,

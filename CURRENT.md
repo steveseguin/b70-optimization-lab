@@ -1955,6 +1955,19 @@ reduction was `42.822%`. These remain fixed-order component timings. The pass
 authorizes only a separately guarded default-off dynamic-M source-dispatch
 design and focused tests, not a rebuild, endpoint, or claim. See the
 [S3g result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-grouped-s3g-result.md).
+The remaining production-shape gate is now designed as S4g: authority versus
+grouped on the five real sentinels at every integer M1--64, 320 cells and 640
+isolated arms. The accompanying default-off source design binds the actual
+one-sequence/64-token scheduler, uses an immutable 65-entry XPU rows table,
+keeps one packed weight bank and fresh outputs, and forbids mutable per-call
+state. Neither packet permits a build or endpoint. See the
+[S4g preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-grouped-s4g-all-production-m-prereg.md)
+and
+[dynamic-M source preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-grouped-dynamic-m-source-prereg.md).
+Independent static review passed S4g as launchable. It also tightened the later
+source guard to require the scheduled-token override remain unset, making the
+effective scheduler cap exactly 64 before any weight treatment; this does not
+change the frozen S4g component run.
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

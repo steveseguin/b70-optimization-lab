@@ -27,7 +27,7 @@ AUTHORITY = Path(
 )
 AUTHORITY_SHA256 = "15af5344c259fa83ffc16ca1755c621a83cce01651119b2c5234c4276a2fcab9"
 WORKER = Path(__file__).with_name("benchmark-hc-up-mgt1-packed-fallback.py")
-WORKER_SHA256 = "3bf77bca6bed6397710b92b28c966724380de2d9c0b1518674325840d7cb4dfc"
+WORKER_SHA256 = "61881cea35d970fc6b43fe7db1ba3256709a09e1d4c8d191e129ac0bfd39db8a"
 WORKER_PYTHON = Path("/home/steve/.venvs/vllm-xpu/bin/python")
 STAGE = Path(
     "/mnt/usb-models/qwen38-build/hc-grouped-stage-eeee7d6-sycl8/vllm_xpu_kernels"
@@ -39,6 +39,7 @@ EVIDENCE_BASE = Path("/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70")
 SEED = 20260831
 RUN_ATTEMPT = 2
 M_VALUES = (2, 8, 64, 256, 1024, 4096)
+PRODUCTION_M_VALUES = tuple(range(1, 65))
 PROVIDERS = ("authority", "packed_view", "matmul", "grouped")
 SENTINELS = ("00-attn", "00-mlp", "24-attn", "47-mlp", "final")
 LOCK_PATHS = (
@@ -104,11 +105,13 @@ def cells(scope: str) -> list[tuple[str, int]]:
         return [(slot, 64) for slot, _ in production_slots()]
     if scope == "s3g":
         return [(slot, 64) for slot, _ in production_slots()]
+    if scope == "s4g":
+        return [(slot, m) for m in PRODUCTION_M_VALUES for slot in SENTINELS]
     raise RuntimeError(f"unknown gate scope: {scope}")
 
 
 def providers(scope: str) -> tuple[str, ...]:
-    if scope == "s3g":
+    if scope in ("s3g", "s4g"):
         return ("authority", "grouped")
     return PROVIDERS
 
@@ -124,7 +127,14 @@ def plan(scope: str) -> dict[str, object]:
         for slot, m in cells(scope)
         for provider in providers(scope)
     ]
-    expected_arms = {"smoke": 4, "s1": 8, "s2": 120, "s3": 388, "s3g": 194}[scope]
+    expected_arms = {
+        "smoke": 4,
+        "s1": 8,
+        "s2": 120,
+        "s3": 388,
+        "s3g": 194,
+        "s4g": 640,
+    }[scope]
     if len(arm_plan) != expected_arms:
         raise RuntimeError(f"frozen {scope} arm plan is not {expected_arms} entries")
     return {
@@ -138,11 +148,15 @@ def plan(scope: str) -> dict[str, object]:
         "run_attempt": RUN_ATTEMPT,
         "worker_python": str(WORKER_PYTHON),
         "all_97_m64": scope in ("s3", "s3g"),
-        "sentinels": list(SENTINELS) if scope == "s2" else ["00-attn"],
+        "sentinels": list(SENTINELS) if scope in ("s2", "s4g") else ["00-attn"],
         "sentinel_m_values": (
             list(M_VALUES)
             if scope == "s2"
-            else ([2, 64] if scope == "s1" else [2] if scope == "smoke" else [64])
+            else (
+                list(PRODUCTION_M_VALUES)
+                if scope == "s4g"
+                else ([2, 64] if scope == "s1" else [2] if scope == "smoke" else [64])
+            )
         ),
         "providers": list(providers(scope)),
         "cell_count": len(cells(scope)),
@@ -337,7 +351,7 @@ def validate_cell(
     for arm in arms:
         if arm.get("status") != "component_arm_valid":
             raise RuntimeError(f"invalid arm status for {slot} M={m}")
-        if arm.get("scope") not in ("smoke", "s1", "s2", "s3", "s3g"):
+        if arm.get("scope") not in ("smoke", "s1", "s2", "s3", "s3g", "s4g"):
             raise RuntimeError(f"invalid arm scope for {slot} M={m}")
         if arm.get("slot") != slot or arm.get("shape", {}).get("m") != m:
             raise RuntimeError(f"arm selection drift for {slot} M={m}")
@@ -357,7 +371,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-only", action="store_true")
     parser.add_argument(
-        "--scope", choices=("smoke", "s1", "s2", "s3", "s3g"), default="smoke"
+        "--scope",
+        choices=("smoke", "s1", "s2", "s3", "s3g", "s4g"),
+        default="smoke",
     )
     parser.add_argument("--repeat", choices=("r1", "r2"))
     args = parser.parse_args()
