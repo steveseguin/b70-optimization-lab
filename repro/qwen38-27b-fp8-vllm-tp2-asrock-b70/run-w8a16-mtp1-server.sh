@@ -13,6 +13,7 @@ compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagra
 max_num_seqs=${MAX_NUM_SEQS:-128}
 max_model_len=${MAX_MODEL_LEN:-256}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
+gpu_memory_utilization=${GPU_MEMORY_UTILIZATION:-0.96}
 xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
@@ -38,6 +39,10 @@ for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
     exit 1
   }
 done
+[[ "${gpu_memory_utilization}" =~ ^0\.[0-9]+$ ]] || {
+  printf 'GPU_MEMORY_UTILIZATION must be between 0 and 1\n' >&2
+  exit 1
+}
 [[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || {
   printf 'VLLM_XPU_ENABLE_XPU_GRAPH must be 0 or 1\n' >&2
   exit 1
@@ -128,7 +133,7 @@ exec docker run --rm --name "${container}" \
   --host 0.0.0.0 --port 8000 \
   --tensor-parallel-size 2 \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \
-  --gpu-memory-utilization 0.96 \
+  --gpu-memory-utilization "${gpu_memory_utilization}" \
   --max-model-len "${max_model_len}" --block-size 64 \
   --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens "${max_num_batched_tokens}" \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
