@@ -101,16 +101,17 @@ docker run --rm --memory "${build_container_memory}" \
       exit 1
     }
     cd /src
-    # _xpu_C calls into the same TLA feature libraries as the frozen base
-    # image. Keep those features enabled even though only the determinism-pad
-    # implementation changed; otherwise the overlay imports with unresolved
-    # MHC symbols and drops the GDN/MQA/grouped-GEMM runtime surface.
+    # This Qwen3.8-27B lane is dense, not MoE. Keep the Xe2 TLA libraries its
+    # _xpu_C surface actually calls (GDN/MQA/MHC), but do not build grouped-MoE
+    # GEMM: that unused translation unit exceeds 30 GiB and cannot affect this
+    # model. Disabling all TLA libraries makes the overlay fail to import with
+    # unresolved MHC symbols.
     MAX_JOBS="${MAX_JOBS}" CMAKE_BUILD_TYPE=Release \
-    BASIC_KERNELS_ENABLED=0 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=1 \
+    BASIC_KERNELS_ENABLED=0 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=0 \
     GDN_KERNELS_ENABLED=1 MQA_LOGITS_KERNELS_ENABLED=1 \
     MHC_KERNELS_ENABLED=1 XPU_SPECIFIC_KERNELS_ENABLED=1 \
     XPUMEM_ALLOCATOR_ENABLED=0 BUILD_SYCL_TLA_KERNELS=1 \
-    VLLM_XPU_ENABLE_XE2=1 VLLM_XPU_ENABLE_XE_DEFAULT=1 \
+    VLLM_XPU_ENABLE_XE2=1 VLLM_XPU_ENABLE_XE_DEFAULT=0 \
     /opt/venv/bin/python setup.py bdist_wheel \
       --dist-dir /out --py-limited-api=cp38
   '
