@@ -23,6 +23,7 @@ gpu_mask=${GPU_MASK:-0}
 device_selector=${ONEAPI_SELECTOR:-level_zero:0}
 container_memory=${CONTAINER_MEMORY:-12g}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-2048}
+speculative_config_json=${SPECULATIVE_CONFIG_JSON:-}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -63,6 +64,11 @@ fi
 "$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$root/model-verify.json" >"$root/model-verify.log"
+server_extra_args=()
+if [[ -n "$speculative_config_json" ]]; then
+  python3 -c 'import json,sys; json.loads(sys.argv[1])' "$speculative_config_json"
+  server_extra_args=(--speculative-config "$speculative_config_json")
+fi
 
 docker run -d --name "$container" --ulimit core=0 --memory "$container_memory" --memory-swap 36g \
   --device /dev/dri:/dev/dri --volume /dev/dri/by-path:/dev/dri/by-path:ro \
@@ -83,7 +89,7 @@ docker run -d --name "$container" --ulimit core=0 --memory "$container_memory" -
   --data-parallel-size 1 --dtype float16 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.80 --max-model-len 2048 --block-size 64 \
   --max-num-seqs 1 --max-num-batched-tokens "$max_num_batched_tokens" --no-enable-prefix-caching \
-  --enable-prompt-tokens-details --language-model-only --enforce-eager \
+  --enable-prompt-tokens-details --language-model-only --enforce-eager "${server_extra_args[@]}" \
   >"$root/container-id.txt"
 
 deadline=$((SECONDS+900))
@@ -95,6 +101,10 @@ done
 docker inspect "$container" >"$root/container-inspect.json"
 docker logs "$container" >"$root/server-startup.log" 2>&1
 [[ "$(docker inspect --format '{{.Image}}' "$container")" == "$image_id" ]] || fail 'image receipt mismatch'
+if [[ -n "$speculative_config_json" ]]; then
+  spec_depth=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["num_speculative_tokens"])' "$speculative_config_json")
+  grep -Fq "num_spec_tokens=${spec_depth}" "$root/server-startup.log" || fail 'speculator depth receipt missing'
+fi
 
 python3 "$bench" --base-url "http://127.0.0.1:${port}" --model "$served" \
   --api-mode completions --suite "$suite" --max-tokens 512 --metric-tokens 100 \
