@@ -31,6 +31,9 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Model Distribution And Packaging Roadmap](model-distribution-and-packaging-roadmap.md):
   novice one/two-GPU packets, contributor recognition, digest-pinned Docker
   packaging, and the bounded Windows path.
+- [Intel Arc Pro B70 ECC And Usable VRAM](b70-ecc-and-vram.md): check,
+  disable, or re-enable ECC on Linux and Windows; understand the verified
+  capacity gain, reliability trade-off, and benchmark-disclosure boundary.
 
 ## Model Lane Entry Points
 

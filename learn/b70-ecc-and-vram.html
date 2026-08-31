@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B70 ECC: 28 GB or 32 GB of usable VRAM — neural.download</title>
+<meta name="description" content="How to check, disable, or enable memory ECC on Intel Arc Pro B70 under Linux and Windows; what usable VRAM it changes; and why it is a reliability-versus-capacity choice, not a promised bandwidth boost.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/learn/b70-ecc-and-vram.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/learn/b70-ecc-and-vram.html">
+<meta property="og:title" content="B70 ECC: 28 GB or 32 GB of usable VRAM — neural.download">
+<meta property="og:description" content="How to check, disable, or enable B70 memory ECC, what it changes, and why ECC-off is a capacity choice rather than a promised bandwidth boost.">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta property="og:image:secure_url" content="https://neural.download/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="neural.download — Run AI at home. We make it faster.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/learn/b70-ecc-and-vram.html">
+<meta name="twitter:title" content="B70 ECC: 28 GB or 32 GB of usable VRAM — neural.download">
+<meta name="twitter:description" content="How to check, disable, or enable B70 memory ECC, what it changes, and why ECC-off is a capacity choice rather than a promised bandwidth boost.">
+<meta name="twitter:image" content="https://neural.download/og-image.png">
+<meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"B70 ECC: 28 GB or 32 GB of usable VRAM","description":"How to check, disable, or enable memory ECC on Intel Arc Pro B70 under Linux and Windows, and understand the reliability-versus-capacity trade-off.","url":"https://neural.download/learn/b70-ecc-and-vram.html","dateModified":"2026-08-30","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["Intel Arc Pro B70","ECC memory","GPU VRAM","local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"B70 ECC and usable VRAM","item":"https://neural.download/learn/b70-ecc-and-vram.html"}]}
+</script>
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../models/">Models</a>
+    <a href="../learn.html" aria-current="page">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 08b</p>
+  <p class="eyebrow">Hardware setup</p>
+  <h1>B70 ECC and usable VRAM</h1>
+  <p>ECC enabled gives you memory error correction and roughly 28 GB visible. ECC disabled exposes the advertised 32 GB. For local LLMs, that is a real capacity choice—but not a promised memory-bandwidth boost.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>ECC on:</strong> roughly 28 GB usable, with memory error correction.</li>
+      <li><strong>ECC off:</strong> roughly 32 GB usable, without that correction.</li>
+      <li>The extra capacity can prevent OOM, CPU offload, or a smaller context. That can be a large practical speed win.</li>
+      <li>Intel still specifies the B70 at <strong>608 GB/s</strong>. We have no controlled evidence that ECC-off increases raw bandwidth, so we do not claim it does.</li>
+    </ul>
+  </div>
+
+  <h2>What the switch changes</h2>
+  <p>The B70 has 32 GB of physical GDDR6 and supports ECC. With ECC enabled, part of that memory is used for error correction. Intel's own support article describes the visible result as <strong>28 GB instead of 32 GB</strong>. <span class="badge spec">Intel documented</span></p>
+
+  <div class="metrics">
+    <div class="metric"><b>~28 GB</b><span>visible with ECC enabled</span></div>
+    <div class="metric"><b>~32 GB</b><span>visible with ECC disabled</span></div>
+    <div class="metric"><b>608 GB/s</b><span>published B70 bandwidth either way</span></div>
+  </div>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Choose</th><th>Best fit</th><th>What you give up</th></tr></thead>
+    <tbody>
+      <tr><td class="best">ECC off</td><td>Local inference, model development, or benchmarking where capacity is the hard limit</td><td>VRAM error correction</td></tr>
+      <tr><td>ECC on</td><td>Long unattended jobs, reliability-sensitive work, or diagnosing possible memory errors</td><td>About 4 GB of usable capacity</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key">
+    <span class="tag">Capacity win, not an automatic speed switch</span>
+    <p>If your workload already fits fully in VRAM, turning ECC off may not move tok/s in a meaningful way. If the extra capacity prevents CPU/RAM offload, paging, an out-of-memory failure, a smaller KV cache, or reduced concurrency, the practical improvement can be enormous. That is a capacity effect—not evidence of higher raw memory bandwidth.</p>
+  </div>
+
+  <h2>Check ECC on Linux</h2>
+  <p>Use Intel XPU-SMI. Discover the IDs first; do not assume that the B70 you want is always device 0.</p>
+  <pre class="command"><code>xpu-smi discovery
+
+xpu-smi config --device 0
+xpu-smi config --device 1</code></pre>
+  <p>Only query IDs that discovery actually lists. Under <code>Memory ECC</code>, look for both:</p>
+  <pre class="command"><code>Current: disabled
+Pending: disabled</code></pre>
+  <p><strong>Current</strong> is active now. <strong>Pending</strong> is what should become active after the required reset or reboot. If they differ, the pending state is not yet valid benchmark metadata.</p>
+
+  <h2>Disable ECC on Linux</h2>
+  <div class="callout warn">
+    <span class="tag">Stop GPU work first</span>
+    <p>Stop inference servers, containers, desktop applications, and other processes using the selected GPU. The change may require a reboot. Save your work before proceeding.</p>
+  </div>
+  <p>Change each explicitly identified B70, one at a time:</p>
+  <pre class="command"><code>sudo xpu-smi config --device 0 --memoryecc 0
+sudo xpu-smi config --device 1 --memoryecc 0
+sudo reboot</code></pre>
+  <p>Run the device-1 command only if device 1 is another B70 you intend to change. After reboot, repeat discovery and configuration checks. Require both <code>Current</code> and <code>Pending</code> to say <code>disabled</code>; do not infer the state only from a larger memory number.</p>
+
+  <h2>Re-enable ECC on Linux</h2>
+  <p>Use <code>1</code> instead of <code>0</code>, then reboot and verify:</p>
+  <pre class="command"><code>sudo xpu-smi config --device 0 --memoryecc 1
+sudo xpu-smi config --device 1 --memoryecc 1
+sudo reboot</code></pre>
+  <p>Both fields should say <code>enabled</code> afterward. Re-check your model, KV-cache, and concurrency budget before relaunching: the usable capacity will shrink again.</p>
+
+  <h2>Windows</h2>
+  <p>Intel documents the setting in <strong>Intel Graphics Software → Graphics → ECC</strong>. Stop GPU workloads, choose the desired state, reboot if requested, and verify both the setting and reported VRAM afterward. Driver interfaces move over time, so use Intel's current support article rather than treating an old screenshot as authoritative.</p>
+
+  <h2>Pros, cons, and side effects</h2>
+  <ul>
+    <li><strong>More usable VRAM with ECC off.</strong> Intel documents approximately 28 GB versus 32 GB. Exact MiB/GiB displays vary with units and driver reservations.</li>
+    <li><strong>Less fault protection with ECC off.</strong> An uncorrected memory fault can affect any computation. ECC on is the conservative choice for reliability-sensitive work.</li>
+    <li><strong>No published bus change.</strong> The card remains a 256-bit GDDR6 design rated at 608 GB/s. Intel has not published a matched B70 bandwidth A/B for these two states.</li>
+    <li><strong>No intentional model-quality change.</strong> Weights and arithmetic are the same, but memory corruption is always capable of changing a result.</li>
+    <li><strong>The state persists.</strong> Treat it as part of the machine's benchmark identity, not a per-process flag.</li>
+  </ul>
+
+  <h2>What our lab is using</h2>
+  <p>On <strong>August 30, 2026</strong>, both B70s on our current two-card host reported ECC <strong>Current: disabled</strong> and <strong>Pending: disabled</strong>. Each card reported <strong>32,656 MiB</strong> total memory. <span class="badge lab">Lab-checked</span> <a href="../data/2026-08-30-b70-ecc-state.json">Exact observation</a></p>
+  <div class="callout good">
+    <span class="tag">Honest benchmark disclosure</span>
+    <p>Recent runs made on this host therefore used ECC disabled unless the run artifact says otherwise. Older manifests did not always record ECC state, so we will not retroactively label every historical result as ECC-off. Going forward, ECC-sensitive results should retain the device IDs and both ECC fields in their hardware receipt.</p>
+  </div>
+
+  <h2>If the command is missing or unsupported</h2>
+  <ul>
+    <li>If <code>xpu-smi</code> is missing, install a current Intel XPU Manager/XPU-SMI package supported by your driver stack.</li>
+    <li>If <code>--memoryecc</code> is absent from <code>xpu-smi config --help</code>, do not invent an <code>xe</code> module option or copy an undocumented sysfs command. Update the supported management stack or check with Intel or the system vendor.</li>
+    <li>If Pending changes but Current does not, reboot. Intel says a device reboot may be required.</li>
+    <li>If a model stops fitting after ECC is enabled, reduce context, cache allocation, concurrency, or model size before treating it as a runtime bug.</li>
+  </ul>
+
+  <h2>Official references</h2>
+  <ul>
+    <li><a href="https://www.intel.com/content/www/us/en/support/articles/000102907/graphics.html">Intel: Arc Pro B-Series showing less VRAM</a></li>
+    <li><a href="https://www.intel.com/content/www/us/en/products/sku/245797/intel-arc-pro-b70-graphics/specifications.html">Intel Arc Pro B70 specifications</a></li>
+    <li><a href="https://intel.github.io/xpumanager/2.0/xpu-smi/config.html">Intel XPU-SMI configuration reference</a></li>
+  </ul>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="hardware.html"><b>Hardware</b><span>Capacity, bandwidth, compute, and software</span></a>
+      <a href="context-length.html"><b>Context length</b><span>How extra VRAM changes the usable window</span></a>
+      <a href="kv-cache-precision.html"><b>KV precision</b><span>Another capacity-versus-speed trade-off</span></a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/b70-ecc-and-vram.md"><b>Markdown guide</b><span>Canonical in-repo copy</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>

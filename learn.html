@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Learn: the levers that set your tok/s — neural.download</title>
-<meta name="description" content="Plain-language guides to every variable that changes local-LLM speed on Intel Arc and friends: models, quantization, KV cache precision, context length, prefill, MTP, speculative decoding, runtimes, and hardware — each backed by measured benchmarks.">
+<meta name="description" content="Plain-language guides to every variable that changes local-LLM speed on Intel Arc and friends: models, quantization, KV cache precision, context length, prefill, MTP, speculative decoding, runtimes, hardware, and B70 ECC.">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://neural.download/learn.html">
 <meta property="og:title" content="Learn: the levers that set your tok/s — neural.download">
-<meta property="og:description" content="Plain-language guides to every variable that changes local-LLM speed on Intel Arc and friends: models, quantization, KV cache precision, context length, prefill, MTP, speculative decoding, runtimes, and hardware — each backed by measured benchmarks.">
+<meta property="og:description" content="Plain-language guides to the variables that change local-LLM speed and capacity on Intel Arc, including models, quantization, context, runtimes, hardware, and B70 ECC.">
 <meta property="og:image" content="https://neural.download/og-image.png">
 <meta property="og:image:secure_url" content="https://neural.download/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -28,11 +28,11 @@
 <meta name="twitter:creator" content="@xyster">
 <meta name="twitter:url" content="https://neural.download/learn.html">
 <meta name="twitter:title" content="Learn: the levers that set your tok/s — neural.download">
-<meta name="twitter:description" content="Plain-language guides to every variable that changes local-LLM speed on Intel Arc and friends: models, quantization, KV cache precision, context length, prefill, MTP, speculative decoding, runtimes, and hardware — each backed by measured benchmarks.">
+<meta name="twitter:description" content="Plain-language guides to the variables that change local-LLM speed and capacity on Intel Arc, including models, quantization, context, runtimes, hardware, and B70 ECC.">
 <meta name="twitter:image" content="https://neural.download/og-image.png">
 <meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster. Tuned recipes and measured LLM speeds on Intel Arc Pro B70, every number linked to its proof.">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"CollectionPage","name":"Learn: the levers that set your tok/s","description":"Plain-language guides to every variable that changes local-LLM speed on Intel Arc and friends: models, quantization, KV cache precision, context length, prefill, MTP, speculative decoding, runtimes, and hardware \u2014 each backed by measured benchmarks.","url":"https://neural.download/learn.html","dateModified":"2026-08-23","inLanguage":"en","isAccessibleForFree":true,"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"}}
+{"@context":"https://schema.org","@type":"CollectionPage","name":"Learn: the levers that set your tok/s","description":"Plain-language guides to the variables that change local-LLM speed and capacity on Intel Arc, including models, quantization, context, runtimes, hardware, and B70 ECC.","url":"https://neural.download/learn.html","dateModified":"2026-08-30","inLanguage":"en","isAccessibleForFree":true,"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"}}
 </script>
 <link rel="stylesheet" href="learn/learn.css">
 </head>
@@ -53,7 +53,7 @@
 <header class="hero"><div class="wrap">
   <p class="eyebrow">Learn · concept guides</p>
   <h1>The levers that set your tokens per second</h1>
-  <p>Ten plain-language guides to the variables that actually move local-LLM speed. Each one explains what the knob is, shows what we measured when we turned it, tells you what to pick, and warns you where it bites. Numbers are labelled by where they came from.</p>
+  <p>Plain-language guides to the variables that actually move local-LLM speed and capacity. Each one explains what the knob is, shows what we measured when we turned it, tells you what to pick, and warns you where it bites. Numbers are labelled by where they came from.</p>
 </div></header>
 
 <main id="main"><div class="wrap">
@@ -74,6 +74,7 @@
     <a class="guide-card" href="learn/models.html"><div class="gc-top"><span class="gc-n">Guide 01</span><h3>Models</h3></div><div class="gc-body">Dense vs mixture-of-experts, parameters vs VRAM, and which model on our board fits your card and job.</div><div class="gc-go">Read guide →</div></a>
     <a class="guide-card" href="learn/quantization-and-speed.html"><div class="gc-top"><span class="gc-n">Guide 02</span><h3>Quantization</h3></div><div class="gc-body">Q4/Q5/Q8/INT4/FP8 explained — and the surprise that a smaller file can decode <em>slower</em>.</div><div class="gc-go">Read guide →</div></a>
     <a class="guide-card" href="learn/hardware.html"><div class="gc-top"><span class="gc-n">Guide 08</span><h3>Hardware</h3></div><div class="gc-body">B65 vs B70 vs Intel Max 1100 vs AMD R9700 Pro vs GB10 Spark — VRAM, bandwidth, and what we've actually tested.</div><div class="gc-go">Read guide →</div></a>
+    <a class="guide-card" href="learn/b70-ecc-and-vram.html"><div class="gc-top"><span class="gc-n">Guide 08b</span><h3>B70 ECC &amp; VRAM</h3></div><div class="gc-body">How to choose between roughly 28 GB with memory error correction and 32 GB without it—and change the setting safely.</div><div class="gc-go">Read guide →</div></a>
     <a class="guide-card" href="learn/runtimes.html"><div class="gc-top"><span class="gc-n">Guide 07</span><h3>Runtimes</h3></div><div class="gc-body">vLLM vs llama.cpp SYCL vs IPEX/XPU — which one gives you MTP, which one just works on one card.</div><div class="gc-go">Read guide →</div></a>
   </div>
 

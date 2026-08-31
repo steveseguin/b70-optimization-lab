@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-08-30T22:28:05-04:00",
+  "scope": "current two-B70 lab host",
+  "read_only_observation": true,
+  "xpu_smi": {
+    "cli_version": "2.0.0.20250225",
+    "build_id": "8389eee7",
+    "level_zero_version": "1.28.6"
+  },
+  "commands": [
+    "xpu-smi discovery -j",
+    "xpu-smi config --device 0 -j",
+    "xpu-smi config --device 1 -j",
+    "xpu-smi --query-gpu=name,index,pci.bus_id,memory.total,ecc.mode.current --format=csv"
+  ],
+  "devices": [
+    {
+      "device_id": 0,
+      "name": "Intel(R) Arc(TM) Pro B70 Graphics",
+      "pci_bdf": "0000:03:00.0",
+      "device_state": "normal",
+      "memory_total_mib": 32656,
+      "memory_ecc_current": "disabled",
+      "memory_ecc_pending": "disabled"
+    },
+    {
+      "device_id": 1,
+      "name": "Intel(R) Arc(TM) Pro B70 Graphics",
+      "pci_bdf": "0000:e3:00.0",
+      "device_state": "normal",
+      "memory_total_mib": 32656,
+      "memory_ecc_current": "disabled",
+      "memory_ecc_pending": "disabled"
+    }
+  ],
+  "notes": [
+    "The generic ecc.mode.current query returned N/A on this XPU-SMI build; the device configuration endpoint returned authoritative current and pending states.",
+    "No ECC setting was changed while collecting this observation."
+  ]
+}
