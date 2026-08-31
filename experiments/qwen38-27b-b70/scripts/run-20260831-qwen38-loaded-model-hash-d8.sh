@@ -3,10 +3,10 @@ set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
 hook="$script_dir/qwen38-loaded-model-hash-sitecustomize.py"
-prereg="$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-loaded-model-hash-d8b-prereg.md"
+prereg="$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-loaded-model-hash-d8c-prereg.md"
 model=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround
-root=/mnt/fast-ai/bench-results/qwen38-loaded-model-hash-20260831-d8b
-cache_root=/mnt/fast-ai/vllm-cache/qwen38-loaded-model-hash-20260831-d8b
+root=/mnt/fast-ai/bench-results/qwen38-loaded-model-hash-20260831-d8c
+cache_root=/mnt/fast-ai/vllm-cache/qwen38-loaded-model-hash-20260831-d8c
 image=neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1
 image_id=sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -27,7 +27,7 @@ mkdir -p "$root" "$cache_root"
  --json "$root/model-verify.json" >"$root/model-verify.log"
 for process in 1 2 3 4; do
   cache="$cache_root/process-${process}"; mkdir "$cache"
-  container="q38-model-hash-d8b-${process}"
+  container="q38-model-hash-d8c-${process}"
   docker run -d --name "$container" --ulimit core=0 --memory 12g --memory-swap 36g \
     --device /dev/dri:/dev/dri --volume /dev/dri/by-path:/dev/dri/by-path:ro \
     --group-add video --group-add render --security-opt label=disable --ipc=host --shm-size=16g \

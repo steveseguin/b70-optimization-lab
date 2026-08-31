@@ -23,6 +23,9 @@ class Contract(unittest.TestCase):
     def test_receipt_is_atomic(self):
         self.assertIn("os.replace(temporary, destination)", self.hook)
 
+    def test_scalar_tensor_has_stable_byte_view(self):
+        self.assertIn("cpu().reshape(-1).view(torch.uint8)", self.hook)
+
     def test_fresh_processes_and_no_requests(self):
         self.assertIn("for process in 1 2 3 4", self.runner)
         self.assertNotIn("/v1/completions", self.runner)

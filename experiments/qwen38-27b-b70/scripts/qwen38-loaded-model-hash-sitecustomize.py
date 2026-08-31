@@ -24,7 +24,9 @@ if OUTPUT:
         if detached.numel() == 0:
             metadata["sha256"] = hashlib.sha256(b"").hexdigest()
             return metadata
-        cpu = detached.contiguous().cpu().view(torch.uint8)
+        # Flatten after the device-to-host copy so scalar tensors can also be
+        # reinterpreted as bytes without changing their stored value.
+        cpu = detached.contiguous().cpu().reshape(-1).view(torch.uint8)
         metadata["sha256"] = hashlib.sha256(cpu.numpy().tobytes()).hexdigest()
         return metadata
 
