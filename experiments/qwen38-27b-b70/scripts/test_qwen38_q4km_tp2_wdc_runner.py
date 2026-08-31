@@ -37,6 +37,14 @@ class Qwen38Q4kmRunnerTests(unittest.TestCase):
         source = RUNNER.read_text()
         self.assertIn('DNNL_VERBOSE=|ONEDNN_VERBOSE=', source)
 
+    def test_dual_gemm_is_scoped_recorded_and_must_fire(self) -> None:
+        source = RUNNER.read_text()
+        self.assertIn('q4k_dual_gemm=${Q4K_DUAL_GEMM:-0}', source)
+        self.assertIn('Q4K_DUAL_GEMM="${q4k_dual_gemm}"', source)
+        self.assertIn('"q4k_dual_gemm": q4k_dual_gemm', source)
+        self.assertIn('candidate Q4_K dual-GEMM liveness failed', source)
+        self.assertIn('Q4_K dual-GEMM negative control failed', source)
+
 
 if __name__ == "__main__":
     unittest.main()

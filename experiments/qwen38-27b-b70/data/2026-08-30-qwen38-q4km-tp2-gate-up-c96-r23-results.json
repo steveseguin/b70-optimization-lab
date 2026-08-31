@@ -1,0 +1,36 @@
+{
+  "campaign": "qwen38-q4km-tp2-gate-up-c96-20260830-r23",
+  "status": "closed qualified negative after two attempts",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, exact F16 cache only for ffn_gate and ffn_up, c96, effective total context 49152, batch 2048, ubatch 256, prompt cache off",
+  "attempt_1": {
+    "aggregate_tok_s": 192.50784312881652,
+    "same_shape_batch_oracle_exact": "96/96",
+    "quality_qualified": true,
+    "gpu0_peak_used_mib": 30478.078125,
+    "gpu1_peak_used_mib": 30352.33203125,
+    "result_sha256": "b44931a5c83128c69bfccaacc29a04cc53b85d174d3b0c458137af894caef7ae",
+    "summary_sha256": "8bc3aadb18869b29fe81a5d01f99faed4ab3d3035030f2a5aaeed33cc85fb811",
+    "qualification_sha256": "460370a6ee0a5872b832db3c69ace3f617901cdd34d5c72bca2c851f0ada2a49",
+    "server_log_sha256": "a538a924fe33d425238a858af97d6d82ee08002ea018f7c17b49b1c3b05bce7e",
+    "runtime_environment_sha256": "f78ed3c4833749d8fa0dd6c3500117c7a5b2639dae0f9d904a9e804868fae3cc",
+    "vram_monitor_sha256": "0a94b89c09993806f5ea8e92a6a5d9bea39d0d2399ec3c941edf3877886271fb"
+  },
+  "attempt_2": {
+    "aggregate_tok_s": 192.00335763172103,
+    "same_shape_batch_oracle_exact": "96/96",
+    "quality_qualified": true,
+    "gpu0_peak_used_mib": 30478.0546875,
+    "gpu1_peak_used_mib": 30354.3515625,
+    "result_sha256": "71209aac82c6d6b4e6ba549795e56becaf8baf1009884acf87656be599b66017",
+    "summary_sha256": "9936560e42cdf20eebda680c585a02d2dfbf760f9209421ad90e3d94a6d82000",
+    "qualification_sha256": "9029e70186668b31855e33a2913553b3416ae65c23ab9743ea745d37b73c93eb",
+    "server_log_sha256": "aa449ae4545468ace1e7801ddd2f1c645f5966354a3d3dc94443e7553b7e88d0",
+    "runtime_environment_sha256": "f78ed3c4833749d8fa0dd6c3500117c7a5b2639dae0f9d904a9e804868fae3cc",
+    "vram_monitor_sha256": "b1ecf1995d895bee75ee9845aff84831ef93a43ec77a6c7a5cc3edb362e0984b"
+  },
+  "candidate_center_tok_s": 192.25560038026878,
+  "incumbent_center_tok_s": 192.34195380893704,
+  "relative_change_percent": -0.04489472772315478,
+  "decision": "Both repeats passed every output and isolation gate, but their center was 0.0449% below the qualified ffn_down+ffn_gate incumbent. Do not promote. The exact-cache pair screen is complete.",
+  "scope": "Qualified shape-specific negative evidence; the candidate rates are not public headline results."
+}

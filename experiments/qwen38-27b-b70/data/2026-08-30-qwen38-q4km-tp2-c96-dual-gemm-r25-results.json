@@ -1,0 +1,26 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-dual-gemm-20260830-r25",
+  "status": "closed qualified negative after attempt 1",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, exact F16 cache for ffn_gate and ffn_up, dual-GEMM queue door on, c96, effective total context 49152, batch 2048, ubatch 256, prompt cache off",
+  "attempt_1": {
+    "aggregate_tok_s": 192.2466813050872,
+    "same_shape_batch_oracle_exact": "96/96",
+    "quality_qualified": true,
+    "cached_tokens_all_zero": true,
+    "complete_token_id_identity_all": true,
+    "must_fire_marker_count": 1,
+    "result_sha256": "54f29c37e6704f8e8a0ac15e75d0cf932fb6c8ef7712dac68c696c0afadd0a96",
+    "summary_sha256": "2b6c87390eb810a2eced795e1bc52d22769522fd1ce8b6331231557d529afb7a",
+    "qualification_sha256": "dc36d85831097d079a4fa89f843b6717616bc127ade5b1eee1a56596fb3d8d93",
+    "server_log_sha256": "69729e4e3ead84ac8b351f19312b2ab7adfc47a70be769681ff6e94beb2fd2c2",
+    "runtime_environment_sha256": "68de4945ba7700b4f970dd294e040a29e7e51af84af542bd0663e70ad0221947",
+    "captured_candidate_source_diff_sha256": "64a9fb8b7f771c76288aef193acb1bcd6e19114813cd92707f44a8201d5ca61a",
+    "vram_monitor": "unavailable: xpu-smi continuous monitor exited without rows; no peak-memory claim is made"
+  },
+  "incumbent_center_tok_s": 192.34195380893704,
+  "relative_to_incumbent_percent": -0.04953287723409305,
+  "relative_to_nonoverlapped_gate_up_center_percent": -0.004639175745169144,
+  "decision": "The endpoint passed every correctness, cache-isolation, liveness and health gate but was below the preregistered first-attempt rate threshold. Close without repeat. The microbenchmark overlap did not improve full-graph throughput.",
+  "cleanup": "The endpoint-only backend code was removed after capture. The active source diff returned exactly to the incumbent SHA-256 30c2d91efc4b33779f9c8122efaf8c39df226fa769837cbc0d06e2252309fa67.",
+  "scope": "Qualified shape-specific negative evidence; 192.2466813050872 is not a promoted public result."
+}

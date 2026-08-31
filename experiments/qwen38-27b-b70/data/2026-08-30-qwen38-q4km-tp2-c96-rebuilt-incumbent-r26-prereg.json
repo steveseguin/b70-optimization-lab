@@ -1,0 +1,14 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-rebuilt-incumbent-20260830-r26",
+  "status": "preregistered before rebuilt-binary replay",
+  "purpose": "Requalify the exact incumbent source after Intel AOT relinking produced a different backend file identity while the source diff returned byte-for-byte to its frozen value.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact F16 cache for ffn_down and ffn_gate, dual-GEMM off, 96 pinned slots, effective total context 49152, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request.",
+  "source_diff_sha256": "30c2d91efc4b33779f9c8122efaf8c39df226fa769837cbc0d06e2252309fa67",
+  "rebuilt_backend_sha256": "d866e3624a4290f6f350b92ddd2c83e5c976ddb18fa5144c1ac406a5d27b4fce",
+  "prior_backend_sha256": "815b017d931942e6e5004719782ee5c7cdd15a5adb18ec54f7decf5412a6a659",
+  "oracle": "Frozen c96 same-shape batch oracle SHA-256 f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1; 96 rows.",
+  "prior_incumbent": "192.35094949480367 and 192.3329581230704 tok/s; center 192.34195380893704 tok/s.",
+  "advance_rule": "Attempt 1 must match 96/96, pass all gates, show dual-GEMM absent, and remain within 1% below the prior center (at least 190.41853427084767 tok/s). Then repeat. Accept the rebuilt identity only if both attempts are 96/96 and their center remains within 1% below the prior center.",
+  "claim_policy": "This is binary-identity requalification, not a new optimization claim. Neither attempt alone is promoted."
+}

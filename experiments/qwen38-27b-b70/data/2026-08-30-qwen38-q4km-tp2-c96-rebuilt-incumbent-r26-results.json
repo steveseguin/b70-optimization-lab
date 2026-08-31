@@ -1,0 +1,35 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-rebuilt-incumbent-20260830-r26",
+  "status": "qualified rebuilt incumbent identity after two attempts",
+  "configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2, MTP0, exact F16 cache for ffn_down and ffn_gate, dual-GEMM off, c96, effective total context 49152, batch 2048, ubatch 256, prompt cache off",
+  "attempt_1": {
+    "aggregate_tok_s": 192.65261657544653,
+    "same_shape_batch_oracle_exact": "96/96",
+    "quality_qualified": true,
+    "cached_tokens_all_zero": true,
+    "dual_gemm_marker_count": 0,
+    "result_sha256": "3fac0a8d922ab4c8326a5144008bb7110a384b5b95967b853e2420fc65a3780e",
+    "summary_sha256": "b4b37a145b86b4244d28f589ab5b46c43365037d5f14a74d32be496b905e2629",
+    "qualification_sha256": "87844536f76ca35a1af2767ffc7f39c674ef85b6a2b18387e176237afcf64f08",
+    "server_log_sha256": "20e60425740c7bdca0a69d7f3333c85e20f420befc868206d1ab8938e6561a95",
+    "runtime_environment_sha256": "4dc540f5c4c9cb0905f41091bb0336d33be683c3e1cd6c8b87ae74c7292e2c43"
+  },
+  "attempt_2": {
+    "aggregate_tok_s": 192.69952582005385,
+    "same_shape_batch_oracle_exact": "96/96",
+    "quality_qualified": true,
+    "cached_tokens_all_zero": true,
+    "dual_gemm_marker_count": 0,
+    "result_sha256": "d29ccc182d5a2fac7617682734cd8504c2758c7528b5a8837c2cc0f02dad2ab0",
+    "summary_sha256": "de1942b18c1335fab62762560e533517cd2cd1ef31b365964664d9b165f1520b",
+    "qualification_sha256": "6a623898063244713dcd737e55f063084224804c9630918feb3c1667750b5ae8",
+    "server_log_sha256": "2ca6bd8560de88119984a15d79471acc1aa2cb170db1c6ae79c7103dd86e3646",
+    "runtime_environment_sha256": "4dc540f5c4c9cb0905f41091bb0336d33be683c3e1cd6c8b87ae74c7292e2c43"
+  },
+  "center_tok_s": 192.6760711977502,
+  "repeat_spread_percent": 0.024349134437495756,
+  "relative_to_prior_incumbent_center_percent": 0.17371009402611381,
+  "source_diff_sha256": "30c2d91efc4b33779f9c8122efaf8c39df226fa769837cbc0d06e2252309fa67",
+  "accepted_backend_sha256": "d866e3624a4290f6f350b92ddd2c83e5c976ddb18fa5144c1ac406a5d27b4fce",
+  "decision": "Accept the rebuilt backend as the new frozen binary identity. Both attempts passed 96/96 and every isolation gate, their spread was 0.0243%, and their center was within the preregistered band. The 0.174% center difference is treated as run/build spread, not a new optimization claim."
+}

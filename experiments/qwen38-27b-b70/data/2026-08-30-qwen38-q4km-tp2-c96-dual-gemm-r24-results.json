@@ -1,0 +1,36 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-dual-gemm-20260830-r24",
+  "status": "mechanism gate passed on both local cards",
+  "scope": "Mechanism-only microbenchmark; these timings are not endpoint or model throughput claims.",
+  "shape": "Two deterministic f16xf16->f32 oneDNN matmuls, A=[1,8704,5120], B=[1,5120,96], C=[1,8704,96]",
+  "method": "Eight warmups, six alternating blocks of ten samples per arm, explicit queue waits at sample boundaries.",
+  "gpu0": {
+    "samples_per_arm": 60,
+    "serial_p25_ms": 0.445759,
+    "serial_median_ms": 0.449041,
+    "serial_p75_ms": 0.464039,
+    "concurrent_p25_ms": 0.390796,
+    "concurrent_median_ms": 0.394076,
+    "concurrent_p75_ms": 0.400181,
+    "median_speedup": 1.139479,
+    "median_reduction_percent": 12.240628,
+    "gate_byte_exact": true,
+    "up_byte_exact": true
+  },
+  "gpu1": {
+    "samples_per_arm": 60,
+    "serial_p25_ms": 0.436486,
+    "serial_median_ms": 0.439721,
+    "serial_p75_ms": 0.443039,
+    "concurrent_p25_ms": 0.382533,
+    "concurrent_median_ms": 0.384621,
+    "concurrent_p75_ms": 0.386809,
+    "median_speedup": 1.143258,
+    "median_reduction_percent": 12.530673,
+    "gate_byte_exact": true,
+    "up_byte_exact": true
+  },
+  "source_sha256": "6d49406207ff7eb52cc17bce41e046fe976adaa8c8e964c8902e8951f026d06d",
+  "executable_sha256": "e3ef9e48d731cfe084f4890202c226689c54a9f491314df14324b004a2853d9e",
+  "decision": "The preregistered 5% mechanism threshold passed on both cards with exact outputs, authorizing one scoped endpoint implementation. r25 determines whether it survives full-graph scheduling."
+}

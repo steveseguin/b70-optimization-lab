@@ -1,0 +1,13 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-dual-gemm-20260830-r24",
+  "status": "preregistered before compilation or measurement",
+  "purpose": "Determine whether the two independent ffn_gate and ffn_up oneDNN GEMMs can profitably overlap on one B70 before modifying the llama.cpp graph executor.",
+  "scope": "Mechanism-only microbenchmark; no rate from this test is an endpoint or publishable model result.",
+  "hardware": "Each of the two local Intel Arc Pro B70 cards tested separately; no remote host.",
+  "shape": "Two independent deterministic f16xf16->f32 oneDNN matmuls with A=[1,8704,5120], B=[1,5120,96], C=[1,8704,96], matching the dominant c96 gate/up shape in r22.",
+  "arms": "Serial execution of both primitives on one in-order SYCL queue versus concurrent execution on two in-order queues sharing one device/context.",
+  "method": "Allocate and initialize once; build primitives and user scratchpads outside timing; warm both arms; alternate arm order across timed blocks; wait for all involved queues at each sample boundary; report medians and interquartile ranges.",
+  "correctness_gate": "Both concurrent outputs must be byte-identical to their corresponding deterministic serial outputs after the timed samples.",
+  "advance_rule": "Only consider a backend graph-fusion implementation if both local cards pass byte identity and show at least 5% median pair-time reduction. Otherwise close concurrent gate/up execution as unsupported by this evidence.",
+  "profile_basis": "r22 attributed 42.5-42.7% of oneDNN execution time to the shared gate/up shape and 17.7-17.9% to ffn_down."
+}

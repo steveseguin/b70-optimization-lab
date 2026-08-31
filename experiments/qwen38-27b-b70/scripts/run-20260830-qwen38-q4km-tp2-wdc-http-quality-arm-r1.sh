@@ -28,6 +28,7 @@ pin_slots=${PIN_SLOTS:-0}
 wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 candidate_kind=${CANDIDATE_KIND:-wdc}
 q4k_f16_cache_filter=${Q4K_F16_CACHE_FILTER:-}
+q4k_dual_gemm=${Q4K_DUAL_GEMM:-0}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -54,7 +55,7 @@ concurrency_oracle_kind=${CONCURRENCY_ORACLE_KIND:-sequential}
 expected_realistic_oracle_sha256=${EXPECTED_REALISTIC_ORACLE_SHA256:-f8e7e4040d653ef6250ed99362221f68a349ddb003f52769560b87877c0e34af}
 expected_concurrency_oracle_sha256=${EXPECTED_CONCURRENCY_ORACLE_SHA256:-0a9095d3407263150fce9794035c33ed480a0ba04908f793ae6810d4e5567e33}
 expected_server_sha256=${EXPECTED_SERVER_SHA256:-7983061d46a7fecf61b498fc159c11a5cfec5dc078ba0dbaa114b5b8c934cf2c}
-expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-815b017d931942e6e5004719782ee5c7cdd15a5adb18ec54f7decf5412a6a659}
+expected_backend_sha256=${EXPECTED_BACKEND_SHA256:-d866e3624a4290f6f350b92ddd2c83e5c976ddb18fa5144c1ac406a5d27b4fce}
 expected_server_impl_sha256=${EXPECTED_SERVER_IMPL_SHA256:-e873e18e080f00533fc7e73089f20df2b4303278c5353bb07fc467267fbb1f64}
 expected_source_diff_sha256=${EXPECTED_SOURCE_DIFF_SHA256:-30c2d91efc4b33779f9c8122efaf8c39df226fa769837cbc0d06e2252309fa67}
 expected_concurrency_harness_sha256=${EXPECTED_CONCURRENCY_HARNESS_SHA256:-53a998b7e31a2626ae27bd58e955746822dd1816a302c854f6b8b1bb0fb147d5}
@@ -100,6 +101,9 @@ esac
 [[ -z "${q4k_f16_cache_filter}" || "${arm}" == candidate ]] || fail 'Q4K_F16_CACHE_FILTER is candidate-only'
 [[ -z "${q4k_f16_cache_filter}" || "${candidate_kind}" == q4k-f16-cache ]] || fail 'Q4K_F16_CACHE_FILTER requires CANDIDATE_KIND=q4k-f16-cache'
 [[ "${candidate_kind}" != q4k-f16-cache || "${arm}" == control || -n "${q4k_f16_cache_filter}" ]] || fail 'q4k-f16-cache candidate requires Q4K_F16_CACHE_FILTER'
+[[ "${q4k_dual_gemm}" == 0 || "${q4k_dual_gemm}" == 1 ]] || fail 'Q4K_DUAL_GEMM must be 0 or 1'
+[[ "${q4k_dual_gemm}" == 0 || ( "${arm}" == candidate && "${candidate_kind}" == q4k-f16-cache ) ]] || fail 'Q4K_DUAL_GEMM=1 requires a Q4_K F16-cache candidate'
+[[ "${q4k_dual_gemm}" == 0 || ( "${q4k_f16_cache_filter}" == *ffn_gate* && "${q4k_f16_cache_filter}" == *ffn_up* ) ]] || fail 'Q4K_DUAL_GEMM=1 requires cached ffn_gate and ffn_up'
 [[ "${candidate_kind}" != q4k-f16-cache || -z "${wdc_q4k_name_filter}" ]] || fail 'cache candidate cannot set WDC_Q4K_NAME_FILTER'
 [[ "${concurrency_oracle_kind}" == sequential || "${concurrency_oracle_kind}" == same-shape-batch ]] || \
   fail 'CONCURRENCY_ORACLE_KIND must be sequential or same-shape-batch'
@@ -181,6 +185,7 @@ timeout --signal=INT --kill-after=30s 3600s env \
   ALLOW_REBUILT_BINARIES=1 MTP_DEPTH="${mtp_depth}" WDC_Q4K="${wdc}" Q4K_REORDER="${q4k_reorder}" PORT="${port}" \
   WDC_Q4K_NAME_FILTER="${wdc_q4k_name_filter}" \
   Q4K_F16_CACHE_FILTER="${q4k_f16_cache_filter}" \
+  Q4K_DUAL_GEMM="${q4k_dual_gemm}" \
   TP_SIZE="${tp_size}" \
   FEATURE_PROFILE="${feature_profile}" \
   Q8_DEDUP_OVERRIDE="${q8_dedup_override}" \
@@ -274,7 +279,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${ubatch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${concurrency_oracle_kind}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${ubatch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${q4k_dual_gemm}" "${concurrency_oracle_kind}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -290,7 +295,8 @@ candidate_kind = sys.argv[17]
 q4k_f16_cache_filter = sys.argv[18] or None
 pin_slots = sys.argv[19] == "1"
 fuse_ext = int(sys.argv[20])
-oracle_kind = sys.argv[21]
+q4k_dual_gemm = sys.argv[21] == "1"
+oracle_kind = sys.argv[22]
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -330,6 +336,7 @@ summary = {
     "mtp_depth": mtp_depth,
     "candidate_kind": candidate_kind,
     "q4k_f16_cache_filter": q4k_f16_cache_filter,
+    "q4k_dual_gemm": q4k_dual_gemm,
     "pin_slots": pin_slots,
     "fuse_ext": fuse_ext,
 }
@@ -348,12 +355,16 @@ journalctl -k -b --since "${start}" --no-pager | \
 [[ ! -s "${run_dir}/kernel-errors.txt" ]] || fail 'kernel error evidence found'
 engaged=0; grep -q 'weight-decompression GEMM ENGAGED' "${run_dir}/server.log" && engaged=1
 cache_engaged=0; grep -q 'Q4K-F16-CACHE: incumbent dequant bytes cached' "${run_dir}/server.log" && cache_engaged=1
+dual_gemm_engaged=0; grep -q 'Q4K-DUAL-GEMM: gate/up c96 overlap engaged' "${run_dir}/server.log" && dual_gemm_engaged=1
 if [[ "${profile}" == concurrency && "${arm}" == candidate && "${candidate_kind}" == wdc && "${engaged}" != 1 ]]; then fail 'candidate WDC liveness failed'; fi
 if [[ "${arm}" == control && "${engaged}" != 0 ]]; then fail 'control WDC negative control failed'; fi
 if [[ "${profile}" == concurrency && "${arm}" == candidate && "${candidate_kind}" == q4k-f16-cache && "${cache_engaged}" != 1 ]]; then fail 'candidate Q4_K F16 cache liveness failed'; fi
+if [[ "${q4k_dual_gemm}" == 1 && "${dual_gemm_engaged}" != 1 ]]; then fail 'candidate Q4_K dual-GEMM liveness failed'; fi
+if [[ "${q4k_dual_gemm}" == 0 && "${dual_gemm_engaged}" != 0 ]]; then fail 'Q4_K dual-GEMM negative control failed'; fi
 if [[ "${arm}" == control && "${cache_engaged}" != 0 ]]; then fail 'control Q4_K F16 cache negative control failed'; fi
 printf '%s\n' "${engaged}" >"${run_dir}/wdc-engaged.txt"
 printf '%s\n' "${cache_engaged}" >"${run_dir}/q4k-f16-cache-engaged.txt"
+printf '%s\n' "${dual_gemm_engaged}" >"${run_dir}/q4k-dual-gemm-engaged.txt"
 sha256sum "${run_dir}/result.json" "${run_dir}/summary.json" >"${run_dir}/result-sha256sums.txt"
 if ! jq -e '.quality_qualified == true' "${run_dir}/summary.json" >/dev/null; then
   fail 'strict output-quality gate failed'

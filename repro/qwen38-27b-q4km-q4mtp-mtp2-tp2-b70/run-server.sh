@@ -15,6 +15,7 @@ threads=${THREADS:-8}
 wdc_q4k=${WDC_Q4K:-0}
 wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 q4k_f16_cache_filter=${Q4K_F16_CACHE_FILTER:-}
+q4k_dual_gemm=${Q4K_DUAL_GEMM:-0}
 q4k_reorder=${Q4K_REORDER:-0}
 queue_settle_ms=${QUEUE_SETTLE_MS:-0}
 queue_settle_target=${QUEUE_SETTLE_TARGET:-0}
@@ -28,6 +29,8 @@ fuse_ext=${FUSE_EXT_OVERRIDE:-15}
 [[ -z "${wdc_q4k_name_filter}" || "${wdc_q4k}" == 1 ]] || { printf 'WDC_Q4K_NAME_FILTER requires WDC_Q4K=1\n' >&2; exit 2; }
 [[ "${q4k_f16_cache_filter}" =~ ^[A-Za-z0-9_.,-]*$ ]] || { printf 'Q4K_F16_CACHE_FILTER contains unsupported characters\n' >&2; exit 2; }
 [[ -z "${q4k_f16_cache_filter}" || "${wdc_q4k}" == 0 ]] || { printf 'Q4K_F16_CACHE_FILTER cannot be combined with WDC_Q4K=1\n' >&2; exit 2; }
+[[ "${q4k_dual_gemm}" == 0 || "${q4k_dual_gemm}" == 1 ]] || { printf 'Q4K_DUAL_GEMM must be 0 or 1\n' >&2; exit 2; }
+[[ "${q4k_dual_gemm}" == 0 || ( "${q4k_f16_cache_filter}" == *ffn_gate* && "${q4k_f16_cache_filter}" == *ffn_up* ) ]] || { printf 'Q4K_DUAL_GEMM=1 requires ffn_gate and ffn_up in Q4K_F16_CACHE_FILTER\n' >&2; exit 2; }
 [[ "${q4k_reorder}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'Q4K_REORDER must be 0 or 1\n' >&2; exit 2; }
 [[ "${wdc_q4k}" == 0 || "${q4k_reorder}" == 1 ]] || { printf 'WDC_Q4K=1 requires Q4K_REORDER=1\n' >&2; exit 2; }
 [[ "${queue_settle_ms}" =~ ^[0-9]+$ ]] && (( queue_settle_ms <= 5000 )) || { printf 'QUEUE_SETTLE_MS must be an integer from 0 through 5000\n' >&2; exit 2; }
@@ -118,6 +121,11 @@ if [[ -n "${q4k_f16_cache_filter}" ]]; then
   export GGML_SYCL_Q4K_F16_CACHE_FILTER="${q4k_f16_cache_filter}"
 else
   unset GGML_SYCL_Q4K_F16_CACHE_FILTER
+fi
+if [[ "${q4k_dual_gemm}" == 1 ]]; then
+  export GGML_SYCL_Q4K_DUAL_GEMM=1
+else
+  unset GGML_SYCL_Q4K_DUAL_GEMM
 fi
 args=(--model "${target_dir}/Qwen3.8-27B-Q4_K_M.gguf")
 if [[ "${tp_size}" == 2 ]]; then

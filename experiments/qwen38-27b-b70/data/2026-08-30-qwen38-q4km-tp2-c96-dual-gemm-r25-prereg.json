@@ -1,0 +1,16 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-dual-gemm-20260830-r25",
+  "status": "preregistered after r24 mechanism test and before endpoint measurement",
+  "purpose": "Test whether explicitly overlapping the independent cached ffn_gate and ffn_up deterministic oneDNN GEMMs improves the strict c96 TP2 endpoint.",
+  "hardware": "Two local Intel Arc Pro B70 cards; no remote host.",
+  "fixed_configuration": "Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact F16 cache for ffn_gate and ffn_up, dual-GEMM queue door on, 96 pinned slots, effective total context 49152, batch 2048, ubatch 256, FUSE_EXT=31, temperature 0, prompt cache off, 128 generated token IDs/request, admission target 96 with 1000 ms ceiling.",
+  "mechanism_evidence": "r24 at A=[1,8704,5120], B=[1,5120,96] measured serial/concurrent pair medians of 0.449041/0.394076 ms on GPU0 and 0.439721/0.384621 ms on GPU1: 12.24% and 12.53% reductions, with gate and up outputs byte-identical on both cards.",
+  "oracle": "Frozen c96 same-shape batch oracle SHA-256 f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1; 96 rows.",
+  "runner_sha256": "ab237f05f2403bcecae9948d007d97bef376985a33e3c48feb80f1d7d612a632",
+  "launcher_sha256": "5b0301c9e87d5cc46bddc2f31dd642bd32ed8ad87f3dd8a2385a3826800e6c1d",
+  "source_diff_sha256": "64a9fb8b7f771c76288aef193acb1bcd6e19114813cd92707f44a8201d5ca61a",
+  "backend_sha256": "f08cf5d489659e1c3c5952019a17b6060e1def40cceb04088e7f61ea9d6214f7",
+  "incumbent": "ffn_down+ffn_gate rates 192.35094949480367 and 192.3329581230704 tok/s; center 192.34195380893704 tok/s.",
+  "advance_rule": "Attempt 1 must show the dual-GEMM must-fire marker, match the frozen c96 oracle 96/96, pass all isolation/health gates and exceed 192.35094949480367 tok/s. Only then repeat. Promotion requires both attempts 96/96 and their center above 192.34195380893704 tok/s.",
+  "failure_policy": "Any output mismatch, missing must-fire marker, OOM/health failure or first rate at or below 192.35094949480367 closes r25. No failed-arm or single-run rate is promoted."
+}
