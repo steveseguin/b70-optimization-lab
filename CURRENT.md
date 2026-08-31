@@ -2050,6 +2050,18 @@ are required for attribution. The current boot followed an unexplained
 overnight unclean reset with no model process active; its mounts, memory, swap,
 and source state are healthy, so no additional reboot is required. See the
 [A30 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a30-hc-grouped-m1-endpoint-prereg.md).
+A30 then completed as a bounded endpoint negative. Recovery, the accepted 6/7
+semantic boundary, the 4K needle, all 16 repeats, and all three protected short
+hashes passed, but short decode was only `5.416309 / 5.415455 / 5.403828`
+tok/s (median `5.415455`), 1.82% below the protected result. The two cache-zero
+exact-4K rows ran at `5.229220 / 5.044012 tok/s` but returned different
+non-authority hashes, first diverging from authority at generated-token indices
+18 and 2. Two corrected internal-NVMe receive events during shard loading also
+tripped the conservative postflight gate; there was no I/O, OOM, GPU, or
+teardown failure. The composite does not justify matched control/repeat loads.
+Keep grouped HC default-off and preserve `5.515783` MTP0 and approximately
+`20.727` MTP4 unchanged. See the
+[A30 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a30-hc-grouped-m1-endpoint-negative.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
