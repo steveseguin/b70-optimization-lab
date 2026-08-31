@@ -17,6 +17,7 @@ served=qwen38-prefill-projection-repair
 container=${CONTAINER_NAME:-q38-prefill-projection-repair-d54}
 port=${PORT:-18354}
 reference_performance=${REFERENCE_PERFORMANCE:-}
+projection_synchronize=${VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE:-1}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -57,6 +58,7 @@ docker run -d --name "$container" --ulimit core=0 --memory 12g --memory-swap 36g
   --publish "127.0.0.1:${port}:8000" --volume "$model:/model:ro" \
   --volume "$cache:/run-cache" --volume "$hook:/instrument/sitecustomize.py:ro" \
   --env PYTHONPATH=/instrument --env VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=1 \
+  --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE=$projection_synchronize" \
   --env ZE_AFFINITY_MASK=0 --env ONEAPI_DEVICE_SELECTOR=level_zero:0 \
   --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_NO_USAGE_STATS=1 --env PYTHONHASHSEED=0 \
