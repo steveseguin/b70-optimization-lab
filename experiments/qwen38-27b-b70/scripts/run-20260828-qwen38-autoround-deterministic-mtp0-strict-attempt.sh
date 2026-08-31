@@ -12,6 +12,10 @@ expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:?set EXPECTED_XPU_
 expected_gdn_library_sha256=${EXPECTED_GDN_LIBRARY_SHA256:?set EXPECTED_GDN_LIBRARY_SHA256}
 model=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-devan}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
+gpu_ids=${GPU_IDS:-2,3}
+min_host_memory_gib=${MIN_HOST_MEMORY_GIB:-80}
+container_memory=${CONTAINER_MEMORY:-96g}
+container_memory_swap=${CONTAINER_MEMORY_SWAP:-104g}
 suite=${SUITE:-$repo/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}
 container="q38-ar-det-mtp0-${mode}-${attempt}"
 served="qwen38-autoround-deterministic-mtp0"
@@ -38,9 +42,9 @@ trap 'exit 130' INT TERM HUP
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$out/model-verify.json" >"$out/model-verify.log"
 
-python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" <<'PY'
+python3 - "$out/campaign-identity.json" "$mode" "$attempt" "$model" "$cache" "$suite" "$port" "$container" "$image" "$expected_image_id" "$expected_xpu_extension_sha256" "$expected_gdn_library_sha256" "$gpu_ids" "$min_host_memory_gib" "$container_memory" "$container_memory_swap" <<'PY'
 import datetime as dt, hashlib, json, pathlib, sys
-path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha = sys.argv[1:]
+path, mode, attempt, model, cache, suite, port, container, image, image_id, xpu_sha, gdn_sha, gpu_ids, min_mem, container_mem, container_swap = sys.argv[1:]
 s = pathlib.Path(suite)
 value = {
   "schema": "neural.download.qwen38-autoround-deterministic-mtp0-strict-attempt.v1",
@@ -50,7 +54,9 @@ value = {
   "port": int(port), "container": container, "image": image,
   "image_id": image_id, "xpu_extension_sha256": xpu_sha,
   "gdn_library_sha256": gdn_sha,
-  "tensor_parallel": 2, "physical_gpus": [2, 3],
+  "tensor_parallel": 2, "physical_gpus": [int(item) for item in gpu_ids.split(",")],
+  "host_memory_gate_gib": int(min_mem), "container_memory": container_mem,
+  "container_memory_swap": container_swap,
   "mtp_depth": 0, "xpu_graph": False, "inductor_deterministic": True,
   "prefix_cache": False, "prompt_or_response_reuse": False,
   "performance_contract": {"complete_fixed_suite": True, "max_tokens": 512,
@@ -66,6 +72,8 @@ env EXECUTION_MODE="$mode" IMAGE="$image" EXPECTED_IMAGE_ID="$expected_image_id"
   EXPECTED_GDN_LIBRARY_SHA256="$expected_gdn_library_sha256" \
   MODEL_DIR="$model" VLLM_CACHE_DIR="$cache" CONTAINER_NAME="$container" \
   PORT="$port" SERVED_MODEL_NAME="$served" \
+  GPU_IDS="$gpu_ids" MIN_HOST_MEMORY_GIB="$min_host_memory_gib" \
+  CONTAINER_MEMORY="$container_memory" CONTAINER_MEMORY_SWAP="$container_memory_swap" \
   "$repo/repro/qwen38-27b-autoround-int4-b70/scripts/run-current-deterministic-mtp0-server.sh" \
   >"$out/server.log" 2>&1 &
 server_pid=$!
@@ -126,8 +134,8 @@ if pgrep -af '[E]ngineCore|[v]llm serve.*qwen3.8-27b-int4-autoround' >/dev/null;
   exit 1
 fi
 journalctl -k --since "@${journal_start}" --no-pager >"$out/kernel-journal.log"
-if grep -Eqi 'xe 0000:(43|47):00\.0.*(reset|fault|timeout|timed out|fatal|wedged|failed)' "$out/kernel-journal.log"; then
-  printf 'new GPU2/3 kernel fault event detected\n' >&2
+if grep -Eqi 'xe .*reset|xe .*fault|xe .*timeout|xe .*timed out|xe .*fatal|xe .*wedged|xe .*failed|device lost|out of memory|oom-kill' "$out/kernel-journal.log"; then
+  printf 'new GPU/kernel/OOM fault event detected\n' >&2
   exit 1
 fi
 printf 'PASS strict mode=%s attempt=%s\n' "$mode" "$attempt"

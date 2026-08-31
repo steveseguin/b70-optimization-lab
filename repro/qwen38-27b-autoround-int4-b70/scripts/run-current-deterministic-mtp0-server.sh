@@ -11,9 +11,15 @@ cache=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new empty cache directory}
 container=${CONTAINER_NAME:?set CONTAINER_NAME to a unique name}
 port=${PORT:?set PORT to a unique host port}
 served_model=${SERVED_MODEL_NAME:-qwen38-autoround-deterministic-mtp0}
+gpu_ids=${GPU_IDS:-2,3}
+min_host_memory_gib=${MIN_HOST_MEMORY_GIB:-80}
+container_memory=${CONTAINER_MEMORY:-96g}
+container_memory_swap=${CONTAINER_MEMORY_SWAP:-104g}
 
 case "$mode" in eager|compiled) ;; *) printf 'EXECUTION_MODE must be eager or compiled\n' >&2; exit 2;; esac
 [[ "$port" =~ ^[1-9][0-9]*$ ]] || { printf 'PORT must be positive\n' >&2; exit 2; }
+[[ "$gpu_ids" =~ ^[0-9]+,[0-9]+$ ]] || { printf 'GPU_IDS must contain two comma-separated device indices\n' >&2; exit 2; }
+[[ "$min_host_memory_gib" =~ ^[1-9][0-9]*$ ]] || { printf 'MIN_HOST_MEMORY_GIB must be positive\n' >&2; exit 2; }
 [[ -d "$model" && ! -L "$model" ]] || { printf 'MODEL_DIR must be a real directory\n' >&2; exit 1; }
 [[ "$(findmnt -n -o FSTYPE -T "$model")" == ext4 ]] || { printf 'MODEL_DIR must be on ext4\n' >&2; exit 1; }
 [[ ! -e "$cache" ]] || { printf 'cache path must be new: %s\n' "$cache" >&2; exit 1; }
@@ -72,16 +78,17 @@ docker run --rm --entrypoint strings "$image" \
 
 docker ps -a --format '{{.Names}}' | grep -Fxq "$container" && { printf 'container exists\n' >&2; exit 1; }
 ss -ltn | grep -Eq ":${port}[[:space:]]" && { printf 'port occupied\n' >&2; exit 1; }
-(( $(awk '/MemAvailable/ {print $2}' /proc/meminfo) >= 80 * 1024 * 1024 )) || {
-  printf 'less than 80 GiB host memory available\n' >&2; exit 1;
+(( $(awk '/MemAvailable/ {print $2}' /proc/meminfo) >= min_host_memory_gib * 1024 * 1024 )) || {
+  printf 'less than %s GiB host memory available\n' "$min_host_memory_gib" >&2; exit 1;
 }
 
 exec 7>/tmp/b70-benchmark.lock
 flock -n 7 || { printf 'benchmark lock held\n' >&2; exit 1; }
-exec 8>/tmp/b70-gpu2.lock
-flock -n 8 || { printf 'GPU2 lock held\n' >&2; exit 1; }
-exec 9>/tmp/b70-gpu3.lock
-flock -n 9 || { printf 'GPU3 lock held\n' >&2; exit 1; }
+IFS=, read -r gpu_a gpu_b <<<"$gpu_ids"
+exec 8>"/tmp/b70-gpu${gpu_a}.lock"
+flock -n 8 || { printf 'GPU%s lock held\n' "$gpu_a" >&2; exit 1; }
+exec 9>"/tmp/b70-gpu${gpu_b}.lock"
+flock -n 9 || { printf 'GPU%s lock held\n' "$gpu_b" >&2; exit 1; }
 
 mkdir -p "$cache"
 mode_args=()
@@ -90,12 +97,12 @@ if [[ "$mode" == eager ]]; then mode_args=(--enforce-eager); fi
 trap - EXIT
 cleanup_tmp
 exec docker run --rm --name "$container" \
-  --ulimit core=0 --memory 96g --memory-swap 104g \
+  --ulimit core=0 --memory "$container_memory" --memory-swap "$container_memory_swap" \
   --device /dev/dri:/dev/dri --group-add render --cap-add SYS_PTRACE \
   --security-opt label=disable --ipc=host --shm-size=16g \
   --publish "127.0.0.1:${port}:8000" \
   --volume "$model:/model:ro" --volume "$cache:/root/.cache/vllm" \
-  --env ZE_AFFINITY_MASK=2,3 --env ONEAPI_DEVICE_SELECTOR=level_zero:2,3 \
+  --env ZE_AFFINITY_MASK="$gpu_ids" --env ONEAPI_DEVICE_SELECTOR="level_zero:${gpu_ids}" \
   --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_NO_USAGE_STATS=1 --env PYTHONHASHSEED=0 \
   --env VLLM_XPU_ENABLE_XPU_GRAPH=0 --env VLLM_XPU_GRAPH=0 \
