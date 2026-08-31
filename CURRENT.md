@@ -1733,6 +1733,15 @@ authority-hash gates. The current A25 boot is already consumed, so the guarded
 A26 launch is the first and only full Flash-Next load after the next reboot.
 See the
 [A26 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a26-async-uva-endpoint-prereg.md).
+A26 completed as a bounded endpoint negative. Recovery, the inherited 6/7
+semantic boundary, 16/16 short repeat, exact-4K needle, and both cache-zero
+transport gates passed. The short median was `5.395973 tok/s`, 2.17% below the
+protected `5.515783 tok/s`. Exact-4K measured `5.276427 / 5.192318 tok/s` with
+`114.453 / 108.876`-second TTFT, but the rows produced different non-authority
+hashes. The async selector is not promoted and no speed receives credit. Clean
+teardown restored all four cards and host memory; protected target-only and
+MTP4 results remain unchanged. See the
+[A26 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a26-async-uva-endpoint-negative.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for

@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "status": "endpoint_reliability_negative",
+  "classification": "component_exact_candidate_rejected_by_full_endpoint_gate",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "d14396e27247c1b251da0ce24a0942772c4b002f",
+    "kernel_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "off",
+    "max_model_len": 4352,
+    "placement": "ple_only_uva",
+    "async_uva_ple_prefetch": true,
+    "attempt": 26,
+    "port": 19698,
+    "boot_id": "d93d5dff-2637-436a-9bc8-8c94020294d0"
+  },
+  "load": {
+    "checkpoint_shards": 131,
+    "checkpoint_location": "local_nvme",
+    "maximum_rank_load_seconds": 80.160253,
+    "device_gib_per_rank": 31.57,
+    "ple_host_gib_per_rank": 11.92,
+    "kv_cache_tokens": 4747
+  },
+  "quality": {
+    "recovery_canary": "passed",
+    "semantic_cases_passed": 6,
+    "semantic_cases_total": 7,
+    "sole_known_miss": "code_execution",
+    "short_repeat": "16/16 one hash",
+    "exact_4k_needle": "passed",
+    "cached_tokens": [0, 0]
+  },
+  "short": {
+    "rates_tok_s_after_ttft": [
+      5.452989273843876,
+      5.364522038604869,
+      5.395972690391963
+    ],
+    "median_tok_s_after_ttft": 5.395972690391963,
+    "protected_median_tok_s_after_ttft": 5.515782521997406,
+    "candidate_change_percent": -2.1721275472270984,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+  },
+  "exact_4k": {
+    "rates_tok_s_conventional_99_interval": [
+      5.276427022556842,
+      5.192318115977083
+    ],
+    "median_tok_s_conventional_99_interval": 5.234372569266963,
+    "ttft_seconds": [114.45309877399995, 108.87595416999989],
+    "elapsed_seconds": [138.54959213899997, 133.34597094299988],
+    "output_token_ids_sha256": [
+      "47fbaefe947ae54ccab203e12228bd3376356e4137c4236dd8416e8ddae3193e",
+      "5a6c744a9b0966431179ba9fcfe5d771a8c179c002cc19b6e4d739a8e40ca654"
+    ],
+    "retained_authority_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+    "same_boot_output_repeat": false,
+    "authority_match": false
+  },
+  "interpretation": {
+    "endpoint_selector_promoted": false,
+    "speed_credit": false,
+    "reason": "Both exact-4K rows passed transport and cache gates but disagreed with each other and the retained authority. The short median also regressed by 2.17 percent. Cross-boot TTFT noise prevents attributing a prefill benefit without a matched control.",
+    "protected_results_changed": false,
+    "next": "Keep the async-UVA implementation and component evidence as a rejected endpoint candidate. Continue reliability work inside zero-based layer-1 GatedDeltaNet, and prioritize already exact target-side MoE or collective candidates for the next bounded speed arm."
+  },
+  "lifecycle": {
+    "supervisor_exit_code": 143,
+    "kernel_journal_check": "passed",
+    "listener_after": false,
+    "model_process_after": false,
+    "post_gpu_memory_mib": [42.8828125, 42.875, 42.875, 42.875],
+    "post_mem_available_kib": 126309296,
+    "post_swap_free_kib": 8307736,
+    "nvme_pcie_events": "four RxErr reports, one also marked NonFatalErr; no reset or model-device loss"
+  },
+  "raw_evidence": {
+    "run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt26",
+    "supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt26-supervisor",
+    "sha256": {
+      "recovery-canary.json": "ee8ce3637c27614dc0126f15b331545934d4e2511d51fbcf6074db4230b491fe",
+      "quality-current.json": "8aa51feff558991caa67d696120955a60da57d93e3fddbce4614738826c1d1d6",
+      "bench-short-r1.json": "54506e0de3af9f91b009d97c3fcfacf26670de5929f53c4da2459edbd127c32d",
+      "bench-short-r2.json": "6e191f0332ff21797163c3e0f1dbbd5d4b014278a00b0ce5fbaf47887983925b",
+      "bench-short-r3.json": "2afcae9660a4422569e9f0a6ee2bd0451683558f5e3855e42e97936a5782e84b",
+      "exact-depth-4k-r1.json": "b0a2e59dc2f0165f3a09e6cd997dd1a8ab1d88c5ce30d1818ab5acbae9a65d2b",
+      "exact-depth-4k-r2.json": "91ef3d16c5537c1eb54fccb94778187abfa16d8d63940dee15ac0cfec9c52d35"
+    }
+  }
+}
