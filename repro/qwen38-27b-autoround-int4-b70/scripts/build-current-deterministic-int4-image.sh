@@ -8,6 +8,7 @@ host_oneapi_root=${HOST_ONEAPI_ROOT:-/opt/intel/oneapi}
 base_image=${BASE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
 expected_base_image_id=${EXPECTED_BASE_IMAGE_ID:?set EXPECTED_BASE_IMAGE_ID to the local base image ID}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1}
+max_jobs=${MAX_JOBS:-2}
 kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 source_url=https://github.com/vllm-project/vllm-xpu-kernels.git
 patch=${repo_root}/experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-kernel1e90-20260828.patch
@@ -23,6 +24,10 @@ for command_name in docker git sha256sum strings unzip; do
     exit 1
   }
 done
+[[ "${max_jobs}" =~ ^[1-9][0-9]*$ ]] || {
+  printf 'MAX_JOBS must be a positive integer\n' >&2
+  exit 1
+}
 for required in "${patch}" "${dockerfile}" "${host_oneapi_root}/setvars.sh"; do
   [[ -e "${required}" ]] || { printf 'missing %s\n' "${required}" >&2; exit 1; }
 done
@@ -55,6 +60,7 @@ docker run --rm --memory 16g --memory-swap 28g \
   --volume "${source_dir}:/src" \
   --volume "${dist_dir}:/out" \
   --volume "${host_oneapi_root}:/opt/intel/oneapi:ro" \
+  --env "MAX_JOBS=${max_jobs}" \
   --entrypoint /bin/bash "${base_image}" -lc '
     set -eo pipefail
     git config --global --add safe.directory /src
@@ -66,12 +72,16 @@ docker run --rm --memory 16g --memory-swap 28g \
       exit 1
     }
     cd /src
-    MAX_JOBS=1 CMAKE_BUILD_TYPE=Release \
-    BASIC_KERNELS_ENABLED=0 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=0 \
-    GDN_KERNELS_ENABLED=1 MQA_LOGITS_KERNELS_ENABLED=0 \
-    MHC_KERNELS_ENABLED=0 XPU_SPECIFIC_KERNELS_ENABLED=1 \
-    XPUMEM_ALLOCATOR_ENABLED=0 BUILD_SYCL_TLA_KERNELS=0 \
-    VLLM_XPU_ENABLE_XE2=0 VLLM_XPU_ENABLE_XE_DEFAULT=0 \
+    # _xpu_C calls into the same TLA feature libraries as the frozen base
+    # image. Keep those features enabled even though only the determinism-pad
+    # implementation changed; otherwise the overlay imports with unresolved
+    # MHC symbols and drops the GDN/MQA/grouped-GEMM runtime surface.
+    MAX_JOBS="${MAX_JOBS}" CMAKE_BUILD_TYPE=Release \
+    BASIC_KERNELS_ENABLED=0 FA2_KERNELS_ENABLED=0 MOE_KERNELS_ENABLED=1 \
+    GDN_KERNELS_ENABLED=1 MQA_LOGITS_KERNELS_ENABLED=1 \
+    MHC_KERNELS_ENABLED=1 XPU_SPECIFIC_KERNELS_ENABLED=1 \
+    XPUMEM_ALLOCATOR_ENABLED=0 BUILD_SYCL_TLA_KERNELS=1 \
+    VLLM_XPU_ENABLE_XE2=1 VLLM_XPU_ENABLE_XE_DEFAULT=1 \
     /opt/venv/bin/python setup.py bdist_wheel \
       --dist-dir /out --py-limited-api=cp38
   '
