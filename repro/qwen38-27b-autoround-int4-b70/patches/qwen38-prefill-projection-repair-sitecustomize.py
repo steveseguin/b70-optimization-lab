@@ -19,7 +19,7 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
     if SMALL_PAD_TOKENS not in (128, 512):
         raise RuntimeError("small prefill pad must be 128 or 512 tokens")
     SYNCHRONIZE = (
-        os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE", "1")
+        os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE", "0")
         != "0"
     )
     _original_mlp_forward = Qwen2MoeMLP.forward
