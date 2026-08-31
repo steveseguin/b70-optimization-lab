@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
-prereg="$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-official-f01e-tp1-eager-control-c1-prereg.md"
+prereg="$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-official-f01e-tp1-eager-control-c1b-prereg.md"
 model=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround
 model_manifest="$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json"
 model_verifier="$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py"
@@ -13,9 +13,9 @@ canaries="$repo/scripts/neural-download-canaries.py"
 image='vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f'
 image_id=sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
 vllm_head=ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9
-served=qwen38-official-f01e-tp1-eager-c1
-root=/mnt/fast-ai/bench-results/qwen38-official-f01e-tp1-eager-control-20260831-c1
-cache_root=/mnt/fast-ai/vllm-cache/qwen38-official-f01e-tp1-eager-control-20260831-c1
+served=qwen38-official-f01e-tp1-eager-c1b
+root=/mnt/fast-ai/bench-results/qwen38-official-f01e-tp1-eager-control-20260831-c1b
+cache_root=/mnt/fast-ai/vllm-cache/qwen38-official-f01e-tp1-eager-control-20260831-c1b
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 container=
@@ -56,12 +56,13 @@ run_arm() {
   local arm=$1 port=$2
   active_dir="$root/$arm"
   local cache="$cache_root/$arm"
-  container="q38-f01e-tp1-eager-c1-${arm}"
+  container="q38-f01e-tp1-eager-c1b-${arm}"
   mkdir "$active_dir" "$cache"
   "$model_verifier" "$model_manifest" "$model" --json "$active_dir/model-verify.json" >"$active_dir/model-verify.log"
   docker run -d --name "$container" --ulimit core=0 --memory 12g --memory-swap 36g \
-    --device /dev/dri:/dev/dri --group-add render --security-opt label=disable \
+    --device /dev/dri:/dev/dri --group-add video --group-add render --security-opt label=disable \
     --ipc=host --shm-size=16g --publish "127.0.0.1:${port}:8000" \
+    --volume /dev/dri/by-path:/dev/dri/by-path:ro \
     --volume "$model:/model:ro" --volume "$cache:/run-cache" \
     --env ZE_AFFINITY_MASK=0 --env ONEAPI_DEVICE_SELECTOR=level_zero:0 \
     --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
@@ -123,8 +124,8 @@ PY
 }
 
 journal_start=$(date +%s)
-run_arm official-A 18176
-run_arm official-B 18177
+run_arm official-A 18178
+run_arm official-B 18179
 journalctl -k --since "@${journal_start}" --no-pager >"$root/kernel-journal.log"
 if grep -Eqi 'xe .*reset|xe .*fault|xe .*timeout|xe .*timed out|xe .*fatal|xe .*wedged|device lost|out of memory|oom-kill' "$root/kernel-journal.log"; then
   fail 'new GPU/kernel/OOM fault event detected'
