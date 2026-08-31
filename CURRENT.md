@@ -1879,6 +1879,13 @@ alternate cycles, requires exact full outputs, at least 50% median and 20%
 minimum per-cycle reduction, and no more than 10 points of order bias. All four
 must pass before the 48-layer screen is allowed. See the
 [alternating preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-alternating-prereg.md).
+The hardened alternating gate passed in all four distinct processes. Median
+paired reductions were 68.54--69.94%; every cycle improved at least 63.83%,
+order bias stayed below 0.35 points, and every full BF16 output matched the
+pre-candidate production authority. The independent aggregate now authorizes
+the 48-layer real-weight round-robin component screen, but not integration or
+an endpoint claim. See the
+[alternating result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-alternating-result.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
