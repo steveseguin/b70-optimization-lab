@@ -4,9 +4,9 @@ set -Eeuo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 base="${script_dir}/supervise-tp4-mtp0-4352-ple-only-a27-moe-warps8.sh"
 expected_base=0baede0a853c984df8994fd4f18fe08eb1d0d97c9bafa67d2f79d9953c436b44
-expected_wrapper=a91abc01c603ab4521269854d8179295fd99051ffe67ba8f47182f7231482176
+expected_wrapper=6a624362e1ae1d4c4522fbc6cd88c6ac9e7da0da7998390c28333927c3aec5b0
 expected_client=28e89555634fe22a06cf87d8bc15fbb69fe6230981ddaef34d9a7fe1476b6981
-expected_source=f5e06bb6e4776efcbeaf441f3f65896359d34e7a7896872fef9945b6b59eb55c
+expected_source=f29972e743ff0e115b36050bd9ac44328bc37fe60f2888aeadc4f3129d1bb612
 
 derive() {
   Q38_A27_SOURCE_ONLY=1 "$base" | awk -v wrapper_hash="$expected_wrapper" -v client_hash="$expected_client" '

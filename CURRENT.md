@@ -1829,6 +1829,12 @@ folder, async PLE, tracing/profiling, MTP, and source drift. Static validation
 and independent review pass. The current boot is consumed; A29 is prepared but
 will not reboot or launch without a later explicit decision. See the
 [A29 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a29-moe-m1-warps8-endpoint-prereg.md).
+Before launch, a second audit caught that the active kernel workspace had
+advanced by one preserved default-off commit while the loaded stage remained
+sealed at its older source. A29 is refrozen with those identities separated;
+all source/stage checks now pass before the boot marker, and the workspace is
+checked again immediately before service. The treatment and protected results
+do not change.
 The 512-expert top-k path also had an unused FP32 scoring workspace. A
 default-off treatment removed it with exact outputs and 7.19--9.12% lower
 synchronized component latency across three fresh-process brackets. At 48

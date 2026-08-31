@@ -27,6 +27,10 @@ def generated(name: str) -> str:
 class A29EndpointContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls.wrapper = (
+            TOOLS / "launch-tp4-mtp0-4352-ple-only-a29-moe-m1-warps8.sh"
+        ).read_text()
+        cls.rewrite = (TOOLS / "rewrite-a29-kernel-workspace-contract.py").read_text()
         cls.launch = generated("launch-tp4-mtp0-4352-ple-only-a29-moe-m1-warps8.sh")
         cls.client = generated("run-tp4-mtp0-4352-ple-only-a29-moe-m1-warps8-client.sh")
         cls.supervisor = generated(
@@ -76,6 +80,27 @@ class A29EndpointContractTest(unittest.TestCase):
         self.assertIn("async UVA PLE selector unexpectedly present", self.client)
         self.assertNotIn("start_profile", self.client)
         self.assertNotIn("KINETO", self.launch.upper())
+
+    def test_workspace_child_and_stage_are_checked_before_boot_claim(self) -> None:
+        workspace_head = "359466a262489bdf4e1774e3572202dc82a00718"
+        staged_head = "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
+        self.assertIn(workspace_head, self.wrapper)
+        self.assertIn(staged_head, self.wrapper)
+        self.assertIn("runtime-stage-padding-guard-loadable.sha256", self.wrapper)
+        self.assertIn("default-off child patch changed before boot claim", self.wrapper)
+        self.assertLess(
+            self.wrapper.index("kernel workspace head changed before boot claim"),
+            self.wrapper.index("source <(derive)"),
+        )
+        self.assertIn("q38-flash-next-full-load.boot-id", self.launch)
+
+    def test_workspace_is_rechecked_immediately_before_serve(self) -> None:
+        self.assertIn("rewrite-a29-kernel-workspace-contract.py", self.launch)
+        self.assertIn(
+            "kernel workspace changed immediately before launch", self.rewrite
+        )
+        self.assertIn("kernel workspace became dirty immediately", self.rewrite)
+        self.assertIn("before launch", self.rewrite)
 
 
 if __name__ == "__main__":
