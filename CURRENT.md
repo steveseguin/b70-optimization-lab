@@ -1927,6 +1927,19 @@ weights and M2--4096; no source, endpoint, or speed claim is promoted. See the
 [S1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s1-result.md)
 and
 [S2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s2-prereg.md).
+S2 completed all 120 arms with clean evidence closure. Grouped E=1 was
+byte-exact in all 30 real-weight/M cells. Packed-view linear and packed matmul
+were each exact in only 22/30, sharing eight mismatches at M2/M8, so neither
+is a universal low-M fallback. Grouped was directionally faster through M64,
+slower at M256/M1024, and neutral at M4096 under the descriptive fixed order.
+Because the frozen S2 rule required unqualified exactness, the original
+all-provider S3 is not authorized. The prospective replacement is a newly
+frozen 194-arm S3g census of authority versus grouped across all 97 M64
+weights; it remains nonlaunchable until its distinct tool plan, hashes, and
+independent review are complete. See the
+[S2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s2-result.md)
+and
+[S3g intent](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-grouped-s3g-intent.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "status": "mixed_provider_component_result",
+  "classification": "real_weight_hc_up_wide_m_grouped_positive_packed_alternatives_rejected_low_m",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "scope": {
+    "slots": ["00-attn", "00-mlp", "24-attn", "47-mlp", "final"],
+    "m_values": [2, 8, 64, 256, 1024, 4096],
+    "providers": ["authority", "packed_view", "matmul", "grouped"],
+    "cell_count": 30,
+    "arm_count": 120,
+    "run_attempt": 2,
+    "repeat": "r1"
+  },
+  "correctness": {
+    "all_outputs_finite_and_repeatable": true,
+    "authority_exact_cells": 30,
+    "grouped_exact_cells": 30,
+    "packed_view_exact_cells": 22,
+    "matmul_exact_cells": 22,
+    "packed_view_and_matmul_common_mismatches": [
+      {"m": 2, "slot": "00-mlp"},
+      {"m": 2, "slot": "47-mlp"},
+      {"m": 2, "slot": "final"},
+      {"m": 8, "slot": "00-attn"},
+      {"m": 8, "slot": "00-mlp"},
+      {"m": 8, "slot": "24-attn"},
+      {"m": 8, "slot": "47-mlp"},
+      {"m": 8, "slot": "final"}
+    ]
+  },
+  "descriptive_cross_slot_medians_us": {
+    "m2": {"authority": 35.059544, "grouped": 14.982708, "grouped_reduction_percent": 57.265},
+    "m8": {"authority": 36.715555, "grouped": 14.733266, "grouped_reduction_percent": 59.872},
+    "m64": {"authority": 38.811094, "grouped": 31.117937, "grouped_reduction_percent": 19.822},
+    "m256": {"authority": 41.89575, "grouped": 49.543, "grouped_reduction_percent": -18.253},
+    "m1024": {"authority": 74.7175, "grouped": 85.9365, "grouped_reduction_percent": -15.015},
+    "m4096": {"authority": 319.514, "grouped": 318.864, "grouped_reduction_percent": 0.203}
+  },
+  "timing_classification": "descriptive_fixed_provider_order",
+  "summary": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-up-mgt1-packed-fallback-s2-r1-a2-seed20260831/summary.json",
+    "sha256": "15994048d275f8252e02ff65702f7b64271dc7dba7c12ce28319a3dd94f67fde"
+  },
+  "frozen_s3_authorized": false,
+  "reason_frozen_s3_not_authorized": "The S2 preregistration required unqualified exactness across S2; all_providers_byte_exact is false.",
+  "next": "Prospectively freeze an authority-versus-grouped all-97 M64 S3g census.",
+  "source_integration_authorized": false,
+  "endpoint_claim_authorized": false
+}
