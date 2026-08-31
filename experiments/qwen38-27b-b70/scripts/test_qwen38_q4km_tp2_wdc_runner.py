@@ -45,6 +45,14 @@ class Qwen38Q4kmRunnerTests(unittest.TestCase):
         self.assertIn('candidate Q4_K dual-GEMM liveness failed', source)
         self.assertIn('Q4_K dual-GEMM negative control failed', source)
 
+    def test_f16_activation_dedup_is_scoped_recorded_and_must_fire(self) -> None:
+        source = RUNNER.read_text()
+        self.assertIn('f16_act_dedup=${F16_ACT_DEDUP:-0}', source)
+        self.assertIn('F16_ACT_DEDUP="${f16_act_dedup}"', source)
+        self.assertIn('"f16_act_dedup": f16_act_dedup', source)
+        self.assertIn('candidate F16 activation-dedup liveness failed', source)
+        self.assertIn('F16 activation-dedup negative control failed', source)
+
 
 if __name__ == "__main__":
     unittest.main()

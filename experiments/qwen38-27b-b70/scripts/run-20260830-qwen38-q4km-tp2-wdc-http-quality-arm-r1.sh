@@ -29,6 +29,7 @@ wdc_q4k_name_filter=${WDC_Q4K_NAME_FILTER:-}
 candidate_kind=${CANDIDATE_KIND:-wdc}
 q4k_f16_cache_filter=${Q4K_F16_CACHE_FILTER:-}
 q4k_dual_gemm=${Q4K_DUAL_GEMM:-0}
+f16_act_dedup=${F16_ACT_DEDUP:-0}
 port=${PORT:-18154}
 source_dir=${SOURCE_DIR:-/media/steve/extended-ssd/steve-archive/active-qwen38-tp1-concurrency-20260825}
 build_dir=${BUILD_DIR:-${source_dir}/build-sycl-aot-bmg-g31-wdc-noq6-r5}
@@ -104,6 +105,9 @@ esac
 [[ "${q4k_dual_gemm}" == 0 || "${q4k_dual_gemm}" == 1 ]] || fail 'Q4K_DUAL_GEMM must be 0 or 1'
 [[ "${q4k_dual_gemm}" == 0 || ( "${arm}" == candidate && "${candidate_kind}" == q4k-f16-cache ) ]] || fail 'Q4K_DUAL_GEMM=1 requires a Q4_K F16-cache candidate'
 [[ "${q4k_dual_gemm}" == 0 || ( "${q4k_f16_cache_filter}" == *ffn_gate* && "${q4k_f16_cache_filter}" == *ffn_up* ) ]] || fail 'Q4K_DUAL_GEMM=1 requires cached ffn_gate and ffn_up'
+[[ "${f16_act_dedup}" == 0 || "${f16_act_dedup}" == 1 ]] || fail 'F16_ACT_DEDUP must be 0 or 1'
+[[ "${f16_act_dedup}" == 0 || ( "${arm}" == candidate && "${candidate_kind}" == q4k-f16-cache ) ]] || fail 'F16_ACT_DEDUP=1 requires a Q4_K F16-cache candidate'
+[[ "${f16_act_dedup}" == 0 || "${q4k_f16_cache_filter}" == *ffn_gate* ]] || fail 'F16_ACT_DEDUP=1 requires cached ffn_gate'
 [[ "${candidate_kind}" != q4k-f16-cache || -z "${wdc_q4k_name_filter}" ]] || fail 'cache candidate cannot set WDC_Q4K_NAME_FILTER'
 [[ "${concurrency_oracle_kind}" == sequential || "${concurrency_oracle_kind}" == same-shape-batch ]] || \
   fail 'CONCURRENCY_ORACLE_KIND must be sequential or same-shape-batch'
@@ -186,6 +190,7 @@ timeout --signal=INT --kill-after=30s 3600s env \
   WDC_Q4K_NAME_FILTER="${wdc_q4k_name_filter}" \
   Q4K_F16_CACHE_FILTER="${q4k_f16_cache_filter}" \
   Q4K_DUAL_GEMM="${q4k_dual_gemm}" \
+  F16_ACT_DEDUP="${f16_act_dedup}" \
   TP_SIZE="${tp_size}" \
   FEATURE_PROFILE="${feature_profile}" \
   Q8_DEDUP_OVERRIDE="${q8_dedup_override}" \
@@ -279,7 +284,7 @@ else
     qualifier_cmd+=(--pilot --pilot-require-batch-gates --pilot-from-batch --oracle-out "${run_dir}/oracle-digests.json")
   fi
   "${qualifier_cmd[@]}"
-  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${ubatch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${q4k_dual_gemm}" "${concurrency_oracle_kind}" <<'PY'
+  python3 - "${run_dir}" "${arm}" "${baseline_mode}" "${pilot_mode}" "${batch_size}" "${ubatch_size}" "${queue_settle_ms}" "${queue_settle_target}" "${tp_size}" "${concurrency}" "${context}" "${feature_profile}" "${q8_dedup_override}" "${launch_stagger_ms}" "${wdc_q4k_name_filter}" "${mtp_depth}" "${candidate_kind}" "${q4k_f16_cache_filter}" "${pin_slots}" "${fuse_ext}" "${q4k_dual_gemm}" "${f16_act_dedup}" "${concurrency_oracle_kind}" <<'PY'
 import json, pathlib, sys
 root, arm = pathlib.Path(sys.argv[1]), sys.argv[2]
 baseline_mode = sys.argv[3] == "1"
@@ -296,7 +301,8 @@ q4k_f16_cache_filter = sys.argv[18] or None
 pin_slots = sys.argv[19] == "1"
 fuse_ext = int(sys.argv[20])
 q4k_dual_gemm = sys.argv[21] == "1"
-oracle_kind = sys.argv[22]
+f16_act_dedup = sys.argv[22] == "1"
+oracle_kind = sys.argv[23]
 result = json.loads((root / "result.json").read_text())
 quality = json.loads((root / "qualification.json").read_text())
 oracle_exact_all = all(batch.get("oracle_exact_all") is True for batch in result["batches"])
@@ -337,6 +343,7 @@ summary = {
     "candidate_kind": candidate_kind,
     "q4k_f16_cache_filter": q4k_f16_cache_filter,
     "q4k_dual_gemm": q4k_dual_gemm,
+    "f16_act_dedup": f16_act_dedup,
     "pin_slots": pin_slots,
     "fuse_ext": fuse_ext,
 }
@@ -356,15 +363,19 @@ journalctl -k -b --since "${start}" --no-pager | \
 engaged=0; grep -q 'weight-decompression GEMM ENGAGED' "${run_dir}/server.log" && engaged=1
 cache_engaged=0; grep -q 'Q4K-F16-CACHE: incumbent dequant bytes cached' "${run_dir}/server.log" && cache_engaged=1
 dual_gemm_engaged=0; grep -q 'Q4K-DUAL-GEMM: gate/up c96 overlap engaged' "${run_dir}/server.log" && dual_gemm_engaged=1
+f16_act_dedup_engaged=0; grep -q 'F16-ACT-DEDUP: gate/up c96 shared conversion engaged' "${run_dir}/server.log" && f16_act_dedup_engaged=1
 if [[ "${profile}" == concurrency && "${arm}" == candidate && "${candidate_kind}" == wdc && "${engaged}" != 1 ]]; then fail 'candidate WDC liveness failed'; fi
 if [[ "${arm}" == control && "${engaged}" != 0 ]]; then fail 'control WDC negative control failed'; fi
 if [[ "${profile}" == concurrency && "${arm}" == candidate && "${candidate_kind}" == q4k-f16-cache && "${cache_engaged}" != 1 ]]; then fail 'candidate Q4_K F16 cache liveness failed'; fi
 if [[ "${q4k_dual_gemm}" == 1 && "${dual_gemm_engaged}" != 1 ]]; then fail 'candidate Q4_K dual-GEMM liveness failed'; fi
 if [[ "${q4k_dual_gemm}" == 0 && "${dual_gemm_engaged}" != 0 ]]; then fail 'Q4_K dual-GEMM negative control failed'; fi
+if [[ "${f16_act_dedup}" == 1 && "${f16_act_dedup_engaged}" != 1 ]]; then fail 'candidate F16 activation-dedup liveness failed'; fi
+if [[ "${f16_act_dedup}" == 0 && "${f16_act_dedup_engaged}" != 0 ]]; then fail 'F16 activation-dedup negative control failed'; fi
 if [[ "${arm}" == control && "${cache_engaged}" != 0 ]]; then fail 'control Q4_K F16 cache negative control failed'; fi
 printf '%s\n' "${engaged}" >"${run_dir}/wdc-engaged.txt"
 printf '%s\n' "${cache_engaged}" >"${run_dir}/q4k-f16-cache-engaged.txt"
 printf '%s\n' "${dual_gemm_engaged}" >"${run_dir}/q4k-dual-gemm-engaged.txt"
+printf '%s\n' "${f16_act_dedup_engaged}" >"${run_dir}/f16-act-dedup-engaged.txt"
 sha256sum "${run_dir}/result.json" "${run_dir}/summary.json" >"${run_dir}/result-sha256sums.txt"
 if ! jq -e '.quality_qualified == true' "${run_dir}/summary.json" >/dev/null; then
   fail 'strict output-quality gate failed'

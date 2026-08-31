@@ -1,0 +1,16 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-f16-act-dedup-same-binary-control-20260830-r28",
+  "status": "preregistered after R27 candidate measurements and before any same-binary control measurement",
+  "reason": "R27's feature-on center is only 0.0906% above the prior rebuilt incumbent. This is smaller than the already observed Intel AOT build-identity shift, so cross-binary comparison cannot establish a causal speed gain.",
+  "hardware": "Two local Intel Arc Pro B70 cards only; no remote host.",
+  "fixed_configuration": "Identical to R27: Qwen3.8-27B Q4_K_M, llama.cpp SYCL TP2 tensor 1,1, MTP0, exact F16 weight cache for ffn_down and ffn_gate, c96 pinned, effective context 49152, batch 2048, ubatch 256, FUSE_EXT=31, prompt cache off, 128 tokens/request.",
+  "same_binary_control": "Use the exact R27 backend SHA-256 6bb6384aeac741bae2b6abc38ce8e1d7cf71c3500cbfd372b9412e96aeac307e with F16_ACT_DEDUP=0. The activation-dedup marker must be absent while the exact weight-cache marker remains present.",
+  "feature_on_attempts_tok_s": [
+    192.87582400378707,
+    192.82526524814904
+  ],
+  "feature_on_center_tok_s": 192.85054462596804,
+  "control_rule": "Run two fresh-server feature-off attempts. Both must pass 96/96 frozen same-shape oracle identity, cache-zero, collision, cleanup, kernel, weight-cache liveness, activation-dedup negative-control, and dual-GEMM negative-control gates.",
+  "causal_decision_rule": "Classify R27 as a qualified speed improvement only if the two-attempt feature-on center is strictly above the two-attempt same-binary feature-off center. If not, classify activation dedup as neutral. Because the expected effect is tiny, report both centers, spread, and exact delta without rounding it into a broader headline. No individual run may be promoted.",
+  "oracle_sha256": "f0d26606c46b72d8701ca43f113625d5630fa16b17cd8e9db4ea563cbf591ff1"
+}

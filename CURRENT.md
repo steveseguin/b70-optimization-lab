@@ -1854,6 +1854,13 @@ an effective 49,152-token pool (96x512), and peak used VRAM was about
 50/96, so this qualifies candidate-vs-control identity and aggregate capacity,
 not batch-invariant text. See the [c96 result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-exact-f16-cache-c96-result.md).
 
+A follow-on default-off c96 activation-conversion dedup passed 96/96 exactness
+twice but is performance-neutral. Feature-on centered at `192.850545 tok/s`;
+identical-backend feature-off controls centered slightly higher at
+`192.867941 tok/s`. The apparent `+0.0906%` cross-binary delta was smaller than
+known Intel AOT relink variation and is not claimed. Active source and backend
+were restored to the r26 identities. See the [R27/R28 result](experiments/qwen38-27b-b70/notes/2026-08-30-qwen38-q4km-tp2-c96-f16-act-dedup-r27-result.md).
+
 The 2026-08-15 Q4_K fusion passed a clean build, mechanism counter, same-binary
 control, and complete 12-prompt cold suite. It improved the conventional
 median by `+1.701%`; all complete output hashes remained exact. The Q8_0 TP2

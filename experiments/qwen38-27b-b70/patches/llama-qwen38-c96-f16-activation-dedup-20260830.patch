@@ -1,0 +1,124 @@
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -3511,6 +3511,92 @@ catch (sycl::exception const &exc) {
+             << ", line:" << __LINE__ << std::endl;
+   std::exit(1);
+ }
++
++// Default-off research door for the c96 Qwen3.8 gate/up endpoint.  Those two
++// adjacent GEMMs consume the same F32 activation but the stock path converts
++// it to F16 independently for each weight.  Keep one exact conversion per
++// backend graph generation and device; the in-order queue makes overwriting
++// this single buffer safe after the prior consumer has been enqueued.
++struct ggml_sycl_f16_act_memo_entry {
++    ggml_backend_sycl_context * ctx        = nullptr;
++    const ggml_tensor *         src1       = nullptr;
++    const float *               src1_data  = nullptr;
++    uint64_t                    generation = 0;
++    sycl::half *                buf        = nullptr;
++    size_t                      capacity   = 0;
++};
++
++static ggml_sycl_f16_act_memo_entry g_f16_act_memo[GGML_SYCL_MAX_DEVICES];
++
++static bool ggml_sycl_f16_act_dedup_enabled() {
++    static const bool enabled = [] {
++        const char * env = getenv("GGML_SYCL_F16_ACT_DEDUP");
++        return env != nullptr && atoi(env) == 1;
++    }();
++    return enabled;
++}
++
++static sycl::half * ggml_sycl_f16_act_dedup(
++        ggml_backend_sycl_context & ctx, int device,
++        const ggml_tensor * src0, const ggml_tensor * src1,
++        const float * src1_data, int64_t src1_ncols, int64_t ne10,
++        const to_fp16_sycl_t to_fp16_sycl, const queue_ptr & stream) {
++    const bool gate_or_up = std::strstr(src0->name, ".ffn_gate.weight") != nullptr ||
++                            std::strstr(src0->name, ".ffn_up.weight") != nullptr;
++    if (!ggml_sycl_f16_act_dedup_enabled() || device < 0 ||
++            device >= GGML_SYCL_MAX_DEVICES || !gate_or_up ||
++            src0->type != GGML_TYPE_Q4_K || src1->type != GGML_TYPE_F32 ||
++            !ggml_is_contiguous(src1) || src1_ncols != 96 || ne10 != 5120) {
++        return nullptr;
++    }
++
++    auto & memo = g_f16_act_memo[device];
++    const size_t elements = (size_t) src1_ncols * ne10;
++    if (memo.ctx == &ctx && memo.src1 == src1 && memo.src1_data == src1_data &&
++            memo.generation == ctx.q8_memo_generation && memo.capacity >= elements) {
++        static std::atomic_flag announced = ATOMIC_FLAG_INIT;
++        if (!announced.test_and_set()) {
++            GGML_LOG_WARN("F16-ACT-DEDUP: gate/up c96 shared conversion engaged\n");
++        }
++        return memo.buf;
++    }
++
++    if (memo.ctx != nullptr && memo.ctx != &ctx && memo.buf != nullptr) {
++        stream->wait();
++        ggml_sycl_free_device(memo.buf, *stream);
++        memo.buf = nullptr;
++        memo.capacity = 0;
++    }
++    if (memo.capacity < elements) {
++        if (memo.buf != nullptr) {
++            stream->wait();
++            ggml_sycl_free_device(memo.buf, *stream);
++            memo.buf = nullptr;
++            memo.capacity = 0;
++        }
++        try {
++            memo.buf = static_cast<sycl::half *>(
++                    ggml_sycl_malloc_device(elements * sizeof(sycl::half), *stream));
++        } catch (const sycl::exception &) {
++            memo.buf = nullptr;
++        }
++        if (memo.buf == nullptr) {
++            memo.ctx = nullptr;
++            memo.src1 = nullptr;
++            memo.src1_data = nullptr;
++            memo.generation = 0;
++            return nullptr;
++        }
++        memo.capacity = elements;
++    }
++
++    to_fp16_sycl(src1_data, memo.buf, elements, stream);
++    memo.ctx = &ctx;
++    memo.src1 = src1;
++    memo.src1_data = src1_data;
++    memo.generation = ctx.q8_memo_generation;
++    return memo.buf;
++}
+ 
+ inline void ggml_sycl_op_mul_mat_sycl(
+     ggml_backend_sycl_context & ctx,
+@@ -3649,18 +3735,24 @@ inline void ggml_sycl_op_mul_mat_sycl(
+                                          : (src0_cached_f16 != nullptr ? src0_cached_f16 : src0_as_f16.get());
+ 
+         ggml_sycl_pool_alloc<sycl::half> src1_as_f16(ctx.pool());
++        sycl::half * src1_cached_f16 = nullptr;
+         if (src1->type != GGML_TYPE_F16) {
+             scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
+                                                  " : converting src1 to fp16");
+             const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
+             GGML_ASSERT(to_fp16_sycl != nullptr);
+             size_t ne = src1_ncols*ne10;
+-            src1_as_f16.alloc(ne);
+-            to_fp16_sycl(src1_ddf_i, src1_as_f16.get(), ne, stream);
++            src1_cached_f16 = ggml_sycl_f16_act_dedup(
++                    ctx, id, src0, src1, src1_ddf_i, src1_ncols, ne10,
++                    to_fp16_sycl, stream);
++            if (src1_cached_f16 == nullptr) {
++                src1_as_f16.alloc(ne);
++                to_fp16_sycl(src1_ddf_i, src1_as_f16.get(), ne, stream);
++            }
+         }
+         const sycl::half *src1_ptr = src1->type == GGML_TYPE_F16
+                 ? (const sycl::half *)src1->data + src1_padded_row_size
+-                                         : src1_as_f16.get();
++                : (src1_cached_f16 != nullptr ? src1_cached_f16 : src1_as_f16.get());
+ 
+ #if GGML_SYCL_DNNL
+         if (g_ggml_sycl_enable_dnn) {
