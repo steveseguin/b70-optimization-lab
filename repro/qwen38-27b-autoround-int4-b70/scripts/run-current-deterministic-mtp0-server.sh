@@ -72,12 +72,12 @@ docker run --rm --entrypoint sha256sum "$image" \
 cmp -s "$expected_files" "$actual_files" || { printf 'patched image file identities mismatch\n' >&2; exit 1; }
 docker run --rm --entrypoint strings "$image" \
   /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so \
-  | grep -Fq VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD || {
+  | grep -F VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD >/dev/null || {
     printf 'INT4 determinism marker missing\n' >&2; exit 1;
   }
 
-docker ps -a --format '{{.Names}}' | grep -Fxq "$container" && { printf 'container exists\n' >&2; exit 1; }
-ss -ltn | grep -Eq ":${port}[[:space:]]" && { printf 'port occupied\n' >&2; exit 1; }
+docker ps -a --format '{{.Names}}' | grep -Fx "$container" >/dev/null && { printf 'container exists\n' >&2; exit 1; }
+ss -ltn | grep -E ":${port}[[:space:]]" >/dev/null && { printf 'port occupied\n' >&2; exit 1; }
 (( $(awk '/MemAvailable/ {print $2}' /proc/meminfo) >= min_host_memory_gib * 1024 * 1024 )) || {
   printf 'less than %s GiB host memory available\n' "$min_host_memory_gib" >&2; exit 1;
 }

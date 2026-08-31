@@ -1,0 +1,15 @@
+{
+  "schema": "neural.download.qwen38-autoround-deterministic-mtp0-campaign.v1",
+  "campaign": "qwen38-autoround-detpad-mtp0-local-tp2-20260830-r1",
+  "classification": "preflight-failed-no-model-request",
+  "failed_arm": "eager-oracle",
+  "attempt_rc": 1,
+  "model_direct_verification": "passed-19-of-19",
+  "server_started": false,
+  "model_loaded": false,
+  "requests_sent": 0,
+  "cause": "The fail-closed marker preflight used strings piped to grep -q under pipefail. The marker was present, but grep closed early and strings returned SIGPIPE, which the wrapper misclassified as a missing marker.",
+  "corrective_action": "Consume the complete strings stream with grep -F redirected to /dev/null; preregister a new r2 campaign rather than reuse r1 evidence roots.",
+  "raw_evidence_root": "/mnt/fast-ai/bench-results/qwen38-autoround-detpad-mtp0-local-tp2-20260830-r1-eager-oracle",
+  "reporting_boundary": "No model inference or performance evidence was produced."
+}
