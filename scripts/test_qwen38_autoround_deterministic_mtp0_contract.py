@@ -52,8 +52,8 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "patched image file identities mismatch",
             "INT4 determinism patch identity mismatch",
             "/tmp/b70-benchmark.lock",
-            "/tmp/b70-gpu2.lock",
-            "/tmp/b70-gpu3.lock",
+            'exec 8>"/tmp/b70-gpu${gpu_a}.lock"',
+            'exec 9>"/tmp/b70-gpu${gpu_b}.lock"',
         ):
             self.assertIn(required, self.server)
         self.assertIn("vllm_xpu_kernels/_xpu_C.abi3.so", self.server)
@@ -79,7 +79,7 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "container remained after bounded shutdown",
             "port remained occupied after bounded shutdown",
             "vLLM process remained after bounded shutdown",
-            "new GPU2/3 kernel fault event detected",
+            "new GPU/kernel/OOM fault event detected",
         ):
             self.assertIn(required, self.attempt)
 
