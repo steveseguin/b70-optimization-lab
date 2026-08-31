@@ -1841,6 +1841,20 @@ synchronized component latency across three fresh-process brackets. At 48
 calls/token this projects to only about 0.143 ms/token, far below endpoint
 noise, so it does not displace A29 or justify another model load by itself. See
 the [component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-topk-512-workspace-component-positive.md).
+The next bounded dense-path screen uses the existing Xe2 BF16 grouped-GEMM
+implementation on real layer-0/layer-47 attention HyperConnection weights. A
+component-only `_xpu_C` and matched grouped library are sealed in an isolated
+stage; preparing that stage exposed and fixed three latent local source/build
+contract mismatches, preserved as patch `0007`. The frozen one-B70 test is
+control/candidate/control, requires exact consumed bytes, and cannot authorize
+an endpoint claim. It performs no reboot, server launch, or full checkpoint
+load. See the
+[HC M1 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-hc-m1-grouped-gemm-prereg.md).
+Those build-only commits advanced the clean kernel workspace from `359466a` to
+`eeee7d6`; the sealed serving stage and all protected results are unchanged,
+but A29's workspace-source guard is now intentionally stale. Refreeze and
+re-audit that guard against the exact four-commit chain before any future A29
+endpoint load.
 An exact-shape one-B70 MoE screen also found a lossless M4 component win,
 but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median

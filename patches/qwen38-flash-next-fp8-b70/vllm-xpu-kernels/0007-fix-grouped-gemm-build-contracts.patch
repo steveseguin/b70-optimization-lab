@@ -1,0 +1,147 @@
+From a6ee94fd8fadb97dc033921f1019ef18f14d5dd0 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 31 Aug 2026 00:17:42 -0400
+Subject: [PATCH 1/3] fix(xpu): restore local grouped GEMM API consistency
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ .../grouped_gemm/grouped_gemm_interface.cpp    | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+index b3cfd2e..3916a78 100644
+--- a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
++++ b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+@@ -11,15 +11,16 @@
+ 
+ torch::Tensor cutlass_grouped_gemm_interface(
+     torch::Tensor ptr_A,
+-    const c10::optional<at::Tensor>& ptr_A_scale,
+     torch::Tensor ptr_B,
+-    const c10::optional<at::Tensor>& ptr_B_scale,
++    const c10::optional<at::Tensor>& ptr_scales,
+     const c10::optional<at::Tensor>& ptr_bias,
+     torch::Tensor ptr_D,
+     torch::Tensor rows_per_expert,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts) {
++    int64_t num_experts,
++    bool is_B_int4,
++    bool is_B_mxfp4) {
+   if (vllm::xpu::force_xe_default_kernel()) {
+ #ifdef VLLM_XPU_ENABLE_XE_DEFAULT
+     int64_t groups = num_experts;
+@@ -33,21 +34,18 @@ torch::Tensor cutlass_grouped_gemm_interface(
+ #endif
+   } else if (vllm::xpu::is_xe2_arch() || vllm::xpu::is_xe3_arch()) {
+ #ifdef VLLM_XPU_ENABLE_XE2
+-    // Xe2 grouped GEMM currently consumes high-precision A (W16A16 / W8A16).
+-    // When callers pass FP8 activations + ptr_A_scale, Python
+-    // (fused_moe_interface._apply_kernel) dequants A before this entry.
+-    // Device W8A8 with ptr_A_scale is not yet implemented here.
+-    (void)ptr_A_scale;
+     return cutlass_grouped_gemm_xe2(
+         ptr_A,
+         ptr_B,
+-        ptr_B_scale,
++        ptr_scales,
+         ptr_bias,
+         ptr_D,
+         rows_per_expert,
+         N,
+         K,
+-        num_experts);
++        num_experts,
++        is_B_int4,
++        is_B_mxfp4);
+ #else
+     TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
+ #endif
+-- 
+2.43.0
+
+
+From 042c6e877b667f03087091ce3ab58b80903afc20 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 31 Aug 2026 00:19:16 -0400
+Subject: [PATCH 2/3] fix(xpu): pass grouped 4-bit weight kind
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    | 21 ++++++++++++-------
+ 1 file changed, 13 insertions(+), 8 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index 8405004..ed10d00 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -529,14 +529,19 @@ CUTE_DEVICE void MoEGEMM(
+       auto tile_coord = make_coord(m_coord, n_coord, _, 0);
+ 
+       if constexpr (is_B_4bits) {
+-#define XE_GEMM_4BITS_CALLER(GroupSize)                                     \
+-  xe_gemm_4bits<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD, GroupSize>( \
+-      A_tensor,                                                             \
+-      B_tensor,                                                             \
+-      ptr_Scales_curr_batch,                                                \
+-      ptr_Bias_curr_batch,                                                  \
+-      D_tensor,                                                             \
+-      tile_coord,                                                           \
++#define XE_GEMM_4BITS_CALLER(GroupSize)           \
++  xe_gemm_4bits<                                  \
++      GmemTiledCopyA,                             \
++      GmemTiledCopyB,                             \
++      GmemTiledCopyD,                             \
++      is_B_int4 ? B_DTYPE::INT4 : B_DTYPE::MXFP4, \
++      GroupSize>(                                 \
++      A_tensor,                                   \
++      B_tensor,                                   \
++      ptr_Scales_curr_batch,                      \
++      ptr_Bias_curr_batch,                        \
++      D_tensor,                                   \
++      tile_coord,                                 \
+       mma);
+         if (group_size == 32) {
+           XE_GEMM_4BITS_CALLER(32)
+-- 
+2.43.0
+
+
+From eeee7d671abfa964626baa18da2174bb92cac80a Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 31 Aug 2026 00:26:28 -0400
+Subject: [PATCH 3/3] fix(moe): declare local prologue for XPU layerlet
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ csrc/moe/moe_ops.h | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/csrc/moe/moe_ops.h b/csrc/moe/moe_ops.h
+index 9d85185..620494a 100755
+--- a/csrc/moe/moe_ops.h
++++ b/csrc/moe/moe_ops.h
+@@ -106,6 +106,19 @@ void remap_hidden_states(
+     int64_t total_experts_num,
+     int64_t local_experts_num);
+ 
++void fused_moe_prologue(
++    torch::Tensor input,
++    const c10::optional<torch::Tensor>& input_scales,
++    torch::Tensor token_selected_experts,
++    torch::Tensor token_final_scales,
++    torch::Tensor workspace,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t block_k,
++    int64_t ep_rank,
++    int64_t ep_size,
++    int64_t num_experts_on_rank);
++
+ torch::Tensor reorder_mxfp_scales(
+     const torch::Tensor& A_scales,
+     const torch::Tensor& rows_per_expert,
+-- 
+2.43.0
+
