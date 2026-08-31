@@ -1742,6 +1742,14 @@ hashes. The async selector is not promoted and no speed receives credit. Clean
 teardown restored all four cards and host memory; protected target-only and
 MTP4 results remain unchanged. See the
 [A26 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a26-async-uva-endpoint-negative.md).
+A27 is the next frozen endpoint arm. It restores synchronous PLE, keeps trace
+off, and changes only the M4 MoE launch entry from four to eight warps through
+the exact tracked config folder. The launcher, live client, and supervisor
+bind the config hash/selection, reject async-PLE, and retain the complete A26
+quality and authority battery. It must be the next boot's only full load. A
+passing speed observation remains a candidate until separately booted matched
+control and repeat arms establish attribution. See the
+[A27 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a27-moe-warps8-endpoint-prereg.md).
 An exact-shape one-B70 MoE screen also found a lossless M4 component win:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
