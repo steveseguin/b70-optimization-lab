@@ -59,6 +59,9 @@ class PrefillProjectionRepairContractTest(unittest.TestCase):
             "disallowed_boot_id=4136985e-4d03-45f1-8ecd-5b465b32e8d1",
             'VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE=1',
             'VLLM_XPU_QWEN38_PREFILL_SMALL_PAD_TOKENS=512',
+            'REQUIRE_DUMMY_SAMPLER_STAGE_SYNC=1',
+            'qwen38-autoround-dummy-sampler-stage-sync-r1',
+            'TRACE_IMAGE_ID=sha256:66bcfff69c6bf49500ce564132b303b26e26793c2c7c1b75a03c47681cab7261',
             'TENSOR_PARALLEL_SIZE=2',
             'MAX_NUM_BATCHED_TOKENS=256',
             '"num_speculative_tokens":1',
@@ -66,6 +69,16 @@ class PrefillProjectionRepairContractTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
         self.assertNotIn('"num_speculative_tokens":2', source)
+
+    def test_strict_runner_fails_closed_on_stage_receipts(self) -> None:
+        source = STRICT_RUNNER.read_text()
+        for required in (
+            'REQUIRE_DUMMY_SAMPLER_STAGE_SYNC',
+            'QWEN38_DUMMY_SAMPLER_STAGE_SYNC pass=$stage',
+            '"$tensor_parallel_size"',
+            'dummy-sampler stage receipt missing or duplicated',
+        ):
+            self.assertIn(required, source)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,34 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index e81913f..b490e95 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -6,0 +7 @@ import itertools
++import os
+@@ -6348,0 +6350,11 @@ class GPUModelRunner(
++        stage_sync_enabled = (
++            os.environ.get("VLLM_XPU_QWEN38_DUMMY_SAMPLER_STAGE_SYNC") == "1"
++        )
++
++        def stage_sync(stage: str) -> None:
++            if stage_sync_enabled:
++                logger.info("QWEN38_DUMMY_SAMPLER_STAGE_SYNC begin=%s", stage)
++                torch.accelerator.synchronize()
++                logger.info("QWEN38_DUMMY_SAMPLER_STAGE_SYNC pass=%s", stage)
++
++        stage_sync("entry")
+@@ -6349,0 +6362 @@ class GPUModelRunner(
++        stage_sync("random_hidden_states")
+@@ -6351,0 +6365 @@ class GPUModelRunner(
++        stage_sync("compute_logits")
+@@ -6375,0 +6390 @@ class GPUModelRunner(
++        stage_sync("sampling_metadata")
+@@ -6379,0 +6395 @@ class GPUModelRunner(
++            stage_sync("sampler_default")
+@@ -6396,0 +6413 @@ class GPUModelRunner(
++                stage_sync("sampler_generators")
+@@ -6411,0 +6429 @@ class GPUModelRunner(
++            stage_sync("spec_decode_metadata")
+@@ -6437,0 +6456 @@ class GPUModelRunner(
++            stage_sync("rejection_sampler_mixed")
+@@ -6451,0 +6471 @@ class GPUModelRunner(
++            stage_sync("rejection_sampler_greedy")

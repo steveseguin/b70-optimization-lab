@@ -6,8 +6,8 @@ campaign=${CAMPAIGN_ID:-qwen38-prefill-projection-repair-strict-20260831-d54}
 root=/mnt/fast-ai/bench-results/$campaign
 cache=/mnt/fast-ai/vllm-cache/$campaign
 model=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround
-image=neural-download/vllm-openai-xpu:qwen38-autoround-gdn-int4-prefill-pad512-r1
-image_id=sha256:03da963d9d9b3b2cfc5cb7d9f1bc0aeb9ebd7e1b9495e3cad4e5b9e5dd4fc493
+image=${TRACE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-autoround-gdn-int4-prefill-pad512-r1}
+image_id=${TRACE_IMAGE_ID:-sha256:03da963d9d9b3b2cfc5cb7d9f1bc0aeb9ebd7e1b9495e3cad4e5b9e5dd4fc493}
 hook=$repo/repro/qwen38-27b-autoround-int4-b70/patches/qwen38-prefill-projection-repair-sitecustomize.py
 prereg=${PREREG_PATH:-$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-strict-d54-prereg.md}
 suite=$repo/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json
@@ -24,6 +24,7 @@ device_selector=${ONEAPI_SELECTOR:-level_zero:0}
 container_memory=${CONTAINER_MEMORY:-12g}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-2048}
 speculative_config_json=${SPECULATIVE_CONFIG_JSON:-}
+require_dummy_sampler_stage_sync=${REQUIRE_DUMMY_SAMPLER_STAGE_SYNC:-0}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -40,6 +41,7 @@ trap cleanup EXIT
 trap 'exit 130' INT TERM HUP
 
 [[ -f "$hook" && -f "$prereg" && -f "$suite" && -f "$bench" && -f "$canaries" ]] || fail 'missing frozen input'
+[[ "$require_dummy_sampler_stage_sync" == 0 || "$require_dummy_sampler_stage_sync" == 1 ]] || fail 'stage-sync requirement must be 0/1'
 [[ -d "$model" && ! -L "$model" && "$(findmnt -n -o FSTYPE -T "$model")" == ext4 ]] || fail 'model must be local ext4'
 [[ ! -e "$root" && ! -e "$cache" ]] || fail 'output or cache root already exists'
 [[ "$(docker image inspect "$image" --format '{{.Id}}')" == "$image_id" ]] || fail 'image identity mismatch'
@@ -101,6 +103,14 @@ done
 docker inspect "$container" >"$root/container-inspect.json"
 docker logs "$container" >"$root/server-startup.log" 2>&1
 [[ "$(docker inspect --format '{{.Image}}' "$container")" == "$image_id" ]] || fail 'image receipt mismatch'
+if [[ "$require_dummy_sampler_stage_sync" == 1 ]]; then
+  for stage in entry random_hidden_states compute_logits sampling_metadata \
+    sampler_default sampler_generators spec_decode_metadata \
+    rejection_sampler_mixed rejection_sampler_greedy; do
+    [[ "$(grep -Fc "QWEN38_DUMMY_SAMPLER_STAGE_SYNC pass=$stage" "$root/server-startup.log")" == "$tensor_parallel_size" ]] || \
+      fail "dummy-sampler stage receipt missing or duplicated: $stage"
+  done
+fi
 if [[ -n "$speculative_config_json" ]]; then
   spec_depth=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["num_speculative_tokens"])' "$speculative_config_json")
   grep -Fq "num_spec_tokens=${spec_depth}" "$root/server-startup.log" || fail 'speculator depth receipt missing'
