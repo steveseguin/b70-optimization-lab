@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "endpoint_speed_and_reliability_negative",
-  "classification": "lossless_component_gain_did_not_transfer_to_endpoint",
+  "status": "endpoint_reliability_negative_intended_speed_treatment_inert",
+  "classification": "m4_component_candidate_not_exercised_by_m1_endpoint",
   "identity": {
     "model": "Qwen/Qwen3.8-Flash-Next-FP8",
     "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
@@ -15,7 +15,9 @@
     "max_model_len": 4352,
     "placement": "ple_only_uva",
     "async_uva_ple_prefetch": false,
-    "moe_m4_num_warps": 8,
+    "intended_moe_m4_num_warps": 8,
+    "production_decode_m": 1,
+    "production_decode_m1_num_warps": 4,
     "tuned_config_sha256": "f93b5e1d5863e04268eb96877ab2ef6ba0990c42c62f1dff27bc36676c30bf7f",
     "attempt": 27,
     "port": 19699,
@@ -28,7 +30,8 @@
     "device_gib_per_rank": 31.57,
     "ple_host_gib_per_rank": 11.92,
     "kv_cache_tokens": 4747,
-    "exact_config_selection_receipt": true
+    "config_file_load_receipt": true,
+    "selected_batch_size_key_receipt": false
   },
   "quality": {
     "recovery_canary": "passed",
@@ -74,9 +77,9 @@
   "interpretation": {
     "endpoint_config_promoted": false,
     "speed_credit": false,
-    "reason": "The three-row short median was 0.255 percent below the protected frontier, and the exact-4K pair was not repeatable. The isolated M4 kernel improvement is not a dominant endpoint bottleneck under this TP4 runtime.",
+    "reason": "The three-row short median was 0.255 percent below the protected frontier, and the exact-4K pair was not repeatable. Later A28 traces and source review show the endpoint routed kernel uses M1, so the unchanged key 1 remained active and this run did not exercise or reject the M4 component candidate.",
     "protected_results_changed": false,
-    "next": "Do not spend a matched-control boot on this non-winning candidate. Preserve the exact component result, continue GatedDeltaNet reliability diagnosis, and profile the complete target step before pursuing another speed treatment."
+    "next": "Require a selected-key receipt for future tuned-config arms. Preserve the exact M4 component result as component-only, re-screen the real M1 endpoint shape, and use A28's full-step profile before pursuing another endpoint treatment."
   },
   "lifecycle": {
     "supervisor_exit_code": 143,

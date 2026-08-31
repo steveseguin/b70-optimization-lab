@@ -1742,22 +1742,22 @@ hashes. The async selector is not promoted and no speed receives credit. Clean
 teardown restored all four cards and host memory; protected target-only and
 MTP4 results remain unchanged. See the
 [A26 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a26-async-uva-endpoint-negative.md).
-A27 is the next frozen endpoint arm. It restores synchronous PLE, keeps trace
-off, and changes only the M4 MoE launch entry from four to eight warps through
-the exact tracked config folder. The launcher, live client, and supervisor
-bind the config hash/selection, reject async-PLE, and retain the complete A26
-quality and authority battery. It must be the next boot's only full load. A
-passing speed observation remains a candidate until separately booted matched
-control and repeat arms establish attribution. See the
+A27 was preregistered to restore synchronous PLE and change only the M4 MoE
+config entry from four to eight warps. Its launcher and client proved that the
+tracked config file was loaded, but they did not prove which batch-size key was
+selected. Later A28 traces and source review show production decode enters the
+routed kernel at M1; the unchanged key `1` therefore remained active and the
+intended key `4` treatment was inert. See the
 [A27 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a27-moe-warps8-endpoint-prereg.md).
-A27 completed as a bounded endpoint speed and reliability negative. The exact
-config-selection receipt, recovery, accepted 6/7 semantics, 16/16 repeat,
-needle, and cache-zero transport checks passed. Short decode measured
+A27 completed as a bounded endpoint reliability negative with an inert speed
+treatment. The config-file load receipt, recovery, accepted 6/7 semantics,
+16/16 repeat, needle, and cache-zero transport checks passed. Short decode
+measured
 `5.561458 / 5.473329 / 5.501703 tok/s`, median `5.501703`, or 0.255% below the
 protected frontier. Exact-4K row 1 matched authority, but row 2 did not. The
-component-exact 20% M4 kernel gain therefore does not transfer as a dominant
-endpoint win and is not promoted. Teardown was clean; protected results remain
-unchanged. See the
+run neither tests nor rejects the M4 component gain at the endpoint; it instead
+exposes an insufficient selection receipt. Nothing is promoted. Teardown was
+clean; protected results remain unchanged. See the
 [A27 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a27-moe-warps8-endpoint-negative.md).
 The exact-shape layer-1 GatedDeltaNet history replay then passed two independent
 qualification processes: 100 full 4K trajectories and 6,400 native calls per
@@ -1784,21 +1784,22 @@ in each captured context. The p4096/o128 request passed generic depth and cache
 gates but returned the known A10-row-2 non-authority hash, so A28 has no speed,
 quality, reliability, or promotion credit. The valid profile identifies 97
 BF16 allreduces per token with severe rank-arrival asymmetry; the production
-decode MoE path (M1 local input expanded to M4 by EP all-gather, ~26.08 ms
-across rank means) and dense projections (~10.03 ms) are the largest concrete
-noncollective buckets, while GDN, QSA, and PLE are not primary speed targets.
+decode MoE path (M1 routed-kernel input, ~26.08 ms across rank means) and dense
+projections (~10.03 ms) are the largest concrete noncollective buckets, while
+GDN, QSA, and PLE are not primary speed targets.
 Next, analyze the already captured collective ordinal/layer arrival timeline
 offline before selecting another endpoint arm.
 Protected results remain unchanged. See the
 [A28 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-tp4-mtp0-a28-target-step-profile-result.md).
-An exact-shape one-B70 MoE screen also found a lossless M4 component win:
+An exact-shape one-B70 MoE screen also found a lossless M4 component win,
+but A28 later proved M4 is not the current single-sequence endpoint shape:
 raising only `num_warps` from 4 to 8 reduced real-weight balanced-EP4 median
 latency by 20.2--21.1% on two hidden seeds while retaining exact bytes for
 100/100 repeats on each. The tuned-folder selection check passed. The seemingly
 faster `BLOCK_SIZE_K=64` family changed bytes on the second seed and is rejected
-from lossless promotion. The warps-8 result is component-only; A25 still runs
-first, then a separate TP4 endpoint arm must pass every short/4K authority and
-quality/reliability gate before any tok/s credit. See the
+from lossless promotion. The M4 result remains a valid component measurement,
+but the production decode kernel uses M1; re-screen M1 before any endpoint arm.
+See the
 [M4 MoE component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-moe-m4-warps8-component-positive.md).
 A matched four-rank decode-shape collective screen also passed exact rank-order,
 reduce-scatter, and 100-repeat hash gates. Across three process starts, reusing

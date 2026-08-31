@@ -95,13 +95,13 @@
     "endpoint_config_promoted": false,
     "protected_results_changed": false,
     "primary_bottleneck_class": "collective_critical_path_and_cross_rank_arrival_imbalance",
-    "strongest_concrete_noncollective_target": "the production decode MoE path (M1 local input expanded to M4 by EP all-gather) and dense projections; A27 rejected one uniform M4 warps-8 treatment, not the entire path",
+    "strongest_concrete_noncollective_target": "the production M1 routed-MoE path and dense projections; A27 loaded a file containing an M4 warps-8 treatment but did not exercise that key",
     "not_supported_as_primary_speed_targets": [
       "GatedDeltaNet",
       "QSA",
       "PLE lookup"
     ],
-    "next": "Use the captured aligned timelines to classify all 97 BF16 allreduces per token by ordinal/layer, rank arrival, message size, and preceding compute. Only then select collective-count/fusion, rank placement, or production M4 MoE tail-latency work. No additional model load is required for this discriminator."
+    "next": "Use the captured aligned timelines to classify all 97 BF16 allreduces per token by ordinal/layer, rank arrival, message size, and preceding compute. Then test the exact 5120-byte collective threshold and re-screen production M1 MoE. No additional model load is required for either discriminator."
   },
   "battery": {
     "recovery_canary": "passed",

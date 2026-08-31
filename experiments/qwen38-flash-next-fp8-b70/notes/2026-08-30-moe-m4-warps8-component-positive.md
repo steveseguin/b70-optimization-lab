@@ -1,9 +1,9 @@
 # Qwen3.8 Flash-Next FP8 M4 MoE warps-8 component positive
 
 Date: 2026-08-30
-Status: lossless exact-shape component win; endpoint qualification pending
+Status: lossless M4 component win; not the current M1 decode endpoint shape
 
-The repaired component gate now measures the production-like local MoE shape
+The repaired component gate measures an M4 local MoE shape
 with real layer-0 rank-0 FP8 weights, 512-global/128-local EP4 mapping,
 deterministic balanced global routing, nonzero outputs, XPU events, and only one
 host copy/hash after each timing phase. The active decode-like M4 shape uses 11
@@ -28,12 +28,14 @@ second seed. It remains diagnostic and cannot enter a lossless endpoint arm.
 screen; stage-only changes were neutral. No source or protected endpoint result
 was changed.
 
-At 48 MoE layers, the isolated difference corresponds to roughly 5.8--6.1 ms
-of device work per target step if it transfers perfectly. This is a component
-projection, not an endpoint speed claim. A25 must run first on the next fresh
-boot. Only afterward may a separate TP4 arm set this tuned-config folder and
-advance if it retains the exact short/4K output authorities, semantic battery,
-needle, repeatability, and fresh-start reliability.
+A28 later proved that the current single-sequence production decode routed
+kernel uses M1, not M4. With DP=PCP=SP=1 there is no per-layer token all-gather,
+and config selection uses the one-row hidden-state input. A27 consequently
+loaded this map but retained its unchanged M1 entry; it did not test the M4
+treatment. The 5.8--6.1 ms projection is therefore not applicable to the
+current endpoint. Preserve this valid M4 component result for M4 workloads,
+but repeat the real-weight lossless screen at M1 and require a receipt of the
+effective selected key before any new endpoint arm.
 
 Structured result:
 [`20260830-moe-m4-warps8-component-positive.json`](../data/20260830-moe-m4-warps8-component-positive.json)

@@ -58,14 +58,15 @@ not justify treating raw oneCCL residence as wire time.
 
 A28 therefore closes generic GDN, QSA, and PLE speed work as priorities for
 this target-only lane. The strongest concrete noncollective work is the
-production decode MoE path plus dense projections. The layer enters with one
-local token, but EP all-gather expands the routed kernel's global work to M4;
-A27 rejected one uniform M4 warps-8 treatment, not the entire MoE path. Before
-changing runtime code, use these already captured aligned timelines to
-classify all 97 BF16 allreduces by ordinal/layer, message size, rank arrival,
-and preceding compute. That discriminator requires no reboot or model load and
+production decode MoE path plus dense projections. The routed kernel receives
+M1: although EP4 is enabled, DP=PCP=SP=1 keeps `use_all2all_kernels` false, so
+there is no per-layer token all-gather. A27 only proved its tuned-config file
+was loaded; its unchanged M1 entry remained active, so the M4 treatment was
+not exercised. Before changing runtime code, use these already captured
+aligned timelines to classify all 97 BF16 allreduces by ordinal/layer, message
+size, rank arrival, and preceding compute. That discriminator requires no reboot or model load and
 will choose among collective-count/fusion, topology/rank placement, and
-production M4 MoE tail-latency work.
+production M1 MoE work.
 
 Teardown was clean: no port-19700 listener or model worker remains, host memory
 and swap recovered, and no B70 reset or fault occurred. Corrected NVMe PCIe

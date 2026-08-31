@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "qualified_component_positive_pending_endpoint",
-  "scope": "one-B70 exact-shape Qwen3.8 Flash-Next FP8 local MoE; not endpoint tok/s",
+  "status": "qualified_m4_component_positive_not_current_single_sequence_endpoint_shape",
+  "scope": "one-B70 Qwen3.8 Flash-Next FP8 local MoE at M4; not the current M1 decode endpoint and not endpoint tok/s",
   "identity": {
     "model": "Qwen/Qwen3.8-Flash-Next-FP8",
     "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
@@ -73,5 +73,10 @@
     "output_sha256": "ba5447ae309467ed64d6d9df5550054d5058948414018b87e68d827fb42e58df"
   },
   "protected_results_changed": false,
-  "next_gate": "A25 fresh-start control first, then matched TP4 endpoint arm with exact short/4K authorities"
+  "post_a28_shape_correction": {
+    "production_decode_m": 1,
+    "a27_m4_key_selected": false,
+    "component_result_remains_valid": true
+  },
+  "next_gate": "Repeat the real-weight lossless component screen at production M1 and require an effective selected-key receipt before any matched TP4 endpoint arm"
 }
