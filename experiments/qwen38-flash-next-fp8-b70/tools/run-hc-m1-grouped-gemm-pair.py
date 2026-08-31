@@ -17,6 +17,9 @@ import sys
 
 
 PAIR_LOCK_PATH = Path("/tmp/q38-hc-m1-grouped-gemm-pair.lock")
+FROZEN_CONSUMED_AUTHORITIES = {
+    (0, "down"): "34ff970c28c0a5530a2fcc901e9dbfffb8e0642f8f5ad9fc4556d899acdf5976",
+}
 EXPECTED_SYCL = Path("/home/steve/.venvs/vllm-xpu/lib/libsycl.so.8")
 LOADER_SUFFIX = (
     "/home/steve/.venvs/vllm-xpu/lib",
@@ -246,7 +249,8 @@ def main() -> None:
 
     identity_fields = (
         "input_sha256",
-        "weight_sha256",
+        "logical_weight_sha256",
+        "logical_weight_layout_nk",
         "model_revision",
         "model_index_sha256",
         "model_config_sha256",
@@ -262,21 +266,51 @@ def main() -> None:
         "device",
         "layer",
         "projection",
-        "shape",
         "seed",
         "input_dtype",
         "weight_dtype",
         "weight_names",
-        "weight_layout_nk",
-        "packed_layout_ekn",
         "consumed_width",
         "repeats",
     )
     for field in identity_fields:
         if len({json.dumps(arm[field], sort_keys=True) for arm in arms}) != 1:
             raise RuntimeError(f"bracket identity mismatch: {field}")
+    expected_shapes = (
+        (
+            {"m": 1, "n": 336, "k": 10240},
+            {"m": 1, "n": 352, "k": 10240},
+            {"m": 1, "n": 336, "k": 10240},
+        )
+        if args.projection == "down"
+        else ({"m": 1, "n": 10240, "k": 320},) * 3
+    )
+    expected_padding = (12, 28, 12) if args.projection == "down" else (0, 0, 0)
+    for arm, expected_shape, padding_width in zip(
+        arms, expected_shapes, expected_padding, strict=True
+    ):
+        if arm["shape"] != expected_shape:
+            raise RuntimeError(
+                f"provider-specific physical shape mismatch: {arm['shape']}"
+            )
+        if arm["alignment"]["padding_width"] != padding_width:
+            raise RuntimeError("provider-specific padding width mismatch")
+        if not arm["discarded_output_all_zero"]:
+            raise RuntimeError("provider returned a nonzero discarded tail")
+    for field in (
+        "shape",
+        "weight_sha256",
+        "weight_layout_nk",
+        "packed_layout_ekn",
+        "alignment",
+        "discarded_output_sha256",
+    ):
+        if arms[0][field] != arms[2][field]:
+            raise RuntimeError(f"control physical identity drift: {field}")
     output_hashes = {str(arm["consumed_output_sha256"]) for arm in arms}
     exact = len(output_hashes) == 1
+    frozen_authority = FROZEN_CONSUMED_AUTHORITIES.get((args.layer, args.projection))
+    authority_match = frozen_authority is None or output_hashes == {frozen_authority}
     controls = [
         float(arms[index]["timing_us"]["median"])  # type: ignore[index]
         for index in (0, 2)
@@ -291,7 +325,11 @@ def main() -> None:
     control_drift_percent = abs(controls[1] / controls[0] - 1.0) * 100.0
     result = {
         "schema_version": 1,
-        "status": "pair_passed" if exact else "pair_rejected_output_mismatch",
+        "status": (
+            "pair_passed"
+            if exact and authority_match
+            else "pair_rejected_output_or_authority_mismatch"
+        ),
         "classification": "hot_weight_component_screen_only",
         "benchmark_sha256": benchmark_sha256,
         "driver_sha256": driver_sha256,
@@ -302,6 +340,8 @@ def main() -> None:
         "projection": args.projection,
         "seed": args.seed,
         "exact_consumed_output": exact,
+        "frozen_consumed_authority": frozen_authority,
+        "frozen_authority_match": authority_match,
         "consumed_output_sha256_values": sorted(output_hashes),
         "control_median_us": control_median,
         "candidate_median_us": candidate,
@@ -309,7 +349,10 @@ def main() -> None:
         "control_drift_percent": control_drift_percent,
         "control_drift_limit_percent": 3.0,
         "eligible_for_round_robin_followup": (
-            exact and latency_reduction_percent >= 5.0 and control_drift_percent <= 3.0
+            exact
+            and authority_match
+            and latency_reduction_percent >= 5.0
+            and control_drift_percent <= 3.0
         ),
         "endpoint_claim_authorized": False,
         "arms": arms,
@@ -320,7 +363,7 @@ def main() -> None:
         raise RuntimeError("runtime manifest changed before final evidence write")
     write_exclusive(output, json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps(result, sort_keys=True))
-    if not exact:
+    if not exact or not authority_match:
         raise SystemExit(2)
 
 

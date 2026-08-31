@@ -34,6 +34,54 @@ EXPECTED_SHARD_SHA256 = {
         "2d06ec9c1726f42bfc9ce0bbb47129917d8ab373c88eed4e758fb6940c92ad4a"
     ),
 }
+EXPECTED_LOGICAL_WEIGHT_SHA256 = {
+    (0, "down"): "bff35df460770a5108d4dea52153322a4857358d5d2d6eb6a54c206d775735a1",
+    (0, "up"): "6e87eb16e95e4e24cb83f3852d4200bdff7da87d8e8989022fe8012b88c2f978",
+    (47, "down"): "367e391d0d9cf602d124ffe3c7a50ab9d48ed373569fe5ad8f1e3fa14f91831b",
+    (47, "up"): "b910a9626f2a671a614e42eb0c4ad6c6a6c62ad6b787693ff127d564303062ae",
+}
+EXPECTED_PHYSICAL_WEIGHT_SHA256 = {
+    (
+        0,
+        "down",
+        "linear",
+    ): "d0e4a87a9b06bf2b873e788e111a2c7b91e570bc813de641dfa48423b0cf6fc8",
+    (
+        0,
+        "down",
+        "grouped",
+    ): "d8c0551681da4a7b5283cc0473f5c7e9cd14241df62dfe84282aa8753ef74d65",
+    (
+        0,
+        "up",
+        "linear",
+    ): "6e87eb16e95e4e24cb83f3852d4200bdff7da87d8e8989022fe8012b88c2f978",
+    (
+        0,
+        "up",
+        "grouped",
+    ): "6e87eb16e95e4e24cb83f3852d4200bdff7da87d8e8989022fe8012b88c2f978",
+    (
+        47,
+        "down",
+        "linear",
+    ): "514e437bf03c8b84eb63bae9d9a812be5ed42c1b97f1967a3dac1d8fd75ac7cb",
+    (
+        47,
+        "down",
+        "grouped",
+    ): "7e680ab1038ecf9ff7db32991df54e79701054642479f4ca8b11b29359bade24",
+    (
+        47,
+        "up",
+        "linear",
+    ): "b910a9626f2a671a614e42eb0c4ad6c6a6c62ad6b787693ff127d564303062ae",
+    (
+        47,
+        "up",
+        "grouped",
+    ): "b910a9626f2a671a614e42eb0c4ad6c6a6c62ad6b787693ff127d564303062ae",
+}
 LOCK_PATH = Path("/tmp/q38-hc-m1-grouped-gemm.lock")
 LOADER_SUFFIX = (
     "/home/steve/.venvs/vllm-xpu/lib",
@@ -72,8 +120,8 @@ def percentile(values: list[float], fraction: float) -> float:
 
 
 def load_weight(
-    model: Path, layer: int, projection: str
-) -> tuple[torch.Tensor, Path, tuple[str, ...]]:
+    model: Path, layer: int, projection: str, provider: str
+) -> tuple[torch.Tensor, torch.Tensor, Path, tuple[str, ...]]:
     prefix = f"model.language_model.layers.{layer}.attn_hyper_connection."
     index = json.loads((model / "model.safetensors.index.json").read_text())
     if projection == "down":
@@ -90,15 +138,38 @@ def load_weight(
     with safe_open(shard, framework="pt", device="cpu") as handle:
         tensors = [handle.get_tensor(name) for name in names]
     if projection == "down":
-        padding = torch.zeros((12, 10240), dtype=torch.bfloat16)
-        weight = torch.cat((*tensors, padding), dim=0)
-        if weight.shape != (336, 10240):
+        logical_weight = torch.cat(tuple(tensors), dim=0).contiguous()
+        if logical_weight.shape != (324, 10240):
+            raise RuntimeError(f"unexpected logical down shape: {logical_weight.shape}")
+        physical_width = 336 if provider == "linear" else 352
+        padding_width = physical_width - logical_weight.shape[0]
+        padding = torch.zeros((padding_width, 10240), dtype=torch.bfloat16)
+        weight = torch.cat((logical_weight, padding), dim=0).contiguous()
+        if weight.shape != (physical_width, 10240):
             raise RuntimeError(f"unexpected merged down shape: {weight.shape}")
+        if torch.count_nonzero(weight[324:]).item() != 0:
+            raise RuntimeError("down-projection physical padding is not all zero")
     else:
-        weight = tensors[0]
+        logical_weight = tensors[0].contiguous()
+        weight = logical_weight
         if weight.shape != (10240, 320):
             raise RuntimeError(f"unexpected up shape: {weight.shape}")
-    return weight.contiguous(), shard, names
+    logical_hash = tensor_sha256(logical_weight)
+    expected_logical_hash = EXPECTED_LOGICAL_WEIGHT_SHA256[(layer, projection)]
+    if logical_hash != expected_logical_hash:
+        raise RuntimeError(
+            f"unexpected logical weight digest: {logical_hash} != {expected_logical_hash}"
+        )
+    physical_hash = tensor_sha256(weight)
+    expected_physical_hash = EXPECTED_PHYSICAL_WEIGHT_SHA256[
+        (layer, projection, provider)
+    ]
+    if physical_hash != expected_physical_hash:
+        raise RuntimeError(
+            "unexpected physical weight digest: "
+            f"{physical_hash} != {expected_physical_hash}"
+        )
+    return weight, logical_weight, shard, names
 
 
 def verify_runtime_stage(stage: Path) -> tuple[Path, dict[str, str]]:
@@ -211,13 +282,17 @@ def main() -> None:
         raise RuntimeError(f"unexpected model index digest: {index_sha256}")
     if config_sha256 != EXPECTED_CONFIG_SHA256:
         raise RuntimeError(f"unexpected model config digest: {config_sha256}")
-    weight_cpu, shard, weight_names = load_weight(model, args.layer, args.projection)
+    weight_cpu, logical_weight_cpu, shard, weight_names = load_weight(
+        model, args.layer, args.projection, args.provider
+    )
     shard_sha256 = file_sha256(shard)
     if shard_sha256 != EXPECTED_SHARD_SHA256.get(shard.name):
         raise RuntimeError(
             f"unexpected model shard digest: {shard.name} {shard_sha256}"
         )
     n, k = weight_cpu.shape
+    if args.provider == "grouped" and (n % 32 != 0 or k % 32 != 0):
+        raise RuntimeError(f"grouped-GEMM N/K are not 32-aligned: N={n} K={k}")
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
     x_cpu = torch.randn((1, k), dtype=torch.bfloat16, generator=generator) * 0.01
     x = x_cpu.to("xpu")
@@ -268,14 +343,18 @@ def main() -> None:
     consumed_width = 324 if args.projection == "down" else n
     full_hashes: set[str] = set()
     consumed_hashes: set[str] = set()
+    discarded_nonzero_repeats = 0
     for _ in range(args.hash_repeats):
         output = invoke()
         torch.xpu.synchronize()
         repeat_output = output.cpu()
         full_hashes.add(tensor_sha256(repeat_output))
         consumed_hashes.add(tensor_sha256(repeat_output[:, :consumed_width]))
+        if torch.count_nonzero(repeat_output[:, consumed_width:]).item() != 0:
+            discarded_nonzero_repeats += 1
     output_cpu = output.cpu()
     consumed_output = output_cpu[:, :consumed_width].contiguous()
+    discarded_output = output_cpu[:, consumed_width:].contiguous()
     output_float = consumed_output.float()
     finite = bool(torch.isfinite(output_float).all())
     if not finite:
@@ -283,6 +362,11 @@ def main() -> None:
     if len(consumed_hashes) != 1:
         raise RuntimeError(
             f"HC consumed projection was not repeatable: {len(consumed_hashes)} hashes"
+        )
+    if discarded_nonzero_repeats:
+        raise RuntimeError(
+            "discarded padded output was nonzero in "
+            f"{discarded_nonzero_repeats} repeats"
         )
 
     print(
@@ -297,6 +381,8 @@ def main() -> None:
                 "seed": args.seed,
                 "input_sha256": tensor_sha256(x_cpu),
                 "input_dtype": str(x.dtype),
+                "logical_weight_sha256": tensor_sha256(logical_weight_cpu),
+                "logical_weight_layout_nk": list(logical_weight_cpu.shape),
                 "weight_sha256": tensor_sha256(weight_cpu),
                 "weight_names": list(weight_names),
                 "weight_dtype": str(weight.dtype),
@@ -333,6 +419,13 @@ def main() -> None:
                 "unique_full_output_sha256": len(full_hashes),
                 "full_output_sha256_values": sorted(full_hashes),
                 "consumed_width": consumed_width,
+                "alignment": {
+                    "grouped_nk_multiple": 32,
+                    "padding_width": n - consumed_width,
+                },
+                "discarded_output_all_zero": bool(discarded_nonzero_repeats == 0),
+                "discarded_output_nonzero_repeats": discarded_nonzero_repeats,
+                "discarded_output_sha256": tensor_sha256(discarded_output),
                 "consumed_output_sha256": tensor_sha256(consumed_output),
                 "timing_us": {
                     "median": statistics.median(timing_us),

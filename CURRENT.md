@@ -1850,6 +1850,14 @@ control/candidate/control, requires exact consumed bytes, and cannot authorize
 an endpoint claim. It performs no reboot, server launch, or full checkpoint
 load. See the
 [HC M1 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-30-hc-m1-grouped-gemm-prereg.md).
+The first layer-0/down control passed, but its grouped candidate failed closed
+before timing: the Xe2 interface requires `N % 32 == 0`, and the initial 324
+real outputs were padded only to 336. That attempt has no performance credit
+and its raw evidence is preserved. The exact successor pads with 28 zero rows
+to `N=352`, adds a preflight alignment guard, retains comparison of only the
+324 production-consumed outputs, and uses a new evidence root. See the
+[N336 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-n336-preflight-negative.md)
+and [N352 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-n352-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

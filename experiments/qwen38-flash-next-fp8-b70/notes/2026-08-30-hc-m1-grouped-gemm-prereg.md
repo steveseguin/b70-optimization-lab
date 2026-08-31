@@ -1,7 +1,13 @@
 # Qwen3.8 Flash-Next FP8 HC M1 grouped-GEMM preregistration
 
 Date: 2026-08-30/31
-Status: frozen before component execution
+Status: executed; closed by the linked N336 shape-contract negative
+
+Execution stopped at the first grouped candidate because its physical `N=336`
+did not meet the Xe2 interface's `N % 32 == 0` contract. No candidate timing or
+speed credit exists. See the
+[result](2026-08-31-hc-m1-grouped-gemm-n336-preflight-negative.md) and its
+[N352 successor](2026-08-31-hc-m1-grouped-gemm-n352-prereg.md).
 
 ## Question and boundary
 
