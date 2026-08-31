@@ -1,0 +1,57 @@
+{
+  "campaign": "qwen38-autoround-detpad-mtp0-local-tp2-20260830-r3",
+  "class_balanced_median_tok_s": {
+    "r2_compiled": 31.8273384407571,
+    "r2_eager": 17.967660778330625,
+    "r3_compiled": 32.110001420516525,
+    "r3_eager": 17.97346616800692
+  },
+  "classification": "shared-or-eager-tp2-nondeterminism",
+  "comparisons": {
+    "compiled_repeat": {
+      "exact": 4,
+      "mismatching_prompt_ids": [
+        "benchmark-analysis",
+        "bug-report-synthesis",
+        "code-review",
+        "decision-memo",
+        "performance-hypotheses",
+        "release-plan",
+        "risk-register",
+        "sql-debugging"
+      ],
+      "total": 12
+    },
+    "eager_repeat": {
+      "exact": 9,
+      "mismatching_prompt_ids": [
+        "customer-email",
+        "release-plan",
+        "risk-register"
+      ],
+      "total": 12
+    },
+    "r3_cross_mode": {
+      "exact": 6,
+      "mismatching_prompt_ids": [
+        "bug-report-synthesis",
+        "decision-memo",
+        "performance-hypotheses",
+        "release-plan",
+        "risk-register",
+        "sql-debugging"
+      ],
+      "total": 12
+    }
+  },
+  "created_utc": "2026-08-31T03:33:34.758934+00:00",
+  "performance_sha256": {
+    "r2_compiled": "3a8ffa399c64d3a34d8703eb2a9f4cee2d2076cef8d7b79d74c822953914f6ed",
+    "r2_eager": "216efe21ec193ed50fc3fa453fcf2161c864aac5431d579ece24a35e5dc05d2a",
+    "r3_compiled": "399a6c1a2dde4bfba09c66e0fd2ac85e578e930a5fe1223cc899bd9a80c8b7d9",
+    "r3_eager": "bbecfececc659950f783a6f45c7e4246b23a7ff38a49df5b06e448d4ceadabd3"
+  },
+  "preregistration_sha256": "c00b78a0c9466286816dfd8343202e2e994bef80128a8f43e7bc67258c83b8a3",
+  "reporting_boundary": "Diagnostic localization only; no speed promotion or MTP authorization.",
+  "schema": "neural.download.qwen38-autoround-determinism-localization.v1"
+}

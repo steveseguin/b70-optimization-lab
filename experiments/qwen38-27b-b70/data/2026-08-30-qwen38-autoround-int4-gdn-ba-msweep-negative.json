@@ -1,0 +1,34 @@
+{
+  "schema": "neural.download.raw-operator-repeatability.v1",
+  "date": "2026-08-30",
+  "classification": "negative-causal-screen",
+  "device": "local B70 GPU 0",
+  "image_id": "sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136",
+  "operator": "torch.ops._xpu_C.int4_gemm_w4a16",
+  "shape": {
+    "k": 5120,
+    "n": 96,
+    "group_size": 128
+  },
+  "determinism_pad_enabled": false,
+  "iterations_per_m": 200,
+  "results": [
+    {"m": 48, "mismatches": 0},
+    {"m": 49, "mismatches": 0},
+    {"m": 52, "mismatches": 0},
+    {"m": 53, "mismatches": 0},
+    {"m": 55, "mismatches": 0},
+    {"m": 56, "mismatches": 0},
+    {"m": 57, "mismatches": 0},
+    {"m": 59, "mismatches": 0},
+    {"m": 65, "mismatches": 0},
+    {"m": 71, "mismatches": 0},
+    {"m": 75, "mismatches": 0},
+    {"m": 78, "mismatches": 0},
+    {"m": 128, "mismatches": 0},
+    {"m": 256, "mismatches": 0}
+  ],
+  "total_comparisons": 2800,
+  "total_mismatches": 0,
+  "decision": "Do not extend the global INT4 pad to the small GDN B/A shape on this evidence. The model stores B/A weights in FP16 and already engages the separate 256-row deterministic B/A path."
+}
