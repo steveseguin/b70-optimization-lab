@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "replication_gate_failed_control_drift",
+  "classification": "exact_directional_component_positive_attribution_incomplete",
+  "all_exact_consumed_output": true,
+  "all_candidate_reductions_exceed_5_percent": true,
+  "frozen_replication_gate_passed": false,
+  "pairs": [
+    {
+      "repeat": "r1",
+      "layer": 0,
+      "control_median_us": 35.535759999999996,
+      "candidate_median_us": 10.92676,
+      "latency_reduction_percent": 69.25136819924494,
+      "control_drift_percent": 2.9972225935332553,
+      "eligible": true,
+      "result_sha256": "83ec14ed14d2a8552459509b1236894b298811c018f2ed7aa661e49b18a15655"
+    },
+    {
+      "repeat": "r1",
+      "layer": 47,
+      "control_median_us": 36.43432,
+      "candidate_median_us": 10.89556,
+      "latency_reduction_percent": 70.0953386806725,
+      "control_drift_percent": 0.4641957026299881,
+      "eligible": true,
+      "result_sha256": "8aa7cb6804a613aabc8f08e86eaab52b455ce09109790775aa78e5a1115034b6"
+    },
+    {
+      "repeat": "r2",
+      "layer": 0,
+      "control_median_us": 35.28018,
+      "candidate_median_us": 11.950639999999998,
+      "latency_reduction_percent": 66.12647667897387,
+      "control_drift_percent": 5.259575240515546,
+      "eligible": false,
+      "result_sha256": "c5860f1651b891c8a0cde85fa1f500d17e29a2cae68b5bd026c0bebd7540d4bb"
+    },
+    {
+      "repeat": "r2",
+      "layer": 47,
+      "control_median_us": 35.96268,
+      "candidate_median_us": 13.39312,
+      "latency_reduction_percent": 62.75828164085657,
+      "control_drift_percent": 7.044277460108361,
+      "eligible": false,
+      "result_sha256": "73dfeb4cbafa3ef591139254208ca2333f84392316a67c18a6dcbb9534536591"
+    }
+  ],
+  "endpoint_claim_authorized": false,
+  "round_robin_screen_authorized_by_frozen_gate": false,
+  "next_action": "Use a separately preregistered same-process alternating control/candidate discriminator before any 48-layer screen."
+}

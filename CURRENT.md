@@ -1866,6 +1866,13 @@ layers 0/47. Up was 65.12% faster at layer 0 and passed all gates; layer 47 was
 authorizes only a 48-layer round-robin component screen. See the
 [four-pair result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-four-pair-result.md)
 and [repeat preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-repeat-prereg.md).
+Both fresh up-only repeats retained exact output and every grouped candidate
+was 62.76--70.10% faster. Repeat 1 passed both layer gates; repeat 2 failed the
+frozen family gate because its linear controls drifted 5.26% / 7.04%, above
+3%. The 48-layer screen is therefore not yet authorized. Next use a separately
+frozen same-process alternating discriminator to remove process-to-process
+control drift without weakening the output or speed gates. See the
+[repeat result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-repeat-result.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
