@@ -126,6 +126,7 @@ unzip -jo "${wheels[0]}" \
   vllm_xpu_kernels/_xpu_C.abi3.so \
   vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
   -d "${context_dir}"
+wheel_sha256=$(sha256sum "${wheels[0]}" | awk '{print $1}')
 xpu_extension_sha256=$(sha256sum "${context_dir}/_xpu_C.abi3.so" | awk '{print $1}')
 gdn_library_sha256=$(sha256sum "${context_dir}/libgdn_attn_kernels_xe_2.so" | awk '{print $1}')
 strings "${context_dir}/_xpu_C.abi3.so" \
@@ -136,6 +137,7 @@ docker build --pull=false \
   --build-arg "BASE_IMAGE_ID=${expected_base_image_id}" \
   --build-arg "KERNEL_HEAD=${kernel_head}" \
   --build-arg "PATCH_SHA256=${patch_sha256}" \
+  --build-arg "WHEEL_SHA256=${wheel_sha256}" \
   --build-arg "XPU_EXTENSION_SHA256=${xpu_extension_sha256}" \
   --build-arg "GDN_LIBRARY_SHA256=${gdn_library_sha256}" \
   --file "${dockerfile}" --tag "${image}" "${context_dir}"
@@ -148,6 +150,10 @@ docker build --pull=false \
   printf 'built image patch label mismatch\n' >&2
   exit 1
 }
+[[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.wheel.sha256" }}')" == "${wheel_sha256}" ]] || {
+  printf 'built image wheel label mismatch\n' >&2
+  exit 1
+}
 [[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.xpu-extension.sha256" }}')" == "${xpu_extension_sha256}" ]] || {
   printf 'built image XPU-extension label mismatch\n' >&2
   exit 1
@@ -156,12 +162,16 @@ docker build --pull=false \
   printf 'built image GDN-library label mismatch\n' >&2
   exit 1
 }
+[[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.feature-set" }}')" == dense-xe2-gdn-mqa-mhc ]] || {
+  printf 'built image feature-set label mismatch\n' >&2
+  exit 1
+}
 
 printf '%s\n' \
   "source_head=${kernel_head}" \
   "patch_sha256=${patch_sha256}" \
   "wheel=$(basename -- "${wheels[0]}")" \
-  "wheel_sha256=$(sha256sum "${wheels[0]}" | awk '{print $1}')" \
+  "wheel_sha256=${wheel_sha256}" \
   "xpu_extension_sha256=${xpu_extension_sha256}" \
   "gdn_library_sha256=${gdn_library_sha256}" \
   "base_image=${base_image}" \

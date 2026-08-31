@@ -4,6 +4,7 @@ FROM ${BASE_IMAGE}
 ARG BASE_IMAGE_ID
 ARG KERNEL_HEAD
 ARG PATCH_SHA256
+ARG WHEEL_SHA256
 ARG XPU_EXTENSION_SHA256
 ARG GDN_LIBRARY_SHA256
 
@@ -12,6 +13,7 @@ COPY libgdn_attn_kernels_xe_2.so /tmp/libgdn_attn_kernels_xe_2.so
 RUN test -n "${BASE_IMAGE_ID}" \
     && test -n "${KERNEL_HEAD}" \
     && test -n "${PATCH_SHA256}" \
+    && test -n "${WHEEL_SHA256}" \
     && test "$(sha256sum /tmp/_xpu_C.abi3.so | awk '{print $1}')" = \
         "${XPU_EXTENSION_SHA256}" \
     && test "$(sha256sum /tmp/libgdn_attn_kernels_xe_2.so | awk '{print $1}')" = \
@@ -30,6 +32,8 @@ LABEL neural.download.base.image.id="${BASE_IMAGE_ID}" \
       neural.download.kernel.head="${KERNEL_HEAD}" \
       neural.download.kernel.patch="qwen38-onednn-int4-determinism-pad-kernel1e90-r1" \
       neural.download.kernel.patch.sha256="${PATCH_SHA256}" \
+      neural.download.kernel.wheel.sha256="${WHEEL_SHA256}" \
       neural.download.kernel.xpu-extension.sha256="${XPU_EXTENSION_SHA256}" \
       neural.download.kernel.gdn-library.sha256="${GDN_LIBRARY_SHA256}" \
+      neural.download.kernel.feature-set="dense-xe2-gdn-mqa-mhc" \
       neural.download.build.lane="qwen38-autoround-current-deterministic-r1"
