@@ -72,11 +72,14 @@ for process in 1 2 3 4; do
   done
   docker logs "$container" >"$active_dir/server-startup.log" 2>&1
   [[ "$(docker inspect --format '{{.Image}}' "$container")" == "$image_id" ]] || fail 'image receipt mismatch'
-  python3 "$bench" --base-url "http://127.0.0.1:${port}" --model "$served" \
-    --api-mode completions --suite "$suite" --prompt-id sql-debugging --max-tokens 64 \
-    --metric-tokens 32 --seed 42 --timeout 900 --return-token-ids --allow-screening \
-    --request-extra-json '{"temperature":0,"top_p":1}' --out "$active_dir/performance.json" \
-    >"$active_dir/performance.stdout"
+  if ! python3 "$bench" --base-url "http://127.0.0.1:${port}" --model "$served" \
+      --api-mode completions --suite "$suite" --prompt-id sql-debugging --max-tokens 64 \
+      --metric-tokens 32 --seed 42 --timeout 900 --return-token-ids --allow-screening \
+      --request-extra-json '{"temperature":0,"top_p":1}' --out "$active_dir/performance.json" \
+      >"$active_dir/performance.stdout"; then
+    docker logs "$container" >"$active_dir/server.log" 2>&1 || true
+    fail "process $process benchmark request failed"
+  fi
   if [[ ! -s "$active_dir/trace.json" ]]; then
     docker logs "$container" >"$active_dir/server.log" 2>&1 || true
     fail "process $process did not reach trace"
