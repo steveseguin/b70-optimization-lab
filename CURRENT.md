@@ -2010,6 +2010,14 @@ unconsumed by a full model load and no reboot is required. See the
 [A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a1-result.md),
 [A2 finalizer result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a2-finalizer-result.md),
 and [A2 qualification preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a2-qualification-prereg.md).
+The first A2 qualification invocation stopped before evidence or device work:
+the normal no-render-owner path returned the final false comparison from its
+shell loop, and `set -e` exited silently. This is a supervisor-only procedural
+negative; the candidate stage remains byte-exact and statically valid. A3 is
+frozen as the exact successor, adding only an explicit successful return and a
+fresh evidence path while retaining every device test and interpretation. See
+the [A2 procedural result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a2-qualification-procedural-negative.md)
+and [A3 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-grouped-full-serving-stage-a3-qualification-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and
