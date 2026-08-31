@@ -28,7 +28,7 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
 
     def test_server_pins_correctness_treatment(self) -> None:
         for required in (
-            "--tensor-parallel-size 2",
+            '--tensor-parallel-size "$tensor_parallel_size"',
             "--dtype float16 --kv-cache-dtype auto",
             "--env VLLM_XPU_ENABLE_XPU_GRAPH=0",
             "--env VLLM_XPU_GRAPH=0",
@@ -47,6 +47,7 @@ class DeterministicMtp0ContractTest(unittest.TestCase):
             "EXPECTED_IMAGE_ID:?",
             "EXPECTED_XPU_EXTENSION_SHA256:?",
             "EXPECTED_GDN_LIBRARY_SHA256:?",
+            "TENSOR_PARALLEL_SIZE must be 1 or 2",
             "MODEL_DIR must be a real directory",
             "MODEL_DIR must be on ext4",
             "cache path must be new",

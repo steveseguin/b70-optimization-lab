@@ -13,6 +13,7 @@ container=${CONTAINER_NAME:?set CONTAINER_NAME to a unique name}
 port=${PORT:?set PORT to a unique host port}
 served_model=${SERVED_MODEL_NAME:-qwen38-autoround-deterministic-mtp0}
 gpu_ids=${GPU_IDS:-2,3}
+tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
 min_host_memory_gib=${MIN_HOST_MEMORY_GIB:-80}
 container_memory=${CONTAINER_MEMORY:-96g}
 container_memory_swap=${CONTAINER_MEMORY_SWAP:-104g}
@@ -21,7 +22,12 @@ gdn_sync_after_native=${GDN_SYNC_AFTER_NATIVE:-0}
 
 case "$mode" in eager|compiled) ;; *) printf 'EXECUTION_MODE must be eager or compiled\n' >&2; exit 2;; esac
 [[ "$port" =~ ^[1-9][0-9]*$ ]] || { printf 'PORT must be positive\n' >&2; exit 2; }
-[[ "$gpu_ids" =~ ^[0-9]+,[0-9]+$ ]] || { printf 'GPU_IDS must contain two comma-separated device indices\n' >&2; exit 2; }
+[[ "$tensor_parallel_size" =~ ^[12]$ ]] || { printf 'TENSOR_PARALLEL_SIZE must be 1 or 2\n' >&2; exit 2; }
+if [[ "$tensor_parallel_size" == 1 ]]; then
+  [[ "$gpu_ids" =~ ^[0-9]+$ ]] || { printf 'GPU_IDS must contain one device index for TP1\n' >&2; exit 2; }
+else
+  [[ "$gpu_ids" =~ ^[0-9]+,[0-9]+$ ]] || { printf 'GPU_IDS must contain two comma-separated device indices for TP2\n' >&2; exit 2; }
+fi
 [[ "$min_host_memory_gib" =~ ^[1-9][0-9]*$ ]] || { printf 'MIN_HOST_MEMORY_GIB must be positive\n' >&2; exit 2; }
 [[ "$gdn_native_fallback" =~ ^[01]$ ]] || { printf 'GDN_NATIVE_FALLBACK must be 0 or 1\n' >&2; exit 2; }
 [[ "$gdn_sync_after_native" =~ ^[01]$ ]] || { printf 'GDN_SYNC_AFTER_NATIVE must be 0 or 1\n' >&2; exit 2; }
@@ -94,8 +100,10 @@ flock -n 7 || { printf 'benchmark lock held\n' >&2; exit 1; }
 IFS=, read -r gpu_a gpu_b <<<"$gpu_ids"
 exec 8>"/tmp/b70-gpu${gpu_a}.lock"
 flock -n 8 || { printf 'GPU%s lock held\n' "$gpu_a" >&2; exit 1; }
-exec 9>"/tmp/b70-gpu${gpu_b}.lock"
-flock -n 9 || { printf 'GPU%s lock held\n' "$gpu_b" >&2; exit 1; }
+if [[ "$tensor_parallel_size" == 2 ]]; then
+  exec 9>"/tmp/b70-gpu${gpu_b}.lock"
+  flock -n 9 || { printf 'GPU%s lock held\n' "$gpu_b" >&2; exit 1; }
+fi
 
 mkdir -p "$cache"
 mode_args=()
@@ -129,7 +137,7 @@ exec docker run --rm --name "$container" \
   --env CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
   "$image" --model /model --tokenizer /model --served-model-name "$served_model" \
   --host 0.0.0.0 --port 8000 --trust-remote-code \
-  --tensor-parallel-size 2 --dtype float16 --kv-cache-dtype auto \
+  --tensor-parallel-size "$tensor_parallel_size" --dtype float16 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.80 --max-model-len 1024 --block-size 64 \
   --max-num-seqs 1 --max-num-batched-tokens 1024 \
   --no-enable-prefix-caching --enable-prompt-tokens-details \
