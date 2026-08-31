@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "frozen_blocked_until_attended_reboot",
+  "classification": "tp4_count2560_cpu_l3_affinity_component_prereg",
+  "scope": "Ordinary accepted XCCL with rank-process plus oneCCL-worker CPU/L3 affinity as one coherent candidate; no model throughput",
+  "identity": {
+    "gate_sha256": "a37f6d5c935ffbcc401fcc9197d49d8283fadba97e02037052d398779c7097c4",
+    "runner_sha256": "88735f8363708acc71de49dc349cf2f1e8223be5009f3239064ded1fb1ed3350",
+    "libccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+    "libsycl_sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
+    "libfabric_sha256": "d849d56fd3f8f2581b4b0c17c1564f8145911a313c2c011d694aaf21e5e86b27",
+    "oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "rejected_boot": "c36480de-9150-4182-9888-08c85d2d9de4"
+  },
+  "hardware_contract": {
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores / 32 threads",
+    "cpu_online": "0-31",
+    "l3_sets": ["0-7,16-23", "8-15,24-31"],
+    "gpu_bdf_order": ["0000:23:00.0", "0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+    "pinned_rank_sets": {
+      "0": [0, 1, 2, 3, 16, 17, 18, 19],
+      "1": [4, 5, 6, 7, 20, 21, 22, 23],
+      "2": [8, 9, 10, 11, 24, 25, 26, 27],
+      "3": [12, 13, 14, 15, 28, 29, 30, 31]
+    },
+    "control_oneccl_worker_cpus_by_local_rank": [31, 30, 29, 28],
+    "candidate_oneccl_worker_cpus_by_local_rank": [19, 23, 27, 31],
+    "thread_receipt": "Every rank records /proc/self/task thread names and Cpus_allowed_list after process-group initialization; candidate threads must remain inside the rank set and every arm must expose the expected singleton oneCCL worker CPU."
+  },
+  "workload": {
+    "fresh_process_order": ["control", "pinned", "pinned", "control"],
+    "world_size": 4,
+    "collectives_per_cycle": 97,
+    "shape": [1, 2560],
+    "dtype": "bfloat16",
+    "warmup_cycles_per_arm": 8,
+    "measured_cycles_per_arm": 60,
+    "protocol": "Rt64_128_PCIE",
+    "control_affinity": "rank process 0-31; explicit oneCCL worker list 31,30,29,28 preserves the runtime default worker CPU per local rank",
+    "candidate_affinity": "rank process uses eight logical CPUs/four physical cores per rank, split by the two L3 domains; explicit oneCCL worker list 19,23,27,31 keeps the worker inside its rank set"
+  },
+  "correctness_gate": {
+    "analytic_sum": "exact independently computed four-rank integer-valued BF16 SUM in every cycle",
+    "cross_rank_hash": "exact",
+    "cross_arm_hash": "exact",
+    "protocol_receipt": "Rt64_128_PCIE on every rank and no Rt64_PCIE"
+  },
+  "performance_gate": {
+    "matched_pairs": [["control-1", "pinned-1"], ["control-2", "pinned-2"]],
+    "minimum_median_saving_fraction_each_pair": 0.05,
+    "minimum_p90_saving_fraction_each_pair": 0.0
+  },
+  "frozen_interpretation": {
+    "both_pairs_pass": "eligible for a separately frozen affinity-only endpoint arm; not yet a tok/s claim",
+    "any_pair_fails": "close affinity without a model load",
+    "any_runtime_or_correctness_failure": "reject and stop before the next arm",
+    "threshold_changes_after_execution": "prohibited"
+  },
+  "paths": {
+    "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1"
+  }
+}

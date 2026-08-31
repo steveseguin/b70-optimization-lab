@@ -2936,3 +2936,13 @@ compute probe stalled, so no further GPU work is allowed on this boot. Reboot
 only when attended, restore the accepted runtime, and use a safer lever. The
 protected `5.515783 tok/s` MTP0 result and all other results are untouched. See
 the [A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-event-chain-a1-runtime-negative.md).
+Clone-only follow-up is closed as low priority: A28 bounds the entire 99-copy
+BF16 device family at only `0.178914-0.185792 ms/token`, a generous endpoint
+ceiling of about `+0.103%`, while a correct in-place path needs a new mutating
+operator rather than violating the existing functional alias contract. The
+next safe component arm instead targets A28's chronic rank-2/3 submission lag
+with explicit rank-process and oneCCL-worker CPU/L3 placement while leaving
+accepted XCCL code and protocol unchanged. It is frozen but hard-blocked on
+the unhealthy current boot; run it only after an attended reboot. See the
+[clone analysis](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-clone-elision-analysis.md)
+and [affinity preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-cpu-affinity-a1-prereg.md).
