@@ -122,13 +122,14 @@ mapfile -t wheels < <(find "${dist_dir}" -maxdepth 1 -type f -name '*.whl')
   exit 1
 }
 unzip -t "${wheels[0]}" >/dev/null
-unzip -j "${wheels[0]}" \
+unzip -jo "${wheels[0]}" \
   vllm_xpu_kernels/_xpu_C.abi3.so \
   vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
   -d "${context_dir}"
 xpu_extension_sha256=$(sha256sum "${context_dir}/_xpu_C.abi3.so" | awk '{print $1}')
 gdn_library_sha256=$(sha256sum "${context_dir}/libgdn_attn_kernels_xe_2.so" | awk '{print $1}')
-strings "${context_dir}/_xpu_C.abi3.so" | grep -Fq VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD
+strings "${context_dir}/_xpu_C.abi3.so" \
+  | grep -F VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD >/dev/null
 
 docker build --pull=false \
   --build-arg "BASE_IMAGE=${base_image}" \
