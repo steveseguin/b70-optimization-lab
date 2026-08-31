@@ -22,9 +22,20 @@ The live server must then log the same M1 folder. The client and supervisor
 reject a missing or inconsistent receipt, the old M4 folder, async PLE,
 profiling, tracing, MTP, or source drift.
 
+That prelaunch resolver is intentionally not live-inference evidence. A28's
+trace establishes that production decode reaches M1, and the resolver proves
+what the exact server environment selects for M1; engagement is therefore
+strongly inferred rather than directly observed during A29 inference. Retain
+that disclosure unless a later report-only arm captures a live selected-key
+receipt without changing arithmetic or scheduling.
+
 The arm is attempt `29`, port `19701`, and must be the boot's only full model
 load. Promotion requires recovery canary, the inherited semantic suite,
 16-repeat exactness, three protected short rows, cache-zero 4K needle, and two
 exact-4K rows with the protected same-output hash. Any failure is a bounded
 negative and changes no protected result. A pass is still a candidate endpoint
-win until a separately booted matched control establishes attribution.
+win. Because the projected effect is only about one percent and overlaps the
+observed short-row spread, causal promotion requires a separately booted exact
+config-unset control followed by a fresh candidate repeat, all using the same
+client and battery. A29 alone cannot establish attribution or replace the
+protected frontier.

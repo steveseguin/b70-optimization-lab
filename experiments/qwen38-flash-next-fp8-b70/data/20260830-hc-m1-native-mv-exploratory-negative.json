@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "exploratory_component_negative",
+  "classification": "native_xpu_mv_does_not_replace_production_linear",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "d14396e27247c1b251da0ce24a0942772c4b002f",
+    "device": "Intel Arc Pro B70",
+    "dtype": "bfloat16",
+    "tokens": 1,
+    "weights": "layer-0 attn HyperConnection checkpoint weights",
+    "input_seed": 20260830
+  },
+  "method": {
+    "control": "torch.nn.functional.linear",
+    "candidates": [
+      "torch.mv(weight, input[0])",
+      "torch.matmul(input, weight.t())"
+    ],
+    "warmups": 30,
+    "timed_repeats": 200,
+    "timing": "host wall time around each invocation plus torch.xpu.synchronize; exploratory relative screen only"
+  },
+  "measurements": [
+    {
+      "name": "hc_down_inject",
+      "input_shape": [1, 10240],
+      "weight_shape": [336, 10240],
+      "linear_median_us": 68.599,
+      "linear_p95_us": 76.754,
+      "mv_median_us": 77.666,
+      "mv_p95_us": 87.414,
+      "matmul_t_median_us": 69.761,
+      "matmul_t_p95_us": 78.528,
+      "linear_sha256": "90cc4eaebd25b67fc718021b3a355ca5b645fc1335379d090699972913cadd8d",
+      "candidate_sha256": "44d94248e00ebd4261b18479b929d200ede41a7d1b168e05c80f4c157f6a6380",
+      "candidate_bytes_match_control": false
+    },
+    {
+      "name": "hc_up",
+      "input_shape": [1, 320],
+      "weight_shape": [10240, 320],
+      "linear_median_us": 64.491,
+      "linear_p95_us": 72.316,
+      "mv_median_us": 72.285,
+      "mv_p95_us": 80.231,
+      "matmul_t_median_us": 65.103,
+      "matmul_t_p95_us": 74.3,
+      "linear_sha256": "2d024951ee5cd3e5d06e91a17000ddce156f5fb1d110a0513a5b92777878adc0",
+      "candidate_sha256": "2d024951ee5cd3e5d06e91a17000ddce156f5fb1d110a0513a5b92777878adc0",
+      "candidate_bytes_match_control": true
+    }
+  ],
+  "decision": {
+    "promoted": false,
+    "reason": "The down/injection candidate changed bytes and both native matrix-vector candidates were slower than the existing linear path. The up candidate was exact but slower.",
+    "next": "Do not add a torch.mv or transposed-matmul dispatch. A future HC optimization needs a purpose-built exact kernel or fusion with an independently measured advantage.",
+    "protected_results_changed": false
+  }
+}
