@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "frozen_blocked_until_attended_reboot",
+  "classification": "qwen38_flash_next_tp4_mtp0_m1_warps8_current_source_endpoint_prereg",
+  "scope": "M1 MoE warps 8 alone on the accepted synchronous-PLE eager endpoint; no grouped HC, async PLE, graph, trace, MTP, or event-chain treatment",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "vllm_prior_endpoint_head": "d14396e27247c1b251da0ce24a0942772c4b002f",
+    "sealed_kernel_source": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "kernel_workspace_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "kernel_stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "kernel_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "mtp": 0,
+    "tp": 4,
+    "ep": 4,
+    "max_model_len": 4352,
+    "attempt": 31,
+    "port": 19703
+  },
+  "source_refresh": {
+    "vllm_descendants_after_prior_endpoint_head": [
+      "8c247a52f Add guarded Qwen HC grouped-up integration",
+      "797769b34 Qualify Qwen HC grouped-up dynamic shapes"
+    ],
+    "required_default_off_state": {
+      "VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP": "unset/false",
+      "VLLM_XPU_PLE_UVA_PREFETCH": "unset/false",
+      "Q38_REPEATABILITY_TRACE_FILE": "unset",
+      "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK": "unset"
+    },
+    "kernel_workspace_descendants_are_not_loaded": true,
+    "loaded_kernel_modules_must_resolve_to": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70"
+  },
+  "treatment": {
+    "config_sha256": "91e5d8b692da3febbba7cb07ee4fdab319909da0c82c1fda95b92dc42d680464",
+    "selected_batch_key": 1,
+    "num_warps": 8,
+    "num_stages": 4,
+    "all_other_tuned_keys_num_warps": 4,
+    "component_result": "experiments/qwen38-flash-next-fp8-b70/data/20260830-moe-m1-warps8-component-positive.json",
+    "component_saving_us_per_layer": [38.0, 41.7],
+    "projected_endpoint_saving_ms_per_token": [1.825, 2.001],
+    "protected_target_tok_s": 5.515783,
+    "non_promotional_projection_tok_s": [5.572, 5.577]
+  },
+  "prerequisites": {
+    "rejected_boot": "c36480de-9150-4182-9888-08c85d2d9de4",
+    "attended_reboot_required": true,
+    "same_boot_affinity_component_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1",
+    "affinity_requirement": "comparison and evidence manifest must verify on the same boot with status passed or cleanly closed; a runtime failure forbids A31"
+  },
+  "quality_and_performance_gate": {
+    "battery": "unchanged A29 recovery, inherited 6/7 semantic boundary, 16-repeat exactness, three protected short hashes, cache-zero 4K needle, and two exact-4K authority rows",
+    "candidate_pass": "all quality/reliability gates pass and short median exceeds protected 5.515783 tok/s",
+    "candidate_fail": "preserve as bounded negative and retain every protected result",
+    "attribution_after_candidate_pass": "requires a separately booted current-source config-unset control and fresh candidate repeat before promotion"
+  },
+  "frozen_files": {
+    "launcher_sha256": "6e7e289ab49f3c210deee49c1ae8c61a6d2f093142199d19abc42c1c40beebc5",
+    "client_sha256": "7342b8ed2e8edb96cbd648e286e6ebeba9945553ac492915174ea17839e0552e",
+    "supervisor_sha256": "9c75161324bcf2e249d6c670d774efdb267b2690ff0baaf5bd8a935ba7089b65",
+    "rewrite_helper_sha256": "daa902d850632f33f07451b72a3f7b4c68df0eb07183b6dc3904de35d02f4d72"
+  },
+  "protected_results_changed": false
+}

@@ -2969,3 +2969,12 @@ accepted XCCL code and protocol unchanged. It is frozen but hard-blocked on
 the unhealthy current boot; run it only after an attended reboot. See the
 [clone analysis](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-clone-elision-analysis.md)
 and [affinity preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-cpu-affinity-a1-prereg.md).
+The next full-model lane is separately frozen as A31: production-M1 MoE
+warps 8 by itself, preserving A29's complete battery while binding the current
+default-off source descendants and the original sealed kernel stage. A30's
+slower grouped-HC composite did not isolate or reject this M1 treatment. A31
+hard-rejects the current boot and requires the same-boot affinity component to
+finish cleanly first; no reboot is authorized by the packet. A pass projects
+only about `5.572-5.577 tok/s` and still needs separately booted map-unset
+control plus candidate repeat before promotion. See the
+[A31 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a31-moe-m1-current-prereg.md).
