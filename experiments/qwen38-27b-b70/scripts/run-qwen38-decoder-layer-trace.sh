@@ -3,8 +3,10 @@ set -euo pipefail
 : "${CAMPAIGN_ID:?set CAMPAIGN_ID}"
 : "${TARGET_LAYER:?set TARGET_LAYER}"
 : "${PREREG_PATH:?set PREREG_PATH}"
+: "${TARGET_CALL:=60}"
 [[ "$CAMPAIGN_ID" =~ ^[a-z0-9-]+$ ]] || { echo 'invalid CAMPAIGN_ID' >&2; exit 2; }
 [[ "$TARGET_LAYER" =~ ^([0-9]|[1-5][0-9]|6[0-3])$ ]] || { echo 'invalid TARGET_LAYER' >&2; exit 2; }
+[[ "$TARGET_CALL" =~ ^[0-9]+$ ]] || { echo 'invalid TARGET_CALL' >&2; exit 2; }
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
 hook="$script_dir/qwen38-decoder-layer-trace-sitecustomize.py"
@@ -46,7 +48,7 @@ for process in 1 2 3 4; do
     --volume "$cache:/run-cache" --volume "$active_dir:/out" \
     --volume "$hook:/instrument/sitecustomize.py:ro" --env PYTHONPATH=/instrument \
     --env VLLM_XPU_DECODER_LAYER_TRACE_OUT=/out/trace.json \
-    --env VLLM_XPU_DECODER_LAYER_TRACE_CALL=60 --env VLLM_XPU_DECODER_LAYER_TRACE_LAYER="$TARGET_LAYER" \
+    --env VLLM_XPU_DECODER_LAYER_TRACE_CALL="$TARGET_CALL" --env VLLM_XPU_DECODER_LAYER_TRACE_LAYER="$TARGET_LAYER" \
     --env ZE_AFFINITY_MASK=0 --env ONEAPI_DEVICE_SELECTOR=level_zero:0 \
     --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
     --env VLLM_NO_USAGE_STATS=1 --env PYTHONHASHSEED=0 \
@@ -76,9 +78,9 @@ for process in 1 2 3 4; do
   docker logs "$container" >"$active_dir/server.log" 2>&1
   docker rm -f "$container" >/dev/null; container=
 done
-python3 - "$root" "$prereg" "$image_id" "$TARGET_LAYER" <<'PY'
+python3 - "$root" "$prereg" "$image_id" "$TARGET_LAYER" "$TARGET_CALL" <<'PY'
 import datetime as dt,hashlib,json,pathlib,sys
-root=pathlib.Path(sys.argv[1]); prereg=pathlib.Path(sys.argv[2]); image_id=sys.argv[3]; layer=int(sys.argv[4])
+root=pathlib.Path(sys.argv[1]); prereg=pathlib.Path(sys.argv[2]); image_id=sys.argv[3]; layer=int(sys.argv[4]); target_call=int(sys.argv[5])
 traces=[json.loads((root/f"process-{i}"/"trace.json").read_text()) for i in range(1,5)]
 tokens=[json.loads((root/f"process-{i}"/"performance.json").read_text())["rows"][0]["token_ids"] for i in range(1,5)]
 limit=min(map(len,tokens)); first=next((i for i in range(limit) if len({t[i] for t in tokens})>1),None)
@@ -86,14 +88,14 @@ positions_identical=len({json.dumps(t["positions"],sort_keys=True) for t in trac
 hidden_identical=len({json.dumps(t["hidden_states"],sort_keys=True) for t in traces})==1
 residual_identical=len({json.dumps(t["residual"],sort_keys=True) for t in traces})==1
 pair_identical=hidden_identical and residual_identical
-classification=("invalid-localization" if not positions_identical or (first is not None and first<60)
+classification=("invalid-localization" if not positions_identical or (first is not None and first<target_call)
  else "positive-causal-finding-at-or-before-layer" if not pair_identical
  else "negative-bound-after-layer")
 result={"schema":"neural.download.qwen38-decoder-layer-trace.result.v1","created_utc":dt.datetime.now(dt.UTC).isoformat(),
- "classification":classification,"image_id":image_id,"target_layer":layer,"target_call_index":60,"fresh_processes":4,
+ "classification":classification,"image_id":image_id,"target_layer":layer,"target_call_index":target_call,"fresh_processes":4,
  "positions_identical":positions_identical,"hidden_states_identical":hidden_identical,"residual_identical":residual_identical,
  "layer_output_pair_identical":pair_identical,"first_output_difference_zero_based":first,
- "token_ids_at_60":[t[60] for t in tokens],
+ "token_ids_at_target":[t[target_call] for t in tokens],
  "trace_sha256":{f"process-{i}":hashlib.sha256((root/f"process-{i}"/"trace.json").read_bytes()).hexdigest() for i in range(1,5)},
  "preregistration_sha256":hashlib.sha256(prereg.read_bytes()).hexdigest()}
 (root/"result.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n"); print(json.dumps(result,indent=2,sort_keys=True))

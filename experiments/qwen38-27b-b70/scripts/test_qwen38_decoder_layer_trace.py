@@ -15,4 +15,6 @@ class Contract(unittest.TestCase):
   for s in ('--prompt-id sql-debugging','--seed 42','--api-mode completions','--no-enable-prefix-caching'): self.assertIn(s,self.r)
  def test_d10_boundary(self):
   self.assertIn('TARGET_LAYER=31',self.d); self.assertIn('for process in 1 2 3 4',self.r)
+ def test_call_is_explicit_and_generalized(self):
+  self.assertIn(': "${TARGET_CALL:=60}"',self.r); self.assertIn('VLLM_XPU_DECODER_LAYER_TRACE_CALL="$TARGET_CALL"',self.r)
 if __name__=='__main__': unittest.main()
