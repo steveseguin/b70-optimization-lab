@@ -1883,9 +1883,20 @@ The hardened alternating gate passed in all four distinct processes. Median
 paired reductions were 68.54--69.94%; every cycle improved at least 63.83%,
 order bias stayed below 0.35 points, and every full BF16 output matched the
 pre-candidate production authority. The independent aggregate now authorizes
-the 48-layer real-weight round-robin component screen, but not integration or
+the real-weight round-robin component screen, but not integration or
 an endpoint claim. See the
 [alternating result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-alternating-result.md).
+Source and A28 profile review corrected that screen from 48 attention weights
+to all 97 MTP0 target up projections: attention and MLP HyperConnection weights
+for 48 layers plus the final mixer. The two-process production-order screen
+passed exact output and performance gates. Full-bank medians fell from
+`3.256665 / 3.326745 ms` to `1.579440 / 1.545463 ms`, saving
+`1.675420 / 1.779963 ms` or `51.45 / 53.49%`; the worst cycle still improved
+`50.09%`. This authorizes only an opt-in source-integration candidate. The
+component's duplicate 1.271 GB layout is endpoint-ineligible; integration must
+replace or release the original 635.7 MB bank and still pass a full endpoint
+A/B. See the
+[97-weight result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-round-robin-result.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

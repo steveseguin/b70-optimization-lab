@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "family_gate_passed",
+  "classification": "two_process_97_weight_round_robin_component_gate",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "production_order": "layer0-attn,layer0-mlp,...,layer47-attn,layer47-mlp,final",
+  "weight_count": 97,
+  "weight_bank_bytes": 635699200,
+  "all_97_outputs_exact_and_finite": true,
+  "runs": [
+    {
+      "repeat": "r1",
+      "raw_sha256": "68f7f8ab975391c60a8b9886b9a5cc89998dd09200721dd0a0ead800be8ad97d",
+      "linear_full_97_sweep_ms": 3.25666536,
+      "grouped_full_97_sweep_ms": 1.5794401999999998,
+      "saving_ms": 1.6754197199999998,
+      "median_reduction_percent": 51.45218442078623,
+      "minimum_reduction_percent": 50.090199291699875,
+      "order_bias_points": 0.09186573778534068,
+      "prepack_seconds": 0.059599608001008164
+    },
+    {
+      "repeat": "r2",
+      "raw_sha256": "3a6c439671267fdba3a28bd7abd7b519467e248e5e111c1652fbf1bb8a0806da",
+      "linear_full_97_sweep_ms": 3.3267447199999998,
+      "grouped_full_97_sweep_ms": 1.54546288,
+      "saving_ms": 1.7799626000000002,
+      "median_reduction_percent": 53.48520614063346,
+      "minimum_reduction_percent": 52.43446914449689,
+      "order_bias_points": 0.0017027141133283408,
+      "prepack_seconds": 0.06193751799946767
+    }
+  ],
+  "family_observed": {
+    "median_component_saving_ms": 1.72769116,
+    "median_reduction_spread_points": 2.033021719847227,
+    "median_saving_spread_ms": 0.10454288000000034,
+    "distinct_process_instances": 2,
+    "distinct_device_state_manifests": 1,
+    "distinct_packed_manifests": 1
+  },
+  "memory_per_process": {
+    "linear_bank_delta_bytes": 635799040,
+    "packed_bank_delta_bytes": 635699200,
+    "linear_and_packed_bytes": 1271498240,
+    "duplicate_steady_bank_is_endpoint_eligible": false
+  },
+  "raw_aggregate": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-m1-grouped-up-round-robin-summary-seed20260831.json",
+  "raw_aggregate_sha256": "a8c0ad8a37fb17ede8a2766c2e78d9f7613d24eb8a32c7d563800c692bad6262",
+  "source_integration_candidate_authorized": true,
+  "source_integration_authorized": false,
+  "endpoint_claim_authorized": false,
+  "integration_requirement": "replace or release the original 635699200-byte HC-up bank; do not retain duplicate linear and packed banks per card"
+}
