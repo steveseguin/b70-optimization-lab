@@ -88,3 +88,13 @@ PLE ordinal, mutable-threshold, unpaired-statistics, hash-binding, no-clobber,
 static-corpus, missing-oracle, protocol-receipt, native-source preservation,
 and abnormal-exit defects. A final review of this corrected packet is required
 before execution.
+
+## Pre-execution wrapper correction
+
+The first invocation stopped before creating the evidence root or exposing any
+GPU work because the runner rejected the pinned virtualenv `python` symlink.
+The symlink is the normal environment entry point and resolves to the recorded
+regular executable whose contents already matched the frozen hash. The runner
+now separately pins the symlink's canonical target and its content hash while
+continuing to reject symlinks for every runtime artifact. No experiment ran;
+the corrected runner was refrozen before retry.

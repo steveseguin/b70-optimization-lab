@@ -18,6 +18,7 @@ output=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/202608
 
 expected_gate=27bf56ef24f2fc09694525256583e6db6beafb97a85d0e4c2c82c1e9f91f03f5
 expected_python=202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8
+expected_python_real=/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12
 expected_torchrun=0d8056324b7819d01abb5e07e62286c56cbafec423edde8cf9ab2ae2a719912c
 expected_libccl=164091ac6aced05bfc658ae1e1cd722153f099714e9cee6f437c62bdd3731c1c
 expected_ccl_kernels=0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9
@@ -68,7 +69,14 @@ trap 'exit 143' TERM
 
 hash_is() {
   local path=$1 expected=$2 label=$3
-  [[ -f "$path" && ! -L "$path" ]] || fail "$label is absent or not regular: $path"
+  [[ -f "$path" && ! -L "$path" ]] || fail "$label is absent or not a regular non-symlink: $path"
+  [[ "$(sha256sum "$path" | cut -d' ' -f1)" == "$expected" ]] || fail "$label hash drifted"
+}
+
+hash_symlink_target_is() {
+  local path=$1 expected_real=$2 expected=$3 label=$4
+  [[ -L "$path" && -f "$path" ]] || fail "$label is absent or not a regular symlink: $path"
+  [[ "$(readlink -f "$path")" == "$expected_real" ]] || fail "$label target drifted"
   [[ "$(sha256sum "$path" | cut -d' ' -f1)" == "$expected" ]] || fail "$label hash drifted"
 }
 
@@ -81,7 +89,7 @@ hash_is() {
 [[ "$(git -C "$kernels" rev-parse HEAD)" == "$expected_kernel_head" ]] || fail "kernel head drifted"
 [[ -z "$(git -C "$kernels" status --porcelain --untracked-files=no)" ]] || fail "kernel tracked tree is dirty"
 hash_is "$gate" "$expected_gate" gate
-hash_is "$python" "$expected_python" python
+hash_symlink_target_is "$python" "$expected_python_real" "$expected_python" python
 hash_is "$torchrun" "$expected_torchrun" torchrun
 hash_is "$libccl" "$expected_libccl" libccl
 hash_is "$ccl_kernels/kernels.spv" "$expected_ccl_kernels" oneCCL-kernels
