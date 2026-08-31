@@ -9,7 +9,8 @@ set -euo pipefail
 [[ "$TARGET_CALL" =~ ^[0-9]+$ ]] || { echo 'invalid TARGET_CALL' >&2; exit 2; }
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd -- "${script_dir}/../../.." && pwd)
-hook="$script_dir/qwen38-decoder-layer-trace-sitecustomize.py"
+: "${TRACE_HOOK_NAME:=qwen38-decoder-layer-trace-sitecustomize.py}"
+hook="$script_dir/$TRACE_HOOK_NAME"
 prereg="$repo/$PREREG_PATH"
 suite="$repo/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json"
 bench="$repo/scripts/bench-openai-realistic-suite.py"

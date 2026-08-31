@@ -17,4 +17,7 @@ class Contract(unittest.TestCase):
   self.assertIn('TARGET_LAYER=31',self.d); self.assertIn('for process in 1 2 3 4',self.r)
  def test_call_is_explicit_and_generalized(self):
   self.assertIn(': "${TARGET_CALL:=60}"',self.r); self.assertIn('VLLM_XPU_DECODER_LAYER_TRACE_CALL="$TARGET_CALL"',self.r)
+ def test_trace_hook_is_explicit_and_generalized(self):
+  self.assertIn(': "${TRACE_HOOK_NAME:=qwen38-decoder-layer-trace-sitecustomize.py}"',self.r)
+  self.assertIn('hook="$script_dir/$TRACE_HOOK_NAME"',self.r)
 if __name__=='__main__': unittest.main()
