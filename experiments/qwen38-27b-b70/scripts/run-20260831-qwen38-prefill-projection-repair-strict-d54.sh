@@ -2,20 +2,21 @@
 set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
-campaign=qwen38-prefill-projection-repair-strict-20260831-d54
+campaign=${CAMPAIGN_ID:-qwen38-prefill-projection-repair-strict-20260831-d54}
 root=/mnt/fast-ai/bench-results/$campaign
 cache=/mnt/fast-ai/vllm-cache/$campaign
 model=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround
 image=neural-download/vllm-openai-xpu:qwen38-autoround-gdn-int4-prefill-pad512-r1
 image_id=sha256:03da963d9d9b3b2cfc5cb7d9f1bc0aeb9ebd7e1b9495e3cad4e5b9e5dd4fc493
 hook=$repo/repro/qwen38-27b-autoround-int4-b70/patches/qwen38-prefill-projection-repair-sitecustomize.py
-prereg=$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-strict-d54-prereg.md
+prereg=${PREREG_PATH:-$repo/experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-strict-d54-prereg.md}
 suite=$repo/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json
 bench=$repo/scripts/bench-openai-realistic-suite.py
 canaries=$repo/scripts/neural-download-canaries.py
 served=qwen38-prefill-projection-repair
-container=q38-prefill-projection-repair-d54
-port=18354
+container=${CONTAINER_NAME:-q38-prefill-projection-repair-d54}
+port=${PORT:-18354}
+reference_performance=${REFERENCE_PERFORMANCE:-}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -41,7 +42,11 @@ git -C "$repo" fetch origin main --quiet
 exec 7>/tmp/b70-benchmark.lock; flock -n 7 || fail 'benchmark lock held'
 exec 8>/tmp/b70-gpu0.lock; flock -n 8 || fail 'GPU0 lock held'
 mkdir -p "$root" "$cache"
-sha256sum "$hook" "$prereg" "$suite" "$bench" "$canaries" >"$root/input-sha256sums.txt"
+sha256sum "$0" "$hook" "$prereg" "$suite" "$bench" "$canaries" >"$root/input-sha256sums.txt"
+if [[ -n "$reference_performance" ]]; then
+  [[ -f "$reference_performance" ]] || fail 'reference performance is absent'
+  sha256sum "$reference_performance" >>"$root/input-sha256sums.txt"
+fi
 "$repo/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
   "$repo/repro/qwen38-27b-autoround-int4-b70/manifests/model.json" "$model" \
   --json "$root/model-verify.json" >"$root/model-verify.log"
@@ -87,17 +92,26 @@ python3 "$canaries" --base-url "http://127.0.0.1:${port}" --model "$served" \
 curl -fsS "http://127.0.0.1:${port}/health" >"$root/post-health.json"
 docker logs "$container" >"$root/server.log" 2>&1
 
-python3 - "$root/performance.json" "$root/canaries.json" "$root/qualification.json" <<'PY'
+python3 - "$root/performance.json" "$root/canaries.json" "$root/qualification.json" "$reference_performance" <<'PY'
 import json,pathlib,sys
 p=json.load(open(sys.argv[1])); c=json.load(open(sys.argv[2])); g=p["realistic_final_gate"]
 assert g["passed"] and p["fresh_response_validity"]["performance_gate_eligible"]
 assert g["cached_tokens_all_zero"] and len(p["rows"]) == 12 and c["pass_all"]
 assert len(set(p["prompt_sha256s"])) == 12
 metric=p["summary"]["class_balanced_tok_s_1_100_intervals_after_ttft"]["median"]
+reference_path=sys.argv[4]
+reference_identical=None
+if reference_path:
+    reference=json.load(open(reference_path))
+    current={row["prompt_id"]:row["token_ids"] for row in p["rows"]}
+    expected={row["prompt_id"]:row["token_ids"] for row in reference["rows"]}
+    reference_identical=current == expected and len(current) == 12
+    assert reference_identical
 value={"status":"passed-candidate-not-promoted","strict_metric_tok_s":metric,
        "aggregation":"median-of-prompt-class-medians","prompt_count":12,
        "cached_tokens_all_zero":True,"canaries_passed":True,
        "repeat_8x_unique_outputs":c["repeat_8x"]["unique_outputs"],
+       "reference_token_ids_identical":reference_identical,
        "promotion_authorized":False}
 pathlib.Path(sys.argv[3]).write_text(json.dumps(value,indent=2,sort_keys=True)+"\n")
 print(json.dumps(value,indent=2,sort_keys=True))
