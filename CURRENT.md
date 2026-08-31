@@ -1858,6 +1858,14 @@ to `N=352`, adds a preflight alignment guard, retains comparison of only the
 324 production-consumed outputs, and uses a new evidence root. See the
 [N336 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-n336-preflight-negative.md)
 and [N352 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-n352-prereg.md).
+The corrected four-pair screen completed with exact consumed bytes and zero
+discarded outputs in every repeat. Down was neutral at -0.59% / +2.45% for
+layers 0/47. Up was 65.12% faster at layer 0 and passed all gates; layer 47 was
+74.34% directionally faster but failed attribution because control drift was
+23.72%. Two fresh up-only brackets per sampled layer are frozen next; a pass
+authorizes only a 48-layer round-robin component screen. See the
+[four-pair result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-four-pair-result.md)
+and [repeat preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-m1-grouped-gemm-up-repeat-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

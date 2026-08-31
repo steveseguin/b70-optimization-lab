@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "one_pair_eligible_three_pairs_ineligible",
+  "classification": "hot_weight_component_screen_only",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "runtime_manifest_sha256": "71e263f19ccc1313bbdc21604b4de5171891454fb7e8e35877af083505522951",
+  "benchmark_sha256": "8b0486685e4167a3d9b4970d40635dd75b031792ef27ade71e27a5ae285af3b0",
+  "driver_sha256": "650efd1e807845f9125150a7390b5c7cf6222d18a136e68d7d2c83f17d8008e7",
+  "all_exact_consumed_output": true,
+  "all_discarded_outputs_zero": true,
+  "pairs": [
+    {
+      "layer": 0,
+      "projection": "down",
+      "control_median_us": 39.3185,
+      "candidate_median_us": 39.55224,
+      "latency_reduction_percent": -0.5944784261861402,
+      "control_drift_percent": 0.054238543761231384,
+      "eligible_for_round_robin_followup": false,
+      "result_sha256": "a08fee932a5008c9ad9b1b5c526bf9cfad144d8f9bc20fb4fd4da2af57f8eb10"
+    },
+    {
+      "layer": 0,
+      "projection": "up",
+      "control_median_us": 35.19593999999999,
+      "candidate_median_us": 12.276679999999999,
+      "latency_reduction_percent": 65.1190449807563,
+      "control_drift_percent": 2.212296845124273,
+      "eligible_for_round_robin_followup": true,
+      "result_sha256": "a29e6e2aa3bfa52ab54c3851d9d6f1633ffe1bf627752965fe5e16996d00ca3e"
+    },
+    {
+      "layer": 47,
+      "projection": "down",
+      "control_median_us": 40.51137999999999,
+      "candidate_median_us": 39.51687999999999,
+      "latency_reduction_percent": 2.45486576858156,
+      "control_drift_percent": 0.2448655162688107,
+      "eligible_for_round_robin_followup": false,
+      "result_sha256": "a96b5cb46c935b557476e042b221573bb2b8f8cd880237783cae0fb1470d2a68"
+    },
+    {
+      "layer": 47,
+      "projection": "up",
+      "control_median_us": 41.308800000000005,
+      "candidate_median_us": 10.59812,
+      "latency_reduction_percent": 74.34415911379658,
+      "control_drift_percent": 23.71542379087289,
+      "eligible_for_round_robin_followup": false,
+      "result_sha256": "32346b46962e24dcf3365c48b6f6bf31d8424ad9dc6f5ed68ddc404e5d3278f1"
+    }
+  ],
+  "endpoint_claim_authorized": false,
+  "raw_evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/hc-m1-grouped-eeee7d6-n352-seed20260830",
+  "next_action": "Run two fresh matched C/G/C repeats of layers 0 and 47 up only; if replicated, expand to a 48-layer round-robin screen."
+}
