@@ -2978,3 +2978,22 @@ finish cleanly first; no reboot is authorized by the packet. A pass projects
 only about `5.572-5.577 tok/s` and still needs separately booted map-unset
 control plus candidate repeat before promotion. See the
 [A31 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a31-moe-m1-current-prereg.md).
+The next independent target-side component candidate is HC-SiLU A1. A28
+measured this five-launch decomposition at `0.591987 ms/token` across 97 calls
+per token. The default-off exact `[1,320]` BF16 native path is now built in an
+isolated component-only runtime, with 11 CPU dispatch tests passing and no GPU
+work performed. Static review removed a redundant post-kernel barrier. Build
+review also rejected a mixed-SYCL-8/9 DSO before execution and rebuilt it
+entirely against the accepted 2025.3/SYCL-8 ABI. The frozen fresh-boot gate
+requires exhaustive 65,536-pattern BF16 parity, production-stride and
+no-mutation checks, 100-repeat stability, five-to-one launch proof, and a
+`C-A-A-C` timing pass. It hard-rejects the current unhealthy boot and does not
+authorize a reboot or endpoint. On the next attended boot it may run before
+the affinity component and A31; any component fault stops the chain. All
+three stages now share an atomic same-boot state: HC-SiLU must record a clean
+pass before affinity can claim the boot, affinity records completion only after
+bounded exact four-card discovery, compute/free-memory, and kernel-journal
+postflight, and both the A31 supervisor and launcher require that final state
+plus the verified same-boot evidence. All protected rates remain unchanged.
+See the
+[HC-SiLU preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a1-prereg.md).

@@ -1,0 +1,212 @@
+Base: 797769b34b6db5c934609b75dc04cc61ec66e5f9
+Status: default-off component candidate; endpoint use is not qualified
+
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -300,6 +300,7 @@
+     VLLM_PLE_CPU_OFFLOAD: bool = False
+     VLLM_XPU_PLE_UVA_PREFETCH: bool = False
+     VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP: bool = False
++    VLLM_XPU_QWEN4_EXP_HC_SILU: bool = False
+     VLLM_PLE_OFFLOAD_READY_TIMEOUT: float = 600.0
+     VLLM_PLE_OFFLOAD_RUNTIME_TIMEOUT: float = 600.0
+     VLLM_LOG_MODEL_INSPECTION: bool = False
+@@ -2057,6 +2058,11 @@
+     "VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP": lambda: (
+         os.getenv("VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP", "False").lower() in ("true", "1")
+     ),
++    # Opt in to the exact-shape native XPU HC SiLU primitive. Unsupported
++    # shapes retain the device-neutral Torch decomposition.
++    "VLLM_XPU_QWEN4_EXP_HC_SILU": lambda: (
++        os.getenv("VLLM_XPU_QWEN4_EXP_HC_SILU", "False").lower() in ("true", "1")
++    ),
+     # Timeout for PLE weight loading and TP worker registration.
+     "VLLM_PLE_OFFLOAD_READY_TIMEOUT": lambda: float(
+         os.getenv("VLLM_PLE_OFFLOAD_READY_TIMEOUT", "600")
+--- a/vllm/models/qwen4_exp/amd/ops/hc.py
++++ b/vllm/models/qwen4_exp/amd/ops/hc.py
+@@ -4,6 +4,7 @@
+ 
+ import torch
+ 
++from vllm import envs
+ from vllm.platforms import current_platform
+ from vllm.triton_utils import tl, triton
+ from vllm.utils.torch_utils import direct_register_custom_op
+@@ -35,6 +36,29 @@
+     return (scaled * torch.sigmoid(scaled)).to(x.dtype)
+ 
+ 
++def _use_native_xpu_hc_silu(x: torch.Tensor, hc_count: int) -> bool:
++    return (
++        envs.VLLM_XPU_QWEN4_EXP_HC_SILU
++        and x.device.type == "xpu"
++        and x.dtype == torch.bfloat16
++        and x.dim() == 2
++        and x.shape == (1, 320)
++        and x.stride(1) == 1
++        and hc_count == 4
++    )
++
++
++def _native_xpu_hc_silu(x: torch.Tensor, hc_count: int) -> torch.Tensor:
++    try:
++        native_op = torch.ops._xpu_C.qwen4_exp_hc_silu
++    except AttributeError as error:
++        raise RuntimeError(
++            "VLLM_XPU_QWEN4_EXP_HC_SILU is enabled for the production "
++            "decode shape, but the native XPU operator is unavailable"
++        ) from error
++    return native_op(x, hc_count)
++
++
+ def _hc_gate_mix_torch(
+     x: torch.Tensor,
+     gate: torch.Tensor,
+@@ -186,6 +210,8 @@
+ 
+ def _hc_silu(x: torch.Tensor, hc_count: int) -> torch.Tensor:
+     if x.device.type == "xpu":
++        if _use_native_xpu_hc_silu(x, hc_count):
++            return _native_xpu_hc_silu(x, hc_count)
+         return _hc_silu_torch(x, hc_count)
+     num_tokens, DIM = x.shape
+     assert x.stride(1) == 1
+@@ -583,6 +609,8 @@
+     "_hc_combine_torch",
+     "_hc_gate_mix_torch",
+     "_hc_silu_torch",
++    "_native_xpu_hc_silu",
++    "_use_native_xpu_hc_silu",
+     "grouped_gemma_rmsnorm",
+     "hc_combine",
+     "hc_combine_norm",
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_amd_hc_silu_dispatch.py
+@@ -0,0 +1,126 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++from types import SimpleNamespace
++
++import pytest
++import torch
++
++from vllm import envs
++from vllm.models.qwen4_exp.amd.ops import hc as hc_module
++
++
++class _FakeTensor:
++    def __init__(
++        self,
++        *,
++        device_type: str = "xpu",
++        dtype: torch.dtype = torch.bfloat16,
++        shape: tuple[int, ...] = (1, 320),
++        inner_stride: int = 1,
++    ) -> None:
++        self.device = SimpleNamespace(type=device_type)
++        self.dtype = dtype
++        self.shape = shape
++        self._inner_stride = inner_stride
++
++    def dim(self) -> int:
++        return len(self.shape)
++
++    def stride(self, dim: int) -> int:
++        assert dim == 1
++        return self._inner_stride
++
++
++def test_native_hc_silu_selector_is_default_off(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.delenv("VLLM_XPU_QWEN4_EXP_HC_SILU", raising=False)
++    assert envs.VLLM_XPU_QWEN4_EXP_HC_SILU is False
++    assert not hc_module._use_native_xpu_hc_silu(  # type: ignore[arg-type]
++        _FakeTensor(), 4
++    )
++
++
++@pytest.mark.parametrize(
++    ("tensor", "hc_count"),
++    [
++        (_FakeTensor(device_type="cpu"), 4),
++        (_FakeTensor(dtype=torch.float16), 4),
++        (_FakeTensor(shape=(2, 320)), 4),
++        (_FakeTensor(shape=(1, 319)), 4),
++        (_FakeTensor(inner_stride=2), 4),
++        (_FakeTensor(), 2),
++    ],
++)
++def test_native_hc_silu_selector_is_exact_shape_only(
++    monkeypatch: pytest.MonkeyPatch,
++    tensor: _FakeTensor,
++    hc_count: int,
++) -> None:
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_HC_SILU", "1")
++    assert not hc_module._use_native_xpu_hc_silu(  # type: ignore[arg-type]
++        tensor, hc_count
++    )
++
++
++def test_native_hc_silu_selector_accepts_production_decode_shape(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_HC_SILU", "1")
++    assert hc_module._use_native_xpu_hc_silu(  # type: ignore[arg-type]
++        _FakeTensor(), 4
++    )
++
++
++def test_hc_silu_routes_exact_shape_to_native_operator(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    expected = object()
++    calls: list[tuple[object, int]] = []
++
++    def native(tensor: object, hc_count: int) -> object:
++        calls.append((tensor, hc_count))
++        return expected
++
++    tensor = _FakeTensor()
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_HC_SILU", "1")
++    monkeypatch.setattr(
++        hc_module.torch,
++        "ops",
++        SimpleNamespace(
++            _xpu_C=SimpleNamespace(qwen4_exp_hc_silu=native),
++        ),
++    )
++    assert hc_module._hc_silu(tensor, 4) is expected  # type: ignore[arg-type]
++    assert calls == [(tensor, 4)]
++
++
++def test_hc_silu_retains_fallback_when_selector_is_off(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    expected = object()
++    calls: list[tuple[object, int]] = []
++
++    def fallback(tensor: object, hc_count: int) -> object:
++        calls.append((tensor, hc_count))
++        return expected
++
++    tensor = _FakeTensor()
++    monkeypatch.delenv("VLLM_XPU_QWEN4_EXP_HC_SILU", raising=False)
++    monkeypatch.setattr(hc_module, "_hc_silu_torch", fallback)
++    assert hc_module._hc_silu(tensor, 4) is expected  # type: ignore[arg-type]
++    assert calls == [(tensor, 4)]
++
++
++def test_hc_silu_enabled_exact_shape_fails_if_native_operator_is_missing(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_HC_SILU", "1")
++    monkeypatch.setattr(
++        hc_module.torch,
++        "ops",
++        SimpleNamespace(_xpu_C=SimpleNamespace()),
++    )
++    with pytest.raises(RuntimeError, match="native XPU operator is unavailable"):
++        hc_module._hc_silu(_FakeTensor(), 4)  # type: ignore[arg-type]

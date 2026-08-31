@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "status": "built_static_validated_gpu_pending",
+  "classification": "default_off_component_candidate",
+  "created_at": "2026-08-31T16:46:04-04:00",
+  "scope": "Qwen3.8 Flash-Next exact TP4 decode-shape HC SiLU component only",
+  "bases": {
+    "vllm": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "vllm_xpu_kernels": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
+  },
+  "source_snapshots": {
+    "vllm": "/mnt/fast-ai/qwen38-build/vllm-q38-hc-silu-a1-src",
+    "vllm_xpu_kernels": "/mnt/fast-ai/qwen38-build/kernels-q38-hc-silu-a1-src",
+    "native_source_sha256": "1fb1af69196475b80346c1795221cae4fc8bfde99bd1bd971f25d246d6197280"
+  },
+  "patches": {
+    "vllm": {
+      "path": "patches/qwen38-flash-next-fp8-b70/vllm/0034-Add-default-off-native-XPU-HC-SiLU-dispatch.patch",
+      "sha256": "a83179f2bfbf49347dd235fdac988379dc3e1df766d7c1b585205b5e437ddde5"
+    },
+    "vllm_xpu_kernels": {
+      "path": "patches/qwen38-flash-next-fp8-b70/vllm-xpu-kernels/0009-Add-exact-Qwen4Exp-HC-SiLU-XPU-kernel.patch",
+      "sha256": "12e5c31dea78ffeba4aadc209a78ae06e0a3d6b9f4f04ef497734f148264e3fb"
+    },
+    "reverse_apply_checks_passed": true
+  },
+  "cpu_tests": {
+    "dispatch_tests_passed": 11,
+    "ruff_passed": true,
+    "python_compile_passed": true
+  },
+  "build": {
+    "directory": "/mnt/fast-ai/qwen38-build/build-q38-hc-silu-a1",
+    "install": "/mnt/fast-ai/qwen38-build/install-q38-hc-silu-a1",
+    "cmake_cache_sha256": "c95a244f81765b84f0b5bba8fdb2ec0ab1b04b0c8686371c675981883861ba41",
+    "build_ninja_sha256": "d66667c2cb7d72534cde4ff6a07af3955c6f1738a171ebf32b0cfd22bcd70eea",
+    "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+    "cmplr_root": "/opt/intel/oneapi/compiler/2025.3",
+    "configuration": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "VLLM_TARGET_DEVICE": "xpu",
+      "VLLM_XPU_ENABLE_XE2": true,
+      "VLLM_XPU_ENABLE_XE_DEFAULT": false,
+      "BASIC_KERNELS_ENABLED": true,
+      "XPU_SPECIFIC_KERNELS_ENABLED": true,
+      "FA2_KERNELS_ENABLED": false,
+      "MOE_KERNELS_ENABLED": false,
+      "GDN_KERNELS_ENABLED": false,
+      "MQA_LOGITS_KERNELS_ENABLED": false,
+      "XPUMEM_ALLOCATOR_ENABLED": false
+    },
+    "uninstalled_dso": {
+      "path": "/mnt/fast-ai/qwen38-build/build-q38-hc-silu-a1/_xpu_C.abi3.so",
+      "bytes": 60245744,
+      "sha256": "db9681773b5d689202d721da0b68fe92741f0c8d569a6e77d8bc2cc244556df2"
+    },
+    "installed_dso": {
+      "path": "/mnt/fast-ai/qwen38-build/install-q38-hc-silu-a1/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "bytes": 60245744,
+      "sha256": "f3e4735c4046b7e15f4e5d597c01b73e6647ff2a8f7b9a2d577518479379841a",
+      "needed_sycl": [
+        "libsycl.so.8"
+      ],
+      "runpath": "$ORIGIN"
+    }
+  },
+  "rejected_build": {
+    "reason": "FindSYCLToolkit followed /opt/intel/oneapi/compiler/latest and linked libsycl.so.9 in addition to the accepted torch/libsycl.so.8 runtime",
+    "installed_dso_sha256": "700d47f7f8124f6df90e81dda2b6ac7c807fec52dedc1ad616ebafdf5db1737c",
+    "gpu_used": false,
+    "retained_as_candidate": false
+  },
+  "component_runtime": {
+    "path": "/mnt/fast-ai/qwen38-build/runtime-q38-hc-silu-a1",
+    "manifest_sha256": "e6b4bb20d0ed079ad454634eced171f7af2ce1c8d9ab56b6833375270820e28a",
+    "purpose": "component gate only",
+    "full_model_capable": false
+  },
+  "gate": {
+    "benchmark_path": "experiments/qwen38-flash-next-fp8-b70/tools/benchmark-q38-hc-silu-a1.py",
+    "benchmark_sha256": "a254a5567ca8251dac49c060a15b73ced16132a712045c09ccc36a12418efb71",
+    "postflight_path": "experiments/qwen38-flash-next-fp8-b70/tools/verify-q38-four-b70-postflight.py",
+    "postflight_sha256": "cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753",
+    "runner_path": "experiments/qwen38-flash-next-fp8-b70/tools/run-q38-hc-silu-a1.sh",
+    "runner_sha256": "8ea486f429ca6845941a80cd610ba7a8305f7ac44b0d6091f52d2778d39eac56",
+    "runner_canonical_sha256": "464a12832c9f423aab7a064340aa96feaefc39de19511e7ab853e84b99efdff1",
+    "static_validation_passed": true,
+    "rejected_boot_guard_passed": true,
+    "rejected_boot": "c36480de-9150-4182-9888-08c85d2d9de4",
+    "gpu_execution_pending_attended_fresh_boot": true
+  },
+  "promotion": {
+    "default_enabled": false,
+    "endpoint_authorized": false,
+    "performance_claim_authorized": false,
+    "protected_mtp0_tok_s": 5.515783,
+    "protected_mtp4_tok_s": 20.727176,
+    "protected_results_changed": false
+  }
+}

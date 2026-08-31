@@ -45,7 +45,9 @@ the event-chain runtime failure. No reboot is authorized by this packet. On a
 later attended fresh boot, the ordinary-XCCL affinity component must complete
 first. A31 verifies its same-boot evidence manifest and accepts either a clean
 performance pass or a clean performance close; any runtime failure forbids the
-model load.
+model load. Both the outer supervisor and launcher also require the atomic
+shared state `cpu-affinity-complete` for the current boot, so an HC-SiLU or
+affinity interruption cannot be bypassed by intact but stale evidence.
 
 A31 then remains the boot's only full model load. It must pass recovery, the
 inherited semantic boundary, 16 exact repeats, all three protected short

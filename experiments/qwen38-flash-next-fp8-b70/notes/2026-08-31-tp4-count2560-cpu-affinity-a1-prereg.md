@@ -62,7 +62,12 @@ ineligible for more GPU work. This runner hard-rejects that boot, so A1 cannot
 run until an attended reboot. It also pins exact runtime hashes, CPU/L3 layout,
 GPU BDF order, evidence mount, output path, and authorization token. Every arm
 has a timeout and exact-path cleanup; a runtime/correctness failure stops before
-the next arm. No reboot is authorized by this packet.
+the next arm. It additionally requires the shared state `hc-silu-passed` from
+this same boot, holds the host, four-GPU, full-load, and component-chain locks,
+marks itself attempted before device work, and writes `cpu-affinity-complete`
+only after clean completion, bounded exact ordered four-BDF rediscovery, a
+bounded four-card arithmetic/free-memory probe, and a clean bounded
+kernel-journal window. No reboot is authorized by this packet.
 
 Structured preregistration:
 [`20260831-tp4-count2560-cpu-affinity-a1-prereg.json`](../data/20260831-tp4-count2560-cpu-affinity-a1-prereg.json).

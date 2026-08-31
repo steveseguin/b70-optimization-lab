@@ -1,0 +1,109 @@
+Base: ad25aa9f69a2171612b9c6b83dfa82c69559f9e4
+Status: default-off component candidate; endpoint use is not qualified
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -555,6 +555,7 @@
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
+       "csrc/xpu/quantization/int8_quant.cpp"
++      "csrc/xpu/qwen4_exp_hc_silu.cpp"
+       "csrc/xpu/qwen_gemma_rms_norm.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -2,6 +2,10 @@
+ 
+ #include <torch/all.h>
+ 
++torch::Tensor qwen4_exp_hc_silu(
++    const torch::Tensor& input,
++    int64_t hc_count);
++
+ torch::Tensor qwen_gemma_rms_norm_f32_weight_out(
+     const torch::Tensor& input,
+     const torch::Tensor& weight,
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -11,6 +11,10 @@
+ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+   at::Tag stride_tag = at::Tag::needs_fixed_stride_order;
+ 
++  xpu_ops.def("qwen4_exp_hc_silu(Tensor input, int hc_count) -> Tensor");
++  xpu_ops.impl(
++      "qwen4_exp_hc_silu", torch::kXPU, &qwen4_exp_hc_silu);
++
+   // fp8_gemm is exposed as two schemas sharing one C++ implementation:
+   // a pure functional variant, and an explicit out-variant. Keeping the
+   // mutable `out` out of the functional schema is required for
+--- /dev/null
++++ b/csrc/xpu/qwen4_exp_hc_silu.cpp
+@@ -0,0 +1,67 @@
++#include <ATen/DeviceGuard.h>
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include "utils.h"
++
++namespace {
++
++class qwen4_exp_hc_silu_bf16_kernel {
++ public:
++  qwen4_exp_hc_silu_bf16_kernel(
++      const sycl::ext::oneapi::bfloat16* input,
++      sycl::ext::oneapi::bfloat16* output)
++      : input_(input), output_(output) {}
++
++  void operator() [[sycl::reqd_sub_group_size(16)]] (
++      const sycl::nd_item<1>& item) const {
++    const size_t column = item.get_global_id(0);
++    if (column >= 320) {
++      return;
++    }
++    const float scaled = static_cast<float>(input_[column]) * 0.25f;
++    const float sigmoid = 1.0f / (1.0f + sycl::exp(-scaled));
++    output_[column] =
++        static_cast<sycl::ext::oneapi::bfloat16>(scaled * sigmoid);
++  }
++
++ private:
++  const sycl::ext::oneapi::bfloat16* input_;
++  sycl::ext::oneapi::bfloat16* output_;
++};
++
++}  // namespace
++
++torch::Tensor qwen4_exp_hc_silu(
++    const torch::Tensor& input,
++    int64_t hc_count) {
++  const at::DeviceGuard device_guard(input.device());
++  TORCH_CHECK(input.is_xpu(), "Qwen4Exp HC SiLU input must be on XPU");
++  TORCH_CHECK(
++      input.scalar_type() == torch::kBFloat16,
++      "Qwen4Exp HC SiLU requires BF16 input");
++  TORCH_CHECK(
++      input.dim() == 2 && input.size(0) == 1 && input.size(1) == 320,
++      "Qwen4Exp HC SiLU requires decode shape [1, 320]");
++  TORCH_CHECK(
++      input.stride(1) == 1,
++      "Qwen4Exp HC SiLU requires unit inner stride");
++  TORCH_CHECK(hc_count == 4, "Qwen4Exp HC SiLU requires hc_count=4");
++
++  auto output = torch::empty({1, 320}, input.options());
++  const auto* input_ptr = reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++      input.data_ptr<c10::BFloat16>());
++  auto* output_ptr = reinterpret_cast<sycl::ext::oneapi::bfloat16*>(
++      output.data_ptr<c10::BFloat16>());
++
++  auto& queue = vllm::xpu::vllmGetQueue(input.device().index());
++  TORCH_CHECK(
++      queue.has_property<sycl::property::queue::in_order>(),
++      "Qwen4Exp HC SiLU requires an in-order XPU queue");
++  queue.submit([&](sycl::handler& handler) {
++    handler.parallel_for(
++        sycl::nd_range<1>(sycl::range<1>(384), sycl::range<1>(128)),
++        qwen4_exp_hc_silu_bf16_kernel(input_ptr, output_ptr));
++  });
++  return output;
++}

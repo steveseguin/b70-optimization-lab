@@ -4,12 +4,13 @@ set -Eeuo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 base="${script_dir}/supervise-tp4-mtp0-4352-ple-only-a29-moe-m1-warps8.sh"
 expected_base=bfb70ca1cdb74f5c7ec4bf462755c250cebbf71a828fd42d18b09c36e7c13bb0
-expected_wrapper=6e7e289ab49f3c210deee49c1ae8c61a6d2f093142199d19abc42c1c40beebc5
+expected_wrapper=b6f9dc16d7b39c7c988f3ff828b37650b24781490348632daf8fb9f574989088
 expected_client=7342b8ed2e8edb96cbd648e286e6ebeba9945553ac492915174ea17839e0552e
 current_vllm=797769b34b6db5c934609b75dc04cc61ec66e5f9
 rejected_boot=c36480de-9150-4182-9888-08c85d2d9de4
 affinity_root=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1
-expected_source=1c9a5829c860061ce1f1773d2d6cca8977c2a4ebfe0e9f485b18b80c0b927d9e
+component_state="/run/user/$(id -u)/q38-flash-next-component-chain.state"
+expected_source=60d281b2f23d1233acc9b42f8ba41dc3f59b59e573ef101f1525820dd291b0c3
 
 derive() {
   Q38_A29_SOURCE_ONLY=1 "$base" | awk \
@@ -60,6 +61,21 @@ if [[ "${Q38_A31_SOURCE_ONLY:-0}" == 1 ]]; then derive; exit 0; fi
   printf 'FAIL: A31 supervisor affinity prerequisite is from another boot\n' >&2
   exit 1
 }
+exec 10>"${component_state}.lock"
+flock -n 10 || {
+  printf 'FAIL: A31 supervisor component-chain state is busy\n' >&2
+  exit 1
+}
+read -r component_status component_boot <"$component_state" || {
+  printf 'FAIL: A31 supervisor component-chain state is absent or malformed\n' >&2
+  exit 1
+}
+[[ "$component_status" == cpu-affinity-complete && "$component_boot" == "$(tr -d '\n' </proc/sys/kernel/random/boot_id)" ]] || {
+  printf 'FAIL: A31 supervisor requires cpu-affinity-complete on this boot\n' >&2
+  exit 1
+}
+flock -u 10
+exec 10>&-
 (cd "$affinity_root" && sha256sum -c evidence.sha256) >/dev/null || {
   printf 'FAIL: A31 supervisor affinity evidence does not verify\n' >&2
   exit 1

@@ -10,6 +10,7 @@ expected_source=b0bc8aea505dc02f24956fe7d7316a29131671cd4db7af922b43d473f11485ec
 current_vllm=797769b34b6db5c934609b75dc04cc61ec66e5f9
 rejected_boot=c36480de-9150-4182-9888-08c85d2d9de4
 affinity_root=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1
+component_state="/run/user/$(id -u)/q38-flash-next-component-chain.state"
 
 derive() {
   Q38_A29_SOURCE_ONLY=1 "$base" | awk \
@@ -72,6 +73,21 @@ if [[ "${Q38_A31_SOURCE_ONLY:-0}" == 1 ]]; then derive; exit 0; fi
   printf 'FAIL: A31 affinity prerequisite is from another boot\n' >&2
   exit 1
 }
+exec 10>"${component_state}.lock"
+flock -n 10 || {
+  printf 'FAIL: A31 component-chain state is busy\n' >&2
+  exit 1
+}
+read -r component_status component_boot <"$component_state" || {
+  printf 'FAIL: A31 component-chain state is absent or malformed\n' >&2
+  exit 1
+}
+[[ "$component_status" == cpu-affinity-complete && "$component_boot" == "$(tr -d '\n' </proc/sys/kernel/random/boot_id)" ]] || {
+  printf 'FAIL: A31 requires cpu-affinity-complete on this boot\n' >&2
+  exit 1
+}
+flock -u 10
+exec 10>&-
 (cd "$affinity_root" && sha256sum -c evidence.sha256) >/dev/null || {
   printf 'FAIL: A31 affinity prerequisite evidence does not verify\n' >&2
   exit 1

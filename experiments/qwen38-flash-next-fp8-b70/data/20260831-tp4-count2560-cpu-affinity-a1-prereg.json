@@ -5,7 +5,8 @@
   "scope": "Ordinary accepted XCCL with rank-process plus oneCCL-worker CPU/L3 affinity as one coherent candidate; no model throughput",
   "identity": {
     "gate_sha256": "a37f6d5c935ffbcc401fcc9197d49d8283fadba97e02037052d398779c7097c4",
-    "runner_sha256": "88735f8363708acc71de49dc349cf2f1e8223be5009f3239064ded1fb1ed3350",
+    "postflight_sha256": "cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753",
+    "runner_sha256": "a47456a93945708bf7c645a7099741f47cb6e76a05a9fe15f3cef1d49ae5b3d0",
     "libccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
     "libsycl_sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
     "libfabric_sha256": "d849d56fd3f8f2581b4b0c17c1564f8145911a313c2c011d694aaf21e5e86b27",
@@ -49,6 +50,21 @@
     "matched_pairs": [["control-1", "pinned-1"], ["control-2", "pinned-2"]],
     "minimum_median_saving_fraction_each_pair": 0.05,
     "minimum_p90_saving_fraction_each_pair": 0.0
+  },
+  "lifecycle_contract": {
+    "required_same_boot_input_state": "hc-silu-passed",
+    "pre_device_state": "cpu-affinity-attempted",
+    "clean_completion_state": "cpu-affinity-complete",
+    "locks": [
+      "/tmp/b70-benchmark.lock",
+      "/tmp/b70-gpu0.lock",
+      "/tmp/b70-gpu1.lock",
+      "/tmp/b70-gpu2.lock",
+      "/tmp/b70-gpu3.lock",
+      "/run/user/1000/q38-flash-next-full-load.boot-id.lock",
+      "/run/user/1000/q38-flash-next-component-chain.state.lock"
+    ],
+    "postflight": "bounded exact ordered four-BDF rediscovery, bounded four-card arithmetic/free-memory probe, and clean bounded kernel-journal window before clean completion state"
   },
   "frozen_interpretation": {
     "both_pairs_pass": "eligible for a separately frozen affinity-only endpoint arm; not yet a tok/s claim",

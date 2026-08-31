@@ -54,6 +54,15 @@ logical-index ordering, while leaving score values and non-XPU dispatch
 unchanged. Promote it into a new certified series only after the linked
 full-model exact-4K and fresh-server gates pass.
 
+Loose vLLM patch `0034` and loose kernel patch `0009` form the default-off
+HC-SiLU A1 component candidate. They are based on vLLM `797769b34` and kernel
+`ad25aa9f` respectively and are not part of either certified reconstruction
+series. The isolated component DSO is single-ABI SYCL 8 and statically
+validated, but no accelerator parity or timing result exists yet. Do not use
+its component-only runtime to serve a model. Promotion requires the frozen
+exhaustive BF16, launch-count, and alternating timing gate followed by a new
+full-runtime build and separate endpoint qualification.
+
 ## Historical loose-artifact SHA-256
 
 ```text
@@ -76,12 +85,14 @@ e9d2ed0234695954ea8c1bdb0edb1b18cc00c0be8c1bfb8e7d021abb0e80795e  vllm/0016-Fail
 cdd9631a9480ab333fb4340812adf856ad65e22b0c4da1b1a8ef91bb04d7fa3c  vllm/0017-Port-Qwen4Exp-MTP-tests-to-tokens-per-state-cache-AP.patch
 7d5328a5d5175fdd0c97ac83b9cb826e8e3dce5d30c755a26c4f732000f41937  vllm/0018-Route-legacy-XPU-GDN-speculative-decode.patch
 df44c39f0c25cb6b05365d5de31afa9e0d3b251b070b371ae71d96080979afcd  vllm/0019-Make-Qwen4Exp-XPU-QSA-selection-deterministic.patch
+a83179f2bfbf49347dd235fdac988379dc3e1df766d7c1b585205b5e437ddde5  vllm/0034-Add-default-off-native-XPU-HC-SiLU-dispatch.patch
 23d25179eb7e287ca8217afac479ec0fe55736cb2e20ff8032e866ffd77b536e  vllm-xpu-kernels/0001-fix-xpu-restore-architecture-probe-bindings.patch
 8cfaecdb5c0d1afe61f6eb87d6018346261c1b8eadb58f181aec328c16f70af1  vllm-xpu-kernels/0002-fix-build-restore-local-MoE-prologue-source.patch
 e8880c975ad17cbfc8676e65edd82eae96a94aaecf883137bd3c51c124e627a2  vllm-xpu-kernels/0003-fix-build-include-fused-quant-implementations.patch
 ecc1cb5c84b148e96755b0b834408ae5ffaf9e497d2c1eb7d46735b4cf850a88  vllm-xpu-kernels/0004-fix-moe-ignore-padding-sentinels-during-alignment.patch
 7cbadf00a334404507ea730ea8281db203d4de7613785b599aa7f9800d523a46  vllm-xpu-kernels/0005-Generalize-exact-GDN-replay-to-MTP-row-count.patch
 d4a7d9934e21a37ed21e812355e4241690992d5b81c27fe818dc9302f19d0ef9  vllm-xpu-kernels/0006-perf-moe-skip-unused-512-expert-top-k-workspace.patch
+12e5c31dea78ffeba4aadc209a78ae06e0a3d6b9f4f04ef497734f148264e3fb  vllm-xpu-kernels/0009-Add-exact-Qwen4Exp-HC-SiLU-XPU-kernel.patch
 ```
 
 These are source artifacts only. A deployment package must additionally pin
