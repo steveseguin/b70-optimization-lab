@@ -1940,6 +1940,13 @@ independent review are complete. See the
 [S2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-packed-fallback-s2-result.md)
 and
 [S3g intent](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-grouped-s3g-intent.md).
+The distinct S3g tooling is now implemented and frozen: all 97 M64 weights,
+authority then grouped only, 194 isolated arms, a new no-clobber evidence
+root, and unchanged historical smoke/S1/S2/S3 plan identities. The worker
+rejects excluded providers before evidence or device work. Independent review
+passed the exact frozen hashes and fail-closed contract, so S3g is launchable;
+a complete pass can authorize only a separate source-dispatch design. See the
+[S3g preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-hc-up-mgt1-grouped-s3g-prereg.md).
 Those build-only commits advanced the clean kernel workspace from `359466a` to
 `eeee7d6`; the sealed serving stage and all protected results are unchanged,
 but A29's workspace-source guard is now intentionally stale. Refreeze and

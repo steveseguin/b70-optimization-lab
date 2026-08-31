@@ -248,7 +248,9 @@ def validate_parent() -> tuple[int, str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scope", choices=("smoke", "s1", "s2", "s3"), required=True)
+    parser.add_argument(
+        "--scope", choices=("smoke", "s1", "s2", "s3", "s3g"), required=True
+    )
     parser.add_argument("--repeat", choices=("r1", "r2"))
     parser.add_argument(
         "--slot", choices=tuple(slot for slot, _ in production_slots()), required=True
@@ -257,6 +259,8 @@ def main() -> None:
     parser.add_argument("--provider", choices=PROVIDERS, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.scope == "s3g" and args.provider not in ("authority", "grouped"):
+        raise RuntimeError("s3g accepts only authority and grouped providers")
 
     script = Path(__file__).resolve()
     script_sha256 = sha256(script)
@@ -273,6 +277,7 @@ def main() -> None:
             "s2": args.slot in ("00-attn", "00-mlp", "24-attn", "47-mlp", "final")
             and args.m in M_VALUES,
             "s3": args.m == 64,
+            "s3g": args.m == 64,
         }
         if not allowed[args.scope]:
             raise RuntimeError(f"cell is outside frozen {args.scope} scope")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Orchestrate the frozen all-97 M64 and sentinel-wide HC fallback gate."""
+"""Orchestrate the frozen HC fallback and grouped-provider gates."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ AUTHORITY = Path(
 )
 AUTHORITY_SHA256 = "15af5344c259fa83ffc16ca1755c621a83cce01651119b2c5234c4276a2fcab9"
 WORKER = Path(__file__).with_name("benchmark-hc-up-mgt1-packed-fallback.py")
-WORKER_SHA256 = "153a51f4a742f461f6bd1a5d4e4e289ca2f91415d11f66e65580d1221d2891c4"
+WORKER_SHA256 = "3bf77bca6bed6397710b92b28c966724380de2d9c0b1518674325840d7cb4dfc"
 WORKER_PYTHON = Path("/home/steve/.venvs/vllm-xpu/bin/python")
 STAGE = Path(
     "/mnt/usb-models/qwen38-build/hc-grouped-stage-eeee7d6-sycl8/vllm_xpu_kernels"
@@ -102,7 +102,15 @@ def cells(scope: str) -> list[tuple[str, int]]:
         return [(slot, m) for m in M_VALUES for slot in SENTINELS]
     if scope == "s3":
         return [(slot, 64) for slot, _ in production_slots()]
+    if scope == "s3g":
+        return [(slot, 64) for slot, _ in production_slots()]
     raise RuntimeError(f"unknown gate scope: {scope}")
+
+
+def providers(scope: str) -> tuple[str, ...]:
+    if scope == "s3g":
+        return ("authority", "grouped")
+    return PROVIDERS
 
 
 def plan(scope: str) -> dict[str, object]:
@@ -114,9 +122,9 @@ def plan(scope: str) -> dict[str, object]:
             "output_name": f"{slot}-m{m}-{provider}.json",
         }
         for slot, m in cells(scope)
-        for provider in PROVIDERS
+        for provider in providers(scope)
     ]
-    expected_arms = {"smoke": 4, "s1": 8, "s2": 120, "s3": 388}[scope]
+    expected_arms = {"smoke": 4, "s1": 8, "s2": 120, "s3": 388, "s3g": 194}[scope]
     if len(arm_plan) != expected_arms:
         raise RuntimeError(f"frozen {scope} arm plan is not {expected_arms} entries")
     return {
@@ -129,14 +137,14 @@ def plan(scope: str) -> dict[str, object]:
         "seed": SEED,
         "run_attempt": RUN_ATTEMPT,
         "worker_python": str(WORKER_PYTHON),
-        "all_97_m64": scope == "s3",
+        "all_97_m64": scope in ("s3", "s3g"),
         "sentinels": list(SENTINELS) if scope == "s2" else ["00-attn"],
         "sentinel_m_values": (
             list(M_VALUES)
             if scope == "s2"
             else ([2, 64] if scope == "s1" else [2] if scope == "smoke" else [64])
         ),
-        "providers": list(PROVIDERS),
+        "providers": list(providers(scope)),
         "cell_count": len(cells(scope)),
         "arm_count": len(arm_plan),
         "arms": arm_plan,
@@ -288,8 +296,13 @@ def verify_authority() -> dict[str, object]:
     return authority
 
 
-def validate_cell(arms: list[dict[str, object]], slot: str, m: int) -> dict[str, bool]:
-    if [arm.get("provider") for arm in arms] != list(PROVIDERS):
+def validate_cell(
+    arms: list[dict[str, object]],
+    slot: str,
+    m: int,
+    expected_providers: tuple[str, ...],
+) -> dict[str, bool]:
+    if [arm.get("provider") for arm in arms] != list(expected_providers):
         raise RuntimeError(f"provider sequence drift for {slot} M={m}")
     identity_fields = (
         "repeat",
@@ -324,7 +337,7 @@ def validate_cell(arms: list[dict[str, object]], slot: str, m: int) -> dict[str,
     for arm in arms:
         if arm.get("status") != "component_arm_valid":
             raise RuntimeError(f"invalid arm status for {slot} M={m}")
-        if arm.get("scope") not in ("smoke", "s1", "s2", "s3"):
+        if arm.get("scope") not in ("smoke", "s1", "s2", "s3", "s3g"):
             raise RuntimeError(f"invalid arm scope for {slot} M={m}")
         if arm.get("slot") != slot or arm.get("shape", {}).get("m") != m:
             raise RuntimeError(f"arm selection drift for {slot} M={m}")
@@ -343,7 +356,9 @@ def validate_cell(arms: list[dict[str, object]], slot: str, m: int) -> dict[str,
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-only", action="store_true")
-    parser.add_argument("--scope", choices=("smoke", "s1", "s2", "s3"), default="smoke")
+    parser.add_argument(
+        "--scope", choices=("smoke", "s1", "s2", "s3", "s3g"), default="smoke"
+    )
     parser.add_argument("--repeat", choices=("r1", "r2"))
     args = parser.parse_args()
 
@@ -416,11 +431,12 @@ def main() -> None:
 
     validated_cells: list[dict[str, object]] = []
     arm_closure: list[tuple[Path, str]] = []
-    exact_counts = {provider: 0 for provider in PROVIDERS}
-    mismatches = {provider: [] for provider in PROVIDERS}
+    selected_providers = providers(args.scope)
+    exact_counts = {provider: 0 for provider in selected_providers}
+    mismatches = {provider: [] for provider in selected_providers}
     for slot, m in cells(args.scope):
         cell_arms: list[dict[str, object]] = []
-        for provider in PROVIDERS:
+        for provider in selected_providers:
             if sha256(script) != script_sha256 or sha256(WORKER) != WORKER_SHA256:
                 raise RuntimeError("driver/worker closure changed before an arm")
             output = arms_dir / f"{slot}-m{m}-{provider}.json"
@@ -516,7 +532,7 @@ def main() -> None:
                 raise RuntimeError(f"arm changed after process receipt: {output}")
             arm_closure.append((output, arm_sha256))
             cell_arms.append(arm)
-        exact_to_authority = validate_cell(cell_arms, slot, m)
+        exact_to_authority = validate_cell(cell_arms, slot, m, selected_providers)
         for provider, exact in exact_to_authority.items():
             if exact:
                 exact_counts[provider] += 1
@@ -569,7 +585,7 @@ def main() -> None:
         "plan_sha256": canonical_sha256(plan(args.scope)),
         "host_preflight": host_preflight,
         "cell_count": len(validated_cells),
-        "arm_count": len(validated_cells) * len(PROVIDERS),
+        "arm_count": len(validated_cells) * len(selected_providers),
         "all_providers_byte_exact": all_exact,
         "provider_classification": {
             provider: {
@@ -577,7 +593,7 @@ def main() -> None:
                 "mismatch_cell_count": len(mismatches[provider]),
                 "mismatches": mismatches[provider],
             }
-            for provider in PROVIDERS
+            for provider in selected_providers
         },
         "all_outputs_finite_and_repeatable": True,
         "timing_classification": "descriptive_fixed_provider_order",
