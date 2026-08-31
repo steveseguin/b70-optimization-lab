@@ -30,6 +30,8 @@ class Contract(unittest.TestCase):
     def test_direct_model_gate_and_tp1(self):
         self.assertIn("verify-model-direct.py", self.runner)
         self.assertIn("--tensor-parallel-size 1", self.runner)
+        self.assertIn("--volume /dev/dri/by-path:/dev/dri/by-path:ro", self.runner)
+        self.assertIn("--group-add video --group-add render", self.runner)
 
 
 if __name__ == "__main__":
