@@ -22,12 +22,14 @@ tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-1}
 gpu_mask=${GPU_MASK:-0}
 device_selector=${ONEAPI_SELECTOR:-level_zero:0}
 container_memory=${CONTAINER_MEMORY:-12g}
+max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-2048}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 cleanup(){
   local rc=$?
   set +e
+  docker logs "$container" >"$root/server-final.log" 2>&1
   docker rm -f "$container" >/dev/null 2>&1
   journalctl -k --since "@${journal_start}" --no-pager >"$root/kernel-journal.log" 2>"$root/kernel-journal.err"
   printf '%s\n' "$rc" >"$root/attempt.rc"
@@ -80,7 +82,7 @@ docker run -d --name "$container" --ulimit core=0 --memory "$container_memory" -
   --served-model-name "$served" --tensor-parallel-size "$tensor_parallel_size" --pipeline-parallel-size 1 \
   --data-parallel-size 1 --dtype float16 --kv-cache-dtype auto \
   --gpu-memory-utilization 0.80 --max-model-len 2048 --block-size 64 \
-  --max-num-seqs 1 --max-num-batched-tokens 2048 --no-enable-prefix-caching \
+  --max-num-seqs 1 --max-num-batched-tokens "$max_num_batched_tokens" --no-enable-prefix-caching \
   --enable-prompt-tokens-details --language-model-only --enforce-eager \
   >"$root/container-id.txt"
 
