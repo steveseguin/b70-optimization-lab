@@ -1,0 +1,35 @@
+{
+  "campaign": "qwen38-q4km-tp2-c96-onednn-primitive-reuse-20260830-r29",
+  "status": "closed mechanism negative on both local cards",
+  "scope": "Mechanism-only real-shape microbenchmark; these timings are not endpoint or model throughput claims.",
+  "shape": "Deterministic f16xf16->f32 oneDNN matmul, A=[1,8704,5120], B=[1,5120,96], C=[1,8704,96]",
+  "method": "Eight paired warmups; six alternating blocks of twenty samples per arm; eight invocations per sample; explicit queue wait; per-invocation wall time.",
+  "gpu0": {
+    "samples_per_arm": 120,
+    "rebuilt_p25_ms": 0.220316,
+    "rebuilt_median_ms": 0.221101,
+    "rebuilt_p75_ms": 0.221803,
+    "cached_p25_ms": 0.220035,
+    "cached_median_ms": 0.220555,
+    "cached_p75_ms": 0.221174,
+    "median_reduction_percent": 0.247059,
+    "output_byte_exact": true
+  },
+  "gpu1": {
+    "samples_per_arm": 120,
+    "rebuilt_p25_ms": 0.215873,
+    "rebuilt_median_ms": 0.216491,
+    "rebuilt_p75_ms": 0.217362,
+    "cached_p25_ms": 0.217140,
+    "cached_median_ms": 0.217762,
+    "cached_p75_ms": 0.218443,
+    "median_reduction_percent": -0.587178,
+    "output_byte_exact": true
+  },
+  "source_sha256": "6dfef7b3543ab5b9399750be2e7a2b4eba196f47e7fba397446d73794fd3e2db",
+  "executable_sha256": "72aad96aa7a3cd757203f157a03858ce736bd7c0b2908e0620746c15074bba6f",
+  "gpu0_raw_sha256": "e28d0eeb5c51c3bf9ee66d7abecf5d6597cadac65f060bf738238b9a1516d8b0",
+  "gpu1_raw_sha256": "2665d4d0a9bf81d8363fb24dee255bb06296be7a310ca3f6f3e5156a026ae2f4",
+  "decision": "The preregistered 5% threshold failed on both cards. Reusing pointer-independent oneDNN primitive objects was neutral on GPU0 and slower on GPU1, consistent with oneDNN's internal primitive cache already absorbing construction cost. Do not implement an endpoint primitive cache.",
+  "next_target": "Optimize the dominant gate/up GEMM data path or its consumer rather than wrapper object construction."
+}
