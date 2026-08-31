@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-autoround-detpad-operator.v1",
+  "created_utc": "2026-08-31T02:58:20Z",
+  "classification": "operator-qualified-only",
+  "host": "steve-TURIND8-2L2T",
+  "physical_gpu": 0,
+  "image": "neural-download/vllm-openai-xpu:qwen38-autoround-current-deterministic-r1",
+  "image_id": "sha256:895e82ec34982f2ca957a00d14b055e41bad6b63f2ac123141c24fd398727136",
+  "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+  "patch_sha256": "8237fd2a5f11c772269275598bc005d7a146f86de741cef753fc0ec74cb1a408",
+  "wheel_sha256": "823615350c5344532f63dde8652b291d7b9d6815a209121c97f2fcfac09474c5",
+  "xpu_extension_sha256": "c5e9c9a505f64e0e4be819191ef091c09bfb2af153c6c7c341c80e8ebed2e620",
+  "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+  "feature_set": "dense-xe2-gdn-mqa-mhc",
+  "environment": {
+    "VLLM_XPU_ONEDNN_INT4_DETERMINISM_PAD": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "msweep": [
+    {"m": 6, "iters": 200, "mismatches": 0},
+    {"m": 8, "iters": 200, "mismatches": 0},
+    {"m": 16, "iters": 200, "mismatches": 0},
+    {"m": 32, "iters": 200, "mismatches": 0},
+    {"m": 64, "iters": 200, "mismatches": 0},
+    {"m": 128, "iters": 200, "mismatches": 0},
+    {"m": 256, "iters": 200, "mismatches": 0},
+    {"m": 341, "iters": 200, "mismatches": 0},
+    {"m": 512, "iters": 200, "mismatches": 0},
+    {"m": 1024, "iters": 200, "mismatches": 0}
+  ],
+  "padded_m512": {
+    "real_rows": 341,
+    "row_independence": true,
+    "iters": 500,
+    "stability_bad_iters": 0
+  },
+  "raw_evidence_root": "/mnt/fast-ai/bench-results/qwen38-autoround-detpad-operator-20260830-r3-final-image",
+  "reporting_boundary": "This qualifies the patched INT4 operator only. It is not a model correctness, determinism, quality, or performance result."
+}
