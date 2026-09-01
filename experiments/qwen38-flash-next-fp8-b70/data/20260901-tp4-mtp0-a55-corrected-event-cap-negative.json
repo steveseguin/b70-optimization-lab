@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "status": "corrected_event_cap_stop_during_second_exact_2k_row",
+  "classification": "bounded_hardware_guard_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "FULL_DECODE_ONLY",
+    "collective": "graph_safe_oneccl_twoshots",
+    "checkpoint_location": "external_ntfs",
+    "attempt": 55,
+    "port": 19727
+  },
+  "startup": {
+    "shards": 131,
+    "rank_total_seconds_min": 579.635503,
+    "rank_total_seconds_max": 580.077044,
+    "gib_per_card": 31.57,
+    "kv_cache_tokens": 3456,
+    "graph_capture_seconds": 51,
+    "endpoint_healthy": true,
+    "recovery_canary_passed": true
+  },
+  "quality": {
+    "exact_cases_passed": 6,
+    "exact_cases_total": 7,
+    "known_failed_case": "code_execution",
+    "repeat_passed": true,
+    "long_context_passed": true,
+    "cached_tokens": 0
+  },
+  "short_diagnostic": {
+    "rates_tok_s": [
+      19.420732866704917,
+      18.546441581595502,
+      19.071016825510725
+    ],
+    "median_tok_s": 19.071016825510725,
+    "output_token_ids_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "a44_diagnostic_median_tok_s": 20.507849,
+    "relative_to_a44_percent": -7.006254895329467,
+    "credit": "diagnostic_only"
+  },
+  "exact_2k": {
+    "row_1_status": "passed",
+    "row_1_conventional_99_interval_tok_s": 11.35432506508016,
+    "row_1_time_to_first_token_s": 57.46604120200027,
+    "row_1_output_token_ids_sha256": "6bebd491c323fd0a99ff3c88bc7bd7d2df7d6899532c486d307b13edc7a18637",
+    "row_2_status": "incomplete_after_supervisor_stop",
+    "row_2_timestamped_events": 85,
+    "row_2_required_events": 128
+  },
+  "guard_stop": {
+    "nvme_corrected_event_baseline": 229,
+    "nvme_corrected_event_final": 294,
+    "nvme_corrected_event_delta": 65,
+    "max_nvme_corrected_event_delta": 64,
+    "nvme_read_delta_sectors": 11323424,
+    "max_nvme_read_delta_sectors": 16777216,
+    "minimum_mem_available_kib": 26310300,
+    "loaded_state_floor_kib": 16000000,
+    "root_corrected_event_delta": 0,
+    "fatal_or_recoverable_link_event": false,
+    "oom": false,
+    "b70_fault": false
+  },
+  "decision": "Do not raise the corrected-event limit or retry twoshots at endpoint scope; reduce local-NVMe runtime traffic and return to component-first W13 screening.",
+  "protected_results_changed": false,
+  "raw_run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraph-mtp0-2304-ple-only-r1-attempt55",
+  "raw_supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraph-mtp0-2304-ple-only-r1-attempt55-supervisor"
+}

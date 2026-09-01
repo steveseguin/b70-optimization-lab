@@ -3502,3 +3502,21 @@ the remaining host safeguards and requires no reboot. See the
 [A54 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a54-local-read-cap-negative.md).
 The exact successor is frozen in the
 [A55 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a55-read-cap-prereg.md).
+A55 completed startup, recovery, the inherited accepted quality boundary, and
+all three exact-hash short rows. Their `19.071017 tok/s` median was 7.006%
+below A44's retained diagnostic full-graph median, so `twoshots` does not
+advance as a serving-speed candidate. Exact-2K row 1 passed at `11.354325
+tok/s`; row 2 was deliberately stopped at 85/128 tokens when the local-NVMe
+corrected-event delta reached 65, one above the unchanged 64-event limit.
+Local reads were only 5.40/8 GiB, minimum availability was 26.31 million KiB,
+root delta was zero, and no fatal link or B70 event occurred. The event limit
+will not be raised, and there is no A56 endpoint retry. Full-model work must
+first reduce local runtime/compile traffic; optimization returns to the frozen
+one-B70 W13 graph census. See the
+[A55 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a55-corrected-event-cap-negative.md).
+The next active arm is the external-checkpoint, one-B70
+[W13 graph census](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-xpu-graph-census-a1-prereg.md): six W1-only M1 MoE candidates,
+each in a fresh control/candidate/control bracket with 100 changing-input exact
+hashes. Only a lossless candidate with at most 2% control drift and at least 3%
+matched improvement can emit a separately reviewed confirmation packet. It
+does not load the full model and does not use the local NVMe checkpoint.
