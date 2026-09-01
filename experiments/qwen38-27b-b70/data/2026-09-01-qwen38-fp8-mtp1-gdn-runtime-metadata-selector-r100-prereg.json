@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-runtime-metadata-selector-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-runtime-metadata-selector-20260901-r100",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether selecting the independently proven c1-exact and c2-exact GDN norm arithmetic from live request metadata repairs output identity at both concurrencies.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-retained-lowering-r99",
+    "base_image_id": "sha256:a2e09416d1f55da2b71ffefbbec7db7d6581089b33ed125c6ea3ed147050eaf8",
+    "r99_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-retained-lowering-r99-result.json"
+  },
+  "treatment": {
+    "selector_boundary": "Inside the opaque qwen_gdn_row_stable_rmsnorm_gated_xpu custom-op implementation, where get_forward_context() exposes live GDNAttentionMetadata and cannot be frozen by the enclosing compiled graph.",
+    "single_request_arm": "R99: eight-row reduction, num_warps=2, num_stages=1; 1024-element pointwise, num_warps=4, num_stages=1; libdevice rsqrt/exp.",
+    "multi_request_arm": "R97: one-row reduction, num_warps=2, default pipeline stages; 256-element pointwise, num_warps=4, default pipeline stages; Triton rsqrt/exp.",
+    "request_count": "max(num_prefills, num_decodes, num_spec_decodes) from the live layer GDNAttentionMetadata; select the multi-request arm only when this is greater than one.",
+    "unchanged": [
+      "R88 request-isolated qkvz prefill",
+      "R89 request-isolated GDN prefill",
+      "FP8 output projection",
+      "deterministic=true",
+      "xpu_graph=false",
+      "frozen prompts, token oracle, request order, and cache-disabled request flags"
+    ]
+  },
+  "operator_gate": {
+    "required": true,
+    "both_arms_match_their_predecessor_operator_outputs": true,
+    "both_arms_row_isolated": true,
+    "unsupported_shape_failed_closed": true,
+    "selector_fails_closed_without_valid_layer_metadata": true
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "operator_gate": "pass",
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "runtime_log_proves_single_and_multi_arms": true,
+    "layer0_core_and_z_trace_remain_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing image, extend warmup for both arms, repeat the frozen gate, then perform clean-boot varied realistic prompts and determinism qualification before any performance promotion.",
+  "followup_if_fail": "Preserve the result and identify whether prefill or speculative decode requires a different live selector; do not substitute fixture row-count heuristics.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the current boot contains an earlier GPU reset."
+}
