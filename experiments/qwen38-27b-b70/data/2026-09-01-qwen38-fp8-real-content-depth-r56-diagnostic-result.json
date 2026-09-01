@@ -1,0 +1,133 @@
+{
+  "schema": "neural.download.qwen38-fp8-real-content-depth-diagnostic-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-real-content-depth-20260901-r56",
+  "status": "passed-diagnostic-not-promotable-from-faulted-boot",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "kv_dtype": "f16",
+    "context_capacity": 33024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 4096,
+    "prefix_cache": false,
+    "xpu_graph": false
+  },
+  "workload": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+    "fixture_sha256": "a8a48b3549062759cc94b28f2360bea119f8adde582ace04928111b624d952ed",
+    "content_classes": [
+      "technical-prose",
+      "python-code",
+      "structured-docs"
+    ],
+    "active_context_tokens": [
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "samples_per_point": 3,
+    "output_tokens": 128,
+    "source_repetition": false,
+    "cache_zero": true,
+    "interpolation_or_extrapolation": false
+  },
+  "points": [
+    {
+      "context_tokens": 2048,
+      "mtp0_decode_tok_s": 33.73456964684977,
+      "mtp1_decode_tok_s": 52.02929381681683,
+      "mtp1_speedup_percent": 54.23138448625644,
+      "mtp0_ttft_ms": 576.5700800038758,
+      "mtp1_ttft_ms": 591.5735950038652,
+      "mtp1_ttft_delta_percent": 2.602201453098041
+    },
+    {
+      "context_tokens": 4096,
+      "mtp0_decode_tok_s": 33.39418804572472,
+      "mtp1_decode_tok_s": 52.90525787444277,
+      "mtp1_speedup_percent": 58.42654357100307,
+      "mtp0_ttft_ms": 1125.9133709972957,
+      "mtp1_ttft_ms": 1150.056119004148,
+      "mtp1_ttft_delta_percent": 2.144281134654924
+    },
+    {
+      "context_tokens": 8192,
+      "mtp0_decode_tok_s": 32.538418231246254,
+      "mtp1_decode_tok_s": 51.92973848257504,
+      "mtp1_speedup_percent": 59.5951533769012,
+      "mtp0_ttft_ms": 2297.619158998714,
+      "mtp1_ttft_ms": 2346.3172129995655,
+      "mtp1_ttft_delta_percent": 2.119500693146814
+    },
+    {
+      "context_tokens": 16384,
+      "mtp0_decode_tok_s": 31.769175689899633,
+      "mtp1_decode_tok_s": 53.134189168880084,
+      "mtp1_speedup_percent": 67.25076434946035,
+      "mtp0_ttft_ms": 4778.769805998309,
+      "mtp1_ttft_ms": 4877.062908999505,
+      "mtp1_ttft_delta_percent": 2.056870428824986
+    },
+    {
+      "context_tokens": 24576,
+      "mtp0_decode_tok_s": 31.01698561034618,
+      "mtp1_decode_tok_s": 49.990048243764505,
+      "mtp1_speedup_percent": 61.16991145357973,
+      "mtp0_ttft_ms": 7465.931658000045,
+      "mtp1_ttft_ms": 7642.923465995409,
+      "mtp1_ttft_delta_percent": 2.3706593644707397
+    },
+    {
+      "context_tokens": 32768,
+      "mtp0_decode_tok_s": 30.330704866321607,
+      "mtp1_decode_tok_s": 50.08766456892154,
+      "mtp1_speedup_percent": 65.13847861326008,
+      "mtp0_ttft_ms": 10319.771191003383,
+      "mtp1_ttft_ms": 10580.253790001734,
+      "mtp1_ttft_delta_percent": 2.524112154981073
+    }
+  ],
+  "quality": {
+    "request_gates_passed": "36/36",
+    "mtp1_complete_output_arrays_exact_vs_mtp0": "18/18",
+    "output_digest_sequence_sha256_mtp0": "77c4f23c80d32edffe67dc2dc29c9755f3127b2e043a8b48b77d5a51ed4270a3",
+    "output_digest_sequence_sha256_mtp1": "77c4f23c80d32edffe67dc2dc29c9755f3127b2e043a8b48b77d5a51ed4270a3",
+    "canaries_before_and_after": true,
+    "new_gpu_faults_or_resets_since_mtp1_launch": 0
+  },
+  "speculation": {
+    "draft_tokens": 1884,
+    "accepted_tokens": 1667,
+    "acceptance_percent": 88.48195329087049
+  },
+  "host_memory": {
+    "container_memory": "12g",
+    "container_memory_swap": "16g",
+    "memory_events_max": 0,
+    "oom": 0,
+    "oom_kill": 0,
+    "final_swap_current_bytes": 2392211456,
+    "earlier_9g_12g_attempt": "stopped without measurements after sustained cgroup max events during model staging"
+  },
+  "raw_artifact_hashes": {
+    "mtp0_summary_json_sha256": "ab58da7d93758ce467ba766b213bed7195628ef9173241303bb834a8589a58b2",
+    "mtp1_summary_json_sha256": "4aca3a87881cd11234a4edf887f27b5b535121bf840313b34a2dd7d119cb83f2",
+    "mtp1_server_log_sha256": "58781d71c409270864f3131fac6cc05fc42e628b4244563bd0a4470e7cad9855",
+    "mtp1_metrics_after_sha256": "05fae4da96d9757194b5a2bf2ec2b52e68625c8c0189ae4dea56234e2b7aeea5",
+    "mtp1_kernel_journal_since_launch_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e"
+  },
+  "publication_boundary": {
+    "grade": "Grade B three-class unrepeated real-content continuation-shape evidence",
+    "promotable": false,
+    "reason": "The current boot journal contains an earlier GPU reset predating these measurements.",
+    "required_next_gate": "Repeat both arms on fresh servers after a clean boot before replacing public context curves.",
+    "short_headline_replaced": false
+  }
+}

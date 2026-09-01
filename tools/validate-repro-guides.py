@@ -8,6 +8,7 @@ from collections import Counter
 from functools import lru_cache
 from html.parser import HTMLParser
 import json
+import posixpath
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
@@ -42,9 +43,17 @@ PACKAGE_STATUSES = {"candidate", "starter", "preview"}
 PACKAGE_COMMANDS = {"preflight", "launch", "health", "benchmark", "stop"}
 NONPORTABLE_COMMAND_PATH = re.compile(r"(?:file://|/(?:home|mnt|media)/)")
 REPOSITORY_COMMAND_PATH = re.compile(
-    r"(?<![A-Za-z0-9_.-])"
+    r"(?<![A-Za-z0-9_./-])"
     r"((?:repro|scripts|tools|patches|experiments|results|data|docs|packages)/"
     r"[A-Za-z0-9_./+:-]+)"
+)
+SCRIPT_RELATIVE_PATHS = (
+    (re.compile(r"\$\{script_dir\}/([A-Za-z0-9_.+/-]+)"), True),
+    (re.compile(r"\$script_dir/([A-Za-z0-9_.+/-]+)"), True),
+    (re.compile(r"\$\{repo_root\}/([A-Za-z0-9_.+/-]+)"), False),
+    (re.compile(r"\$repo_root/([A-Za-z0-9_.+/-]+)"), False),
+    (re.compile(r"\$\{ROOT\}/([A-Za-z0-9_.+/-]+)"), False),
+    (re.compile(r"\$ROOT/([A-Za-z0-9_.+/-]+)"), False),
 )
 PACKAGE_OPERATING_SYSTEMS = {"Linux", "Windows"}
 PACKAGE_DELIVERY = {"native", "container"}
@@ -500,6 +509,12 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
                 errors.append(
                     f"{label}: {field} must be declared in dependencies: {reference}"
                 )
+        if isinstance(commands, dict):
+            errors.extend(
+                _validate_package_entrypoint_closure(
+                    repo, label, commands, dependency_set
+                )
+            )
 
     missing = package.get("missing")
     if status == "starter" and missing:
@@ -674,6 +689,87 @@ def _dependency_is_declared(reference: str, dependencies: set[str]) -> bool:
         or PurePosixPath(dependency) in pure.parents
         for dependency in dependencies
     )
+
+
+def _normalize_reference(value: str) -> str:
+    """Normalize a syntactic repository path without resolving the filesystem."""
+    return posixpath.normpath(value.rstrip(".,;:)\"'`"))
+
+
+def _looks_like_file_reference(value: str) -> bool:
+    """Return whether a literal path is intended to name a repository file."""
+    name = PurePosixPath(value).name
+    return bool(PurePosixPath(value).suffix) or name.startswith("Dockerfile")
+
+
+def _runtime_references(repo: Path, relative: str) -> set[str]:
+    """Extract literal repository files called by a package entrypoint."""
+    path = repo / relative
+    try:
+        text = path.read_text(errors="replace")
+    except OSError:
+        return set()
+
+    references: set[str] = set()
+    for match in REPOSITORY_COMMAND_PATH.finditer(text):
+        candidate = _normalize_reference(match.group(1))
+        path = repo / candidate
+        if path.is_file() or (not path.exists() and _looks_like_file_reference(candidate)):
+            references.add(candidate)
+    for pattern, relative_to_script in SCRIPT_RELATIVE_PATHS:
+        for match in pattern.finditer(text):
+            raw = _normalize_reference(match.group(1))
+            candidate = (
+                _normalize_reference(
+                    (PurePosixPath(relative).parent / raw).as_posix()
+                )
+                if relative_to_script
+                else raw
+            )
+            path = repo / candidate
+            if path.is_file() or (not path.exists() and _looks_like_file_reference(candidate)):
+                references.add(candidate)
+    return references
+
+
+def _validate_package_entrypoint_closure(
+    repo: Path,
+    label: str,
+    commands: dict[str, Any],
+    dependencies: set[str],
+) -> list[str]:
+    """Follow executable package commands and require declared public closure.
+
+    This intentionally starts from the five user-facing package commands rather
+    than crawling every historical evidence link in a guide. Shell/Python
+    helpers reached from those commands are followed recursively.
+    """
+    queue: list[str] = []
+    for command in commands.values():
+        if not isinstance(command, str):
+            continue
+        for match in REPOSITORY_COMMAND_PATH.finditer(command):
+            candidate = _normalize_reference(match.group(1))
+            path = repo / candidate
+            if path.is_file() or (not path.exists() and _looks_like_file_reference(candidate)):
+                queue.append(candidate)
+
+    errors: list[str] = []
+    seen: set[str] = set()
+    while queue:
+        reference = queue.pop()
+        if reference in seen:
+            continue
+        seen.add(reference)
+        errors.extend(_validate_internal_dependency(repo, label, reference))
+        if not _dependency_is_declared(reference, dependencies):
+            errors.append(
+                f"{label}: entrypoint dependency must be declared in dependencies: "
+                f"{reference}"
+            )
+        if (repo / reference).suffix in {".sh", ".py"}:
+            queue.extend(_runtime_references(repo, reference) - seen)
+    return errors
 
 
 @lru_cache(maxsize=8)

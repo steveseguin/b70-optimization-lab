@@ -703,6 +703,22 @@ array differs from MTP0. The older `bench-w8a16-mtp1-depth.sh` remains only for
 replaying historical R33 Grade-C shape evidence. The current audit contract is
 frozen in the [R56 preregistration](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json).
 
+The first diagnostic R56 matrix passed all 36 requests and all 18 MTP1/MTP0
+complete-array comparisons. Median MTP1 decode remained between `49.990` and
+`53.134 tok/s` across 2K-32K, versus `30.331`-`33.735 tok/s` for MTP0;
+draft-token acceptance was `88.482%`. It is not yet a public replacement curve
+because that boot contains an earlier GPU reset. See the
+[diagnostic result](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic.md);
+clean-boot fresh-server repeats remain mandatory. `MAX_NUM_BATCHED_TOKENS`
+may be overridden for preregistered scheduler screens, but its default remains
+the measured 4,096-token profile.
+
+An R57 screen tested an 8,192-token scheduler/prefill budget across the same
+18 cases. Exactness and decode non-inferiority passed, but the preregistered
+8K-32K TTFT median improved only `0.231%` (required: `3%`) and the cgroup
+recorded 2,811 memory-ceiling events. The candidate was rejected; keep 4,096.
+See the [R57 result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json).
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;

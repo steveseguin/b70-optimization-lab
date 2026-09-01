@@ -13,7 +13,21 @@ else
   printf 'set PYTHON to the XPU-enabled Python interpreter\n' >&2
   exit 2
 fi
-PHYSICAL_DEVICES="${PHYSICAL_DEVICES:-0,1,2,3}"
+if [[ -n "${PHYSICAL_DEVICES:-}" ]]; then
+  PHYSICAL_DEVICES=${PHYSICAL_DEVICES}
+else
+  PHYSICAL_DEVICES=$(
+    "$PYTHON" - <<'PY'
+import torch
+
+print(",".join(str(index) for index in range(torch.xpu.device_count())))
+PY
+  )
+  [[ -n "$PHYSICAL_DEVICES" ]] || {
+    printf 'the selected XPU runtime exposes no devices\n' >&2
+    exit 1
+  }
+fi
 XCCL_DEVICES="${XCCL_DEVICES:-$PHYSICAL_DEVICES}"
 XCCL_NPROC="${XCCL_NPROC:-}"
 TIMEOUT_S="${TIMEOUT_S:-90}"

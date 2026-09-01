@@ -103,6 +103,11 @@
   },
   "dependencies": [
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+    "repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json",
+    "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
+    "scripts/bench-openai-realistic-suite.py",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh",
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-depth-server.sh",
@@ -162,6 +167,10 @@
     "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
     "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json",
     "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic.md",
+    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c",
     "experiments/qwen38-27b-b70/scripts/validate-20260901-qwen38-fp8-explicit-deterministic-r54.py",
     "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-explicit-deterministic-r54a-r50",
@@ -551,6 +560,6 @@
     "tested clean-host Intel driver and Docker installation",
     "independent host-driver/Docker installation and strict endpoint replay",
     "beginner recovery flow",
-    "natural-prompt HTTP TTFT/context sweep beyond the measured short-context realistic suite"
+    "two fresh-server clean-boot repeats of the diagnostic natural-prompt 2K-32K context matrix"
   ]
 }

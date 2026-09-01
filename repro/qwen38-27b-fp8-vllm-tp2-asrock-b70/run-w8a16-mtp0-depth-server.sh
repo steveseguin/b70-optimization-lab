@@ -12,5 +12,5 @@ exec env \
   SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp0-depth}" \
   MAX_MODEL_LEN=33024 \
   MAX_NUM_SEQS=1 \
-  MAX_NUM_BATCHED_TOKENS=4096 \
+  MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-4096}" \
   "${script_dir}/run-w8a16-mtp0-strict-server.sh"

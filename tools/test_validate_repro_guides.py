@@ -76,6 +76,49 @@ class ReproGuideValidationTest(unittest.TestCase):
             MODULE._dependency_is_declared("scripts/run.sh", dependencies)
         )
 
+    def test_entrypoint_closure_requires_called_helper(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "repro/example").mkdir(parents=True)
+            run = repo / "repro/example/run.sh"
+            helper = repo / "repro/example/helper.sh"
+            run.write_text('#!/usr/bin/env bash\n"${script_dir}/helper.sh"\n')
+            helper.write_text("#!/usr/bin/env bash\ntrue\n")
+            commands = {
+                "launch": "repro/example/run.sh",
+            }
+            errors = MODULE._validate_package_entrypoint_closure(
+                repo,
+                "packages/example/package.json",
+                commands,
+                {"repro/example/run.sh"},
+            )
+            self.assertTrue(any("helper.sh" in error for error in errors))
+            self.assertEqual(
+                MODULE._validate_package_entrypoint_closure(
+                    repo,
+                    "packages/example/package.json",
+                    commands,
+                    {"repro/example/run.sh", "repro/example/helper.sh"},
+                ),
+                [],
+            )
+
+    def test_entrypoint_closure_rejects_missing_called_helper(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "repro/example").mkdir(parents=True)
+            run = repo / "repro/example/run.sh"
+            run.write_text('#!/usr/bin/env bash\n"${script_dir}/missing-helper.sh"\n')
+            errors = MODULE._validate_package_entrypoint_closure(
+                repo,
+                "packages/example/package.json",
+                {"launch": "repro/example/run.sh"},
+                {"repro/example/run.sh", "repro/example/missing-helper.sh"},
+            )
+            self.assertTrue(any("missing-helper.sh" in error for error in errors))
+            self.assertTrue(any("does not resolve" in error for error in errors))
+
     def test_rejects_mutable_container_package(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)

@@ -20,7 +20,7 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-08-31:
+Verified on 2026-09-01:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
@@ -42,8 +42,16 @@ matched all 12 complete token arrays. The qualified MTP1 center is
 **`51.808087 tok/s`**, `53.5804%` above the `33.733520 tok/s` control center.
 The public chain now builds through the exact R50 image, verifies installed
 content, pins the oneAPI compiler identity, and provides same-image strict MTP0
-and MTP1 launchers. Independent clean-host replay remains pending. Recovery
-order is process
+and MTP1 launchers. Diagnostic R56 then exercised unrepeated technical prose,
+Python, and structured-document inputs at exact 2K, 4K, 8K, 16K, 24K, and 32K
+depths. MTP1 matched the MTP0 oracle in all 18/18 complete token arrays, held
+`49.990`-`53.134 tok/s`, and improved decode by `54.23%`-`67.25%`; MTP0 held
+`30.331`-`33.735 tok/s`. R57 raised the scheduler token budget from 4,096 to
+8,192 and preserved exact output, but improved long-depth TTFT by only `0.23%`,
+below its preregistered `3%` gate, so the public default remains 4,096. These
+depth results are diagnostic because the current boot follows an earlier GPU
+reset; promotion requires two clean-boot repeats. Independent clean-host replay
+also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.
 

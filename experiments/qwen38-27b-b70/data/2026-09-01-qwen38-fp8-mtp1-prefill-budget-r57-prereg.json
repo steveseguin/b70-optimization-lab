@@ -1,0 +1,71 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-prefill-budget-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-prefill-budget-20260901-r57",
+  "objective": "Determine whether increasing the long-context MTP1 scheduler/prefill budget from 4096 to 8192 tokens materially improves TTFT without reducing decode throughput or changing output.",
+  "baseline": {
+    "evidence": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
+    "max_num_batched_tokens": 4096,
+    "status": "passed-diagnostic-not-promotable-from-faulted-boot"
+  },
+  "candidate": {
+    "only_intended_change": "max_num_batched_tokens",
+    "max_num_batched_tokens": 8192,
+    "new_empty_compile_cache": true
+  },
+  "frozen_identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "kv_dtype": "f16",
+    "context_capacity": 33024,
+    "max_num_seqs": 1,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "container_memory": "12g",
+    "container_memory_swap": "16g"
+  },
+  "workload": {
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+    "fixture_sha256": "a8a48b3549062759cc94b28f2360bea119f8adde582ace04928111b624d952ed",
+    "content_classes": [
+      "technical-prose",
+      "python-code",
+      "structured-docs"
+    ],
+    "active_context_tokens": [
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "samples_per_point": 3,
+    "output_tokens": 128,
+    "oracle": "R56 MTP0 complete token arrays"
+  },
+  "required_gates": {
+    "all_18_requests_complete": true,
+    "cached_tokens_zero_for_every_request": true,
+    "canaries_before_and_after": true,
+    "complete_output_arrays_exact_vs_mtp0": "18/18",
+    "no_new_gpu_fault_or_reset": true,
+    "decode_noninferiority_each_depth": "candidate >= 99% of R56 MTP1",
+    "short_context_floor_tok_s": 51.29000611881867
+  },
+  "decision_rule": {
+    "primary_benefit": "median TTFT across 8K, 16K, 24K, and 32K improves by at least 3%",
+    "promote_8192_default_if": "all required gates and primary benefit pass",
+    "otherwise": "retain the measured 4096-token default",
+    "no_cherry_picking": true
+  },
+  "publication_boundary": {
+    "current_boot": "diagnostic-only because the boot journal contains an earlier GPU reset",
+    "clean_boot_replay_required": true,
+    "short_headline_replacement_authorized": false
+  }
+}

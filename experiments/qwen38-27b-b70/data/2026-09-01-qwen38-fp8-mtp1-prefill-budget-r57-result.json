@@ -1,0 +1,114 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-prefill-budget-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-prefill-budget-20260901-r57",
+  "status": "passed-gates-rejected-no-material-benefit",
+  "candidate": {
+    "max_num_batched_tokens": 8192,
+    "baseline_max_num_batched_tokens": 4096,
+    "only_intended_change": "max_num_batched_tokens",
+    "new_empty_compile_cache": true
+  },
+  "points": [
+    {
+      "context_tokens": 2048,
+      "baseline_decode_tok_s": 52.02929381681683,
+      "candidate_decode_tok_s": 52.212140364927265,
+      "decode_delta_percent": 0.3514300016336902,
+      "baseline_ttft_ms": 591.5735950038652,
+      "candidate_ttft_ms": 589.349668000068,
+      "ttft_delta_percent": -0.37593412258074554
+    },
+    {
+      "context_tokens": 4096,
+      "baseline_decode_tok_s": 52.90525787444277,
+      "candidate_decode_tok_s": 53.371181630749426,
+      "decode_delta_percent": 0.8806757116890163,
+      "baseline_ttft_ms": 1150.056119004148,
+      "candidate_ttft_ms": 1152.887272000953,
+      "ttft_delta_percent": 0.24617520397669512
+    },
+    {
+      "context_tokens": 8192,
+      "baseline_decode_tok_s": 51.92973848257504,
+      "candidate_decode_tok_s": 52.11589962903275,
+      "decode_delta_percent": 0.35848658571653313,
+      "baseline_ttft_ms": 2346.3172129995655,
+      "candidate_ttft_ms": 2340.140872998745,
+      "ttft_delta_percent": -0.2632355065462111
+    },
+    {
+      "context_tokens": 16384,
+      "baseline_decode_tok_s": 53.134189168880084,
+      "candidate_decode_tok_s": 53.06913509473721,
+      "decode_delta_percent": -0.1224335501499918,
+      "baseline_ttft_ms": 4877.062908999505,
+      "candidate_ttft_ms": 4874.437018996105,
+      "ttft_delta_percent": -0.053841626659256736
+    },
+    {
+      "context_tokens": 24576,
+      "baseline_decode_tok_s": 49.990048243764505,
+      "candidate_decode_tok_s": 50.02162728015474,
+      "decode_delta_percent": 0.06317064595786626,
+      "baseline_ttft_ms": 7642.923465995409,
+      "candidate_ttft_ms": 7616.6542890059645,
+      "ttft_delta_percent": -0.34370587519710893
+    },
+    {
+      "context_tokens": 32768,
+      "baseline_decode_tok_s": 50.08766456892154,
+      "candidate_decode_tok_s": 49.98924597513709,
+      "decode_delta_percent": -0.19649267864950692,
+      "baseline_ttft_ms": 10580.253790001734,
+      "candidate_ttft_ms": 10562.676342997293,
+      "ttft_delta_percent": -0.166134455310063
+    }
+  ],
+  "decision": {
+    "long_context_depths": [
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "baseline_long_ttft_median_ms": 6259.993187497457,
+    "candidate_long_ttft_median_ms": 6245.545654001035,
+    "long_ttft_improvement_percent": 0.2307915210719047,
+    "required_improvement_percent": 3.0,
+    "primary_benefit_passed": false,
+    "decode_noninferiority_each_depth_passed": true,
+    "short_context_floor_passed": true,
+    "selected_default_max_num_batched_tokens": 4096,
+    "reason": "The 8192-token endpoint produced only a noise-sized TTFT change and increased memory-ceiling pressure."
+  },
+  "quality": {
+    "request_gates_passed": "18/18",
+    "complete_output_arrays_exact_vs_mtp0": "18/18",
+    "output_digest_sequence_sha256": "77c4f23c80d32edffe67dc2dc29c9755f3127b2e043a8b48b77d5a51ed4270a3",
+    "canaries_before_and_after": true,
+    "cache_zero": true,
+    "draft_tokens": 1884,
+    "accepted_tokens": 1667,
+    "acceptance_percent": 88.48195329087049,
+    "new_gpu_faults_or_resets": 0
+  },
+  "resource_effect": {
+    "peak_activation_gib": 1.34,
+    "available_kv_cache_gib": 12.66,
+    "cgroup_memory_max_events": 2811,
+    "oom": 0,
+    "oom_kill": 0,
+    "final_swap_current_bytes": 2147479552
+  },
+  "raw_artifact_hashes": {
+    "candidate_summary_json_sha256": "e00839b630306809646dedf9229644447b26eb6dbc5b49ac0f859f14e7eb52be",
+    "candidate_server_log_sha256": "c841c88c3bba0910141bf54d7a8ce7566707d6292054458ed116032c41eb6d48",
+    "candidate_metrics_after_sha256": "056d03545ecb30eafb43d2f433451fef70e65e778b5270fc9d88bf3db50d8a80",
+    "candidate_kernel_journal_since_launch_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e"
+  },
+  "publication_boundary": {
+    "promotable": false,
+    "reason": "Rejected by the preregistered benefit rule; the boot also contains an earlier GPU reset.",
+    "short_headline_replacement_authorized": false
+  }
+}
