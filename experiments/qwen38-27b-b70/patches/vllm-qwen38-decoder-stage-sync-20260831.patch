@@ -1,0 +1,42 @@
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index 08ee950..1b05a20 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -6,0 +7 @@ from itertools import islice
++import os
+@@ -492,0 +494,21 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync_enabled = (
++            os.environ.get("VLLM_XPU_QWEN38_DECODER_STAGE_SYNC") == "1"
++        )
++
++        def stage_sync(stage: str) -> None:
++            if stage_sync_enabled:
++                logger.info(
++                    "QWEN38_DECODER_STAGE_SYNC begin layer=%d type=%s stage=%s",
++                    self.layer_idx,
++                    self.layer_type,
++                    stage,
++                )
++                torch.accelerator.synchronize()
++                logger.info(
++                    "QWEN38_DECODER_STAGE_SYNC pass layer=%d type=%s stage=%s",
++                    self.layer_idx,
++                    self.layer_type,
++                    stage,
++                )
++
++        stage_sync("entry")
+@@ -498,0 +521 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("input_layernorm")
+@@ -502,0 +526 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("mixer_input_ready")
+@@ -512,0 +537 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("mixer")
+@@ -530,0 +556 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("mixer_output_ready")
+@@ -533,0 +560 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("post_attention_layernorm")
+@@ -540,0 +568 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("mlp")
+@@ -554,0 +583 @@ class Qwen3NextDecoderLayer(nn.Module):
++        stage_sync("exit")

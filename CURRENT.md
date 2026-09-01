@@ -47,15 +47,21 @@ B70s. Its explicit synchronization first surfaced the error at entry to a
 dense MLP, before the dummy sampler, while Xe logged 594 unsuccessful fault
 responses, 27 CCS engine-memory CAT errors, and one CCS reset on PCI function
 `0000:e3:00.0`. Both B70s returned to normal state and passed independent
-compute after teardown. The next bounded arm is D63: the identical
-TP2/MTP1/stage-synchronized startup with only the M=512 projection-repair hook
-disabled. It is startup-only and cannot yield a performance claim. A D63
-device loss makes the projection repair non-causal and redirects localization
-to the preceding model operation; a clean D63 startup implicates the repair's
-profile-shape interaction. See the
+compute after teardown. D63 disabled the M=512 projection repair and
+reproduced device loss on both ranks, but its stage-localization verdict is
+formally inconclusive: the runner's `/instrument` `PYTHONPATH` displaced the
+diagnostic image's `/workspace/vllm` source, so the frozen sampler receipt gate
+could not be satisfied. Both B70s again passed independent compute after
+teardown. The next bounded arm is D64, using immutable image
+`sha256:a1454ebe...cc13c` and an explicit
+`/workspace/vllm:/instrument` import path. It adds per-layer synchronization
+around the attention/GDN mixer, collectives, normalization, and MLP while
+keeping projection repair off. D64 is startup-only and cannot yield a
+performance claim. See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
+[`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
 and
-[`D63 preregistration`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-prereg.md).
+[`D64 preregistration`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-decoder-stage-sync-d64-prereg.md).
 
 ## Qualified Qwen3.8 One-Card Package Work
 

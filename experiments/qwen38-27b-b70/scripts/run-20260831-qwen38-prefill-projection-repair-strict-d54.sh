@@ -27,6 +27,7 @@ speculative_config_json=${SPECULATIVE_CONFIG_JSON:-}
 require_dummy_sampler_stage_sync=${REQUIRE_DUMMY_SAMPLER_STAGE_SYNC:-0}
 enable_projection_repair=${ENABLE_PROJECTION_REPAIR:-1}
 startup_only=${STARTUP_ONLY:-0}
+runtime_pythonpath=${RUNTIME_PYTHONPATH:-/instrument}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -51,6 +52,7 @@ trap 'exit 130' INT TERM HUP
 [[ "$require_dummy_sampler_stage_sync" == 0 || "$require_dummy_sampler_stage_sync" == 1 ]] || fail 'stage-sync requirement must be 0/1'
 [[ "$enable_projection_repair" == 0 || "$enable_projection_repair" == 1 ]] || fail 'projection-repair switch must be 0/1'
 [[ "$startup_only" == 0 || "$startup_only" == 1 ]] || fail 'startup-only switch must be 0/1'
+[[ "$runtime_pythonpath" == /* && "$runtime_pythonpath" != *$'\n'* ]] || fail 'runtime PYTHONPATH must be absolute and single-line'
 [[ -d "$model" && ! -L "$model" && "$(findmnt -n -o FSTYPE -T "$model")" == ext4 ]] || fail 'model must be local ext4'
 [[ ! -e "$root" && ! -e "$cache" ]] || fail 'output or cache root already exists'
 [[ "$(docker image inspect "$image" --format '{{.Id}}')" == "$image_id" ]] || fail 'image identity mismatch'
@@ -86,7 +88,7 @@ docker run -d --name "$container" --ulimit core=0 --memory "$container_memory" -
   --group-add video --group-add render --security-opt label=disable --ipc=host --shm-size=16g \
   --publish "127.0.0.1:${port}:8000" --volume "$model:/model:ro" \
   --volume "$cache:/run-cache" --volume "$hook:/instrument/sitecustomize.py:ro" \
-  --env PYTHONPATH=/instrument --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=$enable_projection_repair" \
+  --env "PYTHONPATH=$runtime_pythonpath" --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=$enable_projection_repair" \
   --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE=$projection_synchronize" \
   --env "ZE_AFFINITY_MASK=$gpu_mask" --env "ONEAPI_DEVICE_SELECTOR=$device_selector" \
   --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
