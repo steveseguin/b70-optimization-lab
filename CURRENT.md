@@ -3323,3 +3323,28 @@ fresh attempt-46/port-19718 paths with identical inference and quality identity,
 without reboot. See the
 [A45 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a45-worker-trace-verifier-negative.md) and
 [A46 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a46-worker-aware-lossless-2k-prereg.md).
+A46 loaded all 131 local-NVMe shards in 78.4 seconds, captured on all four
+ranks, and became healthy, but the host then became unresponsive before the
+client or any inference request ran. The last system sample showed 36.4 million
+KiB available but 7.04 million KiB of swap occupied and active reclaim. Three
+hardware-corrected PCIe receive reports named the local Samsung 980 PRO during
+the arm; after restart its SMART data reports no media or command errors. No
+OOM, B70 fault, panic, or orderly shutdown is present, so causality remains
+unproven. A46 receives no quality or performance credit. The next isolated
+attempt retains its exact model/graph/battery identity and changes only bounded
+host-load controls: no disk-backed swap, PCIe ASPM performance policy, and a
+continuous pressure receipt. Protected results remain unchanged and no reboot
+or per-boot load rule applies. See the
+[A46 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a46-host-freeze-interruption.md).
+A47 is the frozen host-guarded successor, but it is intentionally deferred
+until a combined component finalist exists. It keeps A46's complete inference,
+runtime-verifier, exact-2K, short-hash, and quality identity while disabling
+disk-backed swap and PCIe ASPM only for the bounded arm. A one-second guard
+records memory/PSI/paging/I/O/AER state and tears down on pressure, policy
+drift, or the first new NVMe-link event; ordinary exit restores the original
+swap and ASPM state. Static validation passed and its attempt-47 paths are
+unused. The faster loop now screens the profiled 26.08 ms/token real-weight M1
+MoE, 7.58 ms/token dense, 4.19 ms/token quantization/cast, and collective
+critical-path buckets independently, combines only lossless winners, then pays
+for one A47-style full-model qualification. See the
+[A47 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a47-host-guarded-lossless-2k-prereg.md).
