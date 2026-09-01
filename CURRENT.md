@@ -3082,3 +3082,13 @@ negative with no endpoint claim. Four-card and host postflight plus the
 evidence manifest passed, so the boot remains eligible and A31 can proceed
 without rebooting. Protected rates remain unchanged. See the
 [affinity result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-cpu-affinity-a1-negative.md).
+A31 then became healthy as the third accelerator experiment on the same boot:
+all 131 local-NVMe shards loaded in `69.06 s`, each rank reported
+`31.57 GiB`, the intended M1 warps-8 config was selected, and `/health` returned
+200. Its client failed before sending a request because it applied the old
+tracked-script command-line check to the new generated inner supervisor. The
+failure sentinel tore the service down; host/four-card/journal postflight and
+the lifecycle manifest all passed. A31 is an orchestration negative with no
+quality or speed result. Freeze a new isolated attempt with an inner-to-outer
+supervisor binding check and reuse this healthy boot without rebooting. See the
+[A31 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a31-client-binding-negative.md).

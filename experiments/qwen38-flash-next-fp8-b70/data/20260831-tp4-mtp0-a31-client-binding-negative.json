@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "endpoint_healthy_client_pre_request_failure",
+  "classification": "orchestration_negative_no_inference",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "boot_id": "aab4f613-55bd-4d10-b6c8-830a35d78b68",
+  "run_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt31",
+  "lifecycle_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt31-lifecycle",
+  "bringup": {
+    "checkpoint_load_seconds": 69.06,
+    "model_memory_gib_per_rank": 31.57,
+    "endpoint_health": 200,
+    "m1_selection_receipt_passed": true,
+    "request_sent": false
+  },
+  "failure": {
+    "phase": "client_supervisor_identity_preflight",
+    "message": "FAIL: supervisor identity mismatch",
+    "cause": "The new outer lifecycle supervisor launches the inherited inner supervisor from generated source; the client still required the inner process command line to contain the tracked supervisor filename.",
+    "model_failure": false,
+    "quality_result": null,
+    "performance_result": null
+  },
+  "lifecycle": {
+    "inner_supervisor_rc": 143,
+    "status": "inner_supervisor_failed",
+    "service_teardown_completed": true,
+    "four_b70_preflight_passed": true,
+    "four_b70_postflight_passed": true,
+    "minimum_postflight_free_fraction": 0.9907876089003552,
+    "host_memory_recovered": true,
+    "swap_recovered": true,
+    "kernel_journal_fault_matches": 0,
+    "evidence_manifest_verified": true,
+    "reboot_required": false
+  },
+  "evidence_sha256": {
+    "server.log": "ea40309cac466c26367eb960dfe639815e591c91f6328c10f7e8e89e2e263a0c",
+    "moe-m1-selection-receipt.json": "5a777e604eef5f1a3828d5d86a330e2b58505bc7272e214db52966b9cba734a2",
+    "lifecycle/evidence.sha256": "9a52fe572ae9f55238429acf01ff86e27a1def309561156dc53f269878d561d7",
+    "lifecycle/lifecycle-summary.json": "fe00d582c6273aa73b4b54c689ca92e8e22f76eb6bc13c5c275224c13fd0528e",
+    "lifecycle/four-b70-preflight.json": "70f37deb6b8b6f6af8223d50445c9e0befc48d6317e84152b83c8f9d0f7851b3",
+    "lifecycle/four-b70-postflight.json": "bc533f11a2f96c21625a48cf3b7227e9a05125a96cb523c502ea54af3fb24d14",
+    "lifecycle/kernel-journal-fault-matches.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "follow_up": "Freeze a new attempt with a client that binds the generated inner supervisor to the tracked outer supervisor identity and lock set; reuse this healthy boot after normal preflight.",
+  "protected_results": {
+    "mtp0_tok_s": 5.515783,
+    "mtp4_tok_s": 20.727176,
+    "changed": false
+  }
+}
