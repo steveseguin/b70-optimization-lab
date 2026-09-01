@@ -131,6 +131,7 @@ must not be recorded the same way.
 
 | Entry | Contributor | Source | Evidence level | Tested here |
 | --- | --- | --- | --- | --- |
+| [Qwen3.8 Flash-Next llama.cpp harness](bbeartheancient-flashnext-harness/STATUS.md) | [bbeartheancient](https://github.com/bbeartheancient) | [reviewed repository commit](https://github.com/bbeartheancient/flashnext-harness/commit/138cb88f326587d1cd9776510b2db0bd6a35455b) | `community-reported` | No contributed code/model run; full static read and clean patch apply check; no FP8 kernel transferable, MTP semantics retained as a cross-check |
 | [Qwen3.8 27B Q4_K_M llama.cpp Docker](0xsero-qwen38-27b-q4km-docker/STATUS.md) | [0xSero](https://github.com/0xSero) | [public recipe at reviewed commit](https://github.com/0xSero/qwen38-b70/tree/17323a6b8948a7b4483633e24ba796df0fdb43a9) | `community-reported` | No container/model run; source read and both patch digests matched the lab artifacts; link-only because no source license was present |
 | [Qwen3.6 27B FP8 TP2 Docker](dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) | dominick253 | [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) | `B70-tested` | Yes; recipe runs at 30.171 tok/s median decode, inside the reported range |
 | [Qwen3.6 35B UD-Q8_K_XL llama.cpp SYCL](dominick253-qwen36-35b-llamacpp-sycl/STATUS.md) | dominick253 | [PR #14](https://github.com/steveseguin/b70-optimization-lab/pull/14) | `B70-tested` | Yes; corrected MTP-off recipe, semantic/concurrency gates, 34,649-token retrieval, and cold fixed suite |
