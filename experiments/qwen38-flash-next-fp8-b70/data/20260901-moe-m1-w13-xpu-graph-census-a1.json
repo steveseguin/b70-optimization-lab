@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "classification": "qwen38_w13_m1_xpu_graph_discovery_census",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "checkpoint_location": "external_ntfs",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "layer": 0,
+    "ep_rank": 0,
+    "seed": 20260827,
+    "tokens": 1,
+    "global_experts": 512,
+    "local_experts": 128,
+    "hidden_size": 2560,
+    "local_intermediate_size": 640,
+    "top_k": 10,
+    "block_shape": [128, 128]
+  },
+  "control": {
+    "BLOCK_SIZE_M": 16,
+    "BLOCK_SIZE_N": 64,
+    "BLOCK_SIZE_K": 128,
+    "GROUP_SIZE_M": 1,
+    "SPLIT_K": 1,
+    "num_warps": 8,
+    "num_stages": 4
+  },
+  "rows": {
+    "w13-n32": {
+      "control_before_us": 215.27453999999997,
+      "candidate_us": 166.67482,
+      "control_after_us": 215.56106,
+      "control_drift_percent": 0.1330066503325279,
+      "latency_reduction_percent": 22.627183083292092,
+      "exact_100_changing_inputs": true,
+      "qualified_discovery_positive": true
+    },
+    "w13-stage5": {
+      "latency_reduction_percent": -0.0007843861303591382,
+      "exact_100_changing_inputs": true,
+      "qualified_discovery_positive": false
+    },
+    "w13-warps4": {
+      "latency_reduction_percent": -87.40886412777348,
+      "exact_100_changing_inputs": true,
+      "qualified_discovery_positive": false
+    },
+    "w13-n128": {
+      "latency_reduction_percent": -81.14381012107361,
+      "exact_100_changing_inputs": true,
+      "qualified_discovery_positive": false
+    },
+    "w13-k64": {
+      "latency_reduction_percent": -92.78252004704825,
+      "exact_100_changing_inputs": true,
+      "qualified_discovery_positive": false
+    },
+    "w13-n256": {
+      "latency_reduction_percent": -221.0523361473773,
+      "exact_100_changing_inputs": true,
+      "qualified_discovery_positive": false
+    }
+  },
+  "qualified_candidates": ["w13-n32"],
+  "confirmation": {
+    "status": "frozen_not_executed",
+    "cells": 24,
+    "fresh_processes": 72,
+    "layers": [0, 47],
+    "ep_ranks": [0, 1, 2, 3],
+    "seeds": [20260826, 20260827, 20260830],
+    "maximum_control_drift_percent_each_cell": 2.0,
+    "minimum_median_matched_reduction_percent": 3.0,
+    "minimum_positive_cells": 20,
+    "maximum_single_cell_regression_percent": 2.0,
+    "raw_cross_rank_timings_may_be_pooled": false
+  },
+  "host_observation": {
+    "nvme_corrected_event_before": 294,
+    "nvme_corrected_event_after": 308,
+    "nvme_corrected_event_delta": 14,
+    "host_remained_healthy": true,
+    "devices_idle_after": true
+  },
+  "protected_results_changed": false,
+  "raw_evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-moe-m1-w13-xpu-graph-census-a1"
+}

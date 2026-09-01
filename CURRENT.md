@@ -3520,3 +3520,13 @@ each in a fresh control/candidate/control bracket with 100 changing-input exact
 hashes. Only a lossless candidate with at most 2% control drift and at least 3%
 matched improvement can emit a separately reviewed confirmation packet. It
 does not load the full model and does not use the local NVMe checkpoint.
+The W13 discovery completed all six brackets. N32 was the sole positive:
+`166.674820 us` versus `215.274540 / 215.561060 us` controls, a lossless
+`22.627183%` reduction with `0.133007%` drift and 100/100 changing-input graph
+hashes exact. Stage 5 was neutral and the other four candidates regressed by
+81--221%. This is not yet a serving result. The separately reviewed
+confirmation must cover layers 0/47, all four EP ranks, and three seeds before
+an endpoint arm. The external-model component run still added 14 corrected
+local-NVMe events through runtime/source traffic, so confirmation must have a
+small event budget and deduplicated shard validation. See the
+[W13 discovery result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-xpu-graph-census-a1-result.md).
