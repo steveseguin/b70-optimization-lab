@@ -117,3 +117,18 @@ request identity. The next candidate is request-isolated qkvz projection at
 each request's natural row count (31 and 28 in this fixture), not another padded
 shape. R87's rejected result is
 [`2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-result.json).
+
+R88 implemented that request-isolated qkvz projection and preserved the c1
+oracle, but c2 still passed only 1/2. The layer-0 cache-prompt qkvz and BA
+digests are now bitwise exact across c1/c2 on both TP ranks; layer 1 is not.
+The same zero-based token-96 difference (`348` versus `2972`) remains. This
+moves the boundary past both layer-0 input projections and into the packed
+layer-0 GDN prefill/cache transaction or its immediately following output
+projection. The next candidate must retain R88 and isolate the pure
+multi-request GDN prefill transaction per request.
+
+One preregistered R88 trace label was corrected: R86's selected 28 index rows
+came from a packed 59-row projection, not a natural 28-row call. R88's isolated
+28-row digest therefore should not equal it; the full index output still
+matches the sequential oracle. R88's result is
+[`2026-09-01-qwen38-fp8-mtp1-qkvz-request-isolation-r88-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-qkvz-request-isolation-r88-result.json).

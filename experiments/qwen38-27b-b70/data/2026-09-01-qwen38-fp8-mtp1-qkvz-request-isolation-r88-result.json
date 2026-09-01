@@ -1,0 +1,81 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-qkvz-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-qkvz-request-isolation-20260901-r88",
+  "status": "completed-partial-repair-rejected",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-qkvz-request-isolation-r88-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-qkvz-request-isolation-r88",
+    "image_id": "sha256:206c64b682f204e3d9b83d36d6d7947d8d2d31e904e99fd6ca13a9daf9e0d849",
+    "base_r86_image_id": "sha256:3655f4fcdbe387117a6fcf2b58efacd9c8e8e65eb825b0a961e26c91f1952110",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-qkvz-request-isolation-r88-20260901.patch",
+    "vllm_patch_sha256": "fb8d4897cec608761c8ccc0c09eae3667369e36d0510ec9f2e9124e5021e45c8",
+    "installed_qwen_gdn_sha256": "dec1d5d6857b46d19175b1969219ab84ff3226be9b5dd8583a121378ea9e2815"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "model_direct_verification": "66/66 checkpoint payloads plus MTP/outside payloads matched manifest and ordinary reads",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 32.53136839615915
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 64.82602159468178,
+      "failing_prompt_id": "cache-c000",
+      "first_difference": {
+        "zero_based_token_index": 96,
+        "human_token_number": 97,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      }
+    }
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "gdn_layers": 48,
+    "request_matching": "Matched cache-c000 by its 31 prefill tokens; R88 c2 scheduler order was cache first, index second.",
+    "cache_prompt_c1_vs_c2_within_rank": {
+      "layer_0_projected_qkvz_exact": true,
+      "layer_0_projected_ba_exact": true,
+      "same_result_on_both_tp_ranks": true,
+      "projected_qkvz_exact_rank_layer_pairs": "2/96",
+      "projected_ba_exact_rank_layer_pairs": "2/96"
+    },
+    "layer_0_rank_0_qkvz": {
+      "cache_c1_prefix": "8624f67d595ffdd1",
+      "cache_c2_prefix": "8624f67d595ffdd1",
+      "index_c2_isolated_28_row_prefix": "3d5f22acd2533a65"
+    },
+    "preregistration_correction": "R86's selected 28 index rows were produced by one packed 59-row projection, not a natural 28-row call. The stated digest-comparison criterion was therefore mislabeled. R88's index output is nevertheless exact against the complete sequential oracle.",
+    "interpretation": "Request-isolated qkvz restores the trusted layer-0 cache projection and keeps c1 exact, but layer-1 projections differ and c2 remains wrong. With qkvz and BA exact before layer-0 GDN, the earliest remaining boundary is the packed layer-0 GDN prefill/cache transaction or the immediately following output projection."
+  },
+  "decision": "Do not promote R88 alone. Retain request-isolated qkvz in the next diagnostic candidate and isolate the pure multi-request GDN prefill transaction per request, using one-request metadata and natural request rows.",
+  "reporting_boundary": "Do not promote throughput, site values, README values, recipe defaults, protected speeds, or LocalMaxxing. The strict c2 identity gate failed, tracing synchronizes execution, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-qkvz-request-isolation-20260901-r88",
+    "raw_result_sha256": "3a6df00fd72979be0000f5561ef9cb56f2c51abcc89edaa8d694784af79b8ab7",
+    "trace_sha256": "b429f57d4b2c09a001b848c098163e4caa3783150f1c0afe199f814d064b8d2e",
+    "server_log_sha256": "ca6fc5d2aa87dc1b7765a28f1ccdcd557080684b4efc318fecb007138dbbf08d",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
