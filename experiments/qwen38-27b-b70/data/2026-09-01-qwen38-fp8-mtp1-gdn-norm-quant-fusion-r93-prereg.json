@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-norm-quant-fusion-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-norm-quant-fusion-20260901-r93",
+  "status": "preregistered-before-run",
+  "objective": "Determine whether the compiler's RMSNormGated-plus-FP8-quant fusion causes the c1/c2 GDN output divergence while preserving the accepted c1 path when disabled.",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90",
+    "image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "r92_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-output-factorial-r92-result.json"
+  },
+  "treatment": {
+    "variable": "compilation_config.pass_config.fuse_norm_quant",
+    "value": false,
+    "unchanged": [
+      "VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS=1",
+      "VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS=1",
+      "fuse_act_quant=true",
+      "combo_kernels=false",
+      "deterministic=true",
+      "xpu_graph=false"
+    ],
+    "reason": "R92 localized the boundary to the compiled/fused RMSNormGated path; projection-only isolation was inert, while moving norm behind a custom-op boundary regressed c1."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "server_log_proves_fuse_norm_quant_false": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Repeat without tracing, then run the full varied-prompt deterministic quality battery before measuring performance.",
+  "followup_if_fail": "Preserve the result. If c1 regresses, reject unfused RMSNormGated. If c1 passes and c2 remains 1/2, author a row-stable compiled RMSNormGated implementation that explicitly retains the c1 arithmetic.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; this boot contains an earlier GPU reset."
+}
