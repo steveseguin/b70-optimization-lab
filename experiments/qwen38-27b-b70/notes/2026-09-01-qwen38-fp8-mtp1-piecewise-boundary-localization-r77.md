@@ -181,3 +181,17 @@ The fusion is therefore not causal. The remaining boundary is the compiled
 `RMSNormGated` reduction arithmetic itself across different total row shapes.
 R93's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-norm-quant-fusion-r93-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-norm-quant-fusion-r93-result.json).
+
+R94 replaced every Qwen GDN gated normalization with a fixed one-program-per-row
+128-wide Triton kernel. Its bounded operator gate was bitwise row-invariant and
+matched the native reference exactly. End to end, the candidate repaired the
+failing packed shape from 1/2 to 2/2 exact, while layer-0 `core_attn_out` and
+`z` remained bitwise equal across c1/c2 on both ranks. It nevertheless regressed
+c1 from 1/1 to 0/1: that output became exactly the prior known-bad R90-c2/R91
+sequence, including token 97 changing from `348` to `2972`. R94 is therefore
+rejected, but it is a causal positive for the c2 norm boundary. The next
+diagnostic must preserve compiled RMSNorm for c1 and decode and use the
+row-stable kernel only for packed multi-request prefill; a row-count threshold
+may prove that split but cannot become the production discriminator. R94's
+result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json).

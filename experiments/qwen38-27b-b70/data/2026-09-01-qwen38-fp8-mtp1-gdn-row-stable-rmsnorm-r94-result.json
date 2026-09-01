@@ -1,0 +1,73 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-row-stable-rmsnorm-20260901-r94",
+  "status": "completed-rejected-c1-regression-c2-causal-positive",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90",
+    "base_image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94",
+    "candidate_image_id": "sha256:df6bac2fbf45e96139da8ebfee60e22db9db335aa593dfae276fbb2a15855235",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-row-stable-rmsnorm-r94-20260901.patch",
+    "patch_sha256": "16bf2d0647a357e2faa058e2c1381ee4751ca20f6153e7921382582c423e1ed9",
+    "installed_qwen_gdn_sha256": "0715de8c237cd1334a71ba029545494fee49d3a6c3384db9644c4204672f17a3"
+  },
+  "operator_gate": {
+    "status": "pass",
+    "selected_row_bitwise_invariant": true,
+    "rows": 19,
+    "width": 128,
+    "reference_max_abs_error": 0.0,
+    "unsupported_shape_failed_closed": true,
+    "artifact_sha256": "a2e5d76dc005373b2b7f8090d6eb4fa89fcfc561ed548072fae1ec4d058efb5b"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "0/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 27.537570312838263
+    },
+    "concurrency_2": {
+      "oracle_exact": "2/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 65.61153152483637
+    },
+    "c1_sequence_equal_prior_known_bad_r90_c2": true,
+    "c1_sequence_equal_rejected_r91_and_r92a": true,
+    "c2_both_complete_token_arrays_equal_oracle": true,
+    "c1_first_bad_output": {
+      "prompt_id": "cache-c000",
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "trace_gate": {
+    "records": 192,
+    "layer0_cache_prompt_core_and_z_exact_across_c1_c2_on_both_ranks": true,
+    "c1_row_count": 31,
+    "c2_packed_row_count": 59,
+    "c1_norm_rows": 744,
+    "c2_norm_rows": 1416,
+    "c1_decode_norm_rows": 48,
+    "c2_decode_norm_rows": 96
+  },
+  "procedural_note": "An initial native-API harness invocation received HTTP 404 at /apply-template before model execution. It is retained as harness-native-invalid.log and is not model evidence. The successful run used the completions API.",
+  "interpretation": "The fixed one-program-per-row gated RMSNorm is a causal positive for the failing c2 shape: it changed c2 from 1/2 to 2/2 exact while layer-0 core and z remained exact. Applying it to every GDN call is not acceptable because it changes c1 onto the prior known-bad R90-c2 sequence. The next diagnostic must retain ordinary compiled RMSNorm for c1 and decode while selecting the row-stable kernel only for the packed multi-request prefill boundary.",
+  "next_experiment": "Use a narrowly preregistered packed-prefill discriminator to prove phase-selective repair on the frozen c1/c2 fixture. If it passes, replace the diagnostic row-count discriminator with a metadata-bound production mechanism before full qualification.",
+  "reporting_boundary": "Rejected diagnostic. Do not publish either throughput number. The c1 quality gate failed and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful API shutdown followed by the runtime's bounded EngineCore cleanup"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-row-stable-rmsnorm-20260901-r94",
+    "raw_result_sha256": "f5360bddd21b2194cb3aa95715f922f1caf1ae23a03b587e15f95421acd85075",
+    "trace_sha256": "adce0bd2b02572dcaf13280f1139645ea0a8e1e74bbeadec2241276fddf4a6f3",
+    "server_log_sha256": "ba2385698fb62781aaf775c927a08b0e4f989718966c3be2968bb31a962a6b09",
+    "kernel_journal_sha256": "7cad55d676fbbcc47503c0c86d3df2b7bd030192d667f9a755a7329c8152f20a",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
