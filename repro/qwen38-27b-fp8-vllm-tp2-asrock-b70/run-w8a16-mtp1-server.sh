@@ -37,6 +37,7 @@ gdn_state_input_trace_file=${VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE:-}
 gdn_prefill_input_trace_file=${VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE:-}
 gdn_deterministic_qkvz_prefill=${VLLM_XPU_GDN_DETERMINISTIC_QKVZ_PREFILL:-0}
 gdn_isolate_qkvz_prefill_requests=${VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS:-0}
+gdn_isolate_prefill_requests=${VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS:-0}
 gdn_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}
 gdn_native_fallback=${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}
 mtp_suppress_bonus=${VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN:-0}
@@ -253,6 +254,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE="${gdn_prefill_input_trace_file}" \
   --env VLLM_XPU_GDN_DETERMINISTIC_QKVZ_PREFILL="${gdn_deterministic_qkvz_prefill}" \
   --env VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS="${gdn_isolate_qkvz_prefill_requests}" \
+  --env VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS="${gdn_isolate_prefill_requests}" \
   --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
   --env VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
   --env VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN="${mtp_suppress_bonus}" \

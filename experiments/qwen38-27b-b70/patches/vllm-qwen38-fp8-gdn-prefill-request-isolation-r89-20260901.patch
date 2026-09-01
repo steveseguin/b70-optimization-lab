@@ -1,0 +1,85 @@
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -429,6 +429,82 @@
+         num_accepted_tokens=num_accepted_tokens,
+     )
+ 
++    isolate_prefill_requests = (
++        os.getenv("VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS", "0") == "1"
++        and num_prefills > 1
++        and num_decodes == 0
++        and num_spec_decodes == 0
++        and non_spec_query_start_loc is not None
++        and non_spec_token_indx is None
++        and non_spec_state_indices_tensor is not None
++    )
++    if isolate_prefill_requests:
++        assert non_spec_query_start_loc is not None
++        assert non_spec_state_indices_tensor is not None
++        boundaries = (
++            non_spec_query_start_loc[: num_prefills + 1].detach().cpu().tolist()
++        )
++        boundaries = [int(value) for value in boundaries]
++        if boundaries[0] != 0 or boundaries[-1] != num_actual_tokens:
++            raise RuntimeError(
++                "request-isolated GDN prefill boundaries do not cover tokens"
++            )
++
++        for request, (start, stop) in enumerate(zip(boundaries, boundaries[1:])):
++            if stop <= start:
++                raise RuntimeError(
++                    "request-isolated GDN prefill found an empty request"
++                )
++            request_query_start_loc = torch.tensor(
++                [0, stop - start],
++                dtype=non_spec_query_start_loc.dtype,
++                device=non_spec_query_start_loc.device,
++            )
++            request_has_initial_state = (
++                has_initial_state[request : request + 1].contiguous()
++                if has_initial_state is not None
++                else None
++            )
++            request_num_accepted_tokens = (
++                num_accepted_tokens[request : request + 1].contiguous()
++                if num_accepted_tokens is not None
++                else None
++            )
++            torch.ops._xpu_C.gdn_attention(
++                core_attn_out[start:stop],
++                z[start:stop],
++                projected_states_qkvz[start:stop],
++                projected_states_ba[start:stop],
++                self.num_k_heads,
++                self.num_v_heads,
++                self.head_k_dim,
++                self.head_v_dim,
++                conv_state=conv_state,
++                ssm_state=ssm_state,
++                conv_weights=conv_weights,
++                conv_bias=self.conv1d.bias,
++                activation=self.activation,
++                A_log=self.A_log,
++                dt_bias=self.dt_bias,
++                num_prefills=1,
++                num_decodes=0,
++                num_spec_decodes=0,
++                has_initial_state=request_has_initial_state,
++                non_spec_query_start_loc=request_query_start_loc,
++                non_spec_token_indx=None,
++                non_spec_state_indices_tensor=non_spec_state_indices_tensor[
++                    request : request + 1
++                ].contiguous(),
++                spec_query_start_loc=None,
++                spec_token_indx=None,
++                spec_state_indices_tensor=None,
++                num_accepted_tokens=request_num_accepted_tokens,
++                num_actual_tokens=stop - start,
++                tp_size=self.tp_size,
++                reorder_input=not self.gqa_interleaved_layout,
++            )
++        return
++
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,
