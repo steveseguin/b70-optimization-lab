@@ -1,0 +1,61 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-phase-selective-rmsnorm-20260901-r95",
+  "status": "completed-rejected-dispatch-specialization",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94",
+    "base_image_id": "sha256:df6bac2fbf45e96139da8ebfee60e22db9db335aa593dfae276fbb2a15855235",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95",
+    "candidate_image_id": "sha256:64a2a67ead826d3d2215d845d4db6581974eb5f117e41d1bd7d476ae228cb793",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-phase-selective-rmsnorm-r95-20260901.patch",
+    "patch_sha256": "4289a768050286665012e7837ec0f3bdec9b319bea87cf45dad8266948e68e24",
+    "installed_qwen_gdn_sha256": "77899737907ac9a4ddb73c805af890432b6d8d797b8816d15f851290f1c959fc"
+  },
+  "treatment": {
+    "source_predicate": "VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1 and num_tokens >= 32",
+    "expected": "ordinary compiled norm at c1 prefill/decode; row-stable norm only at c2 packed prefill",
+    "observed_row_stable_norm_rows": [12288, 1536, 744, 48, 1416, 96],
+    "verdict": "The profile-time true branch was reused for every dynamic request shape. The Python/SymInt predicate did not provide runtime phase selection."
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "0/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 31.1829120203899
+    },
+    "concurrency_2": {
+      "oracle_exact": "2/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 65.90980907032358
+    },
+    "all_three_token_sequences_equal_r94": true,
+    "c1_first_bad_output": {
+      "prompt_id": "cache-c000",
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "trace_gate": {
+    "records": 192,
+    "layer0_cache_prompt_core_and_z_exact_across_c1_c2_on_both_ranks": true
+  },
+  "interpretation": "R95 did not test the intended arithmetic split because vLLM's compiled dynamic graph specialized the >=32 source branch during its large profile shape and reused the row-stable custom op for 31-token c1 prefill and 2-token decode. Shape-dependent Python control inside forward_xpu is not a safe production discriminator in this compile configuration. An explicit runtime metadata signal must cross the custom-op boundary, or the custom op must reproduce the accepted compiled arithmetic for non-multi-prefill calls.",
+  "next_experiment": "Inspect the accepted R90 generated RMSNorm kernels and their launch configurations, then implement a single runtime custom operator that selects arithmetic using request metadata inside the operator rather than a compile-time Python shape branch.",
+  "reporting_boundary": "Rejected diagnostic. Do not publish either throughput number. The intended dispatch did not occur, c1 failed, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful API shutdown followed by bounded runtime cleanup"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-phase-selective-rmsnorm-20260901-r95",
+    "raw_result_sha256": "4b944d83049e221ade246aee345bbf31fa7f8feea69e74f3feb8cf7cf94f6aa0",
+    "trace_sha256": "5826f320cc42357bd83cda122e38cde40ba3581a1049944d2e01f139d326a1af",
+    "server_log_sha256": "781ff3fc2d42ffe1b90cf11f6008cef94c7460196429a937e496b37d1783bba5",
+    "kernel_journal_sha256": "c837da25cafb349a89dccd2a1ed0bd22059f86b8d6f17d2ecec8452b5515f959",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

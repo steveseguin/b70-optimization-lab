@@ -195,3 +195,16 @@ row-stable kernel only for packed multi-request prefill; a row-count threshold
 may prove that split but cannot become the production discriminator. R94's
 result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json).
+
+R95 attempted that phase split with a preregistered `num_tokens >= 32`
+diagnostic predicate: the fixture has 31-token c1 prefill, 59-token c2 packed
+prefill, and 2/4-token decode. The predicate did not survive compiled dynamic
+execution as a runtime choice. Because the large profile shape selected the
+true branch, the row-stable custom op later executed at all observed shapes,
+including 744 rows for c1 prefill and 48 rows for c1 decode. Consequently R95
+exactly reproduced R94: c1 0/1, c2 2/2. This rejects Python/SymInt shape
+branching as the phase discriminator. The next implementation must carry
+runtime request metadata inside one custom op, or reproduce the accepted
+compiled c1 arithmetic as the custom op's non-multi-prefill path. R95's result
+is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95-result.json).
