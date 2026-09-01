@@ -1,0 +1,53 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-phase-selective-rmsnorm-20260901-r95",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Determine whether keeping ordinary compiled RMSNorm for c1 and decode while applying R94's row-stable kernel to the packed c2 prefill is sufficient for exact c1/c2 output.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94",
+    "base_image_id": "sha256:df6bac2fbf45e96139da8ebfee60e22db9db335aa593dfae276fbb2a15855235",
+    "r94_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json"
+  },
+  "treatment": {
+    "gate": "VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1",
+    "diagnostic_discriminator": "num_tokens >= 32",
+    "known_fixture_shapes": {
+      "c1_prefill_tokens": 31,
+      "c2_packed_prefill_tokens": 59,
+      "c1_decode_tokens": 2,
+      "c2_decode_tokens": 4
+    },
+    "expected_dispatch": {
+      "c1_prefill": "ordinary compiled RMSNormGated",
+      "c2_packed_prefill": "R94 row-stable RMSNormGated",
+      "all measured decode": "ordinary compiled RMSNormGated"
+    },
+    "production_boundary": "The 32-token threshold is valid only as a causal discriminator for this frozen fixture. It must not become a public or production rule because a single request can also exceed 31 tokens."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "server_log_proves_744_and_48_rows_use_compiled_path": true,
+    "server_log_proves_1416_rows_use_row_stable_path": true,
+    "server_log_proves_96_rows_use_compiled_path": true,
+    "layer0_core_and_z_trace_remain_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Replace the row-count discriminator with an explicit packed-multi-request-prefill signal that preserves the compiled fallback outside that phase, then repeat c1/c2 before clean-boot full qualification.",
+  "followup_if_fail": "Preserve the result and compare exact sequences and dispatch receipts; do not tune the threshold around output tokens.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the discriminator is fixture-shaped and the current boot contains an earlier GPU reset."
+}
