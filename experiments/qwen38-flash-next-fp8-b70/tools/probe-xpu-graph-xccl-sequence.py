@@ -11,13 +11,9 @@ import torch
 import torch.distributed as dist
 
 
-def input_for(
-    rank: int, replay: int, collective: int, hidden: int
-) -> torch.Tensor:
+def input_for(rank: int, replay: int, collective: int, hidden: int) -> torch.Tensor:
     cols = torch.arange(hidden, dtype=torch.int64)
-    values = (
-        (cols * 13 + rank * 29 + replay * 7 + collective * 11) % 127
-    ) - 63
+    values = ((cols * 13 + rank * 29 + replay * 7 + collective * 11) % 127) - 63
     return values.to(torch.bfloat16).reshape(1, hidden)
 
 
@@ -25,10 +21,7 @@ def expected_for(
     replay: int, collective: int, hidden: int, world_size: int
 ) -> torch.Tensor:
     return torch.stack(
-        [
-            input_for(rank, replay, collective, hidden)
-            for rank in range(world_size)
-        ]
+        [input_for(rank, replay, collective, hidden) for rank in range(world_size)]
     ).sum(dim=0)
 
 
@@ -102,9 +95,7 @@ def main() -> None:
                 tensor.copy_(input_for(rank, replay, collective, args.hidden))
             graph.replay()
             torch.xpu.synchronize()
-            hashes.append(
-                validate_outputs(tensors, replay, args.hidden, world_size)
-            )
+            hashes.append(validate_outputs(tensors, replay, args.hidden, world_size))
         elapsed_us = (time.perf_counter_ns() - started) / 1000
 
         if len(set(hashes)) != args.replays:
