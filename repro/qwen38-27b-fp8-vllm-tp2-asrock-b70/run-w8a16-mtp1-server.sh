@@ -43,6 +43,10 @@ expected_image_id=${EXPECTED_IMAGE_ID:-}
 profiler_config=${PROFILER_CONFIG:-}
 profiler_dir=${PROFILER_DIR:-}
 compile_allreduce_custom_op=${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-0}
+draft_lm_head_int4=${VLLM_XPU_DRAFT_LM_HEAD_INT4:-0}
+draft_lm_head_int4_group_size=${VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE:-128}
+draft_lm_head_int4_scale_dtype=${VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE:-bf16}
+draft_lm_head_int4_chunk_rows=${VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS:-2048}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -95,6 +99,25 @@ for value_name in inductor_max_autotune inductor_coordinate_descent; do
     exit 1
   }
 done
+[[ "${draft_lm_head_int4}" == 0 || "${draft_lm_head_int4}" == 1 ]] || {
+  printf 'VLLM_XPU_DRAFT_LM_HEAD_INT4 must be 0 or 1\n' >&2
+  exit 1
+}
+[[ "${draft_lm_head_int4_group_size}" =~ ^[1-9][0-9]*$ ]] || {
+  printf 'VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE must be positive\n' >&2
+  exit 1
+}
+[[ "${draft_lm_head_int4_chunk_rows}" =~ ^[1-9][0-9]*$ ]] || {
+  printf 'VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS must be positive\n' >&2
+  exit 1
+}
+case "${draft_lm_head_int4_scale_dtype}" in
+  bf16|bfloat16|fp16|float16|half|fp32|float32) ;;
+  *)
+    printf 'VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE is invalid\n' >&2
+    exit 1
+    ;;
+esac
 [[ -z "${python_hash_seed}" || "${python_hash_seed}" =~ ^[0-9]+$ ]] || {
   printf 'PYTHONHASHSEED must be an unsigned integer when set\n' >&2
   exit 1
@@ -176,6 +199,10 @@ exec docker run --rm --name "${container}" \
   --env VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE="${inductor_max_autotune}" \
   --env VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${inductor_coordinate_descent}" \
   --env VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP="${compile_allreduce_custom_op}" \
+  --env VLLM_XPU_DRAFT_LM_HEAD_INT4="${draft_lm_head_int4}" \
+  --env VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE="${draft_lm_head_int4_group_size}" \
+  --env VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE="${draft_lm_head_int4_scale_dtype}" \
+  --env VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS="${draft_lm_head_int4_chunk_rows}" \
   "${hash_seed_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \

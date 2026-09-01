@@ -1,0 +1,253 @@
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index 7969508..4bc17e8 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -1,6 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import copy
++import os
+ from collections.abc import Sequence
+ from dataclasses import dataclass
+ 
+@@ -64,12 +66,161 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+ 
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
+ 
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in {
++            "1",
++            "true",
++            "yes",
++            "on",
++        }
++
++    def make_xpu_int4_draft_copy(
++        self, layer: torch.nn.Module
++    ) -> torch.nn.Module | None:
++        """Return a draft-only W4A16 view without changing the target head.
++
++        Qwen3.8 MTP omits an independent vocabulary head and normally shares
++        the target ``ParallelLMHead`` object. A shallow module copy lets the
++        drafter own packed buffers while retaining the already-loaded target
++        parameter. The target module never receives the marker or buffers, so
++        verifier logits stay on the original FP16 path.
++        """
++        if not self._env_enabled("VLLM_XPU_DRAFT_LM_HEAD_INT4"):
++            return None
++        if layer.__class__.__name__ != "ParallelLMHead":
++            raise RuntimeError(
++                "draft INT4 requires a ParallelLMHead target, got "
++                f"{layer.__class__.__name__}"
++            )
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            raise RuntimeError("draft INT4 requires an XPU-resident lm_head weight")
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            raise RuntimeError(
++                "draft INT4 requires an FP16/BF16 lm_head weight, got "
++                f"{weight.dtype}"
++            )
++        import vllm_xpu_kernels._xpu_C  # noqa: F401
++
++        if not hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
++            raise RuntimeError("_xpu_C.int4_gemm_w4a16 is unavailable")
++
++        group_size = int(
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE", "128") or "128"
++        )
++        chunk_rows = int(
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS", "2048") or "2048"
++        )
++        if group_size <= 0 or weight.shape[1] % group_size != 0:
++            raise ValueError(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE must divide hidden "
++                f"size {weight.shape[1]}, got {group_size}"
++            )
++        if group_size % 8 != 0:
++            raise ValueError(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE must be divisible by 8"
++            )
++
++        num_tokens, hidden = weight.shape
++        packed_k = hidden // 8
++        num_groups = hidden // group_size
++        chunk_rows = max(1, min(chunk_rows, num_tokens))
++        scale_name = (
++            os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE", "bf16")
++            .strip()
++            .lower()
++        )
++        if scale_name in {"fp16", "float16", "half"}:
++            scale_dtype = torch.float16
++        elif scale_name in {"fp32", "float32"}:
++            scale_dtype = torch.float32
++        elif scale_name in {"bf16", "bfloat16"}:
++            scale_dtype = torch.bfloat16
++        else:
++            raise ValueError(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE must be bf16, fp16, "
++                f"or fp32, got {scale_name!r}"
++            )
++
++        with torch.no_grad():
++            packed_storage = torch.empty(
++                (num_tokens, packed_k),
++                dtype=torch.int32,
++                device=weight.device,
++            )
++            scales = torch.empty(
++                (num_groups, num_tokens),
++                dtype=scale_dtype,
++                device=weight.device,
++            )
++            factors = (
++                16 ** torch.arange(8, device=weight.device, dtype=torch.int32)
++            ).view(1, 1, 8)
++            for start in range(0, num_tokens, chunk_rows):
++                end = min(start + chunk_rows, num_tokens)
++                weight_chunk = weight[start:end].detach().float()
++                grouped = weight_chunk.view(end - start, num_groups, group_size)
++                chunk_scales = grouped.abs().amax(dim=2).clamp_min(1.0e-10) / 7.0
++                scales[:, start:end] = chunk_scales.t().to(scale_dtype)
++                quantized = (
++                    torch.round(grouped / chunk_scales.unsqueeze(-1))
++                    .clamp(-8, 7)
++                    .to(torch.int32)
++                    + 8
++                )
++                packed_storage[start:end].copy_(
++                    (quantized.view(end - start, packed_k, 8) * factors)
++                    .sum(dim=2)
++                    .to(torch.int32)
++                )
++
++            qweight = packed_storage.t()
++            qzeros = torch.tensor([8], dtype=torch.int8, device=weight.device)
++
++        draft_layer = copy.copy(layer)
++        draft_layer._parameters = layer._parameters.copy()
++        draft_layer._buffers = layer._buffers.copy()
++        draft_layer._modules = layer._modules.copy()
++        draft_layer._non_persistent_buffers_set = (
++            layer._non_persistent_buffers_set.copy()
++        )
++        draft_layer.register_buffer(
++            "_xpu_draft_int4_weight_t", qweight, persistent=False
++        )
++        draft_layer.register_buffer(
++            "_xpu_draft_int4_scale", scales.contiguous(), persistent=False
++        )
++        draft_layer.register_buffer("_xpu_draft_int4_qzeros", qzeros, persistent=False)
++        draft_layer._xpu_draft_int4_group_size = group_size
++        draft_layer._xpu_draft_int4_enabled = True
++        return draft_layer
++
+     def apply(
+         self,
+         layer: torch.nn.Module,
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_DRAFT_LM_HEAD_INT4")
++            and bias is None
++            and x.device.type == "xpu"
++            and getattr(layer, "_xpu_draft_int4_enabled", False)
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            logits = torch.ops._xpu_C.int4_gemm_w4a16(
++                x_contiguous.reshape(-1, x_contiguous.shape[-1]),
++                layer._xpu_draft_int4_weight_t,
++                None,
++                layer._xpu_draft_int4_scale,
++                layer._xpu_draft_int4_qzeros,
++                layer._xpu_draft_int4_group_size,
++                None,
++            )
++            return logits.reshape(
++                x_contiguous.shape[:-1] + (layer._xpu_draft_int4_weight_t.shape[1],)
++            )
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)
+diff --git a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+index 29a95ca..081d3e2 100644
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import dataclasses
++import os
+ from importlib.util import find_spec
+ from typing import TYPE_CHECKING, Any, cast
+ 
+@@ -1527,6 +1528,7 @@ class SpecDecodeBaseProposer:
+         the target model's LM head with the draft model to save memory.
+         """
+         share_lm_head = False
++        lm_head_to_share = getattr(target_language_model, "lm_head", None)
+         if hasattr(self.model, "has_own_lm_head"):
+             # EAGLE model
+             if not self.model.has_own_lm_head:
+@@ -1561,15 +1563,40 @@ class SpecDecodeBaseProposer:
+         else:
+             # MTP model
+             share_lm_head = True
+-            logger.info(
+-                "Detected MTP model. "
+-                "Sharing target model lm_head weights with the draft model."
+-            )
++            draft_int4 = os.environ.get(
++                "VLLM_XPU_DRAFT_LM_HEAD_INT4", "0"
++            ).strip().lower() in {"1", "true", "yes", "on"}
++            if draft_int4:
++                if lm_head_to_share is None:
++                    raise RuntimeError(
++                        "draft INT4 requested but the target has no lm_head"
++                    )
++                quant_method = getattr(lm_head_to_share, "quant_method", None)
++                prepare = getattr(quant_method, "make_xpu_int4_draft_copy", None)
++                if not callable(prepare):
++                    raise RuntimeError(
++                        "draft INT4 requested but the target lm_head quantization "
++                        "method cannot prepare a draft-only copy"
++                    )
++                lm_head_to_share = prepare(lm_head_to_share)
++                if lm_head_to_share is None:
++                    raise RuntimeError(
++                        "draft INT4 requested but no draft-only head was prepared"
++                    )
++                logger.info(
++                    "Prepared MTP draft-only INT4 lm_head from the loaded target "
++                    "weight; the target verifier lm_head remains FP16."
++                )
++            else:
++                logger.info(
++                    "Detected MTP model. "
++                    "Sharing target model lm_head weights with the draft model."
++                )
+ 
+         if share_lm_head and hasattr(target_language_model, "lm_head"):
+             if hasattr(self.model, "lm_head"):
+                 del self.model.lm_head
+-            self.model.lm_head = target_language_model.lm_head
++            self.model.lm_head = lm_head_to_share
+ 
+             # MTP models call compute_logits via shared_head.head (a
+             # ParallelLMHead inside each MTP layer), not self.model.lm_head.
+@@ -1584,9 +1611,9 @@ class SpecDecodeBaseProposer:
+                     sh = getattr(layer, "shared_head", None)
+                     if sh is not None and hasattr(sh, "head"):
+                         del sh.head
+-                        sh.head = target_language_model.lm_head
++                        sh.head = lm_head_to_share
+                         logger.info(
+-                            "Shared target model lm_head with MTP shared_head.head."
++                            "Installed selected lm_head with MTP shared_head.head."
+                         )
+ 
+         if hasattr(target_language_model.model, "topk_indices_buffer"):

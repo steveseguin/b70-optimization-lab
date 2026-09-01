@@ -743,6 +743,67 @@ full-vocabulary FP16 projections for the one-row drafter and two-row verifier;
 the next candidate targets only the drafter and leaves verifier computation
 unchanged. See the [R61 shape report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-shape-profiler-r61.md).
 
+R62 then quantized only the one-row MTP draft vocabulary projection to
+group-128 W4A16. It leaves the two-row FP16 target verifier projection
+unchanged and is default-off. Two fresh-cache diagnostic servers measured
+`54.507697` and `53.976404 tok/s`; all 24 complete arrays matched the MTP0
+oracle, candidate repeat determinism was 12/12, cache use was zero, and
+canaries passed. An 18-case prose/code/document depth matrix remained exact
+through 32K and measured `52.279 tok/s` there. This is a retained candidate,
+not a new public headline: the boot contained an earlier GPU reset, so the
+preregistered two-server clean-boot replay is still required. Build with
+[`build-draft-int4-r62-image.sh`](build-draft-int4-r62-image.sh), launch with
+the repository wrapper documented in the [R62 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md), and run
+`./verify-public-source-closure.sh` first.
+
+The complete third-party build path is explicit. First build the public pinned
+stack under the exact base tag R62 expects:
+
+```bash
+FINAL_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
+BUILD_ROOT=/path/to/new-pinned-stack-build \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh
+
+docker image inspect \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
+  --format '{{.Id}}'
+```
+
+Use the printed ID as `EXPECTED_BASE_IMAGE_ID`; this admits an independently
+built image only after the existing content/label contract passes:
+
+```bash
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-the-id-printed-above \
+BUILD_ROOT=/path/to/new-r62-build \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-draft-int4-r62-image.sh
+
+docker image inspect \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62 \
+  --format '{{.Id}}'
+```
+
+Then launch with the candidate ID printed by the second command and a genuinely
+new cache directory:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-r62-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-the-r62-id-printed-above \
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh
+```
+
+In another terminal, use the same strict workload as the qualified lane:
+
+```bash
+OUT_DIR=/path/to/new-r62-strict-result \
+PROFILE_LABEL=mtp1-draft-int4-r62 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+These placeholders are intentional user-selected paths, not references to this
+lab machine. R62 remains opt-in and does not affect the qualified launcher when
+its environment flag is absent.
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;

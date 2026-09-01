@@ -65,11 +65,16 @@ measured `51.756541 tok/s` short and a `-0.014%` median decode delta across
 R61 recorded exact shapes: all 1,056 per-rank collectives were 20 KiB FP16
 `[2,5120]`. Three isolated repeats showed no benefit from a higher LL threshold
 and made two-shots consistently slower, so that transfer is closed without an
-endpoint load. The trace also found one-row drafter and two-row verifier
-full-vocabulary FP16 projections at about 2.13 ms each under profiling. The
-next candidate reduces only the draft projection; the verifier remains on the
-selected FP16 path and every complete varied-prompt output must still match.
-Promotion of the R56 depth results still requires two clean-boot repeats.
+endpoint load. R62 then moved only the one-row MTP draft vocabulary projection
+to group-128 W4A16 while preserving the FP16 verifier. Two fresh-cache
+diagnostic servers measured `54.507697` and `53.976404 tok/s` (`54.242051`
+center, `+4.6980%` vs the qualified headline); candidate repeat outputs matched
+12/12, all 24 outputs matched MTP0, cache use was zero, and canaries passed.
+The 18-case prose/code/document depth continuation was also exact through 32K,
+where it measured `52.279 tok/s`; it improved over R56 MTP1 at every tested
+depth. R62 is retained but not promoted because this boot contains an earlier
+GPU reset. Its public headline and curve remain unchanged until the
+preregistered two fresh-server clean-boot replay passes.
 Independent clean-host replay
 also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

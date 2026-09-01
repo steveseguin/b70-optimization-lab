@@ -1,0 +1,91 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-20260901-r62",
+  "status": "diagnostic-passed-clean-boot-promotion-pending",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "base_image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "candidate_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "patch_sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+    "patched_vocab_source_sha256": "a67215084b55800174b37166e7e74593e62e4b2d7460da59ad2eb4a23c8c8ba7",
+    "patched_proposer_source_sha256": "96131347dd01576e3bf956371a25937bc17c1476489cab13d1030a5a1a00240b",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "treatment": {
+    "draft_projection": "runtime group-128 W4A16 with BF16 scales",
+    "target_projection": "unchanged FP16",
+    "target_isolation": "The draft uses a shallow ParallelLMHead module copy with nonpersistent packed buffers. It shares only the already-loaded FP16 parameter; the target module receives no INT4 marker or buffer.",
+    "default_off": true,
+    "component_smoke": {
+      "draft_copy_isolated": true,
+      "target_weight_shared": true,
+      "int4_apply_matches_direct_kernel": true
+    },
+    "component_timing_ms": {
+      "shape": "[1,5120] x local [5120,124160]",
+      "iterations": 30,
+      "dense_int4_logits_median": 0.5723610011045821,
+      "dense_int4_logits_plus_argmax_median": 0.6005960021866485,
+      "fp16_profiler_reference": "about 2.13; diagnostic profiler value only"
+    }
+  },
+  "strict_natural_512": {
+    "suite": "12 prompts across six classes, each sent once with a natural 512-token cap",
+    "attempts_tok_s": [54.50769697309161, 53.97640443802031],
+    "center_tok_s": 54.24205070555596,
+    "repeat_range_percent": 0.9794846031086392,
+    "qualified_incumbent_tok_s": 51.80808698870573,
+    "uplift_vs_incumbent_percent": 4.698038198902887,
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "exact_complete_arrays_vs_mtp0": "24/24 across two fresh candidate servers",
+    "exact_complete_arrays_candidate_repeat": "12/12",
+    "exact_complete_arrays_vs_incumbent_mtp1": "24/24",
+    "performance_workload_gates_passed": true
+  },
+  "real_content_depth": {
+    "classification": "Grade B three-class unrepeated real-content exact-depth HTTP evidence",
+    "samples_per_depth": 3,
+    "classes": ["technical-prose", "python-code", "structured-docs"],
+    "output_tokens_per_request": 128,
+    "cached_tokens_all_zero": true,
+    "canaries_before_and_after_passed": true,
+    "exact_complete_arrays_vs_mtp0": "18/18",
+    "points": [
+      {"active_context_tokens": 2048, "decode_tok_s": 54.94214046231005, "ttft_ms": 589.3218389974209, "delta_vs_r56_mtp1_percent": 5.598474305199019},
+      {"active_context_tokens": 4096, "decode_tok_s": 56.019418883586425, "ttft_ms": 1151.3338240038138, "delta_vs_r56_mtp1_percent": 5.88629776000642},
+      {"active_context_tokens": 8192, "decode_tok_s": 54.19441988000092, "ttft_ms": 2351.036797001143, "delta_vs_r56_mtp1_percent": 4.361049108998971},
+      {"active_context_tokens": 16384, "decode_tok_s": 53.51641343787343, "ttft_ms": 4888.378515002842, "delta_vs_r56_mtp1_percent": 0.7193565479251651},
+      {"active_context_tokens": 24576, "decode_tok_s": 53.34890635686784, "ttft_ms": 7650.844228999631, "delta_vs_r56_mtp1_percent": 6.719053553792942},
+      {"active_context_tokens": 32768, "decode_tok_s": 52.279197230309315, "ttft_ms": 10613.0120730013, "delta_vs_r56_mtp1_percent": 4.375393982274156}
+    ],
+    "median_delta_vs_r56_mtp1_percent": 4.986934143736588,
+    "minimum_delta_vs_r56_mtp1_percent": 0.7193565479251651,
+    "interpolation_or_extrapolation": false
+  },
+  "integrity": {
+    "both_rank_preparation_markers_present": true,
+    "new_kernel_faults_during_candidate_runs": 0,
+    "current_boot_contains_earlier_gpu_reset": true,
+    "strict_attempt_1_performance_sha256": "84ab1b29dfd69abc31513e1312ba89df402a0afd0af516fa88402dd17be5a58c",
+    "strict_attempt_2_performance_sha256": "26818be6e69f472150f367b90762f4f0a7d2b53b961bdcac250aa571be4b7247",
+    "strict_attempt_1_server_log_sha256": "6b74ed0496af4d5099612b3f493df18bfeae9f4e37480956a5cc1d94e4342b60",
+    "strict_attempt_2_server_log_sha256": "daab4bf050e82af19b559f5783d18f8e5636762f1c5a87fb03fd74f1d018f0f7",
+    "depth_summary_sha256": "8080dc52fe268054bf73809b243fe539caddb56cc6a300f7053d4f18268664f1",
+    "depth_server_log_sha256": "1487194c8eb794fead3be22a925af79f8278732e809f55039cf1e4c6630b8a9e"
+  },
+  "decision": {
+    "candidate_retained": true,
+    "public_headline_or_curve_changed": false,
+    "localmaxxing_submission_authorized": false,
+    "reason": "Every diagnostic gate passed and the material speed threshold was exceeded, but the preregistration requires two fresh servers on a clean boot. This boot contains an earlier GPU reset.",
+    "next_gate": "After a user-controlled clean boot, run two fresh-cache strict servers and the exact-output comparisons before promotion. Do not reboot solely to complete this gate without user coordination."
+  }
+}

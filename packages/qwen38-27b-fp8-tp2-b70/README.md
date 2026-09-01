@@ -66,6 +66,13 @@ The technical source of truth is the
 [`reproduction guide`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md).
 The machine-readable front door is [`package.json`](package.json).
 
+The latest default-off optimization candidate moves only the MTP drafter's
+vocabulary projection to INT4 while keeping target verification FP16. It
+passed strict and 2K-32K exact-output diagnostics at a `54.242051 tok/s`
+two-server center, but it is deliberately not the package headline until the
+pre-registered clean-boot replay passes. The complete build, patch, launcher,
+and evidence chain is in the [R62 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md).
+
 ## Who built what
 
 **neural.download lab — integrated and optimized:** B70/XPU integration,

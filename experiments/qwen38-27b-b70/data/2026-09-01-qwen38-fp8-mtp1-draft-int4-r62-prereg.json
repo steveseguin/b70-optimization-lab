@@ -1,0 +1,66 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-20260901-r62",
+  "status": "preregistered-not-run",
+  "objective": "Reduce the MTP drafter's full-vocabulary projection without changing the FP8 target verifier or visible greedy output.",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "base_image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "patch_sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "treatment": {
+    "draft_projection": "runtime group-128 W4A16 with BF16 scales",
+    "target_projection": "unchanged FP16",
+    "implementation": "A shallow draft module copy owns nonpersistent packed INT4 buffers while sharing the already-loaded target FP16 parameter. The target module has no INT4 marker or buffers.",
+    "default_off": true,
+    "environment": {
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4": "1",
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE": "128",
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE": "bf16",
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS": "2048"
+    }
+  },
+  "component_admission": {
+    "shape": "[1,5120] x local [5120,124160]",
+    "accepted_image_op_present": true,
+    "dense_int4_logits_median_ms": 0.5723610011045821,
+    "dense_int4_logits_plus_argmax_median_ms": 0.6005960021866485,
+    "iterations": 30,
+    "profiler_fp16_reference_ms": "about 2.13; diagnostic only",
+    "decision": "authorize one bounded endpoint candidate"
+  },
+  "first_endpoint_gate": {
+    "suite": "complete 12-prompt/six-class natural-512 strict suite",
+    "cached_tokens": "all zero",
+    "canaries": "before and after pass",
+    "complete_arrays_exact_vs_mtp0_oracle": "12/12 required",
+    "candidate_determinism": "12/12 complete arrays exact across a repeated candidate server required before promotion",
+    "minimum_decode_tok_s": 51.29000611881867,
+    "reference_incumbent_tok_s": 51.80808698870573,
+    "continuation": "Only a gate-passing candidate may run the unrepeated natural-content 2K-32K depth matrix."
+  },
+  "promotion_gate": {
+    "minimum_material_uplift_percent": 3.0,
+    "required_clean_boot_fresh_servers": 2,
+    "quality": "Every candidate complete token array must match the corresponding same-image MTP0 oracle; no semantic-only substitution.",
+    "current_boot": "Diagnostic only because the boot journal contains an earlier GPU reset. A pass can retain the candidate but cannot promote it."
+  },
+  "abort_conditions": [
+    "target lm_head receives an INT4 marker or packed buffer",
+    "draft-only preparation marker is absent on either TP rank",
+    "any cached token, canary failure, complete-array mismatch, nondeterminism, NaN, GPU reset, device loss, or new Xe fault",
+    "strict decode below the 99% incumbent floor"
+  ],
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "component_timing_is_not_endpoint_evidence": true
+  }
+}
