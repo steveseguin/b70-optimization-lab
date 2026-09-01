@@ -1,0 +1,26 @@
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ 
++import os
+ import torch
+ import torch.distributed as dist
+ from torch.distributed import ProcessGroup
+@@ -47,6 +48,14 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 logger.info("Using AgRs manager on XPU device.")
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
++        # Keep the collective opaque to Inductor when explicitly requested.
++        # At execution time vllm::all_reduce calls back into this method with
++        # torch.compiler.is_compiling() false, preserving the accepted
++        # clone + async Work.wait() completion contract below.
++        if torch.compiler.is_compiling() and os.environ.get(
++            "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP", "0"
++        ) == "1":
++            return torch.ops.vllm.all_reduce(input_, group_name=self.unique_name)
+         output = input_.clone()
+         work = dist.all_reduce(output, group=self.device_group, async_op=True)
+         work.wait()

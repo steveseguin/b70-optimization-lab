@@ -724,10 +724,16 @@ graph-off headline and just below its preregistered 99% floor. It was rejected
 before the long-depth stage. A bounded graph-off profiler then attributed
 roughly 50-51% of device-kernel time to TP all-reduce and 45% to GEMM on both
 ranks; profiler timings are diagnostic, not performance evidence. The next
-implementation target is block-FP8-aware GEMM/collective overlap, not another
-graph or scheduler toggle. See the [R58 negative](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-xpugraph-r58-negative.md)
+implementation target is W8A16 GEMM/collective overlap or a lower-latency
+two-card all-reduce, not another graph or scheduler toggle. See the [R58 negative](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-xpugraph-r58-negative.md)
 and [R59 profiler note](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-profiler-r59.md).
 See the [R57 result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json).
+
+R60 then kept compiled all-reduce opaque while preserving the accepted clone
+and explicit completion wait. It passed 12/12 strict and 18/18 depth exactness,
+but measured `51.756541 tok/s` short and a `-0.014%` median change across
+2K-32K. The treatment is robust but neutral, so it remains default-off. See the
+[R60 result](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-compiled-allreduce-r60-negative.md).
 
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that

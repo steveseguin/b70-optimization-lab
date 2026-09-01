@@ -19,15 +19,17 @@ throughput claim.
 Each rank recorded 1,056 all-reduce kernels and 2,488 GEMM kernels in the
 bounded trace. Absolute durations include profiler overhead, but the symmetric
 rank-level proportions make the next bottleneck unambiguous: further work
-should overlap or fuse TP communication with block-FP8 GEMM, not spend the next
-arm tuning the already-small GDN kernels.
+should overlap or fuse TP communication with the selected W8A16 GEMM, or replace
+the small two-card collective with a lower-latency implementation, rather than
+spend the next arm tuning the already-small GDN kernels.
 
 This also explains why simply enabling the existing AsyncTP machinery is not a
 valid next knob. The earlier PR #52683 integration reached the compiler but
-produced zero replacements: its XPU primitive covers static W8A8, while this
-official checkpoint uses per-token group-128 activation quantization and
-block-scaled weights. A real implementation must communicate the paired
-activation scales and preserve exact target output; the prior result is
+produced zero replacements: its XPU primitive covers quantized FP8 activations,
+while the selected lab kernel deliberately skips activation quantization and
+feeds FP16/BF16 activations plus block-FP8 weights and weight scales to
+`fp8_gemm_w8a16`. A real fused implementation must support that exact W8A16
+signature and preserve target output; the prior result is
 documented in
 [the R14/R15 note](2026-08-26-qwen38-fp8-tp2-asynctp-pr52683-r14-r15-result.md).
 

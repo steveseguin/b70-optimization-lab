@@ -36,6 +36,13 @@ expected=(
   05488952d1d98ca68915cabd7e7fe4ce62632662b175c560ae49bb2444187c79
 )
 
+# Experimental overlays may intentionally replace only the XPU communicator.
+# Keep the ordinary package hash immutable and require candidates to provide
+# their exact replacement digest explicitly.
+if [[ -n "${EXPECTED_XPU_COMMUNICATOR_SHA256:-}" ]]; then
+  expected[4]=${EXPECTED_XPU_COMMUNICATOR_SHA256}
+fi
+
 case "${profile}" in
   mtp0) ;;
   mtp1)

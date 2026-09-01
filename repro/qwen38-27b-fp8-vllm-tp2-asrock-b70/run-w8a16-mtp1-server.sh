@@ -42,6 +42,7 @@ kernel_head=${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}
 expected_image_id=${EXPECTED_IMAGE_ID:-}
 profiler_config=${PROFILER_CONFIG:-}
 profiler_dir=${PROFILER_DIR:-}
+compile_allreduce_custom_op=${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-0}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -174,6 +175,7 @@ exec docker run --rm --name "${container}" \
   --env TORCHINDUCTOR_DETERMINISTIC="${inductor_deterministic}" \
   --env VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE="${inductor_max_autotune}" \
   --env VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${inductor_coordinate_descent}" \
+  --env VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP="${compile_allreduce_custom_op}" \
   "${hash_seed_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \

@@ -52,8 +52,8 @@
   },
   "interpretation": {
     "measured_bottleneck": "TP all-reduce and GEMM dominate the bounded trace on both ranks.",
-    "closed_existing_route": "The prior AsyncTP PR 52683 screen produced zero replacements because it supports static W8A8, not group-128 block-FP8 activation scales.",
-    "next_implementation_target": "A block-FP8-aware GEMM/collective overlap or fusion path with paired activation-scale communication.",
+    "closed_existing_route": "The prior AsyncTP PR 52683 screen produced zero replacements because its XPU primitive expects quantized FP8 activations, while the selected lab kernel consumes FP16/BF16 activations with block-FP8 weights and weight scales.",
+    "next_implementation_target": "W8A16 GEMM/collective overlap or a lower-latency two-card all-reduce that preserves the accepted clone plus explicit completion contract.",
     "not_supported_by_trace": "Absolute uninstrumented step time, an end-to-end speed claim, or a claim that GDN is fully optimized."
   },
   "raw_artifact_hashes": {

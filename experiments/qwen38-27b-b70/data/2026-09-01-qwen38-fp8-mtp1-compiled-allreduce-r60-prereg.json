@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-compiled-allreduce-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-compiled-allreduce-20260901-r60",
+  "objective": "Test whether opaque compiled all-reduce reduces TP2 host/graph-boundary overhead on the final deterministic W8A16 MTP1 stack.",
+  "baseline": {
+    "evidence": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
+    "class_balanced_decode_tok_s": 51.80808698870573,
+    "complete_arrays_exact": "12/12"
+  },
+  "candidate": {
+    "only_runtime_change": "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1",
+    "source_change": "Keep all-reduce opaque during compilation; at execution retain clone plus async Work.wait().",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "base_image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "xpu_graph": false,
+    "mtp_depth": 1,
+    "tensor_parallel": 2,
+    "prefix_cache": false,
+    "fresh_compile_cache": true
+  },
+  "stage_1_startup_gate": {
+    "endpoint_ready": true,
+    "both_gpu_health": true,
+    "no_new_gpu_fault_or_reset": true
+  },
+  "stage_2_strict_gate": {
+    "fixture": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "prompts": 12,
+    "classes": 6,
+    "cached_tokens_zero": true,
+    "canaries_pass": true,
+    "complete_arrays_exact_vs_r54a_mtp0": "12/12",
+    "class_balanced_decode_floor_tok_s": 51.29000611881867
+  },
+  "decision_rule": {
+    "continue_to_long_context_only_if": "All strict gates pass and decode is at least 51.290006 tok/s.",
+    "promote_only_if": "Two fresh strict servers pass all gates, both exceed the incumbent or their center exceeds it outside normal variance, and the complete long-context matrix passes exactness plus non-inferiority.",
+    "otherwise": "Reject and retain the R50 graph-off default.",
+    "no_cherry_picking": true
+  },
+  "publication_boundary": {
+    "current_boot": "diagnostic-only because the boot journal contains an earlier GPU reset",
+    "headline_replacement_authorized": false
+  }
+}

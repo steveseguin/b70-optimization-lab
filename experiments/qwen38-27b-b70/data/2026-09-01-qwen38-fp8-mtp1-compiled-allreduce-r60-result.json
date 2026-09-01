@@ -1,0 +1,72 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-compiled-allreduce-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-compiled-allreduce-20260901-r60",
+  "status": "rejected-neutral",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "base_image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-compiled-allreduce-custom-op-r60",
+    "candidate_image_id": "sha256:1a900fca3e88a61d69606cfe2250b3f299eb661aa0ccd8d0b2f6ae676ce20123",
+    "xpu_communicator_sha256": "a959603a21ac4751c63696801a0e4335554db22b14e8f2b4711c392f314dd448",
+    "patch_sha256": "59e2adcefea5f6e7d228b255248f24f93aa114178125fd7b695cf0654880435e",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "treatment": {
+    "environment": "VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1",
+    "effect": "Keep compiled XPU all-reduce opaque while preserving the accepted clone plus async Work.wait() execution contract.",
+    "fresh_compile_cache_per_server": true
+  },
+  "strict_natural_512": {
+    "class_balanced_decode_tok_s": 51.75654069341995,
+    "incumbent_tok_s": 51.80808698870573,
+    "delta_percent": -0.09949468888393564,
+    "floor_tok_s": 51.29000611881867,
+    "complete_arrays_exact_vs_r54a_mtp0": "12/12",
+    "cached_tokens_zero": true,
+    "canaries_pass": true,
+    "new_gpu_fault_or_reset": false
+  },
+  "real_content_depth": {
+    "classes": ["technical-prose", "python-code", "structured-docs"],
+    "samples_per_depth": 3,
+    "complete_arrays_exact_vs_r56_mtp0": "18/18",
+    "canaries_before_and_after": true,
+    "cached_tokens_zero": true,
+    "median_decode_delta_percent": -0.013875,
+    "points": [
+      {"active_context_tokens": 2048, "baseline_tok_s": 52.029293816817, "candidate_tok_s": 51.98156926558922, "delta_percent": -0.091726},
+      {"active_context_tokens": 4096, "baseline_tok_s": 52.905257874443, "candidate_tok_s": 53.34516220818807, "delta_percent": 0.831495},
+      {"active_context_tokens": 8192, "baseline_tok_s": 51.929738482575, "candidate_tok_s": 52.11792937826388, "delta_percent": 0.362395},
+      {"active_context_tokens": 16384, "baseline_tok_s": 53.13418916888, "candidate_tok_s": 53.16818217535964, "delta_percent": 0.063976},
+      {"active_context_tokens": 24576, "baseline_tok_s": 49.990048243765, "candidate_tok_s": 49.940474687101265, "delta_percent": -0.099167},
+      {"active_context_tokens": 32768, "baseline_tok_s": 50.087664568922, "candidate_tok_s": 49.947235589129974, "delta_percent": -0.280366}
+    ]
+  },
+  "decision": {
+    "strict_continuation_gate_passed": true,
+    "depth_correctness_gate_passed": true,
+    "depth_performance_gate_passed": false,
+    "promotion_gate_required_median_uplift_percent": 3.0,
+    "selected_default": "R50 graph-off with functional compiled collective and explicit Work.wait()",
+    "second_fresh_candidate_server_authorized": false,
+    "reason": "The treatment was exact and robust but performance-neutral; a second server cannot rescue the preregistered 3% depth gate."
+  },
+  "raw_artifact_hashes": {
+    "strict_performance_sha256": "5ec158b562a043cf89b28eaa5f1992aa420df41924b65dc3a20cb207e88ecf6a",
+    "strict_canaries_sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8",
+    "strict_oracle_comparison_sha256": "14e9b5284fe4259e218e66078f40251f51a0d0433a33032a16d215f4e2fc3d87",
+    "depth_summary_sha256": "a9540c5d83b59fceec51ff3dbc5c4d51a178bff800edd492f660e11f00e10194",
+    "depth_server_log_sha256": "9fb3b4399448a65c6fd4033e23c3e63d1730289fcedc6877b78c28b79d62bd2c"
+  },
+  "publication_boundary": {
+    "performance_claim_eligible": false,
+    "headline_or_public_curve_changed": false,
+    "current_boot": "diagnostic-only because the boot journal contains an earlier GPU reset"
+  }
+}

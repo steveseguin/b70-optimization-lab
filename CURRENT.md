@@ -54,9 +54,14 @@ reset. R58 then enabled a size-one XPU Graph on the same deterministic image;
 it remained 12/12 exact but regressed to `51.229844 tok/s` and missed its 99%
 floor, so graph-off remains selected. A bounded R59 graph-off trace attributes
 about 50-51% of device-kernel time to TP all-reduce and 45% to GEMM on both
-ranks. The next implementation target is block-FP8-aware GEMM/collective
-overlap; the existing XPU AsyncTP route is already closed because it supports
-static W8A8 rather than this checkpoint's group-128 activation scales.
+ranks. The next implementation target is W8A16 GEMM/collective overlap or a
+lower-latency two-card all-reduce; the existing XPU AsyncTP route is already
+closed because it expects quantized FP8 activations, while the selected kernel
+consumes FP16/BF16 activations with block-FP8 weights and weight scales.
+R60 then kept compiled all-reduce opaque while retaining clone plus explicit
+`Work.wait()`. It passed 12/12 strict and 18/18 depth-array exactness, but
+measured `51.756541 tok/s` short and a `-0.014%` median decode delta across
+2K-32K, so it is rejected as neutral and the R50 collective path remains.
 Promotion of the R56 depth results still requires two clean-boot repeats.
 Independent clean-host replay
 also remains pending. Recovery order is process
