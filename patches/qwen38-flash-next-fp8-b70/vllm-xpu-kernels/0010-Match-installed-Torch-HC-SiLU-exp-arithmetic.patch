@@ -1,0 +1,21 @@
+A1-source-sha256: 1fb1af69196475b80346c1795221cae4fc8bfde99bd1bd971f25d246d6197280
+Status: default-off component correction; apply after 0009
+
+--- a/csrc/xpu/qwen4_exp_hc_silu.cpp
++++ b/csrc/xpu/qwen4_exp_hc_silu.cpp
+@@ -1,4 +1,5 @@
+ #include <ATen/DeviceGuard.h>
++#include <cmath>
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+ 
+@@ -20,7 +21,8 @@ class qwen4_exp_hc_silu_bf16_kernel {
+       return;
+     }
+     const float scaled = static_cast<float>(input_[column]) * 0.25f;
+-    const float sigmoid = 1.0f / (1.0f + sycl::exp(-scaled));
++    const auto one = float{1.0};
++    const float sigmoid = one / (one + std::exp(-scaled));
+     output_[column] =
+         static_cast<sycl::ext::oneapi::bfloat16>(scaled * sigmoid);
+   }

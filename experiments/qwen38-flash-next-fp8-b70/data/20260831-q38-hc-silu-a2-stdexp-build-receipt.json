@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "status": "built_static_validated_gpu_pending_fresh_boot",
+  "classification": "default_off_component_correction",
+  "created_at": "2026-08-31T22:00:56-04:00",
+  "scope": "Qwen3.8 Flash-Next exact TP4 decode-shape HC-SiLU component only",
+  "upstream_identity": {
+    "torch_version": "2.11.0+xpu",
+    "torch_git": "70d99e998b4955e0049d13a98d77ae1b14db1f45",
+    "torch_xpu_ops_pin": "de4f698b84142e660d5238e02e067182e39641ca",
+    "reference_arithmetic": "one / (one + std::exp(-a))"
+  },
+  "source": {
+    "snapshot": "/mnt/fast-ai/qwen38-build/kernels-q38-hc-silu-a2-stdexp-src",
+    "a1_native_source_sha256": "1fb1af69196475b80346c1795221cae4fc8bfde99bd1bd971f25d246d6197280",
+    "a2_native_source_sha256": "0ec0403ce5825a052ace9af0de207debfd8b1de5e60fe0b69394f2f54d15b725",
+    "only_changed_file_from_a1": "csrc/xpu/qwen4_exp_hc_silu.cpp",
+    "semantic_delta": [
+      "add <cmath>",
+      "replace sycl::exp with float std::exp in the sigmoid expression"
+    ],
+    "dispatch_shape_stride_queue_launch_and_conversion_unchanged": true,
+    "reverse_patch_dry_run_passed": true
+  },
+  "patches": {
+    "a1_base": {
+      "path": "patches/qwen38-flash-next-fp8-b70/vllm-xpu-kernels/0009-Add-exact-Qwen4Exp-HC-SiLU-XPU-kernel.patch",
+      "sha256": "12e5c31dea78ffeba4aadc209a78ae06e0a3d6b9f4f04ef497734f148264e3fb"
+    },
+    "a2_correction": {
+      "path": "patches/qwen38-flash-next-fp8-b70/vllm-xpu-kernels/0010-Match-installed-Torch-HC-SiLU-exp-arithmetic.patch",
+      "sha256": "cf285dddd637c8bd7914002f9d96c3d0c8c23d1cbf8ed34c6413232484d2ca73"
+    }
+  },
+  "a1_negative": {
+    "result": "data/20260831-q38-hc-silu-a1-parity-negative.json",
+    "boot_id": "a37222ff-628d-4d0a-8a84-37e086ad90dc",
+    "message": "bf16-16640: 1 non-NaN BF16 bit patterns differ",
+    "gate_log_sha256": "3acd46c274547cde476854c9b263005f4400539e4f75e66c8d0d0e3b1f1f5a70"
+  },
+  "build": {
+    "directory": "/mnt/fast-ai/qwen38-build/build-q38-hc-silu-a2-stdexp",
+    "install": "/mnt/fast-ai/qwen38-build/install-q38-hc-silu-a2-stdexp",
+    "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+    "compiler_version": "Intel oneAPI DPC++/C++ Compiler 2025.3.3",
+    "cmplr_root": "/opt/intel/oneapi/compiler/2025.3",
+    "cmake_cache_sha256": "ba855927d4452522fcc1dd00bb30ac81786fc374b0d4c7e07c99238998d13966",
+    "build_ninja_sha256": "d4993485247f8e266fe10f2e00a67c272b32994ac159424a1d53fd3dd929708f",
+    "forbidden_fast_or_native_math_flags_absent": true,
+    "configuration": {
+      "CMAKE_BUILD_TYPE": "Release",
+      "VLLM_TARGET_DEVICE": "xpu",
+      "VLLM_XPU_ENABLE_XE2": true,
+      "VLLM_XPU_ENABLE_XE_DEFAULT": false,
+      "BASIC_KERNELS_ENABLED": true,
+      "XPU_SPECIFIC_KERNELS_ENABLED": true,
+      "FA2_KERNELS_ENABLED": false,
+      "MOE_KERNELS_ENABLED": false,
+      "GDN_KERNELS_ENABLED": false,
+      "MQA_LOGITS_KERNELS_ENABLED": false,
+      "XPUMEM_ALLOCATOR_ENABLED": false
+    },
+    "uninstalled_dso_sha256": "c6d21cfc88dbeeea873bb5a1e779d1e0f6d555c9169b53ab5b14a9b3344881a6",
+    "installed_dso_sha256": "1d7cd1a21c7c2d8ecd0c0b0ef38b549adc133ab12683c0c33eb8d210e5d48e49",
+    "needed_sycl": [
+      "libsycl.so.8"
+    ],
+    "runpath": "$ORIGIN",
+    "install_component": "_xpu_C"
+  },
+  "component_runtime": {
+    "path": "/mnt/fast-ai/qwen38-build/runtime-q38-hc-silu-a2-stdexp",
+    "candidate_dso_sha256": "1d7cd1a21c7c2d8ecd0c0b0ef38b549adc133ab12683c0c33eb8d210e5d48e49",
+    "manifest_sha256": "be791a78c2c197d60226bc5d74b5773283cd8104b5967ecf1894ef232a7bf002",
+    "manifested_files": 19,
+    "full_model_capable": false
+  },
+  "gate": {
+    "a1_gate_sha256": "a254a5567ca8251dac49c060a15b73ced16132a712045c09ccc36a12418efb71",
+    "a2_gate_path": "experiments/qwen38-flash-next-fp8-b70/tools/benchmark-q38-hc-silu-a2-stdexp.py",
+    "a2_gate_sha256": "4f2449f29179eb8fdd1f8642374b460d1d68d61bc1dfcb0d1d050c6f3feed9bb",
+    "runner_path": "experiments/qwen38-flash-next-fp8-b70/tools/run-q38-hc-silu-a2-stdexp.sh",
+    "runner_sha256": "49eda370a7f8837b171171245883696c8f6709e12dd069835337ba8e51fe1f70",
+    "runner_canonical_sha256": "e1317d1d0ad235ba87edb7c5a0f97c8ad47c42afdfc6c74be45bca219de297b7",
+    "derived_runner_sha256": "9fce3860319d668acd6d290126a206fc89f3a582e1b3492ddf79aaaffef57e6e",
+    "derived_runner_canonical_sha256": "ab42a0b127d53e6a2b5c162691d8f35e197c8c4f4ccc204572ca0891760769d1",
+    "postflight_sha256": "cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753",
+    "static_validation_passed": true,
+    "rejected_boot": "a37222ff-628d-4d0a-8a84-37e086ad90dc",
+    "gpu_execution_pending_fresh_boot": true
+  },
+  "discarded_incomplete_build": {
+    "path": "/mnt/fast-ai/qwen38-build/build-q38-hc-silu-a2-precise",
+    "reason": "flags-only trial was interrupted before completion when the exact std::exp cause was established",
+    "dso_produced": false,
+    "gpu_used": false,
+    "eligible": false
+  },
+  "promotion": {
+    "default_enabled": false,
+    "endpoint_authorized": false,
+    "performance_claim_authorized": false,
+    "protected_mtp0_tok_s": 5.515783,
+    "protected_mtp4_tok_s": 20.727176,
+    "protected_results_changed": false
+  }
+}

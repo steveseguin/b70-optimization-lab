@@ -3014,3 +3014,22 @@ postflight, and both the A31 supervisor and launcher require that final state
 plus the verified same-boot evidence. All protected rates remain unchanged.
 See the
 [HC-SiLU preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a1-prereg.md).
+A1 then failed closed during the exhaustive BF16 phase: chunk
+`0x4100–0x423f` contained one non-NaN output-bit mismatch, so no profile,
+timing, or endpoint phase ran. Exact four-card postflight and the bounded
+kernel-journal gate passed, classifying this as an arithmetic correctness
+negative rather than a device fault. The installed Torch `2.11.0+xpu`
+reference uses `std::exp`, while A1 used `sycl::exp`; A2 changes only that
+expression and adds a repeated fail-fast test for the failed region before
+rerunning all 65,536 BF16 encodings. This boot is consumed, and no later chain
+stage may run on it. Protected MTP0/MTP4 rates remain unchanged. See the
+[A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a1-parity-negative.md).
+A2 is now built and statically frozen as the minimal arithmetic correction.
+Its isolated source differs from A1 only by `<cmath>` and `sycl::exp` to
+`std::exp`; the accepted DSO links only SYCL 8, contains no fast/native-math
+flag, and remains default-off and component-only. The gate repeats the exact
+failed BF16 region before the complete A1 ladder. It hard-rejects the consumed
+A1 boot. After an attended reboot, A2 must pass first; then the affinity
+component and finally A31 may proceed on that same boot, with any failure
+stopping the chain. See the
+[A2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a2-stdexp-prereg.md).
