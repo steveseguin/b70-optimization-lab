@@ -3424,3 +3424,12 @@ blocker. A50 changes only fresh attempt/port paths and the checkpoint/tokenizer
 source to the existing validated identical 131-shard external copy. See the
 [A49 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a49-local-nvme-guard-negative.md)
 and [A50 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a50-external-model-lossless-2k-prereg.md).
+A50 selected the external checkpoint successfully, but the inherited exact-zero
+AER rule stopped it when the local endpoint rose `63` to `64` despite exactly
+zero local-NVMe read-sector movement. The later registry-directory exception
+was a teardown consequence, not a model-path defect. A51 retains the external
+checkpoint and all inference/quality identity while bounding the actual risky
+combination: <=4 GiB local reads, <=64 corrected endpoint events, zero root-port
+change, and no non-corrected link report. See the
+[A50 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a50-strict-aer-guard-negative.md)
+and [A51 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a51-bounded-nvme-guard-prereg.md).
