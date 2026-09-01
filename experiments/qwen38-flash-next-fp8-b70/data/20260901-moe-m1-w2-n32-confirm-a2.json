@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "classification": "component_performance_negative_exact_output_positive",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "scope": "one-B70 real-weight layer-0 EP-rank-0 M1 modular W2 N32 confirmation",
+    "runner_sha256": "051889b9f7eaeb87d7d059b474607c39c75502f4810b3080b626ae3d8b5f0142"
+  },
+  "candidate": {
+    "common_config": {
+      "num_warps": 8
+    },
+    "w2_config": {
+      "BLOCK_SIZE_N": 32,
+      "num_warps": 8
+    }
+  },
+  "protocol": {
+    "seeds": [
+      20260826,
+      20260827,
+      20260830
+    ],
+    "order_per_seed": [
+      "control-before",
+      "candidate",
+      "control-after"
+    ],
+    "warmups": 10,
+    "timing_batches": 15,
+    "iterations_per_batch": 200,
+    "output_hash_repeats": 100,
+    "advancement_floor_percent": 3.0
+  },
+  "results": [
+    {
+      "seed": 20260826,
+      "control_bracket_mean_us": 437.78046,
+      "candidate_median_us": 431.96218,
+      "latency_reduction_percent": 1.329041,
+      "exact": true
+    },
+    {
+      "seed": 20260827,
+      "control_bracket_mean_us": 435.47023,
+      "candidate_median_us": 435.71684,
+      "latency_reduction_percent": -0.056631,
+      "exact": true
+    },
+    {
+      "seed": 20260830,
+      "control_bracket_mean_us": 435.65821,
+      "candidate_median_us": 435.33958,
+      "latency_reduction_percent": 0.073138,
+      "exact": true
+    }
+  ],
+  "decision": {
+    "median_latency_reduction_percent": 0.073138,
+    "seeds_passing_three_percent": 0,
+    "qualified_component_positive": false,
+    "action": "close W2 N32 as performance-neutral; do not spend a full-model load on it",
+    "protected_results_changed": false
+  },
+  "external_evidence": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-moe-m1-w2-n32-confirm-a2",
+    "manifest": "SHA256SUMS"
+  }
+}
