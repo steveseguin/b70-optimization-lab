@@ -1,0 +1,96 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-xblock8-row-stable-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-xblock8-row-stable-20260901-r98",
+  "status": "completed-rejected",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97",
+    "base_image_id": "sha256:7971b16805126ffe8ce52904637906409782ef414ac777e78ab9872fca89ab41",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98",
+    "candidate_image_id": "sha256:d3ce08c3943d797a921f074ed3e5b4aeaff7d140fd756f2e67e6493bc0391895",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-xblock8-row-stable-r98-20260901.patch",
+    "patch_sha256": "ffe9c9c2d5e5c9a386a969d775cbe851906b727660d7feb52c2d3a079302b5a8",
+    "installed_qwen_gdn_sha256": "d4263506ec99d8c379f498d25dd705d98dfae2765aa53e2fc6c8adb333afb32b"
+  },
+  "operator_gate": {
+    "status": "pass",
+    "all_eight_row_slots_bitwise_invariant": true,
+    "row_slots_bitwise_invariant": [true, true, true, true, true, true, true, true],
+    "tail_masking_matches_full_block": true,
+    "reference_max_abs_error": 0.0000152587890625,
+    "unsupported_shape_failed_closed": true,
+    "artifact_sha256": "93ec3d5e8f659e4010aec4a67d59d9d0e5517f3ba946db3ef0d2b1a75698bbd1"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "0/1",
+      "cached_tokens": [0],
+      "completion_tokens": [128],
+      "aggregate_tok_s_wall_diagnostic": 29.274444040129882
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "completion_tokens": [128, 128],
+      "aggregate_tok_s_wall_diagnostic": 59.8942995928044
+    },
+    "c1_sequence_equal_r94_r96_r97": true,
+    "c1_sequence_equal_r90": false,
+    "c2_sequences_equal_r90_r96": true,
+    "c2_sequences_equal_r94_r97": false,
+    "cache_prompt_first_bad_output": {
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "trace_gate": {
+    "records": 192,
+    "layer0_cache_prompt_core_and_z_exact_across_c1_c2_on_both_ranks": true
+  },
+  "post_result_lowering_findings": {
+    "r90_reduction": {
+      "xblock": 8,
+      "rblock": 128,
+      "num_warps": 2,
+      "num_stages": 1
+    },
+    "r98_reduction": {
+      "xblock": 8,
+      "rblock": 128,
+      "num_warps": 2,
+      "num_stages": 2
+    },
+    "r90_pointwise": {
+      "xblock": 1024,
+      "num_warps": 4,
+      "num_stages": 1,
+      "transcendentals": "libdevice.rsqrt and libdevice.exp"
+    },
+    "r98_pointwise": {
+      "xblock": 256,
+      "num_warps": 4,
+      "num_stages": 2,
+      "transcendentals": "tl.rsqrt and tl.exp lowered as math.rsqrt and math.exp"
+    }
+  },
+  "interpretation": "Matching the retained eight-row reduction tensor shape changed bounded arithmetic but did not change R94's c1 bad token stream. It changed c2 back to R90/R96 exactly. Source-level row shape alone is insufficient; the retained compiled artifacts expose still-unmatched pipeline stage count, pointwise width, and libdevice transcendental lowering.",
+  "next_experiment": "Match the retained R90 compiled lowering: num_stages=1 for both kernels, pointwise XBLOCK=1024, and explicit libdevice rsqrt/exp, while retaining the invariant xblock8 reduction and strict operator gate.",
+  "reporting_boundary": "Rejected diagnostic. Do not publish throughput. c1 and c2 failed required identity, first-use kernels JIT-compiled during inference, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful API shutdown followed by bounded runtime cleanup"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-xblock8-row-stable-20260901-r98",
+    "raw_result_sha256": "43dc0828cc1688add72d161dd962e3914eb1e65bbc037ee75007740deeca18b0",
+    "trace_sha256": "d832027df39f8e20941c2d74fdea47bc214230538c15e139d656cc5f3e680682",
+    "server_log_sha256": "e57c5d11a13b1eed44270af3b08dd466138220af15f247436f2ac251869fb19d",
+    "kernel_journal_sha256": "3c091b838762bbd82ac3eaad85ed7c068ee6fa433af676a78b6fa13d2fc2d46a",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "image_inspect_sha256": "6e4ead4e86621fbb7190185030053292346c9c407cbae8615d2bb2fe36e6be2e",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

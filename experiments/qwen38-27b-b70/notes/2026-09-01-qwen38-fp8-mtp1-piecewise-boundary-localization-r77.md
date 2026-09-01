@@ -231,3 +231,15 @@ row per reduction program. The next candidate will reproduce that fixed
 eight-row program shape ahead of R97's c2-exact pointwise stage. R97's result
 is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97-result.json).
+
+R98 reproduced the retained reduction's eight-row-by-128 tensor shape. Its
+stricter operator gate proved all eight row slots invariant, proved tail masks
+inert, and stayed within `1.53e-5` of the reference. End to end it nevertheless
+produced c1 0/1 and c2 1/2: c1 was exactly R94/R96/R97, while c2 was exactly
+R90/R96. The compiled artifact comparison revealed three still-unmatched
+lowering details. R90 uses one pipeline stage in both kernels, a 1024-element
+pointwise block, and explicit libdevice `rsqrt`/`exp`; R98 used two stages, a
+256-element pointwise block, and Triton math operations. The next candidate
+will match those retained compiled values rather than infer them. R98's result
+is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98-result.json).
