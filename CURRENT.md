@@ -3182,3 +3182,13 @@ on attempt 35/port 19707 and reuses the hash-bound A34 verifier. Host/four-card
 health is clean and no reboot is required. See the
 [A34 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a34-audit-preflight-interruption.md)
 and [A35 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a35-fullgraph-path-successor-prereg.md).
+A35 loaded, captured the full graph on every rank, and became healthy. Its
+corrected preload rule passed, then the client sent zero requests because the
+next redundant post-exec `CCL_KERNEL_PATH` string check failed. Teardown and
+four-card postflight were clean. A36 uses fresh attempt/port/evidence paths and
+holistically validates any retained preload/kernel-path/threshold/graph values
+while making mapped artifacts, exact hashes, server configuration, capture,
+and actual graph dispatch authoritative. No inference selector changes and no
+reboot is needed. See the
+[A35 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a35-kernel-path-verifier-negative.md)
+and [A36 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a36-holistic-runtime-gate-prereg.md).
