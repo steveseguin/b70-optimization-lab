@@ -1,0 +1,20 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90
+FROM ${BASE_IMAGE}
+
+ARG GDN_ROW_STABLE_RMSNORM_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-gdn-row-stable-rmsnorm-r94-20260901.patch /tmp/gdn-row-stable-rmsnorm.patch
+COPY check-gdn-row-stable-rmsnorm-r94.py /opt/neural-download/check-gdn-row-stable-rmsnorm-r94.py
+
+RUN test "$(sha256sum /tmp/gdn-row-stable-rmsnorm.patch | awk '{print $1}')" = \
+        "${GDN_ROW_STABLE_RMSNORM_PATCH_SHA256}" \
+    && patch -p1 -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/gdn-row-stable-rmsnorm.patch \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
+        /opt/neural-download/check-gdn-row-stable-rmsnorm-r94.py \
+    && rm -f /tmp/gdn-row-stable-rmsnorm.patch
+
+LABEL neural.download.composite.base.r90="sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744" \
+      neural.download.vllm.gdn-row-stable-rmsnorm.patch.sha256="${GDN_ROW_STABLE_RMSNORM_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94"

@@ -42,6 +42,7 @@ gdn_isolate_prefill_requests=${VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS:-0}
 gdn_isolate_output_prefill_requests=${VLLM_XPU_GDN_ISOLATE_OUTPUT_PREFILL_REQUESTS:-0}
 gdn_isolate_norm_prefill_requests=${VLLM_XPU_GDN_ISOLATE_NORM_PREFILL_REQUESTS:-0}
 gdn_isolate_projection_prefill_requests=${VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS:-0}
+gdn_row_stable_rmsnorm=${VLLM_XPU_GDN_ROW_STABLE_RMSNORM:-0}
 gdn_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}
 gdn_native_fallback=${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}
 mtp_suppress_bonus=${VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN:-0}
@@ -99,6 +100,7 @@ for value_name in fp8_block_w8a16 fp8_packed_serial_exact \
   gdn_multi_request_split gdn_spec_metadata_trace \
   gdn_spec_evolving_metadata_trace \
   gdn_deterministic_qkvz_prefill \
+  gdn_row_stable_rmsnorm \
   gdn_persistent_scratch gdn_native_fallback \
   mtp_suppress_bonus mtp_draft_eager; do
   value=${!value_name}
@@ -263,6 +265,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_GDN_ISOLATE_OUTPUT_PREFILL_REQUESTS="${gdn_isolate_output_prefill_requests}" \
   --env VLLM_XPU_GDN_ISOLATE_NORM_PREFILL_REQUESTS="${gdn_isolate_norm_prefill_requests}" \
   --env VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS="${gdn_isolate_projection_prefill_requests}" \
+  --env VLLM_XPU_GDN_ROW_STABLE_RMSNORM="${gdn_row_stable_rmsnorm}" \
   --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
   --env VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
   --env VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN="${mtp_suppress_bonus}" \

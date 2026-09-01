@@ -1,0 +1,138 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -207,6 +207,102 @@
+ FUSED_GDN_STATE_DTYPES = (torch.float32, torch.bfloat16)
+ 
+ 
++@triton.jit
++def _xpu_qwen_gdn_row_stable_rmsnorm_gated_kernel(
++    x_ptr,
++    z_ptr,
++    weight_ptr,
++    output_ptr,
++    x_row_stride,
++    z_row_stride,
++    output_row_stride,
++    epsilon,
++    BLOCK_SIZE: tl.constexpr,
++):
++    """R94 diagnostic: one fixed reduction program per GDN head row."""
++    row = tl.program_id(0).to(tl.int64)
++    col = tl.arange(0, BLOCK_SIZE)
++
++    x = tl.load(x_ptr + row * x_row_stride + col).to(tl.float32)
++    z = tl.load(z_ptr + row * z_row_stride + col).to(tl.float32)
++    weight = tl.load(weight_ptr + col).to(tl.float32)
++
++    sum_sq = tl.sum(x * x, axis=0)
++    inv_rms = tl.rsqrt(sum_sq / 128.0 + epsilon)
++    silu_z = z / (tl.exp(-z) + 1.0)
++    output = x * inv_rms * weight * silu_z
++
++    tl.store(output_ptr + row * output_row_stride + col, output)
++
++
++def _xpu_qwen_gdn_row_stable_rmsnorm_gated(
++    x: torch.Tensor,
++    z: torch.Tensor,
++    weight: torch.Tensor,
++    epsilon: float,
++) -> torch.Tensor:
++    """Apply Qwen's 128-wide gated RMSNorm independently to each row."""
++    if x.device.type != "xpu" or z.device.type != "xpu":
++        raise RuntimeError("row-stable Qwen GDN RMSNorm requires XPU tensors")
++    if x.shape != z.shape or x.shape[-1] != 128:
++        raise RuntimeError(
++            "row-stable Qwen GDN RMSNorm requires matching 128-wide rows"
++        )
++    if x.dtype != z.dtype or x.dtype not in (torch.float16, torch.bfloat16):
++        raise RuntimeError(
++            "row-stable Qwen GDN RMSNorm requires matching fp16/bf16 inputs"
++        )
++    if weight.shape != (128,) or weight.device != x.device:
++        raise RuntimeError("row-stable Qwen GDN RMSNorm received incompatible weight")
++    if (
++        not x.is_contiguous()
++        or not z.is_contiguous()
++        or not weight.is_contiguous()
++    ):
++        raise RuntimeError(
++            "row-stable Qwen GDN RMSNorm requires contiguous tensors"
++        )
++
++    x_2d = x.reshape(-1, 128)
++    z_2d = z.reshape(-1, 128)
++    output = torch.empty_like(x_2d)
++    _xpu_qwen_gdn_row_stable_rmsnorm_gated_kernel[(x_2d.shape[0],)](
++        x_2d,
++        z_2d,
++        weight,
++        output,
++        x_2d.stride(0),
++        z_2d.stride(0),
++        output.stride(0),
++        epsilon,
++        BLOCK_SIZE=128,
++        num_warps=1,
++    )
++    logger.warning_once(
++        "R94 Qwen GDN row-stable RMSNormGated path executed on %s rows",
++        x_2d.shape[0],
++    )
++    return output.reshape(x.shape)
++
++
++def _xpu_qwen_gdn_row_stable_rmsnorm_gated_fake(
++    x: torch.Tensor,
++    z: torch.Tensor,
++    weight: torch.Tensor,
++    epsilon: float,
++) -> torch.Tensor:
++    del z, weight, epsilon
++    return torch.empty_like(x)
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_row_stable_rmsnorm_gated_xpu",
++    op_func=_xpu_qwen_gdn_row_stable_rmsnorm_gated,
++    mutates_args=[],
++    fake_impl=_xpu_qwen_gdn_row_stable_rmsnorm_gated_fake,
++)
++
++
+ def _resolve_gdn_prefill_backend(
+     vllm_config: VllmConfig,
+ ) -> tuple[str, Literal["triton", "flashinfer", "cutedsl"]]:
+@@ -1149,11 +1245,27 @@
+         # Part 3: Output Projection
+         # ============================================================
+         z_shape_og = z.shape
+-        # Reshape input data into 2D tensor
+-        core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+-        z = z.reshape(-1, z.shape[-1])
+-        core_attn_out = self.norm(core_attn_out, z)
+-        core_attn_out = core_attn_out.reshape(z_shape_og)
++        if os.getenv("VLLM_XPU_GDN_ROW_STABLE_RMSNORM", "0") == "1":
++            if (
++                self.norm.group_size is not None
++                or not self.norm.norm_before_gate
++                or self.norm.activation not in ("silu", "swish")
++            ):
++                raise RuntimeError(
++                    "row-stable Qwen GDN RMSNorm does not support this gate layout"
++                )
++            core_attn_out = torch.ops.vllm.qwen_gdn_row_stable_rmsnorm_gated_xpu(
++                core_attn_out,
++                z,
++                self.norm.weight,
++                self.norm.eps,
++            )
++        else:
++            # Reshape input data into 2D tensor
++            core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
++            z = z.reshape(-1, z.shape[-1])
++            core_attn_out = self.norm(core_attn_out, z)
++            core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
+         out, _ = self.out_proj(core_attn_out)
+         return out
