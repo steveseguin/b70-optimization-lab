@@ -1,0 +1,79 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-metadata-trace-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-metadata-trace-20260901-r82",
+  "status": "completed-diagnostic-negative",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-metadata-trace-r82",
+    "image_id": "sha256:72b58f419fd463e77940828bcedf0d25159f710a77163b9b5bacda431e2bfe8a",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch_sha256": "acb887bef2b00f905dd7627ebe7084febe057890dd2a039c8db2dd17f03e6dd8",
+    "built_wheel_sha256": "42845d13c9b92ba8792d93943ee22f14731cf9f6dcac9c64bfd478413ba30908",
+    "xpu_extension_sha256": "3f9672ae10bfa941df6eb943b52487a55d49c3772c9d996b37eb0e54f6be1a32",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "observations": {
+    "concurrency_1": {
+      "aggregate_tok_s_wall_diagnostic": 30.27081367227388,
+      "oracle_exact": "1/1",
+      "completion_tokens": [128],
+      "cached_tokens": [0],
+      "first_speculative_call_per_tp_rank": {
+        "num_spec_decodes": 1,
+        "num_actual_tokens": 2,
+        "num_spec_tokens": 2,
+        "spec_query_start_loc": [0, 2],
+        "spec_token_indx": [0, 1],
+        "spec_state_indices_tensor": [[1, 2]],
+        "num_accepted_tokens": [1]
+      }
+    },
+    "concurrency_2": {
+      "aggregate_tok_s_wall_diagnostic": 69.28674134433973,
+      "oracle_exact": "1/2",
+      "completion_tokens": [128, 128],
+      "cached_tokens": [0, 0],
+      "failing_prompt_id": "cache-c000",
+      "known_first_difference_from_r72_oracle": {
+        "zero_based_token_offset": 95,
+        "human_token_number": 96,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      },
+      "first_speculative_call_per_tp_rank": {
+        "num_spec_decodes": 2,
+        "num_actual_tokens": 4,
+        "num_spec_tokens": 2,
+        "spec_query_start_loc": [0, 2, 4],
+        "spec_token_indx": [0, 1, 2, 3],
+        "spec_state_indices_tensor": [[7, 6], [8, 9]],
+        "num_accepted_tokens": [1, 1]
+      }
+    },
+    "tp_rank_agreement": true,
+    "kernel_fault_markers": 0,
+    "server_stop": "clean"
+  },
+  "conclusion": "The scheduler metadata validates R80's request-major slicing and accepted-count-minus-one state selection for the first c1 and c2 speculative calls. The combined serial convolution-plus-delta implementation still fails the strict c2 oracle, so the first-call mapping is not the repair. Trace evolving metadata across later decode steps before changing arithmetic or state mapping again.",
+  "reporting_boundary": "Do not promote either diagnostic throughput value. The output identity gate failed and this boot contains an earlier GPU reset; any repair still requires strict varied-prompt, deterministic, context, concurrency, and clean-boot qualification.",
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-metadata-trace-20260901-r82",
+    "result_sha256": "a5cf22d456366cf1d2c37532250ecf3efad2c1b0d91cde152cc66f29bd23eb80",
+    "server_log_sha256": "de4cc950e735f8b8ba4caed0084da9d0de8ee0b5fceb2ac76b36d807501f43e4",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

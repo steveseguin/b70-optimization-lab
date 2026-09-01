@@ -42,7 +42,18 @@ The combined transaction as implemented is therefore not a repair. R82 traces
 the actual speculative request boundaries, packed-token indices, state-cache
 columns, and accepted counts before any further mapping change.
 
+R82 confirmed the first-call mapping on both TP ranks. The c2 speculative
+batch is request-major: token rows `[0,1]` and `[2,3]`, query starts
+`[0,2,4]`, state rows `[[7,6],[8,9]]`, and accepted counts `[1,1]`. The c1
+control was exact, while c2 remained 1/2 exact and retained the known first
+difference at output token 96. R80's row slicing and accepted-count-minus-one
+selection are therefore consistent with the scheduler metadata at the start
+of decoding; R83 must observe later decode steps where the failure develops
+rather than make another ungrounded mapping change.
+
 This is diagnostic evidence, not a speed or quality promotion. The current boot
 contains an earlier GPU reset, so any eventual repair still requires a clean-
 boot strict replay. Structured evidence is in
 [`2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77-result.json).
+R82's structured result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json).
