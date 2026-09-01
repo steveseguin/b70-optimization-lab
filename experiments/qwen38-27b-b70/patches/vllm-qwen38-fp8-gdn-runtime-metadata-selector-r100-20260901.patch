@@ -1,0 +1,219 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -235,6 +235,22 @@
+ 
+ 
+ @triton.jit
++def _xpu_qwen_gdn_single_row_rmsnorm_sum_kernel(
++    x_ptr,
++    sum_ptr,
++    x_row_stride,
++    BLOCK_SIZE: tl.constexpr,
++):
++    """Exact R97 one-program-per-row reduction arm."""
++    row = tl.program_id(0).to(tl.int64)
++    col = tl.arange(0, BLOCK_SIZE)
++
++    x = tl.load(x_ptr + row * x_row_stride + col).to(tl.float32)
++    sum_sq = tl.sum(x * x, axis=0)
++    tl.store(sum_ptr + row, sum_sq)
++
++
++@triton.jit
+ def _xpu_qwen_gdn_row_stable_rmsnorm_pointwise_kernel(
+     x_ptr,
+     z_ptr,
+@@ -244,6 +260,7 @@
+     n_elements,
+     epsilon,
+     BLOCK_SIZE: tl.constexpr,
++    USE_RETAINED_MATH: tl.constexpr,
+ ):
+     """R97 diagnostic: separate flattened four-warp gated pointwise stage."""
+     offset = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+@@ -257,10 +274,16 @@
+     sum_sq = tl.load(sum_ptr + row, mask=mask).to(tl.float32)
+ 
+     mean_sq = sum_sq / 128.0
+-    inv_rms = libdevice.rsqrt(mean_sq + epsilon)
++    if USE_RETAINED_MATH:
++        inv_rms = libdevice.rsqrt(mean_sq + epsilon)
++    else:
++        inv_rms = tl.rsqrt(mean_sq + epsilon)
+     normalized = x * inv_rms
+     weighted = normalized * weight
+-    silu_z = z / (libdevice.exp(-z) + 1.0)
++    if USE_RETAINED_MATH:
++        silu_z = z / (libdevice.exp(-z) + 1.0)
++    else:
++        silu_z = z / (tl.exp(-z) + 1.0)
+     output = weighted * silu_z
+     tl.store(output_ptr + offset, output, mask=mask)
+ 
+@@ -270,8 +293,47 @@
+     z: torch.Tensor,
+     weight: torch.Tensor,
+     epsilon: float,
++    layer_name: str,
+ ) -> torch.Tensor:
+-    """Apply Qwen's 128-wide gated RMSNorm independently to each row."""
++    """Select the proven single- or multi-request norm at runtime."""
++    try:
++        forward_context = get_forward_context()
++        attn_metadata_raw = forward_context.attn_metadata
++        if not isinstance(attn_metadata_raw, dict):
++            raise RuntimeError("GDN attention metadata is unavailable")
++        attn_metadata = attn_metadata_raw[layer_name]
++        if not isinstance(attn_metadata, GDNAttentionMetadata):
++            raise RuntimeError("GDN attention metadata has an unexpected type")
++    except Exception as exc:
++        raise RuntimeError(
++            "runtime-selected Qwen GDN RMSNorm requires live layer metadata"
++        ) from exc
++
++    request_count = max(
++        int(attn_metadata.num_prefills),
++        int(attn_metadata.num_decodes),
++        int(attn_metadata.num_spec_decodes),
++    )
++    if request_count < 1:
++        raise RuntimeError("runtime-selected Qwen GDN RMSNorm found no requests")
++    return _xpu_qwen_gdn_runtime_selected_rmsnorm_gated_impl(
++        x,
++        z,
++        weight,
++        epsilon,
++        multi_request=request_count > 1,
++    )
++
++
++def _xpu_qwen_gdn_runtime_selected_rmsnorm_gated_impl(
++    x: torch.Tensor,
++    z: torch.Tensor,
++    weight: torch.Tensor,
++    epsilon: float,
++    *,
++    multi_request: bool,
++) -> torch.Tensor:
++    """Run an explicitly selected R99 single or R97 multi-request arm."""
+     if x.device.type != "xpu" or z.device.type != "xpu":
+         raise RuntimeError("row-stable Qwen GDN RMSNorm requires XPU tensors")
+     if x.shape != z.shape or x.shape[-1] != 128:
+@@ -300,39 +362,66 @@
+     )
+     output = torch.empty_like(x_2d)
+     n_rows = x_2d.shape[0]
+-    rows_per_program = 8
+-    _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel[
+-        (triton.cdiv(n_rows, rows_per_program),)
+-    ](
+-        x_2d,
+-        sum_sq,
+-        x_2d.stride(0),
+-        n_rows,
+-        ROWS_BLOCK=rows_per_program,
+-        BLOCK_SIZE=128,
+-        num_warps=2,
+-        num_stages=1,
+-    )
+     n_elements = x_2d.numel()
+-    pointwise_block_size = 1024
+-    _xpu_qwen_gdn_row_stable_rmsnorm_pointwise_kernel[
+-        (triton.cdiv(n_elements, pointwise_block_size),)
+-    ](
+-        x_2d,
+-        z_2d,
+-        weight,
+-        sum_sq,
+-        output,
+-        n_elements,
+-        epsilon,
+-        BLOCK_SIZE=pointwise_block_size,
+-        num_warps=4,
+-        num_stages=1,
+-    )
+-    logger.warning_once(
+-        "R99 Qwen GDN retained-lowering RMSNormGated path executed on %s rows",
+-        x_2d.shape[0],
+-    )
++    if multi_request:
++        _xpu_qwen_gdn_single_row_rmsnorm_sum_kernel[(n_rows,)](
++            x_2d,
++            sum_sq,
++            x_2d.stride(0),
++            BLOCK_SIZE=128,
++            num_warps=2,
++        )
++        pointwise_block_size = 256
++        _xpu_qwen_gdn_row_stable_rmsnorm_pointwise_kernel[
++            (triton.cdiv(n_elements, pointwise_block_size),)
++        ](
++            x_2d,
++            z_2d,
++            weight,
++            sum_sq,
++            output,
++            n_elements,
++            epsilon,
++            BLOCK_SIZE=pointwise_block_size,
++            USE_RETAINED_MATH=False,
++            num_warps=4,
++        )
++        logger.warning_once(
++            "R100 Qwen GDN live-metadata multi-request R97 arm executed"
++        )
++    else:
++        rows_per_program = 8
++        _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel[
++            (triton.cdiv(n_rows, rows_per_program),)
++        ](
++            x_2d,
++            sum_sq,
++            x_2d.stride(0),
++            n_rows,
++            ROWS_BLOCK=rows_per_program,
++            BLOCK_SIZE=128,
++            num_warps=2,
++            num_stages=1,
++        )
++        pointwise_block_size = 1024
++        _xpu_qwen_gdn_row_stable_rmsnorm_pointwise_kernel[
++            (triton.cdiv(n_elements, pointwise_block_size),)
++        ](
++            x_2d,
++            z_2d,
++            weight,
++            sum_sq,
++            output,
++            n_elements,
++            epsilon,
++            BLOCK_SIZE=pointwise_block_size,
++            USE_RETAINED_MATH=True,
++            num_warps=4,
++            num_stages=1,
++        )
++        logger.warning_once(
++            "R100 Qwen GDN live-metadata single-request R99 arm executed"
++        )
+     return output.reshape(x.shape)
+ 
+ 
+@@ -341,8 +430,9 @@
+     z: torch.Tensor,
+     weight: torch.Tensor,
+     epsilon: float,
++    layer_name: str,
+ ) -> torch.Tensor:
+-    del z, weight, epsilon
++    del z, weight, epsilon, layer_name
+     return torch.empty_like(x)
+ 
+ 
+@@ -1310,6 +1400,7 @@
+                 z,
+                 self.norm.weight,
+                 self.norm.eps,
++                self.prefix,
+             )
+         else:
+             # Reshape input data into 2D tensor
