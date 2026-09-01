@@ -56,7 +56,7 @@ They are not clean-machine installation instructions.
 | Artifact | Classification | Purpose |
 | --- | --- | --- |
 | [Qwen3.8 27B AutoRound INT4](qwen38-27b-autoround-int4-b70/) | `research-status` | Active lane with unpublished AOT/cache dependencies and an unresolved promoted identity |
-| [Qwen3.8 Flash-Next FP8 TP4/MTP3](qwen38-flash-next-fp8-tp4-mtp3-b70/) | `research-status` | Fail-closed model, source, and publicly hosted exact-runtime foundation; dependency lock and artifact-only replay remain open |
+| [Qwen3.8 Flash-Next FP8 TP4/MTP3](qwen38-flash-next-fp8-tp4-mtp3-b70/) | `research-status` | Fail-closed model, source, and publicly hosted exact-runtime foundation; [2026-08-31 snapshot](qwen38-flash-next-fp8-tp4-mtp3-b70/EXPERIMENTAL-SNAPSHOT-20260831.md) records the 20.727 tok/s short MTP4 screen and preferred 15.502 tok/s exact-4K MTP3 profile; dependency lock and artifact-only replay remain open |
 | [MiniMax M2.7 structured 94 tok/s](minimax-m27-b70-94tps-structured-20260522/) | `record-capsule` | Constrained-task result retained for audit, not general deployment |
 | [Gemma 4 26B A4B Q8, 95 tok/s](gemma4-26b-a4b-q8-b70-95tps-20260624/) | `archived` | Superseded record retained for history and patch archaeology |
 

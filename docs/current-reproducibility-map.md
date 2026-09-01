@@ -38,6 +38,24 @@ not BF16/lossless or universally token-exact. LocalMaxxing approved the
 conventional interval median as `cmss8515c00n0ms01n3begqgg`. Raw evidence is
 mirrored into the repro, so review does not depend on `/mnt` paths.
 
+## Research-Status Reproduction Foundations
+
+### Qwen3.8 Flash-Next FP8 TP4/MTP3
+
+- [dated experimental snapshot](../repro/qwen38-flash-next-fp8-tp4-mtp3-b70/EXPERIMENTAL-SNAPSHOT-20260831.md)
+- [fail-closed reproduction foundation](../repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md)
+- [full result packet](../results/qwen38-flash-next-fp8-b70/README.md)
+- [public family page](../models/qwen-flash-next.html)
+
+Identity: official 125B-A6B FP8 artifact on four B70s, TP4/EP4, eager and
+graph off, with selective host placement. The fastest retained short Grade-C
+screen is MTP4 at `20.727176 tok/s` after first text; the preferred exact-4K
+MTP3 screen is `15.501565 tok/s`, with `187.899 s` TTFT and `1.246260` wall
+tok/s. Flash-Next has not crossed 30 tok/s in retained evidence. This entry is
+not a promoted or runnable recipe: the hash-addressed dependency wheelhouse,
+portable four-card preflight, and clean artifact-only replay remain open, and
+LocalMaxxing submission is withheld.
+
 ## Qwen3.6 Family Recipes
 
 Use the [Qwen3.6 family research map](qwen36-research-map.md) as the canonical

@@ -11,6 +11,10 @@
 This is the foundation for one narrowly defined four-card profile, not the full
 Flash-Next matrix:
 
+For a concise, dated map of the fastest retained short screen, the preferred
+exact-4K profile, and every reconstruction dependency, see the
+[`2026-08-31 experimental snapshot`](EXPERIMENTAL-SNAPSHOT-20260831.md).
+
 - model: `Qwen/Qwen3.8-Flash-Next-FP8` at
   `bcd9f01ddc9cff2316eb84281bebcd5b058bddce`;
 - four Intel Arc Pro B70 32 GiB cards, TP4 and EP4;
@@ -58,6 +62,12 @@ historical run; MTP3 matched all 26 sealed MTP0 comparisons and passed the exact
 4K needle. That is exact-depth parity evidence, not full model-quality
 qualification. A separate official-thinking MTP0 result cannot establish MTP3
 thinking parity.
+
+The separate configured-512 MTP4 research screen reached `20.727176 tok/s`
+after first text, but it used a narrow repetitive workload and remains Grade C.
+It is not a conventional realistic-suite headline and does not support a
+`>30 tok/s` Flash-Next claim. Its exact identity and LocalMaxxing-withheld
+disposition are recorded in the dated snapshot above.
 
 ## Frozen model identity
 
