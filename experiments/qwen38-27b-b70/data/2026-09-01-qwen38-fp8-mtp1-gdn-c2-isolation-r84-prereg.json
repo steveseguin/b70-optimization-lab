@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-c2-isolation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-c2-isolation-equivalence-20260901-r84",
+  "status": "preregistered-before-harness-implementation-and-run",
+  "objective": "Compare one two-request GDN transaction directly with two isolated one-request transactions on identical tensors, outputs, and cache state. Determine why the R80 combined ordinary-kernel replay did not restore c2 token identity.",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-evolving-metadata-r83",
+    "image_id": "sha256:9f6cd6ccf3182540b415cad70b3d7a78a4c12c722fbaae6da2c6cb59a3ed0bc7",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "r80_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-multi-request-r80-result.json",
+    "r83_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json"
+  },
+  "arms": {
+    "native": "Existing two-request speculative kernels versus the same kernels called once per request.",
+    "r80_combined_serial": "R80 multi-request ordinary one-token convolution and delta replay versus the existing one-request speculative kernels."
+  },
+  "matrix": {
+    "projected_dtype": ["float16"],
+    "ssm_state_dtype": ["float16", "float32"],
+    "reorder_input": [false, true],
+    "accepted_pairs": [[1, 1], [1, 2], [2, 1], [2, 2]],
+    "state_index_rows": [
+      [[7, 6], [8, 9]],
+      [[5, 4], [10, 11]],
+      [[3, 2], [12, 13]]
+    ],
+    "model_shape": {
+      "num_k_heads": 16,
+      "num_v_heads": 48,
+      "head_k_dim": 128,
+      "head_v_dim": 128,
+      "conv_width": 4,
+      "tp_size": 2,
+      "num_spec_decodes": 2,
+      "num_spec_tokens": 2
+    },
+    "cases_per_arm": 48
+  },
+  "measurements": [
+    "bitwise equality and maximum absolute difference for z and core_attn_out",
+    "bitwise equality and maximum absolute difference for every touched convolution and SSM cache row",
+    "NaN/Inf checks",
+    "repeat determinism"
+  ],
+  "decision": "If the native c2 arm differs from isolated c1 while R80 combined serial also differs, identify which stage/state differs and implement a new per-request speculative-kernel split only after this operator evidence. If R80 is operator-exact, reject GDN arithmetic as the server-level cause and move to integration/state lifetime.",
+  "promotion_boundary": "Operator diagnostic only; no throughput or quality promotion."
+}
