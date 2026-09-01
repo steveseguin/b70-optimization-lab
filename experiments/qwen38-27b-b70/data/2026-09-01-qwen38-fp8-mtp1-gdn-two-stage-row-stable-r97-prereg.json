@@ -1,0 +1,67 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-two-stage-row-stable-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-two-stage-row-stable-20260901-r97",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether reproducing the accepted R90 two-kernel GDN norm structure repairs c1 while preserving fixed row ownership and c2 invariance.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94",
+    "base_image_id": "sha256:df6bac2fbf45e96139da8ebfee60e22db9db335aa593dfae276fbb2a15855235",
+    "r94_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json",
+    "r96_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96-result.json"
+  },
+  "source_evidence": {
+    "r90_generated_reduction": "triton_per_fused__to_copy_mean_pow_view_0",
+    "r90_reduction_width": 128,
+    "r90_reduction_num_warps": 2,
+    "r90_generated_pointwise": "triton_poi_fused__to_copy_add_fp8_gemm_w8a16_mean_mul_pow_rsqrt_silu_t_view_1",
+    "r90_pointwise_num_warps": 4,
+    "r96_observation": "Two reduction warps restored R90's c2 behavior but left c1 exactly on R94's known-bad sequence.",
+    "interpretation": "The remaining causal candidates are the intermediate FP32 row-sum store/load boundary and the separate four-warp pointwise stage. R97 changes both together because that is the exact generated structural unit under test."
+  },
+  "treatment": {
+    "change_from_r94": [
+      "Replace the fused per-row norm-and-gate kernel with a dedicated one-program-per-row FP32 sum-of-squares kernel using two warps.",
+      "Write row sums to an FP32 temporary tensor.",
+      "Apply mean, epsilon, rsqrt, weight, SiLU gate, and output conversion in a separate four-warp pointwise kernel."
+    ],
+    "unchanged": [
+      "fixed 128-wide row grouping",
+      "one reduction program per row",
+      "R88 request-isolated qkvz prefill",
+      "R89 request-isolated GDN prefill",
+      "FP8 output projection",
+      "deterministic=true",
+      "xpu_graph=false"
+    ]
+  },
+  "operator_gate": {
+    "required": true,
+    "selected_row_bitwise_invariant": true,
+    "reference_tolerance": {"rtol": 0.002, "atol": 0.002},
+    "unsupported_shape_failed_closed": true
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "operator_gate": "pass",
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer0_core_and_z_trace_remain_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing image and repeat c1/c2, then perform a clean-boot full varied-prompt qualification before performance measurement.",
+  "followup_if_fail": "Preserve the result and separately sweep the pointwise launch block or match the generated persistent-reduction XBLOCK while retaining fixed row ownership.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the current boot contains an earlier GPU reset."
+}
