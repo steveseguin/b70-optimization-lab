@@ -1,0 +1,42 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-qkvz-fixed-shape-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-qkvz-fixed-shape-20260901-r87",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether a fixed-256-row FP8 qkvz projection removes the layer-0 prefill shape variance isolated by R86 and restores strict c2 output identity.",
+  "lineage": {
+    "diagnostic_base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-input-trace-r86",
+    "diagnostic_base_image_id": "sha256:3655f4fcdbe387117a6fcf2b58efacd9c8e8e65eb825b0a961e26c91f1952110",
+    "r86_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json"
+  },
+  "candidate": {
+    "gate": "VLLM_XPU_GDN_DETERMINISTIC_QKVZ_PREFILL=1",
+    "default": false,
+    "implementation": "For qkvz calls with at least 17 rows, split into blocks of at most 256 rows, zero-pad each partial block to exactly 256 rows, invoke the existing quantized in_proj_qkvz module, and retain only real rows. Do not change weights, scales, output dtype, or calls below 17 rows.",
+    "reason": "The existing fixed-256 BA projection is bitwise invariant at layer 0; R86 found the adjacent FP8 qkvz projection was not."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 in the same fresh server.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true,
+    "prefill_trace": true
+  },
+  "required_pass": {
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer_0_cache_prompt_qkvz_exact_across_c1_c2": true,
+    "kernel_fault_markers": 0
+  },
+  "followup_if_pass": "Build a non-tracing candidate and run the broader varied-prompt deterministic quality battery plus repeated c1/c2 performance. This trace run cannot promote speed.",
+  "promotion_boundary": "Candidate only. No site, README, headline, protected-speed, recipe-default, or LocalMaxxing authority. This boot contains an earlier GPU reset."
+}
