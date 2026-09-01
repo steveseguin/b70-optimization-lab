@@ -804,6 +804,16 @@ These placeholders are intentional user-selected paths, not references to this
 lab machine. R62 remains opt-in and does not affect the qualified launcher when
 its environment flag is absent.
 
+R63 then tested that candidate at c1-c64. It cleared the requested aggregate
+floor (`1,080.851 tok/s` at c64), but only 55/64 complete c64 outputs matched
+their sequential oracle. The identical FP16-draft control also first diverged
+at c2 and matched 54/64 at c64, so R62 inherited rather than created the
+underlying MTP1 batch-shape limitation. This does not waive correctness: R62
+has no output-identical concurrency claim. When using
+`bench-openai-concurrency-oracle.py` for an optimization qualification, pass
+`--require-output-identity`; output isolation alone is not quality
+equivalence. See the [R63 negative](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-negative.md).
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;

@@ -72,6 +72,11 @@ passed strict and 2K-32K exact-output diagnostics at a `54.242051 tok/s`
 two-server center, but it is deliberately not the package headline until the
 pre-registered clean-boot replay passes. The complete build, patch, launcher,
 and evidence chain is in the [R62 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md).
+Its first c64 diagnostic reached `1,080.851 tok/s`, but failed strict
+sequential-oracle identity at 55/64. The matched FP16-draft control also failed
+(54/64), proving an inherited MTP1 batch-shape limitation rather than an R62
+first regression. Neither result changes the public concurrency curve; see the
+[R63 negative](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-negative.md).
 
 ## Who built what
 

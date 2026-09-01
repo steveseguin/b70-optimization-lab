@@ -256,6 +256,15 @@ def main() -> int:
     )
     parser.add_argument("--return-token-ids", action="store_true")
     parser.add_argument(
+        "--require-output-identity",
+        action="store_true",
+        help=(
+            "Fail when any concurrent complete output differs from its "
+            "sequential oracle. Output isolation alone is not a quality-"
+            "equivalence gate."
+        ),
+    )
+    parser.add_argument(
         "--oracle-digests",
         type=Path,
         help="Use a pinned compact sequential token-ID oracle instead of regenerating it.",
@@ -359,14 +368,27 @@ def main() -> int:
             else "measured-output-variant"
         )
     )
+    output_identity_qualified = all_exact and all_fresh and all_counts
     result = {
         "created_at_utc": dt.datetime.now(dt.UTC).isoformat(),
         "classification": classification,
         "aggregate_metric": "sum(completion_tokens) / batch wall time",
         "reporting_boundary": (
             "Measured endpoint batches with per-prompt sequential oracle comparison. "
-            "No interpolation or extrapolation; semantic quality remains a separate gate."
+            "No interpolation or extrapolation. Output isolation proves that requests "
+            "did not cross-contaminate one another; it does not prove output identity "
+            "or quality equivalence. A shape-variant result must not be presented as "
+            "quality-equivalent to its sequential oracle."
         ),
+        "identity_qualification": {
+            "complete_outputs_exact_vs_sequential_oracle": all_exact,
+            "fresh_and_complete": all_fresh and all_counts,
+            "public_quality_equivalence_eligible": output_identity_qualified,
+            "output_isolation_only": (
+                output_isolation_qualified and not output_identity_qualified
+            ),
+            "require_output_identity": args.require_output_identity,
+        },
         "config": {
             "base_url": args.base_url,
             "model": args.model,
@@ -382,6 +404,7 @@ def main() -> int:
             "launch_stagger_ms": args.launch_stagger_ms,
             "pin_slots": args.pin_slots,
             "return_token_ids": args.return_token_ids,
+            "require_output_identity": args.require_output_identity,
             "oracle_digests": str(args.oracle_digests) if args.oracle_digests else None,
             "oracle_digests_sha256": oracle_digest_sha256,
         },
@@ -396,6 +419,7 @@ def main() -> int:
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({
         "classification": result["classification"],
+        "output_identity_qualified": output_identity_qualified,
         "output": str(args.out),
         "batches": [
             {
@@ -407,6 +431,8 @@ def main() -> int:
             for row in batches
         ],
     }, indent=2))
+    if args.require_output_identity and not output_identity_qualified:
+        return 4
     return 0 if classification != "measured-output-variant" else 3
 
 

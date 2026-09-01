@@ -1,0 +1,87 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-concurrency-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-concurrency-20260901-r63",
+  "status": "failed-output-identity-performance-floor-passed",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "ccl_topo_p2p_access": 1
+  },
+  "candidate": {
+    "draft_lm_head": "group-128 W4A16",
+    "sequential_oracle_requests": 64,
+    "cached_tokens_all_zero": true,
+    "new_gpu_or_xe_faults": 0,
+    "points": [
+      {"concurrency": 1, "aggregate_tok_s": 51.192919568699125, "exact_vs_sequential_oracle": "1/1"},
+      {"concurrency": 2, "aggregate_tok_s": 71.97178759231012, "exact_vs_sequential_oracle": "1/2"},
+      {"concurrency": 4, "aggregate_tok_s": 186.8532862691119, "exact_vs_sequential_oracle": "3/4"},
+      {"concurrency": 8, "aggregate_tok_s": 326.2520573845295, "exact_vs_sequential_oracle": "7/8"},
+      {"concurrency": 16, "aggregate_tok_s": 493.27250938417075, "exact_vs_sequential_oracle": "13/16"},
+      {"concurrency": 32, "aggregate_tok_s": 806.3638529789521, "exact_vs_sequential_oracle": "29/32"},
+      {"concurrency": 64, "aggregate_tok_s": 1080.8510149755805, "exact_vs_sequential_oracle": "55/64"}
+    ],
+    "c64_floor_tok_s": 875.0,
+    "c64_performance_floor_passed": true,
+    "output_identity_gate_passed": false
+  },
+  "matched_control": {
+    "single_changed_variable": "VLLM_XPU_DRAFT_LM_HEAD_INT4=0",
+    "draft_lm_head": "shared target FP16",
+    "sequential_oracles_exact_vs_candidate": "64/64",
+    "cached_tokens_all_zero": true,
+    "new_gpu_or_xe_faults": 0,
+    "points": [
+      {"concurrency": 1, "aggregate_tok_s": 49.61699290342996, "exact_vs_sequential_oracle": "1/1"},
+      {"concurrency": 2, "aggregate_tok_s": 70.02022849119825, "exact_vs_sequential_oracle": "1/2"},
+      {"concurrency": 4, "aggregate_tok_s": 178.38588180822518, "exact_vs_sequential_oracle": "3/4"},
+      {"concurrency": 8, "aggregate_tok_s": 264.8027529819432, "exact_vs_sequential_oracle": "7/8"},
+      {"concurrency": 16, "aggregate_tok_s": 542.6456337905252, "exact_vs_sequential_oracle": "15/16"},
+      {"concurrency": 32, "aggregate_tok_s": 773.0481777639548, "exact_vs_sequential_oracle": "29/32"},
+      {"concurrency": 64, "aggregate_tok_s": 1061.6455536117264, "exact_vs_sequential_oracle": "54/64"}
+    ],
+    "output_identity_gate_passed": false
+  },
+  "causal_interpretation": {
+    "r62_created_first_divergence": false,
+    "reason": "Candidate and control sequential oracles matched 64/64. Both first diverged from their own sequential oracle at c2 with the same cache-c000 request, and they had similar mismatch counts through c64. Different mismatching subsets at larger batches indicate batch-slot or scheduling sensitivity that predates R62.",
+    "candidate_vs_control_complete_arrays": {
+      "c1": "1/1",
+      "c2": "2/2",
+      "c4": "4/4",
+      "c8": "8/8",
+      "c16": "14/16",
+      "c32": "27/32",
+      "c64": "57/64"
+    },
+    "throughput_warning": "This was one order-fixed diagnostic server per arm. The candidate/control c64 difference was +1.809%; it is not a promoted concurrency speed claim."
+  },
+  "policy_fix": {
+    "problem": "The generic harness's historical output-isolation-qualified-shape-variant label can be misread as output identity even though it explicitly permits sequential-oracle divergence.",
+    "change": "The harness now emits a separate identity_qualification block, states that isolation is not quality equivalence, and offers --require-output-identity to fail closed on any complete-output mismatch.",
+    "historical_evidence_rewritten": false
+  },
+  "decision": {
+    "r62_single_user_candidate_retained": true,
+    "r62_concurrency_identity_claim_authorized": false,
+    "public_concurrency_curve_changed": false,
+    "next_target": "Diagnose and repair deterministic MTP1 batch-shape output before rerunning a paired aggregate screen.",
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  },
+  "raw_artifact_hashes": {
+    "candidate_result_sha256": "b06cff60d0f56196eadc7e2aa9fc6f145137c2a181ebf8f4492df31b7573ffce",
+    "candidate_server_log_sha256": "37e1433d1e025b8803b05e439d9b72f348d24d52e6cee79738614fea7b94594e",
+    "control_result_sha256": "4822ff2a7a12eaf2a836e4934b2ba9ea61c08871c76497e4404eb35abcde14ba",
+    "control_server_log_sha256": "a3f5f5824225e0373e6900b77262cf44958ab5c6dbc5e722e039ad1d254f6132"
+  }
+}

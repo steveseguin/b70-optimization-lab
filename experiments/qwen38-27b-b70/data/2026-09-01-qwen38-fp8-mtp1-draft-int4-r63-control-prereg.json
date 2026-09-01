@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-concurrency-control-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-concurrency-20260901-r63-control",
+  "status": "preregistered-not-run",
+  "objective": "Distinguish an R62 regression from pre-existing MTP1 batch-shape output divergence by repeating the exact R63 service/workload with the draft INT4 flag disabled.",
+  "fixed_identity": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "ccl_topo_p2p_access": 1
+  },
+  "single_changed_variable": {
+    "name": "VLLM_XPU_DRAFT_LM_HEAD_INT4",
+    "candidate": "1",
+    "control": "0"
+  },
+  "workload": {
+    "suite": "2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "repeats": 1,
+    "output_tokens": 128,
+    "oracle": "new fresh sequential complete-token-ID oracle generated on the control server",
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "interpretation": {
+    "control_exact_and_candidate_divergent": "R62 caused a concurrency correctness regression; reject R62 until fixed.",
+    "both_divergent_same_pattern": "R62 inherited an existing deterministic MTP1 batch-shape limitation; retain its single-user candidacy but do not advertise it as output-identical concurrency.",
+    "both_exact": "Treat the first result as nonrepeatable and require another order-rotated pair.",
+    "headline_or_curve_change_authorized": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

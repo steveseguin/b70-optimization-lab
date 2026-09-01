@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -135,6 +137,16 @@ class ConcurrencyOracleTests(unittest.TestCase):
     def test_base_prompt_id_removes_only_concurrency_variant_suffix(self) -> None:
         self.assertEqual(MODULE.base_prompt_id("cache-c031"), "cache")
         self.assertEqual(MODULE.base_prompt_id("cache"), "cache")
+
+    def test_cli_documents_strict_identity_gate(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, str(PATH), "--help"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("--require-output-identity", completed.stdout)
+        self.assertIn("Output isolation alone", completed.stdout)
 
 
 if __name__ == "__main__":

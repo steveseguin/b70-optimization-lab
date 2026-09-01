@@ -75,6 +75,14 @@ where it measured `52.279 tok/s`; it improved over R56 MTP1 at every tested
 depth. R62 is retained but not promoted because this boot contains an earlier
 GPU reset. Its public headline and curve remain unchanged until the
 preregistered two fresh-server clean-boot replay passes.
+R63 tested c1-c64 aggregate robustness. R62 reached `1,080.851 tok/s` at c64
+but matched only 55/64 sequential-oracle arrays; the identical FP16-draft
+control reached `1,061.646 tok/s` and matched 54/64, with both first diverging
+at c2. R62 inherited rather than created the batch-shape limitation, but it has
+no output-identical concurrency claim. The generic harness now separates
+output isolation from identity qualification and provides a fail-closed
+`--require-output-identity` gate. The next local target is deterministic MTP1
+batch-shape repair before another aggregate promotion attempt.
 Independent clean-host replay
 also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

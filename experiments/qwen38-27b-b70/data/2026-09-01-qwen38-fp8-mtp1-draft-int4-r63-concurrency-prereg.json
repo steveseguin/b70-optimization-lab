@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-concurrency-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-concurrency-20260901-r63",
+  "status": "preregistered-not-run",
+  "objective": "Test whether R62's draft-only INT4 vocabulary head preserves output isolation and aggregate throughput when the draft projection receives batched rows.",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "patch_sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "ccl_topo_p2p_access": 1
+  },
+  "workload": {
+    "suite": "2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "repeats": 1,
+    "output_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "oracle": "fresh sequential complete-token-ID oracle generated on the same server before any measured batch",
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "gates": {
+    "all_complete_token_arrays_exact_vs_sequential_oracle": true,
+    "cross_task_oracle_collisions": 0,
+    "all_cached_tokens_zero": true,
+    "all_requests_complete": true,
+    "minimum_c64_aggregate_tok_s": 875.0,
+    "no_new_gpu_or_xe_fault": true
+  },
+  "abort_conditions": [
+    "any incomplete request, cached token, output mismatch, cross-task collision, NaN, device loss, GPU reset, or new Xe fault",
+    "c64 aggregate throughput below 875 tok/s"
+  ],
+  "publication_boundary": {
+    "classification": "single-server diagnostic screen",
+    "headline_or_curve_change_authorized": false,
+    "interpolation_or_extrapolation": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}
