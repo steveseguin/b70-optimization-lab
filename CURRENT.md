@@ -3356,3 +3356,13 @@ MoE, 7.58 ms/token dense, 4.19 ms/token quantization/cast, and collective
 critical-path buckets independently, combines only lossless winners, then pays
 for one A47-style full-model qualification. See the
 [A47 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a47-host-guarded-lossless-2k-prereg.md).
+The first combined-finalist ingredient is now qualified at component scope:
+public graph-safe oneCCL `twoshots` cut the exact 97-allreduce TP4 graph path
+by a median `6.180802%` across three matched pairs, with all four ranks exact
+for 100 changing inputs in every arm. Direct HC Triton substitutions failed
+bit-exact parity, and grouped HC-up was exact but `17.0238%` slower under graph
+replay, so neither advances. A fully identity-bound A48-style endpoint arm will
+combine `twoshots` only after the remaining dense hotspot screen closes. See
+the [collective result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-allreduce-twoshots-component-positive.md),
+[HC parity result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-existing-triton-parity-negative.md),
+and [grouped graph result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-up-grouped-xpu-graph-negative.md).

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "classification": "component_speed_positive_exactness_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "scope": "existing Qwen4Exp HC Triton kernels versus the current Torch XPU fallback at M=1"
+  },
+  "initial_screen": {
+    "grouped_norm": {
+      "control_us": 149.236,
+      "candidate_us": 22.094,
+      "latency_reduction_percent": 85.195,
+      "initial_seed_exact": true
+    },
+    "silu": {
+      "control_us": 49.754,
+      "candidate_us": 19.782,
+      "latency_reduction_percent": 60.240,
+      "initial_seed_exact": true
+    },
+    "gate_mix": {
+      "control_us": 97.246,
+      "candidate_us": 21.396,
+      "latency_reduction_percent": 77.998,
+      "initial_seed_exact": true
+    },
+    "combine": {
+      "control_us": 110.770,
+      "candidate_us": 23.677,
+      "latency_reduction_percent": 78.625,
+      "initial_seed_exact": false,
+      "max_abs_difference": 0.0000019073486328125
+    },
+    "combine_norm": {
+      "control_us": 264.501,
+      "candidate_us": 25.654,
+      "latency_reduction_percent": 90.301,
+      "initial_seed_exact": false,
+      "output_max_abs_difference": 0.0000019073486328125,
+      "norm_max_abs_difference": 0.000244140625
+    }
+  },
+  "stronger_parity": {
+    "silu": {
+      "passed": false,
+      "protocol": "all non-NaN BF16 input encodings",
+      "first_known_mismatch_input_bits": "0x41be",
+      "torch_output_bits": "0x40bd",
+      "triton_output_bits": "0x40be"
+    },
+    "gate_mix": {
+      "passed": false,
+      "protocol": "randomized production shapes and scales after an all-BF16-value sigmoid-only pass",
+      "max_abs_difference": 0.0078125
+    },
+    "grouped_norm": {
+      "passed": false,
+      "protocol": "randomized production shapes and scales",
+      "max_abs_difference": 0.0078125
+    },
+    "libdevice_exp_retry": "failed with the same SiLU mismatch and randomized gate mismatches",
+    "torch_compile_retry": "failed randomized gate/norm parity; SiLU retained the known exhaustive mismatch"
+  },
+  "decision": {
+    "qualified_component_positive": false,
+    "action": "reject all existing HC Triton and torch.compile substitutions under the bit-exact quality rule",
+    "source_changes_retained": false,
+    "protected_results_changed": false
+  }
+}

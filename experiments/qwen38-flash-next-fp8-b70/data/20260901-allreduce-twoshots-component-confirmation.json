@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "classification": "tp4_graph_collective_component_positive",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "scope": "97 ordered BF16[1,2560] allreduces in one XPU graph",
+    "probe_sha256": "d8aa76c000a9796ea6ae0c6ec42888fde7d751d4c7c4a7e4e551bb2d27b6bdf6",
+    "libccl_source_commit": "4ceafd1",
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "ll_threshold_bytes": 4096
+  },
+  "census_a1": {
+    "external_path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-allreduce-ll-algorithm-census-a1",
+    "runner_sha256": "cca34fdcbca69d01884135572689263b05763c64e2645080579adb84835c6a7d",
+    "correction": "the generated summary incorrectly treats ring_markers and recursive_doubling as valid arms; their logs say the deployed library accepts only ring or twoshots and fell back",
+    "valid_arms": {
+      "ring": {
+        "median_rank_mean_us_per_97_collectives": 20315.758505,
+        "slowest_rank_mean_us_per_97_collectives": 20321.69338
+      },
+      "twoshots": {
+        "median_rank_mean_us_per_97_collectives": 18839.240705,
+        "slowest_rank_mean_us_per_97_collectives": 18847.01183
+      }
+    }
+  },
+  "confirmation_a2": {
+    "external_path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-allreduce-twoshots-confirm-a2",
+    "runner_sha256": "353f8f40678771bf0a1a469a428337a73da2e3dfb0bf04219e0aa18c9344d501",
+    "classification": "procedural_negative",
+    "cause": "the frozen 200-replay request exceeded the probe fixture's 127-value period and correctly failed its unique-hash assertion in trial 1 ring",
+    "collective_result": "not_measured",
+    "collective_or_hardware_failure": false,
+    "evidence_packaging": "partial and unchecksummed because fail-closed exit preceded sealing"
+  },
+  "confirmation_a3": {
+    "external_path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-allreduce-twoshots-confirm-a3",
+    "summary_sha256": "ba547a837a65963dc0c9b3df55f95f61a1f2a1f5754db9625b7bda1f860b41d2",
+    "evidence_packaging": "internally checksummed logs and summary, but missing a copied runner, command transcript, device discovery, and identity receipt",
+    "protocol": {
+      "matched_pairs": 3,
+      "changing_input_replays_per_arm": 100,
+      "collectives_per_graph": 97,
+      "rank_count": 4,
+      "order": [
+        "ring,twoshots",
+        "twoshots,ring",
+        "ring,twoshots"
+      ],
+      "correctness": "all outputs matched the CPU oracle; 100 unique composite hashes per rank and arm; no oneCCL error"
+    },
+    "trials": [
+      {
+        "trial": 1,
+        "ring_slowest_rank_us": 19940.73278,
+        "twoshots_slowest_rank_us": 18486.35615,
+        "latency_reduction_percent": 7.293496412823397
+      },
+      {
+        "trial": 2,
+        "ring_slowest_rank_us": 19874.94798,
+        "twoshots_slowest_rank_us": 18646.51687,
+        "latency_reduction_percent": 6.1808016364931495
+      },
+      {
+        "trial": 3,
+        "ring_slowest_rank_us": 19783.28695,
+        "twoshots_slowest_rank_us": 18857.63918,
+        "latency_reduction_percent": 4.678938198386695
+      }
+    ],
+    "median_latency_reduction_percent": 6.1808016364931495,
+    "trials_passing_three_percent": 3
+  },
+  "decision": {
+    "qualified_component_positive": true,
+    "action": "carry twoshots into a fully identity-bound host-guarded full-model graph qualification; do not treat A3 alone as a sealed reproduction packet",
+    "protected_results_changed": false
+  }
+}
