@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-state-input-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-state-input-20260901-r85",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Compare the exact convolution and SSM source-cache bytes entering the first speculative call of every GDN layer for c1 and c2. R84 proved native packed c2 is operator-exact when cache contents are equal.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-evolving-metadata-r83",
+    "base_image_id": "sha256:9f6cd6ccf3182540b415cad70b3d7a78a4c12c722fbaae6da2c6cb59a3ed0bc7",
+    "vllm_image_version": "v0.27.2rc1.dev77+gac7509e2b",
+    "r84_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json"
+  },
+  "instrumentation": {
+    "gate": "VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE",
+    "scope": "First pure-spec call per (GDN layer, request-count shape, TP process).",
+    "payload_per_request": [
+      "layer name",
+      "TP rank",
+      "request index",
+      "accepted count and selected state column/index",
+      "SHA-256 of selected convolution state row",
+      "SHA-256 of selected SSM state row",
+      "SHA-256 of that request's projected qkvz and ba rows"
+    ],
+    "production_default_change": false,
+    "raw_tensor_logging": false
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 in the same fresh server.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true
+  },
+  "decision": "For each TP rank, compare c1 request 0 with c2 request 0 by layer. The first projected-input or selected-cache digest mismatch is the new boundary. If every selected input digest matches, investigate integration ordering/lifetime rather than cache production.",
+  "promotion_boundary": "Diagnostic only. SHA tracing synchronizes device data and invalidates throughput measurement."
+}
