@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-evolving-metadata-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-evolving-metadata-20260901-r83",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Trace scheduler-provided GDN metadata across the c2 decode sequence after R82 validated only the first call and the known output divergence remained at token 96.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-metadata-trace-r82",
+    "base_image_id": "sha256:72b58f419fd463e77940828bcedf0d25159f710a77163b9b5bacda431e2bfe8a",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "r82_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json"
+  },
+  "instrumentation": {
+    "new_gate": "VLLM_XPU_GDN_NATIVE_SPEC_EVOLVING_METADATA_TRACE=1",
+    "production_default_change": false,
+    "scope": "Multi-request speculative GDN calls only, independently bounded per TP process.",
+    "max_calls_per_tp_process": 5000,
+    "payload": [
+      "monotonic_process_call_id",
+      "num_spec_decodes",
+      "num_actual_tokens",
+      "spec_query_start_loc",
+      "spec_token_indx",
+      "spec_state_indices_tensor",
+      "num_accepted_tokens"
+    ],
+    "expected_layer_period": {
+      "total_decoder_layers": 64,
+      "linear_attention_gdn_layers": 48,
+      "interpretation": "Repeated groups of 48 identical metadata records should correspond to one backbone verifier step; analyze and verify this grouping rather than assuming it."
+    }
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true
+  },
+  "decision": "Determine whether state columns, accepted counts, token indices, or request width change before the known token-96 divergence. If all 48 layer calls agree within every step and no anomalous transition exists, reject metadata evolution as the cause and localize state contents or arithmetic next.",
+  "promotion_boundary": "Diagnostic only. Do not publish throughput from the synchronized trace. Any repair must pass strict varied-prompt identity, deterministic repeats, context-depth, concurrency, clean-boot, and speed-floor gates."
+}
