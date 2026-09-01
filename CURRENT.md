@@ -3073,3 +3073,12 @@ manifest all passed. The boot remains eligible for independent work under the
 new policy; the affinity component is next without a reboot. Protected rates
 remain unchanged. See the
 [A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a2-stdexp-parity-negative.md).
+The affinity component then ran on that same boot and closed cleanly, proving
+the health-gated reuse path without a reboot. Its two pinned pairs were slower:
+`-0.8993% / -0.5670%` median/p90 saving and
+`-1.2163% / -1.1325%`, versus required `+5% / >=0%`. Explicit
+rank-process/oneCCL-worker CPU/L3 placement is therefore closed as a component
+negative with no endpoint claim. Four-card and host postflight plus the
+evidence manifest passed, so the boot remains eligible and A31 can proceed
+without rebooting. Protected rates remain unchanged. See the
+[affinity result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-cpu-affinity-a1-negative.md).

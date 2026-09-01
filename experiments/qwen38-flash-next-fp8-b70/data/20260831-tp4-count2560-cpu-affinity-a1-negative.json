@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "closed",
+  "classification": "bounded_component_performance_negative_no_endpoint",
+  "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+  "scope": "ordinary accepted XCCL count-2560 component with rank-process and oneCCL-worker CPU/L3 affinity only",
+  "boot_id": "aab4f613-55bd-4d10-b6c8-830a35d78b68",
+  "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1",
+  "evidence_sha256": {
+    "manifest": "4b15ff21abb248b6c25dfbccf1e721ab0bddde2e16071dfddac5221ef049cf5b",
+    "comparison.json": "7f7db062e48cac80ab469808453875b36322ce27c4f182b425ceec11edf573ed",
+    "four-b70-preflight.json": "9f188057fb63b0d7a52bc8288c9f32d338e687562bc973a5494b871889337b0a",
+    "four-b70-postflight.json": "6c4bede391b4ea2393a0d9a8f91758d605dcdc43f8133924c4ec96ed242ab8fc",
+    "journal-fault-matches.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "pairs": [
+    {
+      "control_median_ms": 7.026607,
+      "pinned_median_ms": 7.0898005,
+      "median_saving_fraction": -0.008993458720546016,
+      "p90_saving_fraction": -0.005670201451870598,
+      "passed": false
+    },
+    {
+      "control_median_ms": 6.985941,
+      "pinned_median_ms": 7.07091,
+      "median_saving_fraction": -0.012162856800536847,
+      "p90_saving_fraction": -0.011324567405353864,
+      "passed": false
+    }
+  ],
+  "thresholds": {
+    "minimum_median_saving_fraction_each_pair": 0.05,
+    "minimum_p90_saving_fraction_each_pair": 0.0
+  },
+  "lifecycle": {
+    "incoming_rc": 0,
+    "postflight": "passed",
+    "four_b70_exact_compute_passed": true,
+    "minimum_postflight_free_fraction": 0.9907874892822146,
+    "kernel_journal_fault_matches": 0,
+    "evidence_manifest_verified": true,
+    "same_boot_after_a2": true,
+    "reboot_required": false
+  },
+  "interpretation": {
+    "affinity_candidate_promoted": false,
+    "endpoint_ran": false,
+    "device_fault": false,
+    "follow_up": "Close the explicit CPU/L3 affinity placement as a component negative and continue independent target-side work on the healthy boot."
+  },
+  "protected_results": {
+    "mtp0_tok_s": 5.515783,
+    "mtp4_tok_s": 20.727176,
+    "changed": false
+  }
+}
