@@ -119,6 +119,7 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-metadata-trace-r82-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-evolving-metadata-r83-20260901.patch

@@ -1,0 +1,111 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-evolving-metadata-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-evolving-metadata-20260901-r83",
+  "status": "completed-diagnostic-negative",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-evolving-metadata-r83",
+    "image_id": "sha256:9f6cd6ccf3182540b415cad70b3d7a78a4c12c722fbaae6da2c6cb59a3ed0bc7",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch_sha256": "db1495c911f7ca7b825e989b1a9f7cac15a8801c1b586e72c302bee00aeeac5c",
+    "built_wheel_sha256": "ae0e2a358d9b0cde539a8309c2fb801da9650ffe9405770843620a07391b3a23",
+    "xpu_extension_sha256": "21d269bd09d0a93ef515e7d6516dbcff530c1812837211029e7adadf41f18436",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "aggregate_tok_s_wall_diagnostic": 34.14197539567936,
+      "oracle_exact": "1/1",
+      "completion_tokens": [128],
+      "cached_tokens": [0]
+    },
+    "concurrency_2": {
+      "aggregate_tok_s_wall_diagnostic": 57.78775093925789,
+      "oracle_exact": "1/2",
+      "completion_tokens": [128, 128],
+      "cached_tokens": [0, 0],
+      "failing_prompt_id": "cache-c000",
+      "known_first_difference": {
+        "human_token_number": 96,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      }
+    }
+  },
+  "trace_analysis": {
+    "records_total": 6912,
+    "records_per_tp_rank": 3456,
+    "continuous_call_ids_per_rank": true,
+    "tp_rank_payload_mismatches": 0,
+    "gdn_layers_per_backbone_step": 48,
+    "complete_backbone_steps": 72,
+    "scalar_shape_all_calls": {
+      "num_spec_decodes": 2,
+      "num_actual_tokens": 4,
+      "spec_token": 4,
+      "num_spec_tokens": 2
+    },
+    "query_start_variants": [[0, 2, 4]],
+    "token_index_variants": [[0, 1, 2, 3]],
+    "state_index_variants": [
+      [7, 6, 8, 9],
+      [5, 4, 10, 11],
+      [3, 2, 12, 13]
+    ],
+    "state_index_pattern": "The three four-slot patterns repeat by GDN layer and remain constant across all 72 steps.",
+    "records_with_duplicate_state_slots": 0,
+    "steps_with_intralayer_metadata_disagreement": 0,
+    "accepted_pair_record_counts": {
+      "1,1": 288,
+      "1,2": 672,
+      "2,1": 480,
+      "2,2": 2016
+    },
+    "accepted_pairs_by_step": [
+      [1, 1], [2, 1], [2, 2], [2, 2], [2, 2], [1, 2],
+      [2, 2], [2, 2], [2, 2], [2, 1], [2, 2], [2, 2],
+      [2, 2], [1, 1], [2, 2], [2, 1], [2, 2], [2, 2],
+      [2, 1], [1, 1], [2, 2], [2, 2], [1, 1], [2, 2],
+      [2, 2], [2, 2], [2, 2], [2, 2], [1, 2], [2, 2],
+      [2, 2], [2, 2], [2, 2], [2, 2], [2, 1], [1, 2],
+      [2, 2], [2, 2], [2, 1], [2, 1], [1, 1], [1, 2],
+      [1, 2], [2, 2], [1, 2], [2, 2], [2, 2], [2, 2],
+      [2, 2], [2, 2], [2, 2], [2, 2], [1, 1], [1, 2],
+      [1, 2], [1, 2], [2, 2], [1, 2], [2, 2], [2, 2],
+      [1, 2], [2, 1], [2, 1], [2, 2], [2, 2], [2, 2],
+      [2, 1], [2, 2], [1, 2], [2, 2], [1, 2], [1, 2]
+    ],
+    "accepted_sum": [124, 128],
+    "token_96_crossing": {
+      "step": 54,
+      "failing_request": {"accepted_before": 95, "accepted_after": 96, "step_accept": 1},
+      "exact_request": {"accepted_before": 95, "accepted_after": 97, "step_accept": 2}
+    }
+  },
+  "conclusion": "Scheduler metadata remains structurally valid and identical across TP ranks for the entire c2 decode. The late token-96 mismatch is not explained by evolving request boundaries, packed-token indices, state-slot collisions, or rank disagreement. It coincides with an accepted-count 1 rejection transition for the failing request; next compare multi-request state contents and operator outputs directly against isolated one-request execution.",
+  "reporting_boundary": "Do not promote synchronized diagnostic throughput. The strict output identity gate failed and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_fault_markers": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-evolving-metadata-20260901-r83",
+    "result_sha256": "8577c0b2332d90274ae54cd99eb8d31f77a8a1c2f5db1cfc1eda34ed4dd4e620",
+    "server_log_sha256": "1f8070b94a6e075fc11dc6f95022b8158cd444195e107fc32b45286c48fc0908",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

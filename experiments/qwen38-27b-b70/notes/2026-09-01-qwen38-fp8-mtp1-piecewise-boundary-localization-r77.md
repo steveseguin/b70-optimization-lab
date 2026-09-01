@@ -51,9 +51,20 @@ selection are therefore consistent with the scheduler metadata at the start
 of decoding; R83 must observe later decode steps where the failure develops
 rather than make another ungrounded mapping change.
 
+R83 extended that trace through all 72 c2 verifier steps: 3,456 calls per TP
+rank (48 GDN layers per step), with zero rank payload mismatches. Every call
+kept query starts `[0,2,4]`, token rows `[0,1,2,3]`, and four distinct state
+slots; each layer's state-slot pattern remained fixed across the decode. The
+known output-token-96 divergence coincides with step 54, where the failing
+request has accepted count 1 and the exact request has accepted count 2, but
+there is no malformed or evolving scheduler mapping. The next discriminator is
+therefore direct multi-request-versus-isolated operator/state equivalence.
+
 This is diagnostic evidence, not a speed or quality promotion. The current boot
 contains an earlier GPU reset, so any eventual repair still requires a clean-
 boot strict replay. Structured evidence is in
 [`2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77-result.json).
 R82's structured result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json).
+R83's full step-level trace summary is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json).
