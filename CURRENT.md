@@ -3433,3 +3433,14 @@ combination: <=4 GiB local reads, <=64 corrected endpoint events, zero root-port
 change, and no non-corrected link report. See the
 [A50 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a50-strict-aer-guard-negative.md)
 and [A51 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a51-bounded-nvme-guard-prereg.md).
+A51 loaded all 131 external shards on every rank in `568.58`-`569.01` seconds,
+initialized the 3,456-token cache, and reached full-graph capture. Its guard
+then stopped at `31,789,856 KiB` available, only `210,144 KiB` below the
+inherited 32-million floor. Swap and memory PSI stayed zero, all storage/link
+bounds held, and teardown recovered more than 124 million KiB, so this is a
+narrow guard-policy negative rather than memory exhaustion. A52 changes only
+the loaded-state supervisor floor to `28,000,000 KiB`; its initial 120-million
+floor and every inference, quality, pressure, storage, link, and postflight gate
+remain exact. See the
+[A51 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a51-memory-floor-negative.md)
+and [A52 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a52-memory-floor-prereg.md).
