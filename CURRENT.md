@@ -3145,3 +3145,13 @@ hashes were unique, and the inclusive graph-plus-validation mean was
 collective count and ordering prerequisite. Selective-UVA PLE graph replay is
 the last no-model prerequisite before an endpoint arm. See the
 [97-collective result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-97-collective-positive.md).
+The selective-UVA PLE prerequisite passed too. At the exact decode geometry,
+one graph captured changing global row IDs, rank-local masking, FP8
+`index_select` from pinned host memory, nonlocal zeroing, and the TP4 byte
+reduction. All 100 replays on all ranks matched the CPU FP8 oracle and produced
+100 unique hashes; the inclusive mean was `249.82`-`250.64 us/rank`. All
+no-model graph prerequisites now pass with public oneCCL `4ceafd1`. Freeze one
+size-1, compilation-mode-NONE, `FULL_DECODE_ONLY` endpoint arm from the
+protected untuned MTP0 lane, retain synchronous PLE and the complete quality
+battery, and keep every prior speed protected. See the
+[PLE graph result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-ple-uva-positive.md).

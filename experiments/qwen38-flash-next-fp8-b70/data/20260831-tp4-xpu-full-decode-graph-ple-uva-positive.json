@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "status": "component_positive",
+  "classification": "tp4_selective_uva_ple_xpu_graph_exact",
+  "identity": {
+    "repository_commit": "ebfc99b53",
+    "torch": "2.11.0+xpu",
+    "world_size": 4,
+    "device": "Intel Arc Pro B70",
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "ccl_sycl_allreduce_ll_threshold": 4096,
+    "storage": "pinned_cpu_with_accelerator_uva_view",
+    "dtype": "float8_e4m3fn_via_int8_sum",
+    "rows": 1,
+    "heads": 16,
+    "head_dim": 160,
+    "output_bytes": 5120,
+    "local_vocab_per_rank": 65536,
+    "replays": 100
+  },
+  "result": {
+    "oracle_match_all_ranks": true,
+    "unique_output_hashes_per_rank": 100,
+    "graph_mean_us_inclusive_range": [249.81845, 250.63518],
+    "exit_code": 0,
+    "timing_eligible_for_endpoint_claim": false
+  },
+  "artifacts": {
+    "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/20260831-xpu-graph-ple-uva-public-4ceafd1-a4",
+    "probe_sha256": "a5b6e9a2455aa4d1661ae403ef5d0d8423ebe55e3d4d9476d3e481a2be8850e2",
+    "torchrun_log_sha256": "c72bad93c6e189cdcce93a5704e633fa875f092912e89949b1b6fb7e7f7faf25"
+  },
+  "interpretation": "The protected endpoint's synchronous selective-UVA PLE decode operation and its TP4 reduction are exact under changing-input XPU graph replay with public oneCCL 4ceafd1. Together with the 97-collective pass, this authorizes one full-model FULL_DECODE_ONLY size-1 candidate with the complete quality battery.",
+  "postflight": {
+    "four_devices_enumerated": true,
+    "model_or_server_loaded": false,
+    "surviving_process": false,
+    "kernel_fault_match": false,
+    "host_memory_recovered": true,
+    "swap_recovered": true,
+    "reboot_required": false
+  },
+  "protected_results_changed": false
+}
