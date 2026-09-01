@@ -89,3 +89,12 @@ R84's operator-equivalence result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json).
 R85's exact state-input result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-result.json).
+
+R86 resolved the prefill side of that boundary. The c2 prefill scheduler orders
+the 28-token `index-c001` request before the 31-token `cache-c000` request, so
+the correct prefill comparison is c1 request 0 against c2 request 1. At layer
+0, the existing fixed-256 BA projection is bitwise exact for `cache-c000` on
+both TP ranks, while its FP8 qkvz projection differs. The difference therefore
+precedes both GDN prefill kernels. A fixed-row-shape qkvz projection is the next
+repair candidate. R86's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json).

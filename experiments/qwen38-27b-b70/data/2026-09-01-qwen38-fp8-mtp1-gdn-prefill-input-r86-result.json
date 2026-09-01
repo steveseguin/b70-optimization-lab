@@ -1,0 +1,89 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-input-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-input-20260901-r86",
+  "status": "completed-diagnostic-positive-boundary",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-input-trace-r86",
+    "image_id": "sha256:3655f4fcdbe387117a6fcf2b58efacd9c8e8e65eb825b0a961e26c91f1952110",
+    "base_r85_image_id": "sha256:142e983d6f948db43db5d1e27a0d40f803c8d29700e9c626d49451296a70bacc",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-prefill-input-trace-r86-20260901.patch",
+    "vllm_patch_sha256": "5a42f301e3150feadcbf290c3eb26004442fecc11ec6946bd891961dc46d4aa0",
+    "installed_xpu_ops_sha256": "a02d25e6f4b21a741508398f56eeae92eb022016b42ea8ae88f6e3bb5b47747f"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 33.825577620460294
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 67.0821254157478,
+      "failing_prompt_id": "cache-c000",
+      "first_difference": {
+        "zero_based_token_index": 96,
+        "human_token_number": 97,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      }
+    }
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "gdn_layers": 48,
+    "records_per_rank_and_shape": 48,
+    "prefill_scheduler_order_at_c2": [
+      {
+        "request": 0,
+        "prompt_id": "index-c001",
+        "prompt_tokens": 28
+      },
+      {
+        "request": 1,
+        "prompt_id": "cache-c000",
+        "prompt_tokens": 31
+      }
+    ],
+    "comparison": "cache-c000 c1 request 0 versus c2 prefill request 1 within each TP rank",
+    "projected_qkvz_exact_layers": "0/48",
+    "projected_ba_exact_layers": "1/48",
+    "projected_ba_exact_layer_indices": [0],
+    "layer_0": {
+      "projected_qkvz_exact": false,
+      "projected_ba_exact": true,
+      "same_result_on_both_tp_ranks": true,
+      "interpretation": "The fixed-256 deterministic BA projection is batch invariant for identical layer-0 hidden rows, while the FP8 qkvz projection is not. The qkvz difference precedes the convolution and delta-rule prefill kernels and explains the different layer-0 cache state observed by R85."
+    },
+    "later_layers": "Both projections differ after layer 0 because the layer-0 qkvz/state difference has already propagated through the model."
+  },
+  "next_experiment": "Pad or block the FP8 qkvz prefill projection to a fixed row shape behind a default-off gate, then rerun the strict c1/c2 oracle. Reuse the existing deterministic BA design and do not alter decode shapes.",
+  "reporting_boundary": "Do not promote trace-synchronized throughput or any c2 result. The strict identity gate failed and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_fault_markers": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-prefill-input-20260901-r86",
+    "raw_result_sha256": "53fda260ba29c1197a7299cc879c80075a41f48114f8e8b0e4922f9414ee7d31",
+    "trace_sha256": "4cc8d98109797066f4c9a71bbdb46fa83b3dbe31910f49105bce9ac2041751ae",
+    "server_log_sha256": "b6b5b69d9d069c6725af3edf6a1fdfebe890cabc02e8353d17273a4095eff50d",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
