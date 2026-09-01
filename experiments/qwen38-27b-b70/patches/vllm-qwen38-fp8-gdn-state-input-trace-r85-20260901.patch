@@ -1,0 +1,172 @@
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -1,6 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import hashlib
++import json
++import os
++import threading
+ from collections.abc import Callable
+ from typing import TYPE_CHECKING
+ 
+@@ -15,6 +19,136 @@
+ 
+ logger = init_logger(__name__)
+ 
++_GDN_STATE_INPUT_TRACE_SEEN: set[tuple[str, int]] = set()
++_GDN_STATE_INPUT_TRACE_LOCK = threading.Lock()
++
++
++def _gdn_state_input_digest(tensor: torch.Tensor) -> str:
++    """Hash exact tensor bytes after materializing a contiguous host copy."""
++    raw = tensor.detach().contiguous().view(torch.uint8).cpu().numpy().tobytes()
++    return hashlib.sha256(raw).hexdigest()
++
++
++def _trace_gdn_state_inputs(
++    *,
++    layer_name: str,
++    num_prefills: int,
++    num_decodes: int,
++    num_spec_decodes: int,
++    projected_states_qkvz: torch.Tensor,
++    projected_states_ba: torch.Tensor,
++    conv_state: torch.Tensor,
++    ssm_state: torch.Tensor,
++    spec_query_start_loc: torch.Tensor | None,
++    spec_token_indx: torch.Tensor | None,
++    spec_state_indices_tensor: torch.Tensor | None,
++    num_accepted_tokens: torch.Tensor | None,
++) -> None:
++    """R85 diagnostic: hash the source rows entering first c1/c2 GDN calls."""
++    trace_file = os.getenv("VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE", "")
++    if not trace_file or num_prefills != 0 or num_decodes != 0:
++        return
++    if num_spec_decodes <= 0:
++        return
++    if any(
++        value is None
++        for value in (
++            spec_query_start_loc,
++            spec_token_indx,
++            spec_state_indices_tensor,
++            num_accepted_tokens,
++        )
++    ):
++        raise RuntimeError("R85 GDN trace is missing pure-spec metadata")
++
++    key = (layer_name, num_spec_decodes)
++    with _GDN_STATE_INPUT_TRACE_LOCK:
++        if key in _GDN_STATE_INPUT_TRACE_SEEN:
++            return
++        _GDN_STATE_INPUT_TRACE_SEEN.add(key)
++
++    assert spec_query_start_loc is not None
++    assert spec_token_indx is not None
++    assert spec_state_indices_tensor is not None
++    assert num_accepted_tokens is not None
++    query_starts = spec_query_start_loc.detach().cpu().tolist()
++    token_indices = spec_token_indx.detach().cpu().tolist()
++    state_indices = spec_state_indices_tensor.detach().cpu().tolist()
++    accepted_counts = num_accepted_tokens.detach().cpu().tolist()
++
++    requests = []
++    for request in range(num_spec_decodes):
++        start = int(query_starts[request])
++        stop = int(query_starts[request + 1])
++        request_token_indices = [int(index) for index in token_indices[start:stop]]
++        token_index_tensor = torch.tensor(
++            request_token_indices,
++            dtype=torch.int64,
++            device=projected_states_qkvz.device,
++        )
++        accepted = int(accepted_counts[request])
++        state_row = state_indices[request]
++        selected_column = min(max(accepted - 1, 0), len(state_row) - 1)
++        selected_state_index = int(state_row[selected_column])
++        qkvz_rows = projected_states_qkvz.index_select(0, token_index_tensor)
++        ba_rows = projected_states_ba.index_select(0, token_index_tensor)
++        requests.append(
++            {
++                "request": request,
++                "accepted": accepted,
++                "selected_state_column": selected_column,
++                "selected_state_index": selected_state_index,
++                "token_indices": request_token_indices,
++                "conv_state": {
++                    "shape": list(conv_state[selected_state_index].shape),
++                    "dtype": str(conv_state.dtype),
++                    "sha256": _gdn_state_input_digest(
++                        conv_state[selected_state_index]
++                    ),
++                },
++                "ssm_state": {
++                    "shape": list(ssm_state[selected_state_index].shape),
++                    "dtype": str(ssm_state.dtype),
++                    "sha256": _gdn_state_input_digest(
++                        ssm_state[selected_state_index]
++                    ),
++                },
++                "projected_qkvz": {
++                    "shape": list(qkvz_rows.shape),
++                    "dtype": str(qkvz_rows.dtype),
++                    "sha256": _gdn_state_input_digest(qkvz_rows),
++                },
++                "projected_ba": {
++                    "shape": list(ba_rows.shape),
++                    "dtype": str(ba_rows.dtype),
++                    "sha256": _gdn_state_input_digest(ba_rows),
++                },
++            }
++        )
++
++    rank = int(os.getenv("RANK", "-1"))
++    if torch.distributed.is_available() and torch.distributed.is_initialized():
++        rank = torch.distributed.get_rank()
++    record = {
++        "schema": "neural.download.qwen38-gdn-state-input-trace.v1",
++        "pid": os.getpid(),
++        "rank": rank,
++        "layer": layer_name,
++        "num_spec_decodes": num_spec_decodes,
++        "query_start_loc": [int(value) for value in query_starts],
++        "requests": requests,
++    }
++    encoded = (
++        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
++    ).encode()
++    fd = os.open(trace_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        written = os.write(fd, encoded)
++        if written != len(encoded):
++            raise RuntimeError("R85 GDN trace record was only partially written")
++    finally:
++        os.close(fd)
++
+ if TYPE_CHECKING:
+ 
+     def register_fake(fn):
+@@ -170,6 +304,21 @@
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
++    _trace_gdn_state_inputs(
++        layer_name=layer_name,
++        num_prefills=num_prefills,
++        num_decodes=num_decodes,
++        num_spec_decodes=num_spec_decodes,
++        projected_states_qkvz=projected_states_qkvz,
++        projected_states_ba=projected_states_ba,
++        conv_state=conv_state,
++        ssm_state=ssm_state,
++        spec_query_start_loc=spec_query_start_loc,
++        spec_token_indx=spec_token_indx,
++        spec_state_indices_tensor=spec_state_indices_tensor,
++        num_accepted_tokens=num_accepted_tokens,
++    )
++
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,

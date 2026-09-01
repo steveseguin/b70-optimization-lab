@@ -122,15 +122,19 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-prereg.json
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-metadata-trace-r82-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-evolving-metadata-r83-20260901.patch
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-state-input-trace-r85-20260901.patch
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-multi-request-followup-r80
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-multi-request-followup-r80-image.sh
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-metadata-trace-r82
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-metadata-trace-r82-image.sh
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-evolving-metadata-r83
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-evolving-metadata-r83-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-state-input-trace-r85
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-state-input-trace-r85-image.sh
   experiments/qwen38-27b-b70/scripts/qwen38-det-gdn-c2-isolation-equivalence-r84.py
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
@@ -202,6 +206,9 @@ check_sha256 \
 check_sha256 \
   db1495c911f7ca7b825e989b1a9f7cac15a8801c1b586e72c302bee00aeeac5c \
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-evolving-metadata-r83-20260901.patch
+check_sha256 \
+  ceefa1f1160ae26b20707329a26d4526e3e3c1051e036aaa858b4c2c9785b644 \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-state-input-trace-r85-20260901.patch
 
 if (( failed )); then
   printf '\nSOURCE CLOSURE FAILED\n' >&2
