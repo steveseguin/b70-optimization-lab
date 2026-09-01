@@ -3164,3 +3164,21 @@ and nonzero size-1 FULL dispatches. The obsolete one-load-per-boot check is not
 present: this healthy boot may be reused under locks, fresh evidence paths,
 preflight, teardown, and postflight. Protected results remain unchanged. See
 the [A33 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a33-full-decode-graph-prereg.md).
+A33 loaded all ranks, completed the size-1 full graph capture, and became
+healthy, but its client sent zero requests: the runtime verifier rejected the
+EngineCore's `LD_PRELOAD` string after already proving its mapped libccl path
+and digest were exact. Teardown and four-card postflight were clean. A33 has no
+quality or speed credit. A34 retains its entire inference and battery identity,
+uses fresh attempt/port/evidence paths, and makes the live mapped image the
+library authority while still rejecting any declared different libccl preload.
+No reboot is needed. See the
+[A33 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a33-fullgraph-runtime-verifier-negative.md)
+and [A34 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a34-fullgraph-runtime-gate-prereg.md).
+Final A34 review accidentally invoked its generated launcher through preflight,
+creating the no-clobber run/cache paths before any server, model worker, shard,
+or request. The empty prelaunch evidence is preserved as a procedural artifact;
+it has no quality or performance meaning. A35 is the exact path-only successor
+on attempt 35/port 19707 and reuses the hash-bound A34 verifier. Host/four-card
+health is clean and no reboot is required. See the
+[A34 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a34-audit-preflight-interruption.md)
+and [A35 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a35-fullgraph-path-successor-prereg.md).
