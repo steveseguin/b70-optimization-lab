@@ -3128,3 +3128,12 @@ threshold using the current libccl and the locally built public oneCCL
 `4ceafd1`, whose graph-recording path uses device-side sequence state.
 Protected rates remain unchanged. See the
 [component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-component-negative.md).
+The corrected production-protocol A/B then established a concrete repair.
+With threshold `4096`, the current endpoint libccl again mismatched on replay
+1 on all ranks, while public oneCCL `4ceafd1` passed 100/100 changing-input
+replays on all four ranks with 100 unique exact hashes. Its diagnostic replay
+mean was `313.94`-`314.86 us/rank`, versus `4455.51`-`4455.90 us/rank` for the
+fully synchronized eager oracle (`14.15`-`14.19x`). This is component evidence,
+not an endpoint claim. The next gates are 97 ordered reductions in one graph
+and selective-UVA PLE replay before any model load. See the
+[matched-protocol result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-production-protocol-positive.md).

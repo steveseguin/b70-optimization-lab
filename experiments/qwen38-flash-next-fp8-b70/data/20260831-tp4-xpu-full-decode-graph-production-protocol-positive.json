@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "status": "component_positive",
+  "classification": "public_oneccl_graph_sequence_repair",
+  "identity": {
+    "probe_repository_commit": "bcc7c47b9",
+    "torch": "2.11.0+xpu",
+    "world_size": 4,
+    "device": "Intel Arc Pro B70",
+    "dtype": "bfloat16",
+    "shape": [1, 2560],
+    "bytes": 5120,
+    "replays": 100,
+    "ccl_sycl_allreduce_ll_threshold": 4096
+  },
+  "arms": {
+    "current_endpoint_libccl": {
+      "libccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+      "exit_code": 1,
+      "eager_oracle_passed": true,
+      "graph_replay_iteration_0_passed": true,
+      "graph_replay_iteration_1_passed": false,
+      "failing_ranks": [0, 1, 2, 3],
+      "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/20260831-xpu-graph-xccl-current-963-threshold4096-a2",
+      "torchrun_log_sha256": "c83f5545a9725cb853af0ec439a247120d298cb3944a16fc908639d454d83bda"
+    },
+    "public_oneccl_4ceafd1": {
+      "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+      "exit_code": 0,
+      "eager_oracle_passed": true,
+      "graph_replays_passed_per_rank": 100,
+      "unique_output_hashes_per_rank": 100,
+      "eager_mean_us_range": [4455.50848, 4455.89691],
+      "graph_mean_us_range": [313.94272, 314.85634],
+      "diagnostic_speedup_range": [14.151161828280161, 14.192442748791882],
+      "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/20260831-xpu-graph-xccl-public-4ceafd1-threshold4096-a2",
+      "torchrun_log_sha256": "6b383942cd6a877a7f54996365b06da2ee01825d107a1f9e069751e84d41a5f3"
+    }
+  },
+  "interpretation": "The graph replay failure is caused by the current libccl path, not by TP4 XPU graph collectives in principle. Public oneCCL 4ceafd1 repairs exact changing-input replay at the protected endpoint's production threshold. This authorizes the 97-collective and selective-UVA PLE component gates, not a model endpoint or speed claim.",
+  "postflight": {
+    "four_devices_enumerated": true,
+    "model_or_server_loaded": false,
+    "surviving_process": false,
+    "kernel_fault_match": false,
+    "host_memory_recovered": true,
+    "swap_recovered": true,
+    "reboot_required": false
+  },
+  "protected_results_changed": false
+}
