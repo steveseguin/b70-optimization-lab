@@ -3234,3 +3234,13 @@ that still contains the new attempt identity. The inference and complete
 quality identities remain unchanged; no reboot is required. See the
 [A40 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a40-payload-authority-interruption.md) and
 [A41 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a41-authority-safe-fullgraph-prereg.md).
+A41 loaded and captured successfully on all four ranks, then became healthy.
+Its client sent zero requests because one inherited pre-request identity string
+omitted the already-disclosed `-torch-trace` diagnostic suffix even though the
+server receipt and later structured client identity include it. The supervisor
+then tore down cleanly, so the statically proven client-only repair was not run
+against a dead endpoint. A42 carries that exact one-line correction into fresh
+attempt-42/port-19714 paths; the full battery and every inference/quality
+selector are unchanged, and no reboot is required. See the
+[A41 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a41-diagnostic-receipt-verifier-negative.md) and
+[A42 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a42-trace-receipt-fullgraph-prereg.md).
