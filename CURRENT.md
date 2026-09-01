@@ -3566,3 +3566,14 @@ execution is fail-closed before derivation, cache/evidence creation, or device
 work unless the fixed external `q38_root_nvme_link_clearance_v1` receipt proves
 the required firmware, SMART, idle, read, and four-B70 gates. See the
 [A2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-n32-xpu-graph-confirmation-a2-prereg.md).
+While that hardware gate is closed, A28's retained profile identified the next
+component target: about 3.109 ms/token of HC-shaped BF16 cast/copy traffic
+inside the 95-times-per-token `hc_combine_norm` path. The first exact staged
+candidate hoists only immutable `1 + norm_weight.float()` construction while
+preserving Torch sigmoid/rsqrt/order and the explicit BF16 combine
+round/reload boundary. Its four real-weight sentinels, 12 matched C/A/C cells,
+95-call graph cycle, 100 changing-input exact checks for both outputs, and
+adversarial BF16 cases are frozen and CPU-validated (21 tests). Live vLLM is
+unchanged, no GPU work ran, and the runner also requires the root-NVMe
+clearance plus explicit one-B70 authorization. See the
+[HC exact-staged preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-combine-norm-exact-staged-a1-prereg.md).

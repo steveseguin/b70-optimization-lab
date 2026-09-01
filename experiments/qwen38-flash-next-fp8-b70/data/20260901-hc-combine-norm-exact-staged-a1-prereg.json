@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "status": "frozen_not_executed_hardware_blocked",
+  "classification": "qwen38_hc_combine_norm_exact_staged_component_preregistration",
+  "scope": "one_b70_real_weight_95_call_graph_cycle_control_candidate_control",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+    "model_config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "hc_authority_source_sha256": "a2ed67ce6240a150a75247097f0a49b4652d5bf1f5db1cdaf34ad5ec52faa8da",
+    "hyperconnection_source_sha256": "29e15a7a9ba9d6f186a0b5613d388605b6680ef4bdaf37228057925e44de479c"
+  },
+  "candidate": {
+    "runtime_delta": "cache exact FP32 1.0 + norm_weight.float() affine before graph capture",
+    "torch_sigmoid_preserved": true,
+    "torch_rsqrt_preserved": true,
+    "dynamic_arithmetic_order_preserved": true,
+    "explicit_bf16_combine_round_and_reload_preserved": true,
+    "live_vllm_source_changed": false,
+    "endpoint_authorized": false
+  },
+  "sentinels": [
+    {
+      "name": "l0-attn",
+      "shard": "model-00001-of-00131.safetensors",
+      "weight": "model.language_model.layers.0.attn_hyper_connection.hc_norm.weight",
+      "weight_sha256": "0a3213d5fbfe4043a4800e3ca12cd05c3e7ced745f5aca03fc67ada75d169f98"
+    },
+    {
+      "name": "l0-mlp",
+      "shard": "model-00003-of-00131.safetensors",
+      "weight": "model.language_model.layers.0.mlp_hyper_connection.hc_norm.weight",
+      "weight_sha256": "e1da29c3232c056fb6869275c5cbbe527d591b88dd967e747716e23f1a89a5bb"
+    },
+    {
+      "name": "l47-attn",
+      "shard": "model-00118-of-00131.safetensors",
+      "weight": "model.language_model.layers.47.attn_hyper_connection.hc_norm.weight",
+      "weight_sha256": "90c3284c07d7dfe2d81ba6ceae92d8b914591094fbefc2717b7505a78facb816"
+    },
+    {
+      "name": "l47-mlp",
+      "shard": "model-00120-of-00131.safetensors",
+      "weight": "model.language_model.layers.47.mlp_hyper_connection.hc_norm.weight",
+      "weight_sha256": "66863fc1e9cae0568b923baf5fce89002527f53fd721e89ab5c1968a7d297452"
+    }
+  ],
+  "matrix": {
+    "seeds": [20260826, 20260827, 20260830],
+    "arms": ["control-before", "candidate", "control-after"],
+    "cells": 12,
+    "arm_executions": 36,
+    "calls_per_graph_cycle": 95,
+    "changing_input_replays": 100,
+    "exact_outputs": ["combined_bf16", "normalized_bf16"],
+    "timing_warmups": 10,
+    "timing_batches": 9,
+    "iterations_per_batch": 50
+  },
+  "frozen_interpretation": {
+    "control_drift_max_percent": 2.0,
+    "material_median_reduction_percent_or_saved_us": [5.0, 1000.0],
+    "minimum_positive_cells": 10,
+    "worst_cell_reduction_min_percent": -2.0,
+    "all_12_cells_must_be_exact": true,
+    "component_pass_allows_source_patch_design_only": true,
+    "component_pass_allows_endpoint_speed_claim": false
+  },
+  "hardware_admission": {
+    "blocked_until_root_nvme_clearance_v1": true,
+    "clearance_path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/host/20260901-root-nvme-link-clearance-v1.json",
+    "any_new_endpoint_or_root_corrected_event_aborts": true,
+    "aer_poll_interval_seconds": 1,
+    "each_arm_uses_owned_process_group": true,
+    "device_selection": "ONEAPI_DEVICE_SELECTOR=level_zero:0 with ZE_AFFINITY_MASK unset",
+    "final_receipts": ["final-health.txt", "SHA256SUMS"],
+    "reboot_required": false
+  },
+  "files": {
+    "candidate_core_sha256": "4f07ca40099b16259ca6f82a226791732455dc9903b66c39691ba212f5d19354",
+    "candidate_cpu_tests_sha256": "91b77d35a9773842ebfdab62d82cf1da03c79864d849932fc69a2439e020799f",
+    "xpu_graph_gate_sha256": "9c8837fbab48f9ce80b7b6e4603d2f1ce339b01997384e662335f396f1aa5ea6",
+    "summarizer_sha256": "7ab377898809bc4d22747b0139d82afdaa5772d3b66b5338c48efeae3267e51f",
+    "summarizer_tests_sha256": "ce36387b231b3644b79485c2dec996c23537592e8ba38a1d2bb2aa6319a3c0b5",
+    "runner_sha256": "88db267a8245086f5f58c2d96af1506ac7197f04535b1420fe31740555bb7b4a",
+    "runner_cpu_tests_sha256": "a8a135ee3e836e915b5a32c247a0f568805b949decbd405e2f5c27c918a3f7a3"
+  },
+  "validation": {
+    "cpu_tests_passed": 21,
+    "gpu_work_run": false,
+    "live_vllm_modified": false,
+    "protected_result_changed": false
+  }
+}
