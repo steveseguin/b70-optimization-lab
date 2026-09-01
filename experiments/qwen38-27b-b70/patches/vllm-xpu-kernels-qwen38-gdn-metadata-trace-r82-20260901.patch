@@ -1,0 +1,603 @@
+diff --git a/csrc/xpu/gdn_attn/causal_conv1d.hpp b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+index 5dcb4f0..1ed031b 100644
+--- a/csrc/xpu/gdn_attn/causal_conv1d.hpp
++++ b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+@@ -1045,7 +1045,14 @@ void causal_conv1d(
+   if (is_spec) {
+     TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
++    // Dynamic speculative scheduling keeps the state-index tensor at the
++    // configured maximum width while emitting fewer active tokens. Derive the
++    // active width from the compact output/token-index buffers and retain the
++    // original row stride for state lookup.
++    TORCH_CHECK(num_spec_decodes > 0);
++    TORCH_CHECK(num_virtual_tokens % num_spec_decodes == 0);
++    num_spec_tokens = num_virtual_tokens / num_spec_decodes;
++    TORCH_CHECK(num_spec_tokens <= cache_indices->size(1));
+     cache_indices_stride_0 = cache_indices->stride(0);
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+index 445ff26..d2c9692 100644
+--- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
++++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+@@ -702,7 +702,12 @@ void gated_delta_rule(
+   if (is_spec) {
+     TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
++    // Dynamic speculative scheduling retains max-width state rows but passes
++    // compact q/k/v buffers for the active width of this scheduler step.
++    TORCH_CHECK(num_spec_decodes > 0);
++    TORCH_CHECK(total_seqlen % num_spec_decodes == 0);
++    num_spec_tokens = total_seqlen / num_spec_decodes;
++    TORCH_CHECK(num_spec_tokens <= cache_indices->size(1));
+     cache_indices_stride_0 = cache_indices->stride(0);
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index e1757be..4ae2460 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1,6 +1,10 @@
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+
++#include <cstdlib>
++#include <mutex>
++#include <string>
++
+ #include "utils.h"
+ #include "dispatch_utils.h"
+
+@@ -13,6 +17,21 @@
+   #include "xe_2/chunk_gated_delta_rule_xe2.h"
+ #endif
+
++namespace {
++
++bool gdn_env_truthy(const char* name) {
++  const char* value = std::getenv(name);
++  if (value == nullptr) {
++    return false;
++  }
++  const std::string text(value);
++  return !text.empty() && text != "0" && text != "false" &&
++         text != "False" && text != "FALSE" && text != "off" &&
++         text != "OFF" && text != "no" && text != "NO";
++}
++
++}  // namespace
++
+ // Conv stage of GatedDeltaNet linear attention, spec-decode path. Runs the
+ // causal conv1d (plus activation) for the spec-decode tokens, scatters z,
+ // advances the per-seq conv cache, and returns the intermediate
+@@ -93,7 +112,7 @@ std::vector<torch::Tensor> causal_conv1d_spec(
+       spec_state_indices_tensor.size(0) == num_spec_decodes,
+       "spec_state_indices_tensor must have size [num_spec_decodes, "
+       "num_speculative_tokens + 1]");
+-  const int num_speculative_tokens = spec_state_indices_tensor.size(1) - 1;
++  const int max_num_spec_tokens = spec_state_indices_tensor.size(1);
+
+   TORCH_CHECK(
+       num_accepted_tokens.is_contiguous(),
+@@ -108,8 +127,52 @@ std::vector<torch::Tensor> causal_conv1d_spec(
+       num_accepted_tokens.size(0) == num_spec_decodes,
+       "num_accepted_tokens size must be num_spec_decodes");
+
+-  TORCH_CHECK(spec_token == num_spec_decodes * (num_speculative_tokens + 1));
+   TORCH_CHECK(spec_token > 0, "spec_token must be > 0 for causal_conv1d_spec");
++  TORCH_CHECK(
++      spec_token % num_spec_decodes == 0,
++      "spec_token must be divisible by num_spec_decodes");
++  const int num_spec_tokens = spec_token / num_spec_decodes;
++  TORCH_CHECK(
++      num_spec_tokens <= max_num_spec_tokens,
++      "active speculative width (",
++      num_spec_tokens,
++      ") exceeds spec_state_indices_tensor width (",
++      max_num_spec_tokens,
++      ")");
++
++  // Bounded diagnostic for the scheduler/kernel metadata contract.  Keep one
++  // record per request-count shape and TP process: copying these small index
++  // tensors to the host deliberately synchronizes, so this must never run in
++  // the production default path.
++  if (gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_METADATA_TRACE")) {
++    static std::once_flag spec_metadata_single_once;
++    static std::once_flag spec_metadata_multi_once;
++    auto& trace_once = num_spec_decodes == 1 ? spec_metadata_single_once
++                                             : spec_metadata_multi_once;
++    std::call_once(trace_once, [&] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_METADATA_TRACE r82: num_prefills=",
++          num_prefills,
++          " num_decodes=",
++          num_decodes,
++          " num_spec_decodes=",
++          num_spec_decodes,
++          " num_actual_tokens=",
++          num_actual_tokens,
++          " spec_token=",
++          spec_token,
++          " num_spec_tokens=",
++          num_spec_tokens,
++          " spec_query_start_loc=",
++          spec_query_start_loc.cpu(),
++          " spec_token_indx=",
++          spec_token_indx.cpu(),
++          " spec_state_indices_tensor=",
++          spec_state_indices_tensor.cpu(),
++          " num_accepted_tokens=",
++          num_accepted_tokens.cpu());
++    });
++  }
+
+   TORCH_CHECK(
+       z.size(0) >= num_actual_tokens,
+@@ -182,6 +245,178 @@ std::vector<torch::Tensor> causal_conv1d_spec(
+       {spec_token, num_v_heads / tp_size},
+       torch::dtype(dtype).device(device).requires_grad(false));
+
++  // Diagnostic correctness lane for multiple pure-spec requests. Keep this
++  // separate from the original one-request proof path below so the qualified
++  // R35/R50 behavior remains byte-for-byte unchanged. Each request is replayed
++  // independently through the ordinary one-token convolution, using the
++  // request's own accepted checkpoint as its initial source.
++  const bool split_conv_multi_request =
++      !gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT") &&
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT") &&
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT") &&
++      num_spec_decodes > 1;
++  if (split_conv_multi_request) {
++    TORCH_CHECK(
++        num_spec_decodes <= 64 && num_spec_tokens >= 2 &&
++            num_spec_tokens <= 9 && num_actual_tokens == spec_token &&
++            spec_state_indices_tensor.size(1) >= num_spec_tokens,
++        "multi-request serial-exact GDN convolution requires two to 64 "
++        "pure-spec requests with two to nine verifier rows each");
++    TORCH_CHECK(
++        queue.has_property<sycl::property::queue::in_order>(),
++        "multi-request serial-exact GDN convolution requires an in-order "
++        "XPU queue");
++
++    static std::once_flag serial_exact_conv_multi_marker_once;
++    std::call_once(serial_exact_conv_multi_marker_once, [] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT reached "
++          "multi-request path (r80)");
++    });
++
++    auto index_options =
++        torch::dtype(torch::kInt32).device(device).requires_grad(false);
++    auto exact_query_start_loc = torch::arange(0, 2, index_options);
++    for (int64_t request = 0; request < num_spec_decodes; ++request) {
++      auto request_state_indices =
++          spec_state_indices_tensor.select(0, request);
++      auto accepted_column =
++          torch::clamp_min(num_accepted_tokens.narrow(0, request, 1) - 1, 0)
++              .to(torch::kLong);
++      auto source_state_indices =
++          request_state_indices.gather(0, accepted_column);
++
++      for (int64_t spec_pos = 0; spec_pos < num_spec_tokens; ++spec_pos) {
++        const int64_t flat_pos = request * num_spec_tokens + spec_pos;
++        auto current_state_indices =
++            request_state_indices.narrow(0, spec_pos, 1);
++        auto source_snapshot = conv_state.index_select(
++            0, source_state_indices.to(torch::kLong));
++        conv_state.index_copy_(
++            0, current_state_indices.to(torch::kLong), source_snapshot);
++
++        auto q_step = q.narrow(0, flat_pos, 1);
++        auto k_step = k.narrow(0, flat_pos, 1);
++        auto v_step = v.narrow(0, flat_pos, 1);
++        auto b_step = b.narrow(0, flat_pos, 1);
++        auto a_step = a.narrow(0, flat_pos, 1);
++        auto token_step = spec_token_indx.narrow(0, flat_pos, 1);
++        gdn::causal_conv1d(
++            queue,
++            q_step,
++            k_step,
++            v_step,
++            z_active,
++            b_step,
++            a_step,
++            projected_states_qkvz_active,
++            projected_states_ba_active,
++            conv_weights,
++            conv_bias,
++            conv_state,
++            exact_query_start_loc,
++            token_step,
++            current_state_indices,
++            std::nullopt,
++            std::nullopt,
++            act_mode,
++            pad_slot_id,
++            0,
++            1,
++            0,
++            reorder_input);
++        source_state_indices = current_state_indices;
++      }
++    }
++    queue.ext_oneapi_submit_barrier();
++    return {q, k, v, b, a};
++  }
++
++  // Correctness-proof lane for MTP verification.  The normal speculative
++  // convolution walks all verifier rows in one special kernel.  Replay every
++  // row through the ordinary one-token convolution instead, snapshotting the
++  // selected prior cache row before publishing each checkpoint.  Together
++  // with the matching serial recurrent path below, this makes the complete
++  // GDN transaction use the same arithmetic kernels as target-only decode.
++  const bool recurrent_serial_exact = gdn_env_truthy(
++      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT");
++  const bool conv_serial_exact =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT");
++  const bool multi_request_split =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT");
++  if (recurrent_serial_exact ||
++      (conv_serial_exact && !multi_request_split)) {
++    TORCH_CHECK(
++        num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 9 &&
++            num_actual_tokens == spec_token &&
++            spec_state_indices_tensor.size(0) == 1 &&
++            spec_state_indices_tensor.size(1) == spec_token,
++        "serial-exact GDN convolution requires one pure-spec request with "
++        "two to nine verifier rows and one state-cache column per row");
++    TORCH_CHECK(
++        queue.has_property<sycl::property::queue::in_order>(),
++        "serial-exact GDN convolution requires an in-order XPU queue");
++
++    static std::once_flag serial_exact_conv_marker_once;
++    std::call_once(serial_exact_conv_marker_once, [] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT reached (r35)");
++    });
++
++    auto index_options =
++        torch::dtype(torch::kInt32).device(device).requires_grad(false);
++    auto exact_query_start_loc = torch::arange(0, 2, index_options);
++    auto accepted_column =
++        torch::clamp_min(num_accepted_tokens - 1, 0).to(torch::kLong);
++    auto source_state_indices =
++        spec_state_indices_tensor
++            .gather(1, accepted_column.unsqueeze(1))
++            .select(1, 0);
++
++    for (int64_t spec_pos = 0; spec_pos < spec_token; ++spec_pos) {
++      auto current_state_indices =
++          spec_state_indices_tensor.select(1, spec_pos);
++      auto source_snapshot = conv_state.index_select(
++          0, source_state_indices.to(torch::kLong));
++      conv_state.index_copy_(
++          0, current_state_indices.to(torch::kLong), source_snapshot);
++
++      auto q_step = q.narrow(0, spec_pos, 1);
++      auto k_step = k.narrow(0, spec_pos, 1);
++      auto v_step = v.narrow(0, spec_pos, 1);
++      auto b_step = b.narrow(0, spec_pos, 1);
++      auto a_step = a.narrow(0, spec_pos, 1);
++      auto token_step = spec_token_indx.narrow(0, spec_pos, 1);
++      gdn::causal_conv1d(
++          queue,
++          q_step,
++          k_step,
++          v_step,
++          z_active,
++          b_step,
++          a_step,
++          projected_states_qkvz_active,
++          projected_states_ba_active,
++          conv_weights,
++          conv_bias,
++          conv_state,
++          exact_query_start_loc,
++          token_step,
++          current_state_indices,
++          std::nullopt,
++          std::nullopt,
++          act_mode,
++          pad_slot_id,
++          0,
++          1,
++          0,
++          reorder_input);
++      source_state_indices = current_state_indices;
++    }
++    queue.ext_oneapi_submit_barrier();
++    return {q, k, v, b, a};
++  }
++
+   gdn::causal_conv1d(
+       queue,
+       q,
+@@ -591,6 +826,184 @@ void gated_delta_rule_spec(
+   auto& queue = vllm::xpu::vllmGetQueue();
+   std::optional<torch::Tensor> empty_tensor{std::nullopt};
+
++  // Diagnostic correctness lane for multiple pure-spec requests. The
++  // ordinary delta kernel writes a compact one-row output, which is then
++  // scattered back to the packed model row identified by spec_token_indx.
++  // As above, the original one-request proof path remains unchanged.
++  const bool split_delta_multi_request =
++      !gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT") &&
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT") &&
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT") &&
++      num_spec_decodes > 1;
++  if (split_delta_multi_request) {
++    const int num_spec_tokens = spec_token / num_spec_decodes;
++    TORCH_CHECK(
++        spec_token % num_spec_decodes == 0 && num_spec_decodes <= 64 &&
++            num_spec_tokens >= 2 && num_spec_tokens <= 9 &&
++            num_actual_tokens == spec_token &&
++            spec_state_indices_tensor.size(0) == num_spec_decodes &&
++            spec_state_indices_tensor.size(1) >= num_spec_tokens,
++        "multi-request serial-exact GDN delta requires two to 64 pure-spec "
++        "requests with two to nine verifier rows each");
++    TORCH_CHECK(
++        queue.has_property<sycl::property::queue::in_order>(),
++        "multi-request serial-exact GDN delta requires an in-order XPU "
++        "queue");
++
++    static std::once_flag serial_exact_delta_multi_marker_once;
++    std::call_once(serial_exact_delta_multi_marker_once, [] {
++      TORCH_WARN(
++          "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT reached "
++          "multi-request path (r80)");
++    });
++
++    auto index_options =
++        torch::dtype(torch::kInt32).device(q.device()).requires_grad(false);
++    auto exact_query_start_loc = torch::arange(0, 2, index_options);
++    auto core_step = torch::empty(
++        {1, num_v_heads / tp_size, head_v_dim}, core_attn_out.options());
++    for (int64_t request = 0; request < num_spec_decodes; ++request) {
++      auto request_state_indices =
++          spec_state_indices_tensor.select(0, request);
++      auto accepted_column =
++          torch::clamp_min(num_accepted_tokens.narrow(0, request, 1) - 1, 0)
++              .to(torch::kLong);
++      auto source_state_indices =
++          request_state_indices.gather(0, accepted_column);
++
++      for (int64_t spec_pos = 0; spec_pos < num_spec_tokens; ++spec_pos) {
++        const int64_t flat_pos = request * num_spec_tokens + spec_pos;
++        auto current_state_indices =
++            request_state_indices.narrow(0, spec_pos, 1);
++        auto source_snapshot = ssm_state.index_select(
++            0, source_state_indices.to(torch::kLong));
++        ssm_state.index_copy_(
++            0, current_state_indices.to(torch::kLong), source_snapshot);
++
++        auto q_step = q.narrow(0, flat_pos, 1);
++        auto k_step = k.narrow(0, flat_pos, 1);
++        auto v_step = v.narrow(0, flat_pos, 1);
++        auto b_step = b.narrow(0, flat_pos, 1);
++        auto a_step = a.narrow(0, flat_pos, 1);
++        auto token_step = spec_token_indx.narrow(0, flat_pos, 1);
++        gdn::gated_delta_rule(
++            queue,
++            core_step,
++            q_step,
++            k_step,
++            v_step,
++            b_step,
++            a_step,
++            A_log,
++            dt_bias,
++            ssm_state,
++            exact_query_start_loc,
++            std::nullopt,
++            current_state_indices,
++            std::nullopt,
++            std::nullopt,
++            0,
++            1,
++            0);
++        core_attn_out_active.index_copy_(
++            0, token_step.to(torch::kLong), core_step);
++        source_state_indices = current_state_indices;
++      }
++    }
++    queue.ext_oneapi_submit_barrier();
++    return;
++  }
++
++  // Experimental correctness lane for a single speculative request.  The
++  // normal spec kernel carries all verifier rows in one work-group.  This
++  // lane instead reuses the ordinary one-token recurrent kernel for every
++  // verifier row and explicitly snapshots the source cache row before each
++  // destination update.  That gives the same state transaction as target-only
++  // decoding even when adjacent speculative cache columns alias physically.
++  // Keep the gate deliberately narrow until the strict target-parity suite
++  // qualifies it.
++  const bool recurrent_serial_exact = gdn_env_truthy(
++      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT");
++  const bool delta_serial_exact =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT");
++  const bool multi_request_split =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT");
++  if (recurrent_serial_exact ||
++      (delta_serial_exact && !multi_request_split)) {
++    TORCH_CHECK(
++        num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 9 &&
++            num_actual_tokens == spec_token &&
++            spec_state_indices_tensor.size(0) == 1 &&
++            spec_state_indices_tensor.size(1) == spec_token,
++        "serial-exact GDN requires one pure-spec request with two to nine "
++        "verifier rows and one state-cache column per row");
++    TORCH_CHECK(
++        queue.has_property<sycl::property::queue::in_order>(),
++        "serial-exact GDN requires an in-order XPU queue");
++
++    static std::once_flag serial_exact_marker_once;
++    std::call_once(serial_exact_marker_once, [] {
++      TORCH_WARN(gdn_env_truthy(
++                     "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT")
++                     ? "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT reached (r50)"
++                     : "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT "
++                       "reached (r35)");
++    });
++
++    auto index_options =
++        torch::dtype(torch::kInt32).device(q.device()).requires_grad(false);
++    auto exact_query_start_loc = torch::arange(0, 2, index_options);
++    auto accepted_column =
++        torch::clamp_min(num_accepted_tokens - 1, 0).to(torch::kLong);
++    auto source_state_indices =
++        spec_state_indices_tensor
++            .gather(1, accepted_column.unsqueeze(1))
++            .select(1, 0);
++
++    for (int64_t spec_pos = 0; spec_pos < spec_token; ++spec_pos) {
++      auto current_state_indices =
++          spec_state_indices_tensor.select(1, spec_pos);
++
++      // index_select materializes the complete source row before index_copy_
++      // mutates the destination.  This is intentional: the cache allocator
++      // may alias adjacent verifier columns, and an in-place device copy is
++      // not a safe snapshot in that case.
++      auto source_snapshot = ssm_state.index_select(
++          0, source_state_indices.to(torch::kLong));
++      ssm_state.index_copy_(
++          0, current_state_indices.to(torch::kLong), source_snapshot);
++
++      auto core_step = core_attn_out_active.narrow(0, spec_pos, 1);
++      auto q_step = q.narrow(0, spec_pos, 1);
++      auto k_step = k.narrow(0, spec_pos, 1);
++      auto v_step = v.narrow(0, spec_pos, 1);
++      auto b_step = b.narrow(0, spec_pos, 1);
++      auto a_step = a.narrow(0, spec_pos, 1);
++      gdn::gated_delta_rule(
++          queue,
++          core_step,
++          q_step,
++          k_step,
++          v_step,
++          b_step,
++          a_step,
++          A_log,
++          dt_bias,
++          ssm_state,
++          exact_query_start_loc,
++          std::nullopt,
++          current_state_indices,
++          std::nullopt,
++          std::nullopt,
++          0,
++          1,
++          0);
++      source_state_indices = current_state_indices;
++    }
++    queue.ext_oneapi_submit_barrier();
++    return;
++  }
++
+   gdn::gated_delta_rule(
+       queue,
+       core_attn_out_active,
+@@ -893,4 +1306,4 @@ void gdn_attention(
+         num_actual_tokens,
+         tp_size);
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/tests/gdn_attn/test_gdn_attn.py b/tests/gdn_attn/test_gdn_attn.py
+index 00fb28e..3ab8f63 100755
+--- a/tests/gdn_attn/test_gdn_attn.py
++++ b/tests/gdn_attn/test_gdn_attn.py
+@@ -709,7 +709,8 @@ def ref_gdn_attention_spec(
+     dtype = projected_states_qkvz.dtype
+     width = conv_weights.shape[-1]
+     rep = num_v_heads // num_k_heads
+-    K = spec_state_indices_tensor.shape[1]
++    state_width = spec_state_indices_tensor.shape[1]
++    K = num_actual_tokens // num_spec_decodes
+     qkv_elems_size = num_k_heads // tp_size * (
+         2 * head_k_dim + num_v_heads // num_k_heads * head_v_dim)
+
+@@ -740,7 +741,7 @@ def ref_gdn_attention_spec(
+         globals_ = spec_token_indx[start:end].to(torch.long)
+
+         naccepted = int(num_accepted_tokens[n].item())
+-        init_col = max(naccepted - 1, 0)
++        init_col = min(max(naccepted - 1, 0), state_width - 1)
+         init_slot = int(spec_state_indices_tensor[n, init_col].item())
+         final_conv_slot = int(spec_state_indices_tensor[n, K - 1].item())
+
+@@ -806,7 +807,8 @@ def ref_gdn_attention_spec(
+
+
+ @pytest.mark.parametrize("num_spec_decodes", NUM_SPEC_DECODES)
+-@pytest.mark.parametrize("num_spec_tokens", NUM_SPEC_TOKENS)
++@pytest.mark.parametrize(("num_spec_tokens", "state_width"),
++                         [(2, 2), (2, 3), (3, 3)])
+ @pytest.mark.parametrize("num_k_heads", [16])
+ @pytest.mark.parametrize("head_k_dim", [128])
+ @pytest.mark.parametrize("num_v_heads", [32])
+@@ -820,9 +822,9 @@ def ref_gdn_attention_spec(
+                          ids=format_tc)
+ @pytest.mark.parametrize("ssm_state_is_fp32", [False, True])
+ @torch.inference_mode()
+-def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+-                           head_k_dim, num_v_heads, head_v_dim, width,
+-                           tp_size, has_bias, activation, reorder_input,
++def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, state_width,
++                           num_k_heads, head_k_dim, num_v_heads, head_v_dim,
++                           width, tp_size, has_bias, activation, reorder_input,
+                            dtype, ssm_state_is_fp32):
+     """Pure spec-decode batch: num_prefills == num_decodes == 0,
+     num_spec_decodes sequences each contributing num_spec_tokens tokens.
+@@ -880,17 +882,22 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+                         device=device)
+     dt_bias = torch.randn(num_v_heads // tp_size, dtype=dtype, device=device)
+
+-    # Each spec seq owns K consecutive cache slots (cols 0..K-1).
+-    state_slots = random.sample(range(cache_batch_size), num_spec_decodes * K)
++    # Dynamic scheduling may retain the configured maximum-width state row
++    # while emitting fewer active token positions for this step.
++    state_slots = random.sample(range(cache_batch_size),
++                                num_spec_decodes * state_width)
+     spec_state_indices_tensor = torch.tensor(state_slots,
+                                              dtype=torch.int32,
+                                              device=device).reshape(
+-                                                 num_spec_decodes, K)
+-    # Mix of acceptance counts including the 0 edge case.
++                                                 num_spec_decodes, state_width)
++    # The accepted count belongs to the preceding step, which may have used
++    # the configured maximum width even when this step emits fewer tokens.
++    accepted_counts = [state_width]
++    accepted_counts.extend(
++        random.randint(0, state_width)
++        for _ in range(num_spec_decodes - 1))
+     num_accepted_tokens = torch.tensor(
+-        [random.randint(0, K) for _ in range(num_spec_decodes)],
+-        dtype=torch.int32,
+-        device=device)
++        accepted_counts, dtype=torch.int32, device=device)
+
+     # Shuffle global token positions across the K-tokens-per-seq layout.
+     perm = torch.randperm(num_actual_tokens, device=device).to(torch.int32)
+@@ -998,6 +1005,17 @@ def test_gdn_attention_mtp(num_spec_decodes, num_spec_tokens, num_k_heads,
+                                        ref_ssm_state[slot],
+                                        atol=atol,
+                                        rtol=rtol)
++        # Padded state columns are stride-only storage and must stay untouched.
++        for t in range(K, state_width):
++            slot = int(spec_state_indices_tensor[n, t].item())
++            torch.testing.assert_close(conv_state[slot],
++                                       ref_conv_state[slot],
++                                       atol=0,
++                                       rtol=0)
++            torch.testing.assert_close(ssm_state[slot],
++                                       ref_ssm_state[slot],
++                                       atol=0,
++                                       rtol=0)
+
+
+ MIXED_NUM_SPEC_DECODES = [1, 4]
