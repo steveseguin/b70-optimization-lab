@@ -28,6 +28,7 @@ from vllm.model_executor.layers.fused_moe.experts.triton_moe import TritonExpert
 from vllm.model_executor.layers.fused_moe.fused_moe import (
     fused_experts,
     get_default_config,
+    resolve_moe_gemm_configs,
     try_get_optimal_moe_config,
 )
 from vllm.model_executor.layers.fused_moe.modular_kernel import FusedMoEKernel
@@ -225,6 +226,14 @@ def main() -> None:
         args.tokens,
         block_shape,
     )
+    effective_config = candidate_config or resolved_config
+    resolved_w1_config, resolved_w2_config = resolve_moe_gemm_configs(
+        effective_config,
+        M=args.tokens,
+        enable_phase_configs=(
+            args.path == "modular" and args.tokens == 1 and block_shape == [128, 128]
+        ),
+    )
     identity = {
         "tokens": args.tokens,
         "experts": experts,
@@ -254,7 +263,9 @@ def main() -> None:
         "weight_dtype": str(weight_dtype),
         "config": config,
         "candidate_config": candidate_config,
-        "resolved_config": candidate_config or resolved_config,
+        "resolved_config": effective_config,
+        "resolved_w1_config": resolved_w1_config,
+        "resolved_w2_config": resolved_w2_config,
         "warmups": args.warmups,
         "timed_batches": args.timed_batches,
         "iterations_per_batch": args.iterations_per_batch,

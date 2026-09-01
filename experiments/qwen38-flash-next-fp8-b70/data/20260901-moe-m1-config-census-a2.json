@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "classification": "lossless_component_screen",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "device": "Intel Arc Pro B70",
+    "tokens": 1,
+    "ep_rank": 0,
+    "weights": "layer-0 checkpoint",
+    "routing": "balanced-global",
+    "runner_sha256": "b30ebf7e12915cdcb43a76eaf097ff162c73387bcce2fbbd028ccdc62a22c0b4"
+  },
+  "control_bracket_mean_us": 449.30418,
+  "authority_output_sha256": "eb1a25f96c14a3343494d2c240b9033b9dffd386d295c73b588b5e5b08d3b718",
+  "candidates": [
+    {"name": "warps8", "median_us": 407.06172, "reduction_percent": 9.401751, "exact": true},
+    {"name": "m32-warps8", "median_us": 409.30136, "reduction_percent": 8.903282, "exact": true},
+    {"name": "k64-warps8", "median_us": 409.34452, "reduction_percent": 8.893676, "exact": true},
+    {"name": "n32-warps8", "median_us": 409.60608, "reduction_percent": 8.835462, "exact": true},
+    {"name": "n32-warps4", "median_us": 411.37512, "reduction_percent": 8.441733, "exact": true},
+    {"name": "n128-warps8", "median_us": 427.42908, "reduction_percent": 4.868662, "exact": true},
+    {"name": "n128-warps4", "median_us": 1094.78772, "reduction_percent": -143.662928, "exact": true}
+  ],
+  "decision": {
+    "winner": "warps8",
+    "new_common_config_promoted": false,
+    "next": "Tune w13 and w2 independently through the opt-in modular phase-config path.",
+    "protected_results_changed": false
+  },
+  "raw_evidence": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-moe-m1-config-census-a2"
+}
