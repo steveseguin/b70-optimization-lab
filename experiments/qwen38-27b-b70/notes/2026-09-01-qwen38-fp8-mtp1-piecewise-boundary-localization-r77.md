@@ -142,3 +142,13 @@ per-request core followed by a batch-dependent norm/output projection. The next
 experiment must record dispatch and hash `core_attn_out`, `z`, and the final
 GDN-layer output before changing arithmetic again. R89's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89-result.json).
+
+R90 proved R89's dispatch and narrowed the boundary again. All 96 c2 rank-layer
+records used `request-isolated`; none silently fell back. At layer 0, the
+31-token cache request's raw `core_attn_out` and `z` are bitwise exact between
+c1 and c2 on both ranks. Layer 1 is the first differing layer. Together with
+R88, this means layer-0 qkvz, BA, native GDN core output, and z all match; the
+difference is introduced afterward by `RMSNormGated` and/or the FP8 output
+projection. The next candidate must isolate that final stage per request rather
+than modify GDN state arithmetic. R90's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-prefill-output-trace-r90-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-output-trace-r90-result.json).

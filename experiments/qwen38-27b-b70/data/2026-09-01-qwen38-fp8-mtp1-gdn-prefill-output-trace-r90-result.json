@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-output-trace-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-output-trace-20260901-r90",
+  "status": "completed-diagnostic-positive-boundary",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-output-trace-r90-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90",
+    "image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "base_r89_image_id": "sha256:f90ffe8bff7db05f99119d293e885ec1c79dc2769d23e5b07b31e5f81b3f6d44",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-prefill-output-trace-r90-20260901.patch",
+    "vllm_patch_sha256": "bbf9cfcfa6396e132705c9187739233352611a6c5f29995bbb2d7f161644837c",
+    "installed_xpu_ops_sha256": "824b4a3d382cae88c686e643f26930f77e6eff6a61099a8e032f2e2257ee8620"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 32.32315935940931
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 63.882002817954756,
+      "failing_prompt_id": "cache-c000",
+      "first_difference": {
+        "zero_based_token_index": 96,
+        "human_token_number": 97,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      }
+    }
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "dispatch_records": {
+      "concurrency_1_packed": 96,
+      "concurrency_2_request_isolated": 96
+    },
+    "cache_prompt_c1_vs_c2_within_rank": {
+      "layer_0_core_attn_out_exact": true,
+      "layer_0_z_exact": true,
+      "same_result_on_both_tp_ranks": true,
+      "core_attn_out_exact_rank_layer_pairs": "2/96",
+      "z_exact_rank_layer_pairs": "2/96",
+      "first_different_layer": 1
+    },
+    "layer_0_rank_0": {
+      "core_attn_out_sha256_prefix": "b31b41cbf9fd826f",
+      "z_sha256_prefix": "12b508c953e901ed"
+    },
+    "layer_0_rank_1": {
+      "core_attn_out_sha256_prefix": "6744ae3a5a83185e",
+      "z_sha256_prefix": "064779b213aaf4d9"
+    },
+    "interpretation": "R89's request-isolated native GDN prefill branch executed on every c2 rank-layer call. With R88, the cache prompt's layer-0 qkvz, BA, raw core output, and z are all bitwise exact across c1/c2. Divergence is first visible in layer-1 inputs, so it is introduced after the layer-0 native GDN call by RMSNormGated and/or the FP8 output projection."
+  },
+  "next_experiment": "Retain R88/R89 and execute the layer's norm plus FP8 output projection independently per pure-prefill request at its natural row count behind a default-off gate, then rerun the strict oracle.",
+  "reporting_boundary": "Do not promote trace-synchronized throughput or any c2 result. The strict identity gate failed and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-prefill-output-trace-20260901-r90",
+    "raw_result_sha256": "c536780b872d2ed70adc1f3a7a3c2aa504a1d092599768cdc02a82835bae8c84",
+    "trace_sha256": "312341f759e034ced7284749367fd95e26aeff2c82c4ee074efa081dc1697737",
+    "server_log_sha256": "ab881b5ea618b29d58ce710f6d142be5004e07d467cc8f1fff69454f9c8f34a9",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
