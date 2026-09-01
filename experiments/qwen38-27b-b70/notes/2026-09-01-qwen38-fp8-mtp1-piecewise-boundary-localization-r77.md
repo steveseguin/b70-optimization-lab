@@ -218,3 +218,16 @@ c2 branch, but cannot reproduce accepted c1 alone. The next candidate must
 mirror the generated two-kernel structure: two-warp sum reduction followed by
 the four-warp flattened gated pointwise stage. R96's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96-result.json).
+
+R97 split the custom norm into the generated implementation's two structural
+stages: a two-warp FP32 sum reduction followed by a separate four-warp gated
+pointwise kernel. The bounded operator gate passed, but the server result was
+again c1 0/1 and c2 2/2, bit-for-bit equal to R94 at both concurrencies. The
+temporary store/load boundary and four-warp pointwise stage therefore do not
+repair c1. Inspection of R90's retained compiled TTIR found the remaining
+concrete difference: Inductor specialized its persistent reduction to
+`tensor<8x128>`, processing eight rows per program, while R94-R97 processed one
+row per reduction program. The next candidate will reproduce that fixed
+eight-row program shape ahead of R97's c2-exact pointwise stage. R97's result
+is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97-result.json).
