@@ -3096,3 +3096,12 @@ the lifecycle manifest all passed. A31 is an orchestration negative with no
 quality or speed result. Freeze a new isolated attempt with an inner-to-outer
 supervisor binding check and reuse this healthy boot without rebooting. See the
 [A31 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a31-client-binding-negative.md).
+A32 is the frozen isolated retry: attempt 32, port 19704, and new
+state/run/cache/compile/RPC/supervisor/lifecycle paths. Its only behavioral
+change is the client binding proof from generated inner supervisor to the
+tracked outer PID/start-time and its host plus GPU0-3 locks. Independent
+normalized comparison confirms the model/runtime/M1 config, quality battery,
+performance selectors, and outer finalizer are otherwise identical to A31.
+All static gates pass and the paths are unused. Run it on the current healthy
+boot without rebooting. See the
+[A32 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a32-moe-m1-current-prereg.md).
