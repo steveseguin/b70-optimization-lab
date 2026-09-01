@@ -3416,3 +3416,11 @@ or request. A49 is the exact attempt-49/port-19721 successor and explicitly
 forwards only those values; all inference and quality selectors remain frozen.
 See the [A48 procedural result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a48-aer-forwarding-prelaunch-negative.md)
 and [A49 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a49-twoshots-lossless-2k-prereg.md).
+A49 reached early startup I/O, then the local Samsung NVMe corrected-event
+counter rose from `51` to `53`. The guard stopped it before endpoint or request;
+memory, swap, ASPM, root-port AER, and all four B70s remained healthy. This
+confirms local-NVMe bulk reads—not Qwen or GPU memory—as the immediate launch
+blocker. A50 changes only fresh attempt/port paths and the checkpoint/tokenizer
+source to the existing validated identical 131-shard external copy. See the
+[A49 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a49-local-nvme-guard-negative.md)
+and [A50 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a50-external-model-lossless-2k-prereg.md).
