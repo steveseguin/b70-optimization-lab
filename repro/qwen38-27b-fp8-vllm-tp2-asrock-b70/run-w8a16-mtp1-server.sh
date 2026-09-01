@@ -35,6 +35,7 @@ gdn_spec_metadata_trace=${VLLM_XPU_GDN_NATIVE_SPEC_METADATA_TRACE:-0}
 gdn_spec_evolving_metadata_trace=${VLLM_XPU_GDN_NATIVE_SPEC_EVOLVING_METADATA_TRACE:-0}
 gdn_state_input_trace_file=${VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE:-}
 gdn_prefill_input_trace_file=${VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE:-}
+gdn_prefill_output_trace_file=${VLLM_XPU_GDN_PREFILL_OUTPUT_TRACE_FILE:-}
 gdn_deterministic_qkvz_prefill=${VLLM_XPU_GDN_DETERMINISTIC_QKVZ_PREFILL:-0}
 gdn_isolate_qkvz_prefill_requests=${VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS:-0}
 gdn_isolate_prefill_requests=${VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS:-0}
@@ -252,6 +253,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_GDN_NATIVE_SPEC_EVOLVING_METADATA_TRACE="${gdn_spec_evolving_metadata_trace}" \
   --env VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE="${gdn_state_input_trace_file}" \
   --env VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE="${gdn_prefill_input_trace_file}" \
+  --env VLLM_XPU_GDN_PREFILL_OUTPUT_TRACE_FILE="${gdn_prefill_output_trace_file}" \
   --env VLLM_XPU_GDN_DETERMINISTIC_QKVZ_PREFILL="${gdn_deterministic_qkvz_prefill}" \
   --env VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS="${gdn_isolate_qkvz_prefill_requests}" \
   --env VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS="${gdn_isolate_prefill_requests}" \

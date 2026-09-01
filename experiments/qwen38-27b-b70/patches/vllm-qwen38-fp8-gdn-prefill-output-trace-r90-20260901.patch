@@ -1,0 +1,132 @@
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -23,6 +23,8 @@
+ _GDN_STATE_INPUT_TRACE_LOCK = threading.Lock()
+ _GDN_PREFILL_INPUT_TRACE_SEEN: set[tuple[str, int]] = set()
+ _GDN_PREFILL_INPUT_TRACE_LOCK = threading.Lock()
++_GDN_PREFILL_OUTPUT_TRACE_SEEN: set[tuple[str, int]] = set()
++_GDN_PREFILL_OUTPUT_TRACE_LOCK = threading.Lock()
+ 
+ 
+ def _gdn_state_input_digest(tensor: torch.Tensor) -> str:
+@@ -246,6 +248,84 @@
+     finally:
+         os.close(fd)
+ 
++
++def _trace_gdn_prefill_outputs(
++    *,
++    layer_name: str,
++    num_prefills: int,
++    num_decodes: int,
++    num_spec_decodes: int,
++    non_spec_query_start_loc: torch.Tensor | None,
++    non_spec_token_indx: torch.Tensor | None,
++    core_attn_out: torch.Tensor,
++    z: torch.Tensor,
++    dispatch: str,
++) -> None:
++    """R90 diagnostic: hash raw per-request GDN prefill outputs."""
++    trace_file = os.getenv("VLLM_XPU_GDN_PREFILL_OUTPUT_TRACE_FILE", "")
++    if not trace_file or num_prefills <= 0:
++        return
++    if num_decodes != 0 or num_spec_decodes != 0:
++        return
++    if non_spec_query_start_loc is None or non_spec_token_indx is not None:
++        raise RuntimeError("R90 GDN output trace requires contiguous pure prefills")
++
++    key = (layer_name, num_prefills)
++    with _GDN_PREFILL_OUTPUT_TRACE_LOCK:
++        if key in _GDN_PREFILL_OUTPUT_TRACE_SEEN:
++            return
++        _GDN_PREFILL_OUTPUT_TRACE_SEEN.add(key)
++
++    query_starts = (
++        non_spec_query_start_loc[: num_prefills + 1].detach().cpu().tolist()
++    )
++    requests = []
++    for request in range(num_prefills):
++        start = int(query_starts[request])
++        stop = int(query_starts[request + 1])
++        core_rows = core_attn_out[start:stop]
++        z_rows = z[start:stop]
++        requests.append(
++            {
++                "request": request,
++                "row_count": stop - start,
++                "core_attn_out": {
++                    "shape": list(core_rows.shape),
++                    "dtype": str(core_rows.dtype),
++                    "sha256": _gdn_state_input_digest(core_rows),
++                },
++                "z": {
++                    "shape": list(z_rows.shape),
++                    "dtype": str(z_rows.dtype),
++                    "sha256": _gdn_state_input_digest(z_rows),
++                },
++            }
++        )
++
++    rank = int(os.getenv("RANK", "-1"))
++    if torch.distributed.is_available() and torch.distributed.is_initialized():
++        rank = torch.distributed.get_rank()
++    record = {
++        "schema": "neural.download.qwen38-gdn-prefill-output-trace.v1",
++        "pid": os.getpid(),
++        "rank": rank,
++        "layer": layer_name,
++        "num_prefills": num_prefills,
++        "dispatch": dispatch,
++        "query_start_loc": [int(value) for value in query_starts],
++        "requests": requests,
++    }
++    encoded = (
++        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
++    ).encode()
++    fd = os.open(trace_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        written = os.write(fd, encoded)
++        if written != len(encoded):
++            raise RuntimeError("R90 GDN trace record was only partially written")
++    finally:
++        os.close(fd)
++
+ if TYPE_CHECKING:
+ 
+     def register_fake(fn):
+@@ -503,6 +583,17 @@
+                 tp_size=self.tp_size,
+                 reorder_input=not self.gqa_interleaved_layout,
+             )
++        _trace_gdn_prefill_outputs(
++            layer_name=layer_name,
++            num_prefills=num_prefills,
++            num_decodes=num_decodes,
++            num_spec_decodes=num_spec_decodes,
++            non_spec_query_start_loc=non_spec_query_start_loc,
++            non_spec_token_indx=non_spec_token_indx,
++            core_attn_out=core_attn_out,
++            z=z,
++            dispatch="request-isolated",
++        )
+         return
+ 
+     torch.ops._xpu_C.gdn_attention(
+@@ -536,6 +627,17 @@
+         tp_size=self.tp_size,
+         reorder_input=not self.gqa_interleaved_layout,
+     )
++    _trace_gdn_prefill_outputs(
++        layer_name=layer_name,
++        num_prefills=num_prefills,
++        num_decodes=num_decodes,
++        num_spec_decodes=num_spec_decodes,
++        non_spec_query_start_loc=non_spec_query_start_loc,
++        non_spec_token_indx=non_spec_token_indx,
++        core_attn_out=core_attn_out,
++        z=z,
++        dispatch="packed",
++    )
+ 
+ 
+ def _gdn_attention_core_xpu_fake(

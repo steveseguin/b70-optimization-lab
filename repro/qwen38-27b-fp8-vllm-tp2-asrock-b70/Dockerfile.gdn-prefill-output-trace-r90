@@ -1,0 +1,18 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89
+FROM ${BASE_IMAGE}
+
+ARG GDN_TRACE_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-gdn-prefill-output-trace-r90-20260901.patch /tmp/gdn-trace.patch
+
+RUN test "$(sha256sum /tmp/gdn-trace.patch | awk '{print $1}')" = \
+        "${GDN_TRACE_PATCH_SHA256}" \
+    && patch -p1 -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/gdn-trace.patch \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py \
+    && rm -f /tmp/gdn-trace.patch
+
+LABEL neural.download.composite.base.r89="sha256:f90ffe8bff7db05f99119d293e885ec1c79dc2769d23e5b07b31e5f81b3f6d44" \
+      neural.download.vllm.gdn-prefill-output-trace.patch.sha256="${GDN_TRACE_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-gdn-prefill-output-trace-r90"
