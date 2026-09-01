@@ -3203,3 +3203,11 @@ compile receipts, and otherwise changes only fresh attempt/port/evidence paths.
 See the
 [A36 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a36-torch-cache-verifier-negative.md)
 and [A37 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a37-cache-aware-fullgraph-prereg.md).
+A37 was a pre-load procedural negative: its generated server launcher retained
+`ATTEMPT=36` and correctly refused to overwrite A36 evidence. No model server,
+checkpoint load, or inference request occurred; postflight was clean. A38 is
+the fresh path-only successor on attempt 38/port 19710 and explicitly corrects
+the inner launch attempt while retaining the complete A37 model, graph, trace,
+quality, and teardown identity. See the
+[A37 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a37-attempt-binding-negative.md)
+and [A38 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-path-corrected-fullgraph-prereg.md).
