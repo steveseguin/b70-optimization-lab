@@ -1,0 +1,17 @@
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index 1b05a20..fe08b48 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -497 +497,3 @@ class Qwen3NextDecoderLayer(nn.Module):
+-            os.environ.get("VLLM_XPU_QWEN38_DECODER_STAGE_SYNC") == "1"
++            os.environ.get("VLLM_XPU_QWEN38_DECODER_STAGE_SYNC") == "1"
++            and os.environ.get("VLLM_XPU_QWEN38_PROFILE_SYNC_ACTIVE")
++            == "1"
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 987ee05..55fafc2 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -6620,0 +6621 @@ class GPUModelRunner(LoRAModelRunnerMixin):
++        os.environ["VLLM_XPU_QWEN38_PROFILE_SYNC_ACTIVE"] = "1"
+@@ -6632,0 +6634 @@ class GPUModelRunner(LoRAModelRunnerMixin):
++        os.environ.pop("VLLM_XPU_QWEN38_PROFILE_SYNC_ACTIVE", None)

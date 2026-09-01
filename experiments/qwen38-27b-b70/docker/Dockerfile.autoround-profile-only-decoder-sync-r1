@@ -1,0 +1,30 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-autoround-decoder-stage-sync-r1
+FROM ${BASE_IMAGE}
+
+ARG BASE_IMAGE_ID
+ARG PATCH_SHA256
+ARG VLLM_HEAD
+
+COPY vllm-qwen38-profile-only-decoder-stage-sync-20260831.patch /tmp/profile-only-decoder-sync.patch
+RUN test -n "${BASE_IMAGE_ID}" \
+    && test -n "${PATCH_SHA256}" \
+    && test -n "${VLLM_HEAD}" \
+    && test "$(sha256sum /tmp/profile-only-decoder-sync.patch | awk '{print $1}')" = "${PATCH_SHA256}" \
+    && test "$(git -C /workspace/vllm rev-parse HEAD)" = "${VLLM_HEAD}" \
+    && cd /workspace/vllm \
+    && git apply --unidiff-zero --check /tmp/profile-only-decoder-sync.patch \
+    && git apply --unidiff-zero /tmp/profile-only-decoder-sync.patch \
+    && /opt/venv/bin/python -m py_compile \
+        /workspace/vllm/vllm/model_executor/models/qwen3_next.py \
+        /workspace/vllm/vllm/v1/worker/gpu_model_runner.py \
+    && grep -Fq VLLM_XPU_QWEN38_PROFILE_SYNC_ACTIVE \
+        /workspace/vllm/vllm/model_executor/models/qwen3_next.py \
+    && grep -Fq VLLM_XPU_QWEN38_PROFILE_SYNC_ACTIVE \
+        /workspace/vllm/vllm/v1/worker/gpu_model_runner.py \
+    && rm -f /tmp/profile-only-decoder-sync.patch
+
+LABEL neural.download.base.image.id="${BASE_IMAGE_ID}" \
+      neural.download.vllm.head="${VLLM_HEAD}" \
+      neural.download.vllm.patch="qwen38-profile-only-decoder-stage-sync-20260831" \
+      neural.download.vllm.patch.sha256="${PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-autoround-profile-only-decoder-sync-r1"

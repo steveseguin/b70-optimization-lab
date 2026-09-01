@@ -26,6 +26,7 @@ max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-2048}
 speculative_config_json=${SPECULATIVE_CONFIG_JSON:-}
 require_dummy_sampler_stage_sync=${REQUIRE_DUMMY_SAMPLER_STAGE_SYNC:-0}
 dummy_sampler_runs_per_rank=${DUMMY_SAMPLER_RUNS_PER_RANK:-1}
+expected_decoder_stage_receipts=${EXPECTED_DECODER_STAGE_RECEIPTS:-0}
 enable_projection_repair=${ENABLE_PROJECTION_REPAIR:-1}
 startup_only=${STARTUP_ONLY:-0}
 runtime_pythonpath=${RUNTIME_PYTHONPATH:-/instrument}
@@ -52,6 +53,7 @@ trap 'exit 130' INT TERM HUP
 [[ -f "$hook" && -f "$prereg" && -f "$suite" && -f "$bench" && -f "$canaries" ]] || fail 'missing frozen input'
 [[ "$require_dummy_sampler_stage_sync" == 0 || "$require_dummy_sampler_stage_sync" == 1 ]] || fail 'stage-sync requirement must be 0/1'
 [[ "$dummy_sampler_runs_per_rank" =~ ^[1-9][0-9]*$ ]] || fail 'dummy-sampler runs per rank must be a positive integer'
+[[ "$expected_decoder_stage_receipts" =~ ^[0-9]+$ ]] || fail 'expected decoder-stage receipts must be a nonnegative integer'
 [[ "$enable_projection_repair" == 0 || "$enable_projection_repair" == 1 ]] || fail 'projection-repair switch must be 0/1'
 [[ "$startup_only" == 0 || "$startup_only" == 1 ]] || fail 'startup-only switch must be 0/1'
 [[ "$runtime_pythonpath" == /* && "$runtime_pythonpath" != *$'\n'* ]] || fail 'runtime PYTHONPATH must be absolute and single-line'
@@ -124,6 +126,12 @@ if [[ "$require_dummy_sampler_stage_sync" == 1 ]]; then
     [[ "$(grep -Fc "QWEN38_DUMMY_SAMPLER_STAGE_SYNC pass=$stage" "$root/server-startup.log")" == "$expected_stage_receipts" ]] || \
       fail "dummy-sampler stage receipt missing or duplicated: $stage"
   done
+fi
+if (( expected_decoder_stage_receipts > 0 )); then
+  [[ "$(grep -Fc 'QWEN38_DECODER_STAGE_SYNC begin' "$root/server-startup.log")" == "$expected_decoder_stage_receipts" ]] || \
+    fail 'decoder-stage begin receipt count mismatch'
+  [[ "$(grep -Fc 'QWEN38_DECODER_STAGE_SYNC pass' "$root/server-startup.log")" == "$expected_decoder_stage_receipts" ]] || \
+    fail 'decoder-stage pass receipt count mismatch'
 fi
 if [[ -n "$speculative_config_json" ]]; then
   spec_depth=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["num_speculative_tokens"])' "$speculative_config_json")
