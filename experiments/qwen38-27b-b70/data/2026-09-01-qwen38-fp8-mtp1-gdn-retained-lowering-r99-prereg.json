@@ -1,0 +1,76 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-retained-lowering-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-retained-lowering-20260901-r99",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Match every recovered launch and transcendental detail of R90's accepted compiled GDN norm kernels while retaining R98's fixed row grouping.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98",
+    "base_image_id": "sha256:d3ce08c3943d797a921f074ed3e5b4aeaff7d140fd756f2e67e6493bc0391895",
+    "r98_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98-result.json"
+  },
+  "retained_compiled_evidence": {
+    "reduction": {
+      "xblock": 8,
+      "rblock": 128,
+      "num_warps": 2,
+      "num_stages": 1
+    },
+    "pointwise": {
+      "xblock": 1024,
+      "num_warps": 4,
+      "num_stages": 1,
+      "rsqrt": "libdevice.rsqrt",
+      "exp": "libdevice.exp"
+    }
+  },
+  "treatment": {
+    "changes_from_r98": [
+      "Set reduction num_stages=1.",
+      "Set pointwise block size to 1024 and num_stages=1.",
+      "Use the same Triton libdevice rsqrt and exp symbols emitted by the retained R90 Inductor source."
+    ],
+    "unchanged": [
+      "eight-row-by-128 reduction tensor shape",
+      "two-warp reduction",
+      "four-warp pointwise",
+      "fixed row grouping across concurrency",
+      "R88 request-isolated qkvz prefill",
+      "R89 request-isolated GDN prefill",
+      "FP8 output projection",
+      "deterministic=true",
+      "xpu_graph=false"
+    ]
+  },
+  "operator_gate": {
+    "required": true,
+    "all_eight_row_slots_bitwise_invariant": true,
+    "reference_tolerance": {"rtol": 0.002, "atol": 0.002},
+    "tail_masking_matches_full_block": true,
+    "compiled_artifacts_match_declared_launches": true,
+    "unsupported_shape_failed_closed": true
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "operator_gate": "pass",
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer0_core_and_z_trace_remain_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing image, extend warmup to cover the request shapes, repeat c1/c2, then clean-boot for the varied-prompt qualification.",
+  "followup_if_fail": "Preserve the result and diff custom TTIR against retained TTIR, including index width, masks, eviction policies, and exact operation ordering. Do not add another source-level guess without compiled evidence.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the current boot contains an earlier GPU reset."
+}
