@@ -40,6 +40,8 @@ inductor_coordinate_descent=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-1}
 python_hash_seed=${PYTHONHASHSEED:-}
 kernel_head=${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}
 expected_image_id=${EXPECTED_IMAGE_ID:-}
+profiler_config=${PROFILER_CONFIG:-}
+profiler_dir=${PROFILER_DIR:-}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -125,6 +127,20 @@ hash_seed_args=()
 if [[ -n "${python_hash_seed}" ]]; then
   hash_seed_args=(--env "PYTHONHASHSEED=${python_hash_seed}")
 fi
+profiler_mount_args=()
+profiler_cli_args=()
+if [[ -n "${profiler_config}" ]]; then
+  [[ -n "${profiler_dir}" ]] || {
+    printf 'PROFILER_DIR is required when PROFILER_CONFIG is set\n' >&2
+    exit 1
+  }
+  mkdir -p "${profiler_dir}"
+  profiler_mount_args=(--volume "${profiler_dir}:/profiles")
+  profiler_cli_args=(--profiler-config "${profiler_config}")
+elif [[ -n "${profiler_dir}" ]]; then
+  printf 'PROFILER_CONFIG is required when PROFILER_DIR is set\n' >&2
+  exit 1
+fi
 
 exec docker run --rm --name "${container}" \
   --ulimit core=0 \
@@ -135,6 +151,7 @@ exec docker run --rm --name "${container}" \
   --publish "127.0.0.1:${port}:8000" \
   --volume "${model_dir}:/model:ro" \
   --volume "${cache_dir}:/root/.cache/vllm" \
+  "${profiler_mount_args[@]}" \
   --env ZE_AFFINITY_MASK=0,1 \
   --env ONEAPI_DEVICE_SELECTOR=level_zero:0,1 \
   --env VLLM_TARGET_DEVICE=xpu \
@@ -178,4 +195,5 @@ exec docker run --rm --name "${container}" \
   --language-model-only \
   "${eager_args[@]}" \
   --speculative-config "${speculative_config}" \
-  --compilation-config "${compilation_config}"
+  --compilation-config "${compilation_config}" \
+  "${profiler_cli_args[@]}"

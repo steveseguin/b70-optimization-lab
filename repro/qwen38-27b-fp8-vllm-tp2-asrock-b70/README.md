@@ -717,6 +717,16 @@ An R57 screen tested an 8,192-token scheduler/prefill budget across the same
 18 cases. Exactness and decode non-inferiority passed, but the preregistered
 8K-32K TTFT median improved only `0.231%` (required: `3%`) and the cgroup
 recorded 2,811 memory-ceiling events. The candidate was rejected; keep 4,096.
+
+A later size-one PIECEWISE XPU Graph screen remained 12/12 exact against the
+matched MTP0 oracle, but measured `51.229844 tok/s`: 1.12% below the selected
+graph-off headline and just below its preregistered 99% floor. It was rejected
+before the long-depth stage. A bounded graph-off profiler then attributed
+roughly 50-51% of device-kernel time to TP all-reduce and 45% to GEMM on both
+ranks; profiler timings are diagnostic, not performance evidence. The next
+implementation target is block-FP8-aware GEMM/collective overlap, not another
+graph or scheduler toggle. See the [R58 negative](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-xpugraph-r58-negative.md)
+and [R59 profiler note](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-profiler-r59.md).
 See the [R57 result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json).
 
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and

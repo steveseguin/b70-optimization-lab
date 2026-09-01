@@ -1,0 +1,64 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-xpugraph-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-xpugraph-20260901-r58",
+  "objective": "Determine whether size-one PIECEWISE XPU Graph improves the final deterministic R50 MTP1 lane without changing complete outputs or sacrificing short- or long-context performance.",
+  "baseline": {
+    "short_evidence": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
+    "depth_evidence": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
+    "short_headline_tok_s": 51.808087,
+    "xpu_graph": false
+  },
+  "candidate": {
+    "only_intended_change": "VLLM_XPU_ENABLE_XPU_GRAPH",
+    "xpu_graph": true,
+    "cudagraph_mode": "PIECEWISE",
+    "capture_sizes": [1],
+    "new_empty_compile_cache": true
+  },
+  "frozen_identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "kv_dtype": "f16",
+    "context_capacity": 33024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 4096,
+    "prefix_cache": false,
+    "container_memory": "12g",
+    "container_memory_swap": "16g"
+  },
+  "stage_1_strict_gate": {
+    "fixture": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "prompts": 12,
+    "max_output_tokens": 512,
+    "cached_tokens_zero": true,
+    "canaries_pass": true,
+    "complete_arrays_exact_vs_matched_mtp0": "12/12",
+    "class_balanced_decode_floor_tok_s": 51.290006,
+    "no_new_gpu_fault_or_reset": true
+  },
+  "stage_2_depth_gate": {
+    "authorized_only_after_stage_1_passes": true,
+    "fixture": "data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+    "active_context_tokens": [2048, 4096, 8192, 16384, 24576, 32768],
+    "content_classes": ["technical-prose", "python-code", "structured-docs"],
+    "complete_arrays_exact_vs_r56_mtp0": "18/18",
+    "decode_noninferiority_each_depth": "candidate >= 99% of R56 MTP1",
+    "canaries_before_and_after": true,
+    "no_new_gpu_fault_or_reset": true
+  },
+  "decision_rule": {
+    "promote_candidate_if": "Both stages pass, the strict class-balanced rate exceeds the 51.808087 tok/s incumbent, and the median decode uplift across all six context depths is at least 3%.",
+    "otherwise": "Retain graph-off and close this exact treatment negative.",
+    "no_cherry_picking": true
+  },
+  "publication_boundary": {
+    "current_boot": "diagnostic-only because the boot journal contains an earlier GPU reset",
+    "clean_boot_fresh_server_repeats_required": true,
+    "short_headline_replacement_authorized": false
+  }
+}

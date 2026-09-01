@@ -1,0 +1,70 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-profiler-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-profiler-20260901-r59",
+  "status": "diagnostic-complete",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "workload": {
+    "natural_prompt": true,
+    "prompt_tokens": 44,
+    "completion_tokens": 96,
+    "cached_tokens": 0,
+    "prompt_repeated": false,
+    "profiler": "PyTorch XPU",
+    "delay_iterations": 10,
+    "max_iterations": 8,
+    "active_iterations": 5
+  },
+  "device_kernel_summary": {
+    "rank0": {
+      "total_kernel_time_us": 507601.8,
+      "oneccl_allreduce_time_us": 259340.2,
+      "oneccl_allreduce_percent": 51.09,
+      "oneccl_allreduce_calls": 1056,
+      "gemm_time_us": 226214.3,
+      "gemm_percent": 44.57,
+      "gemm_calls": 2488,
+      "allreduce_plus_gemm_percent": 95.66,
+      "gdn_spec_percent": 0.68,
+      "gdn_conv_percent": 0.40
+    },
+    "rank1": {
+      "total_kernel_time_us": 499344.4,
+      "oneccl_allreduce_time_us": 251247.6,
+      "oneccl_allreduce_percent": 50.32,
+      "oneccl_allreduce_calls": 1056,
+      "gemm_time_us": 226252.4,
+      "gemm_percent": 45.31,
+      "gemm_calls": 2488,
+      "allreduce_plus_gemm_percent": 95.63,
+      "gdn_spec_percent": 0.58,
+      "gdn_conv_percent": 0.41
+    }
+  },
+  "interpretation": {
+    "measured_bottleneck": "TP all-reduce and GEMM dominate the bounded trace on both ranks.",
+    "closed_existing_route": "The prior AsyncTP PR 52683 screen produced zero replacements because it supports static W8A8, not group-128 block-FP8 activation scales.",
+    "next_implementation_target": "A block-FP8-aware GEMM/collective overlap or fusion path with paired activation-scale communication.",
+    "not_supported_by_trace": "Absolute uninstrumented step time, an end-to-end speed claim, or a claim that GDN is fully optimized."
+  },
+  "raw_artifact_hashes": {
+    "rank0_trace_sha256": "7bd7cefaebcaeb117cf6ac9c5efc43492011b0b51dabb5e4e18286b40c5aa6a6",
+    "rank1_trace_sha256": "e12dd37cc70108c059847545cea4398ed5b83ec1dfff10d3c0dcae56246ff4ad",
+    "request_sha256": "ca3e231820089238a289511c9b2b7cc525ee9bf80a29eb4f71f38ce6f3168fda",
+    "server_log_sha256": "27eff514eb89585f5a80227aec4d63a166394ef7943901d3aa84832ab4f8201a"
+  },
+  "publication_boundary": {
+    "performance_claim_eligible": false,
+    "reason": "Profiler instrumentation materially changes timing; only relative kernel attribution is used.",
+    "headline_or_public_curve_changed": false
+  }
+}

@@ -50,7 +50,15 @@ depths. MTP1 matched the MTP0 oracle in all 18/18 complete token arrays, held
 8,192 and preserved exact output, but improved long-depth TTFT by only `0.23%`,
 below its preregistered `3%` gate, so the public default remains 4,096. These
 depth results are diagnostic because the current boot follows an earlier GPU
-reset; promotion requires two clean-boot repeats. Independent clean-host replay
+reset. R58 then enabled a size-one XPU Graph on the same deterministic image;
+it remained 12/12 exact but regressed to `51.229844 tok/s` and missed its 99%
+floor, so graph-off remains selected. A bounded R59 graph-off trace attributes
+about 50-51% of device-kernel time to TP all-reduce and 45% to GEMM on both
+ranks. The next implementation target is block-FP8-aware GEMM/collective
+overlap; the existing XPU AsyncTP route is already closed because it supports
+static W8A8 rather than this checkpoint's group-128 activation scales.
+Promotion of the R56 depth results still requires two clean-boot repeats.
+Independent clean-host replay
 also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.

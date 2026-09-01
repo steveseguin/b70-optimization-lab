@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-xpugraph-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-xpugraph-20260901-r58",
+  "status": "rejected-performance-floor",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-xpugraph-r58-prereg.json",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "context_capacity": 33024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 4096,
+    "xpu_graph": true,
+    "graph_capture_sizes": [1],
+    "prefix_cache": false
+  },
+  "stage_1": {
+    "class_balanced_decode_tok_s": 51.229844194672744,
+    "incumbent_tok_s": 51.80808698870573,
+    "delta_percent": -1.1161245813979703,
+    "preregistered_noninferiority_floor_tok_s": 51.29000611881867,
+    "floor_passed": false,
+    "floor_shortfall_tok_s": 0.06016192414592325,
+    "requests_complete": "12/12",
+    "cached_tokens_zero": "12/12",
+    "canaries_passed": true,
+    "complete_arrays_exact_vs_r54a_mtp0": "12/12",
+    "new_gpu_faults_or_resets": 0,
+    "draft_tokens": 3626,
+    "accepted_tokens": 2899,
+    "acceptance_percent": 79.9503585217871
+  },
+  "decision": {
+    "stage_2_depth_matrix_authorized": false,
+    "selected_default": "graph-off",
+    "reason": "The candidate missed the preregistered 99% short-rate floor and was 1.116% slower than the incumbent despite exact output.",
+    "additional_boundary": "vLLM warned that XPU Graph is experimental and officially supports only single-GPU execution."
+  },
+  "raw_artifact_hashes": {
+    "performance_json_sha256": "d2c0fda00130361873c809788e1bd6c35f4d7ae28efc4bdef5f62fa0ef3c527d",
+    "comparison_json_sha256": "b2fd33d61ef5420947dfe721cbb7ce0ec7458be6822b8a188edb2ac50bea6005",
+    "server_log_sha256": "f8017078ab8a1688efd47ddaa39270679dfd7e321ad28d38c4f2969d57130adb",
+    "metrics_after_sha256": "ed254cc69968d383be42fb66d2faba303bff1339401deaae7cfb1dbe2f37bb60",
+    "kernel_journal_since_launch_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e"
+  },
+  "publication_boundary": {
+    "promotable": false,
+    "current_boot": "diagnostic-only because the boot journal contains an earlier GPU reset",
+    "headline_or_public_curve_changed": false
+  }
+}
