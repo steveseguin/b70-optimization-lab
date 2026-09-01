@@ -3064,3 +3064,12 @@ work until health is re-established, with reboot reserved for last-resort
 recovery. Historical packets remain unchanged evidence, but their
 boot-consumption language is superseded. See the
 [health-gated reuse policy](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-health-gated-reuse-policy.md).
+A2 then failed closed in its first fail-fast BF16 region at raw input `0x41be`:
+the Torch reference produced `0x40bd` while the `std::exp` candidate produced
+`0x40be`. No exhaustive/profile/timing/endpoint phase followed, so the exact
+HC-SiLU candidate and its arithmetic attribution are closed as negative. Its
+four-card preflight and postflight, host recovery, journal gate, and evidence
+manifest all passed. The boot remains eligible for independent work under the
+new policy; the affinity component is next without a reboot. Protected rates
+remain unchanged. See the
+[A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a2-stdexp-parity-negative.md).
