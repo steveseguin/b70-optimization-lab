@@ -1,0 +1,42 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-output-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-output-trace-20260901-r90",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Prove R89 dispatch and compare per-request raw GDN core/z outputs between c1 and c2 before the norm and output projection.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89",
+    "base_image_id": "sha256:f90ffe8bff7db05f99119d293e885ec1c79dc2769d23e5b07b31e5f81b3f6d44",
+    "r89_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89-result.json"
+  },
+  "instrumentation": {
+    "gate": "VLLM_XPU_GDN_PREFILL_OUTPUT_TRACE_FILE",
+    "scope": "First pure-prefill call per GDN layer and prefill request-count shape in each TP process.",
+    "payload_per_request": [
+      "layer and TP rank",
+      "packed or request-isolated dispatch",
+      "query boundaries and natural request row count",
+      "SHA-256, shape, and dtype of raw core_attn_out rows",
+      "SHA-256, shape, and dtype of raw z rows"
+    ],
+    "raw_tensor_logging": false,
+    "production_default_change": false
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 in the same fresh server.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true,
+    "r88_qkvz_request_isolation": true,
+    "r89_gdn_prefill_request_isolation": true
+  },
+  "decision": "If c2 records request-isolated dispatch and layer-0 core/z for cache-c000 match c1 on both ranks, localize the next difference to norm/output projection. If dispatch is packed, repair the R89 guard. If isolated dispatch runs but core/z differ, inspect native one-request metadata parity.",
+  "promotion_boundary": "Trace-only diagnostic. Device-to-host hashing synchronizes execution; no throughput or quality promotion is allowed. This boot contains an earlier GPU reset."
+}
