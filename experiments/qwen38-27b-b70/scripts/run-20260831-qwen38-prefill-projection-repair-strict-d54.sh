@@ -178,6 +178,12 @@ python3 "$canaries" --base-url "http://127.0.0.1:${port}" --model "$served" \
   --out "$root/canaries.json" >"$root/canaries.stdout"
 curl -fsS "http://127.0.0.1:${port}/health" >"$root/post-health.json"
 docker logs "$container" >"$root/server.log" 2>&1
+if (( expected_decoder_stage_receipts > 0 )); then
+  [[ "$(grep -Fc 'QWEN38_DECODER_STAGE_SYNC begin' "$root/server.log")" == "$expected_decoder_stage_receipts" ]] || \
+    fail 'decoder-stage synchronization unexpectedly changed during requests'
+  [[ "$(grep -Fc 'QWEN38_DECODER_STAGE_SYNC pass' "$root/server.log")" == "$expected_decoder_stage_receipts" ]] || \
+    fail 'decoder-stage synchronization unexpectedly changed during requests'
+fi
 
 python3 - "$root/performance.json" "$root/canaries.json" "$root/qualification.json" "$reference_performance" <<'PY'
 import json,pathlib,sys

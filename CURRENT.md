@@ -69,9 +69,11 @@ forward completed exactly 1,040 boundaries, the later unsynchronized warmup
 forward also completed, and the API reached readiness with a clean kernel log.
 It remains a literal receipt-count false-fail because its frozen contract
 expected both forwards to be profile forwards. D67 changes only that expected
-count from 2,080 to 1,040. These arms are startup-only and cannot yield a
-performance claim. After D67, the profile-only fix must pass strict output and
-performance validation with projection repair restored. See the
+count from 2,080 to 1,040 and passed both health checks with a clean kernel
+delta. These arms are startup-only and cannot yield a performance claim. D68
+restores projection repair and runs the full strict suite against the frozen
+TP2/MTP0 token oracle; its post-request log gate must prove the decoder receipt
+count remains 1,040, so no user request pays for a barrier. See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
 [`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
 and
