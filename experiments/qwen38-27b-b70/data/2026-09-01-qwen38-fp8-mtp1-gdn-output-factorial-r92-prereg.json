@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-output-factorial-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-output-factorial-20260901-r92",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Separate RMSNormGated shape dependence from FP8 out_proj shape dependence after R91's combined output-stage isolation regressed c1.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90",
+    "base_image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "r91_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-output-request-isolation-r91-result.json"
+  },
+  "fixed_gates": [
+    "VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS=1",
+    "VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS=1"
+  ],
+  "variants": [
+    {
+      "id": "r92a-norm-only",
+      "gate": "VLLM_XPU_GDN_ISOLATE_NORM_PREFILL_REQUESTS=1",
+      "implementation": "Apply RMSNormGated independently at each natural request row count, concatenate normalized rows, and invoke the existing FP8 out_proj once on the packed rows."
+    },
+    {
+      "id": "r92b-projection-only",
+      "gate": "VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS=1",
+      "implementation": "Apply RMSNormGated once on packed rows, then invoke the existing FP8 out_proj independently at each natural request row count and concatenate projected rows."
+    }
+  ],
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "For each variant on a fresh server and compile cache, run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "gdn_core_output_trace": true
+  },
+  "required_pass_per_variant": {
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer_0_cache_prompt_core_and_z_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "interpretation_rules": {
+    "c1_regression": "Reject the variant; moving this stage behind a custom-op boundary changes the accepted single-request numerical path.",
+    "c1_pass_c2_fail": "The isolated stage is not sufficient; retain only as localization evidence.",
+    "c1_and_c2_pass": "Candidate diagnostic repair only; require a non-tracing production-lineage build plus the full strict varied-prompt battery and clean-boot replay before promotion."
+  },
+  "promotion_boundary": "Diagnostic factorial only. No site, README, headline, protected-speed, recipe-default, or LocalMaxxing authority. This boot contains an earlier GPU reset."
+}
