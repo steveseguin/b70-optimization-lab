@@ -95,9 +95,9 @@ for value_name in fp8_block_w8a16 fp8_packed_serial_exact \
   }
 done
 if [[ "${gdn_multi_request_split}" == 1 ]]; then
-  [[ "${gdn_serial_exact}" == 0 &&
-     "$((gdn_conv_serial_exact + gdn_delta_serial_exact))" == 1 ]] || {
-    printf 'VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT requires exactly one split GDN stage and disables the combined recurrent gate\n' >&2
+  gdn_split_stage_count=$((gdn_conv_serial_exact + gdn_delta_serial_exact))
+  [[ "${gdn_serial_exact}" == 0 && "${gdn_split_stage_count}" -ge 1 ]] || {
+    printf 'VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT requires one or both split GDN stages and disables the legacy combined recurrent gate\n' >&2
     exit 1
   }
 fi

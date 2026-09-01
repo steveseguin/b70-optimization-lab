@@ -1,0 +1,34 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-combined-multi-request-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-combined-multi-request-20260901-r81",
+  "status": "preregistered-before-run",
+  "objective": "Determine whether serializing the complete convolution-plus-delta GDN state transaction repairs the exact two-request failure after neither isolated R80 stage was sufficient.",
+  "code_boundary": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-multi-request-followup-r80",
+    "image_id": "sha256:320532dcec8d32b965dcfe86b704e85dbc83493c6d093a872df24ae043b4ad48",
+    "kernel_patch_sha256": "44cd6c0b5f71a521ecca286c2f7d24a1df5405783daf664cf0d84bab83339212",
+    "production_default_change": false,
+    "gates": {
+      "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT": 0
+    }
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "concurrency": 2,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true
+  },
+  "decision": "The combined state transaction is implicated only if both requests complete 128 tokens, both exactly match the R72 token oracle, cached_tokens are both zero, both R80 stage markers appear on both TP ranks, and no new GPU/Xe/OOM fault occurs.",
+  "promotion_boundary": "A pass is a diagnostic repair candidate, not a public speed or quality result. It must subsequently pass the clean-boot varied-prompt, deterministic-repeat, context-depth, concurrency, and speed-floor gates."
+}

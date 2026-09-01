@@ -28,6 +28,14 @@ serial controls. The conv arm failed closed before producing output because
 that diagnostic supports one speculative request only. A narrow multi-request
 extension is required before the factorial can answer the question.
 
+R79 reached its new two-request path, then failed closed when the scheduler
+narrowed to a follow-up one-request shape. R80 separated those dispatch modes
+and completed the preregistered factorial. Conv-only and delta-only both
+returned two complete 128-token outputs with zero cached tokens and no new GPU
+fault, but each matched only 1/2 oracle outputs. Both arms produced the same
+token sequences. Neither isolated stage is therefore sufficient; R81 tests the
+complete conv-plus-delta transaction without changing production defaults.
+
 This is diagnostic evidence, not a speed or quality promotion. The current boot
 contains an earlier GPU reset, so any eventual repair still requires a clean-
 boot strict replay. Structured evidence is in

@@ -1,0 +1,53 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-multi-request-factorial-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-multi-request-followup-20260901-r80",
+  "status": "complete-neither-isolated-stage-sufficient",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-multi-request-followup-r80",
+    "id": "sha256:320532dcec8d32b965dcfe86b704e85dbc83493c6d093a872df24ae043b4ad48",
+    "wheel_sha256": "d6128e0a5992c264f1a8b3586bc6d397c8430402f3e541e4d7cceb78762c349b",
+    "xpu_extension_sha256": "2a4d3cd7a329cf14f2fa2c3f416de8371487dea7814ebb4e938440078c02e1f9",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "fixed_gates": {
+    "model_direct_verification_each_arm": "pass-66-of-66",
+    "fresh_server_and_compile_cache_each_arm": true,
+    "xpu_graph": false,
+    "cached_tokens_each_arm": [
+      0,
+      0
+    ],
+    "complete_tokens_each_request": 128,
+    "runtime_marker_both_tp_ranks_each_arm": true,
+    "new_gpu_or_xe_faults_each_arm": 0
+  },
+  "arms": [
+    {
+      "name": "conv-only",
+      "aggregate_tok_s_wall_diagnostic": 52.96115111675179,
+      "oracle_exact": "1/2",
+      "result_sha256": "36f2b6b859ad6bee262ea336b97d53771dc85722e4f413ae0839eb6f5a6a9017",
+      "server_log_sha256": "1274f106dd6a65a7283fd84be3f1fb672ad3141e3621d497bf308ab9fbd83900"
+    },
+    {
+      "name": "delta-only",
+      "aggregate_tok_s_wall_diagnostic": 50.461969952143534,
+      "oracle_exact": "1/2",
+      "result_sha256": "6bee1ba8a858bf5b557e49d054bf90db933b313f4a7e1fa9397231b9881529f0",
+      "server_log_sha256": "068ab0cc427626457a6df11403e314ea413939d393250b54e3febbac9b479308"
+    }
+  ],
+  "output_observation": {
+    "arms_produced_identical_token_sequences": true,
+    "cache_request_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+    "cache_request_oracle_token_ids_sha256": "9e7aec2c17aa1a19556349d1e106c6cb2e6d22db28953687ee655f2f8cb760b6",
+    "index_request_token_ids_sha256": "f464bfb0a0c2539f083ce440680e8e57a076ba4b46acd49ece9233e92c9e1f35",
+    "index_request_exact": true
+  },
+  "conclusion": "Serial replay of convolution alone and delta alone each leaves the same cache-request divergence. Neither isolated stage is sufficient, so no single-stage causal claim is allowed. Test the complete conv-plus-delta state transaction next.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "reason": "Diagnostic output variants are not quality-equivalent results."
+  }
+}
