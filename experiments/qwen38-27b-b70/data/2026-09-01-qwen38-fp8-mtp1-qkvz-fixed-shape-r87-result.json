@@ -1,0 +1,84 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-qkvz-fixed-shape-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-qkvz-fixed-shape-20260901-r87",
+  "status": "completed-candidate-rejected",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-qkvz-fixed-shape-r87",
+    "image_id": "sha256:a980a33654b2ebba793bc40c66fb6b0713485c867eaecb927d879aad6defd919",
+    "base_r86_image_id": "sha256:3655f4fcdbe387117a6fcf2b58efacd9c8e8e65eb825b0a961e26c91f1952110",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-qkvz-fixed-shape-r87-20260901.patch",
+    "vllm_patch_sha256": "c6384af1eaa45f0f49318f78c82a3f7485db19ebe3f5fe6f63c8f5bcafccf3a5",
+    "installed_qwen_gdn_sha256": "637b0687aae7d7c873cb6bc72db17c31950dc75f333c52ccf6b62405dbd4dd22"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "0/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 31.302731124215658,
+      "failing_prompt_id": "cache-c000"
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 60.64460734659319,
+      "failing_prompt_id": "cache-c000"
+    },
+    "cache_prompt_c1_vs_c2": {
+      "complete_128_token_output_exact": true,
+      "first_difference_from_oracle": {
+        "zero_based_token_index": 96,
+        "human_token_number": 97,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      },
+      "interpretation": "The fixed-256 projection forces both cache-c000 executions onto the previously observed incorrect c2 sequence. Cross-batch agreement is not oracle correctness."
+    }
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "gdn_layers": 48,
+    "request_matching": "Match cache-c000 by its 31 prefill tokens. Scheduler order changed from R86: R87 placed the 31-token request first at c2, so a fixed request-index assumption is invalid.",
+    "cache_prompt_c1_vs_c2_within_rank": {
+      "layer_0_projected_qkvz_exact": true,
+      "layer_0_projected_ba_exact": true,
+      "same_result_on_both_tp_ranks": true,
+      "projected_qkvz_exact_rank_layer_pairs": "2/96",
+      "projected_ba_exact_rank_layer_pairs": "2/96"
+    },
+    "cross_run_layer_0_rank_0": {
+      "r86_natural_c1_cache_qkvz_prefix": "8624f67d595ffdd1",
+      "r86_natural_c2_cache_qkvz_prefix": "c171b53efdbd5abe",
+      "r87_fixed_256_cache_qkvz_prefix": "c171b53efdbd5abe"
+    },
+    "interpretation": "R87 removes the layer-0 packed-batch shape difference for cache-c000 by selecting the same numerical path as R86's natural packed c2 projection, not the trusted natural-shape c1 projection. That c2 path is the one associated with the wrong token-97 output, so the change propagates the wrong state into both shapes."
+  },
+  "decision": "Reject fixed-256 qkvz padding. The next candidate must split a packed prefill by request boundary and invoke the existing qkvz projection at each request's natural row count, preserving the trusted sequential arithmetic.",
+  "reporting_boundary": "Do not promote throughput, site values, README values, recipe defaults, protected speeds, or LocalMaxxing. The strict identity gate failed, tracing synchronizes execution, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-qkvz-fixed-shape-20260901-r87",
+    "raw_result_sha256": "f81dc0b5eae340e72751fa2e23e20b0393628f19a1c1a0245f33e8aba49ba0b7",
+    "trace_sha256": "f2eabcd33b4768b1d9e123e56323c83615728d8ecf6c3d43531ae777c793a0c8",
+    "server_log_sha256": "c8e876b3353424d887ff7995f7ae9c4363930e42ac84747d39a4d8ea20f420c0",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

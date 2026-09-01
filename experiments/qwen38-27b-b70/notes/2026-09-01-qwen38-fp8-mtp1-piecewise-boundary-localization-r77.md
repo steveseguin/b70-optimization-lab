@@ -98,3 +98,22 @@ both TP ranks, while its FP8 qkvz projection differs. The difference therefore
 precedes both GDN prefill kernels. A fixed-row-shape qkvz projection is the next
 repair candidate. R86's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json).
+
+R87 rejected the first repair candidate. Padding every qkvz prefill projection
+to 256 rows made layer-0 `cache-c000` qkvz and BA bytes exact between c1 and c2
+on both TP ranks. It did not restore the oracle: c1 fell from 1/1 to 0/1, c2
+remained 1/2, and the cache prompt produced the same complete 128-token sequence
+in both shapes but retained the known wrong token at zero-based index 96
+(`2972` instead of `348`). The fixed shape therefore forced both executions
+onto the previously wrong c2 numerical path. The layer-0 rank-0 qkvz digest
+confirms this directly: R86 natural c1 begins `8624f67d...`, while both R86
+natural c2 and R87 fixed-256 begin `c171b53e...`. Batch invariance alone is not
+a quality result.
+
+R87 also showed that prefill scheduler order is not stable enough to identify a
+request by position: unlike R86, it placed the 31-token cache request first.
+Future trace comparisons must match a prompt by its token count or an explicit
+request identity. The next candidate is request-isolated qkvz projection at
+each request's natural row count (31 and 28 in this fixture), not another padded
+shape. R87's rejected result is
+[`2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-result.json).
