@@ -1,0 +1,68 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-c2-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-c2-isolation-equivalence-20260901-r84",
+  "status": "completed-diagnostic",
+  "classification": "operator-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-prereg.json",
+  "harness": "experiments/qwen38-27b-b70/scripts/qwen38-det-gdn-c2-isolation-equivalence-r84.py",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-evolving-metadata-r83",
+    "image_id": "sha256:9f6cd6ccf3182540b415cad70b3d7a78a4c12c722fbaae6da2c6cb59a3ed0bc7",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783"
+  },
+  "matrix": {
+    "cases_per_arm": 48,
+    "projected_dtype": "float16",
+    "ssm_state_dtypes": ["float16", "float32"],
+    "reorder_input": [false, true],
+    "accepted_pairs": [[1, 1], [1, 2], [2, 1], [2, 2]],
+    "observed_state_index_rows": [
+      [[7, 6], [8, 9]],
+      [[5, 4], [10, 11]],
+      [[3, 2], [12, 13]]
+    ],
+    "model_shape": {
+      "num_k_heads": 16,
+      "num_v_heads": 48,
+      "head_dim": 128,
+      "conv_width": 4,
+      "tp_size": 2,
+      "num_spec_decodes": 2,
+      "num_spec_tokens": 2
+    }
+  },
+  "native_packed_c2_vs_two_isolated_c1": {
+    "all_finite": true,
+    "packed_repeat_exact_cases": "48/48",
+    "isolated_repeat_exact_cases": "48/48",
+    "z_bitwise_equal_cases": "48/48",
+    "core_bitwise_equal_cases": "48/48",
+    "conv_touched_bitwise_equal_cases": "48/48",
+    "ssm_touched_bitwise_equal_cases": "48/48",
+    "maximum_absolute_difference_any_field": 0.0
+  },
+  "r80_combined_serial_vs_two_isolated_c1": {
+    "all_finite": true,
+    "packed_repeat_exact_cases": "48/48",
+    "isolated_repeat_exact_cases": "48/48",
+    "z_bitwise_equal_cases": "48/48",
+    "conv_touched_bitwise_equal_cases": "48/48",
+    "core_bitwise_equal_cases": "24/48",
+    "core_maximum_absolute_difference": 0.0001220703125,
+    "ssm_touched_bitwise_equal_cases": "24/48",
+    "ssm_touched_maximum_absolute_difference": 0.00390625,
+    "difference_scope": "All 24 non-bitwise cases use the production auto-cache float16 SSM state; both reorder modes, all accepted pairs, and all three state-row patterns are represented. Float32 SSM state is 24/24 bitwise exact."
+  },
+  "conclusion": "For identical inputs and cache contents, the existing native packed c2 speculative GDN transaction is bitwise identical to two isolated c1 transactions across the entire preregistered matrix. The c2 server failure is therefore not intrinsic multi-request GDN operator arithmetic. R80's ordinary one-token replay introduces small float16 SSM rounding differences and cannot be called operator-exact. Combined with R77/R83, the next target is the layer-1 cache content delivered to the first verifier step, especially prefill/state publication, not another speculative arithmetic rewrite.",
+  "health": {
+    "kernel_fault_markers": 0,
+    "gpu_count_used": 1
+  },
+  "reporting_boundary": "No throughput or quality promotion; operator diagnostic only.",
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-gdn-c2-isolation-equivalence-20260901-r84",
+    "native_json_sha256": "fe67d2152a8a398533fbdf250a730accfa04337ff62469ca81cc47570cfe58ee",
+    "r80_serial_json_sha256": "bc441c6f8524385cfb9caa7f90ee67cd0df68735f33c00d7db2947457b1db5c1",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

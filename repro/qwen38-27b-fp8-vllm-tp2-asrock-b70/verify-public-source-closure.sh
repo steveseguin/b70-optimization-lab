@@ -120,6 +120,8 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-metadata-trace-r82-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-evolving-metadata-r83-20260901.patch
@@ -129,6 +131,7 @@ required_files=(
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-metadata-trace-r82-image.sh
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-evolving-metadata-r83
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-evolving-metadata-r83-image.sh
+  experiments/qwen38-27b-b70/scripts/qwen38-det-gdn-c2-isolation-equivalence-r84.py
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
 )

@@ -60,6 +60,16 @@ request has accepted count 1 and the exact request has accepted count 2, but
 there is no malformed or evolving scheduler mapping. The next discriminator is
 therefore direct multi-request-versus-isolated operator/state equivalence.
 
+R84 supplied that operator discriminator at the real TP2 GDN dimensions. For
+identical inputs and cache contents, native packed c2 was bitwise identical to
+two isolated c1 transactions in all 48 cases: `z`, core output, convolution
+cache, and SSM cache. The R80 ordinary one-token replay kept convolution exact
+but differed slightly in the production float16 SSM cases (core max absolute
+error 0.0001221; state 0.00390625). This rules out intrinsic native packed-c2
+operator arithmetic and explains why R80 was not a true exact repair. The
+remaining boundary is the layer-1 cache content arriving from prefill/state
+publication before the first verifier step.
+
 This is diagnostic evidence, not a speed or quality promotion. The current boot
 contains an earlier GPU reset, so any eventual repair still requires a clean-
 boot strict replay. Structured evidence is in
@@ -68,3 +78,5 @@ R82's structured result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-result.json).
 R83's full step-level trace summary is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json).
+R84's operator-equivalence result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json).
