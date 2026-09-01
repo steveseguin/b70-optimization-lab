@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-piecewise-selected-row-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-piecewise-selected-row-trace-20260901-r75",
+  "status": "preregistered-not-run",
+  "objective": "Trace the failing cache-c000 packed target row in c2 and align it with the valid R74 c1 row-0 trace to locate the first compiled-piece divergence.",
+  "lineage": {
+    "r74_c1_output": "14f31e74b74869dc329b1f211bac8edd4af4a32bda1f0585d0606ae27b174b13",
+    "r74_c2_cache_output": "b58165ad1524f1e6d2155b21865fc65067c87ce254af7baaeb6d46c0e8807f36",
+    "known_first_token_divergence_zero_based": 96,
+    "oracle_amendment": "The original R74 preregistration cited an older August oracle. R74 c1 exactly matched the current R70-R72 sequential output. The c2 recurrence was therefore validated against an explicitly derived, SHA-bound R72 oracle instead of misclassifying c1 as perturbative."
+  },
+  "artifact": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-boundary-trace-r74",
+    "base_image_id": "sha256:40fffaf5fb9597661802f683af061cfa909ae5bd751d9584bfacd73a0433a09c",
+    "trace_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-selected-row-trace-r75",
+    "trace_image_id": "sha256:83c818bd3bacca532342a8b9ada8ac0e3f7330016bdf2f4a62fcaa96678f9cf4",
+    "trace_hook": "experiments/qwen38-27b-b70/scripts/qwen38-piecewise-selected-row-trace-sitecustomize-r75.py",
+    "trace_hook_sha256": "1b403c57fa3c41f7da337e35289db5c2f828b76ac01c6fd209b9840bbfeff27a"
+  },
+  "configuration": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "trace_rank": 0,
+    "trace_row": 2,
+    "expected_packing": "index-c001 is admitted first; decode rows 0/1 belong to index-c001 and rows 2/3 belong to cache-c000"
+  },
+  "comparison": {
+    "r74_c1_decode_start_call": 4,
+    "r75_c2_decode_start_call": 6,
+    "alignment": "Compare R74 c1 row 0 at call 4+k to R75 c2 row 2 at call 6+k, first by backbone piece input and output hashes, then by eagle-head boundaries.",
+    "validity_gate": "The c2 cache-c000 output must recur with first divergence at token 96, index-c001 must remain exact, cached token counts must be zero, and no new GPU/Xe fault may occur."
+  },
+  "publication_boundary": {
+    "diagnostic_only": true,
+    "headline_or_curve_change_authorized": false,
+    "localmaxxing_submission": false
+  },
+  "host_caveat": "The current boot contains a pre-existing GPU reset, so localization is diagnostic until repeated on a clean boot."
+}

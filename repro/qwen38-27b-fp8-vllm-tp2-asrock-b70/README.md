@@ -835,6 +835,16 @@ are retained as diagnostic evidence, not as recipe dependencies. The public
 R50/R62 launch chains and the qualified single-user value remain unchanged.
 See the [R72 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-negative.md).
 
+R73-R77 then instrumented the execution path without changing model arithmetic.
+R73 established that this production profile has no active XPU CUDAGraph replay
+path. Piecewise compiled-segment tracing subsequently located the first
+meaningful c1-versus-c2 difference at the output of
+`gdn_attention_core_xpu` in decoder layer 1. Embedding, FP8/BA projection,
+layer-0 GDN output, and the layer-1 `z` input were exact. Uninitialized
+`empty_like` scratch bytes were explicitly excluded. R77 also proved packed
+row ownership from token IDs and withdrew the earlier scheduler-based R75/R76
+mapping. See the [R77 localization](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77.md).
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;

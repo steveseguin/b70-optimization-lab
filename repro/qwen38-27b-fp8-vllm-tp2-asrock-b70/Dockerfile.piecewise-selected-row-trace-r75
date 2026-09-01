@@ -1,0 +1,11 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-boundary-trace-r74
+FROM ${BASE_IMAGE}
+
+ARG TRACE_HOOK_SHA256
+COPY qwen38-piecewise-selected-row-trace-sitecustomize-r75.py /instrument/sitecustomize.py
+RUN test "$(sha256sum /instrument/sitecustomize.py | awk '{print $1}')" = "${TRACE_HOOK_SHA256}"
+
+ENV VLLM_XPU_PW_BOUNDARY_TRACE_ROW=2
+
+LABEL neural.download.diagnostic="qwen38-fp8-mtp1-piecewise-selected-row-trace-r75" \
+      neural.download.trace-hook.sha256="${TRACE_HOOK_SHA256}"

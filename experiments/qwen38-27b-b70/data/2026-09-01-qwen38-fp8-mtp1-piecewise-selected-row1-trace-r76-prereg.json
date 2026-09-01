@@ -1,0 +1,17 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-piecewise-selected-row1-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-piecewise-selected-row1-trace-20260901-r76",
+  "status": "preregistered-not-run",
+  "objective": "Resolve the packed-row mapping left ambiguous by R75 by tracing c2 row 1 with the identical hook and workload.",
+  "artifact": {
+    "base_image_id": "sha256:83c818bd3bacca532342a8b9ada8ac0e3f7330016bdf2f4a62fcaa96678f9cf4",
+    "trace_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-selected-row1-trace-r76",
+    "trace_image_id": "sha256:b26ecdd6a48fc217b4648cda0232b2b776bf9820cd01508ddc1c6b03c11e219e",
+    "trace_hook_sha256": "1b403c57fa3c41f7da337e35289db5c2f828b76ac01c6fd209b9840bbfeff27a",
+    "trace_row": 1
+  },
+  "fixed_workload": "Same c2 suite, current R72-derived oracle, output length, cache-zero gate, server shape, and hardware as R74/R75.",
+  "validity_gate": "cache-c000 must again differ first at token 96, index-c001 must remain exact, and no new GPU/Xe fault may occur.",
+  "decision": "If row 1 hashes align with the R74 c1 row-0 request sequence, use row 1 for boundary localization; otherwise test the remaining packed row without inferring a boundary.",
+  "publication_boundary": "Diagnostic only; no performance or quality claim."
+}

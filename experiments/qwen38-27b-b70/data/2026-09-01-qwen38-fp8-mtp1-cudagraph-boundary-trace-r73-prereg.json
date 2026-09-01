@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-cudagraph-boundary-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-cudagraph-boundary-trace-20260901-r73",
+  "status": "preregistered-not-run",
+  "objective": "Locate the first compiled model boundary whose rank-0 request row differs between the cache-c000 c1 authority and the production-shape c2 run.",
+  "artifact": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "base_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "trace_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-cudagraph-boundary-trace-r73",
+    "trace_image_id": "sha256:31bfa388e8b5a3ea45fb0ee376fca3c0fc6363cb60760c184bdc37afc18c4f02",
+    "trace_hook": "experiments/qwen38-27b-b70/scripts/qwen38-cudagraph-boundary-trace-sitecustomize-r73.py",
+    "trace_hook_sha256": "b58c5d5199b0f4677b473b965d00804cd0e5bf8cff1123f6a18175baf9ebf7c2",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "configuration": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false,
+    "trace_rank": 0,
+    "trace_row": 0,
+    "trace_scope": "CUDAGraph replay inputs and outputs only"
+  },
+  "inputs": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle": "experiments/qwen38-27b-b70/data/qwen38-fp8-tp2-http-concurrency-oracle-pilot-20260826-r1-attempt1/oracle-digests.json",
+    "oracle_sha256": "3499c3812ba1ad4cadda4a5503f00629c320e25fc6ce802a0774a31011447b1b"
+  },
+  "screen": {
+    "fresh_server_per_arm": true,
+    "concurrency_arms": [
+      1,
+      2
+    ],
+    "repeats": 1,
+    "output_tokens": 128,
+    "require_cached_tokens_zero": true,
+    "expected_control": "cache-c000 c1 matches the pinned oracle",
+    "required_recurrence": "cache-c000 c2 first differs at generated token 96",
+    "comparison": "align stable wrapper identity and replay order, then report the earliest input/output row SHA-256 mismatch"
+  },
+  "stop_rules": {
+    "trace_perturbation": "If c2 becomes oracle-exact, classify the full trace as synchronization-perturbative and reduce the traced boundary set before drawing a localization conclusion.",
+    "gpu_fault": "Stop on any new GPU, Xe, Level Zero, or collective fault.",
+    "no_match": "Do not infer a layer boundary unless request ordering and the token-96 recurrence are both proven."
+  },
+  "publication_boundary": {
+    "diagnostic_only": true,
+    "headline_or_curve_change_authorized": false,
+    "localmaxxing_submission": false
+  },
+  "host_caveat": "The current boot contains a pre-existing GPU reset, so even a useful localization remains diagnostic until clean-boot confirmation."
+}

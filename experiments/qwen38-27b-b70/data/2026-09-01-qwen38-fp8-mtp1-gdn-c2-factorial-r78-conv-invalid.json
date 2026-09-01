@@ -1,0 +1,30 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-c2-factorial-arm-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-c2-factorial-20260901-r78",
+  "arm": "conv-only",
+  "status": "invalid-unsupported-mixed-request-shape",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374"
+  },
+  "pre_request_gates": {
+    "model_direct_verification": "pass-66-of-66",
+    "fresh_compile_cache": true,
+    "xpu_graph": false
+  },
+  "failure": {
+    "harness_exit_code": 4,
+    "completed_requests": 0,
+    "message": "serial-exact GDN convolution requires one pure-spec request with two to nine verifier rows and one state-cache column per row",
+    "cause": "The R50 serial diagnostic gate rejects num_spec_decodes=2 before it can test the R77 two-request shape. This is a diagnostic limitation, not model output evidence."
+  },
+  "evidence": {
+    "result_sha256": "f59cf92df4aada892e51b8bdf4b8fc59d7e2fd1cf726594587996abf22c08305",
+    "new_gpu_or_xe_faults": 0
+  },
+  "next": "Extend the split serial controls narrowly to multiple pure-spec requests, then rerun conv-only and delta-only from fresh caches.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}

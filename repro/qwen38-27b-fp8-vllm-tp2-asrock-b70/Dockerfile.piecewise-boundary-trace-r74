@@ -1,0 +1,23 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62
+FROM ${BASE_IMAGE}
+
+ARG TRACE_HOOK_SHA256
+
+COPY sitecustomize.py /tmp/sitecustomize.py
+
+RUN test "$(sha256sum /tmp/sitecustomize.py | awk '{print $1}')" = "${TRACE_HOOK_SHA256}" \
+    && install -d -m 0755 /instrument \
+    && install -m 0644 /tmp/sitecustomize.py /instrument/sitecustomize.py \
+    && /opt/venv/bin/python -m py_compile /instrument/sitecustomize.py \
+    && rm -f /tmp/sitecustomize.py
+
+ENV PYTHONPATH=/instrument \
+    VLLM_XPU_PW_BOUNDARY_TRACE=1 \
+    VLLM_XPU_PW_BOUNDARY_TRACE_RANK=0 \
+    VLLM_XPU_PW_BOUNDARY_TRACE_MAX_LINES=30000 \
+    VLLM_XPU_PW_BOUNDARY_TRACE_TENSOR_LIMIT=4 \
+    VLLM_XPU_PW_BOUNDARY_TRACE_MAX_ROW_NUMEL=65536 \
+    VLLM_XPU_PW_BOUNDARY_TRACE_HEAD=4
+
+LABEL neural.download.trace.piecewise-boundary-r74.sha256="${TRACE_HOOK_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-piecewise-boundary-trace-r74"

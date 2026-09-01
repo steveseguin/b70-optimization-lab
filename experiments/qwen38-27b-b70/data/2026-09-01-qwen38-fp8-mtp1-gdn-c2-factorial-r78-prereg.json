@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-c2-factorial-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-c2-factorial-20260901-r78",
+  "status": "preregistered before either server launch",
+  "question": "R77 localized the first meaningful c1-versus-c2 divergence to the layer-1 gdn_attention_core_xpu output. Does serializing only the speculative convolution or only the delta-rule stage repair the exact two-request failure?",
+  "scope": "Diagnostic only. This boot follows an earlier GPU reset, so no throughput number is promotion evidence even if an arm passes output identity.",
+  "fixed_inputs": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "oracle_sha256": "95a477845815414cb1c87126b75043982b526488e9035f518270d451345d3803",
+    "model_revision": "qwen3.8-27b-fp8 direct-verified 66-file local ext4 payload"
+  },
+  "common_profile": {
+    "tensor_parallel_size": 2,
+    "speculative_tokens": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "concurrency": 2,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "draft_lm_head_int4": true,
+    "target_fp8_block_w8a16": true,
+    "rmsnorm_packed_serial_exact": true,
+    "inductor_deterministic": true,
+    "inductor_combo_kernels": false,
+    "persistent_gdn_scratch": true
+  },
+  "arms": [
+    {
+      "id": "conv-only",
+      "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT": 0,
+      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT": 0
+    },
+    {
+      "id": "delta-only",
+      "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT": 0,
+      "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT": 0
+    }
+  ],
+  "decision": "An arm identifies the responsible stage only if both 128-token arrays exactly match the R72 oracle, cached_tokens are both zero, the corresponding runtime marker is present, and no new GPU, kernel, OOM, or model-integrity error occurs. Throughput is recorded only as diagnostic instrumentation overhead and cannot be promoted from this boot."
+}

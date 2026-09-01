@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-selected-row-trace-r75
+FROM ${BASE_IMAGE}
+
+ENV VLLM_XPU_PW_BOUNDARY_TRACE_ROW=1
+
+LABEL neural.download.diagnostic="qwen38-fp8-mtp1-piecewise-selected-row1-trace-r76"

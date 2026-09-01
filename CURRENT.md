@@ -101,7 +101,16 @@ still reproduced `cache-c000`'s token-96 divergence, while the forced exact arm
 fell to about `12.758 tok/s`. This proves the remaining production-shape drift
 originates before the target vocabulary head. All R68-R72 results are negative,
 cache-zero diagnostics with no public speed or curve change. The next local
-target is a c1/c2 first-hidden-divergence trace, not another head repair.
+target was a c1/c2 first-hidden-divergence trace, not another head repair.
+R73 established that the active profile uses compiled execution with XPU Graph
+disabled. R74-R77 then proved packed-row ownership and localized the first
+meaningful c1/c2 difference to `gdn_attention_core_xpu` in decoder layer 1.
+Embedding, FP8/BA projection, layer-0 GDN output, and the layer-1 `z` input are
+exact; differing uninitialized `empty_like` scratch bytes are excluded. R78's
+first conv-only split attempt failed closed because the older serial control
+supports one speculative request only, not the two-request failure shape. The
+next implementation step is a narrow multi-request conv/delta diagnostic,
+followed by the strict clean-boot matrix if either stage repairs identity.
 Independent clean-host replay
 also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

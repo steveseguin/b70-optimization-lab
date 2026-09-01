@@ -1,0 +1,53 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-piecewise-row-map-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-piecewise-row-map-trace-20260901-r77",
+  "status": "preregistered-not-run",
+  "objective": "Prove the request-to-row mapping for the R74-R76 compiled-piece traces before identifying an earliest batch-dependent model boundary.",
+  "lineage": {
+    "r74_c1_output_sha256": "14f31e74b74869dc329b1f211bac8edd4af4a32bda1f0585d0606ae27b174b13",
+    "r74_c2_cache_output_sha256": "b58165ad1524f1e6d2155b21865fc65067c87ce254af7baaeb6d46c0e8807f36",
+    "known_first_token_divergence_zero_based": 96,
+    "problem": "R75 and R76 selected candidate packed rows, but scalar token IDs could not be hashed because the diagnostic attempted a uint8 view before flattening. Scheduler order alone is not sufficient evidence for row ownership."
+  },
+  "artifact": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-boundary-trace-r74",
+    "base_image_id": "sha256:40fffaf5fb9597661802f683af061cfa909ae5bd751d9584bfacd73a0433a09c",
+    "trace_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-piecewise-row-map-trace-r77",
+    "trace_image_id": "sha256:b781f5a302971baa7568cf273b57a303ea1cbe9494fa26d8c837c87c8c8a7f14",
+    "trace_hook": "experiments/qwen38-27b-b70/scripts/qwen38-piecewise-row-map-trace-sitecustomize-r77.py",
+    "trace_hook_sha256": "518185b87577246f03216ce6eefe9664f5260b5fa21bade4254b5fe15865aaee"
+  },
+  "configuration": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "trace_rank": 0,
+    "trace_row": 0,
+    "additional_capture": "For every one-dimensional tensor with at most 16 elements, record all values. Fix scalar row hashing by flattening before the uint8 view."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "concurrency": 2,
+    "repeats": 1,
+    "max_tokens": 128,
+    "temperature": 0,
+    "seed": 42,
+    "cache_gate": "cached_tokens must be zero"
+  },
+  "decision": {
+    "pass": "The c2 recurrence is unchanged and the logged packed token IDs permit deterministic alignment of the failing cache-c000 request with the R74 c1 request.",
+    "fail": "Any output change, nonzero cache use, or missing ID vector invalidates the localization attempt."
+  },
+  "publication_boundary": {
+    "diagnostic_only": true,
+    "headline_or_curve_change_authorized": false,
+    "localmaxxing_submission": false
+  },
+  "host_caveat": "The current boot contains a pre-existing GPU reset, so localization remains diagnostic until repeated on a clean boot."
+}

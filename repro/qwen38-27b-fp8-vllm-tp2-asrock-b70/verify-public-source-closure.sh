@@ -79,6 +79,34 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-result.json
   experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-negative.md
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-cudagraph-boundary-trace-r73-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-cudagraph-boundary-trace-r73-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-cudagraph-boundary-trace-r73-invalid.md
+  experiments/qwen38-27b-b70/scripts/qwen38-cudagraph-boundary-trace-sitecustomize-r73.py
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-cudagraph-boundary-trace-r73-server.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.cudagraph-boundary-trace-r73
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-cudagraph-boundary-trace-r73-image.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-trace-r74-prereg.json
+  experiments/qwen38-27b-b70/scripts/qwen38-piecewise-boundary-trace-sitecustomize-r74.py
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-piecewise-boundary-trace-r74-server.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.piecewise-boundary-trace-r74
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-piecewise-boundary-trace-r74-image.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-piecewise-selected-row-trace-r75-prereg.json
+  experiments/qwen38-27b-b70/scripts/qwen38-piecewise-selected-row-trace-sitecustomize-r75.py
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.piecewise-selected-row-trace-r75
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-piecewise-selected-row-trace-r75-image.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-piecewise-selected-row1-trace-r76-prereg.json
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.piecewise-selected-row1-trace-r76
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-piecewise-selected-row1-trace-r76-image.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-piecewise-row-map-trace-r77-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-piecewise-boundary-localization-r77.md
+  experiments/qwen38-27b-b70/scripts/qwen38-piecewise-row-map-trace-sitecustomize-r77.py
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.piecewise-row-map-trace-r77
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-piecewise-row-map-trace-r77-image.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-factorial-r78-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-factorial-r78-conv-invalid.json
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
 )

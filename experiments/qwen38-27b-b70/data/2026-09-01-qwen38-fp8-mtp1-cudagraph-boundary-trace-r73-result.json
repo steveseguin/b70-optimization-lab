@@ -1,0 +1,26 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-cudagraph-boundary-trace-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-cudagraph-boundary-trace-20260901-r73",
+  "status": "invalid-no-active-cudagraph-runtime",
+  "trace_image_id": "sha256:31bfa388e8b5a3ea45fb0ee376fca3c0fc6363cb60760c184bdc37afc18c4f02",
+  "pre_request_gate": {
+    "model_direct_verification": "pass",
+    "http_requests_sent": 0,
+    "trace_records": 0,
+    "new_gpu_or_xe_faults": 0
+  },
+  "observed_runtime": {
+    "vllm_xpu_enable_xpu_graph": 0,
+    "engine_cudagraph_mode": "NONE",
+    "compilation_mode": "VLLM_COMPILE"
+  },
+  "interpretation": "The qualified R62 lane uses compiled execution without an XPU CUDAGraph runtime, so a CUDAGraph replay hook cannot observe the active path. The server was stopped before any benchmark request and this arm provides no performance or output evidence.",
+  "evidence": {
+    "pre_request_server_log_sha256": "56f17a08b9eecaa9b8038be739284bacf3b370cb68c8fe3c4ecefe9e9a8aea9c"
+  },
+  "next": "Instrument PiecewiseBackend.__call__, which dispatches the active compiled segments even when cudagraph_mode is NONE.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}

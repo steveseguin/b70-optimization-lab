@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-piecewise-boundary-localization-result.v1",
+  "campaigns": [
+    "qwen38-fp8-tp2-mtp1-piecewise-boundary-trace-20260901-r74",
+    "qwen38-fp8-tp2-mtp1-piecewise-selected-row-trace-20260901-r75",
+    "qwen38-fp8-tp2-mtp1-piecewise-selected-row1-trace-20260901-r76",
+    "qwen38-fp8-tp2-mtp1-piecewise-row-map-trace-20260901-r77"
+  ],
+  "status": "diagnostic-localization-complete-clean-boot-repeat-required",
+  "configuration": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "compiled_execution": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false,
+    "output_tokens": 128
+  },
+  "oracle_amendment": {
+    "original_r74_oracle": "stale August oracle; not used for the final interpretation",
+    "matched_r72_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "matched_r72_oracle_sha256": "95a477845815414cb1c87126b75043982b526488e9035f518270d451345d3803"
+  },
+  "output_recurrence": {
+    "r77_aggregate_tok_s_diagnostic_only": 35.14602362739864,
+    "cached_tokens": [0, 0],
+    "completion_tokens": [128, 128],
+    "oracle_exact": "1/2",
+    "cache_c000_response_sha256": "b58165ad1524f1e6d2155b21865fc65067c87ce254af7baaeb6d46c0e8807f36",
+    "index_c001_response_sha256": "a1a53e084eca811c2b6efa3f79c6bfa02f65ebc8ce95cd2ea2632293bba1b4b4",
+    "cache_c000_first_token_mismatch_zero_based": 96,
+    "cache_c000_oracle_token": 348,
+    "cache_c000_observed_token": 2972
+  },
+  "row_mapping": {
+    "r77_backbone_call": 5,
+    "packed_token_ids": [3833, 14542, 271, 9923],
+    "cache_c000_rows": [0, 1],
+    "index_c001_rows": [2, 3],
+    "r74_c1_alignment": "R74 c1 backbone call 5 row 0 aligns with R77 c2 backbone call 5 row 0. Earlier scheduler-based R75/R76 row assumptions are withdrawn."
+  },
+  "boundary": {
+    "piece_0_submod_0": {
+      "meaningful_outputs_exact": true,
+      "fp8_in_projection_row_sha256": "ccbbce113c9433ee2e54341931f74e513e160d40a3eb83988ac0baedbbf8cc28",
+      "ba_projection_row_sha256": "812a6e8aaf66e407a243583dd782cf44e548ff7274f1e4b8e8c5aa58f584cce2",
+      "scratch_difference_ignored": "output slot 1 is torch.empty_like scratch before the custom op and is not initialized model data"
+    },
+    "piece_1_submod_2": {
+      "layer_0_gdn_core_output_exact": true,
+      "core_attn_out_input_row_sha256": "1cf88815934588a82cd1f2a2ccc568dce659e515df92e7e72ea270539ee99c4b",
+      "z_input_row_sha256": "5f27e5dde6ea8e625aec177f21cf79c2b87dad99c9073e359d9dbffae00f9c9b"
+    },
+    "piece_2_submod_4": {
+      "first_meaningful_divergence": true,
+      "operation_before_piece": "decoder layer 1 gdn_attention_core_xpu",
+      "c1_core_attn_out_input_row_sha256": "a5cc5743462c5087c20bae49a95dba465adbcc2830bffa0d743b4595d0b41013",
+      "c2_core_attn_out_input_row_sha256": "e80212288ce7e743e7c96711c26e2320459cc0044687d0eee0a7af4bc44d7f26",
+      "z_input_exact": true,
+      "z_input_row_sha256": "644f5e5fbb14ed2f0800354d61f224ceb229f4705ff344924da8da48eaf97e80"
+    }
+  },
+  "interpretation": "The earliest meaningful c1-versus-c2 difference is the output of gdn_attention_core_xpu in decoder layer 1. Embedding, FP8 input projection, BA projection, layer-0 GDN core, and the layer-1 z input are exact. Uninitialized empty_like scratch differences are explicitly excluded.",
+  "evidence": {
+    "r74_c1_result_sha256": "ce8b3e34680fe443a4508de6bde48ced1fb0e30fe45e8c672d9b4d533ee51499",
+    "r74_c2_result_sha256": "7a54b236ea432faf0fb29e0572efcf9c8ef33f717e8a00c08cb84a1c657e1be9",
+    "r77_c2_result_sha256": "c589ac326313220a2724b507c79fdb7def4a3595eff082adbdbcd92ee1a01237",
+    "r74_c1_trace_records": 5159,
+    "r74_c2_trace_records": 5226,
+    "r77_c2_trace_records": 5293,
+    "new_gpu_or_xe_faults": 0
+  },
+  "limitations": [
+    "The current boot contains a pre-existing GPU reset, so the localization must be repeated on a clean boot before a fix can be promoted.",
+    "R75 and R76 reproduced the output failure but their scalar hashing bug prevented reliable row ownership; they are retained as inconclusive diagnostic lineage.",
+    "Instrumented throughput is not eligible for a public speed claim."
+  ],
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}
