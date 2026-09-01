@@ -27,6 +27,8 @@ if os.environ.get("VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR") == "1":
 
     def _in_repair_band(tensor):
         return (
+            os.environ.get("VLLM_XPU_QWEN38_DUMMY_RUN_ACTIVE") != "1"
+            and
             tensor.device.type == "xpu"
             and tensor.ndim == 2
             and 32 < tensor.shape[0] < PAD_TOKENS

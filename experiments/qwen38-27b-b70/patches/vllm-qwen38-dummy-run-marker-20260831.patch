@@ -1,0 +1,24 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 55fafc2..5d17271 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -256,0 +257,17 @@ logger = init_logger(__name__)
++def _qwen38_mark_dummy_run(func):
++    @functools.wraps(func)
++    def wrapped(*args, **kwargs):
++        marker = "VLLM_XPU_QWEN38_DUMMY_RUN_ACTIVE"
++        previous = os.environ.get(marker)
++        os.environ[marker] = "1"
++        try:
++            return func(*args, **kwargs)
++        finally:
++            if previous is None:
++                os.environ.pop(marker, None)
++            else:
++                os.environ[marker] = previous
++
++    return wrapped
++
++
+@@ -5924,0 +5942 @@ class GPUModelRunner(LoRAModelRunnerMixin):
++    @_qwen38_mark_dummy_run
