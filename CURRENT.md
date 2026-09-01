@@ -84,8 +84,12 @@ D70 passed startup and began the first strict request, then rank 1 lost its
 device asynchronously before the first response completed; no performance row
 exists. Xe logged 513 fault responses, seven CAT errors, and one reset. A
 post-teardown matrix health probe then hung and added a GPU0 BCS fault, so the
-host requires a reboot before D71. D71 enables the hook's existing barriers
-only around repaired real-prefill projections; decode remains barrier-free.
+host required a reboot before D71. D71 enabled the hook's existing barriers
+and localized the first-request loss exactly to the rank-1 M=512 padded dense
+`down_proj`; the following sync surfaced device loss. The prior M=128 option is
+not viable because D58 already proved a response-token change. D72 is the clean
+post-reboot control: full strict TP2/MTP1 with the now-proven startup fix but
+projection repair disabled. It must still match the frozen MTP0 oracle or fail.
 See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
 [`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
