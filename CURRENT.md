@@ -3379,3 +3379,21 @@ combine `twoshots` only after the remaining dense hotspot screen closes. See
 the [collective result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-allreduce-twoshots-component-positive.md),
 [HC parity result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-existing-triton-parity-negative.md),
 and [grouped graph result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-up-grouped-xpu-graph-negative.md).
+The remaining 36-layer GDN QKVZ dense hotspot also has no current exact win:
+native graph APIs stayed near `43 us`, while the `22.486 us` packed-layout
+path, grouped GEMM, and faster multistream forms each changed at least one BF16
+result. The production dense path therefore remains unchanged; `twoshots` is
+the sole A48 inference change. See the
+[dense result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-gdn-qkvz-dense-xpu-graph-negative.md).
+A48 is now the frozen endpoint finalist: attempt 48/port 19720, A47's complete
+host guard and lossless 2K battery, and `twoshots` as the sole enabled
+inference-selector change. It pins the current clean vLLM head and proves the
+intervening opt-in phase-config path is inactive. No reboot is required. See
+the [A48 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a48-twoshots-lossless-2k-prereg.md).
+The host then froze after the real-weight dense component screen, before A48
+launch. All attempt-48 paths were absent after the user restart. The prior
+boot journal again showed repeated corrected local-NVMe receiver events. The
+external evidence drive was remounted, all B70 paths were returned to `on`,
+and A48 now records the post-performance-policy AER baseline and aborts on any
+increment instead of requiring a meaningless literal zero. See the
+[recovery note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-dense-screen-host-freeze-and-a48-recovery.md).

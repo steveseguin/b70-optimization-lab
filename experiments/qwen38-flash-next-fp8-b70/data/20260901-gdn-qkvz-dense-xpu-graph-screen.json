@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "classification": "component_performance_negative_under_exactness_rule",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+    "model_config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "model_shard": "model-00001-of-00131.safetensors",
+    "model_shard_sha256": "774f0ceeadb40d165f2b3ff397d5f3840e6ca8fcb8f3d39d8acb4fea9e52c941",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "torch": "2.11.0+xpu",
+    "onednn": "3.10.2 f1d471933dc852f956fd05389f9313c7148783d5",
+    "driver": "1.15.38308",
+    "device": "one Intel Arc Pro B70"
+  },
+  "hotspot": {
+    "operation": "TP4-local fused GDN in_proj_qkvz",
+    "layer_count": 36,
+    "shape": "BF16[1,2560] x BF16[2560,4096]",
+    "layer0_rank0_weight_sha256": "b1c0892973ebf3a56999ddb17e4629f3c3f7479914cc1f620c69c2fc4c5d9597",
+    "rank0_weight_rows": "qkv[0:512], qkv[2048:2560], qkv[4096:5632], z[0:1536] concatenated in q/k/v/z order"
+  },
+  "protocol": {
+    "seed": 20260901,
+    "changing_input_exact_replays": 100,
+    "timing_batches": 15,
+    "iterations_per_batch": 500,
+    "authority": "eager torch.nn.functional.linear with the original row-contiguous BF16 weight",
+    "execution": "separate static XPU graphs with a copied changing input and synchronization after each timing batch"
+  },
+  "native_api_results": [
+    {"candidate": "F.linear", "median_us": 43.005648, "exact": true},
+    {"candidate": "torch.mm", "median_us": 42.975010, "exact": true},
+    {"candidate": "torch.matmul input-by-weight", "median_us": 43.519730, "exact": true},
+    {"candidate": "torch.mv", "median_us": 42.992844, "exact": true},
+    {"candidate": "torch.matmul weight-by-vector", "median_us": 42.987674, "exact": true},
+    {"candidate": "torch.addmv beta0", "median_us": 45.319284, "exact": true},
+    {"candidate": "torch.compile fullgraph static", "median_us": 43.026602, "exact": true}
+  ],
+  "packed_layout_results": {
+    "control_median_us": 43.502356,
+    "weight_layout": "contiguous BF16[2560,4096]",
+    "candidates": [
+      {"candidate": "mm", "median_us": 22.486356, "latency_reduction_percent": 48.3100, "exact": false},
+      {"candidate": "matmul", "median_us": 23.777456, "latency_reduction_percent": 45.3421, "exact": false},
+      {"candidate": "F.linear transposed view", "median_us": 23.658734, "latency_reduction_percent": 45.6151, "exact": false},
+      {"candidate": "batch1 bmm", "median_us": 23.406160, "latency_reduction_percent": 46.1956, "exact": false}
+    ],
+    "first_input_mismatch_count": 1,
+    "first_input_max_abs_difference": 0.00000762939453125
+  },
+  "grouped_result": {
+    "control_median_us": 43.613066,
+    "candidate_median_us": 42.314350,
+    "latency_reduction_percent": 2.977814,
+    "exact": false,
+    "first_input_mismatch_count": 1,
+    "first_input_max_abs_difference": 0.0000000009313225746154785
+  },
+  "multistream_results": [
+    {"chunks": 2, "median_us": 48.590530, "exact": true},
+    {"chunks": 4, "median_us": 32.182010, "exact": false, "first_mismatch_count": 1, "max_abs_difference": 0.00000762939453125},
+    {"chunks": 8, "median_us": 39.874490, "exact": false, "first_mismatch_count": 1, "max_abs_difference": 0.00000762939453125}
+  ],
+  "interpretation": {
+    "onednn_authority_layout": "T-layout catalog strategy",
+    "fast_packed_layout": "N-layout catalog strategy with a different accumulation/rounding path",
+    "future_research": "Xe2 skinny/T-layout specialization for M1 N4096 K2560 preserving the authority reduction order",
+    "evidence_packaging": "inline component output only; identities and full protocol are recorded here, but no external raw packet was created"
+  },
+  "decision": {
+    "qualified_component_positive": false,
+    "action": "keep the production dense path unchanged; do not include any candidate in A48",
+    "protected_results_changed": false
+  }
+}
