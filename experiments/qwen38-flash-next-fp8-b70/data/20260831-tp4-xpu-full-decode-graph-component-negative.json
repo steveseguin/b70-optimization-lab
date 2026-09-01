@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "closed_correctness_negative",
-  "classification": "tp4_xccl_xpu_graph_replay_not_reusable",
+  "status": "threshold_specific_correctness_negative",
+  "classification": "tp4_xccl_xpu_graph_replay_not_reusable_at_ll_threshold_8192",
   "identity": {
     "repository_commit": "208a0f249d3b6ded6200f39f71aff4e97825b3f9",
     "torch": "2.11.0+xpu",
@@ -35,6 +35,6 @@
     "swap_recovered": true,
     "reboot_required": false
   },
-  "interpretation": "TP4 XCCL inside XPUGraph is not safely reusable on this stack. CompilationMode.NONE plus FULL_DECODE_ONLY cannot advance to a model endpoint because its mandatory collective prerequisite failed exact changing-input replay.",
+  "interpretation": "TP4 XCCL inside XPUGraph is not safely reusable with CCL_SYCL_ALLREDUCE_LL_THRESHOLD=8192. A later identity audit found that the protected endpoint uses threshold 4096 and a different collective protocol, so this result does not close the production FULL_DECODE_ONLY route.",
   "protected_results_changed": false
 }
