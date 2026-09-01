@@ -62,6 +62,13 @@ R60 then kept compiled all-reduce opaque while retaining clone plus explicit
 `Work.wait()`. It passed 12/12 strict and 18/18 depth-array exactness, but
 measured `51.756541 tok/s` short and a `-0.014%` median decode delta across
 2K-32K, so it is rejected as neutral and the R50 collective path remains.
+R61 recorded exact shapes: all 1,056 per-rank collectives were 20 KiB FP16
+`[2,5120]`. Three isolated repeats showed no benefit from a higher LL threshold
+and made two-shots consistently slower, so that transfer is closed without an
+endpoint load. The trace also found one-row drafter and two-row verifier
+full-vocabulary FP16 projections at about 2.13 ms each under profiling. The
+next candidate reduces only the draft projection; the verifier remains on the
+selected FP16 path and every complete varied-prompt output must still match.
 Promotion of the R56 depth results still requires two clean-boot repeats.
 Independent clean-host replay
 also remains pending. Recovery order is process

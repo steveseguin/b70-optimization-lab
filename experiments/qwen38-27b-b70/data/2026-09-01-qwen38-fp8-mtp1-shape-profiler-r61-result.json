@@ -1,0 +1,107 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-shape-profiler-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-shape-profiler-20260901-r61",
+  "status": "diagnostic-complete",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "record_shapes": true
+  },
+  "request": {
+    "prompt_class": "unrepeated technical prose",
+    "prompt_tokens": 77,
+    "completion_tokens": 96,
+    "cached_tokens": 0,
+    "finish_reason": "length"
+  },
+  "bounded_trace": {
+    "profiled_worker_iterations": 8,
+    "rank0": {
+      "fp8_gemm_w8a16_calls": 2080,
+      "vllm_all_reduce_calls": 1056,
+      "c10d_allreduce_calls": 1056,
+      "allreduce_shape": "FP16 [2,5120] (20480 bytes)",
+      "allreduce_device_duration_us": 295331.659,
+      "allreduce_average_device_duration_us": 279.670132,
+      "full_vocab_fp16_mm": [
+        {"shape": "[1,5120]@[5120,124160]", "calls": 8, "average_device_duration_us": 2128.958},
+        {"shape": "[2,5120]@[5120,124160]", "calls": 8, "average_device_duration_us": 2127.043875}
+      ]
+    },
+    "rank1": {
+      "fp8_gemm_w8a16_calls": 2080,
+      "vllm_all_reduce_calls": 1056,
+      "c10d_allreduce_calls": 1056,
+      "allreduce_shape": "FP16 [2,5120] (20480 bytes)",
+      "allreduce_device_duration_us": 340000.584,
+      "allreduce_average_device_duration_us": 321.97025,
+      "full_vocab_fp16_mm": [
+        {"shape": "[1,5120]@[5120,124160]", "calls": 8, "average_device_duration_us": 2129.114125},
+        {"shape": "[2,5120]@[5120,124160]", "calls": 8, "average_device_duration_us": 2133.997}
+      ]
+    },
+    "timing_warning": "Profiler device durations include profiler perturbation and are diagnostic attribution, not endpoint or component latency claims."
+  },
+  "allreduce_component_screen": {
+    "mode": "clone",
+    "payload_bytes": 20480,
+    "dtype": "fp16",
+    "iterations_per_trial": 10000,
+    "world_size": 2,
+    "current_ring_threshold_4096": [
+      {"average_ms": 0.016, "payload_GBps": 1.27},
+      {"average_ms": 0.016, "payload_GBps": 1.29},
+      {"average_ms": 0.016, "payload_GBps": 1.28}
+    ],
+    "ring_threshold_32768": [
+      {"average_ms": 0.016, "payload_GBps": 1.26},
+      {"average_ms": 0.016, "payload_GBps": 1.27},
+      {"average_ms": 0.016, "payload_GBps": 1.26}
+    ],
+    "twoshots_threshold_32768": [
+      {"average_ms": 0.017, "payload_GBps": 1.20},
+      {"average_ms": 0.017, "payload_GBps": 1.22},
+      {"average_ms": 0.017, "payload_GBps": 1.19}
+    ],
+    "decision": "rejected-component-negative",
+    "reason": "Raising the low-latency threshold did not improve the exact 20 KiB production payload; two-shots was consistently slower."
+  },
+  "decision": {
+    "public_headline_or_curve_changed": false,
+    "selected_default": "R50 graph-off with the current 4096-byte LL threshold and ring algorithm",
+    "next_target": "Reduce the draft-only [1,5120] by [5120,124160] vocabulary projection while leaving the target verifier projection unchanged.",
+    "current_boot": "diagnostic-only because the boot journal contains an earlier GPU reset"
+  },
+  "raw_artifact_hashes": {
+    "request_sha256": "d3c65ac8369d7c8a5590d3ea8e723151b23d781cf969ca6e4f3551a08613dcd2",
+    "rank0_trace_sha256": "91d5366b69db8287c4c86dff27c11ee55b8113ed07d9d3292fe602a826bd7696",
+    "rank1_trace_sha256": "83d956fcae8dc45ad9e6918a1b31e2bfc3eb6545830866b700cbf045204741ad",
+    "rank0_profiler_summary_sha256": "b4b4987fdf25c9693294befc8e074b72e93e28676f6dd309f4b102cd28169581",
+    "rank1_profiler_summary_sha256": "8f4cdafc3e1de437bf5a5b394e0e7131735f6abf240b27f9d31b08ca201439d6",
+    "server_log_sha256": "0d456f9ac61f0e4cb0300dece048088140f56b63cdb4c7358c01f00178a74fa7",
+    "allreduce_trial_hashes": {
+      "current": [
+        "c46e076c866ebc6aceaa5938b66697db99ad8da26138327944781301a5dca5c8",
+        "25e5e84d2669a4b87edc42847dc02fbc7af0339a6edf9d9e955fe9ae843ac5b2",
+        "b2ac4dc18f6bf6e20f361755c09b3cd4a5cabec960071a622bbb0975e915d3d2"
+      ],
+      "ring_threshold_32768": [
+        "2356b8a695c70af8dc3ad6bd2305776b2a0d65e110f3ec939dcbac614e1a3e0f",
+        "da7aa3e9d0e9ec9ded7fccc69759e9d03b285c7171b11b633344694d383b411a",
+        "157ddb4edcbc7d81fb7d315b24a73c00b68b570b530655eff6318300d428d898"
+      ],
+      "twoshots_threshold_32768": [
+        "5c7047501c9313f6c21c9bb0a7b51433f90705a30d507b7eb6f69ff543b66f93",
+        "792fc48ff9ad7ea12422083d64f94e2fcf90c00ac68bda15d7f1ffb913fbe381",
+        "34874a9b7e481ccb2d7176b5abeacaff5e7959565408e0dd8ee69898e0063d1d"
+      ]
+    }
+  }
+}

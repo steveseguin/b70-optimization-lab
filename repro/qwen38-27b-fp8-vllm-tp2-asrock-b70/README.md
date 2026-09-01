@@ -735,6 +735,14 @@ but measured `51.756541 tok/s` short and a `-0.014%` median change across
 2K-32K. The treatment is robust but neutral, so it remains default-off. See the
 [R60 result](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-compiled-allreduce-r60-negative.md).
 
+R61 recorded exact operator shapes on the accepted image. Every TP collective
+was FP16 `[2,5120]` (20 KiB). Three isolated repeats found no benefit from
+raising the oneCCL low-latency threshold, while two-shots was consistently
+slower, so neither setting was promoted. The same trace identified separate
+full-vocabulary FP16 projections for the one-row drafter and two-row verifier;
+the next candidate targets only the drafter and leaves verifier computation
+unchanged. See the [R61 shape report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-shape-profiler-r61.md).
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;
