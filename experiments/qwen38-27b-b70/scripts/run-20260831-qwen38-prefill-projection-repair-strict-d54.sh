@@ -25,16 +25,23 @@ container_memory=${CONTAINER_MEMORY:-12g}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-2048}
 speculative_config_json=${SPECULATIVE_CONFIG_JSON:-}
 require_dummy_sampler_stage_sync=${REQUIRE_DUMMY_SAMPLER_STAGE_SYNC:-0}
+enable_projection_repair=${ENABLE_PROJECTION_REPAIR:-1}
+startup_only=${STARTUP_ONLY:-0}
 journal_start=$(date +%s)
 
 fail(){ printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 cleanup(){
   local rc=$?
   set +e
-  docker logs "$container" >"$root/server-final.log" 2>&1
+  if [[ -d "$root" ]]; then
+    if docker inspect "$container" >/dev/null 2>&1; then
+      docker logs "$container" >"$root/server-final.log" 2>&1
+    fi
+    journalctl -k --since "@${journal_start}" --no-pager >"$root/kernel-journal.log" 2>"$root/kernel-journal.err"
+    printf '%s\n' "$rc" >"$root/attempt.rc"
+  fi
   docker rm -f "$container" >/dev/null 2>&1
-  journalctl -k --since "@${journal_start}" --no-pager >"$root/kernel-journal.log" 2>"$root/kernel-journal.err"
-  printf '%s\n' "$rc" >"$root/attempt.rc"
+  trap - EXIT
   exit "$rc"
 }
 trap cleanup EXIT
@@ -42,6 +49,8 @@ trap 'exit 130' INT TERM HUP
 
 [[ -f "$hook" && -f "$prereg" && -f "$suite" && -f "$bench" && -f "$canaries" ]] || fail 'missing frozen input'
 [[ "$require_dummy_sampler_stage_sync" == 0 || "$require_dummy_sampler_stage_sync" == 1 ]] || fail 'stage-sync requirement must be 0/1'
+[[ "$enable_projection_repair" == 0 || "$enable_projection_repair" == 1 ]] || fail 'projection-repair switch must be 0/1'
+[[ "$startup_only" == 0 || "$startup_only" == 1 ]] || fail 'startup-only switch must be 0/1'
 [[ -d "$model" && ! -L "$model" && "$(findmnt -n -o FSTYPE -T "$model")" == ext4 ]] || fail 'model must be local ext4'
 [[ ! -e "$root" && ! -e "$cache" ]] || fail 'output or cache root already exists'
 [[ "$(docker image inspect "$image" --format '{{.Id}}')" == "$image_id" ]] || fail 'image identity mismatch'
@@ -77,7 +86,7 @@ docker run -d --name "$container" --ulimit core=0 --memory "$container_memory" -
   --group-add video --group-add render --security-opt label=disable --ipc=host --shm-size=16g \
   --publish "127.0.0.1:${port}:8000" --volume "$model:/model:ro" \
   --volume "$cache:/run-cache" --volume "$hook:/instrument/sitecustomize.py:ro" \
-  --env PYTHONPATH=/instrument --env VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=1 \
+  --env PYTHONPATH=/instrument --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_REPAIR=$enable_projection_repair" \
   --env "VLLM_XPU_QWEN38_PREFILL_PROJECTION_SYNCHRONIZE=$projection_synchronize" \
   --env "ZE_AFFINITY_MASK=$gpu_mask" --env "ONEAPI_DEVICE_SELECTOR=$device_selector" \
   --env VLLM_TARGET_DEVICE=xpu --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
@@ -114,6 +123,37 @@ fi
 if [[ -n "$speculative_config_json" ]]; then
   spec_depth=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["num_speculative_tokens"])' "$speculative_config_json")
   grep -Fq "num_spec_tokens=${spec_depth}" "$root/server-startup.log" || fail 'speculator depth receipt missing'
+fi
+
+if [[ "$startup_only" == 1 ]]; then
+  curl -fsS "http://127.0.0.1:${port}/health" >"$root/post-health.json"
+  python3 - "$root/startup-qualification.json" "$enable_projection_repair" "$tensor_parallel_size" <<'PY'
+import json
+import pathlib
+import sys
+
+pathlib.Path(sys.argv[1]).write_text(
+    json.dumps(
+        {
+            "status": "passed-startup-only-no-performance-result",
+            "projection_repair_enabled": sys.argv[2] == "1",
+            "tensor_parallel_size": int(sys.argv[3]),
+            "requests_served": 0,
+            "promotion_authorized": False,
+        },
+        indent=2,
+        sort_keys=True,
+    )
+    + "\n"
+)
+PY
+  docker rm -f "$container" >/dev/null
+  journalctl -k --since "@${journal_start}" --no-pager >"$root/kernel-journal.log"
+  if grep -Eqi 'xe .*reset|xe .*fault|xe .*timeout|xe .*timed out|xe .*fatal|xe .*wedged|device lost|out of memory|oom-kill|EXT4-fs error|I/O error' "$root/kernel-journal.log"; then
+    fail 'new GPU, OOM, filesystem, or I/O fault event detected'
+  fi
+  printf 'PASS startup-only diagnostic evidence at %s\n' "$root"
+  exit 0
 fi
 
 python3 "$bench" --base-url "http://127.0.0.1:${port}" --model "$served" \

@@ -40,16 +40,22 @@ diagnostic device-wide barriers reduced median TTFT from 380.687 ms to
 24.80 tok/s TP1 and 18.07 tok/s TP2, are correctness baselines—not promoted
 speed recommendations.
 
-TP2/MTP1 attempt D61 loaded the target and drafter but the second B70 began
-issuing CCS page faults and engine-memory CAT errors during vLLM's profile
-run. The error surfaced as `UR_RESULT_ERROR_DEVICE_LOST` before any request was
-served. An isolated function-level reset did not recover that device; Xe
-declared PCI function `0000:e3:00.0` wedged. **Do not launch another GPU job in
-this boot.** Reboot the host, independently gate basic compute on both B70s,
-then run the synchronized D62 MTP1 localization arm. A passing D62 authorizes a
-fresh no-barrier MTP1 replay; a new Xe fault stops the lane for driver/runtime
-analysis. The exact D61 failure is recorded in
-[`experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-strict-d61-result.md`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-strict-d61-result.md).
+TP2/MTP1 attempts D61 and D62 both loaded the target and drafter but lost TP
+rank 1's Level Zero device during vLLM's profile run, before serving any
+request. D62 ran after a full reboot and independent compute gates on both
+B70s. Its explicit synchronization first surfaced the error at entry to a
+dense MLP, before the dummy sampler, while Xe logged 594 unsuccessful fault
+responses, 27 CCS engine-memory CAT errors, and one CCS reset on PCI function
+`0000:e3:00.0`. Both B70s returned to normal state and passed independent
+compute after teardown. The next bounded arm is D63: the identical
+TP2/MTP1/stage-synchronized startup with only the M=512 projection-repair hook
+disabled. It is startup-only and cannot yield a performance claim. A D63
+device loss makes the projection repair non-causal and redirects localization
+to the preceding model operation; a clean D63 startup implicates the repair's
+profile-shape interaction. See the
+[`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
+and
+[`D63 preregistration`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-prereg.md).
 
 ## Qualified Qwen3.8 One-Card Package Work
 
