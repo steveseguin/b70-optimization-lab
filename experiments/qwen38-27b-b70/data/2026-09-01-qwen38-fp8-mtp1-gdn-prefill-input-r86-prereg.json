@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-input-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-input-20260901-r86",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Determine whether the layer-0 c1/c2 cache-state divergence localized by R85 begins in projected prefill inputs or inside the XPU GDN prefill kernels.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-state-input-trace-r85",
+    "base_image_id": "sha256:142e983d6f948db43db5d1e27a0d40f803c8d29700e9c626d49451296a70bacc",
+    "r85_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-result.json"
+  },
+  "instrumentation": {
+    "gate": "VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE",
+    "scope": "First pure-prefill call per GDN layer and prefill request-count shape in each TP process.",
+    "payload_per_request": [
+      "layer name and TP rank",
+      "prefill request index and token indices",
+      "state-cache destination index",
+      "SHA-256, shape, and dtype of projected qkvz rows",
+      "SHA-256, shape, and dtype of projected ba rows"
+    ],
+    "raw_tensor_logging": false,
+    "production_default_change": false
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 in the same fresh server.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true
+  },
+  "decision": "Compare c1 request 0 with c2 request 0 within each TP rank. If layer-0 qkvz and ba both match, localize to GDN prefill arithmetic. If qkvz differs while ba matches, localize to the qkvz projection. If both differ, trace the layer-0 hidden input before modifying arithmetic.",
+  "promotion_boundary": "Diagnostic only. Device-to-host hashing synchronizes execution and invalidates throughput measurement."
+}
