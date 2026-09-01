@@ -1,0 +1,83 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-output-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-output-request-isolation-20260901-r91",
+  "status": "completed-rejected-regression",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-output-request-isolation-r91-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-output-request-isolation-r91",
+    "image_id": "sha256:2a423365243d1d3fe015ca481ea680d4072dbd357fe2e352084bbd967bda5779",
+    "base_r90_image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-output-request-isolation-r91-20260901.patch",
+    "vllm_patch_sha256": "f7bdd41f58a6b676fc0f4dcc4f517f1d2aabb3866eb4e46cc8b703894d01d7d2",
+    "installed_qwen_gdn_sha256": "3dcd2cfb3485462807b3c87fe8d51373845072ed342b2f061978411f8220def4"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "0/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 27.099192061005894
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 61.29435404760283
+    },
+    "cache_prompt_first_difference": {
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    },
+    "index_prompt_exact": true
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "dispatch_records": {
+      "concurrency_1_packed": 96,
+      "concurrency_2_request_isolated": 96
+    },
+    "cache_prompt_c1_vs_c2_within_rank": {
+      "layer_0_core_attn_out_exact": true,
+      "layer_0_z_exact": true,
+      "same_result_on_both_tp_ranks": true,
+      "core_attn_out_exact_rank_layer_pairs": "2/96",
+      "z_exact_rank_layer_pairs": "2/96",
+      "first_different_layer": 1
+    },
+    "token_sequence_comparison": {
+      "r91_c1_cache_equals_r91_c2_cache": true,
+      "r91_c1_cache_equals_r90_c2_cache": true,
+      "r91_c2_index_equals_r90_c2_index": true,
+      "r91_c1_cache_equals_r90_c1_cache": false
+    },
+    "interpretation": "Splitting RMSNormGated and FP8 out_proj together removed the c1/c2 cache-request shape difference, but selected the known-bad c2 numerical path even for c1. This is a regression, not a repair. The index request remained exact. The next experiment must separate RMSNormGated isolation from out_proj isolation."
+  },
+  "next_experiment": "Run a preregistered two-stage factorial: isolate RMSNormGated only while keeping out_proj packed, then keep RMSNormGated packed while isolating out_proj. Preserve the c1 oracle as a mandatory gate.",
+  "reporting_boundary": "Do not promote any throughput from this rejected diagnostic. The strict identity gate failed, c1 regressed, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-output-request-isolation-20260901-r91",
+    "raw_result_sha256": "366b90cb78f6cc91c18bcfaf6e61128ef70fc01e8142b86e88ce47179abce0d9",
+    "trace_sha256": "7e852ac58ab978cd4f1ffd118d131b6398a8832305fb2fb8865ee5b26ad91e40",
+    "server_log_sha256": "81644590bbc33bf4385c8d5315d3e95854206ac6efc04b7d7b5a5994ac37566a",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

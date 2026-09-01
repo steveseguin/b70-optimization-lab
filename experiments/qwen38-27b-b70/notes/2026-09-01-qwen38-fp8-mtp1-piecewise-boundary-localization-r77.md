@@ -152,3 +152,13 @@ difference is introduced afterward by `RMSNormGated` and/or the FP8 output
 projection. The next candidate must isolate that final stage per request rather
 than modify GDN state arithmetic. R90's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-prefill-output-trace-r90-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-output-trace-r90-result.json).
+
+R91 split `RMSNormGated` and the FP8 `out_proj` together at natural request
+boundaries. It is rejected: c1 regressed from 1/1 to 0/1 and c2 remained 1/2.
+The cache prompt's c1 and c2 token sequences became identical to R90's known-bad
+c2 sequence, with the same token-97 difference (`348` versus `2972`); the index
+prompt stayed exact. Thus output-stage request isolation removes the shape
+difference but selects the wrong numerical path even for a single request. The
+next experiment must separate normalization from projection rather than carry
+this combined change forward. R91's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-output-request-isolation-r91-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-output-request-isolation-r91-result.json).
