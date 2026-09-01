@@ -3155,3 +3155,12 @@ size-1, compilation-mode-NONE, `FULL_DECODE_ONLY` endpoint arm from the
 protected untuned MTP0 lane, retain synchronous PLE and the complete quality
 battery, and keep every prior speed protected. See the
 [PLE graph result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-ple-uva-positive.md).
+A33 is now frozen from the untuned synchronous-PLE A28 lane as the first full
+endpoint graph arm. It changes only the current vLLM identity, public
+graph-safe oneCCL, and compilation-free size-1 `FULL_DECODE_ONLY` execution;
+the complete A28 quality/authority battery is retained. Live gates require the
+exact mapped library, an empty TorchInductor cache, completed graph capture,
+and nonzero size-1 FULL dispatches. The obsolete one-load-per-boot check is not
+present: this healthy boot may be reused under locks, fresh evidence paths,
+preflight, teardown, and postflight. Protected results remain unchanged. See
+the [A33 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a33-full-decode-graph-prereg.md).
