@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-output-request-isolation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-output-request-isolation-20260901-r91",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether request-isolating RMSNormGated plus the FP8 GDN output projection closes the final layer-0 c1/c2 prefill boundary and restores strict output identity.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90",
+    "base_image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "r90_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-output-trace-r90-result.json"
+  },
+  "candidate": {
+    "new_gate": "VLLM_XPU_GDN_ISOLATE_OUTPUT_PREFILL_REQUESTS=1",
+    "existing_gates": [
+      "VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS=1",
+      "VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS=1"
+    ],
+    "default": false,
+    "scope": "Qwen XPU GDN pure-prefill calls with more than one request. Single-request, mixed decode/prefill, decode, and speculative calls retain their natural existing computation.",
+    "implementation": "Slice bitwise-exact core_attn_out and z rows at prefill query boundaries, apply the existing RMSNormGated and out_proj modules independently for each request at its natural row count, and concatenate results in scheduler order.",
+    "reason": "R90 proved layer-0 qkvz, BA, raw GDN core output, and z are exact across c1/c2 on both ranks; layer-1 inputs differ. Only norm/output projection remains between those boundaries."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 in the same fresh server.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true,
+    "gdn_core_output_trace": true
+  },
+  "required_pass": {
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer_0_cache_prompt_core_and_z_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing candidate from the production lineage, add an output-stage dispatch counter, and run repeated c1/c2 plus the full varied-prompt determinism/quality battery before measuring overhead or updating any public result.",
+  "followup_if_fail": "Preserve the result and separately trace normalized rows versus out_proj rows; do not broaden the candidate.",
+  "promotion_boundary": "Candidate only. No site, README, headline, protected-speed, recipe-default, or LocalMaxxing authority. This boot contains an earlier GPU reset."
+}
