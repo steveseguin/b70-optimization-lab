@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "failed_closed_before_checkpoint_or_device_work",
+  "classification": "qwen38_w13_confirmation_a1_idle_admission_infrastructure_negative",
+  "scope": "A1 60-second zero-corrected-change idle admission",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "checkpoint_location": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "checkpoint_shards_read": 0,
+    "xpu_component_processes_started": 0,
+    "runner_sha256": "c81a2240542b75a3bf932fccf606f2db4b2872d201171c76f8e6f48ac5a7fad3"
+  },
+  "outcome": {
+    "runner_exit_code": 1,
+    "health_samples": 22,
+    "elapsed_sample_window_seconds_approx": 21.59,
+    "local_nvme_corrected_baseline": 345,
+    "local_nvme_corrected_final": 346,
+    "local_nvme_corrected_delta": 1,
+    "root_port_corrected_delta": 0,
+    "local_nvme_sectors_read_delta": 0,
+    "swap_used_kib_final": 0,
+    "mem_available_kib_final": 125855396,
+    "memory_full_avg10_final": 0.0,
+    "severe_event_count": 0,
+    "owned_process_teardown_complete": true,
+    "cache_teardown_complete": true,
+    "failure_boundary": "zero-change idle admission rejected the first corrected endpoint receive event"
+  },
+  "journal_classification": {
+    "source": "APEI Generic Hardware Error Source 514",
+    "severity": "corrected",
+    "pcie_device": "0000:01:00.0",
+    "device_role": "local Samsung NVMe endpoint",
+    "aer_status": "RxErr",
+    "uncorrected_status": 0,
+    "root_port_counter_changed": false
+  },
+  "evidence": {
+    "root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-moe-m1-w13-xpu-graph-confirmation-a1",
+    "sha256sums_verified": true,
+    "sha256sums_sha256": "c5cb0306edf1a5683585675389dbe931afe871a13f3cf0c12130a120e32b0abc",
+    "health_receipt_sha256": "5c42866f7277afbe69e202437b116d0f03f330a18b0d22c34d98a276fdda8074",
+    "health_samples_sha256": "8e95f12bf94df246ac8068b2910a5838c63bc4799a7ff2a50af42e9a8bd3eb00",
+    "kernel_journal_sha256": "74051828b8ff5505833be644445fc76a35fd065b7824b69faaf678e39ddcfea0"
+  },
+  "interpretation": {
+    "component_performance_tested": false,
+    "candidate_quality_tested": false,
+    "w13_n32_discovery_result_changed": false,
+    "reason_for_successor": "A continuously zero corrected-event admission is not achievable on the observed idle link; retain a strict bounded total delta instead."
+  },
+  "protected_results_changed": false
+}

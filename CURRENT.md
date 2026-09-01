@@ -3549,3 +3549,20 @@ zero root-port events, 2 GiB local reads, zero swap, and 96 million KiB
 available memory stop the run between cells rather than risking another host
 freeze. It contains no reboot and no full-model load. See the
 [W13-N32 confirmation preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-n32-xpu-graph-confirmation-a1-prereg.md).
+A1 stopped before checkpoint hashing or GPU work when the Samsung endpoint's
+corrected counter changed from 345 to 346 during its idle admission, with zero
+local sectors read, zero swap/pressure, zero root-port change, and clean B70s.
+This proves the recurring freeze signal exists at idle and is a root-NVMe PCIe
+link-path problem rather than Qwen or GPU arithmetic. The installed 980 PRO
+firmware is `4B2QGXA7`; Samsung publishes `5B2QGXA7`. GPU execution is blocked
+until backup, full-power-off reseat/inspection, offline firmware update, cold
+boot verification, and a clean 30-minute idle plus bounded-read clearance.
+The official updater ISO is downloaded but not executed on the external drive.
+See the [A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-xpu-graph-confirmation-a1-idle-admission-negative.md)
+and [root-NVMe blocker](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-root-nvme-link-blocker.md).
+The shorter A2 successor is frozen for after that maintenance: layers 0/47,
+all four EP ranks, one seed, and eight matched 100-input C/A/C cells. Actual
+execution is fail-closed before derivation, cache/evidence creation, or device
+work unless the fixed external `q38_root_nvme_link_clearance_v1` receipt proves
+the required firmware, SMART, idle, read, and four-B70 gates. See the
+[A2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-n32-xpu-graph-confirmation-a2-prereg.md).
