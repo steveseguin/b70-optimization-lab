@@ -21,6 +21,9 @@ a headline. The LocalMaxxing submission
 [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
 was premature and withdrawal is recommended. Static MTP1 is now qualified by
 the newer fresh-cache audit; deeper dynamic MTP remains withheld.
+The replacement strict result is approved on LocalMaxxing as
+[`cmtim8s0d04etp401560ene6k`](https://www.localmaxxing.com/runs/cmtim8s0d04etp401560ene6k),
+bound to the repository qualification attestation by SHA-256.
 
 That is a tested boundary, not an uninvestigated blank. The bounded R34-R38b
 campaign exercised full strict replay, serial native GDN, serial packed
