@@ -63,11 +63,15 @@ second health check and remains a literal cardinality false-fail. D65 repeated
 the exact arm with the corrected cardinality and passed: 2,080/2,080 decoder
 boundaries completed, every sampler stage produced exactly four receipts, both
 health checks passed, and the timestamp-bounded kernel log was clean. This
-confirms enforced decoder ordering prevents the startup device loss; it does
-not yet identify the minimum deployable barrier. These arms are startup-only
-and cannot yield a performance claim. The next step is a profile-only sync arm
-that leaves real request forwards unsynchronized, followed by strict output and
-performance validation. See the
+confirms enforced decoder ordering prevents the startup device loss. D66 then
+scoped those barriers to `GPUModelRunner.profile_run()`: its one true profile
+forward completed exactly 1,040 boundaries, the later unsynchronized warmup
+forward also completed, and the API reached readiness with a clean kernel log.
+It remains a literal receipt-count false-fail because its frozen contract
+expected both forwards to be profile forwards. D67 changes only that expected
+count from 2,080 to 1,040. These arms are startup-only and cannot yield a
+performance claim. After D67, the profile-only fix must pass strict output and
+performance validation with projection repair restored. See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
 [`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
 and
