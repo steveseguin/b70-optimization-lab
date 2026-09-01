@@ -1,0 +1,11 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -272,7 +272,7 @@
+         output.stride(0),
+         epsilon,
+         BLOCK_SIZE=128,
+-        num_warps=1,
++        num_warps=2,
+     )
+     logger.warning_once(
+         "R94 Qwen GDN row-stable RMSNormGated path executed on %s rows",
