@@ -1,0 +1,31 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-profile-aware-selector-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-profile-aware-selector-20260901-r101",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Permit vLLM's explicit metadata-free profile phase while retaining R100's live request-metadata selection for inference.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100",
+    "base_image_id": "sha256:a7d055be59452ec90030411038386298a7240172ba29876f1ebabbb251c14e41",
+    "r100_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100-result.json"
+  },
+  "treatment": {
+    "profile_only": "When forward_context.attn_metadata is exactly None, execute the R99 single-request arm and emit a distinct profile-fallback log.",
+    "live_inference": "Require the layer key and GDNAttentionMetadata type, compute max(num_prefills, num_decodes, num_spec_decodes), and select R99 for one request or R97 for more than one.",
+    "logging": "Emit distinct profile, live-single, and live-multi messages from the selector rather than from the low-level arithmetic helper.",
+    "unchanged": "All arithmetic kernels, frozen workload, oracle, and server settings remain R100-identical."
+  },
+  "required_pass": {
+    "operator_gate": "pass",
+    "server_start": true,
+    "profile_fallback_logged": true,
+    "live_single_and_multi_arms_logged": true,
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing image and begin the clean-boot varied realistic-prompt qualification before any speed promotion.",
+  "followup_if_fail": "Preserve the result and identify the exact runtime phase/request count chosen; do not use prompt or tensor-row heuristics.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the current boot contains an earlier GPU reset."
+}

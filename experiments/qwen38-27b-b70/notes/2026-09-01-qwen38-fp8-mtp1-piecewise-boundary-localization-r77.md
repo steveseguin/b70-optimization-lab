@@ -257,3 +257,14 @@ arm. The next diagnostic must select between them using live request metadata
 inside the opaque custom-op implementation; R95 already proved that a Python
 shape branch outside that boundary freezes during compilation. R99's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-retained-lowering-r99-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-retained-lowering-r99-result.json).
+
+R100 moved the branch to live `GDNAttentionMetadata` inside the opaque custom
+op and independently preserved the R99 single-request and R97 multi-request
+arms. Its operator gate passed, but the server rejected during vLLM's
+pre-serving `profile_run`: that intentional initialization phase has
+`attn_metadata=None`, so R100's preregistered missing-metadata fail-closed rule
+was overly broad. No output request ran. The narrow correction is to recognize
+only that explicit profile state and run the R99 arm there; malformed live
+metadata must still fail closed, and inference must still select from live
+request counts. R100's startup rejection is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100-result.json).

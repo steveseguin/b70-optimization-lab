@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-runtime-metadata-selector-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-runtime-metadata-selector-20260901-r100",
+  "status": "completed-rejected-startup",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100-prereg.json",
+  "lineage": {
+    "base_image_id": "sha256:a2e09416d1f55da2b71ffefbbec7db7d6581089b33ed125c6ea3ed147050eaf8",
+    "candidate_image_id": "sha256:a7d055be59452ec90030411038386298a7240172ba29876f1ebabbb251c14e41",
+    "patch_sha256": "3d52a55146a6d0c7e44c0f6e99585bb5c206ff45ff56357b99658aa8d9e9d917",
+    "installed_qwen_gdn_sha256": "ad6e6c00b42c7755382700141089277827e394a80cbdce05222cc80c69844a4a"
+  },
+  "operator_gate": {
+    "status": "pass",
+    "single_request_arm_matches_r99": true,
+    "multi_request_arm_matches_r97": true,
+    "both_arms_row_slot_bitwise_invariant": true,
+    "both_reference_max_abs_error": 0.0,
+    "unsupported_shape_failed_closed": true,
+    "missing_metadata_failed_closed": true
+  },
+  "server_gate": {
+    "status": "fail-before-serving",
+    "phase": "vLLM profile_run during KV-cache sizing",
+    "error": "runtime-selected Qwen GDN RMSNorm requires live layer metadata",
+    "output_requests_executed": 0
+  },
+  "interpretation": "The arithmetic and custom-op boundary are valid, but the preregistered missing-metadata fail-closed rule was too strict: vLLM intentionally executes the compiled model with attn_metadata=None during profile_run. This is not live inference. The narrow follow-up must use the c1-exact R99 arm only for that explicit None profile state, while continuing to reject malformed live metadata and selecting from live request counts during inference.",
+  "reporting_boundary": "Startup rejection. No output or throughput result exists and nothing may be published.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "container_exit": "clean failure propagation after worker exception"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-runtime-metadata-selector-20260901-r100",
+    "server_log_sha256": "5befbbd31c033aa60c1b5129c57bdaed034a4293dfdd5bdb0cf02870ed4c0dd1",
+    "kernel_journal_sha256": "39e5aebfca606e895aca41c9de33be4be3e2679cc5e472ce82f7cc6acc5cb2f5",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "image_inspect_sha256": "edaaaf0c129064ec58c6039b7e1acb21c5fc536b2fdbacbcb16b6a56580ae870",
+    "operator_gate_sha256": "8e1e5914f78b0365146e87186c0186eb9e16e6467467afe9de1ba593ab065a8d",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
