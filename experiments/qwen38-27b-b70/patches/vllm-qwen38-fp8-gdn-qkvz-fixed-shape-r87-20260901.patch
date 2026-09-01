@@ -1,0 +1,90 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -78,6 +78,8 @@
+ 
+ _XPU_DETERMINISTIC_BA_MIN_TOKENS = 17
+ _XPU_DETERMINISTIC_BA_PAD_TOKENS = 256
++_XPU_DETERMINISTIC_QKVZ_MIN_TOKENS = 17
++_XPU_DETERMINISTIC_QKVZ_PAD_TOKENS = 256
+ 
+ 
+ def _deterministic_xpu_ba_prefill(
+@@ -124,6 +126,56 @@
+ )
+ 
+ 
++def _deterministic_xpu_qkvz_prefill(
++    hidden_states: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    """Run the quantized qkvz projection in fixed 256-row blocks."""
++    forward_context = get_forward_context()
++    layer = forward_context.no_compile_layers[layer_name]
++    pieces = []
++    for start in range(
++        0, hidden_states.shape[0], _XPU_DETERMINISTIC_QKVZ_PAD_TOKENS
++    ):
++        count = min(
++            _XPU_DETERMINISTIC_QKVZ_PAD_TOKENS,
++            hidden_states.shape[0] - start,
++        )
++        block = hidden_states[start : start + count]
++        if count != _XPU_DETERMINISTIC_QKVZ_PAD_TOKENS:
++            padded = torch.zeros(
++                (_XPU_DETERMINISTIC_QKVZ_PAD_TOKENS, hidden_states.shape[-1]),
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
++            padded[:count].copy_(block)
++            block = padded
++        projected, _ = layer.in_proj_qkvz(block)
++        pieces.append(projected[:count])
++    result = torch.cat(pieces, dim=0) if len(pieces) > 1 else pieces[0]
++    if result.shape[-1] != output_size:
++        raise RuntimeError("fixed-shape qkvz projection returned wrong width")
++    return result
++
++
++def _deterministic_xpu_qkvz_prefill_fake(
++    hidden_states: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    del layer_name
++    return hidden_states.new_empty((hidden_states.shape[0], output_size))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_qkvz_prefill_xpu",
++    op_func=_deterministic_xpu_qkvz_prefill,
++    mutates_args=[],
++    fake_impl=_deterministic_xpu_qkvz_prefill_fake,
++)
++
++
+ if GDN_AITER_TRITON_AVAILABLE:
+     from aiter.ops.triton.causal_conv1d_update_single_token import (
+         fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
+@@ -1038,7 +1090,20 @@
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++        if (
++            os.getenv("VLLM_XPU_GDN_DETERMINISTIC_QKVZ_PREFILL", "0") == "1"
++            and num_tokens >= _XPU_DETERMINISTIC_QKVZ_MIN_TOKENS
++        ):
++            qkvz_output_size = (
++                2 * self.key_dim + 2 * self.value_dim
++            ) // self.tp_size
++            projected_states_qkvz = torch.ops.vllm.qwen_gdn_qkvz_prefill_xpu(
++                hidden_states,
++                qkvz_output_size,
++                self.prefix,
++            )
++        else:
++            projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+         if (
+             num_tokens >= _XPU_DETERMINISTIC_BA_MIN_TOKENS
+             and self.in_proj_ba.weight.dtype in (torch.float16, torch.bfloat16)

@@ -126,11 +126,13 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-result.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-prereg.json
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-metadata-trace-r82-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-evolving-metadata-r83-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-state-input-trace-r85-20260901.patch
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-prefill-input-trace-r86-20260901.patch
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-qkvz-fixed-shape-r87-20260901.patch
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-multi-request-followup-r80
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-multi-request-followup-r80-image.sh
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-metadata-trace-r82
@@ -141,6 +143,8 @@ required_files=(
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-state-input-trace-r85-image.sh
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-prefill-input-trace-r86
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-prefill-input-trace-r86-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-qkvz-fixed-shape-r87
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-qkvz-fixed-shape-r87-image.sh
   experiments/qwen38-27b-b70/scripts/qwen38-det-gdn-c2-isolation-equivalence-r84.py
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
@@ -218,6 +222,9 @@ check_sha256 \
 check_sha256 \
   5a42f301e3150feadcbf290c3eb26004442fecc11ec6946bd891961dc46d4aa0 \
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-prefill-input-trace-r86-20260901.patch
+check_sha256 \
+  c6384af1eaa45f0f49318f78c82a3f7485db19ebe3f5fe6f63c8f5bcafccf3a5 \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-qkvz-fixed-shape-r87-20260901.patch
 
 if (( failed )); then
   printf '\nSOURCE CLOSURE FAILED\n' >&2
