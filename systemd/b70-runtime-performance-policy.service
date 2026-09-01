@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep Arc Pro B70 PCIe paths awake for inference work
+After=systemd-modules-load.service systemd-udev-trigger.service
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/steve/llm-optimizations/scripts/tune-b70-runtime-performance-policy.sh --apply
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
