@@ -34,6 +34,7 @@ gdn_multi_request_split=${VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT:-0}
 gdn_spec_metadata_trace=${VLLM_XPU_GDN_NATIVE_SPEC_METADATA_TRACE:-0}
 gdn_spec_evolving_metadata_trace=${VLLM_XPU_GDN_NATIVE_SPEC_EVOLVING_METADATA_TRACE:-0}
 gdn_state_input_trace_file=${VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE:-}
+gdn_prefill_input_trace_file=${VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE:-}
 gdn_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}
 gdn_native_fallback=${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}
 mtp_suppress_bonus=${VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN:-0}
@@ -110,6 +111,15 @@ if [[ -n "${gdn_state_input_trace_file}" ]]; then
     /root/.cache/vllm/*) ;;
     *)
       printf 'VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE must be under /root/.cache/vllm/\n' >&2
+      exit 1
+      ;;
+  esac
+fi
+if [[ -n "${gdn_prefill_input_trace_file}" ]]; then
+  case "${gdn_prefill_input_trace_file}" in
+    /root/.cache/vllm/*) ;;
+    *)
+      printf 'VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE must be under /root/.cache/vllm/\n' >&2
       exit 1
       ;;
   esac
@@ -237,6 +247,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_GDN_NATIVE_SPEC_METADATA_TRACE="${gdn_spec_metadata_trace}" \
   --env VLLM_XPU_GDN_NATIVE_SPEC_EVOLVING_METADATA_TRACE="${gdn_spec_evolving_metadata_trace}" \
   --env VLLM_XPU_GDN_STATE_INPUT_TRACE_FILE="${gdn_state_input_trace_file}" \
+  --env VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE="${gdn_prefill_input_trace_file}" \
   --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
   --env VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
   --env VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN="${mtp_suppress_bonus}" \

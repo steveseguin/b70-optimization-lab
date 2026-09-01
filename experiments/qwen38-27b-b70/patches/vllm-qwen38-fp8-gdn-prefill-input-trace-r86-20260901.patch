@@ -1,0 +1,133 @@
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -21,6 +21,8 @@
+ 
+ _GDN_STATE_INPUT_TRACE_SEEN: set[tuple[str, int]] = set()
+ _GDN_STATE_INPUT_TRACE_LOCK = threading.Lock()
++_GDN_PREFILL_INPUT_TRACE_SEEN: set[tuple[str, int]] = set()
++_GDN_PREFILL_INPUT_TRACE_LOCK = threading.Lock()
+ 
+ 
+ def _gdn_state_input_digest(tensor: torch.Tensor) -> str:
+@@ -149,6 +151,101 @@
+     finally:
+         os.close(fd)
+ 
++
++def _trace_gdn_prefill_inputs(
++    *,
++    layer_name: str,
++    num_prefills: int,
++    num_decodes: int,
++    num_spec_decodes: int,
++    projected_states_qkvz: torch.Tensor,
++    projected_states_ba: torch.Tensor,
++    non_spec_query_start_loc: torch.Tensor | None,
++    non_spec_token_indx: torch.Tensor | None,
++    non_spec_state_indices_tensor: torch.Tensor | None,
++    has_initial_state: torch.Tensor | None,
++) -> None:
++    """R86 diagnostic: hash projected rows entering first c1/c2 prefills."""
++    trace_file = os.getenv("VLLM_XPU_GDN_PREFILL_INPUT_TRACE_FILE", "")
++    if not trace_file or num_prefills <= 0:
++        return
++    if num_decodes != 0 or num_spec_decodes != 0:
++        return
++    if non_spec_query_start_loc is None or non_spec_state_indices_tensor is None:
++        raise RuntimeError("R86 GDN prefill trace is missing non-spec metadata")
++
++    key = (layer_name, num_prefills)
++    with _GDN_PREFILL_INPUT_TRACE_LOCK:
++        if key in _GDN_PREFILL_INPUT_TRACE_SEEN:
++            return
++        _GDN_PREFILL_INPUT_TRACE_SEEN.add(key)
++
++    query_starts = non_spec_query_start_loc.detach().cpu().tolist()
++    if non_spec_token_indx is None:
++        token_indices = list(range(int(query_starts[-1])))
++    else:
++        token_indices = non_spec_token_indx.detach().cpu().tolist()
++    state_indices = non_spec_state_indices_tensor.detach().cpu().tolist()
++    initial_flags = (
++        has_initial_state.detach().cpu().tolist()
++        if has_initial_state is not None
++        else [False] * num_prefills
++    )
++
++    requests = []
++    for request in range(num_prefills):
++        start = int(query_starts[request])
++        stop = int(query_starts[request + 1])
++        request_token_indices = [int(index) for index in token_indices[start:stop]]
++        token_index_tensor = torch.tensor(
++            request_token_indices,
++            dtype=torch.int64,
++            device=projected_states_qkvz.device,
++        )
++        qkvz_rows = projected_states_qkvz.index_select(0, token_index_tensor)
++        ba_rows = projected_states_ba.index_select(0, token_index_tensor)
++        requests.append(
++            {
++                "request": request,
++                "state_index": int(state_indices[request]),
++                "has_initial_state": bool(initial_flags[request]),
++                "token_indices": request_token_indices,
++                "projected_qkvz": {
++                    "shape": list(qkvz_rows.shape),
++                    "dtype": str(qkvz_rows.dtype),
++                    "sha256": _gdn_state_input_digest(qkvz_rows),
++                },
++                "projected_ba": {
++                    "shape": list(ba_rows.shape),
++                    "dtype": str(ba_rows.dtype),
++                    "sha256": _gdn_state_input_digest(ba_rows),
++                },
++            }
++        )
++
++    rank = int(os.getenv("RANK", "-1"))
++    if torch.distributed.is_available() and torch.distributed.is_initialized():
++        rank = torch.distributed.get_rank()
++    record = {
++        "schema": "neural.download.qwen38-gdn-prefill-input-trace.v1",
++        "pid": os.getpid(),
++        "rank": rank,
++        "layer": layer_name,
++        "num_prefills": num_prefills,
++        "query_start_loc": [int(value) for value in query_starts],
++        "requests": requests,
++    }
++    encoded = (
++        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
++    ).encode()
++    fd = os.open(trace_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        written = os.write(fd, encoded)
++        if written != len(encoded):
++            raise RuntimeError("R86 GDN trace record was only partially written")
++    finally:
++        os.close(fd)
++
+ if TYPE_CHECKING:
+ 
+     def register_fake(fn):
+@@ -304,6 +401,19 @@
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
++    _trace_gdn_prefill_inputs(
++        layer_name=layer_name,
++        num_prefills=num_prefills,
++        num_decodes=num_decodes,
++        num_spec_decodes=num_spec_decodes,
++        projected_states_qkvz=projected_states_qkvz,
++        projected_states_ba=projected_states_ba,
++        non_spec_query_start_loc=non_spec_query_start_loc,
++        non_spec_token_indx=non_spec_token_indx,
++        non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        has_initial_state=has_initial_state,
++    )
++
+     _trace_gdn_state_inputs(
+         layer_name=layer_name,
+         num_prefills=num_prefills,
