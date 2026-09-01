@@ -36,6 +36,12 @@ fault, but each matched only 1/2 oracle outputs. Both arms produced the same
 token sequences. Neither isolated stage is therefore sufficient; R81 tests the
 complete conv-plus-delta transaction without changing production defaults.
 
+R81 also matched only 1/2 oracle outputs. Both serial stages executed on both
+TP ranks, yet its two token sequences were identical to both isolated R80 arms.
+The combined transaction as implemented is therefore not a repair. R82 traces
+the actual speculative request boundaries, packed-token indices, state-cache
+columns, and accepted counts before any further mapping change.
+
 This is diagnostic evidence, not a speed or quality promotion. The current boot
 contains an earlier GPU reset, so any eventual repair still requires a clean-
 boot strict replay. Structured evidence is in

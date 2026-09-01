@@ -1,0 +1,42 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-metadata-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-metadata-trace-20260901-r82",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Record the scheduler-provided GDN speculative request boundaries and state mapping for one-request and two-request execution after R81 proved that the current combined serial replay is not sufficient.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-multi-request-followup-r80",
+    "base_image_id": "sha256:320532dcec8d32b965dcfe86b704e85dbc83493c6d093a872df24ae043b4ad48",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "r81_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-combined-multi-request-r81-result.json"
+  },
+  "instrumentation": {
+    "new_gate": "VLLM_XPU_GDN_NATIVE_SPEC_METADATA_TRACE=1",
+    "production_default_change": false,
+    "payload": [
+      "num_prefills",
+      "num_decodes",
+      "num_spec_decodes",
+      "num_actual_tokens",
+      "spec_query_start_loc",
+      "spec_token_indx",
+      "spec_state_indices_tensor",
+      "num_accepted_tokens"
+    ],
+    "scope": "First observed one-request and first observed multi-request speculative convolution call on each TP rank; host logging only."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true
+  },
+  "decision": "Use the trace only to verify request boundaries, packed-token ownership, state-cache-column layout, and accepted-prefix selection. Do not infer a repair or publish throughput from this instrumented run.",
+  "promotion_boundary": "Diagnostic only. Any subsequent repair must pass exact varied-prompt identity, deterministic repeats, context-depth, concurrency, clean-boot, and speed-floor gates before public promotion."
+}

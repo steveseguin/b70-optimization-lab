@@ -115,6 +115,8 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-multi-request-followup-r80-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-multi-request-r80-result.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-combined-multi-request-r81-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-combined-multi-request-r81-result.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-metadata-trace-r82-prereg.json
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-multi-request-followup-r80
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-multi-request-followup-r80-image.sh

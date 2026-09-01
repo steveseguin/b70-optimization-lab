@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-combined-multi-request-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-combined-multi-request-20260901-r81",
+  "status": "complete-negative-combined-transaction-not-sufficient",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-multi-request-followup-r80",
+    "id": "sha256:320532dcec8d32b965dcfe86b704e85dbc83493c6d093a872df24ae043b4ad48",
+    "wheel_sha256": "d6128e0a5992c264f1a8b3586bc6d397c8430402f3e541e4d7cceb78762c349b",
+    "xpu_extension_sha256": "2a4d3cd7a329cf14f2fa2c3f416de8371487dea7814ebb4e938440078c02e1f9",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "configuration": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "fresh_server_and_compile_cache": true,
+    "gates": {
+      "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT": 1,
+      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT": 0
+    }
+  },
+  "validity_gates": {
+    "model_direct_verification": "pass-66-of-66",
+    "completion_tokens": [128, 128],
+    "cached_tokens": [0, 0],
+    "conv_marker_both_tp_ranks": true,
+    "delta_marker_both_tp_ranks": true,
+    "new_gpu_xe_or_oom_faults": 0,
+    "harness_exit_code": 4
+  },
+  "result": {
+    "aggregate_tok_s_wall_diagnostic": 46.294148636609556,
+    "oracle_exact": "1/2",
+    "cache_request_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+    "cache_request_oracle_token_ids_sha256": "9e7aec2c17aa1a19556349d1e106c6cb2e6d22db28953687ee655f2f8cb760b6",
+    "index_request_token_ids_sha256": "f464bfb0a0c2539f083ce440680e8e57a076ba4b46acd49ece9233e92c9e1f35",
+    "index_request_exact": true,
+    "identical_to_both_r80_isolated_arms": true
+  },
+  "artifacts": {
+    "result_sha256": "be9e02259aa0d17d447ebaef13305dc16f871f5fecfa120c4ee146aeab8bb88b",
+    "server_log_sha256": "6558bd83e7a16863971f9b5a3a0db6be0892525c9c9b9f765418973cfed62ede",
+    "harness_log_sha256": "f60f5b39e7e6a24427ebfebe24c779ec95efb48f9691ab024fd463526241355e",
+    "image_inspect_sha256": "9f99f12ab80eceb78b64c6322e6754a7de61d955754e1ae4aeb685508aa154b1",
+    "kernel_journal_sha256": "03e0f8d8f1a95e54803b3e6ee43a8178df185410ec84c855b6a99422434e08c7"
+  },
+  "conclusion": "Serializing both convolution and delta stages produced exactly the same two token sequences as either isolated R80 arm and still matched only one of two sequential-oracle outputs. The combined transaction as implemented is not a repair. The next bounded diagnostic traces the scheduler-provided speculative request boundaries, token indices, state-cache columns, and accepted counts before changing their mapping.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "reason": "The output identity gate failed; diagnostic throughput is not a publishable result."
+  }
+}
