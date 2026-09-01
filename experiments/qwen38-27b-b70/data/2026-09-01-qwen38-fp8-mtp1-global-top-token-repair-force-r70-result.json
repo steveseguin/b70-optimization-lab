@@ -1,0 +1,43 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-top-token-repair-force-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-top-token-repair-force-20260901-r70",
+  "status": "negative-forced-replay-control",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-top-token-repair-r69",
+    "id": "sha256:c5eed78d05513746fc70f285b64eaf34620bfa6b49bea9d379d740a36d9926fc"
+  },
+  "configuration": {
+    "global_repair_margin": 100.0,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "harness_exit_code": 4,
+    "cached_tokens_all_zero": true,
+    "points": [
+      {"concurrency": 1, "aggregate_tok_s": 44.455946726034014, "exact": "1/1"},
+      {"concurrency": 2, "aggregate_tok_s": 68.57107471414196, "exact": "1/2"}
+    ],
+    "first_mismatch": {
+      "prompt_id": "cache-c000",
+      "token_index": 96,
+      "concurrent_token_id": 2972,
+      "sequential_token_id": 348
+    },
+    "new_gpu_or_xe_faults": 0
+  },
+  "interpretation": "Forcing every eligible row through ordinary M1 oneDNN replay did not restore identity. The repair reference must use the proven batch-invariant dot-product implementation, not another oneDNN shape.",
+  "evidence": {
+    "result_sha256": "8378cbe2930bde0a5f4afa8ade2281da2fe517119a1836aa3024f33fd1bc570a",
+    "pre_shutdown_server_log_sha256": "6f150251e1f9b6316af330a8a093f5ae24d95d13aaab3c178b6a16a35e278065"
+  },
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}

@@ -1,0 +1,115 @@
+--- a/vllm/model_executor/layers/logits_processor.py
++++ b/vllm/model_executor/layers/logits_processor.py
+@@ -276,17 +276,104 @@
+         if tp_size == 1:
+             return global_indices
+ 
+-        # All-gather (value, index) pairs, then reduce to global argmax.
+-        # Use float32 to avoid bf16 precision loss on large vocab indices.
+-        local_pair = torch.stack(
+-            [local_max_vals.float(), global_indices.float()], dim=-1
++        repair_margin_s = os.environ.get(
++            "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN", "0"
+         )
+-        # [batch, 2] -> [batch, 2 * tp_size]
+-        gathered = tensor_model_parallel_all_gather(local_pair, dim=-1)
+-        # [batch, tp_size, 2] where [:, :, 0]=values, [:, :, 1]=indices
+-        gathered = gathered.view(hidden_states.shape[0], tp_size, 2)
++        try:
++            repair_margin = float(repair_margin_s or "0")
++        except ValueError as exc:
++            raise ValueError(
++                "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN must be numeric"
++            ) from exc
++        if repair_margin < 0.0:
++            raise ValueError(
++                "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN must be "
++                "non-negative"
++            )
++        is_int4_draft = hasattr(lm_head, "_xpu_lm_head_int4_weight_t")
++        repair_enabled = repair_margin > 0.0 and not is_int4_draft
++        if repair_enabled:
++            if logits.device.type != "xpu":
++                raise RuntimeError(
++                    "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN requires XPU"
++                )
++            if lm_head.__class__.__name__ != "ParallelLMHead":
++                raise RuntimeError(
++                    "global lm_head batch repair requires ParallelLMHead, got "
++                    f"{lm_head.__class__.__name__}"
++                )
++            if lm_head.num_added_embeddings != 0:
++                raise RuntimeError(
++                    "global lm_head batch repair does not support added vocab"
++                )
++            if logits.shape[-1] < 2:
++                raise RuntimeError(
++                    "global lm_head batch repair requires at least two local "
++                    "vocabulary columns"
++                )
++            logits_f32 = logits.float()
++            local_top2_vals = logits_f32.scatter(
++                1, local_max_indices.unsqueeze(1), float("-inf")
++            )
++            local_second_vals, local_second_indices = local_top2_vals.max(dim=-1)
++            global_second_indices = local_second_indices + vocab_start
++            # Gather the two best (value, global-index) pairs from every shard.
++            # Four scalars per row are still negligible versus full logits.
++            local_pairs = torch.stack(
++                [
++                    local_max_vals.float(),
++                    global_indices.float(),
++                    local_second_vals,
++                    global_second_indices.float(),
++                ],
++                dim=-1,
++            )
++            gathered = tensor_model_parallel_all_gather(local_pairs, dim=-1)
++            gathered = gathered.view(hidden_states.shape[0], tp_size * 2, 2)
++        else:
++            # All-gather (value, index) pairs, then reduce to global argmax.
++            # Use float32 to avoid bf16 precision loss on large vocab indices.
++            local_pair = torch.stack(
++                [local_max_vals.float(), global_indices.float()], dim=-1
++            )
++            gathered = tensor_model_parallel_all_gather(local_pair, dim=-1)
++            gathered = gathered.view(hidden_states.shape[0], tp_size, 2)
++
+         max_rank_idx = gathered[:, :, 0].argmax(dim=-1, keepdim=True)
+         top_tokens = gathered[:, :, 1].gather(dim=-1, index=max_rank_idx)
++        if repair_enabled:
++            global_top2 = torch.topk(gathered[:, :, 0], k=2, dim=-1).values
++            repair_rows = (
++                (global_top2[:, 0] - global_top2[:, 1]) < repair_margin
++            ).nonzero(as_tuple=True)[0]
++            for row in repair_rows.tolist():
++                exact_local = self._apply_head(
++                    lm_head,
++                    hidden_states[row : row + 1],
++                    embedding_bias,
++                )
++                if self.soft_cap is not None:
++                    exact_local = (
++                        torch.tanh(exact_local / self.soft_cap) * self.soft_cap
++                    )
++                if self.scale != 1.0:
++                    exact_local = exact_local * self.scale
++                if num_pad > 0:
++                    exact_local[..., -num_pad:] = -float("inf")
++                exact_vals, exact_indices = exact_local.max(dim=-1)
++                exact_global_indices = exact_indices + vocab_start
++                exact_pair = torch.stack(
++                    [exact_vals.float(), exact_global_indices.float()], dim=-1
++                )
++                exact_gathered = tensor_model_parallel_all_gather(
++                    exact_pair, dim=-1
++                ).view(1, tp_size, 2)
++                exact_rank_idx = exact_gathered[:, :, 0].argmax(
++                    dim=-1, keepdim=True
++                )
++                top_tokens[row : row + 1] = exact_gathered[:, :, 1].gather(
++                    dim=-1, index=exact_rank_idx
++                )
+         return top_tokens.squeeze(-1).to(torch.int64)
+ 
+     def extra_repr(self) -> str:

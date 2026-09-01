@@ -50,6 +50,7 @@ draft_lm_head_int4_chunk_rows=${VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS:-2048}
 lm_head_batch_invariant=${VLLM_XPU_LM_HEAD_BATCH_INVARIANT:-0}
 lm_head_batch_repair_rows=${VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS:-0}
 lm_head_batch_repair_margin=${VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN:-0.25}
+lm_head_global_batch_repair_margin=${VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN:-0}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -116,6 +117,10 @@ done
 }
 [[ "${lm_head_batch_repair_margin}" =~ ^[0-9]+([.][0-9]+)?$ ]] || {
   printf 'VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN must be a non-negative number\n' >&2
+  exit 1
+}
+[[ "${lm_head_global_batch_repair_margin}" =~ ^[0-9]+([.][0-9]+)?$ ]] || {
+  printf 'VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN must be a non-negative number\n' >&2
   exit 1
 }
 [[ "${draft_lm_head_int4_group_size}" =~ ^[1-9][0-9]*$ ]] || {
@@ -221,6 +226,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_LM_HEAD_BATCH_INVARIANT="${lm_head_batch_invariant}" \
   --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS="${lm_head_batch_repair_rows}" \
   --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN="${lm_head_batch_repair_margin}" \
+  --env VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN="${lm_head_global_batch_repair_margin}" \
   "${hash_seed_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \

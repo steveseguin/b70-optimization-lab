@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-exact-head-repair-force-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-exact-head-repair-force-20260901-r72",
+  "status": "negative-upstream-divergence-proven",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-exact-head-repair-r71",
+    "id": "sha256:c1ea0b3eb638b79570c399afa153ccd4e20f9ac88d521e4e583c4f588faa0e40"
+  },
+  "configuration": {
+    "global_repair_margin": 100.0,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "harness_exit_code": 4,
+    "cached_tokens_all_zero": true,
+    "points": [
+      {"concurrency": 1, "aggregate_tok_s": 11.463440700393717, "exact": "1/1"},
+      {"concurrency": 2, "aggregate_tok_s": 12.757806663536508, "exact": "1/2"}
+    ],
+    "new_gpu_or_xe_faults": 0
+  },
+  "interpretation": "Even forcing every target row through the batch-invariant dot product did not restore c2 output identity. The production-shape divergence is upstream of the target lm_head; further head repair is closed.",
+  "evidence": {
+    "result_sha256": "662c76c14c4c62dac976e8a64baa9d1f4d9ad612e0cc9ae1e1dd98817a038d2f",
+    "pre_shutdown_server_log_sha256": "a27dcea02fec1fccf47e92bce76e0d6af67306cd5742ac9e3d56a8052f7d6f72"
+  },
+  "next": "Capture identical c1/c2 requests at model boundaries and locate the earliest target hidden-state divergence before changing another kernel.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}

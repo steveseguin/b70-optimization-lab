@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-head-batch-repair-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-head-batch-repair-20260901-r68",
+  "status": "negative-output-path-bypass",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-head-batch-repair-r68",
+    "id": "sha256:9c8a8563e7ea3b4ea4cb8960022e0773f91f1922e5f19758ddf6ac791c098bd3",
+    "logits_processor_sha256": "7f8d4844504c9017f0beb8fffed2d3ed6337297cea68192051120751c37e9f62"
+  },
+  "configuration": {
+    "global_repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "harness_exit_code": 4,
+    "cached_tokens_all_zero": true,
+    "complete_outputs_exact_vs_sequential_oracle": false,
+    "points": [
+      {"concurrency": 1, "repeat": 1, "aggregate_tok_s": 47.50430887837284, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 1, "aggregate_tok_s": 66.03872091051, "exact": "1/2"},
+      {"concurrency": 1, "repeat": 2, "aggregate_tok_s": 46.7122194620832, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 2, "aggregate_tok_s": 90.69373448180964, "exact": "1/2"}
+    ],
+    "first_mismatch": {
+      "prompt_id": "cache-c000",
+      "token_index": 96,
+      "concurrent_token_id": 2972,
+      "sequential_token_id": 348,
+      "repeated": "2/2 c2 batches"
+    },
+    "new_gpu_or_xe_faults": 0
+  },
+  "localization": {
+    "finding": "R68 repaired the full-logits path, but the greedy endpoint uses LogitsProcessor.get_top_tokens, whose local-argmax fast path bypassed _get_logits and therefore bypassed the repair.",
+    "next": "Extend the same global top-two detection and M1 replay to get_top_tokens while retaining its O(batch*TP) communication pattern."
+  },
+  "evidence": {
+    "result_sha256": "4d05ccde7a2792bbefa4ff85c4ce74f4ce5456ddc82f237874a2de4bbec58128",
+    "pre_shutdown_server_log_sha256": "df57bd4175d18af9a247a93556908c47486098f51d578740188830948d28de5c"
+  },
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

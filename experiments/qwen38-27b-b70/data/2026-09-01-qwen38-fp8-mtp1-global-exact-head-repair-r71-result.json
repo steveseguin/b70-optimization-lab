@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-exact-head-repair-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-exact-head-repair-20260901-r71",
+  "status": "negative-identity-and-speed-gates",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-exact-head-repair-r71",
+    "id": "sha256:c1ea0b3eb638b79570c399afa153ccd4e20f9ac88d521e4e583c4f588faa0e40",
+    "logits_processor_sha256": "49bd8dd65bb295d600c97b87b9a9dd2f2b86b6e44921d3ae0c50128a174d3a30"
+  },
+  "configuration": {
+    "global_repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "harness_exit_code": 4,
+    "cached_tokens_all_zero": true,
+    "complete_outputs_exact_vs_sequential_oracle": false,
+    "points": [
+      {"concurrency": 1, "repeat": 1, "aggregate_tok_s": 37.221513189241726, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 1, "aggregate_tok_s": 47.719610938282436, "exact": "1/2"},
+      {"concurrency": 1, "repeat": 2, "aggregate_tok_s": 36.474197489915596, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 2, "aggregate_tok_s": 58.53209911239484, "exact": "1/2"}
+    ],
+    "first_mismatch": {
+      "prompt_id": "cache-c000",
+      "token_index": 96,
+      "concurrent_token_id": 2972,
+      "sequential_token_id": 348,
+      "repeated": "2/2 c2 batches"
+    },
+    "new_gpu_or_xe_faults": 0
+  },
+  "interpretation": "The exact repair path executed and was expensive, but a 0.25 margin still did not cover every state needed for full-output identity. A forced exact-row control is required before further selection work.",
+  "evidence": {
+    "result_sha256": "3aeb0202f972ea595768a85e9542ef2ecf9fd60248abf31b88781aa8951acfd2",
+    "pre_shutdown_server_log_sha256": "b66e6ab4bc84b9ffabaaa8ab3852b3ebffd34d6b2a26c3981a312ebbc7b9c508"
+  },
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}

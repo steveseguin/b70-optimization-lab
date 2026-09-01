@@ -1,0 +1,39 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-top-token-repair-force-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-top-token-repair-force-20260901-r70",
+  "status": "preregistered-not-run",
+  "objective": "Force every eligible row through R69 replay to determine whether the failed 0.25 screen was a margin-detection miss or an insufficient/inactive repair.",
+  "artifact": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-top-token-repair-r69",
+    "image_id": "sha256:c5eed78d05513746fc70f285b64eaf34620bfa6b49bea9d379d740a36d9926fc",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "configuration": {
+    "global_repair_margin": 100.0,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "screen": {
+    "concurrency": [1, 2],
+    "repeats": 1,
+    "output_tokens": 128,
+    "require_output_identity": true,
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "interpretation": {
+    "exact_c2": "The 0.25 candidate detector missed at least one required row.",
+    "inexact_c2": "M1 target-head replay is insufficient or the repaired result is not consumed by the active sampling path."
+  },
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "diagnostic_only": true
+  }
+}

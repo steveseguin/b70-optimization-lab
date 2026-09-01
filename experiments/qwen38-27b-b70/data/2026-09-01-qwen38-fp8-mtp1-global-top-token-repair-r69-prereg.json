@@ -1,0 +1,42 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-top-token-repair-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-top-token-repair-20260901-r69",
+  "status": "preregistered-not-run",
+  "objective": "Test whether global near-tie detection and exact M1 replay inside the actual greedy get_top_tokens path restores c2 output identity without losing the existing c2 throughput floor.",
+  "artifact": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-top-token-repair-r69",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-head-batch-repair-r68",
+    "base_image_id": "sha256:9c8a8563e7ea3b4ea4cb8960022e0773f91f1922e5f19758ddf6ac791c098bd3",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "configuration": {
+    "global_repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "screen": {
+    "concurrency": [1, 2],
+    "repeats": 2,
+    "output_tokens": 128,
+    "sequential_oracle_requests": 2,
+    "require_output_identity": true,
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "gates": {
+    "all_complete_arrays_exact_vs_sequential_oracle": true,
+    "minimum_c2_median_aggregate_tok_s": 68.373,
+    "no_new_gpu_or_xe_fault": true
+  },
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset; a clean-boot repeat remains required"
+  }
+}

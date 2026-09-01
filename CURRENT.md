@@ -92,6 +92,16 @@ global top two were exactly tied, but the repair margin was calculated inside
 each TP vocabulary shard and could not see the cross-shard tie. No R64-R67
 candidate is promoted. The next repair must detect the margin after TP
 all-gather and recompute only globally flagged M1 rows.
+R68-R72 tested that repair boundary without promoting a result. R68 patched
+the full-logits path, which greedy serving bypasses. R69 moved repair into the
+actual `get_top_tokens` path; R70 forced every row through ordinary M1 replay;
+R71 used the proven batch-invariant dot product on selected rows; and R72
+forced that exact repair on every target row. Every production-shape c2 arm
+still reproduced `cache-c000`'s token-96 divergence, while the forced exact arm
+fell to about `12.758 tok/s`. This proves the remaining production-shape drift
+originates before the target vocabulary head. All R68-R72 results are negative,
+cache-zero diagnostics with no public speed or curve change. The next local
+target is a c1/c2 first-hidden-divergence trace, not another head repair.
 Independent clean-host replay
 also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

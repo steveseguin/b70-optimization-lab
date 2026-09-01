@@ -52,6 +52,33 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-full-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-full-result.json
   experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-negative.md
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-head-batch-repair-r68-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.global-head-batch-repair-r68
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-global-head-batch-repair-r68-image.sh
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-global-head-batch-repair-r68-server.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-head-batch-repair-r68-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-head-batch-repair-r68-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-head-batch-repair-r68-negative.md
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-top-token-repair-r69-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.global-top-token-repair-r69
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-global-top-token-repair-r69-image.sh
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-global-top-token-repair-r69-server.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-top-token-repair-r69-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-top-token-repair-r69-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-top-token-repair-r69-negative.md
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-top-token-repair-force-r70-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-top-token-repair-force-r70-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-top-token-repair-force-r70-negative.md
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-exact-head-repair-r71-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.global-exact-head-repair-r71
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-global-exact-head-repair-r71-image.sh
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-global-exact-head-repair-r71-server.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-r71-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-r71-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-r71-negative.md
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-negative.md
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
 )
@@ -101,6 +128,15 @@ check_sha256 \
 check_sha256 \
   53ca0cd22d50e91f78be7234e1e53ed2ee6ce461b2c8b0da03259544c3b0e5ea \
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-selective-head-batch-repair-r66-20260901.patch
+check_sha256 \
+  a8026bd83f1c3ac5671847561b8dca637cdb366a6cbb8a2257375527afc644be \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-head-batch-repair-r68-20260901.patch
+check_sha256 \
+  902409d13c68ef0afc56cdce6385fcfb964061c218b2e5582de142f953a83d9b \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-top-token-repair-r69-20260901.patch
+check_sha256 \
+  1796e4ecc6b10cd26f164ccc67f4bc4bf1f976388bfd05e948ab1753c083748a \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-exact-head-repair-r71-20260901.patch
 
 if (( failed )); then
   printf '\nSOURCE CLOSURE FAILED\n' >&2

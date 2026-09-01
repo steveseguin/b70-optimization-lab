@@ -1,0 +1,20 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-head-batch-repair-r68
+FROM ${BASE_IMAGE}
+
+ARG LOGITS_PROCESSOR_SOURCE_SHA256
+ARG GLOBAL_TOP_TOKEN_REPAIR_PATCH_SHA256
+
+COPY vllm/model_executor/layers/logits_processor.py /tmp/logits_processor.py
+
+RUN test "$(sha256sum /tmp/logits_processor.py | awk '{print $1}')" = "${LOGITS_PROCESSOR_SOURCE_SHA256}" \
+    && install -m 0644 /tmp/logits_processor.py \
+       /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/logits_processor.py \
+    && install -m 0644 /tmp/logits_processor.py \
+       /workspace/vllm/vllm/model_executor/layers/logits_processor.py \
+    && /opt/venv/bin/python -m py_compile \
+       /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/logits_processor.py \
+    && rm -f /tmp/logits_processor.py
+
+LABEL neural.download.vllm.global-top-token-repair-r69.patch.sha256="${GLOBAL_TOP_TOKEN_REPAIR_PATCH_SHA256}" \
+      neural.download.vllm.logits-processor.py.sha256="${LOGITS_PROCESSOR_SOURCE_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-global-top-token-repair-r69"

@@ -824,6 +824,17 @@ shards, which a per-rank margin cannot see. These are diagnostic, unpromoted
 experiments; the qualified single-user recipe and headline remain unchanged.
 See the [R67 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-negative.md).
 
+R68-R72 then tested the global repair directly. R68 changed a full-logits path
+that greedy serving does not consume. R69 repaired the actual local-argmax
+path, R70 forced ordinary M1 replay for every row, R71 used the proven
+batch-invariant dot product for selected rows, and R72 forced that exact repair
+for every target row. The same c2 token-96 mismatch survived every arm; the
+forced exact path measured only about 12.758 tok/s. The production-shape drift
+therefore begins before the target vocabulary head. These patches and results
+are retained as diagnostic evidence, not as recipe dependencies. The public
+R50/R62 launch chains and the qualified single-user value remain unchanged.
+See the [R72 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-global-exact-head-repair-force-r72-negative.md).
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;

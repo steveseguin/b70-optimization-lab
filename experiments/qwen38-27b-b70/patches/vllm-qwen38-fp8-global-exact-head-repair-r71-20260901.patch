@@ -1,0 +1,52 @@
+--- a/vllm/model_executor/layers/logits_processor.py
++++ b/vllm/model_executor/layers/logits_processor.py
+@@ -13,6 +13,7 @@
+     tensor_model_parallel_gather,
+ )
+ from vllm.model_executor.custom_op import PluggableLayer
++from vllm.model_executor.layers.batch_invariant import linear_batch_invariant
+ from vllm.model_executor.layers.vocab_parallel_embedding import (
+     UnquantizedEmbeddingMethod,
+     VocabParallelEmbedding,
+@@ -169,7 +170,7 @@
+         # The copied draft head owns this buffer in the draft-only INT4 lane.
+         # Repairing it would erase the intended draft speed win and would test
+         # quantization error rather than target-head batch-shape drift.
+-        is_int4_draft = hasattr(lm_head, "_xpu_lm_head_int4_weight_t")
++        is_int4_draft = getattr(lm_head, "_xpu_draft_int4_enabled", False)
+         if repair_margin > 0.0 and not is_int4_draft:
+             if logits.device.type != "xpu":
+                 raise RuntimeError(
+@@ -226,9 +227,9 @@
+                 # keeping collective ordering identical. Replaying one row at
+                 # a time fixes the GEMM shape at M=1 at every concurrency.
+                 for row in repair_rows.tolist():
+-                    exact_local = self._apply_head(
+-                        lm_head,
++                    exact_local = linear_batch_invariant(
+                         flat_hidden[row : row + 1],
++                        lm_head.weight,
+                         embedding_bias,
+                     )
+                     exact_global = tensor_model_parallel_all_gather(exact_local)
+@@ -290,7 +291,7 @@
+                 "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN must be "
+                 "non-negative"
+             )
+-        is_int4_draft = hasattr(lm_head, "_xpu_lm_head_int4_weight_t")
++        is_int4_draft = getattr(lm_head, "_xpu_draft_int4_enabled", False)
+         repair_enabled = repair_margin > 0.0 and not is_int4_draft
+         if repair_enabled:
+             if logits.device.type != "xpu":
+@@ -347,9 +348,9 @@
+                 (global_top2[:, 0] - global_top2[:, 1]) < repair_margin
+             ).nonzero(as_tuple=True)[0]
+             for row in repair_rows.tolist():
+-                exact_local = self._apply_head(
+-                    lm_head,
++                exact_local = linear_batch_invariant(
+                     hidden_states[row : row + 1],
++                    lm_head.weight,
+                     embedding_bias,
+                 )
+                 if self.soft_cap is not None:

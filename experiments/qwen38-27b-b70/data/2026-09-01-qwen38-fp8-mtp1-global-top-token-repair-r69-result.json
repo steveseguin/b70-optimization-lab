@@ -1,0 +1,52 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-global-top-token-repair-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-global-top-token-repair-20260901-r69",
+  "status": "negative-identity-gate",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-global-top-token-repair-r69",
+    "id": "sha256:c5eed78d05513746fc70f285b64eaf34620bfa6b49bea9d379d740a36d9926fc",
+    "logits_processor_sha256": "575e9b76e48ce95328e6a72418bd6ecbffacb0e582e80217cbf9c42030aa8f18"
+  },
+  "configuration": {
+    "global_repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "harness_exit_code": 4,
+    "cached_tokens_all_zero": true,
+    "complete_outputs_exact_vs_sequential_oracle": false,
+    "points": [
+      {"concurrency": 1, "repeat": 1, "aggregate_tok_s": 46.948954053153585, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 1, "aggregate_tok_s": 66.4502462785928, "exact": "1/2"},
+      {"concurrency": 1, "repeat": 2, "aggregate_tok_s": 47.07417370796194, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 2, "aggregate_tok_s": 91.34398813534091, "exact": "1/2"}
+    ],
+    "first_mismatch": {
+      "prompt_id": "cache-c000",
+      "token_index": 96,
+      "concurrent_token_id": 2972,
+      "sequential_token_id": 348,
+      "repeated": "2/2 c2 batches"
+    },
+    "new_gpu_or_xe_faults": 0
+  },
+  "next": "Force all eligible rows through replay to distinguish a missed margin from an insufficient or inactive M1 repair.",
+  "evidence": {
+    "result_sha256": "a6ce99a225fd19f56a4c17a10a8a635d92784c32674446b4061aaecc634a0edf",
+    "pre_shutdown_server_log_sha256": "3b4936c9bc3c4ccf2f5278d3061c6abe032d50a963ca9056989f3e46dcf6d01b"
+  },
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

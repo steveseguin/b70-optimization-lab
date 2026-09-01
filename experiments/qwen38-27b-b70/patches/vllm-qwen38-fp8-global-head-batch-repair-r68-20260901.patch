@@ -1,0 +1,108 @@
+--- a/vllm/model_executor/layers/logits_processor.py
++++ b/vllm/model_executor/layers/logits_processor.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """A layer that compute logits from hidden_stats."""
+ 
++import os
++
+ import torch
+ import torch.nn.functional as F
+ 
+@@ -143,6 +145,73 @@
+         # Get the logits for the next tokens.
+         logits = self._apply_head(lm_head, hidden_states, embedding_bias)
+ 
++        # On XPU, oneDNN can select a different lm_head accumulation path when
++        # several requests are batched. Most rows are far enough from a token
++        # boundary that this is harmless. Detect ambiguous rows using the true
++        # top-two values across every TP vocabulary shard, then replay only
++        # those rows through the stable M=1 head below. Exchanging two values
++        # per shard avoids another full-vocabulary gather on the common path.
++        repair_margin_s = os.environ.get(
++            "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN", "0"
++        )
++        try:
++            repair_margin = float(repair_margin_s or "0")
++        except ValueError as exc:
++            raise ValueError(
++                "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN must be numeric"
++            ) from exc
++        if repair_margin < 0.0:
++            raise ValueError(
++                "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN must be "
++                "non-negative"
++            )
++        repair_rows = None
++        # The copied draft head owns this buffer in the draft-only INT4 lane.
++        # Repairing it would erase the intended draft speed win and would test
++        # quantization error rather than target-head batch-shape drift.
++        is_int4_draft = hasattr(lm_head, "_xpu_lm_head_int4_weight_t")
++        if repair_margin > 0.0 and not is_int4_draft:
++            if logits.device.type != "xpu":
++                raise RuntimeError(
++                    "VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN requires XPU"
++                )
++            if lm_head.__class__.__name__ != "ParallelLMHead":
++                raise RuntimeError(
++                    "global lm_head batch repair requires ParallelLMHead, got "
++                    f"{lm_head.__class__.__name__}"
++                )
++            if lm_head.tp_size <= 1:
++                raise RuntimeError(
++                    "global lm_head batch repair requires tensor parallelism"
++                )
++            if not self.use_all_gather:
++                raise RuntimeError(
++                    "global lm_head batch repair requires all-gather logits"
++                )
++            if lm_head.num_added_embeddings != 0:
++                raise RuntimeError(
++                    "global lm_head batch repair does not support added vocab"
++                )
++            if logits.shape[-1] < 2:
++                raise RuntimeError(
++                    "global lm_head batch repair requires at least two local "
++                    "vocabulary columns"
++                )
++            flat_local = logits.reshape(-1, logits.shape[-1]).float()
++            num_pad = lm_head.shard_indices.num_org_vocab_padding
++            if num_pad > 0:
++                flat_local[..., -num_pad:] = -float("inf")
++            local_top1v, local_top1i = flat_local.max(dim=-1)
++            local_top2v = flat_local.scatter(
++                1, local_top1i.unsqueeze(1), float("-inf")
++            ).max(dim=-1).values
++            local_candidates = torch.stack((local_top1v, local_top2v), dim=-1)
++            global_candidates = tensor_model_parallel_all_gather(local_candidates)
++            global_top2 = torch.topk(global_candidates, k=2, dim=-1).values
++            repair_rows = (
++                (global_top2[:, 0] - global_top2[:, 1]) < repair_margin
++            ).nonzero(as_tuple=True)[0]
++
+         # Gather logits for TP
+         if lm_head.tp_size > 1:
+             logits = self._gather_logits(logits)
+@@ -150,6 +219,22 @@
+         # Remove paddings in vocab (if any).
+         if logits is not None:
+             logits = logits[..., : self.org_vocab_size]
++            if repair_rows is not None and repair_rows.numel() > 0:
++                flat_hidden = hidden_states.reshape(-1, hidden_states.shape[-1])
++                flat_logits = logits.reshape(-1, logits.shape[-1])
++                # Every rank derives the same row list from all-gathered values,
++                # keeping collective ordering identical. Replaying one row at
++                # a time fixes the GEMM shape at M=1 at every concurrency.
++                for row in repair_rows.tolist():
++                    exact_local = self._apply_head(
++                        lm_head,
++                        flat_hidden[row : row + 1],
++                        embedding_bias,
++                    )
++                    exact_global = tensor_model_parallel_all_gather(exact_local)
++                    flat_logits[row : row + 1] = exact_global[
++                        ..., : self.org_vocab_size
++                    ].reshape(1, -1)
+         return logits
+ 
+     def get_top_tokens(
