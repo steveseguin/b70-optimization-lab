@@ -3244,3 +3244,12 @@ attempt-42/port-19714 paths; the full battery and every inference/quality
 selector are unchanged, and no reboot is required. See the
 [A41 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a41-diagnostic-receipt-verifier-negative.md) and
 [A42 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a42-trace-receipt-fullgraph-prereg.md).
+A42 loaded, captured, and became healthy; its corrected receipt passed. The
+next pre-request verifier rejected EngineCore because structured logging had
+consumed `TORCH_TRACE`, despite four exact rank logs in the bound trace path.
+Zero requests were sent and teardown was clean. A43 keeps exact worker/path/log
+checks, permits only EngineCore to omit the consumed selector, and still rejects
+any different value. Seven focused tests pass; inference and quality are
+unchanged, and no reboot is required. See the
+[A42 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a42-enginecore-trace-verifier-negative.md) and
+[A43 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a43-enginecore-aware-fullgraph-prereg.md).
