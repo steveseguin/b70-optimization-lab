@@ -1,0 +1,110 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -208,31 +208,50 @@
+ 
+ 
+ @triton.jit
+-def _xpu_qwen_gdn_row_stable_rmsnorm_gated_kernel(
++def _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel(
+     x_ptr,
+-    z_ptr,
+-    weight_ptr,
+-    output_ptr,
++    sum_ptr,
+     x_row_stride,
+-    z_row_stride,
+-    output_row_stride,
+-    epsilon,
+     BLOCK_SIZE: tl.constexpr,
+ ):
+-    """R94 diagnostic: one fixed reduction program per GDN head row."""
++    """R97 diagnostic: fixed-row sum stage matching generated geometry."""
+     row = tl.program_id(0).to(tl.int64)
+     col = tl.arange(0, BLOCK_SIZE)
+ 
+     x = tl.load(x_ptr + row * x_row_stride + col).to(tl.float32)
+-    z = tl.load(z_ptr + row * z_row_stride + col).to(tl.float32)
+-    weight = tl.load(weight_ptr + col).to(tl.float32)
+-
+     sum_sq = tl.sum(x * x, axis=0)
+-    inv_rms = tl.rsqrt(sum_sq / 128.0 + epsilon)
+-    silu_z = z / (tl.exp(-z) + 1.0)
+-    output = x * inv_rms * weight * silu_z
++    tl.store(sum_ptr + row, sum_sq)
+ 
+-    tl.store(output_ptr + row * output_row_stride + col, output)
++
++@triton.jit
++def _xpu_qwen_gdn_row_stable_rmsnorm_pointwise_kernel(
++    x_ptr,
++    z_ptr,
++    weight_ptr,
++    sum_ptr,
++    output_ptr,
++    n_elements,
++    epsilon,
++    BLOCK_SIZE: tl.constexpr,
++):
++    """R97 diagnostic: separate flattened four-warp gated pointwise stage."""
++    offset = tl.program_id(0) * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
++    mask = offset < n_elements
++    row = offset // 128
++    col = offset % 128
++
++    x = tl.load(x_ptr + offset, mask=mask).to(tl.float32)
++    z = tl.load(z_ptr + offset, mask=mask).to(tl.float32)
++    weight = tl.load(weight_ptr + col, mask=mask).to(tl.float32)
++    sum_sq = tl.load(sum_ptr + row, mask=mask).to(tl.float32)
++
++    mean_sq = sum_sq / 128.0
++    inv_rms = tl.rsqrt(mean_sq + epsilon)
++    normalized = x * inv_rms
++    weighted = normalized * weight
++    silu_z = z / (tl.exp(-z) + 1.0)
++    output = weighted * silu_z
++    tl.store(output_ptr + offset, output, mask=mask)
+ 
+ 
+ def _xpu_qwen_gdn_row_stable_rmsnorm_gated(
+@@ -265,21 +284,34 @@
+ 
+     x_2d = x.reshape(-1, 128)
+     z_2d = z.reshape(-1, 128)
++    sum_sq = torch.empty(
++        (x_2d.shape[0],), device=x.device, dtype=torch.float32
++    )
+     output = torch.empty_like(x_2d)
+-    _xpu_qwen_gdn_row_stable_rmsnorm_gated_kernel[(x_2d.shape[0],)](
++    _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel[(x_2d.shape[0],)](
++        x_2d,
++        sum_sq,
++        x_2d.stride(0),
++        BLOCK_SIZE=128,
++        num_warps=2,
++    )
++    n_elements = x_2d.numel()
++    pointwise_block_size = 256
++    _xpu_qwen_gdn_row_stable_rmsnorm_pointwise_kernel[
++        (triton.cdiv(n_elements, pointwise_block_size),)
++    ](
+         x_2d,
+         z_2d,
+         weight,
++        sum_sq,
+         output,
+-        x_2d.stride(0),
+-        z_2d.stride(0),
+-        output.stride(0),
++        n_elements,
+         epsilon,
+-        BLOCK_SIZE=128,
+-        num_warps=1,
++        BLOCK_SIZE=pointwise_block_size,
++        num_warps=4,
+     )
+     logger.warning_once(
+-        "R94 Qwen GDN row-stable RMSNormGated path executed on %s rows",
++        "R97 Qwen GDN two-stage row-stable RMSNormGated path executed on %s rows",
+         x_2d.shape[0],
+     )
+     return output.reshape(x.shape)
