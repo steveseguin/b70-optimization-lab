@@ -1,0 +1,62 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-xblock8-row-stable-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-xblock8-row-stable-20260901-r98",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Reproduce the retained accepted R90 reduction's exact eight-row-by-128 program shape while keeping that shape fixed across request concurrency.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97",
+    "base_image_id": "sha256:7971b16805126ffe8ce52904637906409782ef414ac777e78ab9872fca89ab41",
+    "r97_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97-result.json"
+  },
+  "source_evidence": {
+    "retained_r90_ttir_shape": "tensor<8x128xf32>",
+    "retained_r90_xblock": 8,
+    "retained_r90_reduction_num_warps": 2,
+    "retained_r90_pointwise_num_warps": 4,
+    "interpretation": "R94-R97 removed Inductor's eight-row vector dimension. R97 proved the two-stage and pointwise differences inert for c1, leaving the reduction program shape as the final known arithmetic distinction."
+  },
+  "treatment": {
+    "change_from_r97": "Load and reduce eight independent 128-wide rows in every reduction program, masking tail rows but never changing the eight-row tensor shape.",
+    "unchanged": [
+      "two-warp FP32 sum-of-squares stage",
+      "separate four-warp pointwise stage",
+      "fixed pointwise block size",
+      "R88 request-isolated qkvz prefill",
+      "R89 request-isolated GDN prefill",
+      "FP8 output projection",
+      "deterministic=true",
+      "xpu_graph=false"
+    ]
+  },
+  "operator_gate": {
+    "required": true,
+    "all_eight_row_slots_bitwise_invariant": true,
+    "reference_tolerance": {"rtol": 0.002, "atol": 0.002},
+    "tail_masking_matches_full_block": true,
+    "unsupported_shape_failed_closed": true
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "operator_gate": "pass",
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer0_core_and_z_trace_remain_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing image, warm every required Eagle kernel before measurement, and repeat c1/c2. Then clean-boot the host and run the full varied-prompt identity and performance qualification.",
+  "followup_if_fail": "Preserve the result. Compare custom TTIR with retained R90 TTIR for reduction lowering differences before changing another variable.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the current boot contains an earlier GPU reset."
+}
