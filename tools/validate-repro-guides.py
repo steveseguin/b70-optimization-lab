@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from functools import lru_cache
 from html.parser import HTMLParser
 import json
 from pathlib import Path, PurePosixPath
 import re
+import subprocess
 import sys
 from typing import Any
 from urllib.parse import urlparse
@@ -39,6 +41,11 @@ PACKAGE_CATALOG_FORMAT = "b70-model-package-catalog-v1"
 PACKAGE_STATUSES = {"candidate", "starter", "preview"}
 PACKAGE_COMMANDS = {"preflight", "launch", "health", "benchmark", "stop"}
 NONPORTABLE_COMMAND_PATH = re.compile(r"(?:file://|/(?:home|mnt|media)/)")
+REPOSITORY_COMMAND_PATH = re.compile(
+    r"(?<![A-Za-z0-9_.-])"
+    r"((?:repro|scripts|tools|patches|experiments|results|data|docs|packages)/"
+    r"[A-Za-z0-9_./+:-]+)"
+)
 PACKAGE_OPERATING_SYSTEMS = {"Linux", "Windows"}
 PACKAGE_DELIVERY = {"native", "container"}
 CONTRIBUTOR_KINDS = {"lab", "external"}
@@ -149,6 +156,8 @@ def validate(repo: Path, catalog_path: Path | None = None) -> tuple[list[str], C
             errors.append(f"{guide}: path must stay inside the repository")
         elif not (repo / pure_guide).is_file():
             errors.append(f"{guide}: guide does not exist")
+        else:
+            errors.extend(_validate_internal_dependency(repo, guide, guide))
 
         if classification not in CLASSIFICATIONS:
             errors.append(f"{guide}: unknown classification {classification!r}")
@@ -173,11 +182,7 @@ def validate(repo: Path, catalog_path: Path | None = None) -> tuple[list[str], C
                 if not isinstance(link, str):
                     errors.append(f"{guide}: dependency link must be a string")
                     continue
-                internal = _internal_path(link)
-                if internal is None:
-                    errors.append(f"{guide}: dependency link must point inside this repository: {link}")
-                elif internal.is_absolute() or ".." in internal.parts or not (repo / internal).exists():
-                    errors.append(f"{guide}: dependency link does not resolve: {link}")
+                errors.extend(_validate_internal_dependency(repo, guide, link))
 
         missing = entry.get("missing")
         if not isinstance(missing, list) or any(not isinstance(item, str) or not item for item in missing):
@@ -201,6 +206,7 @@ def validate(repo: Path, catalog_path: Path | None = None) -> tuple[list[str], C
                 errors.append(f"{guide}: package must be a non-empty repository-relative path")
             else:
                 package_paths.add(package)
+                errors.extend(_validate_internal_dependency(repo, guide, package))
                 errors.extend(_validate_package(repo, package, entry))
 
     discovered = {
@@ -245,6 +251,10 @@ def validate(repo: Path, catalog_path: Path | None = None) -> tuple[list[str], C
                 errors.append(f"index.html Copy Markdown target is not repository-relative: {copy_path}")
             elif not (repo / internal).is_file():
                 errors.append(f"index.html Copy Markdown target does not exist: {copy_path}")
+            else:
+                errors.extend(
+                    _validate_internal_dependency(repo, "index.html Copy Markdown", copy_path)
+                )
     except OSError as exc:
         errors.append(f"cannot read index.html: {exc}")
 
@@ -442,6 +452,54 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
     else:
         for dependency in dependencies:
             errors.extend(_validate_internal_dependency(repo, label, dependency))
+        dependency_set = {
+            dependency for dependency in dependencies if isinstance(dependency, str)
+        }
+        required_dependencies: list[tuple[str, object]] = [
+            ("guide", package.get("guide")),
+        ]
+        if isinstance(library, dict) and isinstance(library.get("featured_metric"), dict):
+            required_dependencies.append(
+                ("library.featured_metric.evidence", library["featured_metric"].get("evidence"))
+            )
+        if isinstance(model, dict):
+            required_dependencies.append(("model.manifest", model.get("manifest")))
+        if isinstance(contributors, list):
+            required_dependencies.extend(
+                (f"contributors[{index}].evidence", contributor.get("evidence"))
+                for index, contributor in enumerate(contributors)
+                if isinstance(contributor, dict)
+            )
+        if isinstance(patches, dict) and isinstance(patches.get("items"), list):
+            required_dependencies.extend(
+                (f"project_patches.items[{index}]", item)
+                for index, item in enumerate(patches["items"])
+            )
+        profiles = package.get("performance_profiles")
+        if isinstance(profiles, list):
+            required_dependencies.extend(
+                (f"performance_profiles[{index}].evidence", profile.get("evidence"))
+                for index, profile in enumerate(profiles)
+                if isinstance(profile, dict)
+            )
+        if isinstance(commands, dict):
+            for command_name, command in commands.items():
+                if not isinstance(command, str):
+                    continue
+                for match in REPOSITORY_COMMAND_PATH.finditer(command):
+                    reference = match.group(1).rstrip(".,;:)")
+                    if (repo / reference).exists():
+                        required_dependencies.append(
+                            (f"commands.{command_name}", reference)
+                        )
+        for field, reference in required_dependencies:
+            if (
+                isinstance(reference, str)
+                and not _dependency_is_declared(reference, dependency_set)
+            ):
+                errors.append(
+                    f"{label}: {field} must be declared in dependencies: {reference}"
+                )
 
     missing = package.get("missing")
     if status == "starter" and missing:
@@ -588,9 +646,47 @@ def _validate_internal_dependency(repo: Path, owner: str, value: object) -> list
     internal = _internal_path(value)
     if internal is None or internal.is_absolute() or ".." in internal.parts:
         return [f"{owner}: dependency must point inside this repository: {value}"]
-    if not (repo / internal).exists():
+    resolved_repo = repo.resolve()
+    path = repo / internal
+    if not path.exists():
         return [f"{owner}: dependency does not resolve: {value}"]
+    try:
+        path.resolve().relative_to(resolved_repo)
+    except ValueError:
+        return [f"{owner}: dependency resolves outside this repository: {value}"]
+    tracked = _tracked_paths(resolved_repo)
+    if tracked is not None:
+        relative = internal.as_posix().rstrip("/")
+        if path.is_dir():
+            prefix = f"{relative}/"
+            if not any(candidate.startswith(prefix) for candidate in tracked):
+                return [f"{owner}: dependency directory is not tracked: {value}"]
+        elif relative not in tracked:
+            return [f"{owner}: dependency is not tracked: {value}"]
     return []
+
+
+def _dependency_is_declared(reference: str, dependencies: set[str]) -> bool:
+    """Return whether an exact dependency or a declared parent directory covers it."""
+    pure = PurePosixPath(reference)
+    return any(
+        dependency == reference
+        or PurePosixPath(dependency) in pure.parents
+        for dependency in dependencies
+    )
+
+
+@lru_cache(maxsize=8)
+def _tracked_paths(repo: Path) -> frozenset[str] | None:
+    """Return Git-tracked paths, or None for synthetic non-Git test repositories."""
+    try:
+        output = subprocess.check_output(
+            ["git", "-C", str(repo), "ls-files", "-z"],
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return frozenset(path for path in output.decode().split("\0") if path)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
@@ -53,6 +54,27 @@ class ReproGuideValidationTest(unittest.TestCase):
             )
             errors, _ = MODULE.validate(repo)
             self.assertTrue(any("does not resolve" in error for error in errors))
+
+    def test_rejects_untracked_dependency_in_git_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            tracked = repo / "tracked.txt"
+            tracked.write_text("tracked\n")
+            subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+            untracked = repo / "untracked.txt"
+            untracked.write_text("not public\n")
+            errors = MODULE._validate_internal_dependency(repo, "example", "untracked.txt")
+            self.assertTrue(any("is not tracked" in error for error in errors))
+
+    def test_dependency_declaration_accepts_parent_directory(self) -> None:
+        dependencies = {"repro/example"}
+        self.assertTrue(
+            MODULE._dependency_is_declared("repro/example/run.sh", dependencies)
+        )
+        self.assertFalse(
+            MODULE._dependency_is_declared("scripts/run.sh", dependencies)
+        )
 
     def test_rejects_mutable_container_package(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

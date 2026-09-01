@@ -65,6 +65,15 @@ Agents creating or updating these surfaces must use the repository-local
      material speed win lives in `patches/` with SHA-256s, applies cleanly
      to the pinned commit, and is a candidate for upstreaming. Packets say
      whether their numbers are stock or patched.
+   - Every required patch, Dockerfile, builder, verifier, benchmark harness,
+     model manifest, contributor receipt, and graph-evidence file must appear
+     in the package's `dependencies` list and be Git-tracked. A file that only
+     exists in an operator's working tree or is mentioned only in prose is not
+     part of the public recipe.
+   - Multi-stage patched builds should provide a fail-closed source-closure
+     command that checks the final stages and patch hashes before compilation.
+     CI validates declared dependency closure from a clean Git checkout; a
+     package must not depend on ignored artifacts or chat history.
 
 6. **Discovery and credit** (`packages/<id>/package.json`)
    - Normalize model family, variant, quantization, card count, runtime, OS,
