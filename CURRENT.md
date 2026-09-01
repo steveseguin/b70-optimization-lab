@@ -3397,3 +3397,8 @@ external evidence drive was remounted, all B70 paths were returned to `on`,
 and A48 now records the post-performance-policy AER baseline and aborts on any
 increment instead of requiring a meaningless literal zero. See the
 [recovery note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-dense-screen-host-freeze-and-a48-recovery.md).
+Its first post-restart invocation stopped before path creation because a
+successful `grep -q` ASPM check gave its `lspci` producer SIGPIPE under
+`pipefail`. The host wrapper and field-aware generator now consume the complete
+reports before matching; reproduction and root-only checks pass, and the model
+was never loaded by the interrupted invocation.

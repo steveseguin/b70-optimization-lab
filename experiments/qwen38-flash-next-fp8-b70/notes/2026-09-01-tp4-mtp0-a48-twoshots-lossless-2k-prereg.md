@@ -39,11 +39,11 @@ the packet does not pretend that the source trees are byte-identical.
 - supervisor SHA-256:
   `e0e8a407c8ccbdd2e05146fe76bd7791a37f533ca572a4007266e258e8a0db11`;
 - privileged host wrapper SHA-256:
-  `e950ae8a2fac833f2f56ab11944177aa142637cbf512d32e3d875aecd5b77570`;
+  `1ce70894278f81b6c3c32b21a9696f6098b21970af4649304ab0a3a11e1430b8`;
 - A48 runtime verifier SHA-256:
   `a3acec5018c4b1147f8efddb75f6678acee7f9802d4fb11f3c56bc7b2bd74ca8`;
 - field-aware rewrite helper SHA-256:
-  `1ebeeaabef227f1e8e2d7c8676b894569d616506b2f8cd5d9fbfc54e27fc4808`.
+  `f60885a4f13086ee39f7dd8e1d4bd23dfa4c1da72100dc3872d65ee0834f84fd`.
 
 The rewrite helper validates exact source-field occurrence counts and
 reproduces the tracked A48 packet byte-for-byte in validation mode. Broad
@@ -75,3 +75,11 @@ and A44's `20.507849 tok/s` diagnostic median unchanged.
 No reboot or one-load-per-boot rule applies. The host may run A48 whenever its
 live health, empty evidence paths, source identities, and privileged bounded
 host-control gate pass.
+
+The first host-wrapper invocation exited before path creation with status 141.
+Under `pipefail`, the successful `grep -q` ASPM checks closed their `lspci`
+producers early and converted the resulting SIGPIPE into a wrapper failure.
+The wrapper and its generator now capture each complete `lspci` report before
+matching it. Generator reproduction, root-only validation, and both real
+ASPM-disabled matches pass; no server, checkpoint load, run path, or request
+existed during the procedural interruption.

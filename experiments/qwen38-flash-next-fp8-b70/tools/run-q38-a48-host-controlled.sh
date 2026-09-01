@@ -91,8 +91,10 @@ aspm_restore_required=1
 printf 'performance\n' >"$aspm_policy"
 [[ "$(awk '/^SwapTotal:/ {print $2}' /proc/meminfo)" == 0 ]]
 grep -Fq '[performance]' "$aspm_policy"
-lspci -vv -s 00:03.1 | grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled'
-lspci -vv -s 01:00.0 | grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled'
+root_port_pci=$(lspci -vv -s 00:03.1)
+nvme_pci=$(lspci -vv -s 01:00.0)
+grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled' <<<"$root_port_pci"
+grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled' <<<"$nvme_pci"
 export Q38_A48_NVME_AER_BASELINE
 export Q38_A48_ROOT_AER_BASELINE
 Q38_A48_NVME_AER_BASELINE=$(awk '$1 == "TOTAL_ERR_COR" {print $2}' \

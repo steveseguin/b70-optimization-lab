@@ -295,6 +295,15 @@ def host_wrapper() -> None:
         "}\n\n"
         'runuser -u steve -- "$supervisor" &',
     )
+    text = replace_exact(
+        text,
+        "lspci -vv -s 00:03.1 | grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled'\n"
+        "lspci -vv -s 01:00.0 | grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled'\n",
+        "root_port_pci=$(lspci -vv -s 00:03.1)\n"
+        "nvme_pci=$(lspci -vv -s 01:00.0)\n"
+        "grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled' <<<\"$root_port_pci\"\n"
+        "grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled' <<<\"$nvme_pci\"\n",
+    )
     write_new("run-q38-a48-host-controlled.sh", text)
 
 
