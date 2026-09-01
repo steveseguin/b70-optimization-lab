@@ -1,0 +1,63 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-two-warp-row-stable-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-two-warp-row-stable-20260901-r96",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether restoring R90's two-warp 128-value reduction geometry inside the one-program-per-row R94 kernel preserves accepted c1 arithmetic while retaining c2 batch invariance.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94",
+    "base_image_id": "sha256:df6bac2fbf45e96139da8ebfee60e22db9db335aa593dfae276fbb2a15855235",
+    "r94_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94-result.json",
+    "r95_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95-result.json"
+  },
+  "source_evidence": {
+    "r90_generated_reduction": "triton_per_fused__to_copy_mean_pow_view_0",
+    "r90_reduction_width": 128,
+    "r90_num_warps": 2,
+    "r90_pointwise_num_warps": 4,
+    "r94_num_warps": 1,
+    "interpretation": "R94 changed both row grouping and the within-row reduction tree. The two-warp arm isolates the reduction-tree mismatch while keeping one row per program."
+  },
+  "treatment": {
+    "change_from_r94": "Set num_warps=2 for the fixed 128-wide row-stable gated RMSNorm kernel.",
+    "unchanged": [
+      "one Triton program per row",
+      "R94 float32 arithmetic and output dtype",
+      "VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1 for every Qwen GDN call",
+      "R88 request-isolated qkvz prefill",
+      "R89 request-isolated GDN prefill",
+      "FP8 output projection",
+      "deterministic=true",
+      "xpu_graph=false"
+    ]
+  },
+  "operator_gate": {
+    "required": true,
+    "selected_row_bitwise_invariant": true,
+    "reference_tolerance": {"rtol": 0.002, "atol": 0.002},
+    "unsupported_shape_failed_closed": true
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 on one fresh server and empty compile cache.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false
+  },
+  "required_pass": {
+    "operator_gate": "pass",
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer0_core_and_z_trace_remain_exact_across_c1_c2": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing image and repeat c1/c2, then perform a clean-boot full varied-prompt qualification before performance measurement.",
+  "followup_if_fail": "Preserve the result. If it restores c1 but loses c2, split the generated reduction and pointwise geometry exactly; if it retains R94, the pointwise or kernel split is also causally relevant.",
+  "promotion_boundary": "Diagnostic only. No public speed or quality authority; the current boot contains an earlier GPU reset."
+}
