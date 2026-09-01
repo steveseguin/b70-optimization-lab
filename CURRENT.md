@@ -3449,3 +3449,13 @@ floor and every inference, quality, pressure, storage, link, and postflight gate
 remain exact. See the
 [A51 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a51-memory-floor-negative.md)
 and [A52 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a52-memory-floor-prereg.md).
+A52 passed A51's stopping point: all ranks loaded in `583.19`-`583.62`
+seconds and completed full-graph capture in 52 seconds. During the remaining
+known post-capture initialization interval, one sample reached `27,980,704
+KiB`, only `19,296 KiB` below its 28-million floor. Swap and memory PSI were
+zero, every link/storage bound held, and teardown was clean; no endpoint or
+request existed. A53 changes only the loaded-state floor to `16,000,000 KiB`,
+still far above the prior roughly 1-GiB freeze state and still protected by
+swap-off, PSI, storage, link, device, and postflight gates. See the
+[A52 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a52-memory-floor-negative.md)
+and [A53 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a53-memory-floor-prereg.md).
