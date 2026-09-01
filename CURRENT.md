@@ -3280,3 +3280,12 @@ unresolved. Teardown was clean without reboot. The next arm is a fresh
 supervised standalone launcher with explicit trace export; short-context graph
 qualification and long-context diagnosis remain separate. See the
 [A44 diagnostic result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a44-fullgraph-diagnostic-result.md).
+A45 is the production-oriented successor: a standalone supervised and
+trace-bound attempt-45/port-19717 packet with the same full-decode graph, but a
+2,304-token service cap and exact 2K losslessness gates. It must match the
+retained eager 2K prompt, payload, and output authorities on two cache-zero
+rows, as well as the unchanged protected short hashes, semantic boundary, and
+16-repeat gate. The launcher explicitly exports the exact run-local trace path;
+static source, hash, path, and no-listener checks pass. No reboot or per-boot
+load rule applies. See the
+[A45 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a45-lossless-2k-fullgraph-prereg.md).
