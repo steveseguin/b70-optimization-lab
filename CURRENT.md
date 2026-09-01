@@ -3192,3 +3192,14 @@ and actual graph dispatch authoritative. No inference selector changes and no
 reboot is needed. See the
 [A35 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a35-kernel-path-verifier-negative.md)
 and [A36 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a36-holistic-runtime-gate-prereg.md).
+A36 again loaded and captured the full graph on all four ranks, then became
+healthy. The client sent zero requests because the inherited verifier treated
+ordinary operator JIT/autotune files in the isolated Torch cache as forbidden
+whole-model compilation, despite exact mode-NONE configuration and two
+Inductor-disabled server receipts. Host and devices recovered without reboot;
+protected results remain unchanged. A37 keeps the cache manifest as evidence,
+requires the stronger compilation-disabled receipts, rejects known model
+compile receipts, and otherwise changes only fresh attempt/port/evidence paths.
+See the
+[A36 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a36-torch-cache-verifier-negative.md)
+and [A37 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a37-cache-aware-fullgraph-prereg.md).
