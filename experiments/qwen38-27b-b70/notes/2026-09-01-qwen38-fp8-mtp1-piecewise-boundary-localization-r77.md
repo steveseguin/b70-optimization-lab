@@ -173,3 +173,11 @@ inside FP8 `out_proj`. A repair must preserve the accepted c1 norm arithmetic
 while making it batch-invariant; moving the norm outside the compiled graph is
 known to select the wrong path. R92's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-output-factorial-r92-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-output-factorial-r92-result.json).
+
+R93 disabled only the compiler's `norm_quant` fusion on the unchanged R90
+lineage. The server log proved that only `act_quant` remained enabled, but all
+three token sequences were byte-for-byte the R90 sequences: c1 1/1 and c2 1/2.
+The fusion is therefore not causal. The remaining boundary is the compiled
+`RMSNormGated` reduction arithmetic itself across different total row shapes.
+R93's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-norm-quant-fusion-r93-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-norm-quant-fusion-r93-result.json).

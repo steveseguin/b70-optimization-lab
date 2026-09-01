@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-norm-quant-fusion-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-norm-quant-fusion-20260901-r93",
+  "status": "completed-rejected-no-effect",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-norm-quant-fusion-r93-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-r90",
+    "image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744"
+  },
+  "treatment": {
+    "fuse_norm_quant": false,
+    "fuse_act_quant": true,
+    "server_log_proof": "Enabled custom fusions: act_quant",
+    "fresh_compile_cache": true
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 29.190429148733948
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 65.1552723528041
+    },
+    "all_three_token_sequences_equal_r90": true,
+    "first_bad_output": {
+      "prompt_id": "cache-c000",
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "interpretation": "Disabling only the compiler's norm_quant fusion preserves the accepted c1 result but changes none of the three output sequences. The fusion is not causal. Combined with R92, the remaining boundary is RMSNormGated's compiled reduction arithmetic across total row shapes.",
+  "next_experiment": "Adapt the existing batch-invariant RMS reduction primitive to RMSNormGated behind a narrow default-off gate, preserving the compiled path and gating semantics, then rerun c1/c2 before any broader testing.",
+  "reporting_boundary": "Do not promote this diagnostic throughput. c2 failed and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-norm-quant-fusion-20260901-r93-off",
+    "raw_result_sha256": "078a5bb8300e78b81a331be629819a0840afcdde352c03a58dea18999e634c90",
+    "trace_sha256": "789e05d24c6ad15587fb6de7f9e398de14388cd23562f0570eb0a144a141ce34",
+    "server_log_sha256": "7b4f2b1c0e7b4321cb7a4b8eed71712938a31e2895ea3b8423c140ac92a94f4d",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
