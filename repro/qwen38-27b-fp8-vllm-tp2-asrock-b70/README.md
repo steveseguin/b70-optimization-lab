@@ -42,6 +42,33 @@ MTP1 and R54A MTP0. Its rebuilt libraries use portable `$ORIGIN` RUNPATHs; the
 builder verifies whole-file and code/data section hashes. See the
 [clean-rebuild result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json).
 
+### Refresh older clones before benchmarking
+
+The public build chain published before September 1, 2026 stopped at the R31
+MTP1 image. It did not contain the later serial-attention build stage, rebuilt
+split-GDN stage, or the final R50 GDN patch used by the qualified 51.8 tok/s
+profile. Those files are now tracked in this repository. An old checkout can
+therefore run successfully yet measure a different profile.
+
+Refresh and verify the complete public source closure before building:
+
+```bash
+git pull --ff-only origin main
+repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-public-source-closure.sh
+```
+
+The verifier checks that all final Dockerfiles, builders, and custom-op patches
+are present and tracked, then verifies the three final patch hashes. The full
+builder below applies every stage in order and the image-contract verifier
+checks the installed libraries. Do not substitute the older R31 image for the
+final R50 image.
+
+The 51.808087 tok/s qualification is a single-sequence, 1K allocation profile
+(`MAX_MODEL_LEN=1024`), not a full-262K-context measurement. A server launched
+with a 262K maximum context is useful, but it is not a like-for-like reproduction
+of that headline. The separately measured historical 32K MTP1 point was
+46.636241 tok/s and is explicitly Grade-C shape evidence.
+
 Build the full dependency chain and launch the qualified profile with portable
 caller-selected paths:
 
