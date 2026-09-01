@@ -80,7 +80,13 @@ B70s recovered and passed independent deterministic compute after teardown.
 D69 marked all `_dummy_run` calls and bypassed projection repair only for those
 synthetic inputs; it passed exact startup accounting, both health checks, and a
 clean kernel gate with repair enabled. Real request prefills retain the repair.
-D70 is the full strict output/performance retry. See the
+D70 passed startup and began the first strict request, then rank 1 lost its
+device asynchronously before the first response completed; no performance row
+exists. Xe logged 513 fault responses, seven CAT errors, and one reset. A
+post-teardown matrix health probe then hung and added a GPU0 BCS fault, so the
+host requires a reboot before D71. D71 enables the hook's existing barriers
+only around repaired real-prefill projections; decode remains barrier-free.
+See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
 [`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
 and
