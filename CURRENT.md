@@ -3289,3 +3289,16 @@ rows, as well as the unchanged protected short hashes, semantic boundary, and
 static source, hash, path, and no-listener checks pass. No reboot or per-boot
 load rule applies. See the
 [A45 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a45-lossless-2k-fullgraph-prereg.md).
+A45 loaded, captured on all four ranks, emitted four exact nonempty trace logs,
+and became healthy. Its client sent zero requests because the A43 verifier
+found that structured logging also consumed `TORCH_TRACE` from worker rank 0.
+Offline evidence contains exactly ranks 0–3 and 20 allowed compile events. A46
+adds a verifier-only treatment: EngineCore/worker omission is normalized only
+after the exact four-rank evidence exists; conflicting paths and every inherited
+source/process/graph check remain fatal. Thirty combined verifier tests pass.
+The A45 supervisor tore down cleanly with no B70 fault; two hardware-corrected
+local-NVMe PCIe receive events were recorded during checkpoint I/O. A46 uses
+fresh attempt-46/port-19718 paths with identical inference and quality identity,
+without reboot. See the
+[A45 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a45-worker-trace-verifier-negative.md) and
+[A46 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a46-worker-aware-lossless-2k-prereg.md).
