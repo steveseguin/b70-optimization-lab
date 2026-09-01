@@ -5,19 +5,40 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 base="${script_dir}/launch-tp4-mtp0-4352-ple-only-a29-moe-m1-warps8.sh"
 rewrite="${script_dir}/rewrite-a31-current-source-contract.py"
 expected_base=6a624362e1ae1d4c4522fbc6cd88c6ac9e7da0da7998390c28333927c3aec5b0
-expected_rewrite=daa902d850632f33f07451b72a3f7b4c68df0eb07183b6dc3904de35d02f4d72
-expected_source=b0bc8aea505dc02f24956fe7d7316a29131671cd4db7af922b43d473f11485ec
+expected_rewrite=ab4d36e407e2a8d633431c4dab074a55618a736ee4ec7b21a53eb18261f04e7c
+expected_source=568815145c63708bf1a7e1f3d2b2948a22ee282d66565054b2b22e4ecf2d3a25
 current_vllm=797769b34b6db5c934609b75dc04cc61ec66e5f9
-rejected_boot=c36480de-9150-4182-9888-08c85d2d9de4
-affinity_root=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1
-component_state="/run/user/$(id -u)/q38-flash-next-component-chain.state"
 
 derive() {
   Q38_A29_SOURCE_ONLY=1 "$base" | awk \
     -v rewrite="$rewrite" \
-    -v current_vllm="$current_vllm" \
-    -v rejected_boot="$rejected_boot" '
+    -v current_vllm="$current_vllm" '
+BEGIN {
+  skip_forbidden_boot = 0
+  skip_full_load_marker = 0
+}
 {
+  if ($0 == "  boot_id=$(< /proc/sys/kernel/random/boot_id)") {
+    skip_forbidden_boot = 1
+    next
+  }
+  if (skip_forbidden_boot) {
+    if ($0 ~ /^  mem_available_kib=/) {
+      skip_forbidden_boot = 0
+    } else {
+      next
+    }
+  }
+  if ($0 ~ /^  full_load_marker=/) {
+    skip_full_load_marker = 1
+    next
+  }
+  if (skip_full_load_marker) {
+    if ($0 == "  exec 9>&-") {
+      skip_full_load_marker = 0
+    }
+    next
+  }
   gsub(/ple-only-a29-moe-m1-warps8/, "ple-only-a31-moe-m1-current")
   gsub(/q38-mtp0-ple-only-a29/, "q38-mtp0-ple-only-a31")
   gsub(/q38-ple-only-a29/, "q38-ple-only-a31")
@@ -28,9 +49,8 @@ derive() {
   gsub(/Q38_A29_VALIDATE_ONLY/, "Q38_A31_VALIDATE_ONLY")
   gsub(/A29/, "A31")
   gsub(/d14396e27247c1b251da0ce24a0942772c4b002f/, current_vllm)
-  gsub(/37791a9b20d0ce0d10e89f3930f9d0e8b7d7f743e1074691b39ed22a40e6adbb/, "6fe2ffb28e60706bd7ad814fe0cb57752b8b4f0df27ad50d033880f77a424e0c")
+  gsub(/37791a9b20d0ce0d10e89f3930f9d0e8b7d7f743e1074691b39ed22a40e6adbb/, "07863a1e5981f1efbf79e414ef19dbb47c8aba693e404766a99efd021198be56")
   gsub(/rewrite-a29-kernel-workspace-contract.py/, "rewrite-a31-current-source-contract.py")
-  gsub(/c9c86120-4735-4f7a-9500-d7e49f0d2f63/, rejected_boot)
   if ($0 == "unset VLLM_XPU_PLE_UVA_PREFETCH") {
     print
     print "unset VLLM_XPU_QWEN4_EXP_HC_GROUPED_UP"
@@ -61,39 +81,34 @@ actual_source=$(derive | sha256sum | cut -d' ' -f1)
   exit 1
 }
 if [[ "${Q38_A31_SOURCE_ONLY:-0}" == 1 ]]; then derive; exit 0; fi
-[[ "$(tr -d '\n' </proc/sys/kernel/random/boot_id)" != "$rejected_boot" ]] || {
-  printf 'FAIL: A31 rejects the event-chain failure boot; reboot only while attended\n' >&2
-  exit 1
-}
-[[ -s "$affinity_root/comparison.json" && -s "$affinity_root/evidence.sha256" ]] || {
-  printf 'FAIL: A31 requires the clean same-boot affinity component closeout first\n' >&2
-  exit 1
-}
-[[ "$(tr -d '\n' <"$affinity_root/boot-id.txt")" == "$(tr -d '\n' </proc/sys/kernel/random/boot_id)" ]] || {
-  printf 'FAIL: A31 affinity prerequisite is from another boot\n' >&2
-  exit 1
-}
-exec 10>"${component_state}.lock"
-flock -n 10 || {
-  printf 'FAIL: A31 component-chain state is busy\n' >&2
-  exit 1
-}
-read -r component_status component_boot <"$component_state" || {
-  printf 'FAIL: A31 component-chain state is absent or malformed\n' >&2
-  exit 1
-}
-[[ "$component_status" == cpu-affinity-complete && "$component_boot" == "$(tr -d '\n' </proc/sys/kernel/random/boot_id)" ]] || {
-  printf 'FAIL: A31 requires cpu-affinity-complete on this boot\n' >&2
-  exit 1
-}
-flock -u 10
-exec 10>&-
-(cd "$affinity_root" && sha256sum -c evidence.sha256) >/dev/null || {
-  printf 'FAIL: A31 affinity prerequisite evidence does not verify\n' >&2
-  exit 1
-}
-jq -e '.status == "passed" or .status == "closed"' "$affinity_root/comparison.json" >/dev/null || {
-  printf 'FAIL: A31 affinity prerequisite did not complete cleanly\n' >&2
-  exit 1
-}
+if [[ "${Q38_A31_VALIDATE_ONLY:-0}" != 1 ]]; then
+  supervisor_pid=${Q38_A31_SUPERVISOR_PID:-}
+  supervisor_starttime=${Q38_A31_SUPERVISOR_STARTTIME:-}
+  [[ "$supervisor_pid" =~ ^[1-9][0-9]*$ && "$supervisor_starttime" =~ ^[1-9][0-9]*$ ]] || {
+    printf 'FAIL: A31 runtime may be entered only by its frozen supervisor\n' >&2
+    exit 1
+  }
+  [[ -r "/proc/${supervisor_pid}/stat" ]] || {
+    printf 'FAIL: A31 supervisor process is absent\n' >&2
+    exit 1
+  }
+  actual_starttime=$(awk '{ line=$0; sub(/^.*\) /, "", line); split(line, fields, " "); print fields[20] }' \
+    "/proc/${supervisor_pid}/stat")
+  [[ "$actual_starttime" == "$supervisor_starttime" ]] || {
+    printf 'FAIL: A31 supervisor identity changed\n' >&2
+    exit 1
+  }
+  supervisor_command=$(tr '\0' ' ' <"/proc/${supervisor_pid}/cmdline")
+  [[ "$supervisor_command" == *"supervise-tp4-mtp0-4352-ple-only-a31-moe-m1-current.sh"* ]] || {
+    printf 'FAIL: A31 runtime owner is not the frozen supervisor\n' >&2
+    exit 1
+  }
+  expected_locks=(/tmp/b70-benchmark.lock /tmp/b70-gpu0.lock /tmp/b70-gpu1.lock /tmp/b70-gpu2.lock /tmp/b70-gpu3.lock)
+  for index in 0 1 2 3 4; do
+    [[ "$(readlink -f "/proc/${supervisor_pid}/fd/$((7 + index))")" == "${expected_locks[$index]}" ]] || {
+      printf 'FAIL: A31 supervisor does not hold the complete host/GPU lock set\n' >&2
+      exit 1
+    }
+  done
+fi
 source <(derive)

@@ -14,11 +14,9 @@ libsycl="${venv}/lib/libsycl.so.8"
 libfabric="${venv}/lib/libfabric.so.1"
 ccl_kernels="${venv}/lib/ccl/kernels"
 output=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1
-rejected_boot=c36480de-9150-4182-9888-08c85d2d9de4
 runtime_state_dir="/run/user/$(id -u)"
-full_load_marker="${runtime_state_dir}/q38-flash-next-full-load.boot-id"
-component_state="${runtime_state_dir}/q38-flash-next-component-chain.state"
-component_state_lock="${component_state}.lock"
+full_load_lock="${runtime_state_dir}/q38-flash-next-full-load.boot-id.lock"
+component_state_lock="${runtime_state_dir}/q38-flash-next-component-chain.state.lock"
 
 expected_gate=a37f6d5c935ffbcc401fcc9197d49d8283fadba97e02037052d398779c7097c4
 expected_postflight=cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753
@@ -32,6 +30,13 @@ expected_kernels=0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
   exit 1
+}
+
+postflight_failure=
+record_postflight_failure() {
+  local message=$*
+  postflight_failure+="${postflight_failure:+; }${message}"
+  printf 'POSTFLIGHT_FAIL: %s\n' "$message" >&2
 }
 
 hash_regular() {
@@ -54,7 +59,8 @@ component_pids() {
 }
 
 cleanup_log=/dev/null
-cleanup_armed=0
+finalizer_armed=0
+finalizer_ran=0
 cleanup_components() {
   local -a pids=()
   mapfile -t pids < <(component_pids)
@@ -69,10 +75,91 @@ cleanup_components() {
   printf 'force-stopping exact component processes: %s\n' "${pids[*]}" >>"$cleanup_log"
   kill -KILL "${pids[@]}" 2>/dev/null || true
 }
-cleanup_on_exit() {
-  if [[ "$cleanup_armed" == 1 ]]; then cleanup_components || true; fi
+
+finalize_on_exit() {
+  local incoming_rc=$?
+  local final_rc=$incoming_rc
+  local memory_available swap_free
+  local -a bdfs_after=()
+
+  [[ "$finalizer_armed" == 1 ]] || return "$incoming_rc"
+  [[ "$finalizer_ran" == 0 ]] || return "$incoming_rc"
+  finalizer_ran=1
+  trap - EXIT
+  trap '' INT TERM
+  set +Ee
+
+  cleanup_components
+  if [[ -n "$(component_pids)" ]]; then
+    record_postflight_failure "final cleanup left an exact component process"
+  fi
+
+  if timeout 30s xpu-smi discovery -j >"$output/discovery-after.json"; then
+    if jq -e '.device_list | type == "array"' "$output/discovery-after.json" >/dev/null 2>&1; then
+      mapfile -t bdfs_after < <(jq -r '.device_list[].pci_bdf_address' "$output/discovery-after.json")
+      [[ "${bdfs_after[*]}" == "0000:23:00.0 0000:27:00.0 0000:43:00.0 0000:47:00.0" ]] || \
+        record_postflight_failure "postflight B70 order/topology drifted"
+    else
+      record_postflight_failure "postflight B70 discovery JSON is malformed"
+    fi
+  else
+    record_postflight_failure "bounded postflight B70 discovery failed"
+  fi
+
+  if ! timeout --signal=TERM --kill-after=10s 90s env -i \
+    HOME=/home/steve \
+    PATH="${cmplr}/bin:${venv}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    LD_LIBRARY_PATH="$loader" \
+    OCL_ICD_FILENAMES="${cmplr}/lib/libintelocl.so" \
+    PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1 \
+    ZE_AFFINITY_MASK=0,1,2,3 \
+    "$python" "$postflight" --output "$output/four-b70-postflight.json" \
+    >"$output/four-b70-postflight.log" 2>&1; then
+    record_postflight_failure "bounded four-B70 postflight failed"
+  fi
+
+  if awk '/MemAvailable|SwapFree/ {print}' /proc/meminfo >"$output/memory-after.txt"; then
+    memory_available=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+    swap_free=$(awk '/SwapFree/ {print $2}' /proc/meminfo)
+    [[ "$memory_available" =~ ^[0-9]+$ && "$memory_available" -ge 110000000 ]] || \
+      record_postflight_failure "host memory did not recover after component"
+    [[ "$swap_free" =~ ^[0-9]+$ && "$swap_free" -ge 8000000 ]] || \
+      record_postflight_failure "free swap did not recover after component"
+  else
+    record_postflight_failure "could not capture host memory/swap postflight"
+  fi
+
+  if timeout 15s journalctl -b -k --after-cursor "$journal_cursor" --no-pager >"$output/journal-window.txt"; then
+    rg -i '(xe|i915|drm).*(reset|fault|timed out|timeout|wedg|hang|error)|guc.*(reset|fault|timed out|timeout|wedg|hang|error)|device.*(lost|reset)|cat[_ ]error|page fault|gpu hang' \
+      "$output/journal-window.txt" >"$output/journal-fault-matches.txt" || true
+    [[ ! -s "$output/journal-fault-matches.txt" ]] || \
+      record_postflight_failure "postflight kernel-journal fault signature found"
+  else
+    : >"$output/journal-fault-matches.txt"
+    record_postflight_failure "could not capture the bounded kernel-journal window"
+  fi
+
+  printf 'incoming_rc=%s\npostflight=%s\n' "$incoming_rc" "${postflight_failure:-passed}" \
+    >"$output/finalizer-status.txt" || record_postflight_failure "could not write finalizer status"
+  if ! (cd "$output" && find . -type f ! -name evidence.sha256 -printf '%P\n' | LC_ALL=C sort | xargs -r sha256sum) \
+    >"$output/evidence.sha256"; then
+    record_postflight_failure "could not write the evidence manifest"
+  elif ! (cd "$output" && sha256sum -c evidence.sha256) >/dev/null; then
+    record_postflight_failure "evidence manifest verification failed"
+  fi
+
+  if [[ -n "$postflight_failure" && "$final_rc" == 0 ]]; then
+    final_rc=1
+  fi
+  if [[ "$final_rc" == 0 ]]; then
+    printf 'COMPLETE: %s\n' "$output/comparison.json"
+  else
+    printf 'FAIL: incoming_rc=%s; postflight=%s\n' \
+      "$incoming_rc" "${postflight_failure:-passed}" >&2
+  fi
+  exit "$final_rc"
 }
-trap cleanup_on_exit EXIT
+trap finalize_on_exit EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
@@ -80,8 +167,6 @@ trap 'exit 143' TERM
 [[ "${Q38_RUN_COUNT2560_CPU_AFFINITY_A1:-}" == I_UNDERSTAND_THIS_USES_ALL_FOUR_GPUS ]] || \
   fail "set Q38_RUN_COUNT2560_CPU_AFFINITY_A1=I_UNDERSTAND_THIS_USES_ALL_FOUR_GPUS"
 boot=$(tr -d '\n' </proc/sys/kernel/random/boot_id)
-[[ "$boot" != "$rejected_boot" ]] || \
-  fail "the event-chain failure boot is ineligible; reboot while attended first"
 [[ ! -e "$output" ]] || fail "refusing to overwrite $output"
 hash_regular "$gate" "$expected_gate" gate
 hash_regular "$postflight" "$expected_postflight" postflight
@@ -102,8 +187,9 @@ PY
 read -r source fstype target < <(findmnt -nro SOURCE,FSTYPE,TARGET --target /mnt/usb-models)
 [[ "$source" == /dev/sda2 && "$fstype" == fuseblk && "$target" == /mnt/usb-models ]] || fail "evidence drive is not authenticated"
 
-# Serialize the second component stage against model work and every B70. The
-# HC-SiLU stage holds the same chain lock, so affinity cannot race or bypass it.
+# Serialize this independent component against model work and every B70. The
+# lifecycle and component-state locks remain serialization locks, not same-boot
+# experiment-count or predecessor-state admission gates.
 exec 7>/tmp/b70-benchmark.lock
 flock -n 7 || fail "the host benchmark lock is held"
 exec 8>/tmp/b70-gpu0.lock
@@ -114,38 +200,40 @@ exec 12>/tmp/b70-gpu2.lock
 flock -n 12 || fail "the GPU2 benchmark lock is held"
 exec 13>/tmp/b70-gpu3.lock
 flock -n 13 || fail "the GPU3 benchmark lock is held"
-exec 9>"${full_load_marker}.lock"
+exec 9>"$full_load_lock"
 flock -n 9 || fail "the Flash-Next full-load lifecycle lock is held"
-if [[ -e "$full_load_marker" ]]; then
-  full_load_boot=$(tr -d '\n' <"$full_load_marker")
-  [[ "$full_load_boot" != "$boot" ]] || fail "a Flash-Next full load already consumed this boot"
-fi
 exec 10>"$component_state_lock"
 flock -n 10 || fail "the Flash-Next component-chain lock is held"
-[[ -s "$component_state" ]] || fail "HC-SiLU did not establish a component-chain state"
-read -r prior_component_status prior_component_boot <"$component_state" || \
-  fail "the component-chain state is malformed"
-[[ "$prior_component_status" == hc-silu-passed && "$prior_component_boot" == "$boot" ]] || \
-  fail "affinity requires hc-silu-passed on this boot"
-state_tmp="${component_state}.tmp.$$"
-[[ ! -e "$state_tmp" ]] || fail "component-chain temporary state already exists"
-printf 'cpu-affinity-attempted %s\n' "$boot" >"$state_tmp"
-mv -f -- "$state_tmp" "$component_state"
 
 journal_cursor=$(timeout 15s journalctl -b -k -n 0 --show-cursor --no-pager | sed -n 's/^-- cursor: //p' | tail -1)
 [[ -n "$journal_cursor" ]] || fail "could not capture the pre-device kernel-journal cursor"
-discovery_before=$(timeout 30s xpu-smi discovery -j)
-mapfile -t bdfs < <(jq -r '.device_list[].pci_bdf_address' <<<"$discovery_before")
-[[ "${bdfs[*]}" == "0000:23:00.0 0000:27:00.0 0000:43:00.0 0000:47:00.0" ]] || fail "B70 order/topology drifted"
 pgrep -af '(^|/)(vllm|python)( |.* )serve ' >/dev/null && fail "a model server is active"
+memory_before=$(awk '/MemAvailable|SwapFree/ {print}' /proc/meminfo)
+[[ "$(awk '/MemAvailable/ {print $2}' <<<"$memory_before")" -ge 110000000 ]] || fail "host memory is below the component floor"
+[[ "$(awk '/SwapFree/ {print $2}' <<<"$memory_before")" -ge 8000000 ]] || fail "free swap is below the component floor"
 
 mkdir -p "$output"
+cleanup_log="$output/cleanup.log"
+: >"$cleanup_log"
 printf '%s\n' "$boot" >"$output/boot-id.txt"
 printf '%s\n' "$journal_cursor" >"$output/journal-cursor-before.txt"
-printf '%s\n' "$discovery_before" >"$output/discovery-before.json"
 printf '%s\n' 'control-1 pinned-1 pinned-2 control-2' >"$output/launch-order.txt"
+printf '%s\n' "$memory_before" >"$output/memory-before.txt"
 
 loader="${venv}/lib:${venv}/lib/python3.12/site-packages/torch/lib:${cmplr}/lib:${cmplr}/opt/compiler/lib"
+finalizer_armed=1
+timeout 30s xpu-smi discovery -j >"$output/discovery-before.json" || fail "bounded preflight B70 discovery failed"
+mapfile -t bdfs < <(jq -r '.device_list[].pci_bdf_address' "$output/discovery-before.json")
+[[ "${bdfs[*]}" == "0000:23:00.0 0000:27:00.0 0000:43:00.0 0000:47:00.0" ]] || fail "B70 order/topology drifted"
+timeout --signal=TERM --kill-after=10s 90s env -i \
+  HOME=/home/steve \
+  PATH="${cmplr}/bin:${venv}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  LD_LIBRARY_PATH="$loader" \
+  OCL_ICD_FILENAMES="${cmplr}/lib/libintelocl.so" \
+  PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1 \
+  ZE_AFFINITY_MASK=0,1,2,3 \
+  "$python" "$postflight" --output "$output/four-b70-preflight.json" \
+  >"$output/four-b70-preflight.log" 2>&1 || fail "bounded four-B70 preflight failed"
 arms=(control-1 pinned-1 pinned-2 control-2)
 for arm in "${arms[@]}"; do
   mode=${arm%%-*}
@@ -153,9 +241,6 @@ for arm in "${arms[@]}"; do
   [[ "$mode" == pinned ]] && worker_affinity=19,23,27,31
   arm_dir="${output}/${arm}"
   mkdir "$arm_dir"
-  cleanup_log="${arm_dir}/cleanup.log"
-  : >"$cleanup_log"
-  cleanup_armed=1
   set +e
   timeout --signal=TERM --kill-after=20s 300s env -i \
     HOME=/home/steve \
@@ -181,15 +266,14 @@ for arm in "${arms[@]}"; do
   printf '%s\n' "$code" >"$arm_dir/exit-code.txt"
   if [[ -n "$(component_pids)" ]]; then
     cleanup_components
-    cleanup_armed=0
     [[ -z "$(component_pids)" ]] || fail "$arm cleanup left a process"
     fail "$arm left a process; it was terminated"
   fi
-  cleanup_armed=0
   [[ "$code" == 0 ]] || fail "$arm failed with exit $code"
   [[ -s "$arm_dir/summary.json" ]] || fail "$arm lacks a complete summary"
 done
 
+set +e
 "$python" - "$output" <<'PY'
 import hashlib
 import json
@@ -238,28 +322,7 @@ result = {
 (root / "comparison.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
 print(json.dumps(result, sort_keys=True))
 PY
-
-timeout 30s xpu-smi discovery -j >"$output/discovery-after.json"
-mapfile -t bdfs_after < <(jq -r '.device_list[].pci_bdf_address' "$output/discovery-after.json")
-[[ "${bdfs_after[*]}" == "0000:23:00.0 0000:27:00.0 0000:43:00.0 0000:47:00.0" ]] || fail "postflight B70 order/topology drifted"
-timeout --signal=TERM --kill-after=10s 90s env -i \
-  HOME=/home/steve \
-  PATH="${cmplr}/bin:${venv}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-  LD_LIBRARY_PATH="$loader" \
-  OCL_ICD_FILENAMES="${cmplr}/lib/libintelocl.so" \
-  PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1 \
-  ZE_AFFINITY_MASK=0,1,2,3 \
-  "$python" "$postflight" --output "$output/four-b70-postflight.json" \
-  >"$output/four-b70-postflight.log" 2>&1 || fail "bounded four-B70 postflight failed"
-timeout 15s journalctl -b -k --after-cursor "$journal_cursor" --no-pager >"$output/journal-window.txt" || \
-  fail "could not capture the bounded kernel-journal window"
-rg -i '(xe|i915|drm).*(reset|fault|timed out|timeout|wedg|hang|error)|guc.*(reset|fault|timed out|timeout|wedg|hang|error)|device.*(lost|reset)|cat[_ ]error|page fault|gpu hang' \
-  "$output/journal-window.txt" >"$output/journal-fault-matches.txt" || true
-[[ ! -s "$output/journal-fault-matches.txt" ]] || fail "postflight kernel-journal fault signature found"
-(cd "$output" && find . -type f ! -name evidence.sha256 -printf '%P\n' | LC_ALL=C sort | xargs -r sha256sum) >"$output/evidence.sha256"
-(cd "$output" && sha256sum -c evidence.sha256) >/dev/null
-state_tmp="${component_state}.tmp.$$"
-[[ ! -e "$state_tmp" ]] || fail "component-chain completion state already exists"
-printf 'cpu-affinity-complete %s\n' "$boot" >"$state_tmp"
-mv -f -- "$state_tmp" "$component_state"
-printf 'COMPLETE: %s\n' "$output/comparison.json"
+comparison_code=$?
+set -e
+[[ "$comparison_code" == 0 ]] || fail "comparison failed with exit $comparison_code"
+exit 0

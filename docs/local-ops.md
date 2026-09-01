@@ -47,6 +47,17 @@ may stage, commit, push, or only report findings.
 Do not reboot automatically and do not treat every stalled process as a device
 wedge.
 
+There is no one-experiment or one-model-load-per-boot rule. A boot ID is
+provenance, never an admission or consumption token. After a run tears down,
+later work may proceed on the same boot when it has an unused evidence path,
+holds the required exclusive host/device locks, finds no conflicting process
+or listener, revalidates exact source/runtime identity and storage/memory
+floors, and passes the applicable bounded four-card health preflight. Every
+device run must route success and failure through cleanup plus host, four-card,
+and bounded journal postflight. A failed postflight blocks later device work
+until health is re-established; it does not by itself mandate a reboot. Reboot
+remains the last-resort recovery action described below.
+
 1. Stop new launches. Preserve the failing run directory and first capture
    passive process, listener, progress, and journal evidence. Do not start an
    XPU-SMI or compute-probe loop on a possibly flapping card.

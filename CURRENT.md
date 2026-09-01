@@ -2996,8 +2996,9 @@ combined clone-elision/event-chain A1 as a runtime negative. Replica 1 confirmed
 the intended protocol on all four ranks, then all ranks lost their device queue
 at the first measured-cycle synchronization after warmup. The wrapper correctly
 refused replica 2; no model loaded and no timing was claimed. A tiny postflight
-compute probe stalled, so no further GPU work is allowed on this boot. Reboot
-only when attended, restore the accepted runtime, and use a safer lever. The
+compute probe stalled, so further GPU work was blocked until health was
+re-established. The host was subsequently rebooted and recovered; use a safer
+lever. The
 protected `5.515783 tok/s` MTP0 result and all other results are untouched. See
 the [A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-event-chain-a1-runtime-negative.md).
 Clone-only follow-up is closed as low priority: A28 bounds the entire 99-copy
@@ -3006,18 +3007,22 @@ ceiling of about `+0.103%`, while a correct in-place path needs a new mutating
 operator rather than violating the existing functional alias contract. The
 next safe component arm instead targets A28's chronic rank-2/3 submission lag
 with explicit rank-process and oneCCL-worker CPU/L3 placement while leaving
-accepted XCCL code and protocol unchanged. It is frozen but hard-blocked on
-the unhealthy current boot; run it only after an attended reboot. See the
+accepted XCCL code and protocol unchanged. It is frozen and gated by actual
+host/device health, not any boot-consumption rule. It may run whenever
+its exclusive locks, unused evidence path, identity checks, and bounded
+four-card preflight pass. See the
 [clone analysis](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-clone-elision-analysis.md)
 and [affinity preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-count2560-cpu-affinity-a1-prereg.md).
 The next full-model lane is separately frozen as A31: production-M1 MoE
 warps 8 by itself, preserving A29's complete battery while binding the current
 default-off source descendants and the original sealed kernel stage. A30's
-slower grouped-HC composite did not isolate or reject this M1 treatment. A31
-hard-rejects the current boot and requires the same-boot affinity component to
-finish cleanly first; no reboot is authorized by the packet. A pass projects
-only about `5.572-5.577 tok/s` and still needs separately booted map-unset
-control plus candidate repeat before promotion. See the
+slower grouped-HC composite did not isolate or reject this M1 treatment. A31 is
+independent of the affinity and HC-SiLU component arms and is admitted by
+exclusive locks, no-clobber evidence, exact identities, host resource floors,
+and bounded four-card preflight. A pass projects only about
+`5.572-5.577 tok/s` and still needs a matched map-unset control plus candidate
+repeat before promotion; those arms need independent run identities, not
+different boots. See the
 [A31 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a31-moe-m1-current-prereg.md).
 The next independent target-side component candidate is HC-SiLU A1. A28
 measured this five-launch decomposition at `0.591987 ms/token` across 97 calls
@@ -3025,18 +3030,12 @@ per token. The default-off exact `[1,320]` BF16 native path is now built in an
 isolated component-only runtime, with 11 CPU dispatch tests passing and no GPU
 work performed. Static review removed a redundant post-kernel barrier. Build
 review also rejected a mixed-SYCL-8/9 DSO before execution and rebuilt it
-entirely against the accepted 2025.3/SYCL-8 ABI. The frozen fresh-boot gate
+entirely against the accepted 2025.3/SYCL-8 ABI. Its historical frozen gate
 requires exhaustive 65,536-pattern BF16 parity, production-stride and
 no-mutation checks, 100-repeat stability, five-to-one launch proof, and a
-`C-A-A-C` timing pass. It hard-rejects the current unhealthy boot and does not
-authorize a reboot or endpoint. On the next attended boot it may run before
-the affinity component and A31; any component fault stops the chain. All
-three stages now share an atomic same-boot state: HC-SiLU must record a clean
-pass before affinity can claim the boot, affinity records completion only after
-bounded exact four-card discovery, compute/free-memory, and kernel-journal
-postflight, and both the A31 supervisor and launcher require that final state
-plus the verified same-boot evidence. All protected rates remain unchanged.
-See the
+`C-A-A-C` timing pass. The former fresh-boot and same-boot chain admission
+rules are superseded by the lane-wide health-gated reuse policy below. All
+protected rates remain unchanged. See the
 [HC-SiLU preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a1-prereg.md).
 A1 then failed closed during the exhaustive BF16 phase: chunk
 `0x4100–0x423f` contained one non-NaN output-bit mismatch, so no profile,
@@ -3045,15 +3044,23 @@ kernel-journal gate passed, classifying this as an arithmetic correctness
 negative rather than a device fault. The installed Torch `2.11.0+xpu`
 reference uses `std::exp`, while A1 used `sycl::exp`; A2 changes only that
 expression and adds a repeated fail-fast test for the failed region before
-rerunning all 65,536 BF16 encodings. This boot is consumed, and no later chain
-stage may run on it. Protected MTP0/MTP4 rates remain unchanged. See the
+rerunning all 65,536 BF16 encodings. Its boot ID is provenance only and does
+not block later work after clean health gates. Protected MTP0/MTP4 rates remain
+unchanged. See the
 [A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a1-parity-negative.md).
 A2 is now built and statically frozen as the minimal arithmetic correction.
 Its isolated source differs from A1 only by `<cmath>` and `sycl::exp` to
 `std::exp`; the accepted DSO links only SYCL 8, contains no fast/native-math
 flag, and remains default-off and component-only. The gate repeats the exact
-failed BF16 region before the complete A1 ladder. It hard-rejects the consumed
-A1 boot. After an attended reboot, A2 must pass first; then the affinity
-component and finally A31 may proceed on that same boot, with any failure
-stopping the chain. See the
+failed BF16 region before the complete A1 ladder. It is independent of the
+affinity component and A31 and may run on any healthy boot after its exclusive
+locks, unused evidence path, exact identity checks, resource floors, and
+bounded four-card preflight pass. See the
 [A2 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-q38-hc-silu-a2-stdexp-prereg.md).
+The lane-wide one-experiment/one-model-load-per-boot rule is deleted. Current
+and future scheduling is health-gated: clean teardown and bounded postflight
+permit another experiment on the same boot; an unhealthy close blocks device
+work until health is re-established, with reboot reserved for last-resort
+recovery. Historical packets remain unchanged evidence, but their
+boot-consumption language is superseded. See the
+[health-gated reuse policy](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-health-gated-reuse-policy.md).

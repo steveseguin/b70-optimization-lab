@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "frozen_blocked_until_attended_reboot",
+  "status": "frozen_ready_for_supervised_run",
   "classification": "qwen38_flash_next_tp4_mtp0_m1_warps8_current_source_endpoint_prereg",
   "scope": "M1 MoE warps 8 alone on the accepted synchronous-PLE eager endpoint; no grouped HC, async PLE, graph, trace, MTP, or event-chain treatment",
   "identity": {
@@ -45,24 +45,36 @@
     "protected_target_tok_s": 5.515783,
     "non_promotional_projection_tok_s": [5.572, 5.577]
   },
-  "prerequisites": {
-    "rejected_boot": "c36480de-9150-4182-9888-08c85d2d9de4",
-    "attended_reboot_required": true,
-    "same_boot_affinity_component_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260831-tp4-count2560-cpu-affinity-a1",
-    "same_boot_component_state": "cpu-affinity-complete",
-    "affinity_requirement": "comparison and evidence manifest must verify on the same boot with status passed or cleanly closed, and shared state must be cpu-affinity-complete on that boot; a runtime failure forbids A31"
+  "runtime_safety": {
+    "sole_runtime_entrypoint": "experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp0-4352-ple-only-a31-moe-m1-current.sh",
+    "boot_independent": true,
+    "host_and_gpu_locks_held_through_teardown": true,
+    "exact_four_card_preflight_and_postflight": "experiments/qwen38-flash-next-fp8-b70/tools/verify-q38-four-b70-postflight.py",
+    "admission_floors": {
+      "mem_available_kib": 120000000,
+      "swap_free_kib": 8000000,
+      "nvme_available_bytes": 220000000000
+    },
+    "recovery_floors": {
+      "mem_available_kib": 104857600,
+      "swap_free_kib": 6291456,
+      "nvme_available_bytes": 220000000000
+    },
+    "journal_cursor_window": true,
+    "hash_verified_lifecycle_evidence_manifest": true
   },
   "quality_and_performance_gate": {
     "battery": "unchanged A29 recovery, inherited 6/7 semantic boundary, 16-repeat exactness, three protected short hashes, cache-zero 4K needle, and two exact-4K authority rows",
     "candidate_pass": "all quality/reliability gates pass and short median exceeds protected 5.515783 tok/s",
     "candidate_fail": "preserve as bounded negative and retain every protected result",
-    "attribution_after_candidate_pass": "requires a separately booted current-source config-unset control and fresh candidate repeat before promotion"
+    "attribution_after_candidate_pass": "requires a separate current-source config-unset control and a fresh-service candidate repeat before promotion; verified teardown is required, reboot is not"
   },
   "frozen_files": {
-    "launcher_sha256": "b6f9dc16d7b39c7c988f3ff828b37650b24781490348632daf8fb9f574989088",
+    "launcher_sha256": "4be9bd4258bb31a52319092b5d53a4ea6a73d8e3b053b0ef08dc50694b41f67c",
     "client_sha256": "7342b8ed2e8edb96cbd648e286e6ebeba9945553ac492915174ea17839e0552e",
-    "supervisor_sha256": "63a23916b167c058921428e980132accdabc918527796141f3dda65977e28216",
-    "rewrite_helper_sha256": "daa902d850632f33f07451b72a3f7b4c68df0eb07183b6dc3904de35d02f4d72"
+    "supervisor_sha256": "69fcefeeaa0958e8647c0cc1198e357ff4e91cda53ab3ae8941d98d4d024e0af",
+    "rewrite_helper_sha256": "ab4d36e407e2a8d633431c4dab074a55618a736ee4ec7b21a53eb18261f04e7c",
+    "four_card_helper_sha256": "cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753"
   },
   "protected_results_changed": false
 }

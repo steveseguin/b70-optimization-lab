@@ -1,7 +1,7 @@
 # Qwen3.8 Flash-Next HC-SiLU A2 std::exp preregistration
 
 Date: 2026-08-31
-Status: built and statically frozen; one-card execution requires a fresh boot
+Status: built and statically frozen; one-card execution is health-gated
 
 ## Question and sole treatment
 
@@ -47,17 +47,26 @@ invoke the unchanged A1 ladder:
 
 The runner binds the A1 runner/gate/patch, A2 corrective patch, A2 gate,
 component DSO/runtime manifest, unchanged vLLM dispatch source, compiler ABI,
-evidence mount, locks, memory floors, and fresh-boot lifecycle. It hard-rejects
-the A1-attempt boot `a37222ff-628d-4d0a-8a84-37e086ad90dc` and refuses to
-overwrite its distinct A2 evidence root.
+evidence mount, exclusive locks, memory floors, and no-clobber evidence root.
+It records the current boot ID as provenance only. Admission is based on an
+unused evidence path, exact identities, sufficient host memory/swap, and a
+bounded four-B70 compute/free-memory preflight. An idempotent EXIT finalizer is
+armed before that first device probe, so preflight failure, gate failure,
+signals, and success all attempt exact process cleanup, the same four-card
+postflight, host recovery floors, a bounded kernel-journal check, and the
+self-verifying evidence manifest without an early-exit gap. The former
+boot-consumption rule is deleted.
 
 ## Frozen interpretation
 
 - Any mismatch, repeat, dispatch, profile, timing, teardown, four-card, or
-  journal failure closes A2 as a component negative and stops the chain.
-- A pass authorizes only the already-frozen same-boot CPU-affinity component;
-  it does not authorize an endpoint or throughput claim by itself.
-- Only if both components pass may A31 become that boot's sole full-model load.
+  journal failure closes A2 as a component negative and authorizes no A2
+  promotion. Independent experiments remain governed by their own health
+  gates.
+- A pass establishes only A2 component evidence; it does not authorize an
+  endpoint or throughput claim by itself.
+- The affinity component and A31 are independent health-gated experiments.
+  Neither requires A2, a fresh boot, or a particular boot order.
 - A31 remains a candidate requiring matched control and repeat before
   promotion even if its full battery passes.
 - The protected TP4 MTP0 `5.515783 tok/s` and MTP4 `20.727176 tok/s` results

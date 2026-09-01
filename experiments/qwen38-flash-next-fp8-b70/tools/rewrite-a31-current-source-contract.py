@@ -10,7 +10,7 @@ import sys
 
 
 INPUT_SHA256 = "c02056aa5a963dbb6f0916664899cad80a5e2fac050f31c60a713390e0e7a6cd"
-OUTPUT_SHA256 = "6fe2ffb28e60706bd7ad814fe0cb57752b8b4f0df27ad50d033880f77a424e0c"
+OUTPUT_SHA256 = "07863a1e5981f1efbf79e414ef19dbb47c8aba693e404766a99efd021198be56"
 SEALED_KERNEL_HEAD = "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4"
 WORKSPACE_CHAIN = (
     "359466a262489bdf4e1774e3572202dc82a00718",
@@ -26,6 +26,18 @@ OLD_CHECK = (
     '"${expected_kernels_head}" ]] || fail "kernel overlay head changed"'
 )
 SERVE = 'setsid "${vllm_bin}" serve "${args[@]}" >"${server_log}" 2>&1 &'
+INNER_LOCKS = """exec 7>/tmp/b70-benchmark.lock
+flock -n 7 || fail "host-wide benchmark lock is held"
+for gpu in 0 1 2 3; do
+  eval "exec $((8 + gpu))>/tmp/b70-gpu${gpu}.lock"
+  flock -n "$((8 + gpu))" || fail "GPU ${gpu} lock is held"
+done"""
+SUPERVISOR_LOCK_ASSERTION = """supervisor_pid=${Q38_A31_SUPERVISOR_PID:-}
+[[ "$supervisor_pid" =~ ^[1-9][0-9]*$ ]] || fail "A31 supervisor identity is absent"
+expected_supervisor_locks=(/tmp/b70-benchmark.lock /tmp/b70-gpu0.lock /tmp/b70-gpu1.lock /tmp/b70-gpu2.lock /tmp/b70-gpu3.lock)
+for lock_index in 0 1 2 3 4; do
+  [[ "$(readlink -f "/proc/${supervisor_pid}/fd/$((7 + lock_index))")" == "${expected_supervisor_locks[$lock_index]}" ]] || fail "A31 supervisor lock set changed"
+done"""
 
 
 def digest(data: bytes) -> str:
@@ -60,10 +72,15 @@ def main() -> None:
             f"FAIL: A31 generated input is {actual_input}, expected {INPUT_SHA256}"
         )
     source = original.decode("utf-8")
-    if source.count(OLD_CHECK) != 1 or source.count(SERVE) != 1:
+    if (
+        source.count(OLD_CHECK) != 1
+        or source.count(SERVE) != 1
+        or source.count(INNER_LOCKS) != 1
+    ):
         raise SystemExit("FAIL: A31 generated source anchors are not unique")
 
     source = source.replace(OLD_CHECK, workspace_checks())
+    source = source.replace(INNER_LOCKS, SUPERVISOR_LOCK_ASSERTION)
     pre_serve = "\n".join(
         (
             f'[[ "$(git -C "${{kernels_src}}" rev-parse HEAD)" == "{WORKSPACE_HEAD}" ]] '

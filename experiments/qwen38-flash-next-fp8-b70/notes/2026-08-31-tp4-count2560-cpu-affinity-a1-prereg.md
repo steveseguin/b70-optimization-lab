@@ -1,7 +1,17 @@
 # Qwen3.8 Flash-Next TP4 CPU/L3 affinity A1 preregistration
 
 Date: 2026-08-31
-Status: frozen; blocked until an attended reboot
+Status: refrozen as an independent component; statically validated
+
+## Lifecycle-policy supersession
+
+The original same-boot chain admission rule is deleted for this affinity
+component by explicit user direction. Prior GPU experiments, a full-load marker,
+the event-chain A1 boot ID, and HC-SiLU A1/A2 state neither authorize nor block
+this arm. The boot ID is captured as evidence only. This supersession changes
+only lifecycle admission and failure cleanup; the frozen treatment, four-arm
+order, runtime/toolchain identities, topology, correctness, timing thresholds,
+locks, no-clobber output policy, and endpoint interpretation remain unchanged.
 
 ## Question
 
@@ -57,17 +67,24 @@ without loading the checkpoint.
 
 ## Lifecycle boundary
 
-The event-chain A1 left boot `c36480de-9150-4182-9888-08c85d2d9de4`
-ineligible for more GPU work. This runner hard-rejects that boot, so A1 cannot
-run until an attended reboot. It also pins exact runtime hashes, CPU/L3 layout,
-GPU BDF order, evidence mount, output path, and authorization token. Every arm
-has a timeout and exact-path cleanup; a runtime/correctness failure stops before
-the next arm. It additionally requires the shared state `hc-silu-passed` from
-this same boot, holds the host, four-GPU, full-load, and component-chain locks,
-marks itself attempted before device work, and writes `cpu-affinity-complete`
-only after clean completion, bounded exact ordered four-BDF rediscovery, a
-bounded four-card arithmetic/free-memory probe, and a clean bounded
-kernel-journal window. No reboot is authorized by this packet.
+This runner pins exact runtime hashes, CPU/L3 layout, GPU BDF order, evidence
+mount, output path, and authorization token. It holds the host, four-GPU,
+full-load-lifecycle, and component-state locks strictly for serialization; it
+does not inspect the full-load marker or require any prior component state.
+Every arm has a timeout and exact-path cleanup, and a runtime/correctness
+failure stops before the next arm.
+
+One idempotent EXIT finalizer is armed before initial ordered four-BDF discovery
+and the existing four-B70 arithmetic/free-memory preflight. Every later exit,
+including a preflight, arm, comparison, signal, or unexpected shell failure,
+preserves its incoming nonzero status while the finalizer attempts every
+cleanup/postflight step without early exit: exact-process cleanup, exact ordered
+four-BDF rediscovery, the same four-card arithmetic/free-memory helper, host
+memory and swap recovery gates, the bounded kernel-journal window, and the
+evidence manifest. A finalizer failure converts an otherwise successful exit to
+nonzero. The runner neither reads nor writes attempted/completed component boot
+state; the retained component-state lock is serialization only. The packet
+never authorizes or requires a reboot.
 
 Structured preregistration:
 [`20260831-tp4-count2560-cpu-affinity-a1-prereg.json`](../data/20260831-tp4-count2560-cpu-affinity-a1-prereg.json).

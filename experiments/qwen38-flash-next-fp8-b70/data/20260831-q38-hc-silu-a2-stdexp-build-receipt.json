@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "built_static_validated_gpu_pending_fresh_boot",
+  "status": "built_static_validated_gpu_pending_health_gate",
   "classification": "default_off_component_correction",
   "created_at": "2026-08-31T22:00:56-04:00",
   "scope": "Qwen3.8 Flash-Next exact TP4 decode-shape HC-SiLU component only",
@@ -80,14 +80,30 @@
     "a2_gate_path": "experiments/qwen38-flash-next-fp8-b70/tools/benchmark-q38-hc-silu-a2-stdexp.py",
     "a2_gate_sha256": "4f2449f29179eb8fdd1f8642374b460d1d68d61bc1dfcb0d1d050c6f3feed9bb",
     "runner_path": "experiments/qwen38-flash-next-fp8-b70/tools/run-q38-hc-silu-a2-stdexp.sh",
-    "runner_sha256": "49eda370a7f8837b171171245883696c8f6709e12dd069835337ba8e51fe1f70",
-    "runner_canonical_sha256": "e1317d1d0ad235ba87edb7c5a0f97c8ad47c42afdfc6c74be45bca219de297b7",
-    "derived_runner_sha256": "9fce3860319d668acd6d290126a206fc89f3a582e1b3492ddf79aaaffef57e6e",
-    "derived_runner_canonical_sha256": "ab42a0b127d53e6a2b5c162691d8f35e197c8c4f4ccc204572ca0891760769d1",
+    "runner_sha256": "b6633ebc1247bba697ce6117951aa5dbc9ed307fa4cc33a3afcea062de5a6f39",
+    "runner_canonical_sha256": "ee08478250dbd6b1231eb4572f69d0632dd56b9906fe8bbd1855df2748a6f74e",
+    "derived_runner_sha256": "dad3a3988b0a9a3d8f15c88537480242e34c3f960749844aa24e35781024dbd6",
+    "derived_runner_canonical_sha256": "2d06fa9c7c8e2a8ed337a52d0c56e3d9c8324a8249309c3a9ad88f369d9388a1",
     "postflight_sha256": "cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753",
     "static_validation_passed": true,
-    "rejected_boot": "a37222ff-628d-4d0a-8a84-37e086ad90dc",
-    "gpu_execution_pending_fresh_boot": true
+    "boot_id_is_provenance_only": true,
+    "boot_consumption_rule": "deleted",
+    "admission": [
+      "exclusive host and GPU0 locks",
+      "unused evidence root",
+      "exact source, runtime, ABI, and artifact identities",
+      "host memory and swap floors",
+      "bounded four-B70 compute/free-memory preflight"
+    ],
+    "completion": [
+      "idempotent EXIT finalizer armed before the first four-card device preflight",
+      "bounded process cleanup",
+      "exact four-B70 compute/free-memory postflight",
+      "host memory and swap recovery floors",
+      "bounded kernel-journal gate",
+      "self-verifying evidence manifest"
+    ],
+    "gpu_execution_pending_health_gate": true
   },
   "discarded_incomplete_build": {
     "path": "/mnt/fast-ai/qwen38-build/build-q38-hc-silu-a2-precise",

@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "status": "frozen_blocked_until_attended_reboot",
+  "status": "refrozen_independent_component_statically_validated",
   "classification": "tp4_count2560_cpu_l3_affinity_component_prereg",
   "scope": "Ordinary accepted XCCL with rank-process plus oneCCL-worker CPU/L3 affinity as one coherent candidate; no model throughput",
   "identity": {
     "gate_sha256": "a37f6d5c935ffbcc401fcc9197d49d8283fadba97e02037052d398779c7097c4",
     "postflight_sha256": "cb42de925a4361f69a8922dacfda41cd02b6520f70df81011db2dd6a2c9b8753",
-    "runner_sha256": "a47456a93945708bf7c645a7099741f47cb6e76a05a9fe15f3cef1d49ae5b3d0",
+    "runner_sha256": "7aad150656e7417233f3da1b038edda5f2123dea0176f43ac9f07dec32fd2279",
+    "superseded_same_boot_chain_runner_sha256": "a47456a93945708bf7c645a7099741f47cb6e76a05a9fe15f3cef1d49ae5b3d0",
     "libccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
     "libsycl_sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
     "libfabric_sha256": "d849d56fd3f8f2581b4b0c17c1564f8145911a313c2c011d694aaf21e5e86b27",
-    "oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
-    "rejected_boot": "c36480de-9150-4182-9888-08c85d2d9de4"
+    "oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9"
   },
   "hardware_contract": {
     "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores / 32 threads",
@@ -52,9 +52,9 @@
     "minimum_p90_saving_fraction_each_pair": 0.0
   },
   "lifecycle_contract": {
-    "required_same_boot_input_state": "hc-silu-passed",
-    "pre_device_state": "cpu-affinity-attempted",
-    "clean_completion_state": "cpu-affinity-complete",
+    "admission": "independent component: no rejected-boot, prior-experiment, full-load-marker, or HC-SiLU A1/A2 state prerequisite",
+    "boot_id_role": "evidence only; never an affinity admission gate",
+    "component_state_io": "none; the component-state lock is retained only for serialization",
     "locks": [
       "/tmp/b70-benchmark.lock",
       "/tmp/b70-gpu0.lock",
@@ -64,7 +64,9 @@
       "/run/user/1000/q38-flash-next-full-load.boot-id.lock",
       "/run/user/1000/q38-flash-next-component-chain.state.lock"
     ],
-    "postflight": "bounded exact ordered four-BDF rediscovery, bounded four-card arithmetic/free-memory probe, and clean bounded kernel-journal window before clean completion state"
+    "lock_role": "serialization only; lifecycle marker and prior component state are not inspected",
+    "preflight": "after the EXIT finalizer is armed: bounded exact ordered four-BDF discovery plus existing four-card arithmetic/free-memory helper and host memory/swap floors before the first arm",
+    "postflight": "one idempotent EXIT finalizer preserves every incoming nonzero status and, after any armed outcome, attempts exact-process cleanup, bounded exact ordered four-BDF rediscovery, the existing four-card arithmetic/free-memory helper, host memory/swap recovery gates, the bounded kernel-journal window, and evidence-manifest creation without early exit; a finalizer failure converts an incoming zero status to nonzero"
   },
   "frozen_interpretation": {
     "both_pairs_pass": "eligible for a separately frozen affinity-only endpoint arm; not yet a tok/s claim",

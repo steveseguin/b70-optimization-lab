@@ -1,7 +1,7 @@
 # Qwen3.8 Flash-Next TP4 MTP0 A31 M1-only preregistration
 
 Date: 2026-08-31
-Status: independently reviewed, frozen, and blocked until an attended reboot
+Status: independently reviewed, frozen, and ready for one supervised run
 
 ## Question
 
@@ -40,21 +40,29 @@ evidence without importing it into A31.
 
 ## Lifecycle and interpretation
 
-The current boot `c36480de-9150-4182-9888-08c85d2d9de4` remains rejected after
-the event-chain runtime failure. No reboot is authorized by this packet. On a
-later attended fresh boot, the ordinary-XCCL affinity component must complete
-first. A31 verifies its same-boot evidence manifest and accepts either a clean
-performance pass or a clean performance close; any runtime failure forbids the
-model load. Both the outer supervisor and launcher also require the atomic
-shared state `cpu-affinity-complete` for the current boot, so an HC-SiLU or
-affinity interruption cannot be bypassed by intact but stale evidence.
+A31 is independent of prior component runs and prior boots. It has no rejected
+boot, full-load-per-boot marker, affinity closeout, component-chain state, or
+same-boot procedural prerequisite. A reboot is not part of this experiment's
+admission or attribution contract.
 
-A31 then remains the boot's only full model load. It must pass recovery, the
-inherited semantic boundary, 16 exact repeats, all three protected short
-hashes, cache-zero 4K needle, and both exact-4K authority rows. A quality pass
-and short median above `5.515783 tok/s` is only a candidate. Causal promotion
-still requires a separately booted current-source map-unset control and a
-fresh A31 repeat. Any miss preserves every protected result unchanged.
+Runtime has one entrypoint: the frozen A31 supervisor. It holds the host-wide
+and all four per-GPU locks through final teardown, requires the existing exact
+four-B70 compute/free-memory helper both before launch and after teardown,
+checks the exact four-card topology and idle-memory receipts, preserves the
+host memory/swap/NVMe floors, and records a kernel-journal cursor/window plus a
+hash-verified lifecycle evidence manifest. The launcher refuses runtime when
+that supervisor identity and inherited lock set are absent; source-only and
+validate-only inspection remain available. The generated launcher still owns
+model identity, no-clobber, quality, and service teardown checks.
+
+A31 must pass recovery, the inherited semantic boundary, 16 exact repeats, all
+three protected short hashes, cache-zero 4K needle, and both exact-4K authority
+rows. The `same_boot_output_repeat` field remains a within-run quality check;
+it is not a boot-admission rule. A quality pass and short median above
+`5.515783 tok/s` is only a candidate. Causal promotion still requires a
+separate current-source map-unset control and a fresh-service A31 repeat; both
+may run after verified teardown without rebooting. Any miss preserves every
+protected result unchanged.
 
 Structured preregistration:
 [`20260831-tp4-mtp0-a31-moe-m1-current-prereg.json`](../data/20260831-tp4-mtp0-a31-moe-m1-current-prereg.json).
