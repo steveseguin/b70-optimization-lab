@@ -1,0 +1,82 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-output-factorial-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-output-factorial-20260901-r92",
+  "status": "completed-diagnostic-boundary",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-output-factorial-r92-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-output-factorial-r92",
+    "image_id": "sha256:4552abeeeea008cc9a93a3d97c1035982c666b7ea9367029df9c4b4508de0e86",
+    "base_r90_image_id": "sha256:14ffb2f9c46bd5621563c0a39d53edffeb9b9d85513782ad8d8d1f160d43f744",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-output-factorial-r92-20260901.patch",
+    "vllm_patch_sha256": "a88361b18b666716c54148ccc72cee458439e19454cc576b80686030dcea0d93",
+    "installed_qwen_gdn_sha256": "54c6f115ec325b9bf0ea79f7781c83b79ed2580493463c73ae8a0586a1620c47"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "variants": {
+    "r92a_norm_only": {
+      "status": "rejected-c1-regression",
+      "concurrency_1_oracle": "0/1",
+      "concurrency_2_oracle": "1/2",
+      "cached_tokens_all_zero": true,
+      "aggregate_tok_s_wall_diagnostic": {
+        "concurrency_1": 29.288279270257217,
+        "concurrency_2": 61.900187126266324
+      },
+      "token_sequences_equal_r91_for_all_three_requests": true,
+      "interpretation": "Moving RMSNormGated behind the request-isolated custom-op boundary alone is sufficient to reproduce R91's c1 regression and known-bad cache path."
+    },
+    "r92b_projection_only": {
+      "status": "rejected-no-repair",
+      "concurrency_1_oracle": "1/1",
+      "concurrency_2_oracle": "1/2",
+      "cached_tokens_all_zero": true,
+      "aggregate_tok_s_wall_diagnostic": {
+        "concurrency_1": 31.68553906182418,
+        "concurrency_2": 64.06067056400498
+      },
+      "token_sequences_equal_r90_for_all_three_requests": true,
+      "interpretation": "Request-isolating FP8 out_proj preserves the accepted c1 path but does not change or repair c2."
+    }
+  },
+  "boundary": {
+    "source": "RMSNormGated compiled/fused row-shape path",
+    "excluded": "FP8 out_proj request packing as an independent cause",
+    "first_bad_output": {
+      "prompt_id": "cache-c000",
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    },
+    "next_experiment": "Keep RMSNormGated in the compiled path and force its arithmetic to be batch-invariant while preserving the accepted c1 result. First test the existing default-off serial-exact RMSNorm gate on the R90 lineage before authoring another kernel."
+  },
+  "reporting_boundary": "Do not promote either variant or its throughput. Both c2 gates failed, R92a also regressed c1, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "r92a_server_stop": "clean",
+    "r92b_server_stop": "clean"
+  },
+  "artifacts": {
+    "r92a_host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-output-factorial-20260901-r92a-norm",
+    "r92a_raw_result_sha256": "855ef0c35c07c78af15565cf7f24c2408e985a4dbd0c62b9444f3794849234d5",
+    "r92a_trace_sha256": "bc82ee1aad6ef857224fd6a9c05a70b93ea571ccd8dc2cb79af72ccb78793a52",
+    "r92a_server_log_sha256": "1769984a217f7c975f8d19bf3dcd490a75ef5f03e5ed4e0718948018a8751785",
+    "r92b_host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-output-factorial-20260901-r92b-projection",
+    "r92b_raw_result_sha256": "370ee64d5c83e441f7e6ebb1173a9f308e6450098e3813e8629ddf13d3875aeb",
+    "r92b_trace_sha256": "e82b41abdee9403e9d4d1087c24fae01a99c18717a666bfd5147411d0d8d82bd",
+    "r92b_server_log_sha256": "f5eaa79ec4eabf5f5b33fba826276b9f92e6650e03593d1367c97c5a3352274f"
+  }
+}

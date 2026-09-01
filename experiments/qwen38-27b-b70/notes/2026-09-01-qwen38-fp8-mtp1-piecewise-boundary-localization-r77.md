@@ -162,3 +162,14 @@ difference but selects the wrong numerical path even for a single request. The
 next experiment must separate normalization from projection rather than carry
 this combined change forward. R91's result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-output-request-isolation-r91-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-output-request-isolation-r91-result.json).
+
+R92 separated those stages. Norm-only isolation reproduced all three R91 token
+sequences: c1 regressed to 0/1 and c2 remained 1/2. Projection-only isolation
+reproduced all three R90 sequences: c1 stayed exact and c2 remained 1/2. Both
+arms used fresh compile caches, zero cached prompt tokens, complete 128-token
+outputs, and stopped cleanly with no kernel journal entry. The boundary is
+therefore the compiled/fused `RMSNormGated` row-shape path, not request packing
+inside FP8 `out_proj`. A repair must preserve the accepted c1 norm arithmetic
+while making it batch-invariant; moving the norm outside the compiled graph is
+known to select the wrong path. R92's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-output-factorial-r92-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-output-factorial-r92-result.json).
