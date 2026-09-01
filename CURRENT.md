@@ -3211,10 +3211,15 @@ the inner launch attempt while retaining the complete A37 model, graph, trace,
 quality, and teardown identity. See the
 [A37 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a37-attempt-binding-negative.md)
 and [A38 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-path-corrected-fullgraph-prereg.md).
-A38 stopped before model load when one read of the frozen public oneCCL file
-reported a digest mismatch. The same unchanged inode then matched the exact
-frozen digest on five immediate reads, and postflight was clean. A39 is the
-fresh attempt-39/port-19711 successor and adds three consecutive outer digest
-reads, all of which must pass, before the otherwise unchanged launcher. See the
-[A38 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-transient-libccl-check-negative.md)
-and [A39 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a39-stable-read-fullgraph-prereg.md).
+A38 and A39 both stopped before model load because their broad attempt-name
+rewriters altered characters inside the pinned oneCCL checksum literal: the
+digest itself contains `a37`, which became `a38` and then `a39`. Direct reads
+and A39's three outer checks all matched the correct unchanged library. This is
+a deterministic generator defect, not transient storage behavior. A40 uses
+fresh attempt-40/port-19712 paths and restores the exact digest with
+mode-specific occurrence counts after identity rewriting; any drift fails
+closed. The inference selectors and complete quality battery are unchanged,
+and no reboot is required. See the
+[A38 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-transient-libccl-check-negative.md),
+the [A39 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a39-checksum-rewrite-negative.md), and the
+[A40 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a40-checksum-safe-fullgraph-prereg.md).
