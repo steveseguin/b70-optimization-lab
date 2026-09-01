@@ -3223,3 +3223,14 @@ and no reboot is required. See the
 [A38 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-transient-libccl-check-negative.md),
 the [A39 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a39-checksum-rewrite-negative.md), and the
 [A40 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a40-checksum-safe-fullgraph-prereg.md).
+A40 passed preflight and issued its server command, but an independent static
+audit then found a second attempt-name collision: the broad rewrite had altered
+the inherited exact-depth request-payload authority hash. It was stopped while
+the server log was still empty, before any worker, checkpoint load, healthy
+endpoint, or request. Teardown and four-device postflight were clean. A41 uses
+fresh attempt-41/port-19713 paths, restores that exact authority once, retains
+the correct oneCCL digest counts, and rejects any generated 64-character digest
+that still contains the new attempt identity. The inference and complete
+quality identities remain unchanged; no reboot is required. See the
+[A40 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a40-payload-authority-interruption.md) and
+[A41 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a41-authority-safe-fullgraph-prereg.md).
