@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-multi-request-split-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-multi-request-split-20260901-r79",
+  "status": "preregistered-before-build-and-run",
+  "objective": "Extend only the opt-in R50 conv-only and delta-only serial diagnostics to the exact two-request pure-spec shape localized by R77, then identify which GDN stage causes the layer-1 divergence.",
+  "code_boundary": {
+    "kernel_base": "vllm-xpu-kernels 1e90ffa672ba02f17a909da11838a4c55b199783",
+    "cumulative_patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-split-r79-20260901.patch",
+    "patch_sha256": "beaaf5313d8f0447b8fea5a4c44795b4045794e0bcd1475cf3cd4b14c97a3e46",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "base_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "production_default_change": false,
+    "one_request_r35_r50_change": false,
+    "new_scope": "two to 64 pure-spec requests, uniform active width two to nine, only when the corresponding split diagnostic environment flag is true"
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "oracle_sha256": "95a477845815414cb1c87126b75043982b526488e9035f518270d451345d3803",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "concurrency": 2,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache_per_arm": true
+  },
+  "arms": [
+    "conv-only multi-request serial replay",
+    "delta-only multi-request serial replay"
+  ],
+  "decision": "A stage is implicated only if its arm returns two complete 128-token outputs, both exactly match the R72 oracle, cached_tokens are both zero, its r79 runtime marker is present on both TP ranks, and there is no new GPU/Xe/OOM fault. If both or neither pass, no single-stage causal claim is allowed.",
+  "promotion_boundary": "Diagnostic only on this boot. Any candidate fix must preserve the current single-user speed floor and pass the complete prose/code/document, deterministic repeat, context-depth, and concurrency identity gates on a clean boot before recipe or site promotion."
+}
