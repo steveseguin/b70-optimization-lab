@@ -1,0 +1,116 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -193,6 +193,82 @@
+ )
+ 
+ 
++def _request_isolated_xpu_gdn_output_prefill(
++    core_attn_out: torch.Tensor,
++    z: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    """Apply GDN norm/out projection per request for pure packed prefills."""
++    forward_context = get_forward_context()
++    layer = forward_context.no_compile_layers[layer_name]
++    attn_metadata_raw = forward_context.attn_metadata
++    attn_metadata = (
++        attn_metadata_raw.get(layer_name)
++        if isinstance(attn_metadata_raw, dict)
++        else None
++    )
++
++    def project(request_core: torch.Tensor, request_z: torch.Tensor) -> torch.Tensor:
++        request_shape = request_z.shape
++        request_core = request_core.reshape(-1, request_core.shape[-1])
++        request_z = request_z.reshape(-1, request_z.shape[-1])
++        request_core = layer.norm(request_core, request_z)
++        request_core = request_core.reshape(request_shape).flatten(-2)
++        output, _ = layer.out_proj(request_core)
++        return output
++
++    isolate = (
++        isinstance(attn_metadata, GDNAttentionMetadata)
++        and attn_metadata.num_prefills > 1
++        and attn_metadata.num_decodes == 0
++        and attn_metadata.num_spec_decodes == 0
++        and attn_metadata.prefill_query_start_loc is not None
++    )
++    if not isolate:
++        return project(core_attn_out, z)
++
++    assert isinstance(attn_metadata, GDNAttentionMetadata)
++    assert attn_metadata.prefill_query_start_loc is not None
++    boundaries = (
++        attn_metadata.prefill_query_start_loc[: attn_metadata.num_prefills + 1]
++        .detach()
++        .cpu()
++        .tolist()
++    )
++    boundaries = [int(value) for value in boundaries]
++    if boundaries[0] != 0 or boundaries[-1] != core_attn_out.shape[0]:
++        raise RuntimeError("request-isolated GDN output boundaries do not cover rows")
++
++    pieces = []
++    for start, stop in zip(boundaries, boundaries[1:]):
++        if stop <= start:
++            raise RuntimeError("request-isolated GDN output found an empty request")
++        pieces.append(project(core_attn_out[start:stop], z[start:stop]))
++    result = torch.cat(pieces, dim=0)
++    if result.shape != (core_attn_out.shape[0], output_size):
++        raise RuntimeError("request-isolated GDN output returned wrong shape")
++    return result
++
++
++def _request_isolated_xpu_gdn_output_prefill_fake(
++    core_attn_out: torch.Tensor,
++    z: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    del z, layer_name
++    return core_attn_out.new_empty((core_attn_out.shape[0], output_size))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_output_prefill_isolated_xpu",
++    op_func=_request_isolated_xpu_gdn_output_prefill,
++    mutates_args=[],
++    fake_impl=_request_isolated_xpu_gdn_output_prefill_fake,
++)
++
++
+ if GDN_AITER_TRITON_AVAILABLE:
+     from aiter.ops.triton.causal_conv1d_update_single_token import (
+         fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
+@@ -1148,14 +1224,22 @@
+         # ============================================================
+         # Part 3: Output Projection
+         # ============================================================
+-        z_shape_og = z.shape
+-        # Reshape input data into 2D tensor
+-        core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+-        z = z.reshape(-1, z.shape[-1])
+-        core_attn_out = self.norm(core_attn_out, z)
+-        core_attn_out = core_attn_out.reshape(z_shape_og)
+-        core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
+-        out, _ = self.out_proj(core_attn_out)
++        if os.getenv("VLLM_XPU_GDN_ISOLATE_OUTPUT_PREFILL_REQUESTS", "0") == "1":
++            out = torch.ops.vllm.qwen_gdn_output_prefill_isolated_xpu(
++                core_attn_out,
++                z,
++                hidden_states.shape[-1],
++                self.prefix,
++            )
++        else:
++            z_shape_og = z.shape
++            # Reshape input data into 2D tensor
++            core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
++            z = z.reshape(-1, z.shape[-1])
++            core_attn_out = self.norm(core_attn_out, z)
++            core_attn_out = core_attn_out.reshape(z_shape_og)
++            core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
++            out, _ = self.out_proj(core_attn_out)
+         return out
+ 
+     def forward_cpu(
