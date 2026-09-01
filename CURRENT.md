@@ -3540,3 +3540,12 @@ an endpoint arm. The external-model component run still added 14 corrected
 local-NVMe events through runtime/source traffic, so confirmation must have a
 small event budget and deduplicated shard validation. See the
 [W13 discovery result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-xpu-graph-census-a1-result.md).
+The exact W13-N32 confirmation is now frozen and independently audited. It
+covers layers 0/47, EP ranks 0--3, and three seeds as 24 matched fresh-process
+control/candidate/control cells, while hashing the four distinct external
+checkpoint shards only once. Writable caches are isolated in `/dev/shm`; a
+60-second idle gate and dynamic limits of 16 corrected local-NVMe events,
+zero root-port events, 2 GiB local reads, zero swap, and 96 million KiB
+available memory stop the run between cells rather than risking another host
+freeze. It contains no reboot and no full-model load. See the
+[W13-N32 confirmation preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-n32-xpu-graph-confirmation-a1-prereg.md).

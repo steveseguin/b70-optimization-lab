@@ -4,7 +4,10 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
+import tempfile
 import unittest
 
 
@@ -170,6 +173,102 @@ class WeightAndRouteContractTests(unittest.TestCase):
             counts = [GATE.local_route_count(row, rank) for row in series]
             self.assertGreater(min(counts), 0)
             self.assertLess(max(counts), GATE.TOP_K)
+
+    def test_accepts_frozen_checkpoint_receipt_without_rehashing_shard(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            shard = root / "model-00002-of-00131.safetensors"
+            shard.write_bytes(b"checkpoint bytes")
+            receipt = root / "receipt.json"
+            value = {
+                "schema_version": 1,
+                "status": "pass",
+                "classification": "qwen38_w13_checkpoint_checksum_receipt",
+                "model_path": str(root),
+                "model_revision": GATE.MODEL_REVISION,
+                "model_index_sha256": "1" * 64,
+                "model_config_sha256": "2" * 64,
+                "checkpoint_shards": {
+                    shard.name: {
+                        "path": str(shard),
+                        "size": shard.stat().st_size,
+                        "sha256": hashlib.sha256(shard.read_bytes()).hexdigest(),
+                        "stat_identity": {
+                            "device": shard.stat().st_dev,
+                            "inode": shard.stat().st_ino,
+                            "mtime_ns": shard.stat().st_mtime_ns,
+                            "ctime_ns": shard.stat().st_ctime_ns,
+                        },
+                    }
+                },
+            }
+            receipt.write_text(json.dumps(value), encoding="utf-8")
+            receipt_digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
+            selected = GATE.validate_checkpoint_receipt(
+                receipt,
+                receipt_digest,
+                model=root,
+                model_revision=GATE.MODEL_REVISION,
+                index_sha256="1" * 64,
+                config_sha256="2" * 64,
+                shard_paths={shard.name: shard},
+            )
+            self.assertEqual(
+                selected[shard.name]["sha256"],
+                value["checkpoint_shards"][shard.name]["sha256"],
+            )
+
+    def test_rejects_tampered_or_size_drifted_checkpoint_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            shard = root / "model-00002-of-00131.safetensors"
+            shard.write_bytes(b"checkpoint bytes")
+            receipt = root / "receipt.json"
+            value = {
+                "schema_version": 1,
+                "status": "pass",
+                "classification": "qwen38_w13_checkpoint_checksum_receipt",
+                "model_path": str(root),
+                "model_revision": GATE.MODEL_REVISION,
+                "model_index_sha256": "1" * 64,
+                "model_config_sha256": "2" * 64,
+                "checkpoint_shards": {
+                    shard.name: {
+                        "path": str(shard),
+                        "size": shard.stat().st_size,
+                        "sha256": hashlib.sha256(shard.read_bytes()).hexdigest(),
+                        "stat_identity": {
+                            "device": shard.stat().st_dev,
+                            "inode": shard.stat().st_ino,
+                            "mtime_ns": shard.stat().st_mtime_ns,
+                            "ctime_ns": shard.stat().st_ctime_ns,
+                        },
+                    }
+                },
+            }
+            receipt.write_text(json.dumps(value), encoding="utf-8")
+            digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, "SHA-256 mismatch"):
+                GATE.validate_checkpoint_receipt(
+                    receipt,
+                    "0" * 64,
+                    model=root,
+                    model_revision=GATE.MODEL_REVISION,
+                    index_sha256="1" * 64,
+                    config_sha256="2" * 64,
+                    shard_paths={shard.name: shard},
+                )
+            shard.write_bytes(b"tampered payload")
+            with self.assertRaisesRegex(ValueError, "stat identity mismatch"):
+                GATE.validate_checkpoint_receipt(
+                    receipt,
+                    digest,
+                    model=root,
+                    model_revision=GATE.MODEL_REVISION,
+                    index_sha256="1" * 64,
+                    config_sha256="2" * 64,
+                    shard_paths={shard.name: shard},
+                )
 
 
 if __name__ == "__main__":

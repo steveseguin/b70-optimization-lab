@@ -15,6 +15,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import statistics
 import sys
 import time
@@ -172,6 +173,83 @@ def read_result_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def validate_checkpoint_receipt(
+    receipt_path: Path,
+    expected_receipt_sha256: str,
+    *,
+    model: Path,
+    model_revision: str,
+    index_sha256: str,
+    config_sha256: str,
+    shard_paths: dict[str, Path],
+) -> dict[str, dict[str, Any]]:
+    """Validate a runner-created one-time checkpoint checksum receipt.
+
+    The optional receipt avoids hashing the same multi-GiB checkpoint shards in
+    every fresh C/A/C process. The runner still hashes every distinct shard
+    once, freezes the receipt digest, and each gate process verifies that digest
+    plus the selected files' path and size before trusting the recorded hashes.
+    Callers that omit the receipt retain the original per-process hashing path.
+    """
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_receipt_sha256):
+        raise ValueError("checkpoint receipt SHA-256 must be 64 lowercase hex digits")
+    receipt = receipt_path.resolve()
+    if not receipt.is_file():
+        raise FileNotFoundError(f"checkpoint receipt is missing: {receipt}")
+    if sha256_file(receipt) != expected_receipt_sha256:
+        raise ValueError("checkpoint receipt SHA-256 mismatch")
+    value = json.loads(receipt.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("checkpoint receipt must decode to an object")
+    if (
+        value.get("schema_version") != 1
+        or value.get("status") != "pass"
+        or value.get("classification") != "qwen38_w13_checkpoint_checksum_receipt"
+    ):
+        raise ValueError("checkpoint receipt header is invalid")
+    if value.get("model_path") != str(model):
+        raise ValueError("checkpoint receipt model path mismatch")
+    if value.get("model_revision") != model_revision:
+        raise ValueError("checkpoint receipt model revision mismatch")
+    if value.get("model_index_sha256") != index_sha256:
+        raise ValueError("checkpoint receipt model index mismatch")
+    if value.get("model_config_sha256") != config_sha256:
+        raise ValueError("checkpoint receipt model config mismatch")
+    receipt_shards = value.get("checkpoint_shards")
+    if not isinstance(receipt_shards, dict):
+        raise ValueError("checkpoint receipt shard map is missing")
+
+    selected: dict[str, dict[str, Any]] = {}
+    for name, path in sorted(shard_paths.items()):
+        row = receipt_shards.get(name)
+        if not isinstance(row, dict):
+            raise ValueError(f"checkpoint receipt is missing shard {name}")
+        resolved = path.resolve()
+        if row.get("path") != str(resolved):
+            raise ValueError(f"checkpoint receipt path mismatch for {name}")
+        if row.get("size") != resolved.stat().st_size:
+            raise ValueError(f"checkpoint receipt size mismatch for {name}")
+        file_stat = resolved.stat()
+        expected_stat = {
+            "device": file_stat.st_dev,
+            "inode": file_stat.st_ino,
+            "mtime_ns": file_stat.st_mtime_ns,
+            "ctime_ns": file_stat.st_ctime_ns,
+        }
+        if row.get("stat_identity") != expected_stat:
+            raise ValueError(f"checkpoint receipt stat identity mismatch for {name}")
+        digest = row.get("sha256")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError(f"checkpoint receipt digest is invalid for {name}")
+        selected[name] = {
+            "path": str(resolved),
+            "size": row["size"],
+            "sha256": digest,
+            "stat_identity": expected_stat,
+        }
+    return selected
+
+
 def validate_control_authority(
     authority: dict[str, Any], expected_identity: dict[str, Any]
 ) -> list[str]:
@@ -280,6 +358,18 @@ def parse_args() -> argparse.Namespace:
             "every non-empty W1_CONFIG and optional for a control repeat"
         ),
     )
+    parser.add_argument(
+        "--checkpoint-receipt-json",
+        type=Path,
+        help=(
+            "Runner-created receipt that hashed every required checkpoint shard "
+            "once; requires --checkpoint-receipt-sha256"
+        ),
+    )
+    parser.add_argument(
+        "--checkpoint-receipt-sha256",
+        help="SHA-256 of --checkpoint-receipt-json",
+    )
     parser.add_argument("--seed", type=int, default=20260827)
     parser.add_argument("--hidden-scale", type=float, default=0.01)
     parser.add_argument("--capture-warmups", type=int, default=5)
@@ -291,6 +381,12 @@ def parse_args() -> argparse.Namespace:
         parser.error("--model-revision must be non-empty")
     if args.model_revision != MODEL_REVISION:
         parser.error(f"--model-revision must equal {MODEL_REVISION}")
+    if (args.checkpoint_receipt_json is None) != (
+        args.checkpoint_receipt_sha256 is None
+    ):
+        parser.error(
+            "--checkpoint-receipt-json and --checkpoint-receipt-sha256 must be used together"
+        )
     if not 0.0 < args.hidden_scale <= 10.0:
         parser.error("--hidden-scale must be in (0, 10]")
     if not 1 <= args.capture_warmups <= 20:
@@ -383,14 +479,29 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     index_sha256 = sha256_file(index_path)
     config_sha256 = sha256_file(config_path)
-    shard_receipts = {
-        name: {
-            "path": str(path),
-            "size": path.stat().st_size,
-            "sha256": sha256_file(path),
+    if args.checkpoint_receipt_json is None:
+        shard_receipts = {
+            name: {
+                "path": str(path),
+                "size": path.stat().st_size,
+                "sha256": sha256_file(path),
+            }
+            for name, path in sorted(shard_paths.items())
         }
-        for name, path in sorted(shard_paths.items())
-    }
+        checkpoint_receipt_path = None
+        checkpoint_receipt_sha256 = None
+    else:
+        checkpoint_receipt_path = args.checkpoint_receipt_json.resolve()
+        checkpoint_receipt_sha256 = args.checkpoint_receipt_sha256
+        shard_receipts = validate_checkpoint_receipt(
+            checkpoint_receipt_path,
+            checkpoint_receipt_sha256,
+            model=model,
+            model_revision=args.model_revision,
+            index_sha256=index_sha256,
+            config_sha256=config_sha256,
+            shard_paths=shard_paths,
+        )
     first_expert = args.ep_rank * LOCAL_EXPERTS
     shape_receipt = {
         "tokens": 1,
@@ -684,6 +795,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "load_seconds": load_seconds,
             "selected_weight_count": len(plan) * 6,
             "selected_shard_count": len(shard_names),
+            "checkpoint_checksum_mode": (
+                "per_process" if checkpoint_receipt_path is None else "frozen_receipt"
+            ),
+            "checkpoint_receipt_path": (
+                str(checkpoint_receipt_path)
+                if checkpoint_receipt_path is not None
+                else None
+            ),
+            "checkpoint_receipt_sha256": checkpoint_receipt_sha256,
         },
         "correctness": {
             "exact_replays": EXACT_REPLAYS,
