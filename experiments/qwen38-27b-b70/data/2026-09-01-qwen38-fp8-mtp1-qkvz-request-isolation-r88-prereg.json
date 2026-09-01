@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-qkvz-request-isolation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-qkvz-request-isolation-20260901-r88",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether projecting each request in a packed multi-request prefill at its natural row count restores the trusted sequential FP8 qkvz arithmetic and strict c2 output identity.",
+  "lineage": {
+    "diagnostic_base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-input-trace-r86",
+    "diagnostic_base_image_id": "sha256:3655f4fcdbe387117a6fcf2b58efacd9c8e8e65eb825b0a961e26c91f1952110",
+    "r86_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-input-r86-result.json",
+    "rejected_r87_result": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-qkvz-fixed-shape-r87-result.json"
+  },
+  "candidate": {
+    "gate": "VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS=1",
+    "default": false,
+    "scope": "XPU Qwen GDN pure-prefill calls with more than one prefill request; c1, decode, speculative decode, and mixed decode/prefill calls remain unchanged.",
+    "implementation": "Read the current layer's GDN prefill query boundaries, slice hidden_states into one contiguous natural-length tensor per request, call the existing quantized in_proj_qkvz on each slice, and concatenate results in scheduler order. Do not pad, change weights or scales, or reorder requests.",
+    "expected_fixture_shapes": [31, 28],
+    "reason": "R87 proved that fixed-256 padding selects the same wrong path as the natural packed 59-row c2 call. Natural 31-row c1 is the trusted oracle path; request isolation should reproduce it for cache-c000 while also giving index-c001 its natural 28-row path."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "sequence": "Run cache-c000 alone at c1, then cache-c000 plus index-c001 at c2 in the same fresh server.",
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache": true,
+    "prefill_trace": true
+  },
+  "required_pass": {
+    "concurrency_1_oracle": "1/1",
+    "concurrency_2_oracle": "2/2",
+    "completion_tokens": 128,
+    "cached_tokens_all_zero": true,
+    "layer_0_cache_prompt_qkvz_exact_across_c1_c2": true,
+    "layer_0_index_prompt_qkvz_matches_r86_natural_28_row_digest": true,
+    "kernel_journal_entries": 0
+  },
+  "followup_if_pass": "Build a non-tracing candidate from the production lineage and run repeated c1/c2 plus the broader varied-prompt determinism and quality battery. Measure prefill overhead separately. This diagnostic run cannot promote speed.",
+  "followup_if_fail": "Preserve the result and localize the first layer-0 post-projection divergence without widening the candidate.",
+  "promotion_boundary": "Candidate only. No site, README, headline, protected-speed, recipe-default, or LocalMaxxing authority. This boot contains an earlier GPU reset."
+}
