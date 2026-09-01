@@ -3105,3 +3105,14 @@ performance selectors, and outer finalizer are otherwise identical to A31.
 All static gates pass and the paths are unused. Run it on the current healthy
 boot without rebooting. See the
 [A32 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a32-moe-m1-current-prereg.md).
+A32 passed the corrected supervisor binding and completed the full battery.
+Recovery, the inherited 6/7 semantic boundary, 16/16 repeat, long-context
+needle, and all three protected short hashes passed. Short decode measured
+`5.421586 / 5.416722 / 5.441849 tok/s`, median `5.421586`, which is
+`1.70777%` below the protected `5.515783`. Its two cache-zero exact-4K rows ran
+at `5.252151 / 5.189331 tok/s` but returned different non-authority hashes.
+M1 warps 8 is therefore closed as a lossless short performance negative and an
+exact-4K reliability negative. Teardown and every health/evidence gate passed;
+the boot remains eligible without reboot. Protected MTP0/MTP4 results are
+unchanged. See the
+[A32 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a32-moe-m1-current-negative.md).
