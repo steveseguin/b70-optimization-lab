@@ -1,0 +1,16 @@
+{
+  "schema": "neural.download.invalid-attempt.v1",
+  "status": "invalid-do-not-use-as-performance-or-quality-evidence",
+  "reason": "During model loading on GPU 0 (PCI 0000:03:00.0), the Xe driver reported repeated copy-engine page faults, an unsuccessful -EINVAL fault response, a timed-out python3 job, and an engine_class=bcs reset at 2026-09-01 03:56:52 local journal time. The server never became ready and no benchmark requests or results were produced. xpu-smi reported both B70 devices in normal state after the driver engine reset, so no host reboot or device reload was performed.",
+  "source_changed_during_run": false,
+  "performance_evidence_eligible": false,
+  "quality_evidence_eligible": false,
+  "fault": {
+    "device": "0000:03:00.0",
+    "drm": "/dev/dri/card2",
+    "engine_class": "bcs",
+    "engine_instance": 0,
+    "driver_action": "engine reset",
+    "xe_device_coredump_created": true
+  }
+}

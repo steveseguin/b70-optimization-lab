@@ -1,0 +1,12 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-serial-gdn-prereg.v1",
+  "campaign": "qwen38-fp8-mtp1-serial-gdn-20260831-r46",
+  "status": "preregistered before building the simplified R46 image or starting either candidate server",
+  "question": "Does serial replay of the speculative GDN convolution and recurrent rows make static MTP1 exact against the matched seeded MTP0 target across the complete realistic suite while retaining more than 50 tok/s?",
+  "control": "The two fresh-cache MTP0 R45 attempts with PYTHONHASHSEED=0, deterministic Inductor, XPU Graph off, W8A16, persistent GDN state, and explicit oneCCL Work.wait.",
+  "candidate": "The qualified R31 static-MTP1 userspace image plus only the R35 serial-GDN XPU extension and device library, with VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1. No dynamic-MTP userspace changes are included.",
+  "rationale": "The prior R35 static-MTP1 risk-register sentinel matched the target 512/512 with both serial-GDN mechanism markers, but it was only a one-prompt diagnostic and used a dynamic-MTP composite base. R46 isolates that kernel treatment on the static R31 base and subjects it to the full promotion contract.",
+  "workload": "Two separate fresh servers and empty compile caches; complete fixed 12-prompt/six-class suite once per server; natural 512-token cap; class-balanced 100-event/99-interval decode; temperature 0; no prefix cache; cached_tokens=0; complete raw token arrays; independent canaries.",
+  "gate": "Both R46 attempts must pass all workload/canary gates, match each other 12/12, and each match both completed R45 MTP0 controls 12/12. The two-attempt median must exceed 50 tok/s. Otherwise do not promote.",
+  "reporting": "Preserve every attempt, do not select a favorable compiler cache, and do not publish or submit a performance claim until the full cross-product exactness gate passes."
+}

@@ -1,0 +1,37 @@
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -218,7 +218,8 @@ std::vector<torch::Tensor> causal_conv1d_spec(
+   // with the matching serial recurrent path below, this makes the complete
+   // GDN transaction use the same arithmetic kernels as target-only decode.
+   if (gdn_env_truthy(
+-          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT")) {
++          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT") ||
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT")) {
+     TORCH_CHECK(
+         num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 9 &&
+             num_actual_tokens == spec_token &&
+@@ -708,7 +709,8 @@ void gated_delta_rule_spec(
+   // Keep the gate deliberately narrow until the strict target-parity suite
+   // qualifies it.
+   if (gdn_env_truthy(
+-          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT")) {
++          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT") ||
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT")) {
+     TORCH_CHECK(
+         num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 9 &&
+             num_actual_tokens == spec_token &&
+@@ -723,8 +725,11 @@ void gated_delta_rule_spec(
+
+     static std::once_flag serial_exact_marker_once;
+     std::call_once(serial_exact_marker_once, [] {
+-      TORCH_WARN(
+-          "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT reached (r35)");
++      TORCH_WARN(gdn_env_truthy(
++                     "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT")
++                     ? "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT reached (r50)"
++                     : "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT "
++                       "reached (r35)");
+     });
+
+     auto index_options =

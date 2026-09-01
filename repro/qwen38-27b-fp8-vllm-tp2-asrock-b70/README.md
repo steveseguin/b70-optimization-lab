@@ -2,40 +2,52 @@
 
 > **Certification: `candidate-portable-repro`, not a starter guide.** The
 > model, image, launch, and validation identities are pinned and the model has
-> been verified on this host. The remaining gates are a tested Intel
-> driver/Docker installation path, beginner recovery guidance, and a replay
-> from a clean supported host. See the
+> been verified on this host. A fresh pinned source rebuild and empty-cache
+> strict replay also pass here. The remaining gates are a tested Intel
+> driver/Docker installation path, beginner recovery guidance, and an
+> independent supported-host replay. See the
 > [guide catalog](../guide-catalog.json) and
 > [certification standard](../../docs/reproduction-guide-certification.md).
 
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
-FP16 KV, and TP2. The fastest qualified default is publisher MTP1 with W8A16,
-deterministic Inductor, XPU Graph disabled, exact two-row Gemma RMSNorm replay,
-deterministic GDN state handling, and an explicit oneCCL completion dependency.
-Target-only MTP0 remains the qualified fallback; deeper dynamic MTP remains a
-research lane.
+FP16 KV, and TP2. Static publisher MTP1 is lab-qualified at
+**`51.808087 tok/s`**; deeper dynamic MTP remains a research lane.
 
-## Qualified strict MTP1 default
+## Strict MTP1 qualification
 
-Two fresh servers with separate empty compile caches passed the complete fixed
-12-prompt/six-class, natural 512-token suite:
+Four fresh servers with separate empty compile caches passed the complete fixed
+12-prompt/six-class, natural 512-token suite. MTP0 and MTP1 deliberately used
+the same content-verified R50 image; only speculative decoding changed:
 
-| attempt | class-balanced decode | cache | repeat and target parity |
+| arm | attempt | class-balanced decode | output gate |
 | --- | ---: | ---: | ---: |
-| `r32-A` | 51.606902 tok/s | zero on 12/12 | 12/12 |
-| `r32-B` | 52.230611 tok/s | zero on 12/12 | 12/12 |
-| two-attempt median | **51.918757 tok/s** | — | **qualified** |
+| MTP0 | `r54a-r50` | 33.722035 tok/s | 12/12 vs sibling |
+| MTP0 | `r54c-r50` | 33.745004 tok/s | 12/12 vs sibling |
+| MTP1 | `r53a` | 51.796549 tok/s | 12/12 vs sibling and both targets |
+| MTP1 | `r53b` | 51.819625 tok/s | 12/12 vs sibling and both targets |
+| MTP1 two-attempt center | **51.808087 tok/s** | — | **qualified** |
 
-Both attempts passed every workload and independent-canary gate and matched
-both qualified MTP0 r15 target repeats exactly. This is a **52.56%** strict
-gain over matched MTP0, not a selected prompt or warmed response-cache result.
+All four attempts reported `cached_tokens=0`, passed the independent canaries,
+and used natural EOS with a 512-token cap. The metric is the median of six
+prompt-class medians over the 99 intervals between streamed output events
+1-100 after TTFT. The candidate is `53.5804%` faster than the matched-image
+MTP0 center (`33.733520 tok/s`) with no observed token change. See the
+[audit note](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md).
 
-Build and launch the fail-closed profile with portable caller-selected paths:
+The repository build path was then exercised from a new pinned source checkout.
+That R55C image measured `51.579521 tok/s` with a new compile cache, passed the
+same workload and canaries, and matched 12/12 complete arrays against both R53A
+MTP1 and R54A MTP0. Its rebuilt libraries use portable `$ORIGIN` RUNPATHs; the
+builder verifies whole-file and code/data section hashes. See the
+[clean-rebuild result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json).
+
+Build the full dependency chain and launch the qualified profile with portable
+caller-selected paths:
 
 ```bash
 BUILD_ROOT=/path/to/empty-build-root \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh
 
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-empty-runtime-cache \
@@ -43,12 +55,41 @@ MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh
 ```
 
-The wrapper pins the validated image ID and all correctness-relevant compiler,
-graph, GDN, RMS, W8A16, and MTP settings. See the
-[r32 result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-mtp1-deterministic-r32-result.md)
-and [structured proof](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-mtp1-deterministic-r32.json).
+In another terminal, run the actual strict natural-512 workload—not the older
+128-token concurrency screen:
 
-## Qualified strict MTP0 baseline
+```bash
+OUT_DIR=/path/to/new-strict-attempt \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+The script fails unless the full workload, cache-zero policy, and independent
+canaries pass. It deliberately reports target/repeat parity as unevaluated for
+a single attempt. A qualifying audit needs two new MTP1 attempts and two new
+MTP0 attempts, all compared with
+[`compare-strict-attempt-outputs.py`](../../scripts/compare-strict-attempt-outputs.py).
+
+Launch the matched-image MTP0 control with the same final image and compiler
+contract:
+
+```bash
+PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/another-new-empty-runtime-cache \
+MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh
+
+OUT_DIR=/path/to/new-mtp0-attempt BASE_URL=http://127.0.0.1:18124 \
+MODEL_NAME=qwen38-fp8 PROFILE_LABEL=mtp0-target \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh
+```
+
+The wrapper verifies the installed image contents and pins all
+correctness-relevant graph, GDN, RMS, W8A16, and MTP settings. A local Docker
+image ID is not portable across rebuilds, so content hashes and the kernel
+commit are authoritative. See the
+[structured R54 result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json).
+
+## Historical strict MTP0 baseline
 
 The deterministic GDN/oneCCL patches and graph-off compiled launcher passed the
 full promotion contract on two fresh servers with empty compile caches:
@@ -71,11 +112,25 @@ BUILD_ROOT=/path/to/empty-build-root \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh
 
 IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15 \
+IMAGE_CONTRACT_PROFILE=mtp0 PORT=18124 GPU_MEMORY_UTILIZATION=0.95 \
+COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false}}' \
 VLLM_XPU_FP8_BLOCK_W8A16=1 VLLM_XPU_ENABLE_XPU_GRAPH=0 CCL_P2P_ACCESS=1 \
+TORCHINDUCTOR_DETERMINISTIC=1 PYTHONHASHSEED=0 \
+VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0 \
+VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0 \
+VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1 \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-runtime-cache \
 MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh
+```
+
+Then run the same strict natural-512 workload used for the MTP1 audit:
+
+```bash
+OUT_DIR=/path/to/new-mtp0-attempt MODEL_NAME=qwen38-fp8 \
+PROFILE_LABEL=mtp0-target BASE_URL=http://127.0.0.1:18124 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh
 ```
 
 The validated image ID is
@@ -83,7 +138,7 @@ The validated image ID is
 See the [result note](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-deterministic-eager-baseline-and-compiled-closure.md)
 and [structured summary](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-deterministic-compiled-work-wait.json).
 
-The eager r5 image remains a qualified fallback at `18.910242 tok/s`; its
+The eager r5 image remains a historical fallback at `18.910242 tok/s`; its
 build script is retained for recovery and compiler regression isolation.
 
 ## Earlier MTP matrix — measured, output gate failed
@@ -100,8 +155,9 @@ complete token arrays. Later work stabilized the GDN B/A prefill reduction,
 bound compiler-visible recurrent state, and made oneCCL completion explicit
 with `async_op=True` plus `Work.wait()`. That repaired compiled MTP0 to 12/12
 without enabling XPU Graph. The later packed-RMS plus deterministic-Inductor
-r32 treatment separately qualified static MTP1; it does not retroactively
-qualify the original matrix or dynamic-MTP rows. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
+r32 treatment made static MTP1 exact inside that historical campaign; it does
+not retroactively qualify the original matrix or dynamic-MTP rows, and the
+2026-09-01 audit now withholds its package headline. See the [strict matrix result](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-strict-profile-matrix-result.md)
 and [machine-readable summary](../../experiments/qwen38-27b-b70/data/2026-08-27-qwen38-fp8-strict-profile-matrix-summary.json).
 A one-B70 eager/default-dispatch control subsequently matched only `8/12` too,
 so TP2 and cross-rank oneCCL are not required; see the
@@ -118,7 +174,7 @@ merely missing, and none of its diagnostic rates is public evidence. See the
 [R34-R38b structured closeout](../../experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-dynamic-exactness-r34-r38b-summary.json).
 
 Dynamic-MTP promotion cells stay blank in the research record, and that
-rejected route is omitted from the landing-page chooser. The later qualified
+rejected route is omitted from the landing-page chooser. The historical R32
 deterministic MTP1 profile directly measured all six exact depths from 2K
 through 32K and
 matched the MTP0 target arrays 6/6. Its 32K point is `46.636241 tok/s` with
@@ -296,9 +352,10 @@ This scoped service improves the same-c64 MTP0 median by `19.67%`. MTP0
 remains `3.32%` faster at its separate c128 optimum, so these are two
 deployment modes, not values to splice into one unnamed profile. The old
 single-response 61.699580 tok/s observation is intentionally omitted here: it
-is not the varied-prompt strict headline. Use the qualified 51.918757 tok/s
-r32 result above for one-user comparisons. This concurrency profile has a
-256-token service limit and no measured 32K point.
+is not the varied-prompt strict headline. The historical 51.918757 tok/s R32
+result remains historical; the current independently qualified strict headline
+is 51.808087 tok/s. This concurrency profile has a 256-token service limit and
+no measured 32K point.
 
 The old kernel aborts when continuous batching mixes MTP decode with new
 prefills. The selected kernel commit
@@ -319,8 +376,9 @@ IMAGE=neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122 \
 ```
 
 The kernel helper downloads and digest-checks the exact successful upstream
-GitHub Actions wheel and therefore requires authenticated `gh`. It fails
-closed if the artifact or digest is unavailable. Its pinned image definition is
+wheel from the lab's durable GitHub release. It uses `curl` and requires no
+GitHub CLI authentication. The mirror records the upstream run/artifact
+provenance and does not claim authorship. Its pinned image definition is
 [`Dockerfile.fp8-kernel-1e90-r13`](../../experiments/qwen38-27b-b70/docker/Dockerfile.fp8-kernel-1e90-r13).
 Launch and validate MTP1:
 
@@ -491,6 +549,14 @@ are all in this repository. No point is interpolated or extrapolated.
 | Execution | Run [`preflight.sh`](preflight.sh), launch with [`run-server.sh`](run-server.sh), exercise with [`bench.sh`](bench.sh), and stop with the command below. The image must already be pulled. |
 | Validation | The [experiment note](../../experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md) and [structured result](../../experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json) preserve the fixed quality and benchmark boundaries. Clean-host replay remains open. |
 
+Intel's current host-side references are the
+[Client GPU Linux installation guide](https://dgpu-docs.intel.com/driver/client/overview.html)
+and [oneAPI 2026.1 system requirements](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-toolkit/2026.html).
+They are linked as upstream prerequisites, not claimed as a lab-tested install
+recipe. Use the exact observed package versions above for comparison and keep
+the clean-host gate open until the full preflight/server/strict-suite sequence
+has been replayed on that installation.
+
 The 2026-08-21 host/model preflight is preserved as
 [`preflight-evidence-20260821.json`](preflight-evidence-20260821.json). It is
 evidence for prerequisites and model identity only; it does not claim that the
@@ -519,7 +585,8 @@ docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd
 Run the non-mutating preflight before serving:
 
 ```bash
-MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15 \
+IMAGE_CONTRACT_PROFILE=mtp0 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh
 ```
 
@@ -566,7 +633,7 @@ The wrapper fixes the measured 33,024-token/one-slot/4,096-prefill profile.
 Changing those values creates another operating profile and must not be
 compared as though it were the same measurement.
 
-To reproduce the qualified MTP1 exact-depth profile instead, use another new
+To reproduce the historical MTP1 exact-depth profile instead, use another new
 empty cache and the dedicated wrappers:
 
 ```bash

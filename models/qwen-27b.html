@@ -340,8 +340,8 @@
 </a><a class="packet-card" href="qwen38-27b-fp8-vllm-tp2-asrock-b70.html">
   <div class="packet-top"><span>qwen3.8-27b</span><span class="packet-badges"><b>B70-verified</b></span></div>
   <h3 title="Qwen3.8 FP8 · TP2">Qwen3.8 FP8 · TP2</h3>
-  <p class="packet-promise">Reproduce <b>51.92 tok/s</b> on 2× B70 · candidate package</p>
-  <small class="packet-workload">Median of two fresh-server, empty-compile-cache class-balanced medians over the complete fixed 12-prompt/six-class, natural 512-cap, cache-zero raw-completion suite; official FP8 target, W8A16, FP16 KV, TP2, publisher MTP depth 1, Inductor deterministic mode, XPU Graph off, packed Gemma RMSNorm row replay, and explicit oneCCL Work.wait. All 12 complete token arrays matched between attempts and both qualified MTP0 target repeats; both independent canary batteries passed.</small>
+  <p class="packet-promise">Reproduce <b>51.81 tok/s</b> on 2× B70 · candidate package</p>
+  <small class="packet-workload">Median of two fresh-server class-balanced medians over a complete fixed 12-prompt/six-class natural-512 suite. Both MTP1 attempts and both matched-image MTP0 controls used fresh compile caches; all four cross-arm comparisons matched 12/12 complete token arrays, cached tokens were zero, and independent canaries passed.</small>
   <div class="grade-rail"></div>
   <div class="coverage-rail"><span>decode</span><span>context</span><span>prefill</span><span>TTFT</span><span>quality</span><span>recipe</span><span>concurrency</span><span>queued latency</span></div>
 </a><a class="packet-card" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-08-26-qwen38-official-f01e-autoround-tp1-mtp0-f16-piecewise-depth-r3-human-adjudication-result.json">

@@ -7,7 +7,11 @@ cache_dir="${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a writable cache directory}"
 container="${CONTAINER_NAME:-qwen38-fp8-tp2}"
 port="${PORT:-18087}"
 served_model="${SERVED_MODEL_NAME:-qwen38-fp8}"
-compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'}
+# Keep fresh compilations on the exact-output-stable path qualified by the
+# R53/R54 four-arm matrix. The explicit inductor_compile_config fields are
+# required: setting TORCHINDUCTOR_DETERMINISTIC alone did not make vLLM's
+# generated compile context deterministic on this stack.
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'}
 max_num_seqs="${MAX_NUM_SEQS:-4}"
 max_model_len="${MAX_MODEL_LEN:-4096}"
 max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
@@ -16,6 +20,12 @@ ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
 xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
 inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
+inductor_max_autotune="${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-1}"
+inductor_coordinate_descent="${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-1}"
+python_hash_seed="${PYTHONHASHSEED:-}"
+expected_image_id="${EXPECTED_IMAGE_ID:-}"
+expected_kernel_head="${EXPECTED_KERNEL_HEAD:-}"
+image_contract_profile="${IMAGE_CONTRACT_PROFILE:-}"
 batch_invariant="${VLLM_BATCH_INVARIANT:-0}"
 qwen_gemma_rmsnorm_batch_invariant="${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}"
 qwen_gemma_rmsnorm_packed_serial_exact="${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}"
@@ -31,6 +41,17 @@ gdn_native_fallback="${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}"
 [[ "${fp8_block_w8a16}" == 0 || "${fp8_block_w8a16}" == 1 ]] || { printf 'VLLM_XPU_FP8_BLOCK_W8A16 must be 0 or 1\n' >&2; exit 1; }
 [[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || { printf 'VLLM_XPU_ENABLE_XPU_GRAPH must be 0 or 1\n' >&2; exit 1; }
 [[ "${inductor_deterministic}" == 0 || "${inductor_deterministic}" == 1 ]] || { printf 'TORCHINDUCTOR_DETERMINISTIC must be 0 or 1\n' >&2; exit 1; }
+for value_name in inductor_max_autotune inductor_coordinate_descent; do
+    value=${!value_name}
+    [[ "${value}" == 0 || "${value}" == 1 ]] || {
+        printf '%s must be 0 or 1\n' "${value_name^^}" >&2
+        exit 1
+    }
+done
+[[ -z "${python_hash_seed}" || "${python_hash_seed}" =~ ^[0-9]+$ ]] || {
+    printf 'PYTHONHASHSEED must be an unsigned integer when set\n' >&2
+    exit 1
+}
 for value_name in batch_invariant qwen_gemma_rmsnorm_batch_invariant \
   qwen_gemma_rmsnorm_packed_serial_exact \
   gdn_serial_exact gdn_persistent_scratch gdn_native_fallback; do
@@ -44,6 +65,21 @@ done
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
+docker image inspect "${image}" >/dev/null 2>&1 || {
+    printf 'image is missing: %s\n' "${image}" >&2
+    exit 1
+}
+if [[ -n "${image_contract_profile}" ]]; then
+    "${script_dir}/verify-image-contract.sh" "${image_contract_profile}" "${image}"
+fi
+if [[ -n "${expected_image_id}" && "$(docker image inspect "${image}" --format '{{.Id}}')" != "${expected_image_id}" ]]; then
+    printf 'image identity mismatch: expected %s\n' "${expected_image_id}" >&2
+    exit 1
+fi
+if [[ -n "${expected_kernel_head}" && "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')" != "${expected_kernel_head}" ]]; then
+    printf 'image does not contain the required XPU kernel: %s\n' "${expected_kernel_head}" >&2
+    exit 1
+fi
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${container}"; then
     printf 'Container already exists: %s\n' "${container}" >&2
@@ -55,6 +91,10 @@ mkdir -p "${cache_dir}"
 w8a16_env=()
 if [[ "${fp8_block_w8a16}" == 1 ]]; then
     w8a16_env=(-e VLLM_XPU_FP8_BLOCK_W8A16=1)
+fi
+hash_seed_env=()
+if [[ -n "${python_hash_seed}" ]]; then
+    hash_seed_env=(-e "PYTHONHASHSEED=${python_hash_seed}")
 fi
 
 exec docker run --rm --name "${container}" \
@@ -74,6 +114,9 @@ exec docker run --rm --name "${container}" \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
     -e VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
     -e TORCHINDUCTOR_DETERMINISTIC="${inductor_deterministic}" \
+    -e VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE="${inductor_max_autotune}" \
+    -e VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${inductor_coordinate_descent}" \
+    "${hash_seed_env[@]}" \
     "${w8a16_env[@]}" \
     -e VLLM_BATCH_INVARIANT="${batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \

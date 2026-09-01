@@ -6,7 +6,7 @@ repo_root=$(cd -- "${script_dir}/../.." && pwd)
 build_root=${BUILD_ROOT:?set BUILD_ROOT to a dedicated writable build directory}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31}
 base_image=${BASE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15}
-expected_base_id=${EXPECTED_BASE_IMAGE_ID:-sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e}
+expected_base_id=${EXPECTED_BASE_IMAGE_ID:-}
 source_url=https://github.com/vllm-project/vllm.git
 source_commit=ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9
 source_dir=${build_root}/vllm-${source_commit}
@@ -48,15 +48,19 @@ docker image inspect "${base_image}" >/dev/null 2>&1 || {
   printf 'qualified base image is missing: %s\n' "${base_image}" >&2
   exit 1
 }
-[[ "$(docker image inspect "${base_image}" --format '{{.Id}}')" == "${expected_base_id}" ]] || {
-  printf 'qualified base image identity mismatch: expected %s\n' "${expected_base_id}" >&2
-  exit 1
-}
+if [[ -n "${expected_base_id}" ]]; then
+  [[ "$(docker image inspect "${base_image}" --format '{{.Id}}')" == "${expected_base_id}" ]] || {
+    printf 'qualified base image identity mismatch: expected %s\n' "${expected_base_id}" >&2
+    exit 1
+  }
+fi
+"${script_dir}/verify-image-contract.sh" mtp0 "${base_image}"
 docker build --pull=false --build-arg "BASE_IMAGE=${base_image}" \
   --file "${dockerfile}" --tag "${image}" "${source_dir}"
-docker image inspect "${image}" --format '{{.Id}}'
+"${script_dir}/verify-image-contract.sh" mtp1 "${image}"
 
 printf '%s\n' \
   "Built ${image}." \
-  "Expected local validation image ID: sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b" \
+  "Local image ID: $(docker image inspect "${image}" --format '{{.Id}}')" \
+  "Historical validation image ID: sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b" \
   "The source checkout is intentionally left patched for auditability."

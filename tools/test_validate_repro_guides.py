@@ -83,12 +83,16 @@ class ReproGuideValidationTest(unittest.TestCase):
                 "dependencies": [guide],
                 "missing": ["clean-host replay"],
             }
+            package["commands"]["launch"] = "/home/alice/bin/run-model"
             (repo / package_path).write_text(json.dumps(package))
             (repo / "repro/guide-catalog.json").write_text(
                 json.dumps({"format": MODULE.FORMAT, "guides": [entry]})
             )
             errors, _ = MODULE.validate(repo)
             self.assertTrue(any("pinned by sha256 digest" in error for error in errors))
+            self.assertTrue(
+                any("commands.launch contains a host-local path" in error for error in errors)
+            )
 
     def test_rejects_stale_generated_package_catalog(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

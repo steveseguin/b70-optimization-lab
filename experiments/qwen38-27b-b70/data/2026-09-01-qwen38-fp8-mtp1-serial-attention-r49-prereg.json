@@ -1,0 +1,12 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-serial-attention-prereg.v1",
+  "campaign": "qwen38-fp8-mtp1-serial-attention-20260901-r49",
+  "status": "preregistered after the R48 packed-FP8 gate was proven inert and before the R49 image build or launch",
+  "question": "Does progressive one-query replay of only the static-MTP1 packed FlashAttention call restore exact MTP0 target outputs while retaining more than 50 tok/s?",
+  "control": "The completed R47 MTP0 control: official FP8 target, W8A16, TP2, XPU Graph off, persistent GDN state, explicit oneCCL Work.wait, PYTHONHASHSEED=0, max-autotune=0, and coordinate-descent-tuning=0.",
+  "candidate": "R31 static MTP1 plus the existing default-off R38 progressive serial FlashAttention patch. Packed RMSNorm serial exact remains enabled; serial GDN and serial FP8 remain disabled.",
+  "workload": "Complete fixed 12-prompt/six-class realistic suite, each prompt once, natural 512-token cap, class-balanced 100-event/99-interval decode, temperature 0, no prefix cache, cached_tokens=0, complete raw token arrays, independent canaries, empty compile cache, and fresh server.",
+  "sequence": "Build and content-verify the candidate, require its mechanism marker, then run one fresh-cache candidate against the completed R47 MTP0 control. Stop if any workload/canary gate fails, a GPU fault occurs, throughput is not above 50 tok/s, or fewer than 12/12 outputs match. Only a passing arm advances to a second target/candidate cross-product.",
+  "promotion_gate": "All four fresh-cache attempts must pass; each same-profile repeat and every MTP1-to-MTP0 comparison must match 12/12 complete token arrays; the MTP1 two-attempt class-balanced median must exceed 50 tok/s; kernel logs must remain clean.",
+  "reporting": "No favorable-cache selection, no output tolerance, no shortened suite, and no package or external promotion before the complete gate passes."
+}

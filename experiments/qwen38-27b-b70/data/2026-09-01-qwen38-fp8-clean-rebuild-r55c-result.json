@@ -1,0 +1,54 @@
+{
+  "schema": "neural.download.clean-source-rebuild-result.v1",
+  "status": "passed",
+  "model": "Qwen/Qwen3.8-27B-FP8",
+  "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+  "hardware": "2x Intel Arc Pro B70 32 GiB",
+  "scope": "Fresh source checkout, pinned compiler rebuild, new Docker overlay, new compile cache, and one complete strict workload replay on the original lab host. This closes source-build portability on this host; an independent clean-host driver and Docker installation replay remains pending.",
+  "source": {
+    "repository": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+    "commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)",
+    "base_gdn_patch_sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+    "split_gdn_patch_sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f"
+  },
+  "rebuilt_libraries": {
+    "_xpu_C.abi3.so": {
+      "sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+      "runpath": "$ORIGIN",
+      "sections": {
+        ".text": "50b4ce36788ba69261825e1d7af95937e4f40521c9da5d9b909416a99298292e",
+        ".rodata": "7d44f5949e29e6db50a6eec4aa8f6de46066fad928ad81ab47ee95a9cbec42ec",
+        ".data": "4ab38b348d753193ee9684d9c7bede755918a7c3d13f53e35925cc293391a7aa"
+      }
+    },
+    "libgdn_attn_kernels_xe_2.so": {
+      "sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+      "runpath": "$ORIGIN",
+      "sections": {
+        ".text": "1640dcf159af927e5282c45b80aad25e2c78d50521b46b35203ed92556b32914",
+        ".rodata": "3a15b3ec75f8af75b4b41196ab4f32e68c1f8015a4f385c9c5751be8e8f2b6ca",
+        ".data": "154c9111c82ac7509d6245b64d84a8cc29e34d499ee7e9a6495f29f915a699d7"
+      }
+    }
+  },
+  "runtime": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c",
+    "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+    "image_contract": "passed",
+    "compile_cache": "fresh"
+  },
+  "strict_replay": {
+    "class_balanced_median_tok_s": 51.57952066543126,
+    "prompts": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "natural_eos": true,
+    "cached_tokens_all_zero": true,
+    "realistic_output_gate_passed": true,
+    "independent_canaries_passed": true,
+    "complete_token_arrays_exact_vs_qualified_mtp1_r53a": "12/12",
+    "complete_token_arrays_exact_vs_matched_mtp0_r54a": "12/12",
+    "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c"
+  }
+}

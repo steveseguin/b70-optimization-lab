@@ -1,0 +1,10 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp0-no-combo-prereg.v1",
+  "campaign": "qwen38-fp8-mtp0-no-combo-20260901-r51",
+  "status": "preregistered before either R51 server launch",
+  "finding_that_motivated_this_test": "Fresh compiler-stable R47 MTP0 attempts passed every workload, cache-zero, and canary gate but matched only 11/12 complete token arrays. Their container environments and image IDs were identical, while their compile caches contained different AOTAutograd artifacts and 99 changed common files, including benchmark-generated .best_config and .kernel_perf records. The effective vLLM config still had combo_kernels=true and benchmark_combo_kernel=true despite the environment-level autotuner controls.",
+  "treatment": "Keep the R47 MTP0 image, model, TP2, W8A16, graph-off, persistent GDN state, oneCCL completion, seed 0, deterministic Inductor flag, max-autotune=0, and coordinate-descent=0 unchanged. Additionally set inductor_compile_config.combo_kernels=false and benchmark_combo_kernel=false in the explicit vLLM compilation config.",
+  "workload": "Two fresh servers, separate empty compile caches, complete fixed 12-prompt/six-class natural-512 suite, temperature 0, 100 events/99 intervals, no prefix cache, cached_tokens=0, complete raw token arrays, and independent canaries.",
+  "promotion_gate": "Both attempts must pass every workload and canary gate and match 12/12 complete token arrays. Only then may this compilation profile become the target oracle for MTP1 candidates. Speed is reported but cannot override output failure.",
+  "reporting": "Preserve both caches and evidence directories. Do not promote a target or speculative headline from a single attempt, favorable prompt, tolerance comparison, or compiled-cache replay."
+}

@@ -1,0 +1,18 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31
+FROM ${BASE_IMAGE}
+
+ARG FP8_PY_SHA256
+ARG FP8_PATCH_SHA256
+
+COPY vllm/model_executor/layers/quantization/fp8.py \
+  /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/fp8.py
+COPY vllm/model_executor/layers/quantization/fp8.py \
+  /workspace/vllm/vllm/model_executor/layers/quantization/fp8.py
+
+RUN test "$(sha256sum /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/fp8.py | awk '{print $1}')" = "${FP8_PY_SHA256}" \
+    && /opt/venv/bin/python -m py_compile \
+       /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/fp8.py
+
+LABEL neural.download.vllm.fp8-mtp1-packed-serial.patch.sha256="${FP8_PATCH_SHA256}" \
+      neural.download.vllm.fp8.py.sha256="${FP8_PY_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-serial-linear-r48"

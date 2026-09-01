@@ -248,7 +248,10 @@ def page(pkg, all_pkgs, family=None):
             "diagnostic evidence are retained, but no unqualified headline is published."
         )
     )
-    desc = re.sub(r"\s+", " ", desc).strip()[:300]
+    # Keep the full normalized description here. site_seo.clip() owns preview
+    # length and cuts at a sentence/word boundary; slicing here used to leave
+    # generated metadata ending mid-word (for example, "...tok/s wi").
+    desc = re.sub(r"\s+", " ", desc).strip()
     if exact_projection_workload and has_featured_metric:
         ml_attrs = (f' data-ml-model="{esc(ml["model"])}" data-ml-quant="{esc(ml["quant"])}" data-ml-runtime="{esc(ml["runtime"])}"'
                     f' data-ml-cards="{esc(hw.get("cards", 1))}" data-ml-hardware="Intel Arc Pro B70" data-ml-hardware-label="B70" data-ml-spec="{esc(ml.get("spec", "none"))}"'

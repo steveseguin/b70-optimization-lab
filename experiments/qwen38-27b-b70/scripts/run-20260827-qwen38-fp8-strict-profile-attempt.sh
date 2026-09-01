@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
-profile=${PROFILE:?set PROFILE to mtp0, mtp0-eager, mtp0-eager-defaultoff, mtp0-eager-defaultoff-tp1, mtp1, or dynamic-mtp8}
+profile=${PROFILE:?set PROFILE to mtp0, mtp0-r50-control, mtp0-eager, mtp0-eager-defaultoff, mtp0-eager-defaultoff-tp1, mtp1, mtp1-fast, mtp1-serial-gdn, mtp1-serial-fp8, mtp1-serial-fa, or dynamic-mtp8}
 attempt=${ATTEMPT:?set ATTEMPT to a unique fresh-server attempt label}
 model_dir=${MODEL_DIR:?set MODEL_DIR to the verified Qwen3.8-27B-FP8 directory}
 out_dir=${OUT_DIR:?set OUT_DIR to a new evidence directory}
@@ -10,6 +10,10 @@ cache_dir=${VLLM_CACHE_DIR:?set VLLM_CACHE_DIR to a new empty compile-cache path
 suite=${SUITE:-${repo}/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}
 readiness_timeout=${READINESS_TIMEOUT_S:-600}
 cache_policy=${CACHE_POLICY:-fresh}
+# R53/R54 established that fresh target and MTP1 runs are exact across
+# independent caches when determinism is encoded in vLLM's compile context.
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'}
+export COMPILATION_CONFIG="${compilation_config}"
 
 [[ ! -e "${out_dir}" ]] || {
   printf 'refusing to overwrite evidence: %s\n' "${out_dir}" >&2
@@ -46,14 +50,62 @@ case "${profile}" in
     served_model=qwen38-fp8
     launcher=(
       env
-      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15}"
+      IMAGE_CONTRACT_PROFILE=mtp0
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:-sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e}"
+      EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD_OVERRIDE:-1e90ffa672ba02f17a909da11838a4c55b199783}"
       VLLM_XPU_FP8_BLOCK_W8A16=1
+      VLLM_XPU_ENABLE_XPU_GRAPH=0
+      TORCHINDUCTOR_DETERMINISTIC=1
+      VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0
+      VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
+      PYTHONHASHSEED=0
+      VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
       CCL_P2P_ACCESS=1
+      GPU_MEMORY_UTILIZATION=0.95
       MAX_MODEL_LEN=1024
       MAX_NUM_SEQS=1
       MAX_NUM_BATCHED_TOKENS=1024
       PORT="${port}"
       CONTAINER_NAME="${container}"
+      MODEL_DIR="${model_dir}"
+      VLLM_CACHE_DIR="${cache_dir}"
+      "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh"
+    )
+    ;;
+  mtp0-r50-control)
+    # Matched-image target for the R53/R54 MTP1 qualification matrix.  This
+    # intentionally uses the same content-verified R50 userspace, kernel DSOs,
+    # and mechanism defaults as mtp1-fast; only speculative decoding is absent.
+    port=${PORT:-18131}
+    container=${CONTAINER_NAME:-qwen38-fp8-strict-mtp0-r50-${attempt}}
+    served_model=qwen38-fp8-strict-mtp0-r50
+    launcher=(
+      env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50}"
+      IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:?set EXPECTED_IMAGE_ID_OVERRIDE to the content-verified R50 image ID}"
+      EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD_OVERRIDE:-1e90ffa672ba02f17a909da11838a4c55b199783}"
+      VLLM_XPU_FP8_BLOCK_W8A16=1
+      VLLM_XPU_ENABLE_XPU_GRAPH=0
+      TORCHINDUCTOR_DETERMINISTIC=1
+      VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0
+      VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
+      PYTHONHASHSEED=0
+      VLLM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1
+      VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
+      VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+      VLLM_XPU_GDN_NATIVE_FALLBACK=1
+      CCL_P2P_ACCESS=1
+      GPU_MEMORY_UTILIZATION=0.95
+      MAX_MODEL_LEN=1024
+      MAX_NUM_SEQS=1
+      MAX_NUM_BATCHED_TOKENS=1024
+      PORT="${port}"
+      CONTAINER_NAME="${container}"
+      SERVED_MODEL_NAME="${served_model}"
       MODEL_DIR="${model_dir}"
       VLLM_CACHE_DIR="${cache_dir}"
       "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-server.sh"
@@ -66,6 +118,147 @@ case "${profile}" in
     launcher=(
       env
       IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-w8a16-r122}"
+      MAX_MODEL_LEN=1024
+      MAX_NUM_SEQS=1
+      MAX_NUM_BATCHED_TOKENS=1024
+      PORT="${port}"
+      CONTAINER_NAME="${container}"
+      SERVED_MODEL_NAME="${served_model}"
+      MODEL_DIR="${model_dir}"
+      VLLM_CACHE_DIR="${cache_dir}"
+      "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh"
+    )
+    ;;
+  mtp1-fast)
+    port=${PORT:-18132}
+    container=${CONTAINER_NAME:-qwen38-fp8-strict-mtp1-fast-${attempt}}
+    served_model=qwen38-fp8-strict-mtp1-fast
+    launcher=(
+      env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50}"
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:?set EXPECTED_IMAGE_ID_OVERRIDE to the content-verified R50 image ID}"
+      EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD_OVERRIDE:-1e90ffa672ba02f17a909da11838a4c55b199783}"
+      ENFORCE_EAGER=0
+      VLLM_XPU_ENABLE_XPU_GRAPH=0
+      VLLM_XPU_FP8_BLOCK_W8A16=1
+      VLLM_XPU_FP8_PACKED_SERIAL_EXACT=0
+      VLLM_XPU_FA_SERIAL_SPEC_DECODE=0
+      VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL=0
+      VLLM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1
+      VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
+      VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=0
+      VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=0
+      VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+      VLLM_XPU_GDN_NATIVE_FALLBACK=1
+      VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
+      VLLM_XPU_MTP_DRAFT_EAGER=0
+      TORCHINDUCTOR_DETERMINISTIC=1
+      VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0
+      VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
+      PYTHONHASHSEED=0
+      GPU_MEMORY_UTILIZATION=0.95
+      MAX_MODEL_LEN=1024
+      MAX_NUM_SEQS=1
+      MAX_NUM_BATCHED_TOKENS=1024
+      PORT="${port}"
+      CONTAINER_NAME="${container}"
+      SERVED_MODEL_NAME="${served_model}"
+      MODEL_DIR="${model_dir}"
+      VLLM_CACHE_DIR="${cache_dir}"
+      "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh"
+    )
+    ;;
+  mtp1-serial-gdn)
+    port=${PORT:-18132}
+    container=${CONTAINER_NAME:-qwen38-fp8-strict-mtp1-serial-gdn-${attempt}}
+    served_model=qwen38-fp8-strict-mtp1-serial-gdn
+    launcher=(
+      env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-gdn-r46}"
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:?set EXPECTED_IMAGE_ID_OVERRIDE to the locally built R46 image ID}"
+      EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD_OVERRIDE:-1e90ffa672ba02f17a909da11838a4c55b199783}"
+      ENFORCE_EAGER=0
+      VLLM_XPU_ENABLE_XPU_GRAPH=0
+      VLLM_XPU_FP8_BLOCK_W8A16=1
+      VLLM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1
+      VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+      VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+      VLLM_XPU_GDN_NATIVE_FALLBACK=1
+      VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
+      VLLM_XPU_MTP_DRAFT_EAGER=0
+      TORCHINDUCTOR_DETERMINISTIC=1
+      MAX_MODEL_LEN=1024
+      MAX_NUM_SEQS=1
+      MAX_NUM_BATCHED_TOKENS=1024
+      PORT="${port}"
+      CONTAINER_NAME="${container}"
+      SERVED_MODEL_NAME="${served_model}"
+      MODEL_DIR="${model_dir}"
+      VLLM_CACHE_DIR="${cache_dir}"
+      "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh"
+    )
+    ;;
+  mtp1-serial-fp8)
+    port=${PORT:-18132}
+    container=${CONTAINER_NAME:-qwen38-fp8-strict-mtp1-serial-fp8-${attempt}}
+    served_model=qwen38-fp8-strict-mtp1-serial-fp8
+    launcher=(
+      env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-linear-r48}"
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:?set EXPECTED_IMAGE_ID_OVERRIDE to the locally built R48 image ID}"
+      EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD_OVERRIDE:-1e90ffa672ba02f17a909da11838a4c55b199783}"
+      ENFORCE_EAGER=0
+      VLLM_XPU_ENABLE_XPU_GRAPH=0
+      VLLM_XPU_FP8_BLOCK_W8A16=1
+      VLLM_XPU_FP8_PACKED_SERIAL_EXACT=1
+      VLLM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1
+      VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
+      VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+      VLLM_XPU_GDN_NATIVE_FALLBACK=1
+      VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
+      VLLM_XPU_MTP_DRAFT_EAGER=0
+      TORCHINDUCTOR_DETERMINISTIC=1
+      MAX_MODEL_LEN=1024
+      MAX_NUM_SEQS=1
+      MAX_NUM_BATCHED_TOKENS=1024
+      PORT="${port}"
+      CONTAINER_NAME="${container}"
+      SERVED_MODEL_NAME="${served_model}"
+      MODEL_DIR="${model_dir}"
+      VLLM_CACHE_DIR="${cache_dir}"
+      "${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh"
+    )
+    ;;
+  mtp1-serial-fa)
+    port=${PORT:-18132}
+    container=${CONTAINER_NAME:-qwen38-fp8-strict-mtp1-serial-fa-${attempt}}
+    served_model=qwen38-fp8-strict-mtp1-serial-fa
+    launcher=(
+      env
+      IMAGE="${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-attention-r49}"
+      EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID_OVERRIDE:?set EXPECTED_IMAGE_ID_OVERRIDE to the locally built R49 image ID}"
+      EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD_OVERRIDE:-1e90ffa672ba02f17a909da11838a4c55b199783}"
+      ENFORCE_EAGER=0
+      VLLM_XPU_ENABLE_XPU_GRAPH=0
+      VLLM_XPU_FP8_BLOCK_W8A16=1
+      VLLM_XPU_FP8_PACKED_SERIAL_EXACT=0
+      VLLM_XPU_FA_SERIAL_SPEC_DECODE=1
+      VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL=0
+      VLLM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT=0
+      VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1
+      VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=0
+      VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+      VLLM_XPU_GDN_NATIVE_FALLBACK=1
+      VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
+      VLLM_XPU_MTP_DRAFT_EAGER=0
+      TORCHINDUCTOR_DETERMINISTIC=1
       MAX_MODEL_LEN=1024
       MAX_NUM_SEQS=1
       MAX_NUM_BATCHED_TOKENS=1024
@@ -186,6 +379,7 @@ python3 - "${out_dir}/campaign-identity.json" "${profile}" "${attempt}" \
 import datetime as dt
 import hashlib
 import json
+import os
 import pathlib
 import sys
 
@@ -205,6 +399,29 @@ data = {
     "suite_sha256": hashlib.sha256(suite_path.read_bytes()).hexdigest(),
     "port": int(port),
     "container": container,
+    "gpu_memory_utilization": os.environ.get("GPU_MEMORY_UTILIZATION", "0.96"),
+    "compilation_config_override": os.environ.get("COMPILATION_CONFIG"),
+    "compiler_determinism_environment": {
+        name: os.environ.get(name)
+        for name in (
+            "TORCHINDUCTOR_DETERMINISTIC",
+            "PYTHONHASHSEED",
+            "VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE",
+            "VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING",
+        )
+    },
+    "mechanism_environment": {
+        name: os.environ.get(name)
+        for name in (
+            "VLLM_XPU_FP8_BLOCK_W8A16",
+            "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT",
+            "VLLM_XPU_FA_SERIAL_SPEC_DECODE",
+            "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT",
+            "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT",
+            "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT",
+            "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH",
+        )
+    },
     "performance_contract": {
         "complete_fixed_suite": True,
         "max_tokens": 512,

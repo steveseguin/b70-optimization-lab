@@ -1,0 +1,43 @@
+{
+  "attempt": "r54a",
+  "compilation_config_override": "{\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[1],\"max_cudagraph_capture_size\":1,\"inductor_compile_config\":{\"combo_kernels\":false,\"benchmark_combo_kernel\":false,\"deterministic\":true,\"triton.autotune_pointwise\":false,\"benchmark_epilogue_fusion\":false}}",
+  "compile_cache_policy": "fresh",
+  "compiled_kernel_cache_only": false,
+  "compiler_determinism_environment": {
+    "PYTHONHASHSEED": null,
+    "TORCHINDUCTOR_DETERMINISTIC": null,
+    "VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING": null,
+    "VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE": null
+  },
+  "container": "qwen38-fp8-strict-mtp0-r54a",
+  "created_utc": "2026-09-01T07:42:06.886769+00:00",
+  "fresh_compile_cache": "/mnt/fast-ai/vllm-cache/qwen38-fp8-mtp0-explicit-deterministic-r54a",
+  "gpu_memory_utilization": "0.96",
+  "mechanism_environment": {
+    "VLLM_XPU_FA_SERIAL_SPEC_DECODE": null,
+    "VLLM_XPU_FP8_BLOCK_W8A16": null,
+    "VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT": null,
+    "VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT": null,
+    "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT": null,
+    "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH": null,
+    "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT": null
+  },
+  "model_dir": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8",
+  "performance_contract": {
+    "aggregation": "median-of-prompt-class-medians",
+    "cached_tokens_required": 0,
+    "complete_fixed_suite": true,
+    "ignore_eos": false,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "prompt_reuse": false,
+    "temperature": 0
+  },
+  "port": 18131,
+  "profile": "mtp0",
+  "prompt_kv_response_history_cache_reuse": false,
+  "schema": "neural.download.qwen38-fp8-strict-attempt.v1",
+  "suite": "/home/steve/b70-optimization-lab/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+}

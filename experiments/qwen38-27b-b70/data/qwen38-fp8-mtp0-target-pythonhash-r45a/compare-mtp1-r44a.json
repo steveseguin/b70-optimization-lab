@@ -1,0 +1,98 @@
+{
+  "comparison": {
+    "complete_token_arrays_exact": false,
+    "divergent_prompts": [
+      {
+        "first_divergence_token_zero_based": 341,
+        "left_token_count": 512,
+        "prompt_id": "architecture-tradeoff",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 110,
+        "left_token_count": 512,
+        "prompt_id": "bug-report-synthesis",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 303,
+        "left_token_count": 512,
+        "prompt_id": "code-review",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 124,
+        "left_token_count": 280,
+        "prompt_id": "customer-email",
+        "right_token_count": 272
+      },
+      {
+        "first_divergence_token_zero_based": 392,
+        "left_token_count": 512,
+        "prompt_id": "incident-retrospective",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 479,
+        "left_token_count": 512,
+        "prompt_id": "performance-hypotheses",
+        "right_token_count": 512
+      }
+    ],
+    "exact_prompts": 6,
+    "total_prompts": 12
+  },
+  "left": {
+    "artifacts": {
+      "canaries": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-target-pythonhash-r45a/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-target-pythonhash-r45a/campaign-identity.json",
+        "sha256": "a0188c8ba5694166145bd6d1563441a84f9f0ecb107fe8edd1bab0905cc50a82"
+      },
+      "performance": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-target-pythonhash-r45a/performance.json",
+        "sha256": "61b61580c142aadcdc4b6ec36741ed8d95f11197b22825bd8fd937e7b8dc96e5"
+      }
+    },
+    "attempt": "target-pythonhash-r45a",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 34.024097812632654,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "mtp0"
+  },
+  "qualification": {
+    "all_workload_and_canary_gates_passed": true,
+    "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+    "strict_pair_qualified": false
+  },
+  "right": {
+    "artifacts": {
+      "canaries": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-fresh-pythonhash-r44a/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-fresh-pythonhash-r44a/campaign-identity.json",
+        "sha256": "a669783fd5aa3aa7b2915753bc514c72232b6c3682352782e69c191e8697ae71"
+      },
+      "performance": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-fresh-pythonhash-r44a/performance.json",
+        "sha256": "3d0738898ae8f6eb6c5d4eda5c41a328f0c50ec6cdc38510c0969724ae5e0f8f"
+      }
+    },
+    "attempt": "fresh-pythonhash-r44a",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 51.87228321765698,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "mtp1"
+  },
+  "schema": "neural.download.strict-attempt-output-comparison.v1",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-no-combo-fast-prereg.v1",
+  "campaign": "qwen38-fp8-mtp1-no-combo-fast-20260901-r52",
+  "status": "preregistered before the R52 server launch",
+  "finding_that_motivated_this_test": "R51 established a 12/12 exact target oracle across two independent empty compile caches by disabling Inductor combo-kernel benchmarking. Earlier fast MTP1 evidence was compiled before that target repair, so its cross-target result does not answer whether the fast speculative path is exact when target and candidate share the repaired compiler contract. R50 convolution-only and delta-only serial diagnostics were both below 40 tok/s and non-exact.",
+  "treatment": "Use the R50 content-verified overlay with speculative GDN convolution and delta serialization disabled, progressive serial FlashAttention disabled, packed-FP8 serialization disabled, packed Gemma RMSNorm exact replay enabled, and the exact R51 no-combo compiler configuration. Keep TP2, official FP8, W8A16, XPU Graph off, persistent GDN state, explicit oneCCL completion, seed 0, max-autotune=0, and coordinate-descent=0 fixed.",
+  "workload": "Fresh server and empty compile cache; complete fixed 12-prompt/six-class natural-512 suite; each prompt once; temperature 0; class-balanced 100-event/99-interval decode; prefix cache disabled; cached_tokens=0; complete raw token arrays; independent canaries.",
+  "screen_gate": "The attempt must pass every workload/cache/canary gate, match both independent R51 target attempts 12/12, and exceed 50 tok/s before replication. If it passes, run a second fresh candidate and require the full two-target-by-two-candidate cross-product to remain 12/12.",
+  "reporting": "No headline, package promotion, or external submission from one attempt, a compiled-cache replay, favorable prompts, tolerance matching, or a sub-512 fixture. Preserve negative evidence."
+}

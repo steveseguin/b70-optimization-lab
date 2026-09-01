@@ -1,0 +1,13 @@
+{
+  "schema": "neural.download.qwen38-fp8-compiler-stable-serial-gdn-prereg.v1",
+  "campaign": "qwen38-fp8-compiler-stable-serial-gdn-20260831-r47",
+  "status": "preregistered after the R45 repeat hit a Xe copy-engine fault during timing-driven compilation and before any R47 server",
+  "question": "Can a timing-independent compiler policy plus serial speculative GDN replay produce a cold, fresh-cache, target-exact static-MTP1 lane above 50 tok/s without GPU compile faults?",
+  "control": "MTP0 R15 with W8A16, deterministic Inductor, XPU Graph off, persistent GDN state, explicit oneCCL Work.wait, PYTHONHASHSEED=0, max-autotune=0, and coordinate-descent-tuning=0.",
+  "candidate": "The simplified R46 static-MTP1 image: R31 userspace plus only the pinned R35 serial-GDN kernel binaries; identical compiler policy to the control; packed RMSNorm serial exact and native speculative GDN serial exact enabled.",
+  "reason_for_compiler_change": "R45A completed, but the corrected second fresh-cache R45 control faulted GPU0's Xe BCS engine while max-autotune and coordinate-descent tuning were enabled. The device auto-reset and passed both-device allocation/compute probes. R47 disables both timing-driven tuners rather than selecting a favorable cache or resetting the host.",
+  "workload": "Complete fixed 12-prompt/six-class realistic suite, each prompt once, natural 512-token cap, class-balanced 100-event/99-interval decode, temperature 0, no prefix cache, cached_tokens=0, complete raw token arrays, independent canaries, empty compile cache, and fresh server.",
+  "sequence": "Run one MTP0 control and one MTP1 candidate. If and only if every workload/canary gate passes, all 12 outputs match, no GPU fault occurs, and candidate throughput exceeds 50 tok/s, run a second fresh-cache control and candidate and require the complete four-arm cross-product to be exact.",
+  "promotion_gate": "All four fresh-cache attempts must pass; each same-profile repeat and every MTP1-to-MTP0 comparison must match 12/12 complete token arrays; the MTP1 two-attempt class-balanced median must exceed 50 tok/s; kernel logs must remain clean. Otherwise the lane remains unqualified.",
+  "reporting": "No favorable-cache selection, no output tolerance, no shortened suite, and no performance promotion or external submission before the complete gate passes."
+}

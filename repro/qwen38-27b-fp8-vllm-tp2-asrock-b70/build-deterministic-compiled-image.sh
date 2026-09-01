@@ -5,7 +5,8 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../.." && pwd)
 build_root=${BUILD_ROOT:?set BUILD_ROOT to a dedicated writable build directory}
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15}
-base_image=${BASE_IMAGE:-vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f}
+base_image=${BASE_IMAGE:-neural-download/vllm-openai-xpu:f01e-kernel-1e90-r13}
+expected_kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 source_url=https://github.com/vllm-project/vllm.git
 source_commit=ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9
 source_dir=${build_root}/vllm-${source_commit}
@@ -44,14 +45,19 @@ done
 git -C "${source_dir}" diff --check
 
 docker image inspect "${base_image}" >/dev/null 2>&1 || {
-  printf 'base image is missing: %s\n' "${base_image}" >&2
+  printf 'kernel base image is missing: %s; run build-mtp1-kernel-image.sh first\n' "${base_image}" >&2
+  exit 1
+}
+[[ "$(docker image inspect "${base_image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')" == "${expected_kernel_head}" ]] || {
+  printf 'kernel base identity mismatch: expected %s\n' "${expected_kernel_head}" >&2
   exit 1
 }
 docker build --pull=false --build-arg "BASE_IMAGE=${base_image}" \
   --file "${dockerfile}" --tag "${image}" "${source_dir}"
-docker image inspect "${image}" --format '{{.Id}}'
+"${script_dir}/verify-image-contract.sh" mtp0 "${image}"
 
 printf '%s\n' \
   "Built ${image}." \
-  "Expected validated image ID: sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e" \
+  "Local image ID: $(docker image inspect "${image}" --format '{{.Id}}')" \
+  "Historical validation image ID: sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e" \
   "The source checkout is intentionally left patched for auditability."

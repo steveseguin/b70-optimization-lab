@@ -1,0 +1,15 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-fresh-cache-determinism-prereg.v1",
+  "campaign": "qwen38-fp8-mtp1-fresh-cache-pythonhash-20260831-r44",
+  "status": "preregistered after r43B/E isolated fresh-compile variation and before either r44 server",
+  "observation": "A new empty-cache MTP1 attempt measured 52.165058 tok/s and passed the strict workload/canary gates but matched the qualified r32/MTP0 arrays on only 5/12 prompts. Replaying that attempt's compiled cache measured 52.875822 tok/s and matched 12/12 against the first attempt. Runtime execution is stable for one compiled artifact; independently generated compiler artifacts remain the open variable.",
+  "single_change": "Set PYTHONHASHSEED=0 for both fresh-cache attempts while retaining the qualified r31 image, all r32 correctness settings, max-autotune=1, coordinate-descent-tuning=1, combo_kernels=true, and benchmark_combo_kernel=true.",
+  "hardware": "Only local physical Intel Arc Pro B70 devices 0 and 1; GNOME remains active and GPU reservation is 0.95 instead of 0.96 solely to clear the display framebuffer reservation.",
+  "model": "Qwen/Qwen3.8-27B-FP8 revision 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a on local ext4 NVMe with direct and ordinary I/O verification.",
+  "runtime": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-rms-serial-r31 at sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b; XPU Graph off; compiled target and draft; deterministic Inductor; W8A16; packed-two-row RMS exact replay; persistent GDN state; explicit oneCCL Work.wait; publisher MTP depth 1.",
+  "workload": "Two fresh servers with separate nonexistent compile-cache roots. Each runs the complete fixed 12-prompt/six-class suite once, natural 512-token cap, 100-event/99-interval class-balanced metric, temperature 0, no prefix cache, cached_tokens=0 required, complete raw token IDs, and independent canaries.",
+  "correctness_gate": "Both attempts must pass workload and canary gates and match 12/12 complete arrays to each other and both qualified MTP0 r15 oracles. A speed match alone does not pass.",
+  "performance_gate": "Report both class-balanced medians; retain the treatment only if its two-attempt median is not materially below the 51.918757 tok/s published center.",
+  "next_split": "If r44 varies, run a separately preregistered pair with PYTHONHASHSEED=0, max-autotune=0, and coordinate-descent-tuning=0. Do not harvest or select a lucky cache.",
+  "failure_policy": "Any mismatch, cache use, missing output, failed canary, device event, or configuration drift fails closed. No isolated r44 number is publishable."
+}

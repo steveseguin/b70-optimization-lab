@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 image="${IMAGE:-vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f}"
+image_contract_profile="${IMAGE_CONTRACT_PROFILE:-}"
 model_dir="${MODEL_DIR:?set MODEL_DIR to the downloaded Qwen3.8-27B-FP8 directory}"
 
 fail() {
@@ -27,6 +28,13 @@ mapfile -t render_nodes < <(find /dev/dri -maxdepth 1 -type c -name 'renderD*' 2
 (( ${#render_nodes[@]} >= 2 )) || fail "two DRM render devices are required"
 for node in "${render_nodes[@]:0:2}"; do
     [[ -r "${node}" && -w "${node}" ]] || fail "render device is not readable/writable: ${node}"
+    device_dir="/sys/class/drm/$(basename -- "${node}")/device"
+    [[ -r "${device_dir}/vendor" && -r "${device_dir}/device" ]] || \
+        fail "cannot identify PCI device behind ${node}"
+    vendor=$(<"${device_dir}/vendor")
+    device=$(<"${device_dir}/device")
+    [[ "${vendor}" == "0x8086" && "${device}" == "0xe223" ]] || \
+        fail "${node} is not an Intel Arc Pro B70 (found ${vendor}:${device})"
 done
 
 mem_total_kib=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
@@ -38,8 +46,11 @@ swap_total_kib=$(awk '/^SwapTotal:/ {print $2}' /proc/meminfo)
 [[ -d "${model_dir}" ]] || fail "model directory does not exist: ${model_dir}"
 docker image inspect "${image}" >/dev/null 2>&1 || \
     fail "pinned image is not local; run: docker pull ${image}"
+if [[ -n "${image_contract_profile}" ]]; then
+    "${script_dir}/verify-image-contract.sh" "${image_contract_profile}" "${image}"
+fi
 
-printf 'host_os=%s\nkernel=%s\ndocker=%s\nrender_devices=%s\nimage=%s\n' \
+printf 'host_os=%s\nkernel=%s\ndocker=%s\nrender_devices=%s\ngpu_pci_id=8086:e223\nimage=%s\n' \
     "${PRETTY_NAME}" "$(uname -r)" "$(docker version --format '{{.Server.Version}}')" \
     "${render_nodes[*]}" "${image}"
 dpkg-query -W -f='package=${binary:Package} version=${Version}\n' \

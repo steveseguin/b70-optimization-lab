@@ -1,0 +1,104 @@
+{
+  "comparison": {
+    "complete_token_arrays_exact": false,
+    "divergent_prompts": [
+      {
+        "first_divergence_token_zero_based": 7,
+        "left_token_count": 512,
+        "prompt_id": "architecture-tradeoff",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 303,
+        "left_token_count": 512,
+        "prompt_id": "code-review",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 124,
+        "left_token_count": 280,
+        "prompt_id": "customer-email",
+        "right_token_count": 272
+      },
+      {
+        "first_divergence_token_zero_based": 392,
+        "left_token_count": 512,
+        "prompt_id": "incident-retrospective",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 169,
+        "left_token_count": 512,
+        "prompt_id": "performance-hypotheses",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 440,
+        "left_token_count": 512,
+        "prompt_id": "risk-register",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 160,
+        "left_token_count": 512,
+        "prompt_id": "technical-guide",
+        "right_token_count": 512
+      }
+    ],
+    "exact_prompts": 5,
+    "total_prompts": 12
+  },
+  "left": {
+    "artifacts": {
+      "canaries": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-public-repro-r43b/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-public-repro-r43b/campaign-identity.json",
+        "sha256": "af8f15cddf34dd9be2fc07c6c5d5e057721bf455d0cd5f7e76cdcd075022d4ab"
+      },
+      "performance": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-public-repro-r43b/performance.json",
+        "sha256": "55318d4b14e0f93c8e038c615b46575afc02b1e1cf9b4f553a2aa48f0e633830"
+      }
+    },
+    "attempt": "public-repro-r43b",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 52.165058205237344,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "mtp1"
+  },
+  "qualification": {
+    "all_workload_and_canary_gates_passed": true,
+    "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+    "strict_pair_qualified": false
+  },
+  "right": {
+    "artifacts": {
+      "canaries": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15b/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15b/campaign-identity.json",
+        "sha256": "50d90171918cd8b3ac196774442282d23f047e8b549d72bc0b4810fcb8472a59"
+      },
+      "performance": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-deterministic-compiled-workwait-20260828-r15b/performance.json",
+        "sha256": "52b54b25a90cd95f3eaf79ccc92f1b5cfa7852a428393574e3481e1ea87f139c"
+      }
+    },
+    "attempt": "workwait-r15-B",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 34.03801277726281,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "mtp0"
+  },
+  "schema": "neural.download.strict-attempt-output-comparison.v1",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+}

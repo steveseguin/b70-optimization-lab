@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-31**
+Last reviewed: **2026-09-01**
 
 ## Authority And Update Rule
 
@@ -28,9 +28,28 @@ Verified on 2026-08-31:
 - no Qwen benchmark listeners on `18110`-`18129`;
 - no `llama-server`, vLLM, or frontdoor process or container is running.
 
-## Active Qwen3.8 AutoRound INT4 Two-B70 Optimization
+## Active Qwen3.8 Official FP8 Two-B70 Reproduction Audit
 
-The active local lane is the dense Qwen3.8-27B AutoRound INT4 checkpoint on
+The active local official-FP8/W8A16 TP2 MTP1 audit is qualified. A user report
+on 2026-08-31 measured about 45 tok/s while following a public recipe that
+stopped at the wrong intermediate image and did not encode determinism inside
+vLLM's compile context. The corrected R53/R54 matrix used the identical final
+R50 image for two fresh MTP0 controls (`33.722035`/`33.745004 tok/s`) and two
+fresh MTP1 candidates (`51.796549`/`51.819625 tok/s`). Every arm passed the
+complete 12-prompt/six-class natural-512, cache-zero and independent-canary
+contract; both within-arm comparisons and all four target/candidate comparisons
+matched all 12 complete token arrays. The qualified MTP1 center is
+**`51.808087 tok/s`**, `53.5804%` above the `33.733520 tok/s` control center.
+The public chain now builds through the exact R50 image, verifies installed
+content, pins the oneAPI compiler identity, and provides same-image strict MTP0
+and MTP1 launchers. Independent clean-host replay remains pending. Recovery
+order is process
+cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
+host reboot only if the driver reload cannot restore both devices.
+
+## Paused Qwen3.8 AutoRound INT4 Two-B70 Optimization
+
+The paused local lane is the dense Qwen3.8-27B AutoRound INT4 checkpoint on
 the two B70s. Medium-prefill nondeterminism was localized to INT4 projection
 shapes and repaired with the repository-owned M=512 projection hook. Four
 fresh traced processes matched at every decoder boundary. Two strict TP1/MTP0
@@ -2394,13 +2413,14 @@ W8A16 dispatch were therefore each not required for that instability. Those
 original matrix rows remain rejected.
 
 The later deterministic GDN-state and explicit oneCCL-completion treatments
-qualified compiled MTP0 at `34.031596 tok/s`. The packed-two-row Gemma RMSNorm
-replay plus deterministic Inductor then qualified static MTP1 at
-**`51.918757 tok/s`** from two fresh empty-cache attempts (`51.606902` and
-`52.230611`). Both passed the full 12-prompt/six-class, natural-512-cap,
-cache-zero workload and canary gates; all 12 complete token arrays matched
-across repeats and both qualified MTP0 target attempts. Dynamic MTP remains
-withheld.
+historically qualified compiled MTP0 at `34.031596 tok/s`. The packed-two-row
+Gemma RMSNorm replay plus deterministic Inductor historically measured static
+MTP1 at `51.918757 tok/s`, but the first fresh-cache audit showed that the
+environment-only compiler setting was incomplete. The final R53/R54 matrix
+encoded determinism in vLLM's compilation JSON and used the same R50 image for
+both arms. It qualified static MTP1 at **`51.808087 tok/s`** against a
+`33.733520 tok/s` MTP0 center with all four target/candidate comparisons 12/12
+exact. Dynamic MTP remains withheld.
 
 That exact deterministic MTP1 profile subsequently passed a preregistered
 2K/4K/8K/16K/24K/32K exact-depth sweep. All six cache-zero 128-token arrays
@@ -2417,9 +2437,10 @@ token 128; serial packed block-FP8 moved that sentinel's first divergence to
 token 441. Global batch invariance was byte-identical to that result, while
 progressive serial FlashAttention, with and without its redundant causal mask,
 returned the first divergence to token 128. Every sentinel was cache zero and
-the required mechanism markers fired. None supplies a public speed. The
-qualified user-facing FP8 speculation profile therefore remains static MTP1,
-not the empty/withdrawn dynamic row. See the
+the required mechanism markers fired. None supplies a public speed. At that
+point the user-facing FP8 speculation profile was static MTP1 rather than the
+empty/withdrawn dynamic row. The 2026-09-01 fresh-cache audit above now
+withholds that static-MTP1 headline too. See the
 [structured closeout](experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-dynamic-exactness-r34-r38b-summary.json).
 
 A subsequent one-B70 TP1 eager/default-dispatch control measured

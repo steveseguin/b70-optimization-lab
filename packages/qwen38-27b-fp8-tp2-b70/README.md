@@ -3,25 +3,24 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Qualified strict headline: `51.918757 tok/s` with MTP depth 1.** Two fresh
-> servers with empty compile caches measured `51.606902` and `52.230611 tok/s` on the fixed
-> 12-prompt/six-class suite with a natural 512-token cap. Every request
-> reported zero cached tokens, both independent canary batteries passed, and
-> all 12 complete token arrays matched exactly across attempts and against both
-> qualified MTP0 target repeats. This packaged default uses publisher MTP1,
-> deterministic Inductor, XPU Graph disabled, exact packed Gemma RMSNorm row
-> replay, deterministic GDN state handling, and explicit oneCCL `Work.wait()`
-> ordering. It is 52.56% faster than the matched qualified MTP0 fallback at
-> `34.031596 tok/s`. See the
-> [qualified result](../../experiments/qwen38-27b-b70/notes/2026-08-28-qwen38-fp8-mtp1-deterministic-r32-result.md).
+> **Strict MTP1 qualified: `51.808087 tok/s`.** Two fresh-server attempts
+> measured `51.796549` and `51.819625 tok/s`. Two matched-image MTP0 controls
+> measured `33.722035` and `33.745004 tok/s`, making the MTP1 gain `53.5804%`.
+> Every attempt ran the complete 12-prompt/six-class natural-512 workload with
+> cache zero and independent canaries; both within-arm comparisons and all
+> four target/candidate comparisons matched all 12 complete token arrays. A
+> clean-source rebuild then replayed at `51.579521 tok/s` from a new image and
+> empty compile cache, with 12/12 exact arrays against both MTP1 and MTP0. The
+> package remains `candidate` until an independent host-driver/Docker
+> installation replay. See the
+> [fresh-cache audit](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md).
 
 The old `58.391033 tok/s` dynamic-MTP center used only a 128-token output cap,
 and the `146.814418 tok/s` result used a selected 40-token fixture. Neither is
 a headline. The LocalMaxxing submission
 [`cmtb5n45n0021qq01n13vly2h`](https://www.localmaxxing.com/runs/cmtb5n45n0021qq01n13vly2h)
-was premature and withdrawal is recommended. Static MTP1 is now separately
-repaired and qualified by the strict suite; deeper dynamic MTP remains
-withheld.
+was premature and withdrawal is recommended. Static MTP1 is now qualified by
+the newer fresh-cache audit; deeper dynamic MTP remains withheld.
 
 That is a tested boundary, not an uninvestigated blank. The bounded R34-R38b
 campaign exercised full strict replay, serial native GDN, serial packed
@@ -36,17 +35,18 @@ The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
 short requests, with explicit output-isolation and semantic gates. A separate
 33,024-token target-only profile measured `31.489587 tok/s` decode at an exact
-32K prompt with `13.740 s` TTFT. The now-qualified deterministic MTP1 profile
-also directly measured exact 32K at **`46.636241 tok/s`** with `10.487 s`
-TTFT and matched all six MTP0 depth-oracle token arrays. These are scoped
+32K prompt with `13.740 s` TTFT. The historical deterministic MTP1 profile
+also directly measured 32K at **`46.636241 tok/s`** with `10.487 s` TTFT and
+matched all six then-recorded MTP0 depth-oracle token arrays. These are scoped
 Grade-C capacity/context results, not replacements for the strict
 varied-prompt single-user headline.
 
 The package also retains a separate legacy publisher-MTP1 short-context
 aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
-substitute for the strict single-user result and uses the older concurrency
-service configuration. The MTP1 32K value above comes from the later strict
+substitute for a strict single-user result and uses the older concurrency
+service configuration. The MTP1 32K value above comes from the historical
 deterministic profile and is not borrowed from the MTP0 or concurrency lane.
+It is not proof that a fresh third-party build passes today's exactness gate.
 
 The checkpoint has one publisher MTP layer. Experimental serial reuse to MTP8
 is preserved under `experiments/` for mechanism research, but its selected
@@ -54,9 +54,10 @@ fixture must not be used as a public speed claim. See the corrected
 [screening note](../../experiments/qwen38-27b-b70/notes/2026-08-27-qwen38-fp8-w8a16-mtp8-realistic-cold-result.md).
 
 > **Status: candidate, not a beginner install guide.** The exact model,
-> container, configuration, commands, and evidence are present. A clean Ubuntu
-> host installation of the Intel driver and Docker prerequisites has not yet
-> been replayed, so this package does not install or modify host drivers.
+> container, configuration, commands, and evidence are present. A clean source
+> rebuild and strict replay now pass on the lab host. Installation of the Intel
+> driver and Docker prerequisites has not yet been replayed on an independent
+> host, so this package does not install or modify host drivers.
 
 The technical source of truth is the
 [`reproduction guide`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md).
@@ -85,9 +86,13 @@ The original compliant matrix measured: W8A16 MTP0
 `68.049727`/`62.432362 tok/s`. All remain diagnostics because their paired
 complete outputs matched only `8/12`. The later deterministic compiled MTP0
 repair qualified at `34.025180`/`34.038013 tok/s` with `12/12` exact outputs.
-The later packed-RMS and deterministic-Inductor repair qualified MTP1 at
-`51.606902`/`52.230611 tok/s`, with `12/12` exact outputs across repeats and
-against both MTP0 target oracles.
+The later packed-RMS and deterministic-Inductor campaign measured MTP1 at
+`51.606902`/`52.230611 tok/s`, with `12/12` exact outputs inside that campaign.
+The first 2026-09-01 replay showed that result was not stable under the old
+compiler contract. The final R53/R54 matrix encoded determinism inside vLLM's
+compile configuration and used the same R50 image for target and candidate.
+It qualified MTP1 at `51.808087 tok/s` with 12/12 exact arrays in all four
+target/candidate comparisons.
 
 A later bounded MTP9 screen reached `158.602110 tok/s` for one user but only
 `889.607586 tok/s` at c64, failing its preregistered aggregate-retention gate.
@@ -114,6 +119,15 @@ fix reaches `1,091.64 tok/s` at c64. See the
 The currently observed working host versions are recorded in the reproduction
 guide. They are evidence, not yet a general compatibility promise.
 
+For a clean host, use Intel's current
+[Client GPU Linux installation guide](https://dgpu-docs.intel.com/driver/client/overview.html)
+and check the [oneAPI 2026.1 system requirements](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-toolkit/2026.html)
+for the supported Ubuntu/client-GPU boundary. The container supplies the pinned
+vLLM/Torch userspace, but the host must still expose working Xe/Level Zero
+devices. We intentionally do not embed an untested `sudo apt` recipe here:
+driver packages change independently, and this package has not yet completed a
+clean-host installation replay.
+
 ## 1. Download the exact model
 
 Choose paths appropriate for your machine; `/path/to/...` is deliberately not
@@ -135,25 +149,31 @@ weights.
 docker pull vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f
 ```
 
-Build the qualified deterministic compiled default from the pinned vLLM
-source commit and the three repository patches:
+Build the complete pinned kernel -> MTP0 -> MTP1 -> serial-attention -> rebuilt
+GDN image chain with one command:
 
 ```bash
 BUILD_ROOT=/path/to/empty-build-root \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh
 ```
 
 The helper applies the exact
 [W8A16 patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch),
 [deterministic GDN patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch),
 and [compiled-state/oneCCL patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch),
-then builds the repository-local Docker overlay. The model weights are not
-modified. The validated image ID is
-`sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e`.
+then builds every repository-local Docker overlay through the exact R50 image
+used by the qualifying matrix. The final kernel-only rebuild additionally pins
+the oneAPI compiler line and verifies the rebuilt shared-library hashes. The
+model weights are not
+modified. The upstream kernel wheel is mirrored in a durable lab GitHub
+release, retains its exact upstream build provenance, and is checked against
+SHA-256 `f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6`.
+Docker image IDs can vary between builders; the included
+[`verify-image-contract.sh`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh)
+checks installed file hashes and the kernel commit instead.
 
-The qualified MTP1 profile is a small overlay on the qualified MTP0 image.
-Build it from a dedicated empty checkout after building or acquiring that
-qualified base:
+The first MTP1 layer is a small overlay on the MTP0 image. Rebuild that
+intermediate layer after its prerequisite images already exist with:
 
 ```bash
 BUILD_ROOT=/path/to/empty-mtp1-build-root \
@@ -162,9 +182,10 @@ BUILD_ROOT=/path/to/empty-mtp1-build-root \
 
 The helper applies the repository's
 [packed Gemma RMSNorm patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch)
-to pinned vLLM `ac7509e2b`, verifies the qualified base image identity, and
-builds the validated overlay. Its local validated image ID is
-`sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b`.
+to pinned vLLM `ac7509e2b`, verifies the base image contents, and builds the
+overlay. The one-command builder then applies the serial-attention source
+overlay and rebuilds the GDN kernel with the two repository patches required
+to reach the exact qualified R50 installed-content contract.
 
 The legacy high-concurrency MTP1 profile additionally needs the pinned
 upstream XPU-kernel artifact. Build the kernel image, then place the same W8A16
@@ -193,17 +214,19 @@ The first patch makes the GDN kernel honor the active dynamic width; the
 second allocates Mamba state from the active FCFS lookahead. Both build helpers
 verify exact source and patch hashes before producing their overlays.
 
-The first helper downloads the exact successful upstream GitHub Actions wheel,
-checks its SHA-256 digest, and installs it over the pinned official image. It
-requires `gh` authentication. If that upstream artifact expires, stop rather
-than silently substituting another wheel; clean-host source-build recovery is
-still an open packaging task.
+The kernel helper downloads the exact successful upstream wheel from the
+durable repository release, checks its SHA-256 digest, and installs it over the
+pinned official image. It requires `curl`, not GitHub CLI authentication. The
+original upstream run and artifact identity remain documented in
+[`kernel-wheel-build-info.txt`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/kernel-wheel-build-info.txt).
 
 ## 3. Preflight
 
 From the repository root:
 
 ```bash
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50 \
+IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh
 ```
@@ -211,11 +234,12 @@ MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 This reads the model twice and fails unless the publisher identities, direct
 backing-store reads, and ordinary cache-path reads all agree. It also checks
 the OS boundary, memory, Docker, user groups, two render devices, and exact
-container image.
+container contents. The final profile is verified by the installed file hashes
+and kernel commit, not by a machine-local Docker image ID.
 
 ## 4. Launch, check, and benchmark
 
-For the qualified strict MTP1 service:
+To reproduce the qualified MTP1 service:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
@@ -223,25 +247,39 @@ VLLM_CACHE_DIR=/path/to/new-runtime-cache \
 MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh
 
-python3 scripts/bench-openai-realistic-suite.py \
-  --base-url http://127.0.0.1:18124 --model qwen38-fp8-block-w8a16-mtp1 \
-  --api-mode completions \
-  --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
-  --max-tokens 512 --metric-tokens 100 --seed 42 --return-token-ids \
-  --require-natural-eos \
-  --request-extra-json '{"temperature":0,"top_p":1}' \
-  --out /path/to/new-realistic-suite.json
+OUT_DIR=/path/to/new-strict-attempt \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 ```
 
 Run the same command against a second freshly started server and another empty
 cache directory, then compare the complete token arrays with
 [`compare-strict-attempt-outputs.py`](../../scripts/compare-strict-attempt-outputs.py).
 One run alone is measurement evidence, not a promoted reproduction. Compare
-the two complete arrays to each other and to a qualified MTP0 target oracle.
+two fresh-cache MTP1 attempts to each other and to two fresh-cache MTP0 target
+attempts. The lab's R53/R54 matrix passes that gate; a third-party result should
+still preserve all four attempts rather than quote a single favorable run.
 
-For the qualified target-only MTP0 fallback, use the r15 image and launcher
-documented in the reproduction guide. Its strict two-attempt median is
-`34.031596 tok/s`.
+For the matched-image MTP0 control, use the same R50 image and compilation
+contract, with speculative decoding absent:
+
+```bash
+PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh
+```
+
+After the health endpoint passes, capture one complete target attempt with:
+
+```bash
+OUT_DIR=/path/to/new-mtp0-attempt MODEL_NAME=qwen38-fp8 \
+PROFILE_LABEL=mtp0-target \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh
+```
+
+The current matched-image strict median is `33.733520 tok/s`. A newly built
+image must still pass the same two-fresh-cache complete-output repeat gate
+before it becomes a fresh reproduction claim.
 
 To investigate the still-withheld dynamic-MTP lane under the same fixed
 varied-prompt gate, launch its 1024-token-cap one-slot profile on another fresh
@@ -338,7 +376,7 @@ is shape evidence, not natural-prose latency evidence. The published prompt
 rate is explicitly `prompt tokens / HTTP TTFT`; it includes scheduling and
 first-token work and is not a kernel-only prefill rate.
 
-For the qualified deterministic MTP1 2K-through-32K profile, use the dedicated
+For the historical deterministic MTP1 2K-through-32K profile, use the dedicated
 wrappers and a new empty cache:
 
 ```bash

@@ -1,0 +1,9 @@
+{
+  "schema": "neural.download.invalid-attempt.v1",
+  "status": "invalid; startup timeout with Xe BCS fault",
+  "reason": "fresh timing-driven Inductor compilation did not reach readiness; the later timestamp-bounded kernel audit found GPU0 Xe BCS memory CAT faults and an engine reset before any endpoint request or benchmark began",
+  "promotion_eligible": false,
+  "benchmark_started": false,
+  "gpu_fault_observed": true,
+  "retry_change": "disable max-autotune and coordinate-descent timing search, use a new empty cache, and recover with process cleanup plus Xe reload rather than a host reboot"
+}

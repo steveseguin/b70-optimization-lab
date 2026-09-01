@@ -38,6 +38,7 @@ PACKAGE_FORMAT = "b70-model-package-v1"
 PACKAGE_CATALOG_FORMAT = "b70-model-package-catalog-v1"
 PACKAGE_STATUSES = {"candidate", "starter", "preview"}
 PACKAGE_COMMANDS = {"preflight", "launch", "health", "benchmark", "stop"}
+NONPORTABLE_COMMAND_PATH = re.compile(r"(?:file://|/(?:home|mnt|media)/)")
 PACKAGE_OPERATING_SYSTEMS = {"Linux", "Windows"}
 PACKAGE_DELIVERY = {"native", "container"}
 CONTRIBUTOR_KINDS = {"lab", "external"}
@@ -427,6 +428,13 @@ def _validate_package(repo: Path, package_path: str, guide_entry: dict[str, Any]
         errors.append(f"{label}: commands must contain exactly {sorted(PACKAGE_COMMANDS)}")
     elif any(not isinstance(value, str) or not value.strip() for value in commands.values()):
         errors.append(f"{label}: package commands must be non-empty strings")
+    else:
+        for command_name, command in commands.items():
+            if NONPORTABLE_COMMAND_PATH.search(command):
+                errors.append(
+                    f"{label}: commands.{command_name} contains a host-local path; "
+                    "use a documented placeholder or repository-relative path"
+                )
 
     dependencies = package.get("dependencies")
     if not isinstance(dependencies, list) or not dependencies:

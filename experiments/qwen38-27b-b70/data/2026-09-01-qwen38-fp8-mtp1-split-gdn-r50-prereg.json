@@ -1,0 +1,15 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-split-gdn-prereg.v1",
+  "campaign": "qwen38-fp8-mtp1-split-gdn-20260901-r50",
+  "status": "preregistered after the split-gate source build began but before either overlay image was assembled or any server was launched",
+  "question": "After serial FlashAttention reduced the fresh matched-compiler mismatch from five prompts to two, is the remaining target divergence caused by the speculative GDN convolution stage, the recurrent delta stage, or neither?",
+  "control": "The completed R47 MTP0 control: official FP8 target, W8A16, TP2, XPU Graph off, persistent GDN state, explicit oneCCL Work.wait, PYTHONHASHSEED=0, max-autotune=0, and coordinate-descent-tuning=0.",
+  "candidates": [
+    "R49 progressive serial FlashAttention plus serial ordinary-kernel replay for only speculative GDN convolution",
+    "R49 progressive serial FlashAttention plus serial ordinary-kernel replay for only the speculative recurrent delta rule"
+  ],
+  "workload": "Complete fixed 12-prompt/six-class realistic suite, each prompt once, natural 512-token cap, class-balanced 100-event/99-interval decode, temperature 0, no prefix cache, cached_tokens=0, complete raw token arrays, independent canaries, empty compile cache, and fresh server.",
+  "sequence": "Build one content-identical split-gate kernel overlay. Run convolution-only first, then recurrent-only, each from a new compile cache. Require the corresponding mechanism marker and clean timestamp-bounded kernel logs. A lane advances only if it matches the R47 MTP0 target 12/12 and exceeds 50 tok/s; otherwise retain it as diagnostic evidence.",
+  "promotion_gate": "After a passing diagnostic, run a second fresh MTP0 and a second fresh candidate. All four workload/canary gates must pass; same-profile repeats and every MTP1-to-MTP0 comparison must match 12/12 complete token arrays; the MTP1 two-attempt median must exceed 50 tok/s.",
+  "reporting": "No favorable-prompt selection, no output tolerance, no shortened suite, no extrapolation, and no package or external promotion before the complete gate passes."
+}

@@ -9,7 +9,9 @@ container=${CONTAINER_NAME:-qwen38-fp8-block-w8a16-mtp1-tp2-p128}
 port=${PORT:-18124}
 served_model=${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp1}
 speculative_config=${SPECULATIVE_CONFIG:-'{"method":"qwen3_next_mtp","num_speculative_tokens":1}'}
-compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1}'}
+# Match the independently compiled R54 target oracle. These settings must live
+# inside vLLM's compile context; environment-only determinism was insufficient.
+compilation_config=${COMPILATION_CONFIG:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'}
 max_num_seqs=${MAX_NUM_SEQS:-128}
 max_model_len=${MAX_MODEL_LEN:-256}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
@@ -24,11 +26,16 @@ batch_invariant=${VLLM_BATCH_INVARIANT:-0}
 qwen_gemma_rmsnorm_batch_invariant=${VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT:-0}
 qwen_gemma_rmsnorm_packed_serial_exact=${VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT:-0}
 gdn_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}
+gdn_conv_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT:-0}
+gdn_delta_serial_exact=${VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT:-0}
 gdn_persistent_scratch=${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}
 gdn_native_fallback=${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}
 mtp_suppress_bonus=${VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN:-0}
 mtp_draft_eager=${VLLM_XPU_MTP_DRAFT_EAGER:-0}
 inductor_deterministic=${TORCHINDUCTOR_DETERMINISTIC:-0}
+inductor_max_autotune=${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-1}
+inductor_coordinate_descent=${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-1}
+python_hash_seed=${PYTHONHASHSEED:-}
 kernel_head=${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}
 expected_image_id=${EXPECTED_IMAGE_ID:-}
 
@@ -55,7 +62,8 @@ for value_name in fp8_block_w8a16 fp8_packed_serial_exact \
   fa_serial_spec_decode fa_serial_spec_no_causal batch_invariant \
   qwen_gemma_rmsnorm_batch_invariant \
   qwen_gemma_rmsnorm_packed_serial_exact \
-  gdn_serial_exact gdn_persistent_scratch gdn_native_fallback \
+  gdn_serial_exact gdn_conv_serial_exact gdn_delta_serial_exact \
+  gdn_persistent_scratch gdn_native_fallback \
   mtp_suppress_bonus mtp_draft_eager; do
   value=${!value_name}
   [[ "${value}" == 0 || "${value}" == 1 ]] || {
@@ -65,6 +73,17 @@ for value_name in fp8_block_w8a16 fp8_packed_serial_exact \
 done
 [[ "${inductor_deterministic}" == 0 || "${inductor_deterministic}" == 1 ]] || {
   printf 'TORCHINDUCTOR_DETERMINISTIC must be 0 or 1\n' >&2
+  exit 1
+}
+for value_name in inductor_max_autotune inductor_coordinate_descent; do
+  value=${!value_name}
+  [[ "${value}" == 0 || "${value}" == 1 ]] || {
+    printf '%s must be 0 or 1\n' "${value_name^^}" >&2
+    exit 1
+  }
+done
+[[ -z "${python_hash_seed}" || "${python_hash_seed}" =~ ^[0-9]+$ ]] || {
+  printf 'PYTHONHASHSEED must be an unsigned integer when set\n' >&2
   exit 1
 }
 
@@ -92,6 +111,10 @@ eager_args=()
 if [[ "${enforce_eager}" == 1 ]]; then
   eager_args=(--enforce-eager)
 fi
+hash_seed_args=()
+if [[ -n "${python_hash_seed}" ]]; then
+  hash_seed_args=(--env "PYTHONHASHSEED=${python_hash_seed}")
+fi
 
 exec docker run --rm --name "${container}" \
   --ulimit core=0 \
@@ -115,11 +138,16 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
   --env VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT="${gdn_serial_exact}" \
+  --env VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT="${gdn_conv_serial_exact}" \
+  --env VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT="${gdn_delta_serial_exact}" \
   --env VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
   --env VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
   --env VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN="${mtp_suppress_bonus}" \
   --env VLLM_XPU_MTP_DRAFT_EAGER="${mtp_draft_eager}" \
   --env TORCHINDUCTOR_DETERMINISTIC="${inductor_deterministic}" \
+  --env VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE="${inductor_max_autotune}" \
+  --env VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING="${inductor_coordinate_descent}" \
+  "${hash_seed_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
   --env CCL_ZE_IPC_EXCHANGE=pidfd \

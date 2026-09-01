@@ -1,0 +1,12 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp0-pythonhash-oracle-prereg.v1",
+  "campaign": "qwen38-fp8-mtp0-pythonhash-oracle-20260831-r45",
+  "status": "preregistered after r44A/B matched each other 12/12 and before either r45 target server",
+  "question": "Does the matched target-only MTP0 path become cross-fresh-cache exact with PYTHONHASHSEED=0, and does the r44 MTP1 pair preserve that exact target output?",
+  "control": "Two fresh MTP0 servers from neural-download/vllm-openai-xpu:qwen38-fp8-collective-work-wait-r15 at sha256:d19f802ba702a9cb94b155f807a4674a0100702aee838323372f740d7168e34e with W8A16, deterministic Inductor, XPU Graph off, persistent GDN state, explicit oneCCL Work.wait, PYTHONHASHSEED=0, max-autotune=1, and coordinate-descent-tuning=1.",
+  "candidate": "The already-complete r44A/B MTP1 pair, which changed only PYTHONHASHSEED=0 from the public r32 settings and matched 12/12 across separate fresh caches at 51.872283/51.957770 tok/s.",
+  "hardware_accommodation": "Use GPU reservation 0.95 on both arms because the active GNOME display owns about 0.3 GiB on GPU0. This changes available KV capacity only; max length remains 1024 and max sequences remains 1.",
+  "workload": "Complete fixed 12-prompt/six-class suite once per fresh server, natural 512-token cap, class-balanced 100-event/99-interval decode, temperature 0, no prefix cache, cached_tokens=0, complete raw token arrays, and independent canaries.",
+  "gate": "r45A/B must match each other 12/12 and r44A/B must each match both r45 controls 12/12. All workload and canary gates must pass. Otherwise the seeded MTP1 treatment is rejected as not target-exact.",
+  "reporting": "Publish no new target or candidate number until both control attempts and every cross-comparison pass. Preserve failures and do not select a favorable compiler cache."
+}

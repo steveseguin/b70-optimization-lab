@@ -1,0 +1,98 @@
+{
+  "comparison": {
+    "complete_token_arrays_exact": false,
+    "divergent_prompts": [
+      {
+        "first_divergence_token_zero_based": 341,
+        "left_token_count": 512,
+        "prompt_id": "architecture-tradeoff",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 400,
+        "left_token_count": 512,
+        "prompt_id": "code-review",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 124,
+        "left_token_count": 280,
+        "prompt_id": "customer-email",
+        "right_token_count": 272
+      },
+      {
+        "first_divergence_token_zero_based": 169,
+        "left_token_count": 512,
+        "prompt_id": "performance-hypotheses",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 127,
+        "left_token_count": 512,
+        "prompt_id": "risk-register",
+        "right_token_count": 512
+      },
+      {
+        "first_divergence_token_zero_based": 428,
+        "left_token_count": 512,
+        "prompt_id": "technical-guide",
+        "right_token_count": 512
+      }
+    ],
+    "exact_prompts": 6,
+    "total_prompts": 12
+  },
+  "left": {
+    "artifacts": {
+      "canaries": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-no-combo-r51b/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-no-combo-r51b/campaign-identity.json",
+        "sha256": "70a6e22ea0578650366b8bc9d565e39112b0eb8d282ee9f4a8e6c65de27f06ab"
+      },
+      "performance": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-no-combo-r51b/performance.json",
+        "sha256": "f5f9a672f69765cd4b773916b22bf9ecc46a448a895f3d1a647e374f1e2dad9c"
+      }
+    },
+    "attempt": "mtp0-no-combo-r51b",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 33.975997770500555,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "mtp0"
+  },
+  "qualification": {
+    "all_workload_and_canary_gates_passed": true,
+    "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+    "strict_pair_qualified": false
+  },
+  "right": {
+    "artifacts": {
+      "canaries": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-no-combo-fast-r52c-r50-replay/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      },
+      "identity": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-no-combo-fast-r52c-r50-replay/campaign-identity.json",
+        "sha256": "4084a041e0e5cfb5a0ecdd1dd38c9777f9210a494e0f2d3686db6b0422e93ca4"
+      },
+      "performance": {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-no-combo-fast-r52c-r50-replay/performance.json",
+        "sha256": "07ac6aaec5f111275f0dcf241ab8ee467ab8f432c5583004fa1723210f8f0a6a"
+      }
+    },
+    "attempt": "mtp1-no-combo-fast-r52c-r50-replay",
+    "cached_tokens_all_zero": true,
+    "canaries_passed": true,
+    "class_balanced_median_tok_s": 51.764041515690344,
+    "fresh_response_valid": true,
+    "performance_gate_passed": true,
+    "profile": "mtp1-fast"
+  },
+  "schema": "neural.download.strict-attempt-output-comparison.v1",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+}
