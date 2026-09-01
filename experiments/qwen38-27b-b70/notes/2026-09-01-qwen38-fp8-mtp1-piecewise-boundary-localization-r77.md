@@ -20,8 +20,8 @@ The original R74 preregistration cited an older August oracle. Final analysis
 uses the explicit R72-derived oracle in
 [`2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json`](../data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json).
 The observed c2 failure is unchanged: both outputs are complete, cached-token
-counts are zero, `index-c001` is exact, and `cache-c000` first differs at token
-96 (`348` expected, `2972` observed).
+counts are zero, `index-c001` is exact, and `cache-c000` first differs at
+zero-based token index 96 (human token 97; `348` expected, `2972` observed).
 
 R78 attempted to split convolution from delta-rule arithmetic using the old R50
 serial controls. The conv arm failed closed before producing output because
@@ -46,7 +46,7 @@ R82 confirmed the first-call mapping on both TP ranks. The c2 speculative
 batch is request-major: token rows `[0,1]` and `[2,3]`, query starts
 `[0,2,4]`, state rows `[[7,6],[8,9]]`, and accepted counts `[1,1]`. The c1
 control was exact, while c2 remained 1/2 exact and retained the known first
-difference at output token 96. R80's row slicing and accepted-count-minus-one
+difference at zero-based output index 96. R80's row slicing and accepted-count-minus-one
 selection are therefore consistent with the scheduler metadata at the start
 of decoding; R83 must observe later decode steps where the failure develops
 rather than make another ungrounded mapping change.
@@ -55,7 +55,7 @@ R83 extended that trace through all 72 c2 verifier steps: 3,456 calls per TP
 rank (48 GDN layers per step), with zero rank payload mismatches. Every call
 kept query starts `[0,2,4]`, token rows `[0,1,2,3]`, and four distinct state
 slots; each layer's state-slot pattern remained fixed across the decode. The
-known output-token-96 divergence coincides with step 54, where the failing
+known zero-based output-index-96 divergence coincides with step 54, where the failing
 request has accepted count 1 and the exact request has accepted count 2, but
 there is no malformed or evolving scheduler mapping. The next discriminator is
 therefore direct multi-request-versus-isolated operator/state equivalence.
@@ -70,6 +70,13 @@ operator arithmetic and explains why R80 was not a true exact repair. The
 remaining boundary is the layer-1 cache content arriving from prefill/state
 publication before the first verifier step.
 
+R85 moved that boundary one stage earlier. At layer 0, the target request's
+projected speculative qkvz and ba rows are bitwise identical between c1 and c2
+on both TP ranks, while both its selected convolution and FP32 SSM source-cache
+rows already differ. From layer 1 onward that state difference has propagated
+into the projected inputs. The next split is therefore layer-0 prefill
+projection versus the XPU GDN prefill kernel, not speculative arithmetic.
+
 This is diagnostic evidence, not a speed or quality promotion. The current boot
 contains an earlier GPU reset, so any eventual repair still requires a clean-
 boot strict replay. Structured evidence is in
@@ -80,3 +87,5 @@ R83's full step-level trace summary is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-evolving-metadata-r83-result.json).
 R84's operator-equivalence result is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-isolation-r84-result.json).
+R85's exact state-input result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-result.json).

@@ -1,0 +1,94 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-state-input-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-state-input-20260901-r85",
+  "status": "completed-diagnostic-positive-boundary",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-state-input-r85-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-state-input-trace-r85",
+    "image_id": "sha256:142e983d6f948db43db5d1e27a0d40f803c8d29700e9c626d49451296a70bacc",
+    "base_r83_image_id": "sha256:9f6cd6ccf3182540b415cad70b3d7a78a4c12c722fbaae6da2c6cb59a3ed0bc7",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-state-input-trace-r85-20260901.patch",
+    "vllm_patch_sha256": "ceefa1f1160ae26b20707329a26d4526e3e3c1051e036aaa858b4c2c9785b644",
+    "installed_xpu_ops_sha256": "d509995f67ab0875ab83e0b3e4f3f8e42c6ce46e2032e5f3c84bc82ed98291be",
+    "xpu_extension_sha256": "21d269bd09d0a93ef515e7d6516dbcff530c1812837211029e7adadf41f18436",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "sequence": [
+      "cache-c000 at concurrency 1",
+      "cache-c000 plus index-c001 at concurrency 2"
+    ],
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 29.062819400382313
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 66.30772859968818,
+      "failing_prompt_id": "cache-c000",
+      "first_difference": {
+        "zero_based_token_index": 96,
+        "human_token_number": 97,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      }
+    }
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "gdn_layers": 48,
+    "records_per_rank_and_shape": 48,
+    "tp_ranks": [0, 1],
+    "shapes": [1, 2],
+    "rank_metadata_equal": {
+      "concurrency_1_layers": "48/48",
+      "concurrency_2_layers": "48/48"
+    },
+    "cache_c000_c1_vs_c2_request_zero_within_each_rank": {
+      "layer_0_projected_qkvz_exact": true,
+      "layer_0_projected_ba_exact": true,
+      "layer_0_selected_conv_state_exact": false,
+      "layer_0_selected_ssm_state_exact": false,
+      "projected_qkvz_exact_layers": "1/48",
+      "projected_ba_exact_layers": "1/48",
+      "selected_conv_state_exact_layers": "0/48",
+      "selected_ssm_state_exact_layers": "0/48",
+      "same_result_on_both_tp_ranks": true
+    },
+    "observed_state_dtypes": {
+      "conv_state": "torch.float16",
+      "ssm_state": "torch.float32"
+    },
+    "interpretation": "The same request enters layer 0 speculative GDN with bitwise-identical projected decode inputs but different selected convolution and SSM source-cache bytes. The difference then propagates into projected inputs at every later GDN layer. R84 already proved the native packed c2 operator is exact when given identical state, so the earliest remaining boundary is layer-0 prefill/state-cache production, before speculative GDN arithmetic."
+  },
+  "next_experiment": "Trace request-zero projected qkvz and ba during the c1 and c2 prefill calls, plus numeric deltas of the resulting layer-0 cache state. This distinguishes batch-shape-dependent projection from the XPU GDN prefill kernel itself.",
+  "reporting_boundary": "Do not promote trace-synchronized throughput or any c2 result. The strict identity gate failed and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_fault_markers": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-state-input-20260901-r85",
+    "raw_result_sha256": "8166a7a7ef922477318150a4c514857731bef9a7e10455195c76f01eaf31992e",
+    "trace_sha256": "dda1bf17a129b739278176f531bdeaca91f235afef2b65df42a63e35a6f3349c",
+    "server_log_sha256": "24282b5d97258a6d913ae6af59201dad155796650b05202494b71d4aa3d468f3",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
