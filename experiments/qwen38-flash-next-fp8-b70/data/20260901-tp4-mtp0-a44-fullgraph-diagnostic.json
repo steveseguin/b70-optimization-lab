@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "short_quality_positive_exact_4k_repeatability_negative",
+  "classification": "diagnostic_full_decode_graph_trace_absent",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "797769b34b6db5c934609b75dc04cc61ec66e5f9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "max_model_len": 4352,
+    "graph": "FULL_DECODE_ONLY",
+    "graph_capture_sizes": [1],
+    "compilation_mode": "NONE",
+    "placement": "ple_only_uva",
+    "trace_selector_present": false
+  },
+  "launch_cause": "Q38_A44_SOURCE_ONLY was used after flattening, but the standalone launcher's actual non-executing selector is Q38_A44_DERIVED_SOURCE_ONLY",
+  "short": {
+    "rates_tok_s_after_ttft": [
+      20.846123403813213,
+      20.507849229412827,
+      19.072700032734407
+    ],
+    "median_tok_s_after_ttft": 20.507849229412827,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "all_three_match_protected_authority": true
+  },
+  "quality": {
+    "semantic": "6/7; sole known miss code_execution=30",
+    "repeat": "16/16 one hash",
+    "repeat_sha256": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7",
+    "long_context_needle": "passed at 4096 prompt tokens, cache zero"
+  },
+  "exact_4k": {
+    "transport_gate_passed": [true, true],
+    "rates_tok_s_conventional_99_interval": [
+      12.215317910396388,
+      11.612848654269323
+    ],
+    "time_to_first_token_s": [
+      119.27108608900016,
+      107.83578973299882
+    ],
+    "cached_tokens": [0, 0],
+    "output_token_ids_sha256": [
+      "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+      "90e6812a9e3b48ff189933c9f8667e2440eaf9838ab11b4ecddb7e33cc451de5"
+    ],
+    "same_start_repeatable": false
+  },
+  "promotion_eligible": false,
+  "performance_credit": "diagnostic_only",
+  "protected_results_changed": false,
+  "teardown_clean": true,
+  "reboot_used": false
+}

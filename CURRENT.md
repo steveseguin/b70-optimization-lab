@@ -3253,3 +3253,30 @@ any different value. Seven focused tests pass; inference and quality are
 unchanged, and no reboot is required. See the
 [A42 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a42-enginecore-trace-verifier-negative.md) and
 [A43 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a43-enginecore-aware-fullgraph-prereg.md).
+A43 was interrupted inside its accumulated wrapper-ancestry validation before
+any attempt run/cache/compile/RPC path, model process, checkpoint load,
+endpoint, or request existed. Exit 130 and clean four-device postflight are
+preserved as an orchestration interruption, not a graph/model result. A44 is a
+fresh attempt-44/port-19716 path-only successor. Direct generated sources were
+diffed against A43 and promoted as standalone tracked scripts, eliminating the
+recursive validation cost. The A43 EngineCore-aware verifier remains exact, and every
+inference and quality selector is unchanged. The legitimate A44 inner-source
+digest contains the characters `a44`, so no later broad identity rewrite may
+touch this packet; a later successor must be flattened or field-aware. No
+reboot or per-boot load rule applies. See the
+[A43 interruption](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a43-wrapper-validation-interruption.md) and
+[A44 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a44-enginecore-aware-fullgraph-prereg.md).
+Flattening then exposed an obsolete source-only selector: the A44 launcher was
+executed directly instead of printed. The exact FP8/full-graph endpoint became
+healthy and was retained as a bounded diagnostic, but the old outer wrapper's
+Torch trace export and supervisor were absent, so it is not promotable. The
+performance result is the first large target-only win in this lane: three
+protected short hashes passed at `20.846123 / 20.507849 / 19.072700 tok/s`,
+median `20.507849`, versus protected eager `5.515783`. Quality retained the
+accepted 6/7 semantic boundary, 16/16 repeat hash, and exact cache-zero 4K
+needle. Two exact-depth 4K rows passed transport at `12.215318 / 11.612849`
+tok/s but returned different hashes, so long-prefill repeatability remains
+unresolved. Teardown was clean without reboot. The next arm is a fresh
+supervised standalone launcher with explicit trace export; short-context graph
+qualification and long-context diagnosis remain separate. See the
+[A44 diagnostic result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a44-fullgraph-diagnostic-result.md).
