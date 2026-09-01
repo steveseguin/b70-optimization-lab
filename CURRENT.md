@@ -3467,3 +3467,15 @@ still far above the prior roughly 1-GiB freeze state and still protected by
 swap-off, PSI, storage, link, device, and postflight gates. See the
 [A52 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a52-memory-floor-negative.md)
 and [A53 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a53-memory-floor-prereg.md).
+A53 crossed both prior memory-floor stopping points and loaded every rank in
+`570.72`-`571.16` seconds at `31.57 GiB/card`, but rank 1 exited inside the
+ordinary post-load profile path before KV sizing, graph capture, endpoint, or
+request. Minimum host availability was still `37,684,648 KiB`, swap remained
+off, and the device/link/postflight evidence was clean. A51 and A52 had passed
+the same source/configuration point, so A53 is a bounded one-off startup
+negative with no quality or speed credit. A54 is the single exact path-only
+retry; it makes no runtime or inference change and requires no reboot. A repeat
+of the same startup failure stops endpoint retries in favor of report-only
+instrumentation. See the
+[A53 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a53-worker-startup-negative.md)
+and [A54 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a54-path-only-retry-prereg.md).

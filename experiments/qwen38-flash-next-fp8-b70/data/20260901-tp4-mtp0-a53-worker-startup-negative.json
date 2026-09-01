@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "worker_startup_failure_before_endpoint",
+  "classification": "bounded_native_startup_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "FULL_DECODE_ONLY",
+    "checkpoint_location": "external_ntfs",
+    "attempt": 53,
+    "port": 19725
+  },
+  "checkpoint_load": {
+    "shards": 131,
+    "weight_load_seconds": 564.41,
+    "rank_total_seconds_min": 570.719512,
+    "rank_total_seconds_max": 571.156576,
+    "gib_per_card": 31.57
+  },
+  "failure": {
+    "rank": 1,
+    "phase": "determine_available_memory_profile_run",
+    "endpoint_healthy": false,
+    "client_started": false,
+    "quality_credit": false,
+    "speed_credit": false
+  },
+  "host": {
+    "minimum_mem_available_kib": 37684648,
+    "loaded_state_floor_kib": 16000000,
+    "swap_enabled_during_arm": false,
+    "nvme_corrected_event_delta": 17,
+    "root_corrected_event_delta": 0,
+    "oom": false,
+    "b70_fault": false,
+    "fatal_or_recoverable_link_event": false,
+    "postflight_clean": true
+  },
+  "decision": "Allow one exact path-only A54 retry without reboot; instrument startup instead of retrying again if the same failure repeats.",
+  "raw_run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraph-mtp0-2304-ple-only-r1-attempt53",
+  "raw_supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraph-mtp0-2304-ple-only-r1-attempt53-supervisor"
+}
