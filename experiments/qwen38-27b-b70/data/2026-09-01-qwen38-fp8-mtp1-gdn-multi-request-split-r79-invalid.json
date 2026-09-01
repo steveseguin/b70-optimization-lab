@@ -1,0 +1,39 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-c2-factorial-arm-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-multi-request-split-20260901-r79",
+  "arm": "conv-only",
+  "status": "invalid-followup-shape-dispatch",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-multi-request-split-r79",
+    "id": "sha256:bf77d3dd498738a5c4b6b6725fd3f2e1397e4538e613e7554447aa62edc24ee8",
+    "wheel_sha256": "ef7ea125b9fe5588ee417b617c7c128f3fa32bf52981c662e21f7bb05338f964",
+    "xpu_extension_sha256": "8779bbac1127746061551a7d73ce10530d78fcbac4ecd2cbf65e612713b60d46",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355"
+  },
+  "pre_request_gates": {
+    "model_direct_verification": "pass-66-of-66",
+    "fresh_compile_cache": true,
+    "xpu_graph": false,
+    "r79_multi_request_marker_both_tp_ranks": true
+  },
+  "failure": {
+    "completed_requests": 0,
+    "partial_stream_token_counts": [
+      1,
+      0
+    ],
+    "message": "serial-exact GDN convolution requires one pure-spec request with two to nine verifier rows and one state-cache column per row",
+    "cause": "The initial two-request verifier call reached R79 on both ranks, but a later single-request scheduler shape retained the old R50 split flag and entered its one-request fail-closed guard. This is diagnostic dispatch failure, not model-output evidence."
+  },
+  "evidence": {
+    "local_run_id": "qwen38-fp8-tp2-mtp1-gdn-c2-factorial-20260901-r79-conv-only",
+    "result_sha256": "7b01df335384c58ffeaf7cf031f4e191d8b918b974f94cf213c0599ddfebc89f",
+    "server_log_sha256": "12c51c8e7fdefa8990eb5075febe50c04040027c00a5bfa796b1c2c87c0f93de",
+    "new_gpu_or_xe_faults": 0
+  },
+  "next": "Use a separate opt-in multi-request switch so only num_spec_decodes greater than one takes the R80 serial stage path; follow-up single-request shapes retain their ordinary oracle path.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  }
+}

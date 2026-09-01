@@ -107,6 +107,15 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-factorial-r78-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-c2-factorial-r78-conv-invalid.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-multi-request-split-r79-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-multi-request-split-r79-invalid.json
+  experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-split-r79-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-multi-request-split-r79
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-multi-request-split-r79-image.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-multi-request-followup-r80-prereg.json
+  experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-multi-request-followup-r80
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-multi-request-followup-r80-image.sh
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
 )
@@ -165,6 +174,12 @@ check_sha256 \
 check_sha256 \
   1796e4ecc6b10cd26f164ccc67f4bc4bf1f976388bfd05e948ab1753c083748a \
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-global-exact-head-repair-r71-20260901.patch
+check_sha256 \
+  beaaf5313d8f0447b8fea5a4c44795b4045794e0bcd1475cf3cd4b14c97a3e46 \
+  experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-split-r79-20260901.patch
+check_sha256 \
+  44cd6c0b5f71a521ecca286c2f7d24a1df5405783daf664cf0d84bab83339212 \
+  experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch
 
 if (( failed )); then
   printf '\nSOURCE CLOSURE FAILED\n' >&2

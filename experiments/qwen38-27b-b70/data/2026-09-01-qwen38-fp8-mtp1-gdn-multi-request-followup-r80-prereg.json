@@ -1,0 +1,39 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-multi-request-followup-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-multi-request-followup-20260901-r80",
+  "status": "preregistered-before-build-and-run",
+  "objective": "Complete the R79 conv-versus-delta isolation by separating true multi-request verifier calls from narrower follow-up scheduler calls without changing the R35/R50 one-request diagnostic or any production default.",
+  "code_boundary": {
+    "kernel_base": "vllm-xpu-kernels 1e90ffa672ba02f17a909da11838a4c55b199783",
+    "cumulative_patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-multi-request-followup-r80-20260901.patch",
+    "patch_sha256": "44cd6c0b5f71a521ecca286c2f7d24a1df5405783daf664cf0d84bab83339212",
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "base_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "new_gate": "VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT=1",
+    "production_default_change": false,
+    "one_request_r35_r50_change": false,
+    "dispatch": "With the new gate and exactly one split stage armed, num_spec_decodes greater than one uses the R80 multi-request serial path; later one-request calls use the unchanged ordinary kernel."
+  },
+  "fixed_workload": {
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "suite_sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "oracle_sha256": "95a477845815414cb1c87126b75043982b526488e9035f518270d451345d3803",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "concurrency": 2,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "xpu_graph": false,
+    "fresh_server_and_compile_cache_per_arm": true
+  },
+  "arms": [
+    "conv-only R80 multi-request replay",
+    "delta-only R80 multi-request replay"
+  ],
+  "decision": "A stage is implicated only if its arm returns two complete 128-token outputs, both exactly match the R72 oracle, cached_tokens are both zero, its R80 marker appears on both TP ranks, and no new GPU/Xe/OOM fault occurs. If both or neither pass, no single-stage causal claim is allowed.",
+  "promotion_boundary": "Diagnostic only on this boot. A resulting fix still requires clean-boot varied prose/code/document identity, deterministic repeats, context-depth coverage, concurrency coverage, and preservation of the current speed floor before recipe or site promotion."
+}
