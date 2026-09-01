@@ -25,6 +25,7 @@ container_memory=${CONTAINER_MEMORY:-12g}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-2048}
 speculative_config_json=${SPECULATIVE_CONFIG_JSON:-}
 require_dummy_sampler_stage_sync=${REQUIRE_DUMMY_SAMPLER_STAGE_SYNC:-0}
+dummy_sampler_runs_per_rank=${DUMMY_SAMPLER_RUNS_PER_RANK:-1}
 enable_projection_repair=${ENABLE_PROJECTION_REPAIR:-1}
 startup_only=${STARTUP_ONLY:-0}
 runtime_pythonpath=${RUNTIME_PYTHONPATH:-/instrument}
@@ -50,6 +51,7 @@ trap 'exit 130' INT TERM HUP
 
 [[ -f "$hook" && -f "$prereg" && -f "$suite" && -f "$bench" && -f "$canaries" ]] || fail 'missing frozen input'
 [[ "$require_dummy_sampler_stage_sync" == 0 || "$require_dummy_sampler_stage_sync" == 1 ]] || fail 'stage-sync requirement must be 0/1'
+[[ "$dummy_sampler_runs_per_rank" =~ ^[1-9][0-9]*$ ]] || fail 'dummy-sampler runs per rank must be a positive integer'
 [[ "$enable_projection_repair" == 0 || "$enable_projection_repair" == 1 ]] || fail 'projection-repair switch must be 0/1'
 [[ "$startup_only" == 0 || "$startup_only" == 1 ]] || fail 'startup-only switch must be 0/1'
 [[ "$runtime_pythonpath" == /* && "$runtime_pythonpath" != *$'\n'* ]] || fail 'runtime PYTHONPATH must be absolute and single-line'
@@ -115,10 +117,11 @@ docker inspect "$container" >"$root/container-inspect.json"
 docker logs "$container" >"$root/server-startup.log" 2>&1
 [[ "$(docker inspect --format '{{.Image}}' "$container")" == "$image_id" ]] || fail 'image receipt mismatch'
 if [[ "$require_dummy_sampler_stage_sync" == 1 ]]; then
+  expected_stage_receipts=$((tensor_parallel_size * dummy_sampler_runs_per_rank))
   for stage in entry random_hidden_states compute_logits sampling_metadata \
     sampler_default sampler_generators spec_decode_metadata \
     rejection_sampler_mixed rejection_sampler_greedy; do
-    [[ "$(grep -Fc "QWEN38_DUMMY_SAMPLER_STAGE_SYNC pass=$stage" "$root/server-startup.log")" == "$tensor_parallel_size" ]] || \
+    [[ "$(grep -Fc "QWEN38_DUMMY_SAMPLER_STAGE_SYNC pass=$stage" "$root/server-startup.log")" == "$expected_stage_receipts" ]] || \
       fail "dummy-sampler stage receipt missing or duplicated: $stage"
   done
 fi

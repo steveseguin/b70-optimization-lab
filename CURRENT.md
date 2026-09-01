@@ -56,12 +56,17 @@ teardown. The next bounded arm is D64, using immutable image
 `sha256:a1454ebe...cc13c` and an explicit
 `/workspace/vllm:/instrument` import path. It adds per-layer synchronization
 around the attention/GDN mixer, collectives, normalization, and MLP while
-keeping projection repair off. D64 is startup-only and cannot yield a
-performance claim. See the
+keeping projection repair off. D64 reached readiness with exact complete
+decoder accounting and no Xe event, but the runner expected one sampler pass
+per rank while vLLM performs two; it therefore stopped before the required
+second health check and remains a literal cardinality false-fail. D65 is the
+exact confirmation with the corrected expected count of four receipts per
+sampler stage. These arms are startup-only and cannot yield a performance
+claim. See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
 [`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
 and
-[`D64 preregistration`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-decoder-stage-sync-d64-prereg.md).
+[`D65 preregistration`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-decoder-stage-sync-d65-prereg.md).
 
 ## Qualified Qwen3.8 One-Card Package Work
 
