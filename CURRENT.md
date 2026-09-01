@@ -3211,3 +3211,10 @@ the inner launch attempt while retaining the complete A37 model, graph, trace,
 quality, and teardown identity. See the
 [A37 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a37-attempt-binding-negative.md)
 and [A38 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-path-corrected-fullgraph-prereg.md).
+A38 stopped before model load when one read of the frozen public oneCCL file
+reported a digest mismatch. The same unchanged inode then matched the exact
+frozen digest on five immediate reads, and postflight was clean. A39 is the
+fresh attempt-39/port-19711 successor and adds three consecutive outer digest
+reads, all of which must pass, before the otherwise unchanged launcher. See the
+[A38 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a38-transient-libccl-check-negative.md)
+and [A39 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a39-stable-read-fullgraph-prereg.md).
