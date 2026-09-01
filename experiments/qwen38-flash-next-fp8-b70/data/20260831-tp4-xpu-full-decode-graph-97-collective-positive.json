@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "component_positive",
+  "classification": "tp4_xpu_graph_target_step_collective_sequence_exact",
+  "identity": {
+    "repository_commit": "284b86c91",
+    "torch": "2.11.0+xpu",
+    "world_size": 4,
+    "device": "Intel Arc Pro B70",
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "ccl_sycl_allreduce_ll_threshold": 4096,
+    "dtype": "bfloat16",
+    "shape_per_collective": [1, 2560],
+    "collectives_per_graph": 97,
+    "replays": 100
+  },
+  "result": {
+    "outputs_checked_per_rank": 9700,
+    "oracle_match_all_ranks": true,
+    "unique_composite_hashes_per_rank": 100,
+    "mean_us_per_graph_range": [19750.90961, 19756.00738],
+    "mean_us_per_collective_inclusive_range": [203.6176248453608, 203.67017917525772],
+    "exit_code": 0,
+    "timing_eligible_for_endpoint_claim": false
+  },
+  "artifacts": {
+    "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/20260831-xpu-graph-xccl-public-4ceafd1-97sequence-a3",
+    "torchrun_log_sha256": "11b6ba8dc0d56cb231f6d3ea309669964cc4a8906fd1fce5e7f97e6f4428f4fb"
+  },
+  "interpretation": "Public oneCCL 4ceafd1 preserves exact changing-input replay across the full 97-collective cardinality and order of one Flash-Next target step. This authorizes the selective-UVA PLE graph component gate, not a model endpoint claim.",
+  "protected_results_changed": false
+}

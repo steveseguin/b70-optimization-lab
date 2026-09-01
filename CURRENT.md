@@ -3137,3 +3137,11 @@ fully synchronized eager oracle (`14.15`-`14.19x`). This is component evidence,
 not an endpoint claim. The next gates are 97 ordered reductions in one graph
 and selective-UVA PLE replay before any model load. See the
 [matched-protocol result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-production-protocol-positive.md).
+The target-step-sized follow-up also passed: one graph held 97 ordered,
+independent BF16 `[1,2560]` reductions and replayed 100 times with every input
+changed. All `9,700` outputs per rank matched the CPU oracle, all 100 composite
+hashes were unique, and the inclusive graph-plus-validation mean was
+`19.751`-`19.756 ms/rank`. The graph-aware library therefore clears the
+collective count and ordering prerequisite. Selective-UVA PLE graph replay is
+the last no-model prerequisite before an endpoint arm. See the
+[97-collective result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-97-collective-positive.md).
