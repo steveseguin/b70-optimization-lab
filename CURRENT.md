@@ -3479,3 +3479,17 @@ of the same startup failure stops endpoint retries in favor of report-only
 instrumentation. See the
 [A53 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a53-worker-startup-negative.md)
 and [A54 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a54-path-only-retry-prereg.md).
+A54 proved A53's worker exit transient: all ranks loaded in `569.69`-`569.94`
+seconds, the 3,456-token cache and full graph initialized, the endpoint became
+healthy, and recovery passed. The supervisor then stopped during the first
+quality request because natural local-NVMe runtime reads exceeded the inherited
+4-GiB allowance by only 4,032 sectors (2,064,384 bytes). At that sample
+`MemAvailable` was `29,244,100 KiB`, swap was off, memory-full pressure was low
+at `avg10=0.14`, the corrected-event delta was 38/64, root delta was zero, and
+there was no
+fatal link or B70 event. A55 raises only this anti-accidental-local-checkpoint
+allowance to 8 GiB on fresh paths; it does not change inference, quality, or
+the remaining host safeguards and requires no reboot. See the
+[A54 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a54-local-read-cap-negative.md).
+The exact successor is frozen in the
+[A55 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a55-read-cap-prereg.md).

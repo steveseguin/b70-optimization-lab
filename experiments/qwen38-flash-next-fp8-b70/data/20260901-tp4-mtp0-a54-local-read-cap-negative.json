@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "supervisor_local_nvme_read_cap_stop_after_healthy_endpoint",
+  "classification": "bounded_host_policy_negative",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "FULL_DECODE_ONLY",
+    "collective": "graph_safe_oneccl_twoshots",
+    "checkpoint_location": "external_ntfs",
+    "attempt": 54,
+    "port": 19726
+  },
+  "startup": {
+    "shards": 131,
+    "rank_total_seconds_min": 569.693524,
+    "rank_total_seconds_max": 569.937662,
+    "gib_per_card": 31.57,
+    "kv_cache_tokens": 3456,
+    "graph_capture_seconds": 51,
+    "endpoint_healthy": true,
+    "recovery_canary_passed": true
+  },
+  "guard_stop": {
+    "nvme_sectors_read_baseline": 33274114,
+    "max_delta_sectors": 8388608,
+    "last_passing_delta_sectors": 8384888,
+    "first_failing_delta_sectors": 8392640,
+    "excess_sectors": 4032,
+    "excess_bytes": 2064384,
+    "mem_available_kib": 29244100,
+    "loaded_state_floor_kib": 16000000,
+    "nvme_corrected_event_baseline": 182,
+    "nvme_corrected_event_at_stop": 220,
+    "nvme_corrected_event_delta": 38,
+    "max_nvme_corrected_event_delta": 64,
+    "root_corrected_event_delta": 0,
+    "swap_enabled": false,
+    "memory_full_psi_avg10": 0.14,
+    "fatal_or_recoverable_link_event": false,
+    "oom": false,
+    "b70_fault": false
+  },
+  "credit": {
+    "quality": false,
+    "speed": false,
+    "protected_results_changed": false
+  },
+  "decision": "A55 changes only fresh paths plus the local-NVMe allowance from 4 GiB to 8 GiB; all hardware-health and inference gates remain unchanged.",
+  "raw_run_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraph-mtp0-2304-ple-only-r1-attempt54",
+  "raw_supervisor_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraph-mtp0-2304-ple-only-r1-attempt54-supervisor"
+}
