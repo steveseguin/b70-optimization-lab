@@ -1,0 +1,20 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-two-stage-row-stable-r97
+FROM ${BASE_IMAGE}
+
+ARG GDN_XBLOCK8_ROW_STABLE_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-gdn-xblock8-row-stable-r98-20260901.patch /tmp/gdn-xblock8-row-stable.patch
+COPY check-gdn-xblock8-row-stable-r98.py /opt/neural-download/check-gdn-xblock8-row-stable-r98.py
+
+RUN test "$(sha256sum /tmp/gdn-xblock8-row-stable.patch | awk '{print $1}')" = \
+        "${GDN_XBLOCK8_ROW_STABLE_PATCH_SHA256}" \
+    && patch -p1 -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/gdn-xblock8-row-stable.patch \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
+        /opt/neural-download/check-gdn-xblock8-row-stable-r98.py \
+    && rm -f /tmp/gdn-xblock8-row-stable.patch
+
+LABEL neural.download.composite.base.r97="sha256:7971b16805126ffe8ce52904637906409782ef414ac777e78ab9872fca89ab41" \
+      neural.download.vllm.gdn-xblock8-row-stable.patch.sha256="${GDN_XBLOCK8_ROW_STABLE_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98"

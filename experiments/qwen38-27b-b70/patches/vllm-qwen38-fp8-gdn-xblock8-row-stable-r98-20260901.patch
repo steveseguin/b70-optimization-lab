@@ -1,0 +1,60 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -212,15 +212,25 @@
+     x_ptr,
+     sum_ptr,
+     x_row_stride,
++    n_rows,
++    ROWS_BLOCK: tl.constexpr,
+     BLOCK_SIZE: tl.constexpr,
+ ):
+-    """R97 diagnostic: fixed-row sum stage matching generated geometry."""
+-    row = tl.program_id(0).to(tl.int64)
++    """R98 diagnostic: retained Inductor 8-row by 128 reduction shape."""
++    row = (
++        tl.program_id(0).to(tl.int64) * ROWS_BLOCK
++        + tl.arange(0, ROWS_BLOCK)
++    )
+     col = tl.arange(0, BLOCK_SIZE)
++    row_mask = row < n_rows
+ 
+-    x = tl.load(x_ptr + row * x_row_stride + col).to(tl.float32)
+-    sum_sq = tl.sum(x * x, axis=0)
+-    tl.store(sum_ptr + row, sum_sq)
++    x = tl.load(
++        x_ptr + row[:, None] * x_row_stride + col[None, :],
++        mask=row_mask[:, None],
++        other=0.0,
++    ).to(tl.float32)
++    sum_sq = tl.sum(x * x, axis=1)
++    tl.store(sum_ptr + row, sum_sq, mask=row_mask)
+ 
+ 
+ @triton.jit
+@@ -288,10 +298,16 @@
+         (x_2d.shape[0],), device=x.device, dtype=torch.float32
+     )
+     output = torch.empty_like(x_2d)
+-    _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel[(x_2d.shape[0],)](
++    n_rows = x_2d.shape[0]
++    rows_per_program = 8
++    _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel[
++        (triton.cdiv(n_rows, rows_per_program),)
++    ](
+         x_2d,
+         sum_sq,
+         x_2d.stride(0),
++        n_rows,
++        ROWS_BLOCK=rows_per_program,
+         BLOCK_SIZE=128,
+         num_warps=2,
+     )
+@@ -311,7 +327,7 @@
+         num_warps=4,
+     )
+     logger.warning_once(
+-        "R97 Qwen GDN two-stage row-stable RMSNormGated path executed on %s rows",
++        "R98 Qwen GDN xblock8 row-stable RMSNormGated path executed on %s rows",
+         x_2d.shape[0],
+     )
+     return output.reshape(x.shape)
