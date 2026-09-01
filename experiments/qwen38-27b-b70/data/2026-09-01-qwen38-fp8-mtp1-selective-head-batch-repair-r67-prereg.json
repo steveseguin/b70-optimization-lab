@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-selective-head-batch-repair-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-selective-head-batch-repair-20260901-r67",
+  "status": "preregistered-not-run",
+  "objective": "Repair only near-tie target-head rows at the observed c1 M1 GEMM shape while retaining the normal fast FP16 head for all other rows.",
+  "artifact": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-selective-head-batch-repair-r66",
+    "image_id": "sha256:cc8ab446ce74242f47410ba1ce9f8dd490c4647cd6f2141274411e9c0a23cf0d",
+    "patch_sha256": "53ca0cd22d50e91f78be7234e1e53ed2ee6ce461b2c8b0da03259544c3b0e5ea",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "single_changed_variable_from_r66": {
+    "name": "VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS",
+    "r66": 2,
+    "r67": 1,
+    "basis": "The R66 traceback observed one sampled target-head row at c1."
+  },
+  "fixed_configuration": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "repair_margin": 0.25,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 256,
+    "max_num_seqs": 2,
+    "max_num_batched_tokens": 256
+  },
+  "component_smoke": {
+    "shape": "[2,5120] x [5120,124160]",
+    "normal_ms": 2.151084001525305,
+    "selective_no_flag_ms": 2.259124994452577,
+    "forced_all_rows_repair_ms": 6.657974001427647,
+    "forced_repair_m1_vs_m2_exact": true
+  },
+  "screen": {
+    "concurrency": [1, 2],
+    "repeats": 2,
+    "output_tokens": 128,
+    "sequential_oracle_requests": 2,
+    "require_output_identity": true,
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "gates": {
+    "all_complete_arrays_exact_vs_sequential_oracle": true,
+    "minimum_c2_aggregate_tok_s": 68.37319821269462,
+    "minimum_basis": "95% of the R63 R62 candidate c2 result at 71.97178759231012 tok/s",
+    "no_new_gpu_or_xe_fault": true
+  },
+  "continuation": "Only an exact, speed-floor-passing c2 screen may advance to paired c1-c64 aggregate validation.",
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

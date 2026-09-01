@@ -1,0 +1,49 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-selective-head-batch-repair-screen-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-selective-head-batch-repair-20260901-r67",
+  "status": "c2-screen-passed-advance-to-full",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-selective-head-batch-repair-r66",
+    "id": "sha256:cc8ab446ce74242f47410ba1ce9f8dd490c4647cd6f2141274411e9c0a23cf0d"
+  },
+  "configuration": {
+    "repair_rows": 1,
+    "repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 2,
+    "max_num_batched_tokens": 256,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "classification": "output-identity-qualified",
+    "harness_exit_code": 0,
+    "cached_tokens_all_zero": true,
+    "complete_outputs_exact_vs_sequential_oracle": true,
+    "points": [
+      {"concurrency": 1, "repeat": 1, "aggregate_tok_s": 49.48940154749582, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 1, "aggregate_tok_s": 64.51937127701997, "exact": "2/2"},
+      {"concurrency": 1, "repeat": 2, "aggregate_tok_s": 50.34263921959758, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 2, "aggregate_tok_s": 94.68057322649481, "exact": "2/2"}
+    ],
+    "c1_median_tok_s": 49.916020383546694,
+    "c2_median_tok_s": 79.59997225175739,
+    "c2_floor_tok_s": 68.37319821269462,
+    "median_speed_floor_passed": true,
+    "spread_warning": "The cold first c2 batch was 31.9% below the second; neither point is a headline and a fresh full server is required.",
+    "new_gpu_or_xe_faults": 0
+  },
+  "evidence": {
+    "result_sha256": "33b11741ff207e3812b905bbb3758af53a48a06f864116e0a8b4681feabafe83",
+    "server_log_sha256": "46976c1a5b3633ad3c96872d3ff881cd447c2ebaefced8554f999e77ed383552"
+  },
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

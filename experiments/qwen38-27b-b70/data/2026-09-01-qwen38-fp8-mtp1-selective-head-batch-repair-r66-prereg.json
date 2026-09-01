@@ -1,0 +1,53 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-selective-head-batch-repair-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-selective-head-batch-repair-20260901-r66",
+  "status": "preregistered-not-run",
+  "objective": "Repair only near-tie verifier rows at the c1 two-row GEMM shape while preserving the fast normal FP16 head for all other steps.",
+  "base": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "single_changed_variable": {
+    "name": "selective target-head batch repair",
+    "control": "disabled",
+    "candidate": {"repair_rows": 2, "top2_margin": 0.25},
+    "scope": "ParallelLMHead only; the R62 INT4 draft returns before this branch"
+  },
+  "component_smoke": {
+    "shape": "[4,5120] x [5120,124160]",
+    "normal_ms": 2.15887300146278,
+    "selective_no_flag_ms": 2.270513999974355,
+    "forced_all_groups_repair_ms": 6.672729999991134,
+    "forced_repair_m2_vs_m4_exact": true
+  },
+  "screen": {
+    "max_model_len": 256,
+    "max_num_seqs": 2,
+    "max_num_batched_tokens": 256,
+    "concurrency": [1, 2],
+    "repeats": 2,
+    "output_tokens": 128,
+    "sequential_oracle_requests": 2,
+    "require_output_identity": true,
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "gates": {
+    "all_complete_arrays_exact_vs_sequential_oracle": true,
+    "minimum_c2_aggregate_tok_s": 68.37319821269462,
+    "minimum_basis": "95% of the R63 R62 candidate c2 result at 71.97178759231012 tok/s",
+    "no_new_gpu_or_xe_fault": true
+  },
+  "continuation": "Only an exact, speed-floor-passing c2 screen may advance to paired c1-c64 aggregate validation.",
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

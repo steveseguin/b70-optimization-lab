@@ -1,0 +1,58 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-selective-head-batch-repair-full-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-selective-head-batch-repair-20260901-r67-full",
+  "status": "negative-identity-and-speed-gates",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-selective-head-batch-repair-r66",
+    "id": "sha256:cc8ab446ce74242f47410ba1ce9f8dd490c4647cd6f2141274411e9c0a23cf0d"
+  },
+  "configuration": {
+    "repair_rows": 1,
+    "repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "strict_ladder": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "harness_exit_code": 4,
+    "cached_tokens_all_zero": true,
+    "complete_outputs_exact_vs_sequential_oracle": false,
+    "points": [
+      {"concurrency": 1, "aggregate_tok_s": 48.29300900656564, "exact": "1/1"},
+      {"concurrency": 2, "aggregate_tok_s": 67.50494030819625, "exact": "1/2"},
+      {"concurrency": 4, "aggregate_tok_s": 171.21114762146502, "exact": "3/4"},
+      {"concurrency": 8, "aggregate_tok_s": 290.8879050964886, "exact": "8/8"},
+      {"concurrency": 16, "aggregate_tok_s": 397.4586068168164, "exact": "14/16"},
+      {"concurrency": 32, "aggregate_tok_s": 612.0547478971197, "exact": "29/32"},
+      {"concurrency": 64, "aggregate_tok_s": 753.0767309050653, "exact": "54/64"}
+    ],
+    "c64_floor_tok_s": 875.0,
+    "c64_speed_floor_passed": false,
+    "output_identity_gate_passed": false,
+    "new_gpu_or_xe_faults": 0
+  },
+  "localization": {
+    "repeated_mismatch": "cache-c000 first diverged at token index 96 for c2, c4, and c64",
+    "sequential_top2_logprobs_at_index_96": {"token_space_star": -1.234007477760315, "token_space_double_star": -1.234007477760315},
+    "c2_top2_logprobs_at_index_96": {"token_space_double_star": -1.2295777797698975, "token_space_star": -1.2452027797698975},
+    "finding": "The sequential global top two were exactly tied, but they reside in the gathered vocabulary. The R67 margin was computed independently inside each TP vocabulary shard, so a cross-shard near tie was invisible to both ranks."
+  },
+  "evidence": {
+    "result_sha256": "d2f540b78b46e622a38d238537c991eb0d699402778ef29ce15d71526842fa8e",
+    "logprob_diagnostic_sha256": "f5c8b172673e475a7c51274813c22c003af4cc160bae866a297f76c6958f7640",
+    "server_log_sha256": "1cab9c0106d8fc7b6bdd2ee61501efc3c6a09ddbcabe9f80fb218c79e9b35663"
+  },
+  "next": "Move margin detection after TP all-gather, then recompute only globally flagged rows at M1 on every rank before a second small repair gather.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

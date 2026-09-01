@@ -1,0 +1,20 @@
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -221,6 +221,17 @@
+             return logits.reshape(
+                 x_contiguous.shape[:-1] + (layer._xpu_draft_int4_weight_t.shape[1],)
+             )
++        if self._env_enabled("VLLM_XPU_LM_HEAD_BATCH_INVARIANT"):
++            if x.device.type != "xpu":
++                raise RuntimeError(
++                    "VLLM_XPU_LM_HEAD_BATCH_INVARIANT requires XPU input"
++                )
++            if layer.__class__.__name__ != "ParallelLMHead":
++                raise RuntimeError(
++                    "VLLM_XPU_LM_HEAD_BATCH_INVARIANT may only be used with "
++                    f"ParallelLMHead, got {layer.__class__.__name__}"
++                )
++            return linear_batch_invariant(x, layer.weight, bias)
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)

@@ -1,0 +1,42 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-selective-head-batch-repair-full-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-selective-head-batch-repair-20260901-r67-full",
+  "status": "preregistered-not-run",
+  "objective": "Validate output identity and aggregate throughput from c1 through c64 after the R67 c2 screen passed.",
+  "artifact": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-selective-head-batch-repair-r66",
+    "image_id": "sha256:cc8ab446ce74242f47410ba1ce9f8dd490c4647cd6f2141274411e9c0a23cf0d",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+  },
+  "configuration": {
+    "repair_rows": 1,
+    "repair_margin": 0.25,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "draft_int4": true,
+    "max_model_len": 256,
+    "max_num_seqs": 64,
+    "max_num_batched_tokens": 512,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "screen": {
+    "concurrency": [1, 2, 4, 8, 16, 32, 64],
+    "repeats": 1,
+    "output_tokens": 128,
+    "sequential_oracle_requests": 64,
+    "require_output_identity": true,
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "gates": {
+    "all_complete_arrays_exact_vs_sequential_oracle": true,
+    "minimum_c64_aggregate_tok_s": 875.0,
+    "no_new_gpu_or_xe_fault": true
+  },
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset; a clean-boot repeat remains required"
+  }
+}

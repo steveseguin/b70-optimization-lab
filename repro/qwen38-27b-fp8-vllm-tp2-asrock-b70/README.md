@@ -814,6 +814,16 @@ has no output-identical concurrency claim. When using
 `--require-output-identity`; output isolation alone is not quality
 equivalence. See the [R63 negative](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-negative.md).
 
+R64-R67 then localized that inherited limitation without relaxing the gate.
+Global batch-invariant mode is unsupported by Qwen's GDN backend. A
+target-head-only persistent kernel made c2 exact but cut median c2 throughput
+to 36.003 tok/s. A cheaper local-shard near-tie repair passed a small c2 screen
+but failed the full ladder (54/64 exact and 753.077 tok/s at c64). The decisive
+logprob probe found an exactly tied global top two split across TP vocabulary
+shards, which a per-rank margin cannot see. These are diagnostic, unpromoted
+experiments; the qualified single-user recipe and headline remain unchanged.
+See the [R67 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-negative.md).
+
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
 selector to a different host. Stop with `docker stop -t 20 qwen38-fp8-tp2`;

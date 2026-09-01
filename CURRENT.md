@@ -82,7 +82,16 @@ at c2. R62 inherited rather than created the batch-shape limitation, but it has
 no output-identical concurrency claim. The generic harness now separates
 output isolation from identity qualification and provides a fail-closed
 `--require-output-identity` gate. The next local target is deterministic MTP1
-batch-shape repair before another aggregate promotion attempt.
+batch-shape repair before another aggregate promotion attempt. R64 confirmed
+that upstream global batch-invariant mode rejects Qwen GDN at startup. R65
+scoped the invariant kernel to the vocabulary head and made c2 2/2 exact, but
+regressed median c2 to `36.003 tok/s`. R67's cheaper near-tie repair passed its
+small c2 screen, then failed the full ladder at 1/2 c2 and 54/64 c64 while
+measuring only `753.077 tok/s`. Logprobs localized the miss: the sequential
+global top two were exactly tied, but the repair margin was calculated inside
+each TP vocabulary shard and could not see the cross-shard tie. No R64-R67
+candidate is promoted. The next repair must detect the margin after TP
+all-gather and recompute only globally flagged M1 rows.
 Independent clean-host replay
 also remains pending. Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

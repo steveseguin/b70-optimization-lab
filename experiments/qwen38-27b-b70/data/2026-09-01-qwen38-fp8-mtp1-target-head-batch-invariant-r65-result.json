@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-target-head-batch-invariant-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-target-head-batch-invariant-20260901-r65",
+  "status": "negative-speed-floor",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-target-head-batch-invariant-r65",
+    "id": "sha256:5337f855b67ac8399203ec307bde85b863a32a33d3d153ef4e56e682bc0ec9a4",
+    "vocab_source_sha256": "c21234f8ae913560cf5d87661788a248c24b68be448b87e139e5bf9ff12809fe",
+    "patch_sha256": "e87e8c0a2e9b6b6907ff079a6c4f807bbf3b3cf218f0a01064eb3a264bff361f"
+  },
+  "configuration": {
+    "VLLM_XPU_LM_HEAD_BATCH_INVARIANT": 1,
+    "VLLM_XPU_DRAFT_LM_HEAD_INT4": 1,
+    "max_model_len": 256,
+    "max_num_seqs": 2,
+    "max_num_batched_tokens": 256,
+    "xpu_graph": false,
+    "prefix_cache": false
+  },
+  "strict_screen": {
+    "classification": "output-identity-qualified",
+    "harness_exit_code": 0,
+    "cached_tokens_all_zero": true,
+    "complete_outputs_exact_vs_sequential_oracle": true,
+    "points": [
+      {"concurrency": 1, "repeat": 1, "aggregate_tok_s": 20.213922772935867, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 1, "aggregate_tok_s": 33.332168339316446, "exact": "2/2"},
+      {"concurrency": 1, "repeat": 2, "aggregate_tok_s": 20.102241353272, "exact": "1/1"},
+      {"concurrency": 2, "repeat": 2, "aggregate_tok_s": 38.67393017784822, "exact": "2/2"}
+    ],
+    "c1_median_tok_s": 20.158082063103933,
+    "c2_median_tok_s": 36.00304925858234,
+    "c2_floor_tok_s": 68.37319821269462,
+    "speed_floor_passed": false,
+    "new_gpu_or_xe_faults": 0
+  },
+  "evidence": {
+    "local_result": "/mnt/fast-ai/bench-results/qwen38-fp8-context-optimization-20260901/mtp1-target-head-bi-r65-c2/results/concurrency.json",
+    "result_sha256": "9cd1736a11a6aea8cfbe9f8b67004a39cdadee64b8344e4dc7da8bb335cd7d8b",
+    "server_log_sha256": "b1a8deab63bdd16b8598eee7e004c0a47a9429001554336fc02e8cf4c570d7d4"
+  },
+  "interpretation": "The scoped invariant vocabulary head repairs the c2 identity drift, localizing the observed divergence to head arithmetic, but a full persistent-matmul head is too slow to ship.",
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

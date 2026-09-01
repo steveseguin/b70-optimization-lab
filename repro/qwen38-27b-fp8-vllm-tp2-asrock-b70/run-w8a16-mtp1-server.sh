@@ -47,6 +47,9 @@ draft_lm_head_int4=${VLLM_XPU_DRAFT_LM_HEAD_INT4:-0}
 draft_lm_head_int4_group_size=${VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE:-128}
 draft_lm_head_int4_scale_dtype=${VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE:-bf16}
 draft_lm_head_int4_chunk_rows=${VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS:-2048}
+lm_head_batch_invariant=${VLLM_XPU_LM_HEAD_BATCH_INVARIANT:-0}
+lm_head_batch_repair_rows=${VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS:-0}
+lm_head_batch_repair_margin=${VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN:-0.25}
 
 for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
   value=${!value_name}
@@ -101,6 +104,18 @@ for value_name in inductor_max_autotune inductor_coordinate_descent; do
 done
 [[ "${draft_lm_head_int4}" == 0 || "${draft_lm_head_int4}" == 1 ]] || {
   printf 'VLLM_XPU_DRAFT_LM_HEAD_INT4 must be 0 or 1\n' >&2
+  exit 1
+}
+[[ "${lm_head_batch_invariant}" == 0 || "${lm_head_batch_invariant}" == 1 ]] || {
+  printf 'VLLM_XPU_LM_HEAD_BATCH_INVARIANT must be 0 or 1\n' >&2
+  exit 1
+}
+[[ "${lm_head_batch_repair_rows}" =~ ^[0-9]+$ ]] || {
+  printf 'VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS must be a non-negative integer\n' >&2
+  exit 1
+}
+[[ "${lm_head_batch_repair_margin}" =~ ^[0-9]+([.][0-9]+)?$ ]] || {
+  printf 'VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN must be a non-negative number\n' >&2
   exit 1
 }
 [[ "${draft_lm_head_int4_group_size}" =~ ^[1-9][0-9]*$ ]] || {
@@ -203,6 +218,9 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE="${draft_lm_head_int4_group_size}" \
   --env VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE="${draft_lm_head_int4_scale_dtype}" \
   --env VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS="${draft_lm_head_int4_chunk_rows}" \
+  --env VLLM_XPU_LM_HEAD_BATCH_INVARIANT="${lm_head_batch_invariant}" \
+  --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS="${lm_head_batch_repair_rows}" \
+  --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN="${lm_head_batch_repair_margin}" \
   "${hash_seed_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \

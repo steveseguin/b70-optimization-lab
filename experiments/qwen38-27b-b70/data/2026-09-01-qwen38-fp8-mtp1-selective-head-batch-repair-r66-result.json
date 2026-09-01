@@ -1,0 +1,29 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-selective-head-batch-repair-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-selective-head-batch-repair-20260901-r66",
+  "status": "invalid-configuration-failed-closed",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-selective-head-batch-repair-r66",
+    "id": "sha256:cc8ab446ce74242f47410ba1ce9f8dd490c4647cd6f2141274411e9c0a23cf0d",
+    "patch_sha256": "53ca0cd22d50e91f78be7234e1e53ed2ee6ce461b2c8b0da03259544c3b0e5ea"
+  },
+  "configuration": {
+    "VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS": 2,
+    "VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN": 0.25
+  },
+  "outcome": {
+    "server_ready": true,
+    "benchmark_requests_completed": 0,
+    "harness_exit_code": 1,
+    "first_request_http_status": 500,
+    "error": "RuntimeError: lm_head batch rows must be divisible by repair rows: 1 vs 2",
+    "interpretation": "The runtime exposes one target-head row per active request in this MTP1 profile. The preregistered two-row repair group was based on the speculative verifier width rather than the sampled-head row shape."
+  },
+  "evidence": {
+    "server_log_sha256": "bf44f9bc0c3e2843c08757740a55fdc5d2c9c30f65d5ce93b6c0dc95140a739e",
+    "harness_stdout_sha256": "3a4b45b263d22dbb2775172b27f7c8dfed1bd95b32f6cd3fcecc1ef6adfe3ebe",
+    "new_gpu_or_xe_faults": 0
+  },
+  "next": "Reuse the same artifact with repair_rows=1, supported by a forced-repair M1/M2 bitwise-exact component test; preregister as R67.",
+  "publication": {"headline_or_curve_change": false, "localmaxxing_submission": false}
+}

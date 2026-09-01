@@ -1,0 +1,67 @@
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -221,6 +221,64 @@
+             return logits.reshape(
+                 x_contiguous.shape[:-1] + (layer._xpu_draft_int4_weight_t.shape[1],)
+             )
++        repair_rows_s = os.environ.get("VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS", "0")
++        try:
++            repair_rows = int(repair_rows_s or "0")
++        except ValueError as exc:
++            raise ValueError(
++                "VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS must be an integer"
++            ) from exc
++        if repair_rows > 0:
++            if x.device.type != "xpu":
++                raise RuntimeError(
++                    "VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS requires XPU input"
++                )
++            if layer.__class__.__name__ != "ParallelLMHead":
++                raise RuntimeError(
++                    "VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS may only be used with "
++                    f"ParallelLMHead, got {layer.__class__.__name__}"
++                )
++            margin_s = os.environ.get(
++                "VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN", "0.25"
++            )
++            try:
++                margin = float(margin_s or "0.25")
++            except ValueError as exc:
++                raise ValueError(
++                    "VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN must be numeric"
++                ) from exc
++            if margin <= 0.0:
++                raise ValueError(
++                    "VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN must be positive"
++                )
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            flat_x = x_contiguous.reshape(-1, x_contiguous.shape[-1])
++            if flat_x.shape[0] % repair_rows != 0:
++                raise RuntimeError(
++                    "lm_head batch rows must be divisible by repair rows: "
++                    f"{flat_x.shape[0]} vs {repair_rows}"
++                )
++            gemm = dispatch_unquantized_gemm()
++            logits = gemm(layer, x_contiguous, layer.weight, bias)
++            if flat_x.shape[0] > repair_rows and logits.shape[-1] >= 2:
++                flat_logits = logits.reshape(-1, logits.shape[-1])
++                logits_f32 = flat_logits.float()
++                top1v, top1i = logits_f32.max(dim=-1)
++                top2v = logits_f32.scatter(
++                    1, top1i.unsqueeze(1), float("-inf")
++                ).max(dim=-1).values
++                flagged = (top1v - top2v) < margin
++                if bool(flagged.any().item()):
++                    groups = torch.unique(
++                        flagged.nonzero(as_tuple=True)[0] // repair_rows
++                    )
++                    for group in groups.tolist():
++                        start = group * repair_rows
++                        end = start + repair_rows
++                        flat_logits[start:end] = gemm(
++                            layer, flat_x[start:end], layer.weight, bias
++                        )
++            return logits
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)

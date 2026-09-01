@@ -1,0 +1,46 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-batch-invariant-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-batch-invariant-20260901-r64",
+  "status": "preregistered-not-run",
+  "objective": "Test the supported global batch-invariant path as a repair for the persistent MTP1 c2 sequential-oracle divergence before any full aggregate load.",
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "draft_int4": false,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 256,
+    "max_num_seqs": 2,
+    "max_num_batched_tokens": 256
+  },
+  "single_changed_variable": {
+    "name": "VLLM_BATCH_INVARIANT",
+    "control": "0",
+    "candidate": "1"
+  },
+  "screen": {
+    "concurrency": [1, 2],
+    "repeats": 2,
+    "output_tokens": 128,
+    "sequential_oracle_requests": 2,
+    "require_output_identity": true,
+    "conditioning_run": false,
+    "cached_tokens_required": 0
+  },
+  "gates": {
+    "all_complete_arrays_exact_vs_sequential_oracle": true,
+    "minimum_c2_aggregate_tok_s": 66.51921706663834,
+    "minimum_basis": "95% of the R63 FP16-draft c2 control at 70.02022849119825 tok/s",
+    "no_new_gpu_or_xe_fault": true
+  },
+  "continuation": "Only an exact, speed-floor-passing c2 screen may advance to a paired c1-c64 aggregate run.",
+  "publication_boundary": {
+    "headline_or_curve_change_authorized": false,
+    "current_boot": "diagnostic only because the boot journal contains an earlier GPU reset"
+  }
+}

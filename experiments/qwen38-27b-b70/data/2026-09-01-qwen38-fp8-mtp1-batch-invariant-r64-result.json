@@ -1,0 +1,30 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-batch-invariant-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-batch-invariant-20260901-r64",
+  "status": "negative-incompatible-startup",
+  "started_at": "2026-09-01T15:40:58-04:00",
+  "failed_at": "2026-09-01T15:41:55-04:00",
+  "single_changed_variable": {
+    "name": "VLLM_BATCH_INVARIANT",
+    "control": "0",
+    "candidate": "1"
+  },
+  "outcome": {
+    "server_ready": false,
+    "benchmark_requests_sent": 0,
+    "error": "RuntimeError: VLLM batch_invariant mode is not supported for GDN_ATTN.",
+    "failed_component": "vLLM GDN attention backend selection",
+    "interpretation": "The supported global switch cannot be used for Qwen3.8 GDN. This is not a performance or output result."
+  },
+  "evidence": {
+    "server_log": "/mnt/fast-ai/bench-results/qwen38-fp8-context-optimization-20260901/mtp1-batch-invariant-r64-c2/server.log",
+    "server_log_sha256": "7d218b4bdb9530a45801f8c89a37a7a320a083c8ba630591d2f33de121bde044",
+    "model_direct_verification": "66/66 passed before initialization",
+    "new_gpu_or_xe_fault": false
+  },
+  "publication": {
+    "headline_or_curve_change": false,
+    "localmaxxing_submission": false
+  },
+  "next": "Test a narrow, opt-in invariant linear only at ParallelLMHead; leave GDN, attention, MoE, and other linears unchanged."
+}

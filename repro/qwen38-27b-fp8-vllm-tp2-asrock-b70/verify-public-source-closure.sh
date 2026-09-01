@@ -28,6 +28,30 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-control-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-result.json
   experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-negative.md
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-batch-invariant-r64-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-batch-invariant-r64-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-batch-invariant-r64-negative.md
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-batch-invariant-r64-server.sh
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-target-head-batch-invariant-r65-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.target-head-batch-invariant-r65
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-target-head-batch-invariant-r65-image.sh
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-target-head-batch-invariant-r65-server.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-target-head-batch-invariant-r65-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-target-head-batch-invariant-r65-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-target-head-batch-invariant-r65-negative.md
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-selective-head-batch-repair-r66-20260901.patch
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.selective-head-batch-repair-r66
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-selective-head-batch-repair-r66-image.sh
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-selective-head-batch-repair-r66-server.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r66-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r66-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r66-invalid.md
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-selective-head-batch-repair-r67-server.sh
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-c2-result.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-full-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-full-result.json
+  experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-negative.md
   scripts/bench-openai-concurrency-oracle.py
   scripts/test_bench_openai_concurrency_oracle.py
 )
@@ -71,6 +95,12 @@ check_sha256 \
 check_sha256 \
   594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab \
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-draft-only-int4-lm-head-r62-20260901.patch
+check_sha256 \
+  e87e8c0a2e9b6b6907ff079a6c4f807bbf3b3cf218f0a01064eb3a264bff361f \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-target-head-batch-invariant-r65-20260901.patch
+check_sha256 \
+  53ca0cd22d50e91f78be7234e1e53ed2ee6ce461b2c8b0da03259544c3b0e5ea \
+  experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-selective-head-batch-repair-r66-20260901.patch
 
 if (( failed )); then
   printf '\nSOURCE CLOSURE FAILED\n' >&2

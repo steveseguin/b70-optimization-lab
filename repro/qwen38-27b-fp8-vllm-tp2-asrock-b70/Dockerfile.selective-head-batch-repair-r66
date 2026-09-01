@@ -1,0 +1,20 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62
+FROM ${BASE_IMAGE}
+
+ARG VOCAB_SOURCE_SHA256
+ARG SELECTIVE_HEAD_BATCH_REPAIR_PATCH_SHA256
+
+COPY vllm/model_executor/layers/vocab_parallel_embedding.py /tmp/vocab_parallel_embedding.py
+
+RUN test "$(sha256sum /tmp/vocab_parallel_embedding.py | awk '{print $1}')" = "${VOCAB_SOURCE_SHA256}" \
+    && install -m 0644 /tmp/vocab_parallel_embedding.py \
+       /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py \
+    && install -m 0644 /tmp/vocab_parallel_embedding.py \
+       /workspace/vllm/vllm/model_executor/layers/vocab_parallel_embedding.py \
+    && /opt/venv/bin/python -m py_compile \
+       /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py \
+    && rm -f /tmp/vocab_parallel_embedding.py
+
+LABEL neural.download.vllm.selective-head-batch-repair-r66.patch.sha256="${SELECTIVE_HEAD_BATCH_REPAIR_PATCH_SHA256}" \
+      neural.download.vllm.vocab-parallel-embedding.py.sha256="${VOCAB_SOURCE_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-selective-head-batch-repair-r66"
