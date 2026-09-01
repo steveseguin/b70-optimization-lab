@@ -3402,3 +3402,10 @@ successful `grep -q` ASPM check gave its `lspci` producer SIGPIPE under
 `pipefail`. The host wrapper and field-aware generator now consume the complete
 reports before matching; reproduction and root-only checks pass, and the model
 was never loaded by the interrupted invocation.
+A48 then advanced through the repaired privileged preflight and initial host
+sample, but its clean `env -i` child omitted the two numeric AER baselines. The
+server wrapper failed closed before any run/cache path, worker, shard, endpoint,
+or request. A49 is the exact attempt-49/port-19721 successor and explicitly
+forwards only those values; all inference and quality selectors remain frozen.
+See the [A48 procedural result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a48-aer-forwarding-prelaunch-negative.md)
+and [A49 preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a49-twoshots-lossless-2k-prereg.md).
