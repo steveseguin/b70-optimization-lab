@@ -208,3 +208,13 @@ runtime request metadata inside one custom op, or reproduce the accepted
 compiled c1 arithmetic as the custom op's non-multi-prefill path. R95's result
 is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-phase-selective-rmsnorm-r95-result.json).
+
+R96 restored the accepted R90 reduction kernel's two-warp launch geometry
+inside R94's one-program-per-row kernel. The operator remained bitwise
+row-invariant and matched its bounded reference, but the server result was
+c1 0/1 and c2 1/2. C1 stayed exactly on R94's known-bad sequence, while c2
+returned exactly to R90's sequences. Thus reduction warp geometry controls the
+c2 branch, but cannot reproduce accepted c1 alone. The next candidate must
+mirror the generated two-kernel structure: two-warp sum reduction followed by
+the four-warp flattened gated pointwise stage. R96's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96-result.json).

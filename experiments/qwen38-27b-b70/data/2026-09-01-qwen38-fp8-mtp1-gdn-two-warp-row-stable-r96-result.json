@@ -1,0 +1,61 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-two-warp-row-stable-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-two-warp-row-stable-20260901-r96",
+  "status": "completed-rejected",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-row-stable-rmsnorm-r94",
+    "base_image_id": "sha256:df6bac2fbf45e96139da8ebfee60e22db9db335aa593dfae276fbb2a15855235",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-two-warp-row-stable-r96",
+    "candidate_image_id": "sha256:879de0ef04d808d2d0f980752170c4f8b9530a113c1edf86fb7053cf0b5768c1",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-two-warp-row-stable-r96-20260901.patch",
+    "patch_sha256": "950101c2fcb46b52a821fd8dd8f4263b73313d82447c00601d9136877be8fefb",
+    "installed_qwen_gdn_sha256": "ab6222bfbf6528b0984e0e7ec7e7588e8e5a14e2aff5c126ea2e67c866bd6157"
+  },
+  "operator_gate": {
+    "status": "pass",
+    "selected_row_bitwise_invariant": true,
+    "reference_max_abs_error": 0.0,
+    "unsupported_shape_failed_closed": true
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "0/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 28.220827268818876
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 61.50741228624344
+    },
+    "c1_sequence_equal_r94_known_bad": true,
+    "c2_sequences_equal_r90": true,
+    "cache_prompt_first_bad_output": {
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "trace_gate": {
+    "records": 192,
+    "layer0_cache_prompt_core_and_z_exact_across_c1_c2_on_both_ranks": true
+  },
+  "interpretation": "Changing the one-program-per-row kernel from one to two warps left c1 on R94's known-bad sequence but changed c2 from R94's repaired 2/2 back to R90's 1/2. The reduction warp geometry is causally relevant to c2, but it does not reproduce accepted c1 by itself. The remaining mismatch is the original generated two-kernel structure and/or its four-warp flattened pointwise stage.",
+  "next_experiment": "Mirror the R90 generated implementation as separate sum-reduction and gated pointwise kernels, using two warps for the reduction and four for pointwise, while fixing row grouping. Gate on c1/c2 exactness before any broader run.",
+  "reporting_boundary": "Rejected diagnostic. Do not publish throughput. c1 and c2 both failed required identity and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful API shutdown followed by bounded runtime cleanup"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-two-warp-row-stable-20260901-r96",
+    "raw_result_sha256": "432af95dd00e19d5cc8baabeab13ff42e63084f7e111088777a0d2de060b905f",
+    "trace_sha256": "71ea3c64ac8f571aec49a6bf213a9e795b22b39d7ee9e345aadbe977c6214ff5",
+    "server_log_sha256": "c1d00ed5182830652328722692ebca4e5ae3403f53f3be443d6df60038c4c01d",
+    "kernel_journal_sha256": "ecd08bc36d09523dbae30e8705be2680ea0f7a4ec9299f7240003b54e25d8972",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
