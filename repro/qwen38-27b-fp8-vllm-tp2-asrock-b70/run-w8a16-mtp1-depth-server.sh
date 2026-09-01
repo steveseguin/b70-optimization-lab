@@ -13,4 +13,6 @@ exec env \
   MAX_MODEL_LEN=33024 \
   MAX_NUM_SEQS=1 \
   MAX_NUM_BATCHED_TOKENS=4096 \
+  CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}" \
+  CONTAINER_MEMORY_SWAP="${CONTAINER_MEMORY_SWAP:-16g}" \
   "${script_dir}/run-w8a16-mtp1-strict-server.sh"

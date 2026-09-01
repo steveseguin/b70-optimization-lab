@@ -693,7 +693,10 @@ OUT_DIR=/path/to/new-mtp1-real-content-depth-result \
 
 Both launchers inherit the fail-closed final-image and deterministic
 compiler/RMS/GDN/oneCCL settings, then fix 33,024 tokens, one slot, and
-4,096-token chunked-prefill batches. Every 2K/4K/8K/16K/24K/32K value is
+4,096-token chunked-prefill batches. The MTP1 depth launcher raises only its
+container cgroup bounds to 12 GiB RAM / 16 GiB RAM-plus-swap; the 9/12 GiB
+short-profile bounds caused measured swap thrashing while its second TP worker
+loaded. Every 2K/4K/8K/16K/24K/32K value is
 directly measured. The script performs cache-zero request gates and canaries
 before and after the matrix; it refuses to pass MTP1 if any complete token
 array differs from MTP0. The older `bench-w8a16-mtp1-depth.sh` remains only for

@@ -16,6 +16,8 @@ max_num_seqs="${MAX_NUM_SEQS:-4}"
 max_model_len="${MAX_MODEL_LEN:-4096}"
 max_num_batched_tokens="${MAX_NUM_BATCHED_TOKENS:-256}"
 gpu_memory_utilization="${GPU_MEMORY_UTILIZATION:-0.80}"
+container_memory="${CONTAINER_MEMORY:-9g}"
+container_memory_swap="${CONTAINER_MEMORY_SWAP:-12g}"
 ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
 xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
@@ -37,6 +39,8 @@ gdn_native_fallback="${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}"
 [[ "${max_model_len}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_MODEL_LEN must be positive\n' >&2; exit 1; }
 [[ "${max_num_batched_tokens}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_BATCHED_TOKENS must be positive\n' >&2; exit 1; }
 [[ "${gpu_memory_utilization}" =~ ^0\.[0-9]+$ ]] || { printf 'GPU_MEMORY_UTILIZATION must be between 0 and 1\n' >&2; exit 1; }
+[[ "${container_memory}" =~ ^[1-9][0-9]*[gGmM]$ ]] || { printf 'CONTAINER_MEMORY must be a positive Docker memory value such as 9g\n' >&2; exit 1; }
+[[ "${container_memory_swap}" =~ ^[1-9][0-9]*[gGmM]$ ]] || { printf 'CONTAINER_MEMORY_SWAP must be a positive Docker memory value such as 12g\n' >&2; exit 1; }
 [[ "${ccl_p2p_access}" == 0 || "${ccl_p2p_access}" == 1 ]] || { printf 'CCL_P2P_ACCESS must be 0 or 1\n' >&2; exit 1; }
 [[ "${fp8_block_w8a16}" == 0 || "${fp8_block_w8a16}" == 1 ]] || { printf 'VLLM_XPU_FP8_BLOCK_W8A16 must be 0 or 1\n' >&2; exit 1; }
 [[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || { printf 'VLLM_XPU_ENABLE_XPU_GRAPH must be 0 or 1\n' >&2; exit 1; }
@@ -99,7 +103,7 @@ fi
 
 exec docker run --rm --name "${container}" \
     --ulimit core=0 \
-    --memory 9g --memory-swap 12g \
+    --memory "${container_memory}" --memory-swap "${container_memory_swap}" \
     --device /dev/dri:/dev/dri \
     --group-add render \
     --cap-add SYS_PTRACE \

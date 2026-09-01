@@ -16,6 +16,8 @@ max_num_seqs=${MAX_NUM_SEQS:-128}
 max_model_len=${MAX_MODEL_LEN:-256}
 max_num_batched_tokens=${MAX_NUM_BATCHED_TOKENS:-512}
 gpu_memory_utilization=${GPU_MEMORY_UTILIZATION:-0.96}
+container_memory=${CONTAINER_MEMORY:-9g}
+container_memory_swap=${CONTAINER_MEMORY_SWAP:-12g}
 xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
@@ -48,6 +50,14 @@ for value_name in max_num_seqs max_model_len max_num_batched_tokens; do
 done
 [[ "${gpu_memory_utilization}" =~ ^0\.[0-9]+$ ]] || {
   printf 'GPU_MEMORY_UTILIZATION must be between 0 and 1\n' >&2
+  exit 1
+}
+[[ "${container_memory}" =~ ^[1-9][0-9]*[gGmM]$ ]] || {
+  printf 'CONTAINER_MEMORY must be a positive Docker memory value such as 9g\n' >&2
+  exit 1
+}
+[[ "${container_memory_swap}" =~ ^[1-9][0-9]*[gGmM]$ ]] || {
+  printf 'CONTAINER_MEMORY_SWAP must be a positive Docker memory value such as 12g\n' >&2
   exit 1
 }
 [[ "${xpu_graph}" == 0 || "${xpu_graph}" == 1 ]] || {
@@ -118,7 +128,7 @@ fi
 
 exec docker run --rm --name "${container}" \
   --ulimit core=0 \
-  --memory 9g --memory-swap 12g \
+  --memory "${container_memory}" --memory-swap "${container_memory_swap}" \
   --device /dev/dri:/dev/dri --group-add render \
   --cap-add SYS_PTRACE --security-opt label=disable \
   --ipc=host --shm-size=8g \
