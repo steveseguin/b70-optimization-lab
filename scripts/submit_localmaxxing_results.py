@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import hashlib
 import json
 import os
 import statistics
@@ -13,6 +14,7 @@ from pathlib import Path
 API_URL = "https://www.localmaxxing.com/api/speed-tests"
 API_DRY_RUN_URL = f"{API_URL}/dry-run"
 DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
+REPO_ROOT = Path(__file__).resolve().parents[1]
 PRIMARY_METRIC = (
     "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft"
 )
@@ -99,6 +101,26 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     suite_id = engine.get("realisticSuiteId")
     if not isinstance(suite_id, str) or not suite_id:
         problems.append("missing realisticSuiteId")
+
+    attestation = engine.get("promotionAttestation")
+    attestation_sha256 = engine.get("promotionAttestationSha256")
+    if attestation is not None or attestation_sha256 is not None:
+        if not isinstance(attestation, str) or not attestation:
+            problems.append("promotionAttestation must name a repository file")
+        elif not isinstance(attestation_sha256, str) or len(attestation_sha256) != 64:
+            problems.append("promotionAttestationSha256 must be a SHA-256 digest")
+        else:
+            attestation_path = (REPO_ROOT / attestation).resolve()
+            if not attestation_path.is_relative_to(REPO_ROOT):
+                problems.append("promotionAttestation must stay inside the repository")
+            elif not attestation_path.is_file():
+                problems.append("promotionAttestation file does not exist")
+            else:
+                actual_sha256 = hashlib.sha256(attestation_path.read_bytes()).hexdigest()
+                if actual_sha256 != attestation_sha256:
+                    problems.append(
+                        "promotionAttestationSha256 does not match the repository file"
+                    )
 
     for key, max_length in API_STRING_LIMITS.items():
         value = payload.get(key)

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import unittest
 from pathlib import Path
 
@@ -87,6 +88,23 @@ class LocalMaxxingMetricAccountingTest(unittest.TestCase):
             '"targetModelVerifiedAcceptedTokens": true',
             projected["extraFlags"],
         )
+
+    def test_promotion_attestation_digest_is_bound_to_repository_file(self) -> None:
+        item = queue_item(
+            "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft",
+            "inter-token-intervals",
+        )
+        flags = item["payload"]["engineFlags"]
+        relative = SCRIPT.relative_to(MODULE.REPO_ROOT)
+        flags["promotionAttestation"] = str(relative)
+        flags["promotionAttestationSha256"] = hashlib.sha256(
+            SCRIPT.read_bytes()
+        ).hexdigest()
+        self.assertEqual(MODULE.preflight_payload(item), [])
+
+        flags["promotionAttestationSha256"] = "0" * 64
+        problems = MODULE.preflight_payload(item)
+        self.assertTrue(any("does not match" in problem for problem in problems))
 
 
 if __name__ == "__main__":

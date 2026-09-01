@@ -31,7 +31,7 @@
         "attentionBackend": "vLLM XPU FlashAttention v2",
         "benchmarkJson": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
         "promotionAttestation": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
-        "promotionAttestationSha256": "856f802b33282dc8d1f37ff02f4041af039986da61c20fb77cb0f7ac08a602b1",
+        "promotionAttestationSha256": "a72512595b692c756b14d62bd09c1506fce5afbe4481d8321cdd4f60c96029fd",
         "freshResponseHeadlineValid": true,
         "freshResponseValidity": "Two fresh MTP1 servers and two same-image MTP0 controls; full 12-prompt/six-class natural-512 suite; every prompt sent once per server; cached_tokens=0; all canaries passed; all four target/candidate comparisons matched 12/12 complete token arrays.",
         "githubResultPacket": "https://github.com/steveseguin/b70-optimization-lab/tree/main/packages/qwen38-27b-fp8-tp2-b70",
@@ -86,7 +86,7 @@
         "max_num_batched_tokens": "1024",
         "max_num_seqs": "1"
       },
-      "notes": "Strict varied-prompt static MTP1 result. 51.808087 tok/s is the center of two fresh-server class-balanced medians (51.796549/51.819625). Two same-image fresh MTP0 controls measured 33.722035/33.745004 tok/s. All four complete natural-512 suites were cache zero and passed independent canaries; both within-arm comparisons and all four target/candidate comparisons matched 12/12 complete token arrays. No prefix, prompt/KV, history, n-gram, response, or learned-prompt cache. Package remains candidate pending independent clean-host replay."
+      "notes": "Strict varied-prompt static MTP1 result. 51.808087 tok/s is the center of two fresh-server class-balanced medians (51.796549/51.819625). Two same-image fresh MTP0 controls measured 33.722035/33.745004 tok/s. All four complete natural-512 suites were cache zero and passed independent canaries; both within-arm comparisons and all four target/candidate comparisons matched 12/12 complete token arrays. A new pinned source rebuild replayed at 51.579521 tok/s with 12/12 exact arrays against both MTP1 and MTP0. No prefix, prompt/KV, history, n-gram, response, or learned-prompt cache. Package remains candidate pending independent host-driver/Docker installation replay."
     }
   }
 ]
