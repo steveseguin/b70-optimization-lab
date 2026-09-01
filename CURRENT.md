@@ -77,8 +77,10 @@ decoder receipt count remained 1,040. D68 instead failed before readiness at
 layer 1's repaired dummy MLP: the M=512 hook padded synthetic 256-token profile
 data and Xe logged 491 fault responses, five CAT errors, and one reset. Both
 B70s recovered and passed independent deterministic compute after teardown.
-D69 marks all `_dummy_run` calls and bypasses projection repair only for those
-synthetic inputs; real request prefills retain the repair. See the
+D69 marked all `_dummy_run` calls and bypassed projection repair only for those
+synthetic inputs; it passed exact startup accounting, both health checks, and a
+clean kernel gate with repair enabled. Real request prefills retain the repair.
+D70 is the full strict output/performance retry. See the
 [`D62 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-prefill-projection-repair-tp2-mtp1-sync-d62-result.md)
 [`D63 result`](experiments/qwen38-27b-b70/notes/2026-08-31-qwen38-tp2-mtp1-no-projection-repair-startup-d63-result.md),
 and
