@@ -1,0 +1,82 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-retained-lowering-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-retained-lowering-20260901-r99",
+  "status": "completed-rejected",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-retained-lowering-r99-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98",
+    "base_image_id": "sha256:d3ce08c3943d797a921f074ed3e5b4aeaff7d140fd756f2e67e6493bc0391895",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-retained-lowering-r99",
+    "candidate_image_id": "sha256:a2e09416d1f55da2b71ffefbbec7db7d6581089b33ed125c6ea3ed147050eaf8",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-retained-lowering-r99-20260901.patch",
+    "patch_sha256": "9fa834459abd7774eae3b9d5c5c01727ad6a6f15c58a091f7925f360a7731058",
+    "installed_qwen_gdn_sha256": "bd5d79e47f90846af3a8fa5e078d9352926668bc0925af72f99906e924de225c"
+  },
+  "operator_gate": {
+    "status": "pass",
+    "all_eight_row_slots_bitwise_invariant": true,
+    "row_slots_bitwise_invariant": [true, true, true, true, true, true, true, true],
+    "tail_masking_matches_full_block": true,
+    "reference_max_abs_error": 0.0,
+    "unsupported_shape_failed_closed": true,
+    "artifact_sha256": "7ea700992bfd219d2b9e24fe28ef051882636f2492153b6c971f25b2f9003743"
+  },
+  "compiled_artifact_gate": {
+    "reduction": {
+      "xblock": 8,
+      "rblock": 128,
+      "num_warps": 2,
+      "num_stages": 1
+    },
+    "pointwise": {
+      "xblock": 1024,
+      "num_warps": 4,
+      "num_stages": 1,
+      "transcendentals": "libdevice.rsqrt and libdevice.exp"
+    },
+    "matches_retained_r90_lowering": true
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "completion_tokens": [128],
+      "aggregate_tok_s_wall_diagnostic": 27.861920214510388
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "completion_tokens": [128, 128],
+      "aggregate_tok_s_wall_diagnostic": 59.571397094476914
+    },
+    "all_three_sequences_equal_r90": true,
+    "cache_prompt_first_bad_output": {
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "trace_gate": {
+    "records": 192,
+    "layer0_cache_prompt_core_and_z_exact_across_c1_c2_on_both_ranks": true
+  },
+  "interpretation": "Matching every recovered retained launch and math-lowering detail exactly reproduced R90: c1 is exact, while the cache request in c2 follows the known alternate stream and the index request remains exact. The retained eight-row/libdevice path is the c1-exact arm; R97's one-row/two-stage/Triton-math path is the c2-exact arm. A runtime request-metadata selector inside the custom-op boundary is now justified, while another compile-time Python/SymInt branch is not.",
+  "next_experiment": "Select the R99 arm for single-request work and the R97 arm for multi-request work from live GDNAttentionMetadata inside the opaque custom-op implementation, then require c1 1/1 and c2 2/2 on the unchanged frozen oracle.",
+  "reporting_boundary": "Rejected diagnostic. Do not publish throughput. c2 failed required identity, first-use kernels JIT-compiled during inference, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful API shutdown followed by bounded runtime cleanup"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-retained-lowering-20260901-r99",
+    "raw_result_sha256": "8df35978d5224b710085b6c5488f5981198d7e14110b6bbf52ed0612a41285d1",
+    "trace_sha256": "ae3f29707c80d6ccf872a569a63954f3f285dacc3a6c22e5846757cb0067835e",
+    "server_log_sha256": "955b259ddb17877fcbea4661c5b192eca7528ea83e86ab4cbc8f054aedd95799",
+    "kernel_journal_sha256": "ad6a7f790f82994d1c4cb563ff404982db7862fe728d979b5f80229f064ff4a9",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "image_inspect_sha256": "a7753837adfb11e1afeab9fb2d8766001b4b57e84b67913b21636eccb7e5e009",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

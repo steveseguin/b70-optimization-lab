@@ -243,3 +243,17 @@ pointwise block, and explicit libdevice `rsqrt`/`exp`; R98 used two stages, a
 will match those retained compiled values rather than infer them. R98's result
 is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-xblock8-row-stable-r98-result.json).
+
+R99 matched every remaining retained R90 lowering detail: one pipeline stage
+for both kernels, an eight-row-by-128 two-warp reduction, a 1024-element
+four-warp pointwise launch, and libdevice `rsqrt`/`exp`. The operator gate was
+bitwise row-slot invariant and matched the bounded reference exactly. End to
+end, all three complete token streams became byte-for-byte R90 again: c1
+recovered to 1/1, while c2 remained 1/2 with the cache request's same token-97
+`348` to `2972` divergence and the index request exact. Layer-0 raw GDN core
+output and `z` remained exact across c1/c2 on both ranks. This closes the
+source-level lowering search: R99 is the c1-exact arm and R97 is the c2-exact
+arm. The next diagnostic must select between them using live request metadata
+inside the opaque custom-op implementation; R95 already proved that a Python
+shape branch outside that boundary freezes during compilation. R99's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-retained-lowering-r99-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-retained-lowering-r99-result.json).
