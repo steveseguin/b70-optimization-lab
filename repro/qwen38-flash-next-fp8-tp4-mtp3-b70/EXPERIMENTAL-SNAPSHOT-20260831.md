@@ -9,17 +9,11 @@ active experiment files into a second, drifting recipe.
 
 ## What the evidence supports
 
-Flash-Next itself has **not** crossed 30 tok/s in retained evidence.
-
 | Profile | Scoped measurement | Evidence boundary |
 | --- | ---: | --- |
 | TP4/EP4, eager, MTP4, configured 512 | **20.727176 tok/s** median after first text | Fastest short research screen; repetitive p146/o256/c1 workload, Grade C, not the fixed realistic final gate |
 | TP4/EP4, eager, MTP3, exact active 4K | **15.501565 tok/s** median after first text | Preferred practical 4K screen; median TTFT 187.899 s and wall output 1.246260 tok/s |
 | TP4/EP4, eager, MTP3, p4096/o128 | **4.669548 tok/s** conventional 99-interval decode | Formal exact-depth fixture paired with the 4K profile above |
-
-The separate dense Qwen3.8 27B lanes have qualified results above 30 tok/s.
-Those model, weight, runtime, and benchmark identities do not transfer to the
-125B-A6B Flash-Next FP8 artifact.
 
 The August 30–31 target-side optimization work also does not supersede this
 snapshot. It retains a target-only short frontier of `5.515783 tok/s`; later

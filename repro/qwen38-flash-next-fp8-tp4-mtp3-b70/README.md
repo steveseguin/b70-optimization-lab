@@ -65,9 +65,8 @@ thinking parity.
 
 The separate configured-512 MTP4 research screen reached `20.727176 tok/s`
 after first text, but it used a narrow repetitive workload and remains Grade C.
-It is not a conventional realistic-suite headline and does not support a
-`>30 tok/s` Flash-Next claim. Its exact identity and LocalMaxxing-withheld
-disposition are recorded in the dated snapshot above.
+It is not a conventional realistic-suite headline. Its exact identity and
+LocalMaxxing-withheld disposition are recorded in the dated snapshot above.
 
 ## Frozen model identity
 

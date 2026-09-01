@@ -51,10 +51,9 @@ Identity: official 125B-A6B FP8 artifact on four B70s, TP4/EP4, eager and
 graph off, with selective host placement. The fastest retained short Grade-C
 screen is MTP4 at `20.727176 tok/s` after first text; the preferred exact-4K
 MTP3 screen is `15.501565 tok/s`, with `187.899 s` TTFT and `1.246260` wall
-tok/s. Flash-Next has not crossed 30 tok/s in retained evidence. This entry is
-not a promoted or runnable recipe: the hash-addressed dependency wheelhouse,
-portable four-card preflight, and clean artifact-only replay remain open, and
-LocalMaxxing submission is withheld.
+tok/s. This entry is not a promoted or runnable recipe: the hash-addressed
+dependency wheelhouse, portable four-card preflight, and clean artifact-only
+replay remain open, and LocalMaxxing submission is withheld.
 
 ## Qwen3.6 Family Recipes
 
