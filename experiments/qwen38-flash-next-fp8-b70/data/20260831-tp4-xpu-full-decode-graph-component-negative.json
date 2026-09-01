@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "status": "closed_correctness_negative",
+  "classification": "tp4_xccl_xpu_graph_replay_not_reusable",
+  "identity": {
+    "repository_commit": "208a0f249d3b6ded6200f39f71aff4e97825b3f9",
+    "torch": "2.11.0+xpu",
+    "world_size": 4,
+    "device": "Intel Arc Pro B70",
+    "dtype": "bfloat16",
+    "shape": [1, 2560],
+    "bytes": 5120,
+    "repeats_requested": 100,
+    "ccl_sycl_allreduce_ll_threshold": 8192
+  },
+  "result": {
+    "eager_oracle_passed": true,
+    "graph_replay_iteration_0_passed": true,
+    "graph_replay_iteration_1_passed": false,
+    "failing_ranks": [0, 1, 2, 3],
+    "exit_code": 1,
+    "timing_eligible": false
+  },
+  "artifacts": {
+    "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/20260831-xpu-graph-xccl-a1",
+    "probe_sha256": "e1f6ecb80308981445017e1c6a14637817393824929df0f6a237198ce1fe5864",
+    "torchrun_log_sha256": "947f4d5f2ba7f9442af0944a5bd6cce9075440c66db662325b45fa4d2ff98ab2"
+  },
+  "postflight": {
+    "four_devices_enumerated": true,
+    "model_or_server_loaded": false,
+    "surviving_process": false,
+    "kernel_fault_match": false,
+    "host_memory_recovered": true,
+    "swap_recovered": true,
+    "reboot_required": false
+  },
+  "interpretation": "TP4 XCCL inside XPUGraph is not safely reusable on this stack. CompilationMode.NONE plus FULL_DECODE_ONLY cannot advance to a model endpoint because its mandatory collective prerequisite failed exact changing-input replay.",
+  "protected_results_changed": false
+}

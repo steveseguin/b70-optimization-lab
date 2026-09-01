@@ -3116,3 +3116,12 @@ exact-4K reliability negative. Teardown and every health/evidence gate passed;
 the boot remains eligible without reboot. Protected MTP0/MTP4 results are
 unchanged. See the
 [A32 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-mtp0-a32-moe-m1-current-negative.md).
+The materially different compilation-free `FULL_DECODE_ONLY` graph route then
+failed its mandatory no-model prerequisite. Eager XCCL passed the exact
+changing-input oracle and graph replay 0 passed, but replay 1 mismatched on all
+four ranks for the production BF16 `[1,2560]` all-reduce. No timing, endpoint,
+or model load followed. Four-card and host postflight stayed healthy, so no
+reboot is required. This closes TP4 full-decode graph work on the current
+stack; it avoids PIECEWISE's host-memory failure but cannot safely replay the
+97 collectives in each target step. Protected rates remain unchanged. See the
+[component result](experiments/qwen38-flash-next-fp8-b70/notes/2026-08-31-tp4-xpu-full-decode-graph-component-negative.md).
