@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-ROOT="${ROOT:-/home/steve/llm-optimizations}"
-PYTHON="${PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ROOT="${ROOT:-$(cd -- "${SCRIPT_DIR}/.." && pwd)}"
+if [[ -n "${PYTHON:-}" ]]; then
+  PYTHON=${PYTHON}
+elif python3 -c 'import torch; assert hasattr(torch, "xpu")' >/dev/null 2>&1; then
+  PYTHON=python3
+elif [[ -x "${HOME}/.venvs/vllm-xpu/bin/python" ]]; then
+  PYTHON="${HOME}/.venvs/vllm-xpu/bin/python"
+else
+  printf 'set PYTHON to the XPU-enabled Python interpreter\n' >&2
+  exit 2
+fi
 PHYSICAL_DEVICES="${PHYSICAL_DEVICES:-0,1,2,3}"
 XCCL_DEVICES="${XCCL_DEVICES:-$PHYSICAL_DEVICES}"
 XCCL_NPROC="${XCCL_NPROC:-}"
@@ -35,12 +45,15 @@ PY
 done
 
 echo "[xpu-health] xccl_devices=$XCCL_DEVICES nproc=$XCCL_NPROC"
+# Loopback is the stable local-only transport for this single-host probe. A
+# hard-coded physical NIC name made the health check fail after interface
+# renames even though both GPUs and oneCCL were healthy.
 if ! ONEAPI_DEVICE_SELECTOR="level_zero:$XCCL_DEVICES" \
   ZE_AFFINITY_MASK="$XCCL_DEVICES" \
   CCL_ATL_TRANSPORT="${CCL_ATL_TRANSPORT:-ofi}" \
   CCL_TOPO_P2P_ACCESS="${CCL_TOPO_P2P_ACCESS:-1}" \
-  FI_TCP_IFACE="${FI_TCP_IFACE:-eth1}" \
-  CCL_KVS_IFACE="${CCL_KVS_IFACE:-eth1}" \
+  FI_TCP_IFACE="${FI_TCP_IFACE:-lo}" \
+  CCL_KVS_IFACE="${CCL_KVS_IFACE:-lo}" \
   timeout "$TIMEOUT_S"s "$PYTHON" -m torch.distributed.run \
     --standalone \
     --nproc_per_node="$XCCL_NPROC" \

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
 MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6-35B-A3B-Quark-W8A8-INT8/snapshots/cced56592e8c8935f8220836b4baa04dfd389118}"
 SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
 HOST="${HOST:-127.0.0.1}"
@@ -15,7 +17,7 @@ if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
   COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
 fi
 QWEN36_XPU_PREFLIGHT="${QWEN36_XPU_PREFLIGHT:-auto}"
-QWEN36_XPU_PREFLIGHT_SCRIPT="${QWEN36_XPU_PREFLIGHT_SCRIPT:-/home/steve/llm-optimizations/scripts/check-qwen36-xpu-xccl-health.sh}"
+QWEN36_XPU_PREFLIGHT_SCRIPT="${QWEN36_XPU_PREFLIGHT_SCRIPT:-${SCRIPT_DIR}/check-qwen36-xpu-xccl-health.sh}"
 QWEN36_XPU_PREFLIGHT_LOG="${QWEN36_XPU_PREFLIGHT_LOG:-${LOG_PATH%.*}-xpu-health.log}"
 MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
 MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"

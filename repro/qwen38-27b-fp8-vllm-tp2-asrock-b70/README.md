@@ -660,23 +660,45 @@ The wrapper fixes the measured 33,024-token/one-slot/4,096-prefill profile.
 Changing those values creates another operating profile and must not be
 compared as though it were the same measurement.
 
-To reproduce the historical MTP1 exact-depth profile instead, use another new
-empty cache and the dedicated wrappers:
+For the current real-content depth audit, first create a matched-image MTP0
+oracle. The fixture contains unrepeated technical prose, Python code, and
+structured documentation at every measured depth; it is stronger than the
+older single repeated-token shape fixture.
 
 ```bash
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50 \
+EXPECTED_IMAGE_ID=sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4 \
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-mtp0-depth-cache \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-depth-server.sh
+
+ARM=mtp0 OUT_DIR=/path/to/new-mtp0-real-content-depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-real-content-depth.sh
+```
+
+Stop that server, launch MTP1 from a separate empty cache, and require all 18
+complete output-token arrays to match the MTP0 oracle:
+
+```bash
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50 \
+EXPECTED_IMAGE_ID=sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4 \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-mtp1-depth-cache \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-depth-server.sh
 
-OUT_DIR=/path/to/new-mtp1-depth-result \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-depth.sh
+ARM=mtp1 ORACLE_DIR=/path/to/new-mtp0-real-content-depth-result \
+OUT_DIR=/path/to/new-mtp1-real-content-depth-result \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-real-content-depth.sh
 ```
 
-The launcher inherits the fail-closed qualified image ID and deterministic
-compiler/RMS/GDN/oneCCL settings, then fixes 33,024 tokens, one slot, and
-4,096-token chunked-prefill batches. Compare every returned token array to the
-tracked MTP0 depth oracle before publishing a result. R33 passed 6/6; it did
-not manufacture an x=0 point or warm/retry its first 2K observation.
+Both launchers inherit the fail-closed final-image and deterministic
+compiler/RMS/GDN/oneCCL settings, then fix 33,024 tokens, one slot, and
+4,096-token chunked-prefill batches. Every 2K/4K/8K/16K/24K/32K value is
+directly measured. The script performs cache-zero request gates and canaries
+before and after the matrix; it refuses to pass MTP1 if any complete token
+array differs from MTP0. The older `bench-w8a16-mtp1-depth.sh` remains only for
+replaying historical R33 Grade-C shape evidence. The current audit contract is
+frozen in the [R56 preregistration](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json).
 
 The launcher binds the endpoint to loopback, maps both `/dev/dri` devices, and
 uses `ZE_AFFINITY_MASK=0,1`. Verify device enumeration before copying that
