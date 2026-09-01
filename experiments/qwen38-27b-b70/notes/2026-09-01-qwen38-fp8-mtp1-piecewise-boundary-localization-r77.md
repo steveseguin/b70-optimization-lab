@@ -132,3 +132,13 @@ came from a packed 59-row projection, not a natural 28-row call. R88's isolated
 28-row digest therefore should not equal it; the full index output still
 matches the sequential oracle. R88's result is
 [`2026-09-01-qwen38-fp8-mtp1-qkvz-request-isolation-r88-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-qkvz-request-isolation-r88-result.json).
+
+R89 added a narrow per-request native GDN prefill/cache path on top of R88, but
+the strict result was unchanged: c1 1/1, c2 1/2, with the same cache-prompt
+token difference. Its input trace again has exact layer-0 qkvz and BA on both
+ranks and differing layer-1 projections. R89 did not include a dispatch record,
+so this negative cannot distinguish a guard fallback from a successful
+per-request core followed by a batch-dependent norm/output projection. The next
+experiment must record dispatch and hash `core_attn_out`, `z`, and the final
+GDN-layer output before changing arithmetic again. R89's result is
+[`2026-09-01-qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89-result.json).

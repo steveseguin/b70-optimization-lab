@@ -1,0 +1,71 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-request-isolation-20260901-r89",
+  "status": "completed-candidate-rejected-needs-dispatch-proof",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-request-isolation-r89",
+    "image_id": "sha256:f90ffe8bff7db05f99119d293e885ec1c79dc2769d23e5b07b31e5f81b3f6d44",
+    "base_r88_image_id": "sha256:206c64b682f204e3d9b83d36d6d7947d8d2d31e904e99fd6ca13a9daf9e0d849",
+    "vllm_patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-prefill-request-isolation-r89-20260901.patch",
+    "vllm_patch_sha256": "44a5bb2f39e0d379eb81de9f9357fe68cccf1793ef927a61daac254db3bafa3f",
+    "installed_xpu_ops_sha256": "1d521fbb86005922730435ba66c41ba8e387efff3a8905d2244516a1dc6f7a22"
+  },
+  "workload": {
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "xpu_graph": false,
+    "max_model_len": 256,
+    "max_tokens": 128,
+    "temperature": 0,
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "model_direct_verification": "all recorded checkpoint identities passed O_DIRECT and ordinary-read comparison",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "aggregate_tok_s_wall_diagnostic": 32.45719109300757
+    },
+    "concurrency_2": {
+      "oracle_exact": "1/2",
+      "cached_tokens": [0, 0],
+      "aggregate_tok_s_wall_diagnostic": 66.6276251339706,
+      "failing_prompt_id": "cache-c000",
+      "first_difference": {
+        "zero_based_token_index": 96,
+        "human_token_number": 97,
+        "expected_token_id": 348,
+        "observed_token_id": 2972
+      }
+    }
+  },
+  "trace_analysis": {
+    "records": 192,
+    "expected_records": 192,
+    "projected_qkvz_exact_rank_layer_pairs": "2/96",
+    "projected_ba_exact_rank_layer_pairs": "2/96",
+    "layer_0_cache_projection_exact_on_both_ranks": true,
+    "layer_1_cache_projection_exact_on_both_ranks": false,
+    "dispatch_proof": "not instrumented",
+    "interpretation": "The output is unchanged from R88. The input trace cannot distinguish whether R89's narrow native-prefill branch executed and the later norm/out projection diverged, or its guard fell back to the packed operation. A post-core trace plus explicit dispatch record is required before another repair."
+  },
+  "decision": "Reject R89 as a repair. Next trace per-request core_attn_out, z, and final GDN-layer output at layer 0, and record whether the request-isolated native branch executed.",
+  "reporting_boundary": "Do not promote throughput, site values, README values, recipe defaults, protected speeds, or LocalMaxxing. The strict c2 identity gate failed, tracing synchronizes execution, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "clean"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-prefill-request-isolation-20260901-r89",
+    "raw_result_sha256": "ddf211a46a6d0da990d7378820b4a5db5855307a8bcc2cea26210133b40e4935",
+    "trace_sha256": "f1e88aa8808fa62485a2f3de1cf8acead0136c055803b6bab3ab835954fd14d9",
+    "server_log_sha256": "bcb94f6a4597f352cb1089c78e8bce3caf4d85253124e1f0a6b16166a2fb33db",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}
