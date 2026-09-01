@@ -1,0 +1,62 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -299,8 +299,15 @@
+     try:
+         forward_context = get_forward_context()
+         attn_metadata_raw = forward_context.attn_metadata
++        if attn_metadata_raw is None:
++            logger.warning_once(
++                "R101 Qwen GDN metadata-free profile R99 arm executed"
++            )
++            return _xpu_qwen_gdn_runtime_selected_rmsnorm_gated_impl(
++                x, z, weight, epsilon, multi_request=False
++            )
+         if not isinstance(attn_metadata_raw, dict):
+-            raise RuntimeError("GDN attention metadata is unavailable")
++            raise RuntimeError("GDN attention metadata has an unexpected container")
+         attn_metadata = attn_metadata_raw[layer_name]
+         if not isinstance(attn_metadata, GDNAttentionMetadata):
+             raise RuntimeError("GDN attention metadata has an unexpected type")
+@@ -316,12 +323,21 @@
+     )
+     if request_count < 1:
+         raise RuntimeError("runtime-selected Qwen GDN RMSNorm found no requests")
++    multi_request = request_count > 1
++    if multi_request:
++        logger.warning_once(
++            "R101 Qwen GDN live-metadata multi-request R97 arm executed"
++        )
++    else:
++        logger.warning_once(
++            "R101 Qwen GDN live-metadata single-request R99 arm executed"
++        )
+     return _xpu_qwen_gdn_runtime_selected_rmsnorm_gated_impl(
+         x,
+         z,
+         weight,
+         epsilon,
+-        multi_request=request_count > 1,
++        multi_request=multi_request,
+     )
+ 
+ 
+@@ -386,9 +402,6 @@
+             USE_RETAINED_MATH=False,
+             num_warps=4,
+         )
+-        logger.warning_once(
+-            "R100 Qwen GDN live-metadata multi-request R97 arm executed"
+-        )
+     else:
+         rows_per_program = 8
+         _xpu_qwen_gdn_row_stable_rmsnorm_sum_kernel[
+@@ -419,9 +432,6 @@
+             num_warps=4,
+             num_stages=1,
+         )
+-        logger.warning_once(
+-            "R100 Qwen GDN live-metadata single-request R99 arm executed"
+-        )
+     return output.reshape(x.shape)
+ 
+ 
