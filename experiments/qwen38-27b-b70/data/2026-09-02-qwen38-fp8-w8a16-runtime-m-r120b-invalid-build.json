@@ -1,0 +1,11 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-runtime-m-invalid-build.v1",
+  "campaign_id": "qwen38-fp8-w8a16-runtime-m-20260902-r120b",
+  "status": "invalid-pre-execution-build",
+  "source_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+  "patch_sha256": "d116bd47fef52463939d0cd08dc6fa68ff3b05b970b8f1e55d16df9801ee0ad7",
+  "build_completed": false,
+  "gpu_execution_attempted": false,
+  "invalid_reason": "The oneDNN descriptor correctly used int64_t, but the existing primitive cache-key concat helper accepts int. Passing descriptor_m to the key caused a compile-time overload failure.",
+  "decision": "Superseded by R120c, using a separate int cache sentinel and int64_t oneDNN descriptor dimension."
+}
