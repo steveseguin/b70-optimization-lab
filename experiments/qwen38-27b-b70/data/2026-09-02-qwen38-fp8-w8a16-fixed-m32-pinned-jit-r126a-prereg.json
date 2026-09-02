@@ -1,0 +1,18 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m32-pinned-jit-correction-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m32-pinned-jit-20260902-r126a",
+  "status": "preregistered-before-r126a-xpu-execution",
+  "base_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126-prereg.json",
+  "failed_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126-result.json",
+  "only_change": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-w8a16-fixed-m32-guard-r126a-20260902.patch",
+    "patch_sha256": "b27b6771332627bfc7fb29e0d0131180d7b3e52581d4052605347f337cb936c0",
+    "description": "Change the rank-3 activation guard and diagnostic string from [B,4,K] to [B,32,K]."
+  },
+  "candidate": {
+    "extension_bytes": 70110008,
+    "extension_sha256": "d300220422c75fff5e5f2a54df7d03748dc5a6e1527895d17b318e9c27070560",
+    "compile_only_check": "passed; R126a has not allocated an XPU tensor"
+  },
+  "unchanged": "Benchmark hash, M values, strategy hash, control/candidate order, correctness gates, latency gates, health stop, and no-server rule are unchanged from R126."
+}
