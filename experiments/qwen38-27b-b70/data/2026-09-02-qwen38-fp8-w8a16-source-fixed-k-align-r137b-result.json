@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-align-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-align-20260902-r137b",
+  "classification": "source-selector-operator-gate",
+  "status": "identity-passes-all-shape-dense-gate-performance-misses-frozen-c64-gate-by-0.002844",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-source-fixed-k-align-r137b-prereg.json",
+  "artifact_sha256": "33e49a9dc315a8b0fe25534b098cc373f77856032f8fe91e6871d05800901813",
+  "activation": {
+    "gemm_kernel_environment_unset": true,
+    "m64_final_kernel_exact": true,
+    "m128_final_kernel_exact": true,
+    "activation_gate_pass": true
+  },
+  "identity": {
+    "shapes": 6,
+    "dense_m_values_per_shape": 512,
+    "shape_m_pairs": 3072,
+    "all_dense_prefix_exact": true,
+    "all_dense_repeat_exact": true,
+    "all_registered_permutations_exact": true,
+    "all_padding_168_to_200_exact": true,
+    "all_registered_complete_outputs_match_r134_m32": true,
+    "all_registered_row0_outputs_match_r134_m32": true
+  },
+  "weighted_latency": {
+    "method": "One candidate run per shape, median of five 100-call samples, weighted by 48 GDN-in, 48 GDN-out, 16 attention-QKV, 16 attention-output, 64 MLP gate/up, and 64 MLP down calls. Ratios use the frozen R135 natural totals.",
+    "by_m": {
+      "2": {"candidate_us": 20432.70816, "control_us": 21767.575, "ratio": 0.938676, "pass": true},
+      "4": {"candidate_us": 20263.48304, "control_us": 21368.291, "ratio": 0.948297, "pass": true},
+      "8": {"candidate_us": 20210.55888, "control_us": 20365.88, "ratio": 0.992373, "pass": true},
+      "16": {"candidate_us": 20484.3176, "control_us": 20511.879, "ratio": 0.998656, "pass": true},
+      "32": {"candidate_us": 23101.79088, "control_us": 23045.054, "ratio": 1.002462, "pass": true},
+      "64": {"candidate_us": 27734.3496, "control_us": 27745.613, "ratio": 0.999594, "pass": true},
+      "128": {"candidate_us": 39818.30048, "control_us": 38552.092, "ratio": 1.032844, "pass": false},
+      "168": {"candidate_us": 59807.5416, "control_us": 45089.97, "ratio": 1.326405, "prefill_2x_pass": true},
+      "256": {"candidate_us": 68873.33312, "control_us": 55311.37, "ratio": 1.245193, "prefill_2x_pass": true},
+      "512": {"candidate_us": 131343.39936}
+    },
+    "decode_ratio_ceiling": 1.03,
+    "decode_gate_pass": false,
+    "c64_excess_over_gate": 0.002844
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-source-fixed-k-align-r137b",
+    "sha256_manifest_bytes": 2254,
+    "sha256_manifest_sha256": "65c24cdc0219bc423c631fff4b1bc85ee3e1039d657626541f392f535dc7afc9",
+    "activation_log_sha256": "48f846ff68b545f67a63f04e7650897ebea1b972757ee5efc9d7735ee3d5e50b",
+    "activation_result_sha256": "b9226e32543ac0633e72c73915be3dc3c46a5c51fcf3f44915173ceabb47e922"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "both_devices_normal_after_each_shape": true,
+    "new_fault_or_reset_visible_to_current_user": false,
+    "server_launched": false
+  },
+  "decision": "Accept the source selector's dense row-invariant arithmetic. Do not authorize a server from the cross-session 1.032844 c64 result; run a paired natural/source A-B-B-A performance confirmation."
+}

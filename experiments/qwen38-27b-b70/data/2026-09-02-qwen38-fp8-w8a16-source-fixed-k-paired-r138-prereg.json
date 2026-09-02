@@ -1,0 +1,44 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-paired-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-paired-20260902-r138",
+  "status": "preregistered-before-first-r138-xpu-execution",
+  "classification": "paired-operator-performance-confirmation",
+  "question": "Does the identity-qualified R137b selector remain within 3% of natural oneDNN through c64 when control and candidate are measured in an interleaved same-session A-B-B-A design?",
+  "basis": "R137b passed all 3,072 dense shape/M identity pairs. Its c64 ratio against the older R135 control was 1.032844, only 0.002844 above the gate and inconsistent with R136's 1.016875 same-session model, so a paired drift-resistant measurement is required before serving integration.",
+  "artifacts": {
+    "image_ref": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "natural_extension": "/mnt/fast-ai/build/qwen38-w8a16-pinned-jit-strategy-r123/build/_xpu_C.abi3.so",
+    "natural_extension_sha256": "5feaa29b8b0e9db8f7c6ae6ed2687c38341d742eb9f431769266b5b1d1f46b9f",
+    "natural_build": "ONEDNN_DEV_MODE=ON with GEMM_KERNEL unset",
+    "candidate_extension": "/mnt/fast-ai/build/qwen38-w8a16-fixed-k-source-r137/build-2026/_xpu_C.abi3.so",
+    "candidate_extension_sha256": "33e49a9dc315a8b0fe25534b098cc373f77856032f8fe91e6871d05800901813",
+    "candidate_build": "ONEDNN_DEV_MODE=OFF with GEMM_KERNEL unset",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
+  },
+  "screen": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-pinned-m32-decode-ladder.py",
+    "script_sha256": "06410ec94f572470b7cf286114fe94eddfecbd655f2772cdcdd2b9f845ad2b41",
+    "base_script_sha256": "5438b447c449a27fbf5dd07a1b3a519889dd928c06cbf7d4837b76c7f08f519d",
+    "arms": {"A": "natural R123 extension", "B": "R137b non-developer source selector"},
+    "order_per_shape": ["A1", "B1", "B2", "A2"],
+    "shape_order": ["gdn_in_proj_qkvz", "gdn_out_proj", "attn_qkv_proj", "attn_o_proj", "mlp_gate_up_proj", "mlp_down_proj"],
+    "m_values": [2, 4, 8, 16, 32, 64, 128, 168, 256],
+    "warmups": 10,
+    "iterations": 100,
+    "timing_repeats": 5,
+    "seed": 20260902,
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only"
+  },
+  "aggregation": "For each shape and arm, take the median of the two independent run medians at each M; multiply by the production call counts and sum; divide B by A.",
+  "gates": {
+    "decode": "The paired weighted B/A ratio must be <=1.03 independently at M2, M4, M8, M16, M32, M64, and M128.",
+    "prefill": "Report M168 and M256; either ratio above 2.00 rejects serving integration.",
+    "stability": "No arm may have a timing sample max/min ratio above 1.15 at M128; otherwise the affected shape is rerun once under a separately recorded amendment.",
+    "health": "No new Xe fault, copy-engine fault, CAT error, reset, timeout, hang, coredump, or device loss.",
+    "on_pass": "Record R138 and preregister the first serving-compatible R137b package and endpoint gate.",
+    "on_failure": "Keep R137b as an exact reference only and optimize the wide fixed-K strategy before any server build."
+  },
+  "server_allowed": false
+}
