@@ -1,0 +1,49 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-triton-row-invariant-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-triton-row-invariant-20260902-r121",
+  "classification": "operator-diagnostic-only",
+  "status": "closed-numerically-positive-latency-negative",
+  "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-triton-row-invariant.py",
+  "script_sha256": "9677809e590d006615e08327b5b56e6ede3d2de3f7cbc3f7f857cc621e257be6",
+  "fixed_block_m": 16,
+  "shape_results": {
+    "attn_o_proj": {
+      "shape_KN": [3072, 5120],
+      "compiled_configs": 3,
+      "all_configs_row_invariant": true,
+      "all_configs_permutation_invariant": true,
+      "all_configs_repeat_deterministic": true,
+      "max_abs_vs_static_oneDNN_M16": 0.0001220703125,
+      "best_config": {"block_n": 128, "block_k": 64, "num_warps": 8},
+      "best_M2_latency_us": 348.7569333333333,
+      "paired_static_oneDNN_M2_latency_us": 13.310766666666666,
+      "best_M2_latency_ratio": 26.201115387793838
+    },
+    "attn_qkv_proj": {
+      "shape_KN": [5120, 7168],
+      "compiled_configs": 3,
+      "all_configs_row_invariant": true,
+      "all_configs_permutation_invariant": true,
+      "all_configs_repeat_deterministic": true,
+      "max_abs_vs_static_oneDNN_M16": 0.0001220703125,
+      "best_config": {"block_n": 128, "block_k": 64, "num_warps": 8},
+      "best_M2_latency_us": 351.7361,
+      "paired_static_oneDNN_M2_latency_us": 62.413199999999996,
+      "best_M2_latency_ratio": 5.635604327289741
+    }
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-triton-row-invariant-r121",
+    "result_json_sha256": "cfff6723efd9e092dbaddf8ba6cfea99f9bbb99e1950f8c90c030c8108b7c810",
+    "run_log_sha256": "6807f9663bb37dfce625208262dc1f138b97f181f5020fabac09d6b2407faafa"
+  },
+  "health": {
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "expand_to_all_shapes": false,
+    "reason": "The fixed 16-row Triton program tile meets every numerical gate but misses the preregistered 2x M=2 latency ceiling on both representative shapes.",
+    "next_mechanism": "Test one batched oneDNN call over fixed four-row matrices with broadcast weights; do not launch a server."
+  }
+}

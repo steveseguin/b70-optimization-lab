@@ -327,6 +327,21 @@ four row-0 classes across the sweep (observed groups spanning 1-32, 33-128,
 next identity task, and the wider prompt-length endpoint gate remains required.
 See the [structured R120e result](../data/2026-09-02-qwen38-fp8-w8a16-runtime-m-r120e-result.json).
 
+### R121: fixed-tile Triton W8A16 screen (closed)
+
+A direct Triton reference used a fixed 16-row program tile, FP32 accumulation,
+and the checkpoint's 128x128 FP32 block scales. All three tested configurations
+compiled on B70 for the K3072/N5120 and K5120/N7168 attention shapes. Every
+configuration produced one row-0 class from M=1 through 256, was bitwise exact
+under an M31 permutation and an M59 repeat, and differed from static oneDNN by
+only `0.0001220703125` maximum at M16.
+
+The fastest configuration (`BLOCK_N=128`, `BLOCK_K=64`, eight warps) still took
+348.757 us at M2 for attention output and 351.736 us for attention QKV: 26.20x
+and 5.64x their paired static oneDNN calls. The arithmetic design is a valid
+row-invariant reference, but this Triton lowering is closed for service. No
+server was launched. See the [R121 result](../data/2026-09-02-qwen38-fp8-w8a16-triton-row-invariant-r121-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
