@@ -1,0 +1,76 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-onednn-register-serial-k8-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-onednn-register-serial-k8-20260902-r146",
+  "status": "preregistered-before-r146-source-edit-build-or-device-use",
+  "classification": "onednn-generator-operator-diagnostic-only",
+  "question": "Can one subgroup reproduce natural-M1's eight 64-K FP32 chains using only C0 plus one reusable temporary C tile, enabling a 32x32 subgroup output tile that meets the M128 serving gate?",
+  "evidence_base": {
+    "accepted_arithmetic": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-onednn-register-k8-r144-result.json",
+    "closed_scheduling": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-onednn-register-k8-wg8x4-r145-result.json",
+    "required_order": "For p=0..7, chain p contains K positions p*64+[0,63], then p*64+512+[0,63], and so on. The final FP32 reduction is C0+=C1 through C0+=C7 in ascending p order."
+  },
+  "source": {
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_target": "bmg-g31-a0",
+    "build_mode": "ONEDNN_DEV_MODE=ON for forced strategy selection and generator diagnostics",
+    "base_patch": {
+      "file": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-register-k8-r144-20260902.patch",
+      "sha256": "6eb233934eb6fc8439b73940bd9927531a0987bfa8b54372d1b2413a25cf0d39"
+    }
+  },
+  "fixed_implementation": {
+    "strategy_modifier": "Add one explicit krs64 modifier, separate from R144 kri64. Reject non-systolic, non-FP32-C, K-parallel, SLM, prefetch, sums, repacked/accumulator C, K-dependent quantization, and non-512-unrolled paths.",
+    "register_buffers": "Allocate exactly two C buffers. C0 is the persistent result; C1 is the reusable temporary.",
+    "compressed_pass": "Each generated pass uses logical K/8 iterations. Its address increments advance normally within each 64-K chunk and jump forward by 448 at every chunk boundary, visiting one natural local-K lane's physical K sequence.",
+    "pass_zero": "Run p0 once into zeroed C0.",
+    "passes_one_to_seven": "Emit one runtime loop with seven iterations. Each iteration zeroes C1, traverses the next p sequence into C1, adds C1 into C0, and advances p.",
+    "address_transition": "After each pass, increment A and B K addresses by 64-fullK. A pass finishes at its starting offset plus fullK, so this lands at the next p*64 offset without saved address copies.",
+    "reduction": "The runtime loop adds the completed temporary chains to C0 in p=1..7 order. It must not add per-512 macrochunk.",
+    "forbidden": "No eight-live-C path change, K workgroups, SLM, barriers, global scratch, padding, wrapper allocation/copy, custom SYCL GEMM, server build, or collective experiment."
+  },
+  "candidates": {
+    "m16_n16_wg4x2": {
+      "file": "experiments/qwen38-27b-b70/data/r146-m16-n16-wg4x2-register-serial-k8-strategy.txt",
+      "sha256": "9eede0d6410fea2f37f79ca8fc0e07f316a736e13438d24b26023a0f1e30a93e",
+      "purpose": "Low-register feasibility and arithmetic arm; two C tiles consume 32 GRFs."
+    },
+    "m32_n32_wg4x4": {
+      "file": "experiments/qwen38-27b-b70/data/r146-m32-n32-wg4x4-register-serial-k8-strategy.txt",
+      "sha256": "dc8a81aaa59a809400380cedbfed01c2a0251f18a127aef99b2570c059f33c85",
+      "purpose": "Serving arm; two 32x32 FP32 C tiles consume 128 GRFs and each 256-workitem workgroup covers 128x128 output."
+    }
+  },
+  "ordered_stages": [
+    "Apply the frozen R144 patch in a clean pinned oneDNN tree, add only the krs64 path, build device-free, freeze and hash the cumulative patch and installed extension.",
+    "Parse and generate the 16x16 feasibility arm without device access. Continue only if register allocation and code generation succeed.",
+    "Run the feasibility arm on B70 0000:03:00.0 against the frozen natural-M1 references. Any identity failure stops R146 before the wide arm.",
+    "Only after feasibility identity passes, parse/generate and run the 32x32 serving arm in a fresh bounded GPU0 container.",
+    "No endpoint, server, collective, or second-GPU use is authorized."
+  ],
+  "operator_screen": {
+    "shapes_KN": {
+      "attn_qkv_proj": [5120, 7168],
+      "mlp_gate_up_proj": [5120, 17408]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "identity": "Every complete output must equal concatenated natural oneDNN M1 rows. M512 prefixes, M128 repeat and seeded permutation, and M168-to-M200 random-padding content must also be bitwise exact.",
+    "timing": "Ten warmups and five samples of 100 synchronized calls at M2, M64, M128, M168, and M256 against natural oneDNN.",
+    "stability": "No timing sequence used by the frozen selector may have max/min above 1.15."
+  },
+  "gates": {
+    "feasibility": "The 16x16 arm must generate and pass every identity check. Its latency is diagnostic and cannot be promoted.",
+    "wide_candidate": "The 32x32 arm must generate, pass every identity check, and be stable at M128, M168, and M256.",
+    "frozen_selector": "Use natural oneDNN for M<=4, exact R144 m16_n16_wg4x2 for 8<=M<=64, and exact R146 m32_n32_wg4x4 for M>=128.",
+    "decode_latency": "Using frozen 16:64 attention-QKV:gate-up call counts, the selector must be <=1.03x natural at M2, M64, and M128. M2 is 1.0 by construction and R144 recorded M64 at 0.9697657652307881x.",
+    "prefill_latency": "The R146 wide arm must be <=2.0x natural in the frozen weighted model at M168 and M256.",
+    "on_pass": "Expand the selector to all six production shapes and apply the <=1.03 frozen all-shape decode model before any serving build.",
+    "on_failure": "Record whether failure is generation/register capacity, pointer traversal, arithmetic order, stability, or latency. Do not change reduction order or resume eight-buffer geometry; use the failure evidence to decide whether a different two-buffer traversal or a different engine is justified."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "either B70 is not normal before or after a device case",
+    "any strategy/artifact hash mismatch, unregistered candidate substitution, server launch, collective experiment, or second-GPU use"
+  ]
+}
