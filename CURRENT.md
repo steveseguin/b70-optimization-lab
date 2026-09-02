@@ -20,6 +20,15 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
+**Device lock (2026-09-02, from ~19:05 EDT):** the R147 campaign is running
+unattended on both B70s from
+`experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147.sh`
+(containers `qwen38-fp8-r147-*`, port 18128, artifact root
+`/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147`).
+It launches five two-B70 servers in sequence and takes roughly two to three
+hours. Do not launch A62 or any other GPU work until that root contains
+`campaign-end.txt` or `ABORTED`; check `campaign.log` there for progress.
+
 Verified on 2026-09-02 after a host reboot at `08:16 EDT`:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
