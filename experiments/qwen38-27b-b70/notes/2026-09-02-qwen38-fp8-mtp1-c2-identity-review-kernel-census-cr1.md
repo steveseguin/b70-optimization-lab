@@ -359,6 +359,34 @@ oneDNN solution must pin its implementation/reduction strategy, not merely a
 descriptor dimension. No server was launched. See the
 [structured result](../data/2026-09-02-qwen38-fp8-w8a16-fixed-m4-batch-r122b-result.json).
 
+### R123-R126a: pinned oneDNN JIT strategies (closed)
+
+An exact dev-mode rebuild of the pinned kernel and oneDNN commits exposed the
+selected JIT strategy string. Natural M4 and M32 strategies made both attention
+shapes exact across M=1-512, prefixes, permutation, repeat, and padding content;
+the M256 strategies did not. Interpolation found one useful additional point:
+the natural M128 strategy was exact and fast for K=5120 shapes. Across all six
+production shapes, M32 was exact everywhere and M128 was exact only at K=5120.
+The selected direct catalog nevertheless missed the frozen latency gates on
+four shapes (geometric ratios 1.251 and 1.308 for GDN-in and gate-up; worst
+ratios 1.564 and 1.756 for GDN-out and down-proj).
+
+Combining fixed-M batching with a pinned strategy proved the mechanism more
+strongly but did not rescue latency. Fixed-M4 plus the M32 strategy was exact
+but cost 1.126-1.318x geometrically and up to 1.770x. R126 initially stopped at
+the inherited explicit `[B,4,K]` guard; the sole preregistered R126a correction
+changed that guard to `[B,32,K]`. The corrected fixed-M32 candidate was exact
+for both representative shapes under every row, M512-prefix, sequential-M32,
+M200-permutation, M200-repeat, and random-pad-content check. Against natural
+flattened oneDNN it cost 1.333x geometrically / 1.667x worst for attention
+output and 1.235x / 1.859x for attention QKV, failing both frozen gates.
+
+This closes the entire oneDNN descriptor/strategy composition family. Do not
+search more source-M values, hand-tune strategy strings, or combine more fixed
+descriptor dimensions. The next implementation is a purpose-built kernel with
+a fixed per-output K reduction and M/N affecting only independent grid counts.
+See the [R126a structured result](../data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126a-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
