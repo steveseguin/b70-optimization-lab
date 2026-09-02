@@ -387,6 +387,33 @@ descriptor dimensions. The next implementation is a purpose-built kernel with
 a fixed per-output K reduction and M/N affecting only independent grid counts.
 See the [R126a structured result](../data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126a-result.json).
 
+### R127: Xe2 CUTLASS fixed-M32 BLOCK_FP8 (mechanism accepted)
+
+The exact pinned kernel source already contained an Xe2 grouped-GEMM BLOCK_FP8
+path matching the checkpoint's FP16 activations, E4M3 weights, and FP32
+`[K/128,N/128]` scales. R127 invoked it with one logical expert and pinned the
+existing `w8a16_policy_m_32` (`32x64x32`) for every M. The stock build's full
+MoE instantiation exceeded the 16-GiB host, so a separately recorded build-only
+patch instantiated just this exact datatype/policy combination.
+
+Both representative attention shapes produced one row-0 class across all 15
+tested M values from 1 through 512. Every M was bitwise equal to the matching
+M512 prefix; M200 permutation and repeat checks passed; appending 32 random
+rows to M168 changed no existing output. Maximum error versus natural oneDNN
+was `0.00006103515625`, one FP16 ULP. This is the first specialized kernel in
+the campaign to prove the required arithmetic while remaining near the
+performance envelope.
+
+The one-expert grouped wrapper is not itself deployable. Attention QKV passed
+the frozen latency gate at `1.029x` geometric mean and `1.214x` worst, but
+attention output measured `1.436x` and `1.780x`. The wrapper allocates an atomic
+scratch tensor per call and launches a persistent all-SM MoE scheduler even for
+one dense matrix. The next justified experiment keeps the identical GEMM body
+and fixed K reduction but launches exactly `ceil(M/32)*ceil(N/64)` independent
+tiles, eliminating the rows tensor, atomic scratch, and persistent scheduler.
+No model server was launched. See the
+[R127 result](../data/2026-09-02-qwen38-fp8-w8a16-cutlass-fixed-m32-r127-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
