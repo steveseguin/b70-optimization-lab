@@ -1,0 +1,13 @@
+diff --git a/src/gpu/intel/gemm/jit/gen_kernel.cpp b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+--- a/src/gpu/intel/gemm/jit/gen_kernel.cpp
++++ b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+@@ -229,7 +229,8 @@ status_t gen_desc_t::finalize(const char *tags) {
+             // inheriting the selected catalog entry's alignment metadata.
+             problem_.A.setAlignment(16);
+             problem_.B.setAlignment(16);
+-            problem_.C.setAlignment(16);
++            problem_.C.setAlignment(
++                    problem_.C.defaultAlignment(problem_.Tc_ext));
+             strategy_.unroll[LoopM] = wide ? 32 : 16;
+             strategy_.unroll[LoopN] = wide ? 32 : 16;
+             const char *fixed_k_strategy = wide

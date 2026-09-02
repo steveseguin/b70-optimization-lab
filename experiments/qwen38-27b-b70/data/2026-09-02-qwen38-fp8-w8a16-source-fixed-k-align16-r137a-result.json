@@ -1,0 +1,31 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-align16-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-align16-20260902-r137a",
+  "classification": "source-selector-operator-gate",
+  "status": "rejected-at-activation-gate-before-dense-expansion",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-source-fixed-k-align16-r137a-prereg.json",
+  "artifact_sha256": "42224906fd4bce3fc514647c94a862b2fbd9da1eda572d7ba11351a569a83b73",
+  "activation": {
+    "shape": "attn_qkv_proj",
+    "m_values": [64, 128],
+    "gemm_kernel_environment_unset": true,
+    "m64_final_layout": "T@16N@16N@16",
+    "m128_final_layout": "T@16N@16N@16",
+    "required_layout": "T@16N@16N",
+    "exact_final_kernel_match": false,
+    "arithmetic_smoke_pass": true
+  },
+  "mechanism": "The R136 developer string explicitly aligns A and B to 16 but leaves C unannotated. Developer parsing therefore gives C its FP16 datatype-default alignment. R137a incorrectly forced C to 16, which serialized as the extra final @16.",
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-source-fixed-k-align16-r137a",
+    "activation_log_sha256": "7dfe5e0751e35293a33de2dc638fe7af7baf6f5eedcd53deb4f94f3200944b76",
+    "activation_result_sha256": "b9226e32543ac0633e72c73915be3dc3c46a5c51fcf3f44915173ceabb47e922"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "device_state_after": "normal",
+    "new_fault_or_reset_visible_to_current_user": false,
+    "server_launched": false
+  },
+  "decision": "Reject R137a without dense expansion. R137b changes only C from forced 16-byte alignment to its datatype default and repeats activation."
+}
