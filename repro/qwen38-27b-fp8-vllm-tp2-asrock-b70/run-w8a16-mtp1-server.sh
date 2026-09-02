@@ -145,6 +145,15 @@ if [[ -n "${gdn_projection_trace_file}" ]]; then
       ;;
   esac
 fi
+if [[ -n "${decoder_boundary_trace_file}" ]]; then
+  case "${decoder_boundary_trace_file}" in
+    /root/.cache/vllm/*) ;;
+    *)
+      printf 'VLLM_XPU_DECODER_BOUNDARY_TRACE_FILE must be under /root/.cache/vllm/\n' >&2
+      exit 1
+      ;;
+  esac
+fi
 [[ "${inductor_deterministic}" == 0 || "${inductor_deterministic}" == 1 ]] || {
   printf 'TORCHINDUCTOR_DETERMINISTIC must be 0 or 1\n' >&2
   exit 1
