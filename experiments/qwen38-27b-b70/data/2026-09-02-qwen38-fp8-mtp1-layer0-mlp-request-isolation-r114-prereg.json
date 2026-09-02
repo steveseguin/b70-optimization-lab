@@ -1,0 +1,29 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-correction-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r114",
+  "status": "preregistered-before-correction-build-and-run",
+  "objective": "Repeat R113 after removing its compiler-invisible auxiliary decoder string attribute.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "base_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "r113_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r113-result.json"
+  },
+  "single_change": {
+    "remove": "The decoder's _r113_mlp_context_prefix attribute and its second custom-op string argument.",
+    "add": "Derive the unique MLP registry key from self.linear_attn.prefix during construction and from the same passed attention prefix inside the opaque custom op.",
+    "treatment_arithmetic": "Unchanged from R111-R113."
+  },
+  "mandatory_gates": {
+    "source": "Require direct static-context MLP registration, one compiler-visible attention-prefix argument, and reject all R111-R113 lookup forms.",
+    "startup": "Profile run must execute the single-request control and reach HTTP ready.",
+    "runtime_execution": "Require both single-request-control and split-per-request markers.",
+    "identity": "Warm c1 must be exact before any c2 result is interpreted; all outputs complete and cache-zero.",
+    "workload": "One c1 and two c2 warm repeats, then three c1 and twenty c2 counted repeats."
+  },
+  "decision": {
+    "pass": "Run the treatment factorial without inherited R108 projection tracing, then fresh-server realistic qualification on a clean boot.",
+    "fail": "Reject the treatment if startup or c1 fails; reject it as insufficient if repeated c2 identity fails."
+  },
+  "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset.",
+  "reporting_boundary": "Diagnostic only; no public speed or quality claim."
+}

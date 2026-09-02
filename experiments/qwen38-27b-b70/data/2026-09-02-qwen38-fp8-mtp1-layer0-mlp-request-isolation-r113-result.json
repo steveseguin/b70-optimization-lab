@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r113",
+  "classification": "startup-failed-treatment-untested",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r113",
+    "id": "sha256:e947040c4b7eb2bd3268a6fa65f15bd4812eb52bad19a39399a49a8fc38a4143",
+    "patch_sha256": "96309f0bd4891106593c471ccb67e37b856b0580adb7c7b1330e839e94c762d7",
+    "installed_source_sha256": "9b39485138cc7d60bbf88743d835e9c800bec7dc880866f4bfc1fb8357c289dc"
+  },
+  "gates": {
+    "patch_roundtrip_exact": true,
+    "semantic_callsite_gate": true,
+    "r111_and_r112_rejected_by_semantic_gate": true,
+    "model_direct_identity_gate": true,
+    "server_ready": false,
+    "model_requests_run": 0,
+    "treatment_tested": false
+  },
+  "failure": {
+    "phase": "TorchDynamo tracing before vLLM profile_run",
+    "root_cause": "The dense MLP static-context registration completed, but TorchDynamo's compiled decoder representation did not retain the auxiliary _r113_mlp_context_prefix string attribute.",
+    "error": "'Qwen3_5DecoderLayer' object has no attribute '_r113_mlp_context_prefix'",
+    "narrow_correction": "Remove the auxiliary decoder attribute. Pass the already compiler-visible self.linear_attn.prefix and derive the unique MLP registry key from it in the opaque custom op; use the same derived key during model construction."
+  },
+  "host": {
+    "workers_shutdown_gracefully": true,
+    "both_b70_devices_after_stop": "normal",
+    "new_kernel_fault_or_reset": false,
+    "reboot_or_gpu_reset_requested": false
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r113",
+    "server_log_sha256": "762a5c09cd514798082c4362357562784f9f214ac57534668697e9aa2be461a3",
+    "image_inspect_sha256": "9a36f01f1ddeada1f53a52589c70c234ba9ab13072609389929198e873556282"
+  },
+  "reporting_boundary": "No output or speed evidence exists; no public claim is permitted."
+}

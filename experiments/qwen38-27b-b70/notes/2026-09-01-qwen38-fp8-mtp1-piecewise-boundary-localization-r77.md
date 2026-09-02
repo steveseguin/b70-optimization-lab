@@ -412,3 +412,12 @@ clean. The treatment remains untested. R113 will register the layer-0 dense MLP
 itself under a unique `static_forward_context` key and resolve that key
 directly, without changing request selection or arithmetic. See the
 [`R112 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r112-result.json).
+
+R113 registered the dense MLP itself in `static_forward_context`, but failed
+one stage earlier during TorchDynamo tracing. The compiler-visible
+`Qwen3_5DecoderLayer` representation did not retain R113's auxiliary string
+attribute naming that entry. No profile or HTTP request executed. Both B70s
+again remained normal and the kernel log was clean. R114 removes the decoder
+attribute and derives the MLP registry key from `self.linear_attn.prefix`,
+which the compiled call site already retains. See the
+[`R113 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r113-result.json).
