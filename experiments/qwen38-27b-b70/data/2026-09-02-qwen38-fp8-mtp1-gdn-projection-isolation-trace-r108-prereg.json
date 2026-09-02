@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-projection-isolation-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-projection-isolation-trace-20260902-r108",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Repeat the invalidated R106 projection-isolation test from the frozen R104 image, prove that the live XPU call site executes, and localize any surviving request-order branch at the normalized/projected boundary.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-all-r104",
+    "base_image_id": "sha256:f1dd575ae2e0effc7991535c253af82b332ac0604b7f60ba796f31b81e26f951",
+    "invalidated_predecessors": [
+      "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-result.json",
+      "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-postnorm-projection-trace-r107-result.json"
+    ]
+  },
+  "treatment": {
+    "scope": "On pure multi-request XPU prefills only, split the final post-normalization GDN out_proj by live request boundaries and concatenate the projected rows in the original order.",
+    "trace": "For every pure-prefill invocation, record an execution marker plus exact per-request SHA-256 digests of normalized input and projected output rows, with layer, TP rank, invocation, and live boundaries.",
+    "prompt_or_fixture_heuristics": false,
+    "other_model_arithmetic_change": false,
+    "scheduler_or_dispatch_change": false
+  },
+  "mandatory_treatment_gates": {
+    "patch_parser": "Apply with fuzz zero and fail if stderr/stdout contains trailing garbage, malformed, FAILED, ignored, or reversed.",
+    "semantic_source": "AST-inspect QwenGatedDeltaNetAttention.forward_xpu and require exactly one call to torch.ops.vllm.qwen_gdn_projection_prefill_isolated_xpu behind the projection-isolation environment gate.",
+    "installed_identity": "Pin the complete installed source SHA-256.",
+    "runtime_execution": "Before interpreting outputs, require a non-empty trace file containing both TP ranks and records for the counted pure-prefill workload. Absence invalidates the run."
+  },
+  "workload": {
+    "warmup": "One c1 and two c2 requests against a fresh server.",
+    "qualification": "Three c1 repeats followed by twenty c2 repeats using the frozen realistic two-prompt suite.",
+    "max_tokens": 128,
+    "prefix_caching": false,
+    "frozen_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "output_gate": {
+    "required": "3/3 c1 and 20/20 c2 batches exact against complete token-ID oracles; every request complete; every cached-token count zero.",
+    "quality_policy": "No throughput claim unless output identity passes. No fixture-only or high-acceptance headline.",
+    "health": "No new xe reset, GPU fault, OOM kill, storage error, or corrupted response."
+  },
+  "decision": {
+    "all_output_exact": "Retain as a determinism candidate, then run the cold realistic suite before any speed claim.",
+    "order_branch_survives_normalized_digest_differs": "The branch is at or before post-core normalization; do not blame out_proj.",
+    "order_branch_survives_normalized_same_projected_differs": "The request-local FP8 out_proj is nondeterministic; trace quantization and kernel choice.",
+    "treatment_gate_fails": "Invalidate immediately and do not interpret token outputs."
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; no reboot or GPU reset.",
+  "reporting_boundary": "Diagnostic candidate only. No README, website, public speed, or LocalMaxxing update from this run."
+}
