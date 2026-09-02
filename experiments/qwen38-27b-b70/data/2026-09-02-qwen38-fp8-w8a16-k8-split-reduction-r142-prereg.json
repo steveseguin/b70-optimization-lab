@@ -1,0 +1,72 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-k8-split-reduction-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-k8-split-reduction-20260902-r142",
+  "status": "preregistered-before-candidate-build-or-device-use",
+  "classification": "operator-diagnostic-only",
+  "question": "Can a direct-grid Xe2 DPAS kernel reproduce the natural-M1/source-M4 eight-way K reduction exactly, without the oneDNN catalog geometry's M128 scheduling penalty?",
+  "trigger": {
+    "r140": "The source-M32 fixed-K server was row invariant but matched only 8/12 frozen c1 token arrays, proving that row invariance alone is insufficient when anchored to the wrong arithmetic class.",
+    "r141": "The natural-M1/source-M4 arithmetic class was reproduced exactly by all valid oneDNN wgK8 candidates, but the fastest candidate modeled 1.349335x natural latency at M128, failing the 1.03x decode gate.",
+    "required_mechanism": "Retain an eight-way, 64-K-position local reduction while replacing general oneDNN scheduling with an exact dense output-tile grid."
+  },
+  "provenance": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "cutlass_sycl_commit": "87f6850680a580654b9ea2c80dbc01aeb36ad231",
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_target": "bmg-g31-a0",
+    "source_tree_rule": "Use a new clean clone and build root. Do not build from or modify the dirty R127 source tree.",
+    "server_allowed": false
+  },
+  "frozen_kernel": {
+    "launch": "One direct-grid workgroup per ceil(M/16) by ceil(N/64) output tile; no persistent scheduler, rows tensor, global atomic queue, or per-call scratch allocation.",
+    "mma": "XE_DPAS_TT<8,float,half_t> with WGTile [16,64,512] and SGLayout shape [1,4,8], stride [32,8,1].",
+    "k_partition": "The eight K subgroups each accumulate one 64-position contiguous slice of every 512-position macro-tile. Production K values 3072, 5120, and 8704 are all divisible by 512.",
+    "scales": "For subgroup k_sg, use block scale floor((macro_k*512 + k_sg*64)/128); the two adjacent 64-position subgroups therefore share one 128-wide block scale.",
+    "reduction": "Each subgroup writes its FP32 C fragment to a 32-KiB workgroup-local buffer. After a release/acquire workgroup barrier, only k_sg=0 reads the eight corresponding fragments, reduces them in the frozen candidate order, and writes FP16 output.",
+    "output_layout": "Production NT logical weights: input tensor [1,K,N], interpreted as B [N,K], with FP32 scales [1,K/128,N/128].",
+    "allowed_build_narrowing": "Instantiate only FP16 activation, E4M3 weight, FP32 BLOCK_FP8 scale, no-bias, one-expert dense diagnostic dispatch. Build narrowing may not alter kernel semantics."
+  },
+  "frozen_reduction_orders": [
+    {
+      "id": "ascending",
+      "expression": "(((((((p0+p1)+p2)+p3)+p4)+p5)+p6)+p7)"
+    },
+    {
+      "id": "balanced_adjacent",
+      "expression": "((p0+p1)+(p2+p3))+((p4+p5)+(p6+p7))"
+    },
+    {
+      "id": "balanced_distance4",
+      "expression": "((p0+p4)+(p1+p5))+((p2+p6)+(p3+p7))"
+    }
+  ],
+  "screen": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+    "shapes_KN": {
+      "attn_qkv_proj": [5120, 7168],
+      "mlp_gate_up_proj": [5120, 17408]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "identity_reference": "R141 forced source-M4 output, after directly reconfirming its row 0 equals natural M1 on each shape.",
+    "identity": "Every full output at every M must be bitwise equal to the source-M4 reference; repeat M128, seeded M128 permutation, and 168-to-200 padding must also be exact.",
+    "timing": "Ten warmups, five samples of 100 synchronized calls at M2, M64, M128, M168, and M256, compared with natural oneDNN in the same process protocol.",
+    "stability": "No candidate timed-sample max/min ratio may exceed 1.15."
+  },
+  "gates": {
+    "compile": "The frozen kernel must build without workgroup-size, local-memory-size, spill, or registration failure.",
+    "arithmetic_discovery": "Test reduction orders in the listed order. Stop at the first order exact on both shapes and all M values; do not tune geometry or invent a fourth order in this campaign.",
+    "on_no_exact_order": "Close the guessed-reduction prototype without latency expansion and instrument the oneDNN JIT reduction/store path before another kernel attempt.",
+    "decode_model": "The exact candidate must model <=1.15x natural on the two screened shapes at each of M2, M64, and M128 before expansion. The relaxed 1.15 diagnostic gate is only for deciding whether the mechanism deserves all-six-shape work; endpoint promotion still requires the prior <=1.03 weighted decode budget and >=54 tok/s.",
+    "prefill": "M168 and M256 must each be <=2.0x natural.",
+    "on_pass": "Expand the identical arithmetic and layout to all six production shapes, model the frozen per-layer call mix, and only then preregister a server image and endpoint run.",
+    "on_failure": "Preserve the result and do not launch a server or begin collective optimization."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "either B70 is not normal before or after a device case",
+    "any unregistered reduction order, geometry change, candidate substitution, or server launch"
+  ]
+}
