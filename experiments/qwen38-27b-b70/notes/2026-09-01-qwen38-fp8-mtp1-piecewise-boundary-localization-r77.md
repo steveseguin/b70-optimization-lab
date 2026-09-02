@@ -327,3 +327,17 @@ policy. The next candidate should use live request boundaries to isolate the
 post-core output projection per request atop R101, leaving the R99/R97 selector
 unchanged. See the [`R104 trace result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-trace-all-r104-result.json)
 and [`R105 aligned result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-aligned-r105-result.json).
+
+R106 isolated only the final FP8 GDN `out_proj` at live pure-prefill request
+boundaries, retaining the R101/R97 normalization and every other arithmetic
+gate. It did not repair the branch. The preregistered c1 gate remained exact
+3/3, but c2 passed only 8/20 batches (28/40 complete streams). Both TP ranks
+reported the same order in all 19 traceable pure-c2 batches: all eleven
+`[31,28]` cache-first batches produced the known alternate cache stream, while
+all eight `[28,31]` cache-second batches were exact. The one staggered batch
+also failed. Every request was complete and cache-zero, the index prompt was
+exact 20/20, and the kernel journal was clean. This rejects packed `out_proj`
+shape as the sole cause. The next diagnostic must hash each request immediately
+after normalization and after its isolated projection, before changing
+arithmetic again. See the
+[`R106 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-result.json).
