@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-decoder-boundary-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-decoder-boundary-trace-20260902-r110",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Locate the first order-dependent tensor between layer-0's invariant request-isolated GDN projection and layer-1's order-dependent post-core normalized rows.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "base_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "r108_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108-result.json",
+    "r109_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-outer-rmsnorm-serial-r109-result.json"
+  },
+  "treatment": {
+    "model_arithmetic_change": false,
+    "trace_layers": [0, 1],
+    "per_request_stages": [
+      "input_hidden",
+      "input_residual_when_present",
+      "after_input_norm_hidden",
+      "after_input_norm_residual",
+      "attention_output",
+      "after_post_attention_norm_hidden",
+      "after_post_attention_norm_residual",
+      "mlp_output"
+    ],
+    "trace_method": "Opaque identity custom op reads live pure-prefill request boundaries and appends exact per-request SHA-256 digests; returned tensor aliases no input and is numerically identical.",
+    "prompt_or_fixture_heuristics": false
+  },
+  "mandatory_gates": {
+    "semantic_source": "Require trace calls in Qwen3NextDecoderLayer.forward and one custom-op registration.",
+    "runtime": "Require both TP ranks, layers 0 and 1, both packed orders, and all expected tensor stages before interpreting outputs.",
+    "identity": "Trace op must return the original tensor object without modification; c1 must remain exact."
+  },
+  "workload": {
+    "warmup": "One c1 and two c2 repeats.",
+    "qualification": "One c1 and ten c2 repeats are sufficient for boundary localization if both packed orders appear.",
+    "max_tokens": 128,
+    "prefix_caching": false,
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "decision": {
+    "first_varying_stage": "The next repair targets only that operation and must preserve the exact c1 arm.",
+    "no_stage_varies": "Extend to the next full-attention or residual consumer; do not infer from token outputs alone.",
+    "trace_gate_fails": "Invalidate without tensor or token interpretation."
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; no reboot or GPU reset.",
+  "reporting_boundary": "Observation-only diagnostic. No public speed, README headline, website, or LocalMaxxing update."
+}
