@@ -368,3 +368,15 @@ single-variable diagnostic should exercise the already-available packed serial
 outer RMSNorm/residual path; it must pass repeated c2 output identity before
 any performance measurement. See the
 [`R108 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108-result.json).
+
+R109 tested the existing packed-serial Qwen/Gemma outer RMSNorm path as the
+only new variable, using a fresh compile cache and retaining R108's execution
+trace. It is a clean negative: c1 remained exact 3/3, while all twenty c2
+batches matched only the index request. The cache request produced the same
+known alternate stream 20/20 times. The trace boundary was unchanged on both
+ranks: layer 0 remained invariant across packed order and 94/96 later
+layer-prompt pairs varied. This rules out that existing outer RMSNorm gate as a
+sufficient repair. The next diagnostic must observe the decoder-layer contract
+directly—layer-0 returned hidden/residual and layer-1 received hidden—before
+another arithmetic change. See the
+[`R109 result`](../data/2026-09-02-qwen38-fp8-mtp1-outer-rmsnorm-serial-r109-result.json).

@@ -1,0 +1,59 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-outer-rmsnorm-serial-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-outer-rmsnorm-serial-20260902-r109",
+  "status": "completed-rejected-no-effect-on-order-branch",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-outer-rmsnorm-serial-r109-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "fresh_compile_cache": true
+  },
+  "single_variable": {
+    "name": "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT",
+    "value": "1",
+    "server_marker": "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT armed (r30)"
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "repeats": 3,
+      "oracle_exact": "3/3",
+      "cached_tokens_all_zero": true,
+      "completion_tokens_all_128": true
+    },
+    "concurrency_2": {
+      "repeats": 20,
+      "exact_batches": "0/20",
+      "exact_complete_streams": "20/40",
+      "cache_prompt_exact": "0/20",
+      "cache_prompt_known_alternate": "20/20",
+      "cache_prompt_alternate_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+      "index_prompt_exact": "20/20",
+      "cached_tokens_all_zero": true,
+      "completion_tokens_all_128": true
+    }
+  },
+  "trace_gate": {
+    "records": 2496,
+    "tp_ranks": [0, 1],
+    "layer_prompt_pairs_per_rank": 96,
+    "layer_prompt_pairs_varying_across_prefill_order_per_rank": 94,
+    "layer0_prompt_pairs_varying_across_prefill_order_per_rank": 0,
+    "comparison_to_r108": "unchanged"
+  },
+  "interpretation": "The existing packed-serial Qwen/Gemma outer RMSNorm path preserves c1 but neither changes the known c2 alternate stream nor changes the R108 trace boundary. It is not sufficient to repair this live packed-prefill order branch.",
+  "decision": "Reject R109. Trace the decoder-layer boundary directly: hash each request's layer-0 returned hidden state and residual, then the layer-1 received hidden state, before another arithmetic treatment.",
+  "reporting_boundary": "No public speed, README headline, website, or LocalMaxxing update. The candidate failed complete output identity.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful bounded shutdown"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-outer-rmsnorm-serial-20260902-r109",
+    "c1_3x_sha256": "4e9b442b9546a30c5584fe4aaad4221ff887695e9b9e079cb0a343702615d21f",
+    "c2_20x_sha256": "c955cc7d55c70b267ea2d317c8f49b7438d33fac8b3d1a4f5d239e1b106dd89a",
+    "trace_sha256": "64fa2c5dbec8df72e0b2698a7641da7a4a1d1cd8701c010dc93d89f5ec10ad18",
+    "trace_summary_sha256": "d592f45bf3be5e263cdc4e43a9935489e8622f33ef268b4e54ebfc19716d2dcc",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
