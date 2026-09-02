@@ -1,9 +1,6 @@
 --- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
 +++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
-@@ -194,6 +194,77 @@
- )
- 
- 
+@@ -196,0 +197,71 @@
 +def _request_isolated_xpu_gdn_projection_prefill(
 +    normalized: torch.Tensor,
 +    output_size: int,
@@ -78,10 +75,7 @@
  if GDN_AITER_TRITON_AVAILABLE:
      from aiter.ops.triton.causal_conv1d_update_single_token import (
          fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
-@@ -1419,7 +1490,17 @@
-             core_attn_out = self.norm(core_attn_out, z)
-             core_attn_out = core_attn_out.reshape(z_shape_og)
-         core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
+@@ -1422 +1493,11 @@
 -        out, _ = self.out_proj(core_attn_out)
 +        if (
 +            os.getenv("VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS", "0")
@@ -94,6 +88,3 @@
 +            )
 +        else:
 +            out, _ = self.out_proj(core_attn_out)
-         return out
- 
-     def forward_cpu(
