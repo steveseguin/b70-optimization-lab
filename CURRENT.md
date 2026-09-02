@@ -3705,3 +3705,12 @@ independently reviewed BF16 dense-invariance census is frozen next; it covers
 load. See the
 [A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-moe-m1-w13-n32-xpu-graph-confirmation-a2-result.md)
 and [BF16 census preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-dense-invariance-phase1-prereg.md).
+W13-N32 A2 passed cleanly on 2026-09-02 at 01:29 EDT under the Gen3
+clearance: eight matched fresh-process C/A/C cells on layers 0/47 and EP
+ranks 0--3, all exact, median `22.246154%` reduction (worst `21.551557%`),
+zero link events, 8 sectors of local reads. Three procedural attempts are
+preserved beside it (root-owned external mount, cold page cache versus the
+2 GiB read guard, and a concurrent-agent `pgrep` false positive). W13-N32
+advances to default-off integration and exact eager/captured qualification
+before an endpoint arm. See the
+[A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-moe-m1-w13-n32-xpu-graph-confirmation-a2-result.md).
