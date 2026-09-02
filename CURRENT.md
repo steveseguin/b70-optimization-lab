@@ -3643,3 +3643,12 @@ release. The endpoint logged corrected `RxErr` about every 30 s at idle in
 this boot (131 to 144 over 14 minutes); boot -3 ended with no shutdown record.
 No firmware write, reboot, or GPU work occurred. See the
 [in-place firmware path note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-root-nvme-in-place-firmware-path-and-clearance-generator.md).
+The in-place path was then authorized and executed. Samsung's utility listed
+the drive in a vendor dry run, and the confirmed run reported `Firmware Update
+Completed`: the firmware log now shows `afi 0x11` with slot 1 holding
+`5B2QGXA7` pending activation at the next controller reset, while the running
+controller still reports `4B2QGXA7`. No corrected link event occurred during
+the download (148 before and after), SMART stayed clean, and the root
+filesystem remained readable and writable. The remaining boundary is physical:
+full power off, reseat/inspect, cold boot, verify `5B2QGXA7`, then run the
+tracked clearance generator before any GPU work.

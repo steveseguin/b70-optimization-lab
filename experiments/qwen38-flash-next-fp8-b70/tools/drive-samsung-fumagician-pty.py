@@ -71,6 +71,7 @@ def main() -> int:
 
     buffer = b""
     answered_continue = False
+    continue_count = 0
     answered_next = 0
     answered_any_key = 0
     saw_completed = False
@@ -107,9 +108,12 @@ def main() -> int:
             if COMPLETED in buffer:
                 saw_completed = True
             reply = None
-            if buffer.rstrip().endswith(CONTINUE_PROMPT) and not answered_continue:
+            if buffer.rstrip().endswith(CONTINUE_PROMPT) and continue_count < 3:
+                # The utility asks this twice: once after detection and once
+                # after its backup warning. Both must receive the same answer.
                 reply = args.answer_continue.encode() + b"\n"
                 answered_continue = True
+                continue_count += 1
             elif buffer.rstrip().endswith(NEXT_DEVICE_PROMPT):
                 reply = b"N\n"
                 answered_next += 1
@@ -138,6 +142,7 @@ def main() -> int:
         "exit_reason": exit_reason,
         "child_exit": child_rc,
         "answered_continue": answered_continue,
+        "continue_prompts_answered": continue_count,
         "answer_continue": args.answer_continue,
         "answered_next_device": answered_next,
         "answered_any_key": answered_any_key,

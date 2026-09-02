@@ -24,6 +24,14 @@ if [[ ${answer} != Y ]]; then
   echo "Exiting Samsung SSD Firmware Update Utility Ver. 3.1"
   exit 0
 fi
+echo "  YOU MUST TAKE BACK UP OF ALL DATA ON THE DRIVE AS THE FIRMWARE UPDATE"
+printf 'Do you want to continue the firmware update? [Y/N]: '
+read -r answer_again
+echo
+if [[ ${answer_again} != Y ]]; then
+  echo "Exiting Samsung SSD Firmware Update Utility Ver. 3.1"
+  exit 0
+fi
 echo "Downloading firmware ..."
 echo "Firmware Update Completed"
 printf 'Do you want to continue the firmware update on next device? [Y/N]: '

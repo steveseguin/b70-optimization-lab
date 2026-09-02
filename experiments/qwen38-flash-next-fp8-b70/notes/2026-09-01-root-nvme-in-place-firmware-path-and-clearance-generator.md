@@ -97,3 +97,26 @@ syntax-checked but not yet exercised; run `--dry-run` manually first.
 If corrected receiver errors persist on `5B2QGXA7` after reseat, the next
 discriminators are a different CPU-attached M.2 slot, BIOS 2.4a, and a Gen3
 retrain as a diagnostic only.
+
+## Executed 2026-09-01 23:47--23:52 EDT (user-authorized)
+
+- `--dry-run` passed every gate (evidence `20260902T034750Z-...-dry-run`).
+- `--vendor-dry-run` started Samsung's utility, which listed exactly serial
+  `S6WSNS0T109768K` on `4B2QGXA7`; the driver answered `N` and the utility
+  exited cleanly.
+- First `--confirm` attempt (`20260902T034916Z-...-confirm`) stopped without
+  writing: the utility asks `Do you want to continue the firmware update?`
+  twice, once after detection and once after its backup warning, and the
+  driver answered the second with `N`. Firmware log unchanged (`afi 0x1`,
+  slot 1 `4B2QGXA7`). The driver now answers every continue prompt (max 3)
+  with the configured answer; the fake-utility test covers the double prompt.
+- Second `--confirm` attempt (`20260902T035121Z-...-confirm`) completed:
+  the utility printed `Firmware Update Completed`. Firmware log after:
+  `afi 0x11` (slot 1 active, slot 1 pending activation at next reset),
+  `frs1 5B2QGXA7`. `id-ctrl fr` still reports `4B2QGXA7` until reset.
+  Endpoint corrected counter 148 before and after (no link event during the
+  download), root port 0, SMART clean at 42 C, root filesystem read/write
+  verified afterward. Swap was left off.
+
+The new image activates at the next controller reset. Next: full power off,
+reseat/inspect, cold boot, verify `5B2QGXA7`, then run the clearance generator.
