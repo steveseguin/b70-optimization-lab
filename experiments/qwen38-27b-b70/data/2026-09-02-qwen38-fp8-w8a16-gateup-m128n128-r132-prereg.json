@@ -1,0 +1,33 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-gateup-m128n128-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-gateup-m128n128-20260902-r132",
+  "status": "preregistered-before-first-r132-xpu-execution",
+  "classification": "operator-catalog-diagnostic-only",
+  "base_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-gateup-n128-r131-result.json",
+  "question": "Can a gate/up-only 128x128x32 tile amortize large-M workgroup overhead while retaining the accepted K32 reduction exactly?",
+  "only_change_from_r131": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-block-fp8-gateup-m128n128-r132-20260902.patch",
+    "patch_sha256": "c82213a02114203426eaa6c8b675a3e1ccd56965926926835673b73e67599500",
+    "selection": "For N=17408 and M>32 use WGTile [128,128,32], SGLayout [4,2,1]. N=17408 M=9..32 retains R131 [32,128,32], and M<=8 retains [16,64,32].",
+    "invariance_argument": "All policies retain K tile 32 and the unchanged BLOCK_FP8 main loop. M/N tiling changes only independent output ownership. The full M512-prefix screen is the authoritative cross-policy proof."
+  },
+  "artifact": {
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "grouped_gemm_library_bytes": 232336,
+    "grouped_gemm_library_sha256": "47a0c1f0b91024212f2ad3ee7a826b662e114b359152c3c70e23c90900a0c73e",
+    "compile_diagnostic": "AOT succeeded for bmg-g31-a0, but IGC reported SIMD16, 256 registers, and approximately 45 spilled registers for the new policy. This is recorded before execution and does not alter the frozen gate."
+  },
+  "screen": {
+    "wrapper": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-cutlass-all-shapes.py",
+    "wrapper_sha256": "dcfd77473435987ee87ee2307410766a9400ec97a8b280cf1da5a2377da3f80a",
+    "base_script_sha256": "33485f5b01b04607491538f400704df2c76dc9ae74e93bd507a5206a12973f72",
+    "procedure": "Repeat all six production shapes with the unchanged R130/R131 screen on GPU0."
+  },
+  "gates": {
+    "identity_and_numerical": "All six shapes retain every exactness check and max absolute error <=0.06.",
+    "gate_up_latency": "K5120/N17408 geometric-mean candidate/oneDNN <=1.15 and no timed M >1.50x.",
+    "health": "No new Xe fault, reset, timeout, hang, coredump, or device loss.",
+    "on_pass": "Proceed to the integrated heterogeneous binary and weighted overhead gate.",
+    "on_failure": "Close this wide-M policy. Because the build already reports spills, do not search still-larger workgroups; reassess the per-shape gate versus weighted serving overhead before more kernel work."
+  }
+}
