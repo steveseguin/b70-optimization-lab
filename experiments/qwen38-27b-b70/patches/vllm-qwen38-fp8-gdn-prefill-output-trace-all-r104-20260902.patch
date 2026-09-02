@@ -1,0 +1,31 @@
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -23,7 +23,7 @@
+ _GDN_STATE_INPUT_TRACE_LOCK = threading.Lock()
+ _GDN_PREFILL_INPUT_TRACE_SEEN: set[tuple[str, int]] = set()
+ _GDN_PREFILL_INPUT_TRACE_LOCK = threading.Lock()
+-_GDN_PREFILL_OUTPUT_TRACE_SEEN: set[tuple[str, int]] = set()
++_GDN_PREFILL_OUTPUT_TRACE_INVOCATION: dict[tuple[str, int], int] = {}
+ _GDN_PREFILL_OUTPUT_TRACE_LOCK = threading.Lock()
+ 
+ 
+@@ -272,9 +272,8 @@
+ 
+     key = (layer_name, num_prefills)
+     with _GDN_PREFILL_OUTPUT_TRACE_LOCK:
+-        if key in _GDN_PREFILL_OUTPUT_TRACE_SEEN:
+-            return
+-        _GDN_PREFILL_OUTPUT_TRACE_SEEN.add(key)
++        invocation = _GDN_PREFILL_OUTPUT_TRACE_INVOCATION.get(key, 0) + 1
++        _GDN_PREFILL_OUTPUT_TRACE_INVOCATION[key] = invocation
+ 
+     query_starts = (
+         non_spec_query_start_loc[: num_prefills + 1].detach().cpu().tolist()
+@@ -306,6 +305,7 @@
+     if torch.distributed.is_available() and torch.distributed.is_initialized():
+         rank = torch.distributed.get_rank()
+     record = {
++        "invocation": invocation,
+         "schema": "neural.download.qwen38-gdn-prefill-output-trace.v1",
+         "pid": os.getpid(),
+         "rank": rank,
