@@ -132,3 +132,21 @@ candidate, sentinel, or path changed. Runner SHA-256 is now
 `5b3da87d97cdb6af7aeb35712b75aae0f71f8c0982b263be357218039bfb53dc`
 (was `4734332f...`); the validate-only gate passes. The original file is
 preserved in the Git history.
+
+## Amendment 2026-09-02 10:10 EDT: gate admission ancestor exclusion
+
+With the counter fix in place, the first control cell failed twice at the
+gate's `refuse_active_model_server` check ("active model/server process
+blocks component gate: <pid>", a different transient PID each time; attempts
+preserved as `...a1.failed-foreign-process-admission-20260902T1406Z` and
+`...a1.failed-ancestor-cmdline-admission-20260902T1408Z`, no GPU work). The
+runner launches each arm as `setsid env ... timeout ... python gate
+--model-path <checkpoint>`, so the gate's own `timeout`/`env` ancestors carry
+the checkpoint path in their command lines and the check, which excluded
+only the gate's own PID, refused its own lineage. The gate now excludes every
+ancestor up to init (`_ancestor_pids`); any genuine server or foreign process
+naming the checkpoint is still refused. Gate SHA-256 is now
+`102df2a562685efbea03b8050102fe8d4063265907fcd9fb8be2106b4fd0379f`
+(was `9c8837fb...`) and the runner pin was updated accordingly (runner
+SHA-256 `73a6fa853edae25350bf5344564bff677fbf4e92324e53589957a01d128714ea`).
+Candidate, core, sentinels, cells, and thresholds are unchanged.

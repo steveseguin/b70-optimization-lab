@@ -106,10 +106,30 @@ def load_core() -> Any:
     return module
 
 
+def _ancestor_pids() -> set[int]:
+    """Return this process and every ancestor up to init.
+
+    The frozen runner launches the gate as `setsid env ... timeout ... python
+    gate --model-path <checkpoint>`, so the `timeout` and `env` ancestors carry
+    the checkpoint path in their own command lines. They are the gate's own
+    lineage, not a model server, and must not trip the refusal.
+    """
+    pids: set[int] = set()
+    pid = os.getpid()
+    while pid > 1 and pid not in pids:
+        pids.add(pid)
+        try:
+            fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+            pid = int(fields[1])
+        except (OSError, IndexError, ValueError):
+            break
+    return pids
+
+
 def refuse_active_model_server() -> None:
-    own = os.getpid()
+    own = _ancestor_pids()
     for entry in Path("/proc").iterdir():
-        if not entry.name.isdigit() or int(entry.name) == own:
+        if not entry.name.isdigit() or int(entry.name) in own:
             continue
         try:
             cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode()
