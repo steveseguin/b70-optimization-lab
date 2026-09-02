@@ -364,6 +364,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=20260902)
     parser.add_argument("--skip-lm-head", action="store_true")
+    parser.add_argument("--skip-auxiliary", action="store_true")
     args = parser.parse_args()
 
     if not torch.xpu.is_available():
@@ -406,6 +407,8 @@ def main() -> int:
     except Exception:  # noqa: BLE001
         pass
 
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+
     for name, (k, n) in GEMMS.items():
         if args.skip_lm_head and name == "lm_head":
             continue
@@ -415,13 +418,18 @@ def main() -> int:
         report["gemm_w8a16"][name]["census_seconds"] = round(
             time.perf_counter() - t0, 1
         )
+        # Preserve completed expensive shapes if a later, unrelated auxiliary
+        # diagnostic is unavailable in a particular lane image.
+        args.out.write_text(json.dumps(report, indent=1, sort_keys=True))
         print(f"[census] {name}: classes={report['gemm_w8a16'][name]['row0_invariance_classes_by_M']}", flush=True)
 
-    report["gdn_gated_rmsnorm"] = census_gdn_norm(device, gen)
-    report["plain_rmsnorm_5120"] = census_plain_rmsnorm(device, gen)
-    report["decode_kv_split_plan"] = census_decode_split_plan(device)
+    if args.skip_auxiliary:
+        report["auxiliary_diagnostics"] = {"status": "skipped-by-request"}
+    else:
+        report["gdn_gated_rmsnorm"] = census_gdn_norm(device, gen)
+        report["plain_rmsnorm_5120"] = census_plain_rmsnorm(device, gen)
+        report["decode_kv_split_plan"] = census_decode_split_plan(device)
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1, sort_keys=True))
     print(json.dumps({k: v for k, v in report.items() if k != "gemm_w8a16"},
                      indent=1, sort_keys=True))

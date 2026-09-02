@@ -285,7 +285,7 @@ attempt-1 reset on `0000:03:00.0`. The boot has now reset both cards, so no
 further 27B server was launched on it; the clean reboot should come before any
 further lane run.
 
-### Specification for the oneDNN runtime-M experiment (not yet run)
+### R120-R120e: oneDNN runtime-M experiment (closed for serving)
 
 Location: `csrc/xpu/onednn/onednn_ext.h`, `matmul_primitive_cache_t::get`, at
 kernel commit `1e90ffa672ba02f17a909da11838a4c55b199783` (the image's kernel
@@ -299,11 +299,33 @@ only: build `src_md` and `dst_md` with `DNNL_RUNTIME_DIM_VAL` in the M
 position, drop `m` from the cache key, and pass memory objects carrying the
 real dims at execution. Rebuild `_xpu_C.abi3.so` with the lane's
 `build-vllm-xpu-kernels-xpu-c-only.sh` settings, inject it as the R83
-Dockerfile does, and rerun the three census scripts. Accept only if every
+Dockerfile does, and rerun the three census scripts. The gate required every
 shape collapses to one row-0 class over M 1-512, permutation invariance holds
 at every M, the 168-256 nondeterminism is gone, and the decode plateau cost is
 measured. If oneDNN rejects runtime dims with block scales, the fallback is the
 Triton row-invariant GEMM or fixed 32-row chunking.
+
+R120e proved the numerical mechanism and rejected it for service. After four
+pre-execution build corrections (descriptor width, cache-key type, SYCL SONAME,
+then Torch C++ ABI), the exact-R62-image build loaded and passed a bounded
+smoke. All six production W8A16 shapes had one row-0 class for every tested M
+from 1 through 512; all prefix, permutation, pad-content, and repeat checks
+were bitwise exact. The denser determinism sweep reported zero nondeterministic
+M values for all six shapes, including the 168-256 region. The diagnostic
+W8A16 head also had one class.
+
+The cost is prohibitive. At M=2 the runtime-shape primitive took 1.884-5.186 ms
+per production call. Ratios against the static census were 16.8x-122.8x; the
+properly warmed attention-QKV comparison is about 47x (3.054 ms versus 64.8
+us). No serving image or 27B server was launched. This implementation is
+closed: oneDNN's generic runtime-shape path is a useful correctness reference,
+not a deployable kernel.
+
+The unchanged FP16 head stayed repeat-deterministic for fixed inputs but had
+four row-0 classes across the sweep (observed groups spanning 1-32, 33-128,
+136-320, and 328-512). A deployable row-invariant kernel therefore remains the
+next identity task, and the wider prompt-length endpoint gate remains required.
+See the [structured R120e result](../data/2026-09-02-qwen38-fp8-w8a16-runtime-m-r120e-result.json).
 
 ### Clean-boot R119 update
 

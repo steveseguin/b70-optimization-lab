@@ -1,0 +1,104 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-runtime-m-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-runtime-m-20260902-r120e",
+  "classification": "operator-diagnostic-only",
+  "status": "closed-numerically-positive-serving-negative",
+  "candidate": {
+    "source_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-w8a16-runtime-m-r120c-20260902.patch",
+    "patch_sha256": "debd76bbc60e2f9e8509440ed2b95b680f95af4a6ffbf8e1979f739234746a8e",
+    "build_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "build_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "torch": "2.13.0+xpu",
+    "compiler": "IntelLLVM 2026.1.1",
+    "sycl_soname": "libsycl.so.9",
+    "extension_bytes": 52236000,
+    "extension_sha256": "daec14ba4ed0c4a59a639b72b2f281108f7032559af256f3b99a55cda1f604ca"
+  },
+  "pre_execution_invalid_builds": [
+    {
+      "run": "R120",
+      "reason": "DNNL_RUNTIME_DIM_VAL was narrowed to int and became zero."
+    },
+    {
+      "run": "R120b",
+      "reason": "The int64 descriptor dimension was passed to the int-only cache-key helper and did not compile."
+    },
+    {
+      "run": "R120c",
+      "reason": "Host oneAPI 2025.3 linked libsycl.so.8, while R62 requires libsycl.so.9."
+    },
+    {
+      "run": "R120d",
+      "reason": "Host Torch 2.11 headers did not match R62 Torch 2.13 and the extension failed to import."
+    }
+  ],
+  "smoke": {
+    "shape": [2, 128, 128],
+    "finite": true,
+    "repeat_bitwise_exact": true
+  },
+  "operator_gates": {
+    "production_shapes": [
+      "gdn_in_proj_qkvz",
+      "gdn_out_proj",
+      "attn_qkv_proj",
+      "attn_o_proj",
+      "mlp_gate_up_proj",
+      "mlp_down_proj"
+    ],
+    "one_row0_class_for_M_1_through_512": true,
+    "all_tested_fixed_M_permutations_bitwise_invariant": true,
+    "all_tested_prefixes_bitwise_invariant": true,
+    "all_tested_pad_contents_bitwise_invariant": true,
+    "all_repeat_checks_bitwise_exact": true,
+    "dense_sweep_nondeterministic_M_count_by_shape": {
+      "gdn_in_proj_qkvz": 0,
+      "gdn_out_proj": 0,
+      "attn_qkv_proj": 0,
+      "attn_o_proj": 0,
+      "mlp_gate_up_proj": 0,
+      "mlp_down_proj": 0
+    },
+    "diagnostic_w8a16_lm_head_one_row0_class": true
+  },
+  "warmed_M2_latency_us": {
+    "attn_o_proj": {"static": 15.35199990030378, "runtime_m": 1884.4785666563741, "ratio": 122.75134046992046},
+    "attn_qkv_proj": {"static_census_with_lazy_artifact": 181.74149881815538, "static_properly_warmed": 64.8, "runtime_m": 3053.889833336143, "properly_warmed_ratio": 47.128},
+    "gdn_in_proj_qkvz": {"static": 73.5537993023172, "runtime_m": 3059.8534000091604, "ratio": 41.60020867763338},
+    "gdn_out_proj": {"static": 15.464999887626618, "runtime_m": 1884.4418333477129, "ratio": 121.8520431322754},
+    "mlp_down_proj": {"static": 83.89180002268404, "runtime_m": 5185.584533319343, "ratio": 61.81276992408292},
+    "mlp_gate_up_proj": {"static": 167.05650050425902, "runtime_m": 3987.9708666679408, "ratio": 23.87198854657122}
+  },
+  "unchanged_fp16_lm_head": {
+    "repeat_deterministic_for_fixed_input_at_all_tested_M": true,
+    "row0_invariance_class_ranges": ["1-32", "33-128", "136-320", "328-512"],
+    "note": "The sweep is discrete above M=64; ranges summarize the observed class membership, not every integer."
+  },
+  "attempt_notes": {
+    "full_census_attempt_1": "All seven W8A16 row-class lines completed with one class. The script then exited non-zero because an unrelated private GDN norm helper is absent in R62; the harness was amended to checkpoint each GEMM and permit auxiliary probes to be skipped.",
+    "production_census": "Completed with --skip-lm-head --skip-auxiliary and no false gate booleans.",
+    "followup": "Completed for all seven W8A16 shapes with no false gate booleans.",
+    "dense_sweep": "Completed for all six production W8A16 shapes and the unchanged FP16 head."
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-runtime-m-r120e",
+    "full_census_attempt_1_log_sha256": "a4800e79f722d04a02613dd9ce280b951a48c39e1eecead43aae0acf0e1ab175",
+    "production_census_json_sha256": "aa4312af58a9c459af29606d7404b18a88d682d895617a3d97b8d5b9207f603a",
+    "production_census_log_sha256": "289d5e32d24e6d5fd7967db23ab862b74104c8d85b78c1a83bb052fa6e827680",
+    "followup_json_sha256": "cfdb46c39b4b01b61450aa3cac0c919aad131a718ee33e3a688b4629578a741e",
+    "followup_log_sha256": "c995230dcb6f187f5d9a155899659f71eb28eb35661f6e217f1a6633c65845fc",
+    "sweep_json_sha256": "98d147472c37bb4fe0aea158710f27c08cbff5463f7d9961da5d5b022c42962b",
+    "sweep_log_sha256": "36182f1ba7b43792f20ed9a2151faff3a3c34dcad80c3b7e4ed41cd724afc29f"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "build_serving_candidate": false,
+    "reason": "A runtime-M oneDNN primitive removes W8A16 M-dependent rounding, but oneDNN selects a generic runtime-shape path that is 24-123x slower on most production M=2 shapes (about 47x for properly warmed attention QKV). This cannot preserve useful throughput.",
+    "next_mechanism": "A row-invariant specialized W8A16 kernel, beginning with a Triton/operator micro-benchmark; do not repeat the same oneDNN runtime-dimension treatment."
+  }
+}
