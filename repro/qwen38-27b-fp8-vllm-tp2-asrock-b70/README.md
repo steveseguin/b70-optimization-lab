@@ -136,7 +136,13 @@ of that headline. The separately measured historical 32K MTP1 point was
 46.636241 tok/s and is explicitly Grade-C shape evidence.
 
 Build the full dependency chain, then build and launch the selected R62 overlay
-with portable caller-selected paths. The base and candidate image IDs are
+with portable caller-selected paths. The full-source
+`build-pinned-mtp1-stack.sh` route compiles the final GDN/XPU extension stage
+with the host's Intel oneAPI compiler: it requires `/opt/intel/oneapi/setvars.sh`
+(override with `HOST_ONEAPI_ROOT`) on the build host, which is mounted read-only
+into the build container. The public-binary
+`build-pinned-mtp1-published-r55c-stack.sh` route has no host oneAPI
+requirement. The base and candidate image IDs are
 deliberately supplied by the caller so independently built content is checked
 instead of assuming this host's Docker ID:
 
@@ -160,9 +166,14 @@ In another terminal, run the actual strict natural-512 workload—not the older
 
 ```bash
 OUT_DIR=/path/to/new-strict-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-draft-int4-r62 \
+PROFILE_LABEL=mtp1-draft-int4-r62 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 ```
 
+`MODEL_NAME` must match the name the R62 wrapper serves
+(`qwen38-fp8-block-w8a16-mtp1-draft-int4-r62`); the benchmark's default name
+belongs to the older R50 MTP1 launcher and is not registered on an R62 server.
 The script fails unless the full workload, cache-zero policy, and independent
 canaries pass. It deliberately reports target/repeat parity as unevaluated for
 a single attempt. A qualifying audit needs two new MTP1 attempts and two new
@@ -173,6 +184,7 @@ Launch the matched-image MTP0 control with the same final image and compiler
 contract:
 
 ```bash
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
 PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/another-new-empty-runtime-cache \
 MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
@@ -871,6 +883,7 @@ In another terminal, use the same strict workload as the qualified lane:
 
 ```bash
 OUT_DIR=/path/to/new-r62-strict-result \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-draft-int4-r62 \
 PROFILE_LABEL=mtp1-draft-int4-r62 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 ```

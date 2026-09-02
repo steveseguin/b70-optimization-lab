@@ -178,8 +178,30 @@ Build the complete pinned kernel -> MTP0 -> MTP1 -> serial-attention -> rebuilt
 GDN image chain with one command:
 
 ```bash
+FINAL_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
 BUILD_ROOT=/path/to/empty-build-root \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh
+```
+
+`FINAL_IMAGE` is set to the tag the R62 overlay below expects as its base. The
+full-source route compiles the final GDN/XPU extension stage with the host's
+Intel oneAPI compiler and requires `/opt/intel/oneapi/setvars.sh` on the build
+host (override with `HOST_ONEAPI_ROOT`); the public-binary
+`build-pinned-mtp1-published-r55c-stack.sh` route avoids that requirement.
+
+The qualified `54.424603 tok/s` headline is the R62 overlay on that image:
+it quantizes only the one-row MTP draft vocabulary projection and leaves the
+FP16 target verifier unchanged. Build it with the base image ID printed by
+`docker image inspect <FINAL_IMAGE> --format '{{.Id}}'`:
+
+```bash
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-the-final-image-id \
+BUILD_ROOT=/path/to/empty-r62-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-draft-int4-r62-image.sh
+
+docker image inspect \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62 \
+  --format '{{.Id}}'
 ```
 
 The helper applies the exact
@@ -264,9 +286,28 @@ and kernel commit, not by a machine-local Docker image ID.
 
 ## 4. Launch, check, and benchmark
 
-To reproduce the qualified MTP1 service:
+To reproduce the qualified R62 MTP1 service (`54.424603 tok/s`), launch the
+R62 wrapper with the R62 image ID printed in step 2, then benchmark it with
+the served model name the wrapper registers:
 
 ```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-the-r62-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh
+
+OUT_DIR=/path/to/new-strict-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-draft-int4-r62 \
+PROFILE_LABEL=mtp1-draft-int4-r62 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+The previous `51.808087 tok/s` profile is the same image chain without the R62
+overlay; launch it with `run-w8a16-mtp1-strict-server.sh` and
+`IMAGE=<FINAL_IMAGE from step 2>` and benchmark with the default model name:
+
+```bash
+IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-runtime-cache \
 MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
