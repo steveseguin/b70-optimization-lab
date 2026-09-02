@@ -387,6 +387,21 @@ descriptor dimensions. The next implementation is a purpose-built kernel with
 a fixed per-output K reduction and M/N affecting only independent grid counts.
 See the [R126a structured result](../data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126a-result.json).
 
+R134 checked one remaining composition that R124's per-shape aggregate gate did
+not answer: source-M32 for small rows and source-M128 for large rows. Existing
+timings predicted that blend would clear both latency gates on every K=5120
+projection, and both frozen strings visibly contained `k128`. A digest-only
+screen therefore compared the complete outputs from fresh M32 and M128
+processes on all six shapes and all 15 registered M values.
+
+The result was unambiguous: zero of 90 shape/M pairs matched, including row 0.
+This was true even on K=5120, where each strategy separately passed every
+internal invariance check. The shared `k128` token does not specify the complete
+floating-point accumulation grouping. Switching stable strategies by M would
+simply create two different stable answers and restore the identity hole. No
+dynamic selector was built and no server was launched. See the
+[R134 result](../data/2026-09-02-qwen38-fp8-w8a16-pinned-jit-cross-digest-r134-result.json).
+
 ### R127: Xe2 CUTLASS fixed-M32 BLOCK_FP8 (mechanism accepted)
 
 The exact pinned kernel source already contained an Xe2 grouped-GEMM BLOCK_FP8
