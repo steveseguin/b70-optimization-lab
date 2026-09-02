@@ -442,6 +442,20 @@ already exact and fast pinned-oneDNN M32 strategy for K3072/N5120, CUTLASS for
 the K5120 shapes, and measure CUTLASS at K8704/N5120. No server was launched.
 See the [R129 result](../data/2026-09-02-qwen38-fp8-w8a16-cutlass-m16-small-r129-result.json).
 
+### R130: heterogeneous all-shape catalog (one shape remains)
+
+CUTLASS remained row/prefix/permutation/repeat/random-append exact on all six
+production shapes and stayed within `0.0001220703125` of oneDNN. Combined with
+R124's pinned-oneDNN M32 result for K3072/N5120, the catalog now covers GDN-in,
+both attention projections, and MLP-down inside their shape gates. Only the
+very wide K5120/N17408 MLP gate/up projection remains: it measured `1.180x`
+geometric and `1.673x` worst, with M168 at 977.2 us versus 583.9 us.
+
+The next change is confined to that shape and preserves K32 reduction order:
+double the M32 tile's N width from 64 to 128 and its N subgroup count from four
+to eight. No server was launched. See the
+[R130 result](../data/2026-09-02-qwen38-fp8-w8a16-heterogeneous-catalog-r130-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a

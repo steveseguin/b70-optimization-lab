@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-heterogeneous-catalog-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-heterogeneous-catalog-20260902-r130",
+  "status": "identity-pass-one-shape-latency-fail",
+  "classification": "operator-catalog-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-heterogeneous-catalog-r130-prereg.json",
+  "preregistration_sha256": "28a69f0d2aef3c06031ab20dbb98d2d68141142f669234f02ee0153b28d28dd7",
+  "run": {
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "container_exit_code": 0,
+    "started_utc": "2026-09-02T17:23:25.594114622Z",
+    "finished_utc": "2026-09-02T17:23:30.096838573Z",
+    "raw_result": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-heterogeneous-catalog-r130/raw-result.json",
+    "raw_result_sha256": "3c0acf87e89562d43b047aab555c724e8d1d40dd02aa8c2f36851e394bbbdb29",
+    "container_log_sha256": "cbc48e8914c9be5e36fb8538c30961608fc12a37c2c00ab59d69438dc860d51b"
+  },
+  "identity": {
+    "all_six_shapes_row_invariant": true,
+    "all_six_shapes_all_prefixes_exact": true,
+    "all_six_shapes_permutation_repeat_and_random_append_exact": true,
+    "maximum_abs_vs_oneDNN": 0.0001220703125
+  },
+  "latency_geomean_and_worst_ratio": {
+    "gdn_in_proj_qkvz": [1.1240622780845961, 1.2271609831866397],
+    "gdn_out_proj": [1.2393940108556396, 1.575665856628008],
+    "attn_qkv_proj": [0.9494195431786703, 1.1981792828753106],
+    "attn_o_proj": [1.2499435389963065, 1.5499341974077767],
+    "mlp_gate_up_proj": [1.180138205225814, 1.6734752604948608],
+    "mlp_down_proj": [1.02159374229891, 1.240655983120536]
+  },
+  "catalog": {
+    "cutlass_passes": ["gdn_in_proj_qkvz", "attn_qkv_proj", "mlp_down_proj"],
+    "assigned_to_pinned_onednn": ["gdn_out_proj", "attn_o_proj"],
+    "uncovered": ["mlp_gate_up_proj"],
+    "uncovered_mechanism": "At M=168 the 32x64x32 CUTLASS tile takes 977.1875 us versus 583.9271 us for oneDNN (1.6735x)."
+  },
+  "health": {
+    "post_run_device_state": "both B70s normal",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "integrated_binary_allowed": false,
+    "next_experiment": "For N=17408 and M>8 only, test a 32x128x32 policy with SG layout 1x8. It preserves the K32 reduction and halves the N workgroup count. Require exact equality across the M16-small/M32-N128 boundary and the unchanged latency gates."
+  }
+}
