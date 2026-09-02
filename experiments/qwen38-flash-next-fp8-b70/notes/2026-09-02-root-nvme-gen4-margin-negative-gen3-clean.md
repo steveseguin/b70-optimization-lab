@@ -161,3 +161,19 @@ same drive, slot, and firmware logged about two corrected receiver errors
 per second at Gen4 on BIOS 2.0b eight hours earlier. The AGESA/PCIe training
 refresh in 2.4a is therefore the fix; the Gen3 pin is no longer needed and
 was not reapplied. A fresh Gen4 clearance run started at 09:32 EDT.
+
+## Gen4 clearance passed on BIOS 2.4a (10:01 EDT)
+
+Boot `67848b88-c7c7-452a-bef1-124364a300b9`, link `16 GT/s x4`, ASPM
+`performance`, APST default: 1800 s idle with zero endpoint and root-port
+events (361 polls), then a 4 GiB O_DIRECT read at `5781.1 MiB/s` with zero
+events. Receipt SHA-256
+`6746f0606443ec77ecffd5b8c69fbd1843fb009c0c1ed346e96d29fe14b39f6f`;
+evidence sidecar `20260901-root-nvme-link-clearance-v1.evidence-20260902T133150Z.json`.
+The Gen3 discriminator state is fully retired.
+
+The W13-N32 config-folder qualification runner had pinned the previous
+boot's receipt hash (`843fd84d...`); that single constant was refreshed to the
+new receipt (runner SHA-256 now
+`79543f74cf84416117e5abd517bb614a777f993653d33077d3f1c6b8b74fc7df`). No
+other line changed; its validate-only gate passes.
