@@ -1,0 +1,13 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-runtime-m-invalid-build.v1",
+  "campaign_id": "qwen38-fp8-w8a16-runtime-m-20260902-r120d",
+  "status": "invalid-pre-execution-build",
+  "source_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+  "patch_sha256": "debd76bbc60e2f9e8509440ed2b95b680f95af4a6ffbf8e1979f739234746a8e",
+  "build_completed": true,
+  "gpu_execution_attempted": false,
+  "built_extension_sha256": "a4e6d8c26b728c39550f3e248dd052ebe05d151d292d0bf4df29da5e2af380ed",
+  "sycl_soname": "libsycl.so.9",
+  "invalid_reason": "The extension used the correct oneAPI 2026.1 runtime but was compiled against host Torch 2.11.0+xpu headers. R62 contains Torch 2.13.0+xpu, and import failed on a missing torch::Library::_def symbol before operator registration or GPU execution.",
+  "decision": "Superseded by R120e: compile the identical source patch inside the exact promoted R62 image, with the host oneAPI 2026.1 compiler mounted read-only."
+}
