@@ -1,0 +1,28 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108
+FROM ${BASE_IMAGE}
+
+ARG DECODER_BOUNDARY_TRACE_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-decoder-boundary-trace-r110-20260902.patch /tmp/decoder-boundary-trace.patch
+COPY validate-qwen-decoder-boundary-trace.py /tmp/validate-qwen-decoder-boundary-trace.py
+
+RUN test "$(sha256sum /tmp/decoder-boundary-trace.patch | awk '{print $1}')" = \
+        "${DECODER_BOUNDARY_TRACE_PATCH_SHA256}" \
+    && patch --batch --verbose --fuzz=0 -p1 \
+        -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/decoder-boundary-trace.patch \
+        > /tmp/decoder-boundary-trace.patch.log 2>&1 \
+    && ! grep -Eiq \
+        'trailing garbage|malformed|FAILED|ignored|reversed|offset' \
+        /tmp/decoder-boundary-trace.patch.log \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py \
+    && /opt/venv/bin/python /tmp/validate-qwen-decoder-boundary-trace.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py \
+    && rm -f /tmp/decoder-boundary-trace.patch \
+        /tmp/decoder-boundary-trace.patch.log \
+        /tmp/validate-qwen-decoder-boundary-trace.py
+
+LABEL neural.download.composite.base.r108="sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4" \
+      neural.download.vllm.decoder-boundary-trace.patch.sha256="${DECODER_BOUNDARY_TRACE_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-decoder-boundary-trace-r110"

@@ -1,0 +1,230 @@
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -2,6 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Qwen3Next model."""
+
++import hashlib
++import json
++import os
++import threading
+ from collections.abc import Iterable
+ from itertools import islice
+
+@@ -18,6 +22,7 @@
+     tensor_model_parallel_all_gather,
+     tensor_model_parallel_reduce_scatter,
+ )
++from vllm.forward_context import get_forward_context
+ from vllm.logger import init_logger
+ from vllm.model_executor.layers.attention import Attention
+ from vllm.model_executor.layers.fused_moe import FusedMoEFactory
+@@ -51,7 +56,9 @@
+ from vllm.platforms import current_platform
+ from vllm.sequence import IntermediateTensors
+ from vllm.transformers_utils.configs.qwen3_next import Qwen3NextConfig
++from vllm.utils.torch_utils import direct_register_custom_op
+ from vllm.v1.attention.backend import AttentionType
++from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+
+ from .interfaces import (
+     EagleModelMixin,
+@@ -77,6 +84,105 @@
+
+ KVCache = tuple[torch.Tensor, torch.Tensor]
+
++_DECODER_BOUNDARY_TRACE_INVOCATION: dict[tuple[int, str, int], int] = {}
++_DECODER_BOUNDARY_TRACE_LOCK = threading.Lock()
++
++
++def _trace_qwen_decoder_boundary_xpu(
++    tensor: torch.Tensor,
++    layer_name: str,
++    layer_index: int,
++    stage: str,
++) -> None:
++    """R110: hash request rows without changing the observed tensor."""
++    trace_file = os.getenv("VLLM_XPU_DECODER_BOUNDARY_TRACE_FILE", "")
++    if not trace_file:
++        raise RuntimeError("R110 decoder-boundary trace requires a trace file")
++    context = get_forward_context()
++    metadata_raw = context.attn_metadata
++    metadata = (
++        metadata_raw.get(layer_name) if isinstance(metadata_raw, dict) else None
++    )
++    pure_prefill = (
++        isinstance(metadata, GDNAttentionMetadata)
++        and metadata.num_prefills > 0
++        and metadata.num_decodes == 0
++        and metadata.num_spec_decodes == 0
++        and metadata.prefill_query_start_loc is not None
++    )
++    if not pure_prefill:
++        return
++
++    assert isinstance(metadata, GDNAttentionMetadata)
++    assert metadata.prefill_query_start_loc is not None
++    boundaries = (
++        metadata.prefill_query_start_loc[: metadata.num_prefills + 1]
++        .detach()
++        .cpu()
++        .tolist()
++    )
++    boundaries = [int(value) for value in boundaries]
++    if boundaries[0] != 0 or boundaries[-1] != tensor.shape[0]:
++        raise RuntimeError("R110 decoder boundaries do not cover tensor rows")
++
++    key = (layer_index, stage, metadata.num_prefills)
++    with _DECODER_BOUNDARY_TRACE_LOCK:
++        invocation = _DECODER_BOUNDARY_TRACE_INVOCATION.get(key, 0) + 1
++        _DECODER_BOUNDARY_TRACE_INVOCATION[key] = invocation
++    requests = []
++    for request, (start, stop) in enumerate(zip(boundaries, boundaries[1:])):
++        rows = tensor[start:stop].detach().contiguous()
++        raw = rows.view(torch.uint8).cpu().numpy().tobytes()
++        requests.append(
++            {
++                "request": request,
++                "row_count": stop - start,
++                "sha256": hashlib.sha256(raw).hexdigest(),
++            }
++        )
++
++    rank = int(os.getenv("RANK", "-1"))
++    if torch.distributed.is_available() and torch.distributed.is_initialized():
++        rank = torch.distributed.get_rank()
++    record = {
++        "schema": "neural.download.qwen38-decoder-boundary-trace.v1",
++        "pid": os.getpid(),
++        "rank": rank,
++        "layer": layer_index,
++        "stage": stage,
++        "invocation": invocation,
++        "num_prefills": metadata.num_prefills,
++        "query_start_loc": boundaries,
++        "requests": requests,
++    }
++    encoded = (
++        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
++    ).encode()
++    fd = os.open(trace_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        written = os.write(fd, encoded)
++        if written != len(encoded):
++            raise RuntimeError("R110 decoder trace record was partially written")
++    finally:
++        os.close(fd)
++
++
++def _trace_qwen_decoder_boundary_xpu_fake(
++    tensor: torch.Tensor,
++    layer_name: str,
++    layer_index: int,
++    stage: str,
++) -> None:
++    return
++
++
++direct_register_custom_op(
++    op_name="qwen_decoder_boundary_trace_xpu",
++    op_func=_trace_qwen_decoder_boundary_xpu,
++    mutates_args=["tensor"],
++    fake_impl=_trace_qwen_decoder_boundary_xpu_fake,
++)
++
+
+ def _should_use_sequence_parallel(vllm_config: VllmConfig) -> bool:
+     config = vllm_config.model_config.hf_text_config
+@@ -491,11 +597,44 @@
+     ):
+         full_num_tokens = positions.shape[-1]
+
++        trace_boundaries = (
++            os.getenv("VLLM_XPU_DECODER_BOUNDARY_TRACE_FILE", "")
++            and self.layer_idx in (0, 1)
++            and self.layer_type == "linear_attention"
++        )
++        if trace_boundaries:
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                hidden_states,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "input_hidden",
++            )
++            if residual is not None:
++                torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                    residual,
++                    self.linear_attn.prefix,
++                    self.layer_idx,
++                    "input_residual",
++                )
++
+         if residual is None:
+             residual = hidden_states
+             hidden_states = self.input_layernorm(hidden_states)
+         else:
+             hidden_states, residual = self.input_layernorm(hidden_states, residual)
++        if trace_boundaries:
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                hidden_states,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "after_input_norm_hidden",
++            )
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                residual,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "after_input_norm_residual",
++            )
+
+         if self.use_attn_reduce_scatter_for_moe:
+             hidden_states = tensor_model_parallel_all_gather(hidden_states, 0)
+@@ -510,6 +649,13 @@
+             )
+         else:
+             raise ValueError("Invalid layer_type")
++        if trace_boundaries:
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                hidden_states,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "attention_output",
++            )
+
+         if self.layer_scale:
+             if len(hidden_states.shape) == 2:
+@@ -531,6 +677,19 @@
+
+         # Fully Connected
+         hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
++        if trace_boundaries:
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                hidden_states,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "after_post_attention_norm_hidden",
++            )
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                residual,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "after_post_attention_norm_residual",
++            )
+         if self.use_attn_reduce_scatter_for_moe:
+             hidden_states = self.mlp(
+                 hidden_states,
+@@ -538,6 +697,13 @@
+             )
+         else:
+             hidden_states = self.mlp(hidden_states)
++        if trace_boundaries:
++            torch.ops.vllm.qwen_decoder_boundary_trace_xpu(
++                hidden_states,
++                self.linear_attn.prefix,
++                self.layer_idx,
++                "mlp_output",
++            )
+
+         if self.layer_scale:
+             if len(hidden_states.shape) == 2:
