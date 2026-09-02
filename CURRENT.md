@@ -3719,6 +3719,16 @@ preserved beside it (root-owned external mount, cold page cache versus the
 advances to default-off integration and exact eager/captured qualification
 before an endpoint arm. See the
 [A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-moe-m1-w13-n32-xpu-graph-confirmation-a2-result.md).
+The default-off W13-N32 map packet is now frozen and independently reviewed.
+It changes only the M1 W13 `BLOCK_SIZE_N` from 64 to 32, preserves W2, legacy,
+and every non-M1 resolution semantically, and binds the exact vLLM head plus
+the tracked per-phase-config prerequisite patch. It also carries A32's slower
+`5.421586 tok/s` and exact-4K reliability negative, so the component win cannot
+silently displace the protected `5.515783 tok/s` endpoint. Promotion requires
+a matched map-off control, beating both that control and the protected result,
+exact 4K authority, and a fresh-service repeat. Seven packet tests and the
+independent receipt reproduction pass. See the
+[integration packet](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-moe-m1-w13-n32-config-integration-a1-prereg.md).
 The independently reviewed BF16 dense Phase-1 census then failed closed in its
 first real-weight cell: two aggregate M1 singleton sweeps differed before any
 cell evidence was accepted. That is not yet classified as steady-state model
