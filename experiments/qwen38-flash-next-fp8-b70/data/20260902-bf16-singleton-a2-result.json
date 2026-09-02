@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "complete_bounded_negative",
+  "classification": "exact_warmed_m1_bf16_linear_active_output_repeatability_failure",
+  "scope": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "family": "layer0_attn_hc_down_plus_inject",
+    "provider": "torch_F_linear_xpu",
+    "input_shape": [1, 10240],
+    "weight_shape": [336, 10240],
+    "active_output_columns": [0, 324],
+    "synthetic_padding_columns": [324, 336],
+    "replicas": 2
+  },
+  "finding": {
+    "cold_pair_varies": true,
+    "warmed_immediate_snapshot_varies": true,
+    "warmed_deferred_varies": true,
+    "active_output_varies": true,
+    "synthetic_padding_exact_zero": true,
+    "input_weight_identity_exact_across_processes": true,
+    "fixed_eight_focus_rows_exact": true,
+    "maximum_observed_bf16_ulp_delta": 2,
+    "does_not_establish_all_bf16_families_vary": true,
+    "does_not_alone_establish_endpoint_token_divergence": true
+  },
+  "health": {
+    "all_postflights_pass": true,
+    "xpu_device_count": 4,
+    "aer_event_count": 0,
+    "smart_clean": true,
+    "swap_free": true
+  },
+  "evidence": {
+    "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-singleton-diagnostic-20260902-a2",
+    "summary_sha256": "58b9d94c10cc27f0d16ee7e671988bb50a85308d518ee6fd739dfe913ee99325",
+    "replica1_sha256": "29d5114a2e969300c328945ea802041bf04e1d719712f00aae57f71ad07f6a7e",
+    "replica2_sha256": "3378ac4143c85249a9407eb559ba1e52711682bbba536fc510a91915f7b14c57",
+    "service_log_sha256": "85cd3273eee9767246e467561252d568621ec791c2f5a9c32b4fee1963600232",
+    "independent_audit": "pass"
+  },
+  "decision": {
+    "resume_original_phase1": false,
+    "next": "A3 targeted call-order and torch.backends.mkldnn.deterministic discriminator"
+  }
+}

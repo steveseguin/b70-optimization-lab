@@ -3727,3 +3727,16 @@ contains 12 unused zero-padding columns after 324 active outputs. The remaining
 167 cells are paused. A bounded A2 now distinguishes cold/warm, queued/immediate,
 and active/padding behavior while retaining evidence on every exit. See the
 [A1 negative](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-dense-invariance-phase1-a1-negative.md).
+A2 completed cleanly in two fresh one-B70 processes and closes those initial
+ambiguities. The exact real `[1,10240] x [336,10240]` BF16 `F.linear` changed a
+small number of production-active output values after warm-up even with
+per-call synchronization and immediate CPU snapshots. The 12 synthetic padding
+columns stayed byte-exact zero. Cross-process input, weight, provider, runtime,
+and health identities matched; four B70s were healthy, AER and SMART were
+clean, and swap remained free. This is a bounded negative for the layer-0
+attention HC down/inject M=1 shape, not a claim about all BF16 dense layers or
+proof of endpoint token divergence. The unchanged 168-cell census remains
+stopped. A3 next tests the strongest unstable rows in original call order and a
+separate `torch.backends.mkldnn.deterministic=True` arm without a reboot or
+full-model load. See the
+[A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-singleton-a2-result.md).
