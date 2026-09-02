@@ -1,0 +1,106 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-onednn-register-k8-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-onednn-register-k8-20260902-r144",
+  "status": "closed-identity-positive-serving-latency-negative",
+  "classification": "onednn-generator-operator-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-onednn-register-k8-r144-prereg.json",
+  "source": {
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-register-k8-r144-20260902.patch",
+    "patch_sha256": "6eb233934eb6fc8439b73940bd9927531a0987bfa8b54372d1b2413a25cf0d39",
+    "harness": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-onednn-register-k8-r144.py",
+    "harness_sha256": "8c603f635cf3612c9d0b25f0662448400f6615363b81101e7643e7e7f2cf700a"
+  },
+  "build": {
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_target": "bmg-g31-a0",
+    "onednn_dev_mode": true,
+    "tasks": 721,
+    "result": "passed",
+    "build_extension_bytes": 54539192,
+    "build_extension_sha256": "4c31b1c49576b3f9f7af157d50236e33dd017c502a9aea635ef5f57d528906bd",
+    "installed_extension_sha256": "e87686937b05869aff261a25bf07fb8dc1360d088e9362964fca719d2b093364",
+    "installed_runpath": "$ORIGIN",
+    "no_device_import_torch_2_13_0_xpu": true
+  },
+  "generation": {
+    "small_m1_probe": "passed",
+    "m16_n16_wg4x2_m1_probe": "passed",
+    "all_three_registered_strategies_generated_and_executed": true,
+    "observed_small_kernel": "gemm qH[SH] T@16N@16N 16 4 ... wg 8x1 kri64 sys af k512 grf256 ... sb512",
+    "slm_k_reduction": false,
+    "local_k_split": false
+  },
+  "runs": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-onednn-register-k8-20260902-r144",
+    "natural": {
+      "json_sha256": "3f58930286640f4a802b86702e3aab87bc9b0a3e0c4ec1e77607b97a30f2b4e8",
+      "attn_qkv_reference_sha256": "7be4166471b41c11c2002d2d76fe3cdcbe5f6dc934b71268af47f1aaefad3819",
+      "mlp_gate_up_reference_sha256": "e91322a74df08679d9d8397073b091f02f33e0bcb88dc5dd1bd5de319a69d4cd"
+    },
+    "m16_n4_wg8x1": {
+      "json_sha256": "8058f6f4a8659ada80ea148e865b95fa699cc9e8b33a08a52d479b7070f14fb0"
+    },
+    "m16_n16_wg4x2": {
+      "json_sha256": "89a451348bd20792c62153e90c1d508c7d92fa942de6cee37e78119928faa6d3"
+    },
+    "m16_n16_wg4x4": {
+      "json_sha256": "daa99b66d3abb5794c81ea9b3196f1908c9ebe807470ac50c524842494e00d9b"
+    }
+  },
+  "identity": {
+    "full_outputs_exact_to_natural_m1_rows": "72/72",
+    "maximum_abs_error": 0.0,
+    "all_m512_prefix_checks_exact": true,
+    "all_m128_repeat_checks_exact": true,
+    "all_m128_permutation_checks_exact": true,
+    "all_m168_random_padding_checks_exact": true,
+    "conclusion": "Rotating ordinary 32-K BDPAS outputs through eight FP32 C buffers over a 512-K generated loop and reducing C1 through C7 into C0 exactly reproduces natural-M1 arithmetic without local-K subgroups or SLM."
+  },
+  "latency": {
+    "weighted_call_counts": {
+      "attn_qkv_proj": 16,
+      "mlp_gate_up_proj": 64
+    },
+    "weighted_candidate_over_natural_by_m": {
+      "m16_n4_wg8x1": {
+        "2": 1.129393626522206,
+        "64": 3.5014713162436744,
+        "128": 5.30135712669713,
+        "168": 5.373697134994439,
+        "256": 6.71833168838286
+      },
+      "m16_n16_wg4x2": {
+        "2": 1.0448466127040292,
+        "64": 0.9697657652307881,
+        "128": 1.3187878488212699,
+        "168": 1.648902486549995,
+        "256": 1.7675060640446745
+      },
+      "m16_n16_wg4x4": {
+        "2": 1.1590517087496819,
+        "64": 0.9806567489153614,
+        "128": 1.3139439897976979,
+        "168": 1.6025041406986247,
+        "256": 1.721648686901063
+      }
+    },
+    "all_candidate_sample_sequences_stable": true,
+    "serving_gate": "failed"
+  },
+  "mechanism": {
+    "accepted": true,
+    "limitation": "Eight live FP32 output tiles consume 128 C GRFs at 16x16. A 32x32 per-subgroup tile would require 512 C GRFs before A/B data and cannot fit in the 256-GRF architecture, leaving M128 scheduling materially behind natural oneDNN.",
+    "next": "Retain the same eight 64-K chains and ascending reduction, but compute K partitions serially with C0 plus one reusable temporary C tile. This reduces live C storage from eight tiles to two and makes a 32x32 serving tile feasible without K subgroups or SLM."
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+    "both_devices_normal_after_all_cases": true,
+    "new_xe_fault_or_reset": false,
+    "server_launched": false,
+    "second_gpu_used": false,
+    "containers_removed": true
+  },
+  "decision": "Preserve R144 as the exact no-SLM oneDNN arithmetic reference, but do not promote its eight-live-buffer geometry. Continue inside oneDNN with a two-buffer serial-K-partition implementation; do not return to direct K-subgroup/SLM sweeps and do not begin collective optimization."
+}
