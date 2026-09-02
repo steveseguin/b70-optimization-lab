@@ -47,9 +47,9 @@ def main() -> int:
     runs = {}
     for p in sorted(args.run_dir.glob("*-measured.json")):
         arm = p.name[: -len("-measured.json")]
-        if re.match(r"^(control|candidate)\d*$", arm):
+        if re.match(r"^(control|candidate|candidateb)\d*$", arm):
             runs[arm] = load(p)
-    groups = {"control": [a for a in runs if a.startswith("control")], "candidate": [a for a in runs if a.startswith("candidate")]}
+    groups = {"control": [a for a in runs if a.startswith("control")], "candidate": [a for a in runs if a.startswith("candidate") and not a.startswith("candidateb")], "candidateb": [a for a in runs if a.startswith("candidateb")]}
     report = {"schema": "neural.download.qwen38-fp8-decode-pad-replicates.v1", "order_of_runs": sorted(runs, key=lambda a: Path(args.run_dir / f"{a}-start-time.txt").read_text().strip() if (args.run_dir / f"{a}-start-time.txt").exists() else a),
               "replicates": {a: {k: v for k, v in r.items() if k != "_streams"} for a, r in runs.items()}}
     for metric in ("c1_wall_median", "c1_after_ttft_median", "c2_wall_median"):
@@ -57,10 +57,13 @@ def main() -> int:
         for name, arms in groups.items():
             vals = [runs[a][metric] for a in arms if runs[a][metric] is not None]
             g[name] = {"values": vals, "median": statistics.median(vals) if vals else None, "min": min(vals) if vals else None, "max": max(vals) if vals else None}
-        ctrl, cand = g["control"], g["candidate"]
-        g["candidate_vs_control_median_pct"] = (cand["median"] / ctrl["median"] - 1) * 100 if ctrl["median"] and cand["median"] else None
+        ctrl = g["control"]
         g["control_noise_pct_max_minus_min"] = (ctrl["max"] / ctrl["min"] - 1) * 100 if ctrl["min"] else None
-        g["every_candidate_above_every_control"] = bool(cand["values"] and ctrl["values"] and min(cand["values"]) > max(ctrl["values"]))
+        for cname in ("candidate", "candidateb"):
+            cand = g[cname]
+            g[f"{cname}_vs_control_median_pct"] = (cand["median"] / ctrl["median"] - 1) * 100 if ctrl["median"] and cand["median"] else None
+            g[f"every_{cname}_above_every_control"] = bool(cand["values"] and ctrl["values"] and min(cand["values"]) > max(ctrl["values"]))
+            g[f"every_{cname}_below_every_control"] = bool(cand["values"] and ctrl["values"] and max(cand["values"]) < min(ctrl["values"]))
         report[metric] = g
     # token stream agreement
     ref_arm = groups["control"][0] if groups["control"] else None
@@ -71,7 +74,7 @@ def main() -> int:
             agreement[a] = {pid: (r["_streams"].get(pid) == ref.get(pid)) for pid in ref}
     report["c1_streams_identical_to_first_control"] = agreement
     args.out.write_text(json.dumps(report, indent=1))
-    print(json.dumps({k: v for k, v in report.items() if k != "replicates"}, indent=1))
+    print(json.dumps(report, indent=1))
     return 0
 
 

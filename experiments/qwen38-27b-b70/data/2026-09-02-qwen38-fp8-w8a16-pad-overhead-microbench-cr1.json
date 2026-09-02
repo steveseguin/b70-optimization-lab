@@ -1,0 +1,90 @@
+{
+ "schema": "neural.download.qwen38-fp8-w8a16-pad-overhead.v1",
+ "pad": 32,
+ "shapes": {
+  "gdn_in_proj_qkvz": {
+   "M2": {
+    "plain_us": 73.7,
+    "plain_M32_us": 78.5,
+    "r118_as_written_us": 82.8,
+    "prealloc_copy_us": 81.8
+   },
+   "M4": {
+    "plain_us": 73.6,
+    "plain_M32_us": 78.4,
+    "r118_as_written_us": 83.8,
+    "prealloc_copy_us": 81.8
+   }
+  },
+  "gdn_out_proj": {
+   "M2": {
+    "plain_us": 13.7,
+    "plain_M32_us": 24.7,
+    "r118_as_written_us": 27.8,
+    "prealloc_copy_us": 26.6
+   },
+   "M4": {
+    "plain_us": 12.9,
+    "plain_M32_us": 23.6,
+    "r118_as_written_us": 27.6,
+    "prealloc_copy_us": 26.8
+   }
+  },
+  "attn_qkv_proj": {
+   "M2": {
+    "plain_us": 64.8,
+    "plain_M32_us": 67.8,
+    "r118_as_written_us": 71.1,
+    "prealloc_copy_us": 69.8
+   },
+   "M4": {
+    "plain_us": 62.7,
+    "plain_M32_us": 66.9,
+    "r118_as_written_us": 71.3,
+    "prealloc_copy_us": 70.3
+   }
+  },
+  "attn_o_proj": {
+   "M2": {
+    "plain_us": 13.1,
+    "plain_M32_us": 24.2,
+    "r118_as_written_us": 27.9,
+    "prealloc_copy_us": 26.6
+   },
+   "M4": {
+    "plain_us": 12.9,
+    "plain_M32_us": 23.5,
+    "r118_as_written_us": 27.6,
+    "prealloc_copy_us": 26.8
+   }
+  },
+  "mlp_gate_up_proj": {
+   "M2": {
+    "plain_us": 164.0,
+    "plain_M32_us": 172.5,
+    "r118_as_written_us": 176.8,
+    "prealloc_copy_us": 175.2
+   },
+   "M4": {
+    "plain_us": 162.3,
+    "plain_M32_us": 172.4,
+    "r118_as_written_us": 176.7,
+    "prealloc_copy_us": 175.1
+   }
+  },
+  "mlp_down_proj": {
+   "M2": {
+    "plain_us": 83.2,
+    "plain_M32_us": 94.2,
+    "r118_as_written_us": 96.4,
+    "prealloc_copy_us": 94.3
+   },
+   "M4": {
+    "plain_us": 79.1,
+    "plain_M32_us": 91.5,
+    "r118_as_written_us": 97.9,
+    "prealloc_copy_us": 95.2
+   }
+  }
+ }
+}

@@ -1,0 +1,178 @@
+{
+ "schema": "neural.download.qwen38-fp8-mtp1-w8a16-decode-pad-rows-result.v1",
+ "campaign_id": "qwen38-fp8-tp2-mtp1-w8a16-decode-pad-rows-20260902-r118",
+ "classification": "negative-screen-with-mechanism; lead closed",
+ "public_result_eligible": false,
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118-prereg.json",
+ "images": {
+  "control_and_candidate": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118",
+  "id": "sha256:95742ce8493671fb28b0b53db77a2f0c240e8d82355f20b756ab2479d037b8d0",
+  "r118b_built_not_run": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-w8a16-pad-n-set-prealloc-r118b",
+  "r118b_id": "sha256:a9d125438054865915b65ca5ffba85942f0cea4cbd21347e0036bfab2a45a1de"
+ },
+ "run_order_same_boot": [
+  "control",
+  "control2",
+  "candidate",
+  "control3",
+  "candidate2 (infrastructure failure, no measurement)"
+ ],
+ "gates": {
+  "candidate_padded_marker_in_log": true,
+  "candidate_env_reached_container": true,
+  "cached_tokens_all_zero_all_arms": true,
+  "c1_streams_repeat_identical_within_each_server": true,
+  "candidate_c1_streams_identical_to_controls": true
+ },
+ "measurement": {
+  "c1_wall_median": {
+   "control_values": [
+    39.29522984817821,
+    40.39953289771411,
+    36.78366669179818
+   ],
+   "candidate_values": [
+    35.77642627231161
+   ],
+   "candidate_vs_control_median_pct": -8.954785579475965,
+   "control_spread_pct": 9.830086370161073,
+   "every_candidate_below_every_control": true
+  },
+  "c1_after_ttft_median": {
+   "control_values": [
+    40.47228924181399,
+    41.65015827668065,
+    37.857660510233906
+   ],
+   "candidate_values": [
+    36.80797552036284
+   ],
+   "candidate_vs_control_median_pct": -9.053883015012065,
+   "control_spread_pct": 10.017781646653878,
+   "every_candidate_below_every_control": true
+  },
+  "c2_wall_median": {
+   "control_values": [
+    75.2952030052146,
+    77.80350160435117,
+    69.46373201155919
+   ],
+   "candidate_values": [
+    69.02036234222741
+   ],
+   "candidate_vs_control_median_pct": -8.33365262665222,
+   "control_spread_pct": 12.005933673998669,
+   "every_candidate_below_every_control": true
+  }
+ },
+ "interpretation": {
+  "screen": "The padded candidate (all W8A16 calls padded to 32 rows) measured below every control on every metric (about -9% versus the control median), but the three unpadded controls themselves spread about 10% in run order 39.3, 40.4, 36.8 tok/s c1 wall, with the last control only 2.7% above the candidate. This boot cannot resolve effects of that size; the sign is consistent across metrics but the magnitude is not trustworthy.",
+  "mechanism_from_microbenchmark": "With a deeper warmup the per-call cost of padding is unambiguous: the K=3072 shapes (gdn_out_proj, attn_o_proj) roughly double from about 13 us at M=2 to about 24-27 us at 32 rows, mlp_down_proj rises 83 to 94-96 us, mlp_gate_up_proj 164 to 175-177 us, gdn_in_proj_qkvz 74 to 82 us, and attn_qkv_proj 65 to 70 us. Summed over 64 layers that is about 2-3 ms per decode step, matching a several-percent loss. The census lead itself was an artifact: the census timed each shape with one warmup call and ten iterations and reported attn_qkv_proj at 172-183 us for M<=16; with ten warmups and 250 iterations the same kernel measures 64.8 us at M=2, so oneDNN has lazy first-call work on that shape, not a slow steady-state kernel.",
+  "decision": "R118 and the qkv-only R118b variant are closed. Fixed-row padding buys batch-shape invariance only at a measurable decode cost; it is not a performance lead. The census script now uses ten warmups and thirty iterations so this cannot recur.",
+  "pad_overhead_microbench": {
+   "gdn_in_proj_qkvz": {
+    "M2": {
+     "plain_us": 73.7,
+     "plain_M32_us": 78.5,
+     "r118_as_written_us": 82.8,
+     "prealloc_copy_us": 81.8
+    },
+    "M4": {
+     "plain_us": 73.6,
+     "plain_M32_us": 78.4,
+     "r118_as_written_us": 83.8,
+     "prealloc_copy_us": 81.8
+    }
+   },
+   "gdn_out_proj": {
+    "M2": {
+     "plain_us": 13.7,
+     "plain_M32_us": 24.7,
+     "r118_as_written_us": 27.8,
+     "prealloc_copy_us": 26.6
+    },
+    "M4": {
+     "plain_us": 12.9,
+     "plain_M32_us": 23.6,
+     "r118_as_written_us": 27.6,
+     "prealloc_copy_us": 26.8
+    }
+   },
+   "attn_qkv_proj": {
+    "M2": {
+     "plain_us": 64.8,
+     "plain_M32_us": 67.8,
+     "r118_as_written_us": 71.1,
+     "prealloc_copy_us": 69.8
+    },
+    "M4": {
+     "plain_us": 62.7,
+     "plain_M32_us": 66.9,
+     "r118_as_written_us": 71.3,
+     "prealloc_copy_us": 70.3
+    }
+   },
+   "attn_o_proj": {
+    "M2": {
+     "plain_us": 13.1,
+     "plain_M32_us": 24.2,
+     "r118_as_written_us": 27.9,
+     "prealloc_copy_us": 26.6
+    },
+    "M4": {
+     "plain_us": 12.9,
+     "plain_M32_us": 23.5,
+     "r118_as_written_us": 27.6,
+     "prealloc_copy_us": 26.8
+    }
+   },
+   "mlp_gate_up_proj": {
+    "M2": {
+     "plain_us": 164.0,
+     "plain_M32_us": 172.5,
+     "r118_as_written_us": 176.8,
+     "prealloc_copy_us": 175.2
+    },
+    "M4": {
+     "plain_us": 162.3,
+     "plain_M32_us": 172.4,
+     "r118_as_written_us": 176.7,
+     "prealloc_copy_us": 175.1
+    }
+   },
+   "mlp_down_proj": {
+    "M2": {
+     "plain_us": 83.2,
+     "plain_M32_us": 94.2,
+     "r118_as_written_us": 96.4,
+     "prealloc_copy_us": 94.3
+    },
+    "M4": {
+     "plain_us": 79.1,
+     "plain_M32_us": 91.5,
+     "r118_as_written_us": 97.9,
+     "prealloc_copy_us": 95.2
+    }
+   }
+  }
+ },
+ "infrastructure": {
+  "candidate2": "Second padded replicate never reached readiness: during weight staging the second B70 (0000:e3:00.0) logged repeated copy-engine (bcs) page faults with -EINVAL responses, engine memory CAT errors, one bcs engine reset, a timed-out job, and a device coredump; the container was stopped gracefully after 12 minutes. Both devices reported normal afterwards and passed a bounded 4096x4096 matmul check with no further kernel events. This is the same failure class as the R116 attempt-1 reset on 0000:03:00.0; this boot has now reset both cards and no further 27B server launches were attempted on it.",
+  "kernel_events_summary_file": "candidate2-kernel-events-summary.txt"
+ },
+ "artifacts": {
+  "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-w8a16-decode-pad-rows-20260902-r118",
+  "control_measured_sha256": "f8c997c67fa0f57fd1df810a597801fc17539559eced1352a02918a31589570d",
+  "control2_measured_sha256": "ef3a71f15d555091ec00f1be3ff6fda9714c4ede1c8f7c60a07b5c66f7f0667c",
+  "control3_measured_sha256": "d5f6ec92204f1dc4cf3a7c1a492e2a35b328ea27f41cba50021eae54d3dc568a",
+  "candidate_measured_sha256": "265ce51c9885dd1e6f8e308deba942bf7797ce23f4a39736904de5b1bd22b3bd",
+  "control_server_log_sha256": "669d06d4c1d8b83ae2007536b09441165614de0d64fcb57cf8132c74ad6b4c9d",
+  "control2_server_log_sha256": "6e49937b752220783ad2d0a6a7ba345e09176bc0b32f1f9aa29e78fb7b2e41cc",
+  "control3_server_log_sha256": "80238a7b038f522eea77ea013404fef07c1975e31f81c365822718b8a633cfe6",
+  "candidate_server_log_sha256": "4495e5121f77d3e8e64ed411f44363e1d49ae67badb2ec8997efcf0645bfa4f1",
+  "candidate2_server_log_sha256": "e77e123a674cfd349681c5c49f1e66725ebbc31f1fdc26fb249ae831e9486eab",
+  "candidate2_kernel_journal_sha256": "7c6c92bf68d666860eabdaf833fc0cc01c09ffa38716a7c96768a6302eeda93d",
+  "replicates_sha256": "140f3f6a7f601598e81d2bd938cfa4b045f527d5d8fc077aa5a8f4b85298e1c4"
+ },
+ "reporting_boundary": "Diagnostic screen on a boot with GPU resets on both cards. No README, website, LocalMaxxing, or public speed/quality update."
+}

@@ -91,8 +91,13 @@ def gemm(a: torch.Tensor, w_fp8: torch.Tensor, scales_t: torch.Tensor):
     return torch.ops._xpu_C.fp8_gemm_w8a16(a, w_fp8.t(), scales_t, None)
 
 
-def time_call(fn, iters: int = 20) -> float:
-    fn()
+def time_call(fn, iters: int = 30, warmup: int = 10) -> float:
+    # CR1 lesson: one warmup call plus ten timed iterations reported the attn
+    # qkv M<=16 kernel at ~180 us; with a deeper warmup it measures ~65 us
+    # (see bench-qwen38-fp8-w8a16-pad-overhead.py). Lazy first-call work in
+    # oneDNN is not steady-state kernel latency.
+    for _ in range(warmup):
+        fn()
     torch.xpu.synchronize()
     start = time.perf_counter()
     for _ in range(iters):
@@ -111,7 +116,7 @@ def census_gemm(name: str, k: int, n: int, device, gen, scale_dtype) -> dict:
     for m in M_VALUES:
         a = a_full[:m].contiguous()
         out_by_m[m] = gemm(a, w_fp8, scales_t)
-        timing_us[m] = time_call(lambda: gemm(a, w_fp8, scales_t), iters=10)
+        timing_us[m] = time_call(lambda: gemm(a, w_fp8, scales_t))
     torch.xpu.synchronize()
 
     # Row-invariance classes: group M values by the bitwise value of row 0 and

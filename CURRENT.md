@@ -121,7 +121,11 @@ row-invariant W8A16 GEMM gated by the kernel census, then a regenerated c1 oracl
 the census also found run-to-run nondeterminism for 168-256-row W8A16 GEMMs,
 confirmed at the endpoint on 2026-09-02 (identical 168-250-token requests return
 different logprobs on every repeat; 100 and 300 tokens are bitwise repeatable),
-so single-request determinism language must carry that row-count bound. The published output-audited concurrency curves are
+so single-request determinism language must carry that row-count bound. Fixed 32-row
+padding of small-M W8A16 GEMMs (R118) is closed as a decode cost, not a lead. The
+boot now carries copy-engine resets on both B70s (R116 attempt 1 on `03:00.0`,
+R118 candidate2 on `e3:00.0`, both during weight staging); reboot before the next
+server launch. The published output-audited concurrency curves are
 unaffected. See the
 [`CR1 review`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
  Recovery order is process

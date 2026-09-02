@@ -122,11 +122,15 @@ rows (class `{59-64}`) differ, which is the R86/R115 layer-0 observation.
 
 The W8A16 decode plateau is flat: `mlp_gate_up_proj` 166-170 us for M=1..16,
 173 at 32, 200 at 64, 275 at 128; `mlp_down_proj` 78-84 us to M=16, 100 at 32;
-`gdn_in_proj_qkvz` 73-77 us to M=32. Padding decode GEMMs to 32 rows therefore
-costs almost nothing. `attn_qkv_proj` is the outlier: 172-183 us at M<=16 but
-66 us at M=32 and 79 us at M=128, so oneDNN's small-M kernel choice for this
-shape is about 2.7x slower than its M=32 kernel (16 attention layers, roughly
-1.8 ms per decode step if it reproduces in situ).
+`gdn_in_proj_qkvz` 73-77 us to M=32. The census also showed `attn_qkv_proj` at
+172-183 us for M<=16 versus 66 us at M=32. **That reading was an artifact of the
+census timing (one warmup call, ten iterations):** with ten warmups the same
+kernel measures 64.8 us at M=2 (see the R118 section and
+[`pad-overhead microbench`](../data/2026-09-02-qwen38-fp8-w8a16-pad-overhead-microbench-cr1.json)).
+oneDNN does lazy first-call work on that shape; there is no slow steady-state
+small-M kernel, and the census script now warms up ten times before timing.
+Padding decode GEMMs to 32 rows is not free either: the K=3072 shapes roughly
+double per call (13 to 24-27 us) and the others gain 4-12 us.
 
 ## What this changes
 
@@ -243,6 +247,43 @@ row-count bound until the kernel is fixed; (b) the identity ladder at c6-c8 is
 confounded by this independent of the tie mechanism; (c) the upstream report to
 vllm-xpu-kernels/oneDNN should cite the sweep's per-shape M lists and this
 endpoint reproduction.
+
+### R118 / R118b: fixed 32-row padding of small-M W8A16 GEMMs (closed)
+
+R118 (`sha256:95742ce8...`) wraps every W8A16 linear in an opaque op that pads
+calls below `VLLM_XPU_W8A16_DECODE_PAD_ROWS` rows up to the bucket and slices
+the result, with execution markers; the repro launcher now forwards that
+variable (the first attempt ran unpadded because it did not, and is kept as
+`control2`). Result:
+[`r118-result`](../data/2026-09-02-qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118-result.json),
+[`replicates`](../data/2026-09-02-qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118-replicates.json).
+
+| Arm (run order) | c1 wall tok/s | c1 after-TTFT tok/s | c2 wall tok/s |
+| --- | ---: | ---: | ---: |
+| control (pad 0) | 39.30 | 40.47 | 75.30 |
+| control2 (pad 0) | 40.40 | 41.65 | 77.80 |
+| candidate (pad 32, all shapes) | 35.78 | 36.81 | 69.02 |
+| control3 (pad 0) | 36.78 | 37.86 | 69.46 |
+
+The candidate sits below every control, but the controls drift 10% across the
+session, so the boot cannot resolve the magnitude. The mechanism is settled by
+the micro-benchmark instead: padding the K=3072 shapes to 32 rows doubles their
+per-call cost, and the other shapes gain 4-12 us each, about 2-3 ms per decode
+step in total; the attention-qkv small-M penalty that motivated the lead was a
+warmup artifact of the census timing. R118b (`sha256:a9d12543...`, qkv-only
+padding with a preallocated buffer) was built and preregistered but not run:
+with no real qkv penalty there is nothing for it to recover. Both are closed.
+Token streams were identical across all four arms.
+
+The second padded replicate never reached readiness. While staging weights,
+the second B70 (`0000:e3:00.0`) logged repeated copy-engine page faults with
+`-EINVAL` responses, engine memory CAT errors, one `bcs` engine reset, a
+timed-out job and a device coredump; the container was stopped gracefully,
+both devices returned to `normal`, and a bounded 4096x4096 matmul passed on
+each with no further kernel events. This is the same failure class as the R116
+attempt-1 reset on `0000:03:00.0`. The boot has now reset both cards, so no
+further 27B server was launched on it; the clean reboot should come before any
+further lane run.
 
 ### Specification for the oneDNN runtime-M experiment (not yet run)
 
