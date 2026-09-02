@@ -1,0 +1,40 @@
+{
+ "schema": "neural.download.qwen38-fp8-mtp1-gdn-r99-all-phases-prereg.v1",
+ "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-r99-all-phases-20260902-r117",
+ "status": "preregistered-before-run",
+ "objective": "Remove the R101 selector's R97 multi-request GDN gated-norm arm so every live request count runs the retained R99 lowering that the c1 oracle was produced with. The CR1 census showed R99 is already row-invariant across M and that R97 differs from it by one ULP in 6/1416 rows, so the arm is a deliberate perturbation with no invariance benefit.",
+ "lineage": {
+  "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-allphase-isolation-r116",
+  "base_image_id": "sha256:91e591590f96247cd318bb229e7909ea1c036be201e62b646679e1ea02eab08f",
+  "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-r99-all-phases-r117",
+  "candidate_image_id": "sha256:52fe73b06d0cbef8c2a007f48f06ff77831b2589fec5d04590e10f079266eedf",
+  "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-r99-all-phases-r117-20260902.patch",
+  "patch_sha256": "2b954a93c1b3ae666a0bb386697a0693987ae351d351bc2fc582d0521f57e806",
+  "installed_gdn_source_sha256": "905d2eaf7ac33154f892b80eb2c36133c23820156606bc59d4a584710d4dc568",
+  "validator": "tools/validate-qwen-gdn-r99-all-phases-r117.py",
+  "review": "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md"
+ },
+ "single_change": "In _xpu_qwen_gdn_row_stable_rmsnorm_gated, call the impl with multi_request=False for every live request count and emit R117 markers. The R100 impl body, the R116 layer-0 MLP isolation, R108 projection isolation and trace, R88/R89 prefill isolation, and every runtime flag are unchanged.",
+ "predictions": {
+  "c1": "Exact against the frozen R72 oracle by construction: the single-request path already ran R99.",
+  "c2": "Not predicted to become identity-qualified. Per CR1 the packed and staggered c2 paths still differ from c1 in every packed oneDNN W8A16 GEMM (M-class {12-48}/{59-64} versus {1-4}), so the exact float16 tie at cache-c000 index 96 is still decided by a different rounding history. Whatever c2 does is recorded, not interpreted as repair or regression.",
+  "markers": "Server log must show 'R117 Qwen GDN live-metadata single-request R99 arm executed' and 'R117 ... multi-request R99 arm executed' and must not show any R97 marker."
+ },
+ "workload": {
+  "warm": "one c1 repeat, two simultaneous c2 repeats",
+  "staggered": "four c2 repeats with --launch-stagger-ms 200 to force the mixed prefill/decode shape",
+  "counted": "three c1 repeats and ten simultaneous c2 repeats",
+  "max_tokens": 128,
+  "prefix_caching": false,
+  "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+  "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+ },
+ "mandatory_gates": {
+  "c1_exact": "Every c1 output must match the frozen oracle; a c1 miss invalidates the candidate.",
+  "complete_outputs": "128 tokens and cached_tokens=0 on every response.",
+  "markers": "Both R117 markers present, no R97 marker."
+ },
+ "follow_on_same_image": "A second server with MAX_MODEL_LEN=1024 runs experiments/qwen38-27b-b70/scripts/probe-qwen38-fp8-c1-prefill-length-determinism.py to test end to end whether the 168-256-row oneDNN nondeterminism found by the CR1 sweep is visible at the endpoint (token IDs and logprob floats compared across five sequential repeats at prompt lengths 100, 168, 200, 224, 250, 300).",
+ "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset. This boot contains an earlier GPU reset; correctness diagnostics only.",
+ "reporting_boundary": "Diagnostic only. No README, website, LocalMaxxing, or public speed/quality update."
+}

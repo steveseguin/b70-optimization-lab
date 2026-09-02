@@ -178,6 +178,54 @@ shape is about 2.7x slower than its M=32 kernel (16 attention layers, roughly
 7. Schedule the clean reboot that R62 and every speed claim since 2026-09-01
    have been waiting for.
 
+## Follow-up experiments run after the review
+
+### R117: R99 gated-norm lowering for every phase
+
+Image `neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-r99-all-phases-r117`
+(`sha256:52fe73b0...66eedf`), R116 plus one change: the selector calls the impl
+with `multi_request=False` for every live request count, so the R97 arm is
+unreachable. Runtime flags unchanged. Preregistration and result:
+[`r117-prereg`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-r99-all-phases-r117-prereg.json),
+[`r117-result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-r99-all-phases-r117-result.json),
+[`phase summary`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-r99-all-phases-r117-phase-summary.json).
+
+| Phase | Exact |
+| --- | --- |
+| warm c1 | 1/1 |
+| warm c2 (simultaneous) | 0/2 batches, 2/4 outputs |
+| staggered c2 (200 ms launch stagger) | 0/4 batches, 4/8 outputs |
+| counted c1 | 3/3 |
+| counted c2 (simultaneous) | 0/10 batches, 10/20 outputs |
+
+Every miss is `cache-c000` at zero-based index 96, `348` to `2972`, the same
+alternate stream (`964a2e99...`). The layer-0 trace shows both packed orders
+(five `[28,31]`, five `[31,28]`) and six staggered single-request entries; all
+failed. Under R116 the same packed orders passed 38/38 and 2/2. The only
+difference is the one-ULP R97 norm arm in multi-request phases, so that arm was
+a compensating perturbation that happened to land the tie on 348, not a repair.
+R117 is the cleaner base (no deliberate c1/c2 arithmetic split) and is not a
+regression in any meaningful sense: neither build is bit-identical to c1 in any
+packed GEMM. Both B70s normal afterwards, no kernel event.
+
+### Specification for the oneDNN runtime-M experiment (not yet run)
+
+Location: `csrc/xpu/onednn/onednn_ext.h`, `matmul_primitive_cache_t::get`, at
+kernel commit `1e90ffa672ba02f17a909da11838a4c55b199783` (the image's kernel
+head, present in `/home/steve/src/vllm-xpu-kernels`; use a fresh worktree, the
+main checkout carries uncommitted Codex work). The primitive is built from
+concrete `{m, k}` / `{m, n}` memory descriptors and cached under a key that
+includes `m`, so oneDNN selects a kernel per M. Change, for the W8A16 path
+only: build `src_md` and `dst_md` with `DNNL_RUNTIME_DIM_VAL` in the M
+position, drop `m` from the cache key, and pass memory objects carrying the
+real dims at execution. Rebuild `_xpu_C.abi3.so` with the lane's
+`build-vllm-xpu-kernels-xpu-c-only.sh` settings, inject it as the R83
+Dockerfile does, and rerun the three census scripts. Accept only if every
+shape collapses to one row-0 class over M 1-512, permutation invariance holds
+at every M, the 168-256 nondeterminism is gone, and the decode plateau cost is
+measured. If oneDNN rejects runtime dims with block scales, the fallback is the
+Triton row-invariant GEMM or fixed 32-row chunking.
+
 ## Reporting boundary
 
 Operator diagnostic and review only. Census timings are single-GPU,

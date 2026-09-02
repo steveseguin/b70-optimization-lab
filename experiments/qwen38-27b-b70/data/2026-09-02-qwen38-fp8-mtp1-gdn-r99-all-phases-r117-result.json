@@ -1,0 +1,95 @@
+{
+ "schema": "neural.download.qwen38-fp8-mtp1-gdn-r99-all-phases-result.v1",
+ "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-r99-all-phases-20260902-r117",
+ "classification": "c1-exact-c2-alternate-on-every-shape-confirms-tie-model",
+ "public_result_eligible": false,
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-r99-all-phases-r117-prereg.json",
+ "image": {
+  "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-r99-all-phases-r117",
+  "id": "sha256:52fe73b06d0cbef8c2a007f48f06ff77831b2589fec5d04590e10f079266eedf",
+  "base_r116_id": "sha256:91e591590f96247cd318bb229e7909ea1c036be201e62b646679e1ea02eab08f",
+  "patch_sha256": "2b954a93c1b3ae666a0bb386697a0693987ae351d351bc2fc582d0521f57e806",
+  "installed_gdn_source_sha256": "905d2eaf7ac33154f892b80eb2c36133c23820156606bc59d4a584710d4dc568"
+ },
+ "runtime_flags_unchanged_from_r116": [
+  "VLLM_XPU_GDN_ISOLATE_QKVZ_PREFILL_REQUESTS=1",
+  "VLLM_XPU_GDN_ISOLATE_PREFILL_REQUESTS=1",
+  "VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1",
+  "VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS=1",
+  "VLLM_XPU_ISOLATE_LAYER0_MLP_PREFILL_REQUESTS=1",
+  "VLLM_XPU_ENABLE_XPU_GRAPH=0",
+  "MAX_MODEL_LEN=256",
+  "MAX_NUM_SEQS=64",
+  "MAX_NUM_BATCHED_TOKENS=512"
+ ],
+ "gates": {
+  "server_ready": true,
+  "markers": {
+   "R117 Qwen GDN live-metadata single-request R99 arm executed": 1,
+   "R117 Qwen GDN live-metadata multi-request R99 arm executed": 1,
+   "R101 Qwen GDN metadata-free profile R99 arm executed": 1,
+   "R97 arm executed": 0,
+   "R116 layer-0 MLP multi-prefill treatment executed": 1,
+   "R116 layer-0 MLP multi-request decode-or-mixed treatment executed": 1,
+   "R116 layer-0 MLP single-request control executed": 1
+  },
+  "r97_marker_absent": true,
+  "all_outputs_complete_128": true,
+  "cached_tokens_all_zero": true,
+  "warm_c1_exact": "1/1",
+  "warm_c2_exact_batches": "0/2",
+  "warm_c2_exact_outputs": "2/4",
+  "staggered_c2_200ms_exact_batches": "0/4",
+  "staggered_c2_exact_outputs": "4/8",
+  "counted_c1_exact": "3/3",
+  "counted_c2_exact_batches": "0/10",
+  "counted_c2_exact_outputs": "10/20",
+  "c1_gate": "pass",
+  "strict_identity_pass": false
+ },
+ "layer0_scheduler_shapes_rank0": {
+  "(1, (31,), 'single-request-control')": 9,
+  "(1, (28,), 'single-request-control')": 1,
+  "(2, (28, 31), 'split-per-request')": 5,
+  "(2, (31, 28), 'split-per-request')": 5
+ },
+ "failure": {
+  "every_miss": "cache-c000",
+  "first_divergent_token_zero_based": 96,
+  "oracle_token_id": 348,
+  "observed_token_id": 2972,
+  "miss_count": 16,
+  "distinct_first_divergence_signatures": [
+   "{\"observed\": 2972, \"oracle\": 348, \"zero_based_index\": 96}"
+  ],
+  "observed_token_ids_sha256_set": [
+   "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98"
+  ]
+ },
+ "interpretation": {
+  "c1": "Exact 4/4 as predicted: the single-request path already ran R99.",
+  "c2": "0/16 batches exact across both packed orders (5x [28,31], 5x [31,28]) and the six batches that entered as staggered single-request prefills. Under R116, which differed only by running the R97 norm arm in multi-request phases, the same packed orders passed. Removing that one-ULP perturbation flipped the cache-c000 index-96 tie from 348 to 2972 on every c2 shape. The R97 arm was therefore compensating noise, not a repair, and the fixture measures rounding history rather than correctness. This is the outcome the CR1 review predicted.",
+  "what_this_does_not_show": "It does not show R117 is worse than R116. Both differ from the c1 arithmetic in every packed oneDNN W8A16 GEMM (CR1 census M-classes); neither is identity. R117 is the cleaner base because it no longer carries a deliberate multi-request perturbation.",
+  "next": "Row-invariant W8A16 GEMM for all M (oneDNN runtime-M test first, then Triton or fixed 32-row chunks), census-gated, then regenerate the c1 oracle."
+ },
+ "host": {
+  "both_b70_devices_after_stop": "normal",
+  "new_kernel_fault_or_reset": false,
+  "reboot_or_gpu_reset_requested": false,
+  "boot_public_speed_eligible": false,
+  "run_time_local": "2026-09-02T00:55:01-04:00 to 2026-09-02T01:01:47-04:00"
+ },
+ "artifacts": {
+  "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-r99-all-phases-20260902-r117",
+  "server_log_sha256": "f3dad61dedd10d7c39337f22857df2140abbf9ea25902488c8dbef43e2195733",
+  "warm_c1_sha256": "a65bd999b06e7df482f235708e5017854e10de4e9524a4a7b734b02ac8722fa6",
+  "warm_c2_sha256": "c856f5e154edd151f0a515b60d04a9dae8d0bb144d90744428430067bb0a1008",
+  "staggered_c2_sha256": "f9cfe295c6306d8caf21c7b2a273312b5e9d4a1891de93bc4191b9755bcd9f61",
+  "counted_c1_sha256": "08f3dc844d1af7c5a50ceac4da8ae2415bccd1ebcfe1d4c4acdff8cf96caf5f0",
+  "counted_c2_sha256": "06e303b241b311531d67ee304ba963362d7c4c18a42dde2d54b1dd3eafc434ac",
+  "gdn_projection_trace_r117_sha256l": "e4e7eb62e3f5296b7040cfe6b9431bdb388b7ef0e39e79aed7db0242fcf1dbd5",
+  "phase_summary_sha256": "693684e35de6a9c5e6c845f58f6ccd65369abb2e3cdf48549ac1b1b0fa85f359",
+  "image_inspect_sha256": "5c0f1021efca82c3841e96b451668ecf4031e019d5919b9b5aef69ca6d9bbec3"
+ },
+ "reporting_boundary": "Diagnostic only. Do not update README, neural.download, LocalMaxxing, or any public performance/quality claim from R117."
+}

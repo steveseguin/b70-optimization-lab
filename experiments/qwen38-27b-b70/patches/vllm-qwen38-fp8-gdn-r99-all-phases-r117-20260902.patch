@@ -1,0 +1,32 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -475,21 +475,24 @@
+     )
+     if request_count < 1:
+         raise RuntimeError("runtime-selected Qwen GDN RMSNorm found no requests")
+-    multi_request = request_count > 1
+-    if multi_request:
++    # R117: the R97 multi-request arm is a deliberate one-ULP perturbation of
++    # the c1 arithmetic with no batch-invariance benefit (the R99 arm is
++    # already row-invariant across every M in the CR1 census). Run the
++    # retained R99 lowering for every live request count.
++    if request_count > 1:
+         logger.warning_once(
+-            "R101 Qwen GDN live-metadata multi-request R97 arm executed"
++            "R117 Qwen GDN live-metadata multi-request R99 arm executed"
+         )
+     else:
+         logger.warning_once(
+-            "R101 Qwen GDN live-metadata single-request R99 arm executed"
++            "R117 Qwen GDN live-metadata single-request R99 arm executed"
+         )
+     return _xpu_qwen_gdn_runtime_selected_rmsnorm_gated_impl(
+         x,
+         z,
+         weight,
+         epsilon,
+-        multi_request=multi_request,
++        multi_request=False,
+     )
+ 
+ 
