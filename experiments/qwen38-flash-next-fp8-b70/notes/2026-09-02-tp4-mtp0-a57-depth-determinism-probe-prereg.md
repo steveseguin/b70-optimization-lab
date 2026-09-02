@@ -53,3 +53,15 @@ prompt tokens, and the boundary is unknown.
   short battery's 146-token exactness would then be the outlier to explain.
 
 No speed is measured or claimed. Protected results remain unchanged.
+
+## Amendment 2026-09-02 11:36 EDT: first launch killed by the agent session
+
+The first A57 launch (11:29) was terminated during weight loading when the
+agent's tool session was interrupted and took its child host wrapper down
+with it; the server received SIGTERM and exited cleanly, no evidence was
+produced. Its directories are preserved with a
+`.killed-session-20260902T1536Z` suffix (run, supervisor, runtime cache) and
+the dead run's `/tmp` state, RPC, compile, and derived-launcher files were
+removed so the frozen no-clobber gates could admit the relaunch. The
+relaunch at 11:38 and the probe driver run under `setsid nohup`, detached
+from the agent session. Packet and probe are unchanged.
