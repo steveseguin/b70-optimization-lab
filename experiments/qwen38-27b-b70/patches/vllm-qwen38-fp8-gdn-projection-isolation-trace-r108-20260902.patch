@@ -1,0 +1,188 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -2,7 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Qwen3-Next/Qwen3.5 model."""
+ 
++import hashlib
++import json
+ import os
++import threading
+ from typing import Literal
+ 
+ import torch
+@@ -78,6 +81,155 @@
+ )
+ 
+ _XPU_DETERMINISTIC_BA_MIN_TOKENS = 17
++
++_GDN_PROJECTION_TRACE_INVOCATION: dict[tuple[str, int], int] = {}
++_GDN_PROJECTION_TRACE_LOCK = threading.Lock()
++
++
++def _xpu_gdn_projection_trace_digest(tensor: torch.Tensor) -> str:
++    raw = tensor.detach().contiguous().view(torch.uint8).cpu().numpy().tobytes()
++    return hashlib.sha256(raw).hexdigest()
++
++
++def _trace_xpu_gdn_projection_prefill(
++    *,
++    layer_name: str,
++    num_prefills: int,
++    boundaries: list[int],
++    normalized: torch.Tensor,
++    projected: torch.Tensor,
++    treatment: str,
++) -> None:
++    """R108: prove execution and hash rows around the output projection."""
++    trace_file = os.getenv("VLLM_XPU_GDN_PROJECTION_TRACE_FILE", "")
++    if not trace_file:
++        raise RuntimeError("R108 projection isolation requires a trace file")
++
++    key = (layer_name, num_prefills)
++    with _GDN_PROJECTION_TRACE_LOCK:
++        invocation = _GDN_PROJECTION_TRACE_INVOCATION.get(key, 0) + 1
++        _GDN_PROJECTION_TRACE_INVOCATION[key] = invocation
++
++    requests = []
++    for request, (start, stop) in enumerate(zip(boundaries, boundaries[1:])):
++        normalized_rows = normalized[start:stop]
++        projected_rows = projected[start:stop]
++        requests.append(
++            {
++                "request": request,
++                "row_count": stop - start,
++                "normalized_sha256": _xpu_gdn_projection_trace_digest(
++                    normalized_rows
++                ),
++                "projected_sha256": _xpu_gdn_projection_trace_digest(
++                    projected_rows
++                ),
++            }
++        )
++
++    rank = int(os.getenv("RANK", "-1"))
++    if torch.distributed.is_available() and torch.distributed.is_initialized():
++        rank = torch.distributed.get_rank()
++    record = {
++        "schema": "neural.download.qwen38-gdn-projection-execution-trace.v1",
++        "pid": os.getpid(),
++        "rank": rank,
++        "layer": layer_name,
++        "invocation": invocation,
++        "num_prefills": num_prefills,
++        "query_start_loc": boundaries,
++        "treatment": treatment,
++        "requests": requests,
++    }
++    encoded = (
++        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
++    ).encode()
++    fd = os.open(trace_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        written = os.write(fd, encoded)
++        if written != len(encoded):
++            raise RuntimeError("R108 GDN trace record was only partially written")
++    finally:
++        os.close(fd)
++
++
++def _request_isolated_xpu_gdn_projection_prefill(
++    normalized: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    """Project pure multi-request prefills independently and prove execution."""
++    forward_context = get_forward_context()
++    layer = forward_context.no_compile_layers[layer_name]
++    attn_metadata_raw = forward_context.attn_metadata
++    attn_metadata = (
++        attn_metadata_raw.get(layer_name)
++        if isinstance(attn_metadata_raw, dict)
++        else None
++    )
++    pure_prefill = (
++        isinstance(attn_metadata, GDNAttentionMetadata)
++        and attn_metadata.num_prefills > 0
++        and attn_metadata.num_decodes == 0
++        and attn_metadata.num_spec_decodes == 0
++        and attn_metadata.prefill_query_start_loc is not None
++    )
++    if not pure_prefill:
++        output, _ = layer.out_proj(normalized)
++        return output
++
++    assert isinstance(attn_metadata, GDNAttentionMetadata)
++    assert attn_metadata.prefill_query_start_loc is not None
++    boundaries = (
++        attn_metadata.prefill_query_start_loc[: attn_metadata.num_prefills + 1]
++        .detach()
++        .cpu()
++        .tolist()
++    )
++    boundaries = [int(value) for value in boundaries]
++    if boundaries[0] != 0 or boundaries[-1] != normalized.shape[0]:
++        raise RuntimeError("R108 projection boundaries do not cover input rows")
++    if any(stop <= start for start, stop in zip(boundaries, boundaries[1:])):
++        raise RuntimeError("R108 projection found an empty request")
++
++    if attn_metadata.num_prefills > 1:
++        pieces = []
++        for start, stop in zip(boundaries, boundaries[1:]):
++            output, _ = layer.out_proj(normalized[start:stop])
++            pieces.append(output)
++        result = torch.cat(pieces, dim=0)
++        treatment = "split-per-request"
++    else:
++        result, _ = layer.out_proj(normalized)
++        treatment = "single-request-control"
++    if result.shape != (normalized.shape[0], output_size):
++        raise RuntimeError("R108 projection returned the wrong shape")
++    _trace_xpu_gdn_projection_prefill(
++        layer_name=layer_name,
++        num_prefills=attn_metadata.num_prefills,
++        boundaries=boundaries,
++        normalized=normalized,
++        projected=result,
++        treatment=treatment,
++    )
++    return result
++
++
++def _request_isolated_xpu_gdn_projection_prefill_fake(
++    normalized: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    del layer_name
++    return normalized.new_empty((normalized.shape[0], output_size))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_projection_prefill_isolated_xpu",
++    op_func=_request_isolated_xpu_gdn_projection_prefill,
++    mutates_args=[],
++    fake_impl=_request_isolated_xpu_gdn_projection_prefill_fake,
++)
+ _XPU_DETERMINISTIC_BA_PAD_TOKENS = 256
+ 
+ 
+@@ -1419,7 +1571,17 @@
+             core_attn_out = self.norm(core_attn_out, z)
+             core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
+-        out, _ = self.out_proj(core_attn_out)
++        if (
++            os.getenv("VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS", "0")
++            == "1"
++        ):
++            out = torch.ops.vllm.qwen_gdn_projection_prefill_isolated_xpu(
++                core_attn_out,
++                hidden_states.shape[-1],
++                self.prefix,
++            )
++        else:
++            out, _ = self.out_proj(core_attn_out)
+         return out
+ 
+     def forward_cpu(
