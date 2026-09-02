@@ -3795,3 +3795,9 @@ IOMMU, boot order. The root SSD now runs at its default Gen4 x4 with zero
 corrected events over the first 36 minutes, versus about two per second on
 BIOS 2.0b, so the Gen3 pin is retired. A fresh Gen4 clearance run is in
 progress; W13-N32 integration and the HC gates follow it.
+The Gen4 clearance on BIOS 2.4a passed (1800 s idle and a 4 GiB read at
+`5781.1 MiB/s`, zero events). The W13-N32 config-folder qualification is
+also a pass: 24/24 selection receipts through the live resolver, 8/8 cells
+exact, median `22.223121%`. A56 is frozen as the A55 packet plus the tuned
+M1 map as its sole inference change; it launches after the HC gate-mix and
+HC combine-norm component gates, which run now on the clean Gen4 host.
