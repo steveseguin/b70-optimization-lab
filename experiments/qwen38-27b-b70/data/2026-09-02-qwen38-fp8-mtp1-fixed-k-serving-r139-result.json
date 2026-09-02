@@ -1,0 +1,53 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-fixed-k-serving-build-result.v1",
+  "campaign_id": "qwen38-fp8-mtp1-fixed-k-serving-20260902-r139",
+  "status": "device-free-build-passed-endpoint-use-authorized-after-preregistered-operator-smoke",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-prereg.json",
+  "source": {
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "sycl_tla_commit": "cd763790ad2f74d7294435ecf77682bac0062c3a",
+    "gdn_base_patch_sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+    "gdn_split_patch_sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+    "fixed_k_patch_sha256": "5d2a93f0a36fa89f0ef13cf21ed5332a72491dd5856519bbe2eb21414112464f",
+    "c_alignment_delta_sha256": "feb4f125f69b36dbc3f579ad93743abe655678b7540ba2743fcff797fe35ebd9"
+  },
+  "build": {
+    "compiler": "IntelLLVM 2026.1.1",
+    "options": {
+      "ONEDNN_DEV_MODE": false,
+      "GDN_KERNELS_ENABLED": true,
+      "MOE_KERNELS_ENABLED": false,
+      "MHC_KERNELS_ENABLED": true
+    },
+    "clean_root": "/mnt/fast-ai/build/qwen38-w8a16-fixed-k-serving-r139-clean1",
+    "device_access": false,
+    "persistent_build_log": false,
+    "result": "clean source checkout, patch application, 721-task compile, link, and Docker packaging completed successfully"
+  },
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139",
+    "id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+    "base_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "extension_path": "/opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so",
+    "extension_bytes": 61892672,
+    "extension_sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1"
+  },
+  "abi_gate": {
+    "requires_libsycl_so_9": true,
+    "runpath": "$ORIGIN",
+    "no_device_import_against_torch_2_13_0_xpu": true,
+    "pass": true
+  },
+  "preserved_base_libraries": {
+    "libgdn_attn_kernels_xe_2_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+    "libmhc_kernels_xe_2_sha256": "59ada7ff821aab2b47ceddcb8c563c5dd14f1170f5b0b9ab2c1e10b93a6c23a9",
+    "both_match_r62": true
+  },
+  "integrity": {
+    "dockerfile_sha256": "bf79fc21b5e513dd803edbe3df1a95f70a370afdc067dd8ba074c2d8a3d7e445",
+    "build_script_sha256": "05df8d88e6e9ed388678fc2b3f8d31857b1b844698c1d894ef353d79d45082b1",
+    "labels_record_source_and_patch_identity": true
+  },
+  "decision": "The portable serving image build passes. Do not infer device correctness from the build: first run the preregistered R140 production-image operator activation, then the two-B70 endpoint identity, medium-prefill repeat-determinism, and performance gates."
+}

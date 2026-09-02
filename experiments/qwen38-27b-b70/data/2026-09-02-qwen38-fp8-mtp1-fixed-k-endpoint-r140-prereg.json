@@ -1,0 +1,78 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-fixed-k-endpoint-prereg.v1",
+  "campaign_id": "qwen38-fp8-mtp1-fixed-k-endpoint-20260902-r140",
+  "status": "preregistered-before-device-use",
+  "objective": "Prove that the portable R139 image preserves the R137b row-invariant W8A16 kernel in production, retains R62's exact unchanged-FP16-target output and greater-than-54 tok/s single-user performance, and closes the 168-256-token endpoint repeat-determinism hole.",
+  "repository_commit_before_preregistration": "25a9d7cb1",
+  "boot": {
+    "boot_id": "7c432682-9e2d-4ff0-90a5-5f9a88250d4e",
+    "boot_started_local": "2026-09-02T08:16:24-04:00",
+    "both_devices_state_before_preregistration": "normal",
+    "running_lane_containers_before_preregistration": 0
+  },
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139",
+    "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+    "extension_sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "target_projection": "unchanged FP16",
+    "draft_projection": "group-128 W4A16 with BF16 scales",
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 1024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024
+  },
+  "run_order": [
+    "single-GPU production-image activation smoke with GEMM_KERNEL unset and DNNL_VERBOSE=all",
+    "only if activation passes, start the exact R119 two-B70 server configuration with a new empty compile cache",
+    "run the fixed 12-prompt natural-512 suite and independent canaries",
+    "compare every complete token array to the frozen explicit deterministic MTP0 oracle",
+    "on the same server, run five sequential repeats at prompt lengths 100, 168, 200, 224, 250, and 300 with full token-logprob comparison",
+    "graceful teardown and device health postflight"
+  ],
+  "production_image_operator_gate": {
+    "shape": "attn_qkv_proj K=5120 N=7168",
+    "m_values": [64, 128, 168, 200],
+    "gemm_kernel_environment_unset": true,
+    "required_small_kernel": "T@16N@16N 16 16 wg 4x1x2 ikr ki64 k128",
+    "required_wide_kernel": "T@16N@16N 32 32 wg 4x4x2 ikr ki64 k128",
+    "required_identity": "M64, M128, and M168 outputs equal the corresponding prefixes of M200; M128 repeated and permuted outputs are exact; M168 equals the live-row prefix of an explicitly padded M200 call"
+  },
+  "strict_natural_512_gate": {
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "aggregation": "median-of-prompt-class-medians",
+    "cached_tokens_required": 0,
+    "canaries_required": true,
+    "complete_arrays_exact_vs_mtp0_oracle": "12/12 required",
+    "minimum_tok_s": 54.0,
+    "reference_r119_center_tok_s": 54.42460323814495
+  },
+  "medium_prefill_repeat_gate": {
+    "script": "experiments/qwen38-27b-b70/scripts/probe-qwen38-fp8-c1-prefill-length-determinism.py",
+    "script_sha256": "e02f5e6e20f10f298163748506b50964d91854ab1fa63aeba5a7ff50aef6c3b4",
+    "prompt_tokens": [100, 168, 200, 224, 250, 300],
+    "repeats": 5,
+    "max_tokens": 64,
+    "required_at_every_length": "one token-ID stream, one token-logprob array, one top-logprob array, and zero cached tokens"
+  },
+  "abort_conditions": [
+    "production image selects any kernel other than the required fixed small/wide strategies or misses any operator identity assertion",
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "missing draft-only INT4 marker on either rank or any evidence that the FP16 target projection changed",
+    "any incomplete response, cached token, failed canary, or complete-array mismatch against the frozen oracle",
+    "strict suite throughput below 54.0 tok/s"
+  ],
+  "on_pass": "Promote R139 as the row-invariant single-user profile and preregister R141 with the frozen R63 c1-c64 serving configuration and token-identity matrix.",
+  "on_failure": "Stop the server, preserve evidence, and do not proceed to concurrency or collective optimization."
+}
