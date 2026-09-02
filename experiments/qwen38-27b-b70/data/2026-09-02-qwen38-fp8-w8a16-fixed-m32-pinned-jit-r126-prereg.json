@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m32-pinned-jit-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m32-pinned-jit-20260902-r126",
+  "status": "preregistered-before-r126-xpu-execution",
+  "classification": "operator-diagnostic-only",
+  "question": "Can 32-row independent batch items retain R125's complete identity while recovering efficient large-M parallelism?",
+  "fixed_inputs": {
+    "extension_sha256": "53d622b86488c8d01e116ba3bce1cb5a9b16d11f06e1bf3370b6bdb7f598f774",
+    "extension_description": "Exact R122b rank-3/broadcast descriptor on the R123 developer-mode build",
+    "strategy_sha256": "75698dcb4f9f91e20162cf027eabcdf4db133b0f61ac091d9e3cc8bde13b70a6",
+    "strategy_description": "Exact natural source-M32 strategy from R123/R124",
+    "tile_m": 32,
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-fixed-m32-pinned-jit.py",
+    "script_sha256": "c687fcb8a66891e8a09286ef58f9ad84fd3b874aa960f0301c7afec82cf2a9dc"
+  },
+  "screen": {
+    "shapes_KN": {
+      "attn_o_proj": [3072, 5120],
+      "attn_qkv_proj": [5120, 7168]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 224, 250, 256, 300, 512],
+    "timed_m_values": [1, 4, 32, 168, 256],
+    "procedure": "Run a fresh same-build no-override control, health-check, then a fresh source-M32 override candidate. Inputs are padded once outside timed regions; copy/allocation cost is deliberately deferred until the kernel mechanism passes."
+  },
+  "gates": {
+    "correctness": [
+      "One row-0 class across all M for both shapes.",
+      "Every output equals the corresponding M=512 prefix.",
+      "Batched M=512 equals 16 sequential M=32 calls.",
+      "M=200 permutation and repeat are exact.",
+      "Changing the 168-row tail padding from zeros to random values does not change real rows."
+    ],
+    "latency": "For each shape, candidate fixed-M32 latency divided by control natural flattened-M latency has geometric mean <=1.15 and no timed point >1.50x.",
+    "on_pass": "Expand to all six production shapes and separately measure allocation/copy cost with reusable buffers before implementing production source.",
+    "on_failure": "Close oneDNN descriptor/strategy compositions and proceed to a purpose-built fused batched SYCL/ESIMD kernel.",
+    "health": "Stop on any new Xe fault, reset, timeout, hang, coredump, or device loss."
+  },
+  "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+  "server_allowed": false
+}
