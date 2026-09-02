@@ -470,6 +470,31 @@ boundary checks, but the R130 catalog latency assignments are suspended. R133
 must reinterpret the same physical `[N,K]` storage with the kernel's row-major
 B layout and compare against oneDNN's actual NT path before any integration.
 
+### R133: production-NT CUTLASS correction (closed)
+
+R133 made that correction explicitly. Both the CUTLASS candidate and natural
+oneDNN control consumed the production noncontiguous `[K,N]` transposed view,
+with strides `[1,K]` over physical row-major `[N,K]` checkpoint storage. The
+candidate wrapper interpreted that same physical storage as row-major B; the
+patch chain reproduced the built source byte-for-byte and passed a no-device
+ABI/registration preflight in the exact R62 image before XPU execution.
+
+Arithmetic remained excellent: all six production shapes had one row-0 class,
+were exact against every M512 prefix, and passed M200 permutation/repeat plus
+M168 random-appended-row checks. Maximum error against oneDNN was
+`0.000244140625`.
+
+Performance decisively rejected the candidate. No shape passed both frozen
+latency gates. Geometric candidate/control ratios were `1.883` GDN-in, `2.023`
+GDN-out, `1.430` attention-QKV, `1.584` attention-output, `1.879` gate/up, and
+`1.279` down-projection; worst points ranged from `1.806x` to `3.859x`. This
+supersedes every R127-R132 catalog assignment while retaining their arithmetic
+proofs. The existing Xe2 CUTLASS BLOCK_FP8 tile family is closed for production
+unless a materially different matrix engine, end-to-end-cheaper layout, or
+upstream kernel change appears. No server was launched, both devices remained
+normal, and no new Xe fault was logged. See the
+[R133 result](../data/2026-09-02-qwen38-fp8-w8a16-production-nt-r133-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
