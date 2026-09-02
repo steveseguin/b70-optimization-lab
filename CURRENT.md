@@ -3865,3 +3865,12 @@ graph server) and the hang (seventh 2048 single-step request, engine death
 with page faults at teardown). The graph is exonerated for both. A61 removes
 the public oneCCL preload and twoshots next. See the
 [A60 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a60-nograph-control-probe-result.md).
+A61 (bundled oneCCL control) never served: launched right after A60's
+page-fault teardown, its four workers locked up in the kernel at the start
+of weight loading (`watchdog: BUG: soft lockup` on three `VLLM::Worker_TP`
+threads and a kworker, SIGKILL pending, over 1,000 call traces, taint
+`W L`), the PLE-offload receipt check failed, and `ps`/`sudo` now stall.
+The oneCCL hypothesis is untested; a reboot is required, and the standing
+rule is: after any run whose teardown logs GPU `Fault response` lines, reload
+xe or reboot before the next launch. See the
+[A61 lockup note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a61-bundled-oneccl-control-kernel-lockup.md).
