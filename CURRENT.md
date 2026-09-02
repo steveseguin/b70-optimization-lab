@@ -3715,3 +3715,11 @@ preserved beside it (root-owned external mount, cold page cache versus the
 advances to default-off integration and exact eager/captured qualification
 before an endpoint arm. See the
 [A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-moe-m1-w13-n32-xpu-graph-confirmation-a2-result.md).
+The independently reviewed BF16 dense Phase-1 census then failed closed in its
+first real-weight cell: two aggregate M1 singleton sweeps differed before any
+cell evidence was accepted. That is not yet classified as steady-state model
+output nondeterminism because sweep 1 was cold and the N336 reconstruction
+contains 12 unused zero-padding columns after 324 active outputs. The remaining
+167 cells are paused. A bounded A2 now distinguishes cold/warm, queued/immediate,
+and active/padding behavior while retaining evidence on every exit. See the
+[A1 negative](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-dense-invariance-phase1-a1-negative.md).
