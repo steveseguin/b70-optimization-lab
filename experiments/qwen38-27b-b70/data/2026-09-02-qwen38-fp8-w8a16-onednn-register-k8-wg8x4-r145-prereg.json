@@ -1,0 +1,66 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-onednn-register-k8-scheduling-audit-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-onednn-register-k8-wg8x4-20260902-r145",
+  "status": "preregistered-before-r145-device-use",
+  "classification": "terminal-post-r144-workgroup-scheduling-omission-audit",
+  "question": "Can the already exact R144 eight-register-buffer arithmetic meet the M128 latency gate solely by using the legal 16x16-per-subgroup, wg8x4 geometry, whose 128x64 workgroup output tile halves the M workgroup count versus wg4x4?",
+  "evidence_base": {
+    "r144_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-onednn-register-k8-r144-prereg.json",
+    "r144_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-onednn-register-k8-r144-result.json",
+    "omission": "R144 screened wg4x2 and wg4x4 at 16x16 per subgroup but did not screen wg8x4. The latter has 512 workitems, preserves each subgroup's registers and arithmetic, and changes only workgroup scheduling.",
+    "tiny_m_anchor": "R144 natural controls proved natural oneDNN M1, M2, and M4 bitwise identical on both dominant shapes; therefore the frozen exact selector may retain natural oneDNN for M<=4."
+  },
+  "fixed_artifacts": {
+    "onednn_patch": {
+      "file": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-register-k8-r144-20260902.patch",
+      "sha256": "6eb233934eb6fc8439b73940bd9927531a0987bfa8b54372d1b2413a25cf0d39"
+    },
+    "extension": {
+      "file": "/mnt/fast-ai/build/qwen38-w8a16-onednn-register-k8-r144/compile/install/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "sha256": "e87686937b05869aff261a25bf07fb8dc1360d088e9362964fca719d2b093364"
+    },
+    "harness": {
+      "file": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-onednn-register-k8-r144.py",
+      "sha256": "8c603f635cf3612c9d0b25f0662448400f6615363b81101e7643e7e7f2cf700a"
+    },
+    "natural_reference_root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-onednn-register-k8-20260902-r144/reference",
+    "natural_json_sha256": "3f58930286640f4a802b86702e3aab87bc9b0a3e0c4ec1e77607b97a30f2b4e8"
+  },
+  "sole_candidate": {
+    "name": "m16_n16_wg8x4",
+    "file": "experiments/qwen38-27b-b70/data/r145-m16-n16-wg8x4-register-k8-strategy.txt",
+    "sha256": "1c166a19e15d9b00ee20aec29bc6f85a338cfc3e0f99b7c7e36e8dc06fb5478d",
+    "geometry": "16x16 output per subgroup, wg8x4, 512 workitems, 128x64 output per workgroup",
+    "arithmetic": "Unchanged R144 kri64 path: eight FP32 register C buffers and ascending C0+=C1..C7 reduction."
+  },
+  "execution": {
+    "device": "B70 0000:03:00.0 only via ZE_AFFINITY_MASK=0",
+    "isolation": "One fresh bounded container, private IPC, 1 GiB shared memory, 10 GiB memory with 14 GiB limit, 300 second timeout, core dumps disabled.",
+    "source_or_build_changes": "None authorized. Use the frozen R144 extension, harness, natural controls, and references.",
+    "second_gpu_server_collective": "Not authorized."
+  },
+  "operator_screen": {
+    "shapes_KN": {
+      "attn_qkv_proj": [5120, 7168],
+      "mlp_gate_up_proj": [5120, 17408]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "identity": "Every complete output must equal concatenated natural oneDNN M1 rows. M512 prefixes, M128 repeat and seeded permutation, and M168-to-M200 random-padding content must also be bitwise exact.",
+    "timing": "Ten warmups and five samples of 100 synchronized calls at M2, M64, M128, M168, and M256 against natural oneDNN.",
+    "stability": "No timed sample max/min ratio may exceed 1.15."
+  },
+  "gates": {
+    "candidate": "Generation, complete identity, prefix/repeat/permutation/padding identity, and stability are independently required. Candidate must be <=2.0x natural on both shapes at M168 and M256.",
+    "frozen_selector": "Use natural oneDNN for M<=4, R144 m16_n16_wg4x2 for 8<=M<=64, and R145 m16_n16_wg8x4 for M>=128. Every region is required to be bitwise identical to concatenated natural M1 rows.",
+    "decode_latency": "Using frozen 16:64 attention-QKV:gate-up call counts, the selector must be <=1.03x natural at M2, M64, and M128. Natural defines 1.0x at M2; the recorded R144 wg4x2 ratio defines M64; R145 defines M128.",
+    "prefill_latency": "The R145 candidate must be <=2.0x natural in the frozen weighted model at M168 and M256.",
+    "on_pass": "Expand the three-region selector to all six production shapes and apply the <=1.03 frozen all-shape decode model before any serving build.",
+    "on_failure": "Close eight-live-buffer workgroup scheduling. The next permitted arithmetic implementation is serialized p0..p7 traversal with C0 plus one reusable temporary C tile, enabling a 32x32 subgroup tile. Do not add another R144 geometry arm."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "either B70 is not normal before or after the device case",
+    "strategy or extension hash mismatch",
+    "any unregistered strategy, source/build edit, server launch, collective experiment, or second-GPU use"
+  ]
+}
