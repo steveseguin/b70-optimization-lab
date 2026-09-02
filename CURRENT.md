@@ -3586,3 +3586,14 @@ adversarial BF16 cases are frozen and CPU-validated (21 tests). Live vLLM is
 unchanged, no GPU work ran, and the runner also requires the root-NVMe
 clearance plus explicit one-B70 authorization. See the
 [HC exact-staged preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-combine-norm-exact-staged-a1-prereg.md).
+The next offline target is separately frozen as the HC gate-mix exact-staged
+candidate. Flash-Next executes this path 97 times per target token. The
+experiment retains Torch's FP32 sigmoid, multiplication, reduction, ordering,
+and BF16 output boundary while asking whether type promotion and a BF16 `out`
+tensor can remove only the two standalone cast materializations. Its 23 CPU
+tests pass, including raw-byte parity over 15 seed/scale cells, 100 changing
+inputs, and all 65,280 finite BF16 state encodings; this is not XPU or endpoint
+evidence. The one-B70 gate remains non-executable until the root-NVMe clearance
+passes and a separately reviewed wrapper binds source/runtime/device identity,
+exclusivity, and durable evidence. See the
+[HC gate-mix exact-staged preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-gate-mix-exact-staged-a1-prereg.md).
