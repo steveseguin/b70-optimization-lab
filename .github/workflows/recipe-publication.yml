@@ -1,0 +1,33 @@
+name: public-recipe-closure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/recipe-publication.yml"
+      - "repro/**/publication-manifest.json"
+      - "tools/validate-recipe-publication.py"
+      - "tools/test_validate_recipe_publication.py"
+  pull_request:
+    paths:
+      - ".github/workflows/recipe-publication.yml"
+      - "repro/**/publication-manifest.json"
+      - "tools/validate-recipe-publication.py"
+      - "tools/test_validate_recipe_publication.py"
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  remote-publication-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 -m unittest tools/test_validate_recipe_publication.py
+      - run: python3 tools/validate-recipe-publication.py --check-remote

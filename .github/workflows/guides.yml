@@ -68,6 +68,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: python3 tools/validate-repro-guides.py
       - run: python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py
       - run: python3 tools/validate-recipe-publication.py

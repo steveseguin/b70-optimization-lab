@@ -13,22 +13,28 @@ claim public source closure.
 ## Required publication packet
 
 Each published recipe must include a tracked `publication-manifest.json` using
-`neural.download.recipe-publication.v1`. The manifest binds:
+`neural.download.recipe-publication.v2`. The manifest binds:
 
 - the public guide and every build entrypoint;
+- the exact public-repository source commit and SHA-256 of every build
+  entrypoint at that commit;
 - every immutable in-repository build input and its SHA-256 digest;
 - every upstream source repository at a full commit;
 - a public release URL and the name, byte size, SHA-256 digest, type, and direct
   download URL of every release asset;
-- the exact clean-build, runtime-smoke, and quality evidence;
+- the successful build-log asset and hash-bound clean-build, runtime-smoke,
+  and quality evidence;
 - the UTC time at which the public assets were downloaded and reverified.
 
 Binary-bearing recipes must publish the complete rebuilt wheel or equivalent
 package, the result-critical shared libraries separately, the complete build
-log, and the toolchain/package inventory. ELF/SYCL binaries must record
+log, runtime/toolchain inventories, and a checksum manifest covering every
+other release asset. ELF/SYCL binaries must record
 whole-file hashes, portable RUNPATH, and hashes for `.text`, `.rodata`, `.data`,
 and `OFFLOAD_DEVICE_CODE` where present. This binary path is a recovery and
-audit aid; the source build remains authoritative.
+audit aid; the source build remains authoritative. Remote validation also
+checks that the wheel embeds the same result-critical libraries published as
+standalone assets.
 
 ## Gates before `publication_status: published`
 
@@ -50,7 +56,9 @@ audit aid; the source build remains authoritative.
 7. Run the recipe's fixed quality and determinism gates. Publication closure
    does not promote a benchmark that failed output or realistic-workload rules.
 8. Upload the release assets, then download every public URL and re-hash it.
-   Record `remote_verified_at` only after this succeeds.
+   Re-extract the declared ELF sections, verify RUNPATH, verify the wheel's
+   embedded binaries, and reconcile the checksum manifest. Record
+   `remote_verified_at` only after this succeeds.
 9. Run both validators from the clean clone:
 
    ```bash
@@ -73,7 +81,10 @@ audit aid; the source build remains authoritative.
   immediately return the manifest to `draft` or publish a corrected immutable
   release. Never silently replace an asset under an existing release identity.
 
-CI validates manifest structure, tracked dependency closure, and build-script
-digest contracts without downloading large assets. Release owners must run the
-explicit `--check-remote` audit before setting `published`; the recorded UTC
-verification time makes that action reviewable.
+CI validates manifest structure, source-commit and tracked dependency closure,
+build-script digest contracts, and hash-bound evidence. A dedicated publication
+workflow runs the full `--check-remote` audit whenever a publication manifest
+or validator changes, on manual dispatch, and on a daily schedule. Thus a
+missing or silently replaced public asset fails both at publication time and on
+the next scheduled integrity check; `remote_verified_at` is an attestation, not
+a substitute for CI verification.

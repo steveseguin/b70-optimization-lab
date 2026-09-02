@@ -1,18 +1,43 @@
 {
-  "format": "neural.download.recipe-publication.v1",
+  "format": "neural.download.recipe-publication.v2",
   "recipe_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70-r55c",
   "publication_status": "published",
   "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
   "repository": {
+    "source_commit": "8495574257dda583e19dd39278641477bfaa4e43",
     "build_scripts": [
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh"
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
+        "sha256": "430cb38fba5236f0fa02a101bb211ccf32426235edfdbffd0ce40dcc61f9b817"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh",
+        "sha256": "cdff05b8153d5dc4efdece9ab9cdd595ea22f4a715843c050c67aa22b58c048b"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh",
+        "sha256": "9ac8db63a8037ea23addf325117ae253397983d5a3008ea7cb1e23b9af24629d"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh",
+        "sha256": "7aeaf89faa33b3d8e2fb9b356c0c63fab02828d2b80a0b3f19e0e579a741538a"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
+        "sha256": "712e014dba3b29d94074faf48eb30a6eee59874f1f13e46b3ee6cc7b025e1c51"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh",
+        "sha256": "19399facc5412213848925966e555ad0bf3b68bb6e65c5d2bcdd88c2ef2727ae"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh",
+        "sha256": "5958995a1e6d8760b2abbae15a97e4404013eab4971d95983e86ebf3a791fa2d"
+      },
+      {
+        "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh",
+        "sha256": "f3a1279990f7221e3e31df78a8a2cb186e462cbd703da1de4fc6d526eb5a044f"
+      }
     ],
     "immutable_inputs": [
       {
@@ -208,11 +233,24 @@
     "clean_source_build": true,
     "runtime_smoke": true,
     "quality_gate": true,
+    "build_log_asset": "r55c-public-rebuild.log",
     "quality_evidence": [
-      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json",
-      "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/compare-r53a-mtp1.json",
-      "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/compare-r54a-target.json",
-      "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/canaries.json"
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json",
+        "sha256": "6d5f8a372530664593baa2b32c19f39cedf7dd47991292a7f094b4a6ba6894ee"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/compare-r53a-mtp1.json",
+        "sha256": "f919331b4e2ffd2221d6f7b8fde9db9decfed0c5526d8d21dddb50745b622362"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/compare-r54a-target.json",
+        "sha256": "42205a8668212181567b4a7a65b507ca2ba9b03687e80208b0c18eec10de81ef"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/canaries.json",
+        "sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8"
+      }
     ]
   },
   "known_corrections": [

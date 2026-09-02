@@ -65,7 +65,16 @@ now hashes to `40ca8c3f…`, and the validator derives the contract from the bui
 script so those identities cannot silently disagree again.
 
 For the authoritative clean source build, use `build-pinned-mtp1-stack.sh` as
-shown below. To build the same public parent chain while avoiding compilation
+shown below from the release-bound source commit:
+
+```bash
+git clone https://github.com/steveseguin/b70-optimization-lab.git
+cd b70-optimization-lab
+git checkout 8495574257dda583e19dd39278641477bfaa4e43
+```
+
+The publication manifest binds every build entrypoint at that commit by
+SHA-256. To build the same public parent chain while avoiding compilation
 of only the final GDN/XPU extension stage, use:
 
 ```bash
