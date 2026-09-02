@@ -47,3 +47,16 @@ chunk; 256 and 2048 span several), eight first-step repeats and three
   the bundled library too; the kernels (QSA, MoE, PLE UVA) are next.
 
 No speed is claimed. Protected results remain unchanged.
+
+## Amendment 2026-09-02 18:55 EDT: relaunched as A62 after the reboot
+
+A61 locked up in the kernel before serving (see the A61 lockup note). After
+the reboot (BIOS 2.4a, GuC 70.72.1 on all tiles, Gen4 root SSD at zero
+corrected events, four B70s with runtime power `on`, Corsair drive remounted
+with user ownership, runtime page cache pre-warmed), the byte-identical
+packet was regenerated at attempt 62 / port 19734 by
+`tools/rewrite-q38-a61-to-a62-bundled-ccl.py` (launcher `15ec4b27...`,
+client `25fe9562...`, supervisor `377dd77e...`, host wrapper `890ca861...`)
+and launched detached as the only GPU job. The probe, depths, repeats, and
+acceptance are unchanged; the summary lands at
+`<run_dir>/a62-logprob-determinism.json`.
