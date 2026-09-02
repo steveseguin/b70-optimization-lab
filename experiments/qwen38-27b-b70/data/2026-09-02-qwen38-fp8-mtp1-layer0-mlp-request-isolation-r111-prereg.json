@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r111",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Test whether packed layer-0 dense-MLP execution introduces the request-order-dependent state first observed at the layer-1 GDN boundary.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "base_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "r108_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108-result.json",
+    "r109_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-outer-rmsnorm-serial-r109-result.json",
+    "r110_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-decoder-boundary-trace-r110-result.json"
+  },
+  "rationale": {
+    "established_left_boundary": "R108 proved layer-0 request-isolated GDN normalized/projected rows are invariant across packed request order.",
+    "established_right_boundary": "R108 proved layer-1 GDN normalized rows vary across packed request order.",
+    "negative_control": "R109 proved the existing packed-serial outer RMSNorm treatment is insufficient.",
+    "remaining_layer0_operation": "The dense MLP between post-attention normalization and the returned layer-0 hidden state."
+  },
+  "treatment": {
+    "scope": "Qwen3Next decoder layer 0 only",
+    "single_request": "Call the unchanged loaded MLP once on the original tensor.",
+    "pure_multi_request_prefill": "Read live GDNAttentionMetadata boundaries inside an opaque custom op, call the unchanged loaded MLP independently for each request, and concatenate in scheduler order.",
+    "decode_or_mixed_phase": "Call the unchanged loaded MLP once.",
+    "other_layers": "Unchanged.",
+    "prompt_or_fixture_heuristics": false
+  },
+  "mandatory_gates": {
+    "semantic_source": "Require the custom-op call inside Qwen3NextDecoderLayer.forward, exactly one registration, and the layer-0/linear-attention guard.",
+    "runtime_execution": "Require distinct single-request-control and split-per-request markers before interpreting outputs.",
+    "identity": "C1 must remain exact; every request must return 128 tokens with cached_tokens=0.",
+    "abort": "If warm c1 is not exact, invalidate immediately without c2 interpretation."
+  },
+  "workload": {
+    "warmup": "One c1 and two c2 repeats.",
+    "qualification": "Three c1 and twenty c2 repeats after warmup.",
+    "max_tokens": 128,
+    "prefix_caching": false,
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "decision": {
+    "pass": "Remove the inherited R108 projection trace/isolation treatment in a factorial follow-up, then run fresh-server realistic quality and performance qualification on a clean boot.",
+    "fail": "Reject layer-0 MLP request packing as sufficient and move to the residual/consumer boundary without weakening output identity."
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; no reboot or GPU reset.",
+  "reporting_boundary": "Causal diagnostic only. The current boot contains earlier GPU resets; no public speed, README, website, or LocalMaxxing update."
+}
