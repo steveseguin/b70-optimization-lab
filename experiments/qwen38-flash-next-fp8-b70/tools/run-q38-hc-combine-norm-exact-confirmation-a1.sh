@@ -18,6 +18,10 @@ expected_clearance_validator=2293b3588a275e15a630b813d7a273e650eb64c49eaacedcf21
 model_revision=bcd9f01ddc9cff2316eb84281bebcd5b058bddce
 nvme_aer_path=/sys/bus/pci/devices/0000:01:00.0/aer_dev_correctable
 root_aer_path=/sys/bus/pci/devices/0000:00:03.1/aer_rootport_total_err_cor
+# The endpoint counter file is multi-line; read its TOTAL_ERR_COR field, and
+# the root-port total file's single value, exactly as the gate-mix runner does.
+current_nvme_aer() { awk '$1 == "TOTAL_ERR_COR" {print $2}' "$nvme_aer_path"; }
+current_root_aer() { awk 'NR == 1 {print $1}' "$root_aer_path"; }
 owned_pgid=
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
@@ -53,8 +57,8 @@ fi
 [[ ! -e "$result_dir" && ! -L "$result_dir" ]] || fail "result path already exists"
 [[ ! -e "$cache_root" && ! -L "$cache_root" ]] || fail "cache path already exists"
 
-nvme_aer_baseline=$(<"$nvme_aer_path")
-root_aer_baseline=$(<"$root_aer_path")
+nvme_aer_baseline=$(current_nvme_aer)
+root_aer_baseline=$(current_root_aer)
 [[ "$nvme_aer_baseline" =~ ^[0-9]+$ && "$root_aer_baseline" =~ ^[0-9]+$ ]] || \
   fail "AER baseline is invalid"
 
@@ -85,8 +89,8 @@ finalize() {
   local status=$1 nvme_aer=root_unavailable root_aer=root_unavailable
   terminate_owned_group
   if [[ -d "$result_dir" && ! -L "$result_dir" ]]; then
-    [[ -r "$nvme_aer_path" ]] && nvme_aer=$(<"$nvme_aer_path")
-    [[ -r "$root_aer_path" ]] && root_aer=$(<"$root_aer_path")
+    [[ -r "$nvme_aer_path" ]] && nvme_aer=$(current_nvme_aer)
+    [[ -r "$root_aer_path" ]] && root_aer=$(current_root_aer)
     if [[ ! -e "${result_dir}/final-health.txt" && ! -L "${result_dir}/final-health.txt" ]]; then
       printf 'runner_exit=%s\nnvme_aer_baseline=%s\nnvme_aer_final=%s\nroot_aer_baseline=%s\nroot_aer_final=%s\n' \
         "$status" "$nvme_aer_baseline" "$nvme_aer" "$root_aer_baseline" "$root_aer" \
@@ -106,16 +110,16 @@ trap 'exit 130' INT TERM HUP
 
 check_aer() {
   local nvme_aer root_aer
-  nvme_aer=$(<"$nvme_aer_path")
-  root_aer=$(<"$root_aer_path")
+  nvme_aer=$(current_nvme_aer)
+  root_aer=$(current_root_aer)
   [[ "$nvme_aer" == "$nvme_aer_baseline" && "$root_aer" == "$root_aer_baseline" ]] || \
     fail "corrected-event counter changed; refusing further component work"
 }
 
 aer_matches_baseline() {
   local nvme_aer root_aer
-  nvme_aer=$(<"$nvme_aer_path") || return 1
-  root_aer=$(<"$root_aer_path") || return 1
+  nvme_aer=$(current_nvme_aer) || return 1
+  root_aer=$(current_root_aer) || return 1
   [[ "$nvme_aer" == "$nvme_aer_baseline" && "$root_aer" == "$root_aer_baseline" ]]
 }
 
@@ -167,7 +171,7 @@ run_arm() {
     if ! aer_matches_baseline; then
       aer_abort=1
       printf 'nvme_aer=%s\nroot_aer=%s\n' \
-        "$(<"$nvme_aer_path")" "$(<"$root_aer_path")" \
+        "$(current_nvme_aer)" "$(current_root_aer)" \
         >"${result_dir}/${cell}-${arm}.aer-abort.txt"
       terminate_owned_group
       break

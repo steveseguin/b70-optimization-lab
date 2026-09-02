@@ -118,3 +118,17 @@ receipt from an earlier boot cannot authorize this runner.
 
 CPU validation passed 21 focused tests. The structured preregistration is
 [`20260901-hc-combine-norm-exact-staged-a1-prereg.json`](../data/20260901-hc-combine-norm-exact-staged-a1-prereg.json).
+
+## Amendment 2026-09-02 10:05 EDT: runner counter-parsing fix
+
+The first authorized invocation on the clean Gen4 host stopped at admission
+with `FAIL: AER baseline is invalid` before creating any path or GPU work.
+Cause: the runner read the endpoint's multi-line `aer_dev_correctable` file
+whole (`$(<"$nvme_aer_path")`) at six sites, so the "baseline" was never an
+integer; the gate-mix runner parses the `TOTAL_ERR_COR` field instead. The
+runner now defines `current_nvme_aer`/`current_root_aer` exactly as the
+gate-mix runner does and uses them at every read site. No gate, threshold,
+candidate, sentinel, or path changed. Runner SHA-256 is now
+`5b3da87d97cdb6af7aeb35712b75aae0f71f8c0982b263be357218039bfb53dc`
+(was `4734332f...`); the validate-only gate passes. The original file is
+preserved in the Git history.
