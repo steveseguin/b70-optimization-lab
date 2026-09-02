@@ -28,7 +28,7 @@
   "mandatory_gates": {
     "semantic_source": "Require trace calls in Qwen3NextDecoderLayer.forward and one custom-op registration.",
     "runtime": "Require both TP ranks, layers 0 and 1, both packed orders, and all expected tensor stages before interpreting outputs.",
-    "identity": "Trace op must return the original tensor object without modification; c1 must remain exact."
+    "identity": "Trace op declares the observed tensor as a sequencing dependency, returns no model value, and must not modify it; c1 must remain exact."
   },
   "workload": {
     "warmup": "One c1 and two c2 repeats.",
