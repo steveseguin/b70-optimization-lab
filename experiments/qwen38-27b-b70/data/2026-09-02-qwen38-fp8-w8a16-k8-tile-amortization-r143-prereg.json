@@ -1,0 +1,73 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-k8-tile-amortization-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-k8-tile-amortization-20260902-r143",
+  "status": "preregistered-before-r143-source-edit-build-or-device-use",
+  "classification": "operator-diagnostic-only",
+  "question": "Can a larger direct-grid output tile amortize R142's exact natural-M1 K8 reduction enough to approach oneDNN latency?",
+  "base_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-k8-split-reduction-r142-result.json",
+  "fixed_semantics": {
+    "k_partition": "Exactly R142: eight K subgroups, 64 contiguous K positions per subgroup, 512-position interleave period.",
+    "scale_indexing": "Exactly R142: floor((macro_k*512 + k_sg*64)/128).",
+    "reduction_order": "Exactly R142 and observed oneDNN: p0 += p1 += p2 += p3 += p4 += p5 += p6 += p7 in FP32.",
+    "launch": "Direct dense ceil(M/tileM) by ceil(N/tileN) grid with production NT weights; no persistent scheduler, atomic queue, or global scratch.",
+    "slm": "Reduce accumulator fragments in fixed 16-FP32-value slices through an 8192-float/32-KiB workgroup-local buffer. All work-items execute a release/acquire barrier before and after each reusable slice; only k_sg=0 writes output.",
+    "source_and_toolchain": "Same pinned commits, IntelLLVM 2026.1.1, bmg-g31-a0, diagnostic dtype guards, and build narrowing as R142."
+  },
+  "candidates": [
+    {
+      "id": "m16_n128_sg1x2x8",
+      "wg_tile_mnk": [16, 128, 512],
+      "sg_layout_mnk": [1, 2, 8],
+      "work_items": 256,
+      "fp32_accumulators_per_lane": 64,
+      "purpose": "Small-M option: halve N workgroups and work-items relative to R142 while retaining a 16-row tile."
+    },
+    {
+      "id": "m32_n64_sg1x2x8",
+      "wg_tile_mnk": [32, 64, 512],
+      "sg_layout_mnk": [1, 2, 8],
+      "work_items": 256,
+      "fp32_accumulators_per_lane": 64,
+      "purpose": "Balanced 2048-output tile with half R142's work-items."
+    },
+    {
+      "id": "m64_n64_sg2x2x8",
+      "wg_tile_mnk": [64, 64, 512],
+      "sg_layout_mnk": [2, 2, 8],
+      "work_items": 512,
+      "fp32_accumulators_per_lane": 64,
+      "purpose": "Direct analogue of R141's fastest exact 32x32-unroll, wg2x2x8 oneDNN geometry."
+    },
+    {
+      "id": "m64_n128_sg2x2x8",
+      "wg_tile_mnk": [64, 128, 512],
+      "sg_layout_mnk": [2, 2, 8],
+      "work_items": 512,
+      "fp32_accumulators_per_lane": 128,
+      "purpose": "Maximum preregistered output amortization; reject on compiler spill or latency."
+    }
+  ],
+  "screen": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+    "process_isolation": "Each candidate runs in a fresh bounded container selected only by R143_GEOMETRY.",
+    "shapes_KN": {
+      "attn_qkv_proj": [5120, 7168],
+      "mlp_gate_up_proj": [5120, 17408]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "identity": "Every complete output must equal concatenated natural oneDNN M1 rows; M512 prefixes, M128 repeat/permutation, and M168-to-M200 random-padding content must be exact.",
+    "timing": "Ten warmups and five samples of 100 synchronized calls at M2, M64, M128, M168, and M256 against natural oneDNN.",
+    "stability": "No timed sample max/min ratio may exceed 1.15."
+  },
+  "gates": {
+    "candidate": "Compile, identity, and stability are required independently. A candidate proceeds only if it is <=1.15x natural on both shapes at M2, M64, and M128 and <=2.0x at M168 and M256.",
+    "composition": "A row-count threshold composition may use independently exact candidates. Its frozen 16:64 attention-QKV:gate-up call-count model must be <=1.03x natural at M2, M64, and M128.",
+    "on_pass": "Expand only the fastest exact passing candidate or composition to all six production shapes, then apply the <=1.03 frozen all-shape decode model before any server build.",
+    "on_failure": "Close direct-grid CUTLASS-style K8 tiling for serving. Preserve R142 as the exact executable reference and optimize/instrument the oneDNN local-K implementation itself; do not launch a server or begin collective optimization."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "either B70 is not normal before or after a case",
+    "any unregistered geometry, arithmetic change, candidate substitution, or server launch"
+  ]
+}

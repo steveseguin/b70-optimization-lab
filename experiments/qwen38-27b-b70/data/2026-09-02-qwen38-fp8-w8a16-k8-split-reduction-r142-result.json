@@ -1,0 +1,80 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-k8-split-reduction-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-k8-split-reduction-20260902-r142",
+  "status": "closed-identity-positive-latency-negative",
+  "classification": "operator-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-k8-split-reduction-r142-prereg.json",
+  "preregistration_sha256": "e1ff1a09c95b775d087aedbd2b6ef752748835d453e7de2b30f67a89ae07bf52",
+  "source": {
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-block-fp8-k8-split-reduction-r142-20260902.patch",
+    "patch_sha256": "1a5b0c8f1c76adfeed1fe3acfc874271465b637a2df149c63e5e3ef3c6331d45",
+    "harness": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-k8-split-reduction-r142.py",
+    "harness_sha256": "8563a6301426e37b8f10b5d57f88d70c19ff4fbbc99886ecfc72c189b520881b",
+    "observed_onednn_mechanism": "The pinned oneDNN ikr path initializes h0 to lidK*64, advances across 64-wide chunks by 64*wgK=512, leaves subgroup 0's partial in its C registers, and adds SLM partials from subgroup 1 through subgroup 7 in ascending order."
+  },
+  "build": {
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_target": "bmg-g31-a0",
+    "cutlass_sycl_commit": "87f6850680a580654b9ea2c80dbc01aeb36ad231",
+    "candidate_library": "/mnt/fast-ai/build/qwen38-w8a16-k8-split-r142/build/libgrouped_gemm_xe_2.so",
+    "candidate_library_bytes": 136336,
+    "candidate_library_sha256": "96cb020b5418c166c18fe01c5a5425e1aa8f086faace9b5f0fa939dd3f252a70",
+    "unchanged_extension_sha256": "4a8b308b5dc80816b470e8cf20be2a171a41be5bdffe34253c9eda80d65664a5",
+    "no_device_abi_check": "passed; cutlass_grouped_gemm_interface registered"
+  },
+  "run": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "container_exit_code": 0,
+    "started_utc": "2026-09-02T21:06:36.304140937Z",
+    "finished_utc": "2026-09-02T21:06:45.534125645Z",
+    "raw_result": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-k8-split-reduction-20260902-r142/raw-result.json",
+    "raw_result_bytes": 11692,
+    "raw_result_sha256": "8209cf544bbc59f0133b069de3b4e2464ea88cbbeb0d49118256bbbd983ca665",
+    "container_log_sha256": "269741eeb8507d8a6cad9605656199fb4522de84bf268fa994cb1dac889ebb88"
+  },
+  "identity": {
+    "reference": "512 concatenated natural oneDNN M1 calls per shape; R141 had independently shown this row arithmetic equals forced source-M4",
+    "shapes": [
+      "attn_qkv_proj_K5120_N7168",
+      "mlp_gate_up_proj_K5120_N17408"
+    ],
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "full_outputs_exact": "24/24",
+    "all_m512_prefixes_exact": true,
+    "repeat_m128_exact": true,
+    "permutation_m128_exact": true,
+    "random_pad_content_m168_to_m200_exact": true,
+    "maximum_abs_error_vs_reference": 0.0,
+    "reduction_order_selected": "ascending; the first preregistered order was exact, so the other two were not built or run"
+  },
+  "latency": {
+    "weighted_call_counts": {
+      "attn_qkv_proj": 16,
+      "mlp_gate_up_proj": 64
+    },
+    "weighted_candidate_over_natural_by_m": {
+      "2": 1.1255260951192434,
+      "64": 3.4425759465147556,
+      "128": 5.349242758812901,
+      "168": 6.0702280401978514,
+      "256": 7.188246285377415
+    },
+    "stability_gate": "failed at attention QKV M2: 1.3760 max/min; all stable large-M samples still fail latency decisively",
+    "decode_gate": "failed",
+    "prefill_gate": "failed"
+  },
+  "health": {
+    "post_run_device_state": "both B70s normal",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false,
+    "container_removed": true
+  },
+  "decision": {
+    "promote": false,
+    "mechanism_accepted": true,
+    "geometry_closed": "Do not repeat the 16x64 output tile with 1x4x8 subgroups; its workgroup/barrier density is the dominant large-M cost.",
+    "next_experiment": "Keep the exact 64-position interleave and ascending eight-part FP32 reduction, but enlarge the output tile per workgroup and reduce the accumulator through fixed 32-KiB SLM slices. Screen frozen larger geometries before any six-shape or server expansion."
+  }
+}
