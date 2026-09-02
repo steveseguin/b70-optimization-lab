@@ -2859,6 +2859,17 @@ loaded service.
 
 ## Immediate Manager Actions
 
+**Lane ownership notice (2026-09-02 01:25 EDT):** the Claude session owns the
+Qwen3.8 Flash-Next FP8 lane, the root-NVMe link work, and the BIOS 2.4a
+update until it hands off in `CURRENT.md`. Other agents must not read or scan
+`/mnt/fast-ai` or `/mnt/usb-models` in bulk, must not start
+`generate-q38-root-nvme-link-clearance-v1.py` or any `w13`/`hc` runner, and
+must not run `pgrep`/`rg`/`ps` commands whose command lines contain
+`w13-m1-xpu-graph-gate.py` or the A2 result path: the frozen runners' health
+contract treats any such process as an un-torn-down component process and
+fails closed (A2 attempt 3 recorded exactly that false positive), and bulk
+local-NVMe reads count against their 2 GiB read guard (A2 attempt 2).
+
 0. The external 3.6 TB USB model store was not visible in `lsblk` on this host
    on 2026-08-22, while the internal NVMe had only about 12 GiB free. Do not
    place new model downloads on NVMe. The manager reported that another host
@@ -3681,3 +3692,16 @@ preserved and A2 was relaunched after remounting with user ownership. The
 Supermicro BIOS 2.4a update is staged on the ESP behind a tracked helper that
 uses SAA over the BMC host interface with `--preserve_setting`; a BMC ADMIN
 credential was set in-band and stored outside the repo. Flash follows W13 A2.
+W13-N32 A2 then completed all eight layer/rank C/A/C cells. Every arm exited
+zero and remained exact; all eight cells improved, with a `22.233186%` median
+matched W13 reduction and `21.668224%` worst-cell reduction. The frozen health
+receipt is procedurally red because an agent's sleeping observer command named
+the gate script and the finalizer's broad `pgrep` mistook it for a live worker;
+the receipt itself identifies that observer, while the manifest, postflight
+devices, storage counters, journal, and actual worker teardown are clean. W13
+therefore advances as a component finalist with no endpoint speed credit. The
+independently reviewed BF16 dense-invariance census is frozen next; it covers
+14 real projection families and 532 calls/token without a server or full-model
+load. See the
+[A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-moe-m1-w13-n32-xpu-graph-confirmation-a2-result.md)
+and [BF16 census preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-dense-invariance-phase1-prereg.md).
