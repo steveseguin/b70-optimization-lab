@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-20260902-r137",
+  "classification": "source-selector-operator-gate",
+  "status": "rejected-at-activation-gate-before-dense-expansion",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-source-fixed-k-r137-prereg.json",
+  "artifact_sha256": "51a1ee62a598fc994ae28d81fa09aa55d5551151796441dd24d9ad52faa19f89",
+  "activation": {
+    "shape": "attn_qkv_proj",
+    "m_values": [64, 128],
+    "gemm_kernel_environment_unset": true,
+    "m64_requested_strategy_present": true,
+    "m64_final_layout": "T@128N@128N",
+    "m64_frozen_developer_layout": "T@16N@16N",
+    "m64_exact_final_kernel_match": false,
+    "m128_final_kernel_matches_developer_reference": true,
+    "m128_inferred_flags": ["li", "nmk"],
+    "arithmetic_smoke": {
+      "row0_invariant": true,
+      "prefix_exact": true,
+      "repeat_deterministic": true,
+      "permutation_invariant": true,
+      "padding_168_to_200_exact": true
+    }
+  },
+  "mechanism": "The non-developer path kept alignment metadata from the natural catalog entry before parsing the fixed strategy. The developer path reparses the explicit T@16N@16N layout and therefore resets all three problem alignments to 16. The li/nmk tokens were not a mismatch: a developer-reference verbose run showed that oneDNN infers the same tokens during finalization of the R136 wide string.",
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-source-fixed-k-r137",
+    "activation_log_sha256": "c37f68823c16860e527985f5a0be04ec9bea1e02e7f3b1b584a43c78ab4d4882",
+    "activation_result_sha256": "b9226e32543ac0633e72c73915be3dc3c46a5c51fcf3f44915173ceabb47e922",
+    "developer_m128_log_sha256": "063252cb7b89753b64b12e212fd8da0c88bae13ad5fea4e92d1dd341134f0f52",
+    "developer_m64_log_sha256": "163b81d1515f2ef9d93a87194be52f089c56a76b7ce031b950427d792b8e7095"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "device_state_after": "normal",
+    "new_fault_or_reset_visible_to_current_user": false,
+    "server_launched": false
+  },
+  "decision": "Reject R137 without dense expansion. R137a adds only explicit 16-byte A/B/C alignments inside the already narrow selector and repeats activation before any dense gate."
+}

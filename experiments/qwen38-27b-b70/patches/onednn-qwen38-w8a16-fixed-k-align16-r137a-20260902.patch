@@ -1,0 +1,96 @@
+diff --git a/src/gpu/intel/gemm/jit/gen_kernel.cpp b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+index 19f3f7dd2..c58cf4c3f 100644
+--- a/src/gpu/intel/gemm/jit/gen_kernel.cpp
++++ b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+@@ -101,6 +101,42 @@ static gemmstone::Scalar stringToScalar(std::string val) {
+ }
+ #endif
+ 
++// Keep the reduction tree fixed for the block-scaled W8A16 projections used
++// by Qwen3.8-27B on BMG. The catalog otherwise changes its K partition as N
++// (the logical token-row dimension after matmul lowering) changes, which can
++// change the FP16 result. This is intentionally restricted to the exact
++// production datatype, layout, scale grouping, shape family, and tested row
++// range. All other GEMMs continue to use their catalog-selected strategy.
++static bool use_qwen38_w8a16_fixed_k_strategy(ngen::HW hw,
++        const ngen::Product &product, const gemmstone::GEMMProblem &problem,
++        int m, int n, int k) {
++    using namespace gemmstone;
++
++    if (hw != ngen::HW::Xe2 || product.family != ngen::ProductFamily::BMG)
++        return false;
++    if (n < 1 || n > 512) return false;
++
++    const bool production_shape
++            = (m == 8192 && k == 5120) || (m == 5120 && k == 3072)
++            || (m == 7168 && k == 5120) || (m == 17408 && k == 5120)
++            || (m == 5120 && k == 8704);
++    if (!production_shape) return false;
++
++    return problem.Ta_ext == Type::hf8 && problem.Ta == Type::hf8
++            && problem.Tb_ext == Type::f16 && problem.Tb == Type::f16
++            && problem.Tc == Type::f32 && problem.Tc_ext == Type::f16
++            && problem.Ta_scale == Type::f32 && problem.aScale2D()
++            && !problem.bScale2D() && problem.aqGroupM == 128
++            && problem.aqGroupK == 128 && problem.A.layout == MatrixLayout::T
++            && problem.B.layout == MatrixLayout::N
++            && problem.C.layout == MatrixLayout::N && problem.alpha1()
++            && problem.beta0() && problem.batch == BatchMode::None
++            && problem.batchDims == 0 && !problem.hasPostOp()
++            && problem.aOffset == ABOffset::None
++            && problem.bOffset == ABOffset::None
++            && problem.cOffset == COffset::None;
++}
++
+ status_t gen_desc_t::finalize(const char *tags) {
+     // Update problem alignments to match catalog entry.
+     if (!isPacked(problem_.A.layout)
+@@ -185,10 +221,44 @@ status_t gen_desc_t::finalize(const char *tags) {
+     } else {
+ #endif
+-        strategy_.unroll[LoopM] = entry_->driverInfo.unroll[LoopM];
+-        strategy_.unroll[LoopN] = entry_->driverInfo.unroll[LoopN];
+-        parseStrategy(entry_->strategy, hw_, problem_, strategy_);
+-        modifyStrategy(strategy_, aux_params_);
++        if (use_qwen38_w8a16_fixed_k_strategy(
++                    hw_, product_, problem_, m_, n_, k_)) {
++            const bool wide = n_ >= 128;
++            // The developer strings validated in R136 explicitly carry
++            // T@16N@16N. Reproduce those problem alignments instead of
++            // inheriting the selected catalog entry's alignment metadata.
++            problem_.A.setAlignment(16);
++            problem_.B.setAlignment(16);
++            problem_.C.setAlignment(16);
++            strategy_.unroll[LoopM] = wide ? 32 : 16;
++            strategy_.unroll[LoopN] = wide ? 32 : 16;
++            const char *fixed_k_strategy = wide
++                    ? "aT32#16,0x2{cc}+M64,64@64{cc} "
++                      "aM64#16,0{cc}+M64,64@64{cc} aB#16,0{cc/ub} "
++                      "wg 4x4x2 ikr ki64 sys xaf st k128 grf256 sm sn "
++                      "vav di sr bf cc sb128 np bm16777216 bn16777216 "
++                      "bk16777216"
++                    : "aT32#16,0{cc}+M32,32@32{cc} "
++                      "aM64#16,0{cc}+M64,64@64{cc} aB#16,0{cc/ub} "
++                      "wg 4x1x2 ikr ki64 sys xaf st k128 grf256 sm sn "
++                      "vav di sr bf li nmk sb128 np bm16777216 bn262144 "
++                      "bk16777216";
++            parseStrategy(fixed_k_strategy, hw_, problem_, strategy_);
++
++            // Match the developer override's W-model derivation used to
++            // validate both strategy strings in R136.
++            aux_params_.k0
++                    = utils::rnd_up(utils::div_up(k_, strategy_.wg[LoopK]),
++                            strategy_.unroll[LoopK]);
++            aux_params_.wgK = std::max(1,
++                    std::min(strategy_.wg[LoopK],
++                            int(utils::div_up(k_, aux_params_.k0))));
++        } else {
++            strategy_.unroll[LoopM] = entry_->driverInfo.unroll[LoopM];
++            strategy_.unroll[LoopN] = entry_->driverInfo.unroll[LoopN];
++            parseStrategy(entry_->strategy, hw_, problem_, strategy_);
++            modifyStrategy(strategy_, aux_params_);
++        }
+ #ifdef DNNL_DEV_MODE
+     }
+ #endif
+     strategy_.panelCheck

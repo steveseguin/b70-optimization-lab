@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-align16-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-align16-20260902-r137a",
+  "status": "preregistered-before-first-r137a-xpu-execution",
+  "classification": "source-selector-operator-gate",
+  "question": "Does explicitly reproducing the developer path's T@16N@16N alignments make the non-developer selector's finalized kernels and all M=1..512 outputs exactly match the frozen R136 reference?",
+  "delta_from_r137": "Inside the already guarded selector only, set problem A, B, and C alignment to 16 before parsing the strategy. No guard, strategy, auxiliary K model, operator, or validator changes.",
+  "artifacts": {
+    "image_ref": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "cutlass_commit": "cd763790ad2f74d7294435ecf77682bac0062c3a",
+    "patch": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+    "patch_sha256": "5d2a93f0a36fa89f0ef13cf21ed5332a72491dd5856519bbe2eb21414112464f",
+    "patched_gen_kernel_sha256": "17655cd97c3daf69fe90ad450ab8a393f2c0c573059bb3606c40948d1a170aaf",
+    "compiler": "IntelLLVM 2026.1.1",
+    "build_options": {"ONEDNN_DEV_MODE": false, "GDN_KERNELS_ENABLED": false, "MOE_KERNELS_ENABLED": false},
+    "build_extension": "/mnt/fast-ai/build/qwen38-w8a16-fixed-k-source-r137/build-2026/_xpu_C.abi3.so",
+    "build_extension_bytes": 52252056,
+    "build_extension_sha256": "42224906fd4bce3fc514647c94a862b2fbd9da1eda572d7ba11351a569a83b73",
+    "installed_extension_sha256": "d40bfe5ea61a646adb14201cf7742f25bb70ada2ce97ef6debf84b70074c9530",
+    "mhc_library_sha256": "08c72732460fdc83651981b3693a4f4ada9547adcb4a9bfb1accac64e3f795b5",
+    "required_sycl_soname": "libsycl.so.9",
+    "device_free_abi_import": "pass against torch 2.13.0+xpu in the exact R62 image"
+  },
+  "activation_gate": {
+    "shape": "attn_qkv_proj",
+    "m_values": [64, 128],
+    "environment": "DNNL_VERBOSE=all with GEMM_KERNEL unset",
+    "m64_required_final": "gemm qH[SH] T@16N@16N 16 16 1 0 aT32#16,0{cc}+M32,32@32{cc} aM64#16,0{cc}+M64,64@64{cc} aB#16,0{cc/ub} wg 4x1x2 ikr ki64 sys xaf st k128 grf256 sm sn vav di sr bf li nmk sb128 np bm16777216 bn262144 bk16777216",
+    "m128_required_final": "gemm qH[SH] T@16N@16N 32 32 1 0 aT32#16,0x2{cc}+M64,64@64{cc} aM64#16,0{cc}+M64,64@64{cc} aB#16,0{cc/ub} wg 4x4x2 ikr ki64 sys xaf st k128 grf256 sm sn vav di sr bf cc li nmk sb128 np bm16777216 bn16777216 bk16777216",
+    "failure_action": "Reject R137a immediately; no dense expansion or server build."
+  },
+  "dense_gate": {
+    "inherits": "All validator inputs, execution order, identity, performance, prefill, and health gates from R137 unchanged.",
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-source-fixed-k-dense.py",
+    "script_sha256": "5b02ec4aaeeced2d6f137dcf0809e909acc82fee24869abae2255f72cdee1684",
+    "shape_order": ["mlp_gate_up_proj", "gdn_in_proj_qkvz", "gdn_out_proj", "attn_qkv_proj", "attn_o_proj", "mlp_down_proj"],
+    "m_range": [1, 512],
+    "reference_root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-pinned-jit-cross-digest-r134",
+    "decode_weighted_ratio_ceiling": 1.03,
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only"
+  },
+  "health_gate": "No new Xe fault, copy-engine fault, CAT error, reset, timeout, hang, coredump, or device loss.",
+  "server_allowed": false
+}
