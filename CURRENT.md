@@ -3616,14 +3616,16 @@ blocked until the live `5B2QGXA7` clearance receipt passes; no GPU work or
 endpoint change occurred. See the
 [HC gate-mix exact-staged preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-gate-mix-exact-staged-a1-prereg.md).
 The next bookkeeping candidate is also frozen CPU-only. A28 records 48
-`moe_align_block_size` calls per target token at a `0.240581 ms/token`
-cross-rank mean. The EP4 M1 sparse candidate filters and orders only the ten
+`moe_align_block_size` calls per target token: `0.240581 ms/token` cross-rank
+mean in align/scan plus `0.043295 ms/token` in the associated sort, or
+`0.283876 ms/token` total. The EP4 M1 sparse candidate filters and orders only the ten
 selected global experts while preserving the exact production
 `ignore_invalid_experts=True` contract, all three output buffers, the sorted
 sentinel `10`, the general-kernel inactive expert sentinel `0`, and
 `num_tokens_post_pad`. It matches an independent 512-entry CPU authority over
-1,200 changing rank cases plus 16 adversarial 0/1/5/10-local-hit cases. This is
-not XPU or endpoint evidence and authorizes no launch; a separately reviewed,
-source-bound eager/captured component gate is next after storage clearance.
-See the
-[sparse-assignment preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-ep4-m1-sparse-expert-assignment-a1-prereg.md).
+1,200 changing rank cases plus 16 adversarial 0/1/5/10-local-hit cases. Perfect
+elimination projects only about `+0.157%` at the protected target rate. This is
+not XPU or endpoint evidence and authorizes no launch; native implementation is
+deferred behind W13-N32 and HC gate-mix. See the
+[sparse-assignment preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-ep4-m1-sparse-expert-assignment-a1-prereg.md)
+and [deferred native design](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-ep4-m1-sparse-expert-assignment-xpu-design-deferred.md).

@@ -44,9 +44,14 @@ def run_suite() -> dict[str, object]:
             )
             route_digests.add(tensor_digest(topk_ids))
             for ep_rank in range(EP_SIZE):
-                assert_exact_assignment(
-                    topk_ids, build_contiguous_ep4_expert_map(ep_rank)
-                )
+                expert_map = build_contiguous_ep4_expert_map(ep_rank)
+                topk_before = topk_ids.clone()
+                map_before = expert_map.clone()
+                assert_exact_assignment(topk_ids, expert_map)
+                if not torch.equal(topk_ids, topk_before) or not torch.equal(
+                    expert_map, map_before
+                ):
+                    raise AssertionError("candidate mutated an input tensor")
                 changing_cases += 1
 
     for ep_rank in range(EP_SIZE):
@@ -99,9 +104,10 @@ def run_suite() -> dict[str, object]:
             "expert_ids",
             "num_tokens_post_pad",
         ],
+        "input_tensors_unchanged": True,
         "next_required_gate": (
-            "a separately reviewed, source-bound XPU component wrapper; this CPU "
-            "runner cannot authorize a vLLM patch or endpoint launch"
+            "deferred native source-bound XPU component gate; this CPU runner "
+            "cannot authorize a vLLM patch or endpoint launch"
         ),
     }
 

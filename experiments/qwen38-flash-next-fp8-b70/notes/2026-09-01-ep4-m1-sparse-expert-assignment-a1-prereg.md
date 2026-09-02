@@ -6,12 +6,14 @@ Status: CPU candidate only; **not launch-authorized**
 ## Purpose and profile basis
 
 The A28 target-step profile records exactly 48 calls per generated token on
-each rank to `_moe_C::moe_align_block_size`: about `0.240581 ms/token` as the
-cross-rank mean and `0.241719 ms/token` on the maximum rank. The same step has
-48 M1 routed-MoE layers. Each call receives only ten selected global
-expert IDs (`M=1`, `top_k=10`) but the current generic path is parameterized for
-all 512 global experts. This is therefore a bounded bookkeeping candidate, not
-a numerical model change.
+each rank to `_moe_C::moe_align_block_size`. Its align/scan kernel averages
+`0.240581 ms/token` across ranks and its associated sort kernel another
+`0.043295 ms/token`, or `0.283876 ms/token` together. The same step has 48 M1
+routed-MoE layers. Each call receives only ten selected global expert IDs
+(`M=1`, `top_k=10`) but the current generic path is parameterized for all 512
+global experts. Even perfect elimination projects only about `+0.157%` at the
+protected target rate, so this is a bounded stackable bookkeeping candidate,
+not a numerical model change or major endpoint lever.
 
 The [A28 endpoint profile](2026-08-30-tp4-mtp0-a28-target-step-profile-result.md)
 also records the immediately preceding TopKGating region 48 times per token.
@@ -63,10 +65,11 @@ full-model load, and authorizes no endpoint experiment. Its runner must report
 `launch_authorized=false`, `endpoint_authorized=false`, and
 `gpu_execution_authorized=false`.
 
-The next gate, if independent review accepts the CPU evidence, is a separately
-source-bound XPU component wrapper against the live generic operator and a
-default-off candidate. That wrapper must bind exact source/runtime/config
-hashes, exercise all four maps and changing/adversarial routes in eager and
-captured modes, compare all three outputs exactly, and use matched timing arms.
-Only that evidence may justify preparing an endpoint arm; all protected speed
-and quality results remain unchanged meanwhile.
+The source audit closes immediate XPU implementation as low priority behind
+W13-N32 and HC gate-mix. A future native gate must use one workgroup/submission,
+support invalid and duplicate routes without host reads, exercise eager and
+captured modes, compare all three outputs, and use matched timing arms. The
+[deferred native design](2026-09-01-ep4-m1-sparse-expert-assignment-xpu-design-deferred.md)
+preserves the exact requirements. Only new profile evidence with a meaningful
+ceiling should reopen it; all protected speed and quality results remain
+unchanged.

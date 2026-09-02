@@ -117,6 +117,18 @@ def test_zero_tail_and_active_local_expert_zero_are_disambiguated_by_num_post() 
     gate.assert_exact_assignment(local_zero, rank0_map)
 
 
+def test_candidate_does_not_mutate_routes_or_expert_map() -> None:
+    topk_ids = torch.tensor(
+        [[511, 0, 384, 127, 256, 128, 383, 255, 1, 510]], dtype=torch.int32
+    )
+    expert_map = gate.build_contiguous_ep4_expert_map(2)
+    topk_before = topk_ids.clone()
+    map_before = expert_map.clone()
+    gate.sparse_m1_ep4_candidate(topk_ids, expert_map)
+    assert torch.equal(topk_ids, topk_before)
+    assert torch.equal(expert_map, map_before)
+
+
 @pytest.mark.parametrize(
     ("topk_ids", "error"),
     [
@@ -146,5 +158,6 @@ def test_cpu_runner_is_explicitly_not_launch_authorized() -> None:
     assert result["launch_authorized"] is False
     assert result["endpoint_authorized"] is False
     assert result["gpu_execution_authorized"] is False
+    assert result["input_tensors_unchanged"] is True
     assert result["coverage"]["changing_rank_cases"] == 1200
     assert result["coverage"]["adversarial_rank_cases"] == 16
