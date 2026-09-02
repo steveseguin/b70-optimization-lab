@@ -22,7 +22,7 @@ compare=${repo}/scripts/compare-strict-attempt-outputs.py
 canaries=${repo}/scripts/neural-download-canaries.py
 health=${repo}/scripts/check-qwen36-xpu-xccl-health.sh
 health_timeout=2700
-fault_re='Fault response|CAT error|engine reset|GPU reset|coredump|Timedout job|timed out|hang|wedged|device lost|soft lockup'
+fault_re='Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost|soft lockup|\*ERROR\*'
 
 export EXPECTED_XPU_EXTENSION_SHA256=${ext_sha}
 export MODEL_DIR=${model_dir}
@@ -32,7 +32,7 @@ abort() { log "ABORT: $*"; printf '%s\n' "$*" >"${root}/ABORTED"; exit 2; }
 
 mkdir -p "${root}"
 [[ -e "${root}/campaign-start.txt" ]] && { echo "campaign root already used: ${root}" >&2; exit 1; }
-date --iso-seconds >"${root}/campaign-start.txt"
+date --iso-8601=seconds >"${root}/campaign-start.txt"
 campaign_start=$(date '+%Y-%m-%d %H:%M:%S')
 cat /proc/sys/kernel/random/boot_id >"${root}/boot-id.txt"
 git -C "${repo}" rev-parse HEAD >"${root}/repo-head.txt"
@@ -76,7 +76,7 @@ launch() {
   local label=$1 kind=$2 mml=$3 mns=$4 mbt=$5 dir=${root}/$1 cache=${root}/$1-cache
   mkdir -p "${dir}"; [[ ! -e "${cache}" ]] || abort "${label}: cache exists"; mkdir -p "${cache}"
   local name=qwen38-fp8-r147-${label} served=qwen38-fp8-fixed-k-r147-${label}
-  date --iso-seconds >"${dir}/started-at.txt"
+  date --iso-8601=seconds >"${dir}/started-at.txt"
   if [[ "${kind}" == mtp0 ]]; then
     env IMAGE="${image}" EXPECTED_IMAGE_ID="${image_id}" VLLM_CACHE_DIR="${cache}" \
       CONTAINER_NAME="${name}" PORT="${port}" SERVED_MODEL_NAME="${served}" \
@@ -160,5 +160,5 @@ echo "${ladder_rc}" >"${server_dir}/ladder.rc"
 log "G6 ladder harness exit ${ladder_rc}"
 stop_server "${server_name}" "${server_pid}" "${server_dir}"
 postflight ladder-post
-date --iso-seconds >"${root}/campaign-end.txt"
+date --iso-8601=seconds >"${root}/campaign-end.txt"
 log "campaign complete"
