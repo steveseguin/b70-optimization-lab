@@ -112,7 +112,17 @@ supports one speculative request only, not the two-request failure shape. The
 next implementation step is a narrow multi-request conv/delta diagnostic,
 followed by the strict clean-boot matrix if either stage repairs identity.
 Independent clean-host replay
-also remains pending. Recovery order is process
+also remains pending.
+Review CR1 (2026-09-02) closed the R86-R116 layer-N-only isolation track: the c2
+gate is an exact float16 logit tie decided by M-dependent oneDNN `fp8_gemm_w8a16`
+rounding in every layer plus the deliberate R97 norm arm, and R115's trace shows
+no layer bit-identical to c1. The next identity target is a whole-model
+row-invariant W8A16 GEMM gated by the kernel census, then a regenerated c1 oracle;
+the census also found run-to-run nondeterminism for 168-256-row GEMMs that any
+determinism claim must bound. The published output-audited concurrency curves are
+unaffected. See the
+[`CR1 review`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
+ Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.
 

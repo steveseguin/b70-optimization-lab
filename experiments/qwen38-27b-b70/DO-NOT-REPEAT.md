@@ -1,6 +1,6 @@
 # Qwen3.8 27B do-not-repeat index
 
-Last audited: 2026-08-23
+Last audited: 2026-09-02
 
 This is the first stop before creating another Qwen3.8 27B optimization arm.
 Do not rerun a closed experiment unchanged. A retry needs a materially different
@@ -14,6 +14,9 @@ the [multi-host handoff](MULTI-HOST-HANDOFF.md).
 
 | Experiment | Outcome | Durable record |
 | --- | --- | --- |
+| 2026-09-02 layer-N-only request isolation for c2 token identity (R88/R89/R106-R108/R111-R116 lineage) | Closed. R115's trace shows every GDN layer still differs from c1 after layer-0 isolation; the c2 gate is an exact float16 tie decided by whole-model `fp8_gemm_w8a16` M-class rounding. Retry only as a whole-model row-invariant GEMM gated by the kernel census | [CR1 review](notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md) |
+| 2026-09-02 R101 selector's R97 multi-request norm arm | Closed as a deliberate one-ULP perturbation with no invariance benefit; R99 alone is row-invariant at every M. Force R99 everywhere | [CR1 review](notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md) |
+| 2026-09-02 token-stream bisection of the two-prompt c2 fixture | Closed as a one-coin detector; use the kernel census (all M one class, permutation-invariant, repeat-deterministic) as the operator gate, then regenerate the c1 oracle | [census](data/2026-09-02-qwen38-fp8-kernel-batch-invariance-census-cr1-result.json) |
 | 2026-08-18 upstream vLLM/XPU frontier transfer audit | Closed with no direct hot-path transfer. The pinned XPU base already contains oneDNN 3.13; the only newer official kernel change is FP8 output-buffer plumbing. Recent Qwen-ratio fused GDN is CUDA-only, and the new trailing-allreduce/local-argmax path is DeepSeek/NVIDIA-only while this fork already has Qwen local argmax. Re-audit only after a relevant upstream source change | [audit](notes/2026-08-18-autoround-int4-upstream-frontier-audit.md) |
 | Fresh-compile Python-hash/Inductor tuner isolation on the fast native-MTP lane | **Active config-only candidate; do not duplicate.** Two fresh caches produced different but internally stable outputs while a replay of cache A was `25/25` identical. First fix `PYTHONHASHSEED=0` with tuners unchanged; if divergence remains, isolate max-autotune, coordinate descent, then combo benchmarking. Seal any selected cache before accepting it as identity; no result yet | [candidate](notes/2026-08-18-autoround-int4-inductor-autotune-determinism-candidate.md) |
 | Native-MTP INT4 draft-head local top-K rerank with retained original weights | **Active source-only candidate; do not duplicate.** The fast INT4 full-vocabulary head proposes each TP rank's local top-K and only those rows are rescored in FP32 from the retained original draft-head weights. Target verification remains unchanged. Start with `K=4`; no performance, acceptance, determinism, or quality claim exists yet | [candidate](notes/2026-08-18-autoround-int4-draft-topk-rerank-candidate.md), [patch](patches/vllm-qwen38-draft-int4-topk-rerank-candidate-20260818.patch) |

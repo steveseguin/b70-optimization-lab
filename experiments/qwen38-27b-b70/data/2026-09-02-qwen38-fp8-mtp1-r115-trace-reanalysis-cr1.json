@@ -1,0 +1,26 @@
+{
+ "schema": "neural.download.qwen38-r115-trace-reanalysis.v1",
+ "source": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r115/gdn-projection-trace-r115.jsonl",
+ "records": 2496,
+ "packed_batches_per_order_at_layer0_rank0": {
+  "31,28": 10,
+  "28,31": 10
+ },
+ "per_rank": {
+  "0": {
+   "gdn_layers": 48,
+   "layers_where_cache_digest_differs_from_c1": 48,
+   "layers_where_orders_differ": 46,
+   "c1_control_repeats_consistent": true,
+   "single_digest_per_order": true
+  },
+  "1": {
+   "gdn_layers": 48,
+   "layers_where_cache_digest_differs_from_c1": 48,
+   "layers_where_orders_differ": 46,
+   "c1_control_repeats_consistent": true,
+   "single_digest_per_order": true
+  }
+ },
+ "reading": "After R115 (layer-0 MLP isolation) every GDN layer of the cache request, including layer 0, still carries a different post-norm/out_proj digest than the c1 control on both ranks; layers 2+ also differ between the two packed orders. The 38/38 token passes were therefore not bitwise identity."
+}

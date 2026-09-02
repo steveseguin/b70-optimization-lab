@@ -464,3 +464,12 @@ metadata plus the layer-0 residual/attention boundary. The boot is also
 disqualified for public speed measurement because attempt 1 added a reset.
 See the
 [`R116 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-allphase-isolation-r116-result.json).
+
+Review CR1 (2026-09-02) re-analyzed R115's own trace and ran a kernel-level
+census in the R116 image. The cache request's GDN digests differ from the c1
+control at 48/48 layers on both ranks after R115, so the 38/38 passes were not
+bitwise identity; the gate is an exact float16 logit tie (R67) decided by
+M-dependent oneDNN `fp8_gemm_w8a16` rounding in every layer, plus the deliberate
+R97 arm. Layer-N-only isolation is closed; the next target is a row-invariant
+GEMM gated by the census. See
+[`the CR1 review`](2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
