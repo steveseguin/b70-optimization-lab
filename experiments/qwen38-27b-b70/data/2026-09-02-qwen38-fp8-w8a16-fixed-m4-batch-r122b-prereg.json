@@ -1,0 +1,30 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m4-batch-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m4-batch-20260902-r122b",
+  "status": "preregistered-before-r122b-xpu-execution",
+  "classification": "operator-diagnostic-only",
+  "base_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-fixed-m4-batch-r122-prereg.json",
+  "base_patch": {
+    "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-w8a16-fixed-m4-batch-r122-20260902.patch",
+    "sha256": "101a5f01515372ffc22f1c0466713e4da555e99812b60764e0cf56ce6c9eea88"
+  },
+  "correction_patch": {
+    "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-w8a16-fixed-m4-batch-r122b-scale-groups-20260902.patch",
+    "sha256": "6ac2ea03847e689c3901eb2d27e1b43f6fef67cae8e921d62852ae56f8f70a85"
+  },
+  "correction": {
+    "failed_attempt": "R122",
+    "failed_before_gemm": true,
+    "observed_error": "could not set scales primitive attribute",
+    "cause": "oneDNN dnnl_primitive_attr_set_scales_v3 requires group_ndims to be 0 or 2; R122 incorrectly passed [1,128,128].",
+    "only_change": "Pass scale groups [128,128], which oneDNN applies to the last two weight dimensions; retain mask axes 1 and 2 and scale view [1,K/128,N/128]."
+  },
+  "candidate": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-fixed-m4-batch.py",
+    "script_sha256": "2f8c5ae222c2c4f98fe77227641d227e744ff38dd089dfd923192785f97fe940",
+    "extension_bytes": 67822856,
+    "extension_sha256": "f6e0ecf2adaedac5331316be6e603528ba26af61ea16cea4e0e5cff66e6ced38",
+    "compile_only_check": "passed after the one-line correction; no R122b XPU tensor has been allocated"
+  },
+  "gates": "Unchanged from R122. On any descriptor, numerical, latency, or health failure, preserve the result and do not launch a server."
+}

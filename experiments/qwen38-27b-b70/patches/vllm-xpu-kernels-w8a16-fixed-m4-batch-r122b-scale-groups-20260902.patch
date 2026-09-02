@@ -1,0 +1,14 @@
+diff --git a/csrc/xpu/onednn/fp8_gemm_w8a16.h b/csrc/xpu/onednn/fp8_gemm_w8a16.h
+--- a/csrc/xpu/onednn/fp8_gemm_w8a16.h
++++ b/csrc/xpu/onednn/fp8_gemm_w8a16.h
+@@ -108,9 +108,7 @@ static inline void dnnl_matmul_w8a16_fp8(
+           DNNL_ARG_WEIGHTS,
+           /* mask */ fixed_m_batched ? (1 << 1) + (1 << 2)
+                                      : (1 << 0) + (1 << 1),
+-          fixed_m_batched
+-              ? dnnl::memory::dims{1, blk_group_size, blk_group_size}
+-              : dnnl::memory::dims{blk_group_size, blk_group_size},
++          {blk_group_size, blk_group_size},
+           get_onednn_dtype(m2_sc_arg));
+       /* per block quant */
+     } else if (m2_sc.numel() == 1) {

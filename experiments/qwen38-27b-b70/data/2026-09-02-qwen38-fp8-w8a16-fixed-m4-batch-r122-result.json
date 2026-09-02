@@ -1,0 +1,19 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m4-batch-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m4-batch-20260902-r122",
+  "classification": "operator-diagnostic-only",
+  "status": "closed-pre-gemm-scale-attribute-rejected",
+  "result": {
+    "attn_o_proj": "could not set scales primitive attribute",
+    "attn_qkv_proj": "could not set scales primitive attribute",
+    "gemm_launched": false,
+    "new_xe_fault_or_reset": false
+  },
+  "cause": "The candidate supplied three scale-group dimensions for a rank-3 broadcast weight. The pinned oneDNN API explicitly requires group_ndims to be 0 or 2 and defines grouping over only the last two tensor dimensions.",
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-fixed-m4-batch-r122",
+    "result_json_sha256": "42eec61fa73d3a8060e79894e98dcde10b341cb22844fe892dae7e4f4c9fce36",
+    "run_log_sha256": "524d66bbc88c6b28474f697fcb1bd99b98ed7958afd286774a51c383ee9b6048"
+  },
+  "decision": "Permit one correction only: retain the shifted rank-3 mask and scale-memory view, but pass the documented two groups [128,128]. Record this as R122b before execution."
+}
