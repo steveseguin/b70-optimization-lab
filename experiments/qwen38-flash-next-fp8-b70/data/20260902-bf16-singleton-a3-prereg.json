@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "status": "frozen_before_device_execution",
+  "classification": "report_only_targeted_m1_backend_discriminator",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "a2_tool_sha256": "32e517ff435d4f99ce160c08c4a3172cfcaeb3b4df60848127926d4c2436192f",
+    "a3_tool_sha256": "8ddd0dae1b1a1153bc9c791c9192df87ed0daeb1dcdc7f73313564e8e16dca57",
+    "a3_tests_sha256": "c07fcd3b8a33eddde6fd9d8a4e196157e6ff4c68261433d2ed95ed5e3bb3256f",
+    "torch_version": "2.11.0+xpu",
+    "torch_git_version": "70d99e998b4955e0049d13a98d77ae1b14db1f45",
+    "provider_library": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib/libtorch_xpu.so",
+    "provider_library_sha256": "ee584edab22b995637c5f6ec83fc10dea5931469c86cf2ad91952bb3e1108290",
+    "family": "hc_down_inject",
+    "sentinel": "layer00-attn-r0",
+    "seed": 2026090201,
+    "input_shape": [256, 10240],
+    "per_call_input_shape": [1, 10240],
+    "weight_shape": [336, 10240],
+    "active_output_columns": [0, 324],
+    "synthetic_padding_columns": [324, 336]
+  },
+  "provider_candidate": {
+    "control": "torch.backends.mkldnn.deterministic=False",
+    "candidate": "torch.backends.mkldnn.deterministic=True",
+    "candidate_only_change": true,
+    "setting_applied_before_first_gemm": true,
+    "setting_read_back_and_restored": true,
+    "source_mapping_independently_audited": true,
+    "local_source_file_hash_bound": false,
+    "binary_identity_bound": true,
+    "runtime_onednn_verbose_receipt": false,
+    "runtime_verbose_omission_reason": "process-global verbose mode would contaminate exact environment and timing"
+  },
+  "protocol": {
+    "arms": ["native", "mkldnn-deterministic"],
+    "replicas_per_arm": 2,
+    "fresh_child_processes": 4,
+    "sequential": true,
+    "selected_xpu_count_per_process": 1,
+    "warmup_complete_ordinal_sweeps": 4,
+    "focus_rows": [221, 205, 148, 78],
+    "recurrent_coordinates": [[221, 80], [205, 84], [148, 204], [148, 264], [78, 63]],
+    "consecutive_repeats_per_focus_row": 100,
+    "complete_ordinal_sweeps": 100,
+    "rows_per_ordinal_sweep": 256,
+    "output_authority_excludes_timing": true,
+    "capture": [
+      "full_output_sha256",
+      "active_output_sha256",
+      "synthetic_tail_sha256_and_numeric_zero",
+      "raw_bf16_coordinate_distributions",
+      "comparisons_to_invocation_zero",
+      "synchronized_xpu_event_latency"
+    ]
+  },
+  "safety": {
+    "authority_environment": "Q38_BF16_SINGLETON_A3_EXECUTE=YES",
+    "result_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-singleton-diagnostic-20260902-a3",
+    "no_clobber": true,
+    "atomic_evidence": true,
+    "child_and_parent_postflight": true,
+    "fail_closed_identity_health_and_setting": true,
+    "full_model_load": false,
+    "endpoint_launch": false,
+    "reboot": false,
+    "live_source_write": false
+  },
+  "credit": {
+    "report_only": true,
+    "runtime_change_authorized": false,
+    "speed_credit": false,
+    "quality_credit": false,
+    "endpoint_claim_authorized": false,
+    "protected_results_unchanged": true
+  }
+}
