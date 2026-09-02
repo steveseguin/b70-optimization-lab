@@ -1,0 +1,76 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-cleanboot-promotion-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-cleanboot-20260902-r119",
+  "status": "preregistered-before-run",
+  "objective": "Replay the retained R62 draft-only INT4 vocabulary-head candidate on a clean boot using two fresh compile caches, without changing the FP16 target verifier or the fixed promotion benchmark identity.",
+  "repository_commit": "dc0f5e77908633e8f25b80b902a263ef27081fcc",
+  "boot": {
+    "boot_id": "7c432682-9e2d-4ff0-90a5-5f9a88250d4e",
+    "boot_started_local": "2026-09-02T08:16:24-04:00",
+    "static_post_reboot_gate": "passed",
+    "per_card_compute_gate": "passed on physical devices 0 and 1",
+    "two_card_xccl_allreduce_gate": "passed with value 2.0 on both ranks",
+    "current_boot_xe_fault_signature_before_run": false
+  },
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "candidate_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch_sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "target_projection": "unchanged FP16",
+    "draft_projection": "group-128 W4A16 with BF16 scales",
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 1024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024
+  },
+  "run_order": [
+    "attempt-a with a new empty compile cache",
+    "graceful teardown and clean journal/health postflight",
+    "attempt-b with a second new empty compile cache",
+    "medium-prefill repeat probe on attempt-b only after its strict suite",
+    "graceful teardown and clean journal/health postflight"
+  ],
+  "strict_gate": {
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+    "attempts": 2,
+    "fresh_compile_cache_per_attempt": true,
+    "required_prompt_count": 12,
+    "required_prompt_classes": 6,
+    "max_tokens": 512,
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "aggregation": "median-of-prompt-class-medians",
+    "cached_tokens_required": 0,
+    "canaries_before_and_after_required": true,
+    "candidate_pair_complete_arrays_exact": "12/12 required",
+    "target_oracle": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-explicit-deterministic-r54a-r50",
+    "each_candidate_vs_target_complete_arrays_exact": "12/12 required",
+    "minimum_each_attempt_tok_s": 51.29000611881867,
+    "minimum_center_uplift_vs_51_80808698870573_percent": 3.0
+  },
+  "separate_medium_prefill_guard": {
+    "benchmark_identity_changed": false,
+    "script": "experiments/qwen38-27b-b70/scripts/probe-qwen38-fp8-c1-prefill-length-determinism.py",
+    "script_sha256": "e02f5e6e20f10f298163748506b50964d91854ab1fa63aeba5a7ff50aef6c3b4",
+    "prompt_tokens": [100, 168, 200, 224, 250, 300],
+    "repeats": 5,
+    "max_tokens": 64,
+    "expected": "R62 is expected to inherit the W8A16 168-256-row logprob nondeterminism. This probe determines candidate-specific scope; it cannot invalidate or alter the fixed-suite performance metric, and token-ID stability does not waive logprob nondeterminism."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage",
+    "any cached token, canary failure, incomplete strict response, or target/candidate array mismatch",
+    "missing draft-only INT4 marker on either rank or any evidence that the FP16 target projection changed",
+    "either strict attempt below the frozen 99-percent incumbent floor",
+    "candidate center below the frozen 3-percent material-uplift threshold"
+  ],
+  "publication_decision": "Promote only if both strict attempts and both target comparisons pass, no current-boot infrastructure event occurs, and the center clears the material-uplift threshold. Publish the medium-prefill determinism boundary regardless of whether the probe crosses a greedy token decision."
+}
