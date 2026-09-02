@@ -1,0 +1,83 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-20260902-r137",
+  "status": "preregistered-before-first-r137-xpu-execution",
+  "classification": "source-selector-operator-gate",
+  "question": "Does a narrow non-developer oneDNN selector reproduce the exact R136 fixed-K arithmetic for every production W8A16 shape and every M from 1 through 512, without losing the modeled c1-c64 performance gate?",
+  "basis": {
+    "r134": "The natural source-M32 and source-M128 strategies each pass internal invariance but disagree byte-for-byte at all 90 registered shape/M points, so a runtime selector may switch only between strategies already proven to share one arithmetic answer.",
+    "r135": "The exact source-M32 strategy is at parity through c32 but costs 1.329762x at c64/M128.",
+    "r136": "A wide 32x32, wg4x4x2, two-way interleaved local-K strategy matched the source-M32 answer at all 90 registered shape/M points and produced a composed c64 ratio of 1.016875.",
+    "implementation": "Select source-M32 geometry below M128 and the R136 wide fixed-K geometry at M128 through M512, while retaining wgK=2, ikr, ki64, and k128 on both sides of the boundary."
+  },
+  "source_scope": {
+    "hardware": "Xe2 BMG only",
+    "logical_m_rows": [1, 512],
+    "production_nk_pairs": [[8192, 5120], [5120, 3072], [7168, 5120], [17408, 5120], [5120, 8704]],
+    "contract": "A/weights E4M3 transposed, B/activations FP16 normal, FP32 accumulation, FP16 output, FP32 two-dimensional A scales grouped 128x128, alpha=1, beta=0, no batch, post-op, or offsets",
+    "fallback": "Every non-matching GEMM retains the unmodified oneDNN catalog-selected strategy."
+  },
+  "artifacts": {
+    "image_ref": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "cutlass_commit": "cd763790ad2f74d7294435ecf77682bac0062c3a",
+    "patch": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-r137-20260902.patch",
+    "patch_sha256": "0cfcdf55c7a2448beae7ca8b2c6dfecae1e1e43067395aece89978269d64fc34",
+    "patched_gen_kernel_sha256": "2d1822357f05dd3136d798f28ea9f22e935bdfaf98ea64dd3f7f24ec6b9b5172",
+    "builder": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "builder_sha256": "5cbdadc200626ed9da03b6aa4808a59ee848348c671ce76d4d7ada4a37ca464f",
+    "compiler": "IntelLLVM 2026.1.1",
+    "build_options": {
+      "ONEDNN_DEV_MODE": false,
+      "GDN_KERNELS_ENABLED": false,
+      "MOE_KERNELS_ENABLED": false
+    },
+    "build_extension": "/mnt/fast-ai/build/qwen38-w8a16-fixed-k-source-r137/build-2026/_xpu_C.abi3.so",
+    "build_extension_bytes": 52252056,
+    "build_extension_sha256": "51a1ee62a598fc994ae28d81fa09aa55d5551151796441dd24d9ad52faa19f89",
+    "installed_extension_sha256": "8645077644af9b92d8758102aaa80c4d3c5f2b1821d64285d9968ae483cb7a22",
+    "mhc_library_bytes": 536704,
+    "mhc_library_sha256": "08c72732460fdc83651981b3693a4f4ada9547adcb4a9bfb1accac64e3f795b5",
+    "required_sycl_soname": "libsycl.so.9",
+    "device_free_abi_import": "pass against torch 2.13.0+xpu in the exact R62 image"
+  },
+  "validator": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-source-fixed-k-dense.py",
+    "script_sha256": "5b02ec4aaeeced2d6f137dcf0809e909acc82fee24869abae2255f72cdee1684",
+    "seed": 20260902,
+    "shapes": ["gdn_in_proj_qkvz", "gdn_out_proj", "attn_qkv_proj", "attn_o_proj", "mlp_gate_up_proj", "mlp_down_proj"],
+    "dense_m_range": [1, 512],
+    "registered_m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 224, 250, 256, 300, 512],
+    "permutation_m_values": [2, 63, 64, 65, 127, 128, 129, 168, 200, 256, 511, 512],
+    "timed_m_values": [2, 4, 8, 16, 32, 64, 128, 168, 256, 512],
+    "warmups": 10,
+    "iterations": 100,
+    "timing_repeats": 5,
+    "frozen_reference_root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-pinned-jit-cross-digest-r134",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only"
+  },
+  "execution_order": [
+    "Capture idle GPU and kernel-journal baselines; reject any unhealthy device state.",
+    "With DNNL_VERBOSE=all, execute mlp_gate_up_proj at M64 and M128 and require the exact small and wide kernel strings in the log.",
+    "Run the full dense validator for mlp_gate_up_proj and stop immediately on any identity, process, or device-health failure.",
+    "Only after the first-shape pass, run the other five shapes one at a time with a health check after each.",
+    "Aggregate timed medians by the Qwen3.8 64-layer call graph and evaluate the c1-c64 gate.",
+    "No server launch is authorized until all operator and health gates pass and a separate serving preregistration is committed."
+  ],
+  "gates": {
+    "activation": "The M64 verbose kernel line must equal the frozen source-M32 strategy and the M128 line must equal the frozen R136 wide fixed-K strategy; GEMM_KERNEL is unset.",
+    "dense_prefix": "For every shape and every M=1..512, the complete FP16 output must be byte-identical to the corresponding prefix of the candidate M512 output.",
+    "repeat": "A second call must be byte-identical at every shape and M=1..512.",
+    "permutation": "All registered row permutations must restore to the exact unpermuted output.",
+    "padding": "The first 168 rows of an M200 zero-padded call must equal a direct M168 call.",
+    "cross_reference": "Every complete output and row-0 SHA-256 at all 15 registered M values must equal the frozen R134 source-M32 reference.",
+    "decode_performance": "Call-count-weighted candidate latency divided by the R135 natural control must be <=1.03 independently at M2, M4, M8, M16, M32, M64, and M128; M128 is expected near R136's 1.016875.",
+    "prefill_visibility": "Report M168, M256, and M512 weighted latency. Values at M168 or M256 above 2.00x the R135 natural control reject serving integration.",
+    "health": "No new Xe fault, copy-engine fault, CAT error, reset, timeout, hang, coredump, or device loss.",
+    "on_failure": "Stop expansion, preserve the evidence, and do not build or launch a serving image.",
+    "on_pass": "Write the R137 result, then preregister a serving-compatible package and strict endpoint gate against R119/R62."
+  },
+  "server_allowed": false
+}
