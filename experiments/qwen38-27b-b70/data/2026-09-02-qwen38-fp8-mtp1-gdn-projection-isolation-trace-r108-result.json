@@ -1,0 +1,73 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-projection-isolation-trace-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-projection-isolation-trace-20260902-r108",
+  "status": "completed-rejected-order-branch-precedes-layer1-projection",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-all-r104",
+    "base_image_id": "sha256:f1dd575ae2e0effc7991535c253af82b332ac0604b7f60ba796f31b81e26f951",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "candidate_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-projection-isolation-trace-r108-20260902.patch",
+    "patch_sha256": "8e5f0e79fac1e6b06989118f181c1a084b80f845dc9bdaeedbe7f7d01f09f63a",
+    "installed_qwen_gdn_sha256": "703010730b572b0c149f6ee1ef4ad068ce4a4076cdf7e25b28353c7093ed4475"
+  },
+  "treatment_gate": {
+    "patch_parser_clean": true,
+    "python_compile": "pass",
+    "semantic_forward_xpu_call_site": "pass",
+    "semantic_validator_rejects_inert_r106_source": true,
+    "runtime_trace_emitted": true,
+    "runtime_trace_records": 2496,
+    "tp_ranks": [0, 1],
+    "gdn_layers_per_rank": 48,
+    "observed_treatments": [
+      "single-request-control",
+      "split-per-request"
+    ],
+    "observed_split_boundaries": [
+      [0, 31, 59],
+      [0, 28, 59]
+    ]
+  },
+  "output_gate": {
+    "concurrency_1": {
+      "repeats": 3,
+      "oracle_exact": "3/3",
+      "cached_tokens_all_zero": true,
+      "completion_tokens_all_128": true
+    },
+    "concurrency_2": {
+      "repeats": 20,
+      "exact_batches": "1/20",
+      "exact_complete_streams": "21/40",
+      "cache_prompt_exact": "1/20",
+      "cache_prompt_known_alternate": "19/20",
+      "cache_prompt_alternate_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+      "index_prompt_exact": "20/20",
+      "cached_tokens_all_zero": true,
+      "completion_tokens_all_128": true
+    }
+  },
+  "trace_finding": {
+    "layer_prompt_pairs_per_rank": 96,
+    "layer_prompt_pairs_varying_across_prefill_order_per_rank": 94,
+    "layer0_prompt_pairs_varying_across_prefill_order_per_rank": 0,
+    "interpretation": "For both TP ranks and both requests, layer-0 normalized and request-isolated projected digests are invariant across the two packed-prefill orders. Starting at GDN layer 1, normalized and projected digests vary by order for all remaining 47 GDN layers and both requests. The order branch therefore appears after layer-0 out_proj and before the layer-1 post-core normalization boundary; request packing inside out_proj is not causal."
+  },
+  "decision": "Reject projection isolation as a repair. The next one-variable diagnostic should target the decoder-layer boundary between layer-0 projected output and layer-1 GDN normalized input, beginning with the already-available packed serial outer RMSNorm/residual gate; no speed test is allowed until repeated c2 identity passes.",
+  "reporting_boundary": "No public speed, README headline, website, or LocalMaxxing update. This candidate failed complete output identity.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful bounded shutdown"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-projection-isolation-trace-20260902-r108",
+    "c1_3x_sha256": "4b80ed6e733cb0b607f42dd3d4ec7bb6957dd15c3f02a7cd526c76686f881a7c",
+    "c2_20x_sha256": "ce43bc920f89585ea4a1e393ba99af5499cb34a9f765e5b8ab0c0d84490f4b21",
+    "trace_sha256": "d3b291e45dbd8b9fc93cd236b2470bdab07df15056e3ec597debbea922052c2e",
+    "trace_summary_sha256": "314e54ae9bd96d17e73793c2eb861ab535d947b9fe2488a4d8270c32278a82f3",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

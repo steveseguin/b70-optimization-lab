@@ -347,3 +347,24 @@ interpreted. See the corrected
 [`R106 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-result.json)
 and the
 [`R107 invalidation`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-postnorm-projection-trace-r107-result.json).
+
+R108 repeated the intended treatment from the frozen R104 image with two
+independent execution proofs. Its AST validator requires the custom-op call
+inside `QwenGatedDeltaNetAttention.forward_xpu` (and rejects the inert R106
+source), while the runtime gate recorded 2,496 exact trace rows spanning both
+TP ranks, all 48 GDN layers, and both `single-request-control` and
+`split-per-request` execution. The valid result rejects projection isolation:
+c1 remained exact 3/3, but c2 passed only 1/20 batches (21/40 streams). The
+cache request produced the known alternate stream 19/20 times; the index
+request stayed exact 20/20. Every request was complete and cache-zero.
+
+The new boundary trace is decisive. On both ranks, the normalized and isolated
+projected rows for both prompts are invariant across the two packed orders at
+GDN layer 0. Starting at GDN layer 1, both digests vary by order for all 47
+remaining GDN layers and both prompts (94/96 layer-prompt pairs). The branch is
+therefore introduced after layer-0 `out_proj` and before the layer-1 post-core
+normalization boundary, not by request packing inside `out_proj`. The next
+single-variable diagnostic should exercise the already-available packed serial
+outer RMSNorm/residual path; it must pass repeated c2 output identity before
+any performance measurement. See the
+[`R108 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108-result.json).
