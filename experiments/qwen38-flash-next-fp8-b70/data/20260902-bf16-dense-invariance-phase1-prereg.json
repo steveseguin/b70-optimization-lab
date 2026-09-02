@@ -1,0 +1,124 @@
+{
+  "schema": "neural.download.qwen38-flash-next.bf16-dense-invariance-prereg.v1",
+  "date": "2026-09-02",
+  "status": "frozen_before_xpu_execution",
+  "scope": "component_only_real_weight_bf16_dense_invariance_phase1",
+  "question": "Which actual Flash-Next BF16 dense projection shapes preserve exact per-row results across batch dimension, row order, repeated calls, and fresh processes?",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "model_path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "model_mount": {"source": "/dev/sda2", "fstype": "fuseblk", "target": "/mnt/usb-models"},
+    "model_index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+    "model_config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "historical_verifier_receipt": "/mnt/fast-ai/llm-models/.verification/Qwen3.8-Flash-Next-FP8-20260827.json",
+    "historical_verifier_receipt_sha256": "6ae22291119e8c8a01597bda9fe4b1fb5850912655ec188e363a88eb6de58470",
+    "tree_metadata_sha256": "4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "xpu_kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "python": "3.12.13",
+    "python_prefix": "/home/steve/.venvs/vllm-xpu",
+    "torch": "2.11.0+xpu",
+    "torch_build_config_sha256": "98a0850b0ebb9d008a0dcb75c976d375ae99153c60b91281d91209fd6bbf9dd5",
+    "safetensors": "0.7.0",
+    "libsycl_sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
+    "libtorch_xpu_sha256": "ee584edab22b995637c5f6ec83fc10dea5931469c86cf2ad91952bb3e1108290",
+    "native_library_contract": {
+      "onednn_provider": "libtorch_xpu.so integrated provider; no standalone libdnnl mapping allowed",
+      "onemkl_sycl_blas_sha256": "32b18de9a2ef6c75129ebd1b9f5c86b73eb2f845af60276ae18c7d60dcbbf13b",
+      "onemkl_core_sha256": "4dbb39b7adf44ecc400c78d5489aa54379cb0056e1ac4e0490e234b9f92c9582",
+      "level_zero_loader_sha256": "0fe232b18985ae078dd546b57bc6d11bacf1030834c0544f7e3feb53ed71c1d0",
+      "level_zero_intel_gpu_sha256": "26fa68779adb03b200a8c3001cf81e59fc9a3d63e0f38627ec0005ffce574e7a"
+    },
+    "device_selector": "level_zero:0",
+    "worker_environment": {
+      "HOME": "/home/steve",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+      "PATH": "/home/steve/.venvs/vllm-xpu/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "PYTHONNOUSERSITE": "1",
+      "PYTHONSAFEPATH": "1",
+      "Q38_BF16_DENSE_CENSUS_EXECUTE": "YES"
+    },
+    "logical_tp_size": 4
+  },
+  "a28_source": {
+    "profile": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28/profile-summary-recovered-v3.json",
+    "profiled_mode": "TP4 EP4 eager MTP0 target-only decode",
+    "profile_sha256": "13549ec9be6d923960b0e7d654560e0a56097e8e2f226ca6b9aa660d13cf0fa1",
+    "expanded_top200_catalog": "experiments/qwen38-flash-next-fp8-b70/data/20260902-a28-bf16-dense-shape-catalog-top200.json",
+    "expanded_top200_catalog_sha256": "688ac468d9114391f5411afd433a5ce52748f2120d6985d4e02bf2b467ef4969",
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "dense_gemms_per_token": 532,
+    "catalog_correction": "A top-200 re-summary exposed two one-call shapes hidden by A28's earlier top-25 table. The evidence-backed catalog contains 14 unique shapes, not the initially reported 13. The 1x2560 by 2560x10240 call is PLE key projection; lm_head is outside the profiled execute_context."
+  },
+  "catalog": [
+    {"family": "hc_down_inject", "k": 10240, "n": 336, "calls_per_token": 96},
+    {"family": "final_hc_down", "k": 10240, "n": 320, "calls_per_token": 1},
+    {"family": "hc_up", "k": 320, "n": 10240, "calls_per_token": 97},
+    {"family": "gdn_qkvz", "k": 2560, "n": 4096, "calls_per_token": 36},
+    {"family": "full_qkv", "k": 2560, "n": 3584, "calls_per_token": 12},
+    {"family": "shared_gate_up", "k": 2560, "n": 320, "calls_per_token": 48},
+    {"family": "router", "k": 2560, "n": 512, "calls_per_token": 48},
+    {"family": "qsa_indexer", "k": 2560, "n": 640, "calls_per_token": 12},
+    {"family": "gdn_ba", "k": 2560, "n": 24, "calls_per_token": 36},
+    {"family": "shared_gate", "k": 2560, "n": 1, "calls_per_token": 48},
+    {"family": "shared_down", "k": 160, "n": 2560, "calls_per_token": 48},
+    {"family": "attn_out", "k": 1536, "n": 2560, "calls_per_token": 48},
+    {"family": "ple_key", "k": 2560, "n": 10240, "calls_per_token": 1},
+    {"family": "ple_value", "k": 2560, "n": 2560, "calls_per_token": 1}
+  ],
+  "protocol": {
+    "sentinels_per_family": 2,
+    "seeds": [2026090201, 2026090202, 2026090203],
+    "fresh_process_replicas": [1, 2],
+    "planned_processes": 168,
+    "production_m_values": [1, 2, 4, 8, 16, 32, 48, 64],
+    "diagnostic_only_m_values": [128, 192, 256],
+    "same_input_repeats": 20,
+    "permutations": ["reverse", "cyclic", "random"],
+    "authority": "same XPU torch.nn.functional.linear evaluated one row at a time",
+    "authority_repeats": 2,
+    "weight_layout": "exact TP4-local row-major checkpoint reconstruction; runtime B view has stride [1,K]",
+    "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-dense-invariance-phase1-20260902-a1",
+    "cell_timeout_seconds": 600,
+    "plan_timeout_seconds": 21600
+  },
+  "gates": [
+    "same-M repeat hashes are unique-one and equal the first output",
+    "every batched row is byte-identical to its M1 XPU authority",
+    "reverse, cyclic, and seeded-random row permutations are byte-identical after inverse permutation",
+    "input and weight byte hashes are unchanged",
+    "checkpoint dtype, physical shape, TP rank, source, Torch, Python, and library identities are exact",
+    "all values are produced by fresh calls and synchronized before hashing",
+    "all planned processes and their identities are present before summary completion"
+    ,"fixed current-boot root-NVMe clearance and exact /dev/sda2 fuseblk mount pass before path creation or device import"
+    ,"selected source tensor names and a once-hashed shard stat/SHA contract are exact across every cell"
+    ,"matching fresh-process replicas have identical input, reconstructed weight, repeat-qualified singleton authority, and per-M result hashes"
+    ,"tracked vLLM/kernel source trees and exact isolated interpreter are clean and bound"
+    ,"between-cell and final AER, NVMe SMART, four-XPU, memory, and swap admission/postflight remain clean"
+    ,"worker subprocesses receive only the frozen GEMM-relevant environment allowlist; any additional relevant selector fails closed"
+    ,"actual mapped libsycl, libtorch_xpu/integrated-oneDNN, oneMKL BLAS/core, Level-Zero loader, and Intel GPU provider paths and hashes are exact and unambiguous"
+    ,"external selected-shard hashes and sizes match the historical verifier receipt rather than a newly authored authority"
+  ],
+  "interpretation": {
+    "noninvariance": "Preserve the negative and expand only that hot/failing family to every integer M=1..64 before designing a treatment.",
+    "phase1_pass": "Authorizes only the separately preregistered Phase-2 all-layer/all-rank production-M census.",
+    "runtime_change_authorized": false,
+    "endpoint_launch_authorized": false,
+    "speed_credit": false,
+    "quality_or_promotion_credit": false,
+    "protected_results_changed": false
+  },
+  "artifacts": {
+    "worker_and_driver": "experiments/qwen38-flash-next-fp8-b70/tools/census-q38-bf16-dense-invariance.py",
+    "worker_sha256": "e4700fc44a65d71c7b0a7df5ff34924d808ba685c4157b0e2c12fd4b9d4bdf22",
+    "cpu_contract_tests": "experiments/qwen38-flash-next-fp8-b70/tools/test_census_q38_bf16_dense_invariance.py",
+    "tests_sha256": "d05e23bce84f69f4fbbe7797c29fb0e0e54734dd4fe6481df1cc7afdc29aa239",
+    "expanded_a28_catalog_sha256": "688ac468d9114391f5411afd433a5ce52748f2120d6985d4e02bf2b467ef4969",
+    "catalog_canonical_sha256": "bf4d61de4e4edf1a07ad84069be2dd34187633ca5ac902ca4f8c59ee503e91c3",
+    "cell_plan_canonical_sha256": "c326bb7fbb9a36f469b39f9ad16e23ba07003e9fb64cde7d18035af89ac6c25d"
+  }
+}

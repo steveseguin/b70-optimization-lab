@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-flash-next.a28-bf16-dense-shape-catalog.v1",
+  "status": "cpu_only_derived_from_frozen_kineto_traces",
+  "source_summary": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-eager-mtp0-4352-ple-only-r1-attempt28/profile-summary-recovered-v3.json",
+    "sha256": "13549ec9be6d923960b0e7d654560e0a56097e8e2f226ca6b9aa660d13cf0fa1"
+  },
+  "derivation": {
+    "summarizer": "experiments/qwen38-flash-next-fp8-b70/tools/summarize-tp4-target-decode-kineto.py",
+    "summarizer_sha256": "a4d4c54cce53e1a2c1c3795caf742e7216e8d646ed0ca002f517cf09bd4ab7b6",
+    "arguments": {"top": 200, "drop_first": 1, "expected_retained": 3, "expected_ranks": [0, 1, 2, 3]},
+    "trace_sha256": {
+      "rank0": "7d2b6e83e8d57abc0f9e6ee7112641ef5b3469f4d0caee675419d7a788712996",
+      "rank1": "1e4ee175514f80375eb787359df4797a8fe6a2c3f077fa3dc3146befd10b5a28",
+      "rank2": "71da9972a56cdaf3d5105fed5897422c35fdd3d93ae5ee8f2fcd1104dbb1545b",
+      "rank3": "1b1240230d6e4d3df56b79a5574e41a774c505221559955f6599fb5099f7106b"
+    },
+    "generated_top200_sha256": "94cce4b392127b80db72b10ccd7b12d80ae64c6e5e87bf0c6e3c5db7ce0caa1e",
+    "selection": "rank 0 rows with bucket=dense_projection, operator.name=aten::mm, both input types=c10::BFloat16"
+  },
+  "families": [
+    {"k": 10240, "n": 336, "calls_per_token": 96},
+    {"k": 10240, "n": 320, "calls_per_token": 1},
+    {"k": 320, "n": 10240, "calls_per_token": 97},
+    {"k": 2560, "n": 4096, "calls_per_token": 36},
+    {"k": 2560, "n": 3584, "calls_per_token": 12},
+    {"k": 2560, "n": 320, "calls_per_token": 48},
+    {"k": 2560, "n": 512, "calls_per_token": 48},
+    {"k": 2560, "n": 640, "calls_per_token": 12},
+    {"k": 2560, "n": 24, "calls_per_token": 36},
+    {"k": 2560, "n": 1, "calls_per_token": 48},
+    {"k": 160, "n": 2560, "calls_per_token": 48},
+    {"k": 1536, "n": 2560, "calls_per_token": 48},
+    {"k": 2560, "n": 10240, "calls_per_token": 1},
+    {"k": 2560, "n": 2560, "calls_per_token": 1}
+  ],
+  "family_count": 14,
+  "calls_per_token": 532,
+  "endpoint_or_speed_credit": false
+}
