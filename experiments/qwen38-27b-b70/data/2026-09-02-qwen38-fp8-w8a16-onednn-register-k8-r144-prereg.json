@@ -1,0 +1,72 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-onednn-register-k8-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-onednn-register-k8-20260902-r144",
+  "status": "preregistered-before-r144-source-edit-build-or-device-use",
+  "classification": "onednn-generator-operator-diagnostic-only",
+  "question": "Can one oneDNN subgroup reproduce natural-M1's eight 64-K FP32 chains in registers, then reduce them in the proven order, without the eight K-subgroups and SLM reduction that made R142/R143 too slow?",
+  "evidence_base": {
+    "arithmetic_reference": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-k8-split-reduction-r142-result.json",
+    "closed_direct_grid": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-k8-tile-amortization-r143-result.json",
+    "observed_onednn_order": "With local-K interleave ki64 and wgK=8, lane p starts at p*64, advances by 512, and lane 0 adds p=1 through p=7 in ascending order. R142 reproduced this exactly on both dominant production shapes."
+  },
+  "source": {
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_target": "bmg-g31-a0",
+    "build_mode": "ONEDNN_DEV_MODE=ON for forced strategy selection and generator diagnostics"
+  },
+  "fixed_implementation": {
+    "strategy_modifier": "Add one explicit kri64 modifier. It is invalid unless the K loop unroll is exactly 512, the kernel is systolic FP32 accumulation, local/global K parallelism is absent, C repacking is absent, and K is divisible by 512.",
+    "register_buffers": "Allocate exactly eight C register buffers before GEMM register allocation. Ordinary strategies retain one buffer and unchanged behavior.",
+    "routing": "Keep the ordinary 32-K BDPAS/load cadence. For each generated outer product at compile-time K offset h, write to C buffer floor((h mod 512)/64). Thus each buffer receives its 64 contiguous K positions once per 512-K macro-step.",
+    "reduction": "After the K loop and before offsets/post-ops/output conversion, execute C0 += C1, then +=C2, ..., +=C7 in FP32 register order using the existing register-layout mapper.",
+    "forbidden": "No K workgroups, SLM, barriers, padding, allocation/copy wrapper, atomics, global scratch, custom SYCL GEMM, server build, or collective experiment."
+  },
+  "candidates": {
+    "m16_n4_wg8x1": {
+      "file": "experiments/qwen38-27b-b70/data/r144-m16-n4-wg8x1-register-k8-strategy.txt",
+      "sha256": "946487e11b03cb6ef5b7dc252225ceb6b879ca6d5e78dc64a445c4cda26927c6",
+      "purpose": "Lowest-register feasibility arm derived from the exact natural source-M4 anchor; 32 C GRFs before A/B and temporaries."
+    },
+    "m16_n16_wg4x2": {
+      "file": "experiments/qwen38-27b-b70/data/r144-m16-n16-wg4x2-register-k8-strategy.txt",
+      "sha256": "ff81bcd69471eccd1975c259476e25ff218bd6b092ea9adf7e670568af9442b5",
+      "purpose": "Serving candidate with 128 C GRFs and an eight-subgroup 64x32 workgroup output tile."
+    },
+    "m16_n16_wg4x4": {
+      "file": "experiments/qwen38-27b-b70/data/r144-m16-n16-wg4x4-register-k8-strategy.txt",
+      "sha256": "29fee60ff40108d3d233707bcec3fe0f89331fc7529cc3c9f1826c015ea7dad0",
+      "purpose": "Wider scheduling arm with the same per-subgroup register footprint and a 64x64 workgroup output tile."
+    }
+  },
+  "ordered_stages": [
+    "Implement the narrow modifier and register-buffer path in a clean pinned oneDNN tree; make a cumulative patch and record its hash.",
+    "Build the smallest extension target without device access. Parse/generate m16_n4_wg8x1 first; record any generator exception or register-allocation failure.",
+    "Only if the smallest arm generates, parse/generate the two 16x16 arms. Invalid arms are recorded and not substituted.",
+    "Only generated arms run on B70 0000:03:00.0 in fresh bounded containers, smallest first, with health checks between cases.",
+    "Identity precedes timing. No endpoint or second-GPU use is authorized by this preregistration."
+  ],
+  "operator_screen": {
+    "shapes_KN": {
+      "attn_qkv_proj": [5120, 7168],
+      "mlp_gate_up_proj": [5120, 17408]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "identity": "Every complete output must equal concatenated natural oneDNN M1 rows. M512 prefixes, M128 repeat and seeded permutation, and M168-to-M200 random-padding content must also be bitwise exact.",
+    "timing": "Ten warmups and five samples of 100 synchronized calls at M2, M64, M128, M168, and M256 against natural oneDNN.",
+    "stability": "No timed sample max/min ratio may exceed 1.15."
+  },
+  "gates": {
+    "source": "The modifier must reject every unsupported condition and leave the ordinary path byte-for-byte source-equivalent outside its guards.",
+    "candidate": "Generation, identity, and stability are independently required. A candidate proceeds only if it is <=1.15x natural on both shapes at M2, M64, and M128 and <=2.0x at M168 and M256.",
+    "composition": "A row-count threshold composition may use independently exact candidates only when the frozen 16:64 attention-QKV:gate-up model is <=1.03x natural at M2, M64, and M128.",
+    "on_pass": "Expand only the fastest exact passing candidate or composition to all six production shapes and apply the <=1.03 frozen all-shape decode model before any serving build.",
+    "on_failure": "Preserve R142 as the executable arithmetic reference. Record whether failure is register capacity, generated-code size, identity, or latency; do not resume direct K-subgroup/SLM geometry sweeps and do not begin collective optimization."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "either B70 is not normal before or after a device case",
+    "any unregistered strategy, arithmetic/reduction order, candidate substitution, server launch, or second-GPU use"
+  ]
+}
