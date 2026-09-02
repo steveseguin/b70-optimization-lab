@@ -298,3 +298,15 @@ rule, the public-shape strict speed phase was not run. The next diagnostic must
 correlate each output with the live 31/28-token prefill ordering before another
 arithmetic change. See the
 [`R102 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r102-result.json).
+
+R103 attempted to correlate that binary branch with the live 31/28-token
+prefill order. The intermittent alternate stream reproduced in 4/10 c2
+batches, but the inherited R90 tracer intentionally de-duplicates by
+`(layer_name, num_prefills)` and emitted only one of the ten required layer-0
+rank-0 c2 records. That first order was `[31,28]` and its batch failed; the
+remaining nine orders are unknowable, so the correlation is inconclusive.
+The first startup was also stopped before requests after the inherited 9 GiB
+cgroup began heavy reclaim; the established 12/16 GiB MTP bounds started
+normally without a reset. The next observation-only overlay must log every
+pure-prefill invocation with a counter. See the
+[`R103 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-correlation-r103-result.json).

@@ -1,0 +1,45 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-order-correlation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-order-correlation-20260902-r103",
+  "status": "completed-inconclusive-trace-cardinality-failed",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-correlation-r103-prereg.json",
+  "startup": {
+    "attempt_a": "Stopped before serving requests after the inherited 9 GiB cgroup reached 16,321 memory.max events and about 3 GiB swap during draft staging.",
+    "attempt_b": "Started successfully with the previously established 12 GiB RAM / 16 GiB RAM-plus-swap MTP bounds.",
+    "gpu_reset_or_reboot": false
+  },
+  "output_gate": {
+    "concurrency": 2,
+    "repeats": 10,
+    "exact_batches": "6/10",
+    "failed_repeats": [1, 2, 9, 10],
+    "cache_prompt_alternate_stream_on_each_failure": true,
+    "index_prompt_exact": "10/10",
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true
+  },
+  "trace_gate": {
+    "required_layer0_rank0_c2_records": 10,
+    "observed_layer0_rank0_c2_records": 1,
+    "status": "failed",
+    "observed_first_order": [31, 28],
+    "observed_first_batch_exact": false,
+    "reason": "The inherited R90 trace intentionally de-duplicates by (layer_name, num_prefills), so repeated c2 prefills are not logged. The remaining nine output outcomes cannot be paired with a request order."
+  },
+  "interpretation": "The intermittent stable alternate stream reproduced, but R103 cannot accept or reject request order as its discriminator because its required trace cardinality failed. The trace must log every pure-prefill invocation with an invocation counter before the correlation is rerun.",
+  "next_experiment": "Use a diagnostic-only overlay that replaces the R90 seen-set with a per-(layer,num_prefills) invocation counter and records every pure-prefill call; repeat the unchanged ten c2 batches.",
+  "reporting_boundary": "Inconclusive diagnostic. Do not publish throughput or update README/site/LocalMaxxing. This boot contains earlier xe engine resets.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful bounded shutdown"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-prefill-order-correlation-20260902-r103b",
+    "raw_result_sha256": "cd9f36256f105ee2623240354f2aacf5e724a365fb47c11cc9e08be0b640eec2",
+    "trace_sha256": "8d987dc836deeb7285fc02f65bbbe1b4125ca8e92b7010a820b328582904903c",
+    "server_log_sha256": "843659e060b2a36fbe7de38014c537f9e8d784e92107900e6fa33e1d02dab739",
+    "kernel_journal_sha256": "e6ca8356158927c02550e8c39009de0799113e02cb6d8b9abdc08c165748e281",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
