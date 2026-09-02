@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "status": "static_integration_pass_component_integration_not_run",
+  "classification": "qwen38_flash_next_m1_w13_n32_default_off_config_integration_prereg",
+  "scope": "Apply BLOCK_SIZE_N=32 only to the M1 W13 phase through an explicitly selected tuned-config folder; preserve W2, non-M1, legacy, and phase-disabled behavior",
+  "identity": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "stage": "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70",
+    "quantization": "fp8_w8a8",
+    "weight_block_shape": [
+      128,
+      128
+    ],
+    "experts": 128,
+    "local_expert_intermediate": 640
+  },
+  "integration": {
+    "mechanism": "default-off VLLM_TUNED_CONFIG_FOLDER map",
+    "base_folder": "experiments/qwen38-flash-next-fp8-b70/configs/moe-warps8-m1",
+    "candidate_folder": "experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+    "config_name": "E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json",
+    "selected_batch_key": 1,
+    "sole_map_delta": {
+      "W1_CONFIG": {
+        "BLOCK_SIZE_N": 32
+      }
+    },
+    "resolved_m1": {
+      "w13": {
+        "BLOCK_SIZE_M": 16,
+        "BLOCK_SIZE_N": 32,
+        "BLOCK_SIZE_K": 128,
+        "GROUP_SIZE_M": 1,
+        "SPLIT_K": 1,
+        "num_warps": 8,
+        "num_stages": 4
+      },
+      "w2": {
+        "BLOCK_SIZE_M": 16,
+        "BLOCK_SIZE_N": 64,
+        "BLOCK_SIZE_K": 128,
+        "GROUP_SIZE_M": 1,
+        "SPLIT_K": 1,
+        "num_warps": 8,
+        "num_stages": 4
+      }
+    },
+    "default_off": true,
+    "packet_modifies_live_source": false,
+    "prerequisite": {
+      "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+      "mode": "already_applied_default_off_opt_in_phase_config_source",
+      "tracked_patch": "patches/qwen38-flash-next-fp8-b70/vllm/0021-Add-opt-in-per-phase-Triton-MoE-configs.patch",
+      "tracked_patch_sha256": "ad820bad443bba32f15b114ea76b4deb4dade754fe1bc362faddfef07eb6c519"
+    }
+  },
+  "static_validation": {
+    "status": "pass",
+    "official_live_resolver_imported": true,
+    "integer_m_range_checked": [
+      1,
+      512
+    ],
+    "m1_w13_n32": true,
+    "m1_w2_unchanged": true,
+    "all_integer_m_2_through_512_match_base": true,
+    "legacy_m1_matches_base": true,
+    "non_m1_map_entries_semantically_equal": true,
+    "cpu_tests": {
+      "passed": 7,
+      "total": 7
+    },
+    "receipt_sha256": "933d275e369ba3b11054587563149f94bf5f7a3a471bc8b5645ce9e58ebe6ff3",
+    "not_inference_evidence": true
+  },
+  "hashes": {
+    "base_config_sha256": "91e5d8b692da3febbba7cb07ee4fdab319909da0c82c1fda95b92dc42d680464",
+    "candidate_config_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
+    "phase_config_patch_sha256": "ad820bad443bba32f15b114ea76b4deb4dade754fe1bc362faddfef07eb6c519",
+    "verifier_sha256": "a464b0f6a46e9149b33e5ccca772bf21385532693e78b691ca010a7833be2e6f",
+    "verifier_tests_sha256": "28811aca31ed1248d3c04b300af775ca21d63babc605d65fa067e42380e37268",
+    "fused_moe_source_sha256": "4b376eb5e22e7972a1d70e4012999650ab961719d6309cbec27a6104fa64d0a0",
+    "triton_moe_source_sha256": "b8a461b712b88cf6ab5ba4f49029fddce3a501f7ff909b276b6de04b808da4c2",
+    "modular_kernel_source_sha256": "1e60aca6ed0dd4fcb46d577897ff1651f27a6130b3449d22265c0c791beec5d5",
+    "a2_summary_sha256": "d8250d01c8cf2d2c3dabca3a920ba5a95bbca169bafb4112f51cafb6569a48dc",
+    "a2_health_receipt_sha256": "578f8f7c46c2ff7770bfc0e57c85b27d6ae51e5c7c03392cb64936c7ce049439",
+    "a32_endpoint_result_sha256": "c8f6a4118a373358fe654aa834305ab501b6f3a117ec269105869d8b6ca79e3d"
+  },
+  "prior_evidence": {
+    "a2_component": {
+      "classification": "lossless_cross_layer_cross_rank_component_positive",
+      "cells_exact": 8,
+      "cells_total": 8,
+      "median_reduction_percent": 22.246153504048145,
+      "worst_cell_reduction_percent": 21.55155676813505,
+      "median_absolute_saving_us_per_w13_call": 48.29759999999999,
+      "raw_result_dir": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260901-moe-m1-w13-xpu-graph-confirmation-a2"
+    },
+    "a28_profile": {
+      "role": "target-step workload-share authority only",
+      "fused_moe_calls_per_token": 96,
+      "w13_calls_per_token": 48,
+      "w2_calls_per_token": 48,
+      "non_promotional_projected_saving_ms_per_token": 2.3182847999999994,
+      "projection_range_ms_per_token": [
+        2.2373332799999996,
+        2.34972192
+      ]
+    },
+    "a31_endpoint": {
+      "tuned_folder_selected_at_startup": true,
+      "inference_request_sent": false,
+      "quality_credit": false,
+      "speed_credit": false,
+      "classification": "orchestration_negative_no_inference"
+    },
+    "a32_endpoint": {
+      "map": "moe-warps8-m1",
+      "short_output_hash_preserved": true,
+      "short_median_tok_s": 5.421586387090922,
+      "protected_mtp0_tok_s": 5.515783,
+      "relative_change_percent": -1.70777,
+      "exact_4k_same_run_repeat": false,
+      "exact_4k_authority_match": false,
+      "classification": "lossless_short_decode_performance_and_exact_4k_reliability_negative",
+      "non_promotional_w13_projection_tok_s": 5.4905964936985825,
+      "projected_relative_to_protected_percent": -0.4566261272681893
+    }
+  },
+  "next_component_qualification": {
+    "execution_state": "not_run",
+    "full_model_load": false,
+    "reboot_required": false,
+    "matrix": {
+      "layers": [
+        0,
+        47
+      ],
+      "ep_ranks": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "seed": 20260827,
+      "order": "matched control/candidate/control",
+      "cells": 8,
+      "processes": 24,
+      "changing_inputs_per_process": 100
+    },
+    "required_selection_receipt": {
+      "base_and_candidate_loaded_through_actual_folder": true,
+      "selected_batch_key": 1,
+      "w13_block_size_n": 32,
+      "w2_block_size_n": 64,
+      "num_warps": 8,
+      "source_and_map_hashes_exact": true
+    },
+    "acceptance": {
+      "all_cells_exact": true,
+      "all_process_exit_codes_zero": true,
+      "eager_graph_equal_for_every_input": true,
+      "candidate_matches_control_authority_for_every_input": true,
+      "maximum_control_drift_percent": 2.0,
+      "minimum_median_reduction_percent": 3.0,
+      "minimum_positive_cells": 7,
+      "maximum_cell_regression_percent": 2.0,
+      "a2_host_health_checkpoint_teardown_and_clearance_gates_preserved": true,
+      "new_result_cache_lock_and_derived_paths_required": true
+    }
+  },
+  "endpoint_boundary": {
+    "a28": "profile/workload-share reference, not an endpoint serving baseline",
+    "a55": "current-source TP4/EP4 MTP0 FULL_DECODE_ONLY synchronous-PLE identity reference; its twoshots collective is a bounded negative and must not be silently inherited",
+    "eventual_design": "matched current-source control/candidate pair with every model, placement, graph, collective, cache, prompt, and quality field equal; candidate changes only VLLM_TUNED_CONFIG_FOLDER",
+    "performance_acceptance": {
+      "must_beat_matched_current_source_base_control": true,
+      "must_beat_protected_baseline_tok_s": 5.515783
+    },
+    "reliability_acceptance": {
+      "exact_4k_authority_required": true,
+      "fresh_service_repeat_required": true
+    },
+    "endpoint_credit_now": false,
+    "protected_results_changed": false
+  }
+}
