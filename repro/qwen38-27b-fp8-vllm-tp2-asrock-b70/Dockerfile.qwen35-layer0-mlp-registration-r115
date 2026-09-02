@@ -1,0 +1,28 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r114
+FROM ${BASE_IMAGE}
+
+ARG QWEN35_MLP_REGISTRATION_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-qwen35-layer0-mlp-registration-r115-20260902.patch /tmp/qwen35-mlp-registration.patch
+COPY validate-qwen35-layer0-mlp-registration-r115.py /tmp/validate-qwen35-layer0-mlp-registration-r115.py
+
+RUN test "$(sha256sum /tmp/qwen35-mlp-registration.patch | awk '{print $1}')" = \
+        "${QWEN35_MLP_REGISTRATION_PATCH_SHA256}" \
+    && patch --batch --verbose --fuzz=0 -p1 \
+        -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/qwen35-mlp-registration.patch \
+        > /tmp/qwen35-mlp-registration.patch.log 2>&1 \
+    && ! grep -Eiq \
+        'trailing garbage|malformed|FAILED|ignored|reversed|offset' \
+        /tmp/qwen35-mlp-registration.patch.log \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py \
+    && /opt/venv/bin/python /tmp/validate-qwen35-layer0-mlp-registration-r115.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py \
+    && rm -f /tmp/qwen35-mlp-registration.patch \
+        /tmp/qwen35-mlp-registration.patch.log \
+        /tmp/validate-qwen35-layer0-mlp-registration-r115.py
+
+LABEL neural.download.composite.base.r114="sha256:996c8e59fe759e5370ec8a7a6e0b5d4a49984d6efc6079ea30f259d9275e375b" \
+      neural.download.vllm.qwen35-mlp-registration.patch.sha256="${QWEN35_MLP_REGISTRATION_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-layer0-mlp-request-isolation-r115"

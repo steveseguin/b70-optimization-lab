@@ -1,0 +1,27 @@
+--- a/vllm/model_executor/models/qwen3_5.py
++++ b/vllm/model_executor/models/qwen3_5.py
+@@ -31,7 +31,7 @@
+
+ from vllm._aiter_ops import rocm_aiter_ops
+ from vllm.compilation.decorators import support_torch_compile
+-from vllm.config import VllmConfig
++from vllm.config import VllmConfig, get_current_vllm_config
+ from vllm.distributed import (
+     get_pp_group,
+ )
+@@ -178,6 +178,15 @@
+         else:
+             raise ValueError(f"Invalid model_type {config.model_type}")
+
++        if self.layer_idx == 0 and self.layer_type == "linear_attention":
++            mlp_context_prefix = f"{self.linear_attn.prefix}.r114_mlp"
++            static_context = (
++                get_current_vllm_config().compilation_config.static_forward_context
++            )
++            if mlp_context_prefix in static_context:
++                raise ValueError(f"Duplicate layer name: {mlp_context_prefix}")
++            static_context[mlp_context_prefix] = self.mlp
++
+         self.input_layernorm = Qwen3_5RMSNorm(
+             config.hidden_size, eps=config.rms_norm_eps
+         )
