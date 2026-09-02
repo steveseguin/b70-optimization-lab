@@ -24,10 +24,10 @@
     "prior_evidence": "R123 proved this strategy invariant over all registered M values on both attention shapes; natural controls put M1/M2/M4 in one row class. R141 rechecks natural M1 equality directly on every screened shape."
   },
   "candidates": {
-    "m16_n16_wg4x1x8": "Start from the natural M16 16x16 strategy and change only wgK from 2 to 8.",
-    "m16_n16_wg4x2x8": "The preceding candidate with two-way N scheduling.",
-    "m32_n32_wg4x1x8": "Start from the validated R136 32x32 fixed-K geometry, replace its two-way local-K split with the anchor's eight-way split, and reduce N scheduling to one.",
-    "m32_n32_wg2x2x8": "The same 32x32 geometry with balanced two-way M/N scheduling and the anchor's eight-way local-K split."
+    "m16_n16_wg4x1x8": {"file": "experiments/qwen38-27b-b70/data/r141-m16-n16-wg4x1x8-strategy.txt", "sha256": "ef008736fad8b661a9a15e167b6f6d1ebbd2647418474e21edddf97b8a28b4e7", "description": "Start from the natural M16 16x16 strategy and change only wgK from 2 to 8."},
+    "m16_n16_wg4x2x8": {"file": "experiments/qwen38-27b-b70/data/r141-m16-n16-wg4x2x8-strategy.txt", "sha256": "e544b365ff391fbfa66aab7c7c82babf41857b528149124172198af79fb640a1", "description": "The preceding candidate with two-way N scheduling."},
+    "m32_n32_wg4x1x8": {"file": "experiments/qwen38-27b-b70/data/r141-m32-n32-wg4x1x8-strategy.txt", "sha256": "d61a7e406a07c0aaa12dd36037c21b14181ddca5c32569ff5e767550785da8c6", "description": "Start from the validated R136 32x32 fixed-K geometry, replace its two-way local-K split with the anchor's eight-way split, and reduce N scheduling to one."},
+    "m32_n32_wg2x2x8": {"file": "experiments/qwen38-27b-b70/data/r141-m32-n32-wg2x2x8-strategy.txt", "sha256": "e36e027cae9f50a6dd55ea94cd69783444a66d16f3ee89c0070b4bf00129fe31", "description": "The same 32x32 geometry with balanced two-way M/N scheduling and the anchor's eight-way local-K split."}
   },
   "screen": {
     "shapes": {
