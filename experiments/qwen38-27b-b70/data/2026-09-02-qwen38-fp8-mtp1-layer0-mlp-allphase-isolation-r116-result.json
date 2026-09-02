@@ -1,0 +1,78 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-allphase-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-allphase-isolation-20260902-r116",
+  "classification": "warm-identity-failed-treatment-insufficient",
+  "public_result_eligible": false,
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-allphase-isolation-r116",
+    "id": "sha256:91e591590f96247cd318bb229e7909ea1c036be201e62b646679e1ea02eab08f",
+    "patch_sha256": "ce1cdba00fb1775d2f6d317d00db6c6b91c3a36f8627057c5d088d27ea110d51",
+    "installed_qwen3_next_sha256": "6dfe2a1d2cff1cdd9e6965989c707c05027c55a5d05bcb9b718b6b8ce652c6af",
+    "inherited_qwen3_5_sha256": "183f571f401c94567b7f595073bfecbd418162d50f8758164b2dd0d6a4965a0f"
+  },
+  "attempt_1": {
+    "classification": "infrastructure-failed-before-profile",
+    "failure_phase": "Final MTP shard staging after the target model loaded",
+    "observed": "GPU 0 copy-engine reset followed by rank 0 waiting indefinitely on a Level Zero event while rank 1 was idle.",
+    "kernel_event": "xe 0000:03:00.0 Tile0 GT0 Engine reset: engine_class=bcs",
+    "treatment_executed": false,
+    "container_stopped_gracefully": true,
+    "devices_after_stop": "both normal",
+    "reboot_or_explicit_gpu_reset": false,
+    "server_log_sha256": "4fcc599d75543b4c2d5f66d4850bc06862ce1c49de4767fc4d346a060c20a3bb",
+    "kernel_log_sha256": "7253ce742261878bd6831463d8a06f960e121d1a9ceba827b0b0ee5240c29ee2",
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-allphase-isolation-20260902-r116"
+  },
+  "attempt_2_gates": {
+    "model_direct_identity_gate": true,
+    "server_ready": true,
+    "profile_control_marker": true,
+    "single_request_control_marker": true,
+    "multi_prefill_marker": true,
+    "decode_or_mixed_multi_request_marker": true,
+    "all_outputs_complete": true,
+    "cached_tokens_all_zero": true,
+    "warm_c1_exact": "1/1",
+    "warm_c2_exact": "3/4",
+    "strict_identity_pass": false,
+    "counted_workload_run": false
+  },
+  "attempt_2_warm_measurement": {
+    "c1_aggregate_tok_s_wall": 27.29021181299862,
+    "c2_aggregate_tok_s_wall": [
+      51.658141239075164,
+      72.22794375686475
+    ],
+    "reporting_boundary": "Warm diagnostic only; not a public performance result."
+  },
+  "failure": {
+    "batch": "first warm c2 scheduler-staggered shape",
+    "prompt_id": "cache-c000",
+    "first_divergent_token_zero_based": 96,
+    "observed_token_id": 2972,
+    "oracle_token_id": 348,
+    "observed_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+    "oracle_token_ids_sha256": "9e7aec2c17aa1a19556349d1e106c6cb2e6d22db28953687ee655f2f8cb760b6"
+  },
+  "causal_interpretation": {
+    "execution_proof": "R116's multi-request decode-or-mixed marker executed during the failed staggered batch; the second true packed-prefill batch executed the multi-prefill marker and was 2/2 exact.",
+    "conclusion": "Extending layer-0 dense-MLP request isolation across decode and mixed phases is insufficient. The remaining staggered-shape branch precedes or bypasses that MLP boundary, or lies in another layer-0 mixed prefill/decode consumer.",
+    "next": "Trace the live mixed-phase layer-0 metadata and residual/attention boundary without synchronizing device tensors, then isolate one remaining operation at a time."
+  },
+  "host_after_attempt_2": {
+    "both_b70_devices": "normal",
+    "new_kernel_fault_or_reset": false,
+    "reboot_or_explicit_gpu_reset": false,
+    "boot_public_speed_eligible": false,
+    "reason": "Attempt 1 added a copy-engine reset to this boot."
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-allphase-isolation-20260902-r116-attempt2",
+    "server_log_sha256": "164a9ec93d4d54f711491abdfb3c945d51a9c08fd8587156e7575ed565329a15",
+    "image_inspect_sha256": "29c5aec04b8c6050776e191c15b47cd2da509759536f0b1bf9400e67dbbd582b",
+    "warm_c1_sha256": "99e5099f486e53a6b80357d3c9ea63e550a31200918740273eb14a967a50df64",
+    "warm_c2_sha256": "e0114ad38c609313d715eced7d83fe10284c89f7ad827c8e49099a9efc466d0d",
+    "projection_trace_sha256": "2bb3f677fe1426aa2fc5804f3d98148bc3f17d4b9d8a88d3df30c35fc3d1bbfe"
+  },
+  "reporting_boundary": "R116 failed warm output identity. Do not update README, neural.download, LocalMaxxing, or any public speed/quality claim."
+}

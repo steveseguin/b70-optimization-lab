@@ -448,3 +448,19 @@ not sufficient for robust service. No public result is promoted. The next
 single-variable candidate must preserve the proven prefill arm and extend
 isolation to multi-request decode/mixed scheduler shapes. See the
 [`R115 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r115-result.json).
+
+R116 extended that same layer-0 MLP isolation to live multi-request ordinary
+decode, speculative decode, and mixed phases. Its first startup was invalidated
+before profile by a GPU-0 copy-engine reset during final MTP weight staging;
+the container was stopped without a reboot or explicit reset, both devices
+returned to normal, and the bounded fresh-process retry started cleanly. On the
+retry, c1 was exact and all intended runtime markers fired, including the new
+decode-or-mixed treatment. Nevertheless, the first staggered c2 batch again
+produced the known cache-request token-96 branch (1/2 exact); the following
+true packed-prefill batch was 2/2 exact. Per the warm stop rule no counted run
+was attempted. This rules out layer-0 dense-MLP packing alone as the remaining
+staggered-shape repair and moves the next observation to live mixed-phase
+metadata plus the layer-0 residual/attention boundary. The boot is also
+disqualified for public speed measurement because attempt 1 added a reset.
+See the
+[`R116 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-allphase-isolation-r116-result.json).
