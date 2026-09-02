@@ -120,7 +120,10 @@ devices_normal preflight || abort "preflight: a B70 is not normal"
 "${health}" >"${root}/preflight-compute-xccl.txt" 2>&1 || abort "preflight: compute/XCCL health failed"
 journalctl -k -b 0 --no-pager >"${root}/preflight-kernel-journal-full.txt" 2>&1 || true
 grep -iE "${fault_re}" "${root}/preflight-kernel-journal-full.txt" >"${root}/preflight-kernel-fault-lines.txt" || true
-[[ ! -s "${root}/preflight-kernel-fault-lines.txt" ]] || abort "preflight: this boot already carries a fault signature"
+if [[ -s "${root}/preflight-kernel-fault-lines.txt" ]]; then
+  [[ -n "${resume}" && "${ALLOW_FAULTED_BOOT:-0}" == 1 ]] || abort "preflight: this boot already carries a fault signature"
+  log "WARNING: continuing on a boot with prior fault signatures by explicit user authorization (ALLOW_FAULTED_BOOT=1); speed from this run is diagnostic only"
+fi
 log "preflight clean; boot $(cat "${root}/boot-id.txt")"
 
 # ---------------- MTP0 controls ----------------
