@@ -3629,3 +3629,17 @@ not XPU or endpoint evidence and authorizes no launch; native implementation is
 deferred behind W13-N32 and HC gate-mix. See the
 [sparse-assignment preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-ep4-m1-sparse-expert-assignment-a1-prereg.md)
 and [deferred native design](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-ep4-m1-sparse-expert-assignment-xpu-design-deferred.md).
+The maintenance path no longer requires the live USB. Samsung's statically
+linked utility runs on the installed OS through a fail-closed in-place helper
+with `--dry-run`, `--vendor-dry-run`, and token-confirmed modes; it stages the
+hash-bound vendor files in tmpfs, re-verifies identity/link/SMART/process
+state before exec, and records firmware-log and root-read evidence after. The
+receipt producer for `q38_root_nvme_link_clearance_v1` is also tracked: it
+refuses on the wrong live firmware, stops the 30-minute idle window on the
+first corrected event, runs the bounded O_DIRECT read, and validates through
+the tracked validator before writing. 26 CPU/pty tests pass; the live
+generator smoke correctly refused on `4B2QGXA7`. LVFS carries no 980 PRO
+release. The endpoint logged corrected `RxErr` about every 30 s at idle in
+this boot (131 to 144 over 14 minutes); boot -3 ended with no shutdown record.
+No firmware write, reboot, or GPU work occurred. See the
+[in-place firmware path note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-root-nvme-in-place-firmware-path-and-clearance-generator.md).
