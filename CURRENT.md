@@ -3814,3 +3814,16 @@ defects (whole-file counter read; the gate refusing its own `timeout`
 ancestor) were fixed and amended into the prereg before the passing run.
 A56 launched at 10:18 EDT. See the
 [combine-norm result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-hc-combine-norm-exact-confirmation-a1-result.md).
+A56 ran to its battery. Short cache-zero rows returned the protected hash on
+all three rows at `23.626811 / 22.218021 / 23.809477 tok/s` (median
+`23.626811`, `+23.9%` over A55 and `+15.2%` over the A44 diagnostic) with
+quality 6/7, 16/16 repeat, and the exact needle unchanged. The two exact-2K
+rows passed transport and cache-zero but produced two different output
+hashes within the same server, neither the 2026-08-28 authority; A55's only
+2K row had also not matched that authority. The client's final assertion
+failed closed and nothing is promoted. The tuned M1 map is exact at M1
+decode; the full-graph line's long-prefill output is nondeterministic at 2K,
+so the certifiable lossless context currently ends below 2K prompts. Next:
+a same-server depth sweep (256--2048 tokens, repeated rows) to locate the
+boundary, then the collective and chunked-prefill suspects. See the
+[A56 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a56-w13-n32-map-endpoint-result.md).
