@@ -13,6 +13,10 @@ image_id=sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878
 ext_sha=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1
 model_dir=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8
 port=18128
+# RESUME_FROM=mtp1-b ORACLE_ROOT=<original root> resumes after a fault on a fresh boot,
+# reusing the original mtp0-a oracle and mtp1-a attempt; ROOT must be a new sibling.
+resume=${RESUME_FROM:-}
+oracle_root=${ORACLE_ROOT:-${root}}
 strict_suite=${repo}/repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json
 ladder_suite=${repo}/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json
 frozen_oracle=${repo}/experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-explicit-deterministic-r54a-r50
@@ -120,19 +124,27 @@ grep -iE "${fault_re}" "${root}/preflight-kernel-journal-full.txt" >"${root}/pre
 log "preflight clean; boot $(cat "${root}/boot-id.txt")"
 
 # ---------------- MTP0 controls ----------------
+if [[ -n "${resume}" ]]; then
+  [[ "${resume}" == mtp1-b && -f "${oracle_root}/mtp0-a/strict/performance.json" && -f "${oracle_root}/mtp1-a/strict/performance.json" ]] || abort "resume: need RESUME_FROM=mtp1-b and an ORACLE_ROOT holding mtp0-a and mtp1-a"
+  for d in mtp0-a mtp0-b mtp1-a; do ln -s "${oracle_root}/${d}" "${root}/${d}"; done
+  for f in "${oracle_root}"/compare-*.json; do ln -s "${f}" "${root}/"; done
+  log "resume from mtp1-b using oracle root ${oracle_root}"
+fi
 for label in mtp0-a mtp0-b; do
+  [[ -z "${resume}" ]] || break
   launch "${label}" mtp0 1024 1 1024
   strict_attempt "${label}"
   stop_server "${server_name}" "${server_pid}" "${server_dir}"
   postflight "${label}-post"
 done
-g1=$(compare_pair "${root}/mtp0-a/strict" "${root}/mtp0-b/strict" "${root}/compare-mtp0-a-vs-mtp0-b.json")
+g1=$(python3 -c "import json,sys;c=json.load(open(sys.argv[1]))['comparison'];print(f\"{c['exact_prompts']}/{c['total_prompts']}\")" "${root}/compare-mtp0-a-vs-mtp0-b.json" 2>/dev/null || compare_pair "${root}/mtp0-a/strict" "${root}/mtp0-b/strict" "${root}/compare-mtp0-a-vs-mtp0-b.json")
 log "G1 mtp0-a vs mtp0-b: ${g1}"
 [[ "${g1}" == "12/12" ]] || abort "G1 failed (${g1}): same-image MTP0 is not repeat-exact; no MTP1 launch"
 log "information: mtp0-a vs frozen R54a natural oracle: $(compare_pair "${root}/mtp0-a/strict" "${frozen_oracle}" "${root}/compare-mtp0-a-vs-r54a.json")"
 
 # ---------------- MTP1 candidates ----------------
 for label in mtp1-a mtp1-b; do
+  [[ -z "${resume}" || "${label}" != mtp1-a ]] || continue
   launch "${label}" mtp1 1024 1 1024
   strict_attempt "${label}"
   if [[ "${label}" == mtp1-b ]]; then
