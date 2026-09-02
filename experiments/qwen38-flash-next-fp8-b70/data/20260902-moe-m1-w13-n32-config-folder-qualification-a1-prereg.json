@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "frozen_not_run",
+  "classification": "qwen38_w13_m1_config_folder_qualification_a1_prereg",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "base_map_sha256": "91e5d8b692da3febbba7cb07ee4fdab319909da0c82c1fda95b92dc42d680464",
+    "candidate_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be"
+  },
+  "matrix": {
+    "layers": [0, 47],
+    "ep_ranks": [0, 1, 2, 3],
+    "seed": 20260827,
+    "order": ["control", "candidate", "control"],
+    "cells": 8,
+    "fresh_processes": 24,
+    "changing_inputs_per_process": 100
+  },
+  "selection": {
+    "mechanism": "actual VLLM_TUNED_CONFIG_FOLDER plus live vLLM resolver in every process",
+    "base_folder": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-warps8-m1",
+    "candidate_folder": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+    "selected_key": 1,
+    "control_w13_n": 64,
+    "candidate_w13_n": 32,
+    "w2_n": 64,
+    "num_warps": 8
+  },
+  "acceptance": {
+    "all_24_process_exits_zero": true,
+    "all_24_selection_receipts_exact": true,
+    "all_8_cells_exact": true,
+    "maximum_control_drift_percent": 2.0,
+    "minimum_median_reduction_percent": 3.0,
+    "minimum_positive_cells": 7,
+    "maximum_cell_regression_percent": 2.0
+  },
+  "paths": {
+    "result": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/components/20260902-moe-m1-w13-n32-config-folder-qualification-a1",
+    "cache": "/dev/shm/q38-w13-n32-config-folder-qualification-a1",
+    "lock": "/tmp/q38-w13-n32-config-folder-qualification-a1.lock",
+    "derived": "/dev/shm/q38-w13-m1-config-folder-qualification-a1-derived.sh"
+  },
+  "hashes": {
+    "runner_sha256": "06141adafb320f3eb7386fcddb31ba9a467931c8076111b89a2b33f139ff40a0",
+    "derived_runner_sha256": "656524e10a2f86cc064502156f37ab3423fd16ff3c089ceae1671dc58f520e25",
+    "adapter_sha256": "ec9e8c3f1f99605d1a75bd93c1aa833aada18f4eef9d38d504eaf78ec5fff950",
+    "summarizer_sha256": "52e798b94836bc50d91266f5a6eda4d10edab76bec4fc6789203a1dad860163b",
+    "tests_sha256": "242b5fdbf8d173284541f8aad78d095f0766d084016ae37b8a384122614349d8"
+  },
+  "execution": {
+    "gpu_work_started": false,
+    "full_model_load": false,
+    "reboot": false,
+    "endpoint_credit": false,
+    "protected_results_changed": false
+  }
+}
