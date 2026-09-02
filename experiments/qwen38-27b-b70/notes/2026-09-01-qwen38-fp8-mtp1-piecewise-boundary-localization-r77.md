@@ -328,16 +328,22 @@ post-core output projection per request atop R101, leaving the R99/R97 selector
 unchanged. See the [`R104 trace result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-trace-all-r104-result.json)
 and [`R105 aligned result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-aligned-r105-result.json).
 
-R106 isolated only the final FP8 GDN `out_proj` at live pure-prefill request
-boundaries, retaining the R101/R97 normalization and every other arithmetic
-gate. It did not repair the branch. The preregistered c1 gate remained exact
-3/3, but c2 passed only 8/20 batches (28/40 complete streams). Both TP ranks
-reported the same order in all 19 traceable pure-c2 batches: all eleven
-`[31,28]` cache-first batches produced the known alternate cache stream, while
-all eight `[28,31]` cache-second batches were exact. The one staggered batch
-also failed. Every request was complete and cache-zero, the index prompt was
-exact 20/20, and the kernel journal was clean. This rejects packed `out_proj`
-shape as the sole cause. The next diagnostic must hash each request immediately
-after normalization and after its isolated projection, before changing
-arithmetic again. See the
-[`R106 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-result.json).
+R106 intended to isolate only the final FP8 GDN `out_proj` at live
+pure-prefill request boundaries, but its treatment was inert. The checked-in
+zero-context patch had an incorrect first-hunk line count: GNU `patch` applied
+the helper-registration hunk, treated the call-site hunk as trailing garbage,
+and still returned success. The image and installed-file hashes consequently
+matched the flawed expected source while live `forward_xpu` retained its direct
+`self.out_proj` call. R107 exposed this when its mandatory trace file remained
+absent despite the trace environment being present; installed-source
+inspection confirmed that no custom-op call site existed.
+
+R106's c1/c2 and request-order observations remain a valid reproduction of the
+inherited R101/R104 behavior, but they provide **no evidence** for or against
+projection isolation. The earlier rejection of packed `out_proj` shape is
+withdrawn. A repeat must prove both that the call occurs inside `forward_xpu`
+and that a runtime execution marker is emitted before any output result is
+interpreted. See the corrected
+[`R106 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-result.json)
+and the
+[`R107 invalidation`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-postnorm-projection-trace-r107-result.json).

@@ -1,7 +1,7 @@
 {
   "schema": "neural.download.qwen38-fp8-mtp1-gdn-projection-isolation-result.v1",
   "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-projection-isolation-20260902-r106",
-  "status": "completed-rejected-order-dependence-survives",
+  "status": "completed-invalidated-treatment-inert",
   "classification": "diagnostic-only-not-publishable",
   "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-prereg.json",
   "lineage": {
@@ -14,11 +14,14 @@
     "installed_qwen_gdn_sha256": "a10a51b7c826c521d55b8f348624181c1a2956ad363d1f88852818f3d0654d98"
   },
   "treatment_gate": {
-    "scope": "Only the post-norm GDN out_proj is split at live pure-multi-prefill request boundaries.",
+    "scope": "Intended to split only the post-norm GDN out_proj at live pure-multi-prefill request boundaries.",
     "prompt_or_fixture_heuristics": false,
     "source_patch_applied_with_fuzz": 0,
     "python_compile": "pass",
-    "image_and_installed_source_identity": "pass"
+    "image_and_installed_source_identity": "pass",
+    "semantic_call_site": "fail",
+    "failure": "The checked-in zero-context patch has a malformed first-hunk line count. GNU patch applied the helper-registration hunk, reported the remaining call-site hunk as trailing garbage, and exited successfully. The installed source therefore retained the direct self.out_proj call in forward_xpu, so the treatment never executed.",
+    "discovered_by": "R107 required trace-file gate: the trace environment was present but no trace record was emitted; installed-source inspection then confirmed the custom-op call site was absent."
   },
   "output_gate": {
     "concurrency_1": {
@@ -59,8 +62,8 @@
     },
     "perfect_partition_on_all_19_traceable_pure_c2_batches": true
   },
-  "interpretation": "Per-request FP8 output projection does not remove the branch: every traceable cache-first pure c2 batch still selects the known alternate stream, while every cache-second batch remains exact. The projection's packed GEMM shape is therefore not the sole cause. Because R104/R105 already showed request-local core_attn_out and z exact across c1/c2, the next diagnostic boundary is the normalized input to out_proj and its request-local projected output.",
-  "decision": "Reject R106. Do not build a production or speed candidate. Add per-request post-norm and post-projection digests before another arithmetic change.",
+  "interpretation": "Invalidated. The output and order observations reproduce the inherited R101/R104 behavior, but they contain no evidence about per-request FP8 output projection because the intended call-site edit was not installed.",
+  "decision": "Do not use R106 to accept or reject projection isolation. Repeat from the frozen base only after a semantic source gate proves that forward_xpu calls the custom op and a runtime execution marker proves the treatment ran before qualification.",
   "reporting_boundary": "No public speed, README headline, website, or LocalMaxxing update. The current boot contains earlier xe resets and the candidate failed output identity.",
   "health": {
     "kernel_journal_entries": 0,

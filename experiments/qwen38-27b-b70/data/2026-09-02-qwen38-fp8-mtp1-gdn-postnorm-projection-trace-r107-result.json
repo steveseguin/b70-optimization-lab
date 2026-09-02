@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-postnorm-projection-trace-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-postnorm-projection-trace-20260902-r107",
+  "status": "completed-invalidated-no-live-call-site",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-postnorm-projection-trace-r107-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-r106",
+    "base_image_id": "sha256:b6b9c6847d8e4ad5b4a533eb039ad567bb5661ad5bada61af02bcb9ffbf4923b",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-postnorm-projection-trace-r107",
+    "candidate_image_id": "sha256:5396521c604dc5d3cf5c65602a50bff91f3e64fd552518a893220e47fccd4c66",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-postnorm-projection-trace-r107-20260902.patch",
+    "patch_sha256": "7a0d56dd4c7570e344e6a8da735fcd4ac77a75b453ae5e0057bc9e26ee4d94b9",
+    "installed_qwen_gdn_sha256": "65c20ca5d92b10d556dd109d51f52990280b4942c80076260c6cdf60809f9ae5"
+  },
+  "required_trace_gate": {
+    "trace_environment_present": true,
+    "trace_file_emitted": false,
+    "gate": "fail",
+    "installed_source_finding": "The trace helper and custom-op registration are installed, but forward_xpu contains no call to qwen_gdn_projection_prefill_isolated_xpu and still calls self.out_proj directly."
+  },
+  "diagnostic_workload": {
+    "concurrency_1": {
+      "repeats": 1,
+      "oracle_exact": "1/1"
+    },
+    "concurrency_2": {
+      "repeats": 10,
+      "exact_batches": "2/10",
+      "complete_streams": "20/20",
+      "cached_tokens_all_zero": true,
+      "completion_tokens_all_128": true
+    }
+  },
+  "interpretation": "No post-normalization or post-projection digest inference is permitted because the required trace gate failed. The output observations are inherited-path diagnostics only.",
+  "root_cause": "R106's malformed zero-context patch contained a valid helper hunk followed by a call-site hunk that GNU patch reported as trailing garbage while returning success. Hash-only build validation pinned the resulting inert source instead of proving the intended execution path.",
+  "decision": "Invalidate R107. Correct R106's conclusion, then rebuild from the frozen pre-R106 image with semantic call-site assertions and a mandatory runtime execution marker before running the output gate.",
+  "reporting_boundary": "No public speed, README headline, website, or LocalMaxxing update.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful bounded shutdown"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-postnorm-projection-trace-20260902-r107",
+    "c1_1x_sha256": "142f6a90365bbb79c5a54e7bf9db818388673e7ef11277bc1b058f55e24825db",
+    "c2_10x_sha256": "711d0a2dae880cdb8f46221acaa858d92dd976c5052524427887b185ee60cf7d",
+    "container_inspect_sha256": "21aa7edcd760d8c9934af10541830e8d6b66f16d6f6461ae48bdbd8879d803c3",
+    "container_log_sha256": "0cfa67cb608762440902bcc39e33ae07bdfb6efbee66784bd6ed380b2c4d5c23",
+    "kernel_journal_sha256": "e37d04ea17c7070bf7ce3b4e21e1ba697f5289067b2cd6cd8e5d963c8a6a5bc9"
+  }
+}
