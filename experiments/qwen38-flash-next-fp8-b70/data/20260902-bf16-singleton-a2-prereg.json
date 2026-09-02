@@ -1,0 +1,70 @@
+{
+  "schema": "neural.download.qwen38-flash-next.bf16-singleton-a2-prereg.v1",
+  "date": "2026-09-02",
+  "status": "frozen_before_device_execution",
+  "classification": "bounded_report_only_singleton_diagnostic",
+  "trigger": {
+    "a1_status": "stopped_before_first_cell_evidence",
+    "a1_service_log": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-dense-invariance-phase1-20260902-a1.system-service.log",
+    "a1_service_log_sha256": "15b651edd9c3bdc2f2070d286f6faae33414ad143ca02d61d984e9d5a099e10c",
+    "observation": "two concatenated 256-row singleton-authority hashes differed; the hashes themselves were not preserved"
+  },
+  "identity": {
+    "a1_tool": "experiments/qwen38-flash-next-fp8-b70/tools/census-q38-bf16-dense-invariance.py",
+    "a1_tool_sha256": "e4700fc44a65d71c7b0a7df5ff34924d808ba685c4157b0e2c12fd4b9d4bdf22",
+    "a1_shard_contract": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-dense-invariance-phase1-20260902-a1/shard-contract.json",
+    "a1_shard_contract_file_sha256": "6b82f878734c32099f7dbb0491a0ede061d00fbe7d9c4b4e4e0a49433090a5be",
+    "a1_shard_contract_canonical_sha256": "8ff2556748595bb736ea25caded6bf62cb7c37d8dd0eba0e2819d10f24e179d8",
+    "family": "hc_down_inject",
+    "sentinel": "layer00-attn-r0",
+    "seed": 2026090201,
+    "replicas": [1, 2],
+    "m": 1,
+    "k": 10240,
+    "n": 336,
+    "active_output_columns": [0, 324],
+    "synthetic_padding_output_columns": [324, 336],
+    "selected_device_count": 1
+  },
+  "protocol": {
+    "order": [
+      "cold exact A1-style two-pass 256-row queued-list/cat pair",
+      "four 256-row immediate synchronize-and-host-snapshot passes",
+      "four warmed 256-row queued-list/cat passes",
+      "20 immediate repeats for each of eight fixed rows"
+    ],
+    "focus_rows": [0, 1, 2, 31, 63, 127, 191, 255],
+    "cell_timeout_seconds": 600,
+    "plan_timeout_seconds": 1500,
+    "evidence_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-singleton-diagnostic-20260902-a2",
+    "full_model_or_server": false,
+    "reboot": false
+  },
+  "gates": [
+    "the cold A1-style pair is the first GEMM workload",
+    "every output has exact shape, BF16 dtype, and finite values",
+    "active 0:324 and synthetic padding 324:336 receive separate aggregate and per-row hashes",
+    "differences include row/column sets, element counts, bit pairs, and magnitude statistics by region",
+    "input and weight hashes remain unchanged",
+    "replica input and reconstructed-weight hashes must match before arithmetic inference",
+    "Torch version/build, safetensors, environment, model/shard/source, and native-provider identities remain exact",
+    "native mappings are validated before GEMMs when loaded and exactly after GEMMs",
+    "child diagnostic envelope and child/parent postflight evidence are no-clobber and preserved on failure or timeout"
+  ],
+  "interpretations": {
+    "warmed_immediate_or_fixed_row_active_difference": "genuine warmed M1 F.linear active-output repeatability failure",
+    "warmed_deferred_only_active_difference": "queued-output or buffer-lifetime active-output failure",
+    "cold_only_active_difference": "cold-start active-output instability not reproduced warm",
+    "padding_only_difference": "synthetic padding-tail instability; not production-output nondeterminism",
+    "no_difference": "A1 mismatch not reproduced in bounded A2",
+    "cross_process_input_or_weight_drift": "diagnostic_error / identity_drift_no_interpretation; arithmetic inference is bypassed",
+    "runtime_change_authorized": false,
+    "speed_or_quality_credit": false
+  },
+  "artifacts": {
+    "driver": "experiments/qwen38-flash-next-fp8-b70/tools/diagnose-q38-bf16-singleton-a2.py",
+    "driver_sha256": "32e517ff435d4f99ce160c08c4a3172cfcaeb3b4df60848127926d4c2436192f",
+    "cpu_tests": "experiments/qwen38-flash-next-fp8-b70/tools/test_diagnose_q38_bf16_singleton_a2.py",
+    "cpu_tests_sha256": "eb07440f0caba0569c3dfa75cfabc4d123b83da1ed5ade80b7e8f85f7664e097"
+  }
+}
