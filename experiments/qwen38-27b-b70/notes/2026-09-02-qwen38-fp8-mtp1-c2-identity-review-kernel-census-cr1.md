@@ -429,6 +429,19 @@ source's M16 policy for small M, gated on bitwise equality to the accepted M32
 arithmetic. No server was launched. See the
 [R128 result](../data/2026-09-02-qwen38-fp8-w8a16-cutlass-direct-grid-r128-result.json).
 
+### R129: M16 small-row policy (safe composition, mixed gate)
+
+Selecting the existing M16 tile for M<=8 and M32 otherwise remained bitwise
+equal across the policy boundary. QKV improved to `0.947x` geometric mean and
+`1.189x` worst versus natural oneDNN. Attention output improved to `1.350x`
+and `1.668x`, still outside both gates. This uniform candidate is closed, but
+the M16/M32 CUTLASS path is now a valid component for the larger-K shapes.
+
+The next screen is heterogeneous rather than another global policy: use the
+already exact and fast pinned-oneDNN M32 strategy for K3072/N5120, CUTLASS for
+the K5120 shapes, and measure CUTLASS at K8704/N5120. No server was launched.
+See the [R129 result](../data/2026-09-02-qwen38-fp8-w8a16-cutlass-m16-small-r129-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a

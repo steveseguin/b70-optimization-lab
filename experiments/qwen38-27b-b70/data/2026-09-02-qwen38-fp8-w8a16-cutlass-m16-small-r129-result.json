@@ -1,0 +1,46 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-cutlass-m16-small-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-cutlass-m16-small-20260902-r129",
+  "status": "closed-representative-gate-mixed",
+  "classification": "operator-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-cutlass-m16-small-r129-prereg.json",
+  "preregistration_sha256": "b604ea58376887d6837a42a853d26d7c90db865567b7a0aa24d83070caa192c5",
+  "candidate_artifacts": {
+    "extension_sha256": "4a8b308b5dc80816b470e8cf20be2a171a41be5bdffe34253c9eda80d65664a5",
+    "grouped_gemm_library_sha256": "0b63663b5fcfd438a2289beaa567ecf77cfdbaba2afb42a9f8f58cdbc3176e6a"
+  },
+  "run": {
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "container_exit_code": 0,
+    "started_utc": "2026-09-02T17:20:00.857391983Z",
+    "finished_utc": "2026-09-02T17:20:03.476439754Z",
+    "raw_result": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-cutlass-m16-small-r129/raw-result.json",
+    "raw_result_sha256": "d6ba5d3b4de12e8dc5924c5525327daa86cdf2dd1c7eab2c8a5817647865f4de",
+    "container_log_sha256": "ed93f0402108e01fee7d4b37b3e2001ea7961ecb902df9239025b5a7f2642988"
+  },
+  "results": {
+    "identity": "Both shapes retained one row class, exact M512 prefixes across the M16/M32 policy boundary, exact permutation/repeat/random-appended-row checks, and <=0.00006103515625 max error versus oneDNN.",
+    "attn_o_proj": {
+      "latency_geomean_ratio": 1.3496131607251989,
+      "latency_worst_ratio": 1.6684854880992372,
+      "latency_gate": "fail"
+    },
+    "attn_qkv_proj": {
+      "latency_geomean_ratio": 0.9465804843706409,
+      "latency_worst_ratio": 1.1888543614053828,
+      "latency_gate": "pass"
+    }
+  },
+  "health": {
+    "post_run_device_state": "both B70s normal",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "standalone_all_shape_expansion": false,
+    "m16_policy_arithmetic_accepted": true,
+    "reason": "M16 removes significant small-M waste and makes QKV faster than natural oneDNN overall, but cannot bring K3072/N5120 inside the frozen gate.",
+    "next_experiment": "Evaluate a heterogeneous all-six-shape catalog: pinned oneDNN M32 for K3072/N5120, the M16-small/M32 CUTLASS path for K5120 shapes, and screen CUTLASS on K8704/N5120."
+  }
+}
