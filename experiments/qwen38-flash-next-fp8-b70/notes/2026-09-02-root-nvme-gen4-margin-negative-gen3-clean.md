@@ -88,3 +88,49 @@ and the four-B70 topology. The evidence sidecar records the link speed and
 width. This deviates from the earlier note's "verify Gen4 x4" wording; the
 physical criterion that matters for host stability is zero corrected events,
 and that is what the receipt proves.
+
+## Clearance passed at Gen3 (01:11 EDT)
+
+The first generator run was killed at 1495/1800 s when the agent session
+reconnected; a second run started at 00:41:39 and completed: 1800 s idle with
+zero endpoint/root-port events (361 polls), then a 4 GiB O_DIRECT read from
+the local shards at `3061.3 MiB/s` with zero events. The receipt at the fixed
+path validates against the live boot `d0024575-...`, `5B2QGXA7`, clean SMART,
+and the four-B70 topology. Evidence sidecar:
+`20260901-root-nvme-link-clearance-v1.evidence-20260902T044139Z.json`
+(records link `8.0 GT/s PCIe` x4, ASPM `performance`).
+
+## W13-N32 A2: first attempt was a mount-permission negative
+
+The frozen A2 wrapper started at 01:12:14 and died at its
+`install -m 0644 "$0" runner.sh` step: after the reboot the Corsair drive had
+been remounted by root with `user_id=0`, and `default_permissions` makes the
+kernel refuse a chmod by a non-owner on the FUSE mount. The runner's teardown
+then reported empty health fields (`int('')`). No GPU work ran. The partial
+directory is preserved as
+`components/20260901-moe-m1-w13-xpu-graph-confirmation-a2.failed-ntfs-chmod-20260902T0512Z`.
+Fix: remount `ntfs-3g` with `uid=1000,gid=1000` (identity still
+`/dev/sda2 fuseblk /mnt/usb-models`); chmod now succeeds. A2 relaunched at
+01:14 EDT.
+
+## BIOS 2.4a path prepared (user-authorized, not yet executed)
+
+- Vendor zip verified against Supermicro's published SHA-256; image and
+  `SAA.efi` staged at `/boot/efi/M12BIOS/` with hashes recorded in the
+  tracked helper `tools/flash-m12swa-tf-bios-via-efi-shell.sh`.
+- The package flashes through the BMC's Redfish host interface and needs the
+  BMC ADMIN credential. The board's unique password was unknown, so a new
+  16-character ADMIN password was set in-band over IPMI and stored outside
+  the repo at `~/.config/bmc/admin_password` (mode 600). The BMC
+  (ASPEED 01.00.14) answers Redfish at `169.254.3.254` with it and reports
+  `M12SWA-TF` on BIOS `2.0b`. Direct Redfish `UpdateService` is DCMS-licensed
+  and unavailable; SAA's in-band `UpdateBios` is documented as needing no
+  node product key and supports `--preserve_setting`.
+- Pre-flash snapshot (boot entries, 84 EFI variables, DMI, full `lspci -vvv`,
+  B70 BAR state showing Resizable BAR at 32 GB) is at
+  `host/20260902-pre-bios-2.4a-snapshot/`.
+- Helper preflight passed every gate except one: the Ubuntu live USB must be
+  removed so the ESP is `fs0:` for the built-in shell's `startup.nsh`.
+- Sequence: after W13 A2, `--preflight`, then
+  `--reboot-now --confirm FLASH-BIOS-2.4a`; verify 2.4a, remove the one-shot
+  script, confirm B70 BARs, retest the SSD link at Gen4.

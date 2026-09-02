@@ -3674,3 +3674,10 @@ the errors (5 during the transition, then zero). The root SSD now runs at
 script and an uninstalled boot unit can reapply it. The 30-minute
 idle-plus-bounded-read clearance is running at Gen3. See the
 [Gen4 margin negative](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-root-nvme-gen4-margin-negative-gen3-clean.md).
+The Gen3 clearance passed and validates: 1800 s idle and a 4 GiB direct read
+with zero corrected events on `5B2QGXA7`. W13-N32 A2's first start died on an
+external-drive chmod (root-owned ntfs-3g remount); the partial directory is
+preserved and A2 was relaunched after remounting with user ownership. The
+Supermicro BIOS 2.4a update is staged on the ESP behind a tracked helper that
+uses SAA over the BMC host interface with `--preserve_setting`; a BMC ADMIN
+credential was set in-band and stored outside the repo. Flash follows W13 A2.
