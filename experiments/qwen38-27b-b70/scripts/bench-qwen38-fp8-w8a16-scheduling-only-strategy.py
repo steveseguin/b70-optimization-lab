@@ -38,7 +38,7 @@ bench.SHAPES = {
     "mlp_gate_up_proj": (5120, 17408),
     "mlp_down_proj": (8704, 5120),
 }
-bench.TIMED_MS = [64, 128, 168, 256]
+bench.TIMED_MS = [2, 64, 128, 168, 256]
 
 
 if __name__ == "__main__":
