@@ -1,0 +1,116 @@
+diff --git a/csrc/xpu/onednn/onednn_ext.h b/csrc/xpu/onednn/onednn_ext.h
+index 9a29844..87150e6 100644
+--- a/csrc/xpu/onednn/onednn_ext.h
++++ b/csrc/xpu/onednn/onednn_ext.h
+@@ -647,6 +647,9 @@ class primitive_ext : public primitive {
+ 
+   memory
+   make_src(const engine& aengine, void* handle = DNNL_MEMORY_ALLOCATE) const {
++    if (runtime_src_desc_.has_value()) {
++      return make_memory(runtime_src_desc_->get(), aengine, handle);
++    }
+     return make_memory(src_desc(), aengine, handle);
+   }
+ 
+@@ -662,9 +665,24 @@ class primitive_ext : public primitive {
+ 
+   memory
+   make_dst(const engine& aengine, void* handle = DNNL_MEMORY_ALLOCATE) const {
++    if (runtime_dst_desc_.has_value()) {
++      return make_memory(runtime_dst_desc_->get(), aengine, handle);
++    }
+     return make_memory(dst_desc(), aengine, handle);
+   }
+ 
++  void set_runtime_2d_dims(
++      const int m,
++      const int n,
++      const int k,
++      const memory::data_type src_dt,
++      const memory::data_type dst_dt,
++      const memory::dims& src_strides,
++      const memory::dims& dst_strides) {
++    runtime_src_desc_ = memory::desc({m, k}, src_dt, src_strides);
++    runtime_dst_desc_ = memory::desc({m, n}, dst_dt, dst_strides);
++  }
++
+   memory make_scratchpad(
+       const engine& aengine, void* handle = DNNL_MEMORY_ALLOCATE) const {
+     return make_memory(scratchpad_desc(), aengine, handle);
+@@ -711,7 +729,10 @@ class primitive_ext : public primitive {
+     auto off = slot_off;
+     for (const auto& p : handles) {
+       auto& m_arg = mem_arg_cache[off];
+-      if (m_arg)
++      const bool recreate_runtime_arg =
++          (p.first == DNNL_ARG_SRC && runtime_src_desc_.has_value()) ||
++          (p.first == DNNL_ARG_DST && runtime_dst_desc_.has_value());
++      if (m_arg && !recreate_runtime_arg)
+         m_arg.set_data_handle(p.second);
+       else {
+         m_arg = make_args(p.first, aengine, p.second);
+@@ -733,6 +754,8 @@ class primitive_ext : public primitive {
+  private:
+   memory mem_arg_cache[max_args];
+   dnnl_exec_arg_t c_args[max_args];
++  std::optional<memory::desc> runtime_src_desc_;
++  std::optional<memory::desc> runtime_dst_desc_;
+ };
+ 
+ template <typename T>
+@@ -797,10 +820,20 @@ struct matmul_primitive_cache_t {
+     auto& cached = get_cache(device_id);
+     memory::dims src_strides, wei_strides, dst_strides;
+     get_strides<Tt>(src_strides, wei_strides, dst_strides, lda, ldb, ldc);
++    constexpr bool is_w8a16 =
++        Ts == joint_dtypes_t::f16_f8_e5m2 ||
++        Ts == joint_dtypes_t::bf16_f8_e5m2 ||
++        Ts == joint_dtypes_t::f16_f8_e4m3 ||
++        Ts == joint_dtypes_t::bf16_f8_e4m3;
++    const auto bias_shape = get_shape(b_type);
++    const bool use_runtime_m =
++        is_w8a16 && batch_dim < 0 && bias_shape != bias_shape_t::m &&
++        bias_shape != bias_shape_t::mn;
++    const int descriptor_m = use_runtime_m ? DNNL_RUNTIME_DIM_VAL : m;
+     auto pri_key = concat(
+         src_strides,
+         wei_strides,
+-        m,
++        descriptor_m,
+         n,
+         k,
+         batch_dim,
+@@ -818,11 +851,11 @@ struct matmul_primitive_cache_t {
+       at::Device curDevice = at::Device(at::kXPU, device_id);
+       auto aengine = GpuEngineManager::Instance().get_engine(curDevice);
+       if (batch_dim < 0) {
+-        auto src_md = memory::desc({m, k}, src_dt, src_strides);
++        auto src_md = memory::desc({descriptor_m, k}, src_dt, src_strides);
+         auto wei_md = memory::desc({k, n}, wei_dt, wei_strides);
+-        auto dst_md = memory::desc({m, n}, dst_dt, dst_strides);
++        auto dst_md = memory::desc({descriptor_m, n}, dst_dt, dst_strides);
+         auto bias_md = memory::desc(
+-            get_onednn_bias_dims(b_type, m, n),
++            get_onednn_bias_dims(b_type, descriptor_m, n),
+             get_onednn_bias_data_type(b_type),
+             get_onednn_bias_format_type(b_type));  // {m, n} or {1, n}
+ 
+@@ -869,11 +902,14 @@ struct matmul_primitive_cache_t {
+         }
+       }
+ 
+-      return cached.insert({pri_key, primitive_ext(matmul(matmul_pd))})
+-          .first->second;
+-    } else {
+-      return iter->second;
++      iter = cached.insert({pri_key, primitive_ext(matmul(matmul_pd))}).first;
++    }
++    if (use_runtime_m) {
++      auto [src_dt, wei_dt, dst_dt] = onednn_types_mapper<Ts>::get();
++      iter->second.set_runtime_2d_dims(
++          m, n, k, src_dt, dst_dt, src_strides, dst_strides);
+     }
++    return iter->second;
+   }
+ 
+  private:

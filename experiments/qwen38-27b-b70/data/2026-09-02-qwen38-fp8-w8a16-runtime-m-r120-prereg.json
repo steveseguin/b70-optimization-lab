@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-runtime-m-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-runtime-m-20260902-r120",
+  "status": "preregistered-before-build-and-run",
+  "objective": "Test whether one shared oneDNN W8A16 primitive with runtime M removes M-dependent rounding and the 168-256-row repeat-nondeterminism without padding work.",
+  "source": {
+    "repository": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+    "commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "isolated_source_required": true,
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-w8a16-runtime-m-r120-20260902.patch",
+    "patch_sha256": "74223ccd0be55828924683ee1466426fbd55741f0d1a01df38aa299615b35314",
+    "modified_file": "csrc/xpu/onednn/onednn_ext.h"
+  },
+  "treatment": {
+    "scope": "2-D FP16/BF16 activation by FP8 weight matmul only",
+    "primitive_src_dims": ["DNNL_RUNTIME_DIM_VAL", "K"],
+    "primitive_dst_dims": ["DNNL_RUNTIME_DIM_VAL", "N"],
+    "cache_key_m": "DNNL_RUNTIME_DIM_VAL",
+    "execution_memory": "Concrete per-call M source and destination descriptors",
+    "fallbacks_unchanged": ["batched matmul", "M-dependent bias shapes", "INT4", "W8A8", "FP16 matmul"]
+  },
+  "build": {
+    "script": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "target": "_xpu_C",
+    "aot_device": "bmg-g21-a0",
+    "basic_kernels": false,
+    "fa2_kernels": false,
+    "moe_kernels": false,
+    "gdn_kernels": false,
+    "xpu_specific_kernels": true
+  },
+  "operator_gates": {
+    "scripts": [
+      "experiments/qwen38-27b-b70/scripts/qwen38-fp8-kernel-batch-invariance-census.py",
+      "experiments/qwen38-27b-b70/scripts/qwen38-fp8-kernel-batch-invariance-census-followup.py",
+      "experiments/qwen38-27b-b70/scripts/qwen38-fp8-kernel-determinism-sweep.py"
+    ],
+    "required": [
+      "Every production W8A16 shape has one row-0 class across all tested M",
+      "Every tested fixed-M row permutation is bitwise invariant",
+      "Every repeated call is bitwise deterministic, including the 168-256-row window",
+      "No operator exception, device loss, Xe fault, timeout, or hang",
+      "Decode-plateau latency cost is recorded with at least ten warmups"
+    ]
+  },
+  "decision": {
+    "build_serving_candidate_only_if_all_operator_gates_pass": true,
+    "on_runtime_dimension_rejection": "Close runtime-M as a negative and proceed to the Triton row-invariant W8A16 design.",
+    "on_operator_gate_failure": "Do not launch a 27B server; preserve the result and proceed to the next row-invariant mechanism."
+  }
+}
