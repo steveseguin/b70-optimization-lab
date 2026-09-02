@@ -65,3 +65,17 @@ the dead run's `/tmp` state, RPC, compile, and derived-launcher files were
 removed so the frozen no-clobber gates could admit the relaunch. The
 relaunch at 11:38 and the probe driver run under `setsid nohup`, detached
 from the agent session. Packet and probe are unchanged.
+
+## Amendment 2026-09-02 14:05 EDT: relaunched as A58 on GuC 70.72.1
+
+A57's first launch was killed with the agent session; its relaunch froze
+the host at four-GPU worker initialization (see the A57 freeze note). After
+upstream GuC 70.72.1 was installed and the xe driver reloaded in place on
+all four B70s (runtime power policy reapplied), the byte-identical server
+packet was regenerated at attempt 58 / port 19730 by
+`tools/rewrite-q38-a57-to-a58-depth-probe.py` (launcher `33e88a82...`,
+client `30735b72...`, supervisor `cfef4434...`, host wrapper `ff616929...`)
+and launched detached. The probe runs unchanged with the A58 port, PID
+file, and stop file passed as arguments; its summary lands in the A58 run
+directory as `a58-depth-determinism.json`. Design, depths, repeats, and
+acceptance are unchanged.
