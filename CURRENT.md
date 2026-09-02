@@ -2859,9 +2859,10 @@ loaded service.
 
 ## Immediate Manager Actions
 
-**Lane ownership notice (2026-09-02 01:25 EDT):** the Claude session owns the
-Qwen3.8 Flash-Next FP8 lane, the root-NVMe link work, and the BIOS 2.4a
-update until it hands off in `CURRENT.md`. Other agents must not read or scan
+**Lane ownership notice (2026-09-02 01:34 EDT):** the active Codex session owns
+the Qwen3.8 Flash-Next FP8 optimization lane. Claude's clean W13-N32 A2 run is
+committed and its session has no active child process; root-NVMe and BIOS work
+remain paused. Other agents must not read or scan
 `/mnt/fast-ai` or `/mnt/usb-models` in bulk, must not start
 `generate-q38-root-nvme-link-clearance-v1.py` or any `w13`/`hc` runner, and
 must not run `pgrep`/`rg`/`ps` commands whose command lines contain
