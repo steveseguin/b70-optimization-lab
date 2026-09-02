@@ -1,0 +1,86 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-onednn-register-k8-scheduling-audit-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-onednn-register-k8-wg8x4-20260902-r145",
+  "status": "closed-identity-positive-serving-latency-negative",
+  "classification": "terminal-post-r144-workgroup-scheduling-omission-audit",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-onednn-register-k8-wg8x4-r145-prereg.json",
+  "artifacts": {
+    "strategy": "experiments/qwen38-27b-b70/data/r145-m16-n16-wg8x4-register-k8-strategy.txt",
+    "strategy_sha256": "1c166a19e15d9b00ee20aec29bc6f85a338cfc3e0f99b7c7e36e8dc06fb5478d",
+    "r144_patch_sha256": "6eb233934eb6fc8439b73940bd9927531a0987bfa8b54372d1b2413a25cf0d39",
+    "r144_installed_extension_sha256": "e87686937b05869aff261a25bf07fb8dc1360d088e9362964fca719d2b093364",
+    "r144_harness_sha256": "8c603f635cf3612c9d0b25f0662448400f6615363b81101e7643e7e7f2cf700a",
+    "raw_root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-onednn-register-k8-wg8x4-20260902-r145",
+    "raw_json": "r145-m16_n16_wg8x4.json",
+    "raw_json_sha256": "47157daf0130eb6dec876a8bf74af135046867bbef27b2254af82ce52d4a1d0f"
+  },
+  "execution": {
+    "source_or_build_change": false,
+    "candidate": "m16_n16_wg8x4",
+    "workitems": 512,
+    "workgroup_output_tile": "128x64",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+    "torch": "2.13.0+xpu",
+    "fresh_bounded_container": true,
+    "server_launched": false,
+    "second_gpu_used": false
+  },
+  "identity": {
+    "full_outputs_exact_to_concatenated_natural_m1_rows": "24/24",
+    "maximum_abs_error": 0.0,
+    "all_m512_prefix_checks_exact": true,
+    "all_m128_repeat_checks_exact": true,
+    "all_m128_permutation_checks_exact": true,
+    "all_m168_random_padding_checks_exact": true,
+    "conclusion": "Changing only the R144 workgroup geometry preserves the proven eight-chain register arithmetic exactly."
+  },
+  "latency": {
+    "weighted_call_counts": {
+      "attn_qkv_proj": 16,
+      "mlp_gate_up_proj": 64
+    },
+    "candidate_over_natural_by_shape_and_m": {
+      "attn_qkv_proj": {
+        "2": 1.1002402640264026,
+        "64": 0.7574717384968116,
+        "128": 1.814923676156486,
+        "168": 1.5733580169814778,
+        "256": 1.6061101907613358
+      },
+      "mlp_gate_up_proj": {
+        "2": 1.2252632132696948,
+        "64": 1.0518024059505953,
+        "128": 1.2800789733551186,
+        "168": 1.5868700098434365,
+        "256": 1.702851915605028
+      }
+    },
+    "weighted_candidate_over_natural_by_m": {
+      "2": 1.2124664701087393,
+      "64": 1.0181509273759577,
+      "128": 1.315559529838428,
+      "168": 1.5855552962079529,
+      "256": 1.6938024317092124
+    },
+    "frozen_selector_over_natural": {
+      "2_natural": 1.0,
+      "64_r144_wg4x2": 0.9697657652307881,
+      "128_r145_wg8x4": 1.315559529838428
+    },
+    "maximum_sample_max_min_ratio": 1.1612762189286618,
+    "stability_exception": "The unused M2 QKV sequence was 1.1613 max/min, narrowly above the 1.15 gate. M128, M168, and M256 candidate sequences were stable on both shapes.",
+    "decode_gate": "failed-at-M128",
+    "prefill_gate": "passed"
+  },
+  "health": {
+    "both_devices_normal_after_case": true,
+    "new_xe_fault_or_reset": false,
+    "container_removed": true
+  },
+  "mechanism": {
+    "finding": "Doubling the M workgroup span from R144 wg4x4's 64 rows to wg8x4's 128 rows did not materially repair M128: weighted latency remained 1.316x natural and QKV remained 1.815x. Workgroup count alone is not the limiting mechanism.",
+    "closure": "No further eight-live-C-buffer workgroup shapes are justified. Eight live 16x16 FP32 C tiles consume 128 GRFs before A/B and temporaries, limiting useful tile geometry and occupancy.",
+    "next": "Serialize the same p0..p7 64-K chains through C0 plus one reusable temporary C tile, reducing live C storage from eight tiles to two and enabling a 32x32 subgroup tile."
+  },
+  "decision": "Reject R145 for serving, close eight-live-buffer scheduling, preserve its identity proof, and proceed to a two-buffer serial-K oneDNN implementation."
+}
