@@ -1,0 +1,19 @@
+# Boot-time unit for pin-root-nvme-link-gen3.sh. Not installed by default.
+# Install (explicit authorization required; this changes boot behavior):
+#   sudo install -m 0755 pin-root-nvme-link-gen3.sh /usr/local/sbin/
+#   sudo install -m 0644 pin-root-nvme-link-gen3.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now pin-root-nvme-link-gen3.service
+# The link still trains at Gen4 during firmware/early boot until this runs.
+[Unit]
+Description=Pin root Samsung 980 PRO PCIe link to Gen3 and disable APST (temporary mitigation)
+DefaultDependencies=no
+After=local-fs.target
+Before=basic.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pin-root-nvme-link-gen3.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

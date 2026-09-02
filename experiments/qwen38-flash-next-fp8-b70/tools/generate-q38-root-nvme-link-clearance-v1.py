@@ -344,6 +344,14 @@ def main() -> int:
     # Live identity first: a wrong controller or stale firmware fails before waiting 30 minutes.
     live = validator.read_live_identity()
     evidence["live_identity"] = live
+    link_dir = PCI_ROOT / ENDPOINT_BDF
+    evidence["link"] = {
+        "current_link_speed": (link_dir / "current_link_speed").read_text().strip(),
+        "current_link_width": (link_dir / "current_link_width").read_text().strip(),
+        "aspm_policy": Path("/sys/module/pcie_aspm/parameters/policy")
+        .read_text()
+        .strip(),
+    }
     for key, expected in validator.EXPECTED_ROOT_NVME.items():
         if live["root_nvme"][key] != expected:
             log(

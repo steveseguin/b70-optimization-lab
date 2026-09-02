@@ -3652,3 +3652,13 @@ the download (148 before and after), SMART stayed clean, and the root
 filesystem remained readable and writable. The remaining boundary is physical:
 full power off, reseat/inspect, cold boot, verify `5B2QGXA7`, then run the
 tracked clearance generator before any GPU work.
+The cold boot activated `5B2QGXA7`, but with no physical change the Gen4 link
+became far worse: about two corrected receiver events per second at idle and
+one early-boot non-fatal event, root port still zero. A user-authorized
+in-place discriminator sequence followed: APST off had no effect (103 events
+per minute), a Gen4 retrain had no effect (111), and a Gen3 retrain stopped
+the errors (5 during the transition, then zero). The root SSD now runs at
+8 GT/s x4 with APST off as a temporary, volatile mitigation; a tracked pin
+script and an uninstalled boot unit can reapply it. The 30-minute
+idle-plus-bounded-read clearance is running at Gen3. See the
+[Gen4 margin negative](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-root-nvme-gen4-margin-negative-gen3-clean.md).
