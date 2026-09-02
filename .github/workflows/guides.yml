@@ -25,6 +25,8 @@ on:
       - "tools/test_measured_opt_contract.py"
       - "tools/validate-repro-guides.py"
       - "tools/test_validate_repro_guides.py"
+      - "tools/validate-recipe-publication.py"
+      - "tools/test_validate_recipe_publication.py"
       - "tools/sync-depth-sweep-profiles.py"
       - "tools/test_sync_depth_sweep_profiles.py"
       - "tools/sync-public-result-summary.py"
@@ -54,6 +56,8 @@ on:
       - "tools/test_measured_opt_contract.py"
       - "tools/validate-repro-guides.py"
       - "tools/test_validate_repro_guides.py"
+      - "tools/validate-recipe-publication.py"
+      - "tools/test_validate_recipe_publication.py"
       - "tools/sync-depth-sweep-profiles.py"
       - "tools/test_sync_depth_sweep_profiles.py"
       - "tools/sync-public-result-summary.py"
@@ -66,6 +70,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: python3 tools/validate-repro-guides.py
       - run: python3 -m unittest tools/test_validate_repro_guides.py tools/test_sync_depth_sweep_profiles.py
+      - run: python3 tools/validate-recipe-publication.py
+      - run: python3 -m unittest tools/test_validate_recipe_publication.py
       - run: python3 tools/sync-public-result-summary.py --check
       - run: python3 -m unittest tools/test_sync_public_result_summary.py
       - run: python3 tools/build-family-pages.py --check

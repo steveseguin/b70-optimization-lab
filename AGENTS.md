@@ -78,6 +78,14 @@ exactly scoped measurements, honest pending states, and live-site verification.
 In particular, never extrapolate or interpolate performance curves or invent
 unmeasured context points.
 
+Any recipe that claims to be publicly reproducible must also follow
+`docs/recipe-publication-standard.md`, carry a validated
+`publication-manifest.json`, and pass both local and remote modes of
+`tools/validate-recipe-publication.py`. A local image, an originating-host
+binary, or a hand-maintained hash allow-list is not publication. Do not mark a
+recipe `published` until every release asset has been downloaded from its
+public URL and re-hashed.
+
 ## External Projections (ML Bottleneck bridge)
 
 `learn/assets/mlbottleneck-bridge.js` loads the ML Bottleneck physics engine

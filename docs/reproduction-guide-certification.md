@@ -10,6 +10,10 @@ guides are upgraded.
 The machine-readable authority is
 [`repro/guide-catalog.json`](../repro/guide-catalog.json). CI validation is
 performed by [`tools/validate-repro-guides.py`](../tools/validate-repro-guides.py).
+Recipes that claim public source or binary closure must also follow the
+[`Recipe Publication Standard`](recipe-publication-standard.md), include a
+`publication-manifest.json`, and pass
+[`tools/validate-recipe-publication.py`](../tools/validate-recipe-publication.py).
 
 ## Classifications
 
@@ -64,6 +68,8 @@ A `starter-guide` requires all of the following:
 7. The guide records the clean replay evidence and date.
 8. A second reader can distinguish required settings from optional performance
    experiments and known failures.
+9. Any claimed public release has been downloaded by its direct public URLs and
+   reverified against the tracked publication manifest.
 
 Containerization does not remove the host-platform requirement. A container
 can pin userspace but still depends on a compatible host kernel, Intel driver,
