@@ -1,0 +1,62 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-decoder-boundary-trace-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-decoder-boundary-trace-20260902-r110",
+  "classification": "invalid-observer-perturbed-c1",
+  "preregistration": {
+    "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-decoder-boundary-trace-r110-prereg.json",
+    "sha256": "bcc1dfe3f04aa9e37e0b4c6894e17a2ad79904a5910e27c839425f96e659cb6b"
+  },
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-decoder-boundary-trace-r110",
+    "id": "sha256:1ca4f57c84d362d58c2d793e720f912b504e81821826a872ea533a4c2aa2eff2",
+    "base_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "patch_sha256": "a0f6f75d3df96b81b0cd98b2060ca719681c51ec53e5947b12f7398bfac3c13b",
+    "installed_source_sha256": "6440ffc1cad45b6d69ce73bdea9ae8a84c5af1c4d33e3f28da4dd7520bd67862"
+  },
+  "mandatory_gates": {
+    "patch_roundtrip_exact": true,
+    "semantic_callsite_gate": true,
+    "runtime_trace_present": true,
+    "runtime_trace_ranks": [0, 1],
+    "runtime_trace_layers": [0, 1],
+    "runtime_trace_expected_stages_present": true,
+    "c1_exact_required": true,
+    "c1_exact_observed": false,
+    "overall": false
+  },
+  "warm_c1": {
+    "batches": 1,
+    "requests": 1,
+    "complete_128_token_outputs": 1,
+    "cached_tokens_all_zero": true,
+    "oracle_exact": "0/1",
+    "expected_token_ids_sha256": "9e7aec2c17aa1a19556349d1e106c6cb2e6d22db28953687ee655f2f8cb760b6",
+    "observed_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+    "observed_sequence_class": "known alternate previously seen for the cache prompt",
+    "live_selector_marker": "R101 Qwen GDN live-metadata single-request R99 arm executed"
+  },
+  "trace": {
+    "records_before_abort": 30,
+    "warning": "Do not interpret tensor digests: the synchronous observer changed c1 output and failed its preregistered non-perturbation gate."
+  },
+  "decision": {
+    "r110_valid_for_boundary_localization": false,
+    "c2_run": "not run after mandatory c1 gate failed",
+    "next_experiment": "Replace per-stage device-to-host synchronization and file I/O with deferred device snapshots flushed only at the start of the next request; require c1 identity before interpreting any trace."
+  },
+  "host": {
+    "model_direct_identity_gate": "passed",
+    "both_b70_devices_after_stop": "normal",
+    "run_time_local": "2026-09-01T22:07:29-04:00 to 2026-09-01T22:12:54-04:00",
+    "boot_contains_earlier_gpu_resets": true
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-decoder-boundary-trace-20260902-r110",
+    "warm_c1_sha256": "a9344b168d46f32fd65a5e7583cc7bfea7538a8df0bf4fb69af72b3ca7f387a5",
+    "invalid_trace_sha256": "5002824a3835224b46bb3dfbbf24133a5ed5d4442126a36b1a4447fb44bc6245",
+    "server_log_sha256": "b31127202be2d134765bd8e9d30b17edf19dcb9c603c80a3aeca46862dc3d65f",
+    "container_inspect_sha256": "be93b19042023684e90ce38edf672ff0c695362eac0f75992eed5bd3e06be2c4",
+    "image_inspect_sha256": "6e2a70e7b428dc324c3a41f00bd943b41bc76993f025845f4f0e2d08975b4401"
+  },
+  "reporting_boundary": "Invalid observation-only diagnostic. No speed, quality, README, website, or LocalMaxxing claim is permitted."
+}

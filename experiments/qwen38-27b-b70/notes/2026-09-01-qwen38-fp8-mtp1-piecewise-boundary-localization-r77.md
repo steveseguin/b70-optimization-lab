@@ -380,3 +380,16 @@ sufficient repair. The next diagnostic must observe the decoder-layer contract
 directly—layer-0 returned hidden/residual and layer-1 received hidden—before
 another arithmetic change. See the
 [`R109 result`](../data/2026-09-02-qwen38-fp8-mtp1-outer-rmsnorm-serial-r109-result.json).
+
+R110 attempted to hash the decoder-layer contract at eight layer-0/layer-1
+boundaries, but the synchronous observer failed its mandatory non-perturbation
+gate. The patch and live call sites were proven this time, both ranks emitted
+all expected stages, and the server logged the intended R99 single-request
+selector arm. Nevertheless, the first complete cache-zero c1 output was the
+known alternate token stream instead of the frozen c1 oracle (0/1 exact).
+Because each trace call copied device data to the CPU and wrote a file before
+continuing, the observer changed execution scheduling. C2 was not run and none
+of R110's tensor digests may be interpreted. The replacement must defer all
+device synchronization until a later request and must first reproduce the c1
+oracle exactly. See the
+[`R110 result`](../data/2026-09-02-qwen38-fp8-mtp1-decoder-boundary-trace-r110-result.json).
