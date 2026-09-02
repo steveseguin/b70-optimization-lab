@@ -1,0 +1,33 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-order-correlation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-order-correlation-20260902-r103",
+  "status": "preregistered-before-run",
+  "objective": "Determine whether R101's intermittent c2 cache-prompt output is correlated with the scheduler's live 31-token/28-token packed-prefill order.",
+  "lineage": {
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-profile-aware-selector-r101",
+    "candidate_image_id": "sha256:2a09b9235e885477c5fe4e84010ed5b07ca25d88502e9ec05e91f3562761c581",
+    "r102_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r102-result.json",
+    "frozen_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "treatment": {
+    "arithmetic_change": false,
+    "trace": "Enable the existing GDN prefill-output trace and record layer-0 rank-0 request row counts for each c2 batch.",
+    "workload": "Ten sequential c2 repeats of the unchanged two-prompt, 128-output-token frozen oracle workload.",
+    "cache_policy": "Prefix caching disabled; require cached_tokens=0 and complete 128-token arrays for all 20 outputs."
+  },
+  "analysis": {
+    "cache_prompt_identity": "31-token request",
+    "index_prompt_identity": "28-token request",
+    "order_classes": [
+      [31, 28],
+      [28, 31]
+    ],
+    "primary_question": "Does the cache prompt's exact/alternate output partition perfectly by prefill order?",
+    "required_trace_count": "Exactly one layer-0 rank-0 two-prefill record per measured c2 repeat."
+  },
+  "decision": {
+    "perfect_order_correlation": "The next implementation may canonicalize or fully isolate the remaining order-dependent post-core prefill stage, but must use live request boundaries rather than prompt lengths.",
+    "no_perfect_correlation": "Reject request order as the sole discriminator and compare norm/projection output digests between exact and alternate repeats before changing arithmetic."
+  },
+  "reporting_boundary": "Observation-only diagnostic. Do not publish throughput or quality claims; the current boot contains earlier xe engine resets."
+}
