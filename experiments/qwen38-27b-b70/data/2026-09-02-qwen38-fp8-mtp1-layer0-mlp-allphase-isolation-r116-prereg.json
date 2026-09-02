@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-allphase-isolation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-allphase-isolation-20260902-r116",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Close R115's demonstrated scheduler-coverage hole by preserving its exact per-request prefill MLP arm and extending the same per-request boundary isolation to multi-request ordinary decode, speculative decode, and mixed phases.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r115",
+    "base_image_id": "sha256:1709836b4c8c27f97057049942a69793b7168bdd6245064e6e02900db4529aa7",
+    "r115_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r115-result.json"
+  },
+  "rationale": {
+    "causal_positive": "All 19 counted packed-c2 prefill batches treated by R115 were exact across all 38 outputs and both request orders, versus only 1/20 exact batches in R108.",
+    "coverage_failure": "R115's only counted miss entered as one prefill request and acquired the second active request during decode; R115 deliberately controls rather than isolates every decode or mixed phase.",
+    "known_divergence": "cache-c000 diverged from token 96 with the same 348-to-2972 branch seen before R115."
+  },
+  "single_change": {
+    "scope": "Only the existing opaque layer-0 dense-MLP custom op.",
+    "single_request": "Call the loaded MLP once on the unchanged input tensor.",
+    "multi_request": "Reconstruct scheduler-order request lengths from live GDNAttentionMetadata spec/non-spec query starts and masks; call the unchanged loaded MLP once per request and concatenate in original scheduler order.",
+    "packed_prefill": "Preserve R115's per-request matrix shapes and arithmetic.",
+    "decode_and_mixed": "Newly isolate each active request, including MTP speculative-token groups.",
+    "other_layers_or_operations": "Unchanged.",
+    "prompt_or_length_heuristics": false
+  },
+  "mandatory_gates": {
+    "source": "Require exact R115 base identity, one generalized metadata-boundary helper, the existing layer-0/linear-attention call guard, and fail-closed boundary coverage.",
+    "startup": "Profile must execute the single-request control and reach HTTP ready.",
+    "runtime": "Require distinct packed-prefill and decode-or-mixed multi-request execution markers before interpreting the corresponding gates.",
+    "identity": "Every output must be 128 tokens, cached_tokens=0, and exactly match the frozen complete-token oracle.",
+    "abort": "Abort interpretation after any warm c1 mismatch; no performance claim after any identity mismatch."
+  },
+  "workload": {
+    "warmup": "One c1 repeat and two simultaneous c2 repeats.",
+    "staggered_gate": "At least four c2 repeats with a fixed launch stagger chosen before the run to force the R115-uncovered decode-or-mixed marker.",
+    "qualification": "Three c1 and twenty simultaneous c2 repeats after warmup.",
+    "max_tokens": 128,
+    "prefix_caching": false,
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "decision": {
+    "pass": "Run a fresh-server factorial without inherited R108 projection isolation/tracing, then strict varied-prompt realistic quality and performance qualification on a clean boot.",
+    "fail": "Keep R115/R116 diagnostic-only and localize the remaining layer-0 residual/consumer boundary without weakening identity."
+  },
+  "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset.",
+  "reporting_boundary": "Diagnostic only. No README, website, LocalMaxxing, or public speed/quality update from R116's narrow oracle workload."
+}
