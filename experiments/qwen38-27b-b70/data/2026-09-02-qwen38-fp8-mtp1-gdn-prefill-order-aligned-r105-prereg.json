@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-order-aligned-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-order-aligned-20260902-r105",
+  "status": "preregistered-before-aligned-retry",
+  "objective": "Obtain a one-to-one alignment between ten warmed c2 output batches and ten new layer-0 per-rank pure-prefill trace invocations.",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-all-r104",
+    "image_id": "sha256:f1dd575ae2e0effc7991535c253af82b332ac0604b7f60ba796f31b81e26f951",
+    "r104_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-trace-all-r104-prereg.json",
+    "frozen_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "frozen_pre_run_state": {
+    "trace_records": 960,
+    "layer0_rank0_c2_records": 9,
+    "layer0_rank1_c2_records": 9,
+    "note": "The first R104 attempt had one non-pure or mixed-scheduler prefill and cannot be aligned one-to-one. R105 analyzes only records appended after this checkpoint."
+  },
+  "workload": {
+    "concurrency": 2,
+    "repeats": 10,
+    "max_tokens": 128,
+    "prefix_caching": false,
+    "server": "Already initialized and warmed by R104; model arithmetic and server configuration remain unchanged."
+  },
+  "required_pass": {
+    "new_layer0_rank0_c2_records": 10,
+    "new_layer0_rank1_c2_records": 10,
+    "rank_orders_identical_per_invocation": true,
+    "invocations_strictly_monotonic": true,
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true
+  },
+  "decision": {
+    "perfect_partition": "If every exact/alternate cache-prompt output partitions by [28,31] versus [31,28] on both ranks, treat prefill request order as causal and design a live-boundary order-neutral candidate.",
+    "imperfect_partition": "Reject order as the sole cause and trace the norm/output-projection boundary for exact and alternate repeats."
+  },
+  "reporting_boundary": "Diagnostic only. No throughput promotion; current boot contains earlier xe engine resets."
+}
