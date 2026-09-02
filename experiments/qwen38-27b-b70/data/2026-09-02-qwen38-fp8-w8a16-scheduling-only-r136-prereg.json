@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-scheduling-only-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-scheduling-only-20260902-r136",
+  "status": "preregistered-before-first-r136-xpu-execution",
+  "classification": "developer-strategy-operator-diagnostic-only",
+  "question": "Can larger M/N workgroup geometry recover the exact source-M32 strategy's M128 efficiency while retaining its two-way interleaved local-K reduction and byte-identical outputs?",
+  "basis": {
+    "r135_boundary": "The exact M32 strategy is at parity through M64 but 1.330x call-count-weighted at M128/c64. GDN-in, attention-QKV, and gate/up dominate that jump.",
+    "source_observation": "The M32 string uses 16x16 thread tiles and wg 4x1x2 with ikr ki64; the faster but arithmetically different M128 strategy uses 32x32 thread tiles and wg 4x4 without local-K splitting.",
+    "hypothesis": "Retaining wgK=2, ikr, ki64, and k128 may preserve the accepted reduction while broader M/N geometry reduces workgroup and dispatch overhead at M>=128. Identity is empirical and precedes any performance interpretation."
+  },
+  "variants": {
+    "m32_wg4x4x2": {
+      "file": "experiments/qwen38-27b-b70/data/r136-m32-wg4x4x2-strategy.txt",
+      "sha256": "e7fb6b585b17ec16d0208d34653425dd13b063c3a88966d53e74949cb2de3df3",
+      "change": "Starting from the exact source-M32 string, change only wg 4x1x2 to wg 4x4x2; per-thread tiles, load plans, k128, ikr, and ki64 are unchanged."
+    },
+    "m128_geometry_k2": {
+      "file": "experiments/qwen38-27b-b70/data/r136-m128-geometry-k2-strategy.txt",
+      "sha256": "6418771e3b61c4a0c791be0611f739b2a890ebf9cbf8e4a554aa8f775080efb1",
+      "change": "Starting from the natural K5120 source-M128 geometry, add wgK=2 plus ikr and ki64. This retains the M128 M/N tile but restores the accepted M32 local-K partition contract."
+    }
+  },
+  "artifacts": {
+    "image_ref": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "extension_bytes": 70105800,
+    "extension_sha256": "5feaa29b8b0e9db8f7c6ae6ed2687c38341d742eb9f431769266b5b1d1f46b9f",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "build": "exact pinned sources with ONEDNN_DEV_MODE=ON"
+  },
+  "screen": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-scheduling-only-strategy.py",
+    "script_sha256": "739f2b2804c82b4c896af2fe4dadde97ef6666adebfad1421d251fbdcc1bae95",
+    "base_script_sha256": "5438b447c449a27fbf5dd07a1b3a519889dd928c06cbf7d4837b76c7f08f519d",
+    "first_shape": "mlp_gate_up_proj K5120/N17408",
+    "m_values_for_identity": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 224, 250, 256, 300, 512],
+    "timed_m_values": [64, 128, 168, 256],
+    "warmups": 10,
+    "iterations": 100,
+    "timing_repeats": 5,
+    "seed": 20260902,
+    "reference_digests": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-pinned-jit-cross-digest-r134/mlp_gate_up_proj-m32/result.json",
+    "reference_natural_m128_us": 274.021,
+    "reference_exact_m32_m128_us": 398.714,
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only"
+  },
+  "gates": {
+    "compile_and_execute": "A parser, JIT, launch, nonfinite, or device error rejects only that variant and triggers an immediate health check.",
+    "cross_identity": "Every complete output SHA-256 and row-0 SHA-256 must equal the source-M32 reference at all 15 M values; internal prefix, permutation, repeat, and pad checks must also pass.",
+    "performance": "At M128, candidate median must be <=301.423 us (1.10x the paired R135 natural gate/up control) and at least 20% faster than the exact M32 reference. Both conditions are required before expansion.",
+    "expansion": "Only a first-shape pass may expand, first to the other K5120 shapes and then to the all-shape weighted c64 gate. No server is authorized by R136.",
+    "on_no_pass": "Close developer-strategy scheduling edits and implement an upstream-grade specialized Xe2 kernel from the accepted fixed-reduction reference.",
+    "health": "No new Xe fault, reset, timeout, hang, coredump, or device loss."
+  }
+}
