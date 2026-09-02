@@ -1,0 +1,51 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-profile-aware-selector-strict-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-profile-aware-selector-20260902-r102",
+  "status": "preregistered-before-run",
+  "objective": "Test the R101 live-metadata selector without tracing or measured first-use compilation, then require complete-token-array identity on the established varied realistic suite at the public 1K allocation shape.",
+  "lineage": {
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-profile-aware-selector-r101",
+    "candidate_image_id": "sha256:2a09b9235e885477c5fe4e84010ed5b07ca25d88502e9ec05e91f3562761c581",
+    "r101_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r101-result.json",
+    "mtp1_oracle": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-explicit-deterministic-r53a",
+    "mtp0_oracle": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-explicit-deterministic-r54a-r50"
+  },
+  "phase_1_selector_replay": {
+    "server_shape": {
+      "max_model_len": 256,
+      "max_num_seqs": 64,
+      "max_num_batched_tokens": 512
+    },
+    "trace": false,
+    "warmup": "Use distinct cache-zero requests before measurement; do not reuse frozen oracle prompts.",
+    "required_pass": {
+      "concurrency_1_oracle": "all complete token arrays exact",
+      "concurrency_2_oracle": "all complete token arrays exact",
+      "repeat_determinism": "all complete token arrays exact",
+      "cached_tokens_all_zero": true
+    }
+  },
+  "phase_2_public_shape_strict": {
+    "server_shape": {
+      "max_model_len": 1024,
+      "max_num_seqs": 1,
+      "max_num_batched_tokens": 1024
+    },
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "workload": "12 prompts across six classes, natural EOS, 512-token cap, temperature zero, zero cached tokens, median of prompt-class medians over output intervals 1-100 after TTFT",
+    "warmup": "Use prompts not present in the strict suite; warm compiler/runtime state only, with prefix/KV response cache reuse prohibited.",
+    "required_pass": {
+      "strict_workload_gate": true,
+      "independent_canaries": true,
+      "complete_token_arrays_exact_vs_r53a_mtp1": "12/12",
+      "complete_token_arrays_exact_vs_r54a_mtp0": "12/12",
+      "cached_tokens_all_zero": true,
+      "kernel_journal_entries_since_server_start": 0
+    }
+  },
+  "reporting_boundary": "Diagnostic only. This boot contains earlier xe engine resets. Do not update the public speed headline, website, README headline, or LocalMaxxing from this run.",
+  "decision": {
+    "pass": "Retain R101 as the leading causal correctness repair and schedule the full clean-boot fresh-cache qualification matrix.",
+    "fail": "Preserve the failure and localize it by prompt class/request shape without weakening output identity, cache-zero, natural-EOS, or quality gates."
+  }
+}
