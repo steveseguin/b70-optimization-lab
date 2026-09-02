@@ -14,6 +14,10 @@ required_files=(
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-rebuilt-gdn
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json
+  tools/validate-recipe-publication.py
   experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-serial-spec-flash-attn-r38-20260828.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch
@@ -184,7 +188,7 @@ check_sha256 \
   ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e \
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch
 check_sha256 \
-  08a3de4f26119c50a23be87004708508eb444fed168175fb65a565e9a90e4033 \
+  40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f \
   experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch
 check_sha256 \
   594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab \
@@ -231,6 +235,13 @@ if (( failed )); then
   printf 'Refresh the clone with: git pull --ff-only origin main\n' >&2
   exit 1
 fi
+
+# The publication manifest is the cross-check between the build scripts,
+# tracked immutable inputs, release artifacts, and quality evidence. This
+# prevents a stale hand-maintained hash above from blessing a build script that
+# requires a different patch digest.
+python3 "${repo_root}/tools/validate-recipe-publication.py" \
+  "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json"
 
 printf 'PUBLIC SOURCE CLOSURE PASS\n'
 printf 'commit=%s\n' "$(git -C "${repo_root}" rev-parse HEAD)"

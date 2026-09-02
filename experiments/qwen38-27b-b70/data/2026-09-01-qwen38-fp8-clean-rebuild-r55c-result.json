@@ -12,6 +12,12 @@
     "base_gdn_patch_sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
     "split_gdn_patch_sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f"
   },
+  "rebuilt_wheel": {
+    "filename": "vllm_xpu_kernels-0.1.14.dev14+g1e90ffa.d20260901-cp38-abi3-linux_x86_64.whl",
+    "sha256": "fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b",
+    "size": 24912608,
+    "note": "This is the clean R55C rebuilt wheel. The historical R55C image inherited an older upstream-wheel label; the library hashes below and the publication manifest are authoritative for the rebuilt payload."
+  },
   "rebuilt_libraries": {
     "_xpu_C.abi3.so": {
       "sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
@@ -19,7 +25,8 @@
       "sections": {
         ".text": "50b4ce36788ba69261825e1d7af95937e4f40521c9da5d9b909416a99298292e",
         ".rodata": "7d44f5949e29e6db50a6eec4aa8f6de46066fad928ad81ab47ee95a9cbec42ec",
-        ".data": "4ab38b348d753193ee9684d9c7bede755918a7c3d13f53e35925cc293391a7aa"
+        ".data": "4ab38b348d753193ee9684d9c7bede755918a7c3d13f53e35925cc293391a7aa",
+        "OFFLOAD_DEVICE_CODE": "023a45d0ab8363dd3d4538f7c171ca88e29afa68d048c74086439572e6d8678b"
       }
     },
     "libgdn_attn_kernels_xe_2.so": {
@@ -28,7 +35,8 @@
       "sections": {
         ".text": "1640dcf159af927e5282c45b80aad25e2c78d50521b46b35203ed92556b32914",
         ".rodata": "3a15b3ec75f8af75b4b41196ab4f32e68c1f8015a4f385c9c5751be8e8f2b6ca",
-        ".data": "154c9111c82ac7509d6245b64d84a8cc29e34d499ee7e9a6495f29f915a699d7"
+        ".data": "154c9111c82ac7509d6245b64d84a8cc29e34d499ee7e9a6495f29f915a699d7",
+        "OFFLOAD_DEVICE_CODE": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7"
       }
     }
   },
@@ -37,6 +45,17 @@
     "image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
     "image_contract": "passed",
     "compile_cache": "fresh"
+  },
+  "publication_rebuild": {
+    "date": "2026-09-02",
+    "status": "passed",
+    "scope": "Fresh source checkout using the corrected public split patch and the tracked builder. The rebuilt shared-library payloads are byte-identical to R55C; the wheel ZIP identity differs because setuptools embedded the new packaging date.",
+    "wheel_filename": "vllm_xpu_kernels-0.1.14.dev14+g1e90ffa.d20260902-cp38-abi3-linux_x86_64.whl",
+    "wheel_sha256": "97ed4ca00d179616f3eafcdc86d50cbd4b47e0f30e66e18a3423c802f01cf4fe",
+    "xpu_extension_sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+    "gdn_library_sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+    "image_id": "sha256:d0fc5458300e14654f1b6da0ce090a0c7fa832cc7f73f91f0c6d7f57fb20b385",
+    "build_log_release_asset": "r55c-public-rebuild.log"
   },
   "strict_replay": {
     "class_balanced_median_tok_s": 51.57952066543126,

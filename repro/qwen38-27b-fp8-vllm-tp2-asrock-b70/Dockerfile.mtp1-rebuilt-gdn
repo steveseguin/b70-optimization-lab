@@ -3,8 +3,11 @@ FROM ${BASE_IMAGE}
 
 ARG BASE_GDN_PATCH_SHA256
 ARG SPLIT_GDN_PATCH_SHA256
+ARG WHEEL_SHA256
 ARG XPU_EXTENSION_SHA256
 ARG GDN_LIBRARY_SHA256
+ARG XPU_OFFLOAD_DEVICE_CODE_SHA256
+ARG GDN_OFFLOAD_DEVICE_CODE_SHA256
 
 COPY _xpu_C.abi3.so /tmp/_xpu_C.abi3.so
 COPY libgdn_attn_kernels_xe_2.so /tmp/libgdn_attn_kernels_xe_2.so
@@ -26,6 +29,9 @@ LABEL neural.download.kernel.head="1e90ffa672ba02f17a909da11838a4c55b199783" \
       neural.download.kernel.base-gdn-patch.sha256="${BASE_GDN_PATCH_SHA256}" \
       neural.download.kernel.split-gdn-patch="qwen38-gdn-split-serial-gates-r50" \
       neural.download.kernel.split-gdn-patch.sha256="${SPLIT_GDN_PATCH_SHA256}" \
+      neural.download.kernel.rebuilt-wheel.sha256="${WHEEL_SHA256}" \
       neural.download.kernel.xpu-extension.sha256="${XPU_EXTENSION_SHA256}" \
       neural.download.kernel.gdn-library.sha256="${GDN_LIBRARY_SHA256}" \
+      neural.download.kernel.xpu-extension.offload-device-code.sha256="${XPU_OFFLOAD_DEVICE_CODE_SHA256}" \
+      neural.download.kernel.gdn-library.offload-device-code.sha256="${GDN_OFFLOAD_DEVICE_CODE_SHA256}" \
       neural.download.build.lane="qwen38-fp8-mtp1-serial-fa-split-gdn-r50"

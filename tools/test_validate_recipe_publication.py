@@ -55,6 +55,20 @@ class RecipePublicationValidationTest(unittest.TestCase):
             MODULE._validate_build_script(repo, build, errors)
             self.assertTrue(any("is not tracked" in error for error in errors))
 
+    def test_accepts_script_directory_root_navigation(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            (repo / "repro/example").mkdir(parents=True)
+            build = repo / "repro/example/build.sh"
+            build.write_text(
+                '#!/usr/bin/env bash\nrepo_root=${script_dir}/../..\ntrue\n'
+            )
+            subprocess.run(["git", "-C", str(repo), "add", "repro/example/build.sh"], check=True)
+            errors: list[str] = []
+            MODULE._validate_build_script(repo, build, errors)
+            self.assertEqual(errors, [])
+
     def test_rejects_published_manifest_without_required_binary_assets(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)

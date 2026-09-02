@@ -42,6 +42,49 @@ MTP1 and R54A MTP0. Its rebuilt libraries use portable `$ORIGIN` RUNPATHs; the
 builder verifies whole-file and code/data section hashes. See the
 [clean-rebuild result](../../experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json).
 
+### Public R55C source and binary closure
+
+The immutable
+[`qwen38-fp8-tp2-r55c-20260901` release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-fp8-tp2-r55c-20260901)
+contains the complete final patch chain, clean rebuilt
+[`vllm_xpu_kernels` wheel](https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm_xpu_kernels-0.1.14.dev14%2Bg1e90ffa.d20260901-cp38-abi3-linux_x86_64.whl),
+exact
+[`_xpu_C.abi3.so`](https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/_xpu_C.abi3.so),
+exact
+[`libgdn_attn_kernels_xe_2.so`](https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/libgdn_attn_kernels_xe_2.so),
+successful clean-build log, and oneAPI/runtime package inventories. The tracked
+[`publication-manifest.json`](publication-manifest.json) binds every asset by
+name, byte size, SHA-256, source commit, portable RUNPATH, and ELF/device-code
+section hashes.
+
+This release corrects a September 1 publication defect: the builder required
+the split-GDN patch digest `40ca8c3f…`, while the old closure checker blessed a
+malformed tracked copy at `08a3de4f…`. Two blank unified-diff context lines had
+lost their required leading spaces. The canonical tracked and released patch
+now hashes to `40ca8c3f…`, and the validator derives the contract from the build
+script so those identities cannot silently disagree again.
+
+For the authoritative clean source build, use `build-pinned-mtp1-stack.sh` as
+shown below. To build the same public parent chain while avoiding compilation
+of only the final GDN/XPU extension stage, use:
+
+```bash
+BUILD_ROOT=/path/to/new-r55c-stack \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh
+```
+
+That helper downloads the two public libraries, verifies their whole-file and
+`OFFLOAD_DEVICE_CODE` hashes and `$ORIGIN` RUNPATHs, builds the final overlay,
+and runs the image contract. No `/home/steve`, `/mnt/fast-ai`, private image,
+or untracked file is required. Verify the entire publication packet at any time
+with:
+
+```bash
+python3 tools/validate-recipe-publication.py \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json \
+  --check-remote
+```
+
 ### Refresh older clones before benchmarking
 
 The public build chain published before September 1, 2026 stopped at the R31
@@ -58,10 +101,11 @@ repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-public-source-closure.sh
 ```
 
 The verifier checks that all final Dockerfiles, builders, and custom-op patches
-are present and tracked, then verifies the three final patch hashes. The full
-builder below applies every stage in order and the image-contract verifier
-checks the installed libraries. Do not substitute the older R31 image for the
-final R50 image.
+are present and tracked, validates build-script digest contracts against the
+publication manifest, and verifies the final patch hashes. The full builder
+below applies every stage in order and the image-contract verifier checks the
+installed libraries. Do not substitute the older R31 image for the final R50
+image.
 
 The 51.808087 tok/s qualification is a single-sequence, 1K allocation profile
 (`MAX_MODEL_LEN=1024`), not a full-262K-context measurement. A server launched

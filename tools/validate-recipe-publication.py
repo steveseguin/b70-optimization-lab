@@ -109,6 +109,11 @@ def _validate_build_script(repo: Path, script: Path, errors: list[str]) -> None:
         except ValueError:
             errors.append(f"{label}: referenced path escapes the repository: {referenced}")
             continue
+        # Root-discovery expressions such as ${script_dir}/../.. intentionally
+        # resolve to a directory. File closure is checked below; directory
+        # references are navigation, not publishable artifacts.
+        if referenced.is_dir():
+            continue
         if not referenced.is_file():
             errors.append(f"{label}: referenced file does not exist: {relative.as_posix()}")
         elif not _is_tracked(repo, PurePosixPath(relative.as_posix())):

@@ -24,6 +24,8 @@ expected_xpu_data_sha256=4ab38b348d753193ee9684d9c7bede755918a7c3d13f53e35925cc2
 expected_gdn_text_sha256=1640dcf159af927e5282c45b80aad25e2c78d50521b46b35203ed92556b32914
 expected_gdn_rodata_sha256=3a15b3ec75f8af75b4b41196ab4f32e68c1f8015a4f385c9c5751be8e8f2b6ca
 expected_gdn_data_sha256=154c9111c82ac7509d6245b64d84a8cc29e34d499ee7e9a6495f29f915a699d7
+expected_xpu_offload_device_code_sha256=023a45d0ab8363dd3d4538f7c171ca88e29afa68d048c74086439572e6d8678b
+expected_gdn_offload_device_code_sha256=88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7
 dockerfile=${script_dir}/Dockerfile.mtp1-rebuilt-gdn
 
 for command_name in docker git objcopy patch readelf sha256sum unzip; do
@@ -97,6 +99,7 @@ mapfile -t wheels < <(find "${dist_dir}" -maxdepth 1 -type f -name '*.whl')
   exit 1
 }
 unzip -t "${wheels[0]}" >/dev/null
+wheel_sha256=$(sha256sum "${wheels[0]}" | awk '{print $1}')
 unzip -j "${wheels[0]}" \
   vllm_xpu_kernels/_xpu_C.abi3.so \
   vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so \
@@ -132,6 +135,10 @@ verify_section "${context_dir}/_xpu_C.abi3.so" .data "${expected_xpu_data_sha256
 verify_section "${context_dir}/libgdn_attn_kernels_xe_2.so" .text "${expected_gdn_text_sha256}"
 verify_section "${context_dir}/libgdn_attn_kernels_xe_2.so" .rodata "${expected_gdn_rodata_sha256}"
 verify_section "${context_dir}/libgdn_attn_kernels_xe_2.so" .data "${expected_gdn_data_sha256}"
+verify_section "${context_dir}/_xpu_C.abi3.so" OFFLOAD_DEVICE_CODE \
+  "${expected_xpu_offload_device_code_sha256}"
+verify_section "${context_dir}/libgdn_attn_kernels_xe_2.so" OFFLOAD_DEVICE_CODE \
+  "${expected_gdn_offload_device_code_sha256}"
 for library in "${context_dir}/_xpu_C.abi3.so" \
   "${context_dir}/libgdn_attn_kernels_xe_2.so"; do
   readelf -d "${library}" | grep -Fq 'Library runpath: [$ORIGIN]' || {
@@ -144,13 +151,16 @@ docker build --pull=false \
   --build-arg "BASE_IMAGE=${base_image}" \
   --build-arg "BASE_GDN_PATCH_SHA256=${base_gdn_patch_sha256}" \
   --build-arg "SPLIT_GDN_PATCH_SHA256=${split_gdn_patch_sha256}" \
+  --build-arg "WHEEL_SHA256=${wheel_sha256}" \
   --build-arg "XPU_EXTENSION_SHA256=${xpu_extension_sha256}" \
   --build-arg "GDN_LIBRARY_SHA256=${gdn_library_sha256}" \
+  --build-arg "XPU_OFFLOAD_DEVICE_CODE_SHA256=${expected_xpu_offload_device_code_sha256}" \
+  --build-arg "GDN_OFFLOAD_DEVICE_CODE_SHA256=${expected_gdn_offload_device_code_sha256}" \
   --file "${dockerfile}" --tag "${image}" "${context_dir}"
 
 printf '%s\n' \
   "wheel=$(basename -- "${wheels[0]}")" \
-  "wheel_sha256=$(sha256sum "${wheels[0]}" | awk '{print $1}')" \
+  "wheel_sha256=${wheel_sha256}" \
   "xpu_extension_sha256=${xpu_extension_sha256}" \
   "gdn_library_sha256=${gdn_library_sha256}" \
   "image=${image}" \

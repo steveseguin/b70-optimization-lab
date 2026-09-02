@@ -1,0 +1,221 @@
+{
+  "format": "neural.download.recipe-publication.v1",
+  "recipe_id": "qwen38-27b-fp8-vllm-tp2-asrock-b70-r55c",
+  "publication_status": "draft",
+  "guide": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
+  "repository": {
+    "build_scripts": [
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-kernel-image.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rmsnorm-serial-image.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh",
+      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh"
+    ],
+    "immutable_inputs": [
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "sha256": "5db7f1af1156f3490ca91d0d74a07aa2d0909e175eeb1ae23f2074c55c44ff8a"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
+        "sha256": "cda7dd1e42a1e0fed2dd34f3936303cb038852a46d8d00786a1c2ebae326f8eb"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch",
+        "sha256": "8f8febcd0abc59bc9b69830827cd7607c00870414b17bd02cf32e2d879858ac8"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch",
+        "sha256": "ff5b4f33f5596efbad75112bdbbca2bbf81b6c84688476bfa1c9ec9e546c78c4"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-serial-spec-flash-attn-r38-20260828.patch",
+        "sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch",
+        "sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
+        "sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f"
+      }
+    ]
+  },
+  "source_repositories": [
+    {
+      "url": "https://github.com/vllm-project/vllm.git",
+      "commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+      "commit": "1e90ffa672ba02f17a909da11838a4c55b199783"
+    },
+    {
+      "url": "https://github.com/uxlfoundation/oneDNN.git",
+      "commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
+    },
+    {
+      "url": "https://huggingface.co/Qwen/Qwen3.8-27B-FP8",
+      "commit": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+    }
+  ],
+  "toolchain": {
+    "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)",
+    "python": "3.12.3",
+    "torch": "2.13.0+xpu",
+    "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "vllm_xpu_kernels_source_version": "0.1.14.dev14+g1e90ffa.d20260901",
+    "oneapi_inventory_asset": "r55c-oneapi-packages.txt",
+    "runtime_inventory_asset": "r55c-runtime-packages.txt"
+  },
+  "release": {
+    "tag": "qwen38-fp8-tp2-r55c-20260901",
+    "url": "https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-fp8-tp2-r55c-20260901",
+    "assets": [
+      {
+        "name": "vllm_xpu_kernels-0.1.14.dev14+g1e90ffa.d20260901-cp38-abi3-linux_x86_64.whl",
+        "kind": "wheel",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm_xpu_kernels-0.1.14.dev14%2Bg1e90ffa.d20260901-cp38-abi3-linux_x86_64.whl",
+        "sha256": "fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b",
+        "size": 24912608
+      },
+      {
+        "name": "_xpu_C.abi3.so",
+        "kind": "xpu-extension",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/_xpu_C.abi3.so",
+        "sha256": "1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08",
+        "size": 92051712
+      },
+      {
+        "name": "libgdn_attn_kernels_xe_2.so",
+        "kind": "gdn-library",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/libgdn_attn_kernels_xe_2.so",
+        "sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+        "size": 5914352
+      },
+      {
+        "name": "r55c-original-build.log",
+        "kind": "historical-build-log",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/r55c-original-build.log",
+        "sha256": "eb8193059536ef45aafe1e7daf2e08f01f2d845f6c11ae5845a0a907397339b6",
+        "size": 112682
+      },
+      {
+        "name": "r55c-public-rebuild.log",
+        "kind": "build-log",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/r55c-public-rebuild.log",
+        "sha256": "29d70aefc6204d061968b8ee510155932bc118d89551a60621f48e90ee368350",
+        "size": 116478
+      },
+      {
+        "name": "r55c-oneapi-packages.txt",
+        "kind": "toolchain-inventory",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/r55c-oneapi-packages.txt",
+        "sha256": "2622da088fe91883d0cacd5f0fb0835d36f0532093ce739e403bc2d20ab680b5",
+        "size": 4180
+      },
+      {
+        "name": "r55c-runtime-packages.txt",
+        "kind": "runtime-inventory",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/r55c-runtime-packages.txt",
+        "sha256": "cdfd3460500e5e68bed06a71850d2e7e6b3af0b90a6682a79eaff3c101a9b99d",
+        "size": 5511
+      },
+      {
+        "name": "vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-qwen38-fp8-block-w8a16-20260826.patch",
+        "sha256": "5db7f1af1156f3490ca91d0d74a07aa2d0909e175eeb1ae23f2074c55c44ff8a",
+        "size": 1985
+      },
+      {
+        "name": "vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-qwen38-xpu-deterministic-gdn-ba-state-20260828.patch",
+        "sha256": "cda7dd1e42a1e0fed2dd34f3936303cb038852a46d8d00786a1c2ebae326f8eb",
+        "size": 5923
+      },
+      {
+        "name": "vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-qwen38-xpu-compiled-gdn-state-ccl-wait-20260828.patch",
+        "sha256": "8f8febcd0abc59bc9b69830827cd7607c00870414b17bd02cf32e2d879858ac8",
+        "size": 3463
+      },
+      {
+        "name": "vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-qwen38-xpu-gemma-rmsnorm-mtp1-serial-exact-r30-20260828.patch",
+        "sha256": "ff5b4f33f5596efbad75112bdbbca2bbf81b6c84688476bfa1c9ec9e546c78c4",
+        "size": 2603
+      },
+      {
+        "name": "vllm-qwen38-xpu-serial-spec-flash-attn-r38-20260828.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-qwen38-xpu-serial-spec-flash-attn-r38-20260828.patch",
+        "sha256": "127b4bc1dc9096e630698202bbc06f74ce4e87f603f3bdc64d09a0dfcc26fe30",
+        "size": 4423
+      },
+      {
+        "name": "vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch",
+        "sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e",
+        "size": 16254
+      },
+      {
+        "name": "vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
+        "kind": "source-patch",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
+        "sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f",
+        "size": 1874
+      },
+      {
+        "name": "SHA256SUMS",
+        "kind": "checksum-manifest",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-fp8-tp2-r55c-20260901/SHA256SUMS",
+        "sha256": "0e409bfaca6dac48e177781c793758e43e5fe23fa245ae298cc9d656dfd3e887",
+        "size": 1568
+      }
+    ]
+  },
+  "binary_sections": {
+    "_xpu_C.abi3.so": {
+      "runpath": "$ORIGIN",
+      "sections": {
+        ".text": "50b4ce36788ba69261825e1d7af95937e4f40521c9da5d9b909416a99298292e",
+        ".rodata": "7d44f5949e29e6db50a6eec4aa8f6de46066fad928ad81ab47ee95a9cbec42ec",
+        ".data": "4ab38b348d753193ee9684d9c7bede755918a7c3d13f53e35925cc293391a7aa",
+        "OFFLOAD_DEVICE_CODE": "023a45d0ab8363dd3d4538f7c171ca88e29afa68d048c74086439572e6d8678b"
+      }
+    },
+    "libgdn_attn_kernels_xe_2.so": {
+      "runpath": "$ORIGIN",
+      "sections": {
+        ".text": "1640dcf159af927e5282c45b80aad25e2c78d50521b46b35203ed92556b32914",
+        ".rodata": "3a15b3ec75f8af75b4b41196ab4f32e68c1f8015a4f385c9c5751be8e8f2b6ca",
+        ".data": "154c9111c82ac7509d6245b64d84a8cc29e34d499ee7e9a6495f29f915a699d7",
+        "OFFLOAD_DEVICE_CODE": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7"
+      }
+    }
+  },
+  "validation": {
+    "clean_source_build": true,
+    "runtime_smoke": true,
+    "quality_gate": true,
+    "quality_evidence": [
+      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-clean-rebuild-r55c-result.json",
+      "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/compare-r53a-mtp1.json",
+      "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/compare-r54a-target.json",
+      "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp1-clean-rebuild-r55c/canaries.json"
+    ]
+  },
+  "known_corrections": [
+    "The old public closure verifier accepted split patch SHA-256 08a3de4f26119c50a23be87004708508eb444fed168175fb65a565e9a90e4033 while the final builder required 40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f.",
+    "The historical R55C image inherited upstream wheel label f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6; the clean rebuilt R55C wheel published here is fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b."
+  ]
+}
