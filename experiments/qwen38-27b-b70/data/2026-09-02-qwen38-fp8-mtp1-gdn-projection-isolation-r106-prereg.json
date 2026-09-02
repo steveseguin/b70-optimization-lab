@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-projection-isolation-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-projection-isolation-20260902-r106",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Remove the proven packed-prefill order dependence by isolating only the post-norm GDN output projection at live request boundaries.",
+  "lineage": {
+    "diagnostic_base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-all-r104",
+    "diagnostic_base_image_id": "sha256:f1dd575ae2e0effc7991535c253af82b332ac0604b7f60ba796f31b81e26f951",
+    "arithmetic_parent": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-profile-aware-selector-r101",
+    "r105_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-aligned-r105-result.json"
+  },
+  "treatment": {
+    "selection": "Use live GDNAttentionMetadata pure-prefill request boundaries inside an opaque custom op.",
+    "multi_request_prefill": "After the existing R101 R97 normalization, flatten each request independently, run the existing FP8 out_proj on that request's natural rows, and concatenate in the original scheduler order.",
+    "unchanged": "R99 single-request norm, R97 multi-request norm, qkvz isolation, native GDN request isolation, model weights, scheduler order, decode path, and single-request output projection.",
+    "forbidden": "No prompt-length, prompt-content, request-position, fixture-row, or oracle-token heuristics."
+  },
+  "required_pass": {
+    "operator_and_source_gate": true,
+    "concurrency_1_repeats": 3,
+    "concurrency_1_all_exact": true,
+    "concurrency_2_repeats": 20,
+    "concurrency_2_all_40_outputs_exact": true,
+    "pure_c2_order_31_28_count_min": 3,
+    "pure_c2_order_28_31_count_min": 3,
+    "both_tp_ranks_order_identical": true,
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "kernel_journal_entries": 0
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; no reboot or GPU reset.",
+  "decision": {
+    "pass": "Build a non-tracing production candidate and proceed to repeated varied-prompt strict and depth/concurrency qualification on a clean boot.",
+    "fail": "Preserve the result. If order dependence survives, trace normalized and projected per-request digests before another arithmetic change."
+  },
+  "reporting_boundary": "Diagnostic only on this boot. No public speed, README headline, website, or LocalMaxxing update."
+}
