@@ -370,8 +370,9 @@ def main() -> int:
         raise SystemExit("XPU is required")
     device = torch.device("xpu:0")
     props = torch.xpu.get_device_properties(0)
-    import vllm  # noqa: F401  (registers _xpu_C ops)
+    import vllm  # noqa: F401
     import vllm._xpu_ops  # noqa: F401
+    import vllm_xpu_kernels._xpu_C  # noqa: F401  (registers _xpu_C ops)
     if not hasattr(torch.ops._xpu_C, "fp8_gemm_w8a16"):
         raise SystemExit("_xpu_C::fp8_gemm_w8a16 is missing in this image")
 

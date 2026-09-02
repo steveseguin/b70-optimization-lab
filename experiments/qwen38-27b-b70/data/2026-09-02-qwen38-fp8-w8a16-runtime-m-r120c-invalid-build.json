@@ -1,0 +1,12 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-runtime-m-invalid-build.v1",
+  "campaign_id": "qwen38-fp8-w8a16-runtime-m-20260902-r120c",
+  "status": "invalid-pre-execution-build",
+  "source_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+  "patch_sha256": "debd76bbc60e2f9e8509440ed2b95b680f95af4a6ffbf8e1979f739234746a8e",
+  "build_completed": true,
+  "gpu_execution_attempted": false,
+  "built_extension_sha256": "28d53ff96b0d397d9e48b97f726a0d68fdda053fbe851b68130cae5bbc9761f3",
+  "invalid_reason": "The host build script defaulted to oneAPI 2025.3 and produced an extension requiring libsycl.so.8. The promoted R62 runtime and its PyTorch stack use oneAPI 2026.1 and libsycl.so.9, so the candidate failed dynamic loading before operator registration or GPU execution.",
+  "decision": "Superseded by R120d: rebuild the identical source patch with the image-matched oneAPI 2026.1 toolchain, then repeat the preregistered operator gates."
+}

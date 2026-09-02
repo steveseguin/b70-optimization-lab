@@ -43,6 +43,7 @@ def main() -> int:
     args = parser.parse_args()
     import vllm  # noqa: F401
     import vllm._xpu_ops  # noqa: F401
+    import vllm_xpu_kernels._xpu_C  # noqa: F401  (registers _xpu_C ops)
 
     device = torch.device("xpu:0")
     gen = torch.Generator(device="cpu").manual_seed(args.seed)
