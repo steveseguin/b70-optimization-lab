@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-order-trace-all-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-order-trace-all-20260902-r104",
+  "status": "preregistered-before-image-build-and-run-after-trace-only-patch-draft",
+  "objective": "Repair R103 trace cardinality and determine whether the intermittent c2 output branch partitions by live packed-prefill request order.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-profile-aware-selector-r101",
+    "base_image_id": "sha256:2a09b9235e885477c5fe4e84010ed5b07ca25d88502e9ec05e91f3562761c581",
+    "r103_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-correlation-r103-result.json"
+  },
+  "treatment": {
+    "scope": "Trace bookkeeping only in vllm/_xpu_ops.py.",
+    "change": "Replace the R90 first-occurrence seen-set with a per-(layer_name,num_prefills) invocation counter and write every pure-prefill record with that invocation number.",
+    "model_arithmetic_change": false,
+    "scheduler_or_dispatch_change": false
+  },
+  "workload": {
+    "concurrency": 2,
+    "repeats": 10,
+    "max_tokens": 128,
+    "frozen_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "prefix_caching": false
+  },
+  "required_pass": {
+    "layer0_rank0_c2_trace_records": 10,
+    "layer0_rank1_c2_trace_records": 10,
+    "layer_invocations_monotonic": true,
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "kernel_journal_entries": 0
+  },
+  "analysis": {
+    "primary": "Pair each repeat's exact/alternate cache-prompt stream with its rank-0 [31,28] or [28,31] row-count order.",
+    "secondary": "Require both TP ranks to report the same order for every invocation.",
+    "perfect_order_correlation": "Proceed to a live-boundary request-order-neutral implementation candidate.",
+    "no_perfect_order_correlation": "Reject ordering as the sole cause and extend the trace across the norm/output-projection boundary."
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; the 9/12 GiB attempt was already rejected for heavy reclaim.",
+  "reporting_boundary": "Observation-only diagnostic. Do not publish throughput; the current boot contains earlier xe engine resets."
+}
