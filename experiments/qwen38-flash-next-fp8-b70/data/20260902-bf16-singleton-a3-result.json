@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "status": "complete_strong_bounded_positive",
+  "classification": "mkldnn_deterministic_exact_at_real_hc_down_inject_m1",
+  "scope": {
+    "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "family": "layer0_attn_hc_down_plus_inject",
+    "input_shape": [1, 10240],
+    "weight_shape": [336, 10240],
+    "active_output_columns": [0, 324],
+    "synthetic_padding_columns": [324, 336],
+    "native_replicas": 2,
+    "deterministic_replicas": 2,
+    "ordinal_sweeps_per_replica": 100
+  },
+  "reliability": {
+    "native_unique_active_outputs_per_replica": [100, 100],
+    "native_changed_comparisons_per_replica": [99, 99],
+    "native_active_differing_elements_range": [5, 15],
+    "native_active_differing_elements_median": 9,
+    "deterministic_unique_active_outputs_per_replica": [1, 1],
+    "deterministic_exact_across_processes": true,
+    "deterministic_focus_rows_exact": true,
+    "deterministic_focus_row_hashes_are_native_observed_outcomes": true,
+    "deterministic_recurrent_bits_are_native_observed_values": true,
+    "deterministic_full_aggregate_observed_natively": false,
+    "synthetic_padding_exact_zero_all_arms": true
+  },
+  "latency_screening": {
+    "fixed_arm_order": true,
+    "speed_credit": false,
+    "native_ordinal_median_us": [11769.784, 11750.31],
+    "deterministic_ordinal_median_us": [11409.424, 11078.626],
+    "latency_reduction_percent": [3.061738, 5.716309],
+    "median_of_replica_medians": {
+      "native_us": 11760.047,
+      "deterministic_us": 11244.025,
+      "reduction_percent": 4.387925
+    },
+    "systematic_penalty_observed": false
+  },
+  "health": {
+    "all_child_parent_postflights_pass": true,
+    "xpu_device_count": 4,
+    "aer_event_count": 0,
+    "new_kernel_events": 0,
+    "smart_clean": true,
+    "swap_used_bytes": 0,
+    "service_wall_seconds_approx": 61,
+    "service_memory_peak_mib": 477.1
+  },
+  "evidence": {
+    "raw_root": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/bf16-singleton-diagnostic-20260902-a3",
+    "summary_sha256": "706f70b2565b435798bbcdc78c410b75fc331b03090f5ae12d5496f30d83e049",
+    "native_replica_sha256": [
+      "f152fc2c2850344b6ee3cb91288279f227125d7d72f9916c7eca9acb4f2aa363",
+      "80aac8c298c3e1aa46296fa5e19f695910b26e40d7f9149620d3b1eb130bb3bd"
+    ],
+    "deterministic_replica_sha256": [
+      "707fe32e99a7764012403022babbc54c9024acd01185f443d3784299b46b96ac",
+      "e489acf9cf43d0fdddabd8e360f3a00ff678dcd6d605e57577d5f68e3d8e63eb"
+    ],
+    "service_log_sha256": "139f35481aa2ff173abb824dcd8cc6c21f22dfd2ec025a3a414458790be99fb1",
+    "independent_post_run_audit": "pass"
+  },
+  "decision": {
+    "global_runtime_flag_authorized": false,
+    "endpoint_change_authorized": false,
+    "next": "A4a 14-family x 2-sentinel multiplicity-weighted M1 parity and timing census",
+    "a4a_recommended_process_arms": 112,
+    "a4a_weighted_calls_per_decode_step": 532
+  }
+}

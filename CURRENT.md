@@ -3750,3 +3750,17 @@ stopped. A3 next tests the strongest unstable rows in original call order and a
 separate `torch.backends.mkldnn.deterministic=True` arm without a reboot or
 full-model load. See the
 [A2 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-singleton-a2-result.md).
+A3 is a strong bounded component positive for the supported oneDNN
+deterministic attribute. Native mode produced 100 distinct active/full hashes
+in 100 complete 256-row sweeps in each of two fresh processes; deterministic
+mode produced one identical hash across all sweeps and both processes. Every
+stabilized focus-row hash and recurrent BF16 value was already observed in both
+native replicas, and synthetic padding stayed exactly zero. Screening latency
+was also non-regressive: deterministic complete-sweep medians were 3.06% and
+5.72% lower, although fixed arm order grants no speed credit. All identities,
+setting receipts, child/parent postflights, four-B70 health, AER, SMART, memory,
+and swap gates passed. The global flag and endpoint remain unchanged. A4a next
+tests 14 real BF16 families x two sentinels x two fresh replicas per arm and
+weights cost by all 532 M1 calls per target decode step, without a server or
+reboot. See the
+[A3 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-singleton-a3-result.md).
