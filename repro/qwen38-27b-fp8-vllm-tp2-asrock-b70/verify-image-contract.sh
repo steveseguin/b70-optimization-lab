@@ -36,6 +36,13 @@ expected=(
   05488952d1d98ca68915cabd7e7fe4ce62632662b175c560ae49bb2444187c79
 )
 
+# A source-qualified oneDNN selector rebuild intentionally changes the
+# monolithic extension while leaving the separately loaded GDN/MHC device
+# libraries untouched.  Candidates must opt into that contract with exact
+# digests; the ordinary profile remains closed over its frozen extension.
+expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:-}
+expected_mhc_library_sha256=${EXPECTED_MHC_LIBRARY_SHA256:-}
+
 # Experimental overlays may intentionally replace only the XPU communicator.
 # Keep the ordinary package hash immutable and require candidates to provide
 # their exact replacement digest explicitly.
@@ -94,20 +101,37 @@ case "${profile}" in
   *) fail "unsupported profile: ${profile}" ;;
 esac
 
+if [[ -n "${expected_xpu_extension_sha256}" ]]; then
+  expected[5]=${expected_xpu_extension_sha256}
+fi
+if [[ -n "${expected_mhc_library_sha256}" ]]; then
+  paths+=(/opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libmhc_kernels_xe_2.so)
+  expected+=("${expected_mhc_library_sha256}")
+fi
+
 mapfile -t observed < <(
   docker run --rm --entrypoint sha256sum "${image}" "${paths[@]}" |
     awk '{print $1}'
 )
 [[ "${#observed[@]}" == "${#expected[@]}" ]] || fail 'image hash inventory is incomplete'
 if [[ "${profile}" == mtp1-serial-fa-split-gdn ]]; then
-  case "${observed[5]}:${observed[6]}" in
-    f8013aff50f815b290cbec87d7926936c3fae9daacad6e1cf1f4c01ca60180ef:32a13caab7d56e6b584b7396ff61b3755a60362e6647db26337b98fdbd0bb4ec) ;;
-    1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08:2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355)
-      expected[5]=${observed[5]}
-      expected[6]=${observed[6]}
-      ;;
-    *) fail 'final GDN libraries do not match either validated full-file pair' ;;
-  esac
+  if [[ -n "${expected_xpu_extension_sha256}" ]]; then
+    case "${observed[6]}" in
+      32a13caab7d56e6b584b7396ff61b3755a60362e6647db26337b98fdbd0bb4ec|2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355)
+        expected[6]=${observed[6]}
+        ;;
+      *) fail 'fixed-extension candidate does not preserve a validated GDN device library' ;;
+    esac
+  else
+    case "${observed[5]}:${observed[6]}" in
+      f8013aff50f815b290cbec87d7926936c3fae9daacad6e1cf1f4c01ca60180ef:32a13caab7d56e6b584b7396ff61b3755a60362e6647db26337b98fdbd0bb4ec) ;;
+      1632cafcf2afc0bc039dd49ebbb5eda4e62d626f4c20729aecd9e87874d1dc08:2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355)
+        expected[5]=${observed[5]}
+        expected[6]=${observed[6]}
+        ;;
+      *) fail 'final GDN libraries do not match either validated full-file pair' ;;
+    esac
+  fi
 fi
 for index in "${!expected[@]}"; do
   [[ "${observed[index]}" == "${expected[index]}" ]] || \
