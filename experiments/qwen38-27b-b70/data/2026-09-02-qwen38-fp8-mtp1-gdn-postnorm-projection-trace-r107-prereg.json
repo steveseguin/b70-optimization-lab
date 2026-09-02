@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-postnorm-projection-trace-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-postnorm-projection-trace-20260902-r107",
+  "status": "preregistered-before-implementation-and-run",
+  "objective": "Determine whether the proven prefill-order branch first appears in the normalized rows entering out_proj or in the request-local projected rows leaving out_proj.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-r106",
+    "base_image_id": "sha256:b6b9c6847d8e4ad5b4a533eb039ad567bb5661ad5bada61af02bcb9ffbf4923b",
+    "r106_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-r106-result.json"
+  },
+  "treatment": {
+    "scope": "Observation only inside the existing R106 projection custom op.",
+    "trace": "For every pure-prefill invocation, hash exact per-request normalized input rows and request-local projected output rows, recording layer, TP rank, invocation, and live request boundaries.",
+    "model_arithmetic_change": false,
+    "scheduler_or_dispatch_change": false,
+    "prompt_or_fixture_heuristics": false
+  },
+  "workload": {
+    "concurrency_1_repeats": 1,
+    "concurrency_2_repeats": 10,
+    "max_tokens": 128,
+    "prefix_caching": false,
+    "frozen_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "required_trace_gate": {
+    "both_tp_ranks_present": true,
+    "both_pure_orders_observed": true,
+    "normalized_and_projected_digest_per_request": true,
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "kernel_journal_entries": 0
+  },
+  "decision": {
+    "normalized_digest_partitions_by_order": "The remaining branch is at or before RMSNormGated output; compare R97/R99 norm arithmetic per request without changing out_proj.",
+    "normalized_same_projected_differs": "The request-local FP8 out_proj remains nondeterministic; trace its quantized input and kernel selection before changing arithmetic.",
+    "neither_partitions": "Extend the trace to the residual/add boundary after out_proj and do not infer a repair from token outputs alone."
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; no reboot or GPU reset.",
+  "reporting_boundary": "Observation-only diagnostic. No public throughput, README headline, website, or LocalMaxxing update."
+}
