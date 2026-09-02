@@ -63,9 +63,9 @@ If errors persist, Gen3 x4 is a diagnostic/temporary discriminator, not a
 performance fix. Persistence after reseat and firmware indicates the SSD,
 slot, or motherboard path needs replacement/service.
 
-## Prepared but not executed
+## Prepared media; firmware not executed
 
-The official updater ISO was downloaded to the external drive only:
+The official updater ISO was downloaded to the external drive:
 
 `/mnt/usb-models/tools/samsung-980-pro-firmware/Samsung_SSD_980_PRO_5B2QGXA7.iso`
 
@@ -75,8 +75,14 @@ The official updater ISO was downloaded to the external drive only:
 - source:
   `https://semiconductor.samsung.com/resources/software-resources/Samsung_SSD_980_PRO_5B2QGXA7.iso`.
 
-The ISO has not been mounted, written to boot media, or executed. No firmware,
-PCIe, power-management, mount, or boot configuration was changed.
+It was written to the 8-GB USB and read back exactly. The user then selected
+that USB in UEFI, but the vendor image hung before its updater UI appeared; no
+drive selection, updater execution, or firmware write occurred. Temporary UEFI
+entries were subsequently removed and the original boot order was restored.
+The verified modern-live fallback and its exact current state are recorded in
+the [firmware-update preparation](2026-09-01-root-nvme-firmware-update-preparation.md),
+which supersedes the earlier untouched-media statement without changing the
+GPU block above.
 
 Structured result:
 

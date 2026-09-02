@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "live_fallback_verified_firmware_not_written",
+  "classification": "q38_root_nvme_firmware_update_preparation",
+  "device": {
+    "model": "Samsung SSD 980 PRO with Heatsink 1TB",
+    "serial": "S6WSNS0T109768K",
+    "pci_bdf": "0000:01:00.0",
+    "firmware_before": "4B2QGXA7",
+    "firmware_required": "5B2QGXA7",
+    "smart_critical_warning": 0,
+    "smart_media_errors": 0,
+    "smart_error_log_entries": 0,
+    "temperature_c_range": [41, 42]
+  },
+  "fresh_boot_idle_observation": {
+    "endpoint_corrected_first_snapshot": 34,
+    "endpoint_corrected_latest_snapshot": 79,
+    "endpoint_nonfatal_corrected_latest": 1,
+    "root_port_corrected_latest": 0,
+    "qwen_or_gpu_process_active": false
+  },
+  "recovery": {
+    "root": "/mnt/usb-models/pre-firmware-backup-20260901",
+    "accepted_checksum_file": "SHA256SUMS.accepted",
+    "manifest": "RECOVERY-MANIFEST.md",
+    "post_commit_external_manifest_is_source_of_truth": true,
+    "kernel_recovery_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "empty_restore_and_strict_fsck_passed": true,
+    "sector_image": false
+  },
+  "vendor_iso": {
+    "sha256": "4c02f7b5641c2b6ab6f0b43686f80b303a50a33e0da1abc6465c1ba6d2dc6e1c",
+    "old_kernel_version": "4.5.3",
+    "user_reported_boot_hang_before_updater_ui": true,
+    "firmware_write_occurred": false
+  },
+  "modern_live_usb": {
+    "distribution": "Ubuntu 24.04.4 LTS",
+    "iso_bytes": 6655619072,
+    "usb_device": "/dev/sdc",
+    "usb_bytes": 8022654976,
+    "official_and_readback_sha256": "3a4c9877b483ab46d7c3fbe165a0db275e1ae3cfe56a5657e5a47c2f99a99d1e",
+    "uefi_loader_present": true,
+    "media_binding": {
+      "iso9660_bytes": 6650044416,
+      "label": "Ubuntu 24.04.4 LTS amd64",
+      "uuid": "2026-02-10-01-39-48-00",
+      "file_sha256": {
+        ".disk/info": "fa8c36e43a506028cfa47202d5ea5d172b3f1a3512e89461692f99adb7e90d85",
+        "md5sum.txt": "3e499c309ef90c804ab4aaee5ded5eb02331cc6078ce27c697ed6fced73c1c8f",
+        "casper/vmlinuz": "d3f1cc6693d93fcf6663cd1e04d31031f41e8abd0c14b0ca953ef524a62e4489",
+        "casper/initrd": "b5dd55a35ccb0e43f597531f8c5fc27bf10169bbf675c4ac902980667f493f50",
+        "EFI/boot/bootx64.efi": "6fe6e1bcbe6cf6baec8e056d40361ca1aa715cc04ddcc2855351de060b84350b"
+      }
+    },
+    "official_updater_pack_sha256": "4080184e2d87bf29ff6ed5c8d2d5bbb3a49025749618a98af32f429ef7ef676e",
+    "fail_closed_helper_sha256": "b88c038d004de9273f140237582d8db3f972d1da530758bb2d979784e1f981c4",
+    "independent_static_audit": "pass"
+  },
+  "preferred_update_route": "Samsung Magician on supported Windows with direct internal M.2 attachment",
+  "fallback_route": "verified Ubuntu live USB plus untouched official Samsung updater and fail-closed wrapper",
+  "raw_nvme_firmware_download_authorized": false,
+  "helper_automated_reboot": false,
+  "protected_results_changed": false,
+  "gpu_execution_authorized": false
+}

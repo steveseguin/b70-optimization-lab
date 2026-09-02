@@ -3569,6 +3569,17 @@ boot verification, and a clean 30-minute idle plus bounded-read clearance.
 The official updater ISO is downloaded but not executed on the external drive.
 See the [A1 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-moe-m1-w13-xpu-graph-confirmation-a1-idle-admission-negative.md)
 and [root-NVMe blocker](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-root-nvme-link-blocker.md).
+The maintenance fallback is now fully prepared but has not written firmware.
+Restore-tested source bundles are on the external drive, and an Ubuntu 24.04.4
+live USB passed a complete raw-device readback against its official SHA-256.
+The external updater pack retains Samsung's untouched utility and payload behind
+a fail-closed helper that rejects the installed OS, altered bytes, mounted
+target descendants, active swap, or the wrong drive/serial/firmware. The
+remaining boundary is physical: fully power off, reseat and inspect the SSD,
+heatsink, thermal pad, connector, and standoff before using Windows Magician or
+the verified live fallback. Then fully power off again and cold-boot before the
+30-minute idle/read clearance. See the
+[firmware-update preparation](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-root-nvme-firmware-update-preparation.md).
 The shorter A2 successor is frozen for after that maintenance: layers 0/47,
 all four EP ranks, one seed, and eight matched 100-input C/A/C cells. Actual
 execution is fail-closed before derivation, cache/evidence creation, or device
@@ -3593,7 +3604,26 @@ and BF16 output boundary while asking whether type promotion and a BF16 `out`
 tensor can remove only the two standalone cast materializations. Its 23 CPU
 tests pass, including raw-byte parity over 15 seed/scale cells, 100 changing
 inputs, and all 65,280 finite BF16 state encodings; this is not XPU or endpoint
-evidence. The one-B70 gate remains non-executable until the root-NVMe clearance
-passes and a separately reviewed wrapper binds source/runtime/device identity,
-exclusivity, and durable evidence. See the
+evidence. Its fail-closed one-B70 runner is now frozen after 26 additional
+runner/publication/shared-clearance CPU tests. It binds source/runtime/device
+identity, the current-boot and exact-live-SSD clearance, exclusive
+process/cache/result state, immutable gate/core staging, continuous AER abort,
+and transactionally checksummed evidence around exactly one C-A-A-C gate
+invocation. Its literal final pre-exec helper rechecks every runner, vLLM,
+Python/Torch, live/staged source, clearance, mount, process, and AER identity.
+Checksum-failure and final-path replay simulations pass. Execution remains
+blocked until the live `5B2QGXA7` clearance receipt passes; no GPU work or
+endpoint change occurred. See the
 [HC gate-mix exact-staged preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-hc-gate-mix-exact-staged-a1-prereg.md).
+The next bookkeeping candidate is also frozen CPU-only. A28 records 48
+`moe_align_block_size` calls per target token at a `0.240581 ms/token`
+cross-rank mean. The EP4 M1 sparse candidate filters and orders only the ten
+selected global experts while preserving the exact production
+`ignore_invalid_experts=True` contract, all three output buffers, the sorted
+sentinel `10`, the general-kernel inactive expert sentinel `0`, and
+`num_tokens_post_pad`. It matches an independent 512-entry CPU authority over
+1,200 changing rank cases plus 16 adversarial 0/1/5/10-local-hit cases. This is
+not XPU or endpoint evidence and authorizes no launch; a separately reviewed,
+source-bound eager/captured component gate is next after storage clearance.
+See the
+[sparse-assignment preregistration](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-ep4-m1-sparse-expert-assignment-a1-prereg.md).
