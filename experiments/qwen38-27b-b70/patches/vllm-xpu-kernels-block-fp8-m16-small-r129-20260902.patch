@@ -1,0 +1,41 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 8336beb..3d93c4d 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -297,15 +297,27 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+           ptr_scales->is_contiguous() && ptr_D.is_contiguous(),
+       "R127 tensors must be contiguous");
+ 
+-  DenseBlockFP8GEMMLauncher<w8a16_policy_m_32>(
+-      dpcpp_queue,
+-      reinterpret_cast<half_t*>(ptr_A.data_ptr()),
+-      reinterpret_cast<float_e4m3_t*>(ptr_B.data_ptr()),
+-      reinterpret_cast<float*>(ptr_scales->data_ptr()),
+-      reinterpret_cast<half_t*>(ptr_D.data_ptr()),
+-      ptr_A.size(0),
+-      N,
+-      K);
++  if (ptr_A.size(0) <= 8) {
++    DenseBlockFP8GEMMLauncher<w8a16_policy_m_16>(
++        dpcpp_queue,
++        reinterpret_cast<half_t*>(ptr_A.data_ptr()),
++        reinterpret_cast<float_e4m3_t*>(ptr_B.data_ptr()),
++        reinterpret_cast<float*>(ptr_scales->data_ptr()),
++        reinterpret_cast<half_t*>(ptr_D.data_ptr()),
++        ptr_A.size(0),
++        N,
++        K);
++  } else {
++    DenseBlockFP8GEMMLauncher<w8a16_policy_m_32>(
++        dpcpp_queue,
++        reinterpret_cast<half_t*>(ptr_A.data_ptr()),
++        reinterpret_cast<float_e4m3_t*>(ptr_B.data_ptr()),
++        reinterpret_cast<float*>(ptr_scales->data_ptr()),
++        reinterpret_cast<half_t*>(ptr_D.data_ptr()),
++        ptr_A.size(0),
++        N,
++        K);
++  }
+   return ptr_D;
+ 
+ #if 0  // Stock multi-dtype dispatcher excluded from the R127 diagnostic build.
