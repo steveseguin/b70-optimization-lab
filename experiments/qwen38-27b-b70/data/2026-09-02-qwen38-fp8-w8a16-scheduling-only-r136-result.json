@@ -1,0 +1,63 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-scheduling-only-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-scheduling-only-20260902-r136",
+  "classification": "developer-strategy-operator-diagnostic-only",
+  "status": "fixed-k-wide-geometry-passes-all-shape-identity-and-weighted-c64-gates",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-scheduling-only-r136-prereg.json",
+  "variants": {
+    "m32_wg4x4x2": {
+      "all_gate_up_identity_checks": true,
+      "m128_us": 363.40729,
+      "improvement_vs_exact_m32": 0.08854,
+      "performance_gate_pass": false,
+      "decision": "closed; widening only workgroup N is arithmetically safe but insufficient"
+    },
+    "m128_geometry_k2": {
+      "all_six_shapes_internal_identity_pass": true,
+      "all_90_complete_outputs_equal_source_m32": true,
+      "all_90_row0_outputs_equal_source_m32": true,
+      "gate_up_m128_us": 255.52604,
+      "gate_up_improvement_vs_exact_m32": 0.35918,
+      "gate_up_ratio_vs_natural": 0.93251,
+      "performance_gate_pass": true
+    }
+  },
+  "wide_fixed_k_latency_us": {
+    "gdn_in_proj_qkvz": {"64": 92.412, "128": 114.621, "168": 193.292, "256": 226.836},
+    "gdn_out_proj": {"64": 63.466, "128": 66.311, "168": 81.721, "256": 90.792},
+    "attn_qkv_proj": {"64": 85.311, "128": 110.071, "168": 176.521, "256": 209.481},
+    "attn_o_proj": {"64": 58.219, "128": 66.902, "168": 80.313, "256": 91.442},
+    "mlp_gate_up_proj": {"64": 204.402, "128": 255.526, "168": 432.829, "256": 497.530},
+    "mlp_down_proj": {"64": 136.924, "128": 177.073, "168": 212.363, "256": 262.985}
+  },
+  "composed_policy": {
+    "m_lte_64": "exact source-M32 geometry: 16x16 thread tiles, wg 4x1x2, ikr ki64, k128",
+    "m_gte_128": "R136 wide fixed-K geometry: 32x32 thread tiles, wg 4x4x2, ikr ki64, k128",
+    "identity_argument": "Both policies produced byte-identical complete outputs on every registered shape/M pair, so the boundary changes scheduling but not the accepted arithmetic result.",
+    "weighted_ratios_vs_natural": {
+      "m64": 0.997937,
+      "m128_c64": 1.016875,
+      "m168_prefill": 1.299673,
+      "m256_prefill": 1.242672
+    },
+    "c64_decode_gate_ceiling": 1.03,
+    "c64_decode_gate_pass": true
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-scheduling-only-r136",
+    "sha256_manifest_bytes": 2370,
+    "sha256_manifest_sha256": "de50c21e03e7ffddc072c129962ea9ed9279a5e5e7847dac89122447ba740613"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "all_processes_exit_zero": true,
+    "both_devices_normal_after": true,
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "implement_narrow_source_selector": true,
+    "server_allowed": false,
+    "next": "Patch non-developer oneDNN selection only for the exact block-scaled E4M3-weight/FP16-activation W8A16 contract, use M32 geometry through M64 and R136 wide fixed-K geometry from M128, rebuild, and run a dense M=1..512 all-shape identity and latency gate before any server."
+  }
+}

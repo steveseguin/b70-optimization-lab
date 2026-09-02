@@ -422,6 +422,30 @@ recover M128 scheduling efficiency while remaining bitwise equal to M32, not
 invent another reduction. No server was launched. See the
 [R135 result](../data/2026-09-02-qwen38-fp8-w8a16-pinned-m32-decode-ladder-r135-result.json).
 
+### R136: wide M/N geometry with the accepted K reduction (operator pass)
+
+Inspection of the frozen strategies isolated the arithmetic distinction: the
+exact M32 strategy uses a two-way interleaved local-K reduction (`wgK=2`,
+`ikr`, `ki64`, `k128`), while the fast natural M128 strategy drops that
+partition. R136 tested two developer strings without editing source.
+
+Changing only M32's workgroup from `4x1x2` to `4x4x2` stayed byte-identical but
+improved gate/up M128 by only 8.9%, below the expansion gate. The decisive
+variant instead retained the natural M128 32x32 M/N geometry and restored
+`wgK=2 ikr ki64`. It matched the M32 reference byte-for-byte for every complete
+output and row 0 across all six shapes and 15 M values (90/90), while retaining
+all prefix, permutation, repeat, and padding checks.
+
+At M128 it cut gate/up from 398.7 to 255.5 us, GDN-in from 173.0 to 114.6 us,
+and attention-QKV from 147.6 to 110.1 us. A composed selector using M32 geometry
+through M64 and the wide fixed-K geometry from M128 has a call-count-weighted
+c64 ratio of `1.0169x`, inside the 3% gate. Weighted M168/M256 prefill ratios
+also improve to `1.300x` and `1.243x`. This is the first mechanism to combine
+all-shape byte identity with useful modeled c1-c64 throughput. It remains a
+developer override, not a deployable patch; the next gate is the narrowly
+guarded non-developer source implementation plus dense M1-512 proof. See the
+[R136 result](../data/2026-09-02-qwen38-fp8-w8a16-scheduling-only-r136-result.json).
+
 ### R127: Xe2 CUTLASS fixed-M32 BLOCK_FP8 (mechanism accepted)
 
 The exact pinned kernel source already contained an Xe2 grouped-GEMM BLOCK_FP8
