@@ -1,0 +1,56 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-m4-anchor-geometry-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-m4-anchor-geometry-20260902-r141",
+  "status": "preregistered-before-candidate-device-use",
+  "classification": "developer-strategy-operator-diagnostic-only",
+  "question": "Can scheduling-only M/N geometry changes retain the natural M1/M2/M4 W8A16 arithmetic class while removing the source-M4 strategy's large-M latency penalty?",
+  "r140_trigger": {
+    "row_invariance_succeeded": true,
+    "target_identity": "8/12 complete arrays",
+    "root_cause_hypothesis": "R139 froze source-M32 arithmetic; natural controls show M1, M2, and M4 share one row class while M16/M32 share another.",
+    "required_new_anchor": "the exact natural source-M4 strategy"
+  },
+  "environment": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "developer_extension": "/mnt/fast-ai/build/qwen38-w8a16-pinned-jit-strategy-r123/build/_xpu_C.abi3.so",
+    "developer_extension_sha256": "5feaa29b8b0e9db8f7c6ae6ed2687c38341d742eb9f431769266b5b1d1f46b9f",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "server_allowed": false
+  },
+  "frozen_anchor": {
+    "strategy_source_m": 4,
+    "strategy": "gemm qH[SH] T@16N@16N 16 4 1 0 aS16#16,0{cc}+S16,16@32{cc} aB64x2{cc}+S64,64@72{cc} aB#16,0{cc/ub} wg 8x1x8 ikr ki64 sys af k128 vav di dm sr bf li nmk sb128 np bm262144 bn65536 bk16777216",
+    "prior_evidence": "R123 proved this strategy invariant over all registered M values on both attention shapes; natural controls put M1/M2/M4 in one row class. R141 rechecks natural M1 equality directly on every screened shape."
+  },
+  "candidates": {
+    "m16_n16_wg4x1x8": "Start from the natural M16 16x16 strategy and change only wgK from 2 to 8.",
+    "m16_n16_wg4x2x8": "The preceding candidate with two-way N scheduling.",
+    "m32_n32_wg4x1x8": "Start from the validated R136 32x32 fixed-K geometry, replace its two-way local-K split with the anchor's eight-way split, and reduce N scheduling to one.",
+    "m32_n32_wg2x2x8": "The same 32x32 geometry with balanced two-way M/N scheduling and the anchor's eight-way local-K split."
+  },
+  "screen": {
+    "shapes": {
+      "attn_qkv_proj": [5120, 7168],
+      "mlp_gate_up_proj": [5120, 17408]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "order": "For each shape, capture natural M1 and the forced source-M4 anchor first; then run candidates in the listed order, each in a fresh process. Invalid strategy parses are recorded failures and do not authorize edits or substitution.",
+    "identity": "Every candidate output at every M must be bitwise equal to its shape's forced source-M4 output and natural M1 row; repeat M128, a seeded M128 permutation, and 168-to-200 padding must also be exact.",
+    "timing": "Ten warmups, five samples of 100 synchronized calls at M2, M64, M128, M168, and M256. Report candidate/source-M4 and candidate/natural ratios.",
+    "stability": "No timed sample max/min ratio may exceed 1.15."
+  },
+  "gates": {
+    "candidate_parse_and_identity": "required on both shapes",
+    "decode_model": "Using the frozen call counts, a passing candidate or a two-candidate M-threshold composition must model <=1.03x natural at M2, M64, and M128.",
+    "prefill": "M168 and M256 must each model <=2.0x natural.",
+    "composition": "A threshold composition is allowed only when both strategies independently produce the identical source-M4 digest on both sides of the boundary.",
+    "on_pass": "Expand only the fastest passing strategy or exact threshold composition to all six production shapes, then build a narrow source selector and rerun endpoint identity before concurrency.",
+    "on_failure": "Close oneDNN catalog geometry for natural-M1 anchoring and implement a purpose-built fixed-reduction W8A16 kernel whose reduction order is explicitly matched to natural M1."
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, reset, coredump, device loss, timeout, or hung stage visible to the available health interfaces",
+    "either B70 is not normal before or after a case",
+    "any unregistered strategy edit, candidate substitution, or server launch"
+  ]
+}

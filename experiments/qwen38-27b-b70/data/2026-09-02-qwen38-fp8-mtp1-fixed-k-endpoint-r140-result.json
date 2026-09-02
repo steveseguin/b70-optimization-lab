@@ -1,0 +1,85 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-fixed-k-endpoint-result.v1",
+  "campaign_id": "qwen38-fp8-mtp1-fixed-k-endpoint-20260902-r140",
+  "status": "rejected-at-performance-and-target-identity-gates",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-endpoint-r140-prereg.json",
+  "prelaunch_contract_correction": {
+    "symptom": "The frozen split-GDN image contract paired the monolithic _xpu_C digest with the GDN device-library digest and therefore rejected the intentional R139 extension replacement before device use.",
+    "correction": "Add opt-in exact EXPECTED_XPU_EXTENSION_SHA256 and EXPECTED_MHC_LIBRARY_SHA256 checks while retaining the frozen default contract and requiring a validated GDN device library.",
+    "positive_r139_control_passed": true,
+    "wrong_extension_digest_negative_control_passed": true,
+    "unchanged_r62_contract_passed": true,
+    "repository_commit": "0003eba64"
+  },
+  "operator_activation": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "gemm_kernel_environment_unset": true,
+    "small_kernel_exact": true,
+    "wide_kernel_exact": true,
+    "m_values": [64, 128, 168, 200],
+    "all_outputs_equal_m200_prefix": true,
+    "repeat_exact": true,
+    "permutation_exact": true,
+    "padding_168_to_200_exact": true,
+    "gate_passed": true
+  },
+  "endpoint": {
+    "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+    "extension_sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+    "fresh_compile_cache": true,
+    "cards": 2,
+    "tensor_parallel": 2,
+    "max_model_len": 1024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024,
+    "target_fp16_draft_int4_marker_count": 2,
+    "all_model_shards_verified": true
+  },
+  "strict_natural_512": {
+    "workload_gate_passed": true,
+    "fresh_response_valid": true,
+    "prompt_count": 12,
+    "cached_tokens_all_zero": true,
+    "class_balanced_median_tok_s": 53.80336491947248,
+    "minimum_tok_s": 54.0,
+    "shortfall_vs_minimum_percent": 0.3641390380139331,
+    "delta_vs_r119_center_percent": -1.1414659578759312,
+    "uplift_vs_51_80808698870573_percent": 3.8512866363927367,
+    "performance_gate_passed": false
+  },
+  "offline_identity": {
+    "complete_arrays_exact_vs_frozen_mtp0_oracle": "8/12",
+    "complete_arrays_exact_vs_r119_attempt_b": "8/12",
+    "divergent_prompts_and_first_zero_based_positions": {
+      "incident-retrospective": 392,
+      "code-review": 400,
+      "technical-guide": 160,
+      "performance-hypotheses": 479
+    },
+    "identity_gate_passed": false,
+    "conclusion": "The fixed selector made rows invariant around the source-M32 arithmetic class, but that class is not the natural M1/M2/M4 class on which the frozen c1 oracle was qualified. Small per-layer changes eventually crossed four near-ties."
+  },
+  "aborted_by_rule": {
+    "canaries_run": false,
+    "medium_prefill_repeat_probe_run": false,
+    "concurrency_run": false,
+    "reason": "The preregistered throughput floor failed; the server was stopped immediately. Offline comparison of the already captured arrays then also failed target identity."
+  },
+  "health": {
+    "graceful_stop_requested": true,
+    "both_devices_normal_after_stop": true,
+    "fault_signature_in_server_log": false,
+    "kernel_journal_available_to_current_user": false,
+    "running_lane_containers_after_stop": 0
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-endpoint-20260902-r140",
+    "operator_result_sha256": "037e131470d4a619d436332120651bb68e31d5e97c3e785d4bac1c148fe3e434",
+    "operator_log_sha256": "512cdd59ddc13f73f2f82f3a2a285c14fad98779d85f474ff61174f8494286ad",
+    "performance_sha256": "2226eef3b0779a918c7d318be755dd65eb0a5cde25c81e852fe4ccf87b6249d7",
+    "server_log_sha256": "5eb2bcabd2c05674838398f96132963f4ebb21c33626f4a098a331270240571f",
+    "container_inspect_sha256": "fa6a906e89b6d9354d53c4506d548fc1074d5a282ada62799b3c4242ee82d7ff",
+    "offline_comparison_sha256": "471b291183859cafa2cd15fefff8814de8bf1af0bd0344f1cb248c491c65656f"
+  },
+  "decision": "Do not promote R139 and do not test concurrency. Preserve natural M1 arithmetic by anchoring the row-invariant reduction to the source-M4 strategy, which the natural control places in the same row class as M1/M2, then seek a scheduling-only wide geometry before another source build."
+}
