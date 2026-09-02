@@ -421,3 +421,14 @@ again remained normal and the kernel log was clean. R114 removes the decoder
 attribute and derives the MLP registry key from `self.linear_attn.prefix`,
 which the compiled call site already retains. See the
 [`R113 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r113-result.json).
+
+R114 removed the compiler-invisible decoder attribute and its inherited
+forward call compiled successfully, but the derived MLP key was still absent
+at `profile_run`. Source inspection then exposed the constructor split:
+`Qwen3_5DecoderLayer` inherits the base forward but explicitly bypasses
+`Qwen3NextDecoderLayer.__init__`. Every R111-R114 registration placed in that
+base constructor was unreachable for this checkpoint. R115 adds only the R114
+registration to the actual Qwen3.5 constructor after it creates `self.mlp`.
+No request ran in R114; both devices stayed normal and its kernel log was
+clean. See the
+[`R114 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r114-result.json).

@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r114",
+  "classification": "startup-failed-treatment-untested",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r114",
+    "id": "sha256:996c8e59fe759e5370ec8a7a6e0b5d4a49984d6efc6079ea30f259d9275e375b",
+    "patch_sha256": "be70a949b4de107a648d5e242b0afda5958ee1779f8ab716a5014717f354d7d4",
+    "installed_source_sha256": "503b7b6fd254bbe498b5df4865402aa59d6ed23d68b1b6c4bdd292075c4c1ed3"
+  },
+  "gates": {
+    "patch_roundtrip_exact": true,
+    "semantic_callsite_gate": true,
+    "r111_through_r113_rejected_by_semantic_gate": true,
+    "model_direct_identity_gate": true,
+    "server_ready": false,
+    "model_requests_run": 0,
+    "treatment_tested": false
+  },
+  "failure": {
+    "phase": "vLLM profile_run after successful fresh compilation",
+    "root_cause": "Qwen3_5DecoderLayer inherits Qwen3NextDecoderLayer.forward but deliberately bypasses Qwen3NextDecoderLayer.__init__. R114's compiled call therefore ran, while its base-constructor MLP registration never executed.",
+    "error": "R114 layer-0 MLP is not registered: language_model.model.layers.0.linear_attn.r114_mlp",
+    "narrow_correction": "On top of R114, add only the same static-context registration to the actual Qwen3_5DecoderLayer constructor immediately after it constructs self.mlp."
+  },
+  "host": {
+    "workers_shutdown_gracefully": true,
+    "both_b70_devices_after_stop": "normal",
+    "new_kernel_fault_or_reset": false,
+    "reboot_or_gpu_reset_requested": false
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r114",
+    "server_log_sha256": "218a9f95b4e5c876a806215e7eb80a50e01f2eefd7c6623badac3c5de9b12d8a",
+    "image_inspect_sha256": "533be73f97b3b0fc7492d243f640c980f7c870a47c2ad4e2d9d82055a50ffeea"
+  },
+  "reporting_boundary": "No output or speed evidence exists; no public claim is permitted."
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-correction-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r115",
+  "status": "preregistered-before-correction-build-and-run",
+  "objective": "Execute R114's unchanged treatment by registering its MLP key in the actual Qwen3_5DecoderLayer constructor used by this checkpoint.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r114",
+    "base_image_id": "sha256:996c8e59fe759e5370ec8a7a6e0b5d4a49984d6efc6079ea30f259d9275e375b",
+    "r114_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r114-result.json"
+  },
+  "single_change": {
+    "add": "Register self.mlp under the R114-derived static-context key in Qwen3_5DecoderLayer.__init__ after its dense MLP construction.",
+    "treatment_arithmetic": "Unchanged from R111-R114.",
+    "compiled_call_and_lookup": "Unchanged from R114."
+  },
+  "mandatory_gates": {
+    "source": "Require registration inside Qwen3_5DecoderLayer.__init__, exact R114 base identity, and installed hashes for both qwen3_next.py and qwen3_5.py.",
+    "startup": "Profile run must execute the single-request control and reach HTTP ready.",
+    "runtime_execution": "Require both single-request-control and split-per-request markers.",
+    "identity": "Warm c1 must be exact before any c2 result is interpreted; all outputs complete and cache-zero.",
+    "workload": "One c1 and two c2 warm repeats, then three c1 and twenty c2 counted repeats."
+  },
+  "decision": {
+    "pass": "Run the treatment factorial without inherited R108 projection tracing, then fresh-server realistic qualification on a clean boot.",
+    "fail": "Reject the treatment if startup or c1 fails; reject it as insufficient if repeated c2 identity fails."
+  },
+  "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset.",
+  "reporting_boundary": "Diagnostic only; no public speed or quality claim."
+}
