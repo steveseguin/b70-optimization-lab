@@ -3764,3 +3764,14 @@ tests 14 real BF16 families x two sentinels x two fresh replicas per arm and
 weights cost by all 532 M1 calls per target decode step, without a server or
 reboot. See the
 [A3 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-singleton-a3-result.md).
+A4a then completed all 112/112 fresh processes with clean health and made the
+deterministic provider exact across processes in all 28 cells, but it failed
+the frozen global promotion contract. Both sentinels of the two `K=10240`
+down-projection families stabilized to a few row values absent from 200 native
+sweeps, so only 24/28 cells passed lossless parity. Weighted component cost was
+favorable at `0.986055x`, but two high-use sentinel points also exceeded the
+`1.020x` local cap. The global flag remains off; no endpoint or protected result
+changed. The narrow deterministic-down-kernel lead is preserved, while the
+active speed step returns to the frozen W13-N32 config-folder qualification.
+See the
+[A4a result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-deterministic-a4a-result.md).
