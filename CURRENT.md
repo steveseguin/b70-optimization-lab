@@ -3801,3 +3801,9 @@ also a pass: 24/24 selection receipts through the live resolver, 8/8 cells
 exact, median `22.223121%`. A56 is frozen as the A55 packet plus the tuned
 M1 map as its sole inference change; it launches after the HC gate-mix and
 HC combine-norm component gates, which run now on the clean Gen4 host.
+The HC gate-mix exact-staged candidate is closed as an XPU exactness
+negative: its first eager call differed from the authority by one BF16 ULP
+(`0.00048828125`) despite full CPU parity, so the promoted-multiply and
+`out=`-typed mean staging is not byte-exact on this backend. No production
+change. See the
+[negative](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-hc-gate-mix-exact-staged-a1-xpu-exactness-negative.md).
