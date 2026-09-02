@@ -393,3 +393,12 @@ of R110's tensor digests may be interpreted. The replacement must defer all
 device synchronization until a later request and must first reproduce the c1
 oracle exactly. See the
 [`R110 result`](../data/2026-09-02-qwen38-fp8-mtp1-decoder-boundary-trace-r110-result.json).
+
+R111 replaced observation with a direct layer-0 MLP request-isolation
+candidate, but it did not reach a model request. Its source and compiled call
+site were valid; during `profile_run`, however, both TP workers found the
+module-global MLP registry empty and failed closed. The treatment is therefore
+untested. R112 changes only module lookup: it attaches the MLP to the existing
+attention object and resolves that object through `ForwardContext.no_compile_layers`,
+the same compiled-boundary mechanism already exercised by R108. See the
+[`R111 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r111-result.json).

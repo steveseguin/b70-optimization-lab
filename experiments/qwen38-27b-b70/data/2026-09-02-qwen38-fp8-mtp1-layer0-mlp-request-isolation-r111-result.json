@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r111",
+  "classification": "startup-failed-treatment-untested",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r111",
+    "id": "sha256:9e5bacd99258d860556bde28dcdfe84b60fc3503ed6263606c45cd53c8b48bb5",
+    "patch_sha256": "16f5f347e04b92af9bb84de3fc3bf6d65c808eb6e6a8855b86441a6a5ddadcec",
+    "installed_source_sha256": "a082bb34ffc183f5510860f9f5823ed89986a8a01d0d85a688b71c83ac427ccf"
+  },
+  "gates": {
+    "patch_roundtrip_exact": true,
+    "semantic_callsite_gate": true,
+    "model_direct_identity_gate": true,
+    "server_ready": false,
+    "model_requests_run": 0,
+    "treatment_tested": false
+  },
+  "failure": {
+    "phase": "vLLM profile_run after successful fresh compilation",
+    "root_cause": "The compiled custom op could not resolve the module-global MLP registry in either TP worker.",
+    "error": "R111 layer-0 MLP is not registered: language_model.model.layers.0.linear_attn",
+    "narrow_correction": "Resolve the live attention object through ForwardContext.no_compile_layers, where R108 already proved lookup survives the compiled boundary, and attach the parent MLP to that object during model construction."
+  },
+  "host": {
+    "workers_shutdown_gracefully": true,
+    "both_b70_devices_after_stop": "normal",
+    "run_time_local": "2026-09-01T22:22:56-04:00 to 2026-09-01T22:26:22-04:00",
+    "reboot_or_gpu_reset_requested": false
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r111",
+    "server_log_sha256": "6b3124772a31f4067bb833402ffc5f37e7c6535f4c1ed92b8d42ab787a9bb4aa",
+    "image_inspect_sha256": "8e6f89546d6a421c20a3fcd2939c22f787311cbc7f61c281559bb316b6abf3de"
+  },
+  "reporting_boundary": "No output or speed evidence exists; no public claim is permitted."
+}

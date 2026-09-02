@@ -1,0 +1,29 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-correction-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r112",
+  "status": "preregistered-before-correction-build-and-run",
+  "objective": "Repeat R111's unchanged layer-0 MLP request-isolation treatment after correcting only its compiled-boundary module lookup.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "base_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "r111_prereg": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r111-prereg.json",
+    "r111_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r111-result.json"
+  },
+  "single_change": {
+    "remove": "Module-global mapping from attention prefix to MLP module.",
+    "add": "Attach the parent layer-0 MLP to its existing QwenGatedDeltaNetAttention object and resolve that object from ForwardContext.no_compile_layers inside the custom op.",
+    "treatment_arithmetic": "Unchanged from R111."
+  },
+  "mandatory_gates": {
+    "startup": "Profile run must execute the single-request control and reach HTTP ready.",
+    "runtime_execution": "Require both single-request-control and split-per-request markers.",
+    "identity": "Warm c1 must be exact before any c2 result is interpreted; all outputs complete and cache-zero.",
+    "workload": "One c1 and two c2 warm repeats, then three c1 and twenty c2 counted repeats."
+  },
+  "decision": {
+    "pass": "Run the treatment factorial without inherited R108 projection tracing, then fresh-server realistic qualification on a clean boot.",
+    "fail": "Reject the treatment if startup or c1 fails; reject it as insufficient if repeated c2 identity fails."
+  },
+  "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset.",
+  "reporting_boundary": "Diagnostic only; no public speed or quality claim."
+}
