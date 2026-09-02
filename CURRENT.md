@@ -3848,3 +3848,14 @@ promoted as lossless until the source is removed; A56's `23.626811 tok/s`
 stands as a speed observation. A59 (logprob-resolution probe: first-step
 determinism, jitter magnitude) is next, then an eager control server. See
 the [A58 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a58-depth-determinism-probe-result.md).
+A59 (same server, logprob probe) captured the decisive detail before its
+third identical request hung the engine: two identical 256-token
+`max_tokens=1` requests returned the same top token with logprobs
+`-1.465927` and `-1.435201`, so the nondeterminism is already in prefill and
+the first decode step, not only in graph replay. The hang was contained on
+GuC 70.72.1 (engine death with GPU page faults at teardown, host up), where
+the same class froze the host on 70.44.1. Suspects, in order: the public
+oneCCL path for prefill-sized messages above the twoshots LL threshold, the
+JIT-compiled QSA split-K/merge attention kernels, PLE UVA ordering, chunked
+prefill. An eager control server (A60) runs the same probe next. See the
+[A59 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a59-logprob-determinism-probe-result.md).
