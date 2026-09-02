@@ -1,0 +1,76 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-profile-aware-selector-strict-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-profile-aware-selector-20260902-r102",
+  "status": "completed-rejected-after-phase-1",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r102-prereg.json",
+  "lineage": {
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-profile-aware-selector-r101",
+    "candidate_image_id": "sha256:2a09b9235e885477c5fe4e84010ed5b07ca25d88502e9ec05e91f3562761c581",
+    "frozen_oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json",
+    "frozen_oracle_sha256": "95a477845815414cb1c87126b75043982b526488e9035f518270d451345d3803"
+  },
+  "warmup_gate": {
+    "distinct_non_suite_prompts": 3,
+    "single_request_arm_warmed": true,
+    "multi_request_arm_warmed": true,
+    "completion_tokens_each": 64,
+    "cached_tokens_all_zero": true
+  },
+  "phase_1_selector_replay": {
+    "required_output_identity": true,
+    "concurrency_1": {
+      "repeats": 2,
+      "oracle_exact": "2/2"
+    },
+    "concurrency_2": {
+      "repeats": 2,
+      "exact_batches": "1/2",
+      "exact_outputs": "3/4"
+    },
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "classification": "failed-output-identity"
+  },
+  "bounded_stability_probe": {
+    "concurrency": 2,
+    "repeats": 10,
+    "exact_batches": "7/10",
+    "failed_repeats": [2, 3, 5],
+    "cache_prompt_exact": "7/10",
+    "index_prompt_exact": "10/10",
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "alternate_cache_prompt_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+    "first_divergence": {
+      "zero_based_token_index": 96,
+      "human_token_number": 97,
+      "expected_token_id": 348,
+      "observed_token_id": 2972
+    }
+  },
+  "selector_evidence": {
+    "profile_r99_arm_logged": true,
+    "live_single_r99_arm_logged": true,
+    "live_multi_r97_arm_logged": true,
+    "interpretation": "The intermittent c2 failure occurred under the intended live-multi R97 arm; it is not a metadata-selector misclassification. R97's earlier single 2/2 observation was insufficient to establish repeat determinism."
+  },
+  "phase_2_public_shape_strict": {
+    "status": "not_run",
+    "reason": "The preregistered phase-1 complete-output identity gate failed. Running or reporting a strict speed attempt would violate the stop rule."
+  },
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful bounded shutdown"
+  },
+  "interpretation": "R101 preserves c1 output identity but does not robustly repair c2. The cache prompt alternates between the exact stream and one stable known-bad stream across otherwise identical cache-zero c2 repeats. The next diagnostic must correlate the outcome with live prefill request ordering before changing arithmetic.",
+  "reporting_boundary": "Rejected diagnostic. Do not publish throughput or update README/site/LocalMaxxing. This boot also contains earlier xe engine resets.",
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-profile-aware-selector-20260902-r102-selector",
+    "selector_replay_sha256": "2bb091e4fec41e22d3171f4ddb43353b97fc6827ef9a2128f4c5e5e52c2b4603",
+    "stability_probe_sha256": "f4fae08af5f11719c2fa5bb48e8d2e61976a930aff7c813d300546ff90aab6d5",
+    "server_log_sha256": "e185a8d74d0e9038dac9466a666ce5a19b66d1a7427ef7f9467a9cec26181cd1",
+    "kernel_journal_sha256": "a470255e3912c044063c57cfc085ab0d0f33aa4eaccba49b13b7d5bdba18f366",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

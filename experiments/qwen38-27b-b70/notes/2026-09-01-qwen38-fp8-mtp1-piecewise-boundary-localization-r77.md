@@ -284,3 +284,17 @@ rows were used, and this boot contains an earlier GPU reset. The next gate is a
 non-tracing, fully warmed, varied-prompt determinism qualification on a clean
 boot. R101's result is
 [`2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r101-result.json`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r101-result.json).
+
+R102 rejected that apparent repair under repetition. After distinct cache-zero
+warmups exercised both selector arms, c1 remained exact in 2/2 attempts, but
+c2 matched only 3/4 complete outputs. A bounded ten-repeat c2 probe then passed
+only 7/10 batches. Every miss was the 31-token `cache-c000` request and every
+miss produced the same known alternate stream (`348` to `2972` at zero-based
+token 96); `index-c001` stayed exact 10/10. The server logged the intended
+live-multi R97 arm and the kernel journal was clean, so this is not selector
+misclassification or prompt caching. R97's earlier single 2/2 observation was
+underpowered and R101 is not a robust causal repair. Per the preregistered stop
+rule, the public-shape strict speed phase was not run. The next diagnostic must
+correlate each output with the live 31/28-token prefill ordering before another
+arithmetic change. See the
+[`R102 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r102-result.json).
