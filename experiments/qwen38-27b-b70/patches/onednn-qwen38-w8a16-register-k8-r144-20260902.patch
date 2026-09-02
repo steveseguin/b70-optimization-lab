@@ -1,0 +1,103 @@
+diff --git a/src/gpu/intel/gemm/jit/generator/pieces/gemm.cxx b/src/gpu/intel/gemm/jit/generator/pieces/gemm.cxx
+index 6ad83b8c7..2f7f74de0 100644
+--- a/src/gpu/intel/gemm/jit/generator/pieces/gemm.cxx
++++ b/src/gpu/intel/gemm/jit/generator/pieces/gemm.cxx
+@@ -960,6 +960,17 @@ bool Generator<hw>::gemmBodyInternal(GEMMProblem &problem, GEMMStrategy &strateg
+     // Accumulate C with panel*panel multiply.
+     if (!gemmAccumulateC(problem, strategy, state)) return false;
+ 
++    // Collapse register-interleaved K chains in the same ascending order as
++    // the corresponding local-K SLM reduction.
++    if (strategy.kRegisterInterleaveChunk) {
++        for (int b = 1; b < state.C_buffers; b++) {
++            map(hw, Tc.real(), state.C_regs[0], state.C_regs[b], strategy,
++                    [&](int simd, GRF dst, GRF src) {
++                        add(simd, dst, dst, src);
++                    });
++        }
++    }
++
+     // Final C horizontal reduction for dot product kernels.
+     gemmDotReduce(problem, strategy, state);
+ 
+diff --git a/src/gpu/intel/gemm/jit/generator/pieces/gemm_setup.cxx b/src/gpu/intel/gemm/jit/generator/pieces/gemm_setup.cxx
+index 379a145f5..fd15a9c22 100644
+--- a/src/gpu/intel/gemm/jit/generator/pieces/gemm_setup.cxx
++++ b/src/gpu/intel/gemm/jit/generator/pieces/gemm_setup.cxx
+@@ -1116,6 +1116,20 @@ bool Generator<hw>::gemmAccumulateCSetup(GEMMProblem &problem, GEMMStrategy &str
+     auto unrollK = strategy.unroll[LoopK];
+     auto unrollKSLM = strategy.unrollKSLM;
+ 
++    if (strategy.kRegisterInterleaveChunk) {
++        constexpr int registerKBuffers = 8;
++        if (!strategy.systolic || strategy.kParallel
++                || strategy.kParallelLocal || strategy.kParallelVariable)
++            stub("Register-interleaved K reduction requires serial systolic K");
++        if (strategy.kRegisterInterleaveChunk != 64
++                || unrollK != registerKBuffers * strategy.kRegisterInterleaveChunk)
++            stub("Register-interleaved K reduction requires kri64 and k512");
++        if (Tc_compute != Type::f32 || Tc != Tc_compute || strategy.dotVL
++                || strategy.cAccumulators || strategy.repackC)
++            stub("Unsupported register-interleaved K reduction type or C path");
++        state.C_buffers = registerKBuffers;
++    }
++
+     // Grab a whole flag register now to do emulated SIMD16 64-bit adds, if needed.
+     FlagRegister simd16EmulationFlag;
+     if (state.emulate.temp[0].isValid() && GRF::bytes(hw) == 64
+diff --git a/src/gpu/intel/gemm/jit/generator/pieces/matrix_multiply.cxx b/src/gpu/intel/gemm/jit/generator/pieces/matrix_multiply.cxx
+index 4aeee7c6e..e43af0750 100644
+--- a/src/gpu/intel/gemm/jit/generator/pieces/matrix_multiply.cxx
++++ b/src/gpu/intel/gemm/jit/generator/pieces/matrix_multiply.cxx
+@@ -487,7 +487,14 @@ void Generator<hw>::outerProductSystolic(int h, int ha_period, int hb_period, in
+                 const RegisterBlock *A_block, *B_block, *C_block;
+                 Subregister A, B, C;
+ 
+-                const int cxCompA = -1, cxCompB = -1, cxCompC = -1, cBuffer = 0;
++                const int cxCompA = -1, cxCompB = -1, cxCompC = -1;
++                int cBuffer = 0;
++                if (strategy.kRegisterInterleaveChunk) {
++                    int h0 = local_k_index(h, ksys,
++                            strategy.kRegisterInterleaveChunk * state.C_buffers,
++                            problem);
++                    cBuffer = h0 / strategy.kRegisterInterleaveChunk;
++                }
+                 auto bdpasScaleArg = [&](const RegisterLayout Xr_scaleLayout, Type Tx_scaleOp,
+                                          GRFMultirange Xr_scaleRegs, bool isA, int x) {
+                     RegData XS;
+diff --git a/src/gpu/intel/gemm/jit/generator/strategy_parser.cpp b/src/gpu/intel/gemm/jit/generator/strategy_parser.cpp
+index f3099c144..f4898ae46 100644
+--- a/src/gpu/intel/gemm/jit/generator/strategy_parser.cpp
++++ b/src/gpu/intel/gemm/jit/generator/strategy_parser.cpp
+@@ -509,7 +509,9 @@ void parseStrategy(const std::string &str, HW hw, const GEMMProblem &problem, GE
+             mod.erase(0,3);
+             strategy.dotVL = mod.empty() ? 1 : std::stoi(mod);
+         } else if (mod.length() >= 2) {
+-            if (mod.substr(0, 2) == "ms")
++            if (mod.length() >= 3 && mod.substr(0, 3) == "kri")
++                strategy.kRegisterInterleaveChunk = stoi(mod.substr(3));
++            else if (mod.substr(0, 2) == "ms")
+                 strategy.mSplitThresh = stoi(mod.substr(2));
+             else if (mod.substr(0, 2) == "ns")
+                 strategy.nSplitThresh = stoi(mod.substr(2));
+@@ -883,6 +885,8 @@ std::string unparseStrategy(HW hw, const GEMMProblem &problem, const GEMMStrateg
+                                                                  " kr");
+     if (strategy.fillGoal)          s << " fg" << strategy.fillGoal * (1. / 16);
+     if (strategy.kInterleave)       s << " ki" << strategy.kInterleaveChunk;
++    if (strategy.kRegisterInterleaveChunk)
++        s << " kri" << strategy.kRegisterInterleaveChunk;
+ 
+     if (strategy.fixedSystolic)
+         s << " fs";
+diff --git a/src/gpu/intel/gemm/jit/include/gemmstone/strategy.hpp b/src/gpu/intel/gemm/jit/include/gemmstone/strategy.hpp
+index 5cb1da266..aea94e404 100644
+--- a/src/gpu/intel/gemm/jit/include/gemmstone/strategy.hpp
++++ b/src/gpu/intel/gemm/jit/include/gemmstone/strategy.hpp
+@@ -196,6 +196,7 @@ struct GEMMStrategyPOD : public CommonStrategy {
+                                     ZPAD(A, 1)
+     int fmaSIMD = 0;                             // Vector length for FMA (0 = default = 2 GRFs).
+     int kChain = 1;                              // # of FMAs to chain in k dimension.
++    int kRegisterInterleaveChunk = 0;            // K chunk per C register buffer (0 = disabled).
+     int dotVL = 0;                               // If > 0, use dot products of the given length, instead of outer products.
+     int wg[3] = {0,0,0};                         // m/n/k workgroup sizes, 0 if unconstrained. Indexed by LoopType.
+     WGType forceWGUpdate = WGDynamic;            // Force work group update type.
