@@ -20,14 +20,11 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-**Device lock (2026-09-02, from ~19:05 EDT):** the R147 campaign is running
-unattended on both B70s from
-`experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147.sh`
-(containers `qwen38-fp8-r147-*`, port 18128, artifact root
-`/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147`).
-It launches five two-B70 servers in sequence and takes roughly two to three
-hours. Do not launch A62 or any other GPU work until that root contains
-`campaign-end.txt` or `ABORTED`; check `campaign.log` there for progress.
+**No model launch on this boot (2026-09-02 19:40 EDT):** R147 mtp1-b hit a
+`bcs` copy-engine fault, CAT errors, an engine reset, and a device coredump on
+`0000:e3:00.0` during weight staging. Both B70s report `normal` and passed
+per-card compute plus two-card XCCL afterwards, but the standing rule applies:
+reload xe or reboot before the next launch (A62 included).
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
@@ -165,8 +162,14 @@ same-image oracle, so R141-R146 (natural-M1 arithmetic reproduction at 1.31x
 M128 cost) chase a constraint the identity claim does not need. R147 is running
 the R139 image under that rule (two same-image MTP0 controls, two MTP1
 candidates, the 100-300-token repeat probe, the R63 c1-c64 identity ladder;
-performance recorded, not gated). R146 is paused until R147 reports. The
-publication decision between an identity-qualified profile and the faster
+performance recorded, not gated). R146 is paused until R147 reports. R147 completed three of five servers
+before the fault above: two same-image MTP0 controls match 12/12 (G1), MTP1
+attempt a matches same-image MTP0 12/12 at `54.312987 tok/s` (0.2% under the
+R119 center, so R140's speed rejection was noise), and the same-image MTP0
+controls are 1.2% under the natural-kernel controls. The c1-c64 ladder and the
+168-256-token repeat probe still have to run on a fresh boot; see the
+[`R147 partial note`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-partial.md).
+The publication decision between an identity-qualified profile and the faster
 R62/R119 headline is the user's.
  Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

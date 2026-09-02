@@ -1,0 +1,101 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-prereg.json",
+  "status": "aborted: mtp1-b: server did not become healthy\nCR2: xe 0000:e3:00.0 logged 34 bcs fault responses, engine-memory CAT errors, one bcs engine reset and a device coredump at 19:18:55 during mtp1-b weight staging; container stopped by CR2 (docker stop timed out at 180 s, SIGKILL); both devices normal and per-card compute plus two-card XCCL passed afterwards; no further launch on this boot per the standing fault rule",
+  "campaign_complete": false,
+  "aborted": "mtp1-b: server did not become healthy\nCR2: xe 0000:e3:00.0 logged 34 bcs fault responses, engine-memory CAT errors, one bcs engine reset and a device coredump at 19:18:55 during mtp1-b weight staging; container stopped by CR2 (docker stop timed out at 180 s, SIGKILL); both devices normal and per-card compute plus two-card XCCL passed afterwards; no further launch on this boot per the standing fault rule",
+  "boot_id": "9e05adaf-d974-4a9f-9a83-0bde8a2fa0db",
+  "repo_head_at_launch": "5aed87efb944b903836427220dd6c94ef5a8b650",
+  "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+  "gates_passed": {
+    "G1": true,
+    "G2": false,
+    "G3": false,
+    "G4": false,
+    "G5": false,
+    "G6": false
+  },
+  "identity_qualified": false,
+  "comparisons": {
+    "G1_mtp0_a_vs_mtp0_b": "12/12",
+    "G2_mtp1_a_vs_mtp1_b": null,
+    "G3_mtp1_a_vs_mtp0_a": "12/12",
+    "G3_mtp1_b_vs_mtp0_a": null,
+    "information_mtp0_a_vs_frozen_r54a": "8/12",
+    "information_mtp1_a_vs_frozen_r54a": "8/12"
+  },
+  "attempts": {
+    "mtp0-a": {
+      "label": "mtp0-a",
+      "present": true,
+      "class_balanced_median_tok_s": 33.33695011501167,
+      "rows": 12,
+      "cached_tokens_all_zero": true,
+      "realistic_final_gate_passed": true,
+      "pre_canaries_pass_all": true,
+      "post_canaries_pass_all": true,
+      "fp16_target_int4_draft_marker_count": 0,
+      "server_fault_lines": 0,
+      "performance_sha256": "091320fe143550b597d76c1959bbaea75cb3d136d0efbbc9f922a41c189c280b",
+      "server_log_sha256": "0c156d12bc0b0dad06453f39221390aabd62abef5ddfa4646f975ed497f7011d"
+    },
+    "mtp0-b": {
+      "label": "mtp0-b",
+      "present": true,
+      "class_balanced_median_tok_s": 33.31372875840961,
+      "rows": 12,
+      "cached_tokens_all_zero": true,
+      "realistic_final_gate_passed": true,
+      "pre_canaries_pass_all": true,
+      "post_canaries_pass_all": true,
+      "fp16_target_int4_draft_marker_count": 0,
+      "server_fault_lines": 0,
+      "performance_sha256": "242946990111d69afb01797c1436a87da5cc0c7cb120dad8c3940399262746ef",
+      "server_log_sha256": "35437b3727e91843f54360d9cd31e1d110bcec14b58cf372b624dbb740324e34"
+    },
+    "mtp1-a": {
+      "label": "mtp1-a",
+      "present": true,
+      "class_balanced_median_tok_s": 54.31298729660077,
+      "rows": 12,
+      "cached_tokens_all_zero": true,
+      "realistic_final_gate_passed": true,
+      "pre_canaries_pass_all": true,
+      "post_canaries_pass_all": true,
+      "fp16_target_int4_draft_marker_count": 2,
+      "server_fault_lines": 0,
+      "performance_sha256": "2419500b4b2b215c2cf46eda616f307869cf07c0432da1992fd5644968a6ceaf",
+      "server_log_sha256": "f7ec1ca30186ac7e8d46728a078070091f5d5dbb833a2ef82af5ae0dab9de97c"
+    },
+    "mtp1-b": {
+      "label": "mtp1-b",
+      "present": false
+    }
+  },
+  "medium_prefill_repeat_probe": null,
+  "identity_ladder": null,
+  "performance": {
+    "not_a_gate": true,
+    "mtp1_attempts_tok_s": [
+      54.31298729660077
+    ],
+    "mtp0_attempts_tok_s": [
+      33.33695011501167,
+      33.31372875840961
+    ],
+    "mtp0_center_tok_s": 33.325339436710635,
+    "mtp0_delta_vs_r54_control_percent": -1.2100147369422554
+  },
+  "postflight_files": [
+    "mtp0-a-post-compute-xccl.txt",
+    "mtp0-a-post-kernel-journal.txt",
+    "mtp0-a-post-xpu-smi-discovery.txt",
+    "mtp0-b-post-compute-xccl.txt",
+    "mtp0-b-post-kernel-journal.txt",
+    "mtp0-b-post-xpu-smi-discovery.txt",
+    "mtp1-a-post-compute-xccl.txt",
+    "mtp1-a-post-kernel-journal.txt",
+    "mtp1-a-post-xpu-smi-discovery.txt"
+  ]
+}
