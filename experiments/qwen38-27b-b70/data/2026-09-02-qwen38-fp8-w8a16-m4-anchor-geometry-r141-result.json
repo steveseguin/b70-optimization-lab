@@ -1,0 +1,79 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-m4-anchor-geometry-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-m4-anchor-geometry-20260902-r141",
+  "status": "natural-m1-anchor-proven-catalog-geometry-closed-for-latency",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-m4-anchor-geometry-r141-prereg.json",
+  "loader_correction": {
+    "first_natural_process_reached_xpu": false,
+    "symptom": "The developer extension's build-host RUNPATH did not include the installed package directory and therefore could not resolve libmhc_kernels_xe_2.so.",
+    "correction": "Add the installed vllm_xpu_kernels package directory to LD_LIBRARY_PATH, matching the earlier developer-mode sweeps.",
+    "candidate_or_artifact_changed": false
+  },
+  "anchor": {
+    "source_m": 4,
+    "natural_m1_complete_output_equal_on_attn_qkv_proj": true,
+    "natural_m1_complete_output_equal_on_mlp_gate_up_proj": true,
+    "one_row_class_m1_through_m512_both_shapes": true,
+    "all_complete_outputs_exact_across_row_counts": true,
+    "repeat_permutation_and_padding_exact": true,
+    "conclusion": "The eight-way local-K source-M4 strategy is the correct arithmetic anchor for retaining the promoted natural-c1 oracle."
+  },
+  "candidates": {
+    "m16_n16_wg4x1x8": {
+      "valid": true,
+      "complete_outputs_equal_anchor_both_shapes": true,
+      "two_shape_call_weighted_ratio_vs_natural": {"M2": 0.970618, "M64": 1.247138, "M128": 2.006559, "M168": 5.163128, "M256": 6.132017},
+      "decision": "reject"
+    },
+    "m16_n16_wg4x2x8": {
+      "valid": false,
+      "failure": "Total number of work-items in a work-group cannot exceed 512 at the first M1 call.",
+      "run_log_sha256": "a1d141161717c32864a1ca7316bac6a23d0fa2d4d1f03057dc98dcd782c60a69",
+      "decision": "reject"
+    },
+    "m32_n32_wg4x1x8": {
+      "valid": true,
+      "complete_outputs_equal_anchor_both_shapes": true,
+      "two_shape_call_weighted_ratio_vs_natural": {"M2": 1.008544, "M64": 0.991228, "M128": 1.466904, "M168": 1.677056, "M256": 1.909370},
+      "decision": "reject"
+    },
+    "m32_n32_wg2x2x8": {
+      "valid": true,
+      "complete_outputs_equal_anchor_both_shapes": true,
+      "two_shape_call_weighted_ratio_vs_natural": {"M2": 1.010938, "M64": 0.903257, "M128": 1.349335, "M168": 1.548408, "M256": 1.749655},
+      "decision": "reject"
+    }
+  },
+  "stability": {
+    "all_candidate_samples_max_min_lte_1_15": true,
+    "natural_qkv_m64_first_run_max_min": 1.7646,
+    "natural_qkv_m64_repeat_max_min": 1.0116,
+    "natural_qkv_m2_repeat_max_min": 1.3610,
+    "interpretation": "The repeated M64 control is stable. Natural M2 retained isolated timing drift, but every candidate is already rejected by stable M128 measurements, so no pass depends on M2."
+  },
+  "gate": {
+    "identity_mechanism_passed": true,
+    "decode_ratio_ceiling": 1.03,
+    "best_m128_two_shape_weighted_ratio": 1.349335,
+    "decode_performance_passed": false,
+    "prefill_ratio_ceiling": 2.0,
+    "best_m168_two_shape_weighted_ratio": 1.548408,
+    "best_m256_two_shape_weighted_ratio": 1.749655,
+    "prefill_performance_passed": true,
+    "expand_to_six_shapes": false,
+    "source_selector_or_server_allowed": false
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "both_devices_normal_after_all_cases": true,
+    "new_fault_or_reset_visible_to_current_user": false,
+    "server_launched": false
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-m4-anchor-geometry-20260902-r141",
+    "summary_sha256": "b67d3a42077faa9896019bb6d8ea7e71f0f44051c50121383bb955eedc0df12b",
+    "sha256_manifest_bytes": 4321,
+    "sha256_manifest_sha256": "cdcf9d00fc1914ad7f1c18690e87d3b72b17eb81ad3c014d62f2d1cf5970db10"
+  },
+  "decision": "Close oneDNN catalog geometry for natural-M1 anchoring. The eight-way K split reproduces the required arithmetic but its cross-workgroup reduction cost cannot meet c64. The next implementation must use a purpose-built fixed-reduction kernel that reproduces the source-M4 accumulation order while exposing independent M/N tiles without the catalog strategy's scheduling overhead."
+}
