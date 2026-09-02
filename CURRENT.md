@@ -3838,3 +3838,13 @@ Installing it and reloading xe (or rebooting) is the next corrective step
 and needs explicit authorization. A57's depth-determinism probe did not run
 and is relaunchable at attempt 58. See the
 [freeze note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a57-host-freeze-at-gpu-worker-init.md).
+On upstream GuC 70.72.1 (installed and reloaded in place, user-authorized)
+the A58 server started normally and the same-server depth probe ran to
+completion: the full-graph line is run-to-run nondeterministic at every
+prompt depth from 256 to 2048 tokens (three identical greedy requests,
+three different outputs, divergence within 9--16 tokens). The frozen short
+battery's exactness is margin, not exact compute. No graph-line speed may be
+promoted as lossless until the source is removed; A56's `23.626811 tok/s`
+stands as a speed observation. A59 (logprob-resolution probe: first-step
+determinism, jitter magnitude) is next, then an eager control server. See
+the [A58 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a58-depth-determinism-probe-result.md).
