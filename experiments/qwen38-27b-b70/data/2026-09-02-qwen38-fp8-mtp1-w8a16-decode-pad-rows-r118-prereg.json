@@ -1,0 +1,22 @@
+{
+ "schema": "neural.download.qwen38-fp8-mtp1-w8a16-decode-pad-rows-prereg.v1",
+ "campaign_id": "qwen38-fp8-tp2-mtp1-w8a16-decode-pad-rows-20260902-r118",
+ "status": "preregistered-before-run",
+ "objective": "Performance screen of one lead from the CR1 kernel census: the oneDNN fp8_gemm_w8a16 kernel selected for the attention qkv projection at M<=16 measured about 2.7x the latency of the M=32 kernel (172-183 us versus 66 us, random data, one GPU), while every other production shape sits on a flat plateau through M=32. R118 pads every W8A16 GEMM whose row count is below a bucket up to that bucket inside an opaque custom op and slices the result.",
+ "lineage": {
+  "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-r99-all-phases-r117",
+  "base_image_id": "sha256:52fe73b06d0cbef8c2a007f48f06ff77831b2589fec5d04590e10f079266eedf",
+  "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118",
+  "candidate_image_id": "sha256:95742ce8493671fb28b0b53db77a2f0c240e8d82355f20b756ab2479d037b8d0",
+  "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-w8a16-decode-pad-rows-r118-20260902.patch",
+  "patch_sha256": "9853f37feba7806ca62ab210efd47cd0dc4d6ef12dcde5d0e1e8d915f3be2a67",
+  "installed_xpu_source_sha256": "e9addee16baae25bfc603a26070cfd9558be8f3bba63fee16642c439288ad752",
+  "validator": "tools/validate-xpu-w8a16-decode-pad-rows-r118.py"
+ },
+ "single_change": "Runtime env VLLM_XPU_W8A16_DECODE_PAD_ROWS: control 0 (unchanged fp8_gemm_w8a16 call), candidate 32. Same image, same flags, same boot, servers run back to back.",
+ "expected_arithmetic_effect": "Padding moves c1 decode GEMMs from the census M-class {1-4} to {12-48}, so candidate token streams are a different valid rounding path and are not compared to the frozen R72 oracle. Control and candidate c1 streams are compared to each other only to confirm coherence (any divergence must be a near-tie continuation, not garbage).",
+ "measurement": "Concurrency-oracle harness at c1 with regenerated per-server oracle, 5 repeats, 128-token completions, cache disabled. Primary screen metric: median c1 aggregate wall tok/s over the 5 repeats, candidate versus control on the same boot. A 3% or larger gain advances the candidate to the strict 12-prompt realistic suite on a clean boot; below that it is closed.",
+ "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset. This boot contains an earlier GPU reset; screening only.",
+ "reporting_boundary": "Diagnostic screen. No README, website, LocalMaxxing, or public speed/quality update.",
+ "amendment_before_candidate_run": "The first candidate attempt ran unpadded because the repro launcher forwards only an explicit env allowlist and VLLM_XPU_W8A16_DECODE_PAD_ROWS was not in it (no 'Unknown vLLM environment variable' line for it in that server log). That run is kept as a second control replicate (control2). The launcher now forwards the variable, the R118 op logs 'R118 W8A16 padded GEMM executed' / 'R118 W8A16 unpadded GEMM executed' markers, and the image was rebuilt; the padded marker is a mandatory gate for the candidate arm."
+}

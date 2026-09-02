@@ -1,0 +1,101 @@
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@ -14,12 +14,76 @@
+     kFp8StaticTensorSym,
+     kFp8StaticTokenSym,
+ )
++from vllm.logger import init_logger
+ from vllm.model_executor.utils import replace_parameter
+ from vllm.platforms import current_platform
+ 
+ from .BlockScaledMMLinearKernel import Fp8BlockScaledMMLinearKernel
+ from .ScaledMMLinearKernel import FP8ScaledMMLinearKernel, FP8ScaledMMLinearLayerConfig
+ 
++logger = init_logger(__name__)
++
++
++def _w8a16_decode_pad_rows() -> int:
++    """R118: pad small-M W8A16 GEMMs to a fixed row bucket (0 disables)."""
++    raw = os.environ.get("VLLM_XPU_W8A16_DECODE_PAD_ROWS", "0").strip()
++    try:
++        value = int(raw)
++    except ValueError as exc:
++        raise RuntimeError(
++            "VLLM_XPU_W8A16_DECODE_PAD_ROWS must be an integer"
++        ) from exc
++    if value < 0 or value > 512:
++        raise RuntimeError("VLLM_XPU_W8A16_DECODE_PAD_ROWS must be in 0..512")
++    return value
++
++
++def _xpu_w8a16_padded_gemm(
++    A: torch.Tensor,
++    B_t: torch.Tensor,
++    Bs_t: torch.Tensor,
++    pad_rows: int,
++) -> torch.Tensor:
++    """Run fp8_gemm_w8a16 with M padded up to ``pad_rows`` when smaller.
++
++    Opaque to the compiler so the row-count branch is a live runtime choice
++    (R95 showed a Python shape branch inside the compiled region freezes).
++    The census (CR1) measured the oneDNN kernel selected for M<=16 on the
++    attention qkv shape at about 2.7x the M=32 kernel's latency, while the
++    other shapes sit on a flat plateau up to M=32.
++    """
++    rows = A.shape[0]
++    if 0 < rows < pad_rows:
++        logger.warning_once(
++            "R118 W8A16 padded GEMM executed (rows below %s padded)", pad_rows
++        )
++        padded = A.new_zeros((pad_rows, A.shape[1]))
++        padded[:rows] = A
++        return torch.ops._xpu_C.fp8_gemm_w8a16(padded, B_t, Bs_t, None)[:rows]
++    logger.warning_once("R118 W8A16 unpadded GEMM executed (rows at or above bucket)")
++    return torch.ops._xpu_C.fp8_gemm_w8a16(A, B_t, Bs_t, None)
++
++
++def _xpu_w8a16_padded_gemm_fake(
++    A: torch.Tensor,
++    B_t: torch.Tensor,
++    Bs_t: torch.Tensor,
++    pad_rows: int,
++) -> torch.Tensor:
++    del Bs_t, pad_rows
++    return A.new_empty((A.shape[0], B_t.shape[1]))
++
++
++if current_platform.is_xpu():
++    from vllm.utils.torch_utils import direct_register_custom_op
++
++    direct_register_custom_op(
++        op_name="xpu_w8a16_padded_gemm",
++        op_func=_xpu_w8a16_padded_gemm,
++        mutates_args=[],
++        fake_impl=_xpu_w8a16_padded_gemm_fake,
++    )
++
+ 
+ class XPUW8A8FP8LinearKernel(FP8ScaledMMLinearKernel):
+     _SUPPORTED_ACT_QUANT_KEYS = {
+@@ -206,6 +270,7 @@
+             # activation directly. Skip dynamic activation quantization in
+             # Fp8BlockScaledMMLinearKernel.apply_weights.
+             self.apply_input_quant = False
++        self._decode_pad_rows = _w8a16_decode_pad_rows() if self._use_w8a16 else 0
+ 
+     @classmethod
+     def is_supported(
+@@ -292,6 +357,13 @@
+         # Bs is stored as [n_blocks, k_blocks] view; .t() recovers the
+         # contiguous [k_blocks, n_blocks] buffer that oneDNN expects.
+         if self._use_w8a16:
++            if self._decode_pad_rows:
++                return torch.ops.vllm.xpu_w8a16_padded_gemm(
++                    A,
++                    B.t(),
++                    Bs.t(),
++                    self._decode_pad_rows,
++                )
+             return torch.ops._xpu_C.fp8_gemm_w8a16(
+                 A,
+                 B.t(),
