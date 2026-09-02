@@ -342,6 +342,23 @@ and 5.64x their paired static oneDNN calls. The arithmetic design is a valid
 row-invariant reference, but this Triton lowering is closed for service. No
 server was launched. See the [R121 result](../data/2026-09-02-qwen38-fp8-w8a16-triton-row-invariant-r121-result.json).
 
+### R122/R122b: fixed-M4 batched oneDNN screen (closed)
+
+R122 encoded activations as `[B,4,K]`, a shared weight as `[1,K,N]`, and block
+scales over the last two weight dimensions. The first attempt safely failed
+before GEMM because oneDNN accepts exactly two scale-group dimensions, not a
+rank-sized vector. R122b corrected only that API detail.
+
+R122b was fast: across B1, B8, B32, and B64 its attention-output latency was
+0.99-1.14x the natural flattened call, and attention QKV was 1.00-1.02x. It was
+not row invariant. Attention output formed six row-0 classes as B varied and
+failed an arbitrary B32 row permutation; QKV formed five classes. Only B1 was
+bitwise equal to independent static M4 calls. Thus oneDNN still selects
+B-dependent arithmetic even when the logical per-batch M is fixed. A viable
+oneDNN solution must pin its implementation/reduction strategy, not merely a
+descriptor dimension. No server was launched. See the
+[structured result](../data/2026-09-02-qwen38-fp8-w8a16-fixed-m4-batch-r122b-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
