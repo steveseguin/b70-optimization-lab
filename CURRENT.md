@@ -3827,3 +3827,14 @@ so the certifiable lossless context currently ends below 2K prompts. Next:
 a same-server depth sweep (256--2048 tokens, repeated rows) to locate the
 boundary, then the collective and chunked-prefill suspects. See the
 [A56 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a56-w13-n32-map-endpoint-result.md).
+At 11:39 EDT the host froze during A57's four-GPU worker initialization
+with a clean SSD link (BIOS 2.4a, Gen4, zero corrected events), 124 GB free,
+no pressure, and no BMC event; the user reset it at 11:43. This separates the
+journal-less freeze class from the root-SSD link. Every boot logs that the
+B70 GuC firmware is 70.44.1 against the driver's recommended 70.54.0; Ubuntu's
+pending linux-firmware carries the byte-identical file, while upstream ships
+70.72.1, now staged on the external drive behind a dry-run-default installer.
+Installing it and reloading xe (or rebooting) is the next corrective step
+and needs explicit authorization. A57's depth-determinism probe did not run
+and is relaunchable at attempt 58. See the
+[freeze note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a57-host-freeze-at-gpu-worker-init.md).
