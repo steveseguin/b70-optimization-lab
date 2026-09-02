@@ -1,0 +1,129 @@
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -91,7 +91,7 @@
+     hidden_states: torch.Tensor,
+     attention_prefix: str,
+ ) -> torch.Tensor:
+-    """R114: run each packed prefill request through layer-0 MLP alone."""
++    """R116: run every active request through the layer-0 MLP alone."""
+     context = get_forward_context()
+     mlp_context_prefix = f"{attention_prefix}.r114_mlp"
+     mlp = context.no_compile_layers.get(mlp_context_prefix)
+@@ -105,32 +105,86 @@
+         if isinstance(metadata_raw, dict)
+         else None
+     )
++    if not isinstance(metadata, GDNAttentionMetadata):
++        logger.warning_once("R116 layer-0 MLP profile control executed")
++        return mlp(hidden_states)
++
++    num_non_spec = metadata.num_prefills + metadata.num_decodes
++    num_spec = metadata.num_spec_decodes
++    num_requests = num_non_spec + num_spec
++    if num_requests <= 1:
++        logger.warning_once("R116 layer-0 MLP single-request control executed")
++        return mlp(hidden_states)
++
++    def _lengths(starts: torch.Tensor | None, count: int) -> list[int]:
++        if count == 0:
++            return []
++        if starts is None:
++            raise RuntimeError("R116 MLP request starts are missing")
++        values = (
++            starts[: count + 1].detach().cpu().to(torch.int64).tolist()
++        )
++        if len(values) != count + 1 or int(values[0]) != 0:
++            raise RuntimeError("R116 MLP request starts are malformed")
++        lengths = [
++            int(stop) - int(start)
++            for start, stop in zip(values, values[1:])
++        ]
++        if any(length <= 0 for length in lengths):
++            raise RuntimeError("R116 MLP isolation found an empty request")
++        return lengths
++
++    spec_lengths = _lengths(metadata.spec_query_start_loc, num_spec)
++    non_spec_starts = metadata.non_spec_query_start_loc
++    if non_spec_starts is None and metadata.num_decodes == 0:
++        non_spec_starts = metadata.prefill_query_start_loc
++    non_spec_lengths = _lengths(non_spec_starts, num_non_spec)
++
++    if num_spec and num_non_spec:
++        masks = metadata.spec_sequence_masks
++        if masks is None:
++            raise RuntimeError("R116 MLP spec request mask is missing")
++        mask_values = (
++            masks[:num_requests].detach().cpu().to(torch.bool).tolist()
++        )
++        if (
++            len(mask_values) != num_requests
++            or sum(bool(value) for value in mask_values) != num_spec
++        ):
++            raise RuntimeError("R116 MLP spec request mask is malformed")
++        spec_iter = iter(spec_lengths)
++        non_spec_iter = iter(non_spec_lengths)
++        request_lengths = [
++            next(spec_iter) if is_spec else next(non_spec_iter)
++            for is_spec in mask_values
++        ]
++    elif num_spec:
++        request_lengths = spec_lengths
++    else:
++        request_lengths = non_spec_lengths
++
++    boundaries = [0]
++    for length in request_lengths:
++        boundaries.append(boundaries[-1] + length)
++    if len(boundaries) != num_requests + 1:
++        raise RuntimeError("R116 MLP request count does not match boundaries")
++    if boundaries[-1] != hidden_states.shape[0]:
++        raise RuntimeError(
++            "R116 MLP boundaries do not cover input rows: "
++            f"{boundaries[-1]} != {hidden_states.shape[0]}"
++        )
++
+     pure_prefill = (
+-        isinstance(metadata, GDNAttentionMetadata)
+-        and metadata.num_prefills > 0
++        metadata.num_prefills == num_requests
+         and metadata.num_decodes == 0
+         and metadata.num_spec_decodes == 0
+-        and metadata.prefill_query_start_loc is not None
+-    )
+-    if not pure_prefill or metadata.num_prefills == 1:
+-        logger.warning_once("R114 layer-0 MLP single-request control executed")
+-        return mlp(hidden_states)
+-
+-    assert isinstance(metadata, GDNAttentionMetadata)
+-    assert metadata.prefill_query_start_loc is not None
+-    boundaries = (
+-        metadata.prefill_query_start_loc[: metadata.num_prefills + 1]
+-        .detach()
+-        .cpu()
+-        .tolist()
+     )
+-    boundaries = [int(value) for value in boundaries]
+-    if boundaries[0] != 0 or boundaries[-1] != hidden_states.shape[0]:
+-        raise RuntimeError("R114 MLP boundaries do not cover input rows")
+-    if any(stop <= start for start, stop in zip(boundaries, boundaries[1:])):
+-        raise RuntimeError("R114 MLP isolation found an empty request")
+-
+-    logger.warning_once("R114 layer-0 MLP split-per-request treatment executed")
++    if pure_prefill:
++        logger.warning_once("R116 layer-0 MLP multi-prefill treatment executed")
++    else:
++        logger.warning_once(
++            "R116 layer-0 MLP multi-request decode-or-mixed treatment executed"
++        )
+     result = torch.cat(
+         [
+             mlp(hidden_states[start:stop])
+@@ -139,7 +193,7 @@
+         dim=0,
+     )
+     if result.shape != hidden_states.shape:
+-        raise RuntimeError("R114 layer-0 MLP returned the wrong shape")
++        raise RuntimeError("R116 layer-0 MLP returned the wrong shape")
+     return result
+ 
+ 
