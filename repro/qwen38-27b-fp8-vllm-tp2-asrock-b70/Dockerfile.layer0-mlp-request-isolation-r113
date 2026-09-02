@@ -1,0 +1,28 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108
+FROM ${BASE_IMAGE}
+
+ARG LAYER0_MLP_ISOLATION_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-layer0-mlp-request-isolation-r113-20260902.patch /tmp/layer0-mlp-isolation.patch
+COPY validate-qwen-layer0-mlp-isolation-r113.py /tmp/validate-qwen-layer0-mlp-isolation-r113.py
+
+RUN test "$(sha256sum /tmp/layer0-mlp-isolation.patch | awk '{print $1}')" = \
+        "${LAYER0_MLP_ISOLATION_PATCH_SHA256}" \
+    && patch --batch --verbose --fuzz=0 -p1 \
+        -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/layer0-mlp-isolation.patch \
+        > /tmp/layer0-mlp-isolation.patch.log 2>&1 \
+    && ! grep -Eiq \
+        'trailing garbage|malformed|FAILED|ignored|reversed|offset' \
+        /tmp/layer0-mlp-isolation.patch.log \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py \
+    && /opt/venv/bin/python /tmp/validate-qwen-layer0-mlp-isolation-r113.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py \
+    && rm -f /tmp/layer0-mlp-isolation.patch \
+        /tmp/layer0-mlp-isolation.patch.log \
+        /tmp/validate-qwen-layer0-mlp-isolation-r113.py
+
+LABEL neural.download.composite.base.r108="sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4" \
+      neural.download.vllm.layer0-mlp-isolation.patch.sha256="${LAYER0_MLP_ISOLATION_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-layer0-mlp-request-isolation-r113"

@@ -1,0 +1,164 @@
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Qwen3Next model."""
+
++import os
+ from collections.abc import Iterable
+ from itertools import islice
+
+@@ -10,7 +11,12 @@
+
+ from vllm._aiter_ops import rocm_aiter_ops
+ from vllm.compilation.decorators import support_torch_compile
+-from vllm.config import CacheConfig, ModelConfig, VllmConfig
++from vllm.config import (
++    CacheConfig,
++    ModelConfig,
++    VllmConfig,
++    get_current_vllm_config,
++)
+ from vllm.distributed import (
+     get_ep_group,
+     get_pp_group,
+@@ -18,6 +24,7 @@
+     tensor_model_parallel_all_gather,
+     tensor_model_parallel_reduce_scatter,
+ )
++from vllm.forward_context import get_forward_context
+ from vllm.logger import init_logger
+ from vllm.model_executor.layers.attention import Attention
+ from vllm.model_executor.layers.fused_moe import FusedMoEFactory
+@@ -51,7 +58,9 @@
+ from vllm.platforms import current_platform
+ from vllm.sequence import IntermediateTensors
+ from vllm.transformers_utils.configs.qwen3_next import Qwen3NextConfig
++from vllm.utils.torch_utils import direct_register_custom_op
+ from vllm.v1.attention.backend import AttentionType
++from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+
+ from .interfaces import (
+     EagleModelMixin,
+@@ -78,6 +87,79 @@
+ KVCache = tuple[torch.Tensor, torch.Tensor]
+
+
++def _request_isolated_qwen_layer0_mlp_prefill_xpu(
++    hidden_states: torch.Tensor,
++    mlp_context_prefix: str,
++    attention_prefix: str,
++) -> torch.Tensor:
++    """R113: run each packed prefill request through layer-0 MLP alone."""
++    context = get_forward_context()
++    mlp = context.no_compile_layers.get(mlp_context_prefix)
++    if mlp is None:
++        raise RuntimeError(
++            f"R113 layer-0 MLP is not registered: {mlp_context_prefix}"
++        )
++    metadata_raw = context.attn_metadata
++    metadata = (
++        metadata_raw.get(attention_prefix)
++        if isinstance(metadata_raw, dict)
++        else None
++    )
++    pure_prefill = (
++        isinstance(metadata, GDNAttentionMetadata)
++        and metadata.num_prefills > 0
++        and metadata.num_decodes == 0
++        and metadata.num_spec_decodes == 0
++        and metadata.prefill_query_start_loc is not None
++    )
++    if not pure_prefill or metadata.num_prefills == 1:
++        logger.warning_once("R113 layer-0 MLP single-request control executed")
++        return mlp(hidden_states)
++
++    assert isinstance(metadata, GDNAttentionMetadata)
++    assert metadata.prefill_query_start_loc is not None
++    boundaries = (
++        metadata.prefill_query_start_loc[: metadata.num_prefills + 1]
++        .detach()
++        .cpu()
++        .tolist()
++    )
++    boundaries = [int(value) for value in boundaries]
++    if boundaries[0] != 0 or boundaries[-1] != hidden_states.shape[0]:
++        raise RuntimeError("R113 MLP boundaries do not cover input rows")
++    if any(stop <= start for start, stop in zip(boundaries, boundaries[1:])):
++        raise RuntimeError("R113 MLP isolation found an empty request")
++
++    logger.warning_once("R113 layer-0 MLP split-per-request treatment executed")
++    result = torch.cat(
++        [
++            mlp(hidden_states[start:stop])
++            for start, stop in zip(boundaries, boundaries[1:])
++        ],
++        dim=0,
++    )
++    if result.shape != hidden_states.shape:
++        raise RuntimeError("R113 layer-0 MLP returned the wrong shape")
++    return result
++
++
++def _request_isolated_qwen_layer0_mlp_prefill_xpu_fake(
++    hidden_states: torch.Tensor,
++    mlp_context_prefix: str,
++    attention_prefix: str,
++) -> torch.Tensor:
++    del mlp_context_prefix, attention_prefix
++    return torch.empty_like(hidden_states)
++
++
++direct_register_custom_op(
++    op_name="qwen_layer0_mlp_prefill_isolated_xpu",
++    op_func=_request_isolated_qwen_layer0_mlp_prefill_xpu,
++    mutates_args=[],
++    fake_impl=_request_isolated_qwen_layer0_mlp_prefill_xpu_fake,
++)
++
++
+ def _should_use_sequence_parallel(vllm_config: VllmConfig) -> bool:
+     config = vllm_config.model_config.hf_text_config
+     parallel_config = vllm_config.parallel_config
+@@ -458,6 +540,17 @@
+                 prefix=f"{prefix}.mlp",
+             )
+
++        if self.layer_idx == 0 and self.layer_type == "linear_attention":
++            self._r113_mlp_context_prefix = f"{prefix}.mlp.r113"
++            static_context = (
++                get_current_vllm_config().compilation_config.static_forward_context
++            )
++            if self._r113_mlp_context_prefix in static_context:
++                raise ValueError(
++                    f"Duplicate layer name: {self._r113_mlp_context_prefix}"
++                )
++            static_context[self._r113_mlp_context_prefix] = self.mlp
++
+         self.input_layernorm = Qwen3NextRMSNorm(
+             config.hidden_size, eps=config.rms_norm_eps
+         )
+@@ -536,7 +629,23 @@
+                 hidden_states,
+                 already_sequence_parallel=True,
+             )
++        elif (
++            os.getenv(
++                "VLLM_XPU_ISOLATE_LAYER0_MLP_PREFILL_REQUESTS",
++                "0",
++            )
++            == "1"
++            and self.layer_idx == 0
++            and self.layer_type == "linear_attention"
++        ):
++            hidden_states = (
++                torch.ops.vllm.qwen_layer0_mlp_prefill_isolated_xpu(
++                    hidden_states,
++                    self._r113_mlp_context_prefix,
++                    self.linear_attn.prefix,
++                )
++            )
+         else:
+             hidden_states = self.mlp(hidden_states)
+
+         if self.layer_scale:
