@@ -8,7 +8,7 @@ validator="${script_dir}/validate-q38-root-nvme-link-clearance-v1.py"
 clearance=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/host/20260901-root-nvme-link-clearance-v1.json
 expected_base=c81a2240542b75a3bf932fccf606f2db4b2872d201171c76f8e6f48ac5a7fad3
 expected_summarizer=e61b13c08c6738d9e552c10a0f751ffe726216518dd419bc3b08b73667137113
-expected_validator=9e23b7bab722c502e58181e913382ad0035f0c5cd835ec0560bd1eedc81b9adc
+expected_validator=2293b3588a275e15a630b813d7a273e650eb64c49eaacedcf212f99fe485d5a5
 expected_derived=6c9e672737d46c651c3909ecd7d57693308d121f87a2b93d6bacee3e5a87249a
 derived=/dev/shm/q38-w13-m1-xpu-graph-confirmation-a2-derived.sh
 

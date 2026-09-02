@@ -27,7 +27,7 @@ refuses source drift:
 - A1 base runner SHA-256:
   `c81a2240542b75a3bf932fccf606f2db4b2872d201171c76f8e6f48ac5a7fad3`;
 - A2 wrapper SHA-256:
-  `65d997316bd040dae797f772dd5e14973c72504d9ea9e20e8568f4d37a646f4b`;
+  `bbe360b4aeb838beaed14afa17d1d30ce514ebcb156680f78e0cb232e17d9fcd`;
 - derived A2 runner SHA-256:
   `6c9e672737d46c651c3909ecd7d57693308d121f87a2b93d6bacee3e5a87249a`;
 - A2 summarizer SHA-256:
@@ -35,9 +35,9 @@ refuses source drift:
 - A2 summarizer tests SHA-256:
   `7ff59ed2b281ddea3841adf789bed4e7abdaa817444843e8f3ea1cb541056077`;
 - root-NVMe clearance validator SHA-256:
-  `9e23b7bab722c502e58181e913382ad0035f0c5cd835ec0560bd1eedc81b9adc`;
+  `2293b3588a275e15a630b813d7a273e650eb64c49eaacedcf212f99fe485d5a5`;
 - clearance-validator tests SHA-256:
-  `28eb287e689f8500453b467dbe68883ed4fc96344c8babce5256532670b9506f`;
+  `86cc73b551b88f4fec95a8ce9952837b9d4c8ca7080bd99db95c2e690e207bf1`;
 - shared component gate SHA-256:
   `8828a3b42766a96f014299967af94cbde48410abd92d64183685dbf737ce05a1`;
 - shared gate tests SHA-256:
@@ -127,7 +127,14 @@ rejected.
   "schema_version": 1,
   "status": "pass",
   "classification": "q38_root_nvme_link_clearance_v1",
-  "firmware_after": "5B2QGXA7",
+  "boot_id": "<current boot UUID>",
+  "root_nvme": {
+    "controller": "nvme0",
+    "serial": "S6WSNS0T109768K",
+    "model": "Samsung SSD 980 PRO with Heatsink 1TB",
+    "pci_bdf": "0000:01:00.0",
+    "firmware": "5B2QGXA7"
+  },
   "idle": {
     "seconds": 1800,
     "local_nvme_corrected_delta": 0,
@@ -152,11 +159,14 @@ rejected.
 
 `idle.seconds` may exceed `1800`; all other values and the four-device order
 are exact. Boolean values are rejected where integers are required. The
-firmware-after value must be `5B2QGXA7`; both the at-least-30-minute idle and
-the bounded-read windows must have zero local-NVMe and root-port corrected
-deltas; SMART critical warning and media errors must both be zero. A missing,
-malformed, stale-firmware, dirty-link, dirty-SMART, or wrong-topology receipt
-cannot create the derived runner and cannot reach an XPU process.
+receipt boot ID must equal the live `/proc` boot ID, so it cannot be replayed
+after a reboot. The validator also reads the live `nvme0` sysfs identity and
+requires the exact controller, serial, model, BDF, and `5B2QGXA7` firmware to
+match the receipt. Both the at-least-30-minute idle and bounded-read windows
+must have zero local-NVMe and root-port corrected deltas; SMART critical
+warning and media errors must both be zero. A missing, malformed, cross-boot,
+wrong-controller, stale-firmware, dirty-link, dirty-SMART, or wrong-topology
+receipt cannot create the derived runner and cannot reach an XPU process.
 
 New paths are unused before launch:
 

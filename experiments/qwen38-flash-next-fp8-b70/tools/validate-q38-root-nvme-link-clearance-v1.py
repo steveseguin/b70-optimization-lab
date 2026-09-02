@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Fail closed unless the fixed root-NVMe maintenance clearance is exact."""
+"""Fail closed unless the fixed root-NVMe maintenance clearance is live."""
 
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 
@@ -13,6 +14,15 @@ CLEARANCE_PATH = Path(
     "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/host/"
     "20260901-root-nvme-link-clearance-v1.json"
 )
+BOOT_ID_PATH = Path("/proc/sys/kernel/random/boot_id")
+NVME_SYSFS = Path("/sys/class/nvme/nvme0")
+EXPECTED_ROOT_NVME = {
+    "controller": "nvme0",
+    "serial": "S6WSNS0T109768K",
+    "model": "Samsung SSD 980 PRO with Heatsink 1TB",
+    "pci_bdf": "0000:01:00.0",
+    "firmware": "5B2QGXA7",
+}
 EXPECTED_DEVICES = [
     {
         "device_id": 0,
@@ -54,7 +64,53 @@ def require_int(value: Any, expected: int | None, label: str) -> int:
     return value
 
 
-def validate(value: Any) -> dict[str, Any]:
+def read_stripped(path: Path, label: str) -> str:
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise ValueError(f"cannot read live {label}: {path}") from exc
+    if not value:
+        raise ValueError(f"live {label} is empty")
+    return value
+
+
+def controller_pci_bdf(controller: Path) -> str:
+    """Return the nearest PCI-function ancestor of a resolved NVMe controller."""
+    try:
+        resolved = controller.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"cannot resolve live NVMe controller: {controller}") from exc
+    for ancestor in resolved.parents:
+        if re.fullmatch(
+            r"[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]", ancestor.name
+        ):
+            return ancestor.name.lower()
+    raise ValueError(f"live NVMe controller has no PCI-function ancestor: {resolved}")
+
+
+def read_live_identity() -> dict[str, Any]:
+    """Read the current boot and exact root-controller identity from sysfs."""
+    address = read_stripped(NVME_SYSFS / "address", "NVMe PCI BDF").lower()
+    resolved_bdf = controller_pci_bdf(NVME_SYSFS)
+    if resolved_bdf != address:
+        raise ValueError(
+            "live NVMe sysfs PCI ancestor and address disagree: "
+            f"{resolved_bdf} != {address}"
+        )
+    live = {
+        "boot_id": read_stripped(BOOT_ID_PATH, "boot_id"),
+        "root_nvme": {
+            "controller": NVME_SYSFS.name,
+            "serial": read_stripped(NVME_SYSFS / "serial", "NVMe serial"),
+            "model": read_stripped(NVME_SYSFS / "model", "NVMe model"),
+            "pci_bdf": resolved_bdf,
+            "firmware": read_stripped(NVME_SYSFS / "firmware_rev", "NVMe firmware"),
+        },
+    }
+    return live
+
+
+def validate(value: Any, *, live_identity: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("clearance must be a JSON object")
     require_exact_keys(
@@ -63,7 +119,8 @@ def validate(value: Any) -> dict[str, Any]:
             "schema_version",
             "status",
             "classification",
-            "firmware_after",
+            "boot_id",
+            "root_nvme",
             "idle",
             "bounded_read",
             "smart",
@@ -76,8 +133,29 @@ def validate(value: Any) -> dict[str, Any]:
         raise ValueError("status must equal pass")
     if value["classification"] != "q38_root_nvme_link_clearance_v1":
         raise ValueError("classification is not q38_root_nvme_link_clearance_v1")
-    if value["firmware_after"] != "5B2QGXA7":
-        raise ValueError("firmware_after must equal 5B2QGXA7")
+
+    if not isinstance(live_identity, dict):
+        raise ValueError("live identity must be an object")
+    require_exact_keys(live_identity, {"boot_id", "root_nvme"}, "live identity")
+    if not isinstance(value["boot_id"], str) or not value["boot_id"]:
+        raise ValueError("boot_id must be a nonempty string")
+    if value["boot_id"] != live_identity["boot_id"]:
+        raise ValueError("clearance boot_id does not match the current boot")
+
+    root_nvme = value["root_nvme"]
+    live_nvme = live_identity["root_nvme"]
+    if not isinstance(root_nvme, dict) or not isinstance(live_nvme, dict):
+        raise ValueError("root_nvme and live root_nvme must be objects")
+    expected_keys = {"controller", "serial", "model", "pci_bdf", "firmware"}
+    require_exact_keys(root_nvme, expected_keys, "root_nvme")
+    require_exact_keys(live_nvme, expected_keys, "live root_nvme")
+    for key, expected in EXPECTED_ROOT_NVME.items():
+        if root_nvme[key] != expected:
+            raise ValueError(f"root_nvme.{key} must equal {expected}")
+        if live_nvme[key] != expected:
+            raise ValueError(f"live root_nvme.{key} must equal {expected}")
+        if root_nvme[key] != live_nvme[key]:
+            raise ValueError(f"root_nvme.{key} does not match live hardware")
 
     idle = value["idle"]
     if not isinstance(idle, dict):
@@ -156,7 +234,7 @@ def validate_file(path: Path, *, require_fixed_path: bool = True) -> dict[str, A
         value = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError("clearance is not valid JSON") from exc
-    return validate(value)
+    return validate(value, live_identity=read_live_identity())
 
 
 def main() -> None:
@@ -170,6 +248,8 @@ def main() -> None:
                 "status": "pass",
                 "classification": value["classification"],
                 "clearance_path": str(args.clearance_json),
+                "boot_id": value["boot_id"],
+                "root_nvme": value["root_nvme"],
             },
             sort_keys=True,
         )

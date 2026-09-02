@@ -47,6 +47,18 @@ component GPU run from the current state. Before GPU work resumes:
 5. require at least 30 minutes idle and a bounded read test with zero new
    endpoint or root-port corrected events before W13 A2 may execute.
 
+The clearance receipt must be created and consumed in that same verified boot.
+The fixed validator compares its boot ID to live `/proc` state and its root
+controller identity to live sysfs: `nvme0`, serial `S6WSNS0T109768K`, model
+`Samsung SSD 980 PRO with Heatsink 1TB`, BDF `0000:01:00.0`, and firmware
+`5B2QGXA7`. A copied receipt from an earlier boot, or a receipt describing the
+right firmware while the live drive still reports another revision, fails.
+Validator SHA-256:
+`2293b3588a275e15a630b813d7a273e650eb64c49eaacedcf212f99fe485d5a5`.
+The live BDF is derived from the nearest PCI-function ancestor of the resolved
+`/sys/class/nvme/nvme0` target and must also equal the controller's live
+`address` attribute; the controller basename is not treated as a PCI address.
+
 If errors persist, Gen3 x4 is a diagnostic/temporary discriminator, not a
 performance fix. Persistence after reseat and firmware indicates the SSD,
 slot, or motherboard path needs replacement/service.

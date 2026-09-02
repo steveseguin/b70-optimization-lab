@@ -107,8 +107,14 @@ the selected B70.
 - XPU graph gate: `9c8837fbab48f9ce80b7b6e4603d2f1ce339b01997384e662335f396f1aa5ea6`;
 - summarizer: `7ab377898809bc4d22747b0139d82afdaa5772d3b66b5338c48efeae3267e51f`;
 - summarizer tests: `ce36387b231b3644b79485c2dec996c23537592e8ba38a1d2bb2aa6319a3c0b5`;
-- runner: `88db267a8245086f5f58c2d96af1506ac7197f04535b1420fe31740555bb7b4a`;
+- runner: `4734332f14c98f2397ff8fc786a082575e0845184028b46ad560fef955aabb29`;
 - runner CPU tests: `a8a135ee3e836e915b5a32c247a0f568805b949decbd405e2f5c27c918a3f7a3`.
+
+The shared clearance validator is
+`2293b3588a275e15a630b813d7a273e650eb64c49eaacedcf212f99fe485d5a5`.
+It requires the receipt's current boot ID and exact Samsung controller, serial,
+model, BDF, and `5B2QGXA7` firmware to match live `/proc` and sysfs state; a
+receipt from an earlier boot cannot authorize this runner.
 
 CPU validation passed 21 focused tests. The structured preregistration is
 [`20260901-hc-combine-norm-exact-staged-a1-prereg.json`](../data/20260901-hc-combine-norm-exact-staged-a1-prereg.json).

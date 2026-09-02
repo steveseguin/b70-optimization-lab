@@ -5,6 +5,7 @@
   "device": {
     "path": "/dev/nvme0",
     "pci_bdf": "0000:01:00.0",
+    "serial": "S6WSNS0T109768K",
     "model": "Samsung SSD 980 PRO with Heatsink 1TB",
     "firmware_installed": "4B2QGXA7",
     "firmware_current_official": "5B2QGXA7",
@@ -46,6 +47,19 @@
     "at least 1800 seconds idle with zero endpoint and root corrected-event delta",
     "bounded read test with zero endpoint and root corrected-event delta"
   ],
+  "clearance_receipt_contract": {
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/host/20260901-root-nvme-link-clearance-v1.json",
+    "same_boot_required": true,
+    "live_identity_required": {
+      "controller": "nvme0",
+      "serial": "S6WSNS0T109768K",
+      "model": "Samsung SSD 980 PRO with Heatsink 1TB",
+      "pci_bdf": "0000:01:00.0",
+      "firmware": "5B2QGXA7"
+    },
+    "validator_sha256": "2293b3588a275e15a630b813d7a273e650eb64c49eaacedcf212f99fe485d5a5",
+    "cross_boot_replay_rejected": true
+  },
   "prepared_updater": {
     "path": "/mnt/usb-models/tools/samsung-980-pro-firmware/Samsung_SSD_980_PRO_5B2QGXA7.iso",
     "bytes": 28311552,
