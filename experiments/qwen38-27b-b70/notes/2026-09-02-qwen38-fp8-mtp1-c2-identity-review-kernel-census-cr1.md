@@ -402,6 +402,26 @@ simply create two different stable answers and restore the identity hole. No
 dynamic selector was built and no server was launched. See the
 [R134 result](../data/2026-09-02-qwen38-fp8-w8a16-pinned-jit-cross-digest-r134-result.json).
 
+### R135: decode-weighted invariant-M32 ladder (c1-c32 pass, c64 fail)
+
+R135 tested the only remaining single-strategy compromise with an A-B-B-A
+process order per shape, deeper timing, and the actual 64-layer call graph:
+48 each of GDN-in/out, 16 each of attention-QKV/output, and 64 each of MLP
+gate/up and down. MTP1 maps c1-c64 to target-forward M values 2-128.
+
+Both candidate replicates retained every identity check on all shapes. Weighted
+latency was better than natural oneDNN at c1/c2 and stayed within `0.4%` through
+c32: ratios for M2/4/8/16/32/64 were `0.948`, `0.956`, `1.003`, `1.001`,
+`1.003`, and `0.998`. At M128/c64 it rose abruptly to `1.330`, failing the 3%
+decode gate. The prompt-shape cost is also material: `1.621x` weighted at M168
+and `1.926x` at M256.
+
+This rejects a uniform M32 source build, but narrows the engineering target.
+The exact arithmetic is already fast through M64; the missing kernel must
+recover M128 scheduling efficiency while remaining bitwise equal to M32, not
+invent another reduction. No server was launched. See the
+[R135 result](../data/2026-09-02-qwen38-fp8-w8a16-pinned-m32-decode-ladder-r135-result.json).
+
 ### R127: Xe2 CUTLASS fixed-M32 BLOCK_FP8 (mechanism accepted)
 
 The exact pinned kernel source already contained an Xe2 grouped-GEMM BLOCK_FP8
