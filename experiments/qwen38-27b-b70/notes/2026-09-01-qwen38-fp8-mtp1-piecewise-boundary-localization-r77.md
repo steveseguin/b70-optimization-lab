@@ -310,3 +310,20 @@ cgroup began heavy reclaim; the established 12/16 GiB MTP bounds started
 normally without a reset. The next observation-only overlay must log every
 pure-prefill invocation with a counter. See the
 [`R103 result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-correlation-r103-result.json).
+
+R104 replaced only the trace seen-set with an invocation counter. The overlay
+passed its source gate and emitted 960 records for ten batches, but one batch
+entered as a staggered/mixed scheduler shape rather than a pure c2 prefill, so
+only nine layer-0 c2 records per rank were eligible. R105 froze that checkpoint
+and repeated on the warmed server. Its first batch again began as a one-request
+31-token prefill and is excluded from the order partition. Repeats 2-10 aligned
+one-to-one on both ranks and give a perfect split: all seven `[31,28]`
+cache-first batches produced the same known bad stream, while both `[28,31]`
+cache-second batches matched the sequential oracle. The index request stayed
+exact 10/10 and every request was complete and cache-zero. This establishes
+live packed-prefill order as the discriminator; prompt length is only how the
+frozen diagnostic identifies each request and must not become production
+policy. The next candidate should use live request boundaries to isolate the
+post-core output projection per request atop R101, leaving the R99/R97 selector
+unchanged. See the [`R104 trace result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-trace-all-r104-result.json)
+and [`R105 aligned result`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-aligned-r105-result.json).

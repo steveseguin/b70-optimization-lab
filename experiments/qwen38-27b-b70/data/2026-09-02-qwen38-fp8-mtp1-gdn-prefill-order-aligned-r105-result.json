@@ -1,0 +1,65 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-order-aligned-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-order-aligned-20260902-r105",
+  "status": "completed-causal-correlation-pass",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-aligned-r105-prereg.json",
+  "lineage": {
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-all-r104",
+    "image_id": "sha256:f1dd575ae2e0effc7991535c253af82b332ac0604b7f60ba796f31b81e26f951",
+    "trace_checkpoint_records": 960
+  },
+  "output_gate": {
+    "concurrency": 2,
+    "repeats": 10,
+    "exact_batches": "2/10",
+    "cache_prompt_exact": "2/10",
+    "index_prompt_exact": "10/10",
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "alternate_cache_prompt_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98"
+  },
+  "scheduler_shape": {
+    "repeat_1": {
+      "shape": "not a pure c2 prefill",
+      "first_layer0_record": {
+        "num_prefills": 1,
+        "row_counts": [31]
+      },
+      "cache_prompt_exact": false,
+      "included_in_order_partition": false
+    },
+    "pure_c2_repeats": [2, 3, 4, 5, 6, 7, 8, 9, 10]
+  },
+  "order_partition": {
+    "rank_orders_identical_for_all_nine_pure_c2_invocations": true,
+    "order_31_28": {
+      "repeats": [2, 3, 4, 7, 8, 9, 10],
+      "count": 7,
+      "cache_prompt_exact": "0/7",
+      "cache_prompt_alternate": "7/7"
+    },
+    "order_28_31": {
+      "repeats": [5, 6],
+      "count": 2,
+      "cache_prompt_exact": "2/2",
+      "cache_prompt_alternate": "0/2"
+    },
+    "perfect_partition_on_traceable_pure_c2_batches": true
+  },
+  "interpretation": "The stable cache-prompt branch is perfectly determined by packed-prefill order in every traceable pure-c2 batch: cache-first [31,28] selects the known bad stream, while cache-second [28,31] selects the sequential oracle stream. Both TP ranks report the same order. Prompt length is evidence for identifying the frozen requests, not an acceptable production discriminator.",
+  "next_experiment": "Build a live-boundary, request-order-neutral candidate on R101. Preserve the R99 single-request arm and R97 multi-request norm, and isolate the remaining post-core output projection per request using GDNAttentionMetadata boundaries; do not sort by prompt length or request content.",
+  "reporting_boundary": "Causal diagnostic only. No throughput or public quality promotion; current boot contains earlier xe engine resets.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful bounded shutdown"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-prefill-order-trace-all-20260902-r104",
+    "raw_result_sha256": "650ea38f7259ac574b1e3223abedbbc3e17c619a036fda72ef6a8d93ffbeac56",
+    "trace_through_r105_sha256": "1caae5e2f8264100d14bb6b14e4b8463d8ff4c796ef45abaa2167d67de388bd2",
+    "server_log_sha256": "01b9b356a4226da01a4d64e06fe6dced815625df0e53043df659ca58294410e5",
+    "kernel_journal_sha256": "fbd764db10660c50f685d995e0e8a50d6f519ad7fb13dc3e1db42d84c1c27d05",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

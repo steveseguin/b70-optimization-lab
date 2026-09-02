@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-prefill-order-trace-all-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-prefill-order-trace-all-20260902-r104",
+  "status": "completed-trace-overlay-pass-alignment-incomplete",
+  "classification": "diagnostic-only-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-prefill-order-trace-all-r104-prereg.json",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-prefill-output-trace-all-r104",
+    "id": "sha256:f1dd575ae2e0effc7991535c253af82b332ac0604b7f60ba796f31b81e26f951",
+    "base_id": "sha256:2a09b9235e885477c5fe4e84010ed5b07ca25d88502e9ec05e91f3562761c581",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-prefill-output-trace-all-r104-20260902.patch",
+    "patch_sha256": "9ce0f70fa624b1cbb2a4f64ea6e7961a859c031152bd53b99eb4733c3cb66077",
+    "installed_xpu_ops_sha256": "8ef38ff0f00aa30286130f97b8eee93f27ae0698a5cceabd87247f1a6495f9f8",
+    "source_gate": "pass"
+  },
+  "output_gate": {
+    "concurrency": 2,
+    "repeats": 10,
+    "exact_batches": "4/10",
+    "cache_prompt_alternate_batches": "6/10",
+    "index_prompt_exact": "10/10",
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true
+  },
+  "trace_gate": {
+    "total_records": 960,
+    "layer0_rank0_pure_c2_records": 9,
+    "layer0_rank1_pure_c2_records": 9,
+    "required_per_rank": 10,
+    "status": "instrumentation-pass-workload-alignment-incomplete",
+    "reason": "One HTTP batch did not enter as a pure two-prefill call, so the trace correctly excluded it under the inherited pure-prefill contract."
+  },
+  "interpretation": "R104 successfully records repeated prefill invocations without changing arithmetic, but the first ten-repeat workload cannot be paired one-to-one because one batch used a mixed/staggered scheduler shape. A warmed checkpointed retry is required.",
+  "next_experiment": "R105 analyzes only records appended after the 960-record checkpoint and requires one-to-one alignment for the pure-c2 subset.",
+  "reporting_boundary": "Diagnostic only. Do not publish throughput; current boot contains earlier xe engine resets.",
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-prefill-order-trace-all-20260902-r104",
+    "raw_result_sha256": "d6b18b8cc55f807216cbc8ec01462ce3818636ea2d407cfde7ae94dd3ffa327c",
+    "trace_sha256": "1e3e9c241fc9d50361fb639b1ce6a2915bec3aa5249328eee366d0d8f0b26165"
+  }
+}
