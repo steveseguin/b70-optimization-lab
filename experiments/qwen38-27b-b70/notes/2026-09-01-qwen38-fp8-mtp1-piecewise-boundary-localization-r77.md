@@ -402,3 +402,13 @@ untested. R112 changes only module lookup: it attaches the MLP to the existing
 attention object and resolves that object through `ForwardContext.no_compile_layers`,
 the same compiled-boundary mechanism already exercised by R108. See the
 [`R111 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r111-result.json).
+
+R112 also failed closed during `profile_run`, before any HTTP request. It did
+resolve the attention entry through `ForwardContext.no_compile_layers`, but
+the parent-MLP attribute attached later by the decoder constructor was absent
+from that registered object on both TP workers. Both workers shut down
+gracefully, both B70s remained normal, and the timestamp-bounded kernel log was
+clean. The treatment remains untested. R113 will register the layer-0 dense MLP
+itself under a unique `static_forward_context` key and resolve that key
+directly, without changing request selection or arithmetic. See the
+[`R112 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r112-result.json).

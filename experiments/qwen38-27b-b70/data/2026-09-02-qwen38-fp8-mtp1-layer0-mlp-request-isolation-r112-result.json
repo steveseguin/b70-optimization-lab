@@ -1,0 +1,38 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r112",
+  "classification": "startup-failed-treatment-untested",
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r112",
+    "id": "sha256:a2af00db9471903c6e314cf2c5b6d069c64379a5a7422ff2952997df29ad16cf",
+    "patch_sha256": "c40670899754faf8b4410c1e30a85926ea04c487986be32749987fef8104d7cb",
+    "installed_source_sha256": "50d3cbe167d42ca81e74bbccb2b90ed0608e3b604a8be6747c3f41ae5ff58394"
+  },
+  "gates": {
+    "patch_roundtrip_exact": true,
+    "semantic_callsite_gate": true,
+    "r111_rejected_by_semantic_gate": true,
+    "model_direct_identity_gate": true,
+    "server_ready": false,
+    "model_requests_run": 0,
+    "treatment_tested": false
+  },
+  "failure": {
+    "phase": "vLLM profile_run after successful fresh compilation",
+    "root_cause": "ForwardContext.no_compile_layers resolved the existing attention object, but the parent-MLP attribute attached later by the decoder constructor was absent from that registered object in both TP workers.",
+    "error": "R112 layer-0 MLP is not attached: language_model.model.layers.0.linear_attn",
+    "narrow_correction": "Register the layer-0 dense MLP itself under a unique key in compilation_config.static_forward_context and resolve that exact key through ForwardContext.no_compile_layers; leave treatment arithmetic and request selection unchanged."
+  },
+  "host": {
+    "workers_shutdown_gracefully": true,
+    "both_b70_devices_after_stop": "normal",
+    "new_kernel_fault_or_reset": false,
+    "reboot_or_gpu_reset_requested": false
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r112",
+    "server_log_sha256": "82fb1632fb5e1da9f2e3f4724b477023863bc1718f21629f787f3ef135b1ec84",
+    "image_inspect_sha256": "5caaeb9429c4af5763d666579d07651da5756f143c68b9f573cebab1462e5495"
+  },
+  "reporting_boundary": "No output or speed evidence exists; no public claim is permitted."
+}
