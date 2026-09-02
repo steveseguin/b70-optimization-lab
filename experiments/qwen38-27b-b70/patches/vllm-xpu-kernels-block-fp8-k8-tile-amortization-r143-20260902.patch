@@ -1,0 +1,460 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 9fd55d7..4ebfd2f 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -503,4 +503,223 @@ CUTE_DEVICE void xe_gemm_4bits(
+   copy(copy_c, tCrC_out, tCgC);
+ }
+ 
++#ifndef R142_REDUCTION_ORDER
++#define R142_REDUCTION_ORDER 0
++#endif
++
++// R142 diagnostic kernel. This is deliberately specialized to the production
++// FP16 x E4M3 block-FP8 contract. Its K layout mirrors oneDNN's `ikr ki64`:
++// subgroup k starts at k * 64 and advances by 512, then subgroup zero reduces
++// the eight FP32 fragments through workgroup-local memory.
++template <
++    class GmemTiledCopyA,
++    class GmemTiledCopyB,
++    class GmemTiledCopyC,
++    class ATensor,
++    class BTensor,
++    class DTensor,
++    class TiledMMA>
++CUTE_DEVICE void xe_gemm_block_fp8_k8_split(
++    ATensor const& A,  // (M,K)
++    BTensor const& B,  // (N,K)
++    const float* Scales,
++    DTensor& C,  // (M,N)
++    Coord<int, int, cute::Underscore, int> blk_coord,
++    TiledMMA const& mma,
++    const sycl::local_accessor<float, 1>& partials) {
++  using TA = typename ATensor::element_type;
++  using TB = typename BTensor::element_type;
++  static_assert(is_same_v<TA, half_t>);
++  static_assert(is_same_v<TB, float_e4m3_t>);
++
++  auto item = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
++  auto wg_m = get<0>(blk_coord);
++  auto wg_n = get<1>(blk_coord);
++  int local_id = item.get_local_linear_id();
++
++  Tensor cA = make_identity_tensor(A.shape());
++  Tensor cB = make_identity_tensor(B.shape());
++  Tensor cC = make_identity_tensor(C.shape());
++
++  auto wg_tile = mma.tile_mnk();
++  auto wg_coord = make_coord(wg_m, wg_n, 0);
++
++  Tensor gA = local_tile(
++      cA, select<0, 2>(wg_tile), make_coord(wg_m, _));
++  Tensor gB = local_tile(
++      cB, select<1, 2>(wg_tile), make_coord(wg_n, _));
++  Tensor gC = local_tile(cC, wg_tile, wg_coord, Step<_1, _1, X>{});
++
++  auto copy_a = get_block_2d_copy_A<GmemTiledCopyA>(mma, A);
++  auto copy_b = get_block_2d_copy_B<GmemTiledCopyB>(mma, B);
++  auto copy_c = get_block_2d_copy_D<GmemTiledCopyC>(mma, C);
++
++  auto thr_mma = mma.get_slice(local_id);
++  auto thr_copy_a = copy_a.get_slice(local_id);
++  auto thr_copy_b = copy_b.get_slice(local_id);
++  auto thr_copy_c = copy_c.get_slice(local_id);
++
++  auto tCrA = thr_mma.partition_sg_fragment_A(gA(_, _, 0));
++  auto tCrB = thr_mma.partition_sg_fragment_B(gB(_, _, 0));
++  auto tArA = thr_copy_a.partition_sg_fragment_D(gA(_, _, 0));
++  auto tBrB = thr_copy_b.partition_sg_fragment_D(gB(_, _, 0));
++  Tensor tAgA = thr_copy_a.partition_S(gA);
++  Tensor tBgB = thr_copy_b.partition_S(gB);
++
++  auto tCrC = thr_mma.partition_sg_fragment_C(gC);
++  auto tCrC_out = thr_copy_c.partition_sg_fragment_S(gC);
++  auto tCgC = thr_copy_c.partition_D(gC);
++
++  auto prefetch_a = make_block_2d_prefetch(copy_a);
++  auto prefetch_b = make_block_2d_prefetch(copy_b);
++  auto thr_prefetch_a = prefetch_a.get_slice(local_id);
++  auto thr_prefetch_b = prefetch_b.get_slice(local_id);
++  auto pAgA = thr_prefetch_a.partition_S(gA);
++  auto pBgB = thr_prefetch_b.partition_S(gB);
++
++  static constexpr auto ATOM_M =
++      get<1>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++  static constexpr auto ATOM_N =
++      get<2>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++  static constexpr auto ATOM_K =
++      get<3>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++  static constexpr auto tile_n = get<1>(wg_tile);
++  static constexpr auto tile_k = get<2>(wg_tile);
++  static constexpr auto SG_N = tile_n / ATOM_N;
++  static constexpr auto SG_K = tile_k / ATOM_K;
++  static_assert(ATOM_K == 8);
++  static_assert(tile_k == 512);
++  static_assert(SG_K == 64);
++
++  auto thr_vmnk = mma.get_thr_layout_vmnk().get_flat_coord(local_id);
++  int sg_m = get<1>(thr_vmnk);
++  int sg_n = get<2>(thr_vmnk);
++  int sg_k = get<3>(thr_vmnk);
++  int lane = cutlass::get_sub_group_local_id();
++  int n_tile_start = wg_n * tile_n;
++  int n_sg_start = sg_n * SG_N;
++  int n_blocks = static_cast<int>(get<0>(B.shape())) / 128;
++
++  static constexpr auto thr_N = get<1>(tCrB.shape());
++  static constexpr auto channel_num = get<0>(get<0>(tCrB.shape()));
++  int x_idx = lane / channel_num;
++  half_t scales[thr_N * channel_num];
++
++  clear(tCrC);
++
++  constexpr int prefetch_dist = 6;
++  int k_tile_count = ceil_div(shape<1>(A), tile_k);
++  int k_tile_prefetch = 0;
++  CUTE_UNROLL
++  for (; k_tile_prefetch < prefetch_dist; ++k_tile_prefetch) {
++    prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++    prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++  }
++
++  constexpr SPIRVScope barrier_scope = ScopeWorkgroup;
++  for (int k_tile = 0; k_tile < k_tile_count;
++       ++k_tile, ++k_tile_prefetch) {
++    barrier_arrive(barrier_scope);
++
++    copy(copy_a, tAgA(_, _, _, k_tile), tArA);
++    copy(copy_b, tBgB(_, _, _, k_tile), tBrB);
++
++    int k_block = (k_tile * tile_k + sg_k * SG_K) / 128;
++    CUTLASS_PRAGMA_UNROLL
++    for (int n = 0; n < thr_N; ++n) {
++      CUTLASS_PRAGMA_UNROLL
++      for (int c = 0; c < channel_num; ++c) {
++        int real_idx = x_idx + c * (16 / channel_num);
++        int sg_local_n = n * 16 + real_idx;
++        int n_global = n_tile_start + n_sg_start + sg_local_n;
++        scales[n * channel_num + c] = static_cast<half_t>(
++            Scales[k_block * n_blocks + n_global / 128]);
++      }
++    }
++
++    if (k_tile_prefetch < k_tile_count) {
++      prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++      prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++    }
++
++    reorder(tArA, tCrA);
++    reorder(tBrB, tCrB);
++
++    CUTLASS_PRAGMA_UNROLL
++    for (int n = 0; n < thr_N; ++n) {
++      CUTLASS_PRAGMA_UNROLL
++      for (int c = 0; c < channel_num; ++c) {
++        CUTLASS_PRAGMA_UNROLL
++        for (int i = 0; i < tCrB.size() / thr_N / channel_num; ++i) {
++          tCrB(cute::tuple(c, _), n, _)[i] *=
++              scales[n * channel_num + c];
++        }
++      }
++    }
++
++    cute::gemm(mma, tCrA, tCrB, tCrC);
++    barrier_wait(barrier_scope);
++  }
++
++  // R143 reuses one 32-KiB SLM slice as output tiles grow. Corresponding
++  // lane fragments from k=0..7 remain adjacent, and the second barrier keeps
++  // followers from overwriting a slice before the leader finishes reading it.
++  int mn_sg = sg_m * ATOM_N + sg_n;
++  CUTE_UNROLL
++  for (int frag_base = 0; frag_base < tCrC.size(); frag_base += 16) {
++    CUTLASS_PRAGMA_UNROLL
++    for (int i = 0; i < 16; ++i) {
++      int base = ((mn_sg * 16 + lane) * 16 + i) * 8;
++      partials[base + sg_k] = tCrC(frag_base + i);
++    }
++
++    barrier_arrive(
++        ScopeWorkgroup, SemanticsRelease | SemanticsWGMemory);
++    barrier_wait(
++        ScopeWorkgroup, SemanticsAcquire | SemanticsWGMemory);
++
++    if (sg_k == 0) {
++      CUTLASS_PRAGMA_UNROLL
++      for (int i = 0; i < 16; ++i) {
++        int base = ((mn_sg * 16 + lane) * 16 + i) * 8;
++#if R142_REDUCTION_ORDER == 0
++        float sum = partials[base];
++        sum += partials[base + 1];
++        sum += partials[base + 2];
++        sum += partials[base + 3];
++        sum += partials[base + 4];
++        sum += partials[base + 5];
++        sum += partials[base + 6];
++        sum += partials[base + 7];
++#elif R142_REDUCTION_ORDER == 1
++        float sum =
++            ((partials[base] + partials[base + 1]) +
++             (partials[base + 2] + partials[base + 3])) +
++            ((partials[base + 4] + partials[base + 5]) +
++             (partials[base + 6] + partials[base + 7]));
++#elif R142_REDUCTION_ORDER == 2
++        float sum =
++            ((partials[base] + partials[base + 4]) +
++             (partials[base + 1] + partials[base + 5])) +
++            ((partials[base + 2] + partials[base + 6]) +
++             (partials[base + 3] + partials[base + 7]));
++#else
++#error "R142_REDUCTION_ORDER must be 0, 1, or 2"
++#endif
++        tCrC(frag_base + i) = sum;
++      }
++    }
++
++    barrier_arrive(
++        ScopeWorkgroup, SemanticsRelease | SemanticsWGMemory);
++    barrier_wait(
++        ScopeWorkgroup, SemanticsAcquire | SemanticsWGMemory);
++  }
++
++  if (sg_k != 0) return;
++
++  reorder(tCrC, tCrC_out);
++  copy(copy_c, tCrC_out, tCgC);
++}
++
+ }  // namespace MoE
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+index f613d78..b2a9d83 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+@@ -78,6 +78,38 @@ class w8a16_policy_m_32 : public xe_gemm_policy_base {
+   using SGLayout = Layout<Shape<_1, _4, _1>, Stride<_4, _1, _0>>;
+ };
+ 
++// R142 diagnostic: match oneDNN's natural-M1 `ikr ki64` arithmetic with
++// eight K subgroups while keeping a direct, dense M/N tile grid.
++class w8a16_policy_k8_split : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_16, _64, _512>;
++  using SGLayout = Layout<Shape<_1, _4, _8>, Stride<_32, _8, _1>>;
++};
++
++class w8a16_policy_k8_m16_n128 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_16, _128, _512>;
++  using SGLayout = Layout<Shape<_1, _2, _8>, Stride<_16, _8, _1>>;
++};
++
++class w8a16_policy_k8_m32_n64 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_32, _64, _512>;
++  using SGLayout = Layout<Shape<_1, _2, _8>, Stride<_16, _8, _1>>;
++};
++
++class w8a16_policy_k8_m64_n64 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_64, _64, _512>;
++  using SGLayout = Layout<Shape<_2, _2, _8>, Stride<_16, _8, _1>>;
++};
++
++class w8a16_policy_k8_m64_n128 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_64, _128, _512>;
++  using SGLayout = Layout<Shape<_2, _2, _8>, Stride<_16, _8, _1>>;
++};
++
+ class w4a16_policy : public xe_gemm_policy_base {
+  public:
+   using WGTile = Shape<_128, _256, _32>;
+@@ -104,4 +136,4 @@ class w4a16_policy_m_32 : public xe_gemm_policy_base {
+   using SGLayout = Layout<Shape<_1, _4, _1>, Stride<_4, _1, _0>>;
+ };
+ 
+-}  // namespace MoE
+\ No newline at end of file
++}  // namespace MoE
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index c8ded43..3b24948 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -34,6 +34,8 @@
+ 
+ */
+ #include <torch/all.h>
++#include <cstdlib>
++#include <string>
+ #include "csrc/utils.h"
+ 
+ #include <cute/tensor.hpp>
+@@ -76,6 +78,85 @@ template <
+     B_DTYPE>
+ class GemmCuteName;
+ 
++template <class>
++class DenseBlockFP8K8SplitName;
++
++template <class policy>
++void DenseBlockFP8K8SplitLauncher(
++    sycl::queue& stream,
++    const half_t* activations,
++    const float_e4m3_t* weights,
++    const float* scales,
++    half_t* outputs,
++    const int gemm_m,
++    const int gemm_n,
++    const int gemm_k) {
++  auto op = XE_DPAS_TT<8, float, half_t>{};
++
++  using WGTile = typename policy::WGTile;
++  using SGLayout = typename policy::SGLayout;
++  using MMA = typename TiledMMAHelper<
++      MMA_Atom<decltype(op)>,
++      Layout<WGTile>,
++      SGLayout>::TiledMMA;
++  auto mma = MMA{};
++
++  constexpr int tile_m = get<0>(WGTile{});
++  constexpr int tile_n = get<1>(WGTile{});
++  int m_tiles = (gemm_m + tile_m - 1) / tile_m;
++  int n_tiles = (gemm_n + tile_n - 1) / tile_n;
++  int workgroups = m_tiles * n_tiles;
++
++  auto threads = size(mma);
++  TORCH_CHECK(
++      threads == 256 || threads == 512,
++      "R143 requires exactly 256 or 512 work-items");
++  sycl::range<3> local(1, 1, threads);
++  sycl::range<3> groups(1, workgroups, 1);
++
++  namespace syclex = sycl::ext::oneapi::experimental;
++  namespace intelex = sycl::ext::intel::experimental;
++  syclex::properties kernel_props{
++      syclex::sub_group_size<16>, intelex::grf_size<256>};
++
++  using GmemTiledCopyA = typename policy::GmemTiledCopyA;
++  using GmemTiledCopyB = typename policy::GmemTiledCopyB;
++  using GmemTiledCopyD = typename policy::GmemTiledCopyD;
++
++  stream.submit([&](sycl::handler& cgh) {
++    // 4 N subgroups * 16 lanes * 16 FP32 fragment values * 8 K subgroups.
++    sycl::local_accessor<float, 1> partials(sycl::range<1>(8192), cgh);
++    cgh.parallel_for<DenseBlockFP8K8SplitName<policy>>(
++        sycl::nd_range<3>{groups * local, local},
++        kernel_props,
++        [=](auto item) {
++          int group_id = item.get_group_linear_id();
++          int m_coord = group_id / n_tiles;
++          int n_coord = group_id % n_tiles;
++
++          auto A_tensor = make_moe_tensor<half_t, 'R'>(
++              const_cast<half_t*>(activations), gemm_m, gemm_k);
++          auto B_tensor = make_moe_tensor<float_e4m3_t, 'R'>(
++              const_cast<float_e4m3_t*>(weights), gemm_n, gemm_k);
++          auto D_tensor =
++              make_moe_tensor<half_t, 'R'>(outputs, gemm_m, gemm_n);
++          auto tile_coord = make_coord(m_coord, n_coord, _, 0);
++
++          xe_gemm_block_fp8_k8_split<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD>(
++              A_tensor,
++              B_tensor,
++              scales,
++              D_tensor,
++              tile_coord,
++              mma,
++              partials);
++        });
++  });
++}
++
+ template <
+     char layoutA,
+     char layoutB,
+@@ -184,6 +265,73 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+     int64_t N,
+     int64_t K,
+     int64_t num_experts) {
++  // R142 diagnostic build: instantiate only the direct-grid, eight-way local
++  // K-reduction kernel under test. This narrowing keeps the build within host
++  // memory and does not change the selected candidate's semantics.
++  auto& r142_queue =
++      at::xpu::getCurrentXPUStream(ptr_A.device().index()).queue();
++  TORCH_CHECK(ptr_A.dtype() == at::kHalf, "R142 requires FP16 activations");
++  TORCH_CHECK(
++      ptr_B.dtype() == at::kFloat8_e4m3fn, "R142 requires E4M3 weights");
++  TORCH_CHECK(ptr_scales.has_value(), "R142 requires block scales");
++  TORCH_CHECK(
++      ptr_scales->dtype() == at::kFloat, "R142 requires FP32 scales");
++  TORCH_CHECK(!ptr_bias.has_value(), "R142 does not support bias");
++  TORCH_CHECK(num_experts == 1, "R142 requires one logical expert");
++  TORCH_CHECK(K % 512 == 0, "R142 requires K divisible by 512");
++  TORCH_CHECK(N % 128 == 0, "R142 requires N divisible by 128");
++  TORCH_CHECK(ptr_A.dim() == 2 && ptr_A.size(1) == K, "invalid A shape");
++  TORCH_CHECK(
++      ptr_B.dim() == 3 && ptr_B.size(0) == 1 && ptr_B.size(1) == K &&
++          ptr_B.size(2) == N,
++      "invalid B shape");
++  TORCH_CHECK(
++      ptr_scales->dim() == 3 && ptr_scales->size(0) == 1 &&
++          ptr_scales->size(1) == K / 128 &&
++          ptr_scales->size(2) == N / 128,
++      "invalid scale shape");
++  TORCH_CHECK(
++      ptr_D.dim() == 2 && ptr_D.size(0) == ptr_A.size(0) &&
++          ptr_D.size(1) == N,
++      "invalid D shape");
++  TORCH_CHECK(
++      ptr_A.is_contiguous() && ptr_scales->is_contiguous() &&
++          ptr_D.is_contiguous(),
++      "R142 activations, scales, and output must be contiguous");
++  TORCH_CHECK(
++      ptr_B.stride(1) == 1 && ptr_B.stride(2) == K,
++      "R142 requires production NT weight strides [*,1,K]");
++
++  const char* geometry_env = std::getenv("R143_GEOMETRY");
++  TORCH_CHECK(geometry_env != nullptr, "R143_GEOMETRY must be set");
++  std::string geometry(geometry_env);
++
++#define R143Launch(Policy)                                                     \
++  DenseBlockFP8K8SplitLauncher<Policy>(                                        \
++      r142_queue,                                                              \
++      reinterpret_cast<half_t*>(ptr_A.data_ptr()),                             \
++      reinterpret_cast<float_e4m3_t*>(ptr_B.data_ptr()),                       \
++      reinterpret_cast<float*>(ptr_scales->data_ptr()),                        \
++      reinterpret_cast<half_t*>(ptr_D.data_ptr()),                             \
++      ptr_A.size(0),                                                           \
++      N,                                                                       \
++      K)
++
++  if (geometry == "m16_n128_sg1x2x8") {
++    R143Launch(w8a16_policy_k8_m16_n128);
++  } else if (geometry == "m32_n64_sg1x2x8") {
++    R143Launch(w8a16_policy_k8_m32_n64);
++  } else if (geometry == "m64_n64_sg2x2x8") {
++    R143Launch(w8a16_policy_k8_m64_n64);
++  } else if (geometry == "m64_n128_sg2x2x8") {
++    R143Launch(w8a16_policy_k8_m64_n128);
++  } else {
++    TORCH_CHECK(false, "unknown R143_GEOMETRY: ", geometry);
++  }
++#undef R143Launch
++  return ptr_D;
++
++#if 0  // Stock multi-dtype dispatcher excluded from the R142 diagnostic build.
+   auto& dpcpp_queue =
+       at::xpu::getCurrentXPUStream(ptr_A.device().index()).queue();
+   auto A_dtype = ptr_A.dtype();
+@@ -731,5 +879,6 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+   }
+ #undef MoEGEMMLauncherCallER
+   return ptr_D;
++#endif
+ }
+-}  // namespace MoE
+\ No newline at end of file
++}  // namespace MoE
