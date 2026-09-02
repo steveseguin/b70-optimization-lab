@@ -289,8 +289,10 @@ further lane run.
 
 Location: `csrc/xpu/onednn/onednn_ext.h`, `matmul_primitive_cache_t::get`, at
 kernel commit `1e90ffa672ba02f17a909da11838a4c55b199783` (the image's kernel
-head, present in `/home/steve/src/vllm-xpu-kernels`; use a fresh worktree, the
-main checkout carries uncommitted Codex work). The primitive is built from
+head, present in `/home/steve/src/vllm-xpu-kernels`; use a fresh isolated source
+directory or clone, not a secondary Git worktree, because the main checkout
+carries unrelated uncommitted work and repository policy forbids secondary
+worktrees). The primitive is built from
 concrete `{m, k}` / `{m, n}` memory descriptors and cached under a key that
 includes `m`, so oneDNN selects a kernel per M. Change, for the W8A16 path
 only: build `src_md` and `dst_md` with `DNNL_RUNTIME_DIM_VAL` in the M

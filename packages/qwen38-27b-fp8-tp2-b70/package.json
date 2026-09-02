@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. Static MTP1 is lab-qualified at 51.808087 tok/s by a four-arm fresh-cache matrix against a matched-image MTP0 control, with all target/candidate complete token arrays exact. A new source rebuild replayed at 51.579521 tok/s with exact outputs; independent host-installation replay remains pending.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. Static MTP1 is lab-qualified at 51.808087 tok/s by a four-arm fresh-cache matrix against a matched-image MTP0 control, with all target/candidate complete token arrays exact on the fixed 48-78-token-prompt suite. W8A16 logprobs are not repeat-deterministic for roughly 168-256-row prefills; independent host-installation replay remains pending.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": ["Linux"],
@@ -19,12 +19,12 @@
     "use_cases": ["general", "coding", "long context"],
     "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "dynamic MTP8 to MTP1", "W8A16"],
     "published_at": "2026-08-27",
-    "benchmark_status": "Strict static MTP1 qualified at 51.808087 tok/s: two fresh candidate servers measured 51.796549/51.819625 tok/s and two same-image MTP0 targets measured 33.722035/33.745004 tok/s. All four complete 12-prompt/six-class natural-512 workloads were cache zero and passed independent canaries. Candidate-to-candidate, target-to-target, and all four target/candidate comparisons matched 12/12 complete token arrays. This is a 53.5804% improvement over the 33.733520 tok/s matched-image MTP0 center with no observed output change. A new pinned source rebuild and empty-cache replay measured 51.579521 tok/s and matched 12/12 arrays against both qualified MTP1 and matched MTP0. Independent host-driver/Docker installation replay remains pending.",
+    "benchmark_status": "Strict static MTP1 qualified at 51.808087 tok/s: two fresh candidate servers measured 51.796549/51.819625 tok/s and two same-image MTP0 targets measured 33.722035/33.745004 tok/s. All four complete 12-prompt/six-class natural-512 workloads were cache zero and passed independent canaries. Candidate-to-candidate, target-to-target, and all four target/candidate comparisons matched 12/12 complete token arrays on that fixed 48-78-token-prompt suite. This is a 53.5804% improvement over the 33.733520 tok/s matched-image MTP0 center with no observed output change in scope. A new pinned source rebuild and empty-cache replay measured 51.579521 tok/s and matched 12/12 arrays against both qualified MTP1 and matched MTP0. A later endpoint probe found repeat-nondeterministic logprobs for roughly 168-256-row W8A16 prefills, so no universal prompt-shape determinism is claimed. Independent host-driver/Docker installation replay remains pending.",
     "featured_metric": {
       "value": 51.80808698870573,
       "unit": "tok/s",
       "label": "strict varied-prompt decode (MTP1)",
-      "scope": "Median of two fresh-server class-balanced medians over a complete fixed 12-prompt/six-class natural-512 suite. Both MTP1 attempts and both matched-image MTP0 controls used fresh compile caches; all four cross-arm comparisons matched 12/12 complete token arrays, cached tokens were zero, and independent canaries passed.",
+      "scope": "Median of two fresh-server class-balanced medians over a complete fixed 12-prompt/six-class natural-512 suite whose prompts contain 48-78 tokens. Both MTP1 attempts and both matched-image MTP0 controls used fresh compile caches; all four cross-arm comparisons matched 12/12 complete token arrays, cached tokens were zero, and independent canaries passed. This does not claim universal prompt-shape determinism: roughly 168-256-row W8A16 prefills have repeat-nondeterministic logprobs.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json"
     }
   },

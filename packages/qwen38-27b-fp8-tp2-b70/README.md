@@ -15,6 +15,15 @@ containers on two Intel Arc Pro B70 32 GiB cards.
 > installation replay. See the
 > [fresh-cache audit](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md).
 
+> **Determinism boundary:** the exactness result above is scoped to the fixed
+> suite's 48-78-token prompts. A later operator sweep and endpoint probe found
+> repeat-nondeterministic W8A16 logprobs when a prefill step contains roughly
+> 168-256 rows; five repeats at each of 168, 200, 224, and 250 prompt tokens
+> produced five distinct logprob arrays. Token IDs happened to remain stable
+> for the tested 64-token completions, which is not a universal determinism
+> guarantee. Greedy concurrent output also remains batch-shape-dependent. See
+> the [CR1 review](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
+
 The old `58.391033 tok/s` dynamic-MTP center used only a 128-token output cap,
 and the `146.814418 tok/s` result used a selected 40-token fixture. Neither is
 a headline. The LocalMaxxing submission
@@ -38,7 +47,7 @@ The recipe and independent workload evidence remain useful. The target-only
 block-W8A16 service measured `1,112.570323 tok/s` aggregate at 128 active
 short requests, with explicit output-isolation and semantic gates. A separate
 33,024-token target-only profile measured `31.489587 tok/s` decode at an exact
-32K prompt with `13.740 s` TTFT. The historical deterministic MTP1 profile
+32K prompt with `13.740 s` TTFT. The historical deterministic-Inductor MTP1 profile
 also directly measured 32K at **`46.636241 tok/s`** with `10.487 s` TTFT and
 matched all six then-recorded MTP0 depth-oracle token arrays. These are scoped
 Grade-C capacity/context results, not replacements for the strict
@@ -48,8 +57,10 @@ The package also retains a separate legacy publisher-MTP1 short-context
 aggregate profile at `1,091.642460 tok/s` for 64 active requests. It is not a
 substitute for a strict single-user result and uses the older concurrency
 service configuration. The MTP1 32K value above comes from the historical
-deterministic profile and is not borrowed from the MTP0 or concurrency lane.
-It is not proof that a fresh third-party build passes today's exactness gate.
+deterministic-Inductor profile and is not borrowed from the MTP0 or concurrency
+lane. That compiler setting does not override the W8A16 medium-prefill
+determinism boundary above. It is not proof that a fresh third-party build
+passes today's exactness gate.
 
 The checkpoint has one publisher MTP layer. Experimental serial reuse to MTP8
 is preserved under `experiments/` for mechanism research, but its selected
@@ -391,7 +402,7 @@ is shape evidence, not natural-prose latency evidence. The published prompt
 rate is explicitly `prompt tokens / HTTP TTFT`; it includes scheduling and
 first-token work and is not a kernel-only prefill rate.
 
-For the historical deterministic MTP1 2K-through-32K profile, use the dedicated
+For the historical deterministic-Inductor MTP1 2K-through-32K profile, use the dedicated
 wrappers and a new empty cache:
 
 ```bash

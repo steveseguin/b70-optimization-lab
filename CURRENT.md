@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-01**
+Last reviewed: **2026-09-02**
 
 ## Authority And Update Rule
 
@@ -20,13 +20,16 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-Verified on 2026-09-01:
+Verified on 2026-09-02 after a host reboot at `08:16 EDT`:
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
 - no listeners on `8000`, `18080`-`18089`, `19470`, or `19471`;
 - no Qwen benchmark listeners on `18110`-`18129`;
-- no `llama-server`, vLLM, or frontdoor process or container is running.
+- no `llama-server`, vLLM, or frontdoor process or container is running;
+- both B70s enumerate in `normal` state and the new-boot kernel journal contains
+  no Xe fault, timeout, hang, coredump, or engine-reset signature. Run a real
+  per-card compute smoke plus the two-card XCCL probe before the next model load.
 
 ## Active Qwen3.8 Official FP8 Two-B70 Reproduction Audit
 
@@ -108,11 +111,10 @@ meaningful c1/c2 difference to `gdn_attention_core_xpu` in decoder layer 1.
 Embedding, FP8/BA projection, layer-0 GDN output, and the layer-1 `z` input are
 exact; differing uninitialized `empty_like` scratch bytes are excluded. R78's
 first conv-only split attempt failed closed because the older serial control
-supports one speculative request only, not the two-request failure shape. The
-next implementation step is a narrow multi-request conv/delta diagnostic,
-followed by the strict clean-boot matrix if either stage repairs identity.
-Independent clean-host replay
-also remains pending.
+supports one speculative request only, not the two-request failure shape. Its
+proposed conv/delta follow-up is superseded by the CR1 whole-model W8A16
+diagnosis below; do not resume that layer-local path. Independent clean-host
+replay remains pending.
 Review CR1 (2026-09-02) closed the R86-R116 layer-N-only isolation track: the c2
 gate is an exact float16 logit tie decided by M-dependent oneDNN `fp8_gemm_w8a16`
 rounding in every layer plus the deliberate R97 norm arm, and R115's trace shows
@@ -122,10 +124,12 @@ the census also found run-to-run nondeterminism for 168-256-row W8A16 GEMMs,
 confirmed at the endpoint on 2026-09-02 (identical 168-250-token requests return
 different logprobs on every repeat; 100 and 300 tokens are bitwise repeatable),
 so single-request determinism language must carry that row-count bound. Fixed 32-row
-padding of small-M W8A16 GEMMs (R118) is closed as a decode cost, not a lead. The
-boot now carries copy-engine resets on both B70s (R116 attempt 1 on `03:00.0`,
-R118 candidate2 on `e3:00.0`, both during weight staging); reboot before the next
-server launch. The published output-audited concurrency curves are
+padding of small-M W8A16 GEMMs (R118) is closed as a decode cost, not a lead.
+The prior boot carried copy-engine resets on both B70s (R116 attempt 1 on
+`03:00.0`, R118 candidate2 on `e3:00.0`, both during weight staging). The host
+has since rebooted cleanly. After the real compute/XCCL preflight, the first
+full-model priority is the preregistered two-fresh-server R62 promotion replay;
+do not rerun R118 or R118b. The published output-audited concurrency curves are
 unaffected. See the
 [`CR1 review`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
  Recovery order is process
