@@ -1,0 +1,76 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-layer0-mlp-request-isolation-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r115",
+  "classification": "causal-positive-but-strict-identity-failed-on-uncovered-staggered-shape",
+  "public_result_eligible": false,
+  "image": {
+    "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-layer0-mlp-request-isolation-r115",
+    "id": "sha256:1709836b4c8c27f97057049942a69793b7168bdd6245064e6e02900db4529aa7",
+    "r114_patch_sha256": "be70a949b4de107a648d5e242b0afda5958ee1779f8ab716a5014717f354d7d4",
+    "r115_patch_sha256": "73d3008332658a878fe390901797bd19457498c6ff14d0bd13a7028fb147bb60",
+    "installed_qwen3_next_sha256": "503b7b6fd254bbe498b5df4865402aa59d6ed23d68b1b6c4bdd292075c4c1ed3",
+    "installed_qwen3_5_sha256": "183f571f401c94567b7f595073bfecbd418162d50f8758164b2dd0d6a4965a0f"
+  },
+  "gates": {
+    "patch_roundtrip_exact": true,
+    "semantic_callsite_and_constructor_registration_gate": true,
+    "model_direct_identity_gate": true,
+    "server_ready": true,
+    "profile_single_request_marker": true,
+    "runtime_split_per_request_marker": true,
+    "all_outputs_complete": true,
+    "cached_tokens_all_zero": true,
+    "warm_c1_exact": "1/1",
+    "warm_c2_exact": "4/4",
+    "counted_c1_exact": "3/3",
+    "counted_c2_exact": "39/40",
+    "strict_identity_pass": false
+  },
+  "counted_measurement": {
+    "c1_aggregate_tok_s_wall": {
+      "median": 38.97586530357914,
+      "min": 38.941914782625005,
+      "max": 39.50575070098777,
+      "repeats": 3
+    },
+    "c2_aggregate_tok_s_wall": {
+      "median": 76.16941527006657,
+      "min": 72.40314044601494,
+      "max": 77.39558698184095,
+      "repeats": 20
+    },
+    "reporting_boundary": "Diagnostic cache-zero oracle workload only; not a strict realistic headline or public speed result."
+  },
+  "failure": {
+    "repeat": 1,
+    "prompt_id": "cache-c000",
+    "first_divergent_token_zero_based": 96,
+    "observed_token_id": 2972,
+    "oracle_token_id": 348,
+    "unequal_positions_after_divergence": 30,
+    "observed_token_ids_sha256": "964a2e99550548907943826035d9719c3d07b3d416dafc1ab1699c1537d2dd98",
+    "oracle_token_ids_sha256": "9e7aec2c17aa1a19556349d1e106c6cb2e6d22db28953687ee655f2f8cb760b6"
+  },
+  "causal_interpretation": {
+    "baseline": "R108's valid repeated result passed only 1/20 c2 batches; its cache request produced this same alternate stream 19/20 times.",
+    "covered_shape": "Nineteen counted batches entered layer 0 as packed two-request prefills, executed R115 split-per-request MLP isolation, and matched all 38 oracle streams across both [31,28] and [28,31] request orders.",
+    "uncovered_shape": "The only failed counted batch entered as a scheduler-staggered one-request prefill. R115 took its single-request control path; the second request joined during decode, which R115 deliberately left packed.",
+    "conclusion": "Layer-0 dense-MLP request packing is causal, but pure multi-prefill-only coverage is insufficient for robust concurrent serving. The next candidate must cover mixed/decode multi-request execution without changing the proven packed-prefill arm."
+  },
+  "host": {
+    "both_b70_devices_after_stop": "normal",
+    "new_kernel_fault_or_reset": false,
+    "reboot_or_gpu_reset_requested": false
+  },
+  "artifacts": {
+    "local_run_directory": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-layer0-mlp-request-isolation-20260902-r115",
+    "server_log_sha256": "2d2221273e500890b4a7c74c548c8901162ff90190a491542f472a23aa651d6f",
+    "image_inspect_sha256": "878f183b28ba1e106733a651ba1ad6945424ab79076da80115b924094669a7ce",
+    "warm_c1_sha256": "9f11dd4701a805811b481cfe718e9ff11f886ff328175fd8153b5e0c519f7226",
+    "warm_c2_sha256": "e42200ec49ae9701264a94790177e7c56f5815e4d4b1a00507a86bf36e2a3087",
+    "counted_c1_sha256": "6408c03cfa3cd068c71426a4fc8cd3d3ce66161a2eebadc5bcdcf6738c88949a",
+    "counted_c2_sha256": "74e2daa96cdda3e88dcb55f38e171c1fc8e34849216b58834a2e3229acf29df5",
+    "projection_trace_sha256": "e82c119eb4ff8fba8c2108e7f63827fab79853e257646fdc9733719453c914d1"
+  },
+  "reporting_boundary": "Strict output identity failed. Do not update README, neural.download, LocalMaxxing, or any public performance/quality claim from R115."
+}

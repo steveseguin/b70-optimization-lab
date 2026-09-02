@@ -432,3 +432,19 @@ registration to the actual Qwen3.5 constructor after it creates `self.mlp`.
 No request ran in R114; both devices stayed normal and its kernel log was
 clean. See the
 [`R114 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r114-result.json).
+
+R115 finally executed the intended layer-0 dense-MLP treatment by registering
+the module in the actual `Qwen3_5DecoderLayer` constructor. It is a strong
+causal positive but failed the strict qualification: warm c1/c2 and counted c1
+were exact, while counted c2 matched 39/40 complete cache-zero streams. The
+single miss was the known cache-request branch at zero-based token 96. The
+execution trace resolves the apparent intermittency. Nineteen counted batches
+entered as packed c2 prefills, executed split-per-request MLP isolation across
+both request orders, and matched all 38 streams. The failed first batch entered
+as a staggered one-request prefill, took R115's control arm, and acquired its
+second active request during the decode phase that R115 intentionally leaves
+packed. Thus layer-0 MLP packing is causal, but pure-packed-prefill coverage is
+not sufficient for robust service. No public result is promoted. The next
+single-variable candidate must preserve the proven prefill arm and extend
+isolation to multi-request decode/mixed scheduler shapes. See the
+[`R115 result`](../data/2026-09-02-qwen38-fp8-mtp1-layer0-mlp-request-isolation-r115-result.json).
