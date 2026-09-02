@@ -1,0 +1,99 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -194,6 +194,77 @@
+ )
+ 
+ 
++def _request_isolated_xpu_gdn_projection_prefill(
++    normalized: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    """Project each request in a pure multi-request prefill independently."""
++    forward_context = get_forward_context()
++    layer = forward_context.no_compile_layers[layer_name]
++    attn_metadata_raw = forward_context.attn_metadata
++    attn_metadata = (
++        attn_metadata_raw.get(layer_name)
++        if isinstance(attn_metadata_raw, dict)
++        else None
++    )
++
++    isolate = (
++        isinstance(attn_metadata, GDNAttentionMetadata)
++        and attn_metadata.num_prefills > 1
++        and attn_metadata.num_decodes == 0
++        and attn_metadata.num_spec_decodes == 0
++        and attn_metadata.prefill_query_start_loc is not None
++    )
++    if not isolate:
++        output, _ = layer.out_proj(normalized)
++        return output
++
++    assert isinstance(attn_metadata, GDNAttentionMetadata)
++    assert attn_metadata.prefill_query_start_loc is not None
++    boundaries = (
++        attn_metadata.prefill_query_start_loc[: attn_metadata.num_prefills + 1]
++        .detach()
++        .cpu()
++        .tolist()
++    )
++    boundaries = [int(value) for value in boundaries]
++    if boundaries[0] != 0 or boundaries[-1] != normalized.shape[0]:
++        raise RuntimeError(
++            "request-isolated GDN projection boundaries do not cover rows"
++        )
++
++    pieces = []
++    for start, stop in zip(boundaries, boundaries[1:]):
++        if stop <= start:
++            raise RuntimeError(
++                "request-isolated GDN projection found an empty request"
++            )
++        output, _ = layer.out_proj(normalized[start:stop])
++        pieces.append(output)
++    result = torch.cat(pieces, dim=0)
++    if result.shape != (normalized.shape[0], output_size):
++        raise RuntimeError("request-isolated GDN projection returned wrong shape")
++    return result
++
++
++def _request_isolated_xpu_gdn_projection_prefill_fake(
++    normalized: torch.Tensor,
++    output_size: int,
++    layer_name: str,
++) -> torch.Tensor:
++    del layer_name
++    return normalized.new_empty((normalized.shape[0], output_size))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_projection_prefill_isolated_xpu",
++    op_func=_request_isolated_xpu_gdn_projection_prefill,
++    mutates_args=[],
++    fake_impl=_request_isolated_xpu_gdn_projection_prefill_fake,
++)
++
++
+ if GDN_AITER_TRITON_AVAILABLE:
+     from aiter.ops.triton.causal_conv1d_update_single_token import (
+         fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
+@@ -1419,7 +1490,17 @@
+             core_attn_out = self.norm(core_attn_out, z)
+             core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
+-        out, _ = self.out_proj(core_attn_out)
++        if (
++            os.getenv("VLLM_XPU_GDN_ISOLATE_PROJECTION_PREFILL_REQUESTS", "0")
++            == "1"
++        ):
++            out = torch.ops.vllm.qwen_gdn_projection_prefill_isolated_xpu(
++                core_attn_out,
++                hidden_states.shape[-1],
++                self.prefix,
++            )
++        else:
++            out, _ = self.out_proj(core_attn_out)
+         return out
+ 
+     def forward_cpu(
