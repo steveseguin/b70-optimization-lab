@@ -1,0 +1,94 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147",
+  "status": "preregistered-before-device-use",
+  "classification": "endpoint-identity-qualification; performance recorded, not gated",
+  "repository_commit_before_preregistration": "120fa61fe",
+  "boot": {
+    "boot_id": "9e05adaf-d974-4a9f-9a83-0bde8a2fa0db",
+    "boot_started_local": "2026-09-02T18:23:55-04:00",
+    "clean_boot_reason": "reboot after the Flash-Next A61 kernel soft lockup; no lane server has run on this boot",
+    "both_devices_state_before_preregistration": "normal",
+    "running_lane_containers_before_preregistration": 0
+  },
+  "question": "Does the R139 row-invariant fixed-K W8A16 image deliver batch-shape output identity (c1 == c2 == ... == c64) and 168-256-row repeat determinism at the endpoint when the c1 oracle is regenerated from the same image, as the CR1 review specified, instead of being held to the natural-arithmetic R54a oracle?",
+  "evidence_base": {
+    "cr1_review_step_4": "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md: regenerate the c1 oracle from the invariant build; the frozen oracle is a localization tool, not a requirement",
+    "r140_operator_gate": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-endpoint-r140-result.json: production-image kernel passed small/wide, repeat, permutation, and 168-to-200 padding identity; endpoint rejected only on the frozen-oracle 8/12 and a single-server 53.803 tok/s (-1.14% vs R119)",
+    "r140_gap": "R140 never ran the c1-c64 identity ladder or the medium-prefill repeat probe; the throughput floor aborted the run first",
+    "noise_band": "control-vs-control drift on this host was about 3% back-to-back and 10% across a session (CR1 R118 section); a single-server 1.14% miss is not decisive"
+  },
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "model_dir": "/mnt/fast-ai/llm-models/qwen3.8-27b-fp8",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139",
+    "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+    "extension_sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+    "image_contract_profile": "mtp1-serial-fa-split-gdn with EXPECTED_XPU_EXTENSION_SHA256 opt-in (commit 0003eba64)",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "strict_server": {"max_model_len": 1024, "max_num_seqs": 1, "max_num_batched_tokens": 1024, "gpu_memory_utilization": 0.95},
+    "ladder_server": {"max_model_len": 256, "max_num_seqs": 64, "max_num_batched_tokens": 512, "gpu_memory_utilization": 0.95, "source": "R63 frozen configuration"},
+    "mtp0_launcher": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+    "mtp1_launcher": "experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh (IMAGE and EXPECTED_IMAGE_ID overridden to R139)",
+    "mtp1_draft": "group-128 W4A16 draft head with BF16 scales, FP16 target verifier (R62 treatment, unchanged)",
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147.sh",
+    "artifact_root": "/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147"
+  },
+  "inputs": {
+    "strict_suite": {"path": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json", "sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"},
+    "ladder_suite": {"path": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json", "sha256": "2136a875ef55c71454066e2509061eed11b7e0ccaf98a3e0866a6eabce1cfce4"},
+    "ladder_harness": {"path": "scripts/bench-openai-concurrency-oracle.py", "sha256": "34fff63197fbb62d67ea7c2d828ae60c93630546f007be9cd171ec9d452825ff"},
+    "strict_compare": {"path": "scripts/compare-strict-attempt-outputs.py", "sha256": "0b4ee5baf50b00066d4c2ef86ed0e52c4a2ea369f065c627ebc9c7d154eab7af"},
+    "medium_prefill_probe": {"path": "experiments/qwen38-27b-b70/scripts/probe-qwen38-fp8-c1-prefill-length-determinism.py", "sha256": "e02f5e6e20f10f298163748506b50964d91854ab1fa63aeba5a7ff50aef6c3b4"},
+    "health": {"path": "scripts/check-qwen36-xpu-xccl-health.sh", "sha256": "9b39b43d106683ead2a6bc331a24be50baa401e4168071f48f679ba5ddb2d4aa"},
+    "frozen_natural_oracle_information_only": "experiments/qwen38-27b-b70/data/qwen38-fp8-mtp0-explicit-deterministic-r54a-r50"
+  },
+  "run_order": [
+    "preflight: zero lane containers, both B70s normal, per-card compute and two-card XCCL health, current-boot kernel journal baseline",
+    "mtp0-a: same-image MTP0 control, new empty compile cache, pre-canaries, strict natural-512 suite with post-canaries, graceful stop, health and journal postflight",
+    "mtp0-b: second same-image MTP0 control with a second empty cache, identical protocol",
+    "gate G1 before any MTP1 launch: mtp0-a vs mtp0-b complete token arrays 12/12; mtp0-a becomes the regenerated same-image oracle",
+    "mtp1-a: R139 image with the R62 draft-INT4 treatment, new empty cache, pre-canaries, strict suite, post-canaries, graceful stop, postflight",
+    "mtp1-b: identical protocol, then the medium-prefill repeat probe (100,168,200,224,250,300 tokens x5, 64 output tokens, 5 logprobs) on the same server before stop",
+    "offline: mtp1-a vs mtp1-b, mtp1-a vs mtp0-a, mtp1-b vs mtp0-a, and information-only mtp1-a vs the frozen R54a natural oracle",
+    "ladder: one MTP1 server in the frozen R63 configuration; harness regenerates 64 sequential oracles then measures c1,c2,c4,c8,16,32,64 with repeats=1, max_tokens=128, ignore_eos, temperature 0, --return-token-ids --require-output-identity; graceful stop; postflight"
+  ],
+  "gates": {
+    "G1_same_image_mtp0_repeatability": "mtp0-a vs mtp0-b 12/12 complete arrays exact; on failure stop before any MTP1 launch (the kernel is not c1 repeat-deterministic and nothing downstream can pass)",
+    "G2_mtp1_pair": "mtp1-a vs mtp1-b 12/12",
+    "G3_mtp1_vs_regenerated_oracle": "each MTP1 attempt vs mtp0-a 12/12",
+    "G4_workload": "each attempt: 12 rows, natural EOS, zero cached tokens, canaries pass before and after, realistic_final_gate passed",
+    "G5_medium_prefill_repeat": "at every length one token-ID stream, one token-logprob array, one top-logprob array, zero cached tokens (this is the 168-256-row hole; R62 failed it at 168, 200, 224, 250)",
+    "G6_ladder_identity": "every complete concurrent output at c1..c64 equals its sequential oracle; harness --require-output-identity exit status 0",
+    "identity_qualified": "G1 through G6 all pass"
+  },
+  "performance_recording": {
+    "not_a_gate": true,
+    "reason": "the question is identity; a speed decision between an identity-qualified profile and the faster R62/R119 headline belongs to the user",
+    "metric": "class_balanced_tok_s_1_100_intervals_after_ttft median per MTP1 attempt and the two-attempt center",
+    "reference_r119_center_tok_s": 54.42460323814495,
+    "reference_r62_per_attempt_99pct_floor_tok_s": 53.88,
+    "reference_qualified_incumbent_tok_s": 51.80808698870573,
+    "classification_rule": "if identity_qualified and center >= 0.99 * 54.424603 report 'identity-qualified within the noise band of R119'; if identity_qualified and center below that, report 'identity-qualified, speed-regressed by X% vs R119'; otherwise report which gate failed",
+    "ladder_aggregate": "c64 aggregate tok/s recorded for comparison with R63 (1080.851 candidate, 1061.646 control); not a promoted concurrency speed claim from one server"
+  },
+  "abort_conditions": [
+    "any current-boot Xe fault, CAT error, engine reset, coredump, device loss, timeout, or hung stage in the kernel journal or server log after any stage: stop, do not launch another server",
+    "either B70 not in normal state, or per-card compute / two-card XCCL health failure before a launch or after a stop",
+    "G1 failure: stop before MTP1",
+    "image identity or extension digest mismatch at launch",
+    "a server that does not reach /health within 45 minutes of launch (graceful stop, then abort)"
+  ],
+  "on_pass": "Record the identity-qualified profile in a note and CURRENT.md; do not change README, neural.download, or LocalMaxxing text; present the speed comparison to the user for the publication decision; preregister an independent-host replay and the fixture-hardening step (CR1 step 5)",
+  "on_failure": "Record which gate failed with the raw arrays preserved; if G5 or G6 fails while the operator census passes, the residual source is outside the W8A16 GEMM and the next localization target is the first non-GEMM op whose batch shape differs (lm_head FP16 matmul classes, GDN kernels), not another oneDNN geometry",
+  "explicitly_not_done": [
+    "no R146 run, no oneDNN source edit, no new image build",
+    "no README/public-package edit",
+    "no concurrency speed promotion from the single ladder server",
+    "no Flash-Next lane activity on the same boot until this campaign has stopped and postflight is clean"
+  ]
+}
