@@ -1,0 +1,137 @@
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -5 +5,4 @@
+-import os
++import hashlib
++import json
++import os
++import threading
+@@ -196,0 +200,73 @@
++_GDN_PROJECTION_TRACE_INVOCATION: dict[tuple[str, int], int] = {}
++_GDN_PROJECTION_TRACE_LOCK = threading.Lock()
++
++
++def _xpu_gdn_projection_trace_digest(tensor: torch.Tensor) -> str:
++    raw = tensor.detach().contiguous().view(torch.uint8).cpu().numpy().tobytes()
++    return hashlib.sha256(raw).hexdigest()
++
++
++def _trace_xpu_gdn_projection_prefill(
++    *,
++    layer_name: str,
++    num_prefills: int,
++    boundaries: list[int],
++    normalized: torch.Tensor,
++    projected: torch.Tensor,
++) -> None:
++    """R107 diagnostic: hash per-request rows around the output projection."""
++    trace_file = os.getenv("VLLM_XPU_GDN_PROJECTION_TRACE_FILE", "")
++    if not trace_file:
++        return
++
++    key = (layer_name, num_prefills)
++    with _GDN_PROJECTION_TRACE_LOCK:
++        invocation = _GDN_PROJECTION_TRACE_INVOCATION.get(key, 0) + 1
++        _GDN_PROJECTION_TRACE_INVOCATION[key] = invocation
++
++    requests = []
++    for request, (start, stop) in enumerate(zip(boundaries, boundaries[1:])):
++        normalized_rows = normalized[start:stop]
++        projected_rows = projected[start:stop]
++        requests.append(
++            {
++                "request": request,
++                "row_count": stop - start,
++                "normalized": {
++                    "shape": list(normalized_rows.shape),
++                    "dtype": str(normalized_rows.dtype),
++                    "sha256": _xpu_gdn_projection_trace_digest(normalized_rows),
++                },
++                "projected": {
++                    "shape": list(projected_rows.shape),
++                    "dtype": str(projected_rows.dtype),
++                    "sha256": _xpu_gdn_projection_trace_digest(projected_rows),
++                },
++            }
++        )
++
++    rank = int(os.getenv("RANK", "-1"))
++    if torch.distributed.is_available() and torch.distributed.is_initialized():
++        rank = torch.distributed.get_rank()
++    record = {
++        "schema": "neural.download.qwen38-gdn-postnorm-projection-trace.v1",
++        "pid": os.getpid(),
++        "rank": rank,
++        "layer": layer_name,
++        "invocation": invocation,
++        "num_prefills": num_prefills,
++        "query_start_loc": boundaries,
++        "requests": requests,
++    }
++    encoded = (
++        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
++    ).encode()
++    fd = os.open(trace_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
++    try:
++        written = os.write(fd, encoded)
++        if written != len(encoded):
++            raise RuntimeError("R107 GDN trace record was only partially written")
++    finally:
++        os.close(fd)
++
++
+@@ -212,6 +288,6 @@
+-    isolate = (
++    pure_prefill = (
+         isinstance(attn_metadata, GDNAttentionMetadata)
+-        and attn_metadata.num_prefills > 1
++        and attn_metadata.num_prefills > 0
+         and attn_metadata.num_decodes == 0
+         and attn_metadata.num_spec_decodes == 0
+         and attn_metadata.prefill_query_start_loc is not None
+@@ -219 +295 @@
+-    if not isolate:
++    if not pure_prefill:
+@@ -232,17 +308,25 @@
+-    if boundaries[0] != 0 or boundaries[-1] != normalized.shape[0]:
+-        raise RuntimeError(
+-            "request-isolated GDN projection boundaries do not cover rows"
+-        )
+-
+-    pieces = []
+-    for start, stop in zip(boundaries, boundaries[1:]):
+-        if stop <= start:
+-            raise RuntimeError(
+-                "request-isolated GDN projection found an empty request"
+-            )
+-        output, _ = layer.out_proj(normalized[start:stop])
+-        pieces.append(output)
+-    result = torch.cat(pieces, dim=0)
+-    if result.shape != (normalized.shape[0], output_size):
+-        raise RuntimeError("request-isolated GDN projection returned wrong shape")
+-    return result
++    if boundaries[0] != 0 or boundaries[-1] != normalized.shape[0]:
++        raise RuntimeError(
++            "request-isolated GDN projection boundaries do not cover rows"
++        )
++    if any(stop <= start for start, stop in zip(boundaries, boundaries[1:])):
++        raise RuntimeError("request-isolated GDN projection found an empty request")
++
++    if attn_metadata.num_prefills > 1:
++        pieces = []
++        for start, stop in zip(boundaries, boundaries[1:]):
++            output, _ = layer.out_proj(normalized[start:stop])
++            pieces.append(output)
++        result = torch.cat(pieces, dim=0)
++    else:
++        result, _ = layer.out_proj(normalized)
++    if result.shape != (normalized.shape[0], output_size):
++        raise RuntimeError("request-isolated GDN projection returned wrong shape")
++    _trace_xpu_gdn_projection_prefill(
++        layer_name=layer_name,
++        num_prefills=attn_metadata.num_prefills,
++        boundaries=boundaries,
++        normalized=normalized,
++        projected=result,
++    )
++    return result
