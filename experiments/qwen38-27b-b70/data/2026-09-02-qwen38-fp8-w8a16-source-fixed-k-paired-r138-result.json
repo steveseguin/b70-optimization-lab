@@ -1,0 +1,50 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-source-fixed-k-paired-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-source-fixed-k-paired-20260902-r138",
+  "classification": "paired-operator-performance-confirmation",
+  "status": "passes-c1-through-c64-performance-and-stability-gates",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-source-fixed-k-paired-r138-prereg.json",
+  "order_per_shape": ["A1", "B1", "B2", "A2"],
+  "weighted_latency": {
+    "by_m": {
+      "2": {"natural_us": 21655.01248, "candidate_us": 20658.49536, "ratio": 0.953982, "pass": true},
+      "4": {"natural_us": 21063.00816, "candidate_us": 20451.64152, "ratio": 0.970974, "pass": true},
+      "8": {"natural_us": 20288.28736, "candidate_us": 20373.72904, "ratio": 1.004211, "pass": true},
+      "16": {"natural_us": 20460.39152, "candidate_us": 20472.37872, "ratio": 1.000586, "pass": true},
+      "32": {"natural_us": 23139.43304, "candidate_us": 23119.09168, "ratio": 0.999121, "pass": true},
+      "64": {"natural_us": 27053.09176, "candidate_us": 27736.78312, "ratio": 1.025272, "pass": true},
+      "128": {"natural_us": 39051.16608, "candidate_us": 39857.94096, "ratio": 1.020659, "pass": true},
+      "168": {"natural_us": 45013.09536, "candidate_us": 59621.04168, "ratio": 1.324527, "prefill_2x_pass": true},
+      "256": {"natural_us": 55616.03304, "candidate_us": 69072.98736, "ratio": 1.241962, "prefill_2x_pass": true}
+    },
+    "decode_ratio_ceiling": 1.03,
+    "all_decode_points_pass": true,
+    "prefill_ratio_ceiling": 2.0,
+    "all_prefill_points_pass": true
+  },
+  "m128_by_shape": {
+    "gdn_in_proj_qkvz": {"natural_us": 98.805205, "candidate_us": 117.92057},
+    "gdn_out_proj": {"natural_us": 60.38984, "candidate_us": 66.650775},
+    "attn_qkv_proj": {"natural_us": 78.780465, "candidate_us": 114.28255},
+    "attn_o_proj": {"natural_us": 60.1875, "candidate_us": 66.214325},
+    "mlp_gate_up_proj": {"natural_us": 277.550775, "candidate_us": 261.861455},
+    "mlp_down_proj": {"natural_us": 178.48542, "candidate_us": 177.366145}
+  },
+  "stability": {
+    "m128_sample_max_min_ceiling": 1.15,
+    "maximum_observed": 1.10659,
+    "all_24_runs_pass": true
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-source-fixed-k-paired-r138",
+    "sha256_manifest_bytes": 7896,
+    "sha256_manifest_sha256": "8cfa7eae05108ff4c62adb214f0cab72b5130690fd7d2f3d7c9a6acbabaf3674"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "both_devices_normal_after_each_shape": true,
+    "new_fault_or_reset_visible_to_current_user": false,
+    "server_launched": false
+  },
+  "decision": "The R137b source selector is operator-performance-qualified through c64. Build a full GDN-compatible serving extension and package it over the exact R62 image before endpoint testing."
+}

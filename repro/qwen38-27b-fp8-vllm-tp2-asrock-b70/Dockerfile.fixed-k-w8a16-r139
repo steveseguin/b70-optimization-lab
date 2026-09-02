@@ -1,0 +1,16 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62
+FROM ${BASE_IMAGE}
+
+ARG XPU_EXTENSION_SHA256
+ARG ONEDNN_PATCH_SHA256
+
+COPY _xpu_C.abi3.so /tmp/r139/_xpu_C.abi3.so
+
+RUN set -eux; \
+    echo "${XPU_EXTENSION_SHA256}  /tmp/r139/_xpu_C.abi3.so" | sha256sum -c -; \
+    install -m 0755 /tmp/r139/_xpu_C.abi3.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so; \
+    rm -rf /tmp/r139
+
+LABEL neural.download.build.lane="qwen38-fp8-mtp1-fixed-k-w8a16-r139" \
+      neural.download.onednn.patch.sha256="${ONEDNN_PATCH_SHA256}" \
+      neural.download.xpu.extension.sha256="${XPU_EXTENSION_SHA256}"
