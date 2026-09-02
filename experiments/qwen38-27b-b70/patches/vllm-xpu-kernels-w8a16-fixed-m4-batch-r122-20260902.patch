@@ -1,0 +1,197 @@
+diff --git a/csrc/xpu/onednn/fp8_gemm_w8a16.h b/csrc/xpu/onednn/fp8_gemm_w8a16.h
+index 7f8f387..bc3ccdc 100644
+--- a/csrc/xpu/onednn/fp8_gemm_w8a16.h
++++ b/csrc/xpu/onednn/fp8_gemm_w8a16.h
+@@ -21,11 +21,23 @@ static inline void dnnl_matmul_w8a16_fp8(
+   auto src_sz = mat1.sizes();
+   auto o_sz = result.sizes();
+ 
+-  const int m = std::reduce(
+-      src_sz.begin(), src_sz.end() - 1, 1, std::multiplies<int64_t>());
++  const bool fixed_m_batched = mat1.dim() == 3;
++  const int batch_dim = fixed_m_batched ? src_sz[0] : -1;
++  const int m = fixed_m_batched
++      ? src_sz[1]
++      : std::reduce(
++            src_sz.begin(), src_sz.end() - 1, 1, std::multiplies<int64_t>());
+   const int n = o_sz.back();  // presume channel last format
+   const int k = *(src_sz.end() - 1);
+ 
++  TORCH_CHECK(
++      !fixed_m_batched || (m == 4 && mat2.dim() == 2),
++      "Experimental batched W8A16 path requires A [B, 4, K] and shared B [K, N], got ",
++      mat1.sizes(),
++      " and ",
++      mat2.sizes(),
++      ".");
++
+   // block quant: m2_sc is 2D with size(0) > 1, i.e. [k/group_size,
+   // n/group_size] Per-channel scale [1, N] has size(0)==1 and must NOT enter
+   // this branch.
+@@ -43,6 +55,9 @@ static inline void dnnl_matmul_w8a16_fp8(
+         ".");
+     blk_group_size = k / m2_sc.size(0);
+   }
++  // A batched matmul gives the shared weight a leading singleton dimension.
++  // Match the scale memory rank to that descriptor; unsqueeze is a view.
++  torch::Tensor m2_sc_arg = fixed_m_batched ? m2_sc.unsqueeze(0) : m2_sc;
+ 
+   // get joint dtypes
+   joint_dtypes_t jd;
+@@ -91,23 +106,26 @@ static inline void dnnl_matmul_w8a16_fp8(
+     if (is_block_quant) {
+       pattr.set_scales(
+           DNNL_ARG_WEIGHTS,
+-          /* mask */ (1 << 0) + (1 << 1),
+-          {blk_group_size, blk_group_size},
+-          get_onednn_dtype(m2_sc));
++          /* mask */ fixed_m_batched ? (1 << 1) + (1 << 2)
++                                     : (1 << 0) + (1 << 1),
++          fixed_m_batched
++              ? dnnl::memory::dims{1, blk_group_size, blk_group_size}
++              : dnnl::memory::dims{blk_group_size, blk_group_size},
++          get_onednn_dtype(m2_sc_arg));
+       /* per block quant */
+     } else if (m2_sc.numel() == 1) {
+       pattr.set_scales(
+           DNNL_ARG_WEIGHTS,
+           /* mask */ 0,
+           {},
+-          get_onednn_dtype(m2_sc));
++          get_onednn_dtype(m2_sc_arg));
+       /* per tensor quant */
+     } else {
+       pattr.set_scales(
+           DNNL_ARG_WEIGHTS,
+-          /* mask */ (1 << 1),
++          /* mask */ fixed_m_batched ? (1 << 2) : (1 << 1),
+           {},
+-          get_onednn_dtype(m2_sc));
++          get_onednn_dtype(m2_sc_arg));
+       /* per channel quant */
+     }
+   };
+@@ -122,16 +140,58 @@ static inline void dnnl_matmul_w8a16_fp8(
+ 
+   int m2_sc_group_size = m2_sc.numel();
+   int sc_group_size = (group_size << 8) | m2_sc_group_size;
+-  auto& matmul_ext = matmul_primitive_create_and_cache(
+-      jd, tt, b_type, m, n, k, lda, ldb, ldc, dev_id, f_attr, sc_group_size);
++  primitive_ext* matmul_ext_ptr = nullptr;
++  if (!fixed_m_batched) {
++    matmul_ext_ptr = &matmul_primitive_create_and_cache(
++        jd, tt, b_type, m, n, k, lda, ldb, ldc, dev_id, f_attr, sc_group_size);
++  } else {
++#define CREATE_BATCHED_W8A16_PRIMITIVE(joint_type)                         \
++  &matmul_primitive_create_and_cache<joint_type>(                         \
++      tt,                                                                 \
++      b_type,                                                             \
++      m,                                                                  \
++      n,                                                                  \
++      k,                                                                  \
++      lda,                                                                \
++      ldb,                                                                \
++      ldc,                                                                \
++      dev_id,                                                             \
++      f_attr,                                                             \
++      sc_group_size,                                                      \
++      1,                                                                  \
++      batch_dim,                                                          \
++      true)
++    switch (jd) {
++      case joint_dtypes_t::f16_f8_e5m2:
++        matmul_ext_ptr =
++            CREATE_BATCHED_W8A16_PRIMITIVE(joint_dtypes_t::f16_f8_e5m2);
++        break;
++      case joint_dtypes_t::bf16_f8_e5m2:
++        matmul_ext_ptr =
++            CREATE_BATCHED_W8A16_PRIMITIVE(joint_dtypes_t::bf16_f8_e5m2);
++        break;
++      case joint_dtypes_t::f16_f8_e4m3:
++        matmul_ext_ptr =
++            CREATE_BATCHED_W8A16_PRIMITIVE(joint_dtypes_t::f16_f8_e4m3);
++        break;
++      case joint_dtypes_t::bf16_f8_e4m3:
++        matmul_ext_ptr =
++            CREATE_BATCHED_W8A16_PRIMITIVE(joint_dtypes_t::bf16_f8_e4m3);
++        break;
++      default:
++        TORCH_CHECK(false, "Unsupported dtype for batched W8A16.");
++    }
++#undef CREATE_BATCHED_W8A16_PRIMITIVE
++  }
++  auto& matmul_ext = *matmul_ext_ptr;
+ 
+   matmul_ext.set_attribute(
+       arg_off++,
+       DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS,
+-      m2_sc.data_ptr(),
++      m2_sc_arg.data_ptr(),
+       [&]() {
+         return make_onednn_memory(
+-            get_onednn_md(m2_sc), engine, m2_sc.data_ptr());
++            get_onednn_md(m2_sc_arg), engine, m2_sc_arg.data_ptr());
+       });
+ 
+   std::vector<std::pair<int, void*>> arg_handles;
+diff --git a/csrc/xpu/onednn/onednn_ext.h b/csrc/xpu/onednn/onednn_ext.h
+index 9a29844..605d775 100644
+--- a/csrc/xpu/onednn/onednn_ext.h
++++ b/csrc/xpu/onednn/onednn_ext.h
+@@ -793,7 +793,8 @@ struct matmul_primitive_cache_t {
+       F f_attr,
+       const int scale_group_size,
+       const int zp_group_size,
+-      const int batch_dim) {
++      const int batch_dim,
++      const bool broadcast_weights) {
+     auto& cached = get_cache(device_id);
+     memory::dims src_strides, wei_strides, dst_strides;
+     get_strides<Tt>(src_strides, wei_strides, dst_strides, lda, ldb, ldc);
+@@ -804,6 +805,7 @@ struct matmul_primitive_cache_t {
+         n,
+         k,
+         batch_dim,
++        broadcast_weights,
+         int(b_type),
+         scale_group_size,
+         zp_group_size);
+@@ -835,7 +837,7 @@ struct matmul_primitive_cache_t {
+         }
+       } else {
+         memory::dims src_dims = {batch_dim, m, k};
+-        memory::dims wei_dims = {batch_dim, k, n};
++        memory::dims wei_dims = {broadcast_weights ? 1 : batch_dim, k, n};
+         memory::dims dst_dims = {batch_dim, m, n};
+ 
+         const int64_t src_batch_stride = int64_t(m) * lda;
+@@ -906,7 +908,8 @@ static inline primitive_ext& matmul_primitive_create_and_cache(
+     F attr,
+     const int scale_group_size,
+     const int zp_group_size,
+-    const int batch_dim = -1) {
++    const int batch_dim = -1,
++    const bool broadcast_weights = false) {
+   switch (Tt) {
+     case trans_type_t::nt:
+       return matmul_primitive_cache_t<trans_type_t::nt, Ts, F>::get(
+@@ -921,7 +924,8 @@ static inline primitive_ext& matmul_primitive_create_and_cache(
+           attr,
+           scale_group_size,
+           zp_group_size,
+-          batch_dim);
++          batch_dim,
++          broadcast_weights);
+     case trans_type_t::nn:
+       return matmul_primitive_cache_t<trans_type_t::nn, Ts, F>::get(
+           m,
+@@ -935,7 +939,8 @@ static inline primitive_ext& matmul_primitive_create_and_cache(
+           attr,
+           scale_group_size,
+           zp_group_size,
+-          batch_dim);
++          batch_dim,
++          broadcast_weights);
+     default:
+       throw std::runtime_error("unsupported trans type ...");
+   }
