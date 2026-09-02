@@ -27,9 +27,10 @@ Verified on 2026-09-02 after a host reboot at `08:16 EDT`:
 - no listeners on `8000`, `18080`-`18089`, `19470`, or `19471`;
 - no Qwen benchmark listeners on `18110`-`18129`;
 - no `llama-server`, vLLM, or frontdoor process or container is running;
-- both B70s enumerate in `normal` state and the new-boot kernel journal contains
-  no Xe fault, timeout, hang, coredump, or engine-reset signature. Run a real
-  per-card compute smoke plus the two-card XCCL probe before the next model load.
+- both B70s enumerate in `normal` state. Per-card Level Zero compute and the
+  two-card XCCL barrier/all-reduce passed before R119 and after each of its two
+  server attempts. The new-boot kernel journal contains no Xe fault, timeout,
+  hang, coredump, or engine-reset signature.
 
 ## Active Qwen3.8 Official FP8 Two-B70 Reproduction Audit
 
@@ -75,9 +76,14 @@ center, `+4.6980%` vs the qualified headline); candidate repeat outputs matched
 12/12, all 24 outputs matched MTP0, cache use was zero, and canaries passed.
 The 18-case prose/code/document depth continuation was also exact through 32K,
 where it measured `52.279 tok/s`; it improved over R56 MTP1 at every tested
-depth. R62 is retained but not promoted because this boot contains an earlier
-GPU reset. Its public headline and curve remain unchanged until the
-preregistered two fresh-server clean-boot replay passes.
+depth. Clean-boot R119 then promoted R62 for the scoped single-user workload.
+Two new empty-cache servers measured `54.622918` and `54.226288 tok/s`, centered
+at **`54.424603 tok/s`** (`+5.0504%` vs `51.808087`). Both passed canaries and
+cache-zero workload gates; A/B and both candidate/MTP0 comparisons matched all
+12 complete token arrays. Both-rank markers confirmed the target verifier stayed
+FP16. Preflight and both postflights passed per-card compute and two-card XCCL,
+and the clean boot remained free of Xe faults. This is now the public
+single-user headline, scoped to the fixed suite's 48-78-token prompts.
 R63 tested c1-c64 aggregate robustness. R62 reached `1,080.851 tok/s` at c64
 but matched only 55/64 sequential-oracle arrays; the identical FP16-draft
 control reached `1,061.646 tok/s` and matched 54/64, with both first diverging
@@ -122,15 +128,18 @@ no layer bit-identical to c1. The next identity target is a whole-model
 row-invariant W8A16 GEMM gated by the kernel census, then a regenerated c1 oracle;
 the census also found run-to-run nondeterminism for 168-256-row W8A16 GEMMs,
 confirmed at the endpoint on 2026-09-02 (identical 168-250-token requests return
-different logprobs on every repeat; 100 and 300 tokens are bitwise repeatable),
-so single-request determinism language must carry that row-count bound. Fixed 32-row
-padding of small-M W8A16 GEMMs (R118) is closed as a decode cost, not a lead.
+different logprobs on every repeat; R119 also produced two distinct 64-token
+streams at 168 rows, while 100 and 300 tokens were bitwise repeatable), so
+single-request determinism language must carry that row-count bound. Fixed
+32-row padding of small-M W8A16 GEMMs (R118) is closed as a decode cost, not a
+lead.
 The prior boot carried copy-engine resets on both B70s (R116 attempt 1 on
 `03:00.0`, R118 candidate2 on `e3:00.0`, both during weight staging). The host
-has since rebooted cleanly. After the real compute/XCCL preflight, the first
-full-model priority is the preregistered two-fresh-server R62 promotion replay;
-do not rerun R118 or R118b. The published output-audited concurrency curves are
-unaffected. See the
+has since rebooted cleanly, and R119 completed without an infrastructure event.
+The next full-model priority is the preregistered oneDNN runtime-M experiment
+from an isolated source clone pinned to `1e90ffa672`; do not touch the dirty
+Flash-Next source tree and do not rerun R118 or R118b. The published
+output-audited concurrency curves are unaffected. See the
 [`CR1 review`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
  Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then

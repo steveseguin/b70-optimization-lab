@@ -1,0 +1,93 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-draft-int4-cleanboot-promotion-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-draft-int4-cleanboot-20260902-r119",
+  "status": "promoted-single-user-with-determinism-bound",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-prereg.json",
+  "boot": {
+    "boot_id": "7c432682-9e2d-4ff0-90a5-5f9a88250d4e",
+    "boot_started_local": "2026-09-02T08:16:24-04:00",
+    "post_reboot_static_gate_passed": true,
+    "per_card_compute_before_and_after_passed": true,
+    "two_card_xccl_before_and_after_passed": true,
+    "current_boot_xe_fault_signature": false
+  },
+  "identity": {
+    "model": "Qwen/Qwen3.8-27B-FP8",
+    "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "candidate_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "patch_sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab",
+    "cards": 2,
+    "tensor_parallel": 2,
+    "mtp_depth": 1,
+    "target_projection": "unchanged FP16",
+    "draft_projection": "group-128 W4A16 with BF16 scales",
+    "xpu_graph": false,
+    "prefix_cache": false,
+    "max_model_len": 1024,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 1024
+  },
+  "strict_natural_512": {
+    "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+    "prompt_count": 12,
+    "prompt_classes": 6,
+    "prompt_token_range": [48, 78],
+    "attempts_tok_s": [54.62291797671307, 54.226288499576825],
+    "center_tok_s": 54.42460323814495,
+    "repeat_range_percent": 0.7287687066834798,
+    "qualified_incumbent_tok_s": 51.80808698870573,
+    "uplift_vs_incumbent_percent": 5.050401204757127,
+    "minimum_each_attempt_tok_s": 51.29000611881867,
+    "minimum_center_uplift_percent": 3.0,
+    "cached_tokens_all_zero": true,
+    "canaries_before_and_after_passed": true,
+    "complete_token_arrays_attempt_a_vs_b": "12/12 exact",
+    "complete_token_arrays_attempt_a_vs_mtp0_oracle": "12/12 exact",
+    "complete_token_arrays_attempt_b_vs_mtp0_oracle": "12/12 exact",
+    "target_verifier_unchanged_fp16_marker_on_both_ranks": true,
+    "performance_and_identity_gates_passed": true
+  },
+  "medium_prefill_repeat_probe": {
+    "classification": "single-request endpoint diagnostic; separate from the fixed promotion workload",
+    "repeats_per_length": 5,
+    "completion_tokens": 64,
+    "cached_tokens_all_zero": true,
+    "results": [
+      {"prompt_tokens": 100, "distinct_token_id_streams": 1, "distinct_token_logprob_arrays": 1, "repeat_exact": true},
+      {"prompt_tokens": 168, "distinct_token_id_streams": 2, "distinct_token_logprob_arrays": 5, "repeat_exact": false},
+      {"prompt_tokens": 200, "distinct_token_id_streams": 1, "distinct_token_logprob_arrays": 5, "repeat_exact": false},
+      {"prompt_tokens": 224, "distinct_token_id_streams": 1, "distinct_token_logprob_arrays": 5, "repeat_exact": false},
+      {"prompt_tokens": 250, "distinct_token_id_streams": 1, "distinct_token_logprob_arrays": 5, "repeat_exact": false},
+      {"prompt_tokens": 300, "distinct_token_id_streams": 1, "distinct_token_logprob_arrays": 1, "repeat_exact": true}
+    ],
+    "decision": "Do not claim universal prompt-shape or token determinism. The promoted headline applies only to the fixed 48-78-token prompt suite; roughly 168-256-row prefills are excluded until the W8A16 GEMM is repaired."
+  },
+  "integrity": {
+    "attempt_a_performance_sha256": "b9d9ca30380783511ba15f76856ed6bb145d3e6c53d293d970ebed60e56abc86",
+    "attempt_b_performance_sha256": "66303af82cdec901fa8a4a1556bfc2b6b12c82b84777e4c1c1a30a2dacc2bfea",
+    "attempt_a_canaries_sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8",
+    "attempt_b_canaries_sha256": "f234e605954b061e7f902eb92dd96739722df5437cadd9b2aceed79b976e45f8",
+    "attempt_a_vs_b_comparison_sha256": "15b724e2f8e664f4d0c6b68f17c996bb2621b0f1ead6dea77526f20ccf994ab2",
+    "attempt_a_vs_target_comparison_sha256": "eaf84627e3a19947b3cbefe8db487e4b8baf830e39c43cc7b7080994aef06c4b",
+    "attempt_b_vs_target_comparison_sha256": "2c328c9082eddac8b597a6cdef39674d6b55842d7a96068c5ad393a3bf307df0",
+    "medium_prefill_probe_sha256": "d7664e3e7583ae38226feac29d958f1dd05ed17e3f837b84d93e91f74e94a548",
+    "attempt_a_server_log_sha256": "606e395ede1c434d4bb64d499e0393c532d883337611940064d169824b0b83e8",
+    "attempt_b_server_log_sha256": "52e902d7f8387a33ef112a0e6b56b9df3bde7ab16116f8a6c28dceb731e52ce6",
+    "attempt_a_postflight_xccl_sha256": "6733e70c37058781a9b5987618c2d7fdedce9923ba5e5148aa554b9e07e2fb8c",
+    "attempt_b_postflight_xccl_sha256": "fac92a850f2bc0c12ed74d9d9da6fc790c54b50686b6ea0d9cb5bb281f475d1f",
+    "new_kernel_faults": 0,
+    "lane_containers_after_run": 0
+  },
+  "decision": {
+    "single_user_profile_promoted": true,
+    "public_headline_tok_s": 54.42460323814495,
+    "target_verifier_changed": false,
+    "universal_determinism_claim": false,
+    "concurrency_identity_qualified": false,
+    "independent_host_installation_replay_pending": true,
+    "next_gate": "Repair W8A16 row dependence and repeat nondeterminism, then rerun the oracle and c1-c64 identity matrix before concurrency promotion."
+  }
+}

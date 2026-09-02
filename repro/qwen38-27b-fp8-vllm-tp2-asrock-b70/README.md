@@ -11,14 +11,18 @@
 
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
-FP16 KV, and TP2. Static publisher MTP1 is lab-qualified at
-**`51.808087 tok/s`**; deeper dynamic MTP remains a research lane.
+FP16 KV, and TP2. The R62 publisher-MTP1 profile is lab-qualified at
+**`54.424603 tok/s`** with an unchanged FP16 target verifier; deeper dynamic
+MTP remains a research lane.
 
 ## Strict MTP1 qualification
 
-Four fresh servers with separate empty compile caches passed the complete fixed
-12-prompt/six-class, natural 512-token suite. MTP0 and MTP1 deliberately used
-the same content-verified R50 image; only speculative decoding changed:
+The original four-arm R53/R54 matrix established the exact MTP0 oracle and a
+`51.808087 tok/s` MTP1 incumbent. Clean-boot R119 then ran the R62 draft-only
+INT4 treatment on two more fresh servers with separate empty compile caches.
+Only the one-row draft vocabulary projection is INT4; target verification
+remains FP16. Every arm used the complete fixed 12-prompt/six-class, natural
+512-token suite:
 
 | arm | attempt | class-balanced decode | output gate |
 | --- | ---: | ---: | ---: |
@@ -26,14 +30,23 @@ the same content-verified R50 image; only speculative decoding changed:
 | MTP0 | `r54c-r50` | 33.745004 tok/s | 12/12 vs sibling |
 | MTP1 | `r53a` | 51.796549 tok/s | 12/12 vs sibling and both targets |
 | MTP1 | `r53b` | 51.819625 tok/s | 12/12 vs sibling and both targets |
-| MTP1 two-attempt center | **51.808087 tok/s** | — | **qualified** |
+| R62 MTP1 | `r119-a` | 54.622918 tok/s | 12/12 vs sibling and MTP0 oracle |
+| R62 MTP1 | `r119-b` | 54.226288 tok/s | 12/12 vs sibling and MTP0 oracle |
+| R62 two-attempt center | **54.424603 tok/s** | — | **qualified** |
 
-All four attempts reported `cached_tokens=0`, passed the independent canaries,
-and used natural EOS with a 512-token cap. The metric is the median of six
-prompt-class medians over the 99 intervals between streamed output events
-1-100 after TTFT. The candidate is `53.5804%` faster than the matched-image
-MTP0 center (`33.733520 tok/s`) with no observed token change. See the
-[audit note](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md).
+All attempts reported `cached_tokens=0`, passed independent canaries, and used
+natural EOS with a 512-token cap. The metric is the median of six prompt-class
+medians over the 99 intervals between streamed output events 1-100 after TTFT.
+R62 is `5.0504%` faster than the qualified MTP1 incumbent and `61.3369%` faster
+than the `33.733520 tok/s` MTP0 center with no observed token change inside the
+fixed suite. See the [R119 promotion](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md).
+
+This exactness scope is not universal. The suite prompts contain 48-78 tokens.
+Five repeated requests at each of 168, 200, 224, and 250 prompt tokens produced
+five distinct logprob arrays, and the 168-token case produced two distinct
+64-token streams. The 100- and 300-token controls were bitwise repeatable.
+Roughly 168-256-row prefills and all token-identity concurrency claims remain
+excluded until the W8A16 GEMM is repaired.
 
 The repository build path was then exercised from a new pinned source checkout.
 That R55C image measured `51.579521 tok/s` with a new compile cache, passed the
@@ -116,23 +129,30 @@ below applies every stage in order and the image-contract verifier checks the
 installed libraries. Do not substitute the older R31 image for the final R50
 image.
 
-The 51.808087 tok/s qualification is a single-sequence, 1K allocation profile
+The 54.424603 tok/s qualification is a single-sequence, 1K allocation profile
 (`MAX_MODEL_LEN=1024`), not a full-262K-context measurement. A server launched
 with a 262K maximum context is useful, but it is not a like-for-like reproduction
 of that headline. The separately measured historical 32K MTP1 point was
 46.636241 tok/s and is explicitly Grade-C shape evidence.
 
-Build the full dependency chain and launch the qualified profile with portable
-caller-selected paths:
+Build the full dependency chain, then build and launch the selected R62 overlay
+with portable caller-selected paths. The base and candidate image IDs are
+deliberately supplied by the caller so independently built content is checked
+instead of assuming this host's Docker ID:
 
 ```bash
+FINAL_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
 BUILD_ROOT=/path/to/empty-build-root \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh
 
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-built-base-id \
+BUILD_ROOT=/path/to/empty-r62-build-root \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-draft-int4-r62-image.sh
+
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
 VLLM_CACHE_DIR=/path/to/new-empty-runtime-cache \
-MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 \
-  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh
+EXPECTED_IMAGE_ID=sha256:replace-with-built-r62-id \
+  experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh
 ```
 
 In another terminal, run the actual strict natural-512 workload—not the older
@@ -434,7 +454,7 @@ deployment modes, not values to splice into one unnamed profile. The old
 single-response 61.699580 tok/s observation is intentionally omitted here: it
 is not the varied-prompt strict headline. The historical 51.918757 tok/s R32
 result remains historical; the current independently qualified strict headline
-is 51.808087 tok/s. This concurrency profile has a 256-token service limit and
+is 54.424603 tok/s from R62/R119. This concurrency profile has a 256-token service limit and
 no measured 32K point.
 
 The old kernel aborts when continuous batching mixes MTP decode with new
@@ -798,15 +818,17 @@ unchanged. See the [R61 shape report](../../experiments/qwen38-27b-b70/notes/202
 
 R62 then quantized only the one-row MTP draft vocabulary projection to
 group-128 W4A16. It leaves the two-row FP16 target verifier projection
-unchanged and is default-off. Two fresh-cache diagnostic servers measured
+unchanged and is default-off in the parent image. Two fresh-cache diagnostic servers measured
 `54.507697` and `53.976404 tok/s`; all 24 complete arrays matched the MTP0
 oracle, candidate repeat determinism was 12/12, cache use was zero, and
 canaries passed. An 18-case prose/code/document depth matrix remained exact
-through 32K and measured `52.279 tok/s` there. This is a retained candidate,
-not a new public headline: the boot contained an earlier GPU reset, so the
-preregistered two-server clean-boot replay is still required. Build with
+through 32K and measured `52.279 tok/s` there. Clean-boot R119 then measured
+`54.622918` and `54.226288 tok/s`, centered at **`54.424603 tok/s`**. Both
+attempts and both target comparisons were 12/12 exact, both GPU postflights
+passed, and no new-boot Xe fault appeared. R62 is therefore the scoped
+single-user headline. Build with
 [`build-draft-int4-r62-image.sh`](build-draft-int4-r62-image.sh), launch with
-the repository wrapper documented in the [R62 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md), and run
+the repository wrapper documented in the [R119 promotion](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md), and run
 `./verify-public-source-closure.sh` first.
 
 The complete third-party build path is explicit. First build the public pinned
@@ -854,8 +876,8 @@ PROFILE_LABEL=mtp1-draft-int4-r62 \
 ```
 
 These placeholders are intentional user-selected paths, not references to this
-lab machine. R62 remains opt-in and does not affect the qualified launcher when
-its environment flag is absent.
+lab machine. The treatment remains default-off unless the R62 wrapper is used;
+that wrapper is now the qualified single-user launcher.
 
 R63 then tested that candidate at c1-c64. It cleared the requested aggregate
 floor (`1,080.851 tok/s` at c64), but only 55/64 complete c64 outputs matched
@@ -874,7 +896,7 @@ to 36.003 tok/s. A cheaper local-shard near-tie repair passed a small c2 screen
 but failed the full ladder (54/64 exact and 753.077 tok/s at c64). The decisive
 logprob probe found an exactly tied global top two split across TP vocabulary
 shards, which a per-rank margin cannot see. These are diagnostic, unpromoted
-experiments; the qualified single-user recipe and headline remain unchanged.
+experiments; at that stage they did not change the qualified single-user recipe.
 See the [R67 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-selective-head-batch-repair-r67-negative.md).
 
 R68-R72 then tested the global repair directly. R68 changed a full-logits path

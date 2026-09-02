@@ -3,25 +3,24 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Strict MTP1 qualified: `51.808087 tok/s`.** Two fresh-server attempts
-> measured `51.796549` and `51.819625 tok/s`. Two matched-image MTP0 controls
-> measured `33.722035` and `33.745004 tok/s`, making the MTP1 gain `53.5804%`.
-> Every attempt ran the complete 12-prompt/six-class natural-512 workload with
-> cache zero and independent canaries; both within-arm comparisons and all
-> four target/candidate comparisons matched all 12 complete token arrays. A
-> clean-source rebuild then replayed at `51.579521 tok/s` from a new image and
-> empty compile cache, with 12/12 exact arrays against both MTP1 and MTP0. The
-> package remains `candidate` until an independent host-driver/Docker
-> installation replay. See the
-> [fresh-cache audit](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md).
+> **Strict R62 MTP1 qualified: `54.424603 tok/s`.** After a clean reboot, two
+> fresh-server attempts with separate empty compile caches measured `54.622918`
+> and `54.226288 tok/s`, `5.0504%` above the previous `51.808087 tok/s`
+> profile. Both attempts ran the complete 12-prompt/six-class natural-512
+> workload with cache zero and canaries before and after. Candidate A/B and
+> both candidate/FP16-verifier MTP0 comparisons matched all 12 complete token
+> arrays. Per-card compute and two-card XCCL passed before and after the runs,
+> and the clean boot logged no Xe fault. The package remains `candidate` until
+> an independent host-driver/Docker installation replay. See the
+> [R119 promotion](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md).
 
 > **Determinism boundary:** the exactness result above is scoped to the fixed
 > suite's 48-78-token prompts. A later operator sweep and endpoint probe found
 > repeat-nondeterministic W8A16 logprobs when a prefill step contains roughly
 > 168-256 rows; five repeats at each of 168, 200, 224, and 250 prompt tokens
-> produced five distinct logprob arrays. Token IDs happened to remain stable
-> for the tested 64-token completions, which is not a universal determinism
-> guarantee. Greedy concurrent output also remains batch-shape-dependent. See
+> produced five distinct logprob arrays. The clean-boot R119 probe also
+> produced two distinct 64-token streams at 168 prompt tokens. Greedy
+> concurrent output remains batch-shape-dependent. See
 > the [CR1 review](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
 
 The old `58.391033 tok/s` dynamic-MTP center used only a 128-token output cap,
@@ -77,12 +76,12 @@ The technical source of truth is the
 [`reproduction guide`](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md).
 The machine-readable front door is [`package.json`](package.json).
 
-The latest default-off optimization candidate moves only the MTP drafter's
-vocabulary projection to INT4 while keeping target verification FP16. It
-passed strict and 2K-32K exact-output diagnostics at a `54.242051 tok/s`
-two-server center, but it is deliberately not the package headline until the
-pre-registered clean-boot replay passes. The complete build, patch, launcher,
-and evidence chain is in the [R62 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md).
+The selected single-user optimization moves only the MTP drafter's vocabulary
+projection to INT4 while keeping target verification FP16. Its original
+diagnostic center was `54.242051 tok/s`; the preregistered clean-boot R119
+replay promoted it at `54.424603 tok/s`. The complete build, patch, launcher,
+and evidence chain are in the [R62 report](../../experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md)
+and [R119 promotion](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md).
 Its first c64 diagnostic reached `1,080.851 tok/s`, but failed strict
 sequential-oracle identity at 55/64. The matched FP16-draft control also failed
 (54/64), proving an inherited MTP1 batch-shape limitation rather than an R62

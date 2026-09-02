@@ -305,6 +305,25 @@ at every M, the 168-256 nondeterminism is gone, and the decode plateau cost is
 measured. If oneDNN rejects runtime dims with block scales, the fallback is the
 Triton row-invariant GEMM or fixed 32-row chunking.
 
+### Clean-boot R119 update
+
+After the required reboot, R119 promoted the R62 single-user profile at a
+`54.424603 tok/s` two-server center, with all A/B and candidate/MTP0 complete
+arrays 12/12 exact on the fixed 48-78-token-prompt suite. Both B70s passed
+per-card compute and two-rank XCCL before and after the campaign; the boot
+remained free of Xe faults.
+
+The same endpoint probe on the exact promoted image strengthened the boundary:
+168 prompt tokens produced two distinct 64-token streams across five repeats,
+not merely five distinct logprob arrays. The 200/224/250-token cases retained
+one token stream but five logprob arrays each; 100 and 300 remained bitwise
+repeatable. The runtime-M experiment is therefore the immediate next lane step,
+and success must remove both the operator digest variation and this endpoint
+token divergence before any broader determinism claim.
+
+See the [R119 promotion](2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md)
+and [structured result](../data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-result.json).
+
 ## Reporting boundary
 
 Operator diagnostic and review only. Census timings are single-GPU,

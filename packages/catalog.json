@@ -1782,7 +1782,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. Static MTP1 is lab-qualified at 51.808087 tok/s by a four-arm fresh-cache matrix against a matched-image MTP0 control, with all target/candidate complete token arrays exact on the fixed 48-78-token-prompt suite. W8A16 logprobs are not repeat-deterministic for roughly 168-256-row prefills; independent host-installation replay remains pending.",
+        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. R62 MTP1 is clean-boot-qualified at 54.424603 tok/s with an unchanged FP16 target verifier and 12/12 exact complete arrays across both fresh candidates and the MTP0 oracle on the fixed 48-78-token-prompt suite. W8A16 outputs are not repeat-deterministic for roughly 168-256-row prefills; independent host-installation replay remains pending.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1810,13 +1810,13 @@
           "W8A16"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "Strict static MTP1 qualified at 51.808087 tok/s: two fresh candidate servers measured 51.796549/51.819625 tok/s and two same-image MTP0 targets measured 33.722035/33.745004 tok/s. All four complete 12-prompt/six-class natural-512 workloads were cache zero and passed independent canaries. Candidate-to-candidate, target-to-target, and all four target/candidate comparisons matched 12/12 complete token arrays on that fixed 48-78-token-prompt suite. This is a 53.5804% improvement over the 33.733520 tok/s matched-image MTP0 center with no observed output change in scope. A new pinned source rebuild and empty-cache replay measured 51.579521 tok/s and matched 12/12 arrays against both qualified MTP1 and matched MTP0. A later endpoint probe found repeat-nondeterministic logprobs for roughly 168-256-row W8A16 prefills, so no universal prompt-shape determinism is claimed. Independent host-driver/Docker installation replay remains pending.",
+        "benchmark_status": "Strict R62 MTP1 clean-boot-qualified at 54.424603 tok/s: two fresh empty-cache candidates measured 54.622918/54.226288 tok/s, 5.0504% above the prior 51.808087 tok/s incumbent. Both complete 12-prompt/six-class natural-512 workloads were cache zero and passed canaries before and after. Candidate-to-candidate and both candidate-to-MTP0-oracle comparisons matched 12/12 complete token arrays on the fixed 48-78-token-prompt suite; both-rank markers confirmed the target verifier remained FP16. Per-card compute and two-card XCCL passed before and after, with no current-boot Xe fault. A separate endpoint probe found five distinct logprob arrays at 168, 200, 224, and 250 prompt tokens and two distinct token streams at 168, so no universal prompt-shape determinism is claimed. Independent host-driver/Docker installation replay remains pending.",
         "featured_metric": {
-          "value": 51.80808698870573,
+          "value": 54.42460323814495,
           "unit": "tok/s",
-          "label": "strict varied-prompt decode (MTP1)",
-          "scope": "Median of two fresh-server class-balanced medians over a complete fixed 12-prompt/six-class natural-512 suite whose prompts contain 48-78 tokens. Both MTP1 attempts and both matched-image MTP0 controls used fresh compile caches; all four cross-arm comparisons matched 12/12 complete token arrays, cached tokens were zero, and independent canaries passed. This does not claim universal prompt-shape determinism: roughly 168-256-row W8A16 prefills have repeat-nondeterministic logprobs.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json"
+          "label": "strict varied-prompt decode (R62 MTP1)",
+          "scope": "Median of two clean-boot fresh-server class-balanced medians over a complete fixed 12-prompt/six-class natural-512 suite whose prompts contain 48-78 tokens. Both R62 attempts used separate empty compile caches, matched each other and the FP16-verifier MTP0 oracle on 12/12 complete token arrays, reported zero cached tokens, and passed canaries before and after. This does not claim universal prompt-shape determinism: roughly 168-256-row W8A16 prefills can change logprobs and tokens.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-result.json"
         }
       },
       "contributors": [
@@ -1827,8 +1827,8 @@
           "profile": "https://github.com/steveseguin/b70-optimization-lab",
           "contribution": "B70/XPU integration, strict output validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 dispatch, deterministic GDN state handling, explicit oneCCL completion ordering, exact packed MTP1 Gemma RMSNorm replay, dynamic-width GDN repair, active Mamba-state allocation, and the digest-pinned package.",
           "status": "integrated",
-          "validated_effect": "The deterministic compiled TP2 work historically raised MTP0 from 18.910242 to 34.031596 tok/s, and block W8A16 separately raised matched target-only single/c128 shapes by 60.07%/29.30%. The final explicit-determinism matrix qualified MTP1 at 51.808087 tok/s, 53.5804% above the 33.733520 tok/s same-image MTP0 control, with all four target/candidate comparisons exact on 12/12 complete token arrays.",
-          "evidence": "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md"
+          "validated_effect": "The deterministic compiled TP2 work historically raised MTP0 from 18.910242 to 34.031596 tok/s, and block W8A16 separately raised matched target-only single/c128 shapes by 60.07%/29.30%. Clean-boot R119 qualified the draft-only INT4 R62 MTP1 profile at 54.424603 tok/s, 5.0504% above the prior qualified MTP1 profile, with both candidate and MTP0-oracle comparisons exact on 12/12 complete arrays in scope.",
+          "evidence": "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md"
         },
         {
           "id": "vllm-xpu-kernel-contributors",
@@ -1864,10 +1864,12 @@
         "deterministic_mtp1_overlay_image_id_validated": "sha256:ba42e928e69c60d1c9102df6ec1c0e998e9dd8463f74d5dc0a8b4bb45108fa9b",
         "qualified_mtp1_overlay_image_id_validated": "sha256:2932e495b560e79c6301f5cc64584af928a2260f0d0d19c145142b2ef35860d3",
         "clean_rebuild_mtp1_overlay_image_id_validated": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4",
+        "qualified_r62_overlay_image_id_validated": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
         "overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
         "deterministic_eager_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-eager-image.sh",
         "deterministic_compiled_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-deterministic-compiled-image.sh",
         "deterministic_mtp1_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
+        "qualified_r62_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-draft-int4-r62-image.sh",
         "dynamic_mtp_overlay_build": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-dynamic-mamba-image.sh"
       },
       "project_patches": {
@@ -1880,17 +1882,18 @@
           "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-serial-spec-flash-attn-r38-20260828.patch",
           "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch",
           "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
+          "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-draft-only-int4-lm-head-r62-20260901.patch",
           "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
           "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch"
         ],
-        "reason": "The qualified static MTP1 profile uses block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, and an explicit deterministic vLLM compilation contract with XPU Graph disabled. Concurrent MTP pins XPU kernels at 1e90ffa672 with the mixed-path correction. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
+        "reason": "The qualified R62 MTP1 profile uses block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, an explicit deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection while the target verifier stays FP16. Concurrent MTP pins XPU kernels at 1e90ffa672 with the mixed-path correction. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
       },
       "commands": {
         "preflight": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50 IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-        "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 MAX_NUM_BATCHED_TOKENS=1024 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-independently-built-r62-id experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh",
         "health": "curl -fsS http://127.0.0.1:18124/health",
-        "benchmark": "OUT_DIR=/path/to/new-strict-attempt PROFILE_LABEL=mtp1-candidate repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-        "stop": "docker stop -t 30 qwen38-fp8-block-w8a16-mtp1-tp2-p128"
+        "benchmark": "OUT_DIR=/path/to/new-strict-attempt PROFILE_LABEL=mtp1-draft-int4-r62 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-draft-int4-r62"
       },
       "dependencies": [
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -2177,6 +2180,11 @@
         "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-prereg.json",
         "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic-result.json",
         "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md",
+        "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-result.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md",
+        "experiments/qwen38-27b-b70/scripts/probe-qwen38-fp8-c1-prefill-length-determinism.py",
+        "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md",
         "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-prereg.json",
         "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-control-prereg.json",
         "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-result.json",
