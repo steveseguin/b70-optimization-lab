@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-triton-row-invariant-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-triton-row-invariant-20260902-r121",
+  "status": "preregistered-before-run",
+  "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+  "base_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+  "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-triton-row-invariant.py",
+  "script_sha256": "9677809e590d006615e08327b5b56e6ede3d2de3f7cbc3f7f857cc621e257be6",
+  "mechanism": {
+    "fixed_block_m": 16,
+    "weight_scale_group": [128, 128],
+    "accumulation": "FP32 per K-scale block, multiplied by its FP32 block scale, then accumulated in FP32 and stored as FP16",
+    "row_invariance_argument": "M affects the program grid and masks only; each existing row executes the same fixed tile and reduction tree.",
+    "screen_shapes": {
+      "attn_o_proj": [3072, 5120],
+      "attn_qkv_proj": [5120, 7168]
+    },
+    "configs": [
+      {"block_n": 64, "block_k": 32, "num_warps": 4},
+      {"block_n": 128, "block_k": 32, "num_warps": 4},
+      {"block_n": 128, "block_k": 64, "num_warps": 8}
+    ]
+  },
+  "gates": {
+    "required_for_expansion": [
+      "At least one configuration compiles on XPU for both shapes",
+      "One row-0 class over M=1,2,4,8,16,31,32,59,64,128,256",
+      "M=31 row permutation is bitwise invariant",
+      "M=59 repeated calls are bitwise exact",
+      "Maximum absolute difference versus static oneDNN at M=16 is at most 0.06",
+      "M=2 latency is at most 2x the properly warmed static oneDNN call for both shapes",
+      "No Xe fault, reset, timeout, hang, or device loss"
+    ],
+    "on_pass": "Expand the best fixed configuration to all six production W8A16 shapes and run the full census before any server build.",
+    "on_numerical_or_latency_failure": "Preserve the result and test the fixed-M batched oneDNN formulation; do not launch a server."
+  }
+}
