@@ -1,0 +1,75 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-gdn-profile-aware-selector-result.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-gdn-profile-aware-selector-20260901-r101",
+  "status": "completed-pass-diagnostic",
+  "classification": "output-identity-qualified-diagnostic-not-publishable",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-gdn-profile-aware-selector-r101-prereg.json",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100",
+    "base_image_id": "sha256:a7d055be59452ec90030411038386298a7240172ba29876f1ebabbb251c14e41",
+    "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-profile-aware-selector-r101",
+    "candidate_image_id": "sha256:2a09b9235e885477c5fe4e84010ed5b07ca25d88502e9ec05e91f3562761c581",
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-profile-aware-selector-r101-20260901.patch",
+    "patch_sha256": "f1afa11fb679c2a81f1009550cff8e415a0685562e13290e8bba9aa2ead02b1e",
+    "installed_qwen_gdn_sha256": "42f81082b5e0b70978568bc577acfb1a134ff564ed488ed91da78b30435db4c2"
+  },
+  "operator_gate": {
+    "status": "pass",
+    "single_request_arm_matches_r99": true,
+    "multi_request_arm_matches_r97": true,
+    "metadata_free_profile_fallback": "passed by server-startup lifecycle gate",
+    "unsupported_shape_failed_closed": true,
+    "artifact_sha256": "0916e1d17ef60a396f83b0fc2f0135ad4101981633bcad23e2a3e0bf53fbcd60"
+  },
+  "selector_gate": {
+    "metadata_free_profile_r99_arm_logged": true,
+    "live_single_request_r99_arm_logged": true,
+    "live_multi_request_r97_arm_logged": true,
+    "fixture_row_or_prompt_length_heuristics": false
+  },
+  "compiled_artifact_gate": {
+    "single_request_reduction": {"xblock": 8, "num_warps": 2, "num_stages": 1},
+    "single_request_pointwise": {"xblock": 1024, "num_warps": 4, "num_stages": 1, "transcendentals": "libdevice"},
+    "multi_request_reduction": {"xblock": 1, "num_warps": 2, "num_stages": 2},
+    "multi_request_pointwise": {"xblock": 256, "num_warps": 4, "num_stages": 2, "transcendentals": "triton"}
+  },
+  "output_gate": {
+    "classification": "output-identity-qualified",
+    "concurrency_1": {
+      "oracle_exact": "1/1",
+      "cached_tokens": [0],
+      "completion_tokens": [128],
+      "aggregate_tok_s_wall_diagnostic": 25.739953569014247
+    },
+    "concurrency_2": {
+      "oracle_exact": "2/2",
+      "cached_tokens": [0, 0],
+      "completion_tokens": [128, 128],
+      "aggregate_tok_s_wall_diagnostic": 60.39973012322395
+    },
+    "complete_outputs_exact_vs_sequential_oracle": true
+  },
+  "trace_gate": {
+    "records": 192,
+    "packed_records": 96,
+    "request_isolated_records": 96,
+    "layer0_cache_prompt_core_and_z_exact_across_c1_c2_on_both_ranks": true
+  },
+  "interpretation": "Selecting the independently proven R99 single-request arithmetic and R97 multi-request arithmetic from live GDNAttentionMetadata repairs the frozen end-to-end failure: c1 is 1/1 exact and c2 is 2/2 exact. The metadata-free profile phase safely uses R99. This is the first passing causal repair in the R77-R101 localization series.",
+  "next_experiment": "Remove diagnostic tracing, warm both selector arms and the observed EAGLE first-use kernels before measurement, repeat the exact gate, then run varied realistic prose/code/reasoning prompts and repeated determinism on a clean boot before considering public performance promotion.",
+  "reporting_boundary": "Do not publish the diagnostic throughput. Triton and EAGLE kernels JIT-compiled during measured inference, the prompt set has only two rows, and this boot contains an earlier GPU reset.",
+  "health": {
+    "kernel_journal_entries": 0,
+    "server_stop": "graceful API shutdown followed by bounded runtime cleanup"
+  },
+  "artifacts": {
+    "host_run_dir": "/mnt/fast-ai/bench-results/qwen38-fp8-tp2-mtp1-gdn-profile-aware-selector-20260901-r101",
+    "raw_result_sha256": "4e1c69a9f24a3c78ab4213871d4a34c7cd999734fa3276304ec7b3de2ec56f22",
+    "trace_sha256": "c3679179daa26d9ffc1129a14c93569341f0b8f58f464e119bf80586fbd4195a",
+    "server_log_sha256": "74e4dc52fc962dc69a3551510e5508f718e86b33458b54b91db4e735840b7e9d",
+    "kernel_journal_sha256": "c1c5cf26024eb12d9c9c0bc9aeb37bafed808e34afc817f77af63b1de233aa19",
+    "kernel_journal_filtered_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "image_inspect_sha256": "0ce50bae4c93ab4f3c5ff8073ee97b9767d6ef84f2e956efe3af527d99d7623b",
+    "artifact_manifest": "artifact-sha256.txt"
+  }
+}

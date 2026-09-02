@@ -268,3 +268,19 @@ only that explicit profile state and run the R99 arm there; malformed live
 metadata must still fail closed, and inference must still select from live
 request counts. R100's startup rejection is
 [`2026-09-01-qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100-result.json`](../data/2026-09-01-qwen38-fp8-mtp1-gdn-runtime-metadata-selector-r100-result.json).
+
+R101 recognized only vLLM's explicit metadata-free profile phase and used R99
+there, while retaining live metadata selection for inference. It is the first
+end-to-end pass in this localization series: c1 was 1/1 exact and c2 was 2/2
+exact against complete pinned token streams, with zero cached prompt tokens.
+Distinct server markers proved the profile fallback, live single-request R99
+arm, and live multi-request R97 arm all executed. Compiled metadata also
+confirmed the intended 8-row/1024/libdevice single arm and
+1-row/256/Triton-math multi arm. Layer-0 raw GDN core output and `z` remained
+exact across c1/c2 on both ranks, and the kernel journal was clean. This is a
+causal correctness repair, not yet a public performance result: first-use
+Triton and EAGLE JIT occurred during the measured requests, only two prompt
+rows were used, and this boot contains an earlier GPU reset. The next gate is a
+non-tracing, fully warmed, varied-prompt determinism qualification on a clean
+boot. R101's result is
+[`2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r101-result.json`](../data/2026-09-02-qwen38-fp8-mtp1-gdn-profile-aware-selector-r101-result.json).
