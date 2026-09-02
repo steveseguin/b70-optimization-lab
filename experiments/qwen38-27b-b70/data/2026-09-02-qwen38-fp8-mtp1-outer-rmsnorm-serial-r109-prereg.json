@@ -1,0 +1,41 @@
+{
+  "schema": "neural.download.qwen38-fp8-mtp1-outer-rmsnorm-serial-prereg.v1",
+  "campaign_id": "qwen38-fp8-tp2-mtp1-outer-rmsnorm-serial-20260902-r109",
+  "status": "preregistered-before-run",
+  "objective": "Test whether the proven order branch between layer-0 projected output and layer-1 GDN normalized input is removed by the existing packed-serial Qwen/Gemma outer RMSNorm/residual path.",
+  "lineage": {
+    "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108",
+    "base_image_id": "sha256:e08ee7a313c912d8a645a71f7d88d9e436784d0f8e35d69a5fe4fe94f6a3bed4",
+    "r108_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-gdn-projection-isolation-trace-r108-result.json"
+  },
+  "single_variable": {
+    "name": "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT",
+    "control": "0 in R108",
+    "candidate": "1",
+    "note": "The implementation is already present and operator-qualified in the R108 lineage. R109 changes no source, projection treatment, scheduler setting, prompt, or oracle."
+  },
+  "isolation": {
+    "fresh_compile_cache": true,
+    "prefix_caching": false,
+    "projection_trace_and_execution_gate_retained": true,
+    "model_revision_and_image_identity_pinned": true,
+    "no_prompt_or_fixture_heuristics": true
+  },
+  "workload": {
+    "warmup": "One c1 and two c2 repeats.",
+    "qualification": "Three c1 and twenty c2 repeats, 128 output tokens, frozen complete token-ID oracle.",
+    "suite": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json",
+    "oracle": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-c2-r72-oracle.json"
+  },
+  "required_gate": {
+    "outputs": "3/3 c1 and 20/20 c2 batches exact; complete 128-token streams; cached tokens zero.",
+    "trace": "Both TP ranks present, projection execution retained, and order-dependent normalized/projected layer-prompt pairs reduced from R108's 94/96 to zero if the candidate is causal.",
+    "health": "No new xe reset, GPU fault, OOM kill, storage error, or malformed response."
+  },
+  "decision": {
+    "passes": "Treat as a causal combined candidate only. Remove the rejected projection-isolation treatment in a follow-up factorial, then run fresh-server realistic quality and performance qualification.",
+    "fails": "Reject the outer RMSNorm/residual gate as sufficient and trace the layer-0 decoder residual/add/input-normalization boundary directly."
+  },
+  "resource_boundary": "Use 12 GiB container RAM and 16 GiB RAM-plus-swap; no reboot or GPU reset.",
+  "reporting_boundary": "No public speed, README headline, website, or LocalMaxxing update from this diagnostic."
+}
