@@ -9,7 +9,7 @@ expected_base_id=${EXPECTED_BASE_IMAGE_ID:-sha256:f1dd575ae2e0effc7991535c253af8
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-projection-isolation-r106}
 patch_file=${repo_root}/experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-projection-isolation-r106-20260902.patch
 expected_patch_sha256=09a065de72095f511145a25e47d4069b1d952ce81afbf2375e2021bb250f0009
-expected_installed_sha256=782e6f50f52067a039bcb94d4b41d0ca24a1706d56c54e6cdfdaf68a55965d47
+expected_installed_sha256=a10a51b7c826c521d55b8f348624181c1a2956ad363d1f88852818f3d0654d98
 installed_file=/opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
 dockerfile=${script_dir}/Dockerfile.gdn-projection-isolation-r106
 
