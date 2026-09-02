@@ -3859,3 +3859,9 @@ oneCCL path for prefill-sized messages above the twoshots LL threshold, the
 JIT-compiled QSA split-K/merge attention kernels, PLE UVA ordering, chunked
 prefill. An eager control server (A60) runs the same probe next. See the
 [A59 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a59-logprob-determinism-probe-result.md).
+A60 (eager control) reproduced the jitter (0.2175-nat first-step spread at
+256 tokens, three distinct 128-token outputs, one hash shared with the
+graph server) and the hang (seventh 2048 single-step request, engine death
+with page faults at teardown). The graph is exonerated for both. A61 removes
+the public oneCCL preload and twoshots next. See the
+[A60 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a60-nograph-control-probe-result.md).
