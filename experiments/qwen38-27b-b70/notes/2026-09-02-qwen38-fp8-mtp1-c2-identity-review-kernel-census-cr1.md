@@ -456,6 +456,20 @@ double the M32 tile's N width from 64 to 128 and its N subgroup count from four
 to eight. No server was launched. See the
 [R130 result](../data/2026-09-02-qwen38-fp8-w8a16-heterogeneous-catalog-r130-result.json).
 
+#### Post-R132 layout correction
+
+R127-R132 constructed `weight_nk.t().contiguous()`, while production's
+`XPUW8A16ScaledMMLinearKernel.process_weights_after_loading` deliberately
+stores `weight_nk.t()` as a non-contiguous `[K,N]` view with
+`stride[-2] == 1`. The earlier R123/R124 census used that production NT
+layout. This accounts for large control-latency differences (gate/up large-M
+oneDNN was roughly twice as slow in the contiguous-layout screen).
+
+The fixed-K arithmetic proofs remain valid, including all row and policy
+boundary checks, but the R130 catalog latency assignments are suspended. R133
+must reinterpret the same physical `[N,K]` storage with the kernel's row-major
+B layout and compare against oneDNN's actual NT path before any integration.
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
