@@ -3807,3 +3807,10 @@ negative: its first eager call differed from the authority by one BF16 ULP
 `out=`-typed mean staging is not byte-exact on this backend. No production
 change. See the
 [negative](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-hc-gate-mix-exact-staged-a1-xpu-exactness-negative.md).
+The HC combine-norm exact confirmation passed on the clean Gen4 host: 12/12
+cells exact and positive, median `21.747555%` matched reduction, about
+`0.64 ms` saved per target token, zero link events. Two frozen-runner
+defects (whole-file counter read; the gate refusing its own `timeout`
+ancestor) were fixed and amended into the prereg before the passing run.
+A56 launched at 10:18 EDT. See the
+[combine-norm result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-hc-combine-norm-exact-confirmation-a1-result.md).
