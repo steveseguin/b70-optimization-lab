@@ -22,6 +22,7 @@ xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
 w8a16_decode_pad_rows=${VLLM_XPU_W8A16_DECODE_PAD_ROWS:-0}
+w8a16_pad_n_set=${VLLM_XPU_W8A16_PAD_N_SET:-}
 fp8_packed_serial_exact=${VLLM_XPU_FP8_PACKED_SERIAL_EXACT:-0}
 fa_serial_spec_decode=${VLLM_XPU_FA_SERIAL_SPEC_DECODE:-0}
 fa_serial_spec_no_causal=${VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL:-0}
@@ -176,6 +177,10 @@ done
   printf 'VLLM_XPU_LM_HEAD_BATCH_INVARIANT must be 0 or 1\n' >&2
   exit 1
 }
+[[ -z "${w8a16_pad_n_set}" || "${w8a16_pad_n_set}" =~ ^[0-9]+(,[0-9]+)*$ ]] || {
+  printf 'VLLM_XPU_W8A16_PAD_N_SET must be empty or comma-separated integers\n' >&2
+  exit 1
+}
 [[ "${w8a16_decode_pad_rows}" =~ ^[0-9]+$ && "${w8a16_decode_pad_rows}" -le 512 ]] || {
   printf 'VLLM_XPU_W8A16_DECODE_PAD_ROWS must be an integer in 0..512\n' >&2
   exit 1
@@ -272,6 +277,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
   --env VLLM_XPU_FP8_BLOCK_W8A16="${fp8_block_w8a16}" \
   --env VLLM_XPU_W8A16_DECODE_PAD_ROWS="${w8a16_decode_pad_rows}" \
+  --env VLLM_XPU_W8A16_PAD_N_SET="${w8a16_pad_n_set}" \
   --env VLLM_XPU_FP8_PACKED_SERIAL_EXACT="${fp8_packed_serial_exact}" \
   --env VLLM_XPU_FA_SERIAL_SPEC_DECODE="${fa_serial_spec_decode}" \
   --env VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL="${fa_serial_spec_no_causal}" \

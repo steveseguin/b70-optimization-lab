@@ -1,0 +1,21 @@
+{
+ "schema": "neural.download.qwen38-fp8-mtp1-w8a16-pad-n-set-prealloc-prereg.v1",
+ "campaign_id": "qwen38-fp8-tp2-mtp1-w8a16-pad-n-set-prealloc-20260902-r118b",
+ "status": "preregistered-before-run",
+ "objective": "Isolate the CR1 census lead properly after R118 (pad every W8A16 call to 32 rows) measured about -10% in situ: pad only the per-rank attention qkv projection (N=7168), whose small-M oneDNN kernel the census measured at about 2.7x the M=32 kernel's latency, and replace the per-call allocation with a persistent zero-initialised buffer plus a row copy.",
+ "lineage": {
+  "base_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118",
+  "base_image_id": "sha256:95742ce8493671fb28b0b53db77a2f0c240e8d82355f20b756ab2479d037b8d0",
+  "candidate_image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-w8a16-pad-n-set-prealloc-r118b",
+  "candidate_image_id": "sha256:a9d125438054865915b65ca5ffba85942f0cea4cbd21347e0036bfab2a45a1de",
+  "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-w8a16-pad-n-set-prealloc-r118b-20260902.patch",
+  "patch_sha256": "111bc43ff7de7476986b0a078bd95614315c797e254ea4c80e6f878de4e16c67",
+  "installed_xpu_source_sha256": "a4ba3f34e4f92892a1b85eec3504704811436f20fbac299594540aac54f3be7a",
+  "validator": "tools/validate-xpu-w8a16-pad-n-set-prealloc-r118b.py"
+ },
+ "single_change_vs_controls": "Candidate: VLLM_XPU_W8A16_DECODE_PAD_ROWS=32 and VLLM_XPU_W8A16_PAD_N_SET=7168 on the R118b image. Controls: the R118 image with padding off (control, control2, control3 from the R118 campaign; the R118b image executes byte-identical code when padding is off). Same boot, same flags otherwise.",
+ "measurement": "Concurrency-oracle harness c1 x5 and c2 x5, 128-token completions, cache disabled, regenerated per-server oracle. Primary: median c1 per-request tok/s after TTFT. Noise floor measured across controls is about 3%. Advance only if every candidateb replicate exceeds every control replicate and the group medians differ by at least 3%; otherwise close the lead.",
+ "mandatory_gates": ["server log shows 'R118 W8A16 padded GEMM executed ... N=7168'", "server log shows 'Unknown vLLM environment variable detected: VLLM_XPU_W8A16_PAD_N_SET' (proves the variable reached the container)", "every c1 stream repeat-identical within a server", "cached_tokens=0 everywhere"],
+ "resource_boundary": "12 GiB container RAM, 16 GiB RAM-plus-swap, no reboot or GPU reset. This boot contains an earlier GPU reset; screening only.",
+ "reporting_boundary": "Diagnostic screen. No README, website, LocalMaxxing, or public speed/quality update."
+}

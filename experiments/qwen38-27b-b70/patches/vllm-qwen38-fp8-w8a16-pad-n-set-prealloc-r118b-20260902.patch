@@ -1,0 +1,66 @@
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@ -38,6 +38,27 @@
+     return value
+ 
+ 
++def _w8a16_pad_n_set() -> frozenset[int]:
++    """R118b: restrict padding to explicitly configured output widths N.
++
++    Empty (default) pads every W8A16 call below the bucket (R118 behaviour,
++    measured about -10% in situ). ``7168`` selects only the per-rank attention
++    qkv projection, the one shape whose small-M oneDNN kernel the CR1 census
++    measured at about 2.7x the M=32 kernel's latency.
++    """
++    raw = os.environ.get("VLLM_XPU_W8A16_PAD_N_SET", "").strip()
++    if not raw:
++        return frozenset()
++    try:
++        return frozenset(int(v) for v in raw.split(",") if v.strip())
++    except ValueError as exc:
++        raise RuntimeError("VLLM_XPU_W8A16_PAD_N_SET must be comma-separated ints") from exc
++
++
++_W8A16_PAD_N_SET = _w8a16_pad_n_set()
++_W8A16_PAD_BUFFERS: dict[tuple[torch.device, int, int, torch.dtype], torch.Tensor] = {}
++
++
+ def _xpu_w8a16_padded_gemm(
+     A: torch.Tensor,
+     B_t: torch.Tensor,
+@@ -48,19 +69,26 @@
+ 
+     Opaque to the compiler so the row-count branch is a live runtime choice
+     (R95 showed a Python shape branch inside the compiled region freezes).
+-    The census (CR1) measured the oneDNN kernel selected for M<=16 on the
+-    attention qkv shape at about 2.7x the M=32 kernel's latency, while the
+-    other shapes sit on a flat plateau up to M=32.
++    R118b: pad only widths in VLLM_XPU_W8A16_PAD_N_SET (all when unset) and
++    copy into a persistent zero-initialised buffer instead of allocating one
++    per call; real rows do not depend on pad rows (CR1 census).
+     """
+     rows = A.shape[0]
+-    if 0 < rows < pad_rows:
++    n = B_t.shape[1]
++    selected = not _W8A16_PAD_N_SET or n in _W8A16_PAD_N_SET
++    if selected and 0 < rows < pad_rows:
+         logger.warning_once(
+-            "R118 W8A16 padded GEMM executed (rows below %s padded)", pad_rows
++            "R118 W8A16 padded GEMM executed (rows below %s padded, N=%s)",
++            pad_rows, n,
+         )
+-        padded = A.new_zeros((pad_rows, A.shape[1]))
+-        padded[:rows] = A
+-        return torch.ops._xpu_C.fp8_gemm_w8a16(padded, B_t, Bs_t, None)[:rows]
+-    logger.warning_once("R118 W8A16 unpadded GEMM executed (rows at or above bucket)")
++        key = (A.device, pad_rows, A.shape[1], A.dtype)
++        buf = _W8A16_PAD_BUFFERS.get(key)
++        if buf is None:
++            buf = torch.zeros((pad_rows, A.shape[1]), dtype=A.dtype, device=A.device)
++            _W8A16_PAD_BUFFERS[key] = buf
++        buf[:rows].copy_(A)
++        return torch.ops._xpu_C.fp8_gemm_w8a16(buf, B_t, Bs_t, None)[:rows]
++    logger.warning_once("R118 W8A16 unpadded GEMM executed (rows at or above bucket or N not selected)")
+     return torch.ops._xpu_C.fp8_gemm_w8a16(A, B_t, Bs_t, None)
+ 
+ 

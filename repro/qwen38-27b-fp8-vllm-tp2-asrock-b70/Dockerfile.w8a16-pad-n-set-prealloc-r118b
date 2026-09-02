@@ -1,0 +1,27 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-w8a16-decode-pad-rows-r118
+FROM ${BASE_IMAGE}
+
+ARG W8A16_PAD_N_SET_PATCH_SHA256
+
+COPY vllm-qwen38-fp8-w8a16-pad-n-set-prealloc-r118b-20260902.patch /tmp/w8a16-pad-n-set.patch
+COPY validate-xpu-w8a16-pad-n-set-prealloc-r118b.py /tmp/validate-xpu-w8a16-pad-n-set-prealloc-r118b.py
+
+RUN test "$(sha256sum /tmp/w8a16-pad-n-set.patch | awk '{print $1}')" = \
+        "${W8A16_PAD_N_SET_PATCH_SHA256}" \
+    && patch --batch --verbose --fuzz=0 -p1 \
+        -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/w8a16-pad-n-set.patch \
+        > /tmp/w8a16-pad-n-set.patch.log 2>&1 \
+    && ! grep -Eiq \
+        'trailing garbage|malformed|FAILED|ignored|reversed|offset' \
+        /tmp/w8a16-pad-n-set.patch.log \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py \
+    && /opt/venv/bin/python /tmp/validate-xpu-w8a16-pad-n-set-prealloc-r118b.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py \
+    && rm -f /tmp/w8a16-pad-n-set.patch /tmp/w8a16-pad-n-set.patch.log \
+        /tmp/validate-xpu-w8a16-pad-n-set-prealloc-r118b.py
+
+LABEL neural.download.composite.base.r118="sha256:95742ce8493671fb28b0b53db77a2f0c240e8d82355f20b756ab2479d037b8d0" \
+      neural.download.vllm.w8a16-pad-n-set.patch.sha256="${W8A16_PAD_N_SET_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-w8a16-pad-n-set-prealloc-r118b"
