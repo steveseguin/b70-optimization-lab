@@ -68,9 +68,13 @@ case "${mode}" in
     [[ $(zstdcat "${target}" | sha256sum | cut -d' ' -f1) == "${expected_upstream_sha}" ]] || fail 'run --install first'
     if fuser -s /dev/dri/renderD* 2>/dev/null; then fail 'a process holds a B70 render node'; fi
     pgrep -f 'vllm serve|xpu-graph-gate|xpu-smi' >/dev/null && fail 'GPU runtime processes are present'
+    # `root` feeds the sudo password on stdin, so the address must be passed as
+    # an argument, never piped: a piped `tee` would receive the password instead.
     for bdf in "${b70s[@]}"; do
-      [[ -e /sys/bus/pci/drivers/xe/${bdf} ]] && printf '%s' "${bdf}" | root tee /sys/bus/pci/drivers/xe/unbind >/dev/null
+      [[ -e /sys/bus/pci/drivers/xe/${bdf} ]] && root bash -c "echo ${bdf} > /sys/bus/pci/drivers/xe/unbind"
     done
+    sleep 2
+    [[ $(cat /sys/module/xe/refcnt) == 0 ]] || fail "xe refcnt is $(cat /sys/module/xe/refcnt) after unbinding; something else holds the driver"
     sleep 2
     root modprobe -r xe || fail 'xe module unload failed (refcnt still held)'
     root modprobe xe || fail 'xe module reload failed'
