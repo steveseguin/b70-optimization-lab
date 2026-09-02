@@ -29,7 +29,7 @@ It launches five two-B70 servers in sequence and takes roughly two to three
 hours. Do not launch A62 or any other GPU work until that root contains
 `campaign-end.txt` or `ABORTED`; check `campaign.log` there for progress.
 
-Verified on 2026-09-02 after a host reboot at `08:16 EDT`:
+Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
 - `muse-glimmer-bf16-fleet.service`: inactive;
 - `muse-glimmer-frontdoor.service`: inactive;
@@ -150,6 +150,24 @@ from an isolated source clone pinned to `1e90ffa672`; do not touch the dirty
 Flash-Next source tree and do not rerun R118 or R118b. The published
 output-audited concurrency curves are unaffected. See the
 [`CR1 review`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
+R120-R146 then searched for that kernel (chronology:
+[`R120-R146 track`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-w8a16-row-invariant-kernel-track-r120-r146.md)).
+The runtime-M primitive, Triton, pinned-strategy, and CUTLASS arms were all
+row-invariant but 1.2x-123x too slow; the R136/R137b fixed-K oneDNN selector
+is row-invariant, repeat-deterministic, and operator-qualified at 1.017x-1.033x
+natural through c64. It ships as image R139 (`sha256:901ae9e0...`). R140 ran it
+at the endpoint: the production-image operator gate passed, including 168-to-200
+padding exactness, but the run was rejected on a single-server 53.803 tok/s
+(-1.14% vs R119, inside the host's 3% control band) and 8/12 arrays versus the
+frozen natural R54a oracle; the c1-c64 ladder and the repeat probe never ran.
+CR2 (2026-09-02 evening) notes that CR1 step 4 called for a regenerated
+same-image oracle, so R141-R146 (natural-M1 arithmetic reproduction at 1.31x
+M128 cost) chase a constraint the identity claim does not need. R147 is running
+the R139 image under that rule (two same-image MTP0 controls, two MTP1
+candidates, the 100-300-token repeat probe, the R63 c1-c64 identity ladder;
+performance recorded, not gated). R146 is paused until R147 reports. The
+publication decision between an identity-qualified profile and the faster
+R62/R119 headline is the user's.
  Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.
@@ -3883,3 +3901,10 @@ The oneCCL hypothesis is untested; a reboot is required, and the standing
 rule is: after any run whose teardown logs GPU `Fault response` lines, reload
 xe or reboot before the next launch. See the
 [A61 lockup note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a61-bundled-oneccl-control-kernel-lockup.md).
+CR2 cross-lane note: A4a already measured native run-to-run variation in
+the K=10240 `hc_down` dense GEMMs at M=1 (four cells), and the 27B census found
+oneDNN GEMM nondeterminism concentrated at 168-256 rows. A59/A60's first-step
+jitter at 256-token prefill is consistent with those GEMMs at prefill M, so the
+GEMM belongs on the A62 suspect list ahead of oneCCL; the A4a tool can test
+it at M=64/256/2048 on one card without a server or a hang risk. A62 must
+wait for the R147 device lock above.
