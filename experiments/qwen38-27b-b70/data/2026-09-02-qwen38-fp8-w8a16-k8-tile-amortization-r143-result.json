@@ -1,0 +1,101 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-k8-tile-amortization-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-k8-tile-amortization-20260902-r143",
+  "status": "closed-identity-positive-latency-negative",
+  "classification": "operator-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-k8-tile-amortization-r143-prereg.json",
+  "source": {
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "cumulative_patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-block-fp8-k8-tile-amortization-r143-20260902.patch",
+    "cumulative_patch_sha256": "9b185faf39ce4cda92f6ee91a34fb954ae19495a02055c942fc4f32e2729c9c1",
+    "harness": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-k8-tile-amortization-r143.py",
+    "harness_sha256": "8b388f90eb6a62bdeb59f571bf2c537b69b2e3303bed810b4223be4a641778ba"
+  },
+  "build": {
+    "candidate_library_bytes": 409904,
+    "candidate_library_sha256": "a5c8e889b0154d899665d79e164d5c11eec5ef40a39eecb702b563ae78ebd651",
+    "aot_target": "bmg-g31-a0",
+    "compiler": "IntelLLVM 2026.1.1",
+    "spill_diagnostics": {
+      "m16_n128_sg1x2x8": 61,
+      "m32_n64_sg1x2x8": 9,
+      "m64_n64_sg2x2x8": 8,
+      "m64_n128_sg2x2x8": 167
+    },
+    "m64_n128_decision": "compile-rejected under its preregistered spill gate; no GPU execution"
+  },
+  "runs": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-k8-tile-amortization-20260902-r143",
+    "m16_n128_sg1x2x8": {
+      "raw_sha256": "1495c60e18ba5aa0fb4145446bb1ec0817fce8bfedb29c57728cecf5b2a2636a",
+      "log_sha256": "3df3cffd60ddea107d4e39cba531a27f91efe471f46ba337f1880621c3283e25",
+      "exit_code": 0
+    },
+    "m32_n64_sg1x2x8": {
+      "raw_sha256": "8fd207fa8af2f8f1054c11eccda6669c32f9a964be8b7496b0abebf5d773382d",
+      "log_sha256": "b5466a41a85ae98fcabdc08d1548a361bee4b1333a15ba72fbbde20a76094a49",
+      "exit_code": 0
+    },
+    "m64_n64_sg2x2x8": {
+      "raw_sha256": "d31f643fc9ce89480056a9495f83893ad899b99acec2eb2fd89ead2b348cffac",
+      "log_sha256": "d2d8b9c482c442a67d21d746f4860c6b22ae8185128b835e723438eb8d839dc1",
+      "exit_code": 0
+    }
+  },
+  "identity": {
+    "tested_candidates": 3,
+    "tested_shapes": 2,
+    "tested_m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 256, 512],
+    "full_outputs_exact_to_natural_m1_rows": "72/72",
+    "all_prefix_repeat_permutation_padding_checks_exact": true,
+    "maximum_abs_error_vs_reference": 0.0
+  },
+  "latency": {
+    "weighted_call_counts": {
+      "attn_qkv_proj": 16,
+      "mlp_gate_up_proj": 64
+    },
+    "weighted_candidate_over_natural_by_m": {
+      "m16_n128_sg1x2x8": {
+        "2": 2.6850140270238647,
+        "64": 6.155084374170608,
+        "128": 10.395013236544221,
+        "168": 11.66912280535549,
+        "256": 13.672580684291471
+      },
+      "m32_n64_sg1x2x8": {
+        "2": 1.5317061050696774,
+        "64": 2.2720452069778343,
+        "128": 3.2814908004458827,
+        "168": 3.915462026856521,
+        "256": 4.1867454659407
+      },
+      "m64_n64_sg2x2x8": {
+        "2": 2.1765622880054405,
+        "64": 1.7857720095155578,
+        "128": 2.686185771778306,
+        "168": 3.267222411884536,
+        "256": 3.5797763406618244
+      }
+    },
+    "best_possible_threshold_composition": {
+      "2": 1.5317061050696774,
+      "64": 1.7857720095155578,
+      "128": 2.686185771778306,
+      "gate": "failed"
+    },
+    "stability": "All three attention-QKV M2 sequences exceeded 1.15 max/min because the first sample was much slower; stable later samples still failed latency decisively."
+  },
+  "health": {
+    "post_run_device_state": "both B70s normal",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false,
+    "containers_removed": true
+  },
+  "decision": {
+    "promote": false,
+    "direct_grid_k_subgroup_family_closed": true,
+    "reason": "Larger output tiles reduce workgroup count but accumulator spills and repeated SLM-slice barriers leave the exact eight-subgroup topology materially slower at every serving-relevant M.",
+    "next": "Instrument and change the oneDNN local-K mechanism itself. A justified direction is eight interleaved FP32 accumulator chains reduced in registers by one subgroup, eliminating K-subgroup scheduling and SLM while preserving R142's observed arithmetic order."
+  }
+}
