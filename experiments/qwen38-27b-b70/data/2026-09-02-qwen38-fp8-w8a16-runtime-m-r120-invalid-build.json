@@ -1,0 +1,11 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-runtime-m-invalid-build.v1",
+  "campaign_id": "qwen38-fp8-w8a16-runtime-m-20260902-r120",
+  "status": "invalid-pre-execution-build",
+  "source_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+  "patch_sha256": "74223ccd0be55828924683ee1466426fbd55741f0d1a01df38aa299615b35314",
+  "build_completed": true,
+  "gpu_execution_attempted": false,
+  "invalid_reason": "DNNL_RUNTIME_DIM_VAL is INT64_MIN, but descriptor_m was declared int. The compiler warned that the value converted to zero, so the artifact did not implement the preregistered runtime-M descriptor and was rejected before any XPU call.",
+  "decision": "Superseded by R120b, changing only descriptor_m to int64_t and requiring a new patch digest and preregistration."
+}
