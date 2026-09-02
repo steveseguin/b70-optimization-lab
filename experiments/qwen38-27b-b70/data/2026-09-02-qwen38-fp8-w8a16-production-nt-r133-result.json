@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-production-nt-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-production-nt-20260902-r133",
+  "classification": "production-layout-operator-catalog-diagnostic-only",
+  "status": "identity-pass-latency-gate-fail-cutlass-branch-closed",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-production-nt-r133-prereg.json",
+  "correction": {
+    "candidate_and_control_layout": "noncontiguous [K,N] view with stride [1,K] over physical row-major [N,K] storage, matching production vLLM",
+    "prior_scope": "R127-R132 arithmetic proofs remain valid, but their contiguous-[K,N] latency and catalog conclusions are superseded by R133"
+  },
+  "identity": {
+    "all_six_shapes_row_invariant": true,
+    "all_six_shapes_exact_vs_m512_prefix": true,
+    "all_six_shapes_permutation_m200_exact": true,
+    "all_six_shapes_repeat_m200_exact": true,
+    "all_six_shapes_random_pad_content_m168_exact": true,
+    "maximum_abs_error_vs_onednn": 0.000244140625
+  },
+  "latency": {
+    "gates": {
+      "geomean_ratio_ceiling": 1.15,
+      "worst_ratio_ceiling": 1.5
+    },
+    "candidate_over_production_layout_onednn": {
+      "gdn_in_proj_qkvz": {"geomean_ratio": 1.8830585088150136, "worst_ratio": 2.8920381146496816, "passed": false},
+      "gdn_out_proj": {"geomean_ratio": 2.0228996412644205, "worst_ratio": 2.699594094431835, "passed": false},
+      "attn_qkv_proj": {"geomean_ratio": 1.4299351555027313, "worst_ratio": 1.9334391993083728, "passed": false},
+      "attn_o_proj": {"geomean_ratio": 1.5840285163158718, "worst_ratio": 1.9698582636007675, "passed": false},
+      "mlp_gate_up_proj": {"geomean_ratio": 1.8786712140927593, "worst_ratio": 3.8590128566927286, "passed": false},
+      "mlp_down_proj": {"geomean_ratio": 1.278993465125296, "worst_ratio": 1.8058976479953939, "passed": false}
+    },
+    "shape_families_passing_both_gates": 0,
+    "conclusion": "Correct physical weight interpretation makes the fixed-K CUTLASS arithmetic exact but exposes a decisive production-layout performance gap. No CUTLASS shape belongs in the production catalog."
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-production-nt-r133",
+    "raw_result_bytes": 31481,
+    "raw_result_sha256": "8a6311446bd2455134da80c4f20d61840ef290d510c66fcf571fff8ebce690fc",
+    "grouped_gemm_library_sha256": "801fe48e1982a47ae60db9f7c38cf293d39c7bf4e6444fc9b6f20e501dac78e6",
+    "note": "The inherited raw schema labels the candidate fixed-M32; the actual preregistered and executed binary uses M16 for M<=8 and M32 otherwise."
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "exit_code": 0,
+    "both_devices_normal_after": true,
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "integrate_cutlass": false,
+    "launch_server": false,
+    "terminal_rule": "Close this Xe2 CUTLASS BLOCK_FP8 tile family for production. Do not tune it further without a materially different matrix engine, data-layout transformation that is proven end-to-end cheaper, or upstream kernel change.",
+    "next": "Reassess the exact pinned-oneDNN candidates only as a decode-weighted deployment tradeoff; otherwise move to an upstream-grade specialized oneDNN/Xe2 kernel whose fixed K reduction retains the natural NT fast path."
+  }
+}

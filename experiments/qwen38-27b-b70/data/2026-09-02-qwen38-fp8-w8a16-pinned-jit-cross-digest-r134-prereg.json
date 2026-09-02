@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-pinned-jit-cross-digest-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-pinned-jit-cross-digest-20260902-r134",
+  "status": "preregistered-before-first-r134-xpu-execution",
+  "classification": "operator-diagnostic-only",
+  "question": "Do the already-qualified source-M32 and source-M128 oneDNN JIT strategies produce byte-identical full outputs at the same M, allowing an exact row-count-dependent composition that uses M32 at small M and M128 where it is faster?",
+  "why_this_is_not_the_closed_strategy_search": {
+    "closed_scope": "R123-R126a rejected selecting one fixed strategy per shape and rejected fixed descriptor plus fixed strategy compositions. R134 discovers no new strategy string and edits no strategy token.",
+    "new_evidence": "The R133 production-layout correction invalidated the CUTLASS catalog. Re-reading R124 shows the source-M32 and source-M128 strategies both use fixed k128 reduction, while their latency curves are complementary: M32 is best at small rows and M128 at large rows for K5120.",
+    "bounded_scope": "Digest-only cross-comparison of the two already frozen strategies. A mismatch closes the composition before any source build."
+  },
+  "artifacts": {
+    "image_ref": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "build": "exact pinned sources with ONEDNN_DEV_MODE=ON",
+    "extension_bytes": 70105800,
+    "extension_sha256": "5feaa29b8b0e9db8f7c6ae6ed2687c38341d742eb9f431769266b5b1d1f46b9f",
+    "abi_preflight": "The mounted extension imports in the exact R62 image and registers torch.ops._xpu_C.fp8_gemm_w8a16 without a device."
+  },
+  "strategies": {
+    "source_m32_sha256": "75698dcb4f9f91e20162cf027eabcdf4db133b0f61ac091d9e3cc8bde13b70a6",
+    "source_m128_k5120_sha256": "0a9df7a3e62619179327d7af71d69d30595b4cb97aad6222158be577aa5d5477",
+    "source_m128_gate_up_sha256": "373935ad9c5a829e7dd285a9ad7a7f89455a00654e561396b7be0c94645fd0d3",
+    "source_m128_other_k_sha256": "8caada65a198aa18e3070bceb87f124f20a752f430ff2b032ec43b510d2a4458",
+    "shared_reduction_property": "Every frozen string contains k128; no token is edited."
+  },
+  "screen": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-pinned-jit-cross-digest.py",
+    "script_sha256": "f25bd798f54cc3698d5b253a481fcfaec1bbcf1397298f768bcccdaa54f19125",
+    "base_script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-pinned-jit-strategy.py",
+    "base_script_sha256": "5438b447c449a27fbf5dd07a1b3a519889dd928c06cbf7d4837b76c7f08f519d",
+    "production_shapes_KN": {
+      "gdn_in_proj_qkvz": [5120, 8192],
+      "gdn_out_proj": [3072, 5120],
+      "attn_qkv_proj": [5120, 7168],
+      "attn_o_proj": [3072, 5120],
+      "mlp_gate_up_proj": [5120, 17408],
+      "mlp_down_proj": [8704, 5120]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 224, 250, 256, 300, 512],
+    "procedure": "Run one fresh process for each shape and frozen strategy, with --skip-timing and identical seed 20260902. Compare full-output and row-0 SHA-256 values at every M. Reconfirm each process's internal prefix, permutation, repeat, and pad-content fields."
+  },
+  "gates": {
+    "cross_strategy_identity": "For a row count to select source-M128, its complete output SHA-256 must equal source-M32 for the same shape and M. Row-0 equality alone is insufficient.",
+    "internal_identity": "The source-M32 arm must retain every R123 identity check. An M128 arm used for a range must also retain every internal identity check over that range.",
+    "projected_latency": "Using only R123/R124 median timing points, a proposed composition must have geometric-mean candidate/natural-oneDNN <=1.15 and every timed point <=1.50x for a shape. No new timing claim is made by this digest screen.",
+    "on_full_catalog_pass": "Preregister a narrow oneDNN source-selection patch and a dense M=1..512 operator proof before any server.",
+    "on_partial_pass": "Retain the cross-identity finding, but do not build a source candidate unless a call-count-weighted decode model shows <=3% overhead for the remaining exact M32 shapes.",
+    "on_mismatch": "Close row-count-dependent strategy composition and move to an upstream-grade specialized kernel.",
+    "health": "No new Xe fault, reset, timeout, hang, coredump, or device loss. No server is authorized."
+  },
+  "gpu": "Intel Arc Pro B70 0000:03:00.0 only"
+}

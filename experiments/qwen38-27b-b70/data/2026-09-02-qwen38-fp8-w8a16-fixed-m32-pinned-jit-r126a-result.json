@@ -1,0 +1,62 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m32-pinned-jit-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m32-pinned-jit-20260902-r126a",
+  "classification": "operator-diagnostic-only",
+  "status": "closed-numerically-positive-latency-negative",
+  "base_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126-prereg.json",
+  "correction_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126a-prereg.json",
+  "candidate": {
+    "extension_bytes": 70110008,
+    "extension_sha256": "d300220422c75fff5e5f2a54df7d03748dc5a6e1527895d17b318e9c27070560",
+    "fixed_logical_m": 32,
+    "pinned_strategy_source_m": 32,
+    "all_tested_m_row_invariant": true,
+    "all_tested_m_exact_vs_m512_prefix": true,
+    "exact_vs_sequential_m32": true,
+    "permutation_m200_exact": true,
+    "repeat_m200_exact": true,
+    "random_pad_content_m168_exact": true
+  },
+  "control": {
+    "all_tested_m_row_invariant": false,
+    "attn_o_row0_class_count": 6,
+    "attn_qkv_row0_class_count": 5,
+    "random_pad_content_m168_exact": false,
+    "attn_qkv_permutation_m200_exact": false,
+    "attn_qkv_repeat_m200_exact": false
+  },
+  "latency_gate": {
+    "geomean_ratio_ceiling": 1.15,
+    "worst_ratio_ceiling": 1.5,
+    "candidate_fixed_m32_batch_over_control_natural_flattened": {
+      "attn_o_proj": {
+        "geomean_ratio": 1.3325649665234114,
+        "worst_ratio": 1.667374136347394,
+        "passed": false
+      },
+      "attn_qkv_proj": {
+        "geomean_ratio": 1.2346722097434264,
+        "worst_ratio": 1.8586145816290307,
+        "passed": false
+      }
+    },
+    "passed": false
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-fixed-m32-pinned-jit-r126a",
+    "manifest_sha256": "716b798db3726e815d76e7224f7963f45f985f98e2b47b6fd103ba88d26a135b",
+    "control_result_sha256": "31893d0cead23c6d453b79d7f60368482d04c935004e63c2f380e7d89a577946",
+    "control_run_log_sha256": "4d4dfa9108ee6ff69bb161c82c8d02f98b1a673af998bf84524562f748f4ed44",
+    "candidate_result_sha256": "7449646713783d12568ad65f2cce2a71cfde5a44e9b12b52a5ada9b1e1e3dfd7",
+    "candidate_run_log_sha256": "e08038a3c168f03959714cf349d242ad1c3eda587fe944de21f77907dc22f27f"
+  },
+  "health": {
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "expand_to_all_shapes_or_server": false,
+    "reason": "The corrected fixed-M32 descriptor plus pinned-M32 strategy meets every identity gate but misses the frozen latency gates on both representative shapes.",
+    "terminal_rule": "Close all further oneDNN descriptor and JIT-strategy compositions. The next implementation must be a purpose-built fixed-arithmetic kernel whose M and N grid counts do not change each output row's K reduction."
+  }
+}

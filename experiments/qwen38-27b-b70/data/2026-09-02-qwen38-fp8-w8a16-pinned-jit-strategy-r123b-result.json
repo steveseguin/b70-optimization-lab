@@ -1,0 +1,37 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-pinned-jit-strategy-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-pinned-jit-strategy-20260902-r123b",
+  "classification": "operator-diagnostic-only",
+  "status": "shape-specific-pair-passes-two-shape-gate",
+  "additional_strategies": {
+    "attn_o_proj": {
+      "source_m64_exact": false,
+      "source_m128_exact": false,
+      "source_m168_exact": false
+    },
+    "attn_qkv_proj": {
+      "source_m64_exact": false,
+      "source_m128_exact": true,
+      "source_m128_geomean_latency_ratio": 1.08616944013832,
+      "source_m128_worst_latency_ratio": 1.1842202598695146,
+      "source_m168_exact": false
+    }
+  },
+  "passing_pair": {
+    "attn_o_proj": "R123 source-M32 strategy",
+    "attn_qkv_proj": "R123b source-M128 strategy",
+    "all_exactness_checks_pass": true,
+    "both_shape_geomean_latency_ratio_lte_1_15": true,
+    "both_shape_worst_latency_ratio_lte_1_50": true
+  },
+  "terminal_catalog_sweep_respected": true,
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-pinned-jit-strategy-r123",
+    "sha256_manifest_sha256": "9ed93f6e231a76371aba821792fac9c6e71f209df8ecc62f1cc10d49acd1fe32"
+  },
+  "health": {
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": "Expand only the natural M=32 and M=128 candidates to all six production W8A16 shapes. Select strategies per shape using frozen exactness and latency gates; do not search additional source M values."
+}

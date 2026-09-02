@@ -1,0 +1,54 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-cutlass-direct-grid-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-cutlass-direct-grid-20260902-r128",
+  "status": "preregistered-before-first-r128-xpu-execution",
+  "classification": "operator-diagnostic-only",
+  "base_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-cutlass-fixed-m32-r127-result.json",
+  "question": "Does replacing R127's one-expert persistent MoE scheduler and per-call atomic allocation with an exact dense output-tile grid bring the validated fixed-M32 BLOCK_FP8 arithmetic inside both latency gates?",
+  "only_semantic_change_from_r127": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-block-fp8-direct-grid-r128-20260902.patch",
+    "patch_sha256": "187b5f5de175f13a62d83b5dfc18bd49cd2232af2c40837ae9099d8b449c6802",
+    "description": "Launch exactly ceil(M/32)*ceil(N/64) workgroups and derive each independent (m_tile,n_tile) coordinate from group_linear_id. Remove the rows tensor from device use, the allocated atomic scratch, the global atomic work queue, and the persistent all-SM launch. Keep xe_gemm_4bits<BLOCK_FP8,128>, its M32 policy, scale indexing, DPAS reduction, layouts, and output store unchanged."
+  },
+  "unchanged_provenance": {
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "vllm_xpu_kernels_commit": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "cutlass_sycl_commit": "87f6850680a580654b9ea2c80dbc01aeb36ad231",
+    "compiler": "IntelLLVM 2026.1.1",
+    "aot_target": "bmg-g31-a0",
+    "r127_semantic_patch_sha256": "afb6c3325a1424cb07a022ee058163818e829390d8849ccb11adfc8db23c1b03",
+    "r127_build_narrowing_patch_sha256": "8293ea1a23416ed273ac262c2a7abb5ca0e52bc2c4e2dd15812a1438e4c33db4"
+  },
+  "candidate_artifacts": {
+    "extension_bytes": 52253960,
+    "extension_sha256": "4a8b308b5dc80816b470e8cf20be2a171a41be5bdffe34253c9eda80d65664a5",
+    "note": "The extension is byte-identical because the changed AOT kernel resides in its linked grouped-GEMM device library.",
+    "grouped_gemm_library_bytes": 119512,
+    "grouped_gemm_library_sha256": "10013dd80c8204bd34004b44e1071d700c04ca994aa72ac713b3c778705ed5fa",
+    "abi_and_registration_check": "Passed in the exact R62 container with no GPU devices; candidate operators registered under Torch 2.13.0+xpu. No XPU tensor was allocated."
+  },
+  "screen": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-cutlass-fixed-m32.py",
+    "script_sha256": "33485f5b01b04607491538f400704df2c76dc9ae74e93bd507a5206a12973f72",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+    "shapes_KN": {
+      "attn_o_proj": [3072, 5120],
+      "attn_qkv_proj": [5120, 7168]
+    },
+    "m_values": [1, 2, 4, 8, 16, 32, 64, 128, 168, 200, 224, 250, 256, 300, 512],
+    "timed_m_values": [1, 4, 32, 168, 256],
+    "seed": 20260902,
+    "warmups": 10,
+    "iterations": 30,
+    "timing_repeats": 3,
+    "control": "Unchanged natural oneDNN dense fp8_gemm_w8a16."
+  },
+  "gates": {
+    "identity_and_numerical": "Unchanged from R127: one row-0 class, every M512 prefix exact, M200 permutation/repeat exact, M168 random appended-row content exact, finite, and max absolute error versus oneDNN <=0.06 on both shapes.",
+    "latency_for_expansion": "Unchanged from R127: for both shapes, geometric-mean candidate/control across timed M <=1.15 and no individual M >1.50x.",
+    "health": "No new Xe fault, reset, timeout, hang, coredump, or device loss.",
+    "on_pass": "Expand this exact direct-grid kernel to all six production W8A16 shapes and model full-step overhead before any server build.",
+    "on_failure": "Preserve and classify the result. Do not launch a server. Further kernel work requires a measured mechanism beyond scheduler/allocation removal."
+  }
+}

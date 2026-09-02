@@ -1,0 +1,48 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-pinned-jit-all-shapes-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-pinned-jit-all-shapes-20260902-r124",
+  "status": "preregistered-before-r124-xpu-execution",
+  "classification": "operator-diagnostic-only",
+  "basis": {
+    "r123_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-pinned-jit-strategy-r123-result.json",
+    "r123b_result": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-pinned-jit-strategy-r123b-result.json",
+    "finding": "The natural M=32 strategy is exact and fast for attention output; the natural M=128 strategy is exact and within gate for QKV."
+  },
+  "build": {
+    "extension_sha256": "05eb15ebc0afd174ed583064998be669bc37794c2ab55ffb8abb0e4a2663b92e",
+    "source": "exact vllm-xpu-kernels 1e90ffa672ba02f17a909da11838a4c55b199783 with exact oneDNN 0e2a5bfeef1bfbffc3137464606540233086ce9b and ONEDNN_DEV_MODE=ON",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62",
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374"
+  },
+  "scripts": {
+    "base": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-pinned-jit-strategy.py",
+    "base_sha256": "5438b447c449a27fbf5dd07a1b3a519889dd928c06cbf7d4837b76c7f08f519d",
+    "all_shapes_wrapper": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-pinned-jit-all-shapes.py",
+    "all_shapes_wrapper_sha256": "1dc35554123b6557930b07bce1ede3e8509b7351db00a434d5ae802678ac32eb"
+  },
+  "production_shapes_KN": {
+    "gdn_in_proj_qkvz": [5120, 8192],
+    "gdn_out_proj": [3072, 5120],
+    "attn_qkv_proj": [5120, 7168],
+    "attn_o_proj": [3072, 5120],
+    "mlp_gate_up_proj": [5120, 17408],
+    "mlp_down_proj": [8704, 5120]
+  },
+  "candidate_source_m_values": [32, 128],
+  "procedure": [
+    "For the four not-yet-expanded unique layer names, capture a natural full-M control with DNNL_VERBOSE=debuginfo=10.",
+    "For all six layer names and each source M, discover the natural strategy in a fresh process and normalize it exactly as R123a specifies.",
+    "Replay each strategy in a fresh process over the unchanged R123 M, prefix, permutation, repeat, padding, and timing screen.",
+    "Reuse the already captured R123/R123b attention results only if the newly discovered strategy hashes match exactly."
+  ],
+  "gates": {
+    "per_shape_correctness": "At least one of the two candidates must pass all five exactness checks for every production shape.",
+    "per_shape_latency": "The selected exact candidate must have geometric-mean candidate/control latency <=1.15 and no timed point >1.50x.",
+    "selection": "Among candidates passing both gates for a shape, select the lower sum of median latency across M=1,4,32,168,256. Identical K,N shapes must select the same strategy.",
+    "on_all_pass": "Freeze the six-shape strategy map and measured latency table, then implement a narrowly guarded non-developer oneDNN source patch and rerun the same operator suite before any model server.",
+    "on_any_failure": "Do not implement or launch a server; close catalog strategy pinning and proceed to a custom kernel.",
+    "health": "Stop immediately on any new Xe fault, reset, timeout, hang, coredump, or device loss."
+  },
+  "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+  "server_allowed": false
+}

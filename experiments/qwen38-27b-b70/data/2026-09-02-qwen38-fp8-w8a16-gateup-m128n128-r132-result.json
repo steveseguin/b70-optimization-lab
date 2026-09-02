@@ -1,0 +1,39 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-gateup-m128n128-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-gateup-m128n128-20260902-r132",
+  "status": "closed-identity-pass-latency-fail-layout-diagnostic",
+  "classification": "operator-layout-diagnostic-only",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-gateup-m128n128-r132-prereg.json",
+  "preregistration_sha256": "a8079f39b7bff1147f78620696b0ea8bb8afc1e1d3a90c0be5cf79e69b912d48",
+  "run": {
+    "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "container_exit_code": 0,
+    "started_utc": "2026-09-02T17:31:27.074516888Z",
+    "finished_utc": "2026-09-02T17:31:31.564052157Z",
+    "raw_result": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-gateup-m128n128-r132/raw-result.json",
+    "raw_result_sha256": "01e883022dec0ebbbe425fb36640dd1f1a4325c62276e707a16241c3a9b21b38",
+    "container_log_sha256": "3c40affff27807bbbeddcf277bb4e5f0f61c799a16fcecce541378495b20c42b"
+  },
+  "identity": "All six shapes retained every bitwise gate and max absolute error <=0.0001220703125.",
+  "gate_up": {
+    "latency_geomean_ratio": 1.1711938094849275,
+    "latency_worst_ratio": 1.7860758852321068,
+    "m168_candidate_us": 1031.6944666666666,
+    "m168_control_us": 577.6319333333333,
+    "latency_gate": "fail"
+  },
+  "layout_correction": {
+    "discovered_after_run": true,
+    "candidate_and_control_weight": "contiguous [K,N]",
+    "production_weight": "[K,N] transposed view over contiguous [N,K], with stride[-2] == 1",
+    "impact": "The identity mechanism remains valid, but R127-R132 latency and catalog selection are not production-layout evidence. The contiguous-layout oneDNN control is about 2x slower than the earlier production-layout control on wide gate/up at large M.",
+    "required_next": "Repeat the exact fixed-K kernel with row-major physical [N,K] weights and the matching oneDNN NT control before any catalog or integration decision."
+  },
+  "health": {
+    "post_run_device_state": "both B70s normal",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": "Close the spilling M128N128 policy. Suspend the R130 heterogeneous catalog latency conclusion pending production-NT-layout R133."
+}

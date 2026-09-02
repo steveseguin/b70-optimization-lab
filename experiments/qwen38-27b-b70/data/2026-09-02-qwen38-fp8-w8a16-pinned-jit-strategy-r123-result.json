@@ -1,0 +1,52 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-pinned-jit-strategy-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-pinned-jit-strategy-20260902-r123",
+  "classification": "operator-diagnostic-only",
+  "status": "mechanism-proven-no-candidate-passed-full-latency-gate",
+  "natural_control": {
+    "attn_o_proj": {
+      "row0_class_count": 8,
+      "all_non_m512_prefixes_exact": false,
+      "permutation_m200_exact": true,
+      "repeat_m200_exact": true,
+      "padding_168_to_200_exact": false
+    },
+    "attn_qkv_proj": {
+      "row0_class_count": 7,
+      "all_non_m512_prefixes_exact": false,
+      "permutation_m200_exact": false,
+      "repeat_m200_exact": false,
+      "padding_168_to_200_exact": false
+    }
+  },
+  "strategies": {
+    "source_m4": {
+      "exact_all_checks_both_shapes": true,
+      "attn_o_geomean_and_worst_latency_ratio": [1.5115978156245184, 4.013679459385121],
+      "attn_qkv_geomean_and_worst_latency_ratio": [2.336152048971044, 7.559412401878432],
+      "decision": "closed for latency"
+    },
+    "source_m32": {
+      "exact_all_checks_both_shapes": true,
+      "attn_o_geomean_and_worst_latency_ratio": [0.8260982651834491, 1.0661561462833318],
+      "attn_qkv_geomean_and_worst_latency_ratio": [1.1201787009262976, 1.7940296971574767],
+      "attn_qkv_ratio_at_m168_and_m256": [1.4323826812710878, 1.7940296971574767],
+      "decision": "promising but misses preregistered 1.50x worst-case expansion gate"
+    },
+    "source_m256": {
+      "exact_all_checks_both_shapes": false,
+      "decision": "closed for identity and latency"
+    }
+  },
+  "mechanism_conclusion": "A strategy with fixed K slicing can make the same row bitwise invariant across M, prefix length, padding, permutation, and repeats. oneDNN's natural M-dependent strategy/auxiliary selection is the cause of the W8A16 identity hole; not all pinned strategies are themselves invariant.",
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-pinned-jit-strategy-r123",
+    "sha256_manifest_sha256": "0e0f1af8de6fbb03bbd00ff722982734e31de8db3df7b2151b0fc0f7aab3e4a0"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": "Do one bounded interpolation screen using the naturally selected M=64, M=128, and M=168 strategies. If none is exact and within the frozen latency gates, stop strategy search and move to a narrow source-level M=32-style implementation/census model or custom kernel."
+}

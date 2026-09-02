@@ -1,0 +1,29 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 3d93c4d..35b7261 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -132,7 +132,7 @@ void DenseBlockFP8GEMMLauncher(
+ 
+           auto A_tensor =
+               make_moe_tensor<half_t, 'R'>(const_cast<half_t*>(activations), gemm_m, gemm_k);
+-          auto B_tensor = make_moe_tensor<float_e4m3_t, 'C'>(
++          auto B_tensor = make_moe_tensor<float_e4m3_t, 'R'>(
+               const_cast<float_e4m3_t*>(weights), gemm_n, gemm_k);
+           auto D_tensor =
+               make_moe_tensor<half_t, 'R'>(outputs, gemm_m, gemm_n);
+@@ -293,9 +293,12 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+           ptr_D.size(1) == N,
+       "invalid D shape");
+   TORCH_CHECK(
+-      ptr_A.is_contiguous() && ptr_B.is_contiguous() &&
+-          ptr_scales->is_contiguous() && ptr_D.is_contiguous(),
+-      "R127 tensors must be contiguous");
++      ptr_A.is_contiguous() && ptr_scales->is_contiguous() &&
++          ptr_D.is_contiguous(),
++      "R133 activations, scales, and output must be contiguous");
++  TORCH_CHECK(
++      ptr_B.stride(1) == 1 && ptr_B.stride(2) == K,
++      "R133 requires production NT weight strides [*,1,K]");
+ 
+   if (ptr_A.size(0) <= 8) {
+     DenseBlockFP8GEMMLauncher<w8a16_policy_m_16>(

@@ -1,0 +1,17 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-pinned-jit-strategy-correction.v1",
+  "campaign_id": "qwen38-fp8-w8a16-pinned-jit-strategy-20260902-r123a",
+  "status": "preregistered-after-natural-controls-before-any-gemm-kernel-override",
+  "base_preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-pinned-jit-strategy-r123-prereg.json",
+  "observed_control_only": {
+    "attn_o_proj": "Eight row-0 classes; all non-M512 prefixes differ; M200 repeat and permutation exact; 168-to-200 padding differs.",
+    "attn_qkv_proj": "Seven row-0 classes; all non-M512 prefixes differ; M200 repeat, permutation, and 168-to-200 padding all differ.",
+    "new_xe_fault_or_reset": false
+  },
+  "corrections_before_candidate_execution": [
+    "oneDNN's primitive cache can suppress the verbose kernel line at a requested source M when an earlier M compiled the same kernel. Discover each M=4,32,256 source in a fresh process with --ms SOURCE_M --skip-timing so the delimited kernel line is always emitted.",
+    "The verbose dump prepends a problem annotation such as scalea[g128x128,S], while the developer GEMM_KERNEL parser requires its first token to be gemm. Deterministically normalize by taking the exact substring beginning at the first token 'gemm ' and preserve every subsequent byte. This is parser framing, not strategy editing."
+  ],
+  "unchanged": "The two shapes, three source M values, full replay M set, correctness checks, latency gates, health stop, and no-server rule remain exactly as preregistered in R123.",
+  "candidate_execution_started": false
+}

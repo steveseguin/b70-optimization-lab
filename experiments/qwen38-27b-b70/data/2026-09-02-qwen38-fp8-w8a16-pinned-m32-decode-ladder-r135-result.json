@@ -1,0 +1,52 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-pinned-m32-decode-ladder-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-pinned-m32-decode-ladder-20260902-r135",
+  "classification": "operator-composition-diagnostic-only",
+  "status": "exact-through-c64-decode-gate-fails-at-c64",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-w8a16-pinned-m32-decode-ladder-r135-prereg.json",
+  "identity": {
+    "both_candidate_replicates_passed_all_checks_on_all_shapes": true,
+    "row0_invariant": true,
+    "exact_vs_m512_prefix": true,
+    "permutation_invariant": true,
+    "repeat_deterministic": true,
+    "padding_exact": true
+  },
+  "weighted_latency": {
+    "method": "Median of the two run medians per shape and arm, weighted by 48 GDN-in, 48 GDN-out, 16 attention-QKV, 16 attention-output, 64 MLP gate/up, and 64 MLP down calls per 64-layer target forward.",
+    "by_m": {
+      "2": {"control_us": 21767.575, "candidate_us": 20635.529, "ratio": 0.947994, "mapped_concurrency": 1, "decode_gate_pass": true},
+      "4": {"control_us": 21368.291, "candidate_us": 20421.829, "ratio": 0.955707, "mapped_concurrency": 2, "decode_gate_pass": true},
+      "8": {"control_us": 20365.880, "candidate_us": 20434.700, "ratio": 1.003379, "mapped_concurrency": 4, "decode_gate_pass": true},
+      "16": {"control_us": 20511.879, "candidate_us": 20524.942, "ratio": 1.000637, "mapped_concurrency": 8, "decode_gate_pass": true},
+      "32": {"control_us": 23045.054, "candidate_us": 23124.208, "ratio": 1.003435, "mapped_concurrency": 16, "decode_gate_pass": true},
+      "64": {"control_us": 27745.613, "candidate_us": 27688.387, "ratio": 0.997937, "mapped_concurrency": 32, "decode_gate_pass": true},
+      "128": {"control_us": 38552.092, "candidate_us": 51265.121, "ratio": 1.329762, "mapped_concurrency": 64, "decode_gate_pass": false},
+      "168": {"control_us": 45089.970, "candidate_us": 73099.580, "ratio": 1.621194, "classification": "prefill-visible"},
+      "256": {"control_us": 55311.370, "candidate_us": 106511.329, "ratio": 1.925668, "classification": "prefill-visible"}
+    },
+    "decode_gate_ceiling": 1.03,
+    "decode_gate_pass_c1_through_c32": true,
+    "decode_gate_pass_c64": false,
+    "prefill_2x_ceiling_pass": true
+  },
+  "mechanism": "The M32 strategy is a practical exact decode mechanism through M64, but its small-M scheduling stops scaling at M128. The c64 failure is dominated by GDN-in, attention-QKV, and gate/up, which are 1.758x, 1.862x, and 1.455x their natural controls at M128.",
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-pinned-m32-decode-ladder-r135",
+    "sha256_manifest_bytes": 8040,
+    "sha256_manifest_sha256": "9ede10cb712d87d4ab9ec0357b5aa6c84c8c61808b8345c0657283c1f2fdc40c"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "all_24_processes_exit_zero": true,
+    "both_devices_normal_after": true,
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "build_uniform_m32_source_candidate": false,
+    "launch_server": false,
+    "retain": "M32 is the fastest exact reference and a viable bounded c1-c32 mechanism.",
+    "next": "Target only the M>=128 scheduling deficit with a purpose-built implementation that is bitwise equal to M32 arithmetic. Any scheduling-only oneDNN strategy edit must first prove cross-equality; otherwise proceed directly to a specialized Xe2 kernel."
+  }
+}

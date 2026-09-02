@@ -1,0 +1,38 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+index ec3d733..c5fd7fa 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+@@ -84,6 +84,12 @@ class w8a16_policy_m_32_n_128 : public xe_gemm_policy_base {
+   using SGLayout = Layout<Shape<_1, _8, _1>, Stride<_8, _1, _0>>;
+ };
+ 
++class w8a16_policy_m_128_n_128_k_32 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_128, _128, _32>;
++  using SGLayout = Layout<Shape<_4, _2, _1>, Stride<_2, _1, _0>>;
++};
++
+ class w4a16_policy : public xe_gemm_policy_base {
+  public:
+   using WGTile = Shape<_128, _256, _32>;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index a06c1d8..de4303e 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -307,6 +307,16 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+         ptr_A.size(0),
+         N,
+         K);
++  } else if (N == 17408 && ptr_A.size(0) > 32) {
++    DenseBlockFP8GEMMLauncher<w8a16_policy_m_128_n_128_k_32>(
++        dpcpp_queue,
++        reinterpret_cast<half_t*>(ptr_A.data_ptr()),
++        reinterpret_cast<float_e4m3_t*>(ptr_B.data_ptr()),
++        reinterpret_cast<float*>(ptr_scales->data_ptr()),
++        reinterpret_cast<half_t*>(ptr_D.data_ptr()),
++        ptr_A.size(0),
++        N,
++        K);
+   } else if (N == 17408) {
+     DenseBlockFP8GEMMLauncher<w8a16_policy_m_32_n_128>(
+         dpcpp_queue,

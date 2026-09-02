@@ -1,0 +1,40 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m4-pinned-jit-prereg.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m4-pinned-jit-20260902-r125",
+  "status": "preregistered-before-r125-xpu-execution",
+  "classification": "operator-diagnostic-only",
+  "question": "Does pinning the exact R123 source-M32 strategy remove R122b's B-dependent arithmetic while retaining its near-natural batched throughput?",
+  "composition": {
+    "base": "exact vllm-xpu-kernels 1e90ffa672ba02f17a909da11838a4c55b199783 and oneDNN 0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "fixed_m4_patch_sha256": "101a5f01515372ffc22f1c0466713e4da555e99812b60764e0cf56ce6c9eea88",
+    "scale_group_correction_sha256": "6ac2ea03847e689c3901eb2d27e1b43f6fef67cae8e921d62852ae56f8f70a85",
+    "onednn_dev_mode": true,
+    "extension_bytes": 70110008,
+    "extension_sha256": "53d622b86488c8d01e116ba3bce1cb5a9b16d11f06e1bf3370b6bdb7f598f774"
+  },
+  "strategy": {
+    "source": "R123 natural M=32, identical SHA across all six R124 discoveries",
+    "file_sha256": "75698dcb4f9f91e20162cf027eabcdf4db133b0f61ac091d9e3cc8bde13b70a6",
+    "normalization": "unchanged R123a GEMM_KERNEL framing rule"
+  },
+  "screen": {
+    "script": "experiments/qwen38-27b-b70/scripts/bench-qwen38-fp8-w8a16-fixed-m4-batch.py",
+    "script_sha256": "2f8c5ae222c2c4f98fe77227641d227e744ff38dd089dfd923192785f97fe940",
+    "shapes_KN": {
+      "attn_o_proj": [3072, 5120],
+      "attn_qkv_proj": [5120, 7168]
+    },
+    "batch_values": [1, 2, 8, 16, 32, 42, 50, 56, 63, 64],
+    "represented_total_rows": [4, 8, 32, 64, 128, 168, 200, 224, 252, 256],
+    "procedure": "Run one same-build no-override control, health-check, then one fresh-process source-M32 override candidate."
+  },
+  "gates": {
+    "correctness": "For both shapes: one row-0 class, exact versus sequential M4 at every B, B32 permutation exact, and B16 repeat exact.",
+    "latency": "At B=1,8,32,64 for both shapes, candidate/control geometric mean <=1.15 and no point >1.50x.",
+    "on_pass": "Expand the same composition to all six production shapes, then design a production non-developer implementation. Do not launch a server yet.",
+    "on_failure": "Close this composition and proceed to a custom fused batched kernel; do not tune other catalog strategies.",
+    "health": "Stop on any new Xe fault, reset, timeout, hang, coredump, or device loss."
+  },
+  "gpu": "Intel Arc Pro B70 0000:03:00.0 only",
+  "server_allowed": false
+}

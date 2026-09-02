@@ -1,0 +1,55 @@
+{
+  "schema": "neural.download.qwen38-fp8-w8a16-fixed-m4-batch-result.v1",
+  "campaign_id": "qwen38-fp8-w8a16-fixed-m4-batch-20260902-r122b",
+  "classification": "operator-diagnostic-only",
+  "status": "closed-latency-positive-identity-negative",
+  "candidate": {
+    "base_patch_sha256": "101a5f01515372ffc22f1c0466713e4da555e99812b60764e0cf56ce6c9eea88",
+    "correction_patch_sha256": "6ac2ea03847e689c3901eb2d27e1b43f6fef67cae8e921d62852ae56f8f70a85",
+    "extension_sha256": "f6e0ecf2adaedac5331316be6e603528ba26af61ea16cea4e0e5cff66e6ced38",
+    "fixed_m": 4,
+    "batch_values": [1, 2, 8, 16, 32, 42, 50, 56, 63, 64]
+  },
+  "correctness": {
+    "attn_o_proj": {
+      "row0_class_count": 6,
+      "row0_classes_by_batch": [[1], [2], [8], [16], [32], [42, 50, 56, 63, 64]],
+      "exact_vs_sequential_m4_only_at_B1": true,
+      "max_abs_vs_sequential_m4": 0.00006103515625,
+      "permutation_invariant_B32": false,
+      "permutation_max_abs_B32": 0.00006103515625,
+      "repeat_deterministic_B16": true
+    },
+    "attn_qkv_proj": {
+      "row0_class_count": 5,
+      "row0_classes_by_batch": [[1], [2], [8], [16, 32], [42, 50, 56, 63, 64]],
+      "exact_vs_sequential_m4_only_at_B1": true,
+      "max_abs_vs_sequential_m4": 0.0001220703125,
+      "permutation_invariant_B32": true,
+      "permutation_max_abs_B32": 0.0,
+      "repeat_deterministic_B16": true
+    }
+  },
+  "latency": {
+    "attn_o_proj_B1_B8_B32_B64_us": [17.819433333333336, 29.907999999999998, 70.55206666666666, 69.26736666666667],
+    "attn_o_proj_ratio_vs_natural_B1_B8_B32_B64": [1.0148299735558717, 1.0088432888264232, 1.1407473360435956, 0.9880634769687965],
+    "attn_qkv_proj_B1_B8_B32_B64_us": [62.513866666666665, 66.0903, 78.1875, 149.07813333333334],
+    "attn_qkv_proj_ratio_vs_natural_B1_B8_B32_B64": [1.0003605833342224, 0.996962413576367, 1.0107050169748892, 1.0174534906867625],
+    "all_preregistered_latency_gates_passed": true
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/bench-results/qwen38-fp8-w8a16-fixed-m4-batch-r122b",
+    "result_json_sha256": "8a9125788be1736ad2e5305cfaa397380a66eeddcc3094cc243f123006c53067",
+    "run_log_sha256": "8c8214b5aca5bb0ac13964c63b3798e19e723b89cc388da5ceb8fdc2f4a49a30"
+  },
+  "health": {
+    "gpu": "Intel Arc Pro B70 0000:03:00.0",
+    "new_xe_fault_or_reset": false,
+    "server_launched": false
+  },
+  "decision": {
+    "expand_to_all_shapes": false,
+    "reason": "The broadcast-weight batched primitive is fast, but oneDNN still changes the selected arithmetic as B changes. It therefore does not make a row independent of total request rows.",
+    "do_not_repeat": "Changing fixed M while leaving B variable is the same failed mechanism. A successful oneDNN route must pin the implementation/reduction strategy itself, not only one logical matrix dimension."
+  }
+}

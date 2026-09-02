@@ -1,0 +1,26 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index c8ded43..e172366 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -601,16 +601,11 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+         "{float8_e4m3fn, float8_e5m2}");                                  \
+   }
+ 
+-    if (A_avg_M <= 8) {
+-      using policy = w8a16_policy_m_16;
+-      W8BLOCKFP8LauncherCallER(policy);
+-    } else if (A_avg_M <= 32) {
+-      using policy = w8a16_policy_m_32;
+-      W8BLOCKFP8LauncherCallER(policy);
+-    } else {
+-      using policy = w8a16_policy;
+-      W8BLOCKFP8LauncherCallER(policy);
+-    }
++    // Experimental dense-W8A16 determinism path: keep the per-output K
++    // reduction fixed as M changes. M only changes the number of independent
++    // 32x64 output tiles scheduled by the grid.
++    using policy = w8a16_policy_m_32;
++    W8BLOCKFP8LauncherCallER(policy);
+ #undef W8BLOCKFP8LauncherCallER
+   } else if (is_weight_fp8) {
+     TORCH_CHECK(ptr_scales.has_value(), "w8a16 grouped gemm must have scales");
