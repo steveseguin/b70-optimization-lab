@@ -99,7 +99,9 @@ trap 'rm -f "${tmp}"' EXIT
     printf '  fs%d:\r\n' "$i"
     printf '  cd \\M12BIOS\r\n'
     printf '  echo running SAA on fs%d\r\n' "$i"
-    printf '  SAA.efi -I Redfish_HI -u %s -p %s -c UpdateBios --file %s --preserve_setting --reboot >a saa-update.log\r\n' "${bmc_user}" "${pw}" "${bios_bin}"
+    # --preserve_setting is rejected on this platform (SAA exit 38, 2026-09-02
+    # 08:16 attempt), so settings may reset to defaults; verify after boot.
+    printf '  SAA.efi -I Redfish_HI -u %s -p %s -c UpdateBios --file %s --reboot >a saa-update.log\r\n' "${bmc_user}" "${pw}" "${bios_bin}"
     printf '  echo SAA returned; rebooting in 30 seconds\r\n'
     printf '  stall 30000000\r\n'
     printf '  reset\r\n'

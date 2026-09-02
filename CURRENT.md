@@ -3788,3 +3788,10 @@ changed. The narrow deterministic-down-kernel lead is preserved, while the
 active speed step returns to the frozen W13-N32 config-folder qualification.
 See the
 [A4a result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-bf16-deterministic-a4a-result.md).
+BIOS 2.4a was flashed in place on 2026-09-02 (SAA over the BMC host interface
+from the built-in EFI shell; first attempt refused `--preserve_setting`,
+second attempt succeeded). Settings survived: four B70s with 32 GB BARs,
+IOMMU, boot order. The root SSD now runs at its default Gen4 x4 with zero
+corrected events over the first 36 minutes, versus about two per second on
+BIOS 2.0b, so the Gen3 pin is retired. A fresh Gen4 clearance run is in
+progress; W13-N32 integration and the HC gates follow it.

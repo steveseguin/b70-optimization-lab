@@ -134,3 +134,30 @@ Fix: remount `ntfs-3g` with `uid=1000,gid=1000` (identity still
 - Sequence: after W13 A2, `--preflight`, then
   `--reboot-now --confirm FLASH-BIOS-2.4a`; verify 2.4a, remove the one-shot
   script, confirm B70 BARs, retest the SSD link at Gen4.
+
+## BIOS 2.4a flashed; Gen4 link clean (2026-09-02 08:14--09:30 EDT)
+
+Attempt 1 (08:14--08:16, evidence
+`host/20260902-bios-2.4a-attempt1-preserve-setting-unsupported/`): the
+built-in EFI shell ran `startup.nsh`, SAA 1.3.0-p1 refused with exit 38,
+`--preserve_setting is not supported in this platform`; nothing was written
+and the system booted back into Ubuntu on 2.0b. The helper now omits that
+option.
+
+Attempt 2 (08:33 arm, 08:48 SAA log, evidence
+`host/20260902-bios-2.4a-flash-success/`): SAA uploaded and programmed the
+image through the BMC Redfish host interface (`Uploading FW ... Done`,
+`Updating FW ... Done`, `System reboot command applied`). The system came
+back on BIOS `2.4a` dated `07/17/2025`, boot ID
+`67848b88-c7c7-452a-bef1-124364a300b9`, BootCurrent Ubuntu, boot order
+intact, all four B70s enumerated with 32 GB Resizable BARs, IOMMU with
+interrupt remapping enabled, ASPM `performance`. No BIOS-setup visit was
+needed.
+
+Root SSD after 36 minutes of uptime at the BIOS-default `16 GT/s x4`:
+endpoint corrected `0`, root port `0`, non-fatal `0`, no `RxErr` in the
+kernel log, SMART clean at 40 C, APST back at its default (enabled). The
+same drive, slot, and firmware logged about two corrected receiver errors
+per second at Gen4 on BIOS 2.0b eight hours earlier. The AGESA/PCIe training
+refresh in 2.4a is therefore the fix; the Gen3 pin is no longer needed and
+was not reapplied. A fresh Gen4 clearance run started at 09:32 EDT.
