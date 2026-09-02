@@ -208,6 +208,42 @@ R117 is the cleaner base (no deliberate c1/c2 arithmetic split) and is not a
 regression in any meaningful sense: neither build is bit-identical to c1 in any
 packed GEMM. Both B70s normal afterwards, no kernel event.
 
+### Endpoint probe: the 168-256-row nondeterminism is visible to users
+
+Same R117 image, second server with `MAX_MODEL_LEN=1024`, everything else
+unchanged. [`probe-qwen38-fp8-c1-prefill-length-determinism.py`](../scripts/probe-qwen38-fp8-c1-prefill-length-determinism.py)
+built prompts whose `usage.prompt_tokens` hit 100, 168, 200, 224, 250 and 300,
+then sent each identical request five times in sequence at temperature 0 with
+`logprobs=5`, 64 output tokens, `cached_tokens=0` on every response. Result:
+[`probe result`](../data/2026-09-02-qwen38-fp8-mtp1-r117-prefill-length-determinism-probe-result.json).
+
+| Prompt tokens | Token IDs identical (5 repeats) | Logprob arrays identical |
+| --- | --- | --- |
+| 100 | yes | yes (1 distinct) |
+| 168 | yes | **no (5 distinct)** |
+| 200 | yes | **no (5 distinct)** |
+| 224 | yes | **no (5 distinct)** |
+| 250 | yes | **no (5 distinct)** |
+| 300 | yes | yes (1 distinct) |
+
+The differences are not one ULP at the output. At 200 tokens the first token's
+logprob was `-0.1528`, `-0.1981` and `-0.1869` on three repeats; at 224 it was
+`-0.6008`, `-0.6045` and `-0.6001`. Sixty-four layers amplify the GEMM's
+`1e-4` row differences into few-percent probability shifts. Token IDs held for
+these 64-token completions only because no near-tie was crossed; a longer
+completion or a sampled request would not be repeatable. This matches the
+kernel sweep window exactly and is a single-request determinism hole in the
+lane for any prefill step of roughly 168-256 rows, which includes packed
+multi-request prefills at c6-c8 with 30-token prompts, not just long prompts.
+The strict 12-prompt suite (48-78 tokens) never enters the window, which is why
+R53/R54 passed. Both B70s normal afterwards, no kernel event.
+
+Implications: (a) public determinism language for this lane should state the
+row-count bound until the kernel is fixed; (b) the identity ladder at c6-c8 is
+confounded by this independent of the tie mechanism; (c) the upstream report to
+vllm-xpu-kernels/oneDNN should cite the sweep's per-shape M lists and this
+endpoint reproduction.
+
 ### Specification for the oneDNN runtime-M experiment (not yet run)
 
 Location: `csrc/xpu/onednn/onednn_ext.h`, `matmul_primitive_cache_t::get`, at

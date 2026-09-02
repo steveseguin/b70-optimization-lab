@@ -118,8 +118,10 @@ gate is an exact float16 logit tie decided by M-dependent oneDNN `fp8_gemm_w8a16
 rounding in every layer plus the deliberate R97 norm arm, and R115's trace shows
 no layer bit-identical to c1. The next identity target is a whole-model
 row-invariant W8A16 GEMM gated by the kernel census, then a regenerated c1 oracle;
-the census also found run-to-run nondeterminism for 168-256-row GEMMs that any
-determinism claim must bound. The published output-audited concurrency curves are
+the census also found run-to-run nondeterminism for 168-256-row W8A16 GEMMs,
+confirmed at the endpoint on 2026-09-02 (identical 168-250-token requests return
+different logprobs on every repeat; 100 and 300 tokens are bitwise repeatable),
+so single-request determinism language must carry that row-count bound. The published output-audited concurrency curves are
 unaffected. See the
 [`CR1 review`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
  Recovery order is process
