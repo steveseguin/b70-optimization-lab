@@ -414,6 +414,21 @@ tiles, eliminating the rows tensor, atomic scratch, and persistent scheduler.
 No model server was launched. See the
 [R127 result](../data/2026-09-02-qwen38-fp8-w8a16-cutlass-fixed-m32-r127-result.json).
 
+### R128: direct exact-tile grid (overhead attribution closed)
+
+R128 kept R127's exact `xe_gemm_4bits<BLOCK_FP8,128>` body and M32 policy but
+launched exactly `ceil(M/32)*ceil(N/64)` workgroups. It removed the device rows
+read, per-call atomic tensor allocation, global atomic work queue, and
+persistent all-SM scheduler. Identity and one-ULP numerical results were
+unchanged.
+
+Latency barely moved. Attention output improved from `1.436x` to `1.389x`
+geometric mean and remained `1.757x` worst; QKV moved from `1.029x` to `1.005x`.
+The allocation/scheduler hypothesis is rejected. The next narrow test is the
+source's M16 policy for small M, gated on bitwise equality to the accepted M32
+arithmetic. No server was launched. See the
+[R128 result](../data/2026-09-02-qwen38-fp8-w8a16-cutlass-direct-grid-r128-result.json).
+
 ### Clean-boot R119 update
 
 After the required reboot, R119 promoted the R62 single-user profile at a
