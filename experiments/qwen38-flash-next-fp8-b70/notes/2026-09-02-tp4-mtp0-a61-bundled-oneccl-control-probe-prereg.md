@@ -60,3 +60,17 @@ client `25fe9562...`, supervisor `377dd77e...`, host wrapper `890ca861...`)
 and launched detached as the only GPU job. The probe, depths, repeats, and
 acceptance are unchanged; the summary lands at
 `<run_dir>/a62-logprob-determinism.json`.
+
+## Result 2026-09-02 19:07--19:20 EDT (A62)
+
+The bundled-oneCCL server (attempt 62, no public preload, no `twoshots`)
+was healthy at 19:07 after a driver reload restored the frozen DRM card
+mapping. First-step spreads over eight identical repeats: depth 8
+`0.2173` nats, depth 64 `0.0077`, depth 256 `0.1764`; 128-token repeats
+diverged at every depth (depth 8 at token 10 in both comparisons, depth 64
+at 18/17, depth 256 at 43/9). One depth-256 output hash (`79277509...`)
+recurs from the A58 graph server and the A60 eager server. The third
+2048-token single-step request hung the engine (no GPU fault logged this
+time; clean teardown, rc 143). The public oneCCL preload is therefore not
+the source of the jitter or of the hang. Evidence:
+`.../attempt62/{server.log,a62-logprob-determinism.json}`.
