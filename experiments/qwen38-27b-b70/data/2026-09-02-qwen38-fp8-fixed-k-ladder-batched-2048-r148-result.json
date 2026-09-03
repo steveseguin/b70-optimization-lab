@@ -1,0 +1,200 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-ladder-batched-2048-20260902-r148",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-prereg.json",
+  "status": "negative for the batch-budget hypothesis: both profiles still miss at c32 and c64 with max_num_batched_tokens 2048",
+  "boot_id": "2c230b44-d761-4f9a-a907-56a2e319f117",
+  "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+  "ladder_mtp1_2048": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "points": [
+      {
+        "concurrency": 1,
+        "aggregate_tok_s_wall": 51.78998655499066,
+        "exact_vs_sequential_oracle": "1/1",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 2,
+        "aggregate_tok_s_wall": 77.30664580927069,
+        "exact_vs_sequential_oracle": "2/2",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 4,
+        "aggregate_tok_s_wall": 172.25772218929907,
+        "exact_vs_sequential_oracle": "4/4",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 8,
+        "aggregate_tok_s_wall": 342.72019836835284,
+        "exact_vs_sequential_oracle": "8/8",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 16,
+        "aggregate_tok_s_wall": 490.04441663293517,
+        "exact_vs_sequential_oracle": "16/16",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 32,
+        "aggregate_tok_s_wall": 766.3350706751658,
+        "exact_vs_sequential_oracle": "29/32",
+        "mismatches_first_divergence": [
+          [
+            "benchmark-c019",
+            60
+          ],
+          [
+            "cache-c000",
+            96
+          ],
+          [
+            "index-c025",
+            49
+          ]
+        ]
+      },
+      {
+        "concurrency": 64,
+        "aggregate_tok_s_wall": 1121.8348169787582,
+        "exact_vs_sequential_oracle": "55/64",
+        "mismatches_first_divergence": [
+          [
+            "benchmark-c019",
+            60
+          ],
+          [
+            "cache-c000",
+            96
+          ],
+          [
+            "cache-c032",
+            35
+          ],
+          [
+            "cache-c040",
+            63
+          ],
+          [
+            "evidence-c007",
+            13
+          ],
+          [
+            "evidence-c047",
+            85
+          ],
+          [
+            "evidence-c063",
+            88
+          ],
+          [
+            "index-c017",
+            49
+          ],
+          [
+            "testing-c045",
+            28
+          ]
+        ]
+      }
+    ]
+  },
+  "ladder_mtp0_2048": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "points": [
+      {
+        "concurrency": 1,
+        "aggregate_tok_s_wall": 33.044034318784085,
+        "exact_vs_sequential_oracle": "1/1",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 2,
+        "aggregate_tok_s_wall": 63.48510908569933,
+        "exact_vs_sequential_oracle": "2/2",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 4,
+        "aggregate_tok_s_wall": 122.65276513708552,
+        "exact_vs_sequential_oracle": "4/4",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 8,
+        "aggregate_tok_s_wall": 230.38860200773902,
+        "exact_vs_sequential_oracle": "8/8",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 16,
+        "aggregate_tok_s_wall": 416.3362134345135,
+        "exact_vs_sequential_oracle": "16/16",
+        "mismatches_first_divergence": []
+      },
+      {
+        "concurrency": 32,
+        "aggregate_tok_s_wall": 629.9841449986046,
+        "exact_vs_sequential_oracle": "30/32",
+        "mismatches_first_divergence": [
+          [
+            "benchmark-c019",
+            60
+          ],
+          [
+            "evidence-c007",
+            13
+          ]
+        ]
+      },
+      {
+        "concurrency": 64,
+        "aggregate_tok_s_wall": 944.0355098956461,
+        "exact_vs_sequential_oracle": "55/64",
+        "mismatches_first_divergence": [
+          [
+            "benchmark-c019",
+            60
+          ],
+          [
+            "cache-c000",
+            96
+          ],
+          [
+            "cache-c032",
+            35
+          ],
+          [
+            "cache-c040",
+            63
+          ],
+          [
+            "evidence-c007",
+            13
+          ],
+          [
+            "evidence-c047",
+            85
+          ],
+          [
+            "evidence-c063",
+            88
+          ],
+          [
+            "index-c017",
+            49
+          ],
+          [
+            "testing-c045",
+            28
+          ]
+        ]
+      }
+    ]
+  },
+  "interpretation": "MTP0 at c32 sends 32 rows through the FP16 lm_head (inside its exact M<=32 class) with no prefill splitting, and still misses 2/32. The residual source therefore keys on the number of concurrent sequences (boundary between 16 and 32), not on GEMM rows or prefill chunking. Candidates are per-sequence batched kernels: GDN conv/recurrent state update and the attention decode path. Next per the census-before-bisection rule: an operator census of those kernels at 1..64 sequences. The lm_head chunk (R149) remains required for MTP1 (64 rows at c32) and for c64 on both profiles, but cannot pass the ladder alone.",
+  "decision": "batch budget stays 512 for the published profile; no promotion change from this run"
+}
