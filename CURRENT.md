@@ -3994,3 +3994,13 @@ is host-bound (28.9/18.6 tok/s vs 54.6/33.3) because this Zen 3 Gen4 host
 pays 1.65x per kernel launch and 48 us per two-card all-reduce; XPU Graph
 with capture sizes [1,2] recovers 51.3/31.1 tok/s. See the
 [replay note](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md).
+A72 (overlay `2169dbfe`: the XPU worker's V2 model runner now reports
+`CUDAGraphStat`, found by a Codex read-only audit) passed the entire frozen
+client, exit 0: runtime receipt with 1213 size-1 FULL dispatches, 6/7
+semantic, 16/16 repeat, needle, short rows `24.16/21.88/23.21 tok/s`,
+exact-2K rows `13.18/14.62` with hash `afffd211...` on both rows, the same
+outputs as A70 and A71. Three fresh servers agree on every gate; short
+three-attempt center `23.03 tok/s` vs native A56 `23.63`. Promotion of the
+deterministic graph line waits only on the user's exact-2K authority
+decision. See the
+[A72 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a72-deterministic-graph-endpoint-result.md).

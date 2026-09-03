@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "2169dbfe38c2954edc5ae50e94f68d45be071b79",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "FULL_DECODE_ONLY",
+    "compilation_mode": "NONE",
+    "cudagraph_capture_sizes": [
+      1
+    ],
+    "max_model_len": 2304,
+    "placement": "ple_only_uva",
+    "ple_host_bytes_per_rank": 12800061440,
+    "async_uva_ple_prefetch": false,
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "ccl_kernel_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "ccl_sycl_allreduce_ll": "twoshots",
+    "tuned_config_folder": "moe-m1-w13-n32",
+    "tuned_config_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
+    "diagnostics": "full-decode-graph-public-oneccl-torch-trace",
+    "torch_trace_policy": "dynamo-exact-target-allowlist-v1",
+    "input_embedding": "device",
+    "kv_cache_memory_bytes": 134217728
+  },
+  "recovery_canary": "passed",
+  "quality": {
+    "semantic": "6/7; sole known miss code_execution=30",
+    "repeat": "16/16 one hash",
+    "long_context": "2048 prompt tokens, exact needle, cache zero"
+  },
+  "short": {
+    "protocol": "row 1 follows one conditioning request in its invocation; rows 2-3 have no warmup; all three use the established identical p146/o256/c1 prompt",
+    "rates_tok_s_after_ttft": [
+      24.16159274815581,
+      21.876065122697636,
+      23.210508626250864
+    ],
+    "median_tok_s_after_ttft": 23.210508626250864,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "cache_finish_boundary": "The established harness does not retain cache-detail or finish-reason fields; do not claim those per-row receipts."
+  },
+  "exact_2k": {
+    "repeats": 2,
+    "rates_tok_s_conventional_99_interval": [
+      13.176489023733414,
+      14.617139721815024
+    ],
+    "median_tok_s_conventional_99_interval": 13.89681437277422,
+    "ttft_s": [
+      55.25220290600009,
+      53.63314442899991
+    ],
+    "output_token_ids_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+    "same_boot_output_repeat": true,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "protected_results_changed": false,
+  "interpretation": "Additive PLE-only TP4 compilation-free FULL_DECODE_ONLY quality, short, and exact-2K screen; it does not replace or lower any prior row.",
+  "sha256": {
+    "recovery-canary.json": "c1e8ba7e1e8b3567c933813fcf32a3f2152ea679b81aa8063c58cbf4eae7c409",
+    "quality-current.json": "7cabb11269b867f2170f09658a18712b6e25a9bbbccab6cbd5eb527a5c4842aa",
+    "bench-short-r1.json": "978259a057a2a5639c1e9b821bc671cd8552cedde1f6f477aea4451e3ed56a33",
+    "bench-short-r2.json": "6e55df9dfc137a009348bdb4051cb3811cfc194f9e7fce052b3b129f7a46997f",
+    "bench-short-r3.json": "7db8da2e8e85975bc36f8ff0358ce1b72265009d42ac3526247248691a05340a",
+    "exact-depth-2k-r1.json": "f511a7c5dbbcf8799ad2ba909f185fa7fa1b0a6c645bb94f582d9f5343e7c922",
+    "exact-depth-2k-r2.json": "fb9267ec97cf3cab5e1df877c5849b689463ca1539c81eb0dfe767147e0f8304"
+  }
+}
