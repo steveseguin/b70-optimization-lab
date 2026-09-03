@@ -1,0 +1,5 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp1-async-off-ladder-20260903-r175","status":"preregistered-before-device-use",
+ "question":"Is the published depth-1 MTP1 identity residual above c16 (2/32, 6/64 misses on R156, schedule-sensitive, every kernel censused invariant) the same async-scheduling defect? Prediction if yes: the c1-c64 MTP1 ladder with --no-async-scheduling is 64/64.",
+ "method":"LADDERS_ONLY runner on the published R156 image with EXTRA_SERVE_ARGS=--no-async-scheduling (MTP1 ladder, then MTP0 ladder)",
+ "on_pass":"strict pair + probe with async off (R176) to measure speed; if speed holds, the published profile moves to async off with c64 identity for both profiles",
+ "abort_conditions":["as R147"]}

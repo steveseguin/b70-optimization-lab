@@ -1,0 +1,8 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-phantom-block-trace-20260903-r172",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-block-trace-r172-prereg.json",
+  "status": "cache-c032 again diverged at position 0 but this time the corrupted last row predicted token 220 (17.39) with 60 second (14.77); row 29 unchanged ([60,26], 18.4/17.3). The corruption value varies between runs while every other request is identical -> timing-dependent content. Block trace: requests alternate between two block sets; the new request inherits the finished request's blocks (attention groups [1,2,3],[4,5,6],[7,8,9], mamba [10]) and only the mamba block is in new_block_ids_to_zero. The non-phantom boundary c007->c008 has the identical block pattern, so block reuse alone does not explain it.",
+  "root": "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-block-trace-20260903-r172",
+  "interpretation": "Timing-dependent host-side effect under async scheduling: candidate = reused pinned metadata buffers rewritten for step N+1 while step N's non-blocking H2D copies are still queued (the R173 barrier sits after _update_states' CPU writes, so it did not exclude this). R174 tests blocking copies."
+}
