@@ -4063,3 +4063,13 @@ GDN spec-decode kernel and M=2 paths against single-row decode), the
 serial-exact treatment the 27B lane received. See the
 [A81 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a81-graph-mtp1-result.md)
 and the [A84 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a84-logprob-probe-result.md).
+A85 then ran the kernel source's serial-exact recurrent spec-decode path
+inside the graph for the first time (sealed ad25aa9 stage): `32.3 tok/s`
+short, quality identical, the 2K divergence moved from token 7 to the
+token-12 near-tie, 4K unchanged; a two-row BF16 GEMM equals two one-row
+GEMMs bit for bit on every decode shape, so the dense projections are
+cleared. A port of the 27B lane's serial verifier-row attention (overlay
+`0a03a84c`) has not yet been shown to execute (A87-A89 repeated A85); A90
+carries an entry diagnostic. See the
+[A85 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a85-exact-recurrent-graph-result.md)
+and the [gate notes](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a87-a88-serial-attention-gate-notes.md).
