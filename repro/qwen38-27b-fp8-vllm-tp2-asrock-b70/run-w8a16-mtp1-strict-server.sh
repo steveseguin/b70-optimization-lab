@@ -33,5 +33,5 @@ exec env \
   VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0 \
   VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0 \
   PYTHONHASHSEED=0 \
-  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}' \
+  COMPILATION_CONFIG="${COMPILATION_CONFIG:-{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}}" \
   "${script_dir}/run-w8a16-mtp1-server.sh"

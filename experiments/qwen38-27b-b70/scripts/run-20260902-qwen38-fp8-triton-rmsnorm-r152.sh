@@ -131,6 +131,28 @@ fi
 log "preflight clean; boot $(cat "${root}/boot-id.txt")"
 
 # ---------------- MTP0 controls ----------------
+if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
+  log "LADDERS_ONLY: skipping the strict oracle and candidate stages"
+  launch ladder mtp1 256 64 512
+  python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
+    --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+    --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
+    --return-token-ids --require-output-identity \
+    --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
+  log "G6 ladder harness exit $?"
+  stop_server "${server_name}" "${server_pid}" "${server_dir}"
+  postflight ladder-post
+  launch ladder-mtp0 mtp0 256 64 512
+  python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
+    --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+    --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
+    --return-token-ids --require-output-identity \
+    --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
+  log "G6(mtp0) ladder harness exit $?"
+  stop_server "${server_name}" "${server_pid}" "${server_dir}"
+  postflight ladder-mtp0-post
+  date --iso-8601=seconds >"${root}/campaign-end.txt"; log "campaign complete"; exit 0
+fi
 if [[ -n "${resume}" ]]; then
   [[ "${resume}" == mtp1-b && -f "${oracle_root}/mtp0-a/strict/performance.json" && -f "${oracle_root}/mtp1-a/strict/performance.json" ]] || abort "resume: need RESUME_FROM=mtp1-b and an ORACLE_ROOT holding mtp0-a and mtp1-a"
   for d in mtp0-a mtp0-b mtp1-a; do ln -s "${oracle_root}/${d}" "${root}/${d}"; done

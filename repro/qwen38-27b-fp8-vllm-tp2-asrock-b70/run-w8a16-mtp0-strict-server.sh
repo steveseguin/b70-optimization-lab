@@ -28,5 +28,5 @@ exec env \
   VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0 \
   PYTHONHASHSEED=0 \
   CCL_P2P_ACCESS=1 \
-  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}' \
+  COMPILATION_CONFIG="${COMPILATION_CONFIG:-{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}}" \
   "${script_dir}/run-server.sh"

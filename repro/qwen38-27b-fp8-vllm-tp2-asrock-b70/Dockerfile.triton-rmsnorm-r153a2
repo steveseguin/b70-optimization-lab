@@ -1,0 +1,27 @@
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139
+FROM ${BASE_IMAGE}
+
+ARG TRITON_RMSNORM_PATCH_SHA256
+
+COPY vllm-qwen38-xpu-triton-rmsnorm-r153a2-20260902.patch /tmp/triton-rmsnorm.patch
+COPY validate-xpu-triton-rmsnorm-r153a2.py /tmp/validate-xpu-triton-rmsnorm-r153a2.py
+
+RUN test "$(sha256sum /tmp/triton-rmsnorm.patch | awk '{print $1}')" = \
+        "${TRITON_RMSNORM_PATCH_SHA256}" \
+    && patch --batch --verbose --fuzz=0 -p1 \
+        -d /opt/venv/lib/python3.12/site-packages \
+        < /tmp/triton-rmsnorm.patch \
+        > /tmp/triton-rmsnorm.patch.log 2>&1 \
+    && ! grep -Eiq \
+        'trailing garbage|malformed|FAILED|ignored|reversed|offset' \
+        /tmp/triton-rmsnorm.patch.log \
+    && /opt/venv/bin/python -m py_compile \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py \
+    && /opt/venv/bin/python /tmp/validate-xpu-triton-rmsnorm-r153a2.py \
+        /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py \
+    && rm -f /tmp/triton-rmsnorm.patch /tmp/triton-rmsnorm.patch.log \
+        /tmp/validate-xpu-triton-rmsnorm-r153a2.py
+
+LABEL neural.download.composite.base.r139="sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878" \
+      neural.download.vllm.triton-rmsnorm.patch.sha256="${TRITON_RMSNORM_PATCH_SHA256}" \
+      neural.download.build.lane="qwen38-fp8-mtp1-triton-rmsnorm-r153a2"
