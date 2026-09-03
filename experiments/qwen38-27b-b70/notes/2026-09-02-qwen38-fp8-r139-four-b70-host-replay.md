@@ -123,6 +123,13 @@ All six prompt classes sit within 27.5-30.6 tok/s on MTP1, so the factor
   the graph-off profile exposes it about 130 times per token, and graph
   capture hides it (MTP0 31.1, MTP1 51.3 tok/s above).
 
+- MTP0 graph-off under `iommu=pt` (ACS cleared partway through the run):
+  `18.721904 tok/s`, unchanged from 18.65.
+- GuC firmware: with the distro `70.44.1` reloaded in place of upstream
+  `70.72.1`, the same probe reads 5.15 us launch, 31.2 us launch plus sync,
+  132.3 us `rms_norm` M=2, identical to 70.72.1. Firmware is not a factor;
+  70.72.1 was reinstalled afterwards.
+
 ## Transferable result
 
 On a host whose per-launch and per-collective latency is higher than the
