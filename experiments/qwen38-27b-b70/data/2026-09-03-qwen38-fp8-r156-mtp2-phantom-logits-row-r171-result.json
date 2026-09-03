@@ -1,0 +1,9 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-phantom-logits-row-20260903-r171",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-logits-row-r171-prereg.json",
+  "status": "Off-by-one REJECTED. At the cache-c032 prefill: logits_indices=[30], query_start_loc.gpu=[0,31]=cpu. Row 30 top-2 = [60, 26] at 14.82/13.95; row 29 top-2 = [60, 26] at 18.47/17.34. Normal prefills (c031, c033) have the last row predicting 271 at ~17.7-18.8 and the previous row predicting 60. So the last row's hidden state at the failing step lacks its own token's contribution (it ranks like the previous position, with lower confidence), while the KV/state written by the step were sound.",
+  "root": "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-logits-row-20260903-r171",
+  "phantom_reproduced": true,
+  "interpretation": "The defect is inside the prefill forward of the last token (attention or GDN output row), only when the preceding device work is the discarded async extra step of the finished request. Next: R173 device barrier between steps."
+}

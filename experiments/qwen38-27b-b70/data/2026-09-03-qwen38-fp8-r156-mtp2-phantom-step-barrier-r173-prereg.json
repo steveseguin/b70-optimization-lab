@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-step-barrier-20260903-r173","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-step-barrier-r173 sha256:5b7baba09a31c4599f98942ee8e0b8c904ea370feb3b95077bb00be655ab56ec (R171 + torch.accelerator.synchronize() at the start of every execute_model, diagnostic only)",
+ "observation":"R171: at the cache-c032 prefill logits_indices=[30] is correct and query_start_loc cpu/gpu agree, but the hidden state at row 30 ranks [60, 26] (14.8/13.9) like row 29 ([60, 26], 18.5/17.3) instead of predicting 271 as a normal prefill does; the KV/state written by the step were sound (clean continuation). So the last row's own-token contribution was missing inside the forward.",
+ "hypothesis":"kernels of the discarded async extra step (evidence-c031, 3 tokens at positions 156-158) overlap on the device with the c032 prefill (cross-step race: shared scratch, state slot or KV slot), which a device barrier between steps would remove.",
+ "decision":"phantom gone with the barrier -> cross-step device overlap confirmed; then narrow the barrier and measure speed. Phantom persists -> deterministic bookkeeping (block/slot mapping), log block tables next (R172).",
+ "abort_conditions":["as R147"]}

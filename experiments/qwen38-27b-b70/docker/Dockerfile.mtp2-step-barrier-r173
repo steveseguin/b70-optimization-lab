@@ -1,0 +1,5 @@
+# R173 diagnostic: R171 trace image + a full device synchronize at the start of every model-runner step.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-logits-row-trace-r171
+COPY r173-step-barrier.py /tmp/r173.py
+RUN python /tmp/r173.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py && rm /tmp/r173.py
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-step-barrier-r173-diagnostic"
