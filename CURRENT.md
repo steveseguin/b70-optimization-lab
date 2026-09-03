@@ -4054,7 +4054,12 @@ identity: bit-exact against the MTP0 line at short context and 1.71x faster
 (`38.79 tok/s` median, 93% draft acceptance), but the exact-2K and exact-4K
 continuations diverge at a near-tie and decode at about `7 tok/s` with
 double the TTFT, so MTP1 is neither lossless nor useful at depth on this
-line yet. A83 (eager MTP1) is separating graph replay from the speculative
-path; the kernel-side serial-exact treatment the 27B lane received is the
-likely next lane item. See the
-[A81 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a81-graph-mtp1-result.md).
+line yet. A83 (eager MTP1) reproduced A81 token for token, so the graph is not the
+cause, and A84's logprob probe showed the MTP1 path diverging from the
+MTP0 line within 31 tokens at depth 8, 15 at 256 and 7 at 2048 (first step
+identical; later top-1 logprobs differ by 0.02-0.09 nats on average): MTP1
+is not lossless at any depth. The next MTP step is kernel-level (the
+GDN spec-decode kernel and M=2 paths against single-row decode), the
+serial-exact treatment the 27B lane received. See the
+[A81 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a81-graph-mtp1-result.md)
+and the [A84 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a84-logprob-probe-result.md).

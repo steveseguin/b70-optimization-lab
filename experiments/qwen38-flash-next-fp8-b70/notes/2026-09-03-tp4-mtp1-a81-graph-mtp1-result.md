@@ -1,8 +1,12 @@
 # Qwen3.8 Flash-Next FP8 A81 result: MTP1 inside the full decode graph
 
 Date: 2026-09-03 10:28--10:52 EDT
-Status: **diagnostic; exact and 1.7x faster at short context, not exact and
-slower at 2K/4K**; not a record
+Status: **diagnostic; matched the MTP0 line on the short bench and quality
+suite at 1.7x the speed, not exact at 2K/4K and slower there**; not a
+record. Correction (A84, same day): the short-context match holds only for
+those peaky prompts; the logprob probe shows the MTP1 path diverging from
+the MTP0 line within 31 tokens even at depth 8, so MTP1 is not lossless at
+any depth.
 
 ## Server
 
