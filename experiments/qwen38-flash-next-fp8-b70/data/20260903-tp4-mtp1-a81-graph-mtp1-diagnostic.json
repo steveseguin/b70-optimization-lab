@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "classification": "qwen38_flash_next_a81_mtp1_graph_diagnostic",
+  "status": "diagnostic",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "2169dbfe38c2954edc5ae50e94f68d45be071b79",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 1,
+    "graph": "FULL_DECODE_ONLY",
+    "cudagraph_capture_sizes": [
+      1,
+      2
+    ],
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 376569856,
+    "mkldnn_deterministic": 1,
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+    "supervisor_mem_floor_kib": 12000000
+  },
+  "short": {
+    "rates_tok_s_after_ttft": [
+      38.79120027266848,
+      44.02238631204499,
+      38.532635220128455
+    ],
+    "median_tok_s_after_ttft": 38.79120027266848,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "all_rows_same_hash": true,
+    "mtp0_line_hash": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "matches_mtp0_line": true
+  },
+  "exact_2k": {
+    "rates_tok_s_conventional_99_interval": [
+      7.253413773457171,
+      6.912106699684101
+    ],
+    "ttft_s": [
+      146.62423771600152,
+      99.77443270899676
+    ],
+    "output_token_ids_sha256": "460b0d5cd5b8ab20066403b1d51df0ad330203d30b0a565ab9c7a463337036e1",
+    "both_rows_same_hash": true,
+    "mtp0_line_hash": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+    "matches_mtp0_line": false,
+    "first_divergence_token_index": 7,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "exact_4k": {
+    "rates_tok_s_conventional_99_interval": [
+      7.610711165695134,
+      7.6208074166294155
+    ],
+    "ttft_s": [
+      166.07630629799678,
+      151.43105673600076
+    ],
+    "output_token_ids_sha256": "bf25b9d14a6d1618be82d5b0be902c83d786f4830d207482665d8d00d9cbe58c",
+    "both_rows_same_hash": true,
+    "mtp0_line_hash": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639",
+    "matches_mtp0_line": false,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "quality": {
+    "semantic_passed": 6,
+    "normalized_outputs_identical_to_mtp0_line": true,
+    "repeat_unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "needle_pass": true
+  },
+  "spec_decode_metrics_total": {
+    "vllm:spec_decode_num_drafts_total": 787.0,
+    "vllm:spec_decode_num_draft_tokens_total": 787.0,
+    "vllm:spec_decode_num_accepted_tokens_total": 733.0,
+    "vllm:spec_decode_num_accepted_tokens_per_pos_total": 733.0
+  },
+  "interpretation": "MTP1 inside the full decode graph is bit-exact against the deterministic MTP0 line at short context (three 256-token rows, seven quality cases, 16-repeat, 2157-token needle) and 1.7x faster there, but its exact-2K and exact-4K continuations diverge from the MTP0 line at a near-tie (token 7 at 2K) and decode at about half the MTP0 rate with 2x the TTFT. Not lossless at depth; not a record.",
+  "sha256": {
+    "bench-short-r1.json": "039b7b2585020ee448db59e0cdabb6f1d228fe11b53b0fb5cdd0df8309cd8df0",
+    "bench-short-r2.json": "83924decd0f22f6d35c151459094018c446a4789de85933f580ff582997943f7",
+    "bench-short-r3.json": "425a8945e31cf02d613afb636e09271e04184511b8ddf8f37c6284fe3fea4cc3",
+    "exact-depth-2k-r1.json": "859fb71b5f21e197056a8a0714d06972aa49bafcdeac07864b6f53edbe7cd961",
+    "exact-depth-2k-r2.json": "d6b09c27b1748ecbd4a8843999cae65b86875e8cb22322e527837ac5ceb197c1",
+    "exact-depth-4k-r1.json": "a1d410656831d854a4385165e9b070d79a2151dfd31414bc55540e1f5e8a3b95",
+    "exact-depth-4k-r2.json": "b415fbe6698db2a8abca9fdbf2c030afce8191bd4f17633095d7ab212f938c79",
+    "quality-current.json": "866abbf0f38bf6b3c2c1fc1e44e6c6aefd3ca8e43586b803940c6042e2aac2a9",
+    "metrics-after-diag.prom": "741d36b8596b264a2b9b0219b22c6a484752642f627c7ad705a6cae594794958"
+  }
+}
