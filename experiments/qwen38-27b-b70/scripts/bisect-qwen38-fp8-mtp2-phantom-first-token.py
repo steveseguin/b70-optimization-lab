@@ -19,7 +19,7 @@ def run(item, tag):
                          request_extra={"ignore_eos": True, "temperature": 0}, return_token_ids=True, system_prompt=None, request_id=f"bisect-{tag}-{n:03d}")
     ids = r["token_ids"]; n += 1
     return {"seq": n - 1, "tag": tag, "prompt_id": item["id"], "first_ids": ids[:3], "phantom": ids[0] == 60, "equals_mtp0": m0.get(item["id"]) == ids,
-            "tail_equals_mtp0_shifted": m0.get(item["id"]) is not None and ids[1:] == m0[item["id"]][:127], "chunk_offsets_head": r.get("chunk_offsets_s", [])[:3]}
+            "tail_equals_mtp0_shifted": m0.get(item["id"]) is not None and ids[1:] == m0[item["id"]][:127], "chunk_offsets_head": r.get("chunk_offsets_s", [])[:3], "token_ids": ids}
 log = []
 c032 = expand(32)
 for k in range(33): log.append(run(c032, "A-same-prompt"))

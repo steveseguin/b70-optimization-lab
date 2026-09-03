@@ -2,7 +2,7 @@
   "schema": "b70-lab.result.v1",
   "campaign_id": "qwen38-fp8-r156-mtp2-probe-ladder-20260903-r165",
   "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-probe-ladder-r165-prereg.json",
-  "status": "G5 PASS (6/6 lengths repeat-exact, ids/logprobs/top identical). G6: identity vs its own sequential oracle exact through c16 (31/32, 58/64), same shape as depth 1. NOT PROMOTABLE: the depth-2 sequential oracle for cache-c032 (33rd sequential request) begins with token 60 ']' (the prompt's last token) followed by the MTP0 sequence shifted by one; the same prompt at c64 and in a fresh strict-config request (R166) produced the MTP0 output, and R166 shows ']' is not a greedy candidate at position 0 (top '\\n\\n' at -0.23, next ' A' at -3.59). Depth 1 (R156f) matches the MTP0 oracle 64/64 on this suite.",
+  "status": "G5 PASS (6/6 lengths repeat-exact, ids/logprobs/top identical). G6: identity vs its own sequential oracle exact through c16 (31/32, 58/64), same shape as depth 1. NOT PROMOTABLE: the depth-2 sequential oracle for cache-c032 (33rd sequential request) begins with token 60 ']' (the prompt's last token) followed by the MTP0 sequence for 16 tokens, then a different continuation (CORRECTED 2026-09-03 09:05: an earlier version of this record said the whole tail matched; it diverges at tail index 16); the same prompt at c64 and in a fresh strict-config request (R166) produced the MTP0 output, and R166 shows ']' is not a greedy candidate at position 0 (top '\\n\\n' at -0.23, next ' A' at -3.59). Depth 1 (R156f) matches the MTP0 oracle 64/64 on this suite.",
   "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
   "speculative_config": {
     "method": "qwen3_next_mtp",

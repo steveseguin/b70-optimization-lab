@@ -185,7 +185,7 @@ pair (69.94/69.38 tok/s, 12/12 vs each other and vs the same-image MTP0 oracle,
 canaries pass) and R165 passed the repeat probe 6/6 with the ladder exact
 through c16, but the depth-2 sequential ladder oracle emitted a phantom first
 token on `cache-c032` (the prompt's last token, not a greedy candidate per
-R166); depth 2 is NOT published (DO-NOT-REPEAT entry). Next on this box: find
+R166; deterministic and history-bound per R167/R168); depth 2 is NOT published (DO-NOT-REPEAT entry). Next on this box: find
 the depth-2 first-token bookkeeping defect (slot-history repro on the ladder
 config, then the drafter's first-step token handling), then the MTP draft-forward
 census for the depth-1 MTP1 residual.

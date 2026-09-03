@@ -27,5 +27,7 @@ else:
     resp = json.load(urllib.request.urlopen(req, timeout=300)); ch = resp["choices"][0]
     ids = ch.get("token_ids") or resp.get("token_ids") or []
     ref = m0["cache-c032"]
-    res = {"kind": "mtp0-prompt-plus-bracket", "token_ids_head": ids[:8], "equals_mtp0_oracle_tail": ids[:len(ref)] == ref[:len(ids)] if ids else None, "text_head": ch["text"][:80], "n_ids": len(ids)}
+    ph = [r for r in json.load(open("/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-probe-ladder-20260903-r165/ladder/ladder.json"))["oracle"]["rows"] if r["prompt_id"] == "cache-c032"][0]["token_ids"][1:]
+    div_or = next((i for i in range(min(len(ids), len(ref))) if ids[i] != ref[i]), None); div_ph = next((i for i in range(min(len(ids), len(ph))) if ids[i] != ph[i]), None)
+    res = {"kind": "mtp0-prompt-plus-bracket", "token_ids": ids, "first_divergence_vs_mtp0_oracle": div_or, "first_divergence_vs_r165_phantom_tail": div_ph, "equals_r165_phantom_tail": ids == ph, "text_head": ch["text"][:80], "n_ids": len(ids)}
 json.dump(res, open(a.out, "w"), indent=2); print(json.dumps(res))

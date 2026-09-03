@@ -2,7 +2,7 @@
   "schema": "b70-lab.result.v1",
   "campaign_id": "qwen38-fp8-r156-mtp2-phantom-repro-20260903-r167",
   "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-repro-r167-prereg.json",
-  "status": "REPRODUCED deterministically (r167b): the 64-prompt sequential pass on a 256/64/512 depth-2 server emits the phantom on exactly the 33rd request (cache-c032) and nowhere else, as in R165. MTP0 fed prompt+']' diverges from the oracle within 127 tokens while the phantom run's tail equals the oracle exactly; suggestive (not conclusive, prefill-vs-decode ULP differences are possible) that ']' was not in the model context.",
+  "status": "REPRODUCED deterministically (r167b): the 64-prompt sequential pass on a 256/64/512 depth-2 server emits the phantom on exactly the 33rd request (cache-c032) and nowhere else, as in R165. MTP0 fed prompt+']' diverges from the oracle within 127 tokens and the phantom run's tail also diverges from the oracle (at tail index 16, same in R165 and r167b); whether ']' was in the model context is OPEN until the full MTP0 prompt+']' continuation is compared to the phantom tail (r167c).",
   "roots": [
     "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-repro-20260903-r167",
     "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-repro-20260903-r167b"
