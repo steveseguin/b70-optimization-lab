@@ -82,3 +82,16 @@ layers (3, 7, ..., 39) at the same position are exact. A106 did not carry
 the per-row indexer flag (`VLLM_XPU_QSA_SERIAL_SPEC_INDEXER`, A93); A108
 adds it to A106's identity. Data:
 `../data/20260903-tp4-mtp1-a106-vs-a105-layer-trace-rank{0..3}-pos{2048,2049}.json`.
+
+## A108: the per-row indexer changes nothing; layer 43 traced next
+
+A108 (A106 plus `VLLM_XPU_QSA_SERIAL_SPEC_INDEXER=1`; the flag's marker fired
+on the server) gave the same exact-2K hash as A106, `3c861245...`, and the
+same comparison against A105: exact through layer 42 at row 0 and through
+layer 43 at row 1, first numeric difference `layer_43_output` at row 0. The
+QSA index side path is therefore not the residual. Overlay 76b787e2 adds
+report-only records inside the QSA layer (`_qsa_proj`, `_qsa_selected`,
+`_qsa_attn_output`, `_qsa_gated`, `_qsa_o_proj`) for traced layers; A110
+(MTP1, serial GDN rows and row-wise all-reduce) and A111 (MTP0 reference)
+trace layers 0 and 43. Data:
+`../data/20260903-tp4-mtp1-a108-vs-a105-layer-trace-rank{0..3}-pos{2048,2049}.json`.
