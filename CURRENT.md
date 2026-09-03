@@ -185,10 +185,19 @@ pair (69.94/69.38 tok/s, 12/12 vs each other and vs the same-image MTP0 oracle,
 canaries pass) and R165 passed the repeat probe 6/6 with the ladder exact
 through c16, but the depth-2 sequential ladder oracle emitted a phantom first
 token on `cache-c032` (the prompt's last token, not a greedy candidate per
-R166; deterministic and history-bound per R167/R168); depth 2 is NOT published (DO-NOT-REPEAT entry). Next on this box: find
-the depth-2 first-token bookkeeping defect (slot-history repro on the ladder
-config, then the drafter's first-step token handling), then the MTP draft-forward
-census for the depth-1 MTP1 residual.
+R166; deterministic and history-bound per R167/R168); depth 2 is NOT published (DO-NOT-REPEAT entry). Diagnosis R167-R175 (2026-09-03 morning): the phantom is deterministic and
+history-bound (cache-c032 after evidence-c031), sampled by the prefill forward
+itself, gone with `--no-async-scheduling`, unchanged by a device barrier or
+blocking H2D copies. Mechanism located: a finished request's discarded async
+extra spec step leaves state in blocks that are reassigned to the next request,
+whose GDN state page is never zeroed (`KVBlockZeroer` skips non-AttentionSpec
+groups) and is handed raw to the XPU kernel with `has_initial_state=False`.
+Depth-1 with async off improves the ladder to 32/32 at c32 and 61/64 at c64.
+A GPU fault on 0000:03:00.0 at 10:07 (during an MTP0 server start) blocks
+further device work on this boot. Next after reboot: R176 probe (kernel inputs),
+R178 fix candidate (zero GDN state pages of new blocks,
+`patches/vllm-qwen38-xpu-zero-mamba-state-pages-r178-20260903.patch`), then
+depth-1 and depth-2 ladders and strict pairs on the fixed image, async on and off.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
