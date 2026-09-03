@@ -9,9 +9,10 @@ capture was not an arm. Each arm's override was confirmed in the server's resolv
 |---|---|---|
 | b | `allow_buffer_reuse=false` | phantom on cache-c032 (`[60, 271, 3833]`), 63/64, no other row moved |
 | c | `max_fusion_size=1` | phantom on cache-c032, 63/64, no other row moved |
-| d | `pattern_matcher=false` | (see below) |
+| d | `pattern_matcher=false` | phantom on cache-c032, 63/64, no other row moved (19:26) |
 
-Reading of b and c: neither Inductor buffer planning nor kernel fusion (at the `max_fusion_size` level) is the
-mechanism, and neither knob changed a single token elsewhere, so they are numerically inert on this graph. The
+Reading: none of Inductor buffer planning, kernel fusion (at the `max_fusion_size` level) or the pattern matcher
+is the mechanism, and none of the three knobs changed a single token elsewhere, so they are numerically inert on
+this graph. The
 phantom needs the full VLLM_COMPILE pipeline (R183: absent under eager) but not these two Inductor choices.
 R185 bisects the compile stack instead (backend=eager under VLLM_COMPILE; DYNAMO_TRACE_ONCE; STOCK_TORCH_COMPILE).
