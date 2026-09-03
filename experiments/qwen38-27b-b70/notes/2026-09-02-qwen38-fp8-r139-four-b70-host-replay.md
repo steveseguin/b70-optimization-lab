@@ -133,7 +133,9 @@ All six prompt classes sit within 27.5-30.6 tok/s on MTP1, so the factor
 - `cudagraph_mode` FULL_DECODE_ONLY (sizes `[1]`, MTP0): `31.526087 tok/s`,
   about 1% over PIECEWISE; the image's `all_reduce` is a host-waited
   `torch.distributed` call, so the collectives stay outside the graph either
-  way. The MTP1 FULL_DECODE_ONLY arm with sizes `[1,2]` is recorded below.
+  way. MTP1 FULL_DECODE_ONLY with sizes `[1,2]`: **`52.051144 tok/s`**,
+  95.3% of the published `54.627286`; outputs identical to graph-off MTP0
+  on 12/12 prompts; workload, cache-zero and canary gates pass.
 - Output identity of the graph arms: the strict bench's 12 per-prompt
   output digests (`performance.json` `output_sha256s`) of MTP0 graph-on
   (PIECEWISE and FULL_DECODE_ONLY), MTP1 graph-off, MTP1 graph-on `[1]` and

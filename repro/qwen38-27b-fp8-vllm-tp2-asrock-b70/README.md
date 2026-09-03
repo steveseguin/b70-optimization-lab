@@ -146,7 +146,8 @@ Enabling XPU Graph recovers most of the gap there: with
 (`max_cudagraph_capture_size` 2, so the MTP1 two-row verification step is
 captured as well), the replay host measured MTP1 **`51.32 tok/s`** and MTP0
 **`31.15 tok/s`** with the same strict workload, cache-zero and canary
-gates. The qualified profile ships graph-off because on the publishing
+gates; with `cudagraph_mode` `FULL_DECODE_ONLY` instead of `PIECEWISE` the
+same arms measured `52.05` and `31.53 tok/s`. The qualified profile ships graph-off because on the publishing
 host graph capture measured 1.1% slower (R58) and output identity against
 the oracle has only been established there for the graph-off profile. On
 the replay host every graph-on arm (MTP0 and MTP1, either capture set)
