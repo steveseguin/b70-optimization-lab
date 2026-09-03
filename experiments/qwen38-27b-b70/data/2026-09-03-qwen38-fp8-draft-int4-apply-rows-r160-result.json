@@ -1,0 +1,94 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-draft-int4-apply-rows-20260903-r160",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-draft-int4-apply-rows-r160-prereg.json",
+  "status": "negative for MTP1: 29/32 and 57/64 with the split and the 8-row draft-head chunk both confirmed active (env forwarded, INT4 draft marker on both ranks)",
+  "image_id": "sha256:3d425ec4355f5b514fbbb03cf6372677a393fd94e29a5d384617334955b41d45",
+  "ladder_mtp1": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 50.28002649600428,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 76.15135116745391,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 172.68030121402586,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 352.22691653315894,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 476.53643157927354,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 789.109718101393,
+      "exact_vs_sequential_oracle": "29/32",
+      "mismatches_first_divergence": [
+        [
+          "benchmark-c019",
+          60
+        ],
+        [
+          "rollback-c010",
+          97
+        ],
+        [
+          "testing-c013",
+          34
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1041.957242196017,
+      "exact_vs_sequential_oracle": "57/64",
+      "mismatches_first_divergence": [
+        [
+          "benchmark-c019",
+          60
+        ],
+        [
+          "cache-c000",
+          96
+        ],
+        [
+          "cache-c040",
+          60
+        ],
+        [
+          "evidence-c047",
+          25
+        ],
+        [
+          "evidence-c063",
+          88
+        ],
+        [
+          "index-c033",
+          49
+        ],
+        [
+          "rollback-c050",
+          60
+        ]
+      ]
+    }
+  ],
+  "interpretation": "The draft head's row dependence is real (R159) but chunking it does not change the MTP1 ladder. Remaining MTP1-specific candidates: the Gemma layer norm's row-slot dependence (R151f) which MTP0 tolerates but MTP1's two verify rows per request may not; R161 stacks the lean Triton norm route on R160 to test that."
+}
