@@ -1,0 +1,37 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-strict-20260903-r164",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-strict-r164-prereg.json",
+  "status": "PASS strict pair: static MTP depth 2 on the published R156 image is output-identical to the same-image MTP0 oracle (12/12 both servers) and to itself (12/12); canaries pass on both servers",
+  "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+  "speculative_config": {
+    "method": "qwen3_next_mtp",
+    "num_speculative_tokens": 2
+  },
+  "oracle": "/mnt/fast-ai/bench-results/qwen38-fp8-gdn-split-mixed-full-20260903-r156f mtp0-a (same image)",
+  "class_balanced_median_tok_s": {
+    "mtp1-a": 69.941877104517,
+    "mtp1-b": 69.382393637423,
+    "center": 69.66,
+    "published_mtp1_depth1_center": 54.60324390231517,
+    "gain_pct": 27.6
+  },
+  "qualification": {
+    "mtp1-a-vs-mtp1-b": {
+      "all_workload_and_canary_gates_passed": true,
+      "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+      "strict_pair_qualified": true
+    },
+    "mtp1-a-vs-mtp0-a": {
+      "all_workload_and_canary_gates_passed": true,
+      "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+      "strict_pair_qualified": true
+    },
+    "mtp1-b-vs-mtp0-a": {
+      "all_workload_and_canary_gates_passed": true,
+      "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+      "strict_pair_qualified": true
+    }
+  },
+  "pending_before_promotion": "R165: 100-300-token repeat probe and c1-c64 identity ladder at depth 2"
+}
