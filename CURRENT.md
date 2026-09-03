@@ -20,11 +20,11 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-**Device lock (2026-09-02 late, boot `2c230b44`):** R152 (Triton RMSNorm route over
-R139) runs unattended on both B70s: two MTP0 controls, two MTP1 candidates with
-the repeat probe, then both c1-c64 ladders; root
-`/mnt/fast-ai/bench-results/qwen38-fp8-triton-rmsnorm-20260902-r152b`. Do not
-launch other GPU work until that root holds `campaign-end.txt` or `ABORTED`.
+**Device lock (2026-09-03 01:17 EDT, boot `2c230b44`):** the R156 promotion
+campaign (`qwen38-fp8-gdn-split-mixed-full-20260903-r156f`) runs unattended on
+both B70s: two MTP0 controls, two MTP1 candidates with the repeat probe, both
+ladders. Do not launch other GPU work until that root holds `campaign-end.txt`
+or `ABORTED`.
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
@@ -170,9 +170,12 @@ controls are 1.2% under the natural-kernel controls. On the clean 19:51 boot the
 at 100-300-token prompts and output-identical through c16 (MTP1 center
 `54.627 tok/s`, MTP0 about `33.3`), while c32/c64 miss 2/32 and 6-9/64 on a
 per-sequence source that R148 (batch budget) and R149 (chunked FP16 head)
-cleared as causes. Next is an operator census of the GDN state and attention
-decode kernels at 1..64 sequences; see
-[`R147-R149 ladders`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
+cleared as causes. The census (R151-R162) then found the MTP0 source: the GDN kernel computes
+decode rows on a different path when prefill rows share the call. R156 splits
+mixed steps into pure calls and makes MTP0 output-identical through c64 (64/64,
+reproduced); MTP1 still misses 2/32 and 6/64 with every kernel-level candidate
+cleared, so its residual is specific to speculative serving. See
+[`R151-R162 note`](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md).
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
