@@ -58,6 +58,24 @@ Evidence: [R147](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp
 [R149](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-result.json),
 [note](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
 
+### 2K-32K real-content depth on R139 (R150, 2026-09-02)
+
+Same protocol as R56/R62: unrepeated technical prose, Python, and structured
+documents at exact active context, three requests per depth (median shown),
+128 output tokens, cache zero, canaries before and after. MTP1 matched the
+same-image MTP0 oracle on 18/18 complete arrays.
+
+| active context | MTP1 decode | MTP1 TTFT | MTP0 decode | MTP0 TTFT |
+| ---: | ---: | ---: | ---: | ---: |
+| 2K | `54.811 tok/s` | `0.590 s` | `33.364 tok/s` | `0.587 s` |
+| 4K | `55.448 tok/s` | `1.149 s` | `32.976 tok/s` | `1.131 s` |
+| 8K | `54.139 tok/s` | `2.348 s` | `32.110 tok/s` | `2.290 s` |
+| 16K | `53.048 tok/s` | `4.883 s` | `31.411 tok/s` | `4.773 s` |
+| 24K | `52.882 tok/s` | `7.644 s` | `30.625 tok/s` | `7.455 s` |
+| 32K | `51.929 tok/s` | `10.599 s` | `29.961 tok/s` | `10.313 s` |
+
+Evidence: [R150](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json).
+
 ### Build and run R139
 
 Build the R62 chain exactly as in the R62 section below (public R55C parent

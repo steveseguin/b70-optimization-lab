@@ -2212,7 +2212,8 @@
         "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md",
         "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-w8a16-row-invariant-kernel-track-r120-r146.md",
         "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147.sh",
-        "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c.sh"
+        "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c.sh",
+        "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json"
       ],
       "performance_profiles": [
         {
@@ -2301,247 +2302,247 @@
         },
         {
           "id": "http-decode-vs-active-context",
-          "label": "Block-W8A16 official FP8 TP2 HTTP decode over exact active context",
+          "label": "R139 FP8 TP2 MTP0 HTTP decode over exact active context",
           "metric": "decode",
           "unit": "tok/s",
           "x_label": "Exact active prompt tokens",
-          "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, FP16 activations/KV, the lab W8A16 dispatch, target-only/MTP0, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server sample per measured point. The fixture is grade-C repeated-token shape evidence, not natural prose. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
+          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP0 (target only). No value is interpolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 35.20164806346478,
-              "samples": 1
+              "value": 33.364074767168994,
+              "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 34.75682144803016,
-              "samples": 1
+              "value": 32.97555830733983,
+              "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 33.59272918386755,
-              "samples": 1
+              "value": 32.109907634101944,
+              "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 32.830414570491264,
-              "samples": 1
+              "value": 31.410781638232724,
+              "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 32.04666551696565,
-              "samples": 1
+              "value": 30.624598400733696,
+              "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 31.48958732345858,
-              "samples": 1
+              "value": 29.96102244390492,
+              "samples": 3
             }
           ]
         },
         {
           "id": "http-effective-prompt-proxy-vs-active-context",
-          "label": "Effective prompt throughput (prompt tokens divided by HTTP TTFT)",
+          "label": "R139 MTP0 effective prompt throughput (prompt tokens divided by HTTP TTFT)",
           "metric": "prefill",
           "unit": "tok/s",
           "x_label": "Exact submitted prompt tokens",
-          "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Derived from each exact measured request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not a server-only or kernel-only prefill rate. The grade-C fixture is repeated-token shape evidence. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
+          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. Derived as active context tokens divided by HTTP TTFT; MTP0.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 2024.9146767180835,
-              "samples": 1
+              "value": 3491.2399394447475,
+              "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 2504.9089594252846,
-              "samples": 1
+              "value": 3623.1356401914027,
+              "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 2544.70821453456,
-              "samples": 1
+              "value": 3576.999701367745,
+              "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 2501.3922609235556,
-              "samples": 1
+              "value": 3432.3821288359386,
+              "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 2440.0269289921525,
-              "samples": 1
+              "value": 3296.480331290917,
+              "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 2384.900676021135,
-              "samples": 1
+              "value": 3177.328335630365,
+              "samples": 3
             }
           ]
         },
         {
           "id": "http-ttft-vs-active-context",
-          "label": "Block-W8A16 official FP8 TP2 HTTP TTFT over exact active context",
+          "label": "R139 FP8 TP2 MTP0 HTTP TTFT over exact active context",
           "metric": "ttft",
           "unit": "ms",
           "x_label": "Exact active prompt tokens",
-          "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot receipts. The fixture is grade-C repeated-token shape evidence, not natural prose. One fresh-server sample per point; no interpolation or extrapolation.",
-          "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
+          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. Direct HTTP TTFT, MTP0.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 1011.4006400108337,
-              "samples": 1
+              "value": 586.6110710012435,
+              "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 1635.189169086516,
-              "samples": 1
+              "value": 1130.512464000276,
+              "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 3219.2295970162377,
-              "samples": 1
+              "value": 2290.1874990002398,
+              "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 6549.952302942984,
-              "samples": 1
+              "value": 4773.361293999187,
+              "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 10072.019987972453,
-              "samples": 1
+              "value": 7455.224217999785,
+              "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 13739.775551017374,
-              "samples": 1
+              "value": 10313.066998000068,
+              "samples": 3
             }
           ]
         },
         {
           "id": "http-mtp1-decode-vs-active-context",
-          "label": "Deterministic MTP1 official FP8 TP2 HTTP decode over exact active context",
+          "label": "R139 FP8 TP2 MTP1 HTTP decode over exact active context",
           "metric": "decode",
           "unit": "tok/s",
           "x_label": "Exact active prompt tokens",
-          "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, the lab W8A16 dispatch, publisher MTP depth 1, FP16/auto KV, deterministic Inductor, XPU Graph off, exact packed-RMS replay, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server observation per measured point; all six arrays exactly matched the corresponding qualified MTP0 oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. The 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP1 with FP16 target verifier and draft-only INT4 head; every output matched the same-image MTP0 oracle (18/18 complete arrays).",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 44.77832281833947,
-              "samples": 1
+              "value": 54.81084946371518,
+              "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 54.93201141430635,
-              "samples": 1
+              "value": 55.44777975822136,
+              "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 51.31383425705685,
-              "samples": 1
+              "value": 54.13881282163384,
+              "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 51.2898098461305,
-              "samples": 1
+              "value": 53.04831804508261,
+              "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 43.715434823189355,
-              "samples": 1
+              "value": 52.881962698825845,
+              "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 46.63624110477451,
-              "samples": 1
+              "value": 51.929329486715815,
+              "samples": 3
             }
           ]
         },
         {
           "id": "http-mtp1-effective-prompt-proxy-vs-active-context",
-          "label": "Deterministic MTP1 effective prompt throughput (prompt tokens divided by HTTP TTFT)",
+          "label": "R139 MTP1 effective prompt throughput (prompt tokens divided by HTTP TTFT)",
           "metric": "prefill",
           "unit": "tok/s",
           "x_label": "Exact submitted prompt tokens",
-          "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Derived from each exact measured deterministic-MTP1 request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not server-only or kernel-only prefill. All six cache-zero output arrays matched the MTP0 target oracle. The Grade-C fixture is repeated-token shape evidence; the 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. Derived as active context tokens divided by HTTP TTFT; MTP1.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 2562.8967557323763,
-              "samples": 1
+              "value": 3472.782784745914,
+              "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 3451.7426948674233,
-              "samples": 1
+              "value": 3563.377797744992,
+              "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 3496.528367033354,
-              "samples": 1
+              "value": 3488.3291722048984,
+              "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 3365.2699083393595,
-              "samples": 1
+              "value": 3355.129932344724,
+              "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 3239.6424035593277,
-              "samples": 1
+              "value": 3215.1493189010234,
+              "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 3124.5764710482604,
-              "samples": 1
+              "value": 3091.7452393793774,
+              "samples": 3
             }
           ]
         },
         {
           "id": "http-mtp1-ttft-vs-active-context",
-          "label": "Deterministic MTP1 official FP8 TP2 HTTP TTFT over exact active context",
+          "label": "R139 FP8 TP2 MTP1 HTTP TTFT over exact active context",
           "metric": "ttft",
           "unit": "ms",
           "x_label": "Exact active prompt tokens",
-          "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot deterministic-MTP1 receipts. All six output arrays matched the MTP0 target oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. One fresh-server observation per point; the 2K point includes disclosed first-request Triton draft-kernel JIT. No interpolation or extrapolation.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
+          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. Direct HTTP TTFT, MTP1.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 799.0957869915292,
-              "samples": 1
+              "value": 589.7287930001767,
+              "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 1186.646967078559,
-              "samples": 1
+              "value": 1149.4711569994251,
+              "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 2342.8953350521624,
-              "samples": 1
+              "value": 2348.4022279990313,
+              "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 4868.554513086565,
-              "samples": 1
+              "value": 4883.268407000287,
+              "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 7586.022448958829,
-              "samples": 1
+              "value": 7643.812950000211,
+              "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 10487.181319971569,
-              "samples": 1
+              "value": 10598.544661001142,
+              "samples": 3
             }
           ]
         },
@@ -2644,7 +2645,6 @@
         "tested clean-host Intel driver and Docker installation",
         "independent host-driver/Docker installation and strict endpoint replay",
         "beginner recovery flow",
-        "2K-32K context depth matrix re-measured on the R139 image (current depth curve is from the previous R50/R62 image)",
         "output identity above 16 concurrent users (a per-sequence kernel at 32+ sequences still flips near-tie prompts; operator census pending)"
       ]
     },

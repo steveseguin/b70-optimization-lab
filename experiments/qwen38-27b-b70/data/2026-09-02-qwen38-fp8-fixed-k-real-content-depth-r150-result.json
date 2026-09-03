@@ -1,0 +1,127 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-real-content-depth-20260902-r150",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-prereg.json",
+  "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+  "boot_id": "2c230b44-d761-4f9a-a907-56a2e319f117",
+  "status": "pass: MTP1 matched same-image MTP0 on 18/18 complete arrays at 2K-32K; all receipts passed; cache zero",
+  "classification": "Grade B three-class unrepeated real-content exact-depth HTTP evidence",
+  "mtp1_identity": {
+    "exact_complete_arrays_vs_same_image_mtp0": "18/18",
+    "per_depth_all_exact": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "canaries": {
+      "after": true,
+      "before": true
+    }
+  },
+  "mtp0_points": [
+    {
+      "ctx": 2048,
+      "decode": 33.364074767168994,
+      "ttft": 586.6110710012435,
+      "proxy": 3491.2399394447475,
+      "samples": 3,
+      "exact": null
+    },
+    {
+      "ctx": 4096,
+      "decode": 32.97555830733983,
+      "ttft": 1130.512464000276,
+      "proxy": 3623.1356401914027,
+      "samples": 3,
+      "exact": null
+    },
+    {
+      "ctx": 8192,
+      "decode": 32.109907634101944,
+      "ttft": 2290.1874990002398,
+      "proxy": 3576.999701367745,
+      "samples": 3,
+      "exact": null
+    },
+    {
+      "ctx": 16384,
+      "decode": 31.410781638232724,
+      "ttft": 4773.361293999187,
+      "proxy": 3432.3821288359386,
+      "samples": 3,
+      "exact": null
+    },
+    {
+      "ctx": 24576,
+      "decode": 30.624598400733696,
+      "ttft": 7455.224217999785,
+      "proxy": 3296.480331290917,
+      "samples": 3,
+      "exact": null
+    },
+    {
+      "ctx": 32768,
+      "decode": 29.96102244390492,
+      "ttft": 10313.066998000068,
+      "proxy": 3177.328335630365,
+      "samples": 3,
+      "exact": null
+    }
+  ],
+  "mtp1_points": [
+    {
+      "ctx": 2048,
+      "decode": 54.81084946371518,
+      "ttft": 589.7287930001767,
+      "proxy": 3472.782784745914,
+      "samples": 3,
+      "exact": true
+    },
+    {
+      "ctx": 4096,
+      "decode": 55.44777975822136,
+      "ttft": 1149.4711569994251,
+      "proxy": 3563.377797744992,
+      "samples": 3,
+      "exact": true
+    },
+    {
+      "ctx": 8192,
+      "decode": 54.13881282163384,
+      "ttft": 2348.4022279990313,
+      "proxy": 3488.3291722048984,
+      "samples": 3,
+      "exact": true
+    },
+    {
+      "ctx": 16384,
+      "decode": 53.04831804508261,
+      "ttft": 4883.268407000287,
+      "proxy": 3355.129932344724,
+      "samples": 3,
+      "exact": true
+    },
+    {
+      "ctx": 24576,
+      "decode": 52.881962698825845,
+      "ttft": 7643.812950000211,
+      "proxy": 3215.1493189010234,
+      "samples": 3,
+      "exact": true
+    },
+    {
+      "ctx": 32768,
+      "decode": 51.929329486715815,
+      "ttft": 10598.544661001142,
+      "proxy": 3091.7452393793774,
+      "samples": 3,
+      "exact": true
+    }
+  ],
+  "mtp0_summary_sha256": "eea462bbb6ad58226307ab2b7cdc60e668357e691481c142f66d88328c9b7d90",
+  "mtp1_summary_sha256": "84cb9421c2f93c4b511fc1cee5fbeab4675f80cb17f637a72750a2e957cc4a59",
+  "run_utc": "2026-09-03T02:25:02.571368+00:00"
+}
