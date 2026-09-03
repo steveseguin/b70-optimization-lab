@@ -25,6 +25,12 @@ message.
    and timestamps, to reconstruct the sequence of arms and the wall-clock
    between them.
 
+4. `python3 tools/public-closure-scanner.py --out <json> --markdown <md>` for
+   publication closure: every published package's guide, scripts, Dockerfiles,
+   and patches must resolve to git-tracked files, portable paths, buildable
+   images, and existing release assets. Any package reported with gaps is a
+   finding in its own right, listed before efficiency items.
+
 ## What to measure and report
 
 - **Throughput of the lab**: campaigns started, campaigns with a result,
