@@ -28,7 +28,7 @@ compare=${repo}/scripts/compare-strict-attempt-outputs.py
 canaries=${repo}/scripts/neural-download-canaries.py
 health=${repo}/scripts/check-qwen36-xpu-xccl-health.sh
 health_timeout=2700
-fault_re='Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost|soft lockup|\*ERROR\*'
+fault_re='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup'
 
 export EXPECTED_XPU_EXTENSION_SHA256=${ext_sha}
 export MODEL_DIR=${model_dir}

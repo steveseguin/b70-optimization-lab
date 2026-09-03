@@ -1,0 +1,12 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-compile-sizes-ladders-20260903-r154",
+  "status": "preregistered-before-device-use",
+  "question": "Do the c32/c64 identity misses on the R139 image come from vLLM compiling a separate statically-specialized graph for the one-row capture size (compile_sizes [1]), whose Inductor fusion and rounding differ from the dynamic-shape graph every larger batch uses?",
+  "evidence_base": "R153a2: the Triton norm covering every row count leaves the MTP1 ladder at 28/32 and 58/64, the same as R139, so the layer norm is not the residual source; every kernel has been cleared at operator level (R151); the remaining difference between c1 and c>=2 is the compiled artifact itself",
+  "single_variable": "compilation config gains \"compile_sizes\": [] on the unchanged R139 image (no norm route, no head chunk); everything else as R147b/R147c",
+  "prediction": "if the specialized one-row graph is the source, both ladders become exact through c64; the sequential oracles (c1) may change relative to R147 since c1 now runs the dynamic graph",
+  "gates": {"G6": "every output equal to its sequential oracle at c1..c64 on both profiles"},
+  "runner": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-compile-sizes-ladders-r154.sh",
+  "abort_conditions": ["as R147 (journal filter now requires an xe/drm context)"]
+}
