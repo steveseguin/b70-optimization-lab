@@ -176,6 +176,27 @@ true, 18/18) and all request gates passed. On this host the graph-on line
 holds 90-94% of the published MTP1 curve and 93-95% of the MTP0 curve from
 2K to 32K, with identical outputs to its own MTP0 oracle.
 
+## c1-c64 identity ladder, graph on (MTP1, `FULL_DECODE_ONLY` `[1,2]`)
+
+Same harness, suite and server shape as R147/R147c (`MAX_MODEL_LEN=256`,
+`MAX_NUM_SEQS=64`, `MAX_NUM_BATCHED_TOKENS=512`; 64 sequential oracles then
+1-64 concurrent users, 128 tokens, `--require-output-identity`):
+
+| users | outputs byte-identical to the sequential oracle | aggregate tok/s |
+| ---: | ---: | ---: |
+| c1 | 1/1 | `49.7` |
+| c2 | 2/2 | `47.3` |
+| c4 | 4/4 | `104.6` |
+| c8 | 8/8 | `219.7` |
+| c16 | 16/16 | `366.8` |
+| c32 | 29/32 | `714.6` |
+| c64 | 59/64 | `922.9` |
+
+Identity holds through c16 exactly as the publishing host's graph-off
+qualification does (R139: c16 exact, c32 30/32, c64 55-58/64); the c32 and
+c64 misses are the same residual per-sequence kernel class, not a graph
+effect. The graph-on MTP0 ladder is recorded below when measured.
+
 ## Transferable result
 
 On a host whose per-launch and per-collective latency is higher than the
