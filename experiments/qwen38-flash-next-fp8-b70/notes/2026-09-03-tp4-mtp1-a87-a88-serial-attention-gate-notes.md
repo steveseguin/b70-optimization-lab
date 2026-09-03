@@ -61,3 +61,29 @@ corrections to the reasoning above:
 
 A87, A88 and A89 are three more fresh servers of the A85 identity: short
 rows `30.7-38.0 tok/s`, exact-2K `29a2947a...` on all of them.
+
+## A90 answer (13:07): the port was on the wrong class
+
+A90 (overlay `a6356d5d`, an unconditional one-time warning at the top of
+`FlashAttentionImpl.forward`) came up, captured, passed the exact canary
+and served its first rows without printing that line once: on this model
+`FlashAttentionImpl.forward` is never entered. The 12 full-attention layers
+are `Qwen4ExpQSAAttention` (`vllm/models/qwen4_exp/amd/qsa.py`), whose
+`Qwen4ExpQSAFlashAttentionImpl.forward_qsa` runs the model's own
+query-sparse paged attention: the indexer's per-token top-k block
+selection followed by the Triton `qsa_sparse_paged_attention` kernel,
+through the `qwen4_exp_qsa_with_output` custom op. The 27B lane's serial
+verifier-row flash-attention idea therefore does not apply as ported; the
+R38 port (`d3a61403`, registered flag `0a03a84c`) stays in the overlay,
+off by default and inert for this model, and the two diagnostics were
+removed in `c23ad8e1f`.
+
+What is left for the two-row verification step, after the exact recurrent
+path (A85) and the M-invariant dense GEMMs (offline gate): the QSA indexer
+and top-k selection with two query rows, the QSA sparse kernel itself, the
+Triton block-FP8 MoE at M=2, and the rejection sampler. The next
+diagnostic is offline and per component, in the A1 gate style: feed the
+same hidden state as one row and as row two of a two-row batch through
+each of those and compare bit for bit. A87-A90 add four fresh servers of
+the A85 identity (short `30.7-38.0 tok/s`, exact-2K `29a2947a...` on every
+one).

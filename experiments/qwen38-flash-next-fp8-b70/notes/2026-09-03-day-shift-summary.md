@@ -65,15 +65,19 @@ to iterate); publish a host-tuning guide; general improvements welcome.
   `0a03a84c`) was launched three times on the A85 identity; the gate never
   fired and each run repeated A85 (short `30.7-38.0`, exact-2K
   `29a2947a...`). The `/proc` environment evidence that misled A88 was a
-  process-title artifact. A90 (entry diagnostic at the top of the
-  attention forward) is the last run of the day and tells which path the
-  full-attention layers actually take. Notes:
-  `2026-09-03-tp4-mtp1-a87-a88-serial-attention-gate-notes.md`.
+  process-title artifact. A90 (an entry diagnostic at the top of the base
+  attention forward) showed that forward is never entered: the model's
+  full-attention layers run its own query-sparse attention
+  (`Qwen4ExpQSAAttention`, indexer top-k plus the Triton QSA kernel), so
+  the port does not apply as written. The overlay keeps the flag-gated
+  branch (inert here) and the diagnostics are removed (`c23ad8e1f`).
+  Notes: `2026-09-03-tp4-mtp1-a87-a88-serial-attention-gate-notes.md`.
 
 ## Standing
 
 The deterministic MTP0 full-decode-graph line is the record. MTP1 is worth
 1.4-1.7x at short context but is not lossless; the remaining difference is
 inside the two-row verification step after the recurrent path is made
-exact, and the next work is kernel-level (attention two-row path, Triton
-MoE at M=2, sampler), the treatment the 27B lane received.
+exact and the dense GEMMs are cleared; the next work is offline and per
+component (QSA indexer/top-k and kernel with two rows, Triton block-FP8 MoE
+at M=2, rejection sampler), the treatment the 27B lane received.
