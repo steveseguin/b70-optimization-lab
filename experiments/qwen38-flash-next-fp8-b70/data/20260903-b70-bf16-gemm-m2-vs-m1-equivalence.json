@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "classification": "b70_bf16_gemm_m2_vs_m1_equivalence",
+  "torch": "2.11.0+xpu",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "mkldnn_deterministic": true,
+  "seed": 20260903,
+  "shapes": [
+    {
+      "label": "hyperconnection-mix-K10240",
+      "K": 10240,
+      "N": 10240,
+      "bit_identical": true,
+      "elements_differing": 0,
+      "max_abs_diff": 0.0,
+      "max_rel_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "m2_repeatable": true,
+      "m1_repeatable": true
+    },
+    {
+      "label": "hidden-to-qkv-like",
+      "K": 2048,
+      "N": 5120,
+      "bit_identical": true,
+      "elements_differing": 0,
+      "max_abs_diff": 0.0,
+      "max_rel_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "m2_repeatable": true,
+      "m1_repeatable": true
+    },
+    {
+      "label": "o-proj-like",
+      "K": 5120,
+      "N": 2048,
+      "bit_identical": true,
+      "elements_differing": 0,
+      "max_abs_diff": 0.0,
+      "max_rel_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "m2_repeatable": true,
+      "m1_repeatable": true
+    },
+    {
+      "label": "square-2048",
+      "K": 2048,
+      "N": 2048,
+      "bit_identical": true,
+      "elements_differing": 0,
+      "max_abs_diff": 0.0,
+      "max_rel_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "m2_repeatable": true,
+      "m1_repeatable": true
+    },
+    {
+      "label": "moe-w13-slice-N640",
+      "K": 2048,
+      "N": 640,
+      "bit_identical": true,
+      "elements_differing": 0,
+      "max_abs_diff": 0.0,
+      "max_rel_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "m2_repeatable": true,
+      "m1_repeatable": true
+    },
+    {
+      "label": "dense-up-8192",
+      "K": 2048,
+      "N": 8192,
+      "bit_identical": true,
+      "elements_differing": 0,
+      "max_abs_diff": 0.0,
+      "max_rel_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "m2_repeatable": true,
+      "m1_repeatable": true
+    }
+  ],
+  "all_bit_identical": true
+}

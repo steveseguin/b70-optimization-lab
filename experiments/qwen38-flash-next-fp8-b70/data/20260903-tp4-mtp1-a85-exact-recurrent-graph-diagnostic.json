@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "classification": "qwen38_flash_next_a85_exact_recurrent_graph_mtp1_diagnostic",
+  "status": "diagnostic",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "2169dbfe38c2954edc5ae50e94f68d45be071b79",
+    "kernel_source_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "stage_build_head": "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4",
+    "stage": "/mnt/usb-models/qwen38-build/runtime-mtp1-exact-ad25aa9-b70",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 1,
+    "mtp_exact_recurrent": 1,
+    "graph": "FULL_DECODE_ONLY",
+    "cudagraph_capture_sizes": [
+      1,
+      2
+    ],
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 376569856,
+    "mkldnn_deterministic": 1
+  },
+  "short": {
+    "rates_tok_s_after_ttft": [
+      31.221492540132846,
+      32.274534834289526,
+      36.77065101311076
+    ],
+    "median_tok_s_after_ttft": 32.274534834289526,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "matches_mtp0_line": true
+  },
+  "exact_2k": {
+    "rates_tok_s_conventional_99_interval": [
+      7.498506551421677,
+      8.923614983361555
+    ],
+    "ttft_s": [
+      124.4015216359985,
+      100.19629823099967
+    ],
+    "output_token_ids_sha256": "29a2947a2f76e94531cb9501430de750df47e4f25dd3eb83301a5f90894cc78b",
+    "both_rows_same_hash": true,
+    "matches_mtp0_line": false,
+    "first_divergence_vs_mtp0_line": 12,
+    "first_divergence_plain_mtp1_vs_mtp0_line": 7
+  },
+  "exact_4k": {
+    "rates_tok_s_conventional_99_interval": [
+      7.388536022764938,
+      8.869120397143487
+    ],
+    "ttft_s": [
+      174.42204457700427,
+      149.91760151100607
+    ],
+    "output_token_ids_sha256": "bf25b9d14a6d1618be82d5b0be902c83d786f4830d207482665d8d00d9cbe58c",
+    "matches_mtp0_line": false,
+    "equals_plain_mtp1_a81": true
+  },
+  "quality": {
+    "semantic_passed": 6,
+    "normalized_outputs_identical_to_mtp0_line": true,
+    "repeat_unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "needle_pass": true
+  },
+  "spec_decode_metrics_total": {
+    "vllm:spec_decode_num_drafts_total": 790.0,
+    "vllm:spec_decode_num_draft_tokens_total": 790.0,
+    "vllm:spec_decode_num_accepted_tokens_total": 734.0,
+    "vllm:spec_decode_num_accepted_tokens_per_pos_total": 734.0
+  },
+  "interpretation": "The serial-exact recurrent spec-decode path runs inside the full decode graph, costs about 15% of the plain MTP1 short rate, and moves the exact-2K divergence from token 7 to token 12 (a known near-tie) while leaving the exact-4K continuation equal to plain MTP1. The GDN recurrent path was part of the MTP1 gap; the rest lies outside it.",
+  "sha256": {
+    "bench-short-r1.json": "7bc90cc39ec2065071c6c0b5544544fba286ba3732b779c97402242435371a47",
+    "bench-short-r2.json": "669fe90f011a0b676447463a502bc09d3ad4e3a3e4fcfc1ce4eb4bb9a1e17ef9",
+    "bench-short-r3.json": "2972044fd7eaeadc3b734b70ff603b5b44459863bb60d1e9e6443f434629a396",
+    "exact-depth-2k-r1.json": "fffef81386cd248f470a926a0b008d542cf544257672fd1531dd326f2ed2c27b",
+    "exact-depth-2k-r2.json": "30d74d8c42846516d5631d71139eff8c226df555bcc748640efe11af15ea8fee",
+    "exact-depth-4k-r1.json": "c89bbd72caf7594c5bf45d672b10080d475577e704c4c5f723616ef1e52af10a",
+    "exact-depth-4k-r2.json": "f61c0f1401b975368fb273acc5c5f4881aa7725a8836c83fc812da55daf7cd16",
+    "quality-current.json": "56dc15a46eff0d5f695852081fb8c49936fc2fdbbbb92367d8851ba7f0561f23",
+    "metrics-after-diag.prom": "eb5b1d290c306cbb265d0f5cf89703087da81d83c0e428cab2b0bb049d02aa13"
+  }
+}
