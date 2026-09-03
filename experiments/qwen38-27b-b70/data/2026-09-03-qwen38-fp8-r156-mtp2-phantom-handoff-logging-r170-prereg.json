@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-handoff-logging-20260903-r170","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-handoff-logging-r170 sha256:c378d7922a4a0b3841e8ca56696a63cbb608e6314f0c52a5bcdb3ba39c54af01 (R156 + eager logging patch a00368afccabd058, diagnostic only)",
+ "question":"At the evidence-c031 -> cache-c032 boundary, where does token 60 enter: the sampler output at the prefill row (logits/state), the host copy in AsyncGPUModelRunnerOutput.get_output (handoff), the scheduler append, or the proposer backup/next-token path (valid_sampled_tokens_count==0 or discard mask on the new row) with a scatter into input_ids on the next step?",
+ "method":"QUERY_ONLY on the logging image, 256/64/512: depth-2 64-prompt sequential pass (R167 script) with R170 lines in server.log; then MTP0 prompt+']' full continuation for the context-membership comparison",
+ "caveat":"the .tolist() syncs in the patch may mask an async D2H race; if the phantom disappears on the logging image that is itself evidence for the race",
+ "abort_conditions":["as R147"]}

@@ -1,0 +1,8 @@
+# R170 diagnostic: R156 image + eager-Python logging of the sampled-token handoff (model runner, proposer, scheduler).
+# Not a publishable image; used only to locate the depth-2 phantom first token.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+COPY vllm-qwen38-fp8-mtp2-handoff-logging-r170-diagnostic-20260903.patch /tmp/r170.patch
+RUN cd /opt/venv/lib/python3.12/site-packages/vllm && patch -p1 < /tmp/r170.patch && \
+    python -m py_compile v1/worker/gpu_model_runner.py v1/spec_decode/llm_base_proposer.py v1/core/sched/scheduler.py && \
+    grep -c 'R170' v1/worker/gpu_model_runner.py v1/spec_decode/llm_base_proposer.py v1/core/sched/scheduler.py && rm /tmp/r170.patch
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-handoff-logging-r170-diagnostic"

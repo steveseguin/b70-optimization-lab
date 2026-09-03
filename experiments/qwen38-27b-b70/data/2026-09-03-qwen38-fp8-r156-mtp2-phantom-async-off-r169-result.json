@@ -1,0 +1,8 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-phantom-async-off-20260903-r169",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-async-off-r169-prereg.json",
+  "status": "PHANTOM GONE with --no-async-scheduling: the same 64-prompt sequential pass on the same 256/64/512 depth-2 server config is 64/64 equal to the MTP0 oracle (R167b/R168 with async scheduling on: phantom on cache-c032 after evidence-c031, deterministic). Flag confirmed in container args.",
+  "root": "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-async-off-20260903-r169",
+  "interpretation": "The defect lives in the async-scheduling path (host handoff of sampled tokens via AsyncGPUModelRunnerOutput, prev_sampled_token_ids scatter, or the discard/backup bookkeeping for the finished request's extra step). R170 (logging image, async on) locates the site. Speed with async off is not yet measured; the published depth-1 profile runs async on by default and must be re-checked for the same latent defect once the mechanism is known."
+}

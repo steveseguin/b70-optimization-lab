@@ -1,0 +1,162 @@
+--- a/v1/worker/gpu_model_runner.py
++++ b/v1/worker/gpu_model_runner.py
+@@ -350,6 +350,12 @@
+         """
+         max_gen_len = self.sampled_token_ids_cpu.shape[-1]
+         self.async_copy_ready_event.synchronize()
++        if self.sampled_token_ids_cpu.shape[0] <= 4:
++            logger.info(
++                "R170 get_output invalid_req_indices=%s sampled_token_ids_cpu=%s",
++                self._invalid_req_indices,
++                self.sampled_token_ids_cpu.tolist(),
++            )
+ 
+         # Release the device tensors once the copy has completed.
+         del self._logprobs_tensors
+@@ -1895,6 +1901,26 @@
+ 
+         num_common_tokens = len(sample_flattened_indices)
+         total_without_spec = total_num_scheduled_tokens - total_num_spec_tokens
++        if num_reqs <= 4:
++            prev_sampled = self.input_batch.prev_sampled_token_ids
++            logger.info(
++                "R170 prepare_input_ids req_ids=%s prev_positions=%s "
++                "sample_flattened_indices=%s spec_flattened_indices=%s "
++                "prev_indices=%s prev_draft_token_indices=%s "
++                "common_indices_match=%s prev_sampled_token_ids=%s "
++                "draft_token_ids=%s",
++                list(self.input_batch.req_ids),
++                prev_positions.tolist(),
++                sample_flattened_indices,
++                spec_flattened_indices,
++                prev_indices,
++                prev_draft_token_indices,
++                common_indices_match,
++                None if prev_sampled is None else prev_sampled[:4].tolist(),
++                None
++                if not torch.is_tensor(self._draft_token_ids)
++                else self._draft_token_ids[:4].tolist(),
++            )
+         if self.enable_prompt_embeds:
+             # The multimodal embed path reads is_token_ids.gpu; its .cpu copy is
+             # refreshed every step but the async fast paths below only scatter
+@@ -3810,6 +3836,24 @@
+         discard_sampled_tokens_req_indices = np.nonzero(
+             self.discard_request_mask.np[:num_reqs]
+         )[0]
++        self._r170_step = getattr(self, "_r170_step", 0) + 1
++        if num_reqs <= 4:
++            logger.info(
++                "R170 bookkeeping step=%d req_ids=%s num_tokens_no_spec=%s "
++                "num_computed_tokens_cpu=%s discard_req_indices=%s "
++                "sampled_token_ids=%s prev_req_id_to_index(in)=%s "
++                "prev_sampled_token_ids(in)=%s",
++                self._r170_step,
++                list(self.input_batch.req_ids),
++                self.input_batch.num_tokens_no_spec[:num_reqs].tolist(),
++                self.input_batch.num_computed_tokens_cpu[:num_reqs].tolist(),
++                discard_sampled_tokens_req_indices.tolist(),
++                sampler_output.sampled_token_ids.tolist(),
++                self.input_batch.prev_req_id_to_index,
++                None
++                if self.input_batch.prev_sampled_token_ids is None
++                else self.input_batch.prev_sampled_token_ids[:4].tolist(),
++            )
+         for i in discard_sampled_tokens_req_indices:
+             gen = self.input_batch.generators.get(int(i))
+             if gen is not None:
+@@ -4914,6 +4958,18 @@
+                 scheduler_output.total_num_scheduled_tokens
+             )
+ 
++            if self.input_batch.num_reqs <= 4:
++                logger.info(
++                    "R170 async_output step=%d req_ids=%s invalid_req_indices=%s "
++                    "prev_req_id_to_index(out)=%s prev_sampled_token_ids(out)=%s",
++                    getattr(self, "_r170_step", -1),
++                    list(self.input_batch.req_ids),
++                    invalid_req_indices,
++                    self.input_batch.prev_req_id_to_index,
++                    None
++                    if self.input_batch.prev_sampled_token_ids is None
++                    else self.input_batch.prev_sampled_token_ids[:4].tolist(),
++                )
+             async_output = AsyncGPUModelRunnerOutput(
+                 model_runner_output=output,
+                 sampled_token_ids=sampler_output.sampled_token_ids,
+--- a/v1/spec_decode/llm_base_proposer.py
++++ b/v1/spec_decode/llm_base_proposer.py
+@@ -1078,6 +1078,17 @@
+             ].get_token_id(gpu_input_batch.num_tokens_no_spec[i] - 1)
+         self.backup_next_token_ids.copy_to_gpu(num_reqs)
+         backup_tokens_gpu = self.backup_next_token_ids.gpu
++        if num_reqs <= 4:
++            logger.info(
++                "R170 next_token_padded(pre) req_ids=%s num_tokens_no_spec=%s "
++                "backup_next_token_ids=%s discard_request_mask=%s "
++                "sampled_token_ids=%s",
++                list(gpu_input_batch.req_ids),
++                gpu_input_batch.num_tokens_no_spec[:num_reqs].tolist(),
++                self.backup_next_token_ids.np[:num_reqs].tolist(),
++                discard_request_mask[:num_reqs].tolist(),
++                sampled_token_ids[:num_reqs].tolist(),
++            )
+ 
+         batch_size, num_tokens = sampled_token_ids.shape
+         device = sampled_token_ids.device
+@@ -1105,6 +1116,13 @@
+             sampled_token_ids.stride(0),
+             BLOCK_SIZE_TOKENS=BLOCK_SIZE_TOKENS,
+         )
++        if num_reqs <= 4:
++            logger.info(
++                "R170 next_token_padded(post) next_token_ids=%s "
++                "valid_sampled_tokens_count=%s",
++                next_token_ids[:num_reqs].tolist(),
++                valid_sampled_tokens_count[:num_reqs].tolist(),
++            )
+ 
+         return next_token_ids, valid_sampled_tokens_count
+ 
+--- a/v1/core/sched/scheduler.py
++++ b/v1/core/sched/scheduler.py
+@@ -1868,12 +1868,39 @@
+             prefill_stats = None
+             status_before_stop = request.status
+             num_output_tokens_before = len(request._output_token_ids)
++            if len(num_scheduled_tokens) <= 4:
++                logger.info(
++                    "R170 update_from_output req_id=%s req_index=%d "
++                    "num_scheduled=%d generated_token_ids=%s "
++                    "scheduled_spec_token_ids=%s num_computed_tokens=%d "
++                    "num_output_placeholders=%d num_output_tokens_before=%d "
++                    "stale=%s",
++                    req_id,
++                    req_index,
++                    num_tokens_scheduled,
++                    generated_token_ids,
++                    scheduled_spec_token_ids,
++                    request.num_computed_tokens,
++                    request.num_output_placeholders,
++                    num_output_tokens_before,
++                    output_is_stale,
++                )
+ 
+             # Check for stop and update request status.
+             if new_token_ids:
+                 new_token_ids, stopped = self._update_request_with_output(
+                     request, new_token_ids, is_stale=output_is_stale
+                 )
++                if len(num_scheduled_tokens) <= 4:
++                    logger.info(
++                        "R170 appended req_id=%s new_token_ids=%s stopped=%s "
++                        "num_output_tokens=%d num_computed_tokens=%d",
++                        req_id,
++                        new_token_ids,
++                        stopped,
++                        len(request._output_token_ids),
++                        request.num_computed_tokens,
++                    )
+             elif request.pooling_params and pooler_output is not None:
+                 # Pooling stops as soon as there is output.
+                 request.status = RequestStatus.FINISHED_STOPPED
