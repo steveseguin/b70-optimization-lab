@@ -76,6 +76,35 @@ same-image MTP0 oracle on 18/18 complete arrays.
 
 Evidence: [R150](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json).
 
+### Independent host replay of R139 (four-B70 host, 2026-09-02)
+
+The chain above was replayed from a fresh full clone on a second lab host
+(Supermicro M12SWA-TF, AMD Ryzen Threadripper PRO 5955WX, PCIe Gen4, four
+B70s; the launcher selects Level Zero devices 0 and 1). Every closure,
+model, image-contract and strict-bench gate passed and the installed
+extension digest matched `f912e12d...`. The decode rate did not transfer:
+graph-off MTP1 measured `28.94 tok/s` and MTP0 `18.65 tok/s`, 1.8x below
+the headline on both profiles, and the factor was uniform across all six
+prompt classes. The publishing host is an EPYC 9015 (Zen 5, PCIe Gen5)
+whose async kernel launch costs 3.1 us and whose two-card all-reduce costs
+13 us; the replay host measured 5.2 us and 48 us. `iommu=pt`, ACS redirect,
+the CPU governor, CPU pinning, ECC (off on both hosts) and the GuC firmware
+version each changed nothing. On such a host the graph-off profile pays
+about 130 exposed host round trips per token.
+
+Enabling XPU Graph recovers most of the gap there: with
+`VLLM_XPU_ENABLE_XPU_GRAPH=1` and `cudagraph_capture_sizes` `[1,2]`
+(`max_cudagraph_capture_size` 2, so the MTP1 two-row verification step is
+captured as well), the replay host measured MTP1 **`51.32 tok/s`** and MTP0
+**`31.15 tok/s`** with the same strict workload, cache-zero and canary
+gates. The qualified profile ships graph-off because on the publishing
+host graph capture measured 1.1% slower (R58) and output identity against
+the oracle has only been established there for the graph-off profile; a
+graph-on replay must run the identity ladder before its outputs are
+treated as qualified. Record:
+[note](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md),
+[data](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.json).
+
 ### Build and run R139
 
 Build the R62 chain exactly as in the R62 section below (public R55C parent
