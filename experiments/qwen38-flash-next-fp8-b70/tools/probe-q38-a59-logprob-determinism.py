@@ -123,12 +123,18 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--no-stop", action="store_true")
+    parser.add_argument(
+        "--expect-no-tuned-folder",
+        action="store_true",
+        help="server identity must carry no VLLM_TUNED_CONFIG_FOLDER (A63 old-head control)",
+    )
     args = parser.parse_args()
 
     pid = int(args.server_pid_file.read_text().strip())
     environ = Path(f"/proc/{pid}/environ").read_bytes().split(b"\0")
     folders = [e for e in environ if e.startswith(b"VLLM_TUNED_CONFIG_FOLDER=")]
-    if folders != [f"VLLM_TUNED_CONFIG_FOLDER={FOLDER}".encode()]:
+    expected = [] if args.expect_no_tuned_folder else [f"VLLM_TUNED_CONFIG_FOLDER={FOLDER}".encode()]
+    if folders != expected:
         print(f"FAIL: server {pid} tuned folder is {folders!r}", file=sys.stderr)
         return 1
     with urllib.request.urlopen(f"{args.base_url}/health", timeout=20) as resp:
