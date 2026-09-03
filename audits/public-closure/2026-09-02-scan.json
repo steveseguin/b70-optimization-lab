@@ -1,0 +1,296 @@
+[
+  {
+    "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+    "status": "candidate",
+    "files_crawled": 23,
+    "findings": {
+      "host_path_hardcoded": [
+        {
+          "path": "/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf",
+          "referenced_by": "repro/gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh:48",
+          "line": "EXTRA_LLAMA_ARGS=\"${EXTRA_LLAMA_ARGS:---parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/"
+        }
+      ],
+      "host_path_overridable_default": [
+        {
+          "path": "/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+          "referenced_by": "scripts/run-gemma4-26b-first-baseline.sh:10",
+          "line": "EXPECTED_LLAMA_SERVER_DEFAULT=\"/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server\""
+        },
+        {
+          "path": "/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+          "referenced_by": "scripts/run-gemma4-26b-llamacpp-replica.sh:8",
+          "line": "EXPECTED_LLAMA_SERVER_DEFAULT=\"/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server\""
+        }
+      ]
+    }
+  },
+  {
+    "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+    "status": "candidate",
+    "files_crawled": 35,
+    "findings": {
+      "host_path_hardcoded": [
+        {
+          "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:24",
+          "line": "readonly run_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1/int4/config.json",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:149",
+          "line": "check_hash /mnt/fast-ai/llm-models/laguna-s-2.1/int4/config.json \\"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4/config.json",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:151",
+          "line": "check_hash /mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4/config.json \\"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/source-files.sha256",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:153",
+          "line": "manifest_a=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/source-files.sha256"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:154",
+          "line": "manifest_b=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:159",
+          "line": "\"$model_restore\" --verify /mnt/fast-ai/llm-models/laguna-s-2.1 >/dev/null"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh:163",
+          "line": "--target /mnt/fast-ai/llm-models/laguna-s-2.1"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-models.sh:7",
+          "line": "readonly default_root=/mnt/fast-ai/llm-models/laguna-s-2.1"
+        },
+        {
+          "path": "/home/steve",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-sources.sh:24",
+          "line": "[[ \"$destination\" != / && \"$destination\" != /home && \"$destination\" != /home/steve ]] \\"
+        },
+        {
+          "path": "/home/steve/llm-optimizations",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh:5",
+          "line": "readonly repo_root=/home/steve/llm-optimizations"
+        },
+        {
+          "path": "/home/steve/src/laguna-vllm-shared-elementwise-m12-20260731",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh:6",
+          "line": "readonly vllm_root=/home/steve/src/laguna-vllm-shared-elementwise-m12-20260731"
+        },
+        {
+          "path": "/home/steve/src/laguna-xpu-kernels-shared-elementwise-m12-20260731",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh:7",
+          "line": "readonly kernel_root=/home/steve/src/laguna-xpu-kernels-shared-elementwise-m12-20260731"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-shared-elementwise-m12-repro-$(date",
+          "referenced_by": "repro/laguna-s-2.1-int4-b70-125tps-20260731/run-record-gate.sh:9",
+          "line": "readonly run_dir=\"/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-shared-elementwise-m12-repro-$(date -u +%Y%m%dT%H%M%SZ)\""
+        },
+        {
+          "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public",
+          "referenced_by": "experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_replemb_measurement_leg.sh:222",
+          "line": "readonly public_oneccl_root=\"/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public\""
+        },
+        {
+          "path": "/mnt/fast-ai/*",
+          "referenced_by": "experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_replemb_measurement_leg.sh:512",
+          "line": "[[ -f \"$path\" && \"$(realpath -e -- \"$path\")\" == /mnt/fast-ai/* ]] \\"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/laguna-s-2.1",
+          "referenced_by": "experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh:7",
+          "line": "readonly LAGUNA_NVME_MODEL_ROOT=/mnt/fast-ai/llm-models/laguna-s-2.1"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1",
+          "referenced_by": "experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh:10",
+          "line": "readonly LAGUNA_NVME_ARTIFACT_ROOT=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs",
+          "referenced_by": "experiments/laguna-s-2.1-xpu-b70/tools/capture_laguna_m8_idle_snapshot.py:20",
+          "line": "RUN_ROOT = Path(\"/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs\")"
+        }
+      ]
+    }
+  },
+  {
+    "id": "lfm25-26b-q8-b70",
+    "status": "candidate",
+    "files_crawled": 18,
+    "findings": {}
+  },
+  {
+    "id": "minimax-m27-b70-89tps-20260520",
+    "status": "candidate",
+    "files_crawled": 24,
+    "findings": {
+      "host_path_hardcoded": [
+        {
+          "path": "/mnt/fast-ai/llm-cache/hf",
+          "referenced_by": "repro/minimax-m27-b70-89tps-20260520/scripts/01-download-model.sh:9",
+          "line": "mkdir -p \"$(dirname \"$MODEL_DIR\")\" /mnt/fast-ai/llm-cache/hf"
+        },
+        {
+          "path": "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:784",
+          "line": "\"/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python\","
+        },
+        {
+          "path": "/home/steve/.venvs/vllm-xpu/lib",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:786",
+          "line": "prepend_env_path(\"LD_LIBRARY_PATH\", \"/home/steve/.venvs/vllm-xpu/lib\")"
+        },
+        {
+          "path": "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:789",
+          "line": "\"/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib\","
+        },
+        {
+          "path": "/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}-${ts}",
+          "referenced_by": "scripts/run-minimax-strict-quality-gated-candidate.sh:59",
+          "line": "CACHE_ROOT=\"/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}-${ts}\""
+        }
+      ],
+      "host_path_overridable_default": [
+        {
+          "path": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:61",
+          "line": "default=\"/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround\","
+        },
+        {
+          "path": "/mnt/fast-ai/llm-cache/hf",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:780",
+          "line": "os.environ.setdefault(\"HF_HOME\", \"/mnt/fast-ai/llm-cache/hf\")"
+        }
+      ],
+      "missing_path": [
+        {
+          "path": "scripts/00-install-system-deps.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:39"
+        },
+        {
+          "path": "scripts/01-download-model.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:46"
+        },
+        {
+          "path": "scripts/02-build-stack.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:47"
+        },
+        {
+          "path": "scripts/03-verify-runtime.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:48"
+        },
+        {
+          "path": "scripts/04-run-quality-gate.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:49"
+        },
+        {
+          "path": "scripts/05-run-benchmark.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:50"
+        },
+        {
+          "path": "scripts/06-summarize-result.sh",
+          "referenced_by": "packages/minimax-m27-int4-autoround-b70/README.md:51"
+        }
+      ]
+    }
+  },
+  {
+    "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+    "status": "candidate",
+    "files_crawled": 18,
+    "findings": {}
+  },
+  {
+    "id": "nemotron-35-lightning-30b-a3b-b70",
+    "status": "candidate",
+    "files_crawled": 11,
+    "findings": {}
+  },
+  {
+    "id": "ornith-15-35b-a3b-q4km-b70",
+    "status": "candidate",
+    "files_crawled": 73,
+    "findings": {}
+  },
+  {
+    "id": "ornith-15-9b-q8-b70",
+    "status": "candidate",
+    "files_crawled": 18,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-256k-vision-mtp-b70",
+    "status": "candidate",
+    "files_crawled": 11,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+    "status": "candidate",
+    "files_crawled": 432,
+    "findings": {
+      "image_without_reachable_builder": [
+        {
+          "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-gdn-r46",
+          "referenced_by": [
+            "experiments/qwen38-27b-b70/scripts/run-20260827-qwen38-fp8-strict-profile-attempt.sh:179"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "qwen38-27b-q4km-mtp2-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 50,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
+    "status": "candidate",
+    "files_crawled": 46,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 49,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-tp2-asrock-b70",
+    "status": "candidate",
+    "files_crawled": 33,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q8-q4mtp-mtp2-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 29,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q8-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 38,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q8-tp2-asrock-b70",
+    "status": "candidate",
+    "files_crawled": 39,
+    "findings": {}
+  }
+]

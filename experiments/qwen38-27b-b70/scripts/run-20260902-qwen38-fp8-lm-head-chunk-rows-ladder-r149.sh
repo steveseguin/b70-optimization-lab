@@ -16,7 +16,7 @@ image_id=${IMAGE_ID_OVERRIDE:?set IMAGE_ID_OVERRIDE to the built R149 image id}
 export VLLM_XPU_LM_HEAD_CHUNK_ROWS=${LM_HEAD_CHUNK_ROWS:-32}
 arms=${ARMS:-"mtp1:2048 mtp0:2048"}
 ext_sha=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1
-model_dir=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8
+model_dir=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-fp8}
 port=18128
 # RESUME_FROM=mtp1-b ORACLE_ROOT=<original root> resumes after a fault on a fresh boot,
 # reusing the original mtp0-a oracle and mtp1-a attempt; ROOT must be a new sibling.
