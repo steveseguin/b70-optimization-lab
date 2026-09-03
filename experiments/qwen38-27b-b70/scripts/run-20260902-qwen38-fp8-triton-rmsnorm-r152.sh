@@ -16,6 +16,7 @@ export VLLM_XPU_GEMMA_RMSNORM_TRITON=${GEMMA_TRITON:-1}
 export VLLM_XPU_RMSNORM_TRITON=${RMSNORM_TRITON:-1}
 export VLLM_XPU_LM_HEAD_CHUNK_ROWS=${LM_HEAD_CHUNK_ROWS:-0}
 export VLLM_XPU_GDN_SPLIT_MIXED=${GDN_SPLIT_MIXED:-0}
+export VLLM_XPU_ENABLE_XPU_GRAPH=${XPU_GRAPH:-0}
 export VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS=${DRAFT_HEAD_APPLY_ROWS:-0}
 ext_sha=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1
 model_dir=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-fp8}
@@ -134,6 +135,19 @@ fi
 log "preflight clean; boot $(cat "${root}/boot-id.txt")"
 
 # ---------------- MTP0 controls ----------------
+if [[ "${STRICT_MTP1_ONLY:-0}" == 1 ]]; then
+  log "STRICT_MTP1_ONLY: two MTP1 candidates against the oracle at ${oracle_root}/mtp0-a"
+  for label in mtp1-a mtp1-b; do
+    launch "${label}" mtp1 1024 1 1024
+    strict_attempt "${label}"
+    stop_server "${server_name}" "${server_pid}" "${server_dir}"
+    postflight "${label}-post"
+  done
+  log "G2 mtp1-a vs mtp1-b: $(compare_pair "${root}/mtp1-a/strict" "${root}/mtp1-b/strict" "${root}/compare-mtp1-a-vs-mtp1-b.json")"
+  log "G3 mtp1-a vs oracle: $(compare_pair "${root}/mtp1-a/strict" "${oracle_root}/mtp0-a/strict" "${root}/compare-mtp1-a-vs-mtp0-a.json")"
+  log "G3 mtp1-b vs oracle: $(compare_pair "${root}/mtp1-b/strict" "${oracle_root}/mtp0-a/strict" "${root}/compare-mtp1-b-vs-mtp0-a.json")"
+  date --iso-8601=seconds >"${root}/campaign-end.txt"; log "campaign complete"; exit 0
+fi
 if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   log "LADDERS_ONLY: skipping the strict oracle and candidate stages"
   launch ladder mtp1 256 64 512

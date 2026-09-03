@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-strict-20260903-r164","status":"preregistered-before-device-use",
+ "question":"On the published R156 image, does static MTP depth 2 (num_speculative_tokens 2, one-layer draft reuse) keep 12/12 identity against the same-image MTP0 oracle (r156f mtp0-a) and beat the 54.603 tok/s MTP1 center?",
+ "single_variable":"SPECULATIVE_CONFIG num_speculative_tokens 2; two fresh MTP1 servers, strict natural-512 suite, canaries, cache zero",
+ "gates":{"G2":"12/12 between candidates","G3":"12/12 vs r156f mtp0-a","speed":"recorded; adoption only if center > 54.603 and both attempts > 53.88"},
+ "prior":"DO-NOT-REPEAT: TP4 MTP2 measured below its acceptance floor (2026-08-23); no TP2 MTP2 strict pair on an identity-qualified image exists",
+ "runner":"experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-r163-r164-chain.sh","abort_conditions":["as R147"]}

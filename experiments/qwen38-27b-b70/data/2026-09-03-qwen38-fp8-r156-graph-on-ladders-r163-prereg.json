@@ -1,0 +1,4 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-graph-on-ladders-20260903-r163","status":"preregistered-before-device-use",
+ "question":"On the published R156 image, does XPU Graph capture with capture sizes [1,2] (the setting the slower-host guidance recommends) keep output identity: MTP0 through c64 and MTP1 through c16?",
+ "single_variable":"VLLM_XPU_ENABLE_XPU_GRAPH=1 with cudagraph_capture_sizes [1,2], max 2; everything else as the R156 promotion ladders",
+ "gates":{"G6_mtp0":"64/64 through c64","G6_mtp1":"exact through c16"},"runner":"experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-r163-r164-chain.sh","abort_conditions":["as R147"]}
