@@ -16,3 +16,16 @@ clause the gate tests (`max_seqlen_q`, dynamic causal, mask mods,
 flag is set and a multi-row batch arrives, and a second one-time line when
 only single-row batches are seen. Its battery is the same; the point is the
 diagnostic line. Generator `tools/rewrite-q38-a87-to-a88-fa-diag.py`.
+
+## A88 answer and A89
+
+A88 came up and passed its canary with no diagnostic line at all, not even
+the single-row one: the flag was in the API server's environment but not
+in the engine core's or the workers' (`/proc/<pid>/environ`). vLLM forwards
+only registered `VLLM_*` variables to those processes (the mkldnn flag
+works because 805cde59 registered it in `envs.py`). Overlay `0a03a84c`
+registers `VLLM_XPU_FA_SERIAL_SPEC_DECODE` in `envs.py` and reads it
+through `envs` in the attention gate; A88 was stopped after its canary.
+A89 is the A88 packet at attempt 89 / port 19761 on that head
+(`tools/rewrite-q38-a88-to-a89-registered-flag.py`); same battery and
+pins. The "reached" marker is the first thing to look for.
