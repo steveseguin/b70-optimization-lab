@@ -1,0 +1,5 @@
+# R178 fix candidate: R156 + zeroing of Mamba/GDN state pages for newly allocated blocks.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+COPY r178-zero-mamba-pages.py /tmp/r178.py
+RUN python /tmp/r178.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py && rm /tmp/r178.py
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-zero-mamba-pages-r178"

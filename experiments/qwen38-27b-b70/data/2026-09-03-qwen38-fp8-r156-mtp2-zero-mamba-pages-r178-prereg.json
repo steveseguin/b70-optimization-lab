@@ -1,0 +1,5 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-zero-mamba-pages-20260903-r178","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-zero-mamba-pages-r178 sha256:40d3645a6f97b29dbfaefe91330f32137a699adeebed3104839ae3539637f0ac (R156 + zero GDN conv/ssm state pages of newly allocated blocks in _zero_block_ids)",
+ "hypothesis":"If the depth-2 phantom is stale recycled GDN state handed to the prefill kernel with has_initial_state=False, zeroing the new request's state pages removes it (64/64 on the 64-prompt pass with async scheduling on).",
+ "decision":"64/64 -> fix candidate confirmed; then depth-1 ladders and strict pairs on the fixed image. Phantom persists -> the stale content the kernel reads is elsewhere (scratch), go back to the R176 probe output.",
+ "abort_conditions":["as R147"]}
