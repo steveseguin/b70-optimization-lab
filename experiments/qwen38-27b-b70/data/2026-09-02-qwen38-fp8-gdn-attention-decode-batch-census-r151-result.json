@@ -1,0 +1,344 @@
+{
+ "schema": "qwen38-fp8-gdn-attention-decode-batch-census.v1",
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "torch": "2.13.0+xpu",
+ "batches": [
+  1,
+  2,
+  4,
+  8,
+  16,
+  24,
+  31,
+  32,
+  33,
+  40,
+  48,
+  64
+ ],
+ "sequences": 64,
+ "gdn_decode": {
+  "kernel": "torch.ops._xpu_C.gdn_attention (non-spec decode)",
+  "rows": [
+   {
+    "B": 1,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 2,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 4,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 8,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 16,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 24,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 31,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 32,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 33,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 40,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 48,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   },
+   {
+    "B": 64,
+    "out_equal_single": true,
+    "z_equal_single": true,
+    "conv_state_equal_single": true,
+    "ssm_state_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0,
+    "max_abs_diff_ssm": 0.0
+   }
+  ],
+  "all_batch_invariant": true,
+  "all_repeat_exact": true,
+  "first_failing_B": null
+ },
+ "fa_decode_num_splits_0": {
+  "kernel": "flash_attn_varlen_func paged decode (fa_version=2, num_splits=0)",
+  "rows": [
+   {
+    "B": 1,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 2,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 4,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 8,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 16,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 24,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 31,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 32,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 33,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 40,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 48,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 64,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   }
+  ],
+  "all_batch_invariant": true,
+  "all_repeat_exact": true,
+  "first_failing_B": null
+ },
+ "fa_decode_num_splits_1": {
+  "kernel": "flash_attn_varlen_func paged decode (fa_version=2, num_splits=1)",
+  "rows": [
+   {
+    "B": 1,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 2,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 4,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 8,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 16,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 24,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 31,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 32,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 33,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 40,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 48,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   },
+   {
+    "B": 64,
+    "out_equal_single": true,
+    "repeat_equal": true,
+    "permuted_equal_single": true,
+    "max_abs_diff_out": 0.0
+   }
+  ],
+  "all_batch_invariant": true,
+  "all_repeat_exact": true,
+  "first_failing_B": null
+ }
+}

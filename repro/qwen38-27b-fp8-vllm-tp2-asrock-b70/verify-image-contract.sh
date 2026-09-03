@@ -42,6 +42,8 @@ expected=(
 # digests; the ordinary profile remains closed over its frozen extension.
 expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:-}
 expected_mhc_library_sha256=${EXPECTED_MHC_LIBRARY_SHA256:-}
+# R152 candidates replace the Gemma/RMSNorm module; they must opt in with its exact digest.
+expected_layernorm_sha256=${EXPECTED_LAYERNORM_SHA256:-}
 
 # Experimental overlays may intentionally replace only the XPU communicator.
 # Keep the ordinary package hash immutable and require candidates to provide
@@ -103,6 +105,11 @@ esac
 
 if [[ -n "${expected_xpu_extension_sha256}" ]]; then
   expected[5]=${expected_xpu_extension_sha256}
+fi
+if [[ -n "${expected_layernorm_sha256}" ]]; then
+  for index in "${!paths[@]}"; do
+    [[ "${paths[index]}" == */vllm/model_executor/layers/layernorm.py ]] && expected[index]=${expected_layernorm_sha256}
+  done
 fi
 if [[ -n "${expected_mhc_library_sha256}" ]]; then
   paths+=(/opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libmhc_kernels_xe_2.so)

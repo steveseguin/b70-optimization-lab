@@ -1,0 +1,24 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-triton-rmsnorm-20260902-r152",
+  "status": "preregistered-before-device-use",
+  "question": "With the Gemma layer norms and the q/k head norms routed through the batch- and position-invariant Triton RMSNorm (R152 image over R139), do both profiles become output-identical through c64, stay repeat-exact at 100-300-token prompts, and what does c1 speed do?",
+  "evidence_base": {
+    "census": "R151a-e cleared the GDN decode/prefill kernels, paged attention decode/prefill, argmax, the two-card all-reduce, the gated norm, and (R149) the FP16 head; R151f found the vllm ir rms_norm/fused_add_rms_norm kernel non-invariant: a row's bits depend on its slot in the batch (first differing row varies 4-22 by data, permutation fails), while R151g found the Triton rmsnorm_fn invariant and repeat-exact at every M 1-256 on hidden 5120 and head 256 across seeds, and 29-35 us vs 43-66 us for the ir kernel",
+    "mechanism": "R30 already special-cased two rows for this kernel; R152 generalizes by replacing the kernel rather than the row count"
+  },
+  "treatment": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r152-20260902.patch",
+    "patch_sha256": "ef14d310e17cfad8fcb13d903e09c1ca1f7e840484937ca9f2ef7cb7b75f2a37",
+    "installed_layernorm_sha256": "c2acd0d48c132581331581564698a0952f1bea7bb7648910d5777afe571a7f6d",
+    "env": {"VLLM_XPU_GEMMA_RMSNORM_TRITON": "1", "VLLM_XPU_RMSNORM_TRITON": "1"},
+    "residual": "the fused add stays an exact fp16 add in torch; only the normalization kernel changes",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r152 over R139, built by repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-triton-rmsnorm-r152-image.sh; contract opt-in EXPECTED_LAYERNORM_SHA256"
+  },
+  "run_order": ["preflight as R147", "mtp0-a, mtp0-b: same-image MTP0 controls (new oracle, since the norm arithmetic changes c1)", "G1 12/12 before MTP1", "mtp1-a, mtp1-b with the 100-300-token repeat probe on mtp1-b", "ladder MTP1 (R63 config, 512 budget) with --require-output-identity", "ladder MTP0 (same)"],
+  "gates": {"G1": "mtp0-a vs mtp0-b 12/12", "G2": "mtp1-a vs mtp1-b 12/12", "G3": "each MTP1 vs mtp0-a 12/12", "G4": "workload, canaries, cache zero, FP16 verifier marker, R152 markers on both ranks", "G5": "repeat-exact at all six lengths", "G6": "c1..c64 every output equal to its sequential oracle on both profiles"},
+  "performance_recording": {"not_a_gate": true, "reference_r139": {"mtp1_center": 54.62728639090838, "mtp0_median": 33.31372875840961}, "expectation": "the Triton norm is ~30 us faster per call than the ir kernel; ~130 norm calls per step could show as a small c1 gain"},
+  "abort_conditions": ["as R147"],
+  "on_pass": "R152 supersedes R139 as the identity-qualified image: extend the published concurrency claim to c64, present speed for the headline decision, publish the patch and binaries the same way as R139",
+  "on_failure": "record residual mismatches; remaining un-censused ops are the embedding gather, rotary, and elementwise activations"
+}

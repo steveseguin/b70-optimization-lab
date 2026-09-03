@@ -1,0 +1,13 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-gdn-attention-decode-batch-census-20260902-r151",
+  "status": "preregistered-before-device-use",
+  "classification": "operator census, one card, no server",
+  "question": "Which per-sequence decode kernel changes a sequence's output when 32 or more sequences share a step: the GDN decode kernel (conv + recurrent state) or the paged full-attention decode kernel?",
+  "evidence_base": "R147b/R147c/R148/R149 ladders: exact through c16, misses at c32/c64 on both MTP0 and MTP1 regardless of head rows or batch budget; the W8A16 GEMM (R139), the FP16 head (R149), and the batch budget (R148) are cleared",
+  "method": "experiments/qwen38-27b-b70/scripts/qwen38-fp8-gdn-attention-decode-batch-census.py in the R139 image on level_zero:0: 64 seeded sequences, single-sequence references, batches 1..64 including 31/32/33, bitwise equality of outputs and GDN post-states, permutation and repeat checks; FA tested with num_splits 0 and 1",
+  "prediction": "exactly one kernel fails batch invariance with first_failing_B in (16, 32]; the other is invariant at every B",
+  "gates": {"attribution": "a kernel is the source if its first_failing_B is <= 32 while c16 (B<=16, or 32 rows for MTP1) is invariant"},
+  "on_result": "if GDN: inspect its decode grid/tiling for the 32-sequence boundary and preregister a kernel fix; if FA: test the decode split plan and block-table handling; if neither: the source is outside these two kernels (RMSNorm packed path, sampler) and the census extends there",
+  "abort_conditions": ["any Xe fault or non-normal device"]
+}

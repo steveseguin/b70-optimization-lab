@@ -1,0 +1,572 @@
+{
+ "gemma_rms_norm": {
+  "op": "gemma rms_norm(hidden 5120, fp32 weight)",
+  "rows": [
+   {
+    "M": 1,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 2,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 3,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 4,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 8,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 16,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 17,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 24,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 31,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 32,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 33,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 48,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 64,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 128,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 256,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   }
+  ],
+  "all_batch_invariant": false,
+  "all_repeat_exact": true,
+  "first_failing_M": 16
+ },
+ "gemma_fused_add_rms_norm": {
+  "op": "gemma fused_add_rms_norm(hidden 5120)",
+  "rows": [
+   {
+    "M": 1,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 2,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 3,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 4,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 8,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 16,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.00048828125
+   },
+   {
+    "M": 17,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.00048828125
+   },
+   {
+    "M": 24,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.00048828125
+   },
+   {
+    "M": 31,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.00048828125
+   },
+   {
+    "M": 32,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.000244140625
+   },
+   {
+    "M": 33,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.000244140625
+   },
+   {
+    "M": 48,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.000244140625
+   },
+   {
+    "M": 64,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.000244140625
+   },
+   {
+    "M": 128,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0009765625
+   },
+   {
+    "M": 256,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.001953125
+   }
+  ],
+  "all_batch_invariant": false,
+  "all_repeat_exact": true,
+  "first_failing_M": 16
+ },
+ "qk_head_rms_norm": {
+  "op": "q/k head rms_norm(256)",
+  "rows": [
+   {
+    "M": 1,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 2,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 3,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 4,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 8,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 16,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 17,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 24,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 31,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 32,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 33,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 48,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 64,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 128,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 256,
+    "equal_single": false,
+    "repeat_equal": true,
+    "max_abs_diff": 0.00048828125
+   }
+  ],
+  "all_batch_invariant": false,
+  "all_repeat_exact": true,
+  "first_failing_M": 256
+ },
+ "gdn_gated_rms_norm_nbg_True": {
+  "op": "gdn gated rmsnorm_fn(128, z, norm_before_gate=True)",
+  "rows": [
+   {
+    "M": 1,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 2,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 3,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 4,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 8,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 16,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 17,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 24,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 31,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 32,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 33,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 48,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 64,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 128,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 256,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   }
+  ],
+  "all_batch_invariant": true,
+  "all_repeat_exact": true,
+  "first_failing_M": null
+ },
+ "gdn_gated_rms_norm_nbg_False": {
+  "op": "gdn gated rmsnorm_fn(128, z, norm_before_gate=False)",
+  "rows": [
+   {
+    "M": 1,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 2,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 3,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 4,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 8,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 16,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 17,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 24,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 31,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 32,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 33,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 48,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 64,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 128,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   },
+   {
+    "M": 256,
+    "equal_single": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0
+   }
+  ],
+  "all_batch_invariant": true,
+  "all_repeat_exact": true,
+  "first_failing_M": null
+ },
+ "fa_prefill_paged": {
+  "op": "flash_attn_varlen_func prefill (paged, causal)",
+  "rows": [
+   {
+    "B": 1,
+    "tokens": 24,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 2,
+    "tokens": 49,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 4,
+    "tokens": 102,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 8,
+    "tokens": 220,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 16,
+    "tokens": 504,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 17,
+    "tokens": 544,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 24,
+    "tokens": 733,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 31,
+    "tokens": 971,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 32,
+    "tokens": 1009,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 33,
+    "tokens": 1048,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 48,
+    "tokens": 1515,
+    "equal_single": true,
+    "repeat_equal": true
+   },
+   {
+    "B": 64,
+    "tokens": 2022,
+    "equal_single": true,
+    "repeat_equal": true
+   }
+  ],
+  "all_batch_invariant": true,
+  "all_repeat_exact": true,
+  "first_failing_B": null
+ }
+}

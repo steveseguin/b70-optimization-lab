@@ -23,6 +23,8 @@ enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
 w8a16_decode_pad_rows=${VLLM_XPU_W8A16_DECODE_PAD_ROWS:-0}
 lm_head_chunk_rows=${VLLM_XPU_LM_HEAD_CHUNK_ROWS:-0}
+gemma_rmsnorm_triton=${VLLM_XPU_GEMMA_RMSNORM_TRITON:-0}
+rmsnorm_triton=${VLLM_XPU_RMSNORM_TRITON:-0}
 w8a16_pad_n_set=${VLLM_XPU_W8A16_PAD_N_SET:-}
 fp8_packed_serial_exact=${VLLM_XPU_FP8_PACKED_SERIAL_EXACT:-0}
 fa_serial_spec_decode=${VLLM_XPU_FA_SERIAL_SPEC_DECODE:-0}
@@ -190,6 +192,10 @@ done
   printf 'VLLM_XPU_LM_HEAD_CHUNK_ROWS must be an integer in 0..512\n' >&2
   exit 1
 }
+for value_name in gemma_rmsnorm_triton rmsnorm_triton; do
+  value=${!value_name}
+  [[ "${value}" == 0 || "${value}" == 1 ]] || { printf '%s must be 0 or 1\n' "${value_name^^}" >&2; exit 1; }
+done
 [[ "${lm_head_batch_repair_rows}" =~ ^[0-9]+$ ]] || {
   printf 'VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS must be a non-negative integer\n' >&2
   exit 1
@@ -283,6 +289,8 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_FP8_BLOCK_W8A16="${fp8_block_w8a16}" \
   --env VLLM_XPU_W8A16_DECODE_PAD_ROWS="${w8a16_decode_pad_rows}" \
   --env VLLM_XPU_LM_HEAD_CHUNK_ROWS="${lm_head_chunk_rows}" \
+  --env VLLM_XPU_GEMMA_RMSNORM_TRITON="${gemma_rmsnorm_triton}" \
+  --env VLLM_XPU_RMSNORM_TRITON="${rmsnorm_triton}" \
   --env VLLM_XPU_W8A16_PAD_N_SET="${w8a16_pad_n_set}" \
   --env VLLM_XPU_FP8_PACKED_SERIAL_EXACT="${fp8_packed_serial_exact}" \
   --env VLLM_XPU_FA_SERIAL_SPEC_DECODE="${fa_serial_spec_decode}" \
