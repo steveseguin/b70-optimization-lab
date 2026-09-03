@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "classification": "b70_xpu_hc_torch_fallback_m2_vs_m1_rare_flip_search",
+  "torch": "2.11.0+xpu",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "seed": 20260903,
+  "rows": 2,
+  "ops": [
+    {
+      "op": "grouped_gemma_rmsnorm",
+      "trials": 2000,
+      "elements": 40960000,
+      "trials_with_flip": 30,
+      "first_flip": {
+        "trial": 25,
+        "elements_differing": 1,
+        "max_abs_diff": 0.00390625,
+        "rows_differing": [
+          1
+        ]
+      }
+    },
+    {
+      "op": "hc_combine_norm",
+      "trials": 2000,
+      "elements": 81920000,
+      "trials_with_flip": 29,
+      "first_flip": {
+        "trial": 181,
+        "elements_differing": 1,
+        "max_abs_diff": 0.001953125,
+        "rows_differing": [
+          0
+        ]
+      }
+    },
+    {
+      "op": "hc_gate_mix",
+      "trials": 2000,
+      "elements": 10240000,
+      "trials_with_flip": 0,
+      "first_flip": null
+    },
+    {
+      "op": "hc_silu",
+      "trials": 2000,
+      "elements": 1280000,
+      "trials_with_flip": 0,
+      "first_flip": null
+    }
+  ],
+  "all_bit_identical": false
+}

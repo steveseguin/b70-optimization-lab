@@ -95,3 +95,46 @@ report-only records inside the QSA layer (`_qsa_proj`, `_qsa_selected`,
 (MTP1, serial GDN rows and row-wise all-reduce) and A111 (MTP0 reference)
 trace layers 0 and 43. Data:
 `../data/20260903-tp4-mtp1-a108-vs-a105-layer-trace-rank{0..3}-pos{2048,2049}.json`.
+
+## A110 vs A111: the layer-43 residual is the hyperconnection norm's torch fallback
+
+A110 (MTP1, serial GDN rows and row-wise all-reduce, overlay 76b787e2, QSA
+records on layer 43; exact-2K hash `3c861245...` again) against A111 (MTP0
+reference, hash `afffd211...`), row 0 at position 2048 on every rank: the
+QSA layer's *input* (`layer_43_qsa_proj.hidden_states`, the hyperconnection
+mix output) already differs while all three layer-42 outputs (hidden
+states, block output, injection) are identical; the head values agree, so
+the difference is a few elements. Row 1 at 2049 is exact through layer 43.
+
+Offline searches on card 0 (2 rows vs each row alone):
+
+| component | trials | elements | trials with a flip |
+|---|---|---|---|
+| BF16 mix GEMMs (10240 to 352, 320 to 10240, 10240 to 320, 2560 to 24) via `F.linear` | 300 each, then 4000 / 400 | 2.8 M / 8.2 M | 0 |
+| `_grouped_gemma_rmsnorm` (XPU torch fallback) | 2000 | 41 M | **30** (one BF16 element each) |
+| `_hc_combine_norm` (calls the same fallback) | 2000 | 82 M | **29** |
+| `_hc_gate_mix`, `_hc_silu` | 2000 | 10 M / 1.3 M | 0 |
+
+On XPU the hyperconnection ops run plain torch code, and the grouped
+RMSNorm's variance is `mean` over 2560-wide groups of a [rows, 4, 2560]
+tensor. Torch chooses the reduction order from the whole shape, so one row
+and two rows sum in different orders and the BF16 result flips about once
+per 1.4 M elements: 86 mix calls passed before layer 43's did not.
+
+Fix (overlay 1b2a17c1): `VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=<num_spec+1>`
+computes that variance one row at a time for 2..N-row inputs; with it the
+same 2000-trial search shows zero flips in every op. Default 0 keeps MTP0
+untouched. A112 = A110's identity plus this flag, traced at 2048.
+
+Data: `../data/20260903-b70-bf16-hc-mix-gemm-m2-vs-m1-rare-flip.json`,
+`../data/20260903-b70-xpu-hc-torch-fallback-m2-vs-m1-rare-flip.json`,
+`../data/20260903-tp4-mtp1-a110-vs-a111-layer-trace-rank{0..3}-pos{2048,2049}.json`.
+
+## Host reset during A112 (16:44)
+
+The first A112 launch ended in a silent host stop at 16:44:14, seconds into
+engine initialization (no kernel message, no shutdown record; boot at
+16:48). After the reboot: results drive remounted (`ntfs-3g`, `/dev/sda2`),
+the display driver had taken card1 so the four B70s were reloaded to minors
+0/2/3/4, tuning reapplied, PCIe links verified at 16 GT/s x16, four-card
+all-reduce probe repeated (same result). A112 relaunched 17:59.

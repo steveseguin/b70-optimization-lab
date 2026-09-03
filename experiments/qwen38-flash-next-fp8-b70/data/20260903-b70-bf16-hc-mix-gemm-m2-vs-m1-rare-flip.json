@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "classification": "b70_bf16_hc_mix_gemm_m2_vs_m1_rare_flip_search",
+  "torch": "2.11.0+xpu",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "mkldnn_deterministic": true,
+  "seed": 20260903,
+  "rows": 2,
+  "shapes": [
+    {
+      "label": "hc-down-block-inject",
+      "K": 10240,
+      "N": 352,
+      "trials": 300,
+      "trials_with_flip": 0,
+      "unrepeatable_trials": 0,
+      "max_abs_diff": 0.0,
+      "first_flip": null
+    },
+    {
+      "label": "hc-up",
+      "K": 320,
+      "N": 10240,
+      "trials": 300,
+      "trials_with_flip": 0,
+      "unrepeatable_trials": 0,
+      "max_abs_diff": 0.0,
+      "first_flip": null
+    },
+    {
+      "label": "hc-down-no-inject",
+      "K": 10240,
+      "N": 320,
+      "trials": 300,
+      "trials_with_flip": 0,
+      "unrepeatable_trials": 0,
+      "max_abs_diff": 0.0,
+      "first_flip": null
+    },
+    {
+      "label": "gdn-in_proj_ba",
+      "K": 2560,
+      "N": 24,
+      "trials": 300,
+      "trials_with_flip": 0,
+      "unrepeatable_trials": 0,
+      "max_abs_diff": 0.0,
+      "first_flip": null
+    }
+  ],
+  "all_bit_identical": true
+}
