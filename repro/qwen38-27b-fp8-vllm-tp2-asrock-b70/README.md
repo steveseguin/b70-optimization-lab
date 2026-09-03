@@ -148,9 +148,11 @@ captured as well), the replay host measured MTP1 **`51.32 tok/s`** and MTP0
 **`31.15 tok/s`** with the same strict workload, cache-zero and canary
 gates. The qualified profile ships graph-off because on the publishing
 host graph capture measured 1.1% slower (R58) and output identity against
-the oracle has only been established there for the graph-off profile; a
-graph-on replay must run the identity ladder before its outputs are
-treated as qualified. Record:
+the oracle has only been established there for the graph-off profile. On
+the replay host every graph-on arm (MTP0 and MTP1, either capture set)
+returned outputs identical to graph-off MTP0 on all 12 strict-suite
+prompts; the c1-c64 identity ladder has not been run graph-on, so a
+graph-on profile is not yet qualified. Record:
 [note](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md),
 [data](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.json).
 
