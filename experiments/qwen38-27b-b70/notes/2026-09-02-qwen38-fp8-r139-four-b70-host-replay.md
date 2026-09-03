@@ -68,7 +68,23 @@ All six prompt classes sit within 27.5-30.6 tok/s on MTP1, so the factor
   89.9 us including sync; `rms_norm [1,5120]` 20.5 us; `.item()` round trip
   59.7 us. These are the numbers for the publishing host to diff against
   with its own probe.
-- CPU pinning of the container to one CCD: result below when measured.
+- CPU pinning of the container to one CCD (`docker update --cpuset-cpus
+  0-7,16-23`): MTP0 `19.024147 tok/s`, about 2% over unpinned. Placement is
+  not the cause.
+- XPU Graph on (the qualified profile forces `VLLM_XPU_ENABLE_XPU_GRAPH=0`
+  in the strict wrapper; a scratch copy of the wrapper chain with the flag
+  set to 1 and the same size-one PIECEWISE compilation config): MTP0
+  **`31.149615 tok/s`**, 1.67x the graph-off rate on this host and 94% of
+  the publishing host's graph-off `33.313729`; workload, cache-zero and
+  canary gates pass. This confirms that the gap is per-launch host
+  submission cost, which graph capture removes; the publishing host is fast
+  enough that R58 measured graph-on as 1.1% slower there.
+- XPU Graph on for MTP1 with the same size-one capture: `28.560275 tok/s`,
+  no change from graph-off (`28.944616`). With capture size 1 only the
+  single-row target step is captured; the draft step and the two-row
+  verification run eagerly, so on this host the draft's own launch cost
+  cancels its token gain (graph-on MTP1 is slower than graph-on MTP0 here).
+  A capture-size-{1,2} variant is measured next.
 
 ## Reading
 
