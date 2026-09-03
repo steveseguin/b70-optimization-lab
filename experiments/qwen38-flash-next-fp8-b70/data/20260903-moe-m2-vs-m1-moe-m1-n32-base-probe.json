@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "classification": "flash_next_triton_block_fp8_moe_m2_vs_m1_equivalence",
+  "config_folder": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-n32-base-probe",
+  "seed": 20260903,
+  "rows": 2,
+  "shape": {
+    "E": 128,
+    "K": 2560,
+    "N": 640,
+    "topk": 10,
+    "block": 128
+  },
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "batched_repeatable": true,
+  "single_repeatable": true,
+  "batched_equals_singles": true,
+  "elements_differing": 0,
+  "max_abs_diff": 0.0,
+  "max_rel_diff": 0.0,
+  "mean_abs_diff": 0.0,
+  "sha256_batched": "89998f2b83ef337e27151be5a117c4edc8b46094058d65102721e6c7ac878e1e",
+  "sha256_singles": "89998f2b83ef337e27151be5a117c4edc8b46094058d65102721e6c7ac878e1e",
+  "sha256_row0_single": "e1c62398209e45a734de808c683b3904bd83e02768cda46d4fb31c119aa82426"
+}
