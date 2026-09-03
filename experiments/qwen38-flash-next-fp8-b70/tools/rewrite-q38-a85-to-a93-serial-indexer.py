@@ -46,7 +46,7 @@ def successor(text: str) -> str:
     def rename(segment: str) -> str:
         segment = segment.replace("attempt85", "attempt93")
         segment = segment.replace("19757", "19765")
-        segment = segment.replace("ATTEMPT=85", "ATTEMPT=92")
+        segment = segment.replace("ATTEMPT=85", "ATTEMPT=93")
         segment = segment.replace("a85", "a93")
         return segment.replace("A85", "A93")
 
