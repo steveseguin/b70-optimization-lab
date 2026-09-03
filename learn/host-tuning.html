@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Host tuning: fast vs slow hosts, graph on/off, and what to fix first — neural.download</title>
+<meta name="description" content="Why the same Intel Arc Pro B70 recipe decodes at different speeds on different hosts: CPU submission latency, XPU graph capture on vs off, a five-minute host probe, the host fixes our lab actually needed, and a symptom-to-fix table.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/learn/host-tuning.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/learn/host-tuning.html">
+<meta property="og:title" content="Host tuning: fast vs slow hosts, graph on/off, and what to fix first — neural.download">
+<meta property="og:description" content="Why the same B70 recipe runs at different speeds on different hosts, when XPU graph capture recovers the gap, how to probe your own host in five minutes, and which host fixes changed speed, stability, or nothing.">
+<meta property="og:image" content="https://neural.download/og-image.png">
+<meta property="og:image:secure_url" content="https://neural.download/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="neural.download — Run AI at home. We make it faster.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/learn/host-tuning.html">
+<meta name="twitter:title" content="Host tuning: fast vs slow hosts, graph on/off, and what to fix first — neural.download">
+<meta name="twitter:description" content="Why the same B70 recipe runs at different speeds on different hosts, when XPU graph capture recovers the gap, how to probe your own host in five minutes, and which host fixes changed speed, stability, or nothing.">
+<meta name="twitter:image" content="https://neural.download/og-image.png">
+<meta name="twitter:image:alt" content="neural.download — Run AI at home. We make it faster.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Host tuning: fast vs slow hosts, graph on/off, and what to fix first","description":"Why the same Intel Arc Pro B70 recipe decodes at different speeds on different hosts: CPU submission latency, XPU graph capture on vs off, a five-minute host probe, the host fixes our lab actually needed, and a symptom-to-fix table.","url":"https://neural.download/learn/host-tuning.html","dateModified":"2026-09-03","inLanguage":"en","isAccessibleForFree":true,"author":{"@type":"Organization","name":"Unofficial Intel XPU Optimization Lab","url":"https://neural.download/"},"publisher":{"@type":"Organization","name":"neural.download","url":"https://neural.download/"},"isPartOf":{"@type":"WebSite","name":"neural.download","url":"https://neural.download/"},"about":["Intel Arc Pro B70","vLLM XPU graph","PCIe","GPU firmware","local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"neural.download","item":"https://neural.download/"},{"@type":"ListItem","position":2,"name":"Learn","item":"https://neural.download/learn.html"},{"@type":"ListItem","position":3,"name":"Host tuning","item":"https://neural.download/learn/host-tuning.html"}]}
+</script>
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="../models/">Models</a>
+    <a href="../learn.html" aria-current="page">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../learn.html">Learn</a> / Guide 10</p>
+  <p class="eyebrow">Hardware setup</p>
+  <h1>Host tuning</h1>
+  <p>You built the recipe exactly. Every hash matched. Your B70 still decodes slower than the number on the page. This guide explains why the same recipe runs at different speeds on different hosts, when graph capture gets the speed back, how to probe your own box in five minutes, and which host fixes our lab actually needed.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose">
+
+  <div class="tldr">
+    <h2>The short version</h2>
+    <ul>
+      <li>At one request, a B70 recipe spends much of every decode step waiting for the <strong>CPU to submit the next kernel</strong>. A slower submission path means a slower GPU, even with identical cards and software.</li>
+      <li>Our published Qwen3.8 FP8 TP2 recipe ran <strong>1.8x slower</strong> on a second lab host with the same two-card shape. Turning XPU graph capture on recovered <strong>about 95 percent</strong> of the published speed there. On the fast host, graph-on was <strong>1.1 percent slower</strong>, so the recipe ships graph-off. <span class="badge lab">Lab-measured</span></li>
+      <li>Graph replay is a workaround for slow submission. It is not a faster way to run the model.</li>
+      <li>Some host fixes changed speed. Others fixed crashes and freezes. Several changed nothing. This page says which is which.</li>
+    </ul>
+  </div>
+
+  <h2>Why the same recipe runs at different speeds on different hosts</h2>
+  <p>During decode, the runtime launches a long list of small GPU kernels for every token. Our shape profile of the Qwen3.8 FP8 TP2 MTP1 stack counted <strong>2,080 GEMMs and 1,056 all-reduces per rank across eight decode iterations</strong>, so roughly 130 two-card all-reduces and 260 GEMMs per step, plus norms, attention, and sampling. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-shape-profiler-r61.md">R61 shape profile</a></p>
+  <p>Each of those launches costs CPU time before the GPU sees it. If the GPU finishes a kernel before the CPU has queued the next one, the GPU idles. The runtime also waits on the host at points (synchronize, all-reduce, token readback). That is why two boxes with the same cards, image, model, and weights can disagree on tok/s.</p>
+  <p>The lab measured this directly with one probe run on both of its hosts inside the same container image. <span class="badge lab">Lab-measured</span></p>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Measure</th><th class="num">Publishing host (EPYC 9015, PCIe Gen5, two B70s)</th><th class="num">Replay host (Threadripper PRO 5955WX, PCIe Gen4, four B70s)</th></tr></thead>
+    <tbody>
+      <tr><td>Async kernel launch (tiny add)</td><td class="num">3.1 µs</td><td class="num">5.2–6.2 µs</td></tr>
+      <tr><td>Launch + synchronize</td><td class="num">26 µs</td><td class="num">30–33 µs</td></tr>
+      <tr><td>Native <code>rms_norm</code> at M=2</td><td class="num">41.5 µs</td><td class="num">134 µs</td></tr>
+      <tr><td>Two-card BF16 all-reduce, <code>[1,5120]</code></td><td class="num">13 µs</td><td class="num">48–51 µs</td></tr>
+      <tr><td>Pure-Python single-thread loop</td><td class="num">0.132 s</td><td class="num">0.169 s</td></tr>
+    </tbody>
+  </table></div>
+  <p>Sources: <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">four-B70 host replay note</a> and the publishing host's <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-02-qwen38-host-submission-latency-probe-two-b70-host.json">probe data file</a> (3.13 µs launch, 25.98 µs launch+sync, 41.47 µs rms_norm). The replay host's launch figures were read twice, 5.18 and 6.2 µs, and its launch+sync twice, 30.2 and 33.0 µs.</p>
+
+  <p>The CPU alone is about 28 percent slower single-thread. The GPU submission path is 1.65x slower per launch, launch-heavy ops are 3.2x slower, and the two-card collective is about 4x slower. With about 130 exposed host round trips per token, that adds up to the whole decode gap:</p>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Profile (graph off, one request)</th><th class="num">Publishing host</th><th class="num">Replay host</th><th class="num">Ratio</th></tr></thead>
+    <tbody>
+      <tr><td>MTP1 (draft-only INT4 head, FP16 verifier)</td><td class="num">54.63 tok/s</td><td class="num">28.94 tok/s</td><td class="num">1.89x</td></tr>
+      <tr><td>MTP0 (no speculation)</td><td class="num">33.31 tok/s</td><td class="num">18.65 tok/s</td><td class="num">1.79x</td></tr>
+    </tbody>
+  </table></div>
+  <p>All six prompt classes on the replay host sat within 27.5–30.6 tok/s on MTP1, so the factor is uniform and host-wide, not a per-prompt effect. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></p>
+
+  <div class="callout key">
+    <span class="tag">Where the GPU starts waiting for the CPU</span>
+    <p>On the publishing host, a bounded graph-off trace put about <strong>50–51 percent of device-kernel time in the TP all-reduce and 45 percent in GEMM</strong> on both ranks. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-profiler-r59.md">R59 profile</a> The all-reduce is a host-waited call, so every one of its roughly 130 occurrences per step is a place where the GPU can stall on the CPU. When per-launch and per-collective cost rises, those stalls grow and decode falls with them. That is the mechanism, and it is why a slower host hurts one-request decode far more than it hurts prefill or batched serving.</p>
+  </div>
+
+  <h2>Graph on vs graph off</h2>
+  <p>vLLM can record the kernel launch sequence for a decode step once, per captured batch size, and then replay the whole recording as a single submission. On CUDA this is a CUDA graph; on Intel XPU the same mechanism is exposed as an XPU graph (<code>VLLM_XPU_ENABLE_XPU_GRAPH=1</code>). The knobs live in the compilation config:</p>
+  <ul>
+    <li><code>cudagraph_mode</code>: <code>PIECEWISE</code> captures the parts of the step between non-capturable ops; <code>FULL_DECODE_ONLY</code> captures the whole decode step and leaves prefill eager.</li>
+    <li><code>cudagraph_capture_sizes</code> and <code>max_cudagraph_capture_size</code>: which batch sizes get a recording. Anything larger runs eagerly.</li>
+  </ul>
+  <p>Capture removes the per-launch CPU cost that the section above describes. So the question is simply: how much of your decode step is that cost?</p>
+
+  <h3>On a fast host, graph capture gained nothing</h3>
+  <p>R58 turned on a size-one XPU graph on the publishing host's deterministic MTP1 profile. Outputs stayed 12/12 exact against the MTP0 oracle. Decode went from <strong>51.81 to 51.23 tok/s</strong>, a <strong>1.1 percent</strong> loss, which missed the preregistered 99 percent non-inferiority floor by 0.06 tok/s. Graph-off stayed selected. <span class="badge lab">Lab-measured</span> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-xpugraph-r58-negative.md">R58 note</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/CURRENT.md">CURRENT.md</a></p>
+
+  <h3>On a slow host, it gave 90–95 percent back</h3>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Replay host arm</th><th class="num">tok/s</th><th class="num">vs graph-off on that host</th><th class="num">vs published</th></tr></thead>
+    <tbody>
+      <tr><td>MTP0, PIECEWISE, sizes <code>[1]</code></td><td class="num">31.15</td><td class="num">1.67x</td><td class="num">94%</td></tr>
+      <tr><td class="best">MTP0, FULL_DECODE_ONLY, sizes <code>[1]</code></td><td class="num">31.53</td><td class="num">1.69x</td><td class="num">95%</td></tr>
+      <tr><td>MTP1, sizes <code>[1]</code> only</td><td class="num">28.56</td><td class="num">1.0x (no gain)</td><td class="num">52%</td></tr>
+      <tr><td>MTP1, PIECEWISE, sizes <code>[1,2]</code></td><td class="num">51.32</td><td class="num">1.77x</td><td class="num">94%</td></tr>
+      <tr><td class="best">MTP1, FULL_DECODE_ONLY, sizes <code>[1,2]</code></td><td class="num">52.05</td><td class="num">1.80x</td><td class="num">95%</td></tr>
+    </tbody>
+  </table></div>
+  <p>The MTP1 row with only size <code>[1]</code> matters. With one captured size, the single-row target step is recorded but the two-row verification step still runs eagerly, so the draft's launch cost cancels its token gain. You must capture every batch shape the decode step actually uses. Across 2K–32K real-content depth, the graph-on replay host held 90–94 percent of the published MTP1 curve and 93–95 percent of the MTP0 curve, with every MTP1 array matching its own MTP0 oracle. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></p>
+
+  <div class="callout warn">
+    <span class="tag">Graph replay is a workaround, not a speedup</span>
+    <p>Graph capture does not make any kernel faster. It hides CPU submission cost. If your host already submits fast enough, there is nothing to hide and you pay the trade-offs for no gain. That is exactly what R58 measured. Treat graph-on as the setting for hosts whose probe numbers (next section) are high.</p>
+  </div>
+
+  <h3>What graph capture costs you</h3>
+  <ul>
+    <li><strong>Fixed capture sizes.</strong> Only recorded batch sizes replay. Under concurrency, a batch that does not match a captured size is padded to the next one or bypasses the graph and runs eagerly.</li>
+    <li><strong>Startup time and memory.</strong> Every captured size is a recording that takes time to build at startup and holds its own memory. The lab's four-B70 Flash-Next runs report full-graph capture as a separate startup phase (52 seconds on all four ranks in one attempt). <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-tp4-mtp0-a52-memory-floor-negative.md">A52 note</a></li>
+    <li><strong>Identity under concurrency.</strong> At one request the outputs were byte-identical to graph-off in every lab check: 12/12 strict digests on the replay host, and 64/64 c1 oracles for both profiles on the publishing host (R163). Under load the picture is mixed. Graph-on MTP1 on the replay host was exact through c16, then 29/32 and 59/64; graph-on MTP0 there was exact through c8, then 15/16 at c16. On the publishing host, R163 graph-on MTP0 was exact through c32 (63/64 at c64) and graph-on MTP1 was 15/16 at c16 and 57/64 at c64, while the published graph-off MTP0 profile (R156) is 64/64 at c64. <span class="badge lab">Lab-measured</span> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay ladders</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-graph-on-ladders-r163-result.json">R163 result</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/CURRENT.md">CURRENT.md</a></li>
+    <li><strong>Less visibility.</strong> Inside a replay, individual kernels are not separately submitted, so per-kernel profiling and tracing lose resolution. Diagnose graph-off; then re-enable capture.</li>
+    <li><strong>Support status.</strong> vLLM warns that XPU graph is experimental and officially supports single-GPU execution. The lab's TP2 arms passed their gates, but you are past the documented envelope.</li>
+  </ul>
+
+  <h2>How to profile your own host in five minutes</h2>
+  <p>The lab's probe is a short pure-Python script that runs inside the recipe's container image on one card. It reports three numbers that matter and two that are specific to the image. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/scripts/qwen38-fp8-host-submission-latency-probe.py">Probe script</a></p>
+  <pre class="command"><code># inside the R139 (or later) image, one B70 visible
+python3 qwen38-fp8-host-submission-latency-probe.py probe.json
+cat probe.json</code></pre>
+  <p>How to read it:</p>
+  <ul>
+    <li><code>launch_us_async</code>: microseconds per back-to-back tiny kernel launch (2,000 one-element adds, no sync). This is your pure submission cost.</li>
+    <li><code>launch_plus_sync_us</code>: launch then <code>synchronize</code>, 500 times. This is the cost of every host-waited point in the step.</li>
+    <li><code>ir_rms_norm_m2_us</code>: a real launch-heavy op at decode shape. This amplifies the first number.</li>
+    <li><code>w8a16_m2_qkv_us</code>: a decode-shaped W8A16 GEMM. On the publishing host this returned a scale-layout error rather than a time; treat it as optional.</li>
+  </ul>
+  <p>Reference points from the lab: <strong>3.1 µs / 26 µs / 41 µs</strong> on the host that ran graph-off at full published speed; <strong>5.2 µs / 30 µs / 134 µs</strong> on the host that needed graph-on to get within 5 percent. If your launch number is at or above about 5 µs, or your rms_norm number is several times 41 µs, expect graph-off to underperform and try graph capture first. Between those points we have no measurement; probe, then compare decode both ways. For a two-card recipe, also time the exact-shape all-reduce the model uses: the lab saw 13 µs versus 48–51 µs for a <code>[1,5120]</code> BF16 reduce. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></p>
+
+  <h3>Quick host checks</h3>
+  <pre class="command"><code>lscpu | grep -E 'Model name|^CPU\(s\)|MHz|NUMA'
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+cat /sys/module/pcie_aspm/parameters/policy
+xpu-smi discovery
+scripts/report-pcie-topology.sh            # live and max link state for every hop
+sudo lspci -vv -s 21:00.0 | grep -E 'LnkSta|LnkCap'   # the card's upstream switch port, not the GPU
+sudo dmesg | grep -i -E 'aer|corrected|xe '</code></pre>
+  <div class="callout key">
+    <span class="tag">The B70 endpoint always shows 2.5 GT/s x1</span>
+    <p>The GPU function sits behind the card's own PCIe switch, and that internal hop reports <code>2.5GT/s x1</code> by design. The real host link is the switch's upstream port (on the two-B70 host, <code>21:00.0</code> and <code>25:00.0</code>), which showed <code>16.0 GT/s x16</code> on the Gen4 replay host. Measure the root or upstream port, not the endpoint. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-06-10-qwen36-b70-host-link-audit.md">Host link audit</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/pcie-topology-and-llm-inference.md">PCIe topology guide</a></p>
+  </div>
+
+  <h2>Host fixes the lab actually needed</h2>
+  <p>Each row is something the lab did on its own B70 hosts, with the symptom, the fix, and what it measurably changed. Every claim links to the note. <span class="badge lab">Lab-measured</span></p>
+
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Fix</th><th>Symptom</th><th>What changed</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>GPU GuC firmware</td>
+        <td>Four-card runs stopped at the oneCCL topology warning and never loaded the model; the kernel then looped GuC resets (360 per minute across three cards) while idle. <code>dmesg</code> said GuC 70.54.0 was recommended but only 70.44.1 was found.</td>
+        <td>Installed the upstream <code>xe/bmg_guc_70.bin</code> (70.72.1) in place of Ubuntu's 70.44.1 via <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/tools/install-upstream-xe-firmware.sh">install-upstream-xe-firmware.sh</a>; unbind/reload of <code>xe</code> clears a wedge without reboot.</td>
+        <td><strong>Stability.</strong> Speed unchanged: the probe read 5.15 µs / 31.2 µs / 132 µs on 70.44.1 versus 5.18 / 30.2 / 134 on 70.72.1. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/laguna-s-2.1-xpu-b70/notes/2026-08-04-guc-firmware-wedge-root-cause.md">GuC wedge note</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></td>
+      </tr>
+      <tr>
+        <td>Root NVMe PCIe corrected-error storm</td>
+        <td>Corrected <code>RxErr</code> AER events from the Samsung 980 PRO root SSD, about 1 per 30–60 s on old firmware and about 2 per second at Gen4 after a firmware update; journal-less host freezes during model load; runs aborted by the lab's AER-delta guard.</td>
+        <td>Temporarily pinned the SSD's root port to Gen3 (zero errors, reads fell from about 6.5 to 3.3 GB/s), then flashed the motherboard BIOS (below), which cleared the errors at Gen4.</td>
+        <td><strong>Stability.</strong> Decode was unaffected because the model is resident on the B70s; load time was. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-root-nvme-gen4-margin-negative-gen3-clean.md">Gen4 margin note</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-01-root-nvme-firmware-update-preparation.md">Firmware prep</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-08-24-qwen38-7797b6022c-r1-corrected-nvme-gate-stop.md">AER gate stop</a></td>
+      </tr>
+      <tr>
+        <td>Motherboard BIOS update</td>
+        <td>Supermicro M12SWA-TF on BIOS 2.0b (2022) logged the NVMe errors above at Gen4.</td>
+        <td>Flashed BIOS 2.4a (2025-07-17) in place. Four B70s, 32 GB Resizable BARs, IOMMU and boot order survived.</td>
+        <td><strong>Stability.</strong> Root SSD corrected events went from about 2 per second to 0; a 1800 s idle plus 4 GiB read clearance passed at Gen4 with zero events. No decode change claimed. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-root-nvme-gen4-margin-negative-gen3-clean.md">BIOS 2.4a section</a></td>
+      </tr>
+      <tr>
+        <td>PCIe ASPM policy</td>
+        <td>Wanted to test whether link power management added latency.</td>
+        <td>Wrote <code>performance</code> to <code>/sys/module/pcie_aspm/parameters/policy</code> at runtime. On the four-B70 host in July three cards went to <code>runtime_status=error</code> and needed a reboot; on the two-B70 host in August both Xe devices vanished and the host panicked. On the four-B70 host's current stack (kernel 7.0.0-30, GuC 70.72.1) the Flash-Next run wrapper now writes <code>performance</code> before every launch with the cards active and restores the original policy afterwards, without incident.</td>
+        <td><strong>No decode change was ever measured.</strong> The two wedges happened with the cards idle-suspended on older driver stacks. Treat a runtime ASPM write as a risk on any stack where you have not tested it, stop the model first, and prefer the boot command line or BIOS if you want a fixed policy. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-aspm-device-recovery-blocker.md">Four-B70 note</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-08-17-pcie-aspm-performance-kernel-panic-unsafe.md">Two-B70 note</a></td>
+      </tr>
+      <tr>
+        <td>ECC off</td>
+        <td>Roughly 28 GB visible per card with ECC on.</td>
+        <td><code>sudo xpu-smi config --device N --memoryecc 0</code>, reboot, verify Current and Pending. Each lab card reports 32,656 MiB.</td>
+        <td><strong>Capacity.</strong> Prevents OOM, offload, or a smaller KV budget. No bandwidth claim. <a href="b70-ecc-and-vram.html">ECC guide</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/b70-ecc-and-vram.md">Markdown</a></td>
+      </tr>
+      <tr>
+        <td>PCIe topology and lane placement</td>
+        <td>Every B70 endpoint showed <code>2.5 GT/s x1</code>; feared a Gen1 x1 link.</td>
+        <td>Audited the full tree; the endpoint line is the card's internal switch hop and the root-facing link was <code>16 GT/s x16</code>. A controlled Gen4 x16 vs Gen3 x16 A/B on a Qwen3.6 TP2 shape stayed inside the control envelope (c1 53.2–58.1 vs 54.5–58.3 tok/s).</td>
+        <td><strong>Neutral for Gen3 x16 vs Gen4 x16 at TP2.</strong> Bulk all-reduce did drop (5.57 to 4.59 GB/s). Untested for x1, x4, or Thunderbolt. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/pcie-topology-and-llm-inference.md">Topology guide</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-06-10-qwen36-b70-host-link-audit.md">Link audit</a></td>
+      </tr>
+      <tr>
+        <td>Swap off and memory-pressure guards</td>
+        <td>Four-B70 Flash-Next runs pin about 48 GB of host RAM at worker start; a warm page cache plus that pinning caused a reclaim burst and memory PSI <code>full avg10</code> of 11.4.</td>
+        <td>The run wrapper turns swap off, records <code>MemAvailable</code>, PSI, paging and AER deltas every second, and kills the server if pressure or link errors rise. Launch after <code>echo 1 &gt; /proc/sys/vm/drop_caches</code> when the run pins large host buffers.</td>
+        <td><strong>Stability and honest evidence.</strong> No decode change claimed. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a75-host-pressure-guard-negative.md">A75 note</a> · <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a57-host-freeze-at-gpu-worker-init.md">A57 note</a></td>
+      </tr>
+      <tr>
+        <td>Page cache and storage on model load</td>
+        <td>Load time swung with the storage path.</td>
+        <td>Load from local NVMe rather than an external drive. The lab's 131-shard checkpoint took about 78 s at Gen4, on the order of two minutes at Gen3, and about 570 s from USB.</td>
+        <td><strong>Load time only.</strong> Decode was unchanged once weights were resident. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-root-nvme-gen4-margin-negative-gen3-clean.md">Gen4 margin note</a></td>
+      </tr>
+      <tr>
+        <td><code>iommu=pt</code> and ACS</td>
+        <td>IOMMU in translated mode with ACS redirect on the root ports; suspected peer-to-peer detour.</td>
+        <td>Rebooted with <code>iommu=pt</code>; then cleared ACS bits on both root ports and both card switch ports.</td>
+        <td><strong>Neutral.</strong> All-reduce 50.8 to 48.2 to 47.8 µs; MTP0 graph-off 18.72 vs 18.65 tok/s. The collective floor was launch cost, not the fabric route. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></td>
+      </tr>
+      <tr>
+        <td>CPU governor</td>
+        <td><code>amd-pstate-epp</code> powersave with EPP balance_performance; cores at 1.4–3.1 GHz under load.</td>
+        <td>Switched to performance/performance.</td>
+        <td><strong>Neutral.</strong> MTP0 18.65 vs 18.61 tok/s. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></td>
+      </tr>
+      <tr>
+        <td>CCD / NUMA pinning</td>
+        <td>Two-CCD Threadripper; suspected cross-CCD latency.</td>
+        <td><code>docker update --cpuset-cpus 0-7,16-23</code> to pin the container to one CCD.</td>
+        <td><strong>Neutral.</strong> MTP0 19.02 vs 18.65 tok/s, about 2 percent, far short of the 1.8x gap. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md">Replay note</a></td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout good">
+    <span class="tag">The one host lever that moved decode</span>
+    <p>On the slow host, every host-side knob above was neutral within a few percent. The only change that closed the 1.8x gap was graph capture with the right sizes, because the gap was submission cost, not fabric, clocks, firmware, or placement. Probe first, so you do not spend a week on the neutral rows.</p>
+  </div>
+
+  <h2>Decision table</h2>
+  <div class="scroller"><table class="data">
+    <thead><tr><th>Symptom</th><th>Likely cause</th><th>What to check</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Recipe passes every gate but decodes 1.5–2x slower at one request</td><td>Slow CPU submission path</td><td>Run the probe; compare launch and launch+sync to 3.1 / 26 µs</td><td>Enable XPU graph with capture sizes covering every decode batch shape (<code>[1,2]</code> for MTP1); re-verify outputs</td></tr>
+      <tr><td>Graph-on helps MTP0 but not MTP1</td><td>Only size 1 captured; verification step runs eagerly</td><td><code>cudagraph_capture_sizes</code></td><td>Capture <code>[1,2]</code> and set <code>max_cudagraph_capture_size</code> 2</td></tr>
+      <tr><td>Two-card recipe slow, one-card fine</td><td>Slow all-reduce</td><td>Time the exact-shape all-reduce (lab: 13 vs 48–51 µs)</td><td>Graph capture hides launch cost inside the collective; <code>iommu=pt</code> and ACS were neutral here</td></tr>
+      <tr><td>Four-card run stalls at the oneCCL topology warning; GuC resets in <code>dmesg</code></td><td>Stale GuC firmware</td><td><code>dmesg | grep GuC</code> for a "recommended" line</td><td>Install upstream <code>bmg_guc_70.bin</code>; unbind and reload <code>xe</code></td></tr>
+      <tr><td>Host freezes with no kernel log during model load; corrected AER events climbing</td><td>PCIe link margin on the root SSD</td><td><code>dmesg | grep -i -E 'aer|corrected'</code>; AER counters in sysfs</td><td>SSD firmware, then motherboard BIOS; pin the slot to Gen3 as a stopgap</td></tr>
+      <tr><td>Cards vanish after a sysfs power or ASPM write</td><td>Broken PCI resume path</td><td><code>runtime_status</code> under the GPU's sysfs power directory</td><td>Reboot; on that stack set the policy at boot instead of at runtime</td></tr>
+      <tr><td>Model does not fit or KV budget is small</td><td>ECC on (about 28 GB)</td><td><code>xpu-smi config --device N</code></td><td>ECC off, reboot, verify Current and Pending</td></tr>
+      <tr><td>Server killed by memory pressure at worker start</td><td>Warm page cache plus large pinned host buffers</td><td>Memory PSI, <code>MemAvailable</code>, swap</td><td>Swap off, drop caches before launch, load from local NVMe</td></tr>
+      <tr><td>Endpoint shows 2.5 GT/s x1</td><td>Normal for the B70's internal switch hop</td><td>Upstream switch port and root port link state</td><td>Nothing, if the upstream port shows x16 at the platform speed</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn">
+    <span class="tag">What we have not measured</span>
+    <p>Two hosts only: an EPYC 9015 Gen5 box with two B70s and a Threadripper PRO 5955WX Gen4 box with four. We have no numbers for Intel desktop CPUs, consumer AM5 boards, Gen3-only platforms at x8 or narrower, or Thunderbolt. The mechanism should transfer; the exact tok/s will not. Probe your box, then measure decode graph-off and graph-on before choosing.</p>
+  </div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="hardware.html"><b>Hardware</b><span>Capacity, bandwidth, compute, and software</span></a>
+      <a href="b70-ecc-and-vram.html"><b>B70 ECC &amp; VRAM</b><span>Choose 28 GB protected or 32 GB usable</span></a>
+      <a href="multi-user.html"><b>Many users</b><span>Where graph capture sizes and padding start to matter</span></a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/docs/pcie-topology-and-llm-inference.md"><b>PCIe topology</b><span>Link widths, riser and Thunderbolt caveats</span></a>
+      <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md"><b>Replay note</b><span>The full two-host evidence behind this page</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial community lab — not affiliated with or endorsed by Intel.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a></span>
+</div></footer>
+</body>
+</html>
