@@ -54,7 +54,7 @@ postflight() {
   local tag=$1
   devices_normal "${tag}" || abort "${tag}: a B70 is not in normal state"
   journal_check "${tag}" || abort "${tag}: fault signature in the kernel journal"
-  "${health}" >"${root}/${tag}-compute-xccl.txt" 2>&1 || abort "${tag}: compute/XCCL health failed"
+  ROOT="${repo}" "${health}" >"${root}/${tag}-compute-xccl.txt" 2>&1 || abort "${tag}: compute/XCCL health failed"
   [[ "$(lane_containers)" == 0 ]] || abort "${tag}: a lane container is still running"
   log "${tag}: postflight clean"
 }
@@ -117,7 +117,7 @@ for f in "${strict_suite}" "${ladder_suite}" "${probe}" "${ladder}" "${compare}"
   [[ -f "${f}" ]] || abort "preflight: missing ${f}"
 done
 devices_normal preflight || abort "preflight: a B70 is not normal"
-"${health}" >"${root}/preflight-compute-xccl.txt" 2>&1 || abort "preflight: compute/XCCL health failed"
+ROOT="${repo}" "${health}" >"${root}/preflight-compute-xccl.txt" 2>&1 || abort "preflight: compute/XCCL health failed"
 journalctl -k -b 0 --no-pager >"${root}/preflight-kernel-journal-full.txt" 2>&1 || true
 grep -iE "${fault_re}" "${root}/preflight-kernel-journal-full.txt" >"${root}/preflight-kernel-fault-lines.txt" || true
 if [[ -s "${root}/preflight-kernel-fault-lines.txt" ]]; then
