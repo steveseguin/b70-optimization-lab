@@ -114,6 +114,13 @@ PROFILE_LABEL=mtp0-fixed-k-r139 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 ```
 
+Both routes were replayed on 2026-09-02: the binary route from the release
+download and the source route from a clean clone of the committed tree each
+produced extension digest `f912e12d...` bit for bit
+([binary replay](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-r139-public-binary-route-replay-result.json),
+[source replay](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-r139-clean-clone-source-rebuild-result.json);
+the source build log is a release asset). Image IDs differ between builders;
+the contract binds installed file digests.
 Binaries, section digests, patches, build scripts, and the host package list
 are in GitHub release
 [`qwen38-fp8-tp2-r139-20260902`](https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-fp8-tp2-r139-20260902);
