@@ -1,0 +1,15 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-ladder-batched-2048-20260902-r148",
+  "status": "preregistered-before-device-use",
+  "question": "Do the c32/c64 identity misses on the row-invariant R139 image come from prefills being split across steps by the 512-token max_num_batched_tokens budget (c16 prompts total under 512 tokens; c32 and c64 exceed it)?",
+  "evidence_base": "R147b (MTP1) and R147c (MTP0) ladders: exact through c16, 30/32 at c32, 58/64 at c64, identical counts for 32 and 64 logits rows; FP16 lm_head chunk probe (2026-09-02) shows the head is row-invariant for M<=32, so the MTP0 c32 miss is not the head",
+  "single_variable": "MAX_NUM_BATCHED_TOKENS 512 -> 2048 on the frozen R63 ladder configuration (max_model_len 256, max_num_seqs 64); everything else identical to R147b/R147c",
+  "run_order": ["preflight as R147", "ladder-mtp1-2048: R62-treatment MTP1 server on R139, ladder harness as R147", "ladder-mtp0-2048: MTP0 server on R139, same ladder"],
+  "prediction": "if the budget is the residual source, both ladders are exact through c64; if c32 MTP1 (64 logits rows) misses while c32 MTP0 (32 rows) passes, the FP16 lm_head class boundary is a second, separable source, to be fixed by <=32-row chunking (R149)",
+  "gates": {"G6_2048": "every complete concurrent output at c1..c64 equals its sequential oracle, harness exit 0, per profile"},
+  "performance_recording": {"not_a_gate": true},
+  "abort_conditions": ["as R147"],
+  "runner": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-fixed-k-ladder-batched-2048-r148.sh",
+  "artifact_root": "/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-ladder-batched-2048-20260902-r148"
+}

@@ -1,0 +1,136 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-mtp0-probe-ladder-20260902-r147c",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-prereg.json",
+  "status": "mtp0 c1 repeat-exact, 100-300-token repeat-exact, ladder exact through c16, misses at c32 (30/32) and c64 (58/64)",
+  "boot_id": "2c230b44-d761-4f9a-a907-56a2e319f117",
+  "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+  "mtp0_c": {
+    "class_balanced_median_tok_s": 33.28905229083324,
+    "vs_r147_mtp0_a": "12/12",
+    "cached_tokens_all_zero": true
+  },
+  "medium_prefill_repeat_probe": [
+    {
+      "prompt_tokens": 100,
+      "distinct_token_id_streams": 1,
+      "distinct_token_logprob_arrays": 1,
+      "repeat_exact": true
+    },
+    {
+      "prompt_tokens": 168,
+      "distinct_token_id_streams": 1,
+      "distinct_token_logprob_arrays": 1,
+      "repeat_exact": true
+    },
+    {
+      "prompt_tokens": 200,
+      "distinct_token_id_streams": 1,
+      "distinct_token_logprob_arrays": 1,
+      "repeat_exact": true
+    },
+    {
+      "prompt_tokens": 224,
+      "distinct_token_id_streams": 1,
+      "distinct_token_logprob_arrays": 1,
+      "repeat_exact": true
+    },
+    {
+      "prompt_tokens": 250,
+      "distinct_token_id_streams": 1,
+      "distinct_token_logprob_arrays": 1,
+      "repeat_exact": true
+    },
+    {
+      "prompt_tokens": 300,
+      "distinct_token_id_streams": 1,
+      "distinct_token_logprob_arrays": 1,
+      "repeat_exact": true
+    }
+  ],
+  "identity_ladder": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "points": [
+      {
+        "concurrency": 1,
+        "aggregate_tok_s_wall": 33.47085402014738,
+        "exact_vs_sequential_oracle": "1/1"
+      },
+      {
+        "concurrency": 2,
+        "aggregate_tok_s_wall": 64.43470931407425,
+        "exact_vs_sequential_oracle": "2/2"
+      },
+      {
+        "concurrency": 4,
+        "aggregate_tok_s_wall": 124.05146247977844,
+        "exact_vs_sequential_oracle": "4/4"
+      },
+      {
+        "concurrency": 8,
+        "aggregate_tok_s_wall": 234.57745919978944,
+        "exact_vs_sequential_oracle": "8/8"
+      },
+      {
+        "concurrency": 16,
+        "aggregate_tok_s_wall": 421.06074201902936,
+        "exact_vs_sequential_oracle": "16/16"
+      },
+      {
+        "concurrency": 32,
+        "aggregate_tok_s_wall": 674.5058425119205,
+        "exact_vs_sequential_oracle": "30/32"
+      },
+      {
+        "concurrency": 64,
+        "aggregate_tok_s_wall": 925.791215862034,
+        "exact_vs_sequential_oracle": "58/64"
+      }
+    ],
+    "mismatches": {
+      "c32": [
+        [
+          "cache-c000",
+          96
+        ],
+        [
+          "evidence-c007",
+          13
+        ]
+      ],
+      "c64": [
+        [
+          "cache-c040",
+          60
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "evidence-c063",
+          88
+        ],
+        [
+          "index-c017",
+          49
+        ],
+        [
+          "index-c033",
+          75
+        ],
+        [
+          "rollback-c050",
+          60
+        ]
+      ]
+    }
+  },
+  "gates_passed": {
+    "G1c": true,
+    "G4c": true,
+    "G5_mtp0": true,
+    "G6_mtp0": false
+  },
+  "interpretation": "Not the FP16 lm_head row class alone: MTP0 at c32 has 32 logits rows (class 1) and still misses with the same counts as MTP1 at 64 rows. c16 prompts total under the 512 max_num_batched_tokens budget; c32 exceeds it, so prefills are split across steps. R148 tests a 2048 budget. The lm_head probe shows <=32-row chunking is exact by construction for the head."
+}

@@ -2,26 +2,26 @@
   "schema": "b70-lab.result.v1",
   "campaign_id": "qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147",
   "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-prereg.json",
-  "status": "aborted: mtp1-b: server did not become healthy\nCR2: xe 0000:e3:00.0 logged 34 bcs fault responses, engine-memory CAT errors, one bcs engine reset and a device coredump at 19:18:55 during mtp1-b weight staging; container stopped by CR2 (docker stop timed out at 180 s, SIGKILL); both devices normal and per-card compute plus two-card XCCL passed afterwards; no further launch on this boot per the standing fault rule",
-  "campaign_complete": false,
-  "aborted": "mtp1-b: server did not become healthy\nCR2: xe 0000:e3:00.0 logged 34 bcs fault responses, engine-memory CAT errors, one bcs engine reset and a device coredump at 19:18:55 during mtp1-b weight staging; container stopped by CR2 (docker stop timed out at 180 s, SIGKILL); both devices normal and per-card compute plus two-card XCCL passed afterwards; no further launch on this boot per the standing fault rule",
-  "boot_id": "9e05adaf-d974-4a9f-9a83-0bde8a2fa0db",
-  "repo_head_at_launch": "5aed87efb944b903836427220dd6c94ef5a8b650",
+  "status": "identity gate failed: G6",
+  "campaign_complete": true,
+  "aborted": null,
+  "boot_id": "2c230b44-d761-4f9a-a907-56a2e319f117",
+  "repo_head_at_launch": "b654b81b443d4770f5f9af61e2c1dd0fbb42f225",
   "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
   "gates_passed": {
     "G1": true,
-    "G2": false,
-    "G3": false,
-    "G4": false,
-    "G5": false,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "G5": true,
     "G6": false
   },
   "identity_qualified": false,
   "comparisons": {
     "G1_mtp0_a_vs_mtp0_b": "12/12",
-    "G2_mtp1_a_vs_mtp1_b": null,
+    "G2_mtp1_a_vs_mtp1_b": "12/12",
     "G3_mtp1_a_vs_mtp0_a": "12/12",
-    "G3_mtp1_b_vs_mtp0_a": null,
+    "G3_mtp1_b_vs_mtp0_a": "12/12",
     "information_mtp0_a_vs_frozen_r54a": "8/12",
     "information_mtp1_a_vs_frozen_r54a": "8/12"
   },
@@ -70,32 +70,154 @@
     },
     "mtp1-b": {
       "label": "mtp1-b",
-      "present": false
+      "present": true,
+      "class_balanced_median_tok_s": 54.941585485216464,
+      "rows": 12,
+      "cached_tokens_all_zero": true,
+      "realistic_final_gate_passed": true,
+      "pre_canaries_pass_all": true,
+      "post_canaries_pass_all": true,
+      "fp16_target_int4_draft_marker_count": 2,
+      "server_fault_lines": 0,
+      "performance_sha256": "4a596e8d1d21c1e99a73a4d3cbb863ffa58066aeaf97a3ce74b7bd4a9c31132d",
+      "server_log_sha256": "297488b83d8342bc5428cd90706cbeb982680b58277403aa7e5b71b295b3cfb9"
     }
   },
-  "medium_prefill_repeat_probe": null,
-  "identity_ladder": null,
+  "medium_prefill_repeat_probe": {
+    "results": [
+      {
+        "prompt_tokens": 100,
+        "distinct_token_id_streams": 1,
+        "distinct_token_logprob_arrays": 1,
+        "top_logprobs_identical": true,
+        "cached_tokens_all_zero": true,
+        "repeat_exact": true
+      },
+      {
+        "prompt_tokens": 168,
+        "distinct_token_id_streams": 1,
+        "distinct_token_logprob_arrays": 1,
+        "top_logprobs_identical": true,
+        "cached_tokens_all_zero": true,
+        "repeat_exact": true
+      },
+      {
+        "prompt_tokens": 200,
+        "distinct_token_id_streams": 1,
+        "distinct_token_logprob_arrays": 1,
+        "top_logprobs_identical": true,
+        "cached_tokens_all_zero": true,
+        "repeat_exact": true
+      },
+      {
+        "prompt_tokens": 224,
+        "distinct_token_id_streams": 1,
+        "distinct_token_logprob_arrays": 1,
+        "top_logprobs_identical": true,
+        "cached_tokens_all_zero": true,
+        "repeat_exact": true
+      },
+      {
+        "prompt_tokens": 250,
+        "distinct_token_id_streams": 1,
+        "distinct_token_logprob_arrays": 1,
+        "top_logprobs_identical": true,
+        "cached_tokens_all_zero": true,
+        "repeat_exact": true
+      },
+      {
+        "prompt_tokens": 300,
+        "distinct_token_id_streams": 1,
+        "distinct_token_logprob_arrays": 1,
+        "top_logprobs_identical": true,
+        "cached_tokens_all_zero": true,
+        "repeat_exact": true
+      }
+    ],
+    "all_lengths_repeat_exact": true,
+    "sha256": "f9baa3113b3bd57afe0b0b3ecac4d9e40d464e36944c03606c467217a43b3b08"
+  },
+  "identity_ladder": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "harness_exit_status": "4",
+    "points": [
+      {
+        "concurrency": 1,
+        "aggregate_tok_s_wall": 51.86010195075053,
+        "exact_vs_sequential_oracle": "1/1",
+        "cached_tokens_all_zero": true
+      },
+      {
+        "concurrency": 2,
+        "aggregate_tok_s_wall": 77.45415684965029,
+        "exact_vs_sequential_oracle": "2/2",
+        "cached_tokens_all_zero": true
+      },
+      {
+        "concurrency": 4,
+        "aggregate_tok_s_wall": 174.6006178051111,
+        "exact_vs_sequential_oracle": "4/4",
+        "cached_tokens_all_zero": true
+      },
+      {
+        "concurrency": 8,
+        "aggregate_tok_s_wall": 353.3453706921276,
+        "exact_vs_sequential_oracle": "8/8",
+        "cached_tokens_all_zero": true
+      },
+      {
+        "concurrency": 16,
+        "aggregate_tok_s_wall": 497.38179715580236,
+        "exact_vs_sequential_oracle": "16/16",
+        "cached_tokens_all_zero": true
+      },
+      {
+        "concurrency": 32,
+        "aggregate_tok_s_wall": 809.9119991699383,
+        "exact_vs_sequential_oracle": "30/32",
+        "cached_tokens_all_zero": true
+      },
+      {
+        "concurrency": 64,
+        "aggregate_tok_s_wall": 1086.6104077541474,
+        "exact_vs_sequential_oracle": "58/64",
+        "cached_tokens_all_zero": true
+      }
+    ],
+    "complete_outputs_exact_vs_sequential_oracle": false,
+    "oracle_request_count": 64,
+    "oracle_cached_tokens_all_zero": true,
+    "r63_reference_c64_tok_s": {
+      "r62_candidate": 1080.8510149755805,
+      "fp16_draft_control": 1061.6455536117264
+    },
+    "sha256": "1782b3d742350bc6fd3cb4824b73cc5a2a6f8c80965c3919594db244eabd7d08"
+  },
   "performance": {
     "not_a_gate": true,
     "mtp1_attempts_tok_s": [
-      54.31298729660077
+      54.31298729660077,
+      54.941585485216464
     ],
     "mtp0_attempts_tok_s": [
       33.33695011501167,
       33.31372875840961
     ],
+    "mtp1_center_tok_s": 54.627286390908615,
+    "delta_vs_r119_center_percent": 0.37241089636756985,
+    "uplift_vs_incumbent_percent": 5.441620345521492,
+    "each_attempt_above_r62_99pct_floor": true,
+    "within_r119_noise_band": true,
     "mtp0_center_tok_s": 33.325339436710635,
-    "mtp0_delta_vs_r54_control_percent": -1.2100147369422554
+    "mtp0_delta_vs_r54_control_percent": -1.2100147369422554,
+    "mtp1_over_mtp0_same_image_percent": 63.9211702394008
   },
   "postflight_files": [
-    "mtp0-a-post-compute-xccl.txt",
-    "mtp0-a-post-kernel-journal.txt",
-    "mtp0-a-post-xpu-smi-discovery.txt",
-    "mtp0-b-post-compute-xccl.txt",
-    "mtp0-b-post-kernel-journal.txt",
-    "mtp0-b-post-xpu-smi-discovery.txt",
-    "mtp1-a-post-compute-xccl.txt",
-    "mtp1-a-post-kernel-journal.txt",
-    "mtp1-a-post-xpu-smi-discovery.txt"
+    "ladder-post-compute-xccl.txt",
+    "ladder-post-kernel-journal.txt",
+    "ladder-post-xpu-smi-discovery.txt",
+    "mtp1-b-post-compute-xccl.txt",
+    "mtp1-b-post-kernel-journal.txt",
+    "mtp1-b-post-xpu-smi-discovery.txt"
   ]
 }
