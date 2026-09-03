@@ -44,6 +44,8 @@ expected_xpu_extension_sha256=${EXPECTED_XPU_EXTENSION_SHA256:-}
 expected_mhc_library_sha256=${EXPECTED_MHC_LIBRARY_SHA256:-}
 # R152 candidates replace the Gemma/RMSNorm module; they must opt in with its exact digest.
 expected_layernorm_sha256=${EXPECTED_LAYERNORM_SHA256:-}
+# R156 candidates replace the XPU op wrapper module; opt in with its exact digest.
+expected_xpu_ops_sha256=${EXPECTED_XPU_OPS_SHA256:-}
 
 # Experimental overlays may intentionally replace only the XPU communicator.
 # Keep the ordinary package hash immutable and require candidates to provide
@@ -105,6 +107,11 @@ esac
 
 if [[ -n "${expected_xpu_extension_sha256}" ]]; then
   expected[5]=${expected_xpu_extension_sha256}
+fi
+if [[ -n "${expected_xpu_ops_sha256}" ]]; then
+  for index in "${!paths[@]}"; do
+    [[ "${paths[index]}" == */vllm/_xpu_ops.py ]] && expected[index]=${expected_xpu_ops_sha256}
+  done
 fi
 if [[ -n "${expected_layernorm_sha256}" ]]; then
   for index in "${!paths[@]}"; do
