@@ -1,0 +1,34 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-lm-head-chunk-rows-20260902-r149",
+  "status": "preregistered-before-device-use",
+  "question": "Does computing the FP16 target lm_head in <=32-row chunks (proven row-invariant and equal to single-row arithmetic at the operator level) remove the remaining c32/c64 identity misses on the row-invariant R139 image, alone or together with the 2048-token batch budget tested by R148?",
+  "evidence_base": {
+    "operator_probe": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp16-lm-head-chunk-invariance-probe-result.json: F.linear(K=5120,N=124160) rows 1-32 are one exact class; 32-row chunking equals M=1 rows bit for bit at every M<=256 including permutations; repeat-exact",
+    "ladders": "R147b (MTP1) and R147c (MTP0): exact through c16, 30/32 at c32, 58/64 at c64",
+    "r148": "pending: same ladders with max_num_batched_tokens 2048"
+  },
+  "treatment": {
+    "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-lm-head-chunk-rows-r149-20260902.patch",
+    "patch_sha256": "ed43af629b1bc1ea932462cb3399ac44435f3db2bdd5c2a1dd4f9dff6b3bbee8",
+    "installed_logits_processor_sha256": "0d8f0ffc91a7f7effa05c8607953b0a9a7b50b710aaf8aca05676f385c978d4d",
+    "mechanism": "LogitsProcessor._apply_head splits hidden rows into VLLM_XPU_LM_HEAD_CHUNK_ROWS-row calls to the unchanged quant_method.apply and concatenates; default 0 (off); XPU only; marker 'R149 lm_head chunked apply executed' when rows exceed the chunk",
+    "env": "VLLM_XPU_LM_HEAD_CHUNK_ROWS=32",
+    "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-lm-head-chunk-rows-r149 over R139 sha256:901ae9e0..., built by repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-lm-head-chunk-rows-r149-image.sh",
+    "validator": "tools/validate-xpu-lm-head-chunk-rows-r149.py"
+  },
+  "arms": {
+    "ladder-mtp1-chunk32-2048": "R62-treatment MTP1 on R149, chunk 32, max_num_batched_tokens 2048 (the arm expected to pass if R148 shows the budget matters and the head is the second source)",
+    "ladder-mtp0-chunk32-2048": "MTP0 on R149, chunk 32, 2048",
+    "conditional": "if R148 already passes both ladders at 2048 without chunking, R149 runs only ladder-mtp1-chunk32-512 as an information arm and the head chunk is not adopted (single variable rule)"
+  },
+  "gates": {
+    "G6_chunk": "every complete concurrent output at c1..c64 equals its sequential oracle, harness exit 0, per profile",
+    "c1_unchanged": "the ladder's own 64 sequential oracles must equal the R147b/R147c sequential oracles (chunking must not change c1 output; at c1 rows<=32 the chunk path is a no-op by construction)",
+    "marker": "'R149 lm_head chunked apply executed' present in the server log on both ranks for c64"
+  },
+  "performance_recording": {"not_a_gate": true, "note": "chunking adds one extra lm_head weight pass per 32 rows above 32; record c64 aggregate versus R147b/R147c"},
+  "abort_conditions": ["as R147"],
+  "on_pass": "R139+R149 with chunk 32 (and the batch budget from R148) is the identity-qualified concurrency configuration; run the strict single-user suite on it once to confirm c1 speed is unchanged, then present the publication text",
+  "on_failure": "record the residual mismatches; the next census target is the GDN and attention kernels at batch >= 32"
+}

@@ -1,0 +1,65 @@
+--- a/vllm/model_executor/layers/logits_processor.py	2026-09-02 21:05:07.447423122 -0400
++++ b/vllm/model_executor/layers/logits_processor.py	2026-09-02 21:06:07.571330055 -0400
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """A layer that compute logits from hidden_stats."""
+ 
++import os
++
+ import torch
+ import torch.nn.functional as F
+ 
+@@ -16,6 +18,26 @@
+     VocabParallelEmbedding,
+ )
+ from vllm.platforms import current_platform
++from vllm.logger import init_logger
++
++logger = init_logger(__name__)
++
++
++def _xpu_lm_head_chunk_rows() -> int:
++    """R149: rows per lm_head GEMM call, 0 disables chunking.
++
++    The XPU FP16 lm_head F.linear is row-invariant only inside its M<=32
++    class; computing the head in <=32-row chunks reproduces the single-row
++    arithmetic bit for bit at every batch size (operator probe 2026-09-02).
++    """
++    value = os.environ.get("VLLM_XPU_LM_HEAD_CHUNK_ROWS", "0")
++    try:
++        rows = int(value)
++    except ValueError as exc:
++        raise ValueError(
++            f"VLLM_XPU_LM_HEAD_CHUNK_ROWS must be an integer, got {value!r}"
++        ) from exc
++    return rows if rows > 0 else 0
+ 
+ 
+ # --8<-- [start:logits_processor]
+@@ -103,6 +125,26 @@
+     ) -> torch.Tensor:
+         """Project hidden states through the lm_head, honoring head_dtype."""
+         if self.head_dtype is None or self.head_dtype == hidden_states.dtype:
++            chunk_rows = _xpu_lm_head_chunk_rows()
++            if chunk_rows > 0 and hidden_states.device.type == "xpu":
++                flat = hidden_states.reshape(-1, hidden_states.shape[-1])
++                if flat.shape[0] > chunk_rows:
++                    logger.warning_once(
++                        "R149 lm_head chunked apply executed: chunk_rows=%d",
++                        chunk_rows,
++                    )
++                    parts = [
++                        lm_head.quant_method.apply(
++                            lm_head, flat[i : i + chunk_rows], bias=embedding_bias
++                        )
++                        for i in range(0, flat.shape[0], chunk_rows)
++                    ]
++                    return torch.cat(parts, dim=0).reshape(
++                        *hidden_states.shape[:-1], -1
++                    )
++                logger.warning_once(
++                    "R149 lm_head chunked apply armed: chunk_rows=%d", chunk_rows
++                )
+             return lm_head.quant_method.apply(
+                 lm_head, hidden_states, bias=embedding_bias
+             )

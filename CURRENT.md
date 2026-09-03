@@ -20,13 +20,12 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-**Device lock (2026-09-02, from 20:29 EDT on the 19:51 boot):** R147b is running
-unattended on both B70s (resume of R147: mtp1-b, the 100-300-token repeat
-probe, and the c1-c64 identity ladder; containers `qwen38-fp8-r147-*`, port
-18128, artifact root
-`/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147b`).
-About 30 minutes. Do not launch A65 or any other GPU work until that root
-contains `campaign-end.txt` or `ABORTED`.
+**Device lock (2026-09-02 evening, 19:51 boot):** the R147/R148/R149 ladder
+campaigns run unattended on both B70s from
+`experiments/qwen38-27b-b70/scripts/` (containers `qwen38-fp8-r147-*`, port
+18128, roots `/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-*-20260902-r14*`).
+Do not launch other GPU work until the latest root contains
+`campaign-end.txt` or `ABORTED`.
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
