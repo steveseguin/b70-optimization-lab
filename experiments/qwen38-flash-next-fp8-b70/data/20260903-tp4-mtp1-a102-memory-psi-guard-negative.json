@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "classification": "flash_next_a102_supervisor_guard_negative",
+  "attempt": 102,
+  "identity": "eager MTP1 4352, VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1, layer trace with GDN_LAYERS=0, overlay fd81d811",
+  "failure_record": "FAIL A102 host-pressure or NVMe-link guard",
+  "server_state_at_kill": "safetensors shards 10/131 loaded (12 s into loading), no engine error, SIGKILL from supervisor",
+  "tripping_guard": "memory_psi_full avg10 > 10.0 (observed 11.94 at 15:09:59 with 34.4 GB MemAvailable); AER counters and NVMe sector deltas unchanged; kernel journal empty",
+  "samples_tail": [
+    {
+      "timestamp": "2026-09-03T15:09:53,572491702-04:00",
+      "mem_available_kib": "34422056",
+      "memory_psi_full": "avg10=0.00",
+      "io_psi_full": "avg10=9.02",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:09:54,630518963-04:00",
+      "mem_available_kib": "33646312",
+      "memory_psi_full": "avg10=0.00",
+      "io_psi_full": "avg10=9.02",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:09:55,694586659-04:00",
+      "mem_available_kib": "34179836",
+      "memory_psi_full": "avg10=2.89",
+      "io_psi_full": "avg10=11.55",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:09:56,752000147-04:00",
+      "mem_available_kib": "33641424",
+      "memory_psi_full": "avg10=2.89",
+      "io_psi_full": "avg10=11.55",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:09:57,810086099-04:00",
+      "mem_available_kib": "34167620",
+      "memory_psi_full": "avg10=8.17",
+      "io_psi_full": "avg10=11.09",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:09:58,868257331-04:00",
+      "mem_available_kib": "34459468",
+      "memory_psi_full": "avg10=8.17",
+      "io_psi_full": "avg10=11.09",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:09:59,923710332-04:00",
+      "mem_available_kib": "34413228",
+      "memory_psi_full": "avg10=11.94",
+      "io_psi_full": "avg10=11.43",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    },
+    {
+      "timestamp": "2026-09-03T15:10:20,703169550-04:00",
+      "mem_available_kib": "118987796",
+      "memory_psi_full": "avg10=1.88",
+      "io_psi_full": "avg10=1.72",
+      "nvme_aer_corrected": "0",
+      "root_aer_corrected": "0"
+    }
+  ],
+  "disposition": "host-noise negative; identity relaunched unchanged as A104 (port 19776)"
+}
