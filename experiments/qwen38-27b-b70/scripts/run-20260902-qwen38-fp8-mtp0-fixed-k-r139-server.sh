@@ -19,4 +19,4 @@ exec env \
   MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-1024}" \
   CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}" \
   CONTAINER_MEMORY_SWAP="${CONTAINER_MEMORY_SWAP:-16g}" \
-  "${repro_dir}/${STRICT_WRAPPER:-run-w8a16-mtp0-strict-server.sh}"
+  "${repro_dir}/run-w8a16-mtp0-strict-server.sh"

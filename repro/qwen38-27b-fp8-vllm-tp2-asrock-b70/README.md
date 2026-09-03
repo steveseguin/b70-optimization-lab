@@ -149,9 +149,15 @@ captured as well), the replay host measured MTP1 **`51.32 tok/s`** and MTP0
 gates; with `cudagraph_mode` `FULL_DECODE_ONLY` instead of `PIECEWISE` the
 same arms measured `52.05` and `31.53 tok/s`. Those launch settings are
 tracked as `run-w8a16-mtp1-strict-server-xpugraph.sh` and
-`run-w8a16-mtp0-strict-server-xpugraph.sh`; call them exactly like the
-qualified strict wrappers (the R139 launch wrappers accept
-`STRICT_WRAPPER=<name>` to select one). The qualified profile ships graph-off because on the publishing
+`run-w8a16-mtp0-strict-server-xpugraph.sh`. The manifest-bound R139 launch
+wrappers do not switch to them; run a graph variant by exporting the same
+environment the R139 wrapper sets (`IMAGE`, `EXPECTED_IMAGE_ID`,
+`EXPECTED_KERNEL_HEAD`, `CONTAINER_NAME`, `PORT`, `SERVED_MODEL_NAME`,
+`MAX_MODEL_LEN`, `MAX_NUM_SEQS`, `MAX_NUM_BATCHED_TOKENS`,
+`EXPECTED_XPU_EXTENSION_SHA256`, and for MTP1 the four
+`VLLM_XPU_DRAFT_LM_HEAD_INT4*` values from
+`run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh`) and invoking the
+variant wrapper directly with `MODEL_DIR` and `VLLM_CACHE_DIR`. The qualified profile ships graph-off because on the publishing
 host graph capture measured 1.1% slower (R58) and output identity against
 the oracle has only been established there for the graph-off profile. On
 the replay host every graph-on arm (MTP0 and MTP1, either capture set)
