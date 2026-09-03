@@ -1,0 +1,5 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-logits-row-20260903-r171","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-logits-row-trace-r171 sha256:2b5b759bcee836564cd138114c4cee7dfa6af0d326b7f2a3169cff7c5f75ef33 (R170 + logits row trace, diagnostic only)",
+ "hypothesis":"At the cache-c032 prefill (after evidence-c031's discarded extra step) the sampler reads logits from row P-2 instead of P-1 (query_start_loc off by one, or a stale host buffer), so it emits the token that follows the second-to-last prompt token, which is the closing bracket. Prediction: the R171 line at that step shows logits_indices=[29] or a query_start_loc mismatch between cpu and gpu, and the top-1 at row 29 is 60 while row 30 is 271.",
+ "method":"same 64-prompt sequential pass on the R171 image, 256/64/512, async scheduling on",
+ "abort_conditions":["as R147"]}

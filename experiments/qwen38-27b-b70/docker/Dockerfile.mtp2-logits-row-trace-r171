@@ -1,0 +1,5 @@
+# R171 diagnostic: R170 logging image + logits row-selection trace at small-batch non-spec steps.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-handoff-logging-r170
+COPY r171-logits-row-trace.py /tmp/r171.py
+RUN python /tmp/r171.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py && rm /tmp/r171.py
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-logits-row-trace-r171-diagnostic"

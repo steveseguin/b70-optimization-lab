@@ -1,0 +1,8 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-phantom-handoff-logging-20260903-r170",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-handoff-logging-r170-prereg.json",
+  "status": "Phantom reproduced on the logging image (33rd request, cache-c032). Trace at the boundary: evidence-c031 stopped at 128 tokens (step 1841 output trimmed), then a DISCARDED extra step 1842 for c031 still ran (async scheduling had queued it); the c032 prefill step 1843 shows sampled_token_ids=[[60]] straight from the sampler with no discard, valid_sampled_tokens_count=[1], host copy [[60]], scheduler appended [60]. The proposer backup path, the host handoff and the scheduler are faithful; the prefill forward's sampled row itself produced 60. 30 of 64 request ends had a discarded extra step; only the c031->c032 boundary produced a phantom. MTP0 fed prompt+']' matches the phantom tail at positions 16-17 where both differ from the plain oracle (diverges at 18), so ']' was in the model context and the KV/recurrent state written by the prefill were sound.",
+  "root": "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-handoff-logging-20260903-r170",
+  "interpretation": "Corruption confined to the prefill step's sampled logits row. Leading hypothesis for R171: logits read from row P-2 (the token predicted after the second-to-last prompt token is the closing bracket), i.e. an off-by-one in logits_indices/query_start_loc from a reused host buffer overwritten by the next async-prepared step while the prefill's H2D copies were still queued behind the discarded step."
+}
