@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "classification": "qwen38_flash_next_a83_eager_mtp1_diagnostic",
+  "status": "diagnostic",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "2169dbfe38c2954edc5ae50e94f68d45be071b79",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 1,
+    "graph": "off (enforce_eager)",
+    "max_model_len": 4352,
+    "kv_cache_memory_bytes": 376569856,
+    "mkldnn_deterministic": 1,
+    "model_path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"
+  },
+  "short": {
+    "rates_tok_s_after_ttft": [
+      9.916134479345281,
+      9.605060026185404,
+      9.672459270069425
+    ],
+    "median_tok_s_after_ttft": 9.672459270069425,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "matches_mtp0_line": true
+  },
+  "exact_2k": {
+    "rates_tok_s_conventional_99_interval": [
+      5.8622670222392435,
+      5.904584180913326
+    ],
+    "ttft_s": [
+      159.03747827000188,
+      102.107827369
+    ],
+    "output_token_ids_sha256": "460b0d5cd5b8ab20066403b1d51df0ad330203d30b0a565ab9c7a463337036e1",
+    "matches_a81_graph_mtp1": true,
+    "matches_mtp0_line": false
+  },
+  "exact_4k": {
+    "rates_tok_s_conventional_99_interval": [
+      6.59845406403469,
+      7.385791208085684
+    ],
+    "ttft_s": [
+      173.07916433700302,
+      158.83989661899977
+    ],
+    "output_token_ids_sha256": "bf25b9d14a6d1618be82d5b0be902c83d786f4830d207482665d8d00d9cbe58c",
+    "matches_a81_graph_mtp1": true,
+    "matches_mtp0_line": false
+  },
+  "quality": {
+    "semantic_passed": 6,
+    "repeat_unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "needle_pass": true
+  },
+  "spec_decode_metrics_total": {
+    "vllm:spec_decode_num_drafts_total": 787.0,
+    "vllm:spec_decode_num_draft_tokens_total": 787.0,
+    "vllm:spec_decode_num_accepted_tokens_total": 733.0,
+    "vllm:spec_decode_num_accepted_tokens_per_pos_total": 733.0
+  },
+  "interpretation": "Eager MTP1 reproduces the graph MTP1 (A81) outputs at every gate, including the depth continuations that differ from the MTP0 line, with the same 733/787 draft acceptance. The divergence at depth is a property of the speculative verification path, not of graph replay.",
+  "sha256": {
+    "bench-short-r1.json": "20d3fa48bceb2065026f094ee1f15f44a31bc125b4e298f545d420cceb4b2677",
+    "bench-short-r2.json": "42b131592922e85913ee5df7232db94aeffb86eb5ccb33b2552ad5e5dc8fc9e7",
+    "bench-short-r3.json": "f3f2243cb66f824e0cd212cacf9b9287ada1b87ff6206640a26b7faa6ad39094",
+    "exact-depth-2k-r1.json": "bcd3f8b5ce1c8b75c9a98be56961cc5be64d55596589637e45b8172dd3f0f7da",
+    "exact-depth-2k-r2.json": "fbf98f6adb83516a5b49123ffa3704924167c8561ce8330c3bba74e5c121f1cc",
+    "exact-depth-4k-r1.json": "50b6250326ca78a7924fe4e210d6f2b649501e6124c7f5eb12ab6bf298435f08",
+    "exact-depth-4k-r2.json": "ce3015eae45e92dfe065659bd8d1c1f8ecf6109444ff50f4e8343b94a2018c79",
+    "quality-current.json": "834e6509e40ced2f77a1b50089f107309646202700bf4f6c1fbff2f2c6dfbfd9",
+    "metrics-after-diag.prom": "3f2557c2cf1383c0adca783cdafbe169414ae0f27f8217cdf4a68fc7b3bd7a7a"
+  }
+}
