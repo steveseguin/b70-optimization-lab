@@ -1,5 +1,10 @@
 # Reproduce the exact Laguna S 2.1 125.462 tok/s four-B70 record
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This packet reproduces the current BF16-KV record configuration. It does not
 claim that a source rebuild will have byte-identical native binaries; rebuilt
 artifacts are a new environment and must pass the complete gate.

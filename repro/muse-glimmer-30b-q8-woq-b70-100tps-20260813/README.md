@@ -1,5 +1,10 @@
 # Muse-Glimmer-30B Q8/WOQ on 4x B70: 100 tok/s reproduction
 
+> **Certification: `candidate-portable-repro`, not a starter guide.** Install,
+> restore, launch, and validation material is closed for the lab's own hosts;
+> clean-host certification is still pending. The open items are listed under
+> this guide's `missing` entry in [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This recipe preserves the 2026-08-13 no-training Muse result:
 
 - target: Muse-Glimmer-30B `UD-Q8_K_XL`;

@@ -1,5 +1,4 @@
 # Qwen3.8 27B Q4_K_M + Q4_0 MTP2 on one Arc Pro B70
-
 > **Candidate portable reproduction.** The strict one-user headline is
 > `42.636988 tok/s`, from two fresh full-suite servers. It is 55.75% faster
 > than the identical-build MTP0 control and matches all 12 complete target

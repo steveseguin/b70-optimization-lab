@@ -1,5 +1,10 @@
 # Gemma 4 26B A4B Q8 on 1x B70, 125 tok/s
 
+> **Certification: `candidate-portable-repro`, not a starter guide.** Install,
+> restore, launch, and validation material is closed for the lab's own hosts;
+> clean-host certification is still pending. The open items are listed under
+> this guide's `missing` entry in [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This is the standalone promoted reproduction packet for the current Gemma 4
 26B A4B Q8/INT8-quality short-decode record on one Intel Arc Pro B70.
 

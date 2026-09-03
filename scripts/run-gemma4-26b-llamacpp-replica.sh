@@ -7,6 +7,7 @@ HOST="${HOST:-127.0.0.1}"
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf}"
 EXPECTED_LLAMA_SERVER_DEFAULT="/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server"
 LLAMA_SERVER="${LLAMA_SERVER:-$EXPECTED_LLAMA_SERVER_DEFAULT}"
+[[ -x "$LLAMA_SERVER" ]] || { echo "set LLAMA_SERVER=/path/to/build/bin/llama-server (not executable: $LLAMA_SERVER)" >&2; exit 2; }
 MODEL_ALIAS="${MODEL_ALIAS:-gemma4-26b-a4b-q8}"
 CTX_SIZE="${CTX_SIZE:-8192}"
 BATCH_SIZE="${BATCH_SIZE:-512}"

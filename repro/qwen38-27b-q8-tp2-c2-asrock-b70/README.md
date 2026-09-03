@@ -1,5 +1,10 @@
 # Reproduce Qwen3.8 27B Q8_0 target-only TP2 at concurrency two
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This is a service-throughput companion to the primary
 [single-request Q8 reproduction](../qwen38-27b-q8-tp2-asrock-b70/README.md).
 It runs the same accepted model, binary, source patch, runtime, TP2 split,

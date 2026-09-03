@@ -1,5 +1,10 @@
 # Qwen3.6 27B AutoRound INT4 TP2 — 95.385 tok/s repro
 
+> **Certification: `candidate-portable-repro`, not a starter guide.** Install,
+> restore, launch, and validation material is closed for the lab's own hosts;
+> clean-host certification is still pending. The open items are listed under
+> this guide's `missing` entry in [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This is the standalone reproduction packet for the historical two-B70
 Qwen3.6 27B **AutoRound INT4** vLLM/XPU record:
 

@@ -1,5 +1,10 @@
 # Gemma 4 26B A4B Q8 / B70 Repro Recipes
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 These scripts reproduce the validated Gemma 4 26B A4B Q8 lanes on one Intel
 Arc Pro B70 per replica. They are intentionally split by metric so service
 prompt-processing work does not get confused with LocalMaxxing short-decode

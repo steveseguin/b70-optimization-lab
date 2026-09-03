@@ -1,5 +1,10 @@
 # Reproduce Qwen3.8 27B Q4_K_M target-only TP2 on two B70s
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This recipe reproduces the 2026-08-15 two-card ASRock Arc Pro B70 result. It
 uses Q4_K_M target weights with no MTP, DFlash, draft model, prompt reuse, or
 other speculation.

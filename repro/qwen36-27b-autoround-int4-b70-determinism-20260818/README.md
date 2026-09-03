@@ -1,5 +1,10 @@
 # Reproduction — Qwen3.6 27B AutoRound INT4, MTP3 on 2x Intel Arc Pro B70
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 Reproduces the 2026-08-18 determinism/speed measurements: a deterministic
 `92.003 tok/s` configuration and a faster but non-reproducing `96.822 tok/s`
 configuration, both passing the quality baseline.

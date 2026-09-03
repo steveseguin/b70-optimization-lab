@@ -1,5 +1,10 @@
 # DeepSeek V4 Flash K160 on 4x B70, 80.820 tok/s
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This is the standalone, fail-closed launcher for the best verified result from
 the paused DeepSeek V4 Flash lane. It reproduces the measured source and flag
 identity rather than the later experimental development heads.

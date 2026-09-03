@@ -1,5 +1,8 @@
 # MiniMax M2.7 Structured 94 tok/s Repro
 
+> **Certification: `record-capsule`.** Preserves the exact result identity,
+> evidence, and commands for audit; not an install guide.
+
 This folder records the reproducible command for the MiniMax M2.7 constrained
 HTML fast lane accepted on LocalMaxxing as `cmphg048s00mppc0192sahyug`.
 

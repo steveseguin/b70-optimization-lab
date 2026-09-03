@@ -23,9 +23,13 @@ IMAGE=vllm/vllm-openai-xpu:nightly-e9d1398d9edfd90fcc1cf783805240e3effec013
 mtp=${1:?}; kv=${2:?}; maxlen=${3:?}; gpu=${4:?}; port=${5:?}; out=${6:?}; suite=${7:?}
 tp=$(( $(tr -dc ',' <<< "$gpu" | wc -c) + 1 ))
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)
-model=/mnt/usb-models/llm-models/qwen3.8-27b-int4-autoround-devan
-venv=/home/steve/.venvs/vllm-xpu
-cache_root=/mnt/usb-models/llm-runtime/vllm-cache/qwen38-tp1-nightly-20260822
+# Originating-lab layout; override for another host.
+models_root="${QWEN38_MODELS_ROOT:-/mnt/usb-models}"
+model="${QWEN38_TP1_MODEL:-$models_root/llm-models/qwen3.8-27b-int4-autoround-devan}"
+venv="${VENV:-$HOME/.venvs/vllm-xpu}"
+cache_root="${QWEN38_TP1_CACHE_ROOT:-$models_root/llm-runtime/vllm-cache/qwen38-tp1-nightly-20260822}"
+[[ -d "$model" ]] || { echo "set QWEN38_TP1_MODEL to the AutoRound INT4 model directory (missing: $model)" >&2; exit 2; }
+[[ -x "$venv/bin/python" ]] || { echo "set VENV to a vLLM XPU virtualenv (missing: $venv/bin/python)" >&2; exit 2; }
 alias=qwen38-tp1
 name="qwen38-tp1-nightly-$port"
 
@@ -65,7 +69,7 @@ printf '%s\n' "${args[@]}" > "$out/server-args.txt"
 dockerc run -d --name "$name" \
   --device /dev/dri --group-add 44 --group-add 992 --ipc=host \
   -v /dev/dri/by-path:/dev/dri/by-path:ro \
-  -v /mnt/usb-models:/mnt/usb-models \
+  -v "$models_root:$models_root" \
   -p "127.0.0.1:$port:8000" \
   -e CCL_ZE_IPC_EXCHANGE=sockets \
   ${VLLM_XPU_GRAPH:+-e VLLM_XPU_ENABLE_XPU_GRAPH="$VLLM_XPU_GRAPH"} \

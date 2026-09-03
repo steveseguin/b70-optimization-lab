@@ -1,6 +1,6 @@
 {
   "format": "b70-reproduction-guide-catalog-v1",
-  "reviewed_at": "2026-08-27",
+  "reviewed_at": "2026-09-03",
   "certification_standard": "docs/reproduction-guide-certification.md",
   "guides": [
     {
@@ -128,7 +128,8 @@
       ],
       "missing": [
         "tested host-platform installation",
-        "independent clean-host replay"
+        "independent clean-host replay",
+        "public builder for the pinned virtualenv, oneCCL, SYCL runtime and xpumem binaries that run.sh hash-gates; a rebuilt environment needs a regenerated runtime lock (REPRO_RUNTIME_LOCK)"
       ]
     },
     {
@@ -382,43 +383,43 @@
       "dependency_links": [
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/model-direct.json",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight-evidence-20260821.json",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-serial-attention",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.w8a16",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-w8a16-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-stack.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-serial-attention",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-serial-attention-image.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.mtp1-rebuilt-gdn",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-rebuilt-gdn-image.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-mtp1-published-r55c-image.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh",
-      "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-strict-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-strict.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-concurrency-server.sh",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-concurrency.sh",
         "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
         "experiments/qwen38-27b-b70/notes/2026-08-16-official-fp8-vllm-graph-tp2.md",
         "experiments/qwen38-27b-b70/data/2026-08-16-official-fp8-vllm-graph-tp2.json",
         "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch",
-      "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
-      "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
-      "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md",
-      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
-      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json",
-      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
-      "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic.md",
-      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-prereg.json",
-      "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json",
-      "experiments/qwen38-27b-b70/scripts/validate-20260901-qwen38-fp8-explicit-deterministic-r54.py"
+        "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-result.md",
+        "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-public-reproduction-audit.md",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-explicit-deterministic-matrix-r54-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic-result.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-real-content-depth-r56-diagnostic.md",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-prefill-budget-r57-result.json",
+        "experiments/qwen38-27b-b70/scripts/validate-20260901-qwen38-fp8-explicit-deterministic-r54.py"
       ],
       "missing": [
-      "tested Intel driver and Docker host guide",
-      "clean-host replay",
-      "beginner recovery flow",
-      "two fresh-server clean-boot repeats of the diagnostic natural-prompt 2K-32K context matrix"
+        "tested Intel driver and Docker host guide",
+        "clean-host replay",
+        "beginner recovery flow",
+        "two fresh-server clean-boot repeats of the diagnostic natural-prompt 2K-32K context matrix"
       ]
     },
     {
@@ -827,6 +828,30 @@
         "additional operating points"
       ],
       "package": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
+    },
+    {
+      "id": "rapid-model-snapshots-b70",
+      "guide": "repro/rapid-model-snapshots-b70/README.md",
+      "classification": "record-capsule",
+      "audience": "historical",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": false,
+        "build": false,
+        "launch": false,
+        "validation": true,
+        "patch_links": false,
+        "hashes": false
+      },
+      "dependency_links": [
+        "results/rapid-model-snapshots-b70/README.md",
+        "experiments/rapid-model-snapshots-b70/README.md"
+      ],
+      "missing": [
+        "prompt-suite capsule only; the launch commands live in the experiment notes, and no install or replay path is published"
+      ]
     }
   ]
 }

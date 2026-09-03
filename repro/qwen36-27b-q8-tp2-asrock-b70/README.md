@@ -1,5 +1,10 @@
 # Reproduce Qwen3.6 27B Q8 target-only TP2 on two B70s
 
+> **Certification: `lab-replay`.** This replays the result on a host where the
+> lab's source trees, binaries, caches, models, and topology already exist. It
+> is not a portable install guide; see its `missing` entry in
+> [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This recipe reproduces the 2026-08-15 lab result on two ASRock Intel Arc Pro
 B70 32 GiB cards. It is Q8_0 target-only decode: no MTP, DFlash, draft model,
 prompt reuse, or other speculation.

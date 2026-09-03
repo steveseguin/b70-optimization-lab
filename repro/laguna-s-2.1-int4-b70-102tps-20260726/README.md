@@ -1,5 +1,10 @@
 # Laguna S 2.1 on 4x B70: published 102.971 / conventional 101.942 tok/s
 
+> **Certification: `candidate-portable-repro`, not a starter guide.** Install,
+> restore, launch, and validation material is closed for the lab's own hosts;
+> clean-host certification is still pending. The open items are listed under
+> this guide's `missing` entry in [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This is the fail-closed reproduction packet for the approved Laguna S 2.1
 INT4 four-B70 result. It embeds the sealed raw evidence, restores every known
 source and model revision, verifies actual native loader origins, runs one cold

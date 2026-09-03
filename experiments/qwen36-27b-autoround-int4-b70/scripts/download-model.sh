@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from huggingface_hub import HfApi, snapshot_download
 
-repo_dir = Path("/home/steve/llm-optimizations")
+repo_dir = Path(__file__).resolve().parents[3]
 repo = os.environ["QWEN36_27B_AR_REPO"]
 revision = os.environ["QWEN36_27B_AR_REVISION"]
 hf_home = Path(os.environ["HF_HOME"])

@@ -401,9 +401,14 @@ SHA-256. To build the same public parent chain while avoiding compilation
 of only the final GDN/XPU extension stage, use:
 
 ```bash
+FINAL_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-reprocheck-r55c \
 BUILD_ROOT=/path/to/new-r55c-stack \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-pinned-mtp1-published-r55c-stack.sh
 ```
+
+Set `FINAL_IMAGE` to that `...reprocheck-r55c` tag on this route too: it is the
+base tag the R62 and later builders expect by default, while the helper's own
+default is `...r55c-public-binaries`.
 
 That helper downloads the two public libraries, verifies their whole-file and
 `OFFLOAD_DEVICE_CODE` hashes and `$ORIGIN` RUNPATHs, builds the final overlay,

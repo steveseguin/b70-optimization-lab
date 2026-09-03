@@ -1,5 +1,10 @@
 # MiniMax M2.7 AutoRound INT4 on 4x Intel Arc Pro B70
 
+> **Certification: `candidate-portable-repro`, not a starter guide.** Install,
+> restore, launch, and validation material is closed for the lab's own hosts;
+> clean-host certification is still pending. The open items are listed under
+> this guide's `missing` entry in [`repro/guide-catalog.json`](../guide-catalog.json).
+
 This folder records the reproducible path for the current quality-clean 4x B70 MiniMax result:
 
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`

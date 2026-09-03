@@ -20,5 +20,5 @@ export MAX_MODEL_LEN=512
 export ATTEMPT=1
 export PORT=19641
 export KV_CACHE_MEMORY_BYTES=282427392
-export KERNEL_STAGE=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70
+export KERNEL_STAGE="${KERNEL_STAGE:-/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70}"
 exec "${script_dir}/launch-tp4-ep4-eager-mtp0-512.sh" "$@"

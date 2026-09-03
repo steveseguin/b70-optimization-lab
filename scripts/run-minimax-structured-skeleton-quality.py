@@ -91,10 +91,11 @@ def configure_env(args: argparse.Namespace) -> None:
             "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python",
         ),
     )
-    prepend_env_path("LD_LIBRARY_PATH", "/home/steve/.venvs/vllm-xpu/lib")
+    venv = os.environ.get("VENV") or os.path.expanduser("~/.venvs/vllm-xpu")
+    prepend_env_path("LD_LIBRARY_PATH", f"{venv}/lib")
     prepend_env_path(
         "LD_LIBRARY_PATH",
-        "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+        f"{venv}/lib/python3.12/site-packages/torch/lib",
     )
     if args.cache_root:
         os.environ["VLLM_CACHE_ROOT"] = args.cache_root
