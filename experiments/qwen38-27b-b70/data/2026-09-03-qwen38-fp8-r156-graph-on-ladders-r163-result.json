@@ -1,0 +1,147 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-graph-on-ladders-20260903-r163",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-graph-on-ladders-r163-prereg.json",
+  "status": "graph-on (capture sizes [1,2]) on R156: c1 sequential oracles bit-identical to graph-off on both profiles (64/64 each); MTP0 exact through c32, 63/64 at c64; MTP1 exact through c8 in this run (15/16, 32/32, 57/64)",
+  "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+  "env": {
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+    "cudagraph_capture_sizes": [
+      1,
+      2
+    ],
+    "VLLM_XPU_GDN_SPLIT_MIXED": "1"
+  },
+  "c1_oracles_equal_graph_off": {
+    "mtp1": "64/64",
+    "mtp0": "64/64"
+  },
+  "ladder_mtp1": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 50.77701364467861,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 77.30311445718912,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 175.0446847113505,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 353.8051928154399,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 484.9593403082625,
+      "exact_vs_sequential_oracle": "15/16",
+      "mismatches_first_divergence": [
+        [
+          "rollback-c010",
+          97
+        ]
+      ]
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 820.3759038499574,
+      "exact_vs_sequential_oracle": "32/32",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1077.3761851937325,
+      "exact_vs_sequential_oracle": "57/64",
+      "mismatches_first_divergence": [
+        [
+          "cache-c000",
+          96
+        ],
+        [
+          "cache-c032",
+          35
+        ],
+        [
+          "evidence-c007",
+          13
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "index-c033",
+          75
+        ],
+        [
+          "rollback-c010",
+          97
+        ],
+        [
+          "rollback-c050",
+          60
+        ]
+      ]
+    }
+  ],
+  "ladder_mtp0": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 31.698823903019548,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 61.148240645270846,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 124.15423413762703,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 234.48203303705913,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 420.93399768377566,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 673.8920066784548,
+      "exact_vs_sequential_oracle": "32/32",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 930.3593507664779,
+      "exact_vs_sequential_oracle": "63/64",
+      "mismatches_first_divergence": [
+        [
+          "evidence-c047",
+          25
+        ]
+      ]
+    }
+  ],
+  "interpretation": "Graph capture does not change single-user output on either profile, so the slower-host guidance (graph on) keeps the c1 identity claim. Under concurrency the graph-on MTP0 ladder loses one prompt at c64, so the published MTP0 c64 identity claim applies to the graph-off profile; graph-on MTP0 is identity-qualified through c32. The MTP1 miss set moves with scheduling, consistent with a schedule-sensitive residual."
+}

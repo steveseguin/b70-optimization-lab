@@ -199,6 +199,15 @@ Factors that were measured and found to matter or not:
 Outputs are unaffected by any of these: every strict, cache-zero, canary and
 identity gate passed on both hosts.
 
+Graph-on identity on the published R156 image (R163, 2026-09-03): with
+`VLLM_XPU_ENABLE_XPU_GRAPH=1` and capture sizes `[1,2]`, the 64 single-user
+oracles were bit-identical to the graph-off oracles on both profiles, so the
+single-user identity claim carries over to graph capture unchanged. Under
+concurrency, graph-on MTP0 stayed exact through c32 and missed one prompt at
+c64 (63/64); the published MTP0 c64 identity claim therefore applies to the
+graph-off profile, and graph-on MTP0 is identity-qualified through c32. See
+[R163](../../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-graph-on-ladders-r163-result.json).
+
 ### Independent host replay of R139 (four-B70 host, 2026-09-02)
 
 The chain above was replayed from a fresh full clone on a second lab host
