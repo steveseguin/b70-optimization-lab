@@ -76,6 +76,55 @@ same-image MTP0 oracle on 18/18 complete arrays.
 
 Evidence: [R150](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json).
 
+### Know your host before benchmarking
+
+The single-user decode rate of this recipe is bound by host submission
+latency, not by the cards: with the graph off, each token issues about
+3,000 kernel launches and 130 two-card all-reduces one at a time. Two
+probes, run inside the R139 image, tell you which host class you are on
+before you spend an hour on the strict suite:
+
+```bash
+# per-launch host cost (one card)
+docker run --rm --device /dev/dri:/dev/dri --group-add render \
+  -e ONEAPI_DEVICE_SELECTOR=level_zero:0 --workdir /tmp --entrypoint python3 \
+  -v $PWD/experiments/qwen38-27b-b70/scripts/qwen38-fp8-host-submission-latency-probe.py:/tmp/p.py:ro \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139 /tmp/p.py
+
+# two-card all-reduce latency and exactness (both cards; same flags as run-server.sh)
+docker run --rm --ulimit core=0 --device /dev/dri:/dev/dri --group-add render \
+  --cap-add SYS_PTRACE --security-opt label=disable --ipc=host --shm-size=8g \
+  -e ZE_AFFINITY_MASK=0,1 -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 -e VLLM_TARGET_DEVICE=xpu \
+  -e CCL_ATL_TRANSPORT=ofi -e FI_PROVIDER=tcp -e FI_TCP_IFACE=lo -e CCL_ZE_IPC_EXCHANGE=pidfd \
+  -e CCL_SEND=direct -e CCL_RECV=direct -e CCL_TOPO_P2P_ACCESS=1 \
+  -e CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4294967296 -e CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 \
+  -e CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
+  -v $PWD/experiments/qwen38-27b-b70/scripts/qwen38-fp8-tp2-allreduce-census.py:/tmp/ar.py:ro --workdir /tmp \
+  --entrypoint python3 neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139 \
+  -m torch.distributed.run --standalone --nproc_per_node=2 /tmp/ar.py /tmp/ar.json
+```
+
+| probe value | publishing host (EPYC 9015, PCIe Gen5) | replay host (TR PRO 5955WX, PCIe Gen4) |
+| --- | ---: | ---: |
+| async launch, us | 3.1 | 5.2-6.2 |
+| launch plus sync, us | 26 | 33 |
+| two-card all-reduce at 2 rows, us | 13 | 48-51 |
+| graph-off MTP1 / MTP0, tok/s | 54.6 / 33.3 | 28.9 / 18.6 |
+| graph-on (sizes [1,2]) MTP1 / MTP0, tok/s | 51.2 (R58, MTP1 only) | 51.3 / 31.1 |
+
+Factors that were measured and found to matter or not:
+
+| factor | effect on the c1 rate |
+| --- | --- |
+| host single-thread speed and submission path (CPU generation, I/O die, PCIe generation) | sets the per-launch cost; the dominant factor with the graph off |
+| two-card all-reduce latency (cards on one root complex, PCIe generation) | 130 collectives per token; 13 vs 48 us is the residual gap once the graph is on |
+| XPU Graph capture (`VLLM_XPU_ENABLE_XPU_GRAPH=1`, capture sizes `[1,2]`) | removes most launch cost on slow hosts; 1.1% slower on the publishing host; identity ladder not yet run graph-on |
+| CPU governor / EPP, pinning to one CCD, `iommu=pt`, ACS redirect, GuC 70.44 vs 70.72, ECC (off) | none to 2% |
+| core count, host RAM above the 15 GiB minimum | none; the issue loop is one thread per process |
+
+Outputs are unaffected by any of these: every strict, cache-zero, canary and
+identity gate passed on both hosts.
+
 ### Independent host replay of R139 (four-B70 host, 2026-09-02)
 
 The chain above was replayed from a fresh full clone on a second lab host
