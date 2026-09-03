@@ -3,25 +3,26 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Strict R62 MTP1 qualified: `54.424603 tok/s`.** After a clean reboot, two
-> fresh-server attempts with separate empty compile caches measured `54.622918`
-> and `54.226288 tok/s`, `5.0504%` above the previous `51.808087 tok/s`
-> profile. Both attempts ran the complete 12-prompt/six-class natural-512
-> workload with cache zero and canaries before and after. Candidate A/B and
-> both candidate/FP16-verifier MTP0 comparisons matched all 12 complete token
-> arrays. Per-card compute and two-card XCCL passed before and after the runs,
-> and the clean boot logged no Xe fault. The package remains `candidate` until
-> an independent host-driver/Docker installation replay. See the
-> [R119 promotion](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md).
+> **Strict R139 row-invariant W8A16 qualified: MTP1 `54.627 tok/s`, MTP0
+> `33.314 tok/s`.** On a clean boot (2026-09-02), two fresh MTP1 servers with
+> separate empty compile caches measured `54.313` and `54.942 tok/s`; three
+> fresh MTP0 servers measured `33.337`, `33.314`, and `33.289 tok/s`. Every
+> pairwise comparison matched all 12 complete token arrays, canaries passed
+> before and after, cache stayed zero, and the target verifier stayed FP16
+> (draft-only INT4 head). The R139 image replaces the oneDNN W8A16 GEMM with
+> a fixed-K, row-invariant strategy selector, so greedy output no longer
+> depends on batch shape for batch sizes 1-512. See the
+> [R147-R149 ladders](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
 
-> **Determinism boundary:** the exactness result above is scoped to the fixed
-> suite's 48-78-token prompts. A later operator sweep and endpoint probe found
-> repeat-nondeterministic W8A16 logprobs when a prefill step contains roughly
-> 168-256 rows; five repeats at each of 168, 200, 224, and 250 prompt tokens
-> produced five distinct logprob arrays. The clean-boot R119 probe also
-> produced two distinct 64-token streams at 168 prompt tokens. Greedy
-> concurrent output remains batch-shape-dependent. See
-> the [CR1 review](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-c2-identity-review-kernel-census-cr1.md).
+> **Determinism scope:** both profiles return one token stream and one logprob
+> array across five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens,
+> and every concurrent output is byte-identical to its single-request answer
+> through 16 simultaneous users. At 32 and 64 users a few near-tie prompts
+> take a different, equally valid branch (2/32, 6-9/64), so aggregate rates are
+> published only through c16 until that per-sequence kernel is repaired. The
+> previous R62 profile (`54.424603 tok/s`) failed repeat determinism at
+> 168-250-token prompts and concurrency identity at c2; it remains buildable
+> from the same chain.
 
 The old `58.391033 tok/s` dynamic-MTP center used only a 128-token output cap,
 and the `146.814418 tok/s` result used a selected 40-token fixture. Neither is
@@ -189,7 +190,8 @@ Intel oneAPI compiler and requires `/opt/intel/oneapi/setvars.sh` on the build
 host (override with `HOST_ONEAPI_ROOT`); the public-binary
 `build-pinned-mtp1-published-r55c-stack.sh` route avoids that requirement.
 
-The qualified `54.424603 tok/s` headline is the R62 overlay on that image:
+The R62 overlay on that image is the previous `54.424603 tok/s` headline and
+the base the qualified R139 profile is installed over:
 it quantizes only the one-row MTP draft vocabulary projection and leaves the
 FP16 target verifier unchanged. Build it with the base image ID printed by
 `docker image inspect <FINAL_IMAGE> --format '{{.Id}}'`:
@@ -203,6 +205,32 @@ docker image inspect \
   neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r62 \
   --format '{{.Id}}'
 ```
+
+The qualified R139 profile adds one file, a rebuilt `_xpu_C.abi3.so` whose
+oneDNN W8A16 GEMM is row-invariant. Either install the released binary (whole-
+file and section digests are verified; no compiler needed):
+
+```bash
+BUILD_ROOT=/path/to/empty-r139-build \
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-the-r62-image-id-printed-above \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-published-image.sh
+```
+
+or rebuild it from the pinned vllm-xpu-kernels, oneDNN, and sycl-tla sources
+with the four repository patches (needs host Intel oneAPI 2026.1 under
+`/opt/intel/oneapi`; the compile runs inside the R62 image):
+
+```bash
+BUILD_ROOT=/path/to/empty-r139-source-build \
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-the-r62-image-id-printed-above \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-image.sh
+```
+
+Both routes print the R139 image ID and the extension digest
+`f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1`. The
+binary, its section digests, the patches, the build scripts, and the host
+package list are in GitHub release
+[`qwen38-fp8-tp2-r139-20260902`](https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-fp8-tp2-r139-20260902).
 
 The helper applies the exact
 [W8A16 patch](../../experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-block-w8a16-20260826.patch),
@@ -286,9 +314,41 @@ and kernel commit, not by a machine-local Docker image ID.
 
 ## 4. Launch, check, and benchmark
 
-To reproduce the qualified R62 MTP1 service (`54.424603 tok/s`), launch the
-R62 wrapper with the R62 image ID printed in step 2, then benchmark it with
+To reproduce the qualified R139 MTP1 service (`54.627 tok/s`), launch the
+R139 wrapper with the R139 image ID printed in step 2, then benchmark it with
 the served model name the wrapper registers:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-the-r139-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh
+
+OUT_DIR=/path/to/new-strict-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-fixed-k-r139 \
+PROFILE_LABEL=mtp1-fixed-k-r139 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+The matched R139 MTP0 profile (`33.314 tok/s`, the target-only baseline and
+the oracle the MTP1 result is compared against) uses the same image without
+speculative decoding:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/another-new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-the-r139-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-r139-server.sh
+
+OUT_DIR=/path/to/new-mtp0-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp0-fixed-k-r139 \
+PROFILE_LABEL=mtp0-fixed-k-r139 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+A qualifying audit needs two fresh MTP1 and two fresh MTP0 attempts compared
+with `compare-strict-attempt-outputs.py`. The previous R62 MTP1 service
+(`54.424603 tok/s`) launches the same way from the R62 wrapper and image ID:
 
 ```bash
 MODEL_DIR=/path/to/qwen3.8-27b-fp8 \

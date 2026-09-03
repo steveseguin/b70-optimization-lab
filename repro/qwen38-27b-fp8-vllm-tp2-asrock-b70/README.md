@@ -11,9 +11,115 @@
 
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
-FP16 KV, and TP2. The R62 publisher-MTP1 profile is lab-qualified at
-**`54.424603 tok/s`** with an unchanged FP16 target verifier; deeper dynamic
-MTP remains a research lane.
+FP16 KV, and TP2. The R139 row-invariant W8A16 profile is lab-qualified at
+**`54.627 tok/s`** MTP1 (unchanged FP16 target verifier) and **`33.314 tok/s`**
+MTP0, output-identical through 16 concurrent users and repeat-exact at every
+tested prompt length; deeper dynamic MTP remains a research lane.
+
+## Row-invariant R139 profile (qualified 2026-09-02)
+
+R139 is the R62 image with one file replaced: a rebuilt `_xpu_C.abi3.so`
+whose oneDNN `fp8_gemm_w8a16` uses a fixed-K, row-invariant strategy
+selector. At the operator level every production shape is bitwise
+row-invariant, permutation-invariant, and repeat-exact for batch sizes
+1-512. At the endpoint, on a clean boot:
+
+| arm | attempt | class-balanced decode | output gate |
+| --- | ---: | ---: | ---: |
+| R139 MTP0 | `r147 mtp0-a` | 33.336950 tok/s | oracle |
+| R139 MTP0 | `r147 mtp0-b` | 33.313729 tok/s | 12/12 vs mtp0-a |
+| R139 MTP0 | `r147c mtp0-c` | 33.289052 tok/s | 12/12 vs mtp0-a |
+| R139 MTP1 | `r147 mtp1-a` | 54.312987 tok/s | 12/12 vs sibling and mtp0-a |
+| R139 MTP1 | `r147 mtp1-b` | 54.941585 tok/s | 12/12 vs sibling and mtp0-a |
+| R139 MTP1 two-attempt center | **54.627286 tok/s** | — | **qualified** |
+| R139 MTP0 three-attempt median | **33.313729 tok/s** | — | **qualified** |
+
+Every attempt used the complete fixed 12-prompt/six-class natural-512 suite,
+`cached_tokens=0`, canaries before and after, and a fresh empty compile
+cache; both MTP1 servers logged the FP16-verifier marker on both ranks. The
+same-image MTP0 oracle is regenerated for this kernel (its arithmetic differs
+from the natural kernel by late near-tie tokens on 4 of 12 prompts, as any
+reduction-order change must). Determinism scope, both profiles:
+
+- five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens: one token
+  stream and one logprob array at every length (the R62 profile failed this
+  at 168-250);
+- c1-c64 identity ladder (64 sequential oracles, then 1, 2, 4, 8, 16, 32, 64
+  concurrent users, 128 tokens each): every output byte-identical through
+  c16 (R62 first missed at c2); c32 and c64 matched 30/32 and 55-58/64, so
+  aggregate rates are published only through c16 (MTP1 497.4 tok/s, MTP0
+  421.1 tok/s at c16). Raising the batch budget (R148) and chunking the FP16
+  vocabulary head (R149) did not change that; the residual is a per-sequence
+  kernel at 32+ sequences and is the next census target.
+
+Evidence: [R147](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json),
+[R147c](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-result.json),
+[R148](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-result.json),
+[R149](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-result.json),
+[note](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
+
+### Build and run R139
+
+Build the R62 chain exactly as in the R62 section below (public R55C parent
+plus the R62 overlay), then add the R139 extension by one of two routes. The
+binary route downloads the released `_xpu_C.abi3.so`, verifies its whole-file
+digest `f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1`
+and its `.text`/`.rodata`/`.data`/`OFFLOAD_DEVICE_CODE` section digests, and
+installs it over your R62 image; it needs no compiler:
+
+```bash
+BUILD_ROOT=/path/to/empty-r139-build \
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-your-r62-image-id \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-published-image.sh
+```
+
+The source route clones vllm-xpu-kernels `1e90ffa672`, oneDNN `0e2a5bfeef`,
+and sycl-tla `cd763790ad`, applies the four repository patches
+(`vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch`,
+`vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch`,
+`onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch`,
+`onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch`), and compiles
+inside the R62 image with the host's Intel oneAPI 2026.1 mounted read-only
+(`/opt/intel/oneapi`, override `HOST_ONEAPI_ROOT`). It prints the same
+extension digest when the toolchain matches:
+
+```bash
+BUILD_ROOT=/path/to/empty-r139-source-build \
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-your-r62-image-id \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-image.sh
+```
+
+Launch and benchmark MTP1, then the matched MTP0 control, each with a new
+empty cache directory and the served model name the wrapper registers:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-your-r139-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh
+
+OUT_DIR=/path/to/new-strict-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-fixed-k-r139 \
+PROFILE_LABEL=mtp1-fixed-k-r139 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/another-new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-your-r139-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-r139-server.sh
+
+OUT_DIR=/path/to/new-mtp0-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp0-fixed-k-r139 \
+PROFILE_LABEL=mtp0-fixed-k-r139 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+Binaries, section digests, patches, build scripts, and the host package list
+are in GitHub release
+[`qwen38-fp8-tp2-r139-20260902`](https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-fp8-tp2-r139-20260902);
+`publication-manifest.json` binds every file above by SHA-256 and
+`verify-public-source-closure.sh` checks them. TP1 is not a qualified
+configuration for this checkpoint; only TP2 on two B70s is published.
 
 ## Strict MTP1 qualification
 

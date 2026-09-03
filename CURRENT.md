@@ -170,8 +170,10 @@ per-sequence source that R148 (batch budget) and R149 (chunked FP16 head)
 cleared as causes. Next is an operator census of the GDN state and attention
 decode kernels at 1..64 sequences; see
 [`R147-R149 ladders`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
-The publication decision between an identity-qualified profile and the faster
-R62/R119 headline is the user's.
+On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
+MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
+in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
+R62/R139. LocalMaxxing still holds the older 51.808087 submission.
  Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.

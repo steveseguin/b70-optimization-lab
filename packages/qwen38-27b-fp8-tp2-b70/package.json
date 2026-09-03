@@ -10,22 +10,42 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. R62 MTP1 is clean-boot-qualified at 54.424603 tok/s with an unchanged FP16 target verifier and 12/12 exact complete arrays across both fresh candidates and the MTP0 oracle on the fixed 48-78-token-prompt suite. W8A16 outputs are not repeat-deterministic for roughly 168-256-row prefills; independent host-installation replay remains pending.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R139 row-invariant W8A16 profile is clean-boot-qualified at 54.627 tok/s MTP1 (FP16 target verifier, draft-only INT4 head) and 33.314 tok/s MTP0, with output identical to a single request through 16 concurrent users and repeat-exact answers at every tested prompt length from 100 to 300 tokens. Above 16 concurrent users a few near-tie prompts can take a different valid branch, so those rates are not published. Independent host-installation replay remains pending.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
-    "operating_systems": ["Linux"],
-    "delivery": ["container"],
-    "modalities": ["text"],
-    "use_cases": ["general", "coding", "long context"],
-    "tags": ["two cards", "Docker", "official checkpoint", "target only", "MTP0", "MTP1", "dynamic MTP8 to MTP1", "W8A16"],
+    "operating_systems": [
+      "Linux"
+    ],
+    "delivery": [
+      "container"
+    ],
+    "modalities": [
+      "text"
+    ],
+    "use_cases": [
+      "general",
+      "coding",
+      "long context"
+    ],
+    "tags": [
+      "two cards",
+      "Docker",
+      "official checkpoint",
+      "target only",
+      "MTP0",
+      "MTP1",
+      "dynamic MTP8 to MTP1",
+      "W8A16",
+      "row-invariant W8A16"
+    ],
     "published_at": "2026-08-27",
-    "benchmark_status": "Strict R62 MTP1 clean-boot-qualified at 54.424603 tok/s: two fresh empty-cache candidates measured 54.622918/54.226288 tok/s, 5.0504% above the prior 51.808087 tok/s incumbent. Both complete 12-prompt/six-class natural-512 workloads were cache zero and passed canaries before and after. Candidate-to-candidate and both candidate-to-MTP0-oracle comparisons matched 12/12 complete token arrays on the fixed 48-78-token-prompt suite; both-rank markers confirmed the target verifier remained FP16. Per-card compute and two-card XCCL passed before and after, with no current-boot Xe fault. A separate endpoint probe found five distinct logprob arrays at 168, 200, 224, and 250 prompt tokens and two distinct token streams at 168, so no universal prompt-shape determinism is claimed. Independent host-driver/Docker installation replay remains pending.",
+    "benchmark_status": "Strict R139 fixed-K MTP1 clean-boot-qualified at 54.627 tok/s: two fresh empty-cache servers measured 54.313/54.942 tok/s, each 12/12 complete arrays exact versus a same-image MTP0 oracle that three fresh MTP0 servers reproduced 12/12 (33.337/33.314/33.289 tok/s). Both profiles returned one token stream and one logprob array across five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens, closing the earlier 168-256-token nondeterminism. The c1-c64 concurrency ladder was output-identical to the sequential oracle through c16 on both profiles; c32 and c64 matched 30/32 and 55-58/64, so aggregate rates are published only through c16. The kernel is row-invariant, permutation-invariant, and repeat-exact for every batch size 1-512 at the operator level. Canaries passed before and after every server, cache zero, no Xe fault on the qualifying boot. Independent host replay remains pending.",
     "featured_metric": {
-      "value": 54.42460323814495,
+      "value": 54.62728639090838,
       "unit": "tok/s",
-      "label": "strict varied-prompt decode (R62 MTP1)",
-      "scope": "Median of two clean-boot fresh-server class-balanced medians over a complete fixed 12-prompt/six-class natural-512 suite whose prompts contain 48-78 tokens. Both R62 attempts used separate empty compile caches, matched each other and the FP16-verifier MTP0 oracle on 12/12 complete token arrays, reported zero cached tokens, and passed canaries before and after. This does not claim universal prompt-shape determinism: roughly 168-256-row W8A16 prefills can change logprobs and tokens.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-result.json"
+      "label": "strict varied-prompt decode (R139 fixed-K MTP1)",
+      "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-image MTP0 oracle reproduced by three fresh MTP0 servers, canaries before and after, cache zero. The same image is output-identical through 16 concurrent users and repeat-exact at 100-300-token prompts.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json"
     }
   },
   "contributors": [
@@ -93,16 +113,18 @@
       "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
       "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-draft-only-int4-lm-head-r62-20260901.patch",
       "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
-      "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch"
+      "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch"
     ],
-    "reason": "The qualified R62 MTP1 profile uses block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, an explicit deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection while the target verifier stays FP16. Concurrent MTP pins XPU kernels at 1e90ffa672 with the mixed-path correction. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
+    "reason": "The qualified R139 profile is the R62 image plus a rebuilt vllm-xpu-kernels extension whose oneDNN W8A16 GEMM uses a fixed-K row-invariant strategy selector (two oneDNN patches), so greedy output no longer depends on batch shape for batch sizes 1-512 and is repeat-exact at every prompt length. Everything else is the R62 chain: block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, the deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection with an FP16 target verifier. The compiled extension is published as a release binary with whole-file and section digests, and can be rebuilt from the pinned sources with host oneAPI 2026.1. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
   },
   "commands": {
-    "preflight": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50 IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-    "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-independently-built-r62-id experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh",
+    "preflight": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139 IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn EXPECTED_XPU_EXTENSION_SHA256=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1 MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
+    "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-your-r139-image-id experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
     "health": "curl -fsS http://127.0.0.1:18124/health",
-    "benchmark": "OUT_DIR=/path/to/new-strict-attempt PROFILE_LABEL=mtp1-draft-int4-r62 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-    "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-draft-int4-r62"
+    "benchmark": "OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-fixed-k-r139 PROFILE_LABEL=mtp1-fixed-k-r139 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-fixed-k-r139"
   },
   "dependencies": [
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -398,41 +420,111 @@
     "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-control-prereg.json",
     "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-result.json",
     "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-negative.md",
-    "scripts/test_bench_openai_concurrency_oracle.py"
+    "scripts/test_bench_openai_concurrency_oracle.py",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-published-image.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-image.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.fixed-k-w8a16-r139",
+    "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+    "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
+    "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-r139-server.sh",
+    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-prereg.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md",
+    "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-w8a16-row-invariant-kernel-track-r120-r146.md",
+    "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147.sh",
+    "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c.sh"
   ],
   "performance_profiles": [
     {
-      "id": "http-block-w8a16-mtp1-output-audited-aggregate-vs-concurrent-users",
-      "label": "Block-W8A16 official FP8 TP2 + MTP1 aggregate decode",
+      "id": "http-r139-mtp1-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "R139 fixed-K FP8 TP2 + MTP1 aggregate decode, output-identical through c16",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Measured short-context vLLM HTTP completions on two B70s with official block-FP8 target and publisher MTP weights, one speculative token, FP16 activations/KV, the lab block-W8A16 dispatch, XPU kernels 1e90ffa672 with the mixed spec/non-spec correction, direct oneCCL P2P access, 128 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, and 128 returned raw token IDs per response. c64 and c128 are medians of three repeats; the smaller cells are one post-conditioning sample. The 512/512 c64 semantic canary passed. Greedy output is batch-shape-dependent. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-summary.json",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R139 row-invariant W8A16 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld because 2/32 and 6-9/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json",
       "points": [
-        {"concurrent_sequences": 8, "value": 351.03382883729853, "per_user_value": 43.879228604662316, "samples": 1},
-        {"concurrent_sequences": 16, "value": 585.5252961601492, "per_user_value": 36.595331010009325, "samples": 1},
-        {"concurrent_sequences": 32, "value": 800.4599610158504, "per_user_value": 25.014373781745324, "samples": 1},
-        {"concurrent_sequences": 64, "value": 1091.6424596877368, "per_user_value": 17.056913432620888, "samples": 3},
-        {"concurrent_sequences": 128, "value": 1075.6341550111658, "per_user_value": 8.403391836024733, "samples": 3}
+        {
+          "concurrent_sequences": 1,
+          "value": 51.8628,
+          "per_user_value": 51.8628,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 77.45,
+          "per_user_value": 38.725,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 174.6,
+          "per_user_value": 43.65,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 353.35,
+          "per_user_value": 44.16875,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 497.38,
+          "per_user_value": 31.08625,
+          "samples": 1
+        }
       ]
     },
     {
-      "id": "http-block-w8a16-output-audited-aggregate-vs-concurrent-users",
-      "label": "Block-W8A16 official FP8 TP2 aggregate decode",
+      "id": "http-r139-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "R139 fixed-K FP8 TP2 MTP0 aggregate decode, output-identical through c16",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Measured short-context vLLM HTTP completions on two B70s with official block-FP8 weights, FP16 activations/KV, target-only/MTP0, the lab block-W8A16 dispatch, direct oneCCL P2P access, 128 active slots, 256-token service capacity, cache disabled, and 128 returned raw token IDs per response. The c64-c128 ladder points are one measured screen each. The separately confirmed c128 headline is 1112.570323 tok/s, the median of conditioned repeats 2-5. Output isolation and 1024/1024 semantic canaries passed; greedy output is batch-shape-dependent. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-block-w8a16-tp2-p128-summary.json",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R139 row-invariant W8A16 image (MTP0, target only), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld because 2/32 and 6-9/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-result.json",
       "points": [
-        {"concurrent_sequences": 64, "value": 833.6955167227709, "per_user_value": 13.026492448793296, "samples": 1},
-        {"concurrent_sequences": 80, "value": 980.9004226113435, "per_user_value": 12.261255282641794, "samples": 1},
-        {"concurrent_sequences": 96, "value": 1064.718014389288, "per_user_value": 11.090812649888417, "samples": 1},
-        {"concurrent_sequences": 112, "value": 1090.40107434281, "per_user_value": 9.735723877168, "samples": 1},
-        {"concurrent_sequences": 128, "value": 1112.5703227078056, "per_user_value": 8.691955646154731, "samples": 4}
+        {
+          "concurrent_sequences": 1,
+          "value": 33.47,
+          "per_user_value": 33.47,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 64.43,
+          "per_user_value": 32.215,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 124.05,
+          "per_user_value": 31.0125,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 234.58,
+          "per_user_value": 29.3225,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 421.06,
+          "per_user_value": 26.31625,
+          "samples": 1
+        }
       ]
     },
     {
@@ -441,15 +533,39 @@
       "metric": "decode",
       "unit": "tok/s",
       "x_label": "Exact active prompt tokens",
-      "scope": "One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, FP16 activations/KV, the lab W8A16 dispatch, target-only/MTP0, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server sample per measured point. The fixture is grade-C repeated-token shape evidence, not natural prose. No point is interpolated or extrapolated.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, FP16 activations/KV, the lab W8A16 dispatch, target-only/MTP0, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server sample per measured point. The fixture is grade-C repeated-token shape evidence, not natural prose. No point is interpolated or extrapolated.",
       "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
       "points": [
-        {"context_tokens": 2048, "value": 35.20164806346478, "samples": 1},
-        {"context_tokens": 4096, "value": 34.75682144803016, "samples": 1},
-        {"context_tokens": 8192, "value": 33.59272918386755, "samples": 1},
-        {"context_tokens": 16384, "value": 32.830414570491264, "samples": 1},
-        {"context_tokens": 24576, "value": 32.04666551696565, "samples": 1},
-        {"context_tokens": 32768, "value": 31.48958732345858, "samples": 1}
+        {
+          "context_tokens": 2048,
+          "value": 35.20164806346478,
+          "samples": 1
+        },
+        {
+          "context_tokens": 4096,
+          "value": 34.75682144803016,
+          "samples": 1
+        },
+        {
+          "context_tokens": 8192,
+          "value": 33.59272918386755,
+          "samples": 1
+        },
+        {
+          "context_tokens": 16384,
+          "value": 32.830414570491264,
+          "samples": 1
+        },
+        {
+          "context_tokens": 24576,
+          "value": 32.04666551696565,
+          "samples": 1
+        },
+        {
+          "context_tokens": 32768,
+          "value": 31.48958732345858,
+          "samples": 1
+        }
       ]
     },
     {
@@ -458,15 +574,39 @@
       "metric": "prefill",
       "unit": "tok/s",
       "x_label": "Exact submitted prompt tokens",
-      "scope": "Derived from each exact measured request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not a server-only or kernel-only prefill rate. The grade-C fixture is repeated-token shape evidence. No point is interpolated or extrapolated.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Derived from each exact measured request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not a server-only or kernel-only prefill rate. The grade-C fixture is repeated-token shape evidence. No point is interpolated or extrapolated.",
       "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
       "points": [
-        {"context_tokens": 2048, "value": 2024.9146767180835, "samples": 1},
-        {"context_tokens": 4096, "value": 2504.9089594252846, "samples": 1},
-        {"context_tokens": 8192, "value": 2544.70821453456, "samples": 1},
-        {"context_tokens": 16384, "value": 2501.3922609235556, "samples": 1},
-        {"context_tokens": 24576, "value": 2440.0269289921525, "samples": 1},
-        {"context_tokens": 32768, "value": 2384.900676021135, "samples": 1}
+        {
+          "context_tokens": 2048,
+          "value": 2024.9146767180835,
+          "samples": 1
+        },
+        {
+          "context_tokens": 4096,
+          "value": 2504.9089594252846,
+          "samples": 1
+        },
+        {
+          "context_tokens": 8192,
+          "value": 2544.70821453456,
+          "samples": 1
+        },
+        {
+          "context_tokens": 16384,
+          "value": 2501.3922609235556,
+          "samples": 1
+        },
+        {
+          "context_tokens": 24576,
+          "value": 2440.0269289921525,
+          "samples": 1
+        },
+        {
+          "context_tokens": 32768,
+          "value": 2384.900676021135,
+          "samples": 1
+        }
       ]
     },
     {
@@ -475,15 +615,39 @@
       "metric": "ttft",
       "unit": "ms",
       "x_label": "Exact active prompt tokens",
-      "scope": "Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot receipts. The fixture is grade-C repeated-token shape evidence, not natural prose. One fresh-server sample per point; no interpolation or extrapolation.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot receipts. The fixture is grade-C repeated-token shape evidence, not natural prose. One fresh-server sample per point; no interpolation or extrapolation.",
       "evidence": "experiments/qwen38-27b-b70/data/qwen38-fp8-block-w8a16-tp2-http-depth-20260826-r2/summary.json",
       "points": [
-        {"context_tokens": 2048, "value": 1011.4006400108337, "samples": 1},
-        {"context_tokens": 4096, "value": 1635.189169086516, "samples": 1},
-        {"context_tokens": 8192, "value": 3219.2295970162377, "samples": 1},
-        {"context_tokens": 16384, "value": 6549.952302942984, "samples": 1},
-        {"context_tokens": 24576, "value": 10072.019987972453, "samples": 1},
-        {"context_tokens": 32768, "value": 13739.775551017374, "samples": 1}
+        {
+          "context_tokens": 2048,
+          "value": 1011.4006400108337,
+          "samples": 1
+        },
+        {
+          "context_tokens": 4096,
+          "value": 1635.189169086516,
+          "samples": 1
+        },
+        {
+          "context_tokens": 8192,
+          "value": 3219.2295970162377,
+          "samples": 1
+        },
+        {
+          "context_tokens": 16384,
+          "value": 6549.952302942984,
+          "samples": 1
+        },
+        {
+          "context_tokens": 24576,
+          "value": 10072.019987972453,
+          "samples": 1
+        },
+        {
+          "context_tokens": 32768,
+          "value": 13739.775551017374,
+          "samples": 1
+        }
       ]
     },
     {
@@ -492,15 +656,39 @@
       "metric": "decode",
       "unit": "tok/s",
       "x_label": "Exact active prompt tokens",
-      "scope": "One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, the lab W8A16 dispatch, publisher MTP depth 1, FP16/auto KV, deterministic Inductor, XPU Graph off, exact packed-RMS replay, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server observation per measured point; all six arrays exactly matched the corresponding qualified MTP0 oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. The 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. One-slot vLLM HTTP completions on two B70s with official block-FP8 weights, the lab W8A16 dispatch, publisher MTP depth 1, FP16/auto KV, deterministic Inductor, XPU Graph off, exact packed-RMS replay, 33,024-token capacity, cache disabled, and 128 returned token IDs. One fresh-server observation per measured point; all six arrays exactly matched the corresponding qualified MTP0 oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. The 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
       "points": [
-        {"context_tokens": 2048, "value": 44.77832281833947, "samples": 1},
-        {"context_tokens": 4096, "value": 54.93201141430635, "samples": 1},
-        {"context_tokens": 8192, "value": 51.31383425705685, "samples": 1},
-        {"context_tokens": 16384, "value": 51.2898098461305, "samples": 1},
-        {"context_tokens": 24576, "value": 43.715434823189355, "samples": 1},
-        {"context_tokens": 32768, "value": 46.63624110477451, "samples": 1}
+        {
+          "context_tokens": 2048,
+          "value": 44.77832281833947,
+          "samples": 1
+        },
+        {
+          "context_tokens": 4096,
+          "value": 54.93201141430635,
+          "samples": 1
+        },
+        {
+          "context_tokens": 8192,
+          "value": 51.31383425705685,
+          "samples": 1
+        },
+        {
+          "context_tokens": 16384,
+          "value": 51.2898098461305,
+          "samples": 1
+        },
+        {
+          "context_tokens": 24576,
+          "value": 43.715434823189355,
+          "samples": 1
+        },
+        {
+          "context_tokens": 32768,
+          "value": 46.63624110477451,
+          "samples": 1
+        }
       ]
     },
     {
@@ -509,15 +697,39 @@
       "metric": "prefill",
       "unit": "tok/s",
       "x_label": "Exact submitted prompt tokens",
-      "scope": "Derived from each exact measured deterministic-MTP1 request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not server-only or kernel-only prefill. All six cache-zero output arrays matched the MTP0 target oracle. The Grade-C fixture is repeated-token shape evidence; the 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Derived from each exact measured deterministic-MTP1 request as submitted prompt tokens divided by HTTP TTFT seconds. It includes scheduling, chunked prefill, and first-token work and is not server-only or kernel-only prefill. All six cache-zero output arrays matched the MTP0 target oracle. The Grade-C fixture is repeated-token shape evidence; the 2K point includes disclosed first-request Triton draft-kernel JIT. No point is interpolated or extrapolated.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
       "points": [
-        {"context_tokens": 2048, "value": 2562.8967557323763, "samples": 1},
-        {"context_tokens": 4096, "value": 3451.7426948674233, "samples": 1},
-        {"context_tokens": 8192, "value": 3496.528367033354, "samples": 1},
-        {"context_tokens": 16384, "value": 3365.2699083393595, "samples": 1},
-        {"context_tokens": 24576, "value": 3239.6424035593277, "samples": 1},
-        {"context_tokens": 32768, "value": 3124.5764710482604, "samples": 1}
+        {
+          "context_tokens": 2048,
+          "value": 2562.8967557323763,
+          "samples": 1
+        },
+        {
+          "context_tokens": 4096,
+          "value": 3451.7426948674233,
+          "samples": 1
+        },
+        {
+          "context_tokens": 8192,
+          "value": 3496.528367033354,
+          "samples": 1
+        },
+        {
+          "context_tokens": 16384,
+          "value": 3365.2699083393595,
+          "samples": 1
+        },
+        {
+          "context_tokens": 24576,
+          "value": 3239.6424035593277,
+          "samples": 1
+        },
+        {
+          "context_tokens": 32768,
+          "value": 3124.5764710482604,
+          "samples": 1
+        }
       ]
     },
     {
@@ -526,34 +738,39 @@
       "metric": "ttft",
       "unit": "ms",
       "x_label": "Exact active prompt tokens",
-      "scope": "Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot deterministic-MTP1 receipts. All six output arrays matched the MTP0 target oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. One fresh-server observation per point; the 2K point includes disclosed first-request Triton draft-kernel JIT. No interpolation or extrapolation.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Direct HTTP TTFT from the same six exact-token, cache-zero, one-slot deterministic-MTP1 receipts. All six output arrays matched the MTP0 target oracle. The fixture is Grade-C repeated-token shape evidence, not natural prose. One fresh-server observation per point; the 2K point includes disclosed first-request Triton draft-kernel JIT. No interpolation or extrapolation.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-28-qwen38-fp8-w8a16-mtp1-exact-depth-r33-result.json",
       "points": [
-        {"context_tokens": 2048, "value": 799.0957869915292, "samples": 1},
-        {"context_tokens": 4096, "value": 1186.646967078559, "samples": 1},
-        {"context_tokens": 8192, "value": 2342.8953350521624, "samples": 1},
-        {"context_tokens": 16384, "value": 4868.554513086565, "samples": 1},
-        {"context_tokens": 24576, "value": 7586.022448958829, "samples": 1},
-        {"context_tokens": 32768, "value": 10487.181319971569, "samples": 1}
-      ]
-    },
-    {
-      "id": "http-output-audited-aggregate-vs-concurrent-users",
-      "label": "Output-audited official FP8 TP2 HTTP aggregate decode",
-      "metric": "aggregate_decode",
-      "unit": "tok/s",
-      "x_metric": "concurrent_sequences",
-      "x_label": "Concurrent HTTP users",
-      "scope": "vLLM OpenAI-compatible HTTP completions on two B70s with official FP8 weights, FP16 KV, target-only/MTP0, direct oneCCL P2P access, 64 active service slots, 4,096-token capacity, unique 128-token short prompts, cache disabled, and 128 returned raw token IDs per response. Each marker is the median of two preregistered fresh-server attempts; worst throughput range was 0.525%. c1-c64 are within the active-slot limit. Output isolation passed, but greedy token identity is batch-shape-dependent. No point is interpolated or extrapolated.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
-      "points": [
-        {"concurrent_sequences": 1, "value": 21.557058993055225, "per_user_value": 21.557058993055225, "samples": 2},
-        {"concurrent_sequences": 2, "value": 41.42419577960041, "per_user_value": 20.712097889800205, "samples": 2},
-        {"concurrent_sequences": 4, "value": 81.29938089637803, "per_user_value": 20.324845224094506, "samples": 2},
-        {"concurrent_sequences": 8, "value": 157.99088376038839, "per_user_value": 19.748860470048548, "samples": 2},
-        {"concurrent_sequences": 16, "value": 293.3630296119064, "per_user_value": 18.33518935074415, "samples": 2},
-        {"concurrent_sequences": 32, "value": 504.38710091574535, "per_user_value": 15.762096903617042, "samples": 2},
-        {"concurrent_sequences": 64, "value": 774.3941438129216, "per_user_value": 12.0999084970769, "samples": 2}
+        {
+          "context_tokens": 2048,
+          "value": 799.0957869915292,
+          "samples": 1
+        },
+        {
+          "context_tokens": 4096,
+          "value": 1186.646967078559,
+          "samples": 1
+        },
+        {
+          "context_tokens": 8192,
+          "value": 2342.8953350521624,
+          "samples": 1
+        },
+        {
+          "context_tokens": 16384,
+          "value": 4868.554513086565,
+          "samples": 1
+        },
+        {
+          "context_tokens": 24576,
+          "value": 7586.022448958829,
+          "samples": 1
+        },
+        {
+          "context_tokens": 32768,
+          "value": 10487.181319971569,
+          "samples": 1
+        }
       ]
     },
     {
@@ -563,16 +780,44 @@
       "unit": "ms",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Median request TTFT from the same two fresh-server, output-audited direct-P2P attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p50 values; worst latency range across every reported p50/p95 metric was 4.404%. No point is interpolated or extrapolated.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. Median request TTFT from the same two fresh-server, output-audited direct-P2P attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p50 values; worst latency range across every reported p50/p95 metric was 4.404%. No point is interpolated or extrapolated.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
       "points": [
-        {"concurrent_sequences": 1, "value": 95.04806052427739, "samples": 2},
-        {"concurrent_sequences": 2, "value": 122.74269599583931, "samples": 2},
-        {"concurrent_sequences": 4, "value": 210.9998007363174, "samples": 2},
-        {"concurrent_sequences": 8, "value": 267.1333530161064, "samples": 2},
-        {"concurrent_sequences": 16, "value": 262.5558724976145, "samples": 2},
-        {"concurrent_sequences": 32, "value": 426.0661029838957, "samples": 2},
-        {"concurrent_sequences": 64, "value": 768.7485652277246, "samples": 2}
+        {
+          "concurrent_sequences": 1,
+          "value": 95.04806052427739,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 122.74269599583931,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 210.9998007363174,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 267.1333530161064,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 262.5558724976145,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 426.0661029838957,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 768.7485652277246,
+          "samples": 2
+        }
       ]
     },
     {
@@ -582,16 +827,44 @@
       "unit": "ms",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "p95 request TTFT from the same two fresh-server, output-audited direct-P2P attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p95 values; c64 reached 1.526 seconds. No point is interpolated or extrapolated.",
+      "scope": "Measured on the previous R50/R62 image (natural oneDNN W8A16 kernel), not yet re-measured on R139. p95 request TTFT from the same two fresh-server, output-audited direct-P2P attempts. The service has 64 active slots, so c1-c64 are unqueued. Each point is the median of the two per-attempt p95 values; c64 reached 1.526 seconds. No point is interpolated or extrapolated.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json",
       "points": [
-        {"concurrent_sequences": 1, "value": 95.04806052427739, "samples": 2},
-        {"concurrent_sequences": 2, "value": 170.9504044643836, "samples": 2},
-        {"concurrent_sequences": 4, "value": 211.2859381682938, "samples": 2},
-        {"concurrent_sequences": 8, "value": 267.68026400823146, "samples": 2},
-        {"concurrent_sequences": 16, "value": 391.23190475220326, "samples": 2},
-        {"concurrent_sequences": 32, "value": 728.5014198219869, "samples": 2},
-        {"concurrent_sequences": 64, "value": 1525.9734081308125, "samples": 2}
+        {
+          "concurrent_sequences": 1,
+          "value": 95.04806052427739,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 170.9504044643836,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 211.2859381682938,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 267.68026400823146,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 391.23190475220326,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 728.5014198219869,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 1525.9734081308125,
+          "samples": 2
+        }
       ]
     }
   ],
@@ -599,6 +872,7 @@
     "tested clean-host Intel driver and Docker installation",
     "independent host-driver/Docker installation and strict endpoint replay",
     "beginner recovery flow",
-    "two fresh-server clean-boot repeats of the diagnostic natural-prompt 2K-32K context matrix"
+    "2K-32K context depth matrix re-measured on the R139 image (current depth curve is from the previous R50/R62 image)",
+    "output identity above 16 concurrent users (a per-sequence kernel at 32+ sequences still flips near-tie prompts; operator census pending)"
   ]
 }
