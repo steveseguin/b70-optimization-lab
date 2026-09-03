@@ -194,11 +194,18 @@ whose GDN state page is never zeroed (`KVBlockZeroer` skips non-AttentionSpec
 groups) and is handed raw to the XPU kernel with `has_initial_state=False`.
 Depth-1 with async off improves the ladder to 32/32 at c32 and 61/64 at c64.
 A GPU fault on 0000:03:00.0 at 10:07 (during an MTP0 server start) blocks
-further device work on this boot. Reboot authorized by the user 13:15 EDT. Next after reboot (one command:
-`experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-post-reboot-r176-r178-r179.sh`): R176 probe (kernel inputs),
-R178 fix candidate (zero GDN state pages of new blocks,
-`patches/vllm-qwen38-xpu-zero-mamba-state-pages-r178-20260903.patch`), then
-depth-1 and depth-2 ladders and strict pairs on the fixed image, async on and off.
+further device work on this boot. Reboot authorized by the user 13:15 EDT; rebooted 13:16, boot 88f0984f clean.
+Post-reboot chain (17:42): R178 fix candidate ran live (48 layers) and left
+the phantom untouched (63/64, same `cache-c032` row) because the scheduler only
+records new block ids for `AttentionSpec` managers, so the worker hook never
+received a GDN page (see the
+[R178 result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-zero-mamba-pages-r178-result.md)).
+R180 (R178 + `MambaManager` records its new block ids,
+`patches/vllm-qwen38-xpu-record-mamba-new-blocks-r180-20260903.patch`) is
+built and queued. Running now, in order: R179 (MTP0 ladder, async off), R176
+probe rerun (first attempt aborted on the probe image's own `_xpu_ops.py`
+contract hash; fixed), R180. Then depth-1 and depth-2 ladders and strict pairs
+on the fixed image, async on and off.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to

@@ -1,0 +1,6 @@
+# R180 fix candidate: R178 (worker zeroes GDN conv/ssm pages for new block ids) + the scheduler-side half that R178
+# lacked: MambaManager records its newly allocated block ids so they reach new_block_ids_to_zero.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-zero-mamba-pages-r178
+COPY r180-record-mamba-new-blocks.py /tmp/r180.py
+RUN python /tmp/r180.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/core/single_type_kv_cache_manager.py && rm /tmp/r180.py
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-zero-mamba-pages-r180"

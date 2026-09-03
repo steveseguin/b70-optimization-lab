@@ -1,0 +1,23 @@
+--- a/vllm/v1/core/single_type_kv_cache_manager.py
++++ b/vllm/v1/core/single_type_kv_cache_manager.py
+@@ -84,8 +84,10 @@
+         self._max_admission_blocks_per_request = max_admission_blocks_per_request
+         # Record newly allocated block ids only when worker-side zeroing will
+         # consume them and this manager holds a spec type that gets zeroed.
++        # R180: Mamba/GDN state pages must be zeroed on (re)allocation too; the
++        # worker (R178 _zero_mamba_pages) zeroes conv/ssm views for these ids.
+         self._record_new_block_ids = needs_kv_cache_zeroing and isinstance(
+-            kv_cache_spec, AttentionSpec
++            kv_cache_spec, (AttentionSpec, MambaSpec)
+         )
+         self.new_block_ids: list[int] = []
+ 
+@@ -1662,6 +1664,8 @@
+                         self._apply_cow(request_id, block_idx, source_block, cow_block)
+                         returned_blocks = [cow_block] + returned_blocks
+                 req_blocks.extend(new_blocks)
++                if self._record_new_block_ids:  # R180
++                    self.new_block_ids.extend(b.block_id for b in new_blocks)
+                 self._allocated_block_reqs.add(request_id)
+                 self._partial_hit_reqs.pop(request_id, None)
+                 returned_blocks.extend(new_blocks)

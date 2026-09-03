@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-zero-mamba-pages-20260903-r180","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-zero-mamba-pages-r180 sha256:d343727316453d7f51fe1662e409090d63d5efcab08215aa6c93b3c30bddfbca (R178 + MambaManager records its new block ids so GDN pages reach new_block_ids_to_zero; patches/vllm-qwen38-xpu-record-mamba-new-blocks-r180-20260903.patch)",
+ "why":"R178 (17:48) left the phantom unchanged at cache-c032 (63/64) although its hook ran on 48 layers: SingleTypeKVCacheManager records new block ids only for AttentionSpec, so the hook only ever saw attention page ids. R178 never zeroed a GDN page.",
+ "hypothesis":"If the depth-2 phantom is stale recycled GDN state handed to the prefill kernel with has_initial_state=False, zeroing the GDN pages actually allocated to the new request removes it (64/64 on the 64-prompt pass with async scheduling on).",
+ "decision":"64/64 -> fix candidate confirmed; then depth-1 and depth-2 ladders and strict pairs on the fixed image, async on and off. Phantom persists -> the stale content is not in the state page (scratch or draft-head path); read the R176 probe output before any further fix image.",
+ "abort_conditions":["as R147"]}
