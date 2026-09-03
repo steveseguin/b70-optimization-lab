@@ -32,8 +32,8 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 [[ -x "$driver" ]] || fail "driver is not executable: ${driver}"
 [[ -r "$password_file" ]] || fail "sudo password file is not readable"
 mkdir -p "$log_dir"
-port=$(grep -o -- '--port [0-9]*' "${script_dir}"/launch-*-a"${attempt}"-*.sh 2>/dev/null | head -1 | awk '{print $2}')
-[[ -n "${port:-}" ]] || port=$(grep -o 'PORT=[0-9]*' "${script_dir}"/launch-*-a"${attempt}"-*.sh | head -1 | cut -d= -f2)
+# (grep exits 1 when a form is absent; under pipefail that must not abort.)
+port=$(grep -h -o 'PORT=[0-9]*' "${script_dir}"/launch-*-a"${attempt}"-*.sh 2>/dev/null | head -1 | cut -d= -f2 || true)
 [[ "$port" =~ ^[0-9]+$ ]] || fail "cannot determine the packet port"
 
 # Preflight. The process check uses `ps -eo args` with a bracketed pattern so
