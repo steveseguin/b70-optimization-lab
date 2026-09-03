@@ -1,0 +1,53 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-lm-head-chunk-rows-20260902-r149",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-prereg.json",
+  "status": "negative: <=32-row chunked FP16 lm_head active (marker present, c1 oracles 64/64 equal to R147b) leaves c32 at 29/32 and c64 at 55/64",
+  "image_id": "sha256:146fd946e9136cedd4696a81f307f9f883620c26155ef2671c1e448246af8bf6",
+  "boot_id": "2c230b44-d761-4f9a-a907-56a2e319f117",
+  "arms_run": [
+    "ladder-mtp1-chunk32-2048"
+  ],
+  "arms_skipped": "mtp0 arm not run: the MTP1 arm showed no change, so the head boundary is not what flips tokens at c32/c64",
+  "ladder": {
+    "classification": "output-isolation-qualified-shape-variant",
+    "points": [
+      {
+        "concurrency": 1,
+        "aggregate_tok_s_wall": 50.16371842645247,
+        "exact_vs_sequential_oracle": "1/1"
+      },
+      {
+        "concurrency": 2,
+        "aggregate_tok_s_wall": 78.48081640109318,
+        "exact_vs_sequential_oracle": "2/2"
+      },
+      {
+        "concurrency": 4,
+        "aggregate_tok_s_wall": 173.66954338181645,
+        "exact_vs_sequential_oracle": "4/4"
+      },
+      {
+        "concurrency": 8,
+        "aggregate_tok_s_wall": 346.1425689579228,
+        "exact_vs_sequential_oracle": "8/8"
+      },
+      {
+        "concurrency": 16,
+        "aggregate_tok_s_wall": 492.14151469178086,
+        "exact_vs_sequential_oracle": "16/16"
+      },
+      {
+        "concurrency": 32,
+        "aggregate_tok_s_wall": 727.3793509860025,
+        "exact_vs_sequential_oracle": "29/32"
+      },
+      {
+        "concurrency": 64,
+        "aggregate_tok_s_wall": 1048.0059905813903,
+        "exact_vs_sequential_oracle": "55/64"
+      }
+    ]
+  },
+  "decision": "Do not adopt the head chunk (no measured benefit; single-variable rule). Keep the patch and image as a proven-exact building block for a later configuration that needs >32 head rows to be invariant. The residual source keys on >=32 concurrent sequences on both profiles; next is an operator census of the GDN conv/recurrent state kernels and the attention decode path at 1..64 sequences (census before bisection)."
+}

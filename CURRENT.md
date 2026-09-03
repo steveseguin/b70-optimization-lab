@@ -20,12 +20,8 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-**Device lock (2026-09-02 evening, 19:51 boot):** the R147/R148/R149 ladder
-campaigns run unattended on both B70s from
-`experiments/qwen38-27b-b70/scripts/` (containers `qwen38-fp8-r147-*`, port
-18128, roots `/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-*-20260902-r14*`).
-Do not launch other GPU work until the latest root contains
-`campaign-end.txt` or `ABORTED`.
+**GPUs free (2026-09-02 21:30 EDT, boot `2c230b44`, no fault this boot):** R147-R149
+complete, no lane container running, both B70s normal after postflight.
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
@@ -167,9 +163,13 @@ performance recorded, not gated). R146 is paused until R147 reports. R147 comple
 before the fault above: two same-image MTP0 controls match 12/12 (G1), MTP1
 attempt a matches same-image MTP0 12/12 at `54.312987 tok/s` (0.2% under the
 R119 center, so R140's speed rejection was noise), and the same-image MTP0
-controls are 1.2% under the natural-kernel controls. The c1-c64 ladder and the
-168-256-token repeat probe still have to run on a fresh boot; see the
-[`R147 partial note`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-partial.md).
+controls are 1.2% under the natural-kernel controls. On the clean 19:51 boot the campaign finished: both profiles are repeat-exact
+at 100-300-token prompts and output-identical through c16 (MTP1 center
+`54.627 tok/s`, MTP0 about `33.3`), while c32/c64 miss 2/32 and 6-9/64 on a
+per-sequence source that R148 (batch budget) and R149 (chunked FP16 head)
+cleared as causes. Next is an operator census of the GDN state and attention
+decode kernels at 1..64 sequences; see
+[`R147-R149 ladders`](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
 The publication decision between an identity-qualified profile and the faster
 R62/R119 headline is the user's.
  Recovery order is process
