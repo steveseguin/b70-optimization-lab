@@ -1,0 +1,987 @@
+{
+  "ccl_kernel": {
+    "path": "/home/steve/.venvs/vllm-xpu/lib/ccl/kernels/kernels.spv",
+    "sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9"
+  },
+  "ccl_sycl_allreduce_ll": "twoshots",
+  "collective_processes": [
+    {
+      "command": "vllm",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 363498,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    },
+    {
+      "command": "python",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 363810,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    },
+    {
+      "command": "VLLM::EngineCor",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 363811,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    },
+    {
+      "command": "VLLM::Worker_TP",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 364014,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    },
+    {
+      "command": "VLLM::Worker_TP",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 364174,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    },
+    {
+      "command": "VLLM::Worker_TP",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 364376,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    },
+    {
+      "command": "VLLM::Worker_TP",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "pid": 364621,
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+    }
+  ],
+  "compilation_mode": "NONE",
+  "descendant_pids": [
+    363498,
+    363810,
+    363811,
+    364014,
+    364174,
+    364376,
+    364621
+  ],
+  "graph_stats": [
+    {
+      "count": 2,
+      "padded_tokens": 17,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 17
+    },
+    {
+      "count": 2,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 5,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 1,
+      "padded_tokens": 26,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 26
+    },
+    {
+      "count": 15,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 36,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 36
+    },
+    {
+      "count": 11,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 36,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 36
+    },
+    {
+      "count": 1,
+      "padded_tokens": 26,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 26
+    },
+    {
+      "count": 1,
+      "padded_tokens": 37,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 37
+    },
+    {
+      "count": 103,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 15,
+      "padded_tokens": 37,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 37
+    },
+    {
+      "count": 3,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 2,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 12,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 11,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 6,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 23,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 1,
+      "padded_tokens": 18,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 18
+    },
+    {
+      "count": 149,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 1,
+      "padded_tokens": 18,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 18
+    },
+    {
+      "count": 159,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 150,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 1,
+      "padded_tokens": 18,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 18
+    },
+    {
+      "count": 105,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 163,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 1,
+      "padded_tokens": 18,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 18
+    },
+    {
+      "count": 92,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 7,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 32,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 5,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 95,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 6,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 41,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 4,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 86,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 3,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 6,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 106,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 2,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 21,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 4,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 7,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    },
+    {
+      "count": 121,
+      "padded_tokens": 1,
+      "paddings": 0,
+      "runtime_mode": "FULL",
+      "unpadded_tokens": 1
+    },
+    {
+      "count": 1,
+      "padded_tokens": 64,
+      "paddings": 0,
+      "runtime_mode": "NONE",
+      "unpadded_tokens": 64
+    }
+  ],
+  "inductor_disabled_receipts": 2,
+  "libccl": {
+    "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+    "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700"
+  },
+  "phase": "after",
+  "schema_version": 2,
+  "server_pid": 363498,
+  "size_1_full_dispatch_count": 1487,
+  "status": "passed",
+  "torch_trace": {
+    "compile_event_count": 20,
+    "events": [
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_0_qog3334j.log",
+        "trace_line": 39
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_0_qog3334j.log",
+        "trace_line": 4484
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_0_qog3334j.log",
+        "trace_line": 9021
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_0_qog3334j.log",
+        "trace_line": 13481
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_0_qog3334j.log",
+        "trace_line": 17876
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_1_55d7whjb.log",
+        "trace_line": 39
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_1_55d7whjb.log",
+        "trace_line": 4484
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_1_55d7whjb.log",
+        "trace_line": 9039
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_1_55d7whjb.log",
+        "trace_line": 13499
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_1_55d7whjb.log",
+        "trace_line": 17894
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_2_il8n_jk4.log",
+        "trace_line": 39
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_2_il8n_jk4.log",
+        "trace_line": 4484
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_2_il8n_jk4.log",
+        "trace_line": 9039
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_2_il8n_jk4.log",
+        "trace_line": 13499
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_2_il8n_jk4.log",
+        "trace_line": 17894
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_3_nenqscti.log",
+        "trace_line": 39
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_3_nenqscti.log",
+        "trace_line": 4484
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_3_nenqscti.log",
+        "trace_line": 9039
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_3_nenqscti.log",
+        "trace_line": 13499
+      },
+      {
+        "filename": "/home/steve/src/vllm-current-main/vllm/model_executor/layers/vocab_parallel_embedding.py",
+        "first_line": 168,
+        "name": "get_masked_input_and_mask",
+        "source_sha256": "016bcb89432f68d0b8d6b88fb7b1f50d168cda6237c4c4397cf8dbe62910ad75",
+        "trace_file": "dedicated_log_torch_trace_rank_3_nenqscti.log",
+        "trace_line": 17894
+      }
+    ],
+    "path": "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt79/torch-trace"
+  },
+  "torchinductor_cache": {
+    "file_count": 96,
+    "files": [
+      {
+        "path": "2c/c2cgindvplgmhe57rjexrikzl7kkfac5nutsi3227wk4addsp5oy.py",
+        "size_bytes": 15622
+      },
+      {
+        "path": "2h/c2ht55qhorhaqrfpkxsih7pxfpldros4lg2hp3qhb5hy77chuio5.py",
+        "size_bytes": 3626
+      },
+      {
+        "path": "47/c47kcbbww5whlttkur2oer5xsex5j4ta76kqrkb3uil3zip3lx45.py",
+        "size_bytes": 3299
+      },
+      {
+        "path": "5r/c5rijl5ceclhwt6dxxybeekxe7d5gv633csk6vj66moefzbuatan.py",
+        "size_bytes": 15547
+      },
+      {
+        "path": "67/c67ehlgrnzttkp5n3oqwchqmhsu62nzy5k3x4lp3b5etnlxz4cuv.py",
+        "size_bytes": 3595
+      },
+      {
+        "path": "7d/c7dtgoz2u6dw7d3bq73nkibt4nwehua6teu6rnhutlnryvfrqsgr.py",
+        "size_bytes": 3299
+      },
+      {
+        "path": "7f/c7f5no747wfo5bik7naqccfnnv5uajbcc5wpot66eorffqykpvea.py",
+        "size_bytes": 10434
+      },
+      {
+        "path": "7h/c7h4nhdu2ztlqqih2icsfmunesfsjoxp6cd3ytcn2krr2wk43qdx.py",
+        "size_bytes": 15621
+      },
+      {
+        "path": "7j/c7jwg5sj5zy5kkmf2zxyatgxdtyr4wlzg54qkb25vid3yjjpu7nc.py",
+        "size_bytes": 3205
+      },
+      {
+        "path": "7s/8cd80c384bf3000add33ba3d471a023887b86f59b864042566eb87276bf1a5e4.best_config",
+        "size_bytes": 259
+      },
+      {
+        "path": "7s/c7sh5tpjxkyt3nbkqeehuvtavhq6kklllm3v5flm4i2aj7xkexgl.py",
+        "size_bytes": 3630
+      },
+      {
+        "path": "aotautograd/a2f3jgtdy4aqwe4bu4hpnh2uhwjar3rbrnz6xewv24jq6v5ans52/zrcoyfnuuoai3cqs7ihj4y3jqdmn6jtdlo4fzjontqzkmlldqw7",
+        "size_bytes": 69301
+      },
+      {
+        "path": "aotautograd/a2oycqjpqsohohm7z2vfr6v236eweiuclrpvooe2mhsu4me5kbvv/733wxn6zat5kdn62jxeto7gmgrklfaiv2nkylaxfpjss33rzoo4",
+        "size_bytes": 69301
+      },
+      {
+        "path": "aotautograd/a3bqaptp2e653ftznhismwabequmwzqiik5fjst6glvttlaxbner/lt4zghnws7fvet45seuxezka3bgdleevwxoym7huvp6smpzna27",
+        "size_bytes": 68375
+      },
+      {
+        "path": "aotautograd/a3md5hwoqqan4in75cfpkwdishs5tpqqy642qhefceerkx7ecyow/lixq6awnguivgt7flsnqjfrxet2drgudccnff6rp35axt2glym3",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/a3njnoemxigzxdkuni3dqyjk5cyv6ocic2xauffc4v6qoely5mki/5l3rd5k4toonluisukyrta4yec7fh3jbd3f7tggtambuw4gagyp",
+        "size_bytes": 68375
+      },
+      {
+        "path": "aotautograd/a55t3cwq53ml7soiykzwt4u6dwgszdzfnaiwoxkfiz4oomnireqv/hguy7kadav3achyebzgar7zwmjdjycaxa34qkagdxmhuaejoebn",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/aaztqygugtw75sptebgp7qr3zar2wm3cdeahtrv54o6csuqdot3c/jsek3tkfpnzuy4osbj3rlc4llt2z46q4tcamm6hhybsiyrke4k6",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/ac4o6dhdlinuoyrkryx46qhgwj264bkwc2yznhvciqcceu7obsv2/sexfncxwzgga3vigvq45kh2uhv6dt4xgd4gw4bjo3ljwtpbhf4p",
+        "size_bytes": 68375
+      },
+      {
+        "path": "aotautograd/ag2i6ywpzrlcp32ifidpu6qcof5qdhbplozgnyszybix3wmwcyft/ajbgxfc45nwkddquprvxgf6mimymavki5wc2wshh2zqsqrzeab2",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/aiclauyggtg3b6b4nhcjx7g5qtge4ktj4eksnn46ysmdjtsrvx72/42h3o6bvsdlxsitqobs77k76pshkplbqcfgbnj7h6twcppagsff",
+        "size_bytes": 68931
+      },
+      {
+        "path": "aotautograd/al6lqltay3u7tewjmg3d7dttscte2yn7ccjkvbly4j6vuqaxlogm/6adnuvbqsl5reqrb7lzjaf7ozsncoi7femehk5agey2agers43o",
+        "size_bytes": 68931
+      },
+      {
+        "path": "aotautograd/amxuhenlnawigvoia5hmgul2hd2zwr6okxhcz6yoth5z6b6dgc2o/ym5c2og25npez4aj24nadsdd4t25xohfz5sxufgbz2yw63d56ni",
+        "size_bytes": 68931
+      },
+      {
+        "path": "aotautograd/anmyy4ds6voyrx7io67xt234hde335eiimdranvwgrucc33j32rb/jvojckusrjwl7hujaf6ii2e3tmawjcwq55eqxnxhz5jljuqyxuu",
+        "size_bytes": 68931
+      },
+      {
+        "path": "aotautograd/anrolqkqecbimuu2jfcvkq6j4fsaia3ngmsovn3ow7nswkj7s34c/lebe3vtavbvonzfcqjxdbfqmtb7hjdvofvnwrlh6s7qva66v6qu",
+        "size_bytes": 68375
+      },
+      {
+        "path": "aotautograd/apf2f5glaq44lkvelc6xmz7fhwysquzqknwmgxtjmexrjb62hfcz/272ipawfn2zcjkzvatkwxq3ale3zzze4h2r3depjyyld3bu4ghi",
+        "size_bytes": 69301
+      },
+      {
+        "path": "aotautograd/apgp7blc2qwxvdzpnxxcgbayyxyuahtkor5cdyfzvlrmbjenabyf/5ns6cjarcoucen6rnqvsgig2d2mdqcjyrswxnbk3kooxmzomoze",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/apnwkdc6trmdpjv2z52mptudugmpkcngnrum7jmqca5yrdkinag2/2ftecpacmt3satkuc772m47qp5b7bjn3kdmnbgol6eoiweltpeu",
+        "size_bytes": 69301
+      },
+      {
+        "path": "aotautograd/aqxtblrmaic3yhi6ogifrl37khj2shxneghncsa4ngdyrp2cnghd/dtfw4t3n2orphgalookfodpel673lgwqcatf6y5nljbhdpjgs3y",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/aqz5ulrg7rigs5diekb6jrggwrciui7ym72w3epoxdavkm7c2jpn/j2wun6johsv56aht2nswu5milwkxblwem457jmk3qi4o5zsgu3w",
+        "size_bytes": 68828
+      },
+      {
+        "path": "aotautograd/awlxrkhka5qfsa2erklgatxhyepelbi3iyy237ud7mpjabcm6vu2/xcvah52wcdjbaw7prhkssolmbpnufzouxg2wdvr6vjhdapyndxr",
+        "size_bytes": 68828
+      },
+      {
+        "path": "bw/cbwn4qs5ubdrmoyofgytpalcwib32fwjs5zlpsbg5fbemsyaisqu.py",
+        "size_bytes": 10435
+      },
+      {
+        "path": "c2/49e65765c0312106b910a625ee1f62d7b24d1f0fd7b838d64a38e418b5eddc7e.best_config",
+        "size_bytes": 258
+      },
+      {
+        "path": "c2/cc2hb4pjxhlevkyaj2hxveeqfhujemymzz5rbj45yyyb7rx5etcb.py",
+        "size_bytes": 3630
+      },
+      {
+        "path": "cv/ccvjcfq3zweyxoq7ya33ucmvt3bsgu2hgxjeq6obbtr65tobfiee.py",
+        "size_bytes": 3626
+      },
+      {
+        "path": "d2/cd2pzwh7ptimhizd2sb37jlii4prpr3ifohnh5mv3bcacr7fjqxn.py",
+        "size_bytes": 15553
+      },
+      {
+        "path": "di/cdivdj76quz5qry555osmnmpo4j47wazmym6iuofulk75vs4xnnp.py",
+        "size_bytes": 3205
+      },
+      {
+        "path": "dx/cdxqobf6fk43crsgzibj4zxf7w7475vloyo7gbus3s2egbhpmfub.py",
+        "size_bytes": 3502
+      },
+      {
+        "path": "eg/ceg2fjvdvy2a4zgp3h7gop4umxcfrhctaiaom5jzo2p6mwa35xgj.py",
+        "size_bytes": 15622
+      },
+      {
+        "path": "eh/cehgt73nq2teife4dyfm5d6kndyhuqwbsnhoflzroqgpbzlx36pf.py",
+        "size_bytes": 10426
+      },
+      {
+        "path": "fi/cfiaj6lrvtrscssi7tqmag6prvqwoltuchb6renbfccspeq57pmq.py",
+        "size_bytes": 3626
+      },
+      {
+        "path": "fw/cfwy33eyuauj5wfuzqn5wetqeu4bs7cu3rv6yuubkt3bst4py5je.py",
+        "size_bytes": 10703
+      },
+      {
+        "path": "fxgraph/44/f44zivgulpu433bn6tl5s7aaky36mwlkf4zkj73g7fm7lgtfqx76/gyne4ptbvaw4pohmmsz42q62m3zy6kgxi2f67ce5atqyt7vju5u",
+        "size_bytes": 226288
+      },
+      {
+        "path": "fxgraph/4i/f4ipudeybsma46gsll7mjitl2b7hw7gkqz5lk4qtqh77ywozw2yq/4vdbnhf4ec7mmebqvxacgc7ib3tixwumbufmppnzlivic3jbj42",
+        "size_bytes": 190470
+      },
+      {
+        "path": "fxgraph/4o/f4o74dblbz6w5dkyophl5rxneaso5kbqcspr3xttalfeymqa7amg/bdtqcyvhc7jxmdytaczwlfbmfn5qqzyxdpueakivmht3kt4ppcl",
+        "size_bytes": 289333
+      },
+      {
+        "path": "fxgraph/4w/f4wyo34bftyxc4i4s57ys3oyx7zrxrtpnse55yyvndusrsf4jkzj/l344s3at6x34nmjfmyd5auxabdhshrgsg4jawhbgf3hkve6c3ze",
+        "size_bytes": 226270
+      },
+      {
+        "path": "fxgraph/7i/f7ig7jw6cv5e3tvfttj4mmqjfvxypfs27z7agrxh7hqszggojbqs/uhd4mxe2nymfzodyxb6iijcn762j277ghvk4thdpqmu2gq5mmij",
+        "size_bytes": 289360
+      },
+      {
+        "path": "fxgraph/a2/fa24tvdexfurfyc4y5y3hhvo35okke2apcp63m2ru67373sekotv/wnnabby6dphmqtrkbusyrhbjl6ogbs7nqual7zlhxgeta5g424p",
+        "size_bytes": 155808
+      },
+      {
+        "path": "fxgraph/a4/fa4szru4bz7lvrubj77hrdj3ydvjgbh5dtmqmejzxhxwfmer3wzo/fygynq2kzbodg6socmvx2t2dkmo5fi6gjrqdj25lln7xas3a7bj",
+        "size_bytes": 155835
+      },
+      {
+        "path": "fxgraph/bm/fbmnmdgi2fhxzolvqkzbfhchjzerb4a4cwghuouc7i63zi3nj53j/niut23sff27dx4kry4la55enxkt6ij7rs2xdo7iqrhcg2gobzkt",
+        "size_bytes": 289360
+      },
+      {
+        "path": "fxgraph/db/fdblj3fo2cosfunqgx23zxh2g2cbvoo7mitzwvj7b3gzrn7wi4au/jfp2imswlxjrszqt4lvn37ywf4vzkcm57rrnth3x3nlh3oe3uhf",
+        "size_bytes": 226285
+      },
+      {
+        "path": "fxgraph/ft/fftpgbeylcuxliw7tqlrhf5rbumqz7o4ljvmwguqybv6r24x5hxe/7i6luernlussphk2qcrgmdd2wgmwdq27b7qhodko5eylpfro6hw",
+        "size_bytes": 208374
+      },
+      {
+        "path": "fxgraph/kw/fkwjq7bw2rfzoczgfjaabldffzgeye5h4mfye3kp2edlv2o4szwb/bsnquifrjdf3v75tnfzptlenhq6r3jgwptrzf4piz4xfhrva4yy",
+        "size_bytes": 155835
+      },
+      {
+        "path": "fxgraph/lb/flbw4uoqnn6xnhdwmygl4axptd436puvt6a2rwmbsp7fiqgteios/thviuutfueabgfljcrrlcky6k4rdpvwhq3xlwl7pzlz5akqo2kt",
+        "size_bytes": 190452
+      },
+      {
+        "path": "fxgraph/nr/fnrfbjembobjo42ji36udzy4qgcjzb6qppdzn7pq5d4km7p7psak/jhge7ytrz7rcdhtgqc7vdcxy2aw7t3v2ihwm77vzy6cxv4dohdh",
+        "size_bytes": 226288
+      },
+      {
+        "path": "fxgraph/pg/fpgfqnxrijtziesdrz5tacpmhpeo5rhfi57azqhmk6ecqyd4gjrz/pyfrdrfwiwlb7xqwd4ekjdyuka3pogyei37qu7c75ksw5ycaluz",
+        "size_bytes": 208374
+      },
+      {
+        "path": "fxgraph/pj/fpjdhyyjgvnlu7daxx5qbbm6b27tnnop5qypdxmexmhpvc63idm6/ecywf5qoffmzsax4x5i44tspzkxscwqcrxmnccbhxd6uvb6wzfy",
+        "size_bytes": 208356
+      },
+      {
+        "path": "fxgraph/rf/frffjayyxkld4ne3ufnwo5hvvfxoa3e2bpyexpqf2ymhud5kcpra/d54wdtpxwqkpkudnhifftzjpkbrg6n6cz6zs2kadpajnepenmpm",
+        "size_bytes": 155832
+      },
+      {
+        "path": "fxgraph/w4/fw4ih4wugiml3unmq372aczmzzlbejcj5y6b4tzhjvok75kyq64z/63wlzfrdgl3wmoiscwcvbxxphweo5fz2e5udpjg2gznhfd7hsac",
+        "size_bytes": 208371
+      },
+      {
+        "path": "fxgraph/yl/fyljciu3dxj7zg2wpbgaymnle3ugqmszopail7njgtdtpd4g52qx/jubhl4giemfswbogegcbppv3k5hq37qxe4avc6yowrfjaulgvim",
+        "size_bytes": 289357
+      },
+      {
+        "path": "fxgraph/ym/fymcemahoygxkknt37b756d55mv52vw4fe367jxwynmztlyb47fy/4ezvyllxqfrkwtldrkcl435lgk6fj5t3wc53j6iwprgkxyezwiv",
+        "size_bytes": 190467
+      },
+      {
+        "path": "fxgraph/yt/fytcfm57wtjpkof6wo4tyzuwgzskazpqs2zaedpfgoznpae7uuwx/eyu6yz4do7bzd3dyaecjqwtgycemjldktp2bmpqza54vncsw2ei",
+        "size_bytes": 190470
+      },
+      {
+        "path": "i6/ci642o6amzayrucimnus45fjht6ztkk2sberc3vofyo7ceadzeq7.py",
+        "size_bytes": 3502
+      },
+      {
+        "path": "ia/4df8faa51b305d45669714c2cb860cf32d6f1bd8e5507dba8d5eca8c80cabeaf.best_config",
+        "size_bytes": 258
+      },
+      {
+        "path": "ia/ciaeq4cfj53x6gbeymcsei5omqtbebibeo7fgbnpl2vqnk4zb4ok.py",
+        "size_bytes": 3658
+      },
+      {
+        "path": "ic/cicafntqqvy6qwchsurhzkwc553pie6w3imuqsfglx4aja7i6esg.py",
+        "size_bytes": 3626
+      },
+      {
+        "path": "ix/cixlxox55saxbv4gwvqi364k2hemwqxxblgrqozwyzdlv3nr2vo5.py",
+        "size_bytes": 10704
+      },
+      {
+        "path": "jr/cjrubva5dk6ogdyji7pihg7q6sunpdycqfmeqafs5dg2sgrg4i4l.py",
+        "size_bytes": 10704
+      },
+      {
+        "path": "kb/ckbkklkp5x4pzb2x7spnpwbs4mcpo6heo244ydvrb3dmk3dpssjl.py",
+        "size_bytes": 10695
+      },
+      {
+        "path": "lc/clcxcgl7spydsczbl3g6stkwx3exk6vnifvtdc7gk3jlohcupvih.py",
+        "size_bytes": 3299
+      },
+      {
+        "path": "ng/9fa743b537c210d96121796af54c2258ef780dc98ae5062037215ac12d1b8c91.best_config",
+        "size_bytes": 259
+      },
+      {
+        "path": "ng/cngpr35qlkzyvobz3dicshzvz24bxbqidn7y3bvxjtffuu44jw3o.py",
+        "size_bytes": 3630
+      },
+      {
+        "path": "np/cnp4zesr3ucb2majj6tmbzcttraydqv4ko2kigzk6jkp676q77m2.py",
+        "size_bytes": 3595
+      },
+      {
+        "path": "o7/co7zt5xmhotn3szvhgpmer2lbbt2yaqbgxvs4twvrjnstiwje43e.py",
+        "size_bytes": 10355
+      },
+      {
+        "path": "pu/cpue5hamymtain6jayjobqbdrlbgbjhj5qoewcworvjecvdbm27z.py",
+        "size_bytes": 3299
+      },
+      {
+        "path": "pw/cpwvvkpnp2fx4fzg7ytefnoubsq4lljobmzy4z74gwcy2y7pas7g.py",
+        "size_bytes": 3595
+      },
+      {
+        "path": "q3/cq3i75uvgc43vvowbfhprv4d2hjm2qdmizrs3s25lash3wv5buk5.py",
+        "size_bytes": 3502
+      },
+      {
+        "path": "qh/cqhrv6zsjpvzz5dbq4jx5c3r3qo77nfjidof6hglberqd6pxpo2p.py",
+        "size_bytes": 15616
+      },
+      {
+        "path": "qt/cqtyifrk5ouflbboubcxwijqr5nlvxctweswoljmtbgxwl6xolxc.py",
+        "size_bytes": 15553
+      },
+      {
+        "path": "rf/30f89f0c62d1ee5101826c73cfe68cd41d6ea46f2e6fdc2cc6e809d160dea8b3.best_config",
+        "size_bytes": 259
+      },
+      {
+        "path": "rf/crffhxc7rbknbceptztyiow7x7pqg4mvwrmkmgsbkwzpgfvd6y22.py",
+        "size_bytes": 3630
+      },
+      {
+        "path": "s6/cs65hpybafmpw766omtyt3uz3fdgronwysy2ikkk4qgjq75nk7w4.py",
+        "size_bytes": 10349
+      },
+      {
+        "path": "sf/46f758b1450de2ca8032bd91be36238bd6843d8d4278275316abd0581471325b.best_config",
+        "size_bytes": 258
+      },
+      {
+        "path": "sf/csfgdy5essz6uq7dwr4nvh4fyfqiyz7rrxpxwpaigbp4ua3cze2p.py",
+        "size_bytes": 3658
+      },
+      {
+        "path": "t4/ct4tcqcfifgyfoa32dqg3jshqd3nwxyq754n2nzsvaorxrouawue.py",
+        "size_bytes": 3658
+      },
+      {
+        "path": "t4/fb960614a87781b992030b7e3fd42c9905073a5eb25d2a16ac1807e2bc75aa04.best_config",
+        "size_bytes": 258
+      },
+      {
+        "path": "tj/ctjjifgpuv37rr252yuttvkmkxci23wjxn6letpaytka2hcbak5o.py",
+        "size_bytes": 3205
+      },
+      {
+        "path": "tu/cturz37z5z7xsckqqvrpuvtoeo6ydddztrciwoiewjbwiuoffuks.py",
+        "size_bytes": 3595
+      },
+      {
+        "path": "vq/bdeb95680d9e825dce0dfc13fa7eaf4bcc3109e229fdf63b3d2ab335e5e6ce38.best_config",
+        "size_bytes": 258
+      },
+      {
+        "path": "vq/cvqawlqpjdlnnn3myzszjmnbt2tauxtergsm7kq7bg4pwjinouix.py",
+        "size_bytes": 3658
+      },
+      {
+        "path": "wq/cwqv3qrfpv36suvkxnsfw5534ncxurhmuiklkijihlo3p2gvotlw.py",
+        "size_bytes": 10355
+      },
+      {
+        "path": "xg/cxg6yc4hdrldmra43mfavm5dwzeflisl5j3yraxcohluzwxlk543.py",
+        "size_bytes": 15552
+      },
+      {
+        "path": "xn/cxnixd5lvz5c4vth2x7ig4tmrhi3tvxawywfd2vxntzk7hbxygy3.py",
+        "size_bytes": 3502
+      },
+      {
+        "path": "xu/cxu3rj3iflu77xjdeba2irceyoccckh4jdkwmjj2h2skz2gv5csp.py",
+        "size_bytes": 3205
+      },
+      {
+        "path": "zp/czplz7rpjp72sxxk5hp3msmnpglmx4achph5bnsmjnq5n63vetuu.py",
+        "size_bytes": 10435
+      },
+      {
+        "path": "zt/cztqmi37ee2nmcb2njh36abdxwp746m3mjlomomobz5mmxv4et2s.py",
+        "size_bytes": 10354
+      }
+    ],
+    "interpretation": "trace_attributed_nested_operator_cache",
+    "total_bytes": 6008999
+  }
+}
