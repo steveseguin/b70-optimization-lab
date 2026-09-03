@@ -253,6 +253,12 @@ git pull --ff-only origin main
 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-public-source-closure.sh
 ```
 
+Clone with full history. The verifier binds the manifest's immutable inputs
+to source commit `8495574257dda583e19dd39278641477bfaa4e43`, so a
+`git clone --depth 1` checkout fails with `absent from source commit`
+errors even though every file is present; a normal clone (about 2 GiB of
+history) passes.
+
 The verifier checks that all final Dockerfiles, builders, and custom-op patches
 are present and tracked, validates build-script digest contracts against the
 publication manifest, and verifies the final patch hashes. The full builder
