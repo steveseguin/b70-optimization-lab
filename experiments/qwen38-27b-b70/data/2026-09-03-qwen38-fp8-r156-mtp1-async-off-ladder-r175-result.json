@@ -1,0 +1,45 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp1-async-off-ladder-20260903-r175",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp1-async-off-ladder-r175-prereg.json",
+  "status": "PARTIAL CONFIRMATION. Depth-1 MTP1 ladder on the published R156 image with --no-async-scheduling: exact through c32 (32/32, was 31/32 with async on) and 61/64 at c64 (was 56/64); the 64 sequential oracles equal the MTP0 oracles 64/64. Remaining c64 misses: evidence-c047 (85), evidence-c063 (88), rollback-c050 (60), the same prompts/positions that miss in other non-MTP0 profiles. The MTP0 ladder half of the campaign aborted: the server hung during startup (weights 64/66 loaded, no xe/drm fault, health timeout) and must be rerun.",
+  "ladder_mtp1_async_off": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 49.87407390537222,
+      "exact": "1/1"
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 82.12051332897498,
+      "exact": "2/2"
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 183.44836246718296,
+      "exact": "4/4"
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 336.31939025420684,
+      "exact": "8/8"
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 510.5718815596151,
+      "exact": "16/16"
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 770.236575564068,
+      "exact": "32/32"
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1019.9657267560555,
+      "exact": "61/64"
+    }
+  ],
+  "root": "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp1-async-off-ladder-20260903-r175",
+  "interpretation": "Async scheduling accounts for most of the depth-1 identity residual above c16; a second, smaller residual remains at c64 on three prompts."
+}
