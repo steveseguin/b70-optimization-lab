@@ -314,6 +314,46 @@ to `main` rather than accumulating unpublished side histories.
   hashes, and supporting artifact links. Do not submit warmed/history,
   synthetic-only, or lower-precision side-lane results as the Q8/INT8 headline.
 
+### Diagnosis And Campaign Speed Rules (2026-09-02)
+
+Recorded after the Qwen3.8 27B FP8 identity lane spent R64-R146 (three days)
+on a defect that one operator-level sweep and one chained campaign then
+settled in an evening. These are binding for every lane on this host.
+
+1. **Census before bisection.** When a greedy output flips with batch shape,
+   prompt length, or concurrency, run every production GEMM shape through the
+   kernel invariance/determinism sweep on one card first
+   (`experiments/qwen38-27b-b70/scripts/qwen38-fp8-kernel-batch-invariance-census.py`
+   and `qwen38-fp8-kernel-determinism-sweep.py`; adapt the shape table per
+   model). No server launch for localization until every kernel is cleared or
+   blamed. Token-stream bisection on a fixed prompt pair is a one-coin
+   detector and is closed as a method.
+2. **An oracle is bound to a kernel identity.** A row-invariant or otherwise
+   re-ordered kernel must be gated against a same-image oracle regenerated on
+   that kernel, never against an oracle produced by the previous arithmetic.
+   The frozen oracle stays a localization tool.
+3. **No speed verdict from fewer than two fresh servers,** and speed is never
+   a gate on an identity experiment; it is recorded. This host's
+   control-vs-control drift is about 3% back-to-back and up to 10% across a
+   session.
+4. **Preregister the whole campaign, run it as one unattended runner.** The
+   runner owns preflight, every server stage, the comparisons, health
+   postflights, and abort rules; the human reviews once at the end. One
+   server per preregistration with a human round trip in between is the slow
+   path and is not the default.
+5. **Fast-fail GPU faults.** A runner polls the kernel journal during server
+   startup and aborts on the first `Fault response`, CAT error, engine reset,
+   or coredump line instead of waiting for a health timeout. Filter with
+   specific signatures; generic words such as `hang` match unrelated lines.
+6. **Stop searching when a candidate passes its gate.** The first arm that
+   meets its preregistered operator gate goes to the endpoint the same day;
+   the endpoint result, not further geometry sweeps, decides the next step.
+7. **Delegate read-only work while GPUs are busy.** Recipe audits,
+   preregistration drafting, and result summarization run in parallel through
+   `codex exec --sandbox read-only` or a subagent; they never wait for a GPU.
+8. **One lane per host.** GPU faults and reboots from one model lane cost the
+   other lane its boot; Flash-Next now lives on the other machine.
+
 ## Cross-Agent Delegation
 
 When Claude/OpenCode is orchestrating work, prefer delegating concrete research,
