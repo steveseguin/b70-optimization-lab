@@ -21,14 +21,6 @@ def load(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def positions(report: dict) -> list[int]:
-    for rec in report["records"]:
-        if rec["label"] == "model_positions":
-            t = rec["tensors"]["positions"]
-            return [int(v) for v in t.get("row_head", [[v] for v in t["head"]])[0]] if False else None
-    return None
-
-
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--reference", type=Path, required=True)
