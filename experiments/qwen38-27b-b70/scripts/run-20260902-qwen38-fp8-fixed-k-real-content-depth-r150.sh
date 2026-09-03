@@ -13,7 +13,7 @@ root=${ROOT:-/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-real-content-depth-20
 image=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139
 image_id=sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878
 ext_sha=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1
-model_dir=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8
+model_dir=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-fp8}
 port=18128
 # RESUME_FROM=mtp1-b ORACLE_ROOT=<original root> resumes after a fault on a fresh boot,
 # reusing the original mtp0-a oracle and mtp1-a attempt; ROOT must be a new sibling.

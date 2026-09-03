@@ -163,6 +163,14 @@ def scan_package(pkg: dict, tracked: set[str], rel_cache: dict) -> dict:
                     asset = urllib.parse.unquote(asset)
                     if asset not in release_assets(tag, rel_cache):
                         findings["missing_release_asset"].append({"tag": tag, "asset": asset, "referenced_by": f"{rel}:{lineno}"})
+    # builders anywhere in the repo count: image tags are global, not per lane
+    for bp in list(ROOT.glob("repro/**/build-*.sh")) + list(ROOT.glob("repro/**/Dockerfile*")) + list(ROOT.glob("scripts/build-*.sh")):
+        try:
+            for line in bp.read_text(errors="replace").splitlines():
+                if re.search(r"(--tag|IMAGE=\$\{IMAGE:-|^image=\$\{IMAGE:-|FINAL_IMAGE=|final_image=\$\{FINAL_IMAGE:-|docker tag|^ARG BASE_IMAGE=)", line):
+                    images_built.update(IMAGE_RE.findall(line))
+        except Exception:
+            pass
     for img, refs in images_used.items():
         if img not in images_built:
             findings["image_without_reachable_builder"].append({"image": img, "referenced_by": refs[:3]})
