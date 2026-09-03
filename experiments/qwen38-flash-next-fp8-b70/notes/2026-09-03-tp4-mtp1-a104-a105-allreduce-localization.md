@@ -58,3 +58,27 @@ verification step (about 100 per step at TP4). A106 = A104's identity plus
 this flag, traced at 2048, compared against A105.
 
 Comparison data: `../data/20260903-tp4-mtp1-a104-vs-a105-layer-trace-rank{0,1,2,3}-pos2048.json`.
+
+## A106 result: layers 0-42 exact at both verify rows; residual moves to layer 43
+
+A106 (A104's identity plus `VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2`, overlay
+8ca2cbc2) gave exact-2K hash `3c861245...` (new: neither MTP0's `afffd211`
+nor the earlier MTP1 `29a2947a`). Against A105 on every rank:
+
+- Row 0 (position 2048): every numeric record through `layer_42_output`
+  identical; the only earlier differences are the PLE metadata tensors that
+  differ by construction (`query_start_loc` [0,1] vs [0,2]). First numeric
+  difference: `layer_43_output.block_output`, then layers 44-47 and the
+  model output.
+- Row 1 (position 2049): identical through `layer_43_output`; first
+  difference `layer_44_output` (its recurrent state inherits row 0's
+  layer-44 state, which already differs).
+
+So the all-reduce fix and the serial recurrent path make the verify step
+exact through 43 of 48 layers. Layer 43 is a full-attention (QSA) layer, and
+position 2048 is the first position past the indexer's 2048-token budget,
+where top-k selection first becomes active; the earlier full-attention
+layers (3, 7, ..., 39) at the same position are exact. A106 did not carry
+the per-row indexer flag (`VLLM_XPU_QSA_SERIAL_SPEC_INDEXER`, A93); A108
+adds it to A106's identity. Data:
+`../data/20260903-tp4-mtp1-a106-vs-a105-layer-trace-rank{0..3}-pos{2048,2049}.json`.
