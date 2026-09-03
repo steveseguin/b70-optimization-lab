@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-state-slot-20260903-r176","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-state-slot-probe-r176 sha256:85c287a73cff8ed0cdebd1f93777ba88b2bb26b89b8a753b96fb3bcc52c08616 (R171 + GDN state-slot probes, diagnostic only)",
+ "facts_from_code":"KVBlockZeroer skips non-AttentionSpec groups, so mamba pages are never zeroed; forward_xpu passes raw conv/ssm state pages and has_initial_state to the SYCL kernel with no Python-side zeroing (CUDA path zeroes initial_state[~has_initial_state]); the conv-state page has conv_kernel_size-1+num_spec columns, so a spec step writes into the page that is reassigned to the next request.",
+ "hypothesis":"At the cache-c032 prefill the kernel receives a recycled, non-zero conv/ssm state page with has_initial_state=False, and does not fully honour the flag (at least for the spec columns), corrupting the last row's output; the discarded async extra step (2 of 3 accepted) leaves the page pattern that triggers it.",
+ "predictions":"R176 zeroed_pages abs_sums non-zero for the reassigned mamba page; gdn_pre tag=pure has_initial_state=[False] with non-zero conv/ssm sums; gdn_post out_last_abs at the c032 prefill differs from a clean boundary's.",
+ "abort_conditions":["as R147"]}

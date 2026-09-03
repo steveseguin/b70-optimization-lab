@@ -1,0 +1,237 @@
+--- a/v1/worker/gpu_model_runner.py
++++ b/v1/worker/gpu_model_runner.py
+@@ -1207,6 +1207,53 @@
+         if hasattr(self, "_kv_block_zeroer"):
+             self._kv_block_zeroer.zero_block_ids(block_ids)
+ 
++    def _r176_first_gdn_layer(self):
++        """R176 diagnostic: (layer_name, layer) of the first bound Mamba/GDN
++        layer, found through the MambaSpec KV-cache group."""
++        for group in self.kv_cache_config.kv_cache_groups:
++            if not isinstance(group.kv_cache_spec, MambaSpec):
++                continue
++            for name in group.layer_names:
++                if name in self.runner_only_attn_layers:
++                    continue
++                layer = self.compilation_config.static_forward_context.get(name)
++                kv = getattr(layer, "kv_cache", None)
++                if isinstance(kv, (tuple, list)) and len(kv) >= 2:
++                    return name, layer
++        return None, None
++
++    def _r176_probe_zeroed_pages(self, block_ids: list[int]) -> None:
++        """R176 diagnostic: after _zero_block_ids, read back the mamba page
++        (conv_state, ssm_state) of the first GDN layer for each zeroed id."""
++        try:
++            torch.accelerator.synchronize()
++            name, layer = self._r176_first_gdn_layer()
++            if layer is None:
++                logger.info("R176 zeroed_pages=%s abs_sums=<no GDN layer bound>",
++                            block_ids)
++                return
++            conv_state, ssm_state = layer.kv_cache[0], layer.kv_cache[1]
++            abs_sums = []
++            for b in block_ids:
++                if 0 <= b < conv_state.shape[0]:
++                    abs_sums.append((
++                        int(b),
++                        float(conv_state[b].float().abs().sum()),
++                        float(ssm_state[b].float().abs().sum()),
++                    ))
++                else:
++                    abs_sums.append((int(b), None, None))
++            logger.info(
++                "R176 zeroed_pages=%s abs_sums=%s layer=%s conv_state=%s/%s "
++                "ssm_state=%s/%s",
++                block_ids, abs_sums, name,
++                tuple(conv_state.shape), conv_state.dtype,
++                tuple(ssm_state.shape), ssm_state.dtype,
++            )
++        except Exception as exc:  # diagnostics must never take the step down
++            logger.info("R176 zeroed_pages=%s abs_sums=<probe failed: %r>",
++                        block_ids, exc)
++
+     # Note: used for model runner override.
+     def _init_device_properties(self) -> None:
+         """Initialize attributes from torch.cuda.get_device_properties"""
+@@ -1271,6 +1318,10 @@
+         # stale NaN/data from corrupting attention or SSM computation.
+         if scheduler_output.new_block_ids_to_zero:
+             self._zero_block_ids(scheduler_output.new_block_ids_to_zero)
++            if len(scheduler_output.num_scheduled_tokens) <= 4:
++                self._r176_probe_zeroed_pages(
++                    list(scheduler_output.new_block_ids_to_zero)
++                )
+         if scheduler_output.kv_cache_block_copies:
+             copy_kv_cache_blocks_inplace(
+                 self.kv_caches,
+--- a/v1/attention/backends/gdn_attn.py
++++ b/v1/attention/backends/gdn_attn.py
+@@ -8,6 +8,7 @@
+ import torch
+ 
+ from vllm.config import VllmConfig
++from vllm.logger import init_logger
+ from vllm.utils.torch_utils import async_tensor_h2d
+ from vllm.v1.attention.backend import (
+     AttentionBackend,
+@@ -23,6 +24,13 @@
+ )
+ from vllm.v1.kv_cache_interface import MambaSpec
+ 
++logger = init_logger(__name__)
++
++
++def _r176_tl(t):
++    """R176 diagnostic: tensor -> list (None passthrough)."""
++    return None if t is None else t.tolist()
++
+ 
+ class GDNAttentionBackend(AttentionBackend):
+     @staticmethod
+@@ -495,6 +503,28 @@
+             non_spec_query_start_loc = self.non_spec_query_start_loc[: batch_size + 1]
+             non_spec_query_start_loc[num_decodes + 1 :].fill_(non_spec_num_query_tokens)
+ 
++        if batch_size <= 4:
++            logger.info(
++                "R176 gdn_build num_prefills=%d num_decodes=%d num_spec_decodes=%d "
++                "num_actual_tokens=%d query_start_loc_cpu=%s "
++                "non_spec_state_indices=%s spec_state_indices=%s "
++                "prefill_state_indices=%s has_initial_state=%s "
++                "prefill_has_initial_state=%s num_accepted_tokens=%s "
++                "spec_sequence_masks_cpu=%s num_decode_draft_tokens_cpu=%s "
++                "block_table_row0=%s",
++                num_prefills, num_decodes, num_spec_decodes, m.num_actual_tokens,
++                _r176_tl(query_start_loc_cpu),
++                _r176_tl(non_spec_state_indices_tensor),
++                _r176_tl(spec_state_indices_tensor),
++                _r176_tl(prefill_state_indices),
++                _r176_tl(has_initial_state),
++                _r176_tl(prefill_has_initial_state),
++                _r176_tl(num_accepted_tokens),
++                _r176_tl(spec_sequence_masks_cpu),
++                _r176_tl(num_decode_draft_tokens_cpu),
++                _r176_tl(block_table_tensor[:batch_size, : self.num_spec + 1]),
++            )
++
+         attn_metadata = GDNAttentionMetadata(
+             num_prefills=num_prefills,
+             num_prefill_tokens=num_prefill_tokens,
+--- a/_xpu_ops.py
++++ b/_xpu_ops.py
+@@ -172,8 +172,86 @@
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
++    # ---- R176 diagnostic probe (eager Python; this custom-op body is never
++    # traced by Dynamo, the fake impl is used for tracing). Logs only for the
++    # first GDN layer (layer index 0 parsed from the prefix) and small batches.
++    def _r176_layer_idx(name):
++        try:
++            parts = name.split(".")
++            return int(parts[parts.index("layers") + 1])
++        except (ValueError, IndexError):
++            return None
++
++    _r176_small = (num_prefills + num_decodes + num_spec_decodes) <= 4
++    _r176_idx = _r176_layer_idx(layer_name)
++    _r176_on = _r176_small and (
++        _r176_idx == 0
++        or (_r176_idx is None and num_prefills == 1 and num_decodes == 0
++            and num_spec_decodes == 0 and num_actual_tokens <= 64)
++    )
++
++    def _r176_sum(t):
++        return None if t is None else float(t.float().abs().sum())
++
++    def _r176_state_sums(idx):
++        # idx: 1-D (non-spec) or 2-D (spec, [req, N+1]) state indices tensor.
++        if idx is None:
++            return None
++        flat = idx.reshape(-1).tolist()
++        out = []
++        for b in flat:
++            if 0 <= b < ssm_state.shape[0]:
++                out.append((int(b), _r176_sum(conv_state[b]), _r176_sum(ssm_state[b])))
++            else:
++                out.append((int(b), None, None))
++        return out
++
++    def _r176_pre(tag, n_prefills, n_decodes, n_spec, his, ns_state, sp_state,
++                  n_acc, n_tokens, sp_tok=None):
++        if not _r176_on:
++            return
++        try:
++            logger.info(
++                "R176 gdn_pre tag=%s layer=%s n_prefills=%d n_decodes=%d "
++                "n_spec=%d n_tokens=%d has_initial_state=%s "
++                "non_spec_state(idx,conv_abs,ssm_abs)=%s "
++                "spec_state(idx,conv_abs,ssm_abs)=%s num_accepted_tokens=%s "
++                "spec_token_indx=%s conv_state_shape=%s ssm_state_shape=%s",
++                tag, layer_name, n_prefills, n_decodes, n_spec, n_tokens,
++                None if his is None else his.tolist(),
++                _r176_state_sums(ns_state),
++                _r176_state_sums(sp_state),
++                None if n_acc is None else n_acc.tolist(),
++                None if sp_tok is None else sp_tok.tolist(),
++                tuple(conv_state.shape), tuple(ssm_state.shape),
++            )
++        except Exception as exc:
++            logger.info("R176 gdn_pre tag=%s probe failed: %r", tag, exc)
++
++    def _r176_post(tag, out, ns_state, sp_state, n_tokens):
++        if not _r176_on:
++            return
++        try:
++            n = int(n_tokens)
++            last = _r176_sum(out[n - 1]) if n >= 1 else None
++            prev = _r176_sum(out[n - 2]) if n >= 2 else None
++            logger.info(
++                "R176 gdn_post tag=%s layer=%s n_tokens=%d out_last_abs=%s "
++                "out_prev_abs=%s out_rows_abs=%s "
++                "non_spec_state_written(idx,conv_abs,ssm_abs)=%s "
++                "spec_state_written(idx,conv_abs,ssm_abs)=%s",
++                tag, layer_name, n, last, prev,
++                [_r176_sum(out[i]) for i in range(max(0, n - 4), n)],
++                _r176_state_sums(ns_state),
++                _r176_state_sums(sp_state),
++            )
++        except Exception as exc:
++            logger.info("R176 gdn_post tag=%s probe failed: %r", tag, exc)
++
+     def _kernel(out, zz, qkvz, ba, n_prefills, n_decodes, n_spec, his, ns_qs,
+                 ns_tok, ns_state, sp_qs, sp_tok, sp_state, n_acc, n_tokens):
++        _r176_pre("split", n_prefills, n_decodes, n_spec, his, ns_state,
++                  sp_state, n_acc, n_tokens, sp_tok)
+         torch.ops._xpu_C.gdn_attention(
+             out, zz, qkvz, ba, self.num_k_heads, self.num_v_heads,
+             self.head_k_dim, self.head_v_dim,
+@@ -189,6 +267,7 @@
+             num_actual_tokens=n_tokens, tp_size=self.tp_size,
+             reorder_input=not self.gqa_interleaved_layout,
+         )
++        _r176_post("split", out, ns_state, sp_state, n_tokens)
+ 
+     if os.environ.get("VLLM_XPU_GDN_SPLIT_MIXED", "0") == "1" and (
+         (num_prefills > 0 and num_decodes > 0)
+@@ -261,6 +340,10 @@
+                 z[tok] = z_p
+         return
+ 
++    _r176_pre("pure", num_prefills, num_decodes, num_spec_decodes,
++              has_initial_state, non_spec_state_indices_tensor,
++              spec_state_indices_tensor, num_accepted_tokens, num_actual_tokens,
++              spec_token_indx)
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,
+@@ -292,6 +375,8 @@
+         tp_size=self.tp_size,
+         reorder_input=not self.gqa_interleaved_layout,
+     )
++    _r176_post("pure", core_attn_out, non_spec_state_indices_tensor,
++               spec_state_indices_tensor, num_actual_tokens)
+ 
+ 
+ def _gdn_attention_core_xpu_fake(

@@ -1,0 +1,6 @@
+# R176 diagnostic: R171 trace image + GDN state-slot probes (zeroed pages, metadata, kernel inputs/outputs).
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-logits-row-trace-r171
+COPY vllm-qwen38-fp8-mtp2-state-slot-probe-r176-diagnostic-20260903.patch /tmp/r176.patch
+RUN cd /opt/venv/lib/python3.12/site-packages/vllm && patch -p1 < /tmp/r176.patch && \
+    python -m py_compile v1/worker/gpu_model_runner.py v1/attention/backends/gdn_attn.py _xpu_ops.py && rm /tmp/r176.patch
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-state-slot-probe-r176-diagnostic"
