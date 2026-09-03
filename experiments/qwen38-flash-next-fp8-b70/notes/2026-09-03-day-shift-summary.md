@@ -1,4 +1,4 @@
-# Day-shift summary, 2026-09-03 08:45 to about 13:30 EDT (four-B70 host)
+# Day-shift summary, 2026-09-03 08:45 to about 13:45 EDT (four-B70 host)
 
 The user's brief: every published recipe must be complete and reproducible
 by a third party; keep optimizing Flash-Next (faster, lossless, and faster
@@ -60,10 +60,15 @@ to iterate); publish a host-tuning guide; general improvements welcome.
 - Offline: a two-row BF16 oneDNN GEMM equals two one-row GEMMs bit for bit
   on every decode shape (`equivalence-m2-vs-m1-gemm-gate.py`); the MoE map
   already gives M=2 the M=1 config.
-- A87: a port of the 27B lane's serial verifier-row flash attention
-  (overlay `d3a61403`, flag-gated) was launched on the A85 identity; its
-  marker did not fire, so the two-row attention branch was not where the
-  flag expected it; see the A87 note for where that stands.
+- A87/A88/A89: a port of the 27B lane's serial verifier-row flash
+  attention (overlay `d3a61403`, then registered in `envs.py` as
+  `0a03a84c`) was launched three times on the A85 identity; the gate never
+  fired and each run repeated A85 (short `30.7-38.0`, exact-2K
+  `29a2947a...`). The `/proc` environment evidence that misled A88 was a
+  process-title artifact. A90 (entry diagnostic at the top of the
+  attention forward) is the last run of the day and tells which path the
+  full-attention layers actually take. Notes:
+  `2026-09-03-tp4-mtp1-a87-a88-serial-attention-gate-notes.md`.
 
 ## Standing
 
