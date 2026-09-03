@@ -17,3 +17,11 @@ Reading: async-off is not a stable depth-1 fix. The miss set moves between runs 
 (only two prompts recur: evidence-c047 @85, rollback-c050 @60), and cache-c000 @96 is the R67 exact FP16 tie. This is
 the census-known M-class / run-to-run GEMM nondeterminism at large M, not the depth-2 phantom mechanism. Do not
 re-gate async-off ladders as a fix; the depth-1 residual above c16 stays with the MTP draft-forward census.
+
+## R179 (MTP0 half, 17:55-18:03): the ladder R175 lost to the GPU fault
+
+`ladder-mtp0/ladder.json`: c1-c32 exact, c64 63/64 (index-c041 @46). Aggregate tok/s equals the published
+async-on R156f run at every rung (c64 931.4 vs 931.4). R156f async-on was 64/64 at c64. Async-off therefore
+gives MTP0 nothing (one extra miss, within the same large-M variance seen on MTP1) and costs nothing; the published
+MTP0 async-on identity claim stands. Do not spend more servers on `--no-async-scheduling` ladders for either depth-1
+profile; it matters only for the depth-2 phantom (R169), which is a separate mechanism.
