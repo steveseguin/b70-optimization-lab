@@ -222,7 +222,10 @@ whose async kernel launch costs 3.1 us and whose two-card all-reduce costs
 13 us; the replay host measured 5.2 us and 48 us. `iommu=pt`, ACS redirect,
 the CPU governor, CPU pinning, ECC (off on both hosts) and the GuC firmware
 version each changed nothing. On such a host the graph-off profile pays
-about 130 exposed host round trips per token.
+about 130 exposed host round trips per token. The mechanism, a
+five-minute probe for your own host, and the host fixes that did and did
+not matter are written up in the
+[host tuning guide](https://neural.download/learn/host-tuning.html).
 
 Enabling XPU Graph recovers most of the gap there: with
 `VLLM_XPU_ENABLE_XPU_GRAPH=1` and `cudagraph_capture_sizes` `[1,2]`
