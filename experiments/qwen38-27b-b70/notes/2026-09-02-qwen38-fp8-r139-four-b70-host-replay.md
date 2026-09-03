@@ -143,6 +143,24 @@ All six prompt classes sit within 27.5-30.6 tok/s on MTP1, so the factor
   host, and the prompt digests match. Graph capture is identity-clean here
   on this suite; the c1-c64 ladder has not been run on the graph-on profile.
 
+## 2K-32K real-content depth on this host, graph on (FULL_DECODE_ONLY)
+
+Same fixture and harness as R150 (three content classes, three requests per
+depth, medians), MTP0 oracle arm first:
+
+| active context | MTP0 decode (this host, graph on) | MTP0 TTFT | published MTP0 (graph off, EPYC host) |
+| ---: | ---: | ---: | ---: |
+| 2K | `31.124 tok/s` | `0.651 s` | `33.364` |
+| 4K | `30.850 tok/s` | `1.275 s` | `32.976` |
+| 8K | `30.376 tok/s` | `2.603 s` | `32.110` |
+| 16K | `29.734 tok/s` | `5.408 s` | `31.411` |
+| 24K | `29.071 tok/s` | `8.420 s` | `30.625` |
+| 32K | `28.493 tok/s` | `11.627 s` | `29.961` |
+
+All 18 request gates passed; classification "Grade B three-class unrepeated
+real-content exact-depth HTTP evidence". The MTP1 graph-on depth run
+against this oracle is recorded below.
+
 ## Transferable result
 
 On a host whose per-launch and per-collective latency is higher than the
