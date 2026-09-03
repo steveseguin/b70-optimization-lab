@@ -25,14 +25,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 VALIDATE_ONLY = os.environ.get("Q38_A66_REWRITE_VALIDATE_ONLY") == "1"
 SOURCES = {
-    "launch-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32.sh": "f19f0fbe922ccd07ed6b8476011e5ca824e2dc6c2b21dba06ff7b6dddcda64d6",
-    "run-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32-client.sh": "b37bb78be5421852f74275584e3ed51bb724a4b558e95cd30100ee066f671b59",
-    "supervise-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32.sh": "ec43ee9f62fa6cdf4c99ebbfc09673448c58780907b91bcabab103a4d5126c11",
-    "run-q38-a65-host-controlled.sh": "cde506cf6a8e67dcca50c5da7398d9d25e08e4ea915f81785b9a2d1f12457610",
+    "launch-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32.sh": "202d0f17feb683f21be30de3a9bceeeac2be514f46bde309df672a80213368c1",
+    "run-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32-client.sh": "4620efedc7bdcd0790321d45ef6f99b21e000114854cff5b8dd20d0c90b6e3b4",
+    "supervise-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32.sh": "b39836d07ba325b47c028dd49a593b74d8fb95dbe95b3b3e52b68981358290dc",
+    "run-q38-a65-host-controlled.sh": "cc411503e7aa52520e3bd9486da42ecc1b10f9040b79006e1e526bcefffc2fce",
 }
 HASH_TOKEN = re.compile(r"[0-9a-f]{64}|[0-9a-f]{40}")
-A65_HEAD = "__A65_HEAD__"
-A66_HEAD = "__A66_HEAD__"
+A65_HEAD = "c027fe2d12a8002996c5448654ef9d87fb26cdeb"
+A66_HEAD = "805cde592dfe198a82deaba52894ebfc0e4a4352"
 A65_RUN_DIR = "${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-q38trace-mtp0-2304-ple-only-r1-attempt65"
 
 A65_TRACE_LINES = f"""export Q38_REPEATABILITY_TRACE_FILE={A65_RUN_DIR}/gdn-trace-rank{{rank}}.json
@@ -44,7 +44,19 @@ export Q38_REPEATABILITY_TRACE_GDN_LAYERS=0,1,2
 """
 A66_LINES = """unset Q38_REPEATABILITY_TRACE_FILE
 unset VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK
-export VLLM_XPU_MKLDNN_DETERMINISTIC=1
+"""
+# The derived script unsets every inherited VLLM_* variable, so the flag must
+# be exported inside it (next to the tuned-folder export) and receipted.
+FOLDER_EXPORT = '  print "export VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32"\n'
+FLAG_EXPORT = FOLDER_EXPORT + '  print "export VLLM_XPU_MKLDNN_DETERMINISTIC=1"\n'
+FOLDER_PRINT = """  print "  printf '\\''tuned_config_folder=moe-m1-w13-n32\\\\n'\\''"
+"""
+FLAG_PRINT = FOLDER_PRINT + """  print "  printf '\\''mkldnn_deterministic=1\\\\n'\\''"
+"""
+FOLDER_ASSERT = """[[ "$(grep -Fxc "  printf 'tuned_config_folder=moe-m1-w13-n32\\\\n'" "$derived")" == 1 ]]
+"""
+FLAG_ASSERT = FOLDER_ASSERT + """[[ "$(grep -Fxc 'export VLLM_XPU_MKLDNN_DETERMINISTIC=1' "$derived")" == 1 ]]
+[[ "$(grep -Fxc "  printf 'mkldnn_deterministic=1\\\\n'" "$derived")" == 1 ]]
 """
 
 
@@ -111,6 +123,9 @@ def main() -> None:
     )
     launcher = replace_n(launcher, A65_HEAD, A66_HEAD, 2)
     launcher = replace_once(launcher, A65_TRACE_LINES, A66_LINES)
+    launcher = replace_once(launcher, FOLDER_EXPORT, FLAG_EXPORT)
+    launcher = replace_once(launcher, FOLDER_PRINT, FLAG_PRINT)
+    launcher = replace_once(launcher, FOLDER_ASSERT, FLAG_ASSERT)
     launcher = successor(launcher)
 
     env = os.environ.copy()
@@ -123,6 +138,8 @@ def main() -> None:
     assert "moe-m1-w13-n32" in derived and "  --enforce-eager\n" in derived
     assert "oneccl-4ceafd1-b70-public" not in derived
     assert "REPEATABILITY_TRACE" not in derived
+    assert "export VLLM_XPU_MKLDNN_DETERMINISTIC=1\n" in derived
+    assert "  printf 'mkldnn_deterministic=1\\n'\n" in derived
     assert "q38-ple2k-a66" in derived
     launcher = launcher.replace(
         "expected_derived=" + "0" * 64, "expected_derived=" + digest(derived)
@@ -131,18 +148,18 @@ def main() -> None:
     supervisor = successor(source("supervise-tp4-mtp0-2304-ple-only-a65-q38trace-w13n32.sh"))
     supervisor = replace_once(
         supervisor,
-        "expected_wrapper=f19f0fbe922ccd07ed6b8476011e5ca824e2dc6c2b21dba06ff7b6dddcda64d6",
+        "expected_wrapper=202d0f17feb683f21be30de3a9bceeeac2be514f46bde309df672a80213368c1",
         "expected_wrapper=" + digest(launcher),
     )
     supervisor = replace_once(
         supervisor,
-        "expected_client=b37bb78be5421852f74275584e3ed51bb724a4b558e95cd30100ee066f671b59",
+        "expected_client=4620efedc7bdcd0790321d45ef6f99b21e000114854cff5b8dd20d0c90b6e3b4",
         "expected_client=" + digest(client),
     )
     host = successor(source("run-q38-a65-host-controlled.sh"))
     host = replace_once(
         host,
-        "expected_supervisor=ec43ee9f62fa6cdf4c99ebbfc09673448c58780907b91bcabab103a4d5126c11",
+        "expected_supervisor=b39836d07ba325b47c028dd49a593b74d8fb95dbe95b3b3e52b68981358290dc",
         "expected_supervisor=" + digest(supervisor),
     )
     emit("launch-tp4-mtp0-2304-ple-only-a66-mkldnndet-w13n32.sh", launcher)
