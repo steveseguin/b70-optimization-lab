@@ -55,7 +55,11 @@ def gdn():
         od, zd, cd, sd = call(dec, []); op, zp, cp, sp = call([], pre)
         d_ok = eq(om[:D], od) and eq(zm[:D], zd) and eq(sm[:D], sd[:D]) and eq(cm[:D], cd[:D])
         p_ok = eq(om[D:], op) and eq(zm[D:], zp) and all(eq(sm[32 + s], sp[32 + s]) and eq(cm[32 + s], cp[32 + s]) for s in pre)
-        rows.append({"prefills": P, "decodes": D, "decode_rows_equal_pure_decode": d_ok, "prefill_rows_equal_pure_prefill": p_ok})
+        rel = float((om[:D].float() - od.float()).abs().max() / (od.float().abs().max() + 1e-6))
+        rows.append({"prefills": P, "decodes": D, "decode_rows_equal_pure_decode": d_ok, "prefill_rows_equal_pure_prefill": p_ok,
+                     "decode_out_max_abs_diff": float((om[:D].float() - od.float()).abs().max()), "decode_out_max_rel_diff": rel,
+                     "decode_z_equal": eq(zm[:D], zd), "decode_conv_state_equal": eq(cm[:D], cd[:D]), "decode_ssm_state_equal": eq(sm[:D], sd[:D]),
+                     "decode_ssm_max_abs_diff": float((sm[:D].float() - sd[:D].float()).abs().max())})
         print("gdn-mixed", rows[-1], flush=True)
     return {"rows": rows, "all_mixed_invariant": all(r["decode_rows_equal_pure_decode"] and r["prefill_rows_equal_pure_prefill"] for r in rows)}
 
