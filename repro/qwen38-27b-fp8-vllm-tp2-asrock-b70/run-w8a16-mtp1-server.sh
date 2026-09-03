@@ -274,6 +274,9 @@ elif [[ -n "${profiler_dir}" ]]; then
   exit 1
 fi
 
+# EXTRA_SERVE_ARGS: optional whitespace-separated extra `vllm serve` flags (diagnostics, e.g. --no-async-scheduling).
+extra_serve_args=()
+[[ -z "${EXTRA_SERVE_ARGS:-}" ]] || read -r -a extra_serve_args <<<"${EXTRA_SERVE_ARGS}"
 exec docker run --rm --name "${container}" \
   --ulimit core=0 \
   --memory "${container_memory}" --memory-swap "${container_memory_swap}" \
@@ -360,4 +363,5 @@ exec docker run --rm --name "${container}" \
   "${eager_args[@]}" \
   --speculative-config "${speculative_config}" \
   --compilation-config "${compilation_config}" \
-  "${profiler_cli_args[@]}"
+  "${profiler_cli_args[@]}" \
+  "${extra_serve_args[@]}"

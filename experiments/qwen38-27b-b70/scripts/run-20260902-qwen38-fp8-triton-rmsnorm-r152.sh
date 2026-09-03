@@ -138,7 +138,7 @@ log "preflight clean; boot $(cat "${root}/boot-id.txt")"
 if [[ "${QUERY_ONLY:-0}" == 1 ]]; then
   # QUERY_ONLY=1 QUERY_KINDS="mtp1 mtp0" QUERY_SCRIPT=<python>: launch each kind (strict config), run the script against it, stop.
   for kind in ${QUERY_KINDS:-mtp1 mtp0}; do
-    launch "query-${kind}" "${kind}" 1024 1 1024
+    launch "query-${kind}" "${kind}" ${QUERY_LAUNCH:-1024 1 1024}
     python3 "${QUERY_SCRIPT}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" \
       --out "${server_dir}/query.json" >"${server_dir}/query.stdout" 2>&1 || log "query-${kind}: script exited nonzero"
     log "query-${kind}: $(tail -n 1 "${server_dir}/query.stdout")"

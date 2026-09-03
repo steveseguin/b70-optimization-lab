@@ -1,0 +1,4 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-repro-20260903-r167","status":"preregistered-before-device-use",
+ "question":"Does the depth-2 phantom first token (R165 cache-c032, 33rd sequential request) reproduce deterministically when the sequential 64-prompt oracle pass is rerun on a ladder-config server (256/64/512), and was the phantom token in the model context (MTP0 continuation of prompt+']' equals the MTP0 oracle) or only in the output stream?",
+ "method":"QUERY_ONLY runner mode with QUERY_LAUNCH='256 64 512': depth-2 server runs the harness oracle pass at concurrency 1; MTP0 server decodes cache-c032 with a trailing ']' and compares to the MTP0 oracle",
+ "decision":"reproduces -> bisect request history and instrument the proposer's first-step bookkeeping (agent report); does not reproduce -> nondeterministic phantom, escalate to slot-level tracing","abort_conditions":["as R147"]}

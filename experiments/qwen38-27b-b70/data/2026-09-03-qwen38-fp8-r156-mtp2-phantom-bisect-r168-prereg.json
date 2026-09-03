@@ -1,0 +1,5 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-bisect-20260903-r168","status":"preregistered-before-device-use",
+ "observation":"R167b: the depth-2 phantom first token reproduces deterministically on the 33rd sequential request (cache-c032) of the 64-prompt pass on a 256/64/512 server, nowhere else; MTP0 with prompt+']' diverges from the oracle so the phantom was never in the model context.",
+ "question":"Is the phantom positional (33rd request regardless of prompt) or bound to cache-c032 plus history?",
+ "method":"one depth-2 ladder-config server; phase A 33 sequential requests of cache-c032; phase B the 64 prompts rotated by one; harness post_stream for every request",
+ "abort_conditions":["as R147"]}

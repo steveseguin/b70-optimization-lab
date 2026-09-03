@@ -1,0 +1,22 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-phantom-bisect-20260903-r168",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-bisect-r168-prereg.json",
+  "status": "NOT positional, history-bound: phase A (33 back-to-back requests of cache-c032) clean 33/33; phase B (64 prompts rotated by one) phantom exactly once, at global request 65 = cache-c032 immediately after evidence-c031, matching R165/R167b (cache-c032 after evidence-c031 at request 33). Every other request equals the MTP0 oracle.",
+  "phantoms": [
+    [
+      64,
+      "B-rotated",
+      "cache-c032",
+      [
+        60,
+        271,
+        3833
+      ],
+      false
+    ]
+  ],
+  "n_requests": 97,
+  "stream_signature": "phantom ']' alone in the first chunk (prefill-step output), true first tokens in the next chunk one decode step later",
+  "interpretation": "The defect is in the handoff between a finishing request (128 tokens, ignore_eos, async extra step discarded) and the next request's prefill on this server config; candidate sites: async output D2H copy (XPU event shim), discard/backup-token row bookkeeping (prepare_next_token_ids_padded backup = last prompt token), prev_sampled_token_ids scatter into input_ids. Next: R169 async scheduling off; R170 logging image."
+}
