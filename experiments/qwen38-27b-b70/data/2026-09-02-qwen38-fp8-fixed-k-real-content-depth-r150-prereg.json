@@ -1,0 +1,14 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-real-content-depth-20260902-r150",
+  "status": "preregistered-before-device-use",
+  "question": "On the published R139 row-invariant image, what are the MTP0 and MTP1 decode rates and TTFT at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context on unrepeated technical prose, Python, and structured documents, and does MTP1 match same-image MTP0 on all 18 complete arrays?",
+  "protocol": "identical to R56/R62: repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-real-content-depth.sh with the frozen fixture data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json, 128 output tokens per request, context capacity 33024, MTP0 arm first as the same-image oracle, then the MTP1 arm compared against it; canaries before and after; cache zero",
+  "servers": {"image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878", "max_model_len": 33024, "max_num_seqs": 1, "max_num_batched_tokens": 4096, "mtp0_launcher": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-r139-server.sh", "mtp1_launcher": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh"},
+  "gates": {"identity": "18/18 MTP1 complete arrays equal to same-image MTP0", "workload": "receipts pass, cached tokens zero, canaries before and after"},
+  "performance_recording": {"not_a_gate": true, "reference": "R62 depth points in experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic-result.json real_content_depth"},
+  "on_pass": "replace the package's 2K-32K depth profiles (decode, TTFT, prompt proxy) with the R139 points for both profiles and remove the depth item from the package's missing list",
+  "abort_conditions": ["as R147"],
+  "runner": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-fixed-k-real-content-depth-r150.sh",
+  "artifact_root": "/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-real-content-depth-20260902-r150"
+}
