@@ -138,3 +138,27 @@ engine initialization (no kernel message, no shutdown record; boot at
 the display driver had taken card1 so the four B70s were reloaded to minors
 0/2/3/4, tuning reapplied, PCIe links verified at 16 GT/s x16, four-card
 all-reduce probe repeated (same result). A112 relaunched 17:59.
+
+## A112: the MTP1 verification step is exact (eager)
+
+A112 (eager MTP1 at 4352 tokens; `VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1`,
+`VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2`, `VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2`;
+overlay 1b2a17c1; relaunched 17:59 after the host reset) against A111 on
+all four ranks:
+
+| position | row | records compared | numeric differences |
+|---|---|---|---|
+| 2048 (accepted token) | 0 | 184 | 0 |
+| 2049 (draft token) | 1 | 183 | 0 |
+
+Every layer output, every layer-0 GDN record, every layer-43 QSA record and
+the model output match bit for bit; the only differing tensors are the PLE
+metadata that differ by construction. Exact-2K output hash `afffd211...`,
+the deterministic MTP0 line's authority, at 5.86 tok/s in this eager traced
+configuration. Three rows of the verification step are now known to
+reproduce three rows of sequential decode exactly: the recurrent core via
+the decode kernel, the TP all-reduce row by row, and the hyperconnection
+norm variance row by row. A113 runs the full-decode-graph MTP1 battery
+(short rows, 2K/4K exact depth, quality, spec-decode metrics) with the same
+three flags against the pinned MTP0 hashes.
+Data: `../data/20260903-tp4-mtp1-a112-vs-a111-layer-trace-rank{0..3}-pos{2048,2049}.json`.
