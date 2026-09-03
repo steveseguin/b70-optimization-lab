@@ -4017,3 +4017,13 @@ three-attempt center `23.03 tok/s` vs native A56 `23.63`. Promotion of the
 deterministic graph line waits only on the user's exact-2K authority
 decision. See the
 [A72 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a72-deterministic-graph-endpoint-result.md).
+A76 (the same identity served at 4352 tokens, probe only) is logit-exact
+at depths 8, 64, 256, 2048 and 4096: 8/8 identical first steps and 3/3
+identical 128-token repeats with zero logprob difference at every depth;
+the 2K continuation equals the 2304-capacity servers' `afffd211...` and the
+4K continuation is one hash across repeats, recorded as the deterministic
+line's candidate 4K authority. Two procedural negatives preceded it: A74
+(root-NVMe free-space floor after the 27B image builds) and A75 (the
+supervisor's memory-PSI guard during PLE pinning behind a warmed page
+cache). See the
+[A76 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a76-4k-prefill-determinism-probe-result.md).
