@@ -9,8 +9,8 @@ expected_base_id=${EXPECTED_BASE_IMAGE_ID:-sha256:901ae9e0ade0109e94dd162d0cf2c3
 image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r152}
 patch_file=${repo_root}/experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r152-20260902.patch
 validator=${repo_root}/tools/validate-xpu-triton-rmsnorm-r152.py
-expected_patch_sha256=ef14d310e17cfad8fcb13d903e09c1ca1f7e840484937ca9f2ef7cb7b75f2a37
-expected_xpu_sha256=c2acd0d48c132581331581564698a0952f1bea7bb7648910d5777afe571a7f6d
+expected_patch_sha256=65101f8fcd6903079d8e1bb102bd1698f23bfc0fe388341d07aecdc6bd9ea344
+expected_xpu_sha256=c2562d10a2ddb58763c556389372cd621c1de1ce78db000ac22f59aee31e6740
 xpu_file=/opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
 dockerfile=${script_dir}/Dockerfile.triton-rmsnorm-r152
 

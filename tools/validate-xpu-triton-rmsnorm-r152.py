@@ -12,10 +12,10 @@ def main() -> int:
     names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
     for req in ("_xpu_triton_rmsnorm_enabled", "_xpu_triton_rmsnorm"):
         if req not in names: raise SystemExit(f"R152 is missing {req}")
-    for frag in ('os.environ.get(flag, "0") == "1"', 'from vllm.third_party.flash_linear_attention.ops.layernorm_guard import',
+    for frag in ('os.environ.get(flag, "0") == "1"', 'op_name="xpu_triton_rmsnorm"', 'torch.ops.vllm.xpu_triton_rmsnorm(x, weight, eps)', 'from vllm.third_party.flash_linear_attention.ops.layernorm_guard import',
                  'rmsnorm_fn(\n        x.reshape(-1, shape[-1]), weight, None, z=None, eps=eps\n    )',
                  '_xpu_triton_rmsnorm_enabled(\n            "VLLM_XPU_GEMMA_RMSNORM_TRITON"\n        )', '_xpu_triton_rmsnorm_enabled("VLLM_XPU_RMSNORM_TRITON")',
-                 'R152 Gemma RMSNorm Triton route executed', 'R152 RMSNorm Triton route executed', 'residual = residual + x'):
+                 'R152 Gemma RMSNorm Triton route armed', 'R152 RMSNorm Triton route armed', 'residual = residual + x'):
         if frag not in src: raise SystemExit(f"R152 source is missing: {frag!r}")
     if src.count("residual = residual + x") != 2: raise SystemExit("expected two exact residual adds")
     print("R152 Triton RMSNorm gate: ok"); return 0

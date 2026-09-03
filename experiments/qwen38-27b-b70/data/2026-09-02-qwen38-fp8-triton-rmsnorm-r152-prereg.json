@@ -9,8 +9,8 @@
   },
   "treatment": {
     "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r152-20260902.patch",
-    "patch_sha256": "ef14d310e17cfad8fcb13d903e09c1ca1f7e840484937ca9f2ef7cb7b75f2a37",
-    "installed_layernorm_sha256": "c2acd0d48c132581331581564698a0952f1bea7bb7648910d5777afe571a7f6d",
+    "patch_sha256": "65101f8fcd6903079d8e1bb102bd1698f23bfc0fe388341d07aecdc6bd9ea344",
+    "installed_layernorm_sha256": "c2562d10a2ddb58763c556389372cd621c1de1ce78db000ac22f59aee31e6740",
     "env": {"VLLM_XPU_GEMMA_RMSNORM_TRITON": "1", "VLLM_XPU_RMSNORM_TRITON": "1"},
     "residual": "the fused add stays an exact fp16 add in torch; only the normalization kernel changes",
     "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r152 over R139, built by repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-triton-rmsnorm-r152-image.sh; contract opt-in EXPECTED_LAYERNORM_SHA256"

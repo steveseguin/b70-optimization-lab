@@ -10,7 +10,7 @@ repro=${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70
 root=${ROOT:-/mnt/fast-ai/bench-results/qwen38-fp8-triton-rmsnorm-20260902-r152}
 image=${IMAGE_OVERRIDE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r152}
 image_id=${IMAGE_ID_OVERRIDE:?set IMAGE_ID_OVERRIDE to the built R152 image id}
-export EXPECTED_LAYERNORM_SHA256=c2acd0d48c132581331581564698a0952f1bea7bb7648910d5777afe571a7f6d
+export EXPECTED_LAYERNORM_SHA256=c2562d10a2ddb58763c556389372cd621c1de1ce78db000ac22f59aee31e6740
 export VLLM_XPU_GEMMA_RMSNORM_TRITON=1
 export VLLM_XPU_RMSNORM_TRITON=1
 ext_sha=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1
@@ -176,7 +176,7 @@ python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_mode
 ladder_rc=$?
 echo "${ladder_rc}" >"${server_dir}/ladder.rc"
 log "G6 ladder harness exit ${ladder_rc}"
-grep -c "R152 Gemma RMSNorm Triton route executed" "${server_dir}/server.log" >"${server_dir}/r152-marker-count.txt" || true
+grep -c "R152 Gemma RMSNorm Triton route armed" "${server_dir}/server.log" >"${server_dir}/r152-marker-count.txt" || true
 log "ladder: R152 marker lines $(cat "${server_dir}/r152-marker-count.txt")"
 stop_server "${server_name}" "${server_pid}" "${server_dir}"
 postflight ladder-post
