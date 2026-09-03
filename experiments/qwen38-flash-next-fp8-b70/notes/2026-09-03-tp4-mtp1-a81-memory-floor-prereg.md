@@ -5,6 +5,6 @@ only the supervisor's per-second `MemAvailable` floor changes from
 16,000,000 to 12,000,000 KiB. Question, design, driver and reading are those
 of the A80 preregistration
 (`2026-09-03-tp4-mtp1-a80-graph-mtp1-prereg.md`); the negative it answers is
-`2026-09-03-tp4-mtp1-a80-memory-floor-negative.md`. Packet: launcher
-`d0f2...` (see generator output), client, supervisor and host wrapper as
-emitted by `tools/rewrite-q38-a80-to-a81-memory-floor.py`.
+`2026-09-03-tp4-mtp1-a80-memory-floor-negative.md`. Packet: launcher `c1cd610a...`, client `ac19fe01...`, supervisor
+`f42a8a5e...`, host wrapper `b6c392ac...`, emitted by
+`tools/rewrite-q38-a80-to-a81-memory-floor.py`.
