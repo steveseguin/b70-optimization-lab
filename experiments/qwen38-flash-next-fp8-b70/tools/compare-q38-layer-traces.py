@@ -55,11 +55,15 @@ def main() -> None:
                 if same is None:
                     # reference has more than one row too: compare corresponding rows
                     same = ct["row_sha256"][row] == rt.get("row_sha256", [None])[0]
-            else:
+            elif ct.get("shape") == rt.get("shape"):
                 same = ct["sha256"] == rt["sha256"]
+            else:
+                same = None  # different shapes without per-row digests: not comparable
             out["labels"].append({"label": label, "tensor": name, "same": same, "ref_shape": rt["shape"], "cand_shape": ct["shape"]})
             if same is False and out["first_difference"] is None:
-                out["first_difference"] = {"label": label, "tensor": name, "ref_head": rt["head"][:4], "cand_row_head": (ct.get("row_head") or [ct["head"]])[row or 0][:4]}
+                rh = ct.get("row_head")
+                cand_head = rh[row][:4] if (rh and row is not None and row < len(rh)) else ct["head"][:4]
+                out["first_difference"] = {"label": label, "tensor": name, "ref_head": rt["head"][:4], "cand_row_head": cand_head}
     print(json.dumps(out, indent=1))
 
 

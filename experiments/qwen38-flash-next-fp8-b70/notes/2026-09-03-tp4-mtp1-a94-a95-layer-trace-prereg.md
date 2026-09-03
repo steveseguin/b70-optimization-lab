@@ -42,3 +42,25 @@ The first differing label names the component: `layer_N_attn_mix` or
 (MoE in situ, contradicting the offline gate). If every record matches
 through the last layer, the difference is downstream of the model
 (final norm, logits, or the sampler).
+
+## A94 / A95 result and the A96 / A97 follow-up (14:20)
+
+Both captures landed on all four ranks. A94 (eager MTP0) captured the
+single-row decode at position 2059; A95 (eager exact-recurrent MTP1)
+captured the two-row step at positions 2058-2059. The eager MTP0 line
+agrees with the graph MTP0 line through token 107 of the 2K fixture and
+with the MTP1-exact line through token 11, so the prefix at 2059 is shared.
+Row by row, the embedding of position 2059 is identical, and every record
+from `layer_0_output` on differs (18 identical records, all
+hyperconnection injections at later layers, against 152 differing). Layer 0
+is a linear-attention layer, so its output for the same input token can
+differ for two reasons that this capture cannot separate: the recurrent
+state carried into the step already drifted during the eleven earlier
+verification steps (tokens matched, states did not), or the two-row step's
+own arithmetic differs. A96 (MTP0, captures positions 2048 and 2049) and
+A97 (MTP1-exact, captures its first two-row step at 2048-2049) resolve
+that: both start from the identical post-prefill state, so a difference in
+row 0 at 2048 is the step's arithmetic, and a match there with a
+difference at 2049 (row 1) points at the second row's dependence on the
+first within one step. Packets: `tools/rewrite-q38-a83-to-a96-layer-trace.py`,
+`tools/rewrite-q38-a83-to-a97-layer-trace.py`.
