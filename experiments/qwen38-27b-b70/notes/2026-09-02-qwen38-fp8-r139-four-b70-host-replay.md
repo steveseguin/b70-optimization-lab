@@ -96,6 +96,33 @@ All six prompt classes sit within 27.5-30.6 tok/s on MTP1, so the factor
   and this host's IOMMU is in translated mode with ACS redirect on the root
   ports. `iommu=pt` is the next test (reboot, user-authorized).
 
+## After the `iommu=pt` reboot (2026-09-03 00:10-00:25)
+
+- `/proc/cmdline` carries `iommu=pt`; the kernel reports `Default domain
+  type: Passthrough`. Two-card BF16 all-reduce `[1,5120]`: 48.2 us (was
+  50.8). Clearing ACS `SrcValid/ReqRedir/CmpltRedir/UpstreamFwd` on both root
+  ports and both card switch ports (`setpci ECAP_ACS+6.w=0`): 47.8 us. The
+  server's own collective environment (`CCL_TOPO_P2P_ACCESS=1`,
+  `CCL_ZE_IPC_EXCHANGE=pidfd`), `twoshots`, a raised LL threshold, and even
+  `CCL_TOPO_P2P_ACCESS=0` all sit at 47-56 us. The collective's floor here is
+  not the fabric route; it is the per-launch and sync cost inside the
+  collective.
+- The publishing host's probe (`qwen38-fp8-host-submission-latency-probe.py`,
+  its data file `2026-09-02-qwen38-host-submission-latency-probe-two-b70-host.json`)
+  run on both hosts inside the R139 image:
+
+  | measure | publishing host | this host |
+  | --- | ---: | ---: |
+  | async launch | 3.13 us | 5.18 us |
+  | launch + sync | 25.98 us | 30.22 us |
+  | native `rms_norm` at M=2 | 41.5 us | 133.9 us |
+
+  Per-launch submission is 1.65x slower here and launch-heavy ops 3.2x,
+  against a 1.28x pure-Python gap, so the driver and firmware submission
+  path adds to the CPU difference. This is the whole of the 1.8x decode gap:
+  the graph-off profile exposes it about 130 times per token, and graph
+  capture hides it (MTP0 31.1, MTP1 51.3 tok/s above).
+
 ## Transferable result
 
 On a host whose per-launch and per-collective latency is higher than the
