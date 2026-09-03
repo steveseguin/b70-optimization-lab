@@ -1,0 +1,2345 @@
+{
+ "reference_positions": [
+  2048.0
+ ],
+ "candidate_positions": [
+  2048.0,
+  2049.0
+ ],
+ "candidate_row_for_position": 0,
+ "position": 2048,
+ "labels": [
+  {
+   "label": "model_input",
+   "tensor": "hidden_states",
+   "same": true,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "model_input",
+   "tensor": "input_ids",
+   "same": null,
+   "ref_shape": [
+    1
+   ],
+   "cand_shape": [
+    2
+   ]
+  },
+  {
+   "label": "layer_0_gdn_in_proj",
+   "tensor": "ba",
+   "same": true,
+   "ref_shape": [
+    1,
+    24
+   ],
+   "cand_shape": [
+    2,
+    24
+   ]
+  },
+  {
+   "label": "layer_0_gdn_in_proj",
+   "tensor": "hidden_states",
+   "same": true,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_0_gdn_in_proj",
+   "tensor": "qkvz",
+   "same": true,
+   "ref_shape": [
+    1,
+    4096
+   ],
+   "cand_shape": [
+    2,
+    4096
+   ]
+  },
+  {
+   "label": "layer_0_gdn_core",
+   "tensor": "core_attn_out",
+   "same": true,
+   "ref_shape": [
+    1,
+    12,
+    128
+   ],
+   "cand_shape": [
+    2,
+    12,
+    128
+   ]
+  },
+  {
+   "label": "layer_0_gdn_core",
+   "tensor": "z",
+   "same": true,
+   "ref_shape": [
+    1,
+    12,
+    128
+   ],
+   "cand_shape": [
+    2,
+    12,
+    128
+   ]
+  },
+  {
+   "label": "layer_0_gdn_norm",
+   "tensor": "normed",
+   "same": true,
+   "ref_shape": [
+    1,
+    1536
+   ],
+   "cand_shape": [
+    2,
+    1536
+   ]
+  },
+  {
+   "label": "layer_0_gdn_out_proj",
+   "tensor": "out",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_0_gdn_attn_output",
+   "tensor": "attn_out",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_0_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_0_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_0_output",
+   "tensor": "injection",
+   "same": true,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_1_ple_input",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_ple_input",
+   "tensor": "input_ids",
+   "same": null,
+   "ref_shape": [
+    1
+   ],
+   "cand_shape": [
+    2
+   ]
+  },
+  {
+   "label": "layer_1_ple_input",
+   "tensor": "ngram_context",
+   "same": true,
+   "ref_shape": [
+    1,
+    2
+   ],
+   "cand_shape": [
+    1,
+    2
+   ]
+  },
+  {
+   "label": "layer_1_ple_input",
+   "tensor": "query_start_loc",
+   "same": false,
+   "ref_shape": [
+    2
+   ],
+   "cand_shape": [
+    2
+   ]
+  },
+  {
+   "label": "layer_1_ple_embedding_raw",
+   "tensor": "embeddings",
+   "same": true,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_ple_embedding_dequantized",
+   "tensor": "embeddings",
+   "same": true,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_ple_projection",
+   "tensor": "key",
+   "same": true,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_ple_projection",
+   "tensor": "value",
+   "same": true,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_ple_gate",
+   "tensor": "gate",
+   "same": true,
+   "ref_shape": [
+    1,
+    4,
+    1
+   ],
+   "cand_shape": [
+    2,
+    4,
+    1
+   ]
+  },
+  {
+   "label": "layer_1_ple_gate",
+   "tensor": "gated_value",
+   "same": true,
+   "ref_shape": [
+    1,
+    4,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    4,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_ple_conv_input",
+   "tensor": "normalized",
+   "same": true,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_ple_conv_output",
+   "tensor": "conv_output",
+   "same": true,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_ple_output",
+   "tensor": "ple_output",
+   "same": true,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_post_ple",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_attn_mix",
+   "tensor": "block_input",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_attn_mix",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_attn_mix",
+   "tensor": "injection",
+   "same": true,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_1_attn_output",
+   "tensor": "attn_out",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_mlp_mix",
+   "tensor": "block_input",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_mlp_mix",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_mlp_mix",
+   "tensor": "injection",
+   "same": true,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_1_mlp_output",
+   "tensor": "mlp_out",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_1_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_1_output",
+   "tensor": "injection",
+   "same": true,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_2_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_2_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_2_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_3_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_3_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_3_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_4_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_4_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_4_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_5_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_5_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_5_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_6_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_6_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_6_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_7_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_7_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_7_output",
+   "tensor": "injection",
+   "same": true,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_8_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_8_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_8_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_9_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_9_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_9_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_10_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_10_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_10_output",
+   "tensor": "injection",
+   "same": true,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_11_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_11_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_11_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_12_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_12_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_12_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_13_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_13_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_13_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_14_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_14_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_14_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_15_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_15_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_15_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_16_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_16_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_16_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_17_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_17_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_17_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_18_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_18_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_18_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_19_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_19_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_19_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_20_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_20_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_20_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_21_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_21_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_21_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_22_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_22_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_22_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_23_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_23_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_23_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_24_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_24_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_24_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_25_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_25_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_25_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_26_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_26_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_26_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_27_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_27_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_27_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_28_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_28_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_28_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_29_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_29_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_29_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_30_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_30_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_30_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_31_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_31_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_31_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_32_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_32_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_32_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_33_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_33_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_33_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_34_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_34_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_34_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_35_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_35_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_35_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_36_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_36_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_36_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_37_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_37_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_37_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_38_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_38_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_38_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_39_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_39_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_39_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_40_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_40_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_40_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_41_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_41_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_41_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_42_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_42_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_42_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_43_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_43_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_43_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_44_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_44_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_44_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_45_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_45_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_45_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_46_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_46_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_46_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "layer_47_output",
+   "tensor": "block_output",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  },
+  {
+   "label": "layer_47_output",
+   "tensor": "hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "layer_47_output",
+   "tensor": "injection",
+   "same": false,
+   "ref_shape": [
+    1,
+    4
+   ],
+   "cand_shape": [
+    2,
+    4
+   ]
+  },
+  {
+   "label": "model_output",
+   "tensor": "multi_hidden",
+   "same": false,
+   "ref_shape": [
+    1,
+    10240
+   ],
+   "cand_shape": [
+    2,
+    10240
+   ]
+  },
+  {
+   "label": "model_output",
+   "tensor": "sample_hidden_states",
+   "same": false,
+   "ref_shape": [
+    1,
+    2560
+   ],
+   "cand_shape": [
+    2,
+    2560
+   ]
+  }
+ ],
+ "first_difference": {
+  "label": "layer_0_gdn_out_proj",
+  "tensor": "out",
+  "ref_head": [
+   -0.01171875,
+   -0.025634765625,
+   -0.00567626953125,
+   0.0791015625
+  ],
+  "cand_row_head": [
+   -0.01171875,
+   -0.025634765625,
+   -0.00567626953125,
+   0.0791015625
+  ]
+ }
+}
