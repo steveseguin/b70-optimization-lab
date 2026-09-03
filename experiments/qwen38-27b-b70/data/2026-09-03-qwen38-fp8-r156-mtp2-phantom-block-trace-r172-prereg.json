@@ -1,0 +1,5 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-phantom-block-trace-20260903-r172","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-block-trace-r172 sha256:84542124a4e5d3105590bbb7aa241e1b068899bd9b6d802f0fd53415296d8927 (R171 + block-id/zeroing trace, diagnostic only)",
+ "observation":"R173: the phantom persists with a full device synchronize before every step, so it is deterministic state, not kernel overlap.",
+ "question":"Does cache-c032 inherit evidence-c031's blocks (attention and/or mamba groups) such that its last prompt position (offset 30) is a slot the discarded extra step (positions 156-158, offsets 28-30) had just written, and were those blocks in new_block_ids_to_zero for the c032 prefill step? Compare with a boundary that did not phantom (evidence-c007 -> cache-c008).",
+ "abort_conditions":["as R147"]}

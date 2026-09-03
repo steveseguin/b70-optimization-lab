@@ -1,0 +1,5 @@
+# R172 diagnostic: R171 trace image + block-id and zeroing-list trace per small step.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-logits-row-trace-r171
+COPY r172-block-trace.py /tmp/r172.py
+RUN python /tmp/r172.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py && rm /tmp/r172.py
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-block-trace-r172-diagnostic"
