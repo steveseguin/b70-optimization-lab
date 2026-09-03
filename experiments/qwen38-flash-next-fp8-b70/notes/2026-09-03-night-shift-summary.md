@@ -27,6 +27,13 @@
   memo: `2026-09-03-tp4-mtp0-exact-2k-authority-decision-memo.md`.
   Nothing protected was changed. A73 (exact-4K rows) is proposed and waits
   on that policy: `2026-09-03-tp4-mtp0-a73-exact-4k-proposal.md`.
+- **4K prefill is exact too (A76, 03:43).** The same identity served at 4352
+  tokens gave 8/8 identical first steps and 3/3 identical 128-token repeats
+  with zero logprob difference at depths 8, 64, 256, 2048 and 4096; its 2K
+  continuation equals the 2304 servers' `afffd211...`, and its 4K
+  continuation `c6193cc6...` is the candidate 4K authority. Two guard
+  negatives preceded it (A74 root-NVMe free-space floor after the 27B
+  builds; A75 memory-PSI guard during PLE pinning behind a warmed cache).
 
 ## Qwen3.8 27B FP8 TP2 R139 recipe (replayed on this host)
 
