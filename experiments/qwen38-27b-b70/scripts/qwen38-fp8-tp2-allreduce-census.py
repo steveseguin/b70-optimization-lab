@@ -29,8 +29,17 @@ def main():
         row = {"rows": n, "bytes": n * 5120 * 2, "equals_correctly_rounded_sum": eq_exact, "equals_fp16_add": eq_naive, "repeat_equal": rep, "prefix_equal_smaller_messages": prefix_ok, "max_abs_diff_vs_exact": md}
         rows.append(row)
         if rank == 0: print(row, flush=True)
+    import time
+    timing = {}
+    for n in (2, 32, 64, 900):
+        x = mine[:n].clone()
+        for _ in range(20): dist.all_reduce(x)
+        torch.xpu.synchronize(); t0 = time.perf_counter()
+        for _ in range(200): dist.all_reduce(x)
+        torch.xpu.synchronize(); timing[f"rows{n}_us"] = (time.perf_counter() - t0) / 200 * 1e6
+    if rank == 0: print("allreduce timing us:", {k: round(v, 1) for k, v in timing.items()}, flush=True)
     if rank == 0:
-        out = {"rows": rows, "all_exact": all(r["equals_correctly_rounded_sum"] for r in rows), "all_repeat": all(r["repeat_equal"] for r in rows), "all_prefix_invariant": all(r["prefix_equal_smaller_messages"] for r in rows)}
+        out = {"allreduce_timing_us": timing, "rows": rows, "all_exact": all(r["equals_correctly_rounded_sum"] for r in rows), "all_repeat": all(r["repeat_equal"] for r in rows), "all_prefix_invariant": all(r["prefix_equal_smaller_messages"] for r in rows)}
         open(sys.argv[1], "w").write(json.dumps(out, indent=1)); print({k: out[k] for k in ("all_exact", "all_repeat", "all_prefix_invariant")}, flush=True)
     dist.barrier(device_ids=[lr]); dist.destroy_process_group()
 

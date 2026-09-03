@@ -7,6 +7,11 @@ out=/mnt/fast-ai/bench-results
 docker run --rm --name qwen38-host-probe --device /dev/dri:/dev/dri --group-add render --memory 6g -e ONEAPI_DEVICE_SELECTOR=level_zero:0 -e VLLM_TARGET_DEVICE=xpu \
   -v "${script_dir}/qwen38-fp8-host-submission-latency-probe.py:/tmp/p.py:ro" -v "${out}:/out" --workdir /tmp --entrypoint python3 \
   neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139 /tmp/p.py /out/qwen38-host-submission-latency-probe-20260902.json >"${out}/host-probe.log" 2>&1
+docker run --rm --name qwen38-allreduce-timing --ulimit core=0 --device /dev/dri:/dev/dri --group-add render --cap-add SYS_PTRACE --security-opt label=disable --ipc=host --shm-size=8g --memory 12g \
+  -e ZE_AFFINITY_MASK=0,1 -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 -e VLLM_TARGET_DEVICE=xpu -e CCL_ATL_TRANSPORT=ofi -e FI_PROVIDER=tcp -e FI_TCP_IFACE=lo -e CCL_ZE_IPC_EXCHANGE=pidfd -e CCL_SEND=direct -e CCL_RECV=direct -e CCL_TOPO_P2P_ACCESS=1 \
+  -e CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4294967296 -e CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296 -e CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296 \
+  -v "${script_dir}/qwen38-fp8-tp2-allreduce-census.py:/tmp/ar.py:ro" -v "${out}:/out" --workdir /tmp --entrypoint python3 \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139 -m torch.distributed.run --standalone --nproc_per_node=2 /tmp/ar.py /out/qwen38-fp8-tp2-allreduce-census-timed-20260902.json >"${out}/allreduce-timing.log" 2>&1
 ROOT="${out}/qwen38-fp8-triton-rmsnorm-fast-20260902-r153a" IMAGE_OVERRIDE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r153a \
   IMAGE_ID_OVERRIDE=sha256:e168f4705e935a6771310bc7e8d579fb79c2190c22f1110b570aa08ad91a9c5f \
   LAYERNORM_SHA256_OVERRIDE=37c65a77cd398e4d560f797c74c236336910683dfed3a2dc8259878d86e456a9 \
