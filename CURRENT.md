@@ -178,6 +178,16 @@ R62/R139. LocalMaxxing approved the R139 submission `cmtkvle7a0428p701k0ttabyy` 
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.
 
+## Publication Closure (2026-09-02)
+
+`tools/public-closure-scanner.py` audits every published package for files a
+third party cannot resolve. All Qwen3.8 27B packages are clean, including the
+FP8 lane whose R139 binaries are in GitHub release
+`qwen38-fp8-tp2-r139-20260902`. Laguna S 2.1, MiniMax M2.7, and Gemma 4 recipe
+scripts still carry four-B70-host paths; that host owns the fix per
+[`audits/public-closure/HANDOFF-four-b70-host.md`](audits/public-closure/HANDOFF-four-b70-host.md).
+The daily efficiency auditor runs the scanner.
+
 ## Paused Qwen3.8 AutoRound INT4 Two-B70 Optimization
 
 The paused local lane is the dense Qwen3.8-27B AutoRound INT4 checkpoint on
