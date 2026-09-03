@@ -84,7 +84,10 @@ case "${mode}" in
     done
     [[ $(ls /dev/dri | grep -c renderD) == 4 ]] || fail 'four render nodes did not return'
     root dmesg | grep 'GuC firmware' | tail -4
-    root dmesg | grep -q 'version 70.72.1' || fail 'reloaded driver did not report GuC 70.72.1'
+    # `grep -q` exits on the first match and the SIGPIPE'd dmesg then fails the
+    # pipeline under pipefail, which reported a false FAIL on 2026-09-03; let grep
+    # read the whole buffer instead.
+    [[ -n $(root dmesg | grep 'version 70.72.1') ]] || fail 'reloaded driver did not report GuC 70.72.1'
     printf 'xe reloaded with GuC 70.72.1 on four B70s\n'
     ;;
   *) fail 'usage: --dry-run | --install | --reload-xe | --restore' ;;
