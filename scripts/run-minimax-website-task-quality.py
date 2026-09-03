@@ -136,13 +136,14 @@ def configure_env(mode: str, cache_root: str | None) -> None:
         "PYTHONPATH",
         os.environ.get(
             "LLM_SCALER_KERNELS",
-            "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python",
+            os.path.expanduser("~/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python"),
         ),
     )
-    prepend_env_path("LD_LIBRARY_PATH", "/home/steve/.venvs/vllm-xpu/lib")
+    venv = os.environ.get("VENV") or os.path.expanduser("~/.venvs/vllm-xpu")
+    prepend_env_path("LD_LIBRARY_PATH", f"{venv}/lib")
     prepend_env_path(
         "LD_LIBRARY_PATH",
-        "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+        f"{venv}/lib/python3.12/site-packages/torch/lib",
     )
     if cache_root:
         os.environ["VLLM_CACHE_ROOT"] = cache_root

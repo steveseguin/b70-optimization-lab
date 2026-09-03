@@ -88,7 +88,7 @@ def configure_env(args: argparse.Namespace) -> None:
         "PYTHONPATH",
         os.environ.get(
             "LLM_SCALER_KERNELS",
-            "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python",
+            os.path.expanduser("~/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python"),
         ),
     )
     venv = os.environ.get("VENV") or os.path.expanduser("~/.venvs/vllm-xpu")

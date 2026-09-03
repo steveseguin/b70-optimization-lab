@@ -94,6 +94,39 @@ class RecipePublicationValidationTest(unittest.TestCase):
             errors = MODULE.validate_manifest(repo, manifest_path)
             self.assertTrue(any("lacks release kinds" in error for error in errors))
 
+    def test_chain_release_assets_are_validated_and_remote_checked(self) -> None:
+        good = {
+            "name": "lib.so",
+            "kind": "gdn-library",
+            "url": "https://example.invalid/download/tag/lib.so",
+            "sha256": hashlib.sha256(b"payload").hexdigest(),
+            "size": 7,
+        }
+        errors: list[str] = []
+        valid = MODULE._validate_chain_release(
+            "m.chains['r139']",
+            {"tag": "t", "url": "https://example.invalid/tag", "remote_verified_at": "2026-09-03T00:00:00Z", "assets": [good]},
+            errors,
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(valid, [good])
+        errors = []
+        bad = dict(good, url="https://example.invalid/download/tag/other.so", sha256="xyz")
+        valid = MODULE._validate_chain_release(
+            "m.chains['r139']",
+            {"tag": "", "url": "http://insecure", "remote_verified_at": "yesterday", "assets": [bad]},
+            errors,
+        )
+        self.assertEqual(valid, [])
+        self.assertTrue(any("basename does not match" in e for e in errors))
+        self.assertTrue(any("sha256" in e for e in errors))
+        self.assertTrue(any("release.tag" in e for e in errors))
+        self.assertTrue(any("remote_verified_at" in e for e in errors))
+        errors = []
+        with mock.patch.object(MODULE, "urlopen", return_value=io.BytesIO(b"changed")):
+            MODULE._validate_remote_asset(good, errors)
+        self.assertTrue(any("SHA-256" in e for e in errors))
+
     def test_rejects_missing_remote_asset(self) -> None:
         asset = {
             "name": "missing.so",

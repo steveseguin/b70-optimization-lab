@@ -195,6 +195,26 @@ def main() -> int:
         if a.package and pkg["id"] not in a.package:
             continue
         reports.append(scan_package(pkg, tracked, rel_cache))
+    # Guides that have no model package (lab-replay, research-status, capsules)
+    # are scanned too, as informational lanes: their findings are reported but
+    # never fail the scan, because they do not promise portability.
+    packaged_guides = {pkg["guide"] for pkg in catalog["packages"]}
+    guide_catalog = json.loads((ROOT / "repro/guide-catalog.json").read_text())
+    for guide in guide_catalog["guides"]:
+        if guide["guide"] in packaged_guides:
+            continue
+        if a.package and guide["id"] not in a.package:
+            continue
+        lane = {
+            "id": guide["id"],
+            "guide": guide["guide"],
+            "manifest": guide["guide"],
+            "dependencies": list(guide.get("dependency_links") or []),
+            "status": f"informational:{guide.get('classification')}",
+        }
+        report = scan_package(lane, tracked, rel_cache)
+        report["informational"] = True
+        reports.append(report)
     blocking = ("missing_path", "untracked_path", "host_path_hardcoded", "missing_release_asset", "image_without_reachable_builder")
     lines = ["# Public closure scan", ""]
     fail = False
@@ -202,8 +222,12 @@ def main() -> int:
         f = r["findings"]
         counts = {k: len(v) for k, v in f.items()}
         bad = any(counts.get(k) for k in blocking)
-        fail |= bad
-        lines.append(f"## {r['id']} ({r['status']}, {r['files_crawled']} files) — {'GAPS' if bad else 'clean'}")
+        if not r.get("informational"):
+            fail |= bad
+        verdict = "GAPS" if bad else "clean"
+        if r.get("informational") and bad:
+            verdict = "gaps (informational; no portability promise)"
+        lines.append(f"## {r['id']} ({r['status']}, {r['files_crawled']} files) — {verdict}")
         for k in blocking + ("host_path_overridable_default", "host_requirement", "evidence_missing_path", "evidence_untracked_path"):
             if counts.get(k):
                 lines.append(f"- **{k}**: {counts[k]}")

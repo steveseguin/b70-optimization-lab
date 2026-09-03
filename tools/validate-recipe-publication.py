@@ -325,6 +325,67 @@ def _validate_remote_release(
             _verify_checksum_manifest(retained[checksum_assets[0]["name"]], assets, errors)
 
 
+def _validate_chain_release(
+    label: str, release: Any, errors: list[str]
+) -> list[dict[str, Any]]:
+    """Validate an optional per-chain release block (same asset shape as the
+    top-level release) and return its structurally valid assets.  Chain
+    releases bind the assets of later published images (for example the R139
+    W8A16 image) so that --check-remote re-verifies them as well."""
+    valid: list[dict[str, Any]] = []
+    if not isinstance(release, dict):
+        errors.append(f"{label}.release must be an object")
+        return valid
+    if not isinstance(release.get("tag"), str) or not release["tag"]:
+        errors.append(f"{label}.release.tag must be a non-empty immutable tag")
+    if not isinstance(release.get("url"), str) or not release["url"].startswith("https://"):
+        errors.append(f"{label}.release.url must be an HTTPS URL")
+    remote_verified_at = release.get("remote_verified_at")
+    if not isinstance(remote_verified_at, str) or not re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", remote_verified_at
+    ):
+        errors.append(f"{label}.release.remote_verified_at must be a UTC timestamp")
+    assets = release.get("assets")
+    if not isinstance(assets, list) or not assets:
+        errors.append(f"{label}.release.assets must be a non-empty list")
+        return valid
+    names: set[str] = set()
+    for index, asset in enumerate(assets):
+        asset_label = f"{label}.release.assets[{index}]"
+        if not isinstance(asset, dict):
+            errors.append(f"{asset_label} must be an object")
+            continue
+        name, kind, url = asset.get("name"), asset.get("kind"), asset.get("url")
+        digest, size = asset.get("sha256"), asset.get("size")
+        ok = True
+        if not isinstance(name, str) or not name or PurePosixPath(name).name != name:
+            errors.append(f"{asset_label}.name must be a bare file name")
+            ok = False
+        elif name in names:
+            errors.append(f"{asset_label}: duplicate asset name {name!r}")
+            ok = False
+        else:
+            names.add(name)
+        if not isinstance(kind, str) or not kind:
+            errors.append(f"{asset_label}.kind must be a non-empty string")
+            ok = False
+        if not isinstance(url, str) or not url.startswith("https://"):
+            errors.append(f"{asset_label}.url must be an HTTPS URL")
+            ok = False
+        elif isinstance(name, str) and unquote(PurePosixPath(urlparse(url).path).name) != name:
+            errors.append(f"{asset_label}.url basename does not match asset name {name!r}")
+            ok = False
+        if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+            errors.append(f"{asset_label}.sha256 must be a lowercase SHA-256 digest")
+            ok = False
+        if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+            errors.append(f"{asset_label}.size must be a positive integer")
+            ok = False
+        if ok:
+            valid.append(asset)
+    return valid
+
+
 def validate_manifest(repo: Path, manifest_path: Path, check_remote: bool = False) -> list[str]:
     errors: list[str] = []
     try:
@@ -580,12 +641,36 @@ def validate_manifest(repo: Path, manifest_path: Path, check_remote: bool = Fals
         ):
             errors.append(f"{label}: published release requires remote_verified_at in UTC")
 
+    # Optional top-level `chain_releases`: {chain_id: release} blocks that bind
+    # the assets of later published images (for example the R139 W8A16 image).
+    # They live outside `chains` because the source-closure verifier treats
+    # every dict under `chains` with a sha256 as a repository file binding.
+    chain_releases = manifest.get("chain_releases")
+    chains = manifest.get("chains")
+    chain_assets: list[dict[str, Any]] = []
+    chain_assets_complete = True
+    if chain_releases is not None and not isinstance(chain_releases, dict):
+        errors.append(f"{label}.chain_releases must be an object keyed by chain id")
+    elif isinstance(chain_releases, dict):
+        for chain_id, chain_release in chain_releases.items():
+            chain_label = f"{label}.chain_releases[{chain_id!r}]"
+            if not isinstance(chains, dict) or chain_id not in chains:
+                errors.append(f"{chain_label}: no such chain in {label}.chains")
+            valid_chain_assets = _validate_chain_release(chain_label, chain_release, errors)
+            declared = chain_release.get("assets") if isinstance(chain_release, dict) else None
+            if len(valid_chain_assets) != len(declared or []):
+                chain_assets_complete = False
+            chain_assets.extend(valid_chain_assets)
+
     if check_remote and len(valid_assets) == len(assets or []):
         _validate_remote_release(
             valid_assets,
             binary_sections if isinstance(binary_sections, dict) else {},
             errors,
         )
+    if check_remote and chain_assets_complete:
+        for asset in chain_assets:
+            _validate_remote_asset(asset, errors)
 
     return errors
 
