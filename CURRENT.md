@@ -23,7 +23,7 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 **Device lock (2026-09-02 late, boot `2c230b44`):** R152 (Triton RMSNorm route over
 R139) runs unattended on both B70s: two MTP0 controls, two MTP1 candidates with
 the repeat probe, then both c1-c64 ladders; root
-`/mnt/fast-ai/bench-results/qwen38-fp8-triton-rmsnorm-20260902-r152`. Do not
+`/mnt/fast-ai/bench-results/qwen38-fp8-triton-rmsnorm-20260902-r152b`. Do not
 launch other GPU work until that root holds `campaign-end.txt` or `ABORTED`.
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
