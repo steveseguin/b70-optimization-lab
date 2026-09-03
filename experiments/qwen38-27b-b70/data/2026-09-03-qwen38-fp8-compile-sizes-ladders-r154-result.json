@@ -1,0 +1,86 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-compile-sizes-ladders-20260903-r154",
+  "status": "negative: compile_sizes [] leaves the MTP1 ladder at 31/32 and 57/64 on the unchanged R139 image",
+  "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+  "server_log_confirms": "compile_sizes': []",
+  "ladder_mtp1": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 51.662897828686596,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 77.82015320542276,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 172.9265583162473,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 352.37417274366777,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 496.3047335414902,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 817.3302219307369,
+      "exact_vs_sequential_oracle": "31/32",
+      "mismatches_first_divergence": [
+        [
+          "rollback-c010",
+          97
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1087.7848682764757,
+      "exact_vs_sequential_oracle": "57/64",
+      "mismatches_first_divergence": [
+        [
+          "benchmark-c019",
+          60
+        ],
+        [
+          "evidence-c007",
+          13
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "index-c033",
+          75
+        ],
+        [
+          "rollback-c010",
+          97
+        ],
+        [
+          "rollback-c050",
+          60
+        ],
+        [
+          "testing-c045",
+          28
+        ]
+      ]
+    }
+  ],
+  "interpretation": "The statically specialized one-row graph is not the source. Every row-count-keyed candidate is now cleared (W8A16 GEMM, FP16 head, layer norm, batch budget, compile specialization); the remaining candidates key on scheduling: steps that carry prefills and decodes in one GDN or attention call once 32+ requests arrive with skew (R155 mixed-step census next)."
+}

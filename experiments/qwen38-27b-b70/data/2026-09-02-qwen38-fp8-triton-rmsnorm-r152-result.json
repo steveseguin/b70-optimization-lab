@@ -1,0 +1,273 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-triton-rmsnorm-20260902-r152",
+  "status": "negative for the norm as the c32/c64 source; the Triton route is c1-repeat-exact and probe-exact but slow",
+  "image_id": "sha256:bf5285cb2e735b82808ef04e1f424074f91899e1e76c70e7db28008863c1e1d3",
+  "strict": {
+    "mtp0_attempts_tok_s": [
+      22.992489640771,
+      22.59441179423
+    ],
+    "mtp1_attempts_tok_s": [
+      35.942110093956,
+      35.91197479636
+    ],
+    "G1": "12/12",
+    "G2": "12/12",
+    "G3": "12/12 both",
+    "probe": "repeat-exact at 100-300 tokens"
+  },
+  "ladder_mtp1": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 34.312036412148636,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 51.41738870890822,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 126.45707187978975,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 262.78114907992045,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 432.4160383315088,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 792.7733948418659,
+      "exact_vs_sequential_oracle": "31/32",
+      "mismatches_first_divergence": [
+        [
+          "evidence-c015",
+          77
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1067.4142975392708,
+      "exact_vs_sequential_oracle": "61/64",
+      "mismatches_first_divergence": [
+        [
+          "capacity-c022",
+          48
+        ],
+        [
+          "evidence-c015",
+          77
+        ],
+        [
+          "evidence-c023",
+          52
+        ]
+      ]
+    }
+  ],
+  "ladder_mtp0": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 22.95722900881127,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 44.39764907565686,
+      "exact_vs_sequential_oracle": "1/2",
+      "mismatches_first_divergence": [
+        [
+          "cache-c000",
+          96
+        ]
+      ]
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 84.39633605156776,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 177.18930683415482,
+      "exact_vs_sequential_oracle": "7/8",
+      "mismatches_first_divergence": [
+        [
+          "evidence-c007",
+          13
+        ]
+      ]
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 341.8902486731634,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 658.1439394920055,
+      "exact_vs_sequential_oracle": "28/32",
+      "mismatches_first_divergence": [
+        [
+          "cache-c000",
+          96
+        ],
+        [
+          "capacity-c014",
+          5
+        ],
+        [
+          "capacity-c022",
+          48
+        ],
+        [
+          "evidence-c015",
+          52
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 920.5346912989354,
+      "exact_vs_sequential_oracle": "56/64",
+      "mismatches_first_divergence": [
+        [
+          "capacity-c014",
+          5
+        ],
+        [
+          "capacity-c022",
+          48
+        ],
+        [
+          "evidence-c015",
+          52
+        ],
+        [
+          "evidence-c023",
+          52
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "index-c033",
+          33
+        ],
+        [
+          "index-c041",
+          46
+        ],
+        [
+          "monitoring-c044",
+          84
+        ]
+      ]
+    }
+  ],
+  "ladder_mtp1_r153a2_two_row_route": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 37.312106158997004,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 56.29345943300528,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 142.13135993367555,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 278.13768933608,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 459.9681388469475,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 807.9371222145414,
+      "exact_vs_sequential_oracle": "28/32",
+      "mismatches_first_divergence": [
+        [
+          "benchmark-c019",
+          60
+        ],
+        [
+          "evidence-c015",
+          52
+        ],
+        [
+          "evidence-c023",
+          52
+        ],
+        [
+          "index-c017",
+          49
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1077.4603320563472,
+      "exact_vs_sequential_oracle": "58/64",
+      "mismatches_first_divergence": [
+        [
+          "benchmark-c019",
+          60
+        ],
+        [
+          "capacity-c022",
+          48
+        ],
+        [
+          "evidence-c015",
+          52
+        ],
+        [
+          "evidence-c023",
+          52
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "index-c041",
+          46
+        ]
+      ]
+    }
+  ],
+  "interpretation": "MTP1 31/32, 61/64 (R152) and 28/32, 58/64 (R153a2, Triton for two-row calls too) versus R139's 30/32, 55-58/64: within the same class, so the layer norm is not the residual source at 32+ sequences. MTP0 on R152 regressed at c2 and c8 because the R30 two-row special case still used the ir kernel while one-row and eight-row calls used Triton (fixed in R153a2). The opaque Triton route costs ~31% at c1 (host-side per-call overhead), so it is not adoptable as is."
+}
