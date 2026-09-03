@@ -84,7 +84,32 @@ All six prompt classes sit within 27.5-30.6 tok/s on MTP1, so the factor
   single-row target step is captured; the draft step and the two-row
   verification run eagerly, so on this host the draft's own launch cost
   cancels its token gain (graph-on MTP1 is slower than graph-on MTP0 here).
-  A capture-size-{1,2} variant is measured next.
+  With `cudagraph_capture_sizes` `[1,2]` and `max_cudagraph_capture_size`
+  2 (so the two-row verification step is captured too): MTP1
+  **`51.318302 tok/s`**, 1.77x graph-off on this host and 94% of the
+  published `54.627286`; workload, cache-zero and canary gates pass.
+- Pure-Python single-thread timing (`timeit`, one core): `sum(range(1000))`
+  x20000 `0.169 s` here (0.179 s inside the image) versus `0.132 s` on the
+  publishing host; dict loop `0.034 s` versus `0.026 s`. The CPU is about
+  28% slower single-thread, which does not by itself explain 1.8x; the
+  publishing host's two-card all-reduce is 13 us against 51 us here (4x),
+  and this host's IOMMU is in translated mode with ACS redirect on the root
+  ports. `iommu=pt` is the next test (reboot, user-authorized).
+
+## Transferable result
+
+On a host whose per-launch and per-collective latency is higher than the
+publishing host's, the qualified graph-off profile pays about 130 exposed
+host round trips per token. Enabling XPU Graph with capture sizes that cover
+both the one-row target step and the two-row MTP1 verification recovers
+94% of both published headlines here (MTP0 31.1, MTP1 51.3 tok/s). On the
+publishing host graph capture measured 1.1% slower (R58), which is why the
+qualified profile ships graph-off; the package should state the measuring
+host and name graph capture as the setting for slower hosts, with the
+identity gates unchanged (all four graph arms passed the strict workload,
+cache-zero and canary gates here; output identity against the oracle was
+not part of this replay's gate set and is the next check before any
+recipe text recommends it).
 
 ## Reading
 
