@@ -3956,3 +3956,22 @@ and the
 Cross-lane note: the R147 device lock above refers to the two-B70 host; on
 this four-B70 host no R147 container, listener or artifact root exists, and
 nothing besides the Flash-Next arms used the render nodes during A62-A66.
+A66 (eager + `VLLM_XPU_MKLDNN_DETERMINISTIC=1`) is the first logit-exact
+TP4 server: 8/8 identical first steps and 3/3 identical 128-token repeats
+with zero logprob difference at depths 8, 64, 256 and 2048. A67 applied the
+flag to the full-decode-graph line (public oneCCL twoshots, W13-N32 map) and
+was exact at every point before the supervisor's bounded root-NVMe read
+guard (8 GiB) killed it; A68/A69 were procedural stops (a renamed helper
+pin, then the resolver's head pin); A70 ran the frozen client battery on
+that graph identity: 6/7 semantic with the inherited miss, 16/16 repeat on
+the protected hash, exact 2K needle, short rows `23.03/24.02/22.58 tok/s`,
+exact-2K rows `13.26/13.95 tok/s` with one output hash `afffd211...` that
+differs from the 2026-08-27 native-line authority `5fd297f7...` at token 12
+(a near-tie JSON continuation; both well formed). Whether that becomes the
+deterministic line's exact-2K authority is the user's decision; a
+fresh-server repeat (A71) follows the 27B replay. See the
+[A66](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a66-mkldnn-deterministic-result.md),
+[A67](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a67-fullgraph-mkldnn-deterministic-result.md)
+and
+[A70](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a70-fullgraph-deterministic-battery-result.md)
+results.
