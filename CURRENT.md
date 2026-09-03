@@ -217,10 +217,17 @@ clean control: layer-0 GDN prefill inputs, metadata and output rows are
 identical to the phantom run on all 64 requests and both ranks, so the phantom
 arises after layer 0 inside the prefill forward
 ([R181 result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-layer0-control-r181-result.md)).
-Next: R182, a per-layer last-hidden-row probe plus full-attention metadata
-(seq_lens, query_start_loc, slot_mapping, block table) for small prefill
-batches, async on vs off, to name the first diverging layer. No fix images
-before that.
+R182 (v3, a Dynamo-safe custom op after every layer; v1/v2 Python
+logging was traced away under VLLM_COMPILE) removed the phantom by itself
+and flipped 10 tie rows; async on and off are then identical in every layer
+and every attention metadata line
+([R182](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-layer-trace-r182-result.md)).
+R183 (published R156, `--enforce-eager`, async on, 19:06): no phantom
+([R183](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-enforce-eager-r183-result.md)).
+The depth-2 phantom is an artifact of the Inductor-compiled prefill graph
+under async scheduling. Running now: R184 chain on R156 (buffer reuse off,
+fusion off, pattern matcher off), one knob per server; the first arm that
+removes the phantom is the fix candidate for the depth-2 strict pair.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
