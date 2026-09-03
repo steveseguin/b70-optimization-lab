@@ -158,8 +158,23 @@ depth, medians), MTP0 oracle arm first:
 | 32K | `28.493 tok/s` | `11.627 s` | `29.961` |
 
 All 18 request gates passed; classification "Grade B three-class unrepeated
-real-content exact-depth HTTP evidence". The MTP1 graph-on depth run
-against this oracle is recorded below.
+real-content exact-depth HTTP evidence".
+
+MTP1 graph-on (`FULL_DECODE_ONLY`, sizes `[1,2]`) against that oracle:
+
+| active context | MTP1 decode (this host, graph on) | MTP1 TTFT | published MTP1 (graph off, EPYC host) |
+| ---: | ---: | ---: | ---: |
+| 2K | `51.216 tok/s` | `0.666 s` | `54.811` |
+| 4K | `52.556 tok/s` | `1.299 s` | `55.448` |
+| 8K | `51.038 tok/s` | `2.655 s` | `54.139` |
+| 16K | `50.077 tok/s` | `5.533 s` | `53.048` |
+| 24K | `49.997 tok/s` | `8.619 s` | `52.882` |
+| 32K | `49.125 tok/s` | `11.925 s` | `51.929` |
+
+Every MTP1 array matched the same-image MTP0 oracle (`all_target_oracle_exact`
+true, 18/18) and all request gates passed. On this host the graph-on line
+holds 90-94% of the published MTP1 curve and 93-95% of the MTP0 curve from
+2K to 32K, with identical outputs to its own MTP0 oracle.
 
 ## Transferable result
 
