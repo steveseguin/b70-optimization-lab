@@ -195,7 +195,24 @@ Same harness, suite and server shape as R147/R147c (`MAX_MODEL_LEN=256`,
 Identity holds through c16 exactly as the publishing host's graph-off
 qualification does (R139: c16 exact, c32 30/32, c64 55-58/64); the c32 and
 c64 misses are the same residual per-sequence kernel class, not a graph
-effect. The graph-on MTP0 ladder is recorded below when measured.
+effect.
+
+Graph-on MTP0 (`FULL_DECODE_ONLY` `[1]`), same shape and harness:
+
+| users | outputs byte-identical to the sequential oracle | aggregate tok/s |
+| ---: | ---: | ---: |
+| c1 | 1/1 | `31.4` |
+| c2 | 2/2 | `37.0` |
+| c4 | 4/4 | `73.3` |
+| c8 | 8/8 | `145.6` |
+| c16 | 15/16 | `285.4` |
+| c32 | 31/32 | `544.7` |
+| c64 | 58/64 | `848.8` |
+
+MTP0 graph-on misses one of sixteen at c16, where the qualified graph-off
+profile on the publishing host was exact; on this host the graph-on MTP0
+profile therefore holds identity only through c8, and the MTP1 variant
+through c16. Both fail c32/c64 in the same way as the qualified profile.
 
 ## Transferable result
 

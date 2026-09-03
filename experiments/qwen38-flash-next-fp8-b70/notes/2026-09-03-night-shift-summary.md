@@ -46,8 +46,9 @@
   real-content curve at 51.2 to 49.1 tok/s (MTP1, 18/18 exact against its
   MTP0 oracle) and 31.1 to 28.5 (MTP0). Graph wrappers are tracked in the
   package (`run-w8a16-{mtp1,mtp0}-strict-server-xpugraph.sh`) with a README
-  section; the c1-c64 identity ladder has not been run graph-on, so it is
-  not a qualified profile. Note and data:
+  section. The graph-on c1-c64 identity ladder run afterwards: MTP1 exact
+  through c16 (c32 29/32, c64 59/64), MTP0 exact through c8 with one miss of
+  sixteen at c16 (c32 31/32, c64 58/64); documented variants, not qualified. Note and data:
   `experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md`.
 - Publication closure: Laguna, MiniMax and Gemma recipe scripts are now
   portable (env overrides, fail-closed defaults, two lab-only inputs copied
