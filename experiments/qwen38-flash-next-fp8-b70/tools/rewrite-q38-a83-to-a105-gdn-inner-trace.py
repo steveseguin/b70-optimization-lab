@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""Create the A103 layer-trace packet from frozen A83 (eager MTP0 reference, layer-0 inner GDN trace).
+"""Create the A105 layer-trace packet from frozen A83 (eager MTP0 reference with layer-0 inner GDN trace, overlay fd81d811).
 
 Eager deterministic identity at 4352 tokens from the NVMe copy with the
 Q38 repeatability trace armed on every rank for the first forward whose
 maximum position reaches 2048 (the first verification step after prefill,
 where the exact-recurrent MTP1 line diverges from the MTP0 line). The trace
-records every decoder layer's output with per-row digests plus layer 0's
-inner GDN records (in_proj, core, norm, out_proj) via
-Q38_REPEATABILITY_TRACE_GDN_LAYERS=0 (overlay fd81d811). Attempt 103 / port 19775.
+records every decoder layer's output with per-row digests (overlay
+d132de8c). Attempt 105 / port 19777.
 """
 from __future__ import annotations
 import hashlib, os, re, subprocess
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
-VALIDATE_ONLY = os.environ.get("Q38_A103_REWRITE_VALIDATE_ONLY") == "1"
+VALIDATE_ONLY = os.environ.get("Q38_A105_REWRITE_VALIDATE_ONLY") == "1"
 SOURCES = {'launch-tp4-mtp1-4352-ple-only-a83-mkldnndet-w13n32.sh': '10b794de42d9210def42ba3fd86f1c8a53bf82d7f77ab5c1aab24cc70c8b8cfb', 'run-tp4-mtp1-4352-ple-only-a83-mkldnndet-w13n32-client.sh': '47f3b1160e38e35aac00299a79f5f3491a938758f88d3fd2cd8064279aa7cfbc', 'supervise-tp4-mtp1-4352-ple-only-a83-mkldnndet-w13n32.sh': '757a0a168daab806202dfa097221e95e2204a36224065a6bd2d6ea5bfd772063', 'run-q38-a83-host-controlled.sh': '9f182538adca15666c6ffd7649ffdfb4196bc9e95913c2b2b961ec4c530ce9e9'}
 HASH_TOKEN = re.compile(r"[0-9a-f]{64}|[0-9a-f]{40}")
 MTP0 = True
@@ -23,7 +22,7 @@ NEW_HEAD = "fd81d8110522371d3ac27e6466961f087e2f47fc"
 MTP_RULE = '$0 == "[[ \\"${mtp}\\" == \\"0\\" ]] || {" {\n  print "[[ \\"${mtp}\\" == \\"1\\" ]] || {"\n  next\n}\n'
 EXACT_RULE = '$0 == "[[ \\"${mtp_exact}\\" == \\"0\\" ]] || {" {\n  print "[[ \\"${mtp_exact}\\" == \\"1\\" ]] || {"\n  next\n}\n'
 MTP_GREPS = 'grep -Fxq \'[[ "${mtp}" == "1" ]] || {\' "$derived"\n! grep -Fq \'[[ "${mtp}" == "0" ]] || {\' "$derived"\n'
-TRACE = 'export Q38_REPEATABILITY_TRACE_FILE=${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt103/layer-trace-rank{rank}.json\nexport Q38_REPEATABILITY_TRACE_RANK=all\nexport Q38_REPEATABILITY_TRACE_MIN_POSITION=2048\nexport Q38_REPEATABILITY_TRACE_COUNT=1\nexport Q38_REPEATABILITY_TRACE_GDN_LAYERS=0\n'
+TRACE = 'export Q38_REPEATABILITY_TRACE_FILE=${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt105/layer-trace-rank{rank}.json\nexport Q38_REPEATABILITY_TRACE_RANK=all\nexport Q38_REPEATABILITY_TRACE_MIN_POSITION=2048\nexport Q38_REPEATABILITY_TRACE_COUNT=2\nexport Q38_REPEATABILITY_TRACE_GDN_LAYERS=0\n'
 
 def digest(data):
     if isinstance(data, str): data = data.encode()
@@ -32,10 +31,11 @@ def source(name):
     data = (ROOT / name).read_bytes(); assert digest(data) == SOURCES[name], name; return data.decode()
 def successor(text):
     def rename(seg):
-        seg = seg.replace("tp4-mtp1-4352-ple-only-a83", "tp4-mtp1-4352-ple-only-a103")
-        seg = seg.replace("q38-mtp1-ple-only", "q38-mtp1-ple-only")
-        seg = seg.replace("attempt83", "attempt103").replace("19755", "19775")
-        seg = seg.replace("ATTEMPT=83", "ATTEMPT=103").replace("a83", "a103").replace("A83", "A103")
+        seg = seg.replace("tp4-mtp1-4352-ple-only-a83", "tp4-mtp0-4352-ple-only-a105")
+        seg = seg.replace("mkldnndet-mtp1-4352-ple-only", "mkldnndet-mtp0-4352-ple-only")
+        seg = seg.replace("q38-mtp1-ple-only", "q38-mtp0-ple-only")
+        seg = seg.replace("attempt83", "attempt105").replace("19755", "19777")
+        seg = seg.replace("ATTEMPT=83", "ATTEMPT=105").replace("a83", "a105").replace("A83", "A105")
         return seg
     parts=[]; last=0
     for m in HASH_TOKEN.finditer(text):
@@ -62,27 +62,21 @@ def main():
     if MTP0:
         launcher = replace_once(launcher, MTP_RULE, "")
         launcher = replace_once(launcher, MTP_GREPS, "")
-        launcher = replace_once(launcher, "export MTP=1 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=103 PORT=19775\n", "export MTP=0 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=103 PORT=19775\n")
+        launcher = replace_once(launcher, "export MTP=1 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=105 PORT=19777\n", "export MTP=0 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=105 PORT=19777\n")
         launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=134217728\n" + TRACE)
-    elif not EXACT:
-        launcher = replace_once(launcher, '  print "export VLLM_XPU_MKLDNN_DETERMINISTIC=1"\n', '  print "export VLLM_XPU_MKLDNN_DETERMINISTIC=1"\n  print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1"\n')
-        launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + TRACE)
     else:
         launcher = replace_once(launcher, MTP_RULE, EXACT_RULE + MTP_RULE)
         launcher = replace_once(launcher, MTP_GREPS, MTP_GREPS + """grep -Fxq '[[ "${mtp_exact}" == "1" ]] || {' "$derived"\n""")
-        launcher = replace_once(launcher, "export MTP=1 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=103 PORT=19775\n", "export MTP=1 MTP_EXACT=1 MAX_MODEL_LEN=4352 ATTEMPT=103 PORT=19775\n")
+        launcher = replace_once(launcher, "export MTP=1 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=105 PORT=19777\n", "export MTP=1 MTP_EXACT=1 MAX_MODEL_LEN=4352 ATTEMPT=105 PORT=19777\n")
         launcher = replace_once(launcher, "export KERNEL_STAGE=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70\n", "export KERNEL_STAGE=/mnt/usb-models/qwen38-build/runtime-mtp1-exact-ad25aa9-b70\n")
         launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + TRACE)
-    env = os.environ.copy(); env["Q38_A103_DERIVED_SOURCE_ONLY"] = "1"
+    env = os.environ.copy(); env["Q38_A105_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
-    Path("/tmp/q38-ple2k-a103-base.sh").unlink(missing_ok=True)
-    assert "q38-ple2k-a103" in derived and "  --enforce-eager\n" in derived
+    Path("/tmp/q38-ple2k-a105-base.sh").unlink(missing_ok=True)
+    assert "q38-ple2k-a105" in derived and "  --enforce-eager\n" in derived
     assert f'expected_vllm_head="{NEW_HEAD}"' in derived and OLD_HEAD not in derived
     if MTP0:
         assert '[[ "${mtp}" == "0" ]] || {' in derived
-    elif not EXACT:
-        assert '[[ "${mtp}" == "1" ]] || {' in derived and "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1\n" in derived
-        assert "export MTP=1 MTP_EXACT=0 " in launcher
     else:
         assert '[[ "${mtp}" == "1" ]] || {' in derived and '[[ "${mtp_exact}" == "1" ]] || {' in derived
         assert "runtime-stage-mtp1-exact-loadable.sha256" in derived
@@ -92,13 +86,13 @@ def main():
     if MTP0:
         supervisor = replace_once(supervisor, ".identity.mtp == 1 and", ".identity.mtp == 0 and")
         supervisor = replace_once(supervisor, ".identity.kv_cache_memory_bytes == 376569856 and", ".identity.kv_cache_memory_bytes == 134217728 and")
-    elif EXACT:
+    else:
         supervisor = replace_once(supervisor, '.identity.stage_build_head == "2f829747503c77d4814834dffd0840fb1dd9f75a" and', '.identity.stage_build_head == "ad25aa9f69a2171612b9c6b83dfa82c69559f9e4" and')
     supervisor = replace_once(supervisor, "expected_wrapper=10b794de42d9210def42ba3fd86f1c8a53bf82d7f77ab5c1aab24cc70c8b8cfb", "expected_wrapper=" + digest(launcher))
     supervisor = replace_once(supervisor, "expected_client=47f3b1160e38e35aac00299a79f5f3491a938758f88d3fd2cd8064279aa7cfbc", "expected_client=" + digest(client))
     host = successor(source("run-q38-a83-host-controlled.sh"))
     host = replace_once(host, "expected_supervisor=757a0a168daab806202dfa097221e95e2204a36224065a6bd2d6ea5bfd772063", "expected_supervisor=" + digest(supervisor))
-    names = ("launch-tp4-mtp1-4352-ple-only-a103-mkldnndet-w13n32.sh", "run-tp4-mtp1-4352-ple-only-a103-mkldnndet-w13n32-client.sh", "supervise-tp4-mtp1-4352-ple-only-a103-mkldnndet-w13n32.sh", "run-q38-a103-host-controlled.sh")
+    names = ("launch-tp4-mtp0-4352-ple-only-a105-mkldnndet-w13n32.sh", "run-tp4-mtp0-4352-ple-only-a105-mkldnndet-w13n32-client.sh", "supervise-tp4-mtp0-4352-ple-only-a105-mkldnndet-w13n32.sh", "run-q38-a105-host-controlled.sh")
     for name, text in zip(names, (launcher, client, supervisor, host)): emit(name, text)
     for name in names: print(digest((ROOT / name).read_bytes()), name)
 if __name__ == "__main__":

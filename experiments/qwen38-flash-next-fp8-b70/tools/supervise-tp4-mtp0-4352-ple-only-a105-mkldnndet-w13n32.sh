@@ -2,23 +2,23 @@
 set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
-wrapper="${script_dir}/launch-tp4-mtp1-4352-ple-only-a103-mkldnndet-w13n32.sh"
-expected_wrapper=160df074850ce45cf59fb8fa73d982ec62ea2114bf4a2a8fb55d614ca3ec2802
-client="${script_dir}/run-tp4-mtp1-4352-ple-only-a103-mkldnndet-w13n32-client.sh"
-expected_client=2f8e2348599a8093fad03f4ecc02e1925042a86aae9d60f04df30d4dd4e4dd2d
-state=/tmp/q38-mtp1-ple-only-a103
+wrapper="${script_dir}/launch-tp4-mtp0-4352-ple-only-a105-mkldnndet-w13n32.sh"
+expected_wrapper=5692f6e2f9d91160429df8ce629c2e41071207f7b0d481d5c333f103d13e98b0
+client="${script_dir}/run-tp4-mtp0-4352-ple-only-a105-mkldnndet-w13n32-client.sh"
+expected_client=02e13549abc7795dd41a1896643aa9b9b285422fed8ddc1e11be764fb2dd523c
+state=/tmp/q38-mtp0-ple-only-a105
 stop_file="${state}.stop"
 failure_file="${state}.failed"
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt103
-cache_dir=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt103
-compile_dir=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt103-compile
-rpc_dir=/tmp/q38-ple2k-a103-rpc
-evidence_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt103-supervisor
-port=19775
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt105
+cache_dir=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt105
+compile_dir=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt105-compile
+rpc_dir=/tmp/q38-ple2k-a105-rpc
+evidence_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt105-supervisor
+port=19777
 pressure_log="${evidence_dir}/host-pressure.tsv"
-expected_nvme_aer_cor=${Q38_A103_NVME_AER_BASELINE:-}
-expected_root_aer_cor=${Q38_A103_ROOT_AER_BASELINE:-}
-expected_nvme_sectors_read=${Q38_A103_NVME_SECTORS_READ_BASELINE:-}
+expected_nvme_aer_cor=${Q38_A105_NVME_AER_BASELINE:-}
+expected_root_aer_cor=${Q38_A105_ROOT_AER_BASELINE:-}
+expected_nvme_sectors_read=${Q38_A105_NVME_SECTORS_READ_BASELINE:-}
 max_nvme_aer_delta=64
 max_nvme_sectors_read_delta=536870912
 child=""
@@ -222,7 +222,7 @@ trap 'exit 130' INT TERM HUP
 [[ $# == 0 ]] || { printf 'FAIL: supervisor takes no arguments\n' >&2; exit 2; }
 [[ "$expected_nvme_aer_cor" =~ ^[0-9]+$ && "$expected_root_aer_cor" =~ ^[0-9]+$ && \
    "$expected_nvme_sectors_read" =~ ^[0-9]+$ ]] || {
-  printf 'FAIL: A103 supervisor requires numeric host-control AER baselines\n' >&2
+  printf 'FAIL: A105 supervisor requires numeric host-control AER baselines\n' >&2
   exit 1
 }
 [[ "$(sha256sum "$wrapper" | cut -d' ' -f1)" == "$expected_wrapper" ]] || {
@@ -251,7 +251,7 @@ if ! sample_pressure; then
   kill -TERM "$journal_follow_pid" 2>/dev/null || true
   wait "$journal_follow_pid" 2>/dev/null || true
   journal_follow_pid=""
-  printf 'FAIL: initial A103 host-pressure gate failed\n' >&2
+  printf 'FAIL: initial A105 host-pressure gate failed\n' >&2
   exit 1
 fi
 write_atomic "${state}.deadline-epoch" "$deadline_epoch"
@@ -260,9 +260,9 @@ started=1
 set +e
 timeout --signal=TERM --kill-after=30s 10000s env -i \
   HOME=/home/steve USER=steve LOGNAME=steve LANG=C.UTF-8 \
-  Q38_A103_NVME_AER_BASELINE="$expected_nvme_aer_cor" \
-  Q38_A103_ROOT_AER_BASELINE="$expected_root_aer_cor" \
-  Q38_A103_NVME_SECTORS_READ_BASELINE="$expected_nvme_sectors_read" \
+  Q38_A105_NVME_AER_BASELINE="$expected_nvme_aer_cor" \
+  Q38_A105_ROOT_AER_BASELINE="$expected_root_aer_cor" \
+  Q38_A105_NVME_SECTORS_READ_BASELINE="$expected_nvme_sectors_read" \
   PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   "$wrapper" &
 child=$!
@@ -288,7 +288,7 @@ valid_stop=0
 while kill -0 "$child" 2>/dev/null; do
   remember_server || { printf 'FAIL: owned server identity changed\n' >&2; exit 70; }
   if ! sample_pressure; then
-    write_atomic "$failure_file" 'FAIL A103 host-pressure or NVMe-link guard'
+    write_atomic "$failure_file" 'FAIL A105 host-pressure or NVMe-link guard'
   fi
   if [[ -e "$stop_file" || -e "$failure_file" ]]; then
     requested_stop=1
@@ -353,7 +353,7 @@ final_pressure_ok=0
 if sample_pressure; then
   final_pressure_ok=1
 else
-  write_atomic "$failure_file" 'FAIL A103 final host-pressure or NVMe-link guard'
+  write_atomic "$failure_file" 'FAIL A105 final host-pressure or NVMe-link guard'
 fi
 rc=$child_rc
 if (( requested_stop == 1 && valid_stop == 1 && final_pressure_ok == 1 )) && \
