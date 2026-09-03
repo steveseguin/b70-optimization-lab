@@ -24,7 +24,13 @@ Each published recipe must include a tracked `publication-manifest.json` using
   download URL of every release asset;
 - the successful build-log asset and hash-bound clean-build, runtime-smoke,
   and quality evidence;
-- the UTC time at which the public assets were downloaded and reverified.
+- the UTC time at which the public assets were downloaded and reverified;
+- for every later published image in the same recipe (a chain that ships its
+  own release, such as the FP8 R139 W8A16 image), the same asset binding under
+  a top-level `chain_releases` object keyed by chain id. It lives outside
+  `chains` because the source-closure verifier treats every digest under
+  `chains` as a repository-file binding; `--check-remote` re-verifies these
+  assets too.
 
 Binary-bearing recipes must publish the complete rebuilt wheel or equivalent
 package, the result-critical shared libraries separately, the complete build
