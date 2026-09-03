@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 wrapper="${script_dir}/launch-tp4-mtp0-2304-ple-only-a68-fullgraphdet-w13n32.sh"
-expected_wrapper=5f28b4581d2b1f306c1779c633d2ebd9cbf1a5f850ba2aceaff1d1f87b347642
+expected_wrapper=4ef9fe29c89670f902343b6b5f4b35796f7f8ec34908bcd7a67188d5adf1242e
 client="${script_dir}/run-tp4-mtp0-2304-ple-only-a68-fullgraphdet-w13n32-client.sh"
 expected_client=36369d40d5922648d12c60cb47bf517246c04efd3f8e63097141c7fed9926a40
 state=/tmp/q38-mtp0-ple-only-a68
@@ -20,7 +20,7 @@ expected_nvme_aer_cor=${Q38_A68_NVME_AER_BASELINE:-}
 expected_root_aer_cor=${Q38_A68_ROOT_AER_BASELINE:-}
 expected_nvme_sectors_read=${Q38_A68_NVME_SECTORS_READ_BASELINE:-}
 max_nvme_aer_delta=64
-max_nvme_sectors_read_delta=16777216
+max_nvme_sectors_read_delta=134217728
 child=""
 launcher=""
 server_pid=""

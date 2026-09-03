@@ -246,7 +246,7 @@ if [[ "${Q38_A68_VALIDATE_ONLY:-0}" != 1 ]]; then
   (( root_aer_cor == expected_root_aer_cor && nvme_aer_cor >= expected_nvme_aer_cor && \
      nvme_aer_cor - expected_nvme_aer_cor <= 64 && \
      nvme_sectors_read >= expected_nvme_sectors_read && \
-     nvme_sectors_read - expected_nvme_sectors_read <= 16777216 )) || {
+     nvme_sectors_read - expected_nvme_sectors_read <= 134217728 )) || {
     printf 'FAIL: A68 bounded local-NVMe guard failed\n' >&2; exit 1;
   }
   (( nvme_available_bytes >= 220000000000 )) || { printf 'FAIL: A68 requires >= 220000000000 free NVMe bytes\n' >&2; exit 1; }

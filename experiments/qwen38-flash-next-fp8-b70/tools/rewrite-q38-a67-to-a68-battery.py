@@ -5,7 +5,12 @@ A67 (full decode graph, public oneCCL twoshots, tuned M1 W13-N32 map,
 VLLM_XPU_MKLDNN_DETERMINISTIC=1) is probed for logit exactness; A68 is the
 byte-identical server at attempt 68 / port 19740 on which the frozen client
 battery (recovery canary, quality suite with 16-repeat and exact 2K needle,
-short rows, exact-2K rows) runs instead of the probe.
+short rows, exact-2K rows) runs instead of the probe. One guard changes: the
+bounded root-NVMe read cap (launcher pre-check and supervisor per-second
+guard) rises from 16,777,216 to 134,217,728 sectors, because A66/A67 showed
+mapped runtime pages being re-faulted at about 3.4 GiB per minute under the
+server's host-memory pressure with zero AER events; the AER guard (at most 64
+corrected events) is unchanged.
 """
 
 from __future__ import annotations
@@ -82,6 +87,11 @@ def main() -> None:
     launcher = replace_once(
         launcher, "expected_derived=" + match.group(1), "expected_derived=" + "0" * 64
     )
+    launcher = replace_once(
+        launcher,
+        "     nvme_sectors_read - expected_nvme_sectors_read <= 16777216 )) || {\n",
+        "     nvme_sectors_read - expected_nvme_sectors_read <= 134217728 )) || {\n",
+    )
     launcher = successor(launcher)
     env = os.environ.copy()
     env["Q38_A68_DERIVED_SOURCE_ONLY"] = "1"
@@ -100,6 +110,11 @@ def main() -> None:
     )
     supervisor = successor(
         source("supervise-tp4-mtp0-2304-ple-only-a67-fullgraphdet-w13n32.sh")
+    )
+    supervisor = replace_once(
+        supervisor,
+        "max_nvme_sectors_read_delta=16777216\n",
+        "max_nvme_sectors_read_delta=134217728\n",
     )
     supervisor = replace_once(
         supervisor,
