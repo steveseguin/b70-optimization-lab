@@ -38,7 +38,16 @@ EXPECTED_TRITON_MOE_SHA256 = (
 EXPECTED_MODULAR_KERNEL_SHA256 = (
     "1e60aca6ed0dd4fcb46d577897ff1651f27a6130b3449d22265c0c791beec5d5"
 )
-EXPECTED_VLLM_HEAD = "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9"
+# Overlay heads whose MoE sources carry the per-phase config door. Later
+# diagnostic commits (repeatability-trace records, Q38_ trace aliases, the
+# VLLM_XPU_MKLDNN_DETERMINISTIC worker flag) leave the three hashed MoE files
+# untouched, which validate_source() still proves independently.
+EXPECTED_VLLM_HEADS = frozenset(
+    {
+        "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
+        "805cde592dfe198a82deaba52894ebfc0e4a4352",
+    }
+)
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
 EXPECTED_PHASE_CONFIG_PATCH_SHA256 = (
     "ad820bad443bba32f15b114ea76b4deb4dade754fe1bc362faddfef07eb6c519"
@@ -179,7 +188,7 @@ def validate_prerequisite(
         ).stdout.strip()
     except subprocess.CalledProcessError as exc:
         raise IntegrationContractError("could not resolve vLLM source head") from exc
-    if head != EXPECTED_VLLM_HEAD:
+    if head not in EXPECTED_VLLM_HEADS:
         raise IntegrationContractError(f"vLLM prerequisite head drifted: {head}")
     return {
         "vllm_head": head,

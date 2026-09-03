@@ -70,7 +70,7 @@ class W13N32SelectionTests(unittest.TestCase):
 
     def test_phase_config_prerequisite_is_exact(self) -> None:
         receipt = MODULE.validate_prerequisite(VLLM_SOURCE, PHASE_CONFIG_PATCH)
-        self.assertEqual(receipt["vllm_head"], MODULE.EXPECTED_VLLM_HEAD)
+        self.assertIn(receipt["vllm_head"], MODULE.EXPECTED_VLLM_HEADS)
         self.assertEqual(
             receipt["phase_config_patch_sha256"],
             MODULE.EXPECTED_PHASE_CONFIG_PATCH_SHA256,
