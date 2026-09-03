@@ -212,10 +212,15 @@ received came from request 31, not from request 32's discarded step. R179
 (MTP0 ladder, async off): c1-c32 exact, c64 63/64 at the published speed, so
 async-off is closed for both depth-1 profiles
 ([R179](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-async-off-ladder-repeat-r179.md)).
-Running now: R181, the probe image with `--no-async-scheduling` (the
-no-phantom control) to compare layer-0 GDN kernel inputs and output rows for
-request 33 against R176; the outcome picks kernel-scratch vs downstream. No
-more fix images before that comparison.
+R181 (18:25, probe image with `--no-async-scheduling`, 64/64) is the
+clean control: layer-0 GDN prefill inputs, metadata and output rows are
+identical to the phantom run on all 64 requests and both ranks, so the phantom
+arises after layer 0 inside the prefill forward
+([R181 result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-layer0-control-r181-result.md)).
+Next: R182, a per-layer last-hidden-row probe plus full-attention metadata
+(seq_lens, query_start_loc, slot_mapping, block table) for small prefill
+batches, async on vs off, to name the first diverging layer. No fix images
+before that.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
