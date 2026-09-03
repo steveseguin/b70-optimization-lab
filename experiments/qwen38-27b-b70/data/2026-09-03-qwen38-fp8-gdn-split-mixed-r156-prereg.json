@@ -1,0 +1,12 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-gdn-split-mixed-20260903-r156",
+  "status": "preregistered-before-device-use",
+  "question": "Does splitting every mixed GDN step into pure decode, pure prefill, and pure spec kernel calls (R156, env VLLM_XPU_GDN_SPLIT_MIXED=1 over the unchanged R139 image) make both profiles output-identical through c64?",
+  "evidence_base": "R155: the XPU GDN kernel computes decode rows on a different path when prefill rows share the call (1 fp16 ULP in SSM state and output at every mix; conv state and gate exact; attention mixed mode exact). vLLM's GDN metadata additionally folds non-spec decodes into prefills whenever spec rows are present (gdn_attn.py), so MTP1's first decode step after prefill also changes path at c32+. R151-R154 cleared every row-count-keyed candidate.",
+  "treatment": {"patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gdn-split-mixed-step-r156-20260903.patch", "patch_sha256": "b17e31320a7622d245cb6ea242c6e961d5c214f75678b44ba4bd66eef6ee99b2", "installed_xpu_ops_sha256": "6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064", "mechanism": "in _gdn_attention_core_xpu_impl: no-spec mixed steps are split at the decode/prefill boundary on the decode-first layout; spec steps gather spec rows, non-spec single-token-with-state rows, and remaining prefill rows into contiguous buffers, run each pure, and scatter back. Copies are exact; only launch count changes, and only on mixed steps.", "marker": "R156 GDN split-mixed step executed"},
+  "run_order": ["ladders only on both profiles (R63 config, 512 budget) with the R152 runner; c1 sequential oracles must equal R147b/R147c oracles (c1 steps are never mixed, so c1 arithmetic is unchanged)", "if both ladders pass: full R147-style campaign (two MTP0 controls, two MTP1 candidates, probe) for speed and promotion"],
+  "gates": {"G6": "every output at c1..c64 equal to its sequential oracle on both profiles", "c1_unchanged": "ladder sequential oracles equal to the R147b/R147c oracles"},
+  "performance_recording": {"not_a_gate": true},
+  "abort_conditions": ["as R147"]
+}

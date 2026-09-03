@@ -37,7 +37,8 @@ gdn_native_fallback="${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}"
 lm_head_chunk_rows="${VLLM_XPU_LM_HEAD_CHUNK_ROWS:-0}"
 gemma_rmsnorm_triton="${VLLM_XPU_GEMMA_RMSNORM_TRITON:-0}"
 rmsnorm_triton="${VLLM_XPU_RMSNORM_TRITON:-0}"
-for value_name in gemma_rmsnorm_triton rmsnorm_triton; do value=${!value_name}; [[ "${value}" == 0 || "${value}" == 1 ]] || { printf '%s must be 0 or 1\n' "${value_name^^}" >&2; exit 1; }; done
+gdn_split_mixed="${VLLM_XPU_GDN_SPLIT_MIXED:-0}"
+for value_name in gemma_rmsnorm_triton rmsnorm_triton gdn_split_mixed; do value=${!value_name}; [[ "${value}" == 0 || "${value}" == 1 ]] || { printf '%s must be 0 or 1\n' "${value_name^^}" >&2; exit 1; }; done
 [[ "${lm_head_chunk_rows}" =~ ^[0-9]+$ && "${lm_head_chunk_rows}" -le 512 ]] || { printf 'VLLM_XPU_LM_HEAD_CHUNK_ROWS must be an integer in 0..512\n' >&2; exit 1; }
 
 [[ "${max_num_seqs}" =~ ^[1-9][0-9]*$ ]] || { printf 'MAX_NUM_SEQS must be positive\n' >&2; exit 1; }
@@ -136,6 +137,7 @@ exec docker run --rm --name "${container}" \
     -e VLLM_XPU_LM_HEAD_CHUNK_ROWS="${lm_head_chunk_rows}" \
     -e VLLM_XPU_GEMMA_RMSNORM_TRITON="${gemma_rmsnorm_triton}" \
     -e VLLM_XPU_RMSNORM_TRITON="${rmsnorm_triton}" \
+    -e VLLM_XPU_GDN_SPLIT_MIXED="${gdn_split_mixed}" \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e CCL_ATL_TRANSPORT=ofi \
     -e FI_PROVIDER=tcp \
