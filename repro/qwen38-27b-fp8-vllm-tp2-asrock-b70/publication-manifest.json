@@ -70,6 +70,159 @@
       }
     ]
   },
+  "chains": {
+    "r62": {
+      "description": "Draft-only group-128 W4A16 vocabulary projection overlay and its clean-boot R119 qualification evidence.",
+      "repository": {
+        "build_scripts": [
+          {
+            "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-draft-int4-r62-image.sh",
+            "sha256": "df59e2c962ed759edee7e3483394e149f3eb914e5398549b913cfb0e38f071c3"
+          }
+        ],
+        "immutable_inputs": [
+          {
+            "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-draft-only-int4-lm-head-r62-20260901.patch",
+            "sha256": "594ee1a38fef377bba34db98f2fd7f51641ea9697b4bb622c9a54634b0bd87ab"
+          },
+          {
+            "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.draft-int4-r62",
+            "sha256": "715b2a03b559c5bfe8c0900bb318d980156ccadc87198c91bacfc48b638a342e"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260901-qwen38-fp8-mtp1-draft-int4-r62-server.sh",
+            "sha256": "44484d68e9fe76bc2eff6532d0cd54055aa4bd4a1fa0c98c11db22c7012c90af"
+          }
+        ]
+      },
+      "image": {
+        "image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374",
+        "base_chain": "r55c",
+        "base_image_id": "sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4"
+      },
+      "validation": {
+        "evidence": [
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-prereg.json",
+            "sha256": "599014a299dc3a8de21171df14cf219687d2e76e5955226d2fb6820bfecab878"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic-result.json",
+            "sha256": "1beac7c65a998f9ba0489ec2600b1df9307308932033993b1a1bd0654764e591"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-prereg.json",
+            "sha256": "5d949ece7cb54432afa7cb3d76df5e6c64affb1949ded52fe21404f99decc1cf"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-result.json",
+            "sha256": "ddfc03e466b02619b9e428bab23d7885c218df6af55bc7e89be26b66017cd1b8"
+          }
+        ]
+      }
+    },
+    "r139": {
+      "description": "Source-built fixed-K W8A16 oneDNN overlay and the R139/R147/R147c/R148/R149 operator evidence produced from it.",
+      "repository": {
+        "build_scripts": [
+          {
+            "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-image.sh",
+            "sha256": "05df8d88e6e9ed388678fc2b3f8d31857b1b844698c1d894ef353d79d45082b1"
+          },
+          {
+            "path": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+            "sha256": "5cbdadc200626ed9da03b6aa4808a59ee848348c671ce76d4d7ada4a37ca464f"
+          }
+        ],
+        "immutable_inputs": [
+          {
+            "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.fixed-k-w8a16-r139",
+            "sha256": "bf79fc21b5e513dd803edbe3df1a95f70a370afdc067dd8ba074c2d8a3d7e445"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch",
+            "sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
+            "sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+            "sha256": "5d2a93f0a36fa89f0ef13cf21ed5332a72491dd5856519bbe2eb21414112464f"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+            "sha256": "feb4f125f69b36dbc3f579ad93743abe655678b7540ba2743fcff797fe35ebd9"
+          }
+        ]
+      },
+      "image": {
+        "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+        "xpu_extension_sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+        "base_chain": "r62",
+        "base_image_id": "sha256:cac17acf96ebbf65bfbe98e45dcea8eb5626c2b027dcac0228bc3bcba0063374"
+      },
+      "source_repositories": [
+        {
+          "url": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+          "commit": "1e90ffa672ba02f17a909da11838a4c55b199783"
+        },
+        {
+          "url": "https://github.com/uxlfoundation/oneDNN.git",
+          "commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
+        },
+        {
+          "url": "https://github.com/intel/sycl-tla.git",
+          "commit": "cd763790ad2f74d7294435ecf77682bac0062c3a"
+        }
+      ],
+      "validation": {
+        "evidence": [
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-prereg.json",
+            "sha256": "d3299e8dd521c0cbd00460103b37dc727761606466bec8e1206a594109976f77"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-result.json",
+            "sha256": "d9b7288466a8b6bfafd9b5f5ec904c2741f71f31871ab5ca9b23e9be4c70bb0b"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-prereg.json",
+            "sha256": "3eb61d7933c2e400cd8c4dc14988ab231987d3ffb183f98aec8340ba71011808"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json",
+            "sha256": "51e72a1f098055193e8e07c3a6a50154bf98dbe5df1d74781c95024a43a700a7"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-prereg.json",
+            "sha256": "bd51dbf43d513d1c9d987a32c489e6e84eac3bdf6c16665231c738645023000a"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-result.json",
+            "sha256": "f5a899ba07667ede938500bb8de12c59de1a8a9c5e128744f07b9b2a5b767ce1"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-prereg.json",
+            "sha256": "3306b835fce144ed61704fb0c439decb05adf2eee287b85c132a904adf5917a1"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-result.json",
+            "sha256": "3109c9b11018bd76b7d1c4dbc3c9e1bce996568b29c7504d5d49e22bec9a662e"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-prereg.json",
+            "sha256": "355c439a7f32c48db63a293e21c624fc0d8db8408746e62515dfcf7e0a9bebd5"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-result.json",
+            "sha256": "84afce2804dca95cda9b8c4f93fef5faa55acbb7b3084ad82f72e33bb83fa9dd"
+          }
+        ]
+      }
+    }
+  },
   "source_repositories": [
     {
       "url": "https://github.com/vllm-project/vllm.git",
@@ -254,7 +407,7 @@
     ]
   },
   "known_corrections": [
-    "The old public closure verifier accepted split patch SHA-256 08a3de4f26119c50a23be87004708508eb444fed168175fb65a565e9a90e4033 while the final builder required 40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f.",
+    "The stale split-patch digest reported against the earlier public closure verifier was corrected to the tracked file SHA-256 40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f required by the final builder.",
     "The historical R55C image inherited upstream wheel label f3d999060c11ad6db5b4033d50d19c6b665492380075480d041ec4ee58fdfeb6; the clean rebuilt R55C wheel published here is fa0288ff90aa75fd182489659f41a11ca2b82bc1eca711ca1c992324cf74905b."
   ]
 }

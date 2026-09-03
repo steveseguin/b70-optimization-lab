@@ -28,6 +28,23 @@ required_files=(
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic-result.json
   experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-draft-int4-r62-diagnostic.md
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-result.json
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-fixed-k-w8a16-r139-image.sh
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.fixed-k-w8a16-r139
+  scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+  experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch
+  experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-serving-r139-result.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-result.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-ladder-batched-2048-r148-result.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-prereg.json
+  experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-result.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-control-prereg.json
   experiments/qwen38-27b-b70/data/2026-09-01-qwen38-fp8-mtp1-draft-int4-r63-concurrency-result.json
@@ -230,6 +247,74 @@ check_sha256 \
   c6384af1eaa45f0f49318f78c82a3f7485db19ebe3f5fe6f63c8f5bcafccf3a5 \
   experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-gdn-qkvz-fixed-shape-r87-20260901.patch
 
+# Every chain-level path in the publication manifest is an executable hash
+# contract. Keep this manifest-driven so a newly listed build input or evidence
+# file cannot bypass missing, untracked, or digest checks.
+manifest_path=${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/publication-manifest.json
+manifest_chain_files=0
+if manifest_chain_bindings=$(python3 - "${manifest_path}" <<'PY'
+import json
+import re
+import sys
+from pathlib import PurePosixPath
+
+manifest_path = sys.argv[1]
+with open(manifest_path, encoding="utf-8") as handle:
+    manifest = json.load(handle)
+
+chains = manifest.get("chains")
+if not isinstance(chains, dict):
+    raise SystemExit("publication manifest chains must be an object")
+missing = {"r62", "r139"} - set(chains)
+if missing:
+    raise SystemExit(f"publication manifest is missing chains: {sorted(missing)}")
+
+sha256_re = re.compile(r"[0-9a-f]{64}")
+
+
+def emit_bindings(node, label):
+    if isinstance(node, dict):
+        if "path" in node or "sha256" in node:
+            path = node.get("path")
+            digest = node.get("sha256")
+            if not isinstance(path, str) or not path:
+                raise SystemExit(f"{label} must bind a non-empty path")
+            pure = PurePosixPath(path)
+            if pure.is_absolute() or ".." in pure.parts:
+                raise SystemExit(f"{label} path escapes the repository: {path}")
+            if not isinstance(digest, str) or not sha256_re.fullmatch(digest):
+                raise SystemExit(f"{label} must bind a lowercase SHA-256 digest")
+            print(f"{path}\t{digest}")
+        for key, value in node.items():
+            emit_bindings(value, f"{label}.{key}")
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            emit_bindings(value, f"{label}[{index}]")
+
+
+emit_bindings(chains, "chains")
+PY
+); then
+  while IFS=$'\t' read -r relative_path expected; do
+    [[ -n "${relative_path}" ]] || continue
+    manifest_chain_files=$((manifest_chain_files + 1))
+    if [[ ! -f "${repo_root}/${relative_path}" ]]; then
+      printf 'MISSING %s\n' "${relative_path}" >&2
+      failed=1
+      continue
+    fi
+    if ! git -C "${repo_root}" ls-files --error-unmatch -- "${relative_path}" \
+        >/dev/null 2>&1; then
+      printf 'UNTRACKED %s\n' "${relative_path}" >&2
+      failed=1
+    fi
+    check_sha256 "${expected}" "${relative_path}"
+  done <<<"${manifest_chain_bindings}"
+else
+  printf 'INVALID manifest chain bindings\n' >&2
+  failed=1
+fi
+
 if (( failed )); then
   printf '\nSOURCE CLOSURE FAILED\n' >&2
   printf 'Refresh the clone with: git pull --ff-only origin main\n' >&2
@@ -247,3 +332,4 @@ printf 'PUBLIC SOURCE CLOSURE PASS\n'
 printf 'commit=%s\n' "$(git -C "${repo_root}" rev-parse HEAD)"
 printf 'tracked_files=%d\n' "${#required_files[@]}"
 printf 'patch_hashes=pass\n'
+printf 'manifest_chain_hashes=pass files=%d\n' "${manifest_chain_files}"
