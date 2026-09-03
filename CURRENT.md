@@ -201,11 +201,21 @@ records new block ids for `AttentionSpec` managers, so the worker hook never
 received a GDN page (see the
 [R178 result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-zero-mamba-pages-r178-result.md)).
 R180 (R178 + `MambaManager` records its new block ids,
-`patches/vllm-qwen38-xpu-record-mamba-new-blocks-r180-20260903.patch`) is
-built and queued. Running now, in order: R179 (MTP0 ladder, async off), R176
-probe rerun (first attempt aborted on the probe image's own `_xpu_ops.py`
-contract hash; fixed), R180. Then depth-1 and depth-2 ladders and strict pairs
-on the fixed image, async on and off.
+`patches/vllm-qwen38-xpu-record-mamba-new-blocks-r180-20260903.patch`,
+18:16) zeroed the pages that are actually allocated and the phantom is
+unchanged (63/64, same row), so the stale GDN state page is excluded
+([R180 result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-zero-mamba-pages-r180-result.md)).
+The R176 probe (18:10, [result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-state-slot-probe-r176-result.md))
+shows GDN pages are never zeroed on this lane, every prefill after the first
+sees a stale page with `has_initial_state=False`, and the page request 33
+received came from request 31, not from request 32's discarded step. R179
+(MTP0 ladder, async off): c1-c32 exact, c64 63/64 at the published speed, so
+async-off is closed for both depth-1 profiles
+([R179](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-async-off-ladder-repeat-r179.md)).
+Running now: R181, the probe image with `--no-async-scheduling` (the
+no-phantom control) to compare layer-0 GDN kernel inputs and output rows for
+request 33 against R176; the outcome picks kernel-scratch vs downstream. No
+more fix images before that comparison.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
