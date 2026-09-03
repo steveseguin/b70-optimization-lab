@@ -1,0 +1,52 @@
+{
+  "allreduce_bf16_us_per_op_host_venv": {
+    "2card_1x2560": 51.1,
+    "2card_1x5120": 50.8,
+    "2card_64x5120": 54.9,
+    "2card_8x5120": 51.0,
+    "4card_1x2560": 51.2,
+    "4card_1x5120": 57.6,
+    "4card_64x5120": 56.0,
+    "4card_8x5120": 54.1
+  },
+  "extension_digest": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+  "gates": "verify-public-source-closure PASS on a full clone; model-direct PASS; image contracts PASS; strict bench workload/cache/canary gates PASS on both profiles",
+  "host": {
+    "acs_root_ports": "ReqRedir+ CmpltRedir+ UpstreamFwd+",
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX",
+    "devices_used": [
+      "0000:23:00.0",
+      "0000:27:00.0"
+    ],
+    "docker": "29.7.1",
+    "ecc": "disabled (current and pending) on all four cards",
+    "guc": "70.72.1 upstream",
+    "hostname": "steve-b70s",
+    "iommu": "AMD-Vi translated domain, no iommu=pt",
+    "kernel": "7.0.0-30-generic",
+    "pcie": "Gen4 x16 at the card switch upstream ports"
+  },
+  "images": {
+    "r55c": "image_id=sha256:1d1dd0a2a6b55310aded558478da0ed31b539e9eaf0a9eb39daebf913a22aaf6"
+  },
+  "published_tok_s": {
+    "mtp0": 33.313729,
+    "mtp1": 54.627286
+  },
+  "schema_version": 1,
+  "submission_latency_us_in_r139_image_card0": {
+    "item_round_trip": 59.7,
+    "launch_plus_sync": 33.0,
+    "matmul_1x5120_5120x5120_fp16_incl_sync": 89.9,
+    "matmul_1x5120_5120x5120_fp16_submit": 32.8,
+    "matmul_64x5120_incl_sync": 110.3,
+    "rms_norm_1x5120": 20.5,
+    "tiny_add_submit": 6.2,
+    "torch": "2.13.0+xpu"
+  },
+  "throughput_tok_s": {
+    "mtp0_performance_governor": 18.612841520292,
+    "mtp0_powersave_governor": 18.647730687917,
+    "mtp1_powersave_governor": 28.944615719981
+  }
+}
