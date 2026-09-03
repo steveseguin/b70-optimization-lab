@@ -20,11 +20,13 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-**No model launch on this boot (2026-09-02 19:40 EDT):** R147 mtp1-b hit a
-`bcs` copy-engine fault, CAT errors, an engine reset, and a device coredump on
-`0000:e3:00.0` during weight staging. Both B70s report `normal` and passed
-per-card compute plus two-card XCCL afterwards, but the standing rule applies:
-reload xe or reboot before the next launch (A62 included).
+**Device lock (2026-09-02, from 20:29 EDT on the 19:51 boot):** R147b is running
+unattended on both B70s (resume of R147: mtp1-b, the 100-300-token repeat
+probe, and the c1-c64 identity ladder; containers `qwen38-fp8-r147-*`, port
+18128, artifact root
+`/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147b`).
+About 30 minutes. Do not launch A65 or any other GPU work until that root
+contains `campaign-end.txt` or `ABORTED`.
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
