@@ -1,0 +1,92 @@
+--- a/vllm/model_executor/layers/layernorm.py	2026-09-02 23:09:52.737869667 -0400
++++ b/vllm/model_executor/layers/layernorm.py	2026-09-02 23:09:52.752051855 -0400
+@@ -15,6 +15,32 @@
+ from vllm.model_executor.custom_op import CustomOp
+ from vllm.model_executor.layers.batch_invariant import rms_norm_batch_invariant
+ 
++
++def _xpu_triton_rmsnorm_enabled(flag: str) -> bool:
++    """R152: route a norm through the Triton row kernel (batch- and
++    position-invariant on XPU; the ir kernel's arithmetic depends on a row's
++    slot inside its processing group, which flips near-tie tokens once a
++    step carries roughly 16 or more rows). Default off."""
++    return os.environ.get(flag, "0") == "1"
++
++
++def _xpu_traced_rmsnorm(
++    x: torch.Tensor, weight: torch.Tensor, eps: float
++) -> torch.Tensor:
++    """R153b: pure-torch RMSNorm left visible to Dynamo/Inductor so it is
++    generated as one fused per-row reduction kernel in the compiled graph."""
++    orig_dtype = x.dtype
++    xf = x.to(torch.float32)
++    variance = xf.pow(2).mean(dim=-1, keepdim=True)
++    xf = xf * torch.rsqrt(variance + eps)
++    return (xf * weight).to(orig_dtype)
++
++
++def _xpu_triton_rmsnorm(
++    x: torch.Tensor, weight: torch.Tensor, eps: float
++) -> torch.Tensor:
++    return _xpu_traced_rmsnorm(x, weight, eps)
++
+ logger = init_logger(__name__)
+ 
+ 
+@@ -72,6 +98,8 @@
+         # op priority when weight=None is unsupported.
+         self.pass_weight = self.has_weight
+         self.pass_weight_add = self.has_weight
++        if _xpu_triton_rmsnorm_enabled("VLLM_XPU_RMSNORM_TRITON"):
++            logger.warning_once("R152 RMSNorm Triton route armed")
+ 
+     def forward_native(
+         self,
+@@ -79,6 +107,20 @@
+         residual: torch.Tensor | None = None,
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+         """PyTorch-native implementation equivalent to forward()."""
++        if (
++            x.device.type == "xpu"
++            and self.variance_size_override is None
++            and self.has_weight
++            and _xpu_triton_rmsnorm_enabled("VLLM_XPU_RMSNORM_TRITON")
++        ):
++            weight = self.weight.data.float()
++            if residual is None:
++                return _xpu_triton_rmsnorm(x, weight, self.variance_epsilon)
++            residual = residual + x
++            return (
++                _xpu_triton_rmsnorm(residual, weight, self.variance_epsilon),
++                residual,
++            )
+         if residual is None:
+             return ir.ops.rms_norm(
+                 x,
+@@ -155,6 +197,8 @@
+             logger.warning_once(
+                 "VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT armed (r30)"
+             )
++        if _xpu_triton_rmsnorm_enabled("VLLM_XPU_GEMMA_RMSNORM_TRITON"):
++            logger.warning_once("R152 Gemma RMSNorm Triton route armed")
+ 
+     def forward_native(
+         self,
+@@ -183,6 +227,17 @@
+             row0 = ir.ops.rms_norm(x[0:1], weight, self.variance_epsilon)
+             row1 = ir.ops.rms_norm(x[1:2], weight, self.variance_epsilon)
+             return torch.cat((row0, row1))
++        if x.device.type == "xpu" and _xpu_triton_rmsnorm_enabled(
++            "VLLM_XPU_GEMMA_RMSNORM_TRITON"
++        ):
++            weight = self.weight.float() + 1.0
++            if residual is None:
++                return _xpu_triton_rmsnorm(x, weight, self.variance_epsilon)
++            residual = residual + x
++            return (
++                _xpu_triton_rmsnorm(residual, weight, self.variance_epsilon),
++                residual,
++            )
+         weight = self.weight.float() + 1.0
+         if residual is None:
+             return ir.ops.rms_norm(x, weight, self.variance_epsilon)
