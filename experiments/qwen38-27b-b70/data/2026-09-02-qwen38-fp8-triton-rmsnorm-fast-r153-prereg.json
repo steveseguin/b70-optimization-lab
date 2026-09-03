@@ -4,11 +4,39 @@
   "status": "preregistered-before-device-use",
   "question": "R152's opaque Triton norm made both MTP0 controls agree 12/12 but cost about 31% at c1 (22.6-23.0 vs 33.3 tok/s MTP0). Which cheaper implementation keeps the identity property: R153a, the same Triton kernel launched directly with fixed constants (one program per row, no wrapper), or R153b, the pure-torch decomposition left visible to Dynamo so Inductor generates one fused per-row kernel?",
   "arms": {
-    "r153a": {"patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r153a-20260902.patch", "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r153a", "mechanism": "custom op calling layer_norm_fwd_kernel[(M,1)] with BLOCK_N/num_warps cached per hidden size, ROWS_PER_BLOCK=1 fixed for every M"},
-    "r153b": {"patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r153b-20260902.patch", "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r153b", "mechanism": "no custom op; x.float().pow(2).mean(-1) traced and lowered by Inductor; invariance across M is the open question for this arm (static M=1 graph vs dynamic-M graph)"}
+    "r153a": {
+      "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r153a-20260902.patch",
+      "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r153a",
+      "mechanism": "custom op calling layer_norm_fwd_kernel[(M,1)] with BLOCK_N/num_warps cached per hidden size, ROWS_PER_BLOCK=1 fixed for every M"
+    },
+    "r153b": {
+      "patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-triton-rmsnorm-r153b-20260902.patch",
+      "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-r153b",
+      "mechanism": "no custom op; x.float().pow(2).mean(-1) traced and lowered by Inductor; invariance across M is the open question for this arm (static M=1 graph vs dynamic-M graph)"
+    },
+    "r153ah": {
+      "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-head-chunk-r153ah",
+      "image_id": "sha256:fe07e43f18b743d8e199c014a9dec0abb7da60db22b08f5f2fa178ba9238bf39",
+      "base": "r153a + R149 head-chunk patch"
+    },
+    "r153bh": {
+      "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-triton-rmsnorm-head-chunk-r153bh",
+      "image_id": "sha256:094e31f39f99a03f6ce7e0a80c1e6d08ec9aafb5276acecbd8082f08e509612e",
+      "base": "r153b + R149 head-chunk patch"
+    }
   },
   "protocol_per_arm": "same runner and gates as R152 (two MTP0 controls, two MTP1 candidates with the 100-300-token probe, MTP1 and MTP0 c1-c64 ladders); env VLLM_XPU_GEMMA_RMSNORM_TRITON=1 VLLM_XPU_RMSNORM_TRITON=1",
   "decision_rule": "an arm is adoptable only if G1-G6 pass; between adoptable arms prefer the faster MTP1 center; if neither passes G6, R152 stays the identity reference and the norm implementation is the next kernel target",
-  "performance_reference": {"r139_mtp1_center": 54.62728639090838, "r139_mtp0_median": 33.31372875840961, "r152_mtp0_attempts": [22.992489640771, 22.594411794230]},
-  "abort_conditions": ["as R147"]
+  "performance_reference": {
+    "r139_mtp1_center": 54.62728639090838,
+    "r139_mtp0_median": 33.31372875840961,
+    "r152_mtp0_attempts": [
+      22.992489640771,
+      22.59441179423
+    ]
+  },
+  "abort_conditions": [
+    "as R147"
+  ],
+  "amendment_after_r152": "R152 MTP1 ladder: c1-c16 exact, c32 31/32, c64 61/64 (from 30/32 and 55-58/64), so the norm was one source and a smaller residual remains. Every norm in this model is the Gemma class (Qwen3NextRMSNorm is GemmaRMSNorm; the fused CUDA qk path is not used on XPU), so the remaining candidate is the FP16 head's 33+-row class (R149's chunk fix was masked by the norm). The arms therefore run as r153ah and r153bh: the a/b norm variants plus the R149 32-row head chunk (VLLM_XPU_LM_HEAD_CHUNK_ROWS=32) over the same images."
 }
