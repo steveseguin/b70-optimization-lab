@@ -1,0 +1,88 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-probe-ladder-20260903-r165",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-probe-ladder-r165-prereg.json",
+  "status": "G5 PASS (6/6 lengths repeat-exact, ids/logprobs/top identical). G6: identity vs its own sequential oracle exact through c16 (31/32, 58/64), same shape as depth 1. NOT PROMOTABLE: the depth-2 sequential oracle for cache-c032 (33rd sequential request) begins with token 60 ']' (the prompt's last token) followed by the MTP0 sequence shifted by one; the same prompt at c64 and in a fresh strict-config request (R166) produced the MTP0 output, and R166 shows ']' is not a greedy candidate at position 0 (top '\\n\\n' at -0.23, next ' A' at -3.59). Depth 1 (R156f) matches the MTP0 oracle 64/64 on this suite.",
+  "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+  "speculative_config": {
+    "method": "qwen3_next_mtp",
+    "num_speculative_tokens": 2
+  },
+  "probe": "6/6 (100,168,200,224,250,300 tokens)",
+  "ladder_mtp2": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 61.05975415197883,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 78.38437652846964,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 179.6222582500261,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 361.84777245547707,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 571.1815889398116,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 803.2330320936418,
+      "exact_vs_sequential_oracle": "31/32",
+      "mismatches_first_divergence": [
+        [
+          "testing-c013",
+          34
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 792.5068554979522,
+      "exact_vs_sequential_oracle": "58/64",
+      "mismatches_first_divergence": [
+        [
+          "cache-c000",
+          96
+        ],
+        [
+          "cache-c032",
+          0
+        ],
+        [
+          "evidence-c047",
+          25
+        ],
+        [
+          "evidence-c063",
+          88
+        ],
+        [
+          "rollback-c010",
+          97
+        ],
+        [
+          "rollback-c050",
+          60
+        ]
+      ]
+    }
+  ],
+  "sequential_oracle_vs_mtp0_oracle": "63/64 (cache-c032 phantom first token)",
+  "interpretation": "A token emitted without being the argmax is a spec-decode bookkeeping defect at depth 2 (candidate mechanism: a draft/bonus token carried across requests through slot reuse; every ladder prompt ends with ']'), not a numerical tie. Depth 2 stays unpublished until the mechanism is found and the 64-prompt sequential pass is 64/64."
+}

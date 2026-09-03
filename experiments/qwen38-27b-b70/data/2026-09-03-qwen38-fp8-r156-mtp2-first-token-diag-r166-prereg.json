@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-first-token-diag-20260903-r166","status":"preregistered-before-device-use",
+ "observation":"R165: the MTP depth-2 sequential oracle on ladder prompt cache-c032 emits token 60 (']') at position 0 and then the MTP0 sequence shifted by one (127 following tokens identical); the depth-1 oracle matches MTP0 on all 64 prompts.",
+ "question":"Is ']' a legitimate greedy choice at position 0 (fp16 logit tie or flip versus '\\n\\n' in MTP0), or a phantom token the depth-2 spec-decode path emitted without it being in the model context?",
+ "method":"QUERY_ONLY runner mode: strict-config MTP2 server then MTP0 server, one greedy completions request for cache-c032 with logprobs=5, max_tokens=8; compare position-0 top-2 logprobs and whether the depth-2 stream reports a logprob for ']'",
+ "decision":"tie or flip -> depth 2 stays a candidate documented as 63/64 on the ladder suite; phantom token -> depth 2 is NOT publishable (quality defect), record in DO-NOT-REPEAT with the mechanism",
+ "abort_conditions":["as R147"]}

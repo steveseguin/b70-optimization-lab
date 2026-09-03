@@ -177,8 +177,18 @@ The R156 promotion campaign (`r156f`, 02:00 EDT) passed every strict gate at
 R139 speed (MTP1 `54.603`, MTP0 `33.314`) with MTP0 64/64 through c64 and MTP1
 exact through c16; R156 is now the published profile (package, pages, README,
 manifest chain `r156`). The R139 LocalMaxxing record stands (identical c1
-output). Next on this box: the MTP draft-forward census for the MTP1 residual,
-a graph-on identity ladder, and MTP depth 2 on R156.
+output). Overnight 2026-09-03: R163 graph-on ladders on R156 (capture sizes
+`[1,2]`): c1 oracles bit-identical to graph-off on both profiles, MTP0 exact
+through c32 graph-on (63/64 at c64), MTP1 exact through c8 that run; the
+published profile stays graph-off. R164 MTP depth 2 on R156 passed the strict
+pair (69.94/69.38 tok/s, 12/12 vs each other and vs the same-image MTP0 oracle,
+canaries pass) and R165 passed the repeat probe 6/6 with the ladder exact
+through c16, but the depth-2 sequential ladder oracle emitted a phantom first
+token on `cache-c032` (the prompt's last token, not a greedy candidate per
+R166); depth 2 is NOT published (DO-NOT-REPEAT entry). Next on this box: find
+the depth-2 first-token bookkeeping defect (slot-history repro on the ladder
+config, then the drafter's first-step token handling), then the MTP draft-forward
+census for the depth-1 MTP1 residual.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to

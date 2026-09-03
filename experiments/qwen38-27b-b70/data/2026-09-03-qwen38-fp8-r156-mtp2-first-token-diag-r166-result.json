@@ -1,0 +1,66 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-first-token-diag-20260903-r166",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-first-token-diag-r166-prereg.json",
+  "status": "Fresh strict-config greedy requests for cache-c032 on MTP depth 2 and MTP0 produce identical tokens and identical logprobs (8 positions); position-0 top-2 is '\\n\\n' -0.2321 vs ' A' -3.5915 on both, and ']' is not in the top-5. The ']' first token in the R165 depth-2 sequential oracle was therefore not a greedy choice: it is a history-dependent bookkeeping event (33rd sequential request on the ladder-config server), i.e. a phantom token.",
+  "tokens_and_logprobs_identical_mtp2_vs_mtp0": true,
+  "mtp2": {
+    "tokens": [
+      "\n\n",
+      "One",
+      " practical",
+      " reason",
+      " a",
+      " cache",
+      " invalid",
+      "ation"
+    ],
+    "token_logprobs": [
+      -0.2321009486913681,
+      -1.1520311832427979,
+      -0.04102861508727074,
+      -0.011234006844460964,
+      -0.12345453351736069,
+      -0.002185458317399025,
+      -0.0017628619680181146,
+      -2.098061486321967e-05
+    ],
+    "top0": {
+      "\n\n": -0.2321009486913681,
+      " A": -3.5914759635925293,
+      " One": -3.6539759635925293,
+      "\n": -3.9899134635925293,
+      "A": -4.622725963592529
+    }
+  },
+  "mtp0": {
+    "tokens": [
+      "\n\n",
+      "One",
+      " practical",
+      " reason",
+      " a",
+      " cache",
+      " invalid",
+      "ation"
+    ],
+    "token_logprobs": [
+      -0.2321009486913681,
+      -1.1520311832427979,
+      -0.04102861508727074,
+      -0.011234006844460964,
+      -0.12345453351736069,
+      -0.002185458317399025,
+      -0.0017628619680181146,
+      -2.098061486321967e-05
+    ],
+    "top0": {
+      "\n\n": -0.2321009486913681,
+      " A": -3.5914759635925293,
+      " One": -3.6539759635925293,
+      "\n": -3.9899134635925293,
+      "A": -4.622725963592529
+    }
+  },
+  "decision": "MTP depth 2 not publishable; next: reproduce with the ladder-config server and the 64-prompt sequential oracle pass, instrument the drafter's first-step token bookkeeping across requests (draft/bonus carryover through slot reuse)."
+}
