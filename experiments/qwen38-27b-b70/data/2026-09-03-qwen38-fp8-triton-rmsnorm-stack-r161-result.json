@@ -1,0 +1,85 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-triton-rmsnorm-stack-20260903-r161",
+  "status": "negative for MTP1: 30/32 and 58/64 with the mixed-step split, the 8-row draft-head chunk, and the lean Triton norm route all active",
+  "image_id": "sha256:67f8b7949517d1d92d288d4175c71d3d3d1dd70ad83aa091e2e54683e58e51da",
+  "ladder_mtp1": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 37.26573037620442,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 55.84558693293391,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 141.95983419345873,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 278.22313744239483,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 438.00945421231665,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 772.7554693493023,
+      "exact_vs_sequential_oracle": "30/32",
+      "mismatches_first_divergence": [
+        [
+          "evidence-c015",
+          77
+        ],
+        [
+          "evidence-c023",
+          52
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1019.1657238300425,
+      "exact_vs_sequential_oracle": "58/64",
+      "mismatches_first_divergence": [
+        [
+          "capacity-c022",
+          48
+        ],
+        [
+          "evidence-c015",
+          77
+        ],
+        [
+          "evidence-c023",
+          52
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "index-c017",
+          49
+        ],
+        [
+          "monitoring-c044",
+          84
+        ]
+      ]
+    }
+  ],
+  "interpretation": "Every row-count-keyed and mixed-step candidate is now mitigated and MTP1 still misses at c32+, while MTP0 is exact at c64 with the split alone. The residual is specific to speculative serving. Untested at operator level: the GDN spec path with a mix of accepted-token counts (1 and 2) inside one call and with arbitrary state-slot ids (R158 used uniform counts and contiguous slots)."
+}
