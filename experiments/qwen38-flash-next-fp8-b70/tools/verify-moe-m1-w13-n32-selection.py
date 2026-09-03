@@ -46,6 +46,8 @@ EXPECTED_VLLM_HEADS = frozenset(
     {
         "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9",
         "805cde592dfe198a82deaba52894ebfc0e4a4352",
+        # + V2 runner CUDAGraphStat receipt (no MoE change)
+        "2169dbfe38c2954edc5ae50e94f68d45be071b79",
     }
 )
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
