@@ -4047,3 +4047,14 @@ each, one hash per gate on both servers). The results packet carries the
 section; the family page still needs its run measurements added (Codex
 handoff in the lane notes). See the
 [A78 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a78-fresh-repeat-result.md).
+A79 (10:16) then loaded the same identity from the verified local NVMe copy
+(66 s instead of 546 s, identical outputs), so attempts take 16 minutes
+instead of 24. A81 (10:52) put MTP1 inside the full decode graph on that
+identity: bit-exact against the MTP0 line at short context and 1.71x faster
+(`38.79 tok/s` median, 93% draft acceptance), but the exact-2K and exact-4K
+continuations diverge at a near-tie and decode at about `7 tok/s` with
+double the TTFT, so MTP1 is neither lossless nor useful at depth on this
+line yet. A83 (eager MTP1) is separating graph replay from the speculative
+path; the kernel-side serial-exact treatment the 27B lane received is the
+likely next lane item. See the
+[A81 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a81-graph-mtp1-result.md).
