@@ -1,0 +1,8 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-r156-mtp2-phantom-blocking-h2d-20260903-r174",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-blocking-h2d-r174-prereg.json",
+  "status": "Phantom PERSISTS with blocking CpuGpuBuffer host->device copies (33rd request, cache-c032). Together with R173 (device barrier before every step) this excludes host-buffer reuse races and device overlap. The discarded async extra step of the finished request leaves deterministic device state that the next prefill reads at its last position; candidates are the GDN spec path's lookahead-state writes through stale block-table columns and scratch buffers the pure-prefill path reuses.",
+  "root": "/mnt/fast-ai/bench-results/qwen38-fp8-r156-mtp2-phantom-blocking-h2d-20260903-r174",
+  "phantom_reproduced": true
+}
