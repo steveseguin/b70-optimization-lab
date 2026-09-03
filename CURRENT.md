@@ -3913,3 +3913,32 @@ jitter at 256-token prefill is consistent with those GEMMs at prefill M, so the
 GEMM belongs on the A62 suspect list ahead of oneCCL; the A4a tool can test
 it at M=64/256/2048 on one card without a server or a hang risk. A62 must
 wait for the R147 device lock above.
+
+A63 (old overlay head `1372c62d`, eager, bundled oneCCL, no tuned map)
+jittered at every depth (first-step spread up to 0.3143 nats at 8 tokens,
+three distinct 128-token hashes per depth, no hang, no fault): the 18
+overlay commits are excluded and the 2026-08-28 exactness rested on
+token-hash equality of peaky outputs. Fixed-input gates for the staged
+`_xpu_C.gdn_attention` operator (8-token prefill, 64-token chunk with state,
+32 chained chunks, decode, 128 chained decodes) and the XCCL BF16 all-reduce
+at 1/8/64 rows were bit-repeatable in-process and across two fresh
+processes. See the
+[A63 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a63-old-overlay-head-control-result.md).
+A64 served and jittered but wrote no trace because the derived launcher
+unsets every inherited `VLLM_*` variable (only `Q38_*` survives); the
+overlay now reads every trace setting through `Q38_REPEATABILITY_TRACE_*`.
+A65 then traced three identical 8-token prefills on all four ranks: ranks
+1-3 have byte-identical GDN input projection, core kernel and gated norm
+across captures and first differ at the TP-reduced output projection; rank
+0 already differs at the layer-0 hyperconnection-mix output (a K=10240 BF16
+oneDNN GEMM at M=8) whose partial enters the all-reduce. This is the family
+the A3/A4a census found natively non-repeatable and made exact with
+`torch.backends.mkldnn.deterministic=True` (cost ratio 0.986). A66 sets that
+flag in every XPU worker (`VLLM_XPU_MKLDNN_DETERMINISTIC=1`, overlay
+`805cde59`) and reruns the logprob probe at 8/64/256/2048. See the
+[A65 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a65-gdn-inner-trace-result.md)
+and the
+[A66 prereg](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a66-mkldnn-deterministic-prereg.md).
+Cross-lane note: the R147 device lock above refers to the two-B70 host; on
+this four-B70 host no R147 container, listener or artifact root exists, and
+nothing besides the Flash-Next arms used the render nodes during A62-A66.
