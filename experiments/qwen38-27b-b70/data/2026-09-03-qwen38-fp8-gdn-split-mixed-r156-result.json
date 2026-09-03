@@ -1,0 +1,137 @@
+{
+  "schema": "b70-lab.result.v1",
+  "campaign_id": "qwen38-fp8-gdn-split-mixed-20260903-r156",
+  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-prereg.json",
+  "status": "MTP0 output-identical through c64 (64/64) with the mixed-step split active; MTP1 unchanged at 30/32 and 58/64",
+  "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+  "env": {
+    "VLLM_XPU_GDN_SPLIT_MIXED": "1"
+  },
+  "ladder_mtp0": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 33.50389789962578,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 64.52949805460094,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 124.1806618142534,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 233.4789849038561,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 422.05282397138967,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 675.3424611783994,
+      "exact_vs_sequential_oracle": "32/32",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 931.1774721289167,
+      "exact_vs_sequential_oracle": "64/64",
+      "mismatches_first_divergence": []
+    }
+  ],
+  "ladder_mtp1": [
+    {
+      "concurrency": 1,
+      "aggregate_tok_s_wall": 51.187431376660804,
+      "exact_vs_sequential_oracle": "1/1",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 2,
+      "aggregate_tok_s_wall": 77.98055347092301,
+      "exact_vs_sequential_oracle": "2/2",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 4,
+      "aggregate_tok_s_wall": 170.2331291333204,
+      "exact_vs_sequential_oracle": "4/4",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 8,
+      "aggregate_tok_s_wall": 352.43019795205566,
+      "exact_vs_sequential_oracle": "8/8",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 16,
+      "aggregate_tok_s_wall": 468.49367478329617,
+      "exact_vs_sequential_oracle": "16/16",
+      "mismatches_first_divergence": []
+    },
+    {
+      "concurrency": 32,
+      "aggregate_tok_s_wall": 803.4733249502107,
+      "exact_vs_sequential_oracle": "30/32",
+      "mismatches_first_divergence": [
+        [
+          "rollback-c010",
+          97
+        ],
+        [
+          "testing-c013",
+          34
+        ]
+      ]
+    },
+    {
+      "concurrency": 64,
+      "aggregate_tok_s_wall": 1071.3400003126862,
+      "exact_vs_sequential_oracle": "58/64",
+      "mismatches_first_divergence": [
+        [
+          "cache-c032",
+          35
+        ],
+        [
+          "evidence-c047",
+          85
+        ],
+        [
+          "evidence-c063",
+          88
+        ],
+        [
+          "index-c033",
+          49
+        ],
+        [
+          "rollback-c010",
+          97
+        ],
+        [
+          "rollback-c050",
+          60
+        ]
+      ]
+    }
+  ],
+  "marker_lines": {
+    "mtp0": 1,
+    "mtp1": 1
+  },
+  "interpretation": "The mixed prefill/decode GDN path (R155) was the MTP0 source; splitting mixed steps into pure calls makes MTP0 exact at every concurrency. MTP1's residual lives in the speculative path: the split already runs spec rows in a pure spec call, so the spec path itself must be batch-dependent above 16 sequences (32 verify rows), which R155 did not census. Stale-slot reuse (R157) is exact."
+}
