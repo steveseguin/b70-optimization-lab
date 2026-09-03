@@ -3,23 +3,22 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Strict R139 row-invariant W8A16 qualified: MTP1 `54.627 tok/s`, MTP0
-> `33.314 tok/s`.** On a clean boot (2026-09-02), two fresh MTP1 servers with
-> separate empty compile caches measured `54.313` and `54.942 tok/s`; three
-> fresh MTP0 servers measured `33.337`, `33.314`, and `33.289 tok/s`. Every
+> **Strict R156 qualified: MTP1 `54.603 tok/s`, MTP0 `33.314 tok/s`.** On a
+> clean boot (2026-09-03), two fresh MTP1 servers measured `54.500` and
+> `54.707 tok/s` and two fresh MTP0 servers `33.326` and `33.302 tok/s`; every
 > pairwise comparison matched all 12 complete token arrays, canaries passed
 > before and after, cache stayed zero, and the target verifier stayed FP16
-> (draft-only INT4 head). The R139 image replaces the oneDNN W8A16 GEMM with
-> a fixed-K, row-invariant strategy selector, so greedy output no longer
-> depends on batch shape for batch sizes 1-512. See the
-> [R147-R149 ladders](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
+> (draft-only INT4 head). R156 is the row-invariant R139 image plus a Python
+> mixed-step GDN split; MTP0 output is byte-identical to a single request
+> through 64 concurrent users, MTP1 through 16. See the
+> [R151-R162 note](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md).
 
 > **Determinism scope:** both profiles return one token stream and one logprob
 > array across five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens,
 > and every concurrent output is byte-identical to its single-request answer
-> through 16 simultaneous users. At 32 and 64 users a few near-tie prompts
-> take a different, equally valid branch (2/32, 6-9/64), so aggregate rates are
-> published only through c16 until that per-sequence kernel is repaired. The
+> through 64 simultaneous users for MTP0 and through 16 for MTP1. Above 16,
+> MTP1 still lets a few near-tie prompts take a different, equally valid
+> branch (1/32, 8/64), so MTP1 aggregate rates are published only through c16. The
 > previous R62 profile (`54.424603 tok/s`) failed repeat determinism at
 > 168-250-token prompts and concurrency identity at c2; it remains buildable
 > from the same chain.

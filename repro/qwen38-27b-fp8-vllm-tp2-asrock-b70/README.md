@@ -11,10 +11,84 @@
 
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
-FP16 KV, and TP2. The R139 row-invariant W8A16 profile is lab-qualified at
-**`54.627 tok/s`** MTP1 (unchanged FP16 target verifier) and **`33.314 tok/s`**
-MTP0, output-identical through 16 concurrent users and repeat-exact at every
-tested prompt length; deeper dynamic MTP remains a research lane.
+FP16 KV, and TP2. The R156 profile (row-invariant W8A16 kernel plus a
+mixed-step GDN split) is lab-qualified at **`54.603 tok/s`** MTP1 (unchanged
+FP16 target verifier) and **`33.314 tok/s`** MTP0. MTP0 output is byte-identical
+to a single request through 64 concurrent users, MTP1 through 16, and both are
+repeat-exact at every tested prompt length; deeper dynamic MTP remains a
+research lane.
+
+## Mixed-step split R156 profile (qualified 2026-09-03)
+
+R156 is the R139 image plus one Python patch on `vllm/_xpu_ops.py`: when a
+GDN step carries prefill rows and decode rows in the same kernel call, the
+XPU GDN kernel computes the decode rows on a different arithmetic path (one
+float16 unit in the SSM state, found by the R155 operator census). With
+`VLLM_XPU_GDN_SPLIT_MIXED=1` the wrapper runs such steps as separate pure
+decode, pure prefill, and pure spec calls. One-user steps are never mixed, so
+c1 output and speed are unchanged by construction; the patch is default-off
+and adds launches only on mixed steps. Clean-boot promotion (`r156f`):
+
+| arm | attempt | class-balanced decode | output gate |
+| --- | ---: | ---: | ---: |
+| R156 MTP0 | `mtp0-a` | 33.325915 tok/s | oracle |
+| R156 MTP0 | `mtp0-b` | 33.301558 tok/s | 12/12 vs mtp0-a |
+| R156 MTP1 | `mtp1-a` | 54.499691 tok/s | 12/12 vs sibling and mtp0-a |
+| R156 MTP1 | `mtp1-b` | 54.706797 tok/s | 12/12 vs sibling and mtp0-a |
+| R156 MTP1 center | **54.603244 tok/s** | — | **qualified** |
+| R156 MTP0 center | **33.313736 tok/s** | — | **qualified** |
+
+Determinism scope: five repeats at 100, 168, 200, 224, 250, and 300 prompt
+tokens are exact on both profiles; the c1-c64 identity ladder is exact at
+every level for MTP0 (64/64 at c64, reproduced on three servers: R156,
+R160, R161 ladders and this promotion) and exact through c16 for MTP1 (c32
+31/32, c64 56/64). The MTP1 residual is not in any censused kernel; see the
+[R151-R162 note](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md).
+Aggregate rates are published only where identity holds: MTP0 through c64
+(931.4 tok/s at c64), MTP1 through c16 (474.3 tok/s at c16); single server,
+one pass per point.
+
+### Build and run R156
+
+Build R139 by either route above, then add the Python overlay (no compiler,
+no binary change; the release binaries are R139's):
+
+```bash
+BUILD_ROOT=/path/to/empty-r156-build \
+EXPECTED_BASE_IMAGE_ID=sha256:replace-with-your-r139-image-id \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-split-mixed-r156-image.sh
+```
+
+Launch and benchmark with the R156 wrappers, which export the split flag and
+the patched module's digest for the image contract:
+
+```bash
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-your-r156-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-split-mixed-r156-server.sh
+
+OUT_DIR=/path/to/new-strict-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-split-mixed-r156 \
+PROFILE_LABEL=mtp1-split-mixed-r156 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+
+MODEL_DIR=/path/to/qwen3.8-27b-fp8 \
+VLLM_CACHE_DIR=/path/to/another-new-runtime-cache \
+EXPECTED_IMAGE_ID=sha256:replace-with-your-r156-image-id \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-split-mixed-r156-server.sh
+
+OUT_DIR=/path/to/new-mtp0-attempt \
+MODEL_NAME=qwen38-fp8-block-w8a16-mtp0-split-mixed-r156 \
+PROFILE_LABEL=mtp0-split-mixed-r156 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+```
+
+`publication-manifest.json` binds the R156 chain (build script, Dockerfile,
+patch, validator, wrappers, evidence) by SHA-256. The R139 section below
+remains valid: R139 and R156 produce identical c1 output, and the
+LocalMaxxing record (`cmtkvle7a0428p701k0ttabyy`, 54.627 tok/s on R139)
+stands for both.
 
 ## Row-invariant R139 profile (qualified 2026-09-02)
 

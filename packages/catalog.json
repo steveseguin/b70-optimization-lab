@@ -1782,7 +1782,7 @@
         "model_family": "Qwen3.8",
         "publisher": "Alibaba / Qwen",
         "variant": "27B official FP8",
-        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R139 row-invariant W8A16 profile is clean-boot-qualified at 54.627 tok/s MTP1 (FP16 target verifier, draft-only INT4 head) and 33.314 tok/s MTP0, with output identical to a single request through 16 concurrent users and repeat-exact answers at every tested prompt length from 100 to 300 tokens. Above 16 concurrent users a few near-tie prompts can take a different valid branch, so those rates are not published. Independent host-installation replay remains pending.",
+        "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R156 profile (row-invariant W8A16 kernel plus a mixed-step GDN split) is clean-boot-qualified at 54.603 tok/s MTP1 (FP16 target verifier, draft-only INT4 head) and 33.314 tok/s MTP0. MTP0 output is byte-identical to a single request at every tested concurrency through 64 users; MTP1 through 16 users. Both are repeat-exact at every tested prompt length from 100 to 300 tokens. Independent host-installation replay passed on a second lab host; its slower CPU and fabric lower the single-user rate, see the guide's know-your-host section.",
         "quantization": "FP8",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1808,16 +1808,17 @@
           "MTP1",
           "dynamic MTP8 to MTP1",
           "W8A16",
-          "row-invariant W8A16"
+          "row-invariant W8A16",
+          "mixed-step GDN split"
         ],
         "published_at": "2026-08-27",
-        "benchmark_status": "Strict R139 fixed-K MTP1 clean-boot-qualified at 54.627 tok/s: two fresh empty-cache servers measured 54.313/54.942 tok/s, each 12/12 complete arrays exact versus a same-image MTP0 oracle that three fresh MTP0 servers reproduced 12/12 (33.337/33.314/33.289 tok/s). Both profiles returned one token stream and one logprob array across five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens, closing the earlier 168-256-token nondeterminism. The c1-c64 concurrency ladder was output-identical to the sequential oracle through c16 on both profiles; c32 and c64 matched 30/32 and 55-58/64, so aggregate rates are published only through c16. The kernel is row-invariant, permutation-invariant, and repeat-exact for every batch size 1-512 at the operator level. Canaries passed before and after every server, cache zero, no Xe fault on the qualifying boot. Independent host replay remains pending.",
+        "benchmark_status": "Strict R156 promotion (2026-09-03, clean boot): two same-image MTP0 controls 33.326/33.302 tok/s matched 12/12; two MTP1 candidates 54.500/54.707 tok/s (center 54.603) matched 12/12 against each other and against the MTP0 oracle; canaries before and after every server; cache zero; repeat-exact at 100, 168, 200, 224, 250, and 300 prompt tokens on both profiles. Identity ladders (64 sequential oracles, then 1-64 concurrent users, 128 tokens each): MTP0 exact 64/64 through c64 (reproduced on three servers); MTP1 exact through c16, 31/32 at c32 and 56/64 at c64, so MTP1 aggregate rates are published only through c16. The R156 image is R139 plus a Python patch (vllm/_xpu_ops.py) that runs mixed prefill/decode GDN steps as pure calls; binaries are the R139 release. Independent host replay: recipe closure and all correctness gates pass on a Threadripper PRO/PCIe Gen4 host at 1.8x lower decode rate (host submission latency), recovered to 94% with XPU Graph on.",
         "featured_metric": {
-          "value": 54.62728639090838,
+          "value": 54.60324390231517,
           "unit": "tok/s",
-          "label": "strict varied-prompt decode (R139 fixed-K MTP1)",
-          "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-image MTP0 oracle reproduced by three fresh MTP0 servers, canaries before and after, cache zero. The same image is output-identical through 16 concurrent users and repeat-exact at 100-300-token prompts.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json"
+          "label": "strict varied-prompt decode (R156 MTP1)",
+          "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-image MTP0 oracle, canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json"
         }
       },
       "contributors": [
@@ -1887,16 +1888,17 @@
           "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-mtp-active-width-20260826.patch",
           "experiments/qwen38-27b-b70/patches/vllm-qwen38-dynamic-mtp-mamba-active-allocation-20260826.patch",
           "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch"
+          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+          "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gdn-split-mixed-step-r156-20260903.patch"
         ],
-        "reason": "The qualified R139 profile is the R62 image plus a rebuilt vllm-xpu-kernels extension whose oneDNN W8A16 GEMM uses a fixed-K row-invariant strategy selector (two oneDNN patches), so greedy output no longer depends on batch shape for batch sizes 1-512 and is repeat-exact at every prompt length. Everything else is the R62 chain: block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, the deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection with an FP16 target verifier. The compiled extension is published as a release binary with whole-file and section digests, and can be rebuilt from the pinned sources with host oneAPI 2026.1. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
+        "reason": "The qualified R156 profile is the R62 image plus a Python mixed-step GDN split (vllm/_xpu_ops.py, VLLM_XPU_GDN_SPLIT_MIXED=1) and a rebuilt vllm-xpu-kernels extension whose oneDNN W8A16 GEMM uses a fixed-K row-invariant strategy selector (two oneDNN patches), so greedy output no longer depends on batch shape for batch sizes 1-512 and is repeat-exact at every prompt length. Everything else is the R62 chain: block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, the deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection with an FP16 target verifier. The compiled extension is published as a release binary with whole-file and section digests, and can be rebuilt from the pinned sources with host oneAPI 2026.1. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
       },
       "commands": {
-        "preflight": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-fixed-k-w8a16-r139 IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn EXPECTED_XPU_EXTENSION_SHA256=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1 MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-        "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-your-r139-image-id experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
+        "preflight": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156 IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn EXPECTED_XPU_EXTENSION_SHA256=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1 EXPECTED_XPU_OPS_SHA256=6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064 MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
+        "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-your-r156-image-id experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-split-mixed-r156-server.sh",
         "health": "curl -fsS http://127.0.0.1:18124/health",
-        "benchmark": "OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-fixed-k-r139 PROFILE_LABEL=mtp1-fixed-k-r139 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-        "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-fixed-k-r139"
+        "benchmark": "OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-split-mixed-r156 PROFILE_LABEL=mtp1-split-mixed-r156 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+        "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-split-mixed-r156"
       },
       "dependencies": [
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -2213,89 +2215,112 @@
         "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-w8a16-row-invariant-kernel-track-r120-r146.md",
         "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147.sh",
         "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c.sh",
-        "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json"
+        "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json",
+        "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-split-mixed-r156-server.sh",
+        "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-split-mixed-r156-server.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-split-mixed-r156-image.sh",
+        "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-split-mixed-r156",
+        "tools/validate-xpu-gdn-split-mixed-r156.py",
+        "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gdn-split-mixed-step-r156-20260903.patch",
+        "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-prereg.json",
+        "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-fa-mixed-step-census-r155-result.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md"
       ],
       "performance_profiles": [
         {
-          "id": "http-r139-mtp1-identity-qualified-aggregate-vs-concurrent-users",
-          "label": "R139 fixed-K FP8 TP2 + MTP1 aggregate decode, output-identical through c16",
+          "id": "http-r156-mtp1-identity-qualified-aggregate-vs-concurrent-users",
+          "label": "R156 FP8 TP2 + MTP1 aggregate decode, output-identical through c16",
           "metric": "aggregate_decode",
           "unit": "tok/s",
           "x_metric": "concurrent_sequences",
           "x_label": "Concurrent HTTP users",
-          "scope": "Measured vLLM HTTP completions on two B70s with the R139 row-invariant W8A16 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld because 2/32 and 6-9/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-result.json",
+          "scope": "Measured vLLM HTTP completions on two B70s with the R156 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld: 1/32 and 8/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json",
           "points": [
             {
               "concurrent_sequences": 1,
-              "value": 51.8628,
-              "per_user_value": 51.8628,
+              "value": 51.72696638016744,
+              "per_user_value": 51.72696638016744,
               "samples": 1
             },
             {
               "concurrent_sequences": 2,
-              "value": 77.45,
-              "per_user_value": 38.725,
+              "value": 77.59343580581428,
+              "per_user_value": 38.79671790290714,
               "samples": 1
             },
             {
               "concurrent_sequences": 4,
-              "value": 174.6,
-              "per_user_value": 43.65,
+              "value": 173.5129971811476,
+              "per_user_value": 43.3782492952869,
               "samples": 1
             },
             {
               "concurrent_sequences": 8,
-              "value": 353.35,
-              "per_user_value": 44.16875,
+              "value": 352.8567011818344,
+              "per_user_value": 44.1070876477293,
               "samples": 1
             },
             {
               "concurrent_sequences": 16,
-              "value": 497.38,
-              "per_user_value": 31.08625,
+              "value": 474.26834646536486,
+              "per_user_value": 29.641771654085304,
               "samples": 1
             }
           ]
         },
         {
-          "id": "http-r139-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-          "label": "R139 fixed-K FP8 TP2 MTP0 aggregate decode, output-identical through c16",
+          "id": "http-r156-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+          "label": "R156 FP8 TP2 MTP0 aggregate decode, output-identical through c64",
           "metric": "aggregate_decode",
           "unit": "tok/s",
           "x_metric": "concurrent_sequences",
           "x_label": "Concurrent HTTP users",
-          "scope": "Measured vLLM HTTP completions on two B70s with the R139 row-invariant W8A16 image (MTP0, target only), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld because 2/32 and 6-9/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c-result.json",
+          "scope": "Measured vLLM HTTP completions on two B70s with the R156 image (MTP0, target only), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). All seven points including c32 and c64 passed 64/64. One server, one pass per point; not a promoted concurrency speed record.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json",
           "points": [
             {
               "concurrent_sequences": 1,
-              "value": 33.47,
-              "per_user_value": 33.47,
+              "value": 33.473462863775524,
+              "per_user_value": 33.473462863775524,
               "samples": 1
             },
             {
               "concurrent_sequences": 2,
-              "value": 64.43,
-              "per_user_value": 32.215,
+              "value": 64.5150300817694,
+              "per_user_value": 32.2575150408847,
               "samples": 1
             },
             {
               "concurrent_sequences": 4,
-              "value": 124.05,
-              "per_user_value": 31.0125,
+              "value": 124.14592676126526,
+              "per_user_value": 31.036481690316315,
               "samples": 1
             },
             {
               "concurrent_sequences": 8,
-              "value": 234.58,
-              "per_user_value": 29.3225,
+              "value": 234.23197681700228,
+              "per_user_value": 29.278997102125285,
               "samples": 1
             },
             {
               "concurrent_sequences": 16,
-              "value": 421.06,
-              "per_user_value": 26.31625,
+              "value": 421.1229174615945,
+              "per_user_value": 26.320182341349657,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 675.6173683928753,
+              "per_user_value": 21.113042762277352,
+              "samples": 1
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 931.3632005333552,
+              "per_user_value": 14.552550008333675,
               "samples": 1
             }
           ]
@@ -2645,7 +2670,7 @@
         "tested clean-host Intel driver and Docker installation",
         "independent host-driver/Docker installation and strict endpoint replay",
         "beginner recovery flow",
-        "output identity above 16 concurrent users (a per-sequence kernel at 32+ sequences still flips near-tie prompts; operator census pending)"
+        "MTP1 output identity above 16 concurrent users (MTP0 is exact through 64; the MTP1 residual is not in any censused kernel)"
       ]
     },
     {

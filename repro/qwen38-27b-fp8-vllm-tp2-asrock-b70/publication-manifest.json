@@ -221,6 +221,76 @@
           }
         ]
       }
+    },
+    "r156": {
+      "description": "Mixed-step GDN split (vllm/_xpu_ops.py) over R139: makes MTP0 output-identical through c64 (R156); MTP1 unchanged (R156, R160, R161). Python-only overlay; binaries are the R139 release.",
+      "image": {
+        "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156",
+        "id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+        "base_r139_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+        "installed_xpu_ops_sha256": "6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064",
+        "env": {
+          "VLLM_XPU_GDN_SPLIT_MIXED": "1"
+        }
+      },
+      "repository": {
+        "build_scripts": [
+          {
+            "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/build-gdn-split-mixed-r156-image.sh",
+            "sha256": "8924cbbd54b96bf2e5c8e44e23f646adf998ad3c2241f7c83b7bb7216ca68825"
+          }
+        ],
+        "immutable_inputs": [
+          {
+            "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/Dockerfile.gdn-split-mixed-r156",
+            "sha256": "07d5d5d554e1ad15d7c5f357af606b756b4c68a9227822f4f1399bc03e7ab143"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gdn-split-mixed-step-r156-20260903.patch",
+            "sha256": "b17e31320a7622d245cb6ea242c6e961d5c214f75678b44ba4bd66eef6ee99b2"
+          },
+          {
+            "path": "tools/validate-xpu-gdn-split-mixed-r156.py",
+            "sha256": "c88643f9e299920971501726553fe8a06af8b012fd20a7c350cf0efda8533e9b"
+          }
+        ],
+        "launchers": [
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
+            "sha256": "d0b700a864a94f40e946ee6eeaeb534b9566232a76b0f0a57e9db2dd6b0439c2"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-r139-server.sh",
+            "sha256": "6acb7a8246ca9bca5f551b167376bf602cc6f366ca93bf8f3d239ba2a611ca05"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-split-mixed-r156-server.sh",
+            "sha256": "a3ae7c6f35a5b4d3f620cb2193b6b535b1c01104611d56f09827329a2f1e2a71"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-split-mixed-r156-server.sh",
+            "sha256": "c0cc048c0ef66c53dd7407f9c2430bd68e8d016f94b3650a2a4dd5488754da37"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-fa-mixed-step-census-r155-result.json",
+            "sha256": "c543e7ac91c932c4289f4c6fc14eefd063781ec7cbb60d7b11b2a5576ba1faef"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-prereg.json",
+            "sha256": "05ba3dc7be1c704ce12ca45ea76faa0f223d20fa23866b9c15e7d13407631f43"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-result.json",
+            "sha256": "b20980d9632a78cee06dedba30ab760fc1c9472e0af4fe2e12486c639035a6a8"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json",
+            "sha256": "179a2c7b77f688b6b65345179ee4dadd7eca4d02230d19d63f4e2b53c14f03d8"
+          }
+        ]
+      }
     }
   },
   "source_repositories": [

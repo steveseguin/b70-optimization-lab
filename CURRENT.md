@@ -20,11 +20,8 @@ result packets, handoffs, notes, patches, and reproduction recipes below.
 
 ## Live Service
 
-**Device lock (2026-09-03 01:17 EDT, boot `2c230b44`):** the R156 promotion
-campaign (`qwen38-fp8-gdn-split-mixed-full-20260903-r156f`) runs unattended on
-both B70s: two MTP0 controls, two MTP1 candidates with the repeat probe, both
-ladders. Do not launch other GPU work until that root holds `campaign-end.txt`
-or `ABORTED`.
+**GPUs free (2026-09-03 02:05 EDT, boot `2c230b44`, no fault this boot):** R156
+promotion complete; no lane container running; both B70s normal.
 
 Verified on 2026-09-02 after the second host reboot of the day at `18:23 EDT` (the first was `08:16 EDT`; the second followed the Flash-Next A61 kernel soft lockup):
 
@@ -176,6 +173,12 @@ mixed steps into pure calls and makes MTP0 output-identical through c64 (64/64,
 reproduced); MTP1 still misses 2/32 and 6/64 with every kernel-level candidate
 cleared, so its residual is specific to speculative serving. See
 [`R151-R162 note`](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md).
+The R156 promotion campaign (`r156f`, 02:00 EDT) passed every strict gate at
+R139 speed (MTP1 `54.603`, MTP0 `33.314`) with MTP0 64/64 through c64 and MTP1
+exact through c16; R156 is now the published profile (package, pages, README,
+manifest chain `r156`). The R139 LocalMaxxing record stands (identical c1
+output). Next on this box: the MTP draft-forward census for the MTP1 residual,
+a graph-on identity ladder, and MTP depth 2 on R156.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
