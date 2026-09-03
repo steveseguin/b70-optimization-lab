@@ -194,7 +194,8 @@ whose GDN state page is never zeroed (`KVBlockZeroer` skips non-AttentionSpec
 groups) and is handed raw to the XPU kernel with `has_initial_state=False`.
 Depth-1 with async off improves the ladder to 32/32 at c32 and 61/64 at c64.
 A GPU fault on 0000:03:00.0 at 10:07 (during an MTP0 server start) blocks
-further device work on this boot. Next after reboot: R176 probe (kernel inputs),
+further device work on this boot. Reboot authorized by the user 13:15 EDT. Next after reboot (one command:
+`experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-post-reboot-r176-r178-r179.sh`): R176 probe (kernel inputs),
 R178 fix candidate (zero GDN state pages of new blocks,
 `patches/vllm-qwen38-xpu-zero-mamba-state-pages-r178-20260903.patch`), then
 depth-1 and depth-2 ladders and strict pairs on the fixed image, async on and off.
