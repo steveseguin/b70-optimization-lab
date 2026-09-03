@@ -3975,3 +3975,19 @@ fresh-server repeat (A71) follows the 27B replay. See the
 and
 [A70](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-02-tp4-mtp0-a70-fullgraph-deterministic-battery-result.md)
 results.
+A71, the fresh-server repeat of A70 (after an `iommu=pt` reboot), passed
+every output, quality and speed gate and reproduced A70's exact-2K output
+hash `afffd211...` on both rows; short rows `22.32/21.50/23.48 tok/s`, 2K
+rows `14.21/14.08`. The client stopped only at the final runtime-receipt
+verifier: the `--cudagraph-metrics` dispatch table it parses has never
+appeared in any Flash-Next server log (A44, A55, A56, A70, A71), so the
+receipt plumbing between the TP4 workers and the API stats logger needs a
+fix or the verifier needs the torch-trace receipt instead, before a new
+attempt becomes the promotion record. See the
+[A71 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a71-fresh-server-repeat-result.md).
+The 27B FP8 TP2 R139 recipe was replayed on this host from a fresh public
+clone: closure, model, image and strict-bench gates pass; graph-off decode
+is host-bound (28.9/18.6 tok/s vs 54.6/33.3) because this Zen 3 Gen4 host
+pays 1.65x per kernel launch and 48 us per two-card all-reduce; XPU Graph
+with capture sizes [1,2] recovers 51.3/31.1 tok/s. See the
+[replay note](experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-r139-four-b70-host-replay.md).
