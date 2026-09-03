@@ -1,0 +1,5 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r156-mtp2-probe-ladder-20260903-r165","status":"preregistered-before-device-use",
+ "question":"Is static MTP depth 2 on R156 (R164: 69.94/69.38 tok/s, 12/12 vs each other and vs the same-image MTP0 oracle) repeat-exact at 100-300-token prompts and output-identical under concurrency, and through which c?",
+ "gates":{"G5":"one token stream and one logprob array at 100, 168, 200, 224, 250, 300 tokens","G6":"identity through at least c16 (the current MTP1 claim); c64 recorded"},
+ "on_pass":"MTP2 becomes the MTP1-lane headline candidate: publication update (package featured metric, README, index row) and a LocalMaxxing submission at the strict center; the MTP1 (depth 1) numbers stay published as the alternative",
+ "runner":"experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-triton-rmsnorm-r152.sh PROBE_AND_LADDER_MTP1=1 with SPECULATIVE_CONFIG num_speculative_tokens 2","abort_conditions":["as R147"]}

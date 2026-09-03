@@ -135,6 +135,25 @@ fi
 log "preflight clean; boot $(cat "${root}/boot-id.txt")"
 
 # ---------------- MTP0 controls ----------------
+if [[ "${PROBE_AND_LADDER_MTP1:-0}" == 1 ]]; then
+  log "PROBE_AND_LADDER_MTP1: repeat probe on a strict-config MTP1 server, then the c1-c64 ladder"
+  launch probe-mtp1 mtp1 1024 1 1024
+  python3 "${probe}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" \
+    --out "${server_dir}/medium-prefill-probe.json" >"${server_dir}/medium-prefill-probe.stdout" 2>&1 || log "probe exited nonzero"
+  log "G5 probe: $(tail -n 3 "${server_dir}/medium-prefill-probe.stdout" | tr '\n' ' ')"
+  stop_server "${server_name}" "${server_pid}" "${server_dir}"
+  postflight probe-mtp1-post
+  launch ladder mtp1 256 64 512
+  python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
+    --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+    --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
+    --return-token-ids --require-output-identity \
+    --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
+  log "G6 ladder harness exit $?"
+  stop_server "${server_name}" "${server_pid}" "${server_dir}"
+  postflight ladder-post
+  date --iso-8601=seconds >"${root}/campaign-end.txt"; log "campaign complete"; exit 0
+fi
 if [[ "${STRICT_MTP1_ONLY:-0}" == 1 ]]; then
   log "STRICT_MTP1_ONLY: two MTP1 candidates against the oracle at ${oracle_root}/mtp0-a"
   for label in mtp1-a mtp1-b; do
