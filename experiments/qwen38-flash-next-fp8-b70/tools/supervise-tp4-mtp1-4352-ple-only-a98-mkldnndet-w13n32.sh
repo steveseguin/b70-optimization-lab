@@ -3,17 +3,17 @@ set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 wrapper="${script_dir}/launch-tp4-mtp1-4352-ple-only-a98-mkldnndet-w13n32.sh"
-expected_wrapper=85a7ca17ebdc826ff33ceb0f4d289f9ca86132ffb89668674ac6c371a4c8c9d2
+expected_wrapper=d574aaad6cf8b593a45bf07cb4e77d32f3d4fb0845cdccb5cc5adbea245bff9b
 client="${script_dir}/run-tp4-mtp1-4352-ple-only-a98-mkldnndet-w13n32-client.sh"
-expected_client=538a3367a88aa7818d5a7e99a8a38e8997cad9141634a28ba2d7955bbe22d514
+expected_client=cb7b216f1280d30ea11c9297e21a576ae6f669f3c6ccb788c939741a165b7c06
 state=/tmp/q38-mtp1-ple-only-a98
 stop_file="${state}.stop"
 failure_file="${state}.failed"
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98
-cache_dir=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98
-compile_dir=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98-compile
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98
+cache_dir=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98
+compile_dir=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98-compile
 rpc_dir=/tmp/q38-ple2k-a98-rpc
-evidence_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98-supervisor
+evidence_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98-supervisor
 port=19770
 pressure_log="${evidence_dir}/host-pressure.tsv"
 expected_nvme_aer_cor=${Q38_A98_NVME_AER_BASELINE:-}

@@ -32,7 +32,6 @@ def source(name):
 def successor(text):
     def rename(seg):
         seg = seg.replace("tp4-mtp1-4352-ple-only-a83", "tp4-mtp1-4352-ple-only-a98")
-        seg = seg.replace("mkldnndet-mtp1-4352-ple-only", "mkldnndet-mtp1-exact-recurrent-4352-ple-only")
         seg = seg.replace("q38-mtp1-ple-only", "q38-mtp1-ple-only")
         seg = seg.replace("attempt83", "attempt98").replace("19755", "19770")
         seg = seg.replace("ATTEMPT=83", "ATTEMPT=98").replace("a83", "a98").replace("A83", "A98")

@@ -6,7 +6,7 @@ base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a98-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
 expected_derived=4c3c8651c12ca3c10d621c9b6458556c11d7991c617451744bb33739901d76b5
-campaign=qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1
+campaign=qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
 [[ "$(sha256sum "$tuned_config_map" | cut -d' ' -f1)" == a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be ]] || { printf 'FAIL: A98 tuned M1 map drifted\n' >&2; exit 1; }
@@ -217,7 +217,7 @@ export KERNELS_SRC=/home/steve/src/vllm-xpu-kernels
 export VLLM_PYTHON=/home/steve/.venvs/vllm-xpu/bin/python
 export VLLM_BIN=/home/steve/.venvs/vllm-xpu/bin/vllm
 export RUN_PARENT=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70
-export TORCH_TRACE=${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98/torch-trace
+export TORCH_TRACE=${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98/torch-trace
 unset Q38_REPEATABILITY_TRACE_FILE
 unset VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK
 unset VLLM_XPU_PLE_UVA_PREFETCH

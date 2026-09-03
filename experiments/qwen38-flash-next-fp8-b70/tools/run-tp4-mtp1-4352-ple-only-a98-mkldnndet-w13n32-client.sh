@@ -6,7 +6,7 @@ supervisor="${repo}/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mt
 state=/tmp/q38-mtp1-ple-only-a98
 stop_file="${state}.stop"
 failure_file="${state}.failed"
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98
 base_url=http://127.0.0.1:19770
 model=qwen38-flash-next-fp8-tp4
 tokenizer=/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8
@@ -17,7 +17,7 @@ depth_harness="${repo}/scripts/bench-openai-token-depth-suite.py"
 fixture="${repo}/data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json"
 runtime_verifier=${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-q38-a48-mkldnndet-runtime.py
 expected_runtime_verifier=a3acec5018c4b1147f8efddb75f6678acee7f9802d4fb11f3c56bc7b2bd74ca8
-torchinductor_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98-compile/torchinductor
+torchinductor_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98-compile/torchinductor
 torch_trace=${run_dir}/torch-trace
 compilation_json='{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"compile_sizes":[],"cudagraph_num_of_warmups":1}'
 completed=0
@@ -184,7 +184,7 @@ assert labels.get("kv_cache_memory_bytes") == "134217728", labels
 assert labels.get("enable_prefix_caching") == "False", labels
 assert int(labels.get("kv_cache_size_tokens", "0")) >= 2176, labels
 PY
-journal_start=$(cat "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-exact-recurrent-4352-ple-only-r1-attempt98-supervisor/journal-start-epoch.txt")
+journal_start=$(cat "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp1-4352-ple-only-r1-attempt98-supervisor/journal-start-epoch.txt")
 journalctl -k --since "@${journal_start}" --no-pager >"${run_dir}/journal-before-client.log"
 ! grep -Eqi 'xe 0000:(23|27|43|47):00\.0.*(reset|fault|timeout|timed out|fatal|wedged|failed)' \
   "${run_dir}/journal-before-client.log" || { printf 'FAIL: B70 event before client work\n' >&2; exit 1; }
