@@ -30,3 +30,18 @@ eager (R183), Dynamo-only (R185f) and with a mutating custom op per layer (R182)
 R184 are numerically inert, while removing Inductor or splitting the graph flips the same tie-class rows, so the
 compiled kernels' numerics come from Inductor codegen and the phantom rides on something the piecewise
 VLLM_COMPILE pipeline does that plain Inductor knobs do not touch: vLLM's post-grad passes or the splitting itself.
+
+## R186 (19:43-19:5x): vLLM passes, piecewise splitting, final-op probe
+
+| arm | config | result |
+|---|---|---|
+| h | mode 3, every `pass_config` pass false (noop elimination and all fusions) | phantom on cache-c032, 63/64, no other row moved |
+| j | mode 3, `splitting_ops=[]` (one Inductor graph, 41 s compile) | **no phantom**; 11 tie rows differ, token-identical to R185f (Dynamo-only) on all 64 rows |
+| n | R176 probe image + the custom op after the final norm only | (below) |
+
+Reading: the vLLM post-grad passes are not involved (h, inert). The piecewise pipeline is: with one whole graph
+(j) the outputs equal the FX-eager run token for token and the phantom is gone; with the default attention/GDN
+split points the tie rows move and the phantom appears; with extra split points at every layer (R182) the
+phantom is gone again. So it is not "splitting" as such but the specific default piece structure, or what the
+piecewise runner does at piece boundaries for the mutating attention/GDN ops (their `output` buffers) under async
+scheduling.
