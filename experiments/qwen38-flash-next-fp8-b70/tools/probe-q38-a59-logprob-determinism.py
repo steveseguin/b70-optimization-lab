@@ -46,11 +46,18 @@ def token_ids_sha256(ids: list[int]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def load_prompt() -> list[int]:
+def load_prompt(case_depth: int = 2048) -> list[int]:
     fixture = json.loads(FIXTURE.read_text())
-    case = next(c for c in fixture["cases"] if c.get("depth") == 2048)
+    case = next(c for c in fixture["cases"] if c.get("depth") == case_depth)
     ids = [int(x) for x in case["prompt_token_ids"]]
-    assert len(ids) == 2048 and case["prompt_token_ids_sha256"] == FIXTURE_CASE_SHA
+    assert len(ids) == case_depth
+    if case_depth == 2048:
+        assert case["prompt_token_ids_sha256"] == FIXTURE_CASE_SHA
+    else:
+        # Other fixture cases are bound by the fixture's own recorded digest
+        # (SHA-256 of the compact JSON list, the fixture generator's convention).
+        digest = hashlib.sha256(json.dumps(ids, separators=(",", ":")).encode()).hexdigest()
+        assert digest == case["prompt_token_ids_sha256"], f"fixture case {case_depth} digest mismatch"
     return ids
 
 
@@ -124,6 +131,12 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--no-stop", action="store_true")
     parser.add_argument(
+        "--prompt-case-depth",
+        type=int,
+        default=2048,
+        help="fixture case whose prompt ids feed the depth prefixes (2048 or 4096)",
+    )
+    parser.add_argument(
         "--expect-no-tuned-folder",
         action="store_true",
         help="server identity must carry no VLLM_TUNED_CONFIG_FOLDER (A63 old-head control)",
@@ -140,7 +153,7 @@ def main() -> int:
     with urllib.request.urlopen(f"{args.base_url}/health", timeout=20) as resp:
         assert resp.status == 200
 
-    prompt = load_prompt()
+    prompt = load_prompt(args.prompt_case_depth)
     depths = [int(d) for d in args.depths.split(",")]
     results: dict[str, dict] = {}
     try:
