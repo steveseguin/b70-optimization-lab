@@ -33,3 +33,12 @@ output is identical in phantom and clean runs) and not on KV/GDN pages (R180). T
 the Inductor-compiled pieces of the prefill graph under async scheduling: buffer reuse or an in-place mutation
 across the async step boundary. R183 tests it directly: published R156, depth 2, async on, `--enforce-eager`.
 R182b (probe image, async off) runs as the control of the probe image itself.
+
+## R182b (async off, same probe image, 18:52-18:59): identical to R182a
+
+Same 10 tie-class rows differ from the MTP0 oracle (all mid-sequence, indices 5-96, first token 271 on every
+row), no phantom. The per-layer traces of all 64 prefills are equal between R182a and R182b on both ranks: embed,
+every layer's hidden and residual last-row sums, every full-attention layer's metadata (seq_lens, query_start_loc,
+block table, slot mapping) and the final norm (`compare-r182.py`: "requests with any divergence: []"). On the
+split graph, async scheduling has no observable effect on the prefill forward. The phantom needs the unsplit
+VLLM_COMPILE graph; the metadata the attention layers receive for request 33 is correct in both runs.
