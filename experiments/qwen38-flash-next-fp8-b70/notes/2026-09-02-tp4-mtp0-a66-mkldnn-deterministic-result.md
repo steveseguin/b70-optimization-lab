@@ -15,6 +15,15 @@ server log carries four `torch.backends.mkldnn.deterministic=True` lines
 Load took 13 minutes (weights 21:00, healthy 21:03). The logprob probe ran
 all 44 requests without a hang; the kernel log holds no GPU fault.
 
+Teardown: the supervisor's final status is 70 because its postflight
+bounded root-NVMe read guard tripped (17,551,368 sectors read since the
+baseline, 8.37 GiB, against a 16,777,216-sector cap) after the page cache
+had been dropped before the load; every other postflight condition passed
+(no scratch paths, no listener, journal classifier 0, four cards at 44.8 MiB,
+no xe or PCIe event, NVMe and root-port AER counters 0, swap off, ASPM
+performance). This is a storage-health guard, not a result guard; the
+runtime trees are pre-read before the next launch.
+
 | depth | first-step logits identical (8x) | top-1 logprob spread | 128-token repeats (3x) | max top-1 logprob diff over 128 positions |
 | --- | --- | --- | --- | --- |
 | 8 | yes | 0.0 | one hash | 0.0 |
