@@ -147,7 +147,11 @@ Enabling XPU Graph recovers most of the gap there: with
 captured as well), the replay host measured MTP1 **`51.32 tok/s`** and MTP0
 **`31.15 tok/s`** with the same strict workload, cache-zero and canary
 gates; with `cudagraph_mode` `FULL_DECODE_ONLY` instead of `PIECEWISE` the
-same arms measured `52.05` and `31.53 tok/s`. The qualified profile ships graph-off because on the publishing
+same arms measured `52.05` and `31.53 tok/s`. Those launch settings are
+tracked as `run-w8a16-mtp1-strict-server-xpugraph.sh` and
+`run-w8a16-mtp0-strict-server-xpugraph.sh`; call them exactly like the
+qualified strict wrappers (the R139 launch wrappers accept
+`STRICT_WRAPPER=<name>` to select one). The qualified profile ships graph-off because on the publishing
 host graph capture measured 1.1% slower (R58) and output identity against
 the oracle has only been established there for the graph-off profile. On
 the replay host every graph-on arm (MTP0 and MTP1, either capture set)

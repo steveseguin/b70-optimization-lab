@@ -23,4 +23,4 @@ exec env \
   VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=128 \
   VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=bf16 \
   VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=2048 \
-  "${repro_dir}/run-w8a16-mtp1-strict-server.sh"
+  "${repro_dir}/${STRICT_WRAPPER:-run-w8a16-mtp1-strict-server.sh}"
