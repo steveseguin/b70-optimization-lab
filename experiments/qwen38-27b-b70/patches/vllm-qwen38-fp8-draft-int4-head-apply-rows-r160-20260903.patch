@@ -1,0 +1,51 @@
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py	2026-09-03 00:41:46.198813493 -0400
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py	2026-09-03 00:41:46.616842036 -0400
+@@ -209,15 +209,40 @@
+             and getattr(layer, "_xpu_draft_int4_enabled", False)
+         ):
+             x_contiguous = x if x.is_contiguous() else x.contiguous()
+-            logits = torch.ops._xpu_C.int4_gemm_w4a16(
+-                x_contiguous.reshape(-1, x_contiguous.shape[-1]),
+-                layer._xpu_draft_int4_weight_t,
+-                None,
+-                layer._xpu_draft_int4_scale,
+-                layer._xpu_draft_int4_qzeros,
+-                layer._xpu_draft_int4_group_size,
+-                None,
++            x2d = x_contiguous.reshape(-1, x_contiguous.shape[-1])
++            apply_rows = int(
++                os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS", "0")
+             )
++            if 0 < apply_rows < x2d.shape[0]:
++                # R160: the INT4 W4A16 head kernel is row-invariant only up to
++                # 8 rows; larger calls shift logits by one float16 ULP, which
++                # flips near-tie draft proposals under concurrency. Apply it in
++                # fixed row chunks so every row sees the single-row arithmetic.
++                logits = torch.cat(
++                    [
++                        torch.ops._xpu_C.int4_gemm_w4a16(
++                            x2d[i : i + apply_rows],
++                            layer._xpu_draft_int4_weight_t,
++                            None,
++                            layer._xpu_draft_int4_scale,
++                            layer._xpu_draft_int4_qzeros,
++                            layer._xpu_draft_int4_group_size,
++                            None,
++                        )
++                        for i in range(0, x2d.shape[0], apply_rows)
++                    ],
++                    dim=0,
++                )
++            else:
++                logits = torch.ops._xpu_C.int4_gemm_w4a16(
++                    x2d,
++                    layer._xpu_draft_int4_weight_t,
++                    None,
++                    layer._xpu_draft_int4_scale,
++                    layer._xpu_draft_int4_qzeros,
++                    layer._xpu_draft_int4_group_size,
++                    None,
++                )
+             return logits.reshape(
+                 x_contiguous.shape[:-1] + (layer._xpu_draft_int4_weight_t.shape[1],)
+             )

@@ -1,0 +1,11 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-draft-int4-apply-rows-20260903-r160",
+  "status": "preregistered-before-device-use",
+  "question": "With the R156 mixed-step split (MTP0 already 64/64) plus the draft INT4 head applied in 8-row chunks, does MTP1 become output-identical through c64?",
+  "evidence_base": "R159: int4_gemm_w4a16 (draft head, K=5120, N=124160, group 128) is row-invariant only for M<=8; from M=16 rows shift by one fp16 ULP and permutation fails. The draft's argmax chooses the proposals, so a near-tie proposal flip under concurrency changes which tokens the target verifies together, and the target's one-row and two-row paths differ by a ULP. MTP0 has no draft and is exact with R156 alone. R158: the spec path itself is invariant.",
+  "treatment": {"patch": "experiments/qwen38-27b-b70/patches/vllm-qwen38-fp8-draft-int4-head-apply-rows-r160-20260903.patch", "patch_sha256": "de0c3958452e9777eff3b9f1d05d7ec331dbbbd224c7a65c331838d502c5eb74", "installed_file_sha256": "791d39f4eb99b8bab68ae78a15e2a8e024fa61e0defb3a7dc63d97565fc9430d", "env": {"VLLM_XPU_GDN_SPLIT_MIXED": "1", "VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS": "8"}, "image": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-int4-apply-rows-r160 over R156", "cost": "zero at c1 (one call for up to 8 rows); at c64 eight INT4 head calls per draft step instead of one"},
+  "run_order": ["ladders only, MTP1 then MTP0", "if both pass: full R147-style campaign for speed and promotion, then publication update extending the identity claim to c64"],
+  "gates": {"G6": "every output at c1..c64 equal to its sequential oracle on both profiles"},
+  "abort_conditions": ["as R147"]
+}
