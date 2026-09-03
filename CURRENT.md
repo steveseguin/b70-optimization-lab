@@ -225,9 +225,18 @@ and every attention metadata line
 R183 (published R156, `--enforce-eager`, async on, 19:06): no phantom
 ([R183](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-enforce-eager-r183-result.md)).
 The depth-2 phantom is an artifact of the Inductor-compiled prefill graph
-under async scheduling. Running now: R184 chain on R156 (buffer reuse off,
-fusion off, pattern matcher off), one knob per server; the first arm that
-removes the phantom is the fix candidate for the depth-2 strict pair.
+under async scheduling. R184 (Inductor buffer reuse, fusion, pattern matcher
+off), R186h (every vLLM post-grad pass off): phantom unchanged, no other token
+moved. R185f (DYNAMO_TRACE_ONCE, no Inductor): no phantom. R186j (mode 3
+with `splitting_ops=[]`, one Inductor graph): no phantom and token-identical
+to the Dynamo-only run on all 64 rows
+([R184-R186](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md)).
+The phantom needs the default piecewise split at the attention/GDN ops;
+XPU graphs are disabled on this lane, so the split buys nothing here.
+Running/queued: R186n (probe op after the final norm only), then R187 = R156
++ `splitting_ops=[]` at depth 2 through the full G1-G6 campaign with a
+same-config regenerated oracle (prereg
+`data/2026-09-03-qwen38-fp8-r156-mtp2-no-splitting-full-ladder-r187-prereg.json`).
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
