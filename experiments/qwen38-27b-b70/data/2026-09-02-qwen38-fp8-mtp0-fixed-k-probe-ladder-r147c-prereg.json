@@ -1,0 +1,33 @@
+{
+  "schema": "b70-lab.preregistration.v1",
+  "campaign_id": "qwen38-fp8-fixed-k-mtp0-probe-ladder-20260902-r147c",
+  "status": "preregistered-before-device-use",
+  "amends": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp1-fixed-k-regenerated-oracle-r147-prereg.json",
+  "reason": "The user directed that MTP0 on the row-invariant kernel is publishable on its own if it passes every determinism test, independent of MTP1. R147 ran the 100-300-token repeat probe and the c1-c64 identity ladder on MTP1 servers only; this amendment runs both on MTP0 servers of the same image so the MTP0 claim rests on MTP0 evidence.",
+  "identity": {
+    "image_id": "sha256:901ae9e0ade0109e94dd162d0cf2c398440325b1791f3191376fa0013dc29878",
+    "extension_sha256": "f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1",
+    "mtp0_launcher": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+    "strict_server": {"max_model_len": 1024, "max_num_seqs": 1, "max_num_batched_tokens": 1024},
+    "ladder_server": {"max_model_len": 256, "max_num_seqs": 64, "max_num_batched_tokens": 512},
+    "runner": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp0-fixed-k-probe-ladder-r147c.sh",
+    "artifact_root": "/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-mtp0-probe-ladder-20260902-r147c",
+    "oracle_root": "/mnt/fast-ai/bench-results/qwen38-fp8-fixed-k-regenerated-oracle-20260902-r147 (mtp0-a strict arrays)"
+  },
+  "run_order": [
+    "preflight as R147 (clean journal, both devices normal, compute and XCCL health, zero lane containers)",
+    "mtp0-c: third same-image MTP0 strict server, empty cache, pre-canaries, strict natural-512 suite with post-canaries, then the medium-prefill repeat probe on the same server, graceful stop, postflight",
+    "ladder-mtp0: MTP0 server in the frozen R63 configuration; harness regenerates 64 sequential oracles then measures c1,2,4,8,16,32,64 with repeats=1, max_tokens=128, ignore_eos, temperature 0, --return-token-ids --require-output-identity; graceful stop; postflight"
+  ],
+  "gates": {
+    "G1c": "mtp0-c vs R147 mtp0-a 12/12 complete arrays (third independent MTP0 server)",
+    "G4c": "12 rows, natural EOS, zero cached tokens, canaries before and after, realistic_final_gate passed",
+    "G5(mtp0)": "at 100, 168, 200, 224, 250, 300 prompt tokens x5 repeats: one token-ID stream, one token-logprob array, one top-logprob array, zero cached tokens",
+    "G6(mtp0)": "every complete concurrent output at c1..c64 equals its sequential oracle; harness exit 0",
+    "mtp0_determinism_qualified": "G1c, G4c, G5(mtp0), G6(mtp0) all pass together with R147 G1"
+  },
+  "performance_recording": {"not_a_gate": true, "reference_r54_mtp0_control_center_tok_s": 33.73352, "r147_mtp0_attempts_tok_s": [33.33695011501167, 33.31372875840961]},
+  "abort_conditions": ["as R147: any fault signature, non-normal device, health failure, image mismatch, or a server that does not reach health in 45 minutes"],
+  "on_pass": "MTP0 on the R139 image is determinism-qualified for c1-c64 identity and 100-300-token repeat exactness at the endpoint; write the note and present the publication text change for the user's approval (the README/package edit itself follows lab rules: strict gates passed, numbers from this clean boot)",
+  "on_failure": "record which MTP0 gate failed; the MTP0 claim is not made"
+}
