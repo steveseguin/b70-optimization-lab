@@ -2,4 +2,4 @@
 FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp2-state-slot-probe-r176
 COPY r182-layer-trace.py /tmp/r182.py
 RUN python /tmp/r182.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py && rm /tmp/r182.py
-LABEL neural.download.build.lane="qwen38-fp8-mtp2-layer-trace-r182"
+LABEL neural.download.build.lane="qwen38-fp8-mtp2-layer-trace-r182v2"
