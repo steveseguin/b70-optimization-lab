@@ -1,8 +1,10 @@
 # Qwen3.8 Flash-Next FP8 on four Arc Pro B70s
 
-Status: **research screen; not deployment-qualified**
+Status: **research screen; not deployment-qualified.** The deterministic
+full-decode-graph MTP0 line (below) is the lab's promoted TP4 record as of
+2026-09-03; it is still not a portable recipe.
 
-Last updated: 2026-08-28
+Last updated: 2026-09-03
 
 This packet covers the first instrumentation-free TP4/EP4 server results for the official
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
@@ -41,6 +43,50 @@ while passing 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K
 needle, and card-clean teardown. This closes two current-runtime website cells;
 it does not replace the legacy-runtime rows or establish clean-host,
 fresh-server, graph, vision, or deployment qualification.
+
+## Deterministic full-decode-graph line (promoted 2026-09-03)
+
+Every row above and below this section comes from the native eager line,
+whose servers were shown in September to be logit-jittery: a K=10240 BF16
+oneDNN GEMM in the layer-0 hyperconnection mix is not repeatable natively,
+so the same server can give different 2K/4K continuations from one run to
+the next. The deterministic line fixes that in the XPU worker
+(`VLLM_XPU_MKLDNN_DETERMINISTIC=1`, overlay `805cde59`), keeps the full
+decode graph (`FULL_DECODE_ONLY`, capture size 1), public oneCCL `4ceafd1`
+twoshots, the tuned M1 W13-N32 MoE map and PLE-only UVA placement, and adds
+the V2-runner graph-dispatch receipt (overlay `2169dbfe`). It is the first
+Flash-Next line whose outputs a third party can reproduce on demand.
+
+| served capacity | attempts | short p146/o256 after first text | exact 2K p2048/o128 (99-interval) | exact 4K p4096/o128 (99-interval) | quality |
+| --- | --- | ---: | ---: | ---: | --- |
+| 2304 | A70, A71, A72 | center `23.028483 tok/s` (three attempt medians) | six rows `13.18-14.62`, hash `afffd211...` | not served | 6/7 semantic (`code_execution=30`), 16/16 repeat, exact 2K needle |
+| 4352 | A73, A78 | center **`22.660696 tok/s`**, six rows `22.26-23.90` | four rows `13.44-14.91`, median `13.993164`, hash `afffd211...` | four rows `12.24-13.50`, median **`12.776770 tok/s`**, TTFT 89-103 s, hash `c6193cc6...` | same |
+
+Evidence of determinism: the first-step logits and 128-token continuations
+are bit-identical across eight and three repeats at depths 8-4096 on the
+same server (A66, A67, A76, A77 probes), and every frozen-client output is
+identical across five independently started servers (A70-A72 at 2304,
+A73 and A78 at 4352). The exact-2K continuation has seven servers behind
+it and the exact-4K continuation four. The native line's own exact-2K and
+exact-4K records (`5fd297f7...`, `1d833e5f...`) are kept unchanged and
+labelled as produced by a jittery server class; the deterministic line
+carries its own authorities (decision memo option (a)). The deterministic
+flag costs about 2.5% at the short median against the native A56 single
+attempt (`23.63`). Against the native line's exact-4K rows (`5.27` A9
+eager MTP0, `4.67` MTP3 formal), it is 2.4-2.7x faster with no speculation,
+because the full decode graph removes the host submission cost that bound
+the eager line. MTP on this line is the next lever; the previous MTP screens
+were blocked from exact verification by the jitter.
+
+Notes: [decision memo](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-exact-2k-authority-decision-memo.md),
+[A72](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a72-deterministic-graph-endpoint-result.md),
+[A73](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a73-exact-4k-result.md),
+[A78](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a78-fresh-repeat-result.md);
+data: [A73 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp0-a73-exact-4k-deterministic-summary.json),
+[A78 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp0-a78-fresh-repeat-deterministic-summary.json).
+Packets: `experiments/qwen38-flash-next-fp8-b70/tools/{launch,supervise}-tp4-mtp0-4352-ple-only-a73-fullgraphdet-w13n32.sh`
+and `run-tp4-mtp0-4352-ple-only-a73-fullgraphdet-w13n32-client.sh` (A78 is
+the same packet at attempt 78).
 
 ## Measured point
 

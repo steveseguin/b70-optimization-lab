@@ -4040,3 +4040,10 @@ exact-2K `13.514/14.910` on `afffd211...` (six servers), short
 `22.97/23.90/22.26`, runtime receipt 1375 size-1 FULL dispatches. A78, the
 fresh-server repeat of the byte-identical packet, is the promotion pair. See
 the [A73 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a73-exact-4k-result.md).
+A78 (09:51) reproduced A73 on every output, so the 4352-token deterministic
+graph line is promoted as the lab's TP4 record: short center `22.660696`,
+exact-2K median `13.993164`, exact-4K median `12.776770 tok/s` (four rows
+each, one hash per gate on both servers). The results packet carries the
+section; the family page still needs its run measurements added (Codex
+handoff in the lane notes). See the
+[A78 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a78-fresh-repeat-result.md).
