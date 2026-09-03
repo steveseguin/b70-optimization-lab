@@ -8,6 +8,12 @@ GPU_INDEX="${GPU_INDEX:-1}"
 PORT="${PORT:-18421}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 LABEL="${LABEL:-gemma4-q8-gpu${GPU_INDEX}-vdr2-selecteddown-reordervdr2-full512-${STAMP}}"
+MTP_DRAFT_MODEL="${MTP_DRAFT_MODEL:-/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf}"
+if [[ -z "${EXTRA_LLAMA_ARGS:-}" && ! -f "$MTP_DRAFT_MODEL" ]]; then
+  echo "[gemma4-record] Q4_0 MTP draft not found: $MTP_DRAFT_MODEL" >&2
+  echo "[gemma4-record] set MTP_DRAFT_MODEL to the draft produced by repro/gemma4-26b-a4b-q8-b70-125tps-20260701/prepare-draft.sh" >&2
+  exit 2
+fi
 
 LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server}" \
 ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:${GPU_INDEX}}" \
@@ -45,6 +51,6 @@ CTX_SIZE="${CTX_SIZE:-8192}" BATCH_SIZE="${BATCH_SIZE:-1024}" UBATCH_SIZE="${UBA
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}" CACHE_TYPE_V="${CACHE_TYPE_V:-f16}" FLASH_ATTN="${FLASH_ATTN:-off}" REASONING="${REASONING:-off}" \
 CANARY_REPEATS="${CANARY_REPEATS:-128}" MAX_TOKENS="${MAX_TOKENS:-512}" \
 REALISTIC_GATE="${REALISTIC_GATE:-1}" REALISTIC_METRIC_TOKENS="${REALISTIC_METRIC_TOKENS:-100}" \
-EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0}" \
+EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model $MTP_DRAFT_MODEL --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0}" \
 LABEL="$LABEL" \
 scripts/run-gemma4-26b-first-baseline.sh

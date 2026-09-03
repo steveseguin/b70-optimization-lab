@@ -23,7 +23,7 @@ file does not invent one.
 ## Restore all source provenance
 
 ```bash
-cd /home/steve/llm-optimizations
+cd /path/to/b70-optimization-lab
 repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-sources.sh \
   /mnt/fast-ai/laguna-repro-sources
 ```

@@ -1,0 +1,143 @@
+[
+  {
+    "id": "gemma4-26b-a4b-q8-b70-125tps-20260701",
+    "status": "candidate",
+    "files_crawled": 23,
+    "findings": {
+      "host_path_overridable_default": [
+        {
+          "path": "/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+          "referenced_by": "scripts/run-gemma4-26b-first-baseline.sh:10",
+          "line": "EXPECTED_LLAMA_SERVER_DEFAULT=\"/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server\""
+        },
+        {
+          "path": "/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server",
+          "referenced_by": "scripts/run-gemma4-26b-llamacpp-replica.sh:8",
+          "line": "EXPECTED_LLAMA_SERVER_DEFAULT=\"/home/steve/src/llama.cpp-gemma-record-repro-c926/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin/llama-server\""
+        }
+      ]
+    }
+  },
+  {
+    "id": "laguna-s-2.1-int4-b70-125tps-20260731",
+    "status": "candidate",
+    "files_crawled": 35,
+    "findings": {
+      "host_path_overridable_default": [
+        {
+          "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1",
+          "referenced_by": "experiments/laguna-s-2.1-xpu-b70/tools/capture_laguna_m8_idle_snapshot.py:21",
+          "line": "DEFAULT_ARTIFACT_ROOT = \"/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1\""
+        }
+      ]
+    }
+  },
+  {
+    "id": "lfm25-26b-q8-b70",
+    "status": "candidate",
+    "files_crawled": 18,
+    "findings": {}
+  },
+  {
+    "id": "minimax-m27-b70-89tps-20260520",
+    "status": "candidate",
+    "files_crawled": 24,
+    "findings": {
+      "host_path_overridable_default": [
+        {
+          "path": "~/.venvs/vllm-xpu",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:27",
+          "line": "VENV_DEFAULT = os.path.expanduser(\"~/.venvs/vllm-xpu\")"
+        },
+        {
+          "path": "/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:68",
+          "line": "default=\"/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround\","
+        },
+        {
+          "path": "/mnt/fast-ai/llm-cache/hf",
+          "referenced_by": "scripts/run-vllm-minimax-quality-check.py:787",
+          "line": "os.environ.setdefault(\"HF_HOME\", \"/mnt/fast-ai/llm-cache/hf\")"
+        }
+      ]
+    }
+  },
+  {
+    "id": "muse-glimmer-30b-q8-woq-b70-100tps-20260813",
+    "status": "candidate",
+    "files_crawled": 18,
+    "findings": {}
+  },
+  {
+    "id": "nemotron-35-lightning-30b-a3b-b70",
+    "status": "candidate",
+    "files_crawled": 11,
+    "findings": {}
+  },
+  {
+    "id": "ornith-15-35b-a3b-q4km-b70",
+    "status": "candidate",
+    "files_crawled": 73,
+    "findings": {}
+  },
+  {
+    "id": "ornith-15-9b-q8-b70",
+    "status": "candidate",
+    "files_crawled": 18,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-256k-vision-mtp-b70",
+    "status": "candidate",
+    "files_crawled": 11,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",
+    "status": "candidate",
+    "files_crawled": 433,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-mtp2-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 50,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-q4mtp-mtp2-tp2-b70",
+    "status": "candidate",
+    "files_crawled": 46,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 49,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q4km-tp2-asrock-b70",
+    "status": "candidate",
+    "files_crawled": 33,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q8-q4mtp-mtp2-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 29,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q8-tp1-b70",
+    "status": "candidate",
+    "files_crawled": 38,
+    "findings": {}
+  },
+  {
+    "id": "qwen38-27b-q8-tp2-asrock-b70",
+    "status": "candidate",
+    "files_crawled": 39,
+    "findings": {}
+  }
+]

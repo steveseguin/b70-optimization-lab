@@ -47,7 +47,7 @@ deliberately uses BF16 KV to preserve its canonical-teacher contract.
 This performs no GPU work and no network submission:
 
 ```bash
-cd /home/steve/llm-optimizations
+cd /path/to/b70-optimization-lab
 repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-record.sh
 ```
 
@@ -84,6 +84,17 @@ repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-models.sh \
 The tracked manifest contains exactly 32 release files and excludes `.cache`
 locks, metadata, and incomplete downloads.
 
+The originating host additionally keeps a 118-entry snapshot of the whole
+model directory, release files plus Hugging Face download-cache metadata, at
+`<model root>/.verification/source-files.sha256` and
+`<model root>/.verification/nvme-files.sha256`; the launchers hash-pin that
+snapshot and re-check the directory against it. It is tracked here as
+[`manifests/model-directory-verification.sha256`](manifests/model-directory-verification.sha256).
+On another host, copy it to both `.verification/` names after the download.
+Its `.cache/huggingface/` entries record the originating download and are not
+expected to match a fresh download byte-for-byte; that part of the check is
+originating-host identity rather than payload verification.
+
 ## Runtime and model prerequisites
 
 The exact lab replay expects:
@@ -103,8 +114,11 @@ suite, and both compact teacher oracles. It also checks exact package versions,
 four B70 PCI identities, OS/kernel identity, cluster interface, model
 contents, and actual module and `/proc/self/maps` loader origins.
 Override `REPRO_VLLM_TREE`,
-`REPRO_KERNEL_TREE`, `REPRO_VENV_ROOT`, `REPRO_XPUMEM_MODULE`, or
-`REPRO_CLUSTER_IP` only when the same byte-identical artifacts live elsewhere.
+`REPRO_KERNEL_TREE`, `REPRO_VENV_ROOT`, `REPRO_XPUMEM_MODULE`,
+`REPRO_CLUSTER_IP`, `REPRO_MODEL_ROOT`, `REPRO_ARTIFACT_ROOT`,
+`REPRO_NVME_DEVICE`, or `REPRO_NVME_FSTYPE` only when the same byte-identical
+artifacts live elsewhere; an absent default stops the launcher with a message
+naming the variable.
 
 The original single monolithic build invocation was not sealed. The packet
 therefore distinguishes a portable sealed-evidence audit, an artifact-exact

@@ -21,7 +21,7 @@ die() {
 
 [[ $# == 1 ]] || die "usage: restore-sources.sh DESTINATION"
 destination="$(realpath -m -- "$1")"
-[[ "$destination" != / && "$destination" != /home && "$destination" != /home/steve ]] \
+[[ "$destination" != / && "$destination" != /home && "$destination" != "${HOME:-/home}" ]] \
   || die "refusing broad destination: $destination"
 if [[ -e "$destination" ]]; then
   [[ -d "$destination" ]] || die "destination exists and is not a directory"

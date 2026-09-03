@@ -32,24 +32,36 @@ reconstruction pin, not proof that the old local payload was byte-identical.
 
 ## Exact route
 
-On a dedicated Ubuntu 24.04 host with four idle B70s:
+On a dedicated Ubuntu 24.04 host with four idle B70s, from the repository
+root:
 
 ```bash
-cd repro/minimax-m27-b70-89tps-20260520
-sudo bash scripts/00-install-system-deps.sh
+sudo bash repro/minimax-m27-b70-89tps-20260520/scripts/00-install-system-deps.sh
 sudo reboot
 ```
 
-After reboot, from the same directory:
+After reboot, again from the repository root:
 
 ```bash
-bash scripts/01-download-model.sh
-bash scripts/02-build-stack.sh
-bash scripts/03-verify-runtime.sh
-bash scripts/04-run-quality-gate.sh
-bash scripts/05-run-benchmark.sh
-bash scripts/06-summarize-result.sh /mnt/fast-ai/bench-results/minimax-m27-b70-89tps
+bash repro/minimax-m27-b70-89tps-20260520/scripts/01-download-model.sh
+bash repro/minimax-m27-b70-89tps-20260520/scripts/02-build-stack.sh
+bash repro/minimax-m27-b70-89tps-20260520/scripts/03-verify-runtime.sh
+bash repro/minimax-m27-b70-89tps-20260520/scripts/04-run-quality-gate.sh
+bash repro/minimax-m27-b70-89tps-20260520/scripts/05-run-benchmark.sh
+bash repro/minimax-m27-b70-89tps-20260520/scripts/06-summarize-result.sh \
+  "${OUTDIR:-/mnt/fast-ai/bench-results/minimax-m27-b70-89tps}"
 ```
+
+The scripts default to the originating lab layout
+(`MODEL=/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround`,
+`HF_HOME=/mnt/fast-ai/llm-cache/hf`,
+`OUTDIR=/mnt/fast-ai/bench-results/minimax-m27-b70-89tps`,
+`VENV=$HOME/.venvs/vllm-xpu`, `SRC_ROOT=$HOME/src`,
+`LLM_SCALER_KERNELS=$SRC_ROOT/llm-scaler/vllm/custom-esimd-kernels-vllm/python`,
+`CACHE_ROOT_PARENT=/mnt/fast-ai/vllm-cache-exp`). Export those variables to
+place the model, caches, sources, and results elsewhere; when a default parent
+directory is absent the scripts stop with a message naming the variable instead
+of creating the lab path.
 
 Do not use a cold compile result for comparison. The expected warm band is
 `87.5–90.0 output tok/s`; the quality gate must pass first. This exact lane is

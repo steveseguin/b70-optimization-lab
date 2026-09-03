@@ -21,7 +21,11 @@ readonly xpumem_module="${REPRO_XPUMEM_MODULE:-/home/steve/src/deepseek-v4-xpu-k
 readonly cluster_ip="${REPRO_CLUSTER_IP:-10.0.0.65}"
 readonly kernel_package="$kernel_tree/vllm_xpu_kernels"
 readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
-readonly run_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs
+readonly model_root="${REPRO_MODEL_ROOT:-/mnt/fast-ai/llm-models/laguna-s-2.1}"
+readonly artifact_root="${REPRO_ARTIFACT_ROOT:-/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1}"
+readonly nvme_device="${REPRO_NVME_DEVICE:-/dev/nvme0n1p2}"
+readonly nvme_fstype="${REPRO_NVME_FSTYPE:-ext4}"
+readonly run_root="$artifact_root/runs"
 readonly stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 readonly run_dir="${RUN_DIR:-$run_root/laguna-width12-dflash-fp8-repro-$stamp}"
 readonly expected_vllm=e596ef1543466ae1a05e5bb8091f58872e2b18ba
@@ -76,12 +80,12 @@ preflight() {
   check_hash "$repo_root/scripts/qualify_realistic_window_metrics.py" \
     3f930c1789a468873b23181353c77c7f8ba875db8415b409670f034e9ca92b20
   check_hash "$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/capture_laguna_m8_idle_snapshot.py" \
-    1f491cd89a8659c05c9d5668c2c978ade3b2e98fc61d299977f196130522cf01
+    1a555cfad62c994fbbd14a66428de5f5ffec1a9fa5f00fb75926da898af2837c
   check_hash "$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna_mwide_graph_nvme.sh" \
     5618cfbe8d3206ee19fb6446ed5b4372b773491b25ca41676b3f602bd28cf745
   check_hash "$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh" \
-    99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55
-  check_hash "$leg" 4986f9ab23005e29bb2371025b16c3668094a22b56c02ab99deb3db02ccf4b22
+    bc972c3331a3010c85a4985467e30f216727e45c77ad29d21666536cde5b76cb
+  check_hash "$leg" ecdd6e00769e22d57c0d36c9a138fcb55f5bd5ef4f7af7ade7bdcfc64bc734ac
   check_hash "$runtime_verifier" \
     e43f3c9f46e299eeaa8d7bbc828fadeec2ae60f69f39529f7130f154d158f20d
   check_hash "$runtime_lock" \
@@ -89,9 +93,9 @@ preflight() {
   check_hash "$model_manifest" \
     c19edb79458a24ceb4bb26c991302de71ef29be40e70124e90bf6c13538c692e
   check_hash "$model_restore" \
-    a4e3edd738130feb00b7bc5f6daff2afb69f2b9962cdbeacb337b094ce919bb8
+    62180ebeb0e4267fc898bf7891a411fe681540da0c485ec6e076838edc4dcd34
   check_hash "$source_restore" \
-    a5fa8b82c4b23483f0c6ea35dd0b71ea9d1be274d82ffd4dd60911f840e40944
+    79d939cd7cb664edcccce3c8819be6c2eba76156c35dbce13aad7b6c1a16ea3d
 
   check_hash "$kernel_tree/vllm_xpu_kernels/_C.abi3.so" \
     126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
@@ -146,24 +150,28 @@ for package, wanted in expected.items():
     assert actual == wanted, (package, wanted, actual)
 PY
 
-  check_hash /mnt/fast-ai/llm-models/laguna-s-2.1/int4/config.json \
+  [[ -d "$model_root" ]] \
+    || die "model root is absent: $model_root (set REPRO_MODEL_ROOT to the verified Laguna model root)"
+  [[ -d "$artifact_root" ]] \
+    || die "artifact root is absent: $artifact_root (set REPRO_ARTIFACT_ROOT to a local NVMe artifact root)"
+  check_hash "$model_root/int4/config.json" \
     9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cce6549f7eba5b14e6
-  check_hash /mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4/config.json \
+  check_hash "$model_root/dflash-int4/config.json" \
     6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
-  manifest_a=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/source-files.sha256
-  manifest_b=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256
+  manifest_a="$model_root/.verification/source-files.sha256"
+  manifest_b="$model_root/.verification/nvme-files.sha256"
   check_hash "$manifest_a" 45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
   check_hash "$manifest_b" 45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
   cmp -- "$manifest_a" "$manifest_b" >/dev/null \
     || die "source and NVMe model manifests differ"
-  "$model_restore" --verify /mnt/fast-ai/llm-models/laguna-s-2.1 >/dev/null
+  "$model_restore" --verify "$model_root" >/dev/null
 
   read -r device fstype < <(
     findmnt --noheadings --output SOURCE,FSTYPE \
-      --target /mnt/fast-ai/llm-models/laguna-s-2.1
+      --target "$model_root"
   )
-  [[ "$device" == /dev/nvme0n1p2 && "$fstype" == ext4 ]] \
-    || die "model root is on $device ($fstype), expected /dev/nvme0n1p2 (ext4)"
+  [[ "$device" == "$nvme_device" && "$fstype" == "$nvme_fstype" ]] \
+    || die "model root is on $device ($fstype), expected $nvme_device ($nvme_fstype)"
 
   grep -Fx 'PRETTY_NAME="Ubuntu 24.04.4 LTS"' /etc/os-release >/dev/null \
     || die "OS identity differs from Ubuntu 24.04.4 LTS"
@@ -259,6 +267,10 @@ exec /usr/bin/env -i \
   REPRO_VLLM_TREE="$vllm_tree" \
   REPRO_KERNEL_TREE="$kernel_tree" \
   REPRO_VENV_ROOT="$venv_root" \
+  REPRO_MODEL_ROOT="$model_root" \
+  REPRO_ARTIFACT_ROOT="$artifact_root" \
+  REPRO_NVME_DEVICE="$nvme_device" \
+  REPRO_NVME_FSTYPE="$nvme_fstype" \
   REPRO_CLUSTER_IP="$cluster_ip" \
   REPRO_RUNTIME_LOCK="$runtime_lock" \
   REPRO_RUNTIME_VERIFIER="$runtime_verifier" \

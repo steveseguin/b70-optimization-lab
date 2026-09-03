@@ -17,7 +17,9 @@ from preflight_laguna_m8_gather_sharded_operational import (
 )
 
 
-RUN_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs")
+# Originating-host artifact root; REPRO_ARTIFACT_ROOT relocates it.
+DEFAULT_ARTIFACT_ROOT = "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1"
+RUN_ROOT = Path(os.environ.get("REPRO_ARTIFACT_ROOT", DEFAULT_ARTIFACT_ROOT)) / "runs"
 
 
 def write_exclusive(path: Path, value: dict[str, Any]) -> None:
@@ -44,6 +46,10 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     output = args.output.resolve(strict=False)
+    if not RUN_ROOT.is_dir():
+        raise SystemExit(
+            f"run root is absent: {RUN_ROOT} (set REPRO_ARTIFACT_ROOT to the Laguna artifact root)"
+        )
     run_root = RUN_ROOT.resolve(strict=True)
     if (
         not output.is_relative_to(run_root)

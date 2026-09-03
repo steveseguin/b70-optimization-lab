@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Fixed local-NVMe paths and fail-closed preflight for the additive Laguna lane.
 # Source this file; do not execute it as a standalone launcher.
+# The defaults are the originating host's layout. Override REPRO_MODEL_ROOT,
+# REPRO_ARTIFACT_ROOT, REPRO_NVME_DEVICE, and REPRO_NVME_FSTYPE only when the
+# same verified artifacts live elsewhere; every check below still fails closed.
 
-readonly LAGUNA_NVME_DEVICE=/dev/nvme0n1p2
-readonly LAGUNA_NVME_FSTYPE=ext4
-readonly LAGUNA_NVME_MODEL_ROOT=/mnt/fast-ai/llm-models/laguna-s-2.1
+readonly LAGUNA_NVME_DEVICE="${REPRO_NVME_DEVICE:-/dev/nvme0n1p2}"
+readonly LAGUNA_NVME_FSTYPE="${REPRO_NVME_FSTYPE:-ext4}"
+readonly LAGUNA_NVME_MODEL_ROOT="${REPRO_MODEL_ROOT:-/mnt/fast-ai/llm-models/laguna-s-2.1}"
 readonly LAGUNA_NVME_TARGET_ROOT="$LAGUNA_NVME_MODEL_ROOT/int4"
 readonly LAGUNA_NVME_DRAFT_ROOT="$LAGUNA_NVME_MODEL_ROOT/dflash-int4"
-readonly LAGUNA_NVME_ARTIFACT_ROOT=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1
+readonly LAGUNA_NVME_ARTIFACT_ROOT="${REPRO_ARTIFACT_ROOT:-/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1}"
 readonly LAGUNA_NVME_BACKUP_ROOT=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1
 readonly LAGUNA_NVME_CACHE_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT/cache"
 readonly LAGUNA_NVME_TMP_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT/tmp"
@@ -80,6 +83,10 @@ laguna_nvme_verify_model_contents() {
 laguna_nvme_prepare_paths() {
   local fixed_path
 
+  [[ -d "$LAGUNA_NVME_MODEL_ROOT" ]] \
+    || laguna_nvme_die "model root is absent: $LAGUNA_NVME_MODEL_ROOT (set REPRO_MODEL_ROOT to the verified Laguna model root)"
+  [[ -d "$LAGUNA_NVME_ARTIFACT_ROOT" ]] \
+    || laguna_nvme_die "artifact root is absent: $LAGUNA_NVME_ARTIFACT_ROOT (set REPRO_ARTIFACT_ROOT to a local NVMe artifact root)"
   for fixed_path in \
     "$LAGUNA_NVME_MODEL_ROOT" "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT" \
     "$LAGUNA_NVME_ARTIFACT_ROOT"; do

@@ -56,7 +56,12 @@ if [ -n "${CACHE_ROOT:-}" ]; then
 elif [ "${STRICT_REUSE_INHERITED_VLLM_CACHE_ROOT:-0}" -eq 1 ] && [ -n "${VLLM_CACHE_ROOT:-}" ]; then
   CACHE_ROOT="$VLLM_CACHE_ROOT"
 else
-  CACHE_ROOT="/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}-${ts}"
+  CACHE_ROOT_PARENT="${CACHE_ROOT_PARENT:-/mnt/fast-ai/vllm-cache-exp}"
+  if [ ! -d "$CACHE_ROOT_PARENT" ]; then
+    echo "CACHE_ROOT is unset and CACHE_ROOT_PARENT does not exist: $CACHE_ROOT_PARENT (set CACHE_ROOT or CACHE_ROOT_PARENT)" >&2
+    exit 2
+  fi
+  CACHE_ROOT="$CACHE_ROOT_PARENT/minimax-strict-${LABEL}-${ts}"
 fi
 stem="minimax-${LABEL}-strict-tp${TP}-ctx${MAX_MODEL_LEN}-mbt${MAX_BATCHED_TOKENS}-bs${BLOCK_SIZE}-${ts}"
 summary_json="$OUTDIR/${stem}-summary.json"

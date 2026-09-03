@@ -75,3 +75,26 @@ Re-run after fixing: `python3 tools/public-closure-scanner.py --package <id>`
 - `host_path_hardcoded`: `/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}-${ts}` ← `scripts/run-minimax-strict-quality-gated-candidate.sh:59`  
   `CACHE_ROOT="/mnt/fast-ai/vllm-cache-exp/minimax-strict-${LABEL}-${ts}"`
 
+
+## Resolution (four-B70 host, 2026-09-02 23:05 EDT)
+
+All three packages scan clean (`2026-09-02-scan-after-four-b70-fix.{md,json}`;
+0 of 17 packages with gaps). Recipe scripts now take `REPRO_*` /
+`MTP_DRAFT_MODEL` / `LLM_SCALER_KERNELS` / `VENV` / `CACHE_ROOT_PARENT` /
+`HF_HOME` overrides with the lab values as defaults and fail closed with a
+message naming the variable when a default root is absent; the MiniMax
+package README's script links are repo-root-relative. Two lab-only inputs
+were copied into their packages: the Laguna q1 canonical teacher
+(`repro/laguna-s-2.1-int4-b70-125tps-20260731/teacher-q1-canonical-bench.json`)
+and the pinned Laguna `.verification` manifest
+(`repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-directory-verification.sha256`).
+The Laguna 102tps `run.sh` re-pins the SHA-256 of the five edited helpers, so
+a future 125tps replay records the new leg hash rather than the sealed
+record's; the README says rebuilt harnesses are a new environment.
+
+Still open, not closable from this host without an identity change: 86 of
+118 entries in the Laguna `.verification` manifest are HF download-cache
+metadata a fresh download does not reproduce; the pinned venv binaries,
+kernel 7.0.0-28, cluster IP, PCI BDFs, and the public oneCCL build have no
+public builder. Sealed historical gates outside these packages still pin
+the pre-edit helper hashes and were left as sealed.

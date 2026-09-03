@@ -4,7 +4,7 @@ umask 077
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly manifest="$script_dir/manifests/model-release-files.sha256"
-readonly default_root=/mnt/fast-ai/llm-models/laguna-s-2.1
+readonly default_root="${REPRO_MODEL_ROOT:-/mnt/fast-ai/llm-models/laguna-s-2.1}"
 
 die() {
   printf 'Laguna model restore: %s\n' "$*" >&2
@@ -42,7 +42,7 @@ download_models() {
   local root="$1" python token_file token
   python="${REPRO_PYTHON:-python3}"
   command -v "$python" >/dev/null || die "Python not found: $python"
-  token_file="${HF_TOKEN_FILE:-/home/steve/.config/huggingface/token}"
+  token_file="${HF_TOKEN_FILE:-${HOME:-}/.config/huggingface/token}"
   [[ -r "$token_file" ]] || die "Hugging Face token file is unreadable: $token_file"
   IFS= read -r token < "$token_file"
   [[ -n "$token" ]] || die "Hugging Face token file is empty"
@@ -82,6 +82,9 @@ PY
 [[ $# -ge 1 && $# -le 2 ]] \
   || die "usage: restore-models.sh --verify|--download [MODEL_ROOT]"
 action="$1"
+if [[ $# -lt 2 && -z "${REPRO_MODEL_ROOT:-}" && ! -d "$default_root" ]]; then
+  die "MODEL_ROOT was not given and the default root is absent: $default_root (pass MODEL_ROOT or set REPRO_MODEL_ROOT)"
+fi
 model_root="$(realpath -m -- "${2:-$default_root}")"
 case "$action" in
   --verify)

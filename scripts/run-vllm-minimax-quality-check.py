@@ -19,6 +19,13 @@ import time
 from pathlib import Path
 
 
+# Originating-lab layout. Override with LLM_SCALER_KERNELS and VENV, the same
+# variables the package's configs/promoted-env.sh exports.
+LLM_SCALER_KERNELS_DEFAULT = os.path.expanduser(
+    "~/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python"
+)
+VENV_DEFAULT = os.path.expanduser("~/.venvs/vllm-xpu")
+
 DEFAULT_PROMPTS = [
     (
         "You are a precise assistant. Answer the following in three short "
@@ -779,14 +786,17 @@ def configure_env(args: argparse.Namespace) -> None:
     os.environ.setdefault("CCL_TOPO_P2P_ACCESS", "1")
     os.environ.setdefault("HF_HOME", "/mnt/fast-ai/llm-cache/hf")
     os.environ.setdefault("TRANSFORMERS_CACHE", f"{os.environ['HF_HOME']}/transformers")
+    llm_scaler_kernels = os.environ.get("LLM_SCALER_KERNELS") or LLM_SCALER_KERNELS_DEFAULT
+    venv = os.environ.get("VENV") or VENV_DEFAULT
+    for name, path in (("LLM_SCALER_KERNELS", llm_scaler_kernels), ("VENV", venv)):
+        if not os.path.isdir(path):
+            raise SystemExit(
+                f"{name} directory does not exist: {path} (set {name} for this host)"
+            )
+    prepend_env_path("PYTHONPATH", llm_scaler_kernels)
+    prepend_env_path("LD_LIBRARY_PATH", f"{venv}/lib")
     prepend_env_path(
-        "PYTHONPATH",
-        "/home/steve/src/llm-scaler/vllm/custom-esimd-kernels-vllm/python",
-    )
-    prepend_env_path("LD_LIBRARY_PATH", "/home/steve/.venvs/vllm-xpu/lib")
-    prepend_env_path(
-        "LD_LIBRARY_PATH",
-        "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+        "LD_LIBRARY_PATH", f"{venv}/lib/python3.12/site-packages/torch/lib"
     )
     if args.vllm_cache_root:
         os.environ["VLLM_CACHE_ROOT"] = args.vllm_cache_root

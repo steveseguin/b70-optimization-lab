@@ -219,7 +219,7 @@ readonly model_release_manifest="${REPRO_MODEL_MANIFEST:-$repro_root/manifests/m
 readonly xpumem_module="${REPRO_XPUMEM_MODULE:-/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so}"
 readonly kernel_package="$kernel_root/vllm_xpu_kernels"
 readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
-readonly public_oneccl_root="/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public"
+readonly public_oneccl_root="${REPRO_PUBLIC_ONECCL_ROOT:-/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public}"
 readonly public_oneccl_library="$public_oneccl_root/lib/libccl.so.1.0"
 readonly public_oneccl_kernels="$public_oneccl_root/lib/ccl/kernels/kernels.spv"
 readonly expected_public_oneccl=43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700
@@ -508,9 +508,12 @@ for path in \
   [[ -e "$path" && "$(realpath -e -- "$path")" != /media/* ]] || die "missing or USB-resident required path: $path"
 done
 if (( public_oneccl == 1 )); then
+  [[ -d "$public_oneccl_root" ]] \
+    || die "public oneCCL root is absent: $public_oneccl_root (set REPRO_PUBLIC_ONECCL_ROOT)"
+  public_oneccl_real="$(realpath -e -- "$public_oneccl_root")"
   for path in "$public_oneccl_library" "$public_oneccl_kernels"; do
-    [[ -f "$path" && "$(realpath -e -- "$path")" == /mnt/fast-ai/* ]] \
-      || die "missing or non-NVMe public oneCCL artifact: $path"
+    [[ -f "$path" && "$(realpath -e -- "$path")" == "$public_oneccl_real"/* && "$public_oneccl_real" != /media/* ]] \
+      || die "missing or relocated public oneCCL artifact: $path"
   done
   check_hash "$public_oneccl_library" "$expected_public_oneccl"
   check_hash "$public_oneccl_kernels" "$expected_public_oneccl_kernels"
@@ -741,6 +744,7 @@ setsid /usr/bin/env -i \
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="$m12_shared_elementwise" VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD="$m12_mapped_tail" VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS="$decode_no_kloop_barriers" VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP="$scale_lane_dedup" VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM="$m12_rank_sum_rmsnorm" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M12_ATTENTION_GATE="$m12_attention_gate" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_DECODE_GRF128="$decode_grf128" VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="$decode_transposed_scales" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES="$dflash_inplace_collectives" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES="$dflash_capture_collective_copies" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS="$dflash_capture_attention_graphs" VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS="$dflash_inline_attention_graphs" VLLM_XPU_LAGUNA_M8_INLINE_GATHERS="$target_inline_gathers" LAGUNA_TARGET_INLINE_GATHER_LIMIT="$target_inline_gather_limit" LAGUNA_TARGET_INLINE_GATHER_SKIP="$target_inline_gather_skip" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY="$event_profile_target_only" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="$bf16_attn_native_mm" VLLM_XPU_LAGUNA_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" VLLM_XPU_LAGUNA_PARITY_ROW="$(( parity_probe == 1 ? 0 : -1 ))" VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_probe" VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 \
   VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_ROOT="$confidence_probe_root" VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_TOPK_PROBE="$([[ -n "$confidence_probe_root" ]] && echo 1 || echo 0)" \
+  REPRO_MODEL_ROOT="$LAGUNA_NVME_MODEL_ROOT" REPRO_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" REPRO_NVME_DEVICE="$LAGUNA_NVME_DEVICE" REPRO_NVME_FSTYPE="$LAGUNA_NVME_FSTYPE" \
   "$serve_script" "$run_dir" >"$run_dir/server.log" 2>&1 &
 server_pid="$!"; printf '%s\n' "$server_pid" > "$run_dir/server.pid"
 for _ in $(seq 1 180); do curl -fsS http://127.0.0.1:18080/health >/dev/null 2>&1 && break; service_alive || die "service exited before health"; sleep 5; done
