@@ -173,7 +173,7 @@ decode kernels at 1..64 sequences; see
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
-R62/R139. LocalMaxxing still holds the older 51.808087 submission.
+R62/R139. LocalMaxxing approved the R139 submission `cmtkvle7a0428p701k0ttabyy` (54.627286 tok/s).
  Recovery order is process
 cleanup, bounded GPU health checks, Xe driver reload from SSH/text mode, then
 host reboot only if the driver reload cannot restore both devices.
