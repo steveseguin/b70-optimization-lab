@@ -29,3 +29,35 @@ through `envs` in the attention gate; A88 was stopped after its canary.
 A89 is the A88 packet at attempt 89 / port 19761 on that head
 (`tools/rewrite-q38-a88-to-a89-registered-flag.py`); same battery and
 pins. The "reached" marker is the first thing to look for.
+
+## A89 and where this stands (13:00)
+
+A89 (flag registered in `envs.py`, read through `envs`) also produced no
+diagnostic line and repeated A85's outputs (short `31.06 / 32.09 / 37.96
+tok/s`, exact-2K `29a2947a...`; stopped after that row). Three
+corrections to the reasoning above:
+
+- The engine core's and workers' `/proc/<pid>/environ` are not evidence:
+  vLLM rewrites the process title (`VLLM::EngineCore`, `VLLM::Worker_TP0`),
+  which overwrites the block `/proc` reads, so "the flag is missing there"
+  was an artifact. The workers are forks of the API server, whose
+  environment does carry the flag, and `envs.VLLM_XPU_MKLDNN_DETERMINISTIC`
+  reaches `xpu_worker.init_device` the same way.
+- Registering the flag was still right (it silences the "unknown vLLM
+  environment variable" warning and is how every other lane flag is
+  declared), but it was not the blocker.
+- Since neither the multi-row nor the single-row diagnostic line ever
+  printed in A88/A89, the gate's code is not executed with the flag true in
+  the worker: either `FlashAttentionImpl.forward` takes a path that returns
+  before that block for this model's full-attention layers (cascade, an
+  encoder path, a fused kv-update variant, or a compiled/captured op that
+  bypasses the Python forward after the first capture and the capture
+  itself uses a different metadata shape), or `envs` evaluates false inside
+  the worker for a reason the launch chain hides. The next step is an
+  in-process check, not another 16-minute launch: a one-line unconditional
+  `warning_once` at the top of `FlashAttentionImpl.forward` printing
+  `max_seqlen_q`, `use_cascade`, `num_actual_tokens` and the `envs` value on
+  the first call, run once on the A85 identity.
+
+A87, A88 and A89 are three more fresh servers of the A85 identity: short
+rows `30.7-38.0 tok/s`, exact-2K `29a2947a...` on all of them.
