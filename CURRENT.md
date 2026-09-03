@@ -4027,3 +4027,7 @@ line's candidate 4K authority. Two procedural negatives preceded it: A74
 supervisor's memory-PSI guard during PLE pinning behind a warmed page
 cache). See the
 [A76 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a76-4k-prefill-determinism-probe-result.md).
+A77, an independently started repeat, reproduced A76 at every depth: the
+4K continuation `c6193cc6...` now has two servers behind it and the 2K
+continuation five. See the
+[A77 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a77-4k-prefill-determinism-repeat-result.md).

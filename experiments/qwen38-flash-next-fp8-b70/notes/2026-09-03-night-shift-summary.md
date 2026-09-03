@@ -34,6 +34,7 @@
   continuation `c6193cc6...` is the candidate 4K authority. Two guard
   negatives preceded it (A74 root-NVMe free-space floor after the 27B
   builds; A75 memory-PSI guard during PLE pinning behind a warmed cache).
+  A77, an independent repeat, reproduced A76 at every depth (04:41).
 
 ## Qwen3.8 27B FP8 TP2 R139 recipe (replayed on this host)
 
