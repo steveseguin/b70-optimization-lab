@@ -45,3 +45,13 @@ split points the tie rows move and the phantom appears; with extra split points 
 phantom is gone again. So it is not "splitting" as such but the specific default piece structure, or what the
 piecewise runner does at piece boundaries for the mutating attention/GDN ops (their `output` buffers) under async
 scheduling.
+
+### R186n (19:55-20:01): the phantom persists with a single graph-end op, as the 220 variant
+
+`phantom_first_token_rows: []` is a detector artifact: cache-c032 diverges at index 0 with first token 220 (a
+space) followed by `001]`, i.e. the same "the model's view of the prompt ends early" defect with a different
+corrupted value (the R170-era note already recorded 60 vs 220 varying with the graph). So a mutating op after the
+final norm alone does not remove the phantom; R182's per-layer split did. The final-norm probe line for request
+33 is now recorded in situ under the phantom (128 `final_norm` lines); R186n-b (same image, async off) is queued
+before R187 to give the exact clean-vs-phantom comparison of that row. Detector rule from now on: judge the
+phantom by divergence at index 0 vs the oracle, not by token 60.
