@@ -14,10 +14,10 @@ Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
 FP16 KV, and TP2. The R187 profile (the R156 row-invariant W8A16 kernel and
 mixed-step GDN split, served with one whole-graph `torch.compile`) is
 lab-qualified at **`54.935 tok/s`** MTP1 (unchanged FP16 target verifier),
-**`70.142 tok/s`** MTP depth 2, and **`33.097 tok/s`** MTP0. MTP0 output is
-byte-identical to a single request through 64 concurrent users, MTP1 through
-16, depth 2 through 4, and all three are repeat-exact at every tested prompt
-length.
+**`70.142 tok/s`** MTP depth 2, **`79.183 tok/s`** MTP depth 3, and
+**`33.097 tok/s`** MTP0. MTP0 output is byte-identical to a single request
+through 64 concurrent users, MTP1 and depth 3 through 16, depth 2 through 4,
+and all four are repeat-exact at every tested prompt length.
 
 ## Whole-graph compile R187 profile (qualified 2026-09-03)
 
@@ -38,19 +38,25 @@ image rebuild. Clean-boot qualification (`r187`, `r188`):
 | R187 MTP depth 2 | `mtp2-b` | 70.137858 tok/s | 12/12 vs sibling and mtp0-a |
 | R188 MTP1 | `mtp1-a` | 55.005828 tok/s | 12/12 vs sibling and mtp0-a |
 | R188 MTP1 | `mtp1-b` | 54.864851 tok/s | 12/12 vs sibling and mtp0-a |
+| R191 MTP depth 3 | `mtp3-a` | 79.162590 tok/s | 12/12 vs sibling and mtp0-a |
+| R191 MTP depth 3 | `mtp3-b` | 79.203191 tok/s | 12/12 vs sibling and mtp0-a |
 | R187 MTP1 center | **54.935340 tok/s** | — | **qualified** |
 | R187 MTP depth-2 center | **70.142032 tok/s** | — | **qualified** |
+| R187 MTP depth-3 center | **79.182890 tok/s** | — | **qualified** |
 | R187 MTP0 center | **33.096724 tok/s** | — | **qualified** |
 
-Determinism scope: the 224/250/300-token repeat probe is exact on MTP1 and
-depth 2; the c1-c64 identity ladder is exact at every level for MTP0 (64/64
-at c64), exact through c16 for MTP1 (c32 31/32, c64 59/64) and exact through
-c4 for depth 2 (c8 7/8, c16 16/16, c32 31/32, c64 60/64); the depth-2
-sequential 64-prompt oracle pass has no phantom row. Aggregate rates are
-published only where identity holds: MTP0 through c64 (927.9 tok/s at c64),
-MTP1 through c16 (477.7 tok/s at c16), depth 2 through c4 (210.8 tok/s at
-c4); single server, one pass per point. See the
+Determinism scope: the 224/250/300-token repeat probe is exact on MTP1,
+depth 2 and depth 3; the c1-c64 identity ladder is exact at every level for
+MTP0 (64/64 at c64), exact through c16 for MTP1 (c32 31/32, c64 59/64), exact
+through c4 for depth 2 in both of its ladders (R187 c8 7/8; R190 exact through
+c32, c64 59/64) and exact through c16 for depth 3 in both of its ladders (R191
+c32 30/32, c64 60/64; R193 c32 28/32, c64 61/64); no sequential oracle pass
+has a phantom row. Aggregate rates are published only where identity holds in
+every run: MTP0 through c64 (927.9 tok/s at c64), MTP1 through c16 (477.7
+tok/s at c16), depth 2 through c4 (210.8 tok/s at c4), depth 3 through c16
+(557.0 tok/s at c16); single server, one pass per point. See the
 [R187 result](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md),
+the [R191 depth-3 result](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp3-whole-graph-r191-result.md),
 the [R188 result](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md)
 and the [diagnosis](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md).
 
@@ -64,6 +70,8 @@ EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
   experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh   # MTP1, 54.935 tok/s
 EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
   experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh   # MTP depth 2, 70.142 tok/s
+EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp3-whole-graph-r187-server.sh   # MTP depth 3, 79.183 tok/s
 EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
   experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-whole-graph-r187-server.sh   # MTP0, 33.097 tok/s
 ```

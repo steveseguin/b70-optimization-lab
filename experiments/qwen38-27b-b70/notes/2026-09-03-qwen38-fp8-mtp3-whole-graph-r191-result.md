@@ -16,3 +16,11 @@ Reading: depth 3 is lossless on every gate this lane has, 13% faster than depth 
 aggregate falls below depth 2 from c32 up (more rejected draft work per step). The identity claim waits for the
 second ladder (R193, queued): exact in both runs decides the published concurrency. Publication of a depth-3
 line is the user's call; wrapper `scripts/run-20260903-qwen38-fp8-mtp3-whole-graph-r187-server.sh` is ready.
+
+## R193 (22:59-23:10): second depth-3 probe and ladder
+
+Probe exact. Ladder: c1-c16 exact; c32 28/32 (cache-c000 @96, index-c009 @79, rollback-c010 @97, index-c017
+@49); c64 61/64 (cache-c032 @35, cache-c040 @60, testing-c045 @28); aggregate 70.9 / 82.6 / 237.6 / 382.8 /
+557.0 / 766.0 / 713.3 tok/s; no phantom. Both depth-3 ladders are exact through c16, so the published depth-3
+identity claim is c16 (aggregate 557.0 tok/s at c16); above that the tie-class residual moves between runs as
+on every other profile.

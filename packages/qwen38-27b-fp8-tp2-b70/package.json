@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1 through 16, depth 2 through 4. The whole-graph compile removes the depth-2 phantom first token that the piecewise pipeline produced under async scheduling (R182-R187, 2026-09-03); it is a configuration change only, no patch and no image rebuild.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, 79.183 tok/s MTP depth 3, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1 and depth 3 through 16, depth 2 through 4. The whole-graph compile removes the depth-2 phantom first token that the piecewise pipeline produced under async scheduling (R182-R187, 2026-09-03); it is a configuration change only, no patch and no image rebuild.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -40,7 +40,7 @@
       "mixed-step GDN split"
     ],
     "published_at": "2026-08-27",
-    "benchmark_status": "Strict R187 qualification (2026-09-03, clean boot, whole-graph compile splitting_ops=[]): two same-configuration MTP0 controls 33.111/33.082 tok/s matched 12/12; two depth-1 MTP1 candidates 55.006/54.865 tok/s (center 54.935) matched 12/12 against each other and against the MTP0 oracle (R188); two depth-2 candidates 70.146/70.138 tok/s (center 70.142) matched 12/12 (R187); canaries before and after every server; cache zero; repeat-exact at 224, 250 and 300 prompt tokens on both MTP profiles; identity ladders: MTP0 64/64 through c64 (927.9 tok/s aggregate), MTP1 exact through c16 (477.7 tok/s; c32 31/32, c64 59/64), depth 2 exact through c4 (210.8 tok/s; c8 7/8, c32 31/32, c64 60/64).",
+    "benchmark_status": "Strict R187 qualification (2026-09-03, clean boot, whole-graph compile splitting_ops=[]): two same-configuration MTP0 controls 33.111/33.082 tok/s matched 12/12; two depth-1 MTP1 candidates 55.006/54.865 tok/s (center 54.935) matched 12/12 against each other and against the MTP0 oracle (R188); two depth-2 candidates 70.146/70.138 tok/s (center 70.142) matched 12/12 (R187); canaries before and after every server; cache zero; repeat-exact at 224, 250 and 300 prompt tokens on both MTP profiles; identity ladders: MTP0 64/64 through c64 (927.9 tok/s aggregate), MTP1 exact through c16 (477.7 tok/s; c32 31/32, c64 59/64), depth 2 exact through c4 (210.8 tok/s; c8 7/8, c32 31/32, c64 60/64). Depth 3 (R191/R193): two candidates 79.163/79.203 tok/s (center 79.183) matched 12/12 vs each other and vs the MTP0 oracle; probe exact; two ladders exact through c16 (557.0 tok/s aggregate).",
     "featured_metric": {
       "value": 54.93533953556977,
       "unit": "tok/s",
@@ -463,7 +463,11 @@
     "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh",
     "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-whole-graph-r187-server.sh",
     "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh",
-    "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json"
+    "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r191-whole-graph-depth3-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp3-whole-graph-r191-result.md",
+    "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp3-whole-graph-r187-server.sh",
+    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.md"
   ],
   "performance_profiles": [
     {

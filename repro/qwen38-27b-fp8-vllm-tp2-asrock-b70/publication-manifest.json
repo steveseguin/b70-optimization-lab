@@ -293,7 +293,7 @@
       }
     },
     "r187": {
-      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): removes the MTP depth-2 phantom first token that vLLM's piecewise split produced under async scheduling (R182-R186); MTP1 54.935, depth-2 70.142, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
+      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): removes the MTP depth-2 phantom first token that vLLM's piecewise split produced under async scheduling (R182-R186); MTP1 54.935, depth-2 70.142, depth-3 79.183, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1 and depth 3 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
       "image": {
         "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156",
         "id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
@@ -317,6 +317,10 @@
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh",
             "sha256": "834e7c62eabc2ecd1ec22603ae47895b0ce73bd231d94406ee7c1802e6c09b8f"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp3-whole-graph-r187-server.sh",
+            "sha256": "15af46539db19c3117d0816b11c7a7d7a08329a49adb3ffc460f6dd2ee64adee"
           },
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
@@ -359,6 +363,14 @@
           {
             "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json",
             "sha256": "3e5ff44028abf6f37cc08d2fe4958431014421f149c57e94780e8e6cb6983e6b"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-mtp2-ladder-repeat-and-mtp3-r190-r191-prereg.json",
+            "sha256": "67eeff731f7ae6d714a1f807d7e550a180d2f35ef3f2d8b8fe7a741a2a45a783"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r191-whole-graph-depth3-result.json",
+            "sha256": "8da6c8465aea903b03199776c9aab13d20eae3567381b99c9cdc2a16105e2ffe"
           }
         ],
         "campaign_runners": [
