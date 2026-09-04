@@ -6,11 +6,27 @@
   "name": "Qwen Flash-Next",
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
-  "updated_at": "2026-08-28",
+  "updated_at": "2026-09-04",
   "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. The retained current runtime now independently qualifies TP4 eager MTP0 at short context and exact active 4K: 5.224 tok/s on the established short screen and 4.758 tok/s conventional at exact 4K, with 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K needle, and card-clean teardown. At 16K, current-source MTP0 completed one exact generic-depth request, then the semantic program produced one correct fresh response, a corrupted same-server repeat, and a separate fresh-server worker timeout at 1,600 computed prompt tokens. This is Grade-D quarantined capability and nondeterministic runtime-stability evidence; it does not authorize 24K/32K. MTP2's bounded 16K treatment tranche is exhausted. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. The target-only official-thinking MTP0 profile passed 25/25, and graph, vision, other topologies, clean-host replay, and deployment qualification remain open.",
   "featured_results": [
     {
       "role": "hero",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 deterministic full-decode graph, exact-4K (no speculation)",
+      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-context4k-a78",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Promoted deterministic line: outputs bit-identical across five servers; 6/7 semantic with the inherited miss, 16/16 repeat, exact needle"
+    },
+    {
+      "role": "support",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 lossless MTP1 short context",
+      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-short-a121",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Every output pin equal to the MTP0 line on two servers; 1.20x at short context, slower at depth"
+    },
+    {
+      "role": "support",
       "label": "Qwen3.8 Flash-Next FP8 · TP4 MTP3 exact-4K",
       "measurement_id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1",
       "metric": "decode_tok_s",
@@ -70,17 +86,65 @@
     "evidence": "results/qwen38-flash-next-fp8-b70/README.md"
   },
   "dimensions": {
-    "weight_revision": ["qwen38-flash-next"],
-    "weight_quantization": ["FP8 block-128"],
-    "runtime": ["vLLM XPU 658965050 + kernels 2f829747", "vLLM XPU 1372c62d + staged kernels 2f829747"],
-    "tp": [1, 2, 4],
-    "ep": [1, 2, 4],
-    "mtp": [0, 1, 2, 3, 4],
-    "active_context_tokens": [0, 1024, 2048, 4096, 8192, 16384, 24576, 32768],
-    "configured_max_context_tokens": [512, 1536, 3072, 4352, 8448, 262144],
-    "graph_mode": ["off", "PIECEWISE"],
-    "kv": ["auto"],
-    "modality": ["text", "vision"]
+    "weight_revision": [
+      "qwen38-flash-next"
+    ],
+    "weight_quantization": [
+      "FP8 block-128"
+    ],
+    "runtime": [
+      "vLLM XPU 658965050 + kernels 2f829747",
+      "vLLM XPU 1372c62d + staged kernels 2f829747",
+      "vLLM XPU 2169dbfe (overlay on 1372c62d) + staged kernels 2f829747",
+      "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747"
+    ],
+    "tp": [
+      1,
+      2,
+      4
+    ],
+    "ep": [
+      1,
+      2,
+      4
+    ],
+    "mtp": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "active_context_tokens": [
+      0,
+      1024,
+      2048,
+      4096,
+      8192,
+      16384,
+      24576,
+      32768
+    ],
+    "configured_max_context_tokens": [
+      512,
+      1536,
+      3072,
+      4352,
+      8448,
+      262144
+    ],
+    "graph_mode": [
+      "off",
+      "PIECEWISE",
+      "FULL_DECODE_ONLY"
+    ],
+    "kv": [
+      "auto"
+    ],
+    "modality": [
+      "text",
+      "vision"
+    ]
   },
   "weight_revisions": [
     {
@@ -197,16 +261,33 @@
       "quality_scope": "5/7 strict cases in both batteries; 15/16 repeat stability; substantive reasoning miss; no long-context, vision, or clean-host qualification",
       "workload": "One instrumentation-free server; p146/o256/c1; three sequential repetitive-prompt requests; full-output rate after first text, not the conventional 99-interval final gate",
       "metrics": {
-        "decode_tok_s": [5.221849709057954],
-        "ttft_ms": [5376.467669993872]
+        "decode_tok_s": [
+          5.221849709057954
+        ],
+        "ttft_ms": [
+          5376.467669993872
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [5.142647219137399, 5.221849709057954, 5.289933931346957],
-        "ttft_ms": [7752.22969299648, 5376.467669993872, 4535.219874989707],
+        "decode_tok_s": [
+          5.142647219137399,
+          5.221849709057954,
+          5.289933931346957
+        ],
+        "ttft_ms": [
+          7752.22969299648,
+          5376.467669993872,
+          4535.219874989707
+        ],
         "aggregation": "median of three sequential same-server observations; all raw values remain in the evidence receipt"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 5.221849709057954, "label": "median research screen; short quality failed"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 5.221849709057954,
+          "label": "median research screen; short quality failed"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-attempt19-production-qualification.json"
     },
@@ -236,16 +317,31 @@
       "quality_scope": "Current runtime passed 6/7 semantic cases with only the known code-expression miss, 16/16 same-output repeats, the exact cache-zero 4K needle, and card-clean teardown; this is same-boot Grade-C evidence",
       "workload": "Established p146/o256/c1 after-first-text screen; row one followed one conditioning request in its invocation and rows two and three had no warmup; the harness does not retain per-row cache detail or finish reason",
       "metrics": {
-        "decode_tok_s": [5.223788770075911]
+        "decode_tok_s": [
+          5.223788770075911
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [5.315577823568996, 5.223788770075911, 5.2194047220586395],
-        "usage_each": {"prompt_tokens": 146, "completion_tokens": 256, "total_tokens": 402},
+        "decode_tok_s": [
+          5.315577823568996,
+          5.223788770075911,
+          5.2194047220586395
+        ],
+        "usage_each": {
+          "prompt_tokens": 146,
+          "completion_tokens": 256,
+          "total_tokens": 402
+        },
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "aggregation": "median of three established after-first-text observations; raw values and scope boundaries remain in the tracked receipt"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 5.223788770075911, "label": "current-runtime short Grade-C research screen; not a final-suite headline"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 5.223788770075911,
+          "label": "current-runtime short Grade-C research screen; not a final-suite headline"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-runtime-anchor-attempt4-result.json"
     },
@@ -275,19 +371,41 @@
       "quality_scope": "Both exact-4K rows passed exact 4096/128/4224 usage, cache-zero, length-stop, token-count, fixture, and output-repeat gates after the current-runtime 6/7 semantic and 16/16 repeat battery",
       "workload": "Two exact p4096/o128 requests; conventional decode across the 99 inter-token intervals between generated-token events 1 and 100 after TTFT",
       "metrics": {
-        "decode_tok_s": [4.7578181021380175],
-        "ttft_ms": [147468.33551250165]
+        "decode_tok_s": [
+          4.7578181021380175
+        ],
+        "ttft_ms": [
+          147468.33551250165
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [4.720311369546584, 4.795324834729452],
-        "ttft_ms": [149329.680180992, 145606.9908440113],
-        "cached_tokens": [0, 0],
-        "usage_each": {"prompt_tokens": 4096, "completion_tokens": 128, "total_tokens": 4224},
+        "decode_tok_s": [
+          4.720311369546584,
+          4.795324834729452
+        ],
+        "ttft_ms": [
+          149329.680180992,
+          145606.9908440113
+        ],
+        "cached_tokens": [
+          0,
+          0
+        ],
+        "usage_each": {
+          "prompt_tokens": 4096,
+          "completion_tokens": 128,
+          "total_tokens": 4224
+        },
         "output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
         "aggregation": "median of two same-boot exact-depth observations; both raw rows remain hash-bound in the tracked receipt"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 4.7578181021380175, "label": "current-runtime exact-4K conventional Grade-C research screen"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 4.7578181021380175,
+          "label": "current-runtime exact-4K conventional Grade-C research screen"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-runtime-anchor-attempt4-result.json"
     },
@@ -317,12 +435,24 @@
       "quality_scope": "All 26 MTP0 baseline comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; small needle passed; all 24 quality requests cache-zero",
       "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
       "metrics": {
-        "decode_tok_s": [9.37225436776222],
-        "ttft_ms": [9348.705686017638]
+        "decode_tok_s": [
+          9.37225436776222
+        ],
+        "ttft_ms": [
+          9348.705686017638
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [9.773840621000225, 9.37225436776222, 8.107468408397532],
-        "ttft_ms": [10140.820227010408, 8308.315517002484, 9348.705686017638],
+        "decode_tok_s": [
+          9.773840621000225,
+          9.37225436776222,
+          8.107468408397532
+        ],
+        "ttft_ms": [
+          10140.820227010408,
+          8308.315517002484,
+          9348.705686017638
+        ],
         "mtp0_reference_median_tok_s": 5.221849709057954,
         "uplift_percent": 79.481503489173,
         "cumulative_draft_tokens": 505,
@@ -330,7 +460,12 @@
         "aggregation": "median of three matched same-server observations; all raw values remain in the evidence receipt"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 9.37225436776222, "label": "median matched MTP1 research screen; inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 9.37225436776222,
+          "label": "median matched MTP1 research screen; inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-512-attempt3-result.json"
     },
@@ -360,14 +495,32 @@
       "quality_scope": "All 26 MTP0 baseline comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; small 317-token needle passed; all 24 quality requests complete and cache-zero",
       "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup per invocation then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
       "metrics": {
-        "decode_tok_s": [11.895061402541456],
-        "wall_output_tok_s": [7.804965165044581],
-        "ttft_ms": [11278.097242000513]
+        "decode_tok_s": [
+          11.895061402541456
+        ],
+        "wall_output_tok_s": [
+          7.804965165044581
+        ],
+        "ttft_ms": [
+          11278.097242000513
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [13.586500711704096, 10.064084892145722, 11.895061402541456],
-        "wall_output_tok_s": [8.57494723556275, 6.4119173926046695, 7.804965165044581],
-        "ttft_ms": [11012.178995995782, 14488.66739301593, 11278.097242000513],
+        "decode_tok_s": [
+          13.586500711704096,
+          10.064084892145722,
+          11.895061402541456
+        ],
+        "wall_output_tok_s": [
+          8.57494723556275,
+          6.4119173926046695,
+          7.804965165044581
+        ],
+        "ttft_ms": [
+          11012.178995995782,
+          14488.66739301593,
+          11278.097242000513
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "row_span_percent_of_median": 29.61242233525408,
         "cumulative_draft_tokens": 770,
@@ -375,7 +528,12 @@
         "aggregation": "median of three same-server observations; rows span 29.61% of the median, so cross-depth comparisons are descriptive rather than stable same-window causal estimates"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 11.895061402541456, "label": "median matched MTP2 research screen; variable rows and inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 11.895061402541456,
+          "label": "median matched MTP2 research screen; variable rows and inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-512-attempt1-result.json"
     },
@@ -405,13 +563,29 @@
       "quality_scope": "All 26 MTP0 baseline comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; small 317-token needle passed; all 24 quality requests complete and cache-zero; no 4K MTP3 claim",
       "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup per invocation then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
       "metrics": {
-        "decode_tok_s": [14.88878979448863],
-        "ttft_ms": [11817.638449982041]
+        "decode_tok_s": [
+          14.88878979448863
+        ],
+        "ttft_ms": [
+          11817.638449982041
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [17.47332085152878, 14.88878979448863, 12.538688913202236],
-        "wall_output_tok_s": [9.671857481052726, 9.011438903429243, 7.592681229019125],
-        "ttft_ms": [11817.638449982041, 11214.193463994889, 13299.87188798259],
+        "decode_tok_s": [
+          17.47332085152878,
+          14.88878979448863,
+          12.538688913202236
+        ],
+        "wall_output_tok_s": [
+          9.671857481052726,
+          9.011438903429243,
+          7.592681229019125
+        ],
+        "ttft_ms": [
+          11817.638449982041,
+          11214.193463994889,
+          13299.87188798259
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "mtp0_reference_median_tok_s": 5.221849709057954,
         "mtp0_uplift_percent": 185.12482403815937,
@@ -422,7 +596,12 @@
         "aggregation": "median of three same-server observations; the rows declined monotonically and span 33.14% of the median, so cross-run uplift is descriptive rather than a stable same-window causal estimate"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 14.88878979448863, "label": "median matched MTP3 research screen; variable rows and inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 14.88878979448863,
+          "label": "median matched MTP3 research screen; variable rows and inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-512-attempt4-result.json"
     },
@@ -452,14 +631,32 @@
       "quality_scope": "All 26 MTP0 baseline comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; small 317-token needle passed; all 24 quality requests complete and cache-zero",
       "workload": "One instrumentation-free server; p146/o256/c1; one untimed warmup per invocation then three sequential measured requests; full-output rate after first text, not the conventional 99-interval final gate",
       "metrics": {
-        "decode_tok_s": [20.72717637199404],
-        "wall_output_tok_s": [11.560326762555018],
-        "ttft_ms": [10023.315081984038]
+        "decode_tok_s": [
+          20.72717637199404
+        ],
+        "wall_output_tok_s": [
+          11.560326762555018
+        ],
+        "ttft_ms": [
+          10023.315081984038
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [21.119694109018415, 18.57624860519203, 20.72717637199404],
-        "wall_output_tok_s": [11.560326762555018, 10.360395438896376, 12.276512942462682],
-        "ttft_ms": [10023.315081984038, 10928.44290501671, 8501.892345986562],
+        "decode_tok_s": [
+          21.119694109018415,
+          18.57624860519203,
+          20.72717637199404
+        ],
+        "wall_output_tok_s": [
+          11.560326762555018,
+          10.360395438896376,
+          12.276512942462682
+        ],
+        "ttft_ms": [
+          10023.315081984038,
+          10928.44290501671,
+          8501.892345986562
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "row_span_percent_of_median": 12.271066054433797,
         "mtp3_reference_median_tok_s": 14.88878979448863,
@@ -469,7 +666,12 @@
         "aggregation": "median of three corrected same-server observations; rows span 12.27% of the median and the receipt preserves the preceding filename-loop diagnostic artifact"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 20.72717637199404, "label": "median matched MTP4 research screen; inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 20.72717637199404,
+          "label": "median matched MTP4 research screen; inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-512-attempt1-result.json"
     },
@@ -499,14 +701,32 @@
       "quality_scope": "All 26 sealed MTP0 4K comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; exact 4096-token needle and formal depth gate passed; all 24 quality requests cache-zero; three deployment-shaped rows passed",
       "workload": "Three separately salted exact p4096/o256/c1 requests with no harness-added warmups; full-output rate after first text; formal p4096/o128 99-interval row retained separately",
       "metrics": {
-        "decode_tok_s": [8.904420575355882],
-        "ttft_ms": [232079.23328102333],
-        "wall_output_tok_s": [0.9810504777261468]
+        "decode_tok_s": [
+          8.904420575355882
+        ],
+        "ttft_ms": [
+          232079.23328102333
+        ],
+        "wall_output_tok_s": [
+          0.9810504777261468
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [8.904420575355882, 8.868704696563922, 9.581812273689444],
-        "wall_output_tok_s": [0.8762526385395759, 0.9810504777261468, 1.1657254437993072],
-        "ttft_ms": [263403.42078500544, 232079.23328102333, 192888.45706998836],
+        "decode_tok_s": [
+          8.904420575355882,
+          8.868704696563922,
+          9.581812273689444
+        ],
+        "wall_output_tok_s": [
+          0.8762526385395759,
+          0.9810504777261468,
+          1.1657254437993072
+        ],
+        "ttft_ms": [
+          263403.42078500544,
+          232079.23328102333,
+          192888.45706998836
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "fixed_allocation_blocks": 32,
         "reported_cache_capacity_tokens": 9284,
@@ -520,7 +740,12 @@
         "aggregation": "median of three exact-4K service observations; the 32-block allocation is a recipe parameter, not proof that cache headroom caused the MTP2/MTP4 stalls to disappear"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 8.904420575355882, "label": "median exact-4K MTP1 headroom32 Grade-C screen; 232.1-second TTFT and inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 8.904420575355882,
+          "label": "median exact-4K MTP1 headroom32 Grade-C screen; 232.1-second TTFT and inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp1-4352-headroom32-attempt1-result.json"
     },
@@ -550,14 +775,32 @@
       "quality_scope": "All 26 sealed MTP0 4K comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; exact 4096-token needle and formal depth gate passed; all 24 quality requests cache-zero; three deployment-shaped rows passed",
       "workload": "Three separately salted exact p4096/o256/c1 requests with no harness-added warmups; full-output rate after first text; formal p4096/o128 99-interval row retained separately",
       "metrics": {
-        "decode_tok_s": [9.89315479235244],
-        "ttft_ms": [263279.2244020093],
-        "wall_output_tok_s": [0.891381690144734]
+        "decode_tok_s": [
+          9.89315479235244
+        ],
+        "ttft_ms": [
+          263279.2244020093
+        ],
+        "wall_output_tok_s": [
+          0.891381690144734
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [9.89315479235244, 12.07804962791263, 9.217263500488167],
-        "wall_output_tok_s": [0.8543969736295236, 0.8999042813260602, 0.891381690144734],
-        "ttft_ms": [273750.0517080189, 263279.2244020093, 259420.6210770062],
+        "decode_tok_s": [
+          9.89315479235244,
+          12.07804962791263,
+          9.217263500488167
+        ],
+        "wall_output_tok_s": [
+          0.8543969736295236,
+          0.8999042813260602,
+          0.891381690144734
+        ],
+        "ttft_ms": [
+          273750.0517080189,
+          263279.2244020093,
+          259420.6210770062
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "fixed_allocation_blocks": 32,
         "reported_cache_capacity_tokens": 7329,
@@ -572,7 +815,12 @@
         "aggregation": "median of three exact-4K service observations; compared with the failed 21-block arm, only the fixed cache allocation changed. The result supports this recipe but does not prove 32 blocks is minimal or explain other MTP depths."
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 9.89315479235244, "label": "median exact-4K MTP2 headroom32 Grade-C screen; 263.3-second TTFT and inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 9.89315479235244,
+          "label": "median exact-4K MTP2 headroom32 Grade-C screen; 263.3-second TTFT and inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp2-4352-headroom32-attempt2-result.json"
     },
@@ -602,14 +850,32 @@
       "quality_scope": "All 26 sealed MTP0 4K comparisons matched; inherited strict score 5/7; fixed-set repeats 16/16 with one hash; exact 4096-token needle and formal depth gate passed; all 24 quality requests cache-zero",
       "workload": "Three separately salted exact p4096/o256/c1 requests with no harness-added warmups; full-output rate after first text; formal p4096/o128 99-interval row retained separately",
       "metrics": {
-        "decode_tok_s": [15.50156510641242],
-        "ttft_ms": [187899.1858829977],
-        "wall_output_tok_s": [1.2462600034136797]
+        "decode_tok_s": [
+          15.50156510641242
+        ],
+        "ttft_ms": [
+          187899.1858829977
+        ],
+        "wall_output_tok_s": [
+          1.2462600034136797
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [16.57897611005858, 15.50156510641242, 14.615697889304094],
-        "wall_output_tok_s": [1.2834112898631422, 1.2456291788090392, 1.2462600034136797],
-        "ttft_ms": [184027.15963101946, 189004.16664901422, 187899.1858829977],
+        "decode_tok_s": [
+          16.57897611005858,
+          15.50156510641242,
+          14.615697889304094
+        ],
+        "wall_output_tok_s": [
+          1.2834112898631422,
+          1.2456291788090392,
+          1.2462600034136797
+        ],
+        "ttft_ms": [
+          184027.15963101946,
+          189004.16664901422,
+          187899.1858829977
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "formal_99_interval_tok_s": 4.669548248983529,
         "formal_ttft_ms": 266080.89533800376,
@@ -622,7 +888,12 @@
         "aggregation": "median of three exact-4K service observations; decode is reported with TTFT and wall throughput because long-prompt prefill dominates end-to-end latency"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 15.50156510641242, "label": "median exact-4K MTP3 research screen; 187.9-second TTFT and inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 15.50156510641242,
+          "label": "median exact-4K MTP3 research screen; 187.9-second TTFT and inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp3-4352-attempt1-result.json"
     },
@@ -652,17 +923,34 @@
       "quality_scope": "987-token exact needle and 16/16 repeats passed; 12-prompt realistic timing gate passed cache-zero; short battery remained 5/7",
       "workload": "One instrumentation-free server; three unique exact p1024/o256/c1 requests; full-output rate after first text; no harness-added warmups after the server completed prerequisite gates; separate 12-prompt realistic suite",
       "metrics": {
-        "decode_tok_s": [5.13358756138473],
-        "ttft_ms": [29043.11463900376]
+        "decode_tok_s": [
+          5.13358756138473
+        ],
+        "ttft_ms": [
+          29043.11463900376
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [5.153794240763608, 5.13358756138473, 5.0512700513432325],
-        "ttft_ms": [29686.471389984945, 25229.969660984352, 29043.11463900376],
+        "decode_tok_s": [
+          5.153794240763608,
+          5.13358756138473,
+          5.0512700513432325
+        ],
+        "ttft_ms": [
+          29686.471389984945,
+          25229.969660984352,
+          29043.11463900376
+        ],
         "realistic_99_interval_median_tok_s": 4.449168445347031,
         "aggregation": "median of three unique exact-1K observations; raw values and realistic outputs remain in the evidence receipt"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 5.13358756138473, "label": "median exact-1K research screen; short quality failed"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 5.13358756138473,
+          "label": "median exact-1K research screen; short quality failed"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-1536-context-screen.json"
     },
@@ -692,18 +980,35 @@
       "quality_scope": "Protocol-v2 fixed-set first-token sensitivity passed 32/32, full repeats passed 16/16 with one exact output, and the formal 2K cache-zero gate passed; short battery remained 5/7",
       "workload": "One instrumentation-free server; three unique exact p2048/o256/c1 requests; full-output rate after first text; no harness-added warmups after the server completed prerequisite gates; separate formal exact-p2048/o128 cache-zero gate",
       "metrics": {
-        "decode_tok_s": [5.228429046201661],
-        "ttft_ms": [81146.86629301286]
+        "decode_tok_s": [
+          5.228429046201661
+        ],
+        "ttft_ms": [
+          81146.86629301286
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [5.034312884410624, 5.257401637348096, 5.228429046201661],
-        "ttft_ms": [87998.60319800791, 81146.86629301286, 76276.06647202629],
+        "decode_tok_s": [
+          5.034312884410624,
+          5.257401637348096,
+          5.228429046201661
+        ],
+        "ttft_ms": [
+          87998.60319800791,
+          81146.86629301286,
+          76276.06647202629
+        ],
         "formal_99_interval_tok_s": 3.8648778892817663,
         "formal_ttft_ms": 111659.75860299659,
         "aggregation": "median of three unique exact-2K legacy-comparable observations; formal cache-zero rate is retained separately in the evidence receipt"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 5.228429046201661, "label": "median exact-2K protocol-v2 research screen; short quality failed"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 5.228429046201661,
+          "label": "median exact-2K protocol-v2 research screen; short quality failed"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-3072-context-repeat-v2-screen.json"
     },
@@ -733,12 +1038,24 @@
       "quality_scope": "All seven short outputs matched the 2K baseline; fixed-set repeats passed 16/16 with one exact output; the exact-4K needle and formal cache-zero gate passed; short battery remained 5/7",
       "workload": "Primary formal cache-zero exact-p4096/o128 100-event/99-interval row; secondary three-prompt exact-p4096/o256 legacy after-first-text comparison on the same instrumentation-free server",
       "metrics": {
-        "decode_tok_s": [4.4560264746397324],
-        "ttft_ms": [217909.69186701113]
+        "decode_tok_s": [
+          4.4560264746397324
+        ],
+        "ttft_ms": [
+          217909.69186701113
+        ]
       },
       "raw_observations": {
-        "legacy_after_first_text_decode_tok_s": [5.298983874891171, 5.233664731906276, 5.161604624443941],
-        "legacy_after_first_text_ttft_ms": [132052.37051899894, 123391.27512401319, 117952.53843598766],
+        "legacy_after_first_text_decode_tok_s": [
+          5.298983874891171,
+          5.233664731906276,
+          5.161604624443941
+        ],
+        "legacy_after_first_text_ttft_ms": [
+          132052.37051899894,
+          123391.27512401319,
+          117952.53843598766
+        ],
         "legacy_after_first_text_median_tok_s": 5.233664731906276,
         "legacy_after_first_text_median_ttft_ms": 123391.27512401319,
         "formal_99_interval_tok_s": 4.4560264746397324,
@@ -746,7 +1063,12 @@
         "aggregation": "primary metrics use the formal cache-zero row; legacy after-first-text comparison is retained separately for the context curve"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 4.4560264746397324, "label": "formal exact-4K cache-zero 99-interval research screen; short quality failed"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 4.4560264746397324,
+          "label": "formal exact-4K cache-zero 99-interval research screen; short quality failed"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json"
     },
@@ -776,19 +1098,42 @@
       "quality_scope": "Same exact-4K MTP0 gate as the formal measurement; this separate workload record retains only its comparable p4096/o256 service rows",
       "workload": "Three separately salted exact p4096/o256/c1 requests with no harness-added warmups; full-output rate after first text; formal p4096/o128 row retained separately",
       "metrics": {
-        "decode_tok_s": [5.233664731906276],
-        "ttft_ms": [123391.27512401319],
-        "wall_output_tok_s": [1.485734265884717]
+        "decode_tok_s": [
+          5.233664731906276
+        ],
+        "ttft_ms": [
+          123391.27512401319
+        ],
+        "wall_output_tok_s": [
+          1.485734265884717
+        ]
       },
       "raw_observations": {
-        "decode_tok_s": [5.298983874891171, 5.233664731906276, 5.161604624443941],
-        "wall_output_tok_s": [1.4193557575079974, 1.485734265884717, 1.5279065125481308],
-        "ttft_ms": [132052.37051899894, 123391.27512401319, 117952.53843598766],
+        "decode_tok_s": [
+          5.298983874891171,
+          5.233664731906276,
+          5.161604624443941
+        ],
+        "wall_output_tok_s": [
+          1.4193557575079974,
+          1.485734265884717,
+          1.5279065125481308
+        ],
+        "ttft_ms": [
+          132052.37051899894,
+          123391.27512401319,
+          117952.53843598766
+        ],
         "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
         "aggregation": "median of three exact-4K service observations; retained separately from the formal p4096/o128 measurement"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 5.233664731906276, "label": "median exact-4K MTP0 service comparison; inherited short quality 5/7"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 5.233664731906276,
+          "label": "median exact-4K MTP0 service comparison; inherited short quality 5/7"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-4352-context-screen.json"
     },
@@ -818,12 +1163,22 @@
       "quality_scope": "All seven short outputs matched the 4K baseline; fixed-set repeats passed 16/16 with one exact output; the exact-8K needle and formal cache-zero gate passed; short battery remained 5/7; the runtime stopped during the third legacy-comparison request",
       "workload": "Primary formal cache-zero exact-p8192/o128 100-event/99-interval row; two valid exact-p8192/o256 legacy observations retained without a median because the required third row did not complete",
       "metrics": {
-        "decode_tok_s": [3.97972923995132],
-        "ttft_ms": [386534.3322980043]
+        "decode_tok_s": [
+          3.97972923995132
+        ],
+        "ttft_ms": [
+          386534.3322980043
+        ]
       },
       "raw_observations": {
-        "legacy_after_first_text_decode_tok_s_valid_rows": [5.170404147374639, 5.182352525810221],
-        "legacy_after_first_text_ttft_ms_valid_rows": [243262.31589599047, 216963.4954840003],
+        "legacy_after_first_text_decode_tok_s_valid_rows": [
+          5.170404147374639,
+          5.182352525810221
+        ],
+        "legacy_after_first_text_ttft_ms_valid_rows": [
+          243262.31589599047,
+          216963.4954840003
+        ],
         "legacy_median_authorized": false,
         "legacy_third_row": "invalid: no text or usage before runtime shutdown",
         "formal_99_interval_tok_s": 3.97972923995132,
@@ -831,9 +1186,353 @@
         "aggregation": "primary metrics use the completed formal cache-zero row; two legacy observations remain raw only and no 8K legacy curve point is authorized"
       },
       "sample_annotations": [
-        {"metric": "decode_tok_s", "index": 0, "value": 3.97972923995132, "label": "formal exact-8K cache-zero 99-interval research screen; repeated comparison incomplete and short quality failed"}
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 3.97972923995132,
+          "label": "formal exact-8K cache-zero 99-interval research screen; repeated comparison incomplete and short quality failed"
+        }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp0-8448-context-screen.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-short-a78",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2169dbfe (overlay on 1372c62d) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 0,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-fullgraphdet-ctx0-v1",
+      "measurement_class": "promoted frozen-client short p146/o256 rows on the deterministic full-decode-graph line",
+      "promotion_status": "deterministic line promoted as the lab TP4 record on 2026-09-03 (results packet section 'Deterministic full-decode-graph line'); LocalMaxxing submission pending",
+      "quality_scope": "6/7 semantic (sole miss code_execution=30), 16/16 repeat with one hash, exact cache-zero 2K needle; outputs identical across five independently started servers (A70-A73, A78); first-step logits and 128-token continuations bit-identical across repeats at depths 8-4096",
+      "workload": "three separately salted p146/o256/c1 requests (row 1 after one conditioning request); rate after first text; two servers A73 and A78",
+      "metrics": {
+        "decode_tok_s": [
+          22.660696
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          22.966002,
+          23.898996,
+          22.256402,
+          22.35539,
+          23.350884,
+          22.321053
+        ],
+        "aggregation": "median of the two attempt medians (A73 22.966002, A78 22.355390); six rows 22.26-23.90",
+        "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 22.660696,
+          "label": "deterministic full-decode-graph line, no speculation; center of two servers"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp0-a78-fresh-repeat-deterministic-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-context2k-a78",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2169dbfe (overlay on 1372c62d) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 2048,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-fullgraphdet-ctx2048-v1",
+      "measurement_class": "promoted frozen-client exact-2K p2048/o128 rows (conventional 99 inter-token intervals)",
+      "promotion_status": "deterministic line promoted as the lab TP4 record on 2026-09-03 (results packet section 'Deterministic full-decode-graph line'); LocalMaxxing submission pending",
+      "quality_scope": "6/7 semantic (sole miss code_execution=30), 16/16 repeat with one hash, exact cache-zero 2K needle; outputs identical across five independently started servers (A70-A73, A78); first-step logits and 128-token continuations bit-identical across repeats at depths 8-4096",
+      "workload": "two exact p2048/o128 requests per server, cache zero; 99-interval rate; TTFT recorded",
+      "metrics": {
+        "decode_tok_s": [
+          13.993164
+        ],
+        "ttft_ms": [
+          57167.8
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          13.514374,
+          14.909545,
+          13.44331,
+          14.471953
+        ],
+        "ttft_ms": [
+          58256.2,
+          56079.4
+        ],
+        "aggregation": "median of four rows on two servers",
+        "output_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 13.993164,
+          "label": "deterministic line exact-2K median; hash afffd211 on seven servers"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp0-a78-fresh-repeat-deterministic-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-context4k-a78",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2169dbfe (overlay on 1372c62d) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 4096,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-fullgraphdet-ctx4096-v1",
+      "measurement_class": "promoted frozen-client exact-4K p4096/o128 rows (conventional 99 inter-token intervals)",
+      "promotion_status": "deterministic line promoted as the lab TP4 record on 2026-09-03 (results packet section 'Deterministic full-decode-graph line'); LocalMaxxing submission pending",
+      "quality_scope": "6/7 semantic (sole miss code_execution=30), 16/16 repeat with one hash, exact cache-zero 2K needle; outputs identical across five independently started servers (A70-A73, A78); first-step logits and 128-token continuations bit-identical across repeats at depths 8-4096",
+      "workload": "two exact p4096/o128 requests per server, cache zero; 99-interval rate; TTFT recorded",
+      "metrics": {
+        "decode_tok_s": [
+          12.77677
+        ],
+        "ttft_ms": [
+          99436.9
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          12.728316,
+          12.825225,
+          13.498466,
+          12.241721
+        ],
+        "ttft_ms": [
+          98680.0,
+          89510.0,
+          102516.5,
+          96357.4
+        ],
+        "aggregation": "median of four rows on two servers",
+        "output_sha256": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 12.77677,
+          "label": "deterministic line exact-4K median, no speculation: 2.4-2.7x the native eager line"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp0-a78-fresh-repeat-deterministic-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-short-a121",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 0,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-fullgraphdet-ctx0-v1",
+      "measurement_class": "certified lossless frozen-client short p146/o256 rows with one speculative token",
+      "promotion_status": "certified lossless on two servers 2026-09-03; short-context candidate (faster than the MTP0 line only at short context); MTP0 line remains the record at depth",
+      "quality_scope": "Same gates; every output pin equals the MTP0 deterministic line's (short 5f407446, exact-2K afffd211, exact-4K c6193cc6, repeat 3b0b3192) on two independently started servers (A120, A121); the two-row verification step traced bit-identical to the MTP0 step through all 48 layers on every rank (A112)",
+      "workload": "same short protocol as the MTP0 line; three exact-verify selectors (serial GDN verifier rows, row-wise TP all-reduce, row-wise hyperconnection norm variance)",
+      "metrics": {
+        "decode_tok_s": [
+          27.149928
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          22.185575,
+          28.389615,
+          26.72301,
+          22.024228,
+          31.381879,
+          27.576847
+        ],
+        "aggregation": "median of the two attempt medians (A120 26.723010, A121 27.576847); six rows 22.02-31.38; the cold-first diagnostic battery A113 gave 31.20/34.73/31.31",
+        "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+        "draft_acceptance": "735 of 785 draft tokens over the A113 battery"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 27.149928,
+          "label": "lossless MTP1: 1.20x the MTP0 line at short context in the frozen client (1.38x in the cold battery)"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp1-a121-frozen-client-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-context2k-a121",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 2048,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-fullgraphdet-ctx2048-v1",
+      "measurement_class": "certified lossless frozen-client exact-2K rows with one speculative token",
+      "promotion_status": "certified lossless on two servers 2026-09-03; short-context candidate (faster than the MTP0 line only at short context); MTP0 line remains the record at depth",
+      "quality_scope": "Same gates; every output pin equals the MTP0 deterministic line's (short 5f407446, exact-2K afffd211, exact-4K c6193cc6, repeat 3b0b3192) on two independently started servers (A120, A121); the two-row verification step traced bit-identical to the MTP0 step through all 48 layers on every rank (A112)",
+      "workload": "two exact p2048/o128 requests per server; 99-interval rate",
+      "metrics": {
+        "decode_tok_s": [
+          9.039214
+        ],
+        "ttft_ms": [
+          88014.0
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          8.924331,
+          8.839258,
+          9.17304,
+          9.154097
+        ],
+        "ttft_ms": [
+          94694.8,
+          83542.1,
+          95443.7,
+          78309.8
+        ],
+        "aggregation": "median of four rows on two servers",
+        "output_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 9.039214,
+          "label": "lossless MTP1 at 2K is 0.65x the MTP0 line: the two-row graph replay costs 144-255 ms per step against 71 ms (depth-cost note)"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp1-a121-frozen-client-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-context4k-a121",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1b2a17c1 (overlay on 1372c62d) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 4096,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-fullgraphdet-ctx4096-v1",
+      "measurement_class": "certified lossless frozen-client exact-4K rows with one speculative token",
+      "promotion_status": "certified lossless on two servers 2026-09-03; short-context candidate (faster than the MTP0 line only at short context); MTP0 line remains the record at depth",
+      "quality_scope": "Same gates; every output pin equals the MTP0 deterministic line's (short 5f407446, exact-2K afffd211, exact-4K c6193cc6, repeat 3b0b3192) on two independently started servers (A120, A121); the two-row verification step traced bit-identical to the MTP0 step through all 48 layers on every rank (A112)",
+      "workload": "two exact p4096/o128 requests per server; 99-interval rate",
+      "metrics": {
+        "decode_tok_s": [
+          7.724194
+        ],
+        "ttft_ms": [
+          146706.0
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          7.140176,
+          7.433851,
+          8.014537,
+          8.05301
+        ],
+        "ttft_ms": [
+          149700.1,
+          145169.2,
+          151646.3,
+          140113.5
+        ],
+        "aggregation": "median of four rows on two servers",
+        "output_sha256": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 7.724194,
+          "label": "lossless MTP1 at 4K is 0.60x the MTP0 line"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp1-a121-frozen-client-summary.json"
     }
   ],
   "series_measurements": [
@@ -846,14 +1545,41 @@
       "variant": "official FP8 block-128",
       "runtime": "vLLM XPU 658965050 + kernels 2f829747",
       "runtime_family": "vLLM XPU",
-      "config": {"tp": 4, "ep": 4, "parallel_profile": "TP=EP", "mtp": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "graph_mode": "off",
+        "kv": "auto",
+        "modality": "text"
+      },
       "workload": "HTTP p146/o256 control median at x=0 plus three unique exact-p1024/o256, exact-p2048/o256, and exact-p4096/o256 medians; after-first-text legacy-comparable rates; research-only quality boundary",
       "axis": "active_context_tokens",
       "points": [
-        {"x": 0, "decode_tok_s": 5.221849709057954, "samples": 3},
-        {"x": 1024, "decode_tok_s": 5.13358756138473, "ttft_ms": 29043.11463900376, "samples": 3},
-        {"x": 2048, "decode_tok_s": 5.228429046201661, "ttft_ms": 81146.86629301286, "samples": 3},
-        {"x": 4096, "decode_tok_s": 5.233664731906276, "ttft_ms": 123391.27512401319, "samples": 3}
+        {
+          "x": 0,
+          "decode_tok_s": 5.221849709057954,
+          "samples": 3
+        },
+        {
+          "x": 1024,
+          "decode_tok_s": 5.13358756138473,
+          "ttft_ms": 29043.11463900376,
+          "samples": 3
+        },
+        {
+          "x": 2048,
+          "decode_tok_s": 5.228429046201661,
+          "ttft_ms": 81146.86629301286,
+          "samples": 3
+        },
+        {
+          "x": 4096,
+          "decode_tok_s": 5.233664731906276,
+          "ttft_ms": 123391.27512401319,
+          "samples": 3
+        }
       ],
       "quality": "All plotted points remain research-only because the same substantive short-quality miss reproduced. The 1K point passed its needle, repeats, and cache-zero realistic suite; the 2K and 4K points passed exact needles, fixed-set repeats, and separate formal cache-zero exact-depth gates. The 8K formal gate also passed, but it is excluded from this legacy-comparable series because the required third comparison row did not complete.",
       "caveat": "The x=0 control used a 146-token ordinary prompt at configured max 512; x=1024 used exact p1024 at configured max 1536; x=2048 used exact p2048 at configured max 3072; x=4096 used exact p4096 at configured max 4352. Formal 99-interval results are separately labeled in the receipts. This bounded legacy-comparable curve stops at 4K; the separately classified formal 8K screen is not silently mixed into it.",
@@ -882,7 +1608,10 @@
       "metric": "decode_tok_s",
       "unit": "tok/s",
       "value": 3.32691,
-      "interval": {"low": 1.663455, "high": 4.990364},
+      "interval": {
+        "low": 1.663455,
+        "high": 4.990364
+      },
       "engine": {
         "name": "qwen38-flash-next-mtp0-context-estimator",
         "version": "1.0.0",
@@ -918,7 +1647,10 @@
       "metric": "decode_tok_s",
       "unit": "tok/s",
       "value": 3.174425,
-      "interval": {"low": 1.587212, "high": 4.761637},
+      "interval": {
+        "low": 1.587212,
+        "high": 4.761637
+      },
       "engine": {
         "name": "qwen38-flash-next-mtp0-context-estimator",
         "version": "1.0.0",
@@ -945,7 +1677,14 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 512/1536/3072/4352/8448", "short quality plus screened 1K/2K/4K and formal 8K context"],
+      "coverage": [
+        "TP4/EP4",
+        "MTP0",
+        "eager",
+        "text-only",
+        "configured max 512/1536/3072/4352/8448",
+        "short quality plus screened 1K/2K/4K and formal 8K context"
+      ],
       "grades": {
         "capability": {
           "grade": "C",
@@ -994,7 +1733,15 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP0", "eager", "text-only", "configured max 4352", "short screen plus repeated exact active-4K screen", "same-boot quality and card-clean teardown"],
+      "coverage": [
+        "TP4/EP4",
+        "MTP0",
+        "eager",
+        "text-only",
+        "configured max 4352",
+        "short screen plus repeated exact active-4K screen",
+        "same-boot quality and card-clean teardown"
+      ],
       "grades": {
         "capability": {
           "grade": "C",
@@ -1038,7 +1785,17 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP1", "eager", "text-only", "configured max 512 and 4352/headroom32", "configured max 1536 and 3072 retained as first-request bounded negatives", "configured max 8448 retained as an active-8K cross-runtime parity quarantine", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "three exact-4K deployment-shaped rows plus a separate formal row"],
+      "coverage": [
+        "TP4/EP4",
+        "MTP1",
+        "eager",
+        "text-only",
+        "configured max 512 and 4352/headroom32",
+        "configured max 1536 and 3072 retained as first-request bounded negatives",
+        "configured max 8448 retained as an active-8K cross-runtime parity quarantine",
+        "matched MTP0 quality plus 16/16 repeat and exact-4K needle",
+        "three exact-4K deployment-shaped rows plus a separate formal row"
+      ],
       "grades": {
         "capability": {
           "grade": "D",
@@ -1086,7 +1843,18 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP3", "eager", "text-only", "configured max 512 and 4352", "configured max 1536 retained as an active-1K external-signal quarantine", "configured max 3072 retained as an active-2K target-parity quarantine", "configured max 8448 retained as an active-8K bounded no-receipt quarantine", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "variable 512-token screen plus exact-4K service and formal rows"],
+      "coverage": [
+        "TP4/EP4",
+        "MTP3",
+        "eager",
+        "text-only",
+        "configured max 512 and 4352",
+        "configured max 1536 retained as an active-1K external-signal quarantine",
+        "configured max 3072 retained as an active-2K target-parity quarantine",
+        "configured max 8448 retained as an active-8K bounded no-receipt quarantine",
+        "matched MTP0 quality plus 16/16 repeat and exact-4K needle",
+        "variable 512-token screen plus exact-4K service and formal rows"
+      ],
       "grades": {
         "capability": {
           "grade": "C",
@@ -1135,7 +1903,17 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP2", "eager", "text-only", "configured max 512 and 4352/headroom32", "configured max 1536 retained as an active-1K clean-host quarantine", "configured max 3072 and 8448 retained as active-2K and active-8K target-parity quarantines", "matched MTP0 quality plus 16/16 repeat and exact-4K needle", "short and exact-4K three-row speed screens plus separate formal rows"],
+      "coverage": [
+        "TP4/EP4",
+        "MTP2",
+        "eager",
+        "text-only",
+        "configured max 512 and 4352/headroom32",
+        "configured max 1536 retained as an active-1K clean-host quarantine",
+        "configured max 3072 and 8448 retained as active-2K and active-8K target-parity quarantines",
+        "matched MTP0 quality plus 16/16 repeat and exact-4K needle",
+        "short and exact-4K three-row speed screens plus separate formal rows"
+      ],
       "grades": {
         "capability": {
           "grade": "D",
@@ -1184,7 +1962,19 @@
       "cards": 4,
       "status": "research-only-quality-caveat",
       "evidence_level": "B70-screened",
-      "coverage": ["TP4/EP4", "MTP4", "eager", "text-only", "configured max 512", "configured max 1536 retained as an active-1K teardown quarantine", "configured max 3072 retained as an active-2K no-output and reset quarantine", "configured max 4352 retained as an exact-4K runtime quarantine", "configured max 8448 retained as an exact active-8K cross-runtime parity quarantine", "matched MTP0 quality plus 16/16 repeat and small needle", "three-row speed screen"],
+      "coverage": [
+        "TP4/EP4",
+        "MTP4",
+        "eager",
+        "text-only",
+        "configured max 512",
+        "configured max 1536 retained as an active-1K teardown quarantine",
+        "configured max 3072 retained as an active-2K no-output and reset quarantine",
+        "configured max 4352 retained as an exact-4K runtime quarantine",
+        "configured max 8448 retained as an exact active-8K cross-runtime parity quarantine",
+        "matched MTP0 quality plus 16/16 repeat and small needle",
+        "three-row speed screen"
+      ],
       "grades": {
         "capability": {
           "grade": "D",
@@ -1231,14 +2021,50 @@
       "subtitle": "Only TP4 has bounded screens; each MTP cell has three same-server samples under the declared workload, so no TP mini-curve is implied",
       "x_label": "tensor parallel cards",
       "discrete": true,
-      "missing_x": [1, 2],
-      "metrics": ["decode_tok_s", "ttft_ms"],
+      "missing_x": [
+        1,
+        2
+      ],
+      "metrics": [
+        "decode_tok_s",
+        "ttft_ms"
+      ],
       "series": [
-        {"label": "official FP8 · eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-attempt19"], "x_from": "config.tp"},
-        {"label": "official FP8 · eager MTP1", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp1-a3"], "x_from": "config.tp"},
-        {"label": "official FP8 · eager MTP2 (variable screen)", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp2-a1"], "x_from": "config.tp"},
-        {"label": "official FP8 · eager MTP3 (variable screen)", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp3-a4"], "x_from": "config.tp"},
-        {"label": "official FP8 · eager MTP4", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp4-a1"], "x_from": "config.tp"}
+        {
+          "label": "official FP8 · eager MTP0",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-attempt19"
+          ],
+          "x_from": "config.tp"
+        },
+        {
+          "label": "official FP8 · eager MTP1",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp1-a3"
+          ],
+          "x_from": "config.tp"
+        },
+        {
+          "label": "official FP8 · eager MTP2 (variable screen)",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp2-a1"
+          ],
+          "x_from": "config.tp"
+        },
+        {
+          "label": "official FP8 · eager MTP3 (variable screen)",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp3-a4"
+          ],
+          "x_from": "config.tp"
+        },
+        {
+          "label": "official FP8 · eager MTP4",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp4-a1"
+          ],
+          "x_from": "config.tp"
+        }
       ]
     },
     {
@@ -1246,9 +2072,18 @@
       "title": "Legacy-comparable after-first-text context screen",
       "subtitle": "The plotted 5.22/5.13/5.23/5.23 tok/s values use the legacy after-first-text comparison and stop at 4K. Separate formal cache-zero rates are 3.865 at 2K, 4.456 at 4K, and 3.980 tok/s at 8K; 8K is not plotted here because its third comparison row did not complete. All cells retain the short-quality caveat.",
       "x_label": "active context tokens",
-      "metrics": ["decode_tok_s", "ttft_ms"],
+      "metrics": [
+        "decode_tok_s",
+        "ttft_ms"
+      ],
       "series": [
-        {"label": "official FP8 · TP4 eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-context-screen"], "x_from": "active_context_tokens"}
+        {
+          "label": "official FP8 · TP4 eager MTP0",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-context-screen"
+          ],
+          "x_from": "active_context_tokens"
+        }
       ]
     },
     {
@@ -1257,13 +2092,43 @@
       "subtitle": "Workload-aligned p4096/o256/c1 service screens with no harness-added warmups, but from different vLLM source revisions and cache allocations. MTP1 and MTP2 use 32-block headroom recipes; MTP3 remains faster with lower TTFT and higher wall output. Separate single-point series avoid implying a causal MTP-depth or cache curve; only MTP4 remains quarantined.",
       "x_label": "MTP depth",
       "discrete": true,
-      "missing_x": [4],
-      "metrics": ["decode_tok_s", "wall_output_tok_s", "ttft_ms"],
+      "missing_x": [
+        4
+      ],
+      "metrics": [
+        "decode_tok_s",
+        "wall_output_tok_s",
+        "ttft_ms"
+      ],
       "series": [
-        {"label": "official FP8 · TP4 eager MTP0", "measurement_ids": ["qwen38-flash-next-fp8-tp4-context4k-service-a1"], "x_from": "config.mtp"},
-        {"label": "official FP8 · TP4 eager MTP1 · headroom32", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp1-context4k-headroom32-a1"], "x_from": "config.mtp"},
-        {"label": "official FP8 · TP4 eager MTP2 · headroom32", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2"], "x_from": "config.mtp"},
-        {"label": "official FP8 · TP4 eager MTP3", "measurement_ids": ["qwen38-flash-next-fp8-tp4-mtp3-context4k-a1"], "x_from": "config.mtp"}
+        {
+          "label": "official FP8 · TP4 eager MTP0",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-context4k-service-a1"
+          ],
+          "x_from": "config.mtp"
+        },
+        {
+          "label": "official FP8 · TP4 eager MTP1 · headroom32",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp1-context4k-headroom32-a1"
+          ],
+          "x_from": "config.mtp"
+        },
+        {
+          "label": "official FP8 · TP4 eager MTP2 · headroom32",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2"
+          ],
+          "x_from": "config.mtp"
+        },
+        {
+          "label": "official FP8 · TP4 eager MTP3",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1"
+          ],
+          "x_from": "config.mtp"
+        }
       ]
     }
   ],
@@ -1272,12 +2137,22 @@
       "id": "qwen-flash-next-tp4-mtp-by-context",
       "label": "Practical TP4 eager text coverage",
       "fixed": "Official FP8 child artifact on TP4/EP4, eager text, and automatic KV. MTP0 uses vLLM 658965050 plus kernels 2f829747; MTP1-4 use vLLM 1372c62d plus staged kernels 2f829747. This is a coverage map across exact runtime identities, not a controlled depth curve.",
-      "row_axis": {"key": "mtp", "label": "MTP depth", "prefix": "MTP"},
+      "row_axis": {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP"
+      },
       "column_axis": {
         "key": "active_context_tokens",
         "label": "Active context",
         "prefix": "",
-        "value_labels": {"0": "0", "1024": "1K", "2048": "2K", "4096": "4K", "8192": "8K"}
+        "value_labels": {
+          "0": "0",
+          "1024": "1K",
+          "2048": "2K",
+          "4096": "4K",
+          "8192": "8K"
+        }
       },
       "fixed_selectors": {
         "revision": "qwen38-flash-next",
@@ -1290,46 +2165,267 @@
         "kv": "auto",
         "modality": "text"
       },
-      "rows": [0, 1, 2, 3, 4],
-      "columns": [0, 1024, 2048, 4096, 8192],
+      "rows": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "columns": [
+        0,
+        1024,
+        2048,
+        4096,
+        8192
+      ],
       "cells": {
-        "0:0": {"state": "lab-screened", "label": "5.222 tok/s; quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19", "packet_id": "qwen38-flash-next-fp8-tp4-research", "selectors": {"runtime": "vLLM XPU 658965050 + kernels 2f829747"}},
-        "0:1024": {"state": "lab-screened", "label": "5.134 tok/s exact-1K screen", "evidence_id": "qwen38-flash-next-fp8-tp4-context1k-a1", "packet_id": "qwen38-flash-next-fp8-tp4-research", "selectors": {"runtime": "vLLM XPU 658965050 + kernels 2f829747"}},
-        "0:2048": {"state": "lab-screened", "label": "5.228 tok/s exact-2K protocol-v2 screen", "evidence_id": "qwen38-flash-next-fp8-tp4-context2k-v2-a2", "packet_id": "qwen38-flash-next-fp8-tp4-research", "selectors": {"runtime": "vLLM XPU 658965050 + kernels 2f829747"}},
-        "0:4096": {"state": "lab-screened", "label": "4.456 tok/s formal exact-4K", "evidence_id": "qwen38-flash-next-fp8-tp4-context4k-a1", "packet_id": "qwen38-flash-next-fp8-tp4-research", "selectors": {"runtime": "vLLM XPU 658965050 + kernels 2f829747"}},
-        "0:8192": {"state": "lab-screened", "label": "3.980 tok/s formal exact-8K", "evidence_id": "qwen38-flash-next-fp8-tp4-context8k-a1", "packet_id": "qwen38-flash-next-fp8-tp4-research", "selectors": {"runtime": "vLLM XPU 658965050 + kernels 2f829747"}},
-        "1:0": {"state": "lab-screened", "label": "9.372 tok/s; matched quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-a3", "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "1:1024": {"state": "quarantined", "label": "768 computed prompt tokens; no output", "reason": "The exact 32-block configured-1536 identity passed source, runtime, four-rank, placement, cache, capacity, and health gates, then reached the unchanged worker-response deadline during its first 1K request. No output was returned; request two was not sent and the separate 2K boot did not run.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "1:2048": {"state": "quarantined", "label": "360-second client timeout; 448 computed tokens; no output or speed", "reason": "The exact 32-block configured-3072 identity passed all startup gates and exposed 7,561 cache tokens. Its first exact-2K exchange had a zero-byte completion body and no output token recorded when the fixed 360-second client bound expired; the subsequent engine diagnostic showed 448 computed prompt tokens and zero output, while vLLM completed-request, token, and MTP counters remained zero. The engine independently reported its own sampling timeout. Request two was not sent. The post-failure teardown window recorded compute- and copy-class resets on all four cards before all four were rediscovered; no post-reset collective was run. Existing MTP1 configured-512 and exact-4K passes and every captured speed remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "1:4096": {"state": "lab-screened", "label": "8.904 tok/s decode; headroom32", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-context4k-headroom32-a1", "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "1:8192": {"state": "quarantined", "label": "exact 8K completed; parity mismatch at token 73; 4.151 tok/s diagnostic only", "reason": "The exact 32-block current-source identity exposed 13,516 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all 25 generic depth gates, and positive MTP1 counters at position zero. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 72. The 4.151 tok/s rate and 953.3-second TTFT receive no speed or quality credit. Controlled teardown passed its cleanup gates and returned all four cards idle; the intentional stop retained the known shutdown-time output-handler notice and one shared-memory cleanup warning. The host window contained corrected local-NVMe events but no B70 event.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "2:0": {"state": "lab-screened", "label": "11.895 tok/s; variable matched-quality screen", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-a1", "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "2:1024": {"state": "quarantined", "label": "exact parity twice; corrected local-NVMe events; diagnostic only", "reason": "Both exact active-1K requests returned the frozen MTP0 text hash with zero cache reuse, identical text, and perfect MTP2 acceptance at positions zero and one. Request one observed 10.683 tok/s after first text and the repeat sentinel 12.642 tok/s. Eleven corrected local-NVMe events after the preregistered journal cutoff failed the strict clean-host gate, so neither rate receives speed, quality, or deployment credit. No event named a B70 address; existing MTP2 configured-512, active-2K, and exact-4K results remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "2:2048": {"state": "quarantined", "label": "completed; target-parity mismatch at token 13; no speed credit", "reason": "The exact 32-block configured-3072 identity passed all startup gates. Its first exact-2K request returned 128 tokens with zero cache reuse and active MTP2 counters, but the token array diverged from the frozen MTP0 authority at zero-based generated-token index 12. Request two was not sent. The observed 4.527 tok/s is diagnostic only and does not alter the passing MTP2 512 or exact-4K results.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "2:4096": {"state": "lab-screened", "label": "9.893 tok/s decode; headroom32", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2", "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "2:8192": {"state": "quarantined", "label": "exact 8K completed; parity mismatch at token 27; 6.235 tok/s diagnostic only", "reason": "The exact 32-block current-source identity exposed 11,264 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all generic depth gates, and positive MTP2 counters at both positions. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 6.235 tok/s rate and 649.7-second TTFT receive no speed or quality credit. The bounded host window contained corrected storage/root-port events but no B70 event; teardown was clean and all four cards returned idle.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "3:0": {"state": "lab-screened", "label": "14.889 tok/s; variable matched-quality screen", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-a4", "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "3:1024": {"state": "quarantined", "label": "external SIGTERM during request one; six accepted draft tokens; no completed response or speed", "reason": "The exact 25-block local-NVMe identity passed source, runtime, fresh four-rank, placement, cache, capacity, served-identity, and health gates. Request one began under the frozen protocol, then the server received an external SIGTERM before the response completed. No request JSON, usage, output hash, or performance result exists. Partial server metrics showed six drafted and six accepted tokens with 1.000 acceptance at all three MTP3 positions, but those counters receive no parity, speed, quality, or deployment credit. Request two was not sent. Existing MTP3 configured-512, active-2K, and exact-4K results remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "3:2048": {"state": "quarantined", "label": "completed; target-parity mismatch at token five; no speed credit", "reason": "The exact 25-block configured-3072 identity passed source, runtime, four-rank, placement, cache, capacity, and health gates. Its first exact-2K request returned 128 tokens with zero cache reuse and active MTP3 counters, but the token array diverged from the frozen MTP0 authority at zero-based generated-token index 4. Request two was not sent. The observed 5.932 tok/s is diagnostic only and does not alter the passing MTP3 512 or exact-4K results.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "3:4096": {"state": "lab-screened", "label": "15.502 tok/s decode; exact-4K", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1", "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "3:8192": {"state": "quarantined", "label": "900-second client timeout; no completed receipt or speed", "reason": "The exact current-source TP4/EP4 eager MTP3 boot passed source/runtime, fresh four-rank, placement, served-identity, health, and 32-block capacity gates, reporting 9,654 cache tokens. Its sole p8192/o128 request reached the fixed 900-second client bound without a completed response receipt or any durably recorded output token. No usage, cache-zero, MTP-counter, parity, quality, TTFT, or speed result is claimed. The failed-request supervisor path cleanly removed the listener, process group, compile/RPC paths and returned all four cards idle. The host window contained corrected local-NVMe events but no B70-addressed event. Existing MTP3 configured-512, active-2K, exact-4K, and every captured speed remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "4:0": {"state": "lab-screened", "label": "20.727 tok/s; matched quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp4-a1", "packet_id": "qwen38-flash-next-fp8-tp4-mtp4-research", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "4:1024": {"state": "quarantined", "label": "exact parity twice; detached teardown gate failed; diagnostic only", "reason": "Both exact active-1K requests returned the frozen MTP0 text hash with zero cache reuse, identical text, and perfect MTP4 acceptance at positions zero through three. Request one observed 13.326 tok/s after first text and the repeat sentinel 17.291 tok/s. The exact stop sentinel terminated the timeout supervisor without reaching the detached server group; direct recovery produced an orderly shutdown, but the frozen teardown rule quarantines the cell. Seven corrected-only local-NVMe records separately block clean-host qualification. Existing MTP4 configured-512 and exact-4K results remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "4:2048": {"state": "quarantined", "label": "360-second client timeout; 384 computed tokens; no output; four-card teardown resets", "reason": "The exact 29-block configured-3072 identity passed source, runtime, fresh four-rank, placement, cache, capacity, served-identity, and health gates. Request one reached the fixed 360-second client bound without a response receipt; about five seconds later the engine independently reported its own sampling timeout at 384 computed prompt tokens and zero output. No HTTP status, usage, parity hash, MTP counter delta, or speed exists, and request two was not sent. The corrected supervisor returned zero and left no listener, recorded process, compile path, or RPC path, but the teardown window recorded compute- and copy-class resets on all four B70s. All four cards were rediscovered at low memory use; no post-reset collective or known-good generation canary was run. Existing MTP4 configured-512, active-1K, exact-4K, and all captured speeds remain unchanged.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "4:4096": {"state": "quarantined", "label": "worker timeout at 3,904 computed tokens; no speed", "reason": "The exact 29-block configuration admitted 4,352 tokens but stopped during the 4K quality request; no durable quality or timing result was produced", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}},
-        "4:8192": {"state": "quarantined", "label": "exact 8K completed; parity mismatch at token 27; 4.026 tok/s diagnostic only", "reason": "The exact 36-block current-source identity exposed 9,504 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all 25 generic depth gates, and positive MTP4 counters at all four positions. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 4.026 tok/s rate and 918.4-second TTFT receive no speed or quality credit. Controlled teardown passed its cleanup gates and returned all four cards idle; the five-second grace expired before the remaining EngineCore and workers were stopped, and the intentional stop retained the known output-handler and shared-memory cleanup notices. Six corrected local-NVMe endpoint records block clean-host wording, but no B70 event appears. The superseded attempt-1 command-identity stop sent no request and grants no matrix credit.", "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json", "selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"}}
+        "0:0": {
+          "state": "lab-screened",
+          "label": "5.222 tok/s; quality caveat",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "selectors": {
+            "runtime": "vLLM XPU 658965050 + kernels 2f829747"
+          }
+        },
+        "0:1024": {
+          "state": "lab-screened",
+          "label": "5.134 tok/s exact-1K screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context1k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "selectors": {
+            "runtime": "vLLM XPU 658965050 + kernels 2f829747"
+          }
+        },
+        "0:2048": {
+          "state": "lab-screened",
+          "label": "5.228 tok/s exact-2K protocol-v2 screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context2k-v2-a2",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "selectors": {
+            "runtime": "vLLM XPU 658965050 + kernels 2f829747"
+          }
+        },
+        "0:4096": {
+          "state": "lab-screened",
+          "label": "4.456 tok/s formal exact-4K",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context4k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "selectors": {
+            "runtime": "vLLM XPU 658965050 + kernels 2f829747"
+          }
+        },
+        "0:8192": {
+          "state": "lab-screened",
+          "label": "3.980 tok/s formal exact-8K",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-context8k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "selectors": {
+            "runtime": "vLLM XPU 658965050 + kernels 2f829747"
+          }
+        },
+        "1:0": {
+          "state": "lab-screened",
+          "label": "9.372 tok/s; matched quality caveat",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-a3",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "1:1024": {
+          "state": "quarantined",
+          "label": "768 computed prompt tokens; no output",
+          "reason": "The exact 32-block configured-1536 identity passed source, runtime, four-rank, placement, cache, capacity, and health gates, then reached the unchanged worker-response deadline during its first 1K request. No output was returned; request two was not sent and the separate 2K boot did not run.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "1:2048": {
+          "state": "quarantined",
+          "label": "360-second client timeout; 448 computed tokens; no output or speed",
+          "reason": "The exact 32-block configured-3072 identity passed all startup gates and exposed 7,561 cache tokens. Its first exact-2K exchange had a zero-byte completion body and no output token recorded when the fixed 360-second client bound expired; the subsequent engine diagnostic showed 448 computed prompt tokens and zero output, while vLLM completed-request, token, and MTP counters remained zero. The engine independently reported its own sampling timeout. Request two was not sent. The post-failure teardown window recorded compute- and copy-class resets on all four cards before all four were rediscovered; no post-reset collective was run. Existing MTP1 configured-512 and exact-4K passes and every captured speed remain unchanged.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "1:4096": {
+          "state": "lab-screened",
+          "label": "8.904 tok/s decode; headroom32",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-context4k-headroom32-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "1:8192": {
+          "state": "quarantined",
+          "label": "exact 8K completed; parity mismatch at token 73; 4.151 tok/s diagnostic only",
+          "reason": "The exact 32-block current-source identity exposed 13,516 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all 25 generic depth gates, and positive MTP1 counters at position zero. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 72. The 4.151 tok/s rate and 953.3-second TTFT receive no speed or quality credit. Controlled teardown passed its cleanup gates and returned all four cards idle; the intentional stop retained the known shutdown-time output-handler notice and one shared-memory cleanup warning. The host window contained corrected local-NVMe events but no B70 event.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "2:0": {
+          "state": "lab-screened",
+          "label": "11.895 tok/s; variable matched-quality screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "2:1024": {
+          "state": "quarantined",
+          "label": "exact parity twice; corrected local-NVMe events; diagnostic only",
+          "reason": "Both exact active-1K requests returned the frozen MTP0 text hash with zero cache reuse, identical text, and perfect MTP2 acceptance at positions zero and one. Request one observed 10.683 tok/s after first text and the repeat sentinel 12.642 tok/s. Eleven corrected local-NVMe events after the preregistered journal cutoff failed the strict clean-host gate, so neither rate receives speed, quality, or deployment credit. No event named a B70 address; existing MTP2 configured-512, active-2K, and exact-4K results remain unchanged.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "2:2048": {
+          "state": "quarantined",
+          "label": "completed; target-parity mismatch at token 13; no speed credit",
+          "reason": "The exact 32-block configured-3072 identity passed all startup gates. Its first exact-2K request returned 128 tokens with zero cache reuse and active MTP2 counters, but the token array diverged from the frozen MTP0 authority at zero-based generated-token index 12. Request two was not sent. The observed 4.527 tok/s is diagnostic only and does not alter the passing MTP2 512 or exact-4K results.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "2:4096": {
+          "state": "lab-screened",
+          "label": "9.893 tok/s decode; headroom32",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "2:8192": {
+          "state": "quarantined",
+          "label": "exact 8K completed; parity mismatch at token 27; 6.235 tok/s diagnostic only",
+          "reason": "The exact 32-block current-source identity exposed 11,264 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all generic depth gates, and positive MTP2 counters at both positions. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 6.235 tok/s rate and 649.7-second TTFT receive no speed or quality credit. The bounded host window contained corrected storage/root-port events but no B70 event; teardown was clean and all four cards returned idle.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "3:0": {
+          "state": "lab-screened",
+          "label": "14.889 tok/s; variable matched-quality screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-a4",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "3:1024": {
+          "state": "quarantined",
+          "label": "external SIGTERM during request one; six accepted draft tokens; no completed response or speed",
+          "reason": "The exact 25-block local-NVMe identity passed source, runtime, fresh four-rank, placement, cache, capacity, served-identity, and health gates. Request one began under the frozen protocol, then the server received an external SIGTERM before the response completed. No request JSON, usage, output hash, or performance result exists. Partial server metrics showed six drafted and six accepted tokens with 1.000 acceptance at all three MTP3 positions, but those counters receive no parity, speed, quality, or deployment credit. Request two was not sent. Existing MTP3 configured-512, active-2K, and exact-4K results remain unchanged.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "3:2048": {
+          "state": "quarantined",
+          "label": "completed; target-parity mismatch at token five; no speed credit",
+          "reason": "The exact 25-block configured-3072 identity passed source, runtime, four-rank, placement, cache, capacity, and health gates. Its first exact-2K request returned 128 tokens with zero cache reuse and active MTP3 counters, but the token array diverged from the frozen MTP0 authority at zero-based generated-token index 4. Request two was not sent. The observed 5.932 tok/s is diagnostic only and does not alter the passing MTP3 512 or exact-4K results.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "3:4096": {
+          "state": "lab-screened",
+          "label": "15.502 tok/s decode; exact-4K",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "3:8192": {
+          "state": "quarantined",
+          "label": "900-second client timeout; no completed receipt or speed",
+          "reason": "The exact current-source TP4/EP4 eager MTP3 boot passed source/runtime, fresh four-rank, placement, served-identity, health, and 32-block capacity gates, reporting 9,654 cache tokens. Its sole p8192/o128 request reached the fixed 900-second client bound without a completed response receipt or any durably recorded output token. No usage, cache-zero, MTP-counter, parity, quality, TTFT, or speed result is claimed. The failed-request supervisor path cleanly removed the listener, process group, compile/RPC paths and returned all four cards idle. The host window contained corrected local-NVMe events but no B70-addressed event. Existing MTP3 configured-512, active-2K, exact-4K, and every captured speed remain unchanged.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "4:0": {
+          "state": "lab-screened",
+          "label": "20.727 tok/s; matched quality caveat",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp4-a1",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp4-research",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "4:1024": {
+          "state": "quarantined",
+          "label": "exact parity twice; detached teardown gate failed; diagnostic only",
+          "reason": "Both exact active-1K requests returned the frozen MTP0 text hash with zero cache reuse, identical text, and perfect MTP4 acceptance at positions zero through three. Request one observed 13.326 tok/s after first text and the repeat sentinel 17.291 tok/s. The exact stop sentinel terminated the timeout supervisor without reaching the detached server group; direct recovery produced an orderly shutdown, but the frozen teardown rule quarantines the cell. Seven corrected-only local-NVMe records separately block clean-host qualification. Existing MTP4 configured-512 and exact-4K results remain unchanged.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "4:2048": {
+          "state": "quarantined",
+          "label": "360-second client timeout; 384 computed tokens; no output; four-card teardown resets",
+          "reason": "The exact 29-block configured-3072 identity passed source, runtime, fresh four-rank, placement, cache, capacity, served-identity, and health gates. Request one reached the fixed 360-second client bound without a response receipt; about five seconds later the engine independently reported its own sampling timeout at 384 computed prompt tokens and zero output. No HTTP status, usage, parity hash, MTP counter delta, or speed exists, and request two was not sent. The corrected supervisor returned zero and left no listener, recorded process, compile path, or RPC path, but the teardown window recorded compute- and copy-class resets on all four B70s. All four cards were rediscovered at low memory use; no post-reset collective or known-good generation canary was run. Existing MTP4 configured-512, active-1K, exact-4K, and all captured speeds remain unchanged.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "4:4096": {
+          "state": "quarantined",
+          "label": "worker timeout at 3,904 computed tokens; no speed",
+          "reason": "The exact 29-block configuration admitted 4,352 tokens but stopped during the 4K quality request; no durable quality or timing result was produced",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        },
+        "4:8192": {
+          "state": "quarantined",
+          "label": "exact 8K completed; parity mismatch at token 27; 4.026 tok/s diagnostic only",
+          "reason": "The exact 36-block current-source identity exposed 9,504 cache tokens and completed one p8192/o128 request with exact usage, zero cache reuse, all 25 generic depth gates, and positive MTP4 counters at all four positions. Its token array first diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 4.026 tok/s rate and 918.4-second TTFT receive no speed or quality credit. Controlled teardown passed its cleanup gates and returned all four cards idle; the five-second grace expired before the remaining EngineCore and workers were stopped, and the intentional stop retained the known output-handler and shared-memory cleanup notices. Six corrected local-NVMe endpoint records block clean-host wording, but no B70 event appears. The superseded attempt-1 command-identity stop sent no request and grants no matrix credit.",
+          "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-8448-context-attempt2-parity-quarantine.json",
+          "selectors": {
+            "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747"
+          }
+        }
       }
     },
     {
       "id": "qwen-flash-next-legacy-mtp0-context-estimates",
       "label": "Archived MTP0 context anchors and estimates",
       "fixed": "Legacy vLLM 658965050 TP4/EP4 eager-text MTP0 only. The 4K/8K cells are formal exact-depth measurements; 24K/32K are deterministic Grade-D extrapolations with 50%-150% bands. They do not transfer to the latest runtime or qualify boot, fit, quality, deployment, records, or promotion.",
-      "row_axis": {"key": "mtp", "label": "MTP depth", "prefix": "MTP"},
+      "row_axis": {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP"
+      },
       "column_axis": {
         "key": "active_context_tokens",
         "label": "Active context",
         "prefix": "",
-        "value_labels": {"4096": "4K", "8192": "8K", "24576": "24K", "32768": "32K"}
+        "value_labels": {
+          "4096": "4K",
+          "8192": "8K",
+          "24576": "24K",
+          "32768": "32K"
+        }
       },
       "fixed_selectors": {
         "revision": "qwen38-flash-next",
@@ -1343,8 +2439,15 @@
         "kv": "auto",
         "modality": "text"
       },
-      "rows": [0],
-      "columns": [4096, 8192, 24576, 32768],
+      "rows": [
+        0
+      ],
+      "columns": [
+        4096,
+        8192,
+        24576,
+        32768
+      ],
       "cells": {
         "0:4096": {
           "state": "lab-screened",
@@ -1374,12 +2477,20 @@
       "id": "qwen-flash-next-tp4-deep-context",
       "label": "TP4 eager text deeper-context coverage",
       "fixed": "Official FP8 child artifact on current-source vLLM 1372c62d plus staged kernels 2f829747, TP4/EP4 eager text, and automatic KV. Single generic requests and bounded negatives are Grade-D matrix evidence until semantic and repeat qualification exists.",
-      "row_axis": {"key": "mtp", "label": "MTP depth", "prefix": "MTP"},
+      "row_axis": {
+        "key": "mtp",
+        "label": "MTP depth",
+        "prefix": "MTP"
+      },
       "column_axis": {
         "key": "active_context_tokens",
         "label": "Active context",
         "prefix": "",
-        "value_labels": {"16384": "16K", "24576": "24K", "32768": "32K"}
+        "value_labels": {
+          "16384": "16K",
+          "24576": "24K",
+          "32768": "32K"
+        }
       },
       "fixed_selectors": {
         "revision": "qwen38-flash-next",
@@ -1393,8 +2504,18 @@
         "kv": "auto",
         "modality": "text"
       },
-      "rows": [0, 1, 2, 3, 4],
-      "columns": [16384, 24576, 32768],
+      "rows": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "columns": [
+        16384,
+        24576,
+        32768
+      ],
       "cells": {
         "0:16384": {
           "state": "quarantined",
@@ -1402,33 +2523,80 @@
           "reason": "The current-source 33-block identity first completed one generic p16384/o128 request at a diagnostic-only 5.219 tok/s. The semantic program then returned one correct 16,213-token fresh response, corrupted the identical same-server repeat into repeated text despite zero reported cache use, and stopped a separate fresh-server attempt at 1,600 computed prompt tokens with no first output after an RPC sampling timeout. Cleanup of the latter recorded eight B70 engine resets and 61 unsuccessful responses before all four cards re-enumerated idle. The cell is nondeterministically unstable and receives no speed, curve, quality, deployment, or headline credit; unchanged retries and 24K/32K serving remain blocked pending a material runtime treatment.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json"
         },
-        "0:24576": {"state": "missing", "label": "not yet tested"},
-        "0:32768": {"state": "missing", "label": "not yet tested"},
-        "1:16384": {"state": "missing", "label": "not yet tested"},
-        "1:24576": {"state": "missing", "label": "not yet tested"},
-        "1:32768": {"state": "missing", "label": "not yet tested"},
+        "0:24576": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "0:32768": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "1:16384": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "1:24576": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "1:32768": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
         "2:16384": {
           "state": "quarantined",
           "label": "exact 16K stopped at 5,440 computed prompt tokens after scheduler-32 treatment; no output; four-card teardown events; diagnostic only",
           "reason": "The current-source MTP2 identity admitted exactly 40 blocks / 20,014 cache tokens in both bounded arms. Scheduler-64 stopped at 3,200 computed prompt tokens; the scheduler-32 arm was observed 2,240 tokens / 70% farther at 5,440, but the sole p16384/o128 treatment request still returned no output before the unchanged 300-second runtime response deadline. This is treatment evidence, not repeat-confirmed causality. Its shutdown was followed by eight card reset records and 58 unsuccessful card responses, so the frozen postflight rule fails and the treatment tranche is exhausted. No capability, speed, quality, parity, deployment, or headline credit is granted; current checks found no listener or owned residue and all cards are below 43 MiB.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json"
         },
-        "2:24576": {"state": "missing", "label": "not yet tested"},
-        "2:32768": {"state": "missing", "label": "not yet tested"},
-        "3:16384": {"state": "missing", "label": "not yet tested"},
-        "3:24576": {"state": "missing", "label": "not yet tested"},
-        "3:32768": {"state": "missing", "label": "not yet tested"},
-        "4:16384": {"state": "missing", "label": "not yet tested"},
-        "4:24576": {"state": "missing", "label": "not yet tested"},
-        "4:32768": {"state": "missing", "label": "not yet tested"}
+        "2:24576": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "2:32768": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "3:16384": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "3:24576": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "3:32768": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "4:16384": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "4:24576": {
+          "state": "missing",
+          "label": "not yet tested"
+        },
+        "4:32768": {
+          "state": "missing",
+          "label": "not yet tested"
+        }
       }
     },
     {
       "id": "qwen-flash-next-tp-fit",
       "label": "Card-fit summary",
       "fixed": "Official FP8 child artifact, vLLM 658965050 plus kernels 2f829747, eager MTP0 text, zero prior context, automatic KV, and TP=EP. TP1 and TP2 need separate fit/offload designs; they are not claimed unsupported.",
-      "row_axis": {"key": "mtp", "label": "Generation mode", "prefix": "MTP"},
-      "column_axis": {"key": "tp", "label": "TP", "prefix": "TP"},
+      "row_axis": {
+        "key": "mtp",
+        "label": "Generation mode",
+        "prefix": "MTP"
+      },
+      "column_axis": {
+        "key": "tp",
+        "label": "TP",
+        "prefix": "TP"
+      },
       "fixed_selectors": {
         "revision": "qwen38-flash-next",
         "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
@@ -1440,12 +2608,38 @@
         "kv": "auto",
         "modality": "text"
       },
-      "rows": [0],
-      "columns": [1, 2, 4],
+      "rows": [
+        0
+      ],
+      "columns": [
+        1,
+        2,
+        4
+      ],
       "cells": {
-        "0:1": {"state": "missing", "label": "separate fit/offload design required", "selectors": {"ep": 1}},
-        "0:2": {"state": "missing", "label": "separate fit/offload design required", "selectors": {"ep": 2}},
-        "0:4": {"state": "lab-screened", "label": "5.222 tok/s; quality caveat", "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19", "packet_id": "qwen38-flash-next-fp8-tp4-research", "selectors": {"ep": 4}}
+        "0:1": {
+          "state": "missing",
+          "label": "separate fit/offload design required",
+          "selectors": {
+            "ep": 1
+          }
+        },
+        "0:2": {
+          "state": "missing",
+          "label": "separate fit/offload design required",
+          "selectors": {
+            "ep": 2
+          }
+        },
+        "0:4": {
+          "state": "lab-screened",
+          "label": "5.222 tok/s; quality caveat",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-attempt19",
+          "packet_id": "qwen38-flash-next-fp8-tp4-research",
+          "selectors": {
+            "ep": 4
+          }
+        }
       }
     },
     {
@@ -1456,13 +2650,19 @@
         "key": "graph_mode",
         "label": "Graph mode",
         "prefix": "",
-        "value_labels": {"off": "eager", "PIECEWISE": "graph"}
+        "value_labels": {
+          "off": "eager",
+          "PIECEWISE": "graph"
+        }
       },
       "column_axis": {
         "key": "modality",
         "label": "Modality",
         "prefix": "",
-        "value_labels": {"text": "text", "vision": "vision"}
+        "value_labels": {
+          "text": "text",
+          "vision": "vision"
+        }
       },
       "fixed_selectors": {
         "revision": "qwen38-flash-next",
@@ -1476,18 +2676,35 @@
         "active_context_tokens": 0,
         "kv": "auto"
       },
-      "rows": ["off", "PIECEWISE"],
-      "columns": ["text", "vision"],
+      "rows": [
+        "off",
+        "PIECEWISE"
+      ],
+      "columns": [
+        "text",
+        "vision"
+      ],
       "cells": {
-        "off:text": {"state": "lab-screened", "label": "5.224 tok/s; current-runtime Grade-C screen", "evidence_id": "qwen38-flash-next-fp8-tp4-mtp0-current-a4", "packet_id": "qwen38-flash-next-fp8-tp4-mtp0-current-research"},
-        "off:vision": {"state": "missing", "label": "vision serving not measured"},
+        "off:text": {
+          "state": "lab-screened",
+          "label": "5.224 tok/s; current-runtime Grade-C screen",
+          "evidence_id": "qwen38-flash-next-fp8-tp4-mtp0-current-a4",
+          "packet_id": "qwen38-flash-next-fp8-tp4-mtp0-current-research"
+        },
+        "off:vision": {
+          "state": "missing",
+          "label": "vision serving not measured"
+        },
         "PIECEWISE:text": {
           "state": "quarantined",
           "label": "all 131 shards loaded on four ranks; graph compile began; 30-GiB host-memory guard tripped; no API, quality, or speed",
           "reason": "Attempt 7 loaded the complete checkpoint on all four ranks and entered PIECEWISE torch.compile with one compile thread. The phase-aware guard latched below its 30-GiB host-memory floor before the later TTM/global-OOM teardown window. Graph capture did not complete, the API never became healthy, and no client, output, quality, replay, or speed row exists. This is Grade-D bounded resource evidence only.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt7-result.json"
         },
-        "PIECEWISE:vision": {"state": "missing", "label": "graph vision serving not measured"}
+        "PIECEWISE:vision": {
+          "state": "missing",
+          "label": "graph vision serving not measured"
+        }
       }
     }
   ],
@@ -1496,345 +2713,809 @@
       "id": "flash-next-text-serving-space",
       "label": "Text serving coverage",
       "description": "Exact text-serving combinations across topology, MTP depth, active context, and graph mode on the latest retained runtime. Older-runtime evidence is preserved in a separate archival contract and never silently transferred into these cells.",
-      "fixed_selectors": {"runtime": "vLLM XPU 1372c62d + staged kernels 2f829747", "runtime_family": "vLLM XPU", "parallel_profile": "TP=EP"},
+      "fixed_selectors": {
+        "runtime": "vLLM XPU 1372c62d + staged kernels 2f829747",
+        "runtime_family": "vLLM XPU",
+        "parallel_profile": "TP=EP"
+      },
       "axes": [
-        {"key": "revision", "label": "Weight revision", "values": ["qwen38-flash-next"]},
-        {"key": "artifact_id", "label": "Artifact", "values": ["qwen38-flash-next-fp8-bcd9f01"]},
-        {"key": "tp", "label": "Tensor parallel", "values": [1, 2, 4]},
-        {"key": "mtp", "label": "MTP depth", "values": [0, 1, 2, 3, 4]},
-        {"key": "active_context_tokens", "label": "Active context", "values": [0, 1024, 2048, 4096, 8192, 16384, 24576, 32768]},
-        {"key": "graph_mode", "label": "Graph mode", "values": ["off", "PIECEWISE"]},
-        {"key": "kv", "label": "KV cache", "values": ["auto"]},
-        {"key": "modality", "label": "Modality", "values": ["text"]}
+        {
+          "key": "revision",
+          "label": "Weight revision",
+          "values": [
+            "qwen38-flash-next"
+          ]
+        },
+        {
+          "key": "artifact_id",
+          "label": "Artifact",
+          "values": [
+            "qwen38-flash-next-fp8-bcd9f01"
+          ]
+        },
+        {
+          "key": "tp",
+          "label": "Tensor parallel",
+          "values": [
+            1,
+            2,
+            4
+          ]
+        },
+        {
+          "key": "mtp",
+          "label": "MTP depth",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "key": "active_context_tokens",
+          "label": "Active context",
+          "values": [
+            0,
+            1024,
+            2048,
+            4096,
+            8192,
+            16384,
+            24576,
+            32768
+          ]
+        },
+        {
+          "key": "graph_mode",
+          "label": "Graph mode",
+          "values": [
+            "off",
+            "PIECEWISE"
+          ]
+        },
+        {
+          "key": "kv",
+          "label": "KV cache",
+          "values": [
+            "auto"
+          ]
+        },
+        {
+          "key": "modality",
+          "label": "Modality",
+          "values": [
+            "text"
+          ]
+        }
       ],
       "rules": [
         {
           "id": "default-gap",
-          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": "*", "graph_mode": "*", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": "*",
+            "mtp": "*",
+            "active_context_tokens": "*",
+            "graph_mode": "*",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "not measured",
           "parent": "flash-next-qualification-backlog",
-          "retry": {"status": "queued"}
+          "retry": {
+            "status": "queued"
+          }
         },
         {
           "id": "tp4-mtp0-active0-piecewise-compile-resource-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 0, "graph_mode": "PIECEWISE", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 0,
+            "active_context_tokens": 0,
+            "graph_mode": "PIECEWISE",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "all shards loaded and graph compile began · 30-GiB host-memory guard tripped · no API, quality, or speed",
           "reason": "Attempt 7 loaded all 131 shards on all four ranks and entered PIECEWISE graph compilation with one compile thread. The phase-aware host-memory guard latched below 30 GiB before the later TTM/global-OOM teardown window. Graph capture did not complete; no healthy API, client, output, quality result, replay result, or speed row exists. This is Grade-D bounded resource evidence only.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-current-piecewise-graph-attempt7-result.json",
           "parent": "flash-next-piecewise-host-memory-design",
-          "retry": {"status": "blocked-on-material-memory-design", "trigger": "a materially different preregistered compile-memory treatment after clean host recovery"}
+          "retry": {
+            "status": "blocked-on-material-memory-design",
+            "trigger": "a materially different preregistered compile-memory treatment after clean host recovery"
+          }
         },
         {
           "id": "tp1-mtp0-active0-static-fit-closure",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 1, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 1,
+            "mtp": 0,
+            "active_context_tokens": 0,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "closed",
           "label": "fit closed on this host · exact 169.41-GiB text target",
           "reason": "Header accounting across all 131 shards leaves 169.413485 GiB for the text-only MTP0 target after excluding 0.836199 GiB of vision weights and 2.512733 GiB of MTP weights. One 31.890625-GiB B70 plus this host's 125.652466 GiB physical RAM is 11.870394 GiB short before runtime, cache, workspace, or operating-system headroom. This is a speedless Grade-D fit boundary, not a boot or performance estimate.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp1-ep1-eager-mtp0-active0-static-fit-boundary.json",
           "parent": "flash-next-tp1-memory-design",
-          "retry": {"status": "blocked-on-material-memory-design", "trigger": "at least 192 GiB host RAM with qualified expert offload, or a separately qualified compression or streaming design"}
+          "retry": {
+            "status": "blocked-on-material-memory-design",
+            "trigger": "at least 192 GiB host RAM with qualified expert offload, or a separately qualified compression or streaming design"
+          }
         },
         {
           "id": "context16k-anchor-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 16384, "graph_mode": "*", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": "*",
+            "mtp": "*",
+            "active_context_tokens": 16384,
+            "graph_mode": "*",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "16K capability and quality anchor required",
           "reason": "No unquarantined 16K cell exists. A completed request alone is insufficient: qualification needs exact depth, semantic quality, repeat stability, controlled teardown, and a clean exact-topology postflight under the exact cell identity.",
           "parent": "flash-next-context16k-qualification-backlog",
-          "retry": {"status": "needs-qualified-16k-anchor", "trigger": "one preregistered MTP0 or MTP1 anchor after clean exact-topology recovery"}
+          "retry": {
+            "status": "needs-qualified-16k-anchor",
+            "trigger": "one preregistered MTP0 or MTP1 anchor after clean exact-topology recovery"
+          }
         },
         {
           "id": "context24k-anchor-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 24576, "graph_mode": "*", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": "*",
+            "mtp": "*",
+            "active_context_tokens": 24576,
+            "graph_mode": "*",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "24K capability and quality anchor required",
           "reason": "No 24K Flash-Next request has been qualified. This cell needs a measured capacity identity and exact-depth capability receipt before quality, speed, or any estimate can receive credit.",
           "parent": "flash-next-context24k-qualification-backlog",
-          "retry": {"status": "needs-measured-24k-anchor", "trigger": "qualify TP4 eager MTP0 first, then transfer only explicitly justified bounds"}
+          "retry": {
+            "status": "needs-measured-24k-anchor",
+            "trigger": "qualify TP4 eager MTP0 first, then transfer only explicitly justified bounds"
+          }
         },
         {
           "id": "context32k-anchor-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "active_context_tokens": 32768, "graph_mode": "*", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": "*",
+            "mtp": "*",
+            "active_context_tokens": 32768,
+            "graph_mode": "*",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "32K capability and quality anchor required",
           "reason": "No 32K Flash-Next request has been qualified. This cell needs a measured capacity identity and exact-depth capability receipt before quality, speed, or any estimate can receive credit.",
           "parent": "flash-next-context32k-qualification-backlog",
-          "retry": {"status": "needs-measured-32k-anchor", "trigger": "qualify TP4 eager MTP0 after the 24K anchor, then transfer only explicitly justified bounds"}
+          "retry": {
+            "status": "needs-measured-32k-anchor",
+            "trigger": "qualify TP4 eager MTP0 after the 24K anchor, then transfer only explicitly justified bounds"
+          }
         },
         {
           "id": "mtp2-context24k-treatment-blocked",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 2, "active_context_tokens": 24576, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 24576,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP2 24K blocked by exhausted 16K treatment",
           "reason": "Both bounded 16K MTP2 arms produced no output and the scheduler-32 arm failed postflight. A deeper launch would not answer a new question and is blocked until a material runtime treatment qualifies at 16K.",
           "parent": "flash-next-mtp2-deep-context-runtime-block",
-          "retry": {"status": "blocked-on-material-runtime-treatment", "trigger": "new runtime fix that completes and cleanly tears down the 16K MTP2 gate"}
+          "retry": {
+            "status": "blocked-on-material-runtime-treatment",
+            "trigger": "new runtime fix that completes and cleanly tears down the 16K MTP2 gate"
+          }
         },
         {
           "id": "mtp2-context32k-treatment-blocked",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 2, "active_context_tokens": 32768, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 32768,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP2 32K blocked by exhausted 16K treatment",
           "reason": "Both bounded 16K MTP2 arms produced no output and the scheduler-32 arm failed postflight. A deeper launch would not answer a new question and is blocked until a material runtime treatment qualifies at 16K.",
           "parent": "flash-next-mtp2-deep-context-runtime-block",
-          "retry": {"status": "blocked-on-material-runtime-treatment", "trigger": "new runtime fix that completes and cleanly tears down the 16K MTP2 gate"}
+          "retry": {
+            "status": "blocked-on-material-runtime-treatment",
+            "trigger": "new runtime fix that completes and cleanly tears down the 16K MTP2 gate"
+          }
         },
         {
           "id": "mtp3-context16k-runtime-treatment-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 3, "active_context_tokens": 16384, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 16384,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP3 16K blocked pending shallower stability treatment",
           "reason": "MTP3 did not complete its bounded 8K request. A 16K launch is not authorized until a material runtime treatment completes the exact 8K gate with clean postflight.",
           "parent": "flash-next-mtp3-deep-context-runtime-block",
-          "retry": {"status": "blocked-on-qualified-8k-gate", "trigger": "material treatment plus completed exact-8K MTP3 receipt and clean postflight"}
+          "retry": {
+            "status": "blocked-on-qualified-8k-gate",
+            "trigger": "material treatment plus completed exact-8K MTP3 receipt and clean postflight"
+          }
         },
         {
           "id": "mtp3-context24k-runtime-treatment-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 3, "active_context_tokens": 24576, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 24576,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP3 24K blocked pending shallower stability treatment",
           "reason": "MTP3 did not complete its bounded 8K request. Deeper launches are blocked until a material treatment qualifies 8K and 16K sequentially.",
           "parent": "flash-next-mtp3-deep-context-runtime-block",
-          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K and exact-16K MTP3 receipts with clean postflight"}
+          "retry": {
+            "status": "blocked-on-qualified-shallower-gates",
+            "trigger": "qualified exact-8K and exact-16K MTP3 receipts with clean postflight"
+          }
         },
         {
           "id": "mtp3-context32k-runtime-treatment-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 3, "active_context_tokens": 32768, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 32768,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP3 32K blocked pending shallower stability treatment",
           "reason": "MTP3 did not complete its bounded 8K request. Deeper launches are blocked until a material treatment qualifies 8K, 16K, and 24K sequentially.",
           "parent": "flash-next-mtp3-deep-context-runtime-block",
-          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K, exact-16K, and exact-24K MTP3 receipts with clean postflight"}
+          "retry": {
+            "status": "blocked-on-qualified-shallower-gates",
+            "trigger": "qualified exact-8K, exact-16K, and exact-24K MTP3 receipts with clean postflight"
+          }
         },
         {
           "id": "mtp4-context16k-parity-treatment-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 4, "active_context_tokens": 16384, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 16384,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP4 16K blocked pending parity treatment",
           "reason": "MTP4 completed 8K only as diagnostic evidence because it diverged from the frozen authority. Deeper capability work is blocked until a same-runtime authority or material parity treatment resolves that shallower cell.",
           "parent": "flash-next-mtp4-deep-context-parity-block",
-          "retry": {"status": "blocked-on-parity-treatment", "trigger": "same-runtime authority design or material parity treatment that qualifies exact 8K"}
+          "retry": {
+            "status": "blocked-on-parity-treatment",
+            "trigger": "same-runtime authority design or material parity treatment that qualifies exact 8K"
+          }
         },
         {
           "id": "mtp4-context24k-parity-treatment-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 4, "active_context_tokens": 24576, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 24576,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP4 24K blocked pending parity treatment",
           "reason": "MTP4 completed 8K only as diagnostic evidence because it diverged from the frozen authority. Deeper work is blocked until parity is resolved and 16K qualifies cleanly.",
           "parent": "flash-next-mtp4-deep-context-parity-block",
-          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K and exact-16K MTP4 receipts under a same-runtime authority"}
+          "retry": {
+            "status": "blocked-on-qualified-shallower-gates",
+            "trigger": "qualified exact-8K and exact-16K MTP4 receipts under a same-runtime authority"
+          }
         },
         {
           "id": "mtp4-context32k-parity-treatment-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": 4, "mtp": 4, "active_context_tokens": 32768, "graph_mode": "off", "kv": "*", "modality": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 32768,
+            "graph_mode": "off",
+            "kv": "*",
+            "modality": "*"
+          },
           "state": "missing",
           "label": "MTP4 32K blocked pending parity treatment",
           "reason": "MTP4 completed 8K only as diagnostic evidence because it diverged from the frozen authority. Deeper work is blocked until parity is resolved and all shallower depth gates qualify cleanly.",
           "parent": "flash-next-mtp4-deep-context-parity-block",
-          "retry": {"status": "blocked-on-qualified-shallower-gates", "trigger": "qualified exact-8K, exact-16K, and exact-24K MTP4 receipts under a same-runtime authority"}
+          "retry": {
+            "status": "blocked-on-qualified-shallower-gates",
+            "trigger": "qualified exact-8K, exact-16K, and exact-24K MTP4 receipts under a same-runtime authority"
+          }
         },
         {
           "id": "mtp1-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 1, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 1,
+            "active_context_tokens": 0,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "9.372 tok/s matched MTP1 research screen",
           "reason": "All 26 MTP0 baseline comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. Inherited short quality remains 5/7. The separate exact-4K headroom32 screen does not overwrite this configured-512 cell.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-a3",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research",
           "parent": "flash-next-mtp1-a3",
-          "retry": {"status": "needs-full-quality"}
+          "retry": {
+            "status": "needs-full-quality"
+          }
         },
         {
           "id": "mtp2-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 0,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "11.895 tok/s variable matched MTP2 research screen",
           "reason": "All 26 bounded MTP0 comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. Inherited short quality remains 5/7, and the rows span 29.61% of their median. The separate active-4K selector is quarantined and does not lower this configured-512 cell.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-a1",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
           "parent": "flash-next-mtp2-a1",
-          "retry": {"status": "needs-speed-stability-and-full-quality"}
+          "retry": {
+            "status": "needs-speed-stability-and-full-quality"
+          }
         },
         {
           "id": "mtp3-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 0,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "14.889 tok/s variable matched MTP3 research screen",
           "reason": "All 26 bounded MTP0 comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, and all three speed rows returned the target hash. The needle was only 317 actual prompt tokens, inherited short quality remains 5/7, and the speed rows declined monotonically across a wide range.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-a4",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research",
           "parent": "flash-next-mtp3-a4",
-          "retry": {"status": "needs-full-quality"}
+          "retry": {
+            "status": "needs-full-quality"
+          }
         },
         {
           "id": "mtp4-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 0,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "20.727 tok/s matched MTP4 research screen",
           "reason": "All 26 bounded MTP0 comparisons matched with thinking disabled on both clients; fixed-set repeats passed 16/16, the small cache-zero needle passed, all three corrected speed rows returned the target hash, and cumulative acceptance was 1,716/1,716. Inherited short quality remains 5/7; the separate exact-4K MTP4 selector is quarantined and does not lower this cell.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp4-a1",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp4-research",
           "parent": "flash-next-mtp4-a1",
-          "retry": {"status": "needs-full-quality"}
+          "retry": {
+            "status": "needs-full-quality"
+          }
         },
         {
           "id": "mtp1-context1k-first-request-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 1, "active_context_tokens": 1024, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 1,
+            "active_context_tokens": 1024,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "first 1K request stopped at 768 computed tokens · no output",
           "reason": "The exact source/runtime identity booted from the local-NVMe model, passed four-rank preflight, reported all four 12.22-GiB placements, admitted 32 cache blocks and became healthy. Its first 1K request reached the unchanged 300-second worker-response gate during sampling with 768 computed prompt tokens and zero output. Request two and the separate 2K boot were skipped under the preregistered stop rule. Existing MTP1 512 and 4K passes are unchanged.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-1536-context-attempt1-bounded-negative.json",
           "parent": "flash-next-mtp1-context1k-a1",
-          "retry": {"status": "blocked-on-runtime-fix", "trigger": "material first-request completion fix plus fresh four-rank boot"}
+          "retry": {
+            "status": "blocked-on-runtime-fix",
+            "trigger": "material first-request completion fix plus fresh four-rank boot"
+          }
         },
         {
           "id": "mtp1-context2k-client-and-engine-timeout-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 1, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 1,
+            "active_context_tokens": 2048,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "client timeout after 360 s · 448 computed tokens · no output",
           "reason": "The exact local-NVMe source/runtime identity passed four-rank, placement, 32-block cache, capacity, identity, and health gates. Request one had a zero-byte completion body and no output token recorded when the fixed client bound expired. The subsequent engine diagnostic reported 448 computed prompt tokens and zero output, after which the engine independently reported its own sampling timeout. Request two was blocked. The post-failure teardown window recorded compute- and copy-class resets on all four cards; all devices were rediscovered, but no post-reset collective was run. Existing MTP1 configured-512 and exact-4K passes are unchanged.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-3072-context-attempt2-bounded-negative.json",
           "parent": "flash-next-mtp1-context2k-a2",
-          "retry": {"status": "blocked-on-runtime-fix", "trigger": "material first-request completion fix plus fresh post-reset four-rank validation"}
+          "retry": {
+            "status": "blocked-on-runtime-fix",
+            "trigger": "material first-request completion fix plus fresh post-reset four-rank validation"
+          }
         },
         {
           "id": "mtp1-context4k-headroom32-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 1, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 1,
+            "active_context_tokens": 4096,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "8.904 tok/s decode · 232.1 s TTFT · headroom32",
           "reason": "The 32-block recipe passed all 26 sealed MTP0 comparisons, 16/16 repeats, the exact cache-zero 4096-token needle, a formal p4096/o128 gate, and all three p4096/o256 rows with one accepted-target hash. Median wall output was 0.981 tok/s and cumulative draft acceptance was 528/539. This is a Grade-C support cell, not a minimum-cache claim; MTP3 remains the preferred exact-4K recipe.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp1-context4k-headroom32-a1",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp1-research",
           "parent": "flash-next-mtp1-context4k-headroom32-a1",
-          "retry": {"status": "needs-clean-boot-full-quality"}
+          "retry": {
+            "status": "needs-clean-boot-full-quality"
+          }
         },
         {
           "id": "mtp1-context8k-cross-runtime-parity-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 1, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 1,
+            "active_context_tokens": 8192,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "exact 8K completed · cross-runtime parity mismatch at token 73 · diagnostic only",
           "reason": "The exact current-source identity passed fresh four-rank, placement, 32-block cache, capacity, served-model, and health gates and exposed 13,516 cache tokens. Its sole p8192/o128 request completed all 25 generic gates with exact usage, zero cache reuse, and positive MTP1 counters, but diverged from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 72. The 4.151 tok/s rate and 953.3-second TTFT receive no speed or quality credit. Owned shutdown passed its cleanup gates with all four cards idle and no B70-addressed event; the intentional stop retained the known shutdown-time output-handler notice and one shared-memory cleanup warning. Seven corrected local-NVMe records separately block clean-host wording.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp1-8448-context-attempt1-parity-quarantine.json",
           "parent": "flash-next-mtp1-context8k-a1",
-          "retry": {"status": "blocked-on-parity-treatment", "trigger": "material parity treatment, same-runtime authority design, or a new preregistration with a distinct causal question"}
+          "retry": {
+            "status": "blocked-on-parity-treatment",
+            "trigger": "material parity treatment, same-runtime authority design, or a new preregistration with a distinct causal question"
+          }
         },
         {
           "id": "mtp2-context1k-host-health-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 1024, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 1024,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "two exact target-parity requests passed; clean-host gate failed on corrected NVMe events",
           "reason": "The exact local-NVMe source/runtime identity passed fresh four-rank, placement, 32-block cache, capacity, identity, and health gates. Both authorized requests returned exactly 1,024 prompt and 256 output tokens, the frozen MTP0 text hash, zero cache reuse, identical text, and perfect MTP2 acceptance at both positions. Request one observed 10.683 tok/s after first text and the repeat sentinel 12.642 tok/s, but 11 corrected events for local NVMe 0000:01:00.0 appeared after the frozen journal cutoff. The strict clean-host rule quarantines the cell and gives both rates diagnostic-only status; no B70 event appeared.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-1536-context-attempt1-host-quarantine.json",
           "parent": "flash-next-mtp2-context1k-a1",
-          "retry": {"status": "blocked-on-clean-storage-window", "trigger": "clean local-NVMe link or identical verified model on storage with a clean post-cutoff host window"}
+          "retry": {
+            "status": "blocked-on-clean-storage-window",
+            "trigger": "clean local-NVMe link or identical verified model on storage with a clean post-cutoff host window"
+          }
         },
         {
           "id": "mtp2-context2k-target-parity-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 2048,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "completed exact-2K request · target-parity mismatch at token 13 · no speed credit",
           "reason": "The local-NVMe boot passed four-rank, placement, 32-block cache, capacity, identity, and health gates. Request one completed with 2,048 prompt and 128 output tokens, zero cache reuse, and positive MTP2 counters, but diverged from the frozen MTP0 authority at zero-based generated-token index 12. Request two was blocked. This is a scoped cross-lane parity mismatch, not isolated proof that MTP2 caused the divergence.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-3072-context-attempt1-parity-quarantine.json",
           "parent": "flash-next-mtp2-context2k-a1",
-          "retry": {"status": "blocked-on-parity-fix", "trigger": "material target-parity treatment plus a new preregistration"}
+          "retry": {
+            "status": "blocked-on-parity-fix",
+            "trigger": "material target-parity treatment plus a new preregistration"
+          }
         },
         {
           "id": "mtp2-context4k-headroom32-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 4096,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "9.893 tok/s decode · 263.3 s TTFT · headroom32",
           "reason": "The 32-block recipe passed all 26 sealed MTP0 comparisons, 16/16 repeats, the exact cache-zero 4096-token needle, a formal p4096/o128 gate, and all three p4096/o256 rows with one accepted-target hash. Median wall output was 0.891 tok/s and cumulative draft acceptance was 719/748. The failed 21-block arm remains linked as history; this pass does not prove a speed gain, causal cache mechanism, or minimum cache. MTP3 remains preferred.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp2-context4k-headroom32-a2",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp2-research",
           "parent": "flash-next-mtp2-context4k-headroom32-a2",
-          "retry": {"status": "needs-clean-boot-full-quality"}
+          "retry": {
+            "status": "needs-clean-boot-full-quality"
+          }
         },
         {
           "id": "mtp2-context8k-target-parity-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 8192,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "completed exact-8K request · parity mismatch at token 27 · no speed credit",
           "reason": "The exact 32-block current-source identity exposed 11,264 cache tokens and completed one p8192/o128 request with exact 8192/128/8320 usage, zero cache reuse, 128 token IDs, and positive MTP2 counters at positions zero and one. Its token array first diverged from the frozen MTP0 authority at zero-based generated-token index 26. The observed 6.235 tok/s and 649.7-second TTFT are diagnostic only. The authority used a different vLLM commit and cache allocation, so this is a scoped cross-runtime parity quarantine rather than isolated proof that MTP2 caused the difference. Teardown passed with no B70 event; corrected storage/root-port events block clean-host wording.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-8448-context-attempt2-parity-quarantine.json",
           "parent": "flash-next-mtp2-context8k-a2",
-          "retry": {"status": "blocked-on-parity-fix", "trigger": "material parity treatment plus a new preregistration"}
+          "retry": {
+            "status": "blocked-on-parity-fix",
+            "trigger": "material parity treatment plus a new preregistration"
+          }
         },
         {
           "id": "mtp3-context1k-external-signal-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 1024, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 1024,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "external SIGTERM during request one · six accepted draft tokens · no completed response or speed",
           "reason": "The exact 25-block local-NVMe identity passed source, runtime, fresh four-rank, placement, cache, capacity, served-identity, and health gates. Request one began under the frozen protocol, then the server received an external SIGTERM before the response completed. No request JSON, usage, output hash, or performance result exists. Partial server metrics showed six drafted and six accepted tokens with 1.000 acceptance at all three MTP3 positions, but those counters receive no parity, speed, quality, or deployment credit. Request two was not sent.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-1536-context-attempt1-external-stop.json",
           "parent": "flash-next-mtp3-context1k-a1",
-          "retry": {"status": "blocked-on-new-preregistration", "trigger": "new preregistration that explicitly addresses external process-session continuity"}
+          "retry": {
+            "status": "blocked-on-new-preregistration",
+            "trigger": "new preregistration that explicitly addresses external process-session continuity"
+          }
         },
         {
           "id": "mtp3-context2k-target-parity-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 2048,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "completed exact-2K request · target-parity mismatch at token five · no speed credit",
           "reason": "The exact source/runtime identity booted from local NVMe, passed four-rank preflight, reported all four 12.22-GiB placements, admitted the 25-block cache and became healthy. Request one completed the generic exact-depth gate with 2,048 prompt and 128 output tokens, zero cache reuse, and positive MTP3 counters, but its token array diverged from the frozen MTP0 authority at zero-based generated-token index 4. The preregistered rule blocked request two. This is a scoped cross-lane parity mismatch, not isolated proof that MTP3 caused the divergence or a universal semantic-quality failure.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-3072-context-attempt1-parity-quarantine.json",
           "parent": "flash-next-mtp3-context2k-a1",
-          "retry": {"status": "blocked-on-parity-fix", "trigger": "material target-parity treatment plus a new preregistration"}
+          "retry": {
+            "status": "blocked-on-parity-fix",
+            "trigger": "material target-parity treatment plus a new preregistration"
+          }
         },
         {
           "id": "mtp3-context4k-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 4096,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "15.502 tok/s decode · 187.9 s TTFT exact-4K",
           "reason": "All 26 sealed MTP0 4K comparisons matched, fixed-set repeats passed 16/16, and the exact cache-zero 4096-token needle plus formal gate passed. The three service rows returned one accepted-target hash. Long-prompt prefill dominates: median wall output was 1.246 tok/s and median TTFT was 187.9 seconds; inherited short quality remains 5/7. The official-thinking transfer completed 19 of 25 required rows; every completed row passed and matched MTP0, but the repeated-session boundary stopped request 20 and left six rows unrun. The outcome is inconclusive and unqualified, not an answer-quality failure.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp3-context4k-a1",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp3-research",
           "parent": "flash-next-mtp3-context4k-a1",
-          "retry": {"status": "blocked-on-repeated-session-stability", "trigger": "separately-preregistered bounded stability gate"}
+          "retry": {
+            "status": "blocked-on-repeated-session-stability",
+            "trigger": "separately-preregistered bounded stability gate"
+          }
         },
         {
           "id": "mtp3-context8k-client-timeout-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 3, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 3,
+            "active_context_tokens": 8192,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "900-second client timeout · no completed receipt or speed",
           "reason": "The exact current-source identity passed fresh four-rank, placement, 32-block cache, capacity, served-model, and health gates and exposed 9,654 cache tokens. Its sole p8192/o128 request entered inference but reached the fixed 900-second client bound without a completed response receipt or any durably recorded output token. No usage, MTP counter, parity, rate, or TTFT result exists. The owned failed-request shutdown path passed postflight with all four cards idle and no B70-addressed event; corrected local-NVMe records separately block clean-host wording.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp3-8448-context-attempt1-bounded-negative.json",
           "parent": "flash-next-mtp3-context8k-a1",
-          "retry": {"status": "blocked-on-runtime-treatment", "trigger": "material completion treatment or separately justified progress evidence, plus new preregistration and fresh four-rank preflight; a longer bound alone is insufficient"}
+          "retry": {
+            "status": "blocked-on-runtime-treatment",
+            "trigger": "material completion treatment or separately justified progress evidence, plus new preregistration and fresh four-rank preflight; a longer bound alone is insufficient"
+          }
         },
         {
           "id": "mtp4-context1k-teardown-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 1024, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 1024,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "two exact target-parity requests passed · detached teardown gate failed",
           "reason": "The exact 29-block local-NVMe identity passed every startup gate. Both authorized requests returned 1,024 prompt and 256 output tokens, the frozen MTP0 text hash, zero cache reuse, identical text, and perfect MTP4 acceptance at positions zero through three. The observed 13.326 and 17.291 tok/s rates are diagnostic only because the exact stop sentinel ended the timeout supervisor without reaching the detached server group. Direct recovery produced an orderly shutdown, but the frozen teardown rule quarantines the cell. Seven corrected-only local-NVMe records independently block clean-host qualification; no B70 event appeared.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-1536-context-attempt1-teardown-quarantine.json",
           "parent": "flash-next-mtp4-context1k-a1",
-          "retry": {"status": "blocked-on-lifecycle-and-clean-storage", "trigger": "separately tested descendant-aware supervisor plus a clean storage-link window"}
+          "retry": {
+            "status": "blocked-on-lifecycle-and-clean-storage",
+            "trigger": "separately tested descendant-aware supervisor plus a clean storage-link window"
+          }
         },
         {
           "id": "mtp4-context2k-no-output-reset-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 2048, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 2048,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "client and engine timeouts · 384 computed tokens · no output · four-card teardown resets",
           "reason": "The exact 29-block configured-3072 identity passed every startup gate. Request one reached the fixed 360-second client bound without a response receipt; about five seconds later the engine independently reported its own sampling timeout at 384 computed prompt tokens and zero output. No HTTP status, usage, parity hash, MTP counter delta, or speed exists, and request two was blocked. The corrected lifecycle controller returned zero and left no listener, recorded process, compile path, or RPC path, but the teardown window recorded compute- and copy-class resets on all four B70s. All cards were rediscovered at low memory use; no post-reset collective or known-good generation canary was run.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp4-3072-context-attempt1-bounded-negative.json",
           "parent": "flash-next-mtp4-context2k-a1",
-          "retry": {"status": "blocked-on-runtime-fix-and-post-reset-qualification", "trigger": "material first-request completion treatment, new preregistration, and full post-reset recovery qualification"}
+          "retry": {
+            "status": "blocked-on-runtime-fix-and-post-reset-qualification",
+            "trigger": "material first-request completion treatment, new preregistration, and full post-reset recovery qualification"
+          }
         },
         {
           "id": "mtp4-context4k-worker-timeout-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 4096,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "worker timeout at 3,904 computed tokens · no speed",
           "reason": "The exact 29-block configuration became healthy and admitted 4,352 tokens, but the 4K quality request exceeded the worker-response deadline during token sampling and the engine stopped. Cleanup was followed by card-engine resets on all four B70 addresses. No durable quality JSON or timing result was produced.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260827-tp4-mtp4-4352-attempt1-bounded-negative.json",
           "parent": "flash-next-mtp4-context4k-a1",
-          "retry": {"status": "blocked-on-runtime-fix", "trigger": "material worker-stall fix plus post-reset four-rank preflight"}
+          "retry": {
+            "status": "blocked-on-runtime-fix",
+            "trigger": "material worker-stall fix plus post-reset four-rank preflight"
+          }
         },
         {
           "id": "mtp4-context8k-cross-runtime-parity-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 4, "active_context_tokens": 8192, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 4,
+            "active_context_tokens": 8192,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "exact 8K completed · MTP4 mechanism passed · parity mismatch at token 27 · diagnostic only",
           "reason": "The exact 36-block current-source identity completed one p8192/o128 request with exact 8192/128/8320 usage, zero cache reuse, all 25 generic depth gates, and positive MTP4 accepted-token deltas [30,24,18,14] whose sum equals 86. Its output first differs from the frozen cross-runtime/cache MTP0 authority at zero-based generated-token index 26. The 4.026 tok/s rate and 918.4-second TTFT are diagnostic only and do not isolate MTP4 as the cause. The owned completed-classification path passed postflight and returned all four cards idle; shutdown warnings and six corrected local-NVMe endpoint records remain disclosed, with no B70-addressed event.",
@@ -1847,45 +3528,89 @@
         },
         {
           "id": "mtp0-current-short-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 0, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 0,
+            "active_context_tokens": 0,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "5.224 tok/s · current-runtime short Grade-C screen",
           "reason": "The exact current-runtime TP4/EP4 MTP0 identity passed fresh four-rank preflight, an exact cache-zero recovery canary, 6/7 semantic quality with only the known code-expression miss, 16/16 repeats, and card-clean teardown. Three established p146/o256/c1 after-first-text rows measured 5.316, 5.224, and 5.219 tok/s. The short harness does not retain per-row cache or finish fields, and this is not the fixed realistic final suite, a clean-host replay, or deployment qualification.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp0-current-a4",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp0-current-research",
           "parent": "flash-next-mtp0-current-short-a4",
-          "retry": {"status": "needs-fresh-server-clean-host-final-suite"}
+          "retry": {
+            "status": "needs-fresh-server-clean-host-final-suite"
+          }
         },
         {
           "id": "mtp0-current-context4k-text-screen",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 4096, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 0,
+            "active_context_tokens": 4096,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "lab-screened",
           "label": "4.758 tok/s decode · 147.5 s TTFT · current runtime exact-4K",
           "reason": "After the current-runtime 6/7 semantic, 16/16 repeat, and exact cache-zero 4K needle gates, two exact p4096/o128 requests both returned 4096/128/4224 usage, zero cache reuse, length stops, 128 token IDs, and one output-token hash. Their conventional 99-interval rates were 4.720 and 4.795 tok/s; the same-boot median is 4.758 tok/s with 147.5-second median TTFT. The output hash matches the retained legacy target authority, but fresh-server and clean-host replay remain open.",
           "evidence_id": "qwen38-flash-next-fp8-tp4-mtp0-current-context4k-a4",
           "packet_id": "qwen38-flash-next-fp8-tp4-mtp0-current-research",
           "parent": "flash-next-mtp0-current-context4k-a4",
-          "retry": {"status": "needs-fresh-server-clean-host-repeat"}
+          "retry": {
+            "status": "needs-fresh-server-clean-host-repeat"
+          }
         },
         {
           "id": "mtp0-context16k-current-source-generic-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 0, "active_context_tokens": 16384, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 0,
+            "active_context_tokens": 16384,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "16K generic request completed once · semantic repeat corrupted · separate fresh server timed out · diagnostic only",
           "reason": "The current-source 33-block identity completed one generic p16384/o128 request at a diagnostic-only 5.219 tok/s. A semantic successor then completed its first 16,213-token request correctly, returned corrupted repeated text on the identical same-server request despite zero reported cache use, and a separately started fresh server stopped at 1,600 computed prompt tokens before first output with an RPC sampling timeout. Cleanup of the fresh-server failure recorded eight B70 engine resets and 61 unsuccessful responses before all four cards re-enumerated idle. This is nondeterministic long-context runtime-stability evidence, not a speed or quality result.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json",
           "parent": "flash-next-mtp0-context16k-current-source-a2",
-          "retry": {"status": "blocked-on-material-runtime-treatment-and-fresh-four-card-health-gate"}
+          "retry": {
+            "status": "blocked-on-material-runtime-treatment-and-fresh-four-card-health-gate"
+          }
         },
         {
           "id": "mtp2-context16k-current-source-scheduler-treatment-exhausted-quarantine",
-          "match": {"revision": "qwen38-flash-next", "artifact_id": "qwen38-flash-next-fp8-bcd9f01", "tp": 4, "mtp": 2, "active_context_tokens": 16384, "graph_mode": "off", "kv": "auto", "modality": "text"},
+          "match": {
+            "revision": "qwen38-flash-next",
+            "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+            "tp": 4,
+            "mtp": 2,
+            "active_context_tokens": 16384,
+            "graph_mode": "off",
+            "kv": "auto",
+            "modality": "text"
+          },
           "state": "quarantined",
           "label": "MTP2 scheduler treatment stopped at 5,440/16,384 computed prompt tokens · no output · card-event postflight failed",
           "reason": "The current-source MTP2 identity admitted exactly 40 blocks / 20,014 cache tokens in both bounded arms. Scheduler-64 stopped at 3,200 computed prompt tokens; the scheduler-32 arm was observed 2,240 tokens / 70% farther at 5,440, but the sole p16384/o128 treatment request still returned no output before the unchanged 300-second runtime response deadline. This is treatment evidence, not repeat-confirmed causality. Its shutdown was followed by eight card reset records and 58 unsuccessful card responses, so the frozen postflight rule fails and the treatment tranche is exhausted. No capability, speed, quality, parity, deployment, or headline credit is granted; current checks found no listener or owned residue and all cards are below 43 MiB.",
           "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp2-16512-scheduler32-attempt2-runtime-timeout-quarantine.json",
           "parent": "flash-next-mtp2-context16k-current-source-a2-scheduler32",
-          "retry": {"status": "treatment-exhausted-no-further-mtp2-active16k-retry"}
+          "retry": {
+            "status": "treatment-exhausted-no-further-mtp2-active16k-retry"
+          }
         }
       ]
     },
@@ -1902,17 +3627,67 @@
         "workload_profile": "fixed-vision-fixture-v1-required"
       },
       "axes": [
-        {"key": "revision", "label": "Weight revision", "values": ["qwen38-flash-next"]},
-        {"key": "artifact_id", "label": "Artifact", "values": ["qwen38-flash-next-fp8-bcd9f01"]},
-        {"key": "tp", "label": "Tensor parallel", "values": [1, 2, 4]},
-        {"key": "mtp", "label": "MTP depth", "values": [0, 1, 2, 3, 4]},
-        {"key": "graph_mode", "label": "Graph mode", "values": ["off", "PIECEWISE"]},
-        {"key": "kv", "label": "KV cache", "values": ["auto"]}
+        {
+          "key": "revision",
+          "label": "Weight revision",
+          "values": [
+            "qwen38-flash-next"
+          ]
+        },
+        {
+          "key": "artifact_id",
+          "label": "Artifact",
+          "values": [
+            "qwen38-flash-next-fp8-bcd9f01"
+          ]
+        },
+        {
+          "key": "tp",
+          "label": "Tensor parallel",
+          "values": [
+            1,
+            2,
+            4
+          ]
+        },
+        {
+          "key": "mtp",
+          "label": "MTP depth",
+          "values": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "key": "graph_mode",
+          "label": "Graph mode",
+          "values": [
+            "off",
+            "PIECEWISE"
+          ]
+        },
+        {
+          "key": "kv",
+          "label": "KV cache",
+          "values": [
+            "auto"
+          ]
+        }
       ],
       "rules": [
         {
           "id": "fixed-vision-anchor-required",
-          "match": {"revision": "*", "artifact_id": "*", "tp": "*", "mtp": "*", "graph_mode": "*", "kv": "*"},
+          "match": {
+            "revision": "*",
+            "artifact_id": "*",
+            "tp": "*",
+            "mtp": "*",
+            "graph_mode": "*",
+            "kv": "*"
+          },
           "state": "missing",
           "label": "fixed-image capability and quality anchor required",
           "reason": "No versioned fixed-image Flash-Next workload has been run on this runtime. Define one fixture and qualify TP4 eager MTP0 before measuring or estimating vision topology, graph, or MTP variants.",

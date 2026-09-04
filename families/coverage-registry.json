@@ -8,7 +8,10 @@
       "disposition": "excluded",
       "reason": "Navigation index, not a deployment or evidence lane.",
       "artifacts": [
-        {"kind": "result-index", "path": "results/README.md"}
+        {
+          "kind": "result-index",
+          "path": "results/README.md"
+        }
       ]
     },
     {
@@ -16,7 +19,14 @@
       "disposition": "excluded",
       "reason": "Collection index; each underlying snapshot is counted as its own canonical lane.",
       "artifacts": [
-        {"kind": "rapid-snapshot-index", "path": "results/rapid-model-snapshots-b70/README.md"}
+        {
+          "kind": "rapid-snapshot-index",
+          "path": "results/rapid-model-snapshots-b70/README.md"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/rapid-model-snapshots-b70/README.md"
+        }
       ]
     },
     {
@@ -24,8 +34,14 @@
       "disposition": "family",
       "family_id": "deepseek-v4",
       "artifacts": [
-        {"kind": "repro", "path": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md"},
-        {"kind": "result", "path": "results/deepseek-v4-flash-k160-b70/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/deepseek-v4-flash-k160-b70/README.md"
+        }
       ]
     },
     {
@@ -33,10 +49,22 @@
       "disposition": "family",
       "family_id": "gemma-4",
       "artifacts": [
-        {"kind": "package", "path": "packages/gemma4-26b-a4b-q8-b70/package.json"},
-        {"kind": "repro", "path": "repro/gemma4-26b-a4b-q8-b70/README.md"},
-        {"kind": "repro", "path": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"},
-        {"kind": "result", "path": "results/gemma4-26b-a4b-q8-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/gemma4-26b-a4b-q8-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/gemma4-26b-a4b-q8-b70/README.md"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/gemma4-26b-a4b-q8-b70/README.md"
+        }
       ]
     },
     {
@@ -44,7 +72,10 @@
       "disposition": "archive",
       "reason": "The repro catalog explicitly classifies this historical lane as archived.",
       "artifacts": [
-        {"kind": "repro", "path": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md"
+        }
       ]
     },
     {
@@ -52,9 +83,18 @@
       "disposition": "family",
       "family_id": "laguna-s",
       "artifacts": [
-        {"kind": "package", "path": "packages/laguna-s-2.1-int4-b70-125tps/package.json"},
-        {"kind": "repro", "path": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md"},
-        {"kind": "result", "path": "results/laguna-s-2.1-int4-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/laguna-s-2.1-int4-b70-125tps/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/laguna-s-2.1-int4-b70/README.md"
+        }
       ]
     },
     {
@@ -62,7 +102,10 @@
       "disposition": "family",
       "family_id": "laguna-s",
       "artifacts": [
-        {"kind": "repro", "path": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md"
+        }
       ]
     },
     {
@@ -70,8 +113,14 @@
       "disposition": "family",
       "family_id": "lfm-2-5",
       "artifacts": [
-        {"kind": "package", "path": "packages/lfm25-26b-q8-b70/package.json"},
-        {"kind": "repro", "path": "repro/lfm25-26b-q8-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/lfm25-26b-q8-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/lfm25-26b-q8-b70/README.md"
+        }
       ]
     },
     {
@@ -79,8 +128,14 @@
       "disposition": "family",
       "family_id": "minimax-m2-7",
       "artifacts": [
-        {"kind": "package", "path": "packages/minimax-m27-int4-autoround-b70/package.json"},
-        {"kind": "repro", "path": "repro/minimax-m27-b70-89tps-20260520/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/minimax-m27-int4-autoround-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/minimax-m27-b70-89tps-20260520/README.md"
+        }
       ]
     },
     {
@@ -88,7 +143,10 @@
       "disposition": "family",
       "family_id": "minimax-m2-7",
       "artifacts": [
-        {"kind": "result", "path": "results/minimax-m27-int4-autoround-b70/README.md"}
+        {
+          "kind": "result",
+          "path": "results/minimax-m27-int4-autoround-b70/README.md"
+        }
       ]
     },
     {
@@ -96,7 +154,10 @@
       "disposition": "family",
       "family_id": "minimax-m2-7",
       "artifacts": [
-        {"kind": "repro", "path": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md"
+        }
       ]
     },
     {
@@ -104,7 +165,10 @@
       "disposition": "family",
       "family_id": "minimax-m2-7",
       "artifacts": [
-        {"kind": "repro", "path": "repro/minimax-m27-b70-94tps-structured-20260522/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/minimax-m27-b70-94tps-structured-20260522/README.md"
+        }
       ]
     },
     {
@@ -112,9 +176,18 @@
       "disposition": "family",
       "family_id": "muse-glimmer",
       "artifacts": [
-        {"kind": "package", "path": "packages/muse-glimmer-30b-q8-woq-b70/package.json"},
-        {"kind": "repro", "path": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md"},
-        {"kind": "result", "path": "results/muse-glimmer-30b-q8-woq-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/muse-glimmer-30b-q8-woq-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/muse-glimmer-30b-q8-woq-b70/README.md"
+        }
       ]
     },
     {
@@ -122,8 +195,14 @@
       "disposition": "family",
       "family_id": "nemotron-3-5",
       "artifacts": [
-        {"kind": "package", "path": "packages/nemotron-35-lightning-30b-a3b-b70/package.json"},
-        {"kind": "repro", "path": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/nemotron-35-lightning-30b-a3b-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/nemotron-35-lightning-30b-a3b-b70/README.md"
+        }
       ]
     },
     {
@@ -131,8 +210,14 @@
       "disposition": "family",
       "family_id": "ornith-1-5",
       "artifacts": [
-        {"kind": "package", "path": "packages/ornith-15-35b-a3b-q4km-b70/package.json"},
-        {"kind": "repro", "path": "repro/ornith-15-35b-a3b-q4km-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/ornith-15-35b-a3b-q4km-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/ornith-15-35b-a3b-q4km-b70/README.md"
+        }
       ]
     },
     {
@@ -140,8 +225,14 @@
       "disposition": "family",
       "family_id": "ornith-1-5",
       "artifacts": [
-        {"kind": "package", "path": "packages/ornith-15-9b-q8-b70/package.json"},
-        {"kind": "repro", "path": "repro/ornith-15-9b-q8-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/ornith-15-9b-q8-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/ornith-15-9b-q8-b70/README.md"
+        }
       ]
     },
     {
@@ -149,8 +240,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "repro", "path": "repro/qwen36-27b-autoround-int4-b70/README.md"},
-        {"kind": "result", "path": "results/qwen36-27b-autoround-int4-b70/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/qwen36-27b-autoround-int4-b70/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/qwen36-27b-autoround-int4-b70/README.md"
+        }
       ]
     },
     {
@@ -158,8 +255,14 @@
       "disposition": "family",
       "family_id": "qwen-flash-next",
       "artifacts": [
-        {"kind": "repro", "path": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md"},
-        {"kind": "result", "path": "results/qwen38-flash-next-fp8-b70/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/qwen38-flash-next-fp8-b70/README.md"
+        }
       ]
     },
     {
@@ -167,7 +270,10 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "repro", "path": "repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/qwen36-27b-autoround-int4-b70-determinism-20260818/README.md"
+        }
       ]
     },
     {
@@ -175,7 +281,10 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "repro", "path": "repro/qwen38-27b-autoround-int4-b70/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-autoround-int4-b70/README.md"
+        }
       ]
     },
     {
@@ -183,8 +292,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "repro", "path": "repro/qwen36-27b-q8-tp2-asrock-b70/README.md"},
-        {"kind": "result", "path": "results/qwen36-27b-q8-tp2-asrock-b70/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/qwen36-27b-q8-tp2-asrock-b70/README.md"
+        },
+        {
+          "kind": "result",
+          "path": "results/qwen36-27b-q8-tp2-asrock-b70/README.md"
+        }
       ]
     },
     {
@@ -192,7 +307,10 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "result", "path": "results/qwen36-27b-mtp-gguf-q4-b70/README.md"}
+        {
+          "kind": "result",
+          "path": "results/qwen36-27b-mtp-gguf-q4-b70/README.md"
+        }
       ]
     },
     {
@@ -200,7 +318,10 @@
       "disposition": "family",
       "family_id": "qwen-35b",
       "artifacts": [
-        {"kind": "result", "path": "results/qwen36-35b-quark-int8-b70/README.md"}
+        {
+          "kind": "result",
+          "path": "results/qwen36-35b-quark-int8-b70/README.md"
+        }
       ]
     },
     {
@@ -208,8 +329,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-256k-vision-mtp-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-256k-vision-mtp-b70/README.md"
+        }
       ]
     },
     {
@@ -217,8 +344,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-fp8-tp2-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-fp8-tp2-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md"
+        }
       ]
     },
     {
@@ -226,8 +359,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-q4km-tp1-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-q4km-tp1-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-q4km-tp1-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q4km-tp1-b70/README.md"
+        }
       ]
     },
     {
@@ -235,8 +374,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q4km-mtp2-tp1-b70/README.md"
+        }
       ]
     },
     {
@@ -244,8 +389,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-q8-tp1-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-q8-tp1-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-q8-tp1-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q8-tp1-b70/README.md"
+        }
       ]
     },
     {
@@ -253,8 +404,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q8-q4mtp-mtp2-tp1-b70/README.md"
+        }
       ]
     },
     {
@@ -262,8 +419,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q4km-tp2-asrock-b70/README.md"
+        }
       ]
     },
     {
@@ -286,8 +449,14 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "package", "path": "packages/qwen38-27b-q8-tp2-b70/package.json"},
-        {"kind": "repro", "path": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md"}
+        {
+          "kind": "package",
+          "path": "packages/qwen38-27b-q8-tp2-b70/package.json"
+        },
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q8-tp2-asrock-b70/README.md"
+        }
       ]
     },
     {
@@ -295,7 +464,10 @@
       "disposition": "family",
       "family_id": "qwen-27b",
       "artifacts": [
-        {"kind": "repro", "path": "repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md"}
+        {
+          "kind": "repro",
+          "path": "repro/qwen38-27b-q8-tp2-c2-asrock-b70/README.md"
+        }
       ]
     },
     {
@@ -303,7 +475,10 @@
       "disposition": "family",
       "family_id": "deepseek-coder-v2",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md"
+        }
       ]
     },
     {
@@ -311,7 +486,10 @@
       "disposition": "family",
       "family_id": "glm-4-7",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md"
+        }
       ]
     },
     {
@@ -319,7 +497,10 @@
       "disposition": "family",
       "family_id": "mistral-small-3-2",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md"
+        }
       ]
     },
     {
@@ -327,7 +508,10 @@
       "disposition": "family",
       "family_id": "nemotron-cascade-2",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md"
+        }
       ]
     },
     {
@@ -335,7 +519,10 @@
       "disposition": "family",
       "family_id": "phi-4",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md"
+        }
       ]
     },
     {
@@ -343,7 +530,10 @@
       "disposition": "family",
       "family_id": "qwen-14b",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/qwen3-14b-instruct-q4km/README.md"
+        }
       ]
     },
     {
@@ -351,7 +541,10 @@
       "disposition": "family",
       "family_id": "qwen-30b-a3b",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md"
+        }
       ]
     },
     {
@@ -359,7 +552,10 @@
       "disposition": "family",
       "family_id": "qwen-30b-a3b",
       "artifacts": [
-        {"kind": "rapid-snapshot", "path": "results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md"}
+        {
+          "kind": "rapid-snapshot",
+          "path": "results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md"
+        }
       ]
     }
   ]
