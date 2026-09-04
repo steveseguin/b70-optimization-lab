@@ -61,3 +61,24 @@ already spawned; the R187 runner had launched `run-...-r152.sh` (pid 47866) seco
 that campaign is the valid R187 (clean preflight 20:02:11). The R186n-b launch then lost the port race to R187's
 MTP0 server (`docker run` failed on the published port) and was re-queued behind R187. Before killing a queued
 runner, check for its r152 child with `pgrep -af r152.sh`.
+
+### R186n vs R186n-b (20:43-20:49): the phantom measured in situ at the final norm
+
+R186n-b (same final-op probe image, `--no-async-scheduling`) is 64/64. Comparing the `final_norm` probe lines
+(abs-sums of the last two real rows after the final RMSNorm) of the 64 prefills, phantom run vs control:
+
+| | TP0 last row | TP1 last row | TP0 row before last | TP1 row before last |
+|---|---|---|---|---|
+| request 33 (cache-c032), phantom run | 5982.85 | 6022.08 | 6518.65 | 6518.65 |
+| request 33, clean control | 7167.73 | 7167.73 | 6510.96 | 6510.96 |
+| every other request | equal | equal | equal | equal |
+
+So in the phantom run the last **two** rows of request 33's final hidden state are wrong (not only the sampled
+last row), and the two TP ranks **disagree** on the last row while they agree on everything else and agree with
+each other in the control. Rank-local disagreement after the model's last all-reduce means the corruption enters
+the rank-replicated residual stream (not the all-reduced hidden path) from rank-local data that differs between
+ranks: stale or uninitialised memory, deterministic per graph because the previous step's contents are
+deterministic (hence token 60 on one graph and 220 on another). The model-level row count is 31 in both runs
+(`n=31 rows=31`), so it is not padding at the model boundary. Together with R186j (one graph: clean) and R182
+(split at every layer: clean), the reading is a tail-of-sequence read past the written rows inside a default
+piecewise piece, whose stale content under async scheduling is the discarded extra step's rows.
