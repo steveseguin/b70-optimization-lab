@@ -1,0 +1,54 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r187-mtp5-strict-20260904-r200",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp5-r200-prereg.json",
+ "status": "MTP depth 5 strict pair 86.266/86.097 tok/s, 12/12 vs sibling and vs the R187 MTP0 oracle",
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "compilation_config": {
+  "splitting_ops": []
+ },
+ "speculative_config": {
+  "method": "qwen3_next_mtp",
+  "num_speculative_tokens": 5
+ },
+ "oracle_root": "qwen38-fp8-r156-mtp2-no-splitting-full-20260903-r187/mtp0-a",
+ "boot_id": "88f0984f-9533-42f6-b35b-08d329f62b34",
+ "repo_head_at_launch": "8cb377668263286474a62752b29cf13e8c8f18e7",
+ "gates_passed": {
+  "G2": true,
+  "G3": true
+ },
+ "attempts": {
+  "mtp5-a": {
+   "label": "mtp1-a",
+   "class_balanced_median_tok_s": 86.26628084659836,
+   "class_medians": {
+    "analysis": 68.34644018545704,
+    "code": 92.98784517034817,
+    "documentation": 96.2309250121794,
+    "operations": 110.17845580004787,
+    "prose": 79.54471652284855,
+    "structured-writing": 79.23018638390877
+   },
+   "tok_s_wall_full_median": 72.94115254636051,
+   "ttft_ms_median": 95.63380799954757
+  },
+  "mtp5-b": {
+   "label": "mtp1-b",
+   "class_balanced_median_tok_s": 86.09716284389253,
+   "class_medians": {
+    "analysis": 68.34181116254456,
+    "code": 92.79753584429174,
+    "documentation": 97.19611685585225,
+    "operations": 109.60127397506717,
+    "prose": 79.39678984349334,
+    "structured-writing": 79.06196179955825
+   },
+   "tok_s_wall_full_median": 72.8341494608363,
+   "ttft_ms_median": 95.81422149858554
+  }
+ },
+ "centers": {
+  "mtp5_class_balanced_tok_s": 86.18172184524545
+ }
+}
