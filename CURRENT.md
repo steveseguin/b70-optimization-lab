@@ -244,11 +244,18 @@ tie-class misses only (c8 7/8, c32 31/32, c64 60/64), MTP0 ladder
 output-identity-qualified 64/64 through c64 at 927.9 tok/s.** A
 configuration-only fix (no patch, no image): the depth-2 line is
 publishable through c4 by the one-miss rule with the whole-graph compile;
-MTP0 keeps its c1-c64 identity on it. Not yet run on it: the depth-1 MTP1
-ladders (c32/c64 tie residual expected unchanged). The piecewise defect
-itself is not localised; R186n-b (probe image, async off) is queued for the
-exact final-row comparison. Publication of the depth-2 line is the user's
-call.
+MTP0 keeps its c1-c64 identity on it. R188 (20:50-21:14,
+[result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md)):
+the published depth-1 MTP1 profile on the same configuration is strict-pair
+exact at 55.01 / 54.86 tok/s, 12/12 vs the R187 oracle, probe exact, ladder
+exact through c16 with c32 31/32 and c64 59/64 (published piecewise: 31/32,
+56/64) at the same aggregate speeds. R186n-b (async-off control of the
+final-op probe) measured the phantom in situ: the last two final-norm rows
+of request 33 are wrong and the two TP ranks disagree on the last one, all
+other rows exact (rank-local stale-memory signature inside a default
+piecewise piece). Decision for the user: move the published line and/or
+publish depth 2 on `splitting_ops=[]` (manifest change only), or keep the
+piecewise line. Devices are idle.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
