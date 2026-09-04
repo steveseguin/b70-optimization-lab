@@ -50,3 +50,40 @@ Data: `../data/20260903-tp4-mtp1-a122-eager-step-timing-2k.json`,
 `../data/20260903-tp4-mtp1-a127-graph-step-timing-2k.json`,
 `../data/20260903-b70-triton-block-fp8-moe-m1-m2-m4-timing-w13n32.json`,
 `../data/20260903-b70-tp4-xccl-allreduce-latency.json`.
+
+## Subtraction runs and clocks (A129, A130; 2026-09-04 00:00-00:25)
+
+| packet | selectors | size-2 replay at 2K (all ranks) | 2K rate |
+|---|---|---|---|
+| A127 | serial GDN, row-wise all-reduce, row-wise norm | mean `181 ms`, `144-255` | 7.71 |
+| A129 | minus row-wise norm | mean `220 ms`, `126-301` | 7.09 |
+| A130 | minus row-wise all-reduce | mean `186 ms`, `117-251` | 7.87 |
+
+Neither flag group changes the replay time; the spread between steps and
+between servers is larger than either. GPU clocks sampled at 1 Hz stayed at
+2800 MHz on all four cards through the decode windows with no throttle
+reason. The size-2 replay costs about 110 ms more than the size-1 replay
+on the same line, the plain MTP1 screen (A81, no selectors) was no better,
+and the offline pieces that can be timed alone (MoE kernel, all-reduce
+latency) account for about 25 ms of it. What remains is the two-row cost
+of the captured kernels themselves (QSA sparse attention and indexer at two
+rows over 2K keys, the GDN decode kernel twice, the MoE at two tokens) and
+the replay's per-node overhead on XPU, which the subtraction runs could not
+separate because the nodes they removed are a small fraction of the graph.
+
+Ranked next steps for the depth lever:
+
+1. Per-kernel device timing of the size-2 versus size-1 step (an XPU
+   profiler pass on the eager line at 2K with the three selectors, reading
+   kernel durations only, not attributions: the profiler's own overhead is
+   known to distort ~6x on B70 but kernel-to-kernel ratios survive).
+2. Replace the Python serial verifier-row path with the sealed
+   exact-recurrent GDN kernel stage (`runtime-mtp1-exact-ad25aa9-b70`),
+   which A85/A100 showed bit-identical to it, removing ~250 captured nodes
+   and one of the two GDN kernel launches per layer.
+3. A two-row QSA sparse-attention profile: the split-K kernel uses the same
+   tile and split counts for one and two rows, so its two-row cost should be
+   near 2x; if the profiler shows more, the indexer (`qsa_mqa_paged`,
+   `argsort`, `expand`) at two rows is the place to look.
+4. Only then the norm: an M-invariant single-launch variance kernel that
+   reproduces the one-row torch reduction bit for bit.

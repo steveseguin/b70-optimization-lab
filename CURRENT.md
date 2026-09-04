@@ -4203,3 +4203,14 @@ the section as the certified lossless MTP1 line and short-context
 candidate; the MTP0 line stays the record at depth. See the
 [A120 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a120-frozen-client-result.md)
 and the [A121 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a121-fresh-repeat-result.md).
+The depth cost of that line was then attributed with per-step and per-layer
+wall-clock hooks (A122-A130): the drafter and sampler are small; the
+size-2 graph replay itself takes `144-255 ms` per step at 2K against
+`71 ms` for the size-1 MTP0 replay, unchanged by dropping either the
+row-wise all-reduce or the row-wise norm, with clocks pinned at 2800 MHz;
+offline, the second row costs the MoE kernel `0.25 ms` per layer and the
+all-reduce `0.11 ms` per extra call, together about 25 ms of the 110 ms
+gap. The ranked next steps (per-kernel device timing of the two-row step,
+the sealed exact-recurrent GDN kernel stage in place of the serial rows,
+the two-row QSA profile) are in the
+[depth-cost note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-depth-cost-attribution.md).
