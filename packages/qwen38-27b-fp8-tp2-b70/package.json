@@ -475,97 +475,97 @@
   "performance_profiles": [
     {
       "id": "http-r156-mtp1-identity-qualified-aggregate-vs-concurrent-users",
-      "label": "R156 FP8 TP2 + MTP1 aggregate decode, output-identical through c16",
+      "label": "R187 FP8 TP2 MTP1 identity-qualified aggregate decode vs concurrent users (c1-c16)",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Measured vLLM HTTP completions on two B70s with the R156 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld: 1/32 and 8/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R187 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld: 1/32 and 8/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r188-whole-graph-depth1-result.json",
       "points": [
         {
           "concurrent_sequences": 1,
-          "value": 51.72696638016744,
-          "per_user_value": 51.72696638016744,
-          "samples": 1
+          "value": 53.5361089749907,
+          "samples": 1,
+          "per_user_value": 53.5361089749907
         },
         {
           "concurrent_sequences": 2,
-          "value": 77.59343580581428,
-          "per_user_value": 38.79671790290714,
-          "samples": 1
+          "value": 72.1595380864749,
+          "samples": 1,
+          "per_user_value": 36.07976904323745
         },
         {
           "concurrent_sequences": 4,
-          "value": 173.5129971811476,
-          "per_user_value": 43.3782492952869,
-          "samples": 1
+          "value": 193.3635682197048,
+          "samples": 1,
+          "per_user_value": 48.3408920549262
         },
         {
           "concurrent_sequences": 8,
-          "value": 352.8567011818344,
-          "per_user_value": 44.1070876477293,
-          "samples": 1
+          "value": 353.233907423836,
+          "samples": 1,
+          "per_user_value": 44.1542384279795
         },
         {
           "concurrent_sequences": 16,
-          "value": 474.26834646536486,
-          "per_user_value": 29.641771654085304,
-          "samples": 1
+          "value": 477.6588917840359,
+          "samples": 1,
+          "per_user_value": 29.853680736502245
         }
       ]
     },
     {
       "id": "http-r156-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-      "label": "R156 FP8 TP2 MTP0 aggregate decode, output-identical through c64",
+      "label": "R187 FP8 TP2 MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Measured vLLM HTTP completions on two B70s with the R156 image (MTP0, target only), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). All seven points including c32 and c64 passed 64/64. One server, one pass per point; not a promoted concurrency speed record.",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R187 image (MTP0, target only), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). All seven points including c32 and c64 passed 64/64. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-whole-graph-depth2-result.json",
       "points": [
         {
           "concurrent_sequences": 1,
-          "value": 33.473462863775524,
-          "per_user_value": 33.473462863775524,
-          "samples": 1
+          "value": 33.375431781866325,
+          "samples": 1,
+          "per_user_value": 33.375431781866325
         },
         {
           "concurrent_sequences": 2,
-          "value": 64.5150300817694,
-          "per_user_value": 32.2575150408847,
-          "samples": 1
+          "value": 64.35204956704715,
+          "samples": 1,
+          "per_user_value": 32.17602478352357
         },
         {
           "concurrent_sequences": 4,
-          "value": 124.14592676126526,
-          "per_user_value": 31.036481690316315,
-          "samples": 1
+          "value": 123.93764901565976,
+          "samples": 1,
+          "per_user_value": 30.98441225391494
         },
         {
           "concurrent_sequences": 8,
-          "value": 234.23197681700228,
-          "per_user_value": 29.278997102125285,
-          "samples": 1
+          "value": 234.38391319439305,
+          "samples": 1,
+          "per_user_value": 29.29798914929913
         },
         {
           "concurrent_sequences": 16,
-          "value": 421.1229174615945,
-          "per_user_value": 26.320182341349657,
-          "samples": 1
+          "value": 419.9261644481194,
+          "samples": 1,
+          "per_user_value": 26.24538527800746
         },
         {
           "concurrent_sequences": 32,
-          "value": 675.6173683928753,
-          "per_user_value": 21.113042762277352,
-          "samples": 1
+          "value": 672.0107142920494,
+          "samples": 1,
+          "per_user_value": 21.000334821626545
         },
         {
           "concurrent_sequences": 64,
-          "value": 931.3632005333552,
-          "per_user_value": 14.552550008333675,
-          "samples": 1
+          "value": 927.9028136957172,
+          "samples": 1,
+          "per_user_value": 14.498481463995581
         }
       ]
     },
@@ -988,6 +988,78 @@
           "context_tokens": 32768,
           "value": 83.18747425034647,
           "samples": 3
+        }
+      ]
+    },
+    {
+      "id": "http-r187-mtp2-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "R187 FP8 TP2 MTP depth-2 identity-qualified aggregate decode vs concurrent users (c1-c4)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R187 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld: 1/32 and 8/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-whole-graph-depth2-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 63.14486988197364,
+          "samples": 1,
+          "per_user_value": 63.14486988197364
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 68.048355221868,
+          "samples": 1,
+          "per_user_value": 34.024177610934
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 212.5199807591929,
+          "samples": 1,
+          "per_user_value": 53.12999518979822
+        }
+      ]
+    },
+    {
+      "id": "http-r187-mtp3-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "R187 FP8 TP2 MTP depth-3 identity-qualified aggregate decode vs concurrent users (c1-c16)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R187 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld: 1/32 and 8/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r191-whole-graph-depth3-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 70.93644548357716,
+          "samples": 1,
+          "per_user_value": 70.93644548357716
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 82.59040753391578,
+          "samples": 1,
+          "per_user_value": 41.29520376695789
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 237.64012399494973,
+          "samples": 1,
+          "per_user_value": 59.41003099873743
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 382.76128415386177,
+          "samples": 1,
+          "per_user_value": 47.84516051923272
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 557.0489881160106,
+          "samples": 1,
+          "per_user_value": 34.81556175725066
         }
       ]
     }
