@@ -46,6 +46,8 @@ expected_mhc_library_sha256=${EXPECTED_MHC_LIBRARY_SHA256:-}
 expected_layernorm_sha256=${EXPECTED_LAYERNORM_SHA256:-}
 # R156 candidates replace the XPU op wrapper module; opt in with its exact digest.
 expected_xpu_ops_sha256=${EXPECTED_XPU_OPS_SHA256:-}
+# R207 candidates replace the XPU communicator module; opt in with its exact digest.
+expected_xpu_communicator_sha256=${EXPECTED_XPU_COMMUNICATOR_SHA256:-}
 
 # Experimental overlays may intentionally replace only the XPU communicator.
 # Keep the ordinary package hash immutable and require candidates to provide
@@ -111,6 +113,11 @@ fi
 if [[ -n "${expected_xpu_ops_sha256}" ]]; then
   for index in "${!paths[@]}"; do
     [[ "${paths[index]}" == */vllm/_xpu_ops.py ]] && expected[index]=${expected_xpu_ops_sha256}
+  done
+fi
+if [[ -n "${expected_xpu_communicator_sha256}" ]]; then
+  for index in "${!paths[@]}"; do
+    [[ "${paths[index]}" == */device_communicators/xpu_communicator.py ]] && expected[index]=${expected_xpu_communicator_sha256}
   done
 fi
 if [[ -n "${expected_layernorm_sha256}" ]]; then

@@ -19,6 +19,7 @@ gpu_memory_utilization=${GPU_MEMORY_UTILIZATION:-0.96}
 container_memory=${CONTAINER_MEMORY:-9g}
 container_memory_swap=${CONTAINER_MEMORY_SWAP:-12g}
 xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
+allreduce_host_wait=${VLLM_XPU_ALLREDUCE_HOST_WAIT:-1}
 tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
 xpu_device_mask=${XPU_DEVICE_MASK:-0,1}
 enforce_eager=${ENFORCE_EAGER:-0}
@@ -294,6 +295,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_TARGET_DEVICE=xpu \
   --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
+  --env VLLM_XPU_ALLREDUCE_HOST_WAIT="${allreduce_host_wait}" \
   --env VLLM_XPU_FP8_BLOCK_W8A16="${fp8_block_w8a16}" \
   --env VLLM_XPU_W8A16_DECODE_PAD_ROWS="${w8a16_decode_pad_rows}" \
   --env VLLM_XPU_LM_HEAD_CHUNK_ROWS="${lm_head_chunk_rows}" \
