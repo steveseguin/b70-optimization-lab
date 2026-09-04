@@ -1,0 +1,104 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r187-mtp4-strict-20260904-r197a + qwen38-fp8-r187-mtp4-ladder-20260904-r197b",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-night-r195-r197-prereg.json",
+ "status": "MTP depth 4 on the R187 line: strict pair 82.447/82.345 tok/s, 12/12 vs sibling and vs the R187 MTP0 oracle; probe exact; one ladder (rungs below); acceptance 0.893/0.828/0.562/0.521, mean length 3.80",
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "compilation_config": {
+  "splitting_ops": []
+ },
+ "speculative_config": {
+  "method": "qwen3_next_mtp",
+  "num_speculative_tokens": 4
+ },
+ "oracle_root": "qwen38-fp8-r156-mtp2-no-splitting-full-20260903-r187/mtp0-a",
+ "boot_id": "88f0984f-9533-42f6-b35b-08d329f62b34",
+ "repo_head_at_launch": "851cfa139df4d6c4eb33aa3752d35e4425086472",
+ "gates_passed": {
+  "G2": true,
+  "G3": true,
+  "G5": true
+ },
+ "comparisons": {
+  "G2": "12/12",
+  "G3_a": "12/12",
+  "G3_b": "12/12",
+  "G5_probe_224_250_300": "identical"
+ },
+ "attempts": {
+  "mtp4-a": {
+   "label": "mtp1-a",
+   "class_balanced_median_tok_s": 82.44653870262454,
+   "class_medians": {
+    "analysis": 69.13355541403281,
+    "code": 88.85522950520321,
+    "documentation": 93.39197373209984,
+    "operations": 104.99400317209394,
+    "prose": 76.03784790004585,
+    "structured-writing": 75.26007876282037
+   },
+   "tok_s_wall_full_median": 74.0595065502936,
+   "ttft_ms_median": 96.93286049878225
+  },
+  "mtp4-b": {
+   "label": "mtp1-b",
+   "class_balanced_median_tok_s": 82.3446902467543,
+   "class_medians": {
+    "analysis": 69.18041232475393,
+    "code": 88.75307181135483,
+    "documentation": 93.9916509325412,
+    "operations": 105.48060057347614,
+    "prose": 75.93630868215376,
+    "structured-writing": 75.12322935689807
+   },
+   "tok_s_wall_full_median": 74.15068891627365,
+   "ttft_ms_median": 97.17793700110633
+  }
+ },
+ "centers": {
+  "mtp4_class_balanced_tok_s": 82.39561447468941
+ },
+ "ladders": {
+  "mtp4": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 78.82829455470107
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 71.61182106335589
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 218.01670190128908
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 384.74153790276574
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 530.7198676117745
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "30/32",
+     "aggregate_tok_s_wall": 558.5804298053168
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "58/64",
+     "aggregate_tok_s_wall": 619.7920986772151
+    }
+   ],
+   "oracle_first_token_phantom_rows": []
+  }
+ }
+}
