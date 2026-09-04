@@ -24,3 +24,14 @@ B70s keep minors 0/2/3/4, tuning), no GPU faults since.
   at three rows), A138 (MTP2 eager trace at 2048), A134/A135 (fixed
   realistic suite on the MTP0 and MTP1 identities for LocalMaxxing), the
   attestation builder `tools/build-q38-flash-next-promotion-attestation.py`.
+
+## Late morning
+
+- **A133: MTP2 lossless on the graph line.** Every pin equal to the MTP0
+  line; short `32.21/37.03/32.00` (1.42x), exact-2K `8.09/7.37`, exact-4K
+  `7.37/7.30`; acceptance 984/1122. The selectors generalize to three
+  verifier rows. Certification pair A139/A140 built (verifier requires
+  size-3 graph dispatches).
+- **Realistic suite (LocalMaxxing gate):** A134 on the promoted MTP0
+  identity (overlay at 2169dbfe) running; A135 (MTP1 identity, 1b2a17c1)
+  next.

@@ -4237,3 +4237,12 @@ gap. The ranked next steps (per-kernel device timing of the two-row step,
 the sealed exact-recurrent GDN kernel stage in place of the serial rows,
 the two-row QSA profile) are in the
 [depth-cost note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-depth-cost-attribution.md).
+On 2026-09-04 the family page and site index were regenerated with the
+deterministic MTP0 record and the lossless MTP1 line, the torch profiler
+was found unusable on this XPU stack (A131 tripped the memory floor, A136
+crashed the worker in Kineto's `clearActivities`), and A133 showed MTP2 on
+the deterministic graph line lossless as well (every pin equal to MTP0,
+short `32.21/37.03/32.00 tok/s`, 1.42x; depth 0.55x): the three selectors
+generalize to three verifier rows without further trace work. See the
+[A133 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp2-a133-graph-battery-result.md)
+and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-day-summary.md).

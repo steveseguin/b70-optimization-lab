@@ -118,6 +118,14 @@ Flash-Next whose outputs a third party can reproduce. The depth cost is the
 next lever (the drafter runs eagerly on XPU; only piecewise graphs support
 it).
 
+MTP2 on the same line (two speculative tokens, capture sizes [1, 2, 3],
+the three selectors at three rows) passed the same diagnostic battery on
+2026-09-04 (A133): every pin equal to the MTP0 line, short rows
+`32.21/37.03/32.00 tok/s` (1.42x), exact-2K `8.09/7.37`, exact-4K
+`7.37/7.30`, acceptance 984 of 1122 draft tokens; its frozen-client
+certification pair (A139/A140) is queued. See the
+[A133 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp2-a133-graph-battery-result.md).
+
 Notes: [localization](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a104-a105-allreduce-localization.md),
 [A113](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a113-graph-three-flags-battery-result.md),
 [A120](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a120-frozen-client-result.md),
