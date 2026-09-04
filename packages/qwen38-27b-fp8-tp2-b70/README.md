@@ -13,8 +13,12 @@ containers on two Intel Arc Pro B70 32 GiB cards.
 > verifier stayed FP16 (draft-only INT4 head). R187 is the R156 image and
 > launcher chain served with one whole-graph `torch.compile`
 > (`splitting_ops=[]`) instead of vLLM's piecewise split at the attention/GDN
-> ops; the split produced a phantom first token at MTP depth 2 under async
-> scheduling and, with XPU graphs disabled, had no other role. MTP0 output is
+> ops. On the piecewise compile MTP depth 2 emitted a phantom first token on
+> one request in 64; on the whole-graph compile no pass has shown it. The
+> cause is an unfixed upstream vLLM defect that also occurs on the unmodified
+> image (R192/R194), so this configuration avoids it on our deterministic
+> build rather than fixing it; with XPU graphs disabled the split had no other
+> role. MTP0 output is
 > byte-identical to a single request through 64 concurrent users, MTP1 and
 > depth 3 through 16, depth 2 through 4. See the
 > [R187](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md)

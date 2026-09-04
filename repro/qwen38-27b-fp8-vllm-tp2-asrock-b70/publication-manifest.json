@@ -293,7 +293,7 @@
       }
     },
     "r187": {
-      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): removes the MTP depth-2 phantom first token that vLLM's piecewise split produced under async scheduling (R182-R186); MTP1 54.935, depth-2 70.142, depth-3 79.183, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1 and depth 3 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
+      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): avoids the MTP depth-2 phantom first token seen on vLLM's piecewise split (an unfixed upstream defect that also occurs on the unmodified image, R182-R194; no whole-graph pass has shown it); MTP1 54.935, depth-2 70.142, depth-3 79.183, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1 and depth 3 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
       "image": {
         "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156",
         "id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",

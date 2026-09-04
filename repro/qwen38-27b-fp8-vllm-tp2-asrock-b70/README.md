@@ -25,10 +25,16 @@ R187 is the R156 image and launcher chain with one change in the vLLM
 compilation config: `"splitting_ops": []`, so the model is compiled as one
 Inductor graph instead of pieces split at every attention/GDN op. XPU graphs
 are disabled on this lane (`VLLM_XPU_ENABLE_XPU_GRAPH=0`), so the split had
-no graph-capture role; it was the source of a phantom first token at MTP
-depth 2 under async scheduling (a stale-memory read of the last two rows of
-one request's final hidden state, rank-divergent; R176-R186). No patch, no
-image rebuild. Clean-boot qualification (`r187`, `r188`):
+no graph-capture role. On the default piecewise compile, MTP depth 2 emitted
+a phantom first token (the prompt's last token, inserted into the output
+stream and then treated as generated) on one request in 64, every time; on
+the whole-graph compile no sequential pass at depth 1, 2 or 3 has shown it
+(six passes, R187-R193). The underlying defect is upstream and unfixed: it
+also occurs on the unmodified vLLM XPU image, with and without torch.compile
+(R192/R194, 2 of 5 stock servers), so the whole-graph compile is a
+configuration that avoids it on this lane's deterministic build, not a fix
+of the cause. No patch, no image rebuild. Clean-boot qualification (`r187`,
+`r188`):
 
 | arm | attempt | class-balanced decode | output gate |
 | --- | ---: | ---: | ---: |
