@@ -24,3 +24,14 @@ Probe exact. Ladder: c1-c16 exact; c32 28/32 (cache-c000 @96, index-c009 @79, ro
 557.0 / 766.0 / 713.3 tok/s; no phantom. Both depth-3 ladders are exact through c16, so the published depth-3
 identity claim is c16 (aggregate 557.0 tok/s at c16); above that the tie-class residual moves between runs as
 on every other profile.
+
+## Draft acceptance by depth (strict servers mtp1-a, R188 / R187 / R191)
+
+| depth | per-position acceptance | mean accepted length | tok/s | implied step time |
+|---|---|---|---|---|
+| 1 | 0.927 | 1.93 | 54.94 | 35.2 ms |
+| 2 | 0.844, 0.748 | 2.59 | 70.14 | 36.9 ms |
+| 3 | 0.842, 0.704, 0.526 | 3.07 | 79.18 | 38.8 ms |
+
+Each extra draft position costs about 1.7 ms per step; the target forward (about 30 ms, the MTP0 rate of 33.1
+tok/s) dominates. Depth 4 (R197, queued) should reach roughly 85 tok/s if the fourth position accepts near 0.4.
