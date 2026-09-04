@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# R199c (2026-09-04): torch profiler capture, 8-token window, 24g container (R199b: workers died writing a 128-step trace under 12g) of MTP1 decode steps on the R187 configuration (diagnostic only; no publication).
+# R199c (2026-09-04): torch profiler capture, 8-token window, 12g container (R199b: workers died writing a 128-step trace; 8 steps keep the trace small) of MTP1 decode steps on the R187 configuration (diagnostic only; no publication).
 # Standalone docker run mirroring run-server.sh with VLLM_TORCH_PROFILER_DIR added; /start_profile, one 128-token completion, /stop_profile.
 set -uo pipefail
 while kill -0 "${1:?pid}" 2>/dev/null; do sleep 30; done
 out=/mnt/fast-ai/bench-results/qwen38-fp8-r187-decode-profile-20260904-r199c; mkdir -p "$out/profile" "$out/cache"
 img=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156; model=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8; port=18130; name=qwen38-fp8-r199c-profile
 CC='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
-docker run -d --rm --name "$name" --ulimit core=0 --memory 24g --memory-swap 28g --device /dev/dri:/dev/dri --group-add render --cap-add SYS_PTRACE --security-opt label=disable --ipc=host --shm-size=8g \
+docker run -d --rm --name "$name" --ulimit core=0 --memory 12g --memory-swap 16g --device /dev/dri:/dev/dri --group-add render --cap-add SYS_PTRACE --security-opt label=disable --ipc=host --shm-size=8g \
   -p 127.0.0.1:$port:8000 -v "$model:/model:ro" -v "$out/cache:/root/.cache/vllm" -v "$out/profile:/profile" \
   -e ZE_AFFINITY_MASK=0,1 -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 -e VLLM_TARGET_DEVICE=xpu -e VLLM_WORKER_MULTIPROC_METHOD=spawn -e VLLM_XPU_ENABLE_XPU_GRAPH=0 \
   -e TORCHINDUCTOR_DETERMINISTIC=0 -e VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=1 -e VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=1 -e VLLM_XPU_FP8_BLOCK_W8A16=1 -e VLLM_XPU_GDN_SPLIT_MIXED=1 \
