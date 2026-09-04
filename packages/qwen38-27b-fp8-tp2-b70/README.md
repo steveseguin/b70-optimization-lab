@@ -25,6 +25,14 @@ containers on two Intel Arc Pro B70 32 GiB cards.
 > and [R188](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md)
 > results and the [R182-R186 diagnosis](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md).
 
+> **Prebuilt image (optional):** the exact image behind this line is on GitHub
+> Container Registry, pinned by digest, and the digest equals the image id the
+> launchers verify, so nothing changes in the recipe except skipping the build:
+> `docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8@sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0`
+> then tag it `neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156`
+> and run the contract verifier (see the
+> [guide](../../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md#prebuilt-image-optional-ghcr)).
+
 > **Determinism scope:** both profiles return one token stream and one logprob
 > array across five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens,
 > and every concurrent output is byte-identical to its single-request answer
