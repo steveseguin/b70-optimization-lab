@@ -45,3 +45,13 @@ per-card GEMM work): if its decode step is close to TP2's, TP2's advantage is be
 synchronization and a device-side one-shot P2P all-reduce (the CUDA `custom_all_reduce` pattern; vLLM's XPU
 communicator has no such path, only oneCCL via torch.distributed) becomes the highest-value kernel project on
 this lane. The theoretical headroom is large: 3.5 ms of compute per 35 ms step.
+
+## R207a (10:34-10:45): dropping the host-side `Work.wait()` after each all-reduce changes nothing
+
+R156 + `docker/r207-allreduce-no-host-wait.py` (`VLLM_XPU_ALLREDUCE_HOST_WAIT=0`, confirmed in the container),
+R187 configuration, MTP1 strict pair vs the R187 MTP0 oracle: 55.220 / 55.113 tok/s (published 54.935), 12/12 vs
+sibling and vs the oracle. Lossless and within noise. So XCCL's `wait()` is not a host stall on this stack (a
+stream-level dependency at most), and the idle gaps of R199c are not caused by it. The remaining explanation is
+per-launch host overhead over the ~400 custom-op dispatches per forward (233 W8A16 GEMMs, 128 all-reduces, 48
+GDN calls); R206b (TP1: no collectives) is the discriminator, and if it confirms, the lever is fewer or cheaper
+launches (fused/persistent decoder kernels), not collective plumbing.
