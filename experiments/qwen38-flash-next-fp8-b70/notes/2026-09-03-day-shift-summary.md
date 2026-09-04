@@ -125,8 +125,10 @@ to iterate); publish a host-tuning guide; general improvements welcome.
 
 ## Standing
 
-The deterministic MTP0 full-decode-graph line is the record. MTP1 on that
-line is now bit-exact with it at the verification step (A112) and, in the
-full decode graph, reproduces the short-context hash at 1.4x (A113 short
-rows); the depth rows and quality of A113 decide whether A114/A115 (the
-frozen MTP1 client and its fresh-server repeat) become the promotion pair.
+The deterministic MTP0 full-decode-graph line is the record at every
+depth. MTP1 on that line is bit-exact with it (A112 traces; A113 battery;
+A120/A121 frozen client on two servers): every output pin equal, short
+context 1.20x (client) to 1.38x (cold battery), depth 0.6x with 1.6x the
+time to first token. The MTP1 line is published as the certified lossless
+short-context candidate; the depth cost (the eager drafter step on XPU) is
+the next lever.

@@ -88,6 +88,48 @@ Packets: `experiments/qwen38-flash-next-fp8-b70/tools/{launch,supervise}-tp4-mtp
 and `run-tp4-mtp0-4352-ple-only-a73-fullgraphdet-w13n32-client.sh` (A78 is
 the same packet at attempt 78).
 
+## Deterministic MTP1 line (certified lossless 2026-09-03, short-context candidate)
+
+The same deterministic full-decode-graph identity with one speculative
+token (`num_speculative_tokens` 1, capture sizes [1, 2], KV 376569856
+bytes) and three exact-verify selectors that make the two-row verification
+step reduce exactly like the one-row decode step: verifier rows through the
+ordinary GDN decode kernel (`VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1`), row-wise
+TP all-reduce (`VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2`) and a row-wise
+hyperconnection RMSNorm variance (`VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2`),
+overlay `1b2a17c1`. Per-layer traces show the verification step bit-exact
+with the MTP0 step through all 48 layers on every rank (A112), and the
+frozen client's outputs equal the MTP0 line's authorities on two
+independently started servers (A120, A121): MTP1 on this line changes no
+answer.
+
+| served capacity | attempts | short p146/o256 after first text | exact 2K p2048/o128 (99-interval) | exact 4K p4096/o128 (99-interval) | quality |
+| --- | --- | ---: | ---: | ---: | --- |
+| 4352 | A120, A121 | center **`27.149928 tok/s`**, six rows `22.02-31.38` (MTP0 line `22.66`) | four rows `8.84-9.17`, median `9.039214`, hash `afffd211...` (MTP0 `13.99`) | four rows `7.14-8.05`, median `7.724194`, hash `c6193cc6...` (MTP0 `12.78`) | 6/7 semantic (`code_execution=30`), 16/16 one hash `3b0b3192...`, exact needle; 786 size-2 graph dispatches per client |
+
+It is faster than the MTP0 line only at short context (1.20x in the
+frozen client, whose short rows follow the quality suite; 1.38x in the
+cold-first diagnostic battery A113, `31.20/34.73/31.31`) and slower at
+depth (0.65x at 2K, 0.60x at 4K, about 1.6x the time to first token), the
+same depth cost the plain MTP1 screen A81 showed, so the selectors cost
+nothing measurable. The MTP0 line stays the record for the 2K and 4K rows;
+this line is the short-context candidate and the first MTP line on
+Flash-Next whose outputs a third party can reproduce. The depth cost is the
+next lever (the drafter runs eagerly on XPU; only piecewise graphs support
+it).
+
+Notes: [localization](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a104-a105-allreduce-localization.md),
+[A113](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a113-graph-three-flags-battery-result.md),
+[A120](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a120-frozen-client-result.md),
+[A121](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a121-fresh-repeat-result.md);
+data: [A120 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp1-a120-frozen-client-summary.json),
+[A121 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp1-a121-frozen-client-summary.json).
+Packets: `experiments/qwen38-flash-next-fp8-b70/tools/{launch,supervise}-tp4-mtp1-4352-ple-only-a120-fullgraphdet-w13n32.sh`,
+`run-tp4-mtp1-4352-ple-only-a120-fullgraphdet-w13n32-client.sh` and
+`run-q38-a120-host-controlled.sh` (A121 is the same packet at attempt 121;
+the client must be started once the server is up, e.g. through a driver
+that polls the run directory's server log for `Application startup complete`).
+
 ## Measured point
 
 The exact attempt-19 identity was text-only, TP4 + EP4, eager/graph-off, MTP0,

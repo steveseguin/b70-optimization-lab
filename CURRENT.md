@@ -4177,3 +4177,14 @@ so the B70s keep minors 0/2/3/4, tuning) restored the frozen identity. See
 the [localization note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a104-a105-allreduce-localization.md),
 the [A113 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a113-graph-three-flags-battery-result.md)
 and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-day-shift-summary.md).
+A120 (22:08) and A121 (22:32), the frozen MTP1 client and its fresh-server
+repeat, both passed every gate (three earlier packets, A114/A116/A118,
+failed only on identity literals of their own: the tuned-map resolver's
+head pin, then size-1 dispatch requirements MTP1 never meets). Pair
+centers: short `27.15 tok/s` (1.20x the MTP0 line; six rows `22.02-31.38`),
+exact-2K `9.04` and exact-4K `7.72` on the MTP0 authority hashes (0.65x and
+0.60x), 786 size-2 graph dispatches per client. The results packet carries
+the section as the certified lossless MTP1 line and short-context
+candidate; the MTP0 line stays the record at depth. See the
+[A120 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a120-frozen-client-result.md)
+and the [A121 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a121-fresh-repeat-result.md).
