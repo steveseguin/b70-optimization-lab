@@ -1,0 +1,214 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r156-mtp2-no-splitting-full-20260903-r187",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-no-splitting-full-ladder-r187-prereg.json",
+ "status": "qualification of R156 + COMPILATION_CONFIG splitting_ops=[] (whole-graph torch.compile) at MTP depth 2: G1-G5 12/12, depth-2 center 70.142 tok/s, MTP0 center 33.097 tok/s; depth-2 ladder phantom-free and exact through c4; MTP0 ladder output-identical c1-c64",
+ "boot_id": "88f0984f-9533-42f6-b35b-08d329f62b34",
+ "repo_head_at_launch": "b3c7b05c04b305af83ce620f1d9ea85a7a860690",
+ "campaign_complete": true,
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "compilation_config": {
+  "splitting_ops": [],
+  "cudagraph_mode": "PIECEWISE (inert, XPU graphs disabled)",
+  "inductor_compile_config": "lane default (deterministic)"
+ },
+ "speculative_config": {
+  "method": "qwen3_next_mtp",
+  "num_speculative_tokens": 2
+ },
+ "gates_passed": {
+  "G1": true,
+  "G2": true,
+  "G3": true,
+  "G5": true,
+  "G6_mtp0_identity_c1_c64": true,
+  "G6_mtp2_identity_through": "c4"
+ },
+ "comparisons": {
+  "G1_mtp0_a_vs_mtp0_b": "12/12",
+  "G2_mtp1_a_vs_mtp1_b": "12/12",
+  "G3_mtp1_a_vs_mtp0_a": "12/12",
+  "G3_mtp1_b_vs_mtp0_a": "12/12",
+  "G5_probe_224_250_300": "ids, logprobs, top-k identical"
+ },
+ "attempts": {
+  "mtp0-a": {
+   "label": "mtp0-a",
+   "class_balanced_median_tok_s": 33.1113896507058,
+   "class_medians": {
+    "analysis": 33.10917151135036,
+    "code": 33.117208911407985,
+    "documentation": 33.10982169166676,
+    "operations": 33.10653585022539,
+    "prose": 33.11295760974484,
+    "structured-writing": 33.12051074478369
+   }
+  },
+  "mtp0-b": {
+   "label": "mtp0-b",
+   "class_balanced_median_tok_s": 33.08205798180306,
+   "class_medians": {
+    "analysis": 33.083175868132784,
+    "code": 33.09195084179456,
+    "documentation": 33.08094009547334,
+    "operations": 33.07661627037925,
+    "prose": 33.07562005673116,
+    "structured-writing": 33.09583896354967
+   }
+  },
+  "mtp2-a": {
+   "label": "mtp1-a",
+   "class_balanced_median_tok_s": 70.14620508054756,
+   "class_medians": {
+    "analysis": 60.960946988847255,
+    "code": 72.2980114665923,
+    "documentation": 72.63712254771748,
+    "operations": 79.60165268176225,
+    "prose": 67.9943986945028,
+    "structured-writing": 67.9672867901998
+   }
+  },
+  "mtp2-b": {
+   "label": "mtp1-b",
+   "class_balanced_median_tok_s": 70.13785841453097,
+   "class_medians": {
+    "analysis": 61.00648950058856,
+    "code": 72.30826434126735,
+    "documentation": 73.13542237937067,
+    "operations": 79.65887642338795,
+    "prose": 67.91607458467982,
+    "structured-writing": 67.96745248779457
+   }
+  }
+ },
+ "centers": {
+  "mtp0_class_balanced_tok_s": 33.09672381625443,
+  "mtp2_class_balanced_tok_s": 70.14203174753926
+ },
+ "ladders": {
+  "mtp2": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 62.758146842300846,
+     "misses": []
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 67.83564167668506,
+     "misses": []
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 210.76317425257872,
+     "misses": []
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "7/8",
+     "aggregate_tok_s_wall": 368.36810505583435,
+     "misses": [
+      {
+       "prompt_id": "evidence-c007",
+       "first_divergence_index": 13
+      }
+     ]
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 565.7441550578696,
+     "misses": []
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "31/32",
+     "aggregate_tok_s_wall": 783.8649060946087,
+     "misses": [
+      {
+       "prompt_id": "cache-c000",
+       "first_divergence_index": 96
+      }
+     ]
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "60/64",
+     "aggregate_tok_s_wall": 773.449663047798,
+     "misses": [
+      {
+       "prompt_id": "cache-c000",
+       "first_divergence_index": 96
+      },
+      {
+       "prompt_id": "cache-c032",
+       "first_divergence_index": 35
+      },
+      {
+       "prompt_id": "index-c033",
+       "first_divergence_index": 33
+      },
+      {
+       "prompt_id": "cache-c040",
+       "first_divergence_index": 60
+      }
+     ]
+    }
+   ],
+   "oracle_first_token_phantom_rows": []
+  },
+  "mtp0": {
+   "classification": "output-identity-qualified",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 33.375431781866325,
+     "misses": []
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 64.35204956704715,
+     "misses": []
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 123.93764901565976,
+     "misses": []
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 234.38391319439305,
+     "misses": []
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 419.9261644481194,
+     "misses": []
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "32/32",
+     "aggregate_tok_s_wall": 672.0107142920494,
+     "misses": []
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "64/64",
+     "aggregate_tok_s_wall": 927.9028136957172,
+     "misses": []
+    }
+   ],
+   "oracle_first_token_phantom_rows": []
+  }
+ },
+ "note": "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md"
+}

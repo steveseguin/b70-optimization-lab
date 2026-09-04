@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R156 profile (row-invariant W8A16 kernel plus a mixed-step GDN split) is clean-boot-qualified at 54.603 tok/s MTP1 (FP16 target verifier, draft-only INT4 head) and 33.314 tok/s MTP0. MTP0 output is byte-identical to a single request at every tested concurrency through 64 users; MTP1 through 16 users. Both are repeat-exact at every tested prompt length from 100 to 300 tokens. Independent host-installation replay passed on a second lab host; its slower CPU and fabric lower the single-user rate, see the guide's know-your-host section.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1 through 16, depth 2 through 4. The whole-graph compile removes the depth-2 phantom first token that the piecewise pipeline produced under async scheduling (R182-R187, 2026-09-03); it is a configuration change only, no patch and no image rebuild.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -40,13 +40,13 @@
       "mixed-step GDN split"
     ],
     "published_at": "2026-08-27",
-    "benchmark_status": "Strict R156 promotion (2026-09-03, clean boot): two same-image MTP0 controls 33.326/33.302 tok/s matched 12/12; two MTP1 candidates 54.500/54.707 tok/s (center 54.603) matched 12/12 against each other and against the MTP0 oracle; canaries before and after every server; cache zero; repeat-exact at 100, 168, 200, 224, 250, and 300 prompt tokens on both profiles. Identity ladders (64 sequential oracles, then 1-64 concurrent users, 128 tokens each): MTP0 exact 64/64 through c64 (reproduced on three servers); MTP1 exact through c16, 31/32 at c32 and 56/64 at c64, so MTP1 aggregate rates are published only through c16. The R156 image is R139 plus a Python patch (vllm/_xpu_ops.py) that runs mixed prefill/decode GDN steps as pure calls; binaries are the R139 release. Independent host replay: recipe closure and all correctness gates pass on a Threadripper PRO/PCIe Gen4 host at 1.8x lower decode rate (host submission latency), recovered to 94% with XPU Graph on.",
+    "benchmark_status": "Strict R187 qualification (2026-09-03, clean boot, whole-graph compile splitting_ops=[]): two same-configuration MTP0 controls 33.111/33.082 tok/s matched 12/12; two depth-1 MTP1 candidates 55.006/54.865 tok/s (center 54.935) matched 12/12 against each other and against the MTP0 oracle (R188); two depth-2 candidates 70.146/70.138 tok/s (center 70.142) matched 12/12 (R187); canaries before and after every server; cache zero; repeat-exact at 224, 250 and 300 prompt tokens on both MTP profiles; identity ladders: MTP0 64/64 through c64 (927.9 tok/s aggregate), MTP1 exact through c16 (477.7 tok/s; c32 31/32, c64 59/64), depth 2 exact through c4 (210.8 tok/s; c8 7/8, c32 31/32, c64 60/64).",
     "featured_metric": {
-      "value": 54.60324390231517,
+      "value": 54.93533953556977,
       "unit": "tok/s",
-      "label": "strict varied-prompt decode (R156 MTP1)",
-      "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-image MTP0 oracle, canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).",
-      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-promotion-r156f-result.json"
+      "label": "strict varied-prompt decode (R187 MTP1, whole-graph compile)",
+      "scope": "Median of two clean-boot fresh-server class-balanced medians over the complete fixed 12-prompt/six-class natural-512 suite (48-78-token prompts), separate empty compile caches, 12/12 complete token arrays exact versus a same-configuration MTP0 oracle, canaries before and after, cache zero; repeat-exact at 100-300-token prompts; output-identical through 16 concurrent users (MTP0: through 64).",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r188-whole-graph-depth1-result.json"
     }
   },
   "contributors": [
@@ -119,14 +119,14 @@
       "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
       "experiments/qwen38-27b-b70/patches/vllm-qwen38-xpu-gdn-split-mixed-step-r156-20260903.patch"
     ],
-    "reason": "The qualified R156 profile is the R62 image plus a Python mixed-step GDN split (vllm/_xpu_ops.py, VLLM_XPU_GDN_SPLIT_MIXED=1) and a rebuilt vllm-xpu-kernels extension whose oneDNN W8A16 GEMM uses a fixed-K row-invariant strategy selector (two oneDNN patches), so greedy output no longer depends on batch shape for batch sizes 1-512 and is repeat-exact at every prompt length. Everything else is the R62 chain: block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, the deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection with an FP16 target verifier. The compiled extension is published as a release binary with whole-file and section digests, and can be rebuilt from the pinned sources with host oneAPI 2026.1. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
+    "reason": "The qualified R187 profile is the R156 profile served with one whole-graph torch.compile (COMPILATION_CONFIG splitting_ops=[]; the piecewise split at the attention/GDN ops produced a phantom first token at MTP depth 2 under async scheduling, R182-R187). R156 is the R62 image plus a Python mixed-step GDN split (vllm/_xpu_ops.py, VLLM_XPU_GDN_SPLIT_MIXED=1) and a rebuilt vllm-xpu-kernels extension whose oneDNN W8A16 GEMM uses a fixed-K row-invariant strategy selector (two oneDNN patches), so greedy output no longer depends on batch shape for batch sizes 1-512 and is repeat-exact at every prompt length. Everything else is the R62 chain: block-W8A16, deterministic GDN B/A and compiler-visible recurrent state, explicit oneCCL Work.wait, packed Gemma RMSNorm serial replay, the content-verified R50 GDN build, the deterministic vLLM compilation contract with XPU Graph disabled, and draft-only INT4 vocabulary projection with an FP16 target verifier. The compiled extension is published as a release binary with whole-file and section digests, and can be rebuilt from the pinned sources with host oneAPI 2026.1. Dynamic MTP additionally requires the active-width GDN and active-lookahead Mamba allocation patches and remains research-only."
   },
   "commands": {
     "preflight": "IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156 IMAGE_CONTRACT_PROFILE=mtp1-serial-fa-split-gdn EXPECTED_XPU_EXTENSION_SHA256=f912e12de1d79206221142c9a50af2aba70d2c77c735c9cd2d5d8d9def0740d1 EXPECTED_XPU_OPS_SHA256=6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064 MODEL_DIR=/path/to/qwen3.8-27b-fp8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/preflight.sh",
-    "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-your-r156-image-id experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-split-mixed-r156-server.sh",
+    "launch": "PORT=18124 MODEL_DIR=/path/to/qwen3.8-27b-fp8 VLLM_CACHE_DIR=/path/to/new-runtime-cache EXPECTED_IMAGE_ID=sha256:replace-with-your-r156-image-id experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh",
     "health": "curl -fsS http://127.0.0.1:18124/health",
-    "benchmark": "OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-split-mixed-r156 PROFILE_LABEL=mtp1-split-mixed-r156 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-    "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-split-mixed-r156"
+    "benchmark": "OUT_DIR=/path/to/new-strict-attempt MODEL_NAME=qwen38-fp8-block-w8a16-mtp1-whole-graph-r187 PROFILE_LABEL=mtp1-whole-graph-r187 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "stop": "docker stop -t 30 qwen38-fp8-w8a16-mtp1-whole-graph-r187"
   },
   "dependencies": [
     "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md",
@@ -454,7 +454,15 @@
     "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-prereg.json",
     "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-split-mixed-r156-result.json",
     "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-gdn-fa-mixed-step-census-r155-result.json",
-    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md"
+    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md",
+    "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-whole-graph-depth2-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r188-whole-graph-depth1-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md",
+    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md",
+    "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md",
+    "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh",
+    "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-whole-graph-r187-server.sh",
+    "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh"
   ],
   "performance_profiles": [
     {

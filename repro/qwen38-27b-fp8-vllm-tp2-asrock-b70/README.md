@@ -11,12 +11,65 @@
 
 This is a quality-gated vLLM/XPU reproduction packet for two ASRock Intel Arc
 Pro B70 32 GiB cards. It uses Qwen's official block-scaled FP8 target, native
-FP16 KV, and TP2. The R156 profile (row-invariant W8A16 kernel plus a
-mixed-step GDN split) is lab-qualified at **`54.603 tok/s`** MTP1 (unchanged
-FP16 target verifier) and **`33.314 tok/s`** MTP0. MTP0 output is byte-identical
-to a single request through 64 concurrent users, MTP1 through 16, and both are
-repeat-exact at every tested prompt length; deeper dynamic MTP remains a
-research lane.
+FP16 KV, and TP2. The R187 profile (the R156 row-invariant W8A16 kernel and
+mixed-step GDN split, served with one whole-graph `torch.compile`) is
+lab-qualified at **`54.935 tok/s`** MTP1 (unchanged FP16 target verifier),
+**`70.142 tok/s`** MTP depth 2, and **`33.097 tok/s`** MTP0. MTP0 output is
+byte-identical to a single request through 64 concurrent users, MTP1 through
+16, depth 2 through 4, and all three are repeat-exact at every tested prompt
+length.
+
+## Whole-graph compile R187 profile (qualified 2026-09-03)
+
+R187 is the R156 image and launcher chain with one change in the vLLM
+compilation config: `"splitting_ops": []`, so the model is compiled as one
+Inductor graph instead of pieces split at every attention/GDN op. XPU graphs
+are disabled on this lane (`VLLM_XPU_ENABLE_XPU_GRAPH=0`), so the split had
+no graph-capture role; it was the source of a phantom first token at MTP
+depth 2 under async scheduling (a stale-memory read of the last two rows of
+one request's final hidden state, rank-divergent; R176-R186). No patch, no
+image rebuild. Clean-boot qualification (`r187`, `r188`):
+
+| arm | attempt | class-balanced decode | output gate |
+| --- | ---: | ---: | ---: |
+| R187 MTP0 | `mtp0-a` | 33.111390 tok/s | oracle |
+| R187 MTP0 | `mtp0-b` | 33.082058 tok/s | 12/12 vs mtp0-a |
+| R187 MTP depth 2 | `mtp2-a` | 70.146205 tok/s | 12/12 vs sibling and mtp0-a |
+| R187 MTP depth 2 | `mtp2-b` | 70.137858 tok/s | 12/12 vs sibling and mtp0-a |
+| R188 MTP1 | `mtp1-a` | 55.005828 tok/s | 12/12 vs sibling and mtp0-a |
+| R188 MTP1 | `mtp1-b` | 54.864851 tok/s | 12/12 vs sibling and mtp0-a |
+| R187 MTP1 center | **54.935340 tok/s** | — | **qualified** |
+| R187 MTP depth-2 center | **70.142032 tok/s** | — | **qualified** |
+| R187 MTP0 center | **33.096724 tok/s** | — | **qualified** |
+
+Determinism scope: the 224/250/300-token repeat probe is exact on MTP1 and
+depth 2; the c1-c64 identity ladder is exact at every level for MTP0 (64/64
+at c64), exact through c16 for MTP1 (c32 31/32, c64 59/64) and exact through
+c4 for depth 2 (c8 7/8, c16 16/16, c32 31/32, c64 60/64); the depth-2
+sequential 64-prompt oracle pass has no phantom row. Aggregate rates are
+published only where identity holds: MTP0 through c64 (927.9 tok/s at c64),
+MTP1 through c16 (477.7 tok/s at c16), depth 2 through c4 (210.8 tok/s at
+c4); single server, one pass per point. See the
+[R187 result](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md),
+the [R188 result](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md)
+and the [diagnosis](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md).
+
+### Run R187
+
+Build R156 exactly as below; launch through the R187 wrappers, which only add
+the compilation config to the R156 chain:
+
+```bash
+EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh   # MTP1, 54.935 tok/s
+EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh   # MTP depth 2, 70.142 tok/s
+EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-whole-graph-r187-server.sh   # MTP0, 33.097 tok/s
+```
+
+The piecewise R156 line below stays valid for MTP1 and MTP0 (54.603 /
+33.314 tok/s); do not serve MTP depth 2 on it.
 
 ## Mixed-step split R156 profile (qualified 2026-09-03)
 

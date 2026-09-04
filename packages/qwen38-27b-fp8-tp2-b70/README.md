@@ -3,22 +3,30 @@
 This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
-> **Strict R156 qualified: MTP1 `54.603 tok/s`, MTP0 `33.314 tok/s`.** On a
-> clean boot (2026-09-03), two fresh MTP1 servers measured `54.500` and
-> `54.707 tok/s` and two fresh MTP0 servers `33.326` and `33.302 tok/s`; every
-> pairwise comparison matched all 12 complete token arrays, canaries passed
-> before and after, cache stayed zero, and the target verifier stayed FP16
-> (draft-only INT4 head). R156 is the row-invariant R139 image plus a Python
-> mixed-step GDN split; MTP0 output is byte-identical to a single request
-> through 64 concurrent users, MTP1 through 16. See the
-> [R151-R162 note](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-c32-identity-source-census-r151-r162.md).
+> **Strict R187 qualified: MTP1 `54.935 tok/s`, MTP depth-2 `70.142 tok/s`,
+> MTP0 `33.097 tok/s`.** On a clean boot (2026-09-03), two fresh depth-1
+> MTP1 servers measured `55.006` and `54.865 tok/s`, two depth-2 servers
+> `70.146` and `70.138 tok/s`, and two fresh MTP0 servers `33.111` and
+> `33.082 tok/s`; every pairwise comparison matched all 12 complete token
+> arrays, canaries passed before and after, cache stayed zero, and the target
+> verifier stayed FP16 (draft-only INT4 head). R187 is the R156 image and
+> launcher chain served with one whole-graph `torch.compile`
+> (`splitting_ops=[]`) instead of vLLM's piecewise split at the attention/GDN
+> ops; the split produced a phantom first token at MTP depth 2 under async
+> scheduling and, with XPU graphs disabled, had no other role. MTP0 output is
+> byte-identical to a single request through 64 concurrent users, MTP1
+> through 16, depth 2 through 4. See the
+> [R187](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md)
+> and [R188](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md)
+> results and the [R182-R186 diagnosis](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md).
 
 > **Determinism scope:** both profiles return one token stream and one logprob
 > array across five repeats at 100, 168, 200, 224, 250, and 300 prompt tokens,
 > and every concurrent output is byte-identical to its single-request answer
-> through 64 simultaneous users for MTP0 and through 16 for MTP1. Above 16,
-> MTP1 still lets a few near-tie prompts take a different, equally valid
-> branch (1/32, 8/64), so MTP1 aggregate rates are published only through c16. The
+> through 64 simultaneous users for MTP0, through 16 for MTP1 and through 4
+> for MTP depth 2. Above that, a few near-tie prompts take a different,
+> equally valid branch (MTP1 1/32, 5/64; depth 2 1/8, 1/32, 4/64), so
+> aggregate rates are published only through those levels. The
 > previous R62 profile (`54.424603 tok/s`) failed repeat determinism at
 > 168-250-token prompts and concurrency identity at c2; it remains buildable
 > from the same chain.
@@ -329,7 +337,7 @@ PROFILE_LABEL=mtp1-fixed-k-r139 \
   repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
 ```
 
-The matched R139 MTP0 profile (`33.314 tok/s`, the target-only baseline and
+The matched MTP0 profile (`33.097 tok/s` on the whole-graph compile, `33.314 tok/s` on the piecewise R156 line, the target-only baseline and
 the oracle the MTP1 result is compared against) uses the same image without
 speculative decoding:
 

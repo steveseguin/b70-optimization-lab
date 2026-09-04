@@ -1,0 +1,136 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r156-mtp1-no-splitting-depth1-strict-20260903-r188a + qwen38-fp8-r156-mtp1-no-splitting-depth1-ladder-20260903-r188b",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp1-no-splitting-depth1-r188-prereg.json",
+ "status": "qualification of the published depth-1 MTP1 profile on R156 + splitting_ops=[]: G2/G3 12/12 vs the R187 same-config MTP0 oracle, center 54.935 tok/s, probe exact, ladder exact through c16 (c32 31/32, c64 59/64)",
+ "boot_id": "88f0984f-9533-42f6-b35b-08d329f62b34",
+ "repo_head_at_launch": "179e39b18025f72384117aaf31de57246874a44f",
+ "campaign_complete": true,
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "oracle_root": "qwen38-fp8-r156-mtp2-no-splitting-full-20260903-r187/mtp0-a",
+ "compilation_config": {
+  "splitting_ops": []
+ },
+ "speculative_config": {
+  "method": "qwen3_next_mtp",
+  "num_speculative_tokens": 1
+ },
+ "gates_passed": {
+  "G2": true,
+  "G3": true,
+  "G5": true,
+  "G6_identity_through": "c16"
+ },
+ "comparisons": {
+  "G2_mtp1_a_vs_mtp1_b": "12/12",
+  "G3_mtp1_a_vs_mtp0_a": "12/12",
+  "G3_mtp1_b_vs_mtp0_a": "12/12",
+  "G5_probe_224_250_300": "ids, logprobs, top-k identical"
+ },
+ "attempts": {
+  "mtp1-a": {
+   "label": "mtp1-a",
+   "class_balanced_median_tok_s": 55.005827901533834,
+   "class_medians": {
+    "analysis": 51.80832206936329,
+    "code": 55.41532340164545,
+    "documentation": 57.717293024086786,
+    "operations": 56.748646454862445,
+    "prose": 54.26899713741303,
+    "structured-writing": 54.59633240142222
+   }
+  },
+  "mtp1-b": {
+   "label": "mtp1-b",
+   "class_balanced_median_tok_s": 54.8648511696057,
+   "class_medians": {
+    "analysis": 51.613326007758594,
+    "code": 55.09469186058698,
+    "documentation": 57.53448740813306,
+    "operations": 55.889530186303475,
+    "prose": 54.22595966692592,
+    "structured-writing": 54.63501047862442
+   }
+  }
+ },
+ "centers": {
+  "mtp1_class_balanced_tok_s": 54.93533953556977
+ },
+ "ladders": {
+  "mtp1": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 53.5361089749907,
+     "misses": []
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 72.1595380864749,
+     "misses": []
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 193.3635682197048,
+     "misses": []
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 353.233907423836,
+     "misses": []
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 477.6588917840359,
+     "misses": []
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "31/32",
+     "aggregate_tok_s_wall": 810.6841190575542,
+     "misses": [
+      {
+       "prompt_id": "testing-c013",
+       "first_divergence_index": 34
+      }
+     ]
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "59/64",
+     "aggregate_tok_s_wall": 1063.4460321285578,
+     "misses": [
+      {
+       "prompt_id": "index-c017",
+       "first_divergence_index": 49
+      },
+      {
+       "prompt_id": "benchmark-c019",
+       "first_divergence_index": 60
+      },
+      {
+       "prompt_id": "cache-c032",
+       "first_divergence_index": 35
+      },
+      {
+       "prompt_id": "index-c033",
+       "first_divergence_index": 33
+      },
+      {
+       "prompt_id": "index-c041",
+       "first_divergence_index": 46
+      }
+     ]
+    }
+   ],
+   "oracle_first_token_phantom_rows": []
+  }
+ },
+ "note": "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md"
+}
