@@ -125,6 +125,7 @@ the conventional 99-interval field.
 | Qwen3.8 27B AutoRound INT4, TP2 MTP5 | 2x Arc Pro B70 | Historical `101.922` is preserved as a measured margin-on speed observation; its published 25/25 determinism/quality interpretation does not survive margin-free review, and upstream disposition remains a human decision | `cmszbkxco0e11ms01l2rixxbt` | [corrected evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp5-20260818.json); [position](../experiments/qwen38-27b-b70/notes/2026-08-23-lmx-position-and-candidates.md) |
 | Qwen3.8 27B AutoRound INT4, TP2 MTP4 | 2x Arc Pro B70 | Historical `100.497083` is preserved as a measured margin-on speed observation; it used the same output-changing margin and margin-on baseline, and upstream disposition remains a human decision | `cmszarna10e0nms0103hv0tve` | [corrected evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp4-20260818.json); [position](../experiments/qwen38-27b-b70/notes/2026-08-23-lmx-position-and-candidates.md) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
+| Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0 | 4x Arc Pro B70 | **14.433684 conventional interval median (class-balanced; 14.757123 all-prompt median)**, fixed cold realistic gate, no speculation, outputs bit-identical across five servers | [`cmtn32b2w000tmm01t7j2wlpn`](https://www.localmaxxing.com/runs/cmtn32b2w000tmm01t7j2wlpn) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260904-tp4-mtp0-a134-realistic-suite-v1-result.json); [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260904-tp4-mtp0-a134-promotion-attestation.json) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 47.819 median tok/s, fixed cold realistic gate | `cmrjbx8bc02g8mj01yzz2v701` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json) |
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
@@ -680,3 +681,19 @@ All three approved on submission (HTTP 201). Attestations: `experiments/qwen38-2
 | `qwen38-27b-official-fp8-whole-graph-r187-tp2-mtp3-strict-79tok-20260903` | `cmtmfa2t101u1l601gth9lyx6` | 1 | 56 | 512 | **79.183 median 1-100 after TTFT** | R191 depth-3 strict pair 79.163/79.203, 12/12 vs oracle; identity c1-c16 (two ladders) |
 | `qwen38-27b-official-fp8-whole-graph-r187-tp2-mtp4-strict-82tok-20260904` | `cmtmk61qo01x8l601vtqbitg5` | 1 | 56 | 512 | **82.396 median 1-100 after TTFT** | R197 depth-4 strict pair 82.447/82.345, 12/12 vs oracle; identity c1-c16 (two ladders, R197/R201) |
 | `qwen38-27b-official-fp8-whole-graph-r187-tp2-mtp5-strict-86tok-20260904` | `cmtn23c500005mm010ierd4g3` | 1 | 56 | 512 | **86.182 median 1-100 after TTFT** | R200 depth-5 strict pair 86.266/86.097, 12/12 vs oracle; identity c1-c16 (two ladders, R204a/b) |
+
+## Qwen3.8 Flash-Next 125B-A6B official FP8 (4x B70, vLLM XPU) — deterministic full-decode-graph line (2026-09-04)
+
+Approved on submission (HTTP 201). Identity: the promoted MTP0 line (overlay
+`2169dbfe` on `1372c62d` + staged kernels `2f829747`, `FULL_DECODE_ONLY`
+capture size 1, `VLLM_XPU_MKLDNN_DETERMINISTIC=1`, public oneCCL twoshots,
+W13-N32 MoE map, PLE-only UVA, TP4/EP4, 4352 served tokens), frozen packet
+A78 at attempt 134. Fixed realistic suite v1 run once cold, cache zero on all
+twelve prompts, 512 requested output tokens, every row past 100 generated
+events. Payload queue:
+`experiments/qwen38-flash-next-fp8-b70/data/20260904-tp4-mtp0-a134-localmaxxing-payload-queue.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-realistic-20260904` | `cmtn32b2w000tmm01t7j2wlpn` | 1 | **14.433684 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 14.757123, p10 14.015291, full after-TTFT 16.058, wall 15.046, TTFT median 1.86 s) | attestation `20260904-tp4-mtp0-a134-promotion-attestation.json` binds the suite JSON to the A73/A78 quality and determinism evidence |
+

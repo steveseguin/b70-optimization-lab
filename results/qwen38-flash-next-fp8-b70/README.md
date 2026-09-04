@@ -78,6 +78,13 @@ because the full decode graph removes the host submission cost that bound
 the eager line. MTP on this line is the next lever; the previous MTP screens
 were blocked from exact verification by the jitter.
 
+LocalMaxxing: the promoted MTP0 line is submitted and approved
+(`cmtn32b2w000tmm01t7j2wlpn`, 2026-09-04) on the fixed realistic suite run
+once cold: 14.433684 tok/s class-balanced median of prompt-class medians
+(all-prompt median 14.757123, p10 14.015291, TTFT median 1.86 s), cache zero
+on every request. See the [A134 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp0-a134-realistic-suite-result.md)
+and the [ledger](../localmaxxing-submissions.md).
+
 Notes: [decision memo](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-exact-2k-authority-decision-memo.md),
 [A72](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a72-deterministic-graph-endpoint-result.md),
 [A73](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp0-a73-exact-4k-result.md),
