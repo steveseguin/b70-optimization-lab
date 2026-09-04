@@ -302,6 +302,13 @@
         "env": {
           "VLLM_XPU_GDN_SPLIT_MIXED": "1",
           "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[1],\"max_cudagraph_capture_size\":1,\"splitting_ops\":[],\"inductor_compile_config\":{\"combo_kernels\":false,\"benchmark_combo_kernel\":false,\"deterministic\":true,\"triton.autotune_pointwise\":false,\"benchmark_epilogue_fusion\":false}}"
+        },
+        "prebuilt": {
+          "registry": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8",
+          "tag": "r156-whole-graph-r187-20260903",
+          "digest": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+          "published": "2026-09-04",
+          "note": "manifest digest equals the local image id; source build remains authoritative"
         }
       },
       "repository": {

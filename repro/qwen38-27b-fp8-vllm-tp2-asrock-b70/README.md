@@ -85,6 +85,28 @@ EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
 The piecewise R156 line below stays valid for MTP1 and MTP0 (54.603 /
 33.314 tok/s); do not serve MTP depth 2 on it.
 
+### Prebuilt image (optional, GHCR)
+
+The exact locally built R156 image behind the R187 line is published on
+GitHub Container Registry; its manifest digest equals the image id the
+wrappers check, so the pull is pinned and the contract verifier applies
+unchanged. The source build above remains the authoritative recipe; this
+only skips the build.
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8@sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0
+docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8@sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0 \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+EXPECTED_XPU_OPS_SHA256=6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064 \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn \
+  neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+EXPECTED_IMAGE_ID=sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0 \
+  experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh
+```
+
+Published with `publish-r187-image-ghcr.sh` (tag
+`r156-whole-graph-r187-20260903`, 2026-09-04).
+
 ### 2K-32K real-content depth on R187 (R189, 2026-09-03)
 
 Same protocol as R150 (below): unrepeated technical prose, Python, and
