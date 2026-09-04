@@ -23,7 +23,7 @@ for arm in async-on async-off; do
   docker logs "$name" >"$out/$arm/server.log" 2>&1 || true
   if (( ok )); then
     echo "[r192 $(date +%T)] $arm healthy" | tee -a "$out/campaign.log"
-    python3 "$repo/scripts/bench-openai-concurrency-oracle.py" --base-url "http://127.0.0.1:$port" --model stock-mtp2 --api-mode completions --suite "$suite" --concurrency 1 --repeats 1 --max-tokens 128 --seed 42 --timeout 600 \
+    python3 "$repo/scripts/bench-openai-concurrency-oracle.py" --base-url "http://127.0.0.1:$port" --model stock-mtp2 --api-mode completions --suite "$suite" --concurrency 64 --repeats 1 --max-tokens 128 --seed 42 --timeout 600 \
       --request-extra-json '{"ignore_eos":true,"temperature":0}' --return-token-ids --out "$out/$arm/ladder-c1.json" >"$out/$arm/harness.stdout" 2>&1; echo "[r192 $(date +%T)] $arm harness exit $?" | tee -a "$out/campaign.log"
   else echo "[r192 $(date +%T)] ABORT: $arm server did not become healthy" | tee -a "$out/campaign.log"; fi
   docker logs "$name" >"$out/$arm/server.log" 2>&1 || true; docker stop -t 120 "$name" >/dev/null 2>&1 || true; sleep 5
