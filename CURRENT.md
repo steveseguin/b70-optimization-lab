@@ -253,7 +253,28 @@ exact through c16 with c32 31/32 and c64 59/64 (published piecewise: 31/32,
 final-op probe) measured the phantom in situ: the last two final-norm rows
 of request 33 are wrong and the two TP ranks disagree on the last one, all
 other rows exact (rank-local stale-memory signature inside a default
-piecewise piece). **Published 21:45 (user: "fix it"): R187 is the headline** (manifest chain
+piecewise piece). **2026-09-04 day (through 11:05):** depth 5 qualified and published
+(86.182 tok/s, identity c1-c16 in two ladders, LocalMaxxing
+`cmtn23c500005mm010ierd4g3`; the featured metric is now depth 5); depth 6
+repeats at 87.12 (four servers, +1.1% over depth 5, below the 2% bar; strict
+pairs only); depth 7 turns down. R199c profile: single-user decode runs GPU
+compute ~10% of the step; the rest is idle gaps and the two ranks waiting on
+each other inside 128 tiny all-reduces per forward
+([R199c](experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-r187-decode-profile-r199c-result.md)).
+Tested and closed: dropping the host `Work.wait()` (R207, lossless, neutral),
+XPU graph capture (R198, -1.3%), single-card TP1 (R206/R206b: does not fit,
+KV -1.1 GiB). The lead for the next lossless single-user win is per-launch
+host overhead across ~400 custom-op dispatches per forward: a device-side
+one-shot P2P all-reduce (128 launches + rendezvous per forward) and a cheaper
+W8A16 GEMM dispatch (233 per forward); both are kernel projects, not configs.
+Also done today: recipe surface carries the R187 ladders and depth 2-5
+profiles; `TENSOR_PARALLEL_SIZE`/`XPU_DEVICE_MASK`/`GPU_MEMORY_UTILIZATION`
+and the communicator digest override are plumbed (defaults unchanged); 14 GB of
+diagnostic compile caches removed; four-B70 replay handoff written. The INT4
+AutoRound TP2 lane stays paused: its device losses are a W4A16 kernel fault, not
+something the compile/depth levers address. vLLM issue still unfiled (user).
+
+**Published 21:45 (user: "fix it"): R187 is the headline** (manifest chain
 `r187`, wrappers `run-20260903-qwen38-fp8-{mtp0,mtp1,mtp2,mtp3}-whole-graph-r187-server.sh`,
 package/catalog/pages/READMEs). Then: R189 depth curve on R187 (MTP1
 lossless 2K-32K, decode within 1% of R150; published), R190 second depth-2
