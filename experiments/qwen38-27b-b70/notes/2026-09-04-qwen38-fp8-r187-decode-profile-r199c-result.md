@@ -46,7 +46,7 @@ synchronization and a device-side one-shot P2P all-reduce (the CUDA `custom_all_
 communicator has no such path, only oneCCL via torch.distributed) becomes the highest-value kernel project on
 this lane. The theoretical headroom is large: 3.5 ms of compute per 35 ms step.
 
-## R207a (10:34-10:45): dropping the host-side `Work.wait()` after each all-reduce changes nothing
+## R207 (10:34-10:56): dropping the host-side `Work.wait()` after each all-reduce changes nothing (MTP1 55.22/55.11; depth 4 82.61/82.74, all 12/12)
 
 R156 + `docker/r207-allreduce-no-host-wait.py` (`VLLM_XPU_ALLREDUCE_HOST_WAIT=0`, confirmed in the container),
 R187 configuration, MTP1 strict pair vs the R187 MTP0 oracle: 55.220 / 55.113 tok/s (published 54.935), 12/12 vs
