@@ -1,0 +1,4 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r187-mtp5-strict-20260904-r200","status":"preregistered-before-device-use","image":"R156 image on the R187 configuration, num_speculative_tokens=5",
+ "why":"depth 3 -> 4 gained 4% (79.18 -> 82.4 tok/s, R197a); the per-position acceptance falls ~0.15-0.2 per position while each position costs ~1.7 ms/step, so depth 5 is near the turnover.",
+ "hypothesis":"12/12 vs sibling and oracle (lossless by construction); c1 speed within +-3% of depth 4",
+ "decision":"faster by >2% -> probe+ladder later; otherwise depth 4 is the turnover and stays the deepest candidate","abort_conditions":["as R147"]}
