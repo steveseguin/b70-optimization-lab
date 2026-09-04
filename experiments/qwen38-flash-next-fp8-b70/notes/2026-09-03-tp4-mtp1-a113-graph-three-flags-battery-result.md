@@ -61,8 +61,8 @@ The frozen clients do not wait for the server, so they are started through
 a waiting driver (poll the run directory's server log for startup, then run
 the client unchanged).
 - **A118** (21:36-21:57): every output gate passed again (short
-  `26.9/27.6/26.6`-class rows, exact-2K `9.16/8.98` on `afffd211...`,
-  exact-4K on `c6193cc6...`, summary written) and the A118 verifier passed
+  `21.96/28.53/26.79`, exact-2K `9.16/8.98` on `afffd211...`, exact-4K
+  `7.70/8.05` on `c6193cc6...`, summary written) and the A118 verifier passed
   its after phase (769 size-2 FULL dispatches, 0 size-1, schema 3), but the
   client's own jq gate on that receipt still required a size-1 count above
   zero. A120 (and A121, its repeat) require the size-2 count only. Evidence:
