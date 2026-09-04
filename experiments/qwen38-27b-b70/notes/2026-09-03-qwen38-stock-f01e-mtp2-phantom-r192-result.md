@@ -21,3 +21,20 @@ build.
 Reading: the phantom is not caused by any lab patch; it exists on unpatched vLLM with this model and MTP depth 2.
 R194 (queued) repeats on stock: two more compiled arms and two `--enforce-eager` arms. If eager never shows it and
 compiled does, the upstream report can stand on stock evidence alone.
+
+## R194 (23:11-23:37): four more stock servers
+
+| arm | first token != 271 |
+|---|---|
+| default compile, async on (2nd) | none |
+| default compile, `--no-async-scheduling` (2nd) | none |
+| `--enforce-eager`, async on (1st) | **cache-c040** `[60, 271, 3833]` |
+| `--enforce-eager`, async on (2nd) | **cache-c040** |
+
+Stock tally: 2 of 6 servers show the phantom (one compiled async-off, one eager async-on), on different
+requests. Tail test on every phantom row (stock and lane): tokens after the phantom equal the normal answer for
+16-18 tokens, then drift. So the phantom token was inserted into the output stream without being in the model's
+context, and later appended as if generated. This is an upstream defect independent of torch.compile and of
+async scheduling; on the lane's deterministic build it manifests in exactly one configuration (piecewise +
+async), and the whole-graph compile avoids that history. Published wording corrected accordingly; issue draft
+`drafts/2026-09-03-vllm-issue-piecewise-mtp2-phantom.md` rewritten on the stock evidence (not filed).
