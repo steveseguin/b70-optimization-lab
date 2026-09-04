@@ -37,6 +37,38 @@
   "center_single": 85.93733161476335,
   "G3_a": "12/12 (a passed strict; b never became healthy: GPU fault during weight staging)"
  },
- "turnover": "c1 rate by depth: d1 54.935, d2 70.142, d3 79.183, d4 82.396, d5 86.182, d6 87.144, d7 85.937 (one candidate). Peak at depth 6; d6 over d5 is +1.1% (below the preregistered 2% bar), so depth 5 is the deepest candidate; its ladders (R204) were blocked by the fault.",
- "status": "turnover found at depth 6; depth 5 is the deepest candidate by the 2% rule; device work stopped by the 02:35 GPU fault (no reboot overnight per the user)"
+ "turnover": "c1 rate by depth: d1 54.935, d2 70.142, d3 79.183, d4 82.396, d5 86.182, d6 87.144, d7 85.937 (one candidate). Peak at depth 6; d6 over d5 is +1.1% (below the preregistered 2% bar), so depth 5 is the deepest candidate; its ladders (R204) were blocked by the fault. R205 (clean boot 4634e845): depth 6 repeats at 87.145/87.095 (center 87.120); four depth-6 servers span 87.05-87.24 vs four depth-5 servers 86.10-86.27: a consistent +1.1%, real but below the 2% bar.",
+ "status": "turnover found at depth 6; depth 5 is the deepest candidate by the 2% rule; device work stopped by the 02:35 GPU fault (no reboot overnight per the user)",
+ "depth6_repeat_r205": {
+  "attempts": {
+   "mtp6-a": {
+    "label": "mtp1-a",
+    "class_balanced_median_tok_s": 87.14549813572239,
+    "class_medians": {
+     "analysis": 67.70335419472484,
+     "code": 93.29549135261695,
+     "documentation": 101.56164967764461,
+     "operations": 116.75737842235927,
+     "prose": 78.18879221810268,
+     "structured-writing": 80.99550491882782
+    }
+   },
+   "mtp6-b": {
+    "label": "mtp1-b",
+    "class_balanced_median_tok_s": 87.09548108845755,
+    "class_medians": {
+     "analysis": 67.59177074506343,
+     "code": 93.19409196962087,
+     "documentation": 101.47611690194003,
+     "operations": 116.46857483618467,
+     "prose": 78.03292666268754,
+     "structured-writing": 80.99687020729421
+    }
+   }
+  },
+  "center": 87.12048961208997,
+  "G2": "12/12",
+  "G3": "12/12 and 12/12",
+  "boot": "4634e845-e682-457b-815d-15d069e2638a"
+ }
 }

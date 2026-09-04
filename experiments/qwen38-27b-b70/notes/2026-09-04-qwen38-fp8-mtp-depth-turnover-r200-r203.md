@@ -24,3 +24,11 @@ coredump during the depth-7 candidate-b weight staging (the recurring copy-engin
 runner's preflight then refused every further launch on this boot. No reboot overnight (user instruction). Next
 after a reboot: R204 (depth-5 ladders x2), R199c (short profiler window), then a depth-6 pair repeat if the user
 wants the last 1%.
+
+## R205 (2026-09-04 10:12-10:19, clean boot 4634e845): depth-6 pair repeat
+
+87.145 / 87.095 tok/s, 12/12 vs sibling and vs the R187 MTP0 oracle. Four depth-6 servers now span 87.05-87.24
+and four depth-5 servers 86.10-86.27: the +1.1% of depth 6 over depth 5 is reproducible (server-to-server noise
+about 0.2%) but below the preregistered 2% bar. Depth 5 keeps the "deepest candidate" label by that rule; the
+user may prefer depth 6 for the last 1% at the cost of more rejected work at c32+ (depth 4 already loses to
+depth 2 above c16).
