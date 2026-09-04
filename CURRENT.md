@@ -263,7 +263,14 @@ c16 on one run; R193 repeat queued), R192 the phantom on the STOCK upstream
 image (async-off arm, stock GEMM nondeterministic; R194 repeats + eager arms
 queued). LocalMaxxing payloads for MTP1 54.935 / depth-2 70.142 / depth-3
 79.183 are queued and server-validated, NOT submitted (user review). vLLM
-issue draft in `drafts/`, NOT filed (user review, R194).
+issue draft in `drafts/`, NOT filed (user review). **LocalMaxxing approved
+all three R187 submissions on 2026-09-03 23:4x: MTP1 54.935
+`cmtmfa23g01tvl601eyqliy9y`, depth-2 70.142 `cmtmfa2i701tyl601yrkxjn46`,
+depth-3 79.183 `cmtmfa2t101u1l601gth9lyx6`.** R192/R194: the phantom also
+occurs on the stock upstream image (3 of 6 servers, including both eager
+runs) and is an output-stream insertion (tail test), so the whole-graph
+compile avoids it on this build rather than fixing it; wording corrected
+everywhere.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to
