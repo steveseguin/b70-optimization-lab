@@ -21,6 +21,8 @@ container_memory_swap="${CONTAINER_MEMORY_SWAP:-12g}"
 ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
 xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
+tensor_parallel_size="${TENSOR_PARALLEL_SIZE:-2}"
+xpu_device_mask="${XPU_DEVICE_MASK:-0,1}"
 inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
 inductor_max_autotune="${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-1}"
 inductor_coordinate_descent="${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-1}"
@@ -118,8 +120,9 @@ exec docker run --rm --name "${container}" \
     -p "127.0.0.1:${port}:8000" \
     -v "${model_dir}:/model:ro" \
     -v "${cache_dir}:/root/.cache/vllm" \
-    -e ZE_AFFINITY_MASK=0,1 \
-    -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 \
+    -e ZE_AFFINITY_MASK="${xpu_device_mask}" \
+    -e ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_mask}" \
+    -e REPRO_TP="${tensor_parallel_size}" \
     -e VLLM_TARGET_DEVICE=xpu \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
     -e VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
@@ -157,4 +160,4 @@ exec docker run --rm --name "${container}" \
     -e REPRO_COMPILATION_CONFIG="${compilation_config}" \
     --entrypoint bash \
     "${image}" -lc \
-    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size 2 --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'
+    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size "${REPRO_TP}" --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'

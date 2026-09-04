@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r187-tp1-mtp4-full-20260904-r206","status":"preregistered-before-device-use",
+ "image":"R156 image on the R187 configuration (splitting_ops=[]), TENSOR_PARALLEL_SIZE=1 on device 0, GPU_MEMORY_UTILIZATION=0.96, MTP depth 4 (draft-only INT4 head)",
+ "why":"A single-B70 official-FP8 line does not exist: the 08-26 TP1 fit screen ran the stock image, eager, MTP0 at 10.75 tok/s (capacity 8448 tokens). The R187 stack (row-invariant W8A16 kernels, mixed-step GDN split, whole-graph compile) plus depth-4 MTP has never been measured at TP1; a lossless one-card line at 30-45 tok/s would be a new recipe for the most common setup.",
+ "hypothesis":"the server fits (weights ~27 GB LM-only + KV at 1024 context); G1 MTP0 TP1 repeat pair 12/12; G2/G3 depth-4 12/12 vs sibling and vs the TP1 MTP0 oracle; G5 probe exact; c1 decode roughly half the TP2 depth-4 rate (about 40 tok/s) with MTP0 near 17 tok/s",
+ "decision":"all gates pass -> a candidate one-card line (publication later, after a second ladder and a depth curve within the TP1 capacity); OOM at startup -> record the capacity limit and try max-model-len/utilization once; identity miss -> report, no line",
+ "abort_conditions":["as R147","no reboot: a GPU fault stops all launches"]}

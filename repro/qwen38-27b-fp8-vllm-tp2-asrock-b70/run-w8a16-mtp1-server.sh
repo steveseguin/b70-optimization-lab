@@ -19,6 +19,8 @@ gpu_memory_utilization=${GPU_MEMORY_UTILIZATION:-0.96}
 container_memory=${CONTAINER_MEMORY:-9g}
 container_memory_swap=${CONTAINER_MEMORY_SWAP:-12g}
 xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
+tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
+xpu_device_mask=${XPU_DEVICE_MASK:-0,1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
 w8a16_decode_pad_rows=${VLLM_XPU_W8A16_DECODE_PAD_ROWS:-0}
@@ -287,8 +289,8 @@ exec docker run --rm --name "${container}" \
   --volume "${model_dir}:/model:ro" \
   --volume "${cache_dir}:/root/.cache/vllm" \
   "${profiler_mount_args[@]}" \
-  --env ZE_AFFINITY_MASK=0,1 \
-  --env ONEAPI_DEVICE_SELECTOR=level_zero:0,1 \
+  --env ZE_AFFINITY_MASK="${xpu_device_mask}" \
+  --env ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_mask}" \
   --env VLLM_TARGET_DEVICE=xpu \
   --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
@@ -353,7 +355,7 @@ exec docker run --rm --name "${container}" \
   "${image}" \
   --model /model --served-model-name "${served_model}" \
   --host 0.0.0.0 --port 8000 \
-  --tensor-parallel-size 2 \
+  --tensor-parallel-size "${tensor_parallel_size}" \
   --dtype float16 --quantization fp8 --kv-cache-dtype auto \
   --gpu-memory-utilization "${gpu_memory_utilization}" \
   --max-model-len "${max_model_len}" --block-size 64 \
