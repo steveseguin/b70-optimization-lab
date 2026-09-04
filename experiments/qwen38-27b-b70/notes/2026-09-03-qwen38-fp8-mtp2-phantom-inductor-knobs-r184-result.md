@@ -55,3 +55,9 @@ final norm alone does not remove the phantom; R182's per-layer split did. The fi
 33 is now recorded in situ under the phantom (128 `final_norm` lines); R186n-b (same image, async off) is queued
 before R187 to give the exact clean-vs-phantom comparison of that row. Detector rule from now on: judge the
 phantom by divergence at index 0 vs the oracle, not by token 60.
+
+Process note (20:02): killing a queued wrapper after its wait loop has passed does not kill the campaign it
+already spawned; the R187 runner had launched `run-...-r152.sh` (pid 47866) seconds before it was killed, and
+that campaign is the valid R187 (clean preflight 20:02:11). The R186n-b launch then lost the port race to R187's
+MTP0 server (`docker run` failed on the published port) and was re-queued behind R187. Before killing a queued
+runner, check for its r152 child with `pgrep -af r152.sh`.
