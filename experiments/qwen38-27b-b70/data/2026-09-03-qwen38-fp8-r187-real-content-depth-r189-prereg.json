@@ -1,0 +1,6 @@
+{"schema":"b70-lab.preregistration.v1","campaign_id":"qwen38-fp8-r187-whole-graph-real-content-depth-20260903-r189","status":"preregistered-before-device-use",
+ "image":"neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156 sha256:173660ec... via the R187 wrappers (COMPILATION_CONFIG splitting_ops=[])",
+ "why":"The published 2K-32K real-content depth curve (R150) was measured on the piecewise R139 line; R187 is now the headline and its long-context speed and MTP1-vs-MTP0 identity at depth are unmeasured.",
+ "hypothesis":"MTP1 matches same-configuration MTP0 on 18/18 complete arrays at 2K-32K (as R150); decode tok/s within 3% of R150 at every depth (33.4 to 30.0 MTP0, MTP1 51.9-55.5).",
+ "decision":"pass -> publish the R189 curve as the R187 line's depth profile; identity miss -> report and keep the R150 curve labelled as the R156/R139 line; speed off by >3% -> report the delta.",
+ "abort_conditions":["as R147"]}
