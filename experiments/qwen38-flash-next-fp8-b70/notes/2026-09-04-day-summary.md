@@ -35,3 +35,10 @@ B70s keep minors 0/2/3/4, tuning), no GPU faults since.
 - **Realistic suite (LocalMaxxing gate):** A134 on the promoted MTP0
   identity (overlay at 2169dbfe) running; A135 (MTP1 identity, 1b2a17c1)
   next.
+- **LocalMaxxing: first Flash-Next approval.** A134 ran the fixed realistic
+  suite on the promoted MTP0 identity (gate passed, cache zero, 12/12):
+  14.433684 tok/s class-balanced median (all-prompt 14.757), submitted as
+  `cmtn32b2w000tmm01t7j2wlpn` and approved. Ledger, packet, family page and
+  index updated. vLLM XPU payloads need `--engine-name vllm`, KV dtype
+  `auto`, attention backend `triton` and the frozen server command as the
+  snippet (`patch-localmaxxing-payload.py` step in the post-run script).
