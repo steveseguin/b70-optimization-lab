@@ -4087,3 +4087,36 @@ the QSA indexer/top-k and kernel, the Triton block-FP8 MoE at M=2, and the
 rejection sampler, to be tested offline per component. See the
 [A85 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a85-exact-recurrent-graph-result.md)
 and the [gate notes](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a87-a88-serial-attention-gate-notes.md).
+The afternoon closed the MTP1 question with per-layer traces of the first
+two-row verification step compared against an MTP0 reference on every rank
+and offline two-row-versus-one-row gates. Three row-count dependences were
+found and each is fixed behind a flag that leaves the MTP0 line untouched:
+the GDN spec-decode kernel (verifier rows now run through the ordinary
+decode kernel one row at a time, `VLLM_XPU_GDN_SERIAL_SPEC_DECODE`), the
+XCCL all-reduce (a two-row all-reduce differs bit for bit from two
+one-row all-reduces on four B70s; `VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS`)
+and the hyperconnection grouped RMSNorm's torch fallback on XPU (its
+variance `mean` over the 2560-wide groups reduces in a shape-dependent
+order and flips one BF16 element in about 1.5% of draws;
+`VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS`). A112 (eager MTP1 with the three
+flags, overlay `1b2a17c1`) is bit-identical to the MTP0 reference through
+all 48 layers at both verification rows on all four ranks, and A113 (the
+full-decode-graph MTP1 battery with capture sizes [1, 2]) reproduces every
+MTP0 pin: short `5f407446...` at `31.20/34.73/31.31 tok/s` (1.38x the MTP0
+center `22.66`), exact-2K `afffd211...` at `8.55/8.47`, exact-4K
+`c6193cc6...` at `7.69/7.27`, 16/16 repeat `3b0b3192...`, exact needle,
+6/7 semantic with the inherited miss, 93.6% draft acceptance. MTP1 on this
+line is lossless; at depth it is 0.6x the MTP0 line with double the time
+to first token, the same cost A81 showed, which now belongs to the MTP1
+step itself (the drafter runs eagerly on XPU, since only piecewise graphs
+support it) rather than to exactness. A114, the first frozen MTP1 client
+(receipts for `mtp=1`, KV 376569856, capture [1, 2], the three selectors;
+verifier `verify-q38-a114-fullgraph-runtime.py` requires size-1 and size-2
+FULL dispatches; output pins unchanged), and A115, its fresh-server repeat,
+are the promotion pair. The host froze silently twice during worker
+initialization (16:44 and 18:12, no kernel message); each time the user
+reset it and the post-reboot routine (results-drive remount, `xe` reload
+so the B70s keep minors 0/2/3/4, tuning) restored the frozen identity. See
+the [localization note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a104-a105-allreduce-localization.md),
+the [A113 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-tp4-mtp1-a113-graph-three-flags-battery-result.md)
+and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-03-day-shift-summary.md).
