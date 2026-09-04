@@ -73,11 +73,60 @@ to iterate); publish a host-tuning guide; general improvements welcome.
   branch (inert here) and the diagnostics are removed (`c23ad8e1f`).
   Notes: `2026-09-03-tp4-mtp1-a87-a88-serial-attention-gate-notes.md`.
 
+## Afternoon and evening: MTP1 made exact (A91-A113)
+
+- **Method.** Per-layer repeatability traces at the first two-row
+  verification step (positions 2048/2049, the same state and tokens as the
+  MTP0 decode step) compared record by record against an MTP0 reference on
+  every rank, plus offline two-row-versus-one-row gates for each component
+  the traces implicated. Every MTP1 attempt keeps the deterministic
+  identity (`VLLM_XPU_MKLDNN_DETERMINISTIC=1`, W13-N32 map, PLE-only UVA).
+- **Cleared offline (bit-identical at M=2 vs 2xM=1):** BF16 oneDNN GEMMs on
+  every decode shape, the block-FP8 oneDNN linear path on the layer-0 shapes
+  (`equivalence-fp8-linear-m2-vs-m1-gate.py`), the Triton block-FP8 MoE
+  under three configs, the hyperconnection mix GEMMs at their real shapes
+  (2.8 M and 8.2 M elements without a flip), the QSA index side path (A93,
+  A108), and the hyperconnection gate-mix and SiLU fallbacks.
+- **Three row-count dependences found and fixed, each flag-gated in the
+  overlay with the MTP0 line untouched:**
+  1. the GDN spec-decode kernel (A96/A97): verifier rows now run through
+     the ordinary decode kernel one row at a time with state copies between
+     the spec columns (`VLLM_XPU_GDN_SERIAL_SPEC_DECODE`, overlay fd81d811;
+     A100/A104 traces exact through the recurrent core);
+  2. the XCCL all-reduce (A104 vs A105; four-card probe
+     `equivalence-tp4-allreduce-m2-vs-m1-probe.py`: a [2,N] all-reduce
+     differs bit for bit from two [1,N] all-reduces at every width):
+     row-wise all-reduce for 2..N-row inputs (`VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS`,
+     overlay 8ca2cbc2; A106 exact through layer 42 at both rows);
+  3. the hyperconnection grouped RMSNorm torch fallback (A110 vs A111 with
+     QSA-layer records, overlay 76b787e2; `equivalence-hc-torch-fallback-m2-vs-m1-gate.py`:
+     the `mean` over [rows, 4, 2560] flips one BF16 element in 1.5% of
+     draws): per-row variance (`VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS`, overlay
+     1b2a17c1).
+- **A112 (eager MTP1, three flags):** zero numeric differences against the
+  MTP0 reference through all 48 layers and the model output, both verify
+  rows, all four ranks; exact-2K hash `afffd211...`, the MTP0 authority.
+  Note: `2026-09-03-tp4-mtp1-a104-a105-allreduce-localization.md`.
+- **A113 (full-decode-graph MTP1 battery, capture [1, 2], three flags):**
+  short rows exact on the MTP0 hash at `31.2/34.7/31.3 tok/s` (MTP0 line
+  center `22.66`); depth rows and quality recorded below when complete.
+- **Host:** two silent freezes at worker initialization (16:44 during the
+  first A112 launch, 18:12 during the first A113 launch), no kernel
+  message either time; the user reset the host. After each reboot: results
+  drive remounted (`ntfs-3g`), the four B70s reloaded under `xe` because the
+  display driver had taken card1, tuning reapplied, links verified at
+  16 GT/s x16. A102 was a memory-PSI guard trip during shard loading
+  (host noise); A103 a packet-generation slip (MTP0 packets must come from
+  the A96 generator).
+- **Packets ready:** A114, the first frozen MTP1 client (A113 identity,
+  receipts for `mtp=1`, KV 376569856, capture [1, 2], the three selectors;
+  verifier `verify-q38-a114-fullgraph-runtime.py` requires size-1 and
+  size-2 FULL dispatches; output pins unchanged).
+
 ## Standing
 
-The deterministic MTP0 full-decode-graph line is the record. MTP1 is worth
-1.4-1.7x at short context but is not lossless; the remaining difference is
-inside the two-row verification step after the recurrent path is made
-exact and the dense GEMMs are cleared; the next work is offline and per
-component (QSA indexer/top-k and kernel with two rows, Triton block-FP8 MoE
-at M=2, rejection sampler), the treatment the 27B lane received.
+The deterministic MTP0 full-decode-graph line is the record. MTP1 on that
+line is now bit-exact with it at the verification step (A112) and, in the
+full decode graph, reproduces the short-context hash at 1.4x (A113 short
+rows); the depth rows and quality of A113 decide whether A114/A115 (the
+frozen MTP1 client and its fresh-server repeat) become the promotion pair.
