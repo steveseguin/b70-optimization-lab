@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, 79.183 tok/s MTP depth 3, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1 and depth 3 through 16, depth 2 through 4. On the piecewise compile MTP depth 2 emitted a phantom first token on one request in 64; on the whole-graph compile no pass has shown it (R182-R193, 2026-09-03). The cause is an unfixed upstream vLLM defect that also occurs on the unmodified image (R192/R194), so this is a configuration that avoids it on our deterministic build, not a fix; no patch, no image rebuild. A prebuilt copy of the exact image is on GitHub Container Registry (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8, digest sha256:173660ec…, equal to the image id the launchers verify); the source build in the guide remains the authoritative route.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, 79.183 tok/s MTP depth 3, 82.396 tok/s MTP depth 4, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1, depth 3 and depth 4 through 16, depth 2 through 4. On the piecewise compile MTP depth 2 emitted a phantom first token on one request in 64; on the whole-graph compile no pass has shown it (R182-R193, 2026-09-03). The cause is an unfixed upstream vLLM defect that also occurs on the unmodified image (R192/R194), so this is a configuration that avoids it on our deterministic build, not a fix; no patch, no image rebuild. A prebuilt copy of the exact image is on GitHub Container Registry (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8, digest sha256:173660ec…, equal to the image id the launchers verify); the source build in the guide remains the authoritative route.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -40,7 +40,7 @@
       "mixed-step GDN split"
     ],
     "published_at": "2026-08-27",
-    "benchmark_status": "Strict R187 qualification (2026-09-03, clean boot, whole-graph compile splitting_ops=[]): two same-configuration MTP0 controls 33.111/33.082 tok/s matched 12/12; two depth-1 MTP1 candidates 55.006/54.865 tok/s (center 54.935) matched 12/12 against each other and against the MTP0 oracle (R188); two depth-2 candidates 70.146/70.138 tok/s (center 70.142) matched 12/12 (R187); canaries before and after every server; cache zero; repeat-exact at 224, 250 and 300 prompt tokens on both MTP profiles; identity ladders: MTP0 64/64 through c64 (927.9 tok/s aggregate), MTP1 exact through c16 (477.7 tok/s; c32 31/32, c64 59/64), depth 2 exact through c4 (210.8 tok/s; c8 7/8, c32 31/32, c64 60/64). Depth 3 (R191/R193): two candidates 79.163/79.203 tok/s (center 79.183) matched 12/12 vs each other and vs the MTP0 oracle; probe exact; two ladders exact through c16 (557.0 tok/s aggregate).",
+    "benchmark_status": "Strict R187 qualification (2026-09-03, clean boot, whole-graph compile splitting_ops=[]): two same-configuration MTP0 controls 33.111/33.082 tok/s matched 12/12; two depth-1 MTP1 candidates 55.006/54.865 tok/s (center 54.935) matched 12/12 against each other and against the MTP0 oracle (R188); two depth-2 candidates 70.146/70.138 tok/s (center 70.142) matched 12/12 (R187); canaries before and after every server; cache zero; repeat-exact at 224, 250 and 300 prompt tokens on both MTP profiles; identity ladders: MTP0 64/64 through c64 (927.9 tok/s aggregate), MTP1 exact through c16 (477.7 tok/s; c32 31/32, c64 59/64), depth 2 exact through c4 (210.8 tok/s; c8 7/8, c32 31/32, c64 60/64). Depth 3 (R191/R193): two candidates 79.163/79.203 tok/s (center 79.183) matched 12/12 vs each other and vs the MTP0 oracle; probe exact; two ladders exact through c16 (557.0 tok/s aggregate). Depth 4 (R197/R201): two candidates 82.447/82.345 tok/s (center 82.396) matched 12/12 vs each other and vs the MTP0 oracle; probe exact; two ladders exact through c16 (529.4 tok/s aggregate).",
     "featured_metric": {
       "value": 54.93533953556977,
       "unit": "tok/s",
@@ -470,7 +470,10 @@
     "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.md",
     "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp2-real-content-depth-r195-result.json",
     "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp3-real-content-depth-r196-result.json",
-    "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-r187-depth-curves-mtp2-mtp3-r195-r196.md"
+    "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-r187-depth-curves-mtp2-mtp3-r195-r196.md",
+    "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r197-whole-graph-depth4-result.json",
+    "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-mtp4-whole-graph-r197-result.md",
+    "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp4-whole-graph-r187-server.sh"
   ],
   "performance_profiles": [
     {
@@ -1060,6 +1063,48 @@
           "value": 557.0489881160106,
           "samples": 1,
           "per_user_value": 34.81556175725066
+        }
+      ]
+    },
+    {
+      "id": "http-r187-mtp4-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "R187 FP8 TP2 MTP depth-4 identity-qualified aggregate decode vs concurrent users (c1-c16)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R187 image (MTP1, FP16 verifier, draft-only INT4 head), FP16 activations/KV, 64 service slots, 256-token total request capacity, max_num_batched_tokens=512, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite. Every point shown is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (harness --require-output-identity). c32 and c64 were measured but are withheld: 1/32 and 8/64 near-tie prompts took a different valid branch. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r197-whole-graph-depth4-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 79.07277631598423,
+          "per_user_value": 79.07277631598423,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 71.14050759403455,
+          "per_user_value": 35.57025379701727,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 218.00673313409288,
+          "per_user_value": 54.50168328352322,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 384.48818883503094,
+          "per_user_value": 48.06102360437887,
+          "samples": 1
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 529.4198600731922,
+          "per_user_value": 33.088741254574515,
+          "samples": 1
         }
       ]
     }

@@ -293,7 +293,7 @@
       }
     },
     "r187": {
-      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): avoids the MTP depth-2 phantom first token seen on vLLM's piecewise split (an unfixed upstream defect that also occurs on the unmodified image, R182-R194; no whole-graph pass has shown it); MTP1 54.935, depth-2 70.142, depth-3 79.183, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1 and depth 3 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
+      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): avoids the MTP depth-2 phantom first token seen on vLLM's piecewise split (an unfixed upstream defect that also occurs on the unmodified image, R182-R194; no whole-graph pass has shown it); MTP1 54.935, depth-2 70.142, depth-3 79.183, depth-4 82.396, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1, depth 3 and depth 4 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
       "image": {
         "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156",
         "id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
@@ -328,6 +328,10 @@
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp3-whole-graph-r187-server.sh",
             "sha256": "15af46539db19c3117d0816b11c7a7d7a08329a49adb3ffc460f6dd2ee64adee"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp4-whole-graph-r187-server.sh",
+            "sha256": "57ea58149fba28df6c1e1c62487f78762839a2e9912d39daadb07801e9b5cbb1"
           },
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
@@ -390,6 +394,18 @@
           {
             "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp3-real-content-depth-r196-result.json",
             "sha256": "ccaf7a0672d8968883e0b9bafbc83884b15c2010e287d78c654dbbc753adf944"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r197-whole-graph-depth4-result.json",
+            "sha256": "f30f8e6cbf840e593ea70ec703f7c4ec91742d2ac7f90f7940b872c86d360e5a"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r200-whole-graph-depth5-strict-result.json",
+            "sha256": "b4399a722c891341187eaf12e02bdef40aff107e90388edb38a4a18e606e8ba8"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp5-r200-prereg.json",
+            "sha256": "f0198b12ce4496cef09f77dc6952893c01536f3dc544964984bf7d4752bd8ec8"
           }
         ],
         "campaign_runners": [
