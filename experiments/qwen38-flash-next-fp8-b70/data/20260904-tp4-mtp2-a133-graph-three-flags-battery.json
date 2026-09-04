@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "classification": "flash_next_a133_fullgraph_mtp2_three_flags_battery",
+  "attempt": 133,
+  "port": 19804,
+  "launched": "2026-09-04T10:10:44-04:00",
+  "identity": {
+    "vllm_head": "5915cb0e88b03d709d743020d74c821c5b5b3ecf",
+    "kernels_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "kv_cache_memory_bytes": "376569856",
+    "compilation_config": "{\"mode\":0,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,3],\"max_cudagraph_capture_size\":3,\"compile_sizes\":[],\"cudagraph_num_of_warmups\":1}",
+    "tuned_config_folder": "moe-m1-w13-n32",
+    "mkldnn_deterministic": "1"
+  },
+  "identity_line": "triton eager=0 graph=FULL_DECODE_ONLY mtp=2 max_model_len=4352 max_num_batched_tokens=64",
+  "exact_verify_selectors": [
+    "VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1",
+    "VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=3",
+    "VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=3"
+  ],
+  "short": {
+    "tok_s_after_ttft": [
+      32.21159222775876,
+      37.033347589781904,
+      32.00129388031584
+    ],
+    "median": 32.21159222775876,
+    "sha256": [
+      "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+    ]
+  },
+  "exact_2k": {
+    "tok_s_conventional_99_interval": [
+      8.088409156587053,
+      7.370006209631422
+    ],
+    "ttft_s": [
+      150.2486578979997,
+      106.00249169100016
+    ],
+    "output_token_ids_sha256": [
+      "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714"
+    ]
+  },
+  "exact_4k": {
+    "tok_s_conventional_99_interval": [
+      7.366973510092574,
+      7.303699086630274
+    ],
+    "ttft_s": [
+      179.9992602430002,
+      153.25817329300025
+    ],
+    "output_token_ids_sha256": [
+      "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639"
+    ]
+  },
+  "quality": {
+    "semantic_passed": 6,
+    "failed_cases": [
+      "code_execution"
+    ],
+    "repeat_unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "needle_pass": true
+  },
+  "spec_decode": {
+    "drafts": 561.0,
+    "draft_tokens": 1122.0,
+    "accepted_tokens": 984.0
+  },
+  "mtp0_authorities": {
+    "short": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "exact_2k": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+    "exact_4k": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639",
+    "repeat": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+  },
+  "all_pins_match_mtp0": true
+}
