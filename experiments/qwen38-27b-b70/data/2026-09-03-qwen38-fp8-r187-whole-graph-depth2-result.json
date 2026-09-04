@@ -208,7 +208,50 @@
     }
    ],
    "oracle_first_token_phantom_rows": []
+  },
+  "mtp2_repeat_r190": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 63.14486988197364
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 68.048355221868
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 212.5199807591929
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 364.19653178715345
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 569.5280810124422
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "32/32",
+     "aggregate_tok_s_wall": 799.9315514816229
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "59/64",
+     "aggregate_tok_s_wall": 783.8345544621723
+    }
+   ],
+   "oracle_first_token_phantom_rows": [],
+   "probe_224_250_300": "exact"
   }
  },
- "note": "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md"
+ "note": "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md",
+ "identity_claim": "depth 2 exact through c4 in both ladders (R187, R190); R190 alone exact through c32"
 }

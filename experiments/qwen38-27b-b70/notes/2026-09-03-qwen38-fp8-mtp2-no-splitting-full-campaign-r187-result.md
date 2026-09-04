@@ -36,3 +36,12 @@ Open: the piecewise pipeline's defect itself is still not localised (it needs th
 scheduling; R186n showed a graph-end op does not remove it while per-layer ops do), and the depth-1 profile's
 c32/c64 tie residual is unchanged by this configuration. The depth-1 ladders on the whole-graph compile were not
 run in this campaign.
+
+## R190 (22:07-22:19): second depth-2 probe and ladder on the same configuration
+
+Probe exact (224/250/300). Ladder: c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 59/64
+(rollback-c010 @97, testing-c013 @34, index-c017 @49, index-c033 @33, testing-c045 @28); aggregate 63.1 / 68.0 /
+212.5 / 364.2 / 569.5 / 799.9 / 783.8 tok/s; no phantom row on the sequential pass. The R187 c8 miss
+(evidence-c007 @13) did not repeat; the c64 miss set moved entirely, as it does for depth 1. By the preregistered
+rule (exact in both runs) the published depth-2 identity claim stays at c4; c8-c32 were exact in one of two runs.
+A third ladder would let a two-of-three reading extend the claim; that is the user's call.
