@@ -34,3 +34,29 @@ are the promotion pair; the depth cost is the next lever.
 
 Data: `../data/20260903-tp4-mtp1-a113-graph-three-flags-battery.json`.
 Run: `/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt113`.
+
+## Frozen-client packets A114, A116 and A118 (21:00-21:40)
+
+The first frozen MTP1 client went through two packet defects before its
+identity checks were right, neither of which touched the outputs:
+
+- **A114** (21:02): the client's official W13-N32 resolver receipt
+  (`verify-moe-m1-w13-n32-selection.py`) pins the vLLM prerequisite heads
+  and refused overlay 1b2a17c1. The resolver now lists that head (MoE map
+  untouched); A116 pins the updated resolver.
+- **A116** (21:13-21:35): every output gate passed (resolver receipt, before
+  verifier, canary, quality 6/7 with the inherited miss, 16/16 one hash,
+  exact needle, short `26.31/27.86/26.43 tok/s` on `5f407446...`, exact-2K
+  `8.76/9.14` on `afffd211...`, exact-4K `7.06/7.59` on `c6193cc6...`, the
+  summary written), then the after-phase verifier failed its own
+  expectation: it required a size-1 FULL dispatch, and with one speculative
+  token every decode step of a single sequence is a size-2 dispatch (the
+  server's dispatch table shows only `2 | 2 | 0 | FULL` rows). The A118
+  verifier requires a size-2 dispatch and records the size-1 count.
+  Evidence: `../data/20260903-tp4-mtp1-a116-frozen-client-summary-verifier-defect.json`.
+- **A118 / A119** are the promotion pair with the corrected verifier
+  (`verify-q38-a118-fullgraph-runtime.py`).
+
+The frozen clients do not wait for the server, so they are started through
+a waiting driver (poll the run directory's server log for startup, then run
+the client unchanged).
