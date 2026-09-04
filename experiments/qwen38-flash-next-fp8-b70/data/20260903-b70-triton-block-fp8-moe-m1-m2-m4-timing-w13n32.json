@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "classification": "b70_triton_block_fp8_moe_m_timing",
+  "config_folder": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+  "iters": 200,
+  "results": {
+    "M1": {
+      "mean_ms": 0.4469485300433007,
+      "median_ms": 0.44346799950290006,
+      "min_ms": 0.4293869988032384,
+      "max_ms": 0.5377799989219056,
+      "p90_ms": 0.46803899931546766,
+      "local_expert_slots": 2
+    },
+    "M2": {
+      "mean_ms": 0.6962979100535449,
+      "median_ms": 0.677232000271033,
+      "min_ms": 0.6710809993819566,
+      "max_ms": 0.9129150002991082,
+      "p90_ms": 0.6945049990463303,
+      "local_expert_slots": 11
+    },
+    "M4": {
+      "mean_ms": 1.1755558149161516,
+      "median_ms": 1.178288999653887,
+      "min_ms": 1.1084730012953514,
+      "max_ms": 1.2026899985357886,
+      "p90_ms": 1.1879319990839576,
+      "local_expert_slots": 16
+    }
+  }
+}
