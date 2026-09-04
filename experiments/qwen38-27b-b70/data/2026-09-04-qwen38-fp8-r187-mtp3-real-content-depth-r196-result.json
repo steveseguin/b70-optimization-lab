@@ -1,0 +1,69 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r187-mtp3-real-content-depth-20260904-r196",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-night-r195-r197-prereg.json",
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "compilation_config": {
+  "splitting_ops": []
+ },
+ "speculative_config": {
+  "method": "qwen3_next_mtp",
+  "num_speculative_tokens": 3
+ },
+ "oracle": "qwen38-fp8-r187-whole-graph-real-content-depth-20260903-r189/depth-mtp0/depth (same configuration MTP0)",
+ "boot_id": "88f0984f-9533-42f6-b35b-08d329f62b34",
+ "repo_head_at_launch": "2c32de93f51d682b8585d2db5083a3aa95ad47eb",
+ "status": "pass: depth 3 matched same-configuration MTP0 at every depth 2K-32K (18/18); decode 80.6/83.6/84.7/77.9/66.9/83.2 tok/s; canaries before/after; cache zero",
+ "classification": "Grade B three-class unrepeated real-content exact-depth HTTP evidence",
+ "mtp3_points": [
+  {
+   "ctx": 2048,
+   "decode": 80.6041499563398,
+   "ttft": 603.9498669997556,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 4096,
+   "decode": 83.61436918129985,
+   "ttft": 1165.1722070018877,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 8192,
+   "decode": 84.70874552665002,
+   "ttft": 2374.0996870037634,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 16384,
+   "decode": 77.85963571992264,
+   "ttft": 4942.530906002503,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 24576,
+   "decode": 66.87441060480666,
+   "ttft": 7739.624936002656,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 32768,
+   "decode": 83.18747425034647,
+   "ttft": 10732.709842995973,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  }
+ ],
+ "note": "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-r187-depth-curves-mtp2-mtp3-r195-r196.md"
+}
