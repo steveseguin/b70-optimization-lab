@@ -2235,7 +2235,8 @@
         "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md",
         "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh",
         "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp0-whole-graph-r187-server.sh",
-        "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh"
+        "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp2-whole-graph-r187-server.sh",
+        "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json"
       ],
       "performance_profiles": [
         {
@@ -2336,41 +2337,41 @@
         },
         {
           "id": "http-decode-vs-active-context",
-          "label": "R139 FP8 TP2 MTP0 HTTP decode over exact active context",
+          "label": "R187 FP8 TP2 MTP0 HTTP decode over exact active context",
           "metric": "decode",
           "unit": "tok/s",
           "x_label": "Exact active prompt tokens",
-          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP0 (target only). No value is interpolated.",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
+          "scope": "Measured on the published R187 line (R156 image, whole-graph torch.compile; 2026-09-03, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP0 (target only). No value is interpolated.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 33.364074767168994,
+              "value": 33.00186467133787,
               "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 32.97555830733983,
+              "value": 32.74192382357966,
               "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 32.109907634101944,
+              "value": 31.896309461629123,
               "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 31.410781638232724,
+              "value": 31.181138974276305,
               "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 30.624598400733696,
+              "value": 30.44503893662358,
               "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 29.96102244390492,
+              "value": 29.77809869783394,
               "samples": 3
             }
           ]
@@ -2459,41 +2460,41 @@
         },
         {
           "id": "http-mtp1-decode-vs-active-context",
-          "label": "R139 FP8 TP2 MTP1 HTTP decode over exact active context",
+          "label": "R187 FP8 TP2 MTP1 HTTP decode over exact active context",
           "metric": "decode",
           "unit": "tok/s",
           "x_label": "Exact active prompt tokens",
-          "scope": "Measured on the published R139 row-invariant W8A16 image (2026-09-02, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP1 with FP16 target verifier and draft-only INT4 head; every output matched the same-image MTP0 oracle (18/18 complete arrays).",
-          "evidence": "experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-fixed-k-real-content-depth-r150-result.json",
+          "scope": "Measured on the published R187 line (R156 image, whole-graph torch.compile; 2026-09-03, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP1 with FP16 target verifier and draft-only INT4 head; every output matched the same-image MTP0 oracle (18/18 complete arrays).",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json",
           "points": [
             {
               "context_tokens": 2048,
-              "value": 54.81084946371518,
+              "value": 54.613745980688705,
               "samples": 3
             },
             {
               "context_tokens": 4096,
-              "value": 55.44777975822136,
+              "value": 55.16720004495228,
               "samples": 3
             },
             {
               "context_tokens": 8192,
-              "value": 54.13881282163384,
+              "value": 53.74307625029583,
               "samples": 3
             },
             {
               "context_tokens": 16384,
-              "value": 53.04831804508261,
+              "value": 52.68395525752048,
               "samples": 3
             },
             {
               "context_tokens": 24576,
-              "value": 52.881962698825845,
+              "value": 51.561871965678094,
               "samples": 3
             },
             {
               "context_tokens": 32768,
-              "value": 51.929329486715815,
+              "value": 51.55062633347536,
               "samples": 3
             }
           ]

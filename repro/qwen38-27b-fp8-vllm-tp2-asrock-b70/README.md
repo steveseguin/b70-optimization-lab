@@ -71,6 +71,26 @@ EXPECTED_IMAGE_ID=sha256:<your R156 image id> \
 The piecewise R156 line below stays valid for MTP1 and MTP0 (54.603 /
 33.314 tok/s); do not serve MTP depth 2 on it.
 
+### 2K-32K real-content depth on R187 (R189, 2026-09-03)
+
+Same protocol as R150 (below): unrepeated technical prose, Python, and
+structured documents at exact active context, three requests per depth
+(median shown), 128 output tokens, cache zero, canaries before and after.
+MTP1 matched the same-configuration MTP0 oracle at every depth (18/18
+complete arrays). Decode is within 1% of the R150 piecewise curve at every
+point but 24K MTP1 (-2.5%); TTFT within 2%.
+
+| active context | MTP1 decode | MTP1 TTFT | MTP0 decode | MTP0 TTFT |
+| ---: | ---: | ---: | ---: | ---: |
+| 2K | `54.614 tok/s` | `0.601 s` | `33.002 tok/s` | `0.581 s` |
+| 4K | `55.167 tok/s` | `1.166 s` | `32.742 tok/s` | `1.143 s` |
+| 8K | `53.743 tok/s` | `2.371 s` | `31.896 tok/s` | `2.331 s` |
+| 16K | `52.684 tok/s` | `4.952 s` | `31.181 tok/s` | `4.828 s` |
+| 24K | `51.562 tok/s` | `7.742 s` | `30.445 tok/s` | `7.550 s` |
+| 32K | `51.551 tok/s` | `10.719 s` | `29.778 tok/s` | `10.438 s` |
+
+Evidence: [R189](../../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json).
+
 ## Mixed-step split R156 profile (qualified 2026-09-03)
 
 R156 is the R139 image plus one Python patch on `vllm/_xpu_ops.py`: when a
@@ -185,7 +205,7 @@ Evidence: [R147](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-mtp
 [R149](../../experiments/qwen38-27b-b70/data/2026-09-02-qwen38-fp8-lm-head-chunk-rows-r149-result.json),
 [note](../../experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-fixed-k-identity-ladders-r147-r149.md).
 
-### 2K-32K real-content depth on R139 (R150, 2026-09-02)
+### 2K-32K real-content depth on R139 (R150, 2026-09-02; the piecewise R139/R156 line)
 
 Same protocol as R56/R62: unrepeated technical prose, Python, and structured
 documents at exact active context, three requests per depth (median shown),

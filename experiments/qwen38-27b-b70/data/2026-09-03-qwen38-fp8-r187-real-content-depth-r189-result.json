@@ -1,0 +1,114 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r187-whole-graph-real-content-depth-20260903-r189",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-prereg.json",
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "compilation_config": {
+  "splitting_ops": []
+ },
+ "boot_id": "88f0984f-9533-42f6-b35b-08d329f62b34",
+ "repo_head_at_launch": "fcead4ddcd22ea4aac3dd84fc931bde634c2c9d0",
+ "status": "pass: MTP1 matched same-configuration MTP0 at every depth 2K-32K (all_target_oracle_exact at 6/6 depths, 3 samples each, 18/18 arrays); decode within 1.1% of R150 except 24K MTP1 (-2.5%); TTFT within 2%; canaries before/after; cache zero",
+ "classification": "Grade B three-class unrepeated real-content exact-depth HTTP evidence",
+ "mtp0_points": [
+  {
+   "ctx": 2048,
+   "decode": 33.00186467133787,
+   "ttft": 580.8749239986355,
+   "samples": 3,
+   "exact": null,
+   "gates": true
+  },
+  {
+   "ctx": 4096,
+   "decode": 32.74192382357966,
+   "ttft": 1143.195520999143,
+   "samples": 3,
+   "exact": null,
+   "gates": true
+  },
+  {
+   "ctx": 8192,
+   "decode": 31.896309461629123,
+   "ttft": 2331.2929780004197,
+   "samples": 3,
+   "exact": null,
+   "gates": true
+  },
+  {
+   "ctx": 16384,
+   "decode": 31.181138974276305,
+   "ttft": 4828.119088000676,
+   "samples": 3,
+   "exact": null,
+   "gates": true
+  },
+  {
+   "ctx": 24576,
+   "decode": 30.44503893662358,
+   "ttft": 7549.994089000393,
+   "samples": 3,
+   "exact": null,
+   "gates": true
+  },
+  {
+   "ctx": 32768,
+   "decode": 29.77809869783394,
+   "ttft": 10437.539410999307,
+   "samples": 3,
+   "exact": null,
+   "gates": true
+  }
+ ],
+ "mtp1_points": [
+  {
+   "ctx": 2048,
+   "decode": 54.613745980688705,
+   "ttft": 601.2540610026917,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 4096,
+   "decode": 55.16720004495228,
+   "ttft": 1166.449003998423,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 8192,
+   "decode": 53.74307625029583,
+   "ttft": 2371.0708460021124,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 16384,
+   "decode": 52.68395525752048,
+   "ttft": 4951.751818996854,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 24576,
+   "decode": 51.561871965678094,
+   "ttft": 7742.352592998941,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  },
+  {
+   "ctx": 32768,
+   "decode": 51.55062633347536,
+   "ttft": 10719.163355999626,
+   "samples": 3,
+   "exact": true,
+   "gates": true
+  }
+ ],
+ "note": "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.md"
+}
