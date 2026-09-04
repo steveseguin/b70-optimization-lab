@@ -233,10 +233,22 @@ to the Dynamo-only run on all 64 rows
 ([R184-R186](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md)).
 The phantom needs the default piecewise split at the attention/GDN ops;
 XPU graphs are disabled on this lane, so the split buys nothing here.
-Running/queued: R186n (probe op after the final norm only), then R187 = R156
-+ `splitting_ops=[]` at depth 2 through the full G1-G6 campaign with a
-same-config regenerated oracle (prereg
-`data/2026-09-03-qwen38-fp8-r156-mtp2-no-splitting-full-ladder-r187-prereg.json`).
+R186n (probe op after the final norm only) keeps the phantom (variant first
+token 220), so the per-layer split was the operative change; the detector
+rule is now "divergence at index 0", not "token 60".
+**R187 (20:02-20:42, [result](experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md)):
+R156 + `splitting_ops=[]`, depth 2, full campaign: G1 12/12 (MTP0 33.11 /
+33.08 tok/s), G2 12/12 and G3 12/12 (depth-2 MTP 70.15 / 70.14 tok/s), G5
+probe exact, depth-2 ladder with no phantom on the sequential pass and
+tie-class misses only (c8 7/8, c32 31/32, c64 60/64), MTP0 ladder
+output-identity-qualified 64/64 through c64 at 927.9 tok/s.** A
+configuration-only fix (no patch, no image): the depth-2 line is
+publishable through c4 by the one-miss rule with the whole-graph compile;
+MTP0 keeps its c1-c64 identity on it. Not yet run on it: the depth-1 MTP1
+ladders (c32/c64 tie residual expected unchanged). The piecewise defect
+itself is not localised; R186n-b (probe image, async off) is queued for the
+exact final-row comparison. Publication of the depth-2 line is the user's
+call.
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to

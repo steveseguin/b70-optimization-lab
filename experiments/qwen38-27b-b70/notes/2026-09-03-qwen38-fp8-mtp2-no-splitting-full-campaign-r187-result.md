@@ -1,6 +1,6 @@
 # R187: R156 + `splitting_ops=[]` (whole-graph Inductor compile), MTP depth 2, full G1-G6 campaign
 
-Date: 2026-09-03 20:02-20:4x EDT, boot 88f0984f (clean). Published R156 image unchanged
+Date: 2026-09-03 20:02-20:42 EDT, boot 88f0984f (clean). Published R156 image unchanged
 (`sha256:173660ec...`); every server of the campaign ran with
 `COMPILATION_CONFIG={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],<lane inductor config>}`
 (XPU graphs disabled as on the published line, so `cudagraph_mode` is inert). Prereg
@@ -18,7 +18,7 @@ Date: 2026-09-03 20:02-20:4x EDT, boot 88f0984f (clean). Published R156 image un
 | G5 repeat probe (224/250/300 tokens) | ids, logprobs and top-k identical on all three |
 | G6 depth-2 ladder, sequential 64-prompt oracle pass | **no first-token phantom on any row** (first time at depth 2 with async scheduling on); 4/4 cache-c032 first tokens equal the R156f oracle |
 | G6 depth-2 ladder rungs | c1 1/1, c2 2/2, c4 4/4, c8 7/8 (evidence-c007 @13), c16 16/16, c32 31/32 (cache-c000 @96), c64 60/64 (cache-c000 @96, cache-c032 @35, index-c033 @33, cache-c040 @60); aggregate 62.8 / 67.8 / 210.8 / 368.4 / 565.7 / 783.9 / 773.4 tok/s |
-| G6 MTP0 ladder | (below) |
+| G6 MTP0 ladder | `output-identity-qualified`, 64/64 at c64 (exact on every rung c1-c64); aggregate 33.4 / 64.4 / 123.9 / 234.4 / 419.9 / 672.0 / 927.9 tok/s (published piecewise R156f: 931.4 at c64) |
 
 The rung misses are the known tie-class prompts at their usual divergence indices (the R67 FP16 tie at
 cache-c000 @96, the recurring evidence-c007 @13 and index-c033 @33), the same population and scale as the depth-1
