@@ -17,7 +17,8 @@
  "gates_passed": {
   "G2": true,
   "G3": true,
-  "G5": true
+  "G5": true,
+  "G6_identity_through_two_ladders": "c16"
  },
  "comparisons": {
   "G2": "12/12",
@@ -99,6 +100,49 @@
     }
    ],
    "oracle_first_token_phantom_rows": []
+  },
+  "mtp4_repeat_r201": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 79.07277631598423
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 71.14050759403455
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 218.00673313409288
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 384.48818883503094
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 529.4198600731922
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "30/32",
+     "aggregate_tok_s_wall": 556.8214998238536
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "59/64",
+     "aggregate_tok_s_wall": 609.1873375437244
+    }
+   ],
+   "oracle_first_token_phantom_rows": [],
+   "probe_224_250_300": "exact"
   }
- }
+ },
+ "identity_claim": "depth 4 exact through c16 in both ladders (R197b, R201)"
 }
