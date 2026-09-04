@@ -31,7 +31,7 @@ stream and then treated as generated) on one request in 64, every time; on
 the whole-graph compile no sequential pass at depth 1, 2 or 3 has shown it
 (six passes, R187-R193). The underlying defect is upstream and unfixed: it
 also occurs on the unmodified vLLM XPU image, with and without torch.compile
-(R192/R194, 2 of 5 stock servers), so the whole-graph compile is a
+(R192/R194, 3 of 6 stock servers), so the whole-graph compile is a
 configuration that avoids it on this lane's deterministic build, not a fix
 of the cause. No patch, no image rebuild. Clean-boot qualification (`r187`,
 `r188`):

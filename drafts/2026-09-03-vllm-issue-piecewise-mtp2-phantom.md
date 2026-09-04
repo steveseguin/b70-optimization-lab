@@ -13,7 +13,7 @@ the first 16 to 18 tokens, exactly as if the extra token were not there. Then, l
 by then vLLM has appended the extra token to the conversation as if the model had chosen it.
 
 It happens on the unmodified upstream XPU image, with the default compile and also with `--enforce-eager`, with
-async scheduling on and off, on 2 of 5 servers we ran (the request it hits varies). On our own build of the
+async scheduling on and off, on 3 of 6 servers we ran (both `--enforce-eager` servers hit the same request; one default-compile server hit a different one). On our own build of the
 same commit, which has deterministic kernels, it hits the same request every single time with the default
 piecewise compile plus async scheduling, and never with `--compilation-config '{"splitting_ops": []}'`,
 `--enforce-eager`, or `--no-async-scheduling`; we think that is the deterministic build picking one history,
@@ -36,7 +36,7 @@ Observed: one row starts `[60, 271, 3833, ...]` where every other pass gives `[2
 Token 60 is `]`, the prompt's last token. Tokens 1..17 of the bad row equal tokens 0..16 of the good row; the
 rows diverge from about token 16-18 on.
 
-Seen on: `cache-c032` (default compile, `--no-async-scheduling`), `cache-c040` (`--enforce-eager`, async on).
+Seen on: `cache-c032` (default compile, `--no-async-scheduling`), `cache-c040` (`--enforce-eager`, async on; twice out of two eager servers).
 Not seen on 3 other servers (default compile async on x2, `--no-async-scheduling` x1).
 
 ## What we ruled out on the deterministic build (each with a run)

@@ -31,8 +31,8 @@ compiled does, the upstream report can stand on stock evidence alone.
 | `--enforce-eager`, async on (1st) | **cache-c040** `[60, 271, 3833]` |
 | `--enforce-eager`, async on (2nd) | **cache-c040** |
 
-Stock tally: 2 of 6 servers show the phantom (one compiled async-off, one eager async-on), on different
-requests. Tail test on every phantom row (stock and lane): tokens after the phantom equal the normal answer for
+Stock tally: 3 of 6 servers show the phantom (one compiled async-off on cache-c032; both eager async-on runs on
+cache-c040). Tail test on every phantom row (stock and lane): tokens after the phantom equal the normal answer for
 16-18 tokens, then drift. So the phantom token was inserted into the output stream without being in the model's
 context, and later appended as if generated. This is an upstream defect independent of torch.compile and of
 async scheduling; on the lane's deterministic build it manifests in exactly one configuration (piecewise +
