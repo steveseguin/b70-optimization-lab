@@ -11,5 +11,6 @@
   "no reboot: a GPU fault stops all launches"
  ],
  "r206_outcome": "aborted at the MTP0 oracle: model loading took 27.57 GiB on the card; available KV cache memory -1.27 GiB after the profile run at 1024 batched tokens (gpu_memory_utilization 0.96)",
- "r206b": "same campaign through scripts/run-20260904-qwen38-fp8-r152-tp1-variant.sh: strict/probe servers at 256 batched tokens, ladders 256/8/256 with concurrency 1,2,4,8; hypothesis and decision unchanged, identity ladder claim capped at c8 by construction"
+ "r206b": "same campaign through scripts/run-20260904-qwen38-fp8-r152-tp1-variant.sh: strict/probe servers at 256 batched tokens, ladders 256/8/256 with concurrency 1,2,4,8; hypothesis and decision unchanged, identity ladder claim capped at c8 by construction",
+ "r206b_outcome": "aborted at the MTP0 oracle again: model loading 27.57 GiB, available KV cache memory -1.1 GiB at 256 batched tokens and 0.96 utilization. The shortfall is fixed non-KV memory of the R156/R187 stack (~4 GiB above the weights), not activations; the 08-26 stock eager TP1 fit had 8448 tokens of KV with the same weights. Closed: a single-card FP8 line needs weight-side savings (e.g. an INT4/INT8 draft head is irrelevant at MTP0; the target itself must shrink) or a smaller non-KV footprint."
 }
