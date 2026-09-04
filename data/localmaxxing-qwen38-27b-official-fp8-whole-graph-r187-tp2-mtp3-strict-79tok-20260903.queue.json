@@ -31,7 +31,7 @@
     "attentionBackend": "vLLM XPU FlashAttention v2",
     "benchmarkJson": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r191-whole-graph-depth3-result.json",
     "promotionAttestation": "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r191-whole-graph-depth3-result.json",
-    "promotionAttestationSha256": "c13c2eca79e550dec8ea222e8f9fecb7eab4cefa838d3e06566c62569ae4bb47",
+    "promotionAttestationSha256": "8da6c8465aea903b03199776c9aab13d20eae3567381b99c9cdc2a16105e2ffe",
     "freshResponseHeadlineValid": true,
     "freshResponseValidity": "Two fresh MTP depth-3 servers on the R187 configuration (79.163/79.203 tok/s) against two same-configuration MTP0 controls (33.111/33.082); full 12-prompt/six-class natural-512 suite; every prompt sent once per server; cached_tokens=0; canaries before and after; every pairwise comparison matched 12/12 complete token arrays; repeat-exact at 224-300-token prompts; the sequential 64-prompt pass has no phantom first token and equals the MTP0 oracle (R191, 2026-09-03).",
     "githubResultPacket": "https://github.com/steveseguin/b70-optimization-lab/tree/main/packages/qwen38-27b-fp8-tp2-b70",
@@ -126,7 +126,7 @@
     "max_num_seqs": "1",
     "kernelBuild": "GitHub release qwen38-fp8-tp2-r139-20260902 (binary + section digests + patches); build-fixed-k-w8a16-r139-published-image.sh + build-gdn-split-mixed-r156-image.sh; COMPILATION_CONFIG splitting_ops=[] (configuration only)"
    },
-   "notes": "Strict varied-prompt static MTP depth-3 result (num_speculative_tokens=3, target-verified) on the R187 configuration: the R156 row-invariant W8A16 image served with one whole-graph torch.compile (splitting_ops=[]). 79.182890 tok/s is the center of two fresh-server, empty-compile-cache class-balanced medians (79.162590/79.203191). Two same-configuration fresh MTP0 controls measured 33.111390/33.082058 tok/s. Every pairwise comparison matched all 12 complete token arrays; canaries before and after; cached_tokens=0; repeat-exact at 224/250/300 prompt tokens; concurrent outputs byte-identical to the single-request answer through 16 users on the first ladder (c32 30/32, c64 60/64 on near-tie prompts). Target verifier FP16, draft-only INT4 head."
+   "notes": "Strict varied-prompt static MTP depth-3 result (num_speculative_tokens=3, target-verified) on the R187 configuration: the R156 row-invariant W8A16 image served with one whole-graph torch.compile (splitting_ops=[]). 79.182890 tok/s is the center of two fresh-server, empty-compile-cache class-balanced medians (79.162590/79.203191). Two same-configuration fresh MTP0 controls measured 33.111390/33.082058 tok/s. Every pairwise comparison matched all 12 complete token arrays; canaries before and after; cached_tokens=0; repeat-exact at 224/250/300 prompt tokens; concurrent outputs byte-identical to the single-request answer through 16 users in both ladders (c32 30/32 and 28/32, c64 60/64 and 61/64 on near-tie prompts). Target verifier FP16, draft-only INT4 head."
   }
  }
 ]
