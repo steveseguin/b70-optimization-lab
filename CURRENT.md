@@ -263,6 +263,18 @@ c16 on one run; R193 repeat queued), R192 the phantom on the STOCK upstream
 image (async-off arm, stock GEMM nondeterministic; R194 repeats + eager arms
 queued). LocalMaxxing payloads for MTP1 54.935 / depth-2 70.142 / depth-3
 79.183 are queued and server-validated, NOT submitted (user review). vLLM
+**Night of 2026-09-03/04 (autonomous):** R187 line extended and published:
+depth curves for depth 2 and 3 (lossless 2K-32K; depth 3 80-85 tok/s), depth 4
+qualified (82.396 tok/s, identity c1-c16 in two ladders, LocalMaxxing
+`cmtmk61qo01x8l601vtqbitg5`), depth 5 pair 86.18, depth 6 pair 87.14
+(+1.1%), depth 7 85.94: turnover at 6, depth 5 the deepest candidate by the 2%
+bar ([turnover note](experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-mtp-depth-turnover-r200-r203.md)).
+XPU graph capture on the whole-graph compile: lossless, 1.2-1.4% slower
+(R198, DNR). Prebuilt image on GHCR; package profiles now carry the R187
+ladders and depth 2/3/4 aggregates. **GPU fault on 0000:03:00.0 at 02:35:46
+(weight staging, depth-7 candidate b): preflight refuses launches on this boot;
+reboot before any server.** Pending after reboot: R204 depth-5 probe + two
+ladders, R199c short profiler capture, depth-6 pair repeat (optional).
 issue draft in `drafts/`, NOT filed (user review). **LocalMaxxing approved
 all three R187 submissions on 2026-09-03 23:4x: MTP1 54.935
 `cmtmfa23g01tvl601eyqliy9y`, depth-2 70.142 `cmtmfa2i701tyl601yrkxjn46`,

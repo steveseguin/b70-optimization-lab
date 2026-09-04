@@ -1,0 +1,42 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-fp8-r187-mtp6-strict-20260904-r202; qwen38-fp8-r187-mtp7-strict-20260904-r203 (candidate b aborted: GPU fault 0000:03:00.0 at 02:35:46 during weight staging)",
+ "preregistration": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp6-mtp7-r202-r203-prereg.json",
+ "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
+ "compilation_config": {
+  "splitting_ops": []
+ },
+ "depth6": {
+  "attempts": {
+   "mtp6-a": {
+    "label": "mtp1-a",
+    "class_balanced_median_tok_s": 87.23916698643674,
+    "tok_s_wall_full_median": 71.3662121975731,
+    "ttft_ms_median": 103.03174050204689
+   },
+   "mtp6-b": {
+    "label": "mtp1-b",
+    "class_balanced_median_tok_s": 87.04798840504716,
+    "tok_s_wall_full_median": 71.3128417101945,
+    "ttft_ms_median": 102.61831150273792
+   }
+  },
+  "center": 87.14357769574195,
+  "G2": "12/12",
+  "G3": "12/12 and 12/12"
+ },
+ "depth7": {
+  "attempts": {
+   "mtp7-a": {
+    "label": "mtp1-a",
+    "class_balanced_median_tok_s": 85.93733161476335,
+    "tok_s_wall_full_median": 70.34258877164353,
+    "ttft_ms_median": 100.93979599696468
+   }
+  },
+  "center_single": 85.93733161476335,
+  "G3_a": "12/12 (a passed strict; b never became healthy: GPU fault during weight staging)"
+ },
+ "turnover": "c1 rate by depth: d1 54.935, d2 70.142, d3 79.183, d4 82.396, d5 86.182, d6 87.144, d7 85.937 (one candidate). Peak at depth 6; d6 over d5 is +1.1% (below the preregistered 2% bar), so depth 5 is the deepest candidate; its ladders (R204) were blocked by the fault.",
+ "status": "turnover found at depth 6; depth 5 is the deepest candidate by the 2% rule; device work stopped by the 02:35 GPU fault (no reboot overnight per the user)"
+}
