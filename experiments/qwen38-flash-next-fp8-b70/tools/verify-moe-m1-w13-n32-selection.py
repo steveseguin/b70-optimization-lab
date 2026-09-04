@@ -48,6 +48,9 @@ EXPECTED_VLLM_HEADS = frozenset(
         "805cde592dfe198a82deaba52894ebfc0e4a4352",
         # + V2 runner CUDAGraphStat receipt (no MoE change)
         "2169dbfe38c2954edc5ae50e94f68d45be071b79",
+        # 1b2a17c1: the exact-verify MTP1 selectors (serial GDN rows, row-wise
+        # all-reduce, row-wise HC norm) on the 2169dbfe line; MoE map untouched.
+        "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
     }
 )
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
