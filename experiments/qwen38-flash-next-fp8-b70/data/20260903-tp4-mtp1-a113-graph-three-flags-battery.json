@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "classification": "flash_next_a113_fullgraph_mtp1_three_flags_battery",
+  "attempt": 113,
+  "port": 19785,
+  "launched": "2026-09-03T20:33:18-04:00",
+  "battery_exit": 0,
+  "identity": {
+    "vllm_head": "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
+    "kernels_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "runtime_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "kv_cache_memory_bytes": "376569856",
+    "compilation_config": "{\"mode\":0,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2],\"max_cudagraph_capture_size\":2,\"compile_sizes\":[],\"cudagraph_num_of_warmups\":1}",
+    "tuned_config_folder": "moe-m1-w13-n32",
+    "mkldnn_deterministic": "1",
+    "ccl_sycl_allreduce_ll": "twoshots"
+  },
+  "identity_mtp_line": "triton eager=0 graph=FULL_DECODE_ONLY mtp=1 max_model_len=4352 max_num_batched_tokens=64",
+  "exact_verify_selectors": [
+    "VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1",
+    "VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2",
+    "VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2"
+  ],
+  "short": {
+    "tok_s_after_ttft": [
+      31.19771059958707,
+      34.734660955511025,
+      31.31457864270936
+    ],
+    "median": 31.31457864270936,
+    "sha256": [
+      "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0"
+    ],
+    "usage": [
+      [
+        146,
+        256
+      ],
+      [
+        146,
+        256
+      ],
+      [
+        146,
+        256
+      ]
+    ]
+  },
+  "exact_2k": {
+    "tok_s_conventional_99_interval": [
+      8.551582392191321,
+      8.473179602946049
+    ],
+    "ttft_s": [
+      151.18959105200008,
+      100.51672200900009
+    ],
+    "output_token_ids_sha256": [
+      "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714"
+    ],
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "exact_4k": {
+    "tok_s_conventional_99_interval": [
+      7.693601922337529,
+      7.265744361576091
+    ],
+    "ttft_s": [
+      193.89796361799995,
+      163.12293756099984
+    ],
+    "output_token_ids_sha256": [
+      "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639"
+    ],
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "quality": {
+    "semantic_passed": 6,
+    "failed_cases": [
+      "code_execution"
+    ],
+    "repeat_unique_hashes": [
+      "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+    ],
+    "repeats": 16,
+    "needle_pass": true
+  },
+  "spec_decode": {
+    "drafts": 785.0,
+    "draft_tokens": 785.0,
+    "accepted_tokens": 735.0
+  },
+  "mtp0_authorities": {
+    "short": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "exact_2k": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+    "exact_4k": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639",
+    "repeat": "3b0b3192cd70de9c19caf7a6f6f69a4dda63cc4e66049c2cf9c15633103896b7"
+  },
+  "all_pins_match_mtp0": true
+}
