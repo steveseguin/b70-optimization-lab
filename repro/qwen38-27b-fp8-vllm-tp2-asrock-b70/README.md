@@ -127,6 +127,20 @@ point but 24K MTP1 (-2.5%); TTFT within 2%.
 
 Evidence: [R189](../../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.json).
 
+Depth 2 and depth 3 on the same configuration and oracle (R195/R196, 2026-09-04; both 18/18 exact):
+
+| active context | depth-2 decode | depth-3 decode | TTFT |
+| ---: | ---: | ---: | ---: |
+| 2K | `70.849 tok/s` | `80.604 tok/s` | `0.604 s` |
+| 4K | `73.371 tok/s` | `83.614 tok/s` | `1.165 s` |
+| 8K | `70.984 tok/s` | `84.709 tok/s` | `2.374 s` |
+| 16K | `68.969 tok/s` | `77.860 tok/s` | `4.943 s` |
+| 24K | `60.161 tok/s` | `66.874 tok/s` | `7.740 s` |
+| 32K | `68.528 tok/s` | `83.187 tok/s` | `10.733 s` |
+
+Evidence: [R195](../../experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp2-real-content-depth-r195-result.json),
+[R196](../../experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp3-real-content-depth-r196-result.json).
+
 ## Mixed-step split R156 profile (qualified 2026-09-03)
 
 R156 is the R139 image plus one Python patch on `vllm/_xpu_ops.py`: when a

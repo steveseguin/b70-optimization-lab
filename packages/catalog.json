@@ -2240,7 +2240,10 @@
         "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r191-whole-graph-depth3-result.json",
         "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp3-whole-graph-r191-result.md",
         "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp3-whole-graph-r187-server.sh",
-        "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.md"
+        "experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-r187-real-content-depth-r189-result.md",
+        "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp2-real-content-depth-r195-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp3-real-content-depth-r196-result.json",
+        "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-r187-depth-curves-mtp2-mtp3-r195-r196.md"
       ],
       "performance_profiles": [
         {
@@ -2676,6 +2679,88 @@
               "concurrent_sequences": 64,
               "value": 1525.9734081308125,
               "samples": 2
+            }
+          ]
+        },
+        {
+          "id": "http-mtp2-decode-vs-active-context",
+          "label": "R187 FP8 TP2 MTP depth-2 HTTP decode over exact active context",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Exact active prompt tokens",
+          "scope": "Measured on the published R187 line (R156 image, whole-graph torch.compile; 2026-09-04, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP1 with FP16 target verifier and draft-only INT4 head; every output matched the same-image MTP0 oracle (18/18 complete arrays). MTP depth 2 matched the same-configuration MTP0 oracle on 18/18 complete arrays.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp2-real-content-depth-r195-result.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 70.84942380399343,
+              "samples": 3
+            },
+            {
+              "context_tokens": 4096,
+              "value": 73.3710208747659,
+              "samples": 3
+            },
+            {
+              "context_tokens": 8192,
+              "value": 70.98388769165258,
+              "samples": 3
+            },
+            {
+              "context_tokens": 16384,
+              "value": 68.96875043706231,
+              "samples": 3
+            },
+            {
+              "context_tokens": 24576,
+              "value": 60.16140864752236,
+              "samples": 3
+            },
+            {
+              "context_tokens": 32768,
+              "value": 68.52798939677955,
+              "samples": 3
+            }
+          ]
+        },
+        {
+          "id": "http-mtp3-decode-vs-active-context",
+          "label": "R187 FP8 TP2 MTP depth-3 HTTP decode over exact active context",
+          "metric": "decode",
+          "unit": "tok/s",
+          "x_label": "Exact active prompt tokens",
+          "scope": "Measured on the published R187 line (R156 image, whole-graph torch.compile; 2026-09-04, clean boot): one-slot vLLM HTTP completions on two B70s at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, cache zero, canaries before and after. MTP1 with FP16 target verifier and draft-only INT4 head; every output matched the same-image MTP0 oracle (18/18 complete arrays). MTP depth 3 matched the same-configuration MTP0 oracle on 18/18 complete arrays.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp3-real-content-depth-r196-result.json",
+          "points": [
+            {
+              "context_tokens": 2048,
+              "value": 80.6041499563398,
+              "samples": 3
+            },
+            {
+              "context_tokens": 4096,
+              "value": 83.61436918129985,
+              "samples": 3
+            },
+            {
+              "context_tokens": 8192,
+              "value": 84.70874552665002,
+              "samples": 3
+            },
+            {
+              "context_tokens": 16384,
+              "value": 77.85963571992264,
+              "samples": 3
+            },
+            {
+              "context_tokens": 24576,
+              "value": 66.87441060480666,
+              "samples": 3
+            },
+            {
+              "context_tokens": 32768,
+              "value": 83.18747425034647,
+              "samples": 3
             }
           ]
         }
