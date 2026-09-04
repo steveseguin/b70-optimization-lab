@@ -253,9 +253,17 @@ exact through c16 with c32 31/32 and c64 59/64 (published piecewise: 31/32,
 final-op probe) measured the phantom in situ: the last two final-norm rows
 of request 33 are wrong and the two TP ranks disagree on the last one, all
 other rows exact (rank-local stale-memory signature inside a default
-piecewise piece). Decision for the user: move the published line and/or
-publish depth 2 on `splitting_ops=[]` (manifest change only), or keep the
-piecewise line. Devices are idle.
+piecewise piece). **Published 21:45 (user: "fix it"): R187 is the headline** (manifest chain
+`r187`, wrappers `run-20260903-qwen38-fp8-{mtp0,mtp1,mtp2,mtp3}-whole-graph-r187-server.sh`,
+package/catalog/pages/READMEs). Then: R189 depth curve on R187 (MTP1
+lossless 2K-32K, decode within 1% of R150; published), R190 second depth-2
+ladder (no phantom, exact through c32; claim stays at c4 by the two-run
+rule), R191 depth 3 (79.18 tok/s, 12/12, probe exact, ladder exact through
+c16 on one run; R193 repeat queued), R192 the phantom on the STOCK upstream
+image (async-off arm, stock GEMM nondeterministic; R194 repeats + eager arms
+queued). LocalMaxxing payloads for MTP1 54.935 / depth-2 70.142 / depth-3
+79.183 are queued and server-validated, NOT submitted (user review). vLLM
+issue draft in `drafts/`, NOT filed (user review, R194).
 On 2026-09-02 the user published it: R139 is the headline (MTP1 `54.627`,
 MTP0 `33.314`, identity through c16, aggregate rates capped at c16), binaries
 in GitHub release `qwen38-fp8-tp2-r139-20260902`, manifest closure extended to

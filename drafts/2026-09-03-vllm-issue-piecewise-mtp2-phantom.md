@@ -4,6 +4,8 @@
 [XPU] With async scheduling + MTP (num_speculative_tokens=2), the default piecewise torch.compile makes one request in 64 start its answer with a wrong token; `splitting_ops=[]` fixes it
 
 ## Summary (plain language)
+(Note for reviewer: on stock vLLM the unpatched W8A16 GEMM is nondeterministic run to run, so which server shows the wrong first token varies; on our deterministic build it is the same request every time.)
+
 We run a Qwen3.8 27B model on two Intel Arc Pro B70 GPUs with vLLM. When we turn on speculative decoding with two draft tokens and send 64 short prompts one after another, the 33rd answer always starts with a wrong first token: the model repeats the last word of the prompt (or emits a stray space) before answering normally. It happens every time, on the same prompt, and only with:
 
 - async scheduling on (the default), and
@@ -19,7 +21,7 @@ We looked inside: for that one request, the last two rows of the final hidden st
 - Model: Qwen/Qwen3.8-27B-FP8 (hybrid GDN + full attention), `--quantization fp8 --dtype float16 --kv-cache-dtype auto --block-size 64 --no-enable-prefix-caching --language-model-only`
 - `--speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":2}'`, `--max-model-len 256 --max-num-seqs 64 --max-num-batched-tokens 512`
 - XPU graphs disabled (default on this platform), compilation mode VLLM_COMPILE (3), inductor backend
-- (fill in from R192: reproduced on the stock image `vllm/vllm-openai-xpu@sha256:f01e24f6...` = yes/no; our own runs used an image with local kernel patches for W8A16 determinism, which do not touch the compile pipeline)
+- Reproduced on the unmodified upstream image `vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f` (R192: one of two default-compile servers showed it; R194 repeats pending, see below). Our own deeper runs used the same vLLM commit with local kernel patches that make the W8A16 GEMM deterministic; those patches do not touch the compile pipeline, and on that deterministic build the effect is 100% reproducible and strictly tied to async scheduling.
 
 ## Steps to reproduce
 1. Serve the model with the flags above (async scheduling on, default compile).
@@ -35,7 +37,7 @@ Expected: identical first tokens. Observed: request 33 (`cache-c032` in our suit
 - Inductor knobs `allow_buffer_reuse=False`, `max_fusion_size=1`, `pattern_matcher=False`, and every vLLM `pass_config` pass off: no change.
 - Device barrier before each step and blocking H2D copies: no change.
 
-## What removes it
+## What removes it (measured on our deterministic build of the same commit)
 - `--no-async-scheduling`
 - `--enforce-eager`
 - `--compilation-config '{"mode": 2}'` (DYNAMO_TRACE_ONCE)
