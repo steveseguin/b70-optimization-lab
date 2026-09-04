@@ -3056,6 +3056,17 @@ local-NVMe reads count against their 2 GiB read guard (A2 attempt 2).
    its generic result is diagnostic until a model-specific quality oracle is
    registered.
 
+0b. **Four-B70 host: replay the R187 line (2026-09-04).** Pull
+   `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8@sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0`,
+   tag it `neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156`,
+   run `verify-image-contract.sh mtp1-serial-fa-split-gdn` with
+   `EXPECTED_XPU_OPS_SHA256=6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064`,
+   then the strict pairs through the R187 wrappers
+   (`run-20260903-qwen38-fp8-{mtp0,mtp1,mtp4}-whole-graph-r187-server.sh`,
+   `EXPECTED_IMAGE_ID=sha256:173660ec…`). Graph-on is the right setting there
+   (add `VLLM_XPU_ENABLE_XPU_GRAPH=1`, capture sizes [1,2] for MTP1, [1..5] for
+   depth 4); on this host graph-on is 1.2-1.4% slower (R198). This replay is
+   the certification gap for the recipe (README: "clean-host replay pending").
 1. Preserve the inactive Muse fleet and its source; verify service/process state
    again before every GPU launch.
 2. Continue Qwen3.8 Q8_0 target-only TP2 from its newly qualified
