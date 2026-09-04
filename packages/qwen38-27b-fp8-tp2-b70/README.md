@@ -4,10 +4,12 @@ This package uses Qwen's official FP8 model and digest-pinned vLLM XPU
 containers on two Intel Arc Pro B70 32 GiB cards.
 
 > **Strict R187 qualified: MTP1 `54.935 tok/s`, MTP depth-2 `70.142 tok/s`,
-> MTP depth-3 `79.183 tok/s`, MTP depth-4 `82.396 tok/s`, MTP0 `33.097 tok/s`.** On a clean boot (2026-09-03), two fresh depth-1
+> MTP depth-3 `79.183 tok/s`, MTP depth-4 `82.396 tok/s`, MTP depth-5
+> `86.182 tok/s`, MTP0 `33.097 tok/s`.** On a clean boot (2026-09-03), two fresh depth-1
 > MTP1 servers measured `55.006` and `54.865 tok/s`, two depth-2 servers
 > `70.146` and `70.138 tok/s`, two depth-3 servers `79.163` and `79.203 tok/s`,
-> two depth-4 servers `82.447` and `82.345 tok/s`, and two fresh MTP0 servers `33.111` and
+> two depth-4 servers `82.447` and `82.345 tok/s`, two depth-5 servers `86.266`
+> and `86.097 tok/s`, and two fresh MTP0 servers `33.111` and
 > `33.082 tok/s`; every pairwise comparison matched all 12 complete token
 > arrays, canaries passed before and after, cache stayed zero, and the target
 > verifier stayed FP16 (draft-only INT4 head). R187 is the R156 image and
@@ -19,8 +21,8 @@ containers on two Intel Arc Pro B70 32 GiB cards.
 > image (R192/R194), so this configuration avoids it on our deterministic
 > build rather than fixing it; with XPU graphs disabled the split had no other
 > role. MTP0 output is
-> byte-identical to a single request through 64 concurrent users, MTP1, depth 3
-> and depth 4 through 16, depth 2 through 4. See the
+> byte-identical to a single request through 64 concurrent users, MTP1 and
+> depths 3-5 through 16, depth 2 through 4. See the
 > [R187](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-no-splitting-full-campaign-r187-result.md)
 > and [R188](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp1-depth1-no-splitting-r188-result.md)
 > results and the [R182-R186 diagnosis](../../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md).

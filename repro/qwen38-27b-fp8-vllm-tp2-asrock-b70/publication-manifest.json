@@ -293,7 +293,7 @@
       }
     },
     "r187": {
-      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): avoids the MTP depth-2 phantom first token seen on vLLM's piecewise split (an unfixed upstream defect that also occurs on the unmodified image, R182-R194; no whole-graph pass has shown it); MTP1 54.935, depth-2 70.142, depth-3 79.183, depth-4 82.396, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1, depth 3 and depth 4 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
+      "description": "Whole-graph torch.compile over R156 (COMPILATION_CONFIG splitting_ops=[]): avoids the MTP depth-2 phantom first token seen on vLLM's piecewise split (an unfixed upstream defect that also occurs on the unmodified image, R182-R194; no whole-graph pass has shown it); MTP1 54.935, depth-2 70.142, depth-3 79.183, depth-4 82.396, depth-5 86.182, MTP0 33.097 tok/s; MTP0 identity c1-c64, MTP1 and depths 3-5 c1-c16, depth 2 c1-c4. Configuration only; image and binaries are R156/R139.",
       "image": {
         "name": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156",
         "id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
@@ -332,6 +332,10 @@
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp4-whole-graph-r187-server.sh",
             "sha256": "57ea58149fba28df6c1e1c62487f78762839a2e9912d39daadb07801e9b5cbb1"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp5-whole-graph-r187-server.sh",
+            "sha256": "fd673c67728128676d59c478d088af23aecaca41c45c901d5832a25b34e21f54"
           },
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-mtp1-fixed-k-r139-server.sh",
@@ -401,11 +405,19 @@
           },
           {
             "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r200-whole-graph-depth5-strict-result.json",
-            "sha256": "b4399a722c891341187eaf12e02bdef40aff107e90388edb38a4a18e606e8ba8"
+            "sha256": "100c97886c4b4055f7178e030a890b8d3b89f8c4b720792b511d210703b45208"
           },
           {
             "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp5-r200-prereg.json",
             "sha256": "f0198b12ce4496cef09f77dc6952893c01536f3dc544964984bf7d4752bd8ec8"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r202-r203-depth6-depth7-result.json",
+            "sha256": "1e1be1402e50ac0dd162c370970e14780dd7718707d050d645eda9ee7dd164b2"
+          },
+          {
+            "path": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp6-mtp7-r202-r203-prereg.json",
+            "sha256": "a4c7485254b539b966094ad1601548421ba4d19d9f4f22bd89fe7afc3be1c4c4"
           }
         ],
         "campaign_runners": [
@@ -419,7 +431,7 @@
           },
           {
             "path": "experiments/qwen38-27b-b70/scripts/run-20260902-qwen38-fp8-triton-rmsnorm-r152.sh",
-            "sha256": "ffbcf3f218ebb38922ab287e7c683b82edbd94225e476122b439d3bf049a6e85"
+            "sha256": "f3eceb2aca81ad19adac97226d8c0c53b9708f11fa5154bf3b102c63fb78a95f"
           }
         ]
       }

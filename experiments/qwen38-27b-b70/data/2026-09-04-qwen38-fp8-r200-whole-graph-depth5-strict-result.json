@@ -2,7 +2,7 @@
  "schema": "b70-lab.result.v1",
  "campaign_id": "qwen38-fp8-r187-mtp5-strict-20260904-r200",
  "preregistration": "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r187-mtp5-r200-prereg.json",
- "status": "MTP depth 5 strict pair 86.266/86.097 tok/s, 12/12 vs sibling and vs the R187 MTP0 oracle",
+ "status": "MTP depth 5 on the R187 line: strict pair 86.266/86.097 tok/s (center 86.182), 12/12 vs sibling and oracle; probe exact; identity through c16 in two ladders",
  "image_id": "sha256:173660ec18c6e98a14b9a4f573922abe9d3414999056f07ab5c3c14b55d6ceb0",
  "compilation_config": {
   "splitting_ops": []
@@ -16,7 +16,9 @@
  "repo_head_at_launch": "8cb377668263286474a62752b29cf13e8c8f18e7",
  "gates_passed": {
   "G2": true,
-  "G3": true
+  "G3": true,
+  "G5": true,
+  "G6_identity_through_two_ladders": "c16"
  },
  "attempts": {
   "mtp5-a": {
@@ -50,5 +52,102 @@
  },
  "centers": {
   "mtp5_class_balanced_tok_s": 86.18172184524545
+ },
+ "ladders": {
+  "mtp5_r204a": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 74.27703409245034
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 70.80555027029264
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 215.7595525584435
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 375.7070679061197
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 493.0263788749503
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "31/32",
+     "aggregate_tok_s_wall": 508.29321858681703
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "57/64",
+     "aggregate_tok_s_wall": 554.190064400481
+    }
+   ],
+   "oracle_first_token_phantom_rows": [],
+   "probe_224_250_300": "exact"
+  },
+  "mtp5_r204b": {
+   "classification": "output-isolation-qualified-shape-variant",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 74.16068912391982
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 72.18136463590626
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 214.91504538380357
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 375.5361131455465
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 493.2246280734996
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "32/32",
+     "aggregate_tok_s_wall": 505.7940129819634
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "58/64",
+     "aggregate_tok_s_wall": 551.722732799349
+    }
+   ],
+   "oracle_first_token_phantom_rows": [],
+   "probe_224_250_300": "exact"
+  }
+ },
+ "identity_claim": "depth 5 exact through c16 in both ladders (R204a, R204b); c32 31/32 and 32/32; c64 57/64 and 58/64",
+ "acceptance": {
+  "per_position": [
+   0.857,
+   0.741,
+   0.536,
+   0.415,
+   0.33
+  ],
+  "mean_length": 3.88
  }
 }
