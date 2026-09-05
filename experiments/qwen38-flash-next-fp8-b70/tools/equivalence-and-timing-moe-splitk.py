@@ -18,6 +18,7 @@ def main() -> int:
     ap.add_argument("--config-folder", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--iters", type=int, default=200); ap.add_argument("--seed", type=int, default=20260903)
     ap.add_argument("--splits", default="2,4,5,8,10,20"); ap.add_argument("--ms", default="1,2,4")
+    ap.add_argument("--weight-sets", type=int, default=1, help="distinct expert weight sets rotated call by call (defeats cache reuse; 1 = the cached regime)")
     args = ap.parse_args(); refuse_active_model_server()
     os.environ["VLLM_TUNED_CONFIG_FOLDER"] = args.config_folder
     os.environ.pop("VLLM_XPU_MOE_SPLIT_K", None)
@@ -39,12 +40,19 @@ def main() -> int:
         scale = amax / torch.finfo(fp8).max
         q = (wb / scale).clamp(-torch.finfo(fp8).max, torch.finfo(fp8).max).to(fp8)
         return q.view(e, r, c), scale.view(e, r // BLK, c // BLK).to(torch.float32)
-    w1q, w1s = block_quant(torch.randn(E_LOCAL, 2 * N, K, generator=g) * (1.0 / K ** 0.5))
-    w2q, w2s = block_quant(torch.randn(E_LOCAL, K, N, generator=g) * (1.0 / N ** 0.5))
-    w1q, w1s, w2q, w2s = (t.to(device) for t in (w1q, w1s, w2q, w2s))
+    sets = []
+    gd = torch.Generator(device=device).manual_seed(args.seed)
+    for _ in range(args.weight_sets):
+        w1q, w1s = block_quant(torch.randn(E_LOCAL, 2 * N, K, generator=gd, device=device) * (1.0 / K ** 0.5))
+        w2q, w2s = block_quant(torch.randn(E_LOCAL, K, N, generator=gd, device=device) * (1.0 / N ** 0.5))
+        sets.append((w1q.contiguous(), w1s.contiguous(), w2q.contiguous(), w2s.contiguous()))
+        torch.xpu.synchronize()
+    w1q, w1s, w2q, w2s = sets[0]
     expert_map = torch.full((E_GLOBAL,), -1, dtype=torch.int32); expert_map[:E_LOCAL] = torch.arange(E_LOCAL, dtype=torch.int32)
     expert_map = expert_map.to(device)
-    quant = fp8_w8a8_moe_quant_config(w1_scale=w1s, w2_scale=w2s, block_shape=[BLK, BLK])
+    quants = [fp8_w8a8_moe_quant_config(w1_scale=s1, w2_scale=s2, block_shape=[BLK, BLK]) for (_, s1, _, s2) in sets]
+    quant = quants[0]
+    call_idx = [0]
     def timed(fn, iters):
         for _ in range(20): fn()
         ts = []
@@ -60,15 +68,17 @@ def main() -> int:
         tw, ti = torch.topk(torch.softmax(router.float(), dim=-1), TOPK, dim=-1)
         tw = (tw / tw.sum(dim=-1, keepdim=True)).to(torch.float32); ti = ti.to(torch.int32)
         def run():
-            out = fused_experts(x, w1q, w2q, tw, ti, global_num_experts=E_GLOBAL, expert_map=expert_map, quant_config=quant)
+            i = call_idx[0] % len(sets); call_idx[0] += 1
+            a1, _, a2, _ = sets[i]
+            out = fused_experts(x, a1, a2, tw, ti, global_num_experts=E_GLOBAL, expert_map=expert_map, quant_config=quants[i])
             torch.xpu.synchronize(); return out
         os.environ.pop("VLLM_XPU_MOE_SPLIT_K", None)
-        ref = run().clone(); ref2 = run().clone()
+        call_idx[0] = 0; ref = run().clone(); call_idx[0] = 0; ref2 = run().clone()
         row = {"stock": dict(timed(run, args.iters), repeat_equal=bool(torch.equal(ref, ref2)))}
         print(M, "stock", json.dumps(row["stock"]), flush=True)
         for S in (int(s) for s in args.splits.split(",")):
             os.environ["VLLM_XPU_MOE_SPLIT_K"] = str(S)
-            o1 = run().clone(); o2 = run().clone()
+            call_idx[0] = 0; o1 = run().clone(); call_idx[0] = 0; o2 = run().clone()
             d = (o1.float() - ref.float()).abs()
             r = dict(timed(run, args.iters), bit_equal_to_stock=bool(torch.equal(o1, ref)), repeat_equal=bool(torch.equal(o1, o2)),
                      max_abs_diff=float(d.max()), mean_abs_diff=float(d.mean()), ref_max_abs=float(ref.float().abs().max()),
@@ -77,7 +87,7 @@ def main() -> int:
         os.environ.pop("VLLM_XPU_MOE_SPLIT_K", None)
         results[f"M{M}"] = row
     json.dump({"schema_version": 1, "classification": "b70_triton_block_fp8_moe_splitk_equivalence_timing", "config_folder": args.config_folder,
-               "iters": args.iters, "seed": args.seed, "shape": dict(E_LOCAL=E_LOCAL, E_GLOBAL=E_GLOBAL, K=K, N=N, TOPK=TOPK, block=BLK),
+               "iters": args.iters, "seed": args.seed, "shape": dict(E_LOCAL=E_LOCAL, E_GLOBAL=E_GLOBAL, K=K, N=N, TOPK=TOPK, block=BLK), "weight_sets": args.weight_sets,
                "results": results}, open(args.out, "w"), indent=1)
     return 0
 
