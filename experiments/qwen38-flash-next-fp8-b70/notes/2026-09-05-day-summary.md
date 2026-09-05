@@ -93,3 +93,19 @@ Per rank the weights take 31.57 GiB of the B70's 31.89 GiB (routed experts 114.8
 ## 14:42 seventh host freeze, the first with a kernel trace
 
 A174 (eager lineage, checkpoint on the root NVMe) launched 14:40:31; its server log stops at 14:41:35 as weight loading begins. The previous boot's journal then shows `watchdog: BUG: soft lockup - CPU#30 stuck for 678s! [VLLM::Worker_TP]` in `smp_call_function_many_cond` (TLB-shootdown IPIs from the page-fault path) and `kworker … blk_mq_timeout_work blocked for more than 122 seconds` (the block layer), i.e. the root 980 PRO stalled under the mmap'd checkpoint read and the host hung. With xpu-smi bypassed since the morning, this is the next failure mode exposed. The host was hard-restarted at 16:33 (a first reboot at 16:16 was restarted again). Eager-lineage runs, which load from the root NVMe, are now a suspected freeze trigger; the graph lineage loads from USB.
+
+## 17:00 the step is VRAM paging, confirmed offline at the server's footprint
+
+`timing-moe-gemm-events-offline.py` gained `Q38_BENCH_SETS` (layer-sized FP8 expert weight sets, 629 MB each) and `Q38_BENCH_FRESH_ROUTING` (new random local experts every call). On card 0:
+
+| resident expert sets | GB | reported free | w13 GEMM | w2 GEMM |
+|---|---|---|---|---|
+| 8 | 5 | 26 | 0.23 ms | 0.16 ms |
+| 24 | 15 | 12.8 | 0.23 | 0.16 |
+| 40 | 25 | 3.45 | 0.23 | 0.16 |
+| 42 / 44 / 46 | 26 / 28 / 29 | 1.9 / 0.33 / 0.33 | 0.23 | 0.16 |
+| 48 | 30.2 | 0.51 | **21.7** | **12.2** |
+
+The 48-set cost is the same for 3 and 10 hits and equals one whole 419 MB / 210 MB buffer crossing PCIe at ~19 GB/s: the xe driver migrates entire buffers on touch once the footprint no longer fits, and there is no watermark slack below that (0.33 GiB free is still clean). A175's memory note puts the server at 31.746 GiB reserved of 31.891 per rank, i.e. at the edge, so transients evict weight buffers and every later touch of a cold expert pays a migration. This is the mechanism behind the promoted 72.7 ms step (real routing keeps hot experts resident), the 125–159 ms forced-routing steps (A171/A172), the 313 ms PLE-on-device step (A161), and the fast degenerate trajectories (a few warm experts).
+
+Fix under test: A177 = promoted graph identity with `embed_tokens.weight`, `layers.46.mlp.experts` and `layers.47.mlp.experts` added to the UVA offload (≈1.56 GiB/rank freed for ≈5 ms/step of PCIe expert reads; the kernel reads the same bytes, so the output hash must stay `afffd211…`).
