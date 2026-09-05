@@ -1,0 +1,6 @@
+# R236: R228 + GDN prefill sequences launched in groups of <=VLLM_XPU_GDN_PREFILL_GROUP (default 1) for batch invariance.
+FROM neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228
+COPY r236-gdn-prefill-group.py /tmp/r236.py
+RUN python /tmp/r236.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py && rm /tmp/r236.py \
+    && sha256sum /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+LABEL neural.download.build.lane="qwen38-int4-gdn-prefill-group-r236"
