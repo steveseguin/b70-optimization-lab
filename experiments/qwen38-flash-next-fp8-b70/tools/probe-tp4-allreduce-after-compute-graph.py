@@ -58,7 +58,12 @@ def worker(rank, world, args, result_path):
     xs = None
     if args.data == "file" and args.data_index < 0:
         dumped = torch.load(args.data_file, map_location="cpu")
-        xs = [t[:1].to(torch.bfloat16).to(device) for t in dumped[: L]]
+        if args.data_mode == "rankdistinct":
+            xs = [dumped[(i + 11 * rank) % len(dumped)][:1].to(torch.bfloat16).to(device) for i in range(L)]
+        elif args.data_mode == "rank0only":
+            xs = [(dumped[i][:1] if rank == 0 else torch.zeros_like(dumped[i][:1])).to(torch.bfloat16).to(device) for i in range(L)]
+        else:
+            xs = [t[:1].to(torch.bfloat16).to(device) for t in dumped[: L]]
         if rank == 0: print(f"file: {len(dumped)} dumped tensors, replaying {len(xs)} per sequence; abs max {max(float(t.float().abs().max()) for t in xs):.3g}", flush=True)
     outs = []
     def seq(k, do_busy, do_ar):
@@ -104,7 +109,7 @@ def worker(rank, world, args, result_path):
                     if not torch.equal(outs[i], ref): bad += 1
                 row[f"graph_{name}_verify_mismatches"] = bad
         res[f"pad{k}"] = row
-        if rank == 0: print(f"{args.busy} data={args.data} pad{k}", json.dumps(row), flush=True)
+        if rank == 0: print(f"{args.busy} data={args.data}/{args.data_mode} pad{k}", json.dumps(row), flush=True)
     dist.barrier()
     if rank == 0: json.dump(res, open(result_path, "w"), indent=1)
     dist.destroy_process_group()
@@ -113,7 +118,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", required=True); ap.add_argument("--iters", type=int, default=30)
     ap.add_argument("--pad-iters", default="0,1,3,6"); ap.add_argument("--port", type=int, default=29517)
-    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence"); ap.add_argument("--verify", action="store_true", help="check every graph replay output against the eager all-gather sum")
+    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence"); ap.add_argument("--data-mode", choices=("identical","rankdistinct","rank0only"), default="identical"); ap.add_argument("--verify", action="store_true", help="check every graph replay output against the eager all-gather sum")
     args = ap.parse_args(); refuse_active_model_server()
     import torch.multiprocessing as mp
     mp.set_start_method("spawn", force=True)
