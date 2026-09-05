@@ -2,25 +2,25 @@
 set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
-wrapper="${script_dir}/launch-tp4-mtp0-4352-ple-only-a174-mkldnndet-w13n32.sh"
-expected_wrapper=1161b66f014236f7000bfd654a1a290a8c224681df32e041dc6ac3157f0e0889
-client="${script_dir}/run-tp4-mtp0-4352-ple-only-a174-mkldnndet-w13n32-client.sh"
-expected_client=b0f45b73887ac65f9e34f43d2c202202f2fe8b6f67bff152063ba2e3f066606b
-state=/tmp/q38-mtp0-ple-only-a174
+wrapper="${script_dir}/launch-tp4-mtp0-4352-ple-only-a175-fullgraphdet-w13n32.sh"
+expected_wrapper=5fe06f7e8fdc2d083ae5386f39b6e6b5d71ec0abeab1d13cef367761b4fea0e3
+client="${script_dir}/run-tp4-mtp0-4352-ple-only-a175-fullgraphdet-w13n32-client.sh"
+expected_client=5ebec4cca36fc4de9fda8aa34dd204141e660252ab7389f8830393dc8ff4a0e8
+state=/tmp/q38-mtp0-ple-only-a175
 stop_file="${state}.stop"
 failure_file="${state}.failed"
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt174
-cache_dir=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt174
-compile_dir=/tmp/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt174-compile
-rpc_dir=/tmp/q38-ple2k-a174-rpc
-evidence_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-mkldnndet-mtp0-4352-ple-only-r1-attempt174-supervisor
-port=19845
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt175
+cache_dir=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt175
+compile_dir=/tmp/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt175-compile
+rpc_dir=/tmp/q38-ple2k-a175-rpc
+evidence_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt175-supervisor
+port=19846
 pressure_log="${evidence_dir}/host-pressure.tsv"
-expected_nvme_aer_cor=${Q38_A174_NVME_AER_BASELINE:-}
-expected_root_aer_cor=${Q38_A174_ROOT_AER_BASELINE:-}
-expected_nvme_sectors_read=${Q38_A174_NVME_SECTORS_READ_BASELINE:-}
+expected_nvme_aer_cor=${Q38_A175_NVME_AER_BASELINE:-}
+expected_root_aer_cor=${Q38_A175_ROOT_AER_BASELINE:-}
+expected_nvme_sectors_read=${Q38_A175_NVME_SECTORS_READ_BASELINE:-}
 max_nvme_aer_delta=64
-max_nvme_sectors_read_delta=536870912
+max_nvme_sectors_read_delta=134217728
 child=""
 launcher=""
 server_pid=""
@@ -66,7 +66,7 @@ sample_pressure() {
      nvme_aer_cor - expected_nvme_aer_cor <= max_nvme_aer_delta && \
      nvme_sectors_read >= expected_nvme_sectors_read && \
      nvme_sectors_read - expected_nvme_sectors_read <= max_nvme_sectors_read_delta )) || return 1
-  (( mem_available_kib >= 12000000 )) || return 1
+  (( mem_available_kib >= 16000000 )) || return 1
   awk -v field="$mem_psi_full" 'BEGIN { split(field, values, "="); exit !(values[2] <= 10.0) }' || return 1
   ! grep -Eqi 'event severity: (fatal|recoverable)|uncorrected|DPC:|link down|controller is down' \
     "${evidence_dir}/kernel-follow.log" || return 1
@@ -77,7 +77,7 @@ owned_server_pid() {
   pid=$(cat "${run_dir}/server.pid" 2>/dev/null || true)
   [[ "$pid" =~ ^[1-9][0-9]*$ && -e "/proc/${pid}" ]] || return 1
   command=$(tr '\0' ' ' <"/proc/${pid}/cmdline" 2>/dev/null || true)
-  [[ "$command" == *"vllm serve /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"* && \
+  [[ "$command" == *"vllm serve /mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"* && \
      "$command" == *"--port ${port}"* && "$command" == *"--max-model-len 4352"* ]] || return 1
   printf '%s\n' "$pid"
 }
@@ -224,7 +224,7 @@ trap 'exit 130' INT TERM HUP
 [[ $# == 0 ]] || { printf 'FAIL: supervisor takes no arguments\n' >&2; exit 2; }
 [[ "$expected_nvme_aer_cor" =~ ^[0-9]+$ && "$expected_root_aer_cor" =~ ^[0-9]+$ && \
    "$expected_nvme_sectors_read" =~ ^[0-9]+$ ]] || {
-  printf 'FAIL: A174 supervisor requires numeric host-control AER baselines\n' >&2
+  printf 'FAIL: A175 supervisor requires numeric host-control AER baselines\n' >&2
   exit 1
 }
 [[ "$(sha256sum "$wrapper" | cut -d' ' -f1)" == "$expected_wrapper" ]] || {
@@ -253,7 +253,7 @@ if ! sample_pressure; then
   kill -TERM "$journal_follow_pid" 2>/dev/null || true
   wait "$journal_follow_pid" 2>/dev/null || true
   journal_follow_pid=""
-  printf 'FAIL: initial A174 host-pressure gate failed\n' >&2
+  printf 'FAIL: initial A175 host-pressure gate failed\n' >&2
   exit 1
 fi
 write_atomic "${state}.deadline-epoch" "$deadline_epoch"
@@ -262,9 +262,9 @@ started=1
 set +e
 timeout --signal=TERM --kill-after=30s 10000s env -i \
   HOME=/home/steve USER=steve LOGNAME=steve LANG=C.UTF-8 \
-  Q38_A174_NVME_AER_BASELINE="$expected_nvme_aer_cor" \
-  Q38_A174_ROOT_AER_BASELINE="$expected_root_aer_cor" \
-  Q38_A174_NVME_SECTORS_READ_BASELINE="$expected_nvme_sectors_read" \
+  Q38_A175_NVME_AER_BASELINE="$expected_nvme_aer_cor" \
+  Q38_A175_ROOT_AER_BASELINE="$expected_root_aer_cor" \
+  Q38_A175_NVME_SECTORS_READ_BASELINE="$expected_nvme_sectors_read" \
   PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
   "$wrapper" &
 child=$!
@@ -290,7 +290,7 @@ valid_stop=0
 while kill -0 "$child" 2>/dev/null; do
   remember_server || { printf 'FAIL: owned server identity changed\n' >&2; exit 70; }
   if ! sample_pressure; then
-    write_atomic "$failure_file" 'FAIL A174 host-pressure or NVMe-link guard'
+    write_atomic "$failure_file" 'FAIL A175 host-pressure or NVMe-link guard'
   fi
   if [[ -e "$stop_file" || -e "$failure_file" ]]; then
     requested_stop=1
@@ -310,7 +310,7 @@ while kill -0 "$child" 2>/dev/null; do
          .torchinductor_cache.interpretation == "trace_attributed_nested_operator_cache" and
          .torchinductor_cache.file_count > 0 and
          .torch_trace.compile_event_count > 0' \
-         "${run_dir}/mkldnndet-runtime-after.json" >/dev/null 2>&1 && \
+         "${run_dir}/fullgraphdet-runtime-after.json" >/dev/null 2>&1 && \
        jq -e '.status == "passed" and .recovery_canary == "passed" and
          .identity.model_revision == "bcd9f01ddc9cff2316eb84281bebcd5b058bddce" and
          .identity.vllm_head == "cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9" and
@@ -355,7 +355,7 @@ final_pressure_ok=0
 if sample_pressure; then
   final_pressure_ok=1
 else
-  write_atomic "$failure_file" 'FAIL A174 final host-pressure or NVMe-link guard'
+  write_atomic "$failure_file" 'FAIL A175 final host-pressure or NVMe-link guard'
 fi
 rc=$child_rc
 if (( requested_stop == 1 && valid_stop == 1 && final_pressure_ok == 1 )) && \
