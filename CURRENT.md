@@ -355,8 +355,14 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   has five row-count classes and only M<=8 reproduces the single-request bits, so concurrency identity
   on this kernel needs either the opt-in 8-row-chunk mode (R213c, `VLLM_XPU_W4A16_ROW_CHUNK8=1`, R218
   queued to measure it) or a row-invariant W4A16 GEMM (the real optimization item).
-- **Queue (01:45):** R216 chain depths 5, 3, 2, 1, 6, 7 (strict vs the R216 oracle + ladders) ->
-  R215 TP1 full campaign -> R218 chunk-8 ladders. Logs under `/mnt/fast-ai/bench-results/logs/r21*.log`.
+- **GPU fault 01:43:30 on 0000:03:00.0** (xe "Fault response: Unsuccessful -EINVAL", devcoredump) during
+  weight staging of the depth-5 candidate b, the same signature as the FP8 lane's 2026-09-04 fault; no
+  census or other process was on the GPUs at the time. Preflight refuses every launch on this boot, so
+  the queue aborted. Depth-5 candidate a had already finished: **68.28 tok/s**, 12/12 vs the R216 oracle
+  (single arm; the two-run rule still needs candidate b).
+- **After the reboot, run one command:** `bash experiments/qwen38-27b-b70/scripts/run-20260905-qwen38-int4-post-reboot-r219-resume-queue.sh`
+  (removes the aborted roots, then R216 chain depths 5, 3, 2, 1, 6, 7 -> R215 TP1 -> R218 chunk-8
+  ladders; logs under `/mnt/fast-ai/bench-results/logs/r21*.log`).
 - **Next after the queue:** result note per depth, the c1 spectrum into the INT4 package/recipe (headline
   = deepest lossless depth by the two-run rule), then optimization: row-invariant W4A16 GEMM (also removes
   the ~4% custom-op dispatch cost and both pads), then the FP8 lane's launch-overhead work.
