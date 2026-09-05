@@ -43,14 +43,23 @@ The real trajectory routes to more distinct local experts per rank and
 reaches the MoE collective more skewed; the graph replay, with nothing
 else resynchronizing the ranks, doubles that into the 40 ms.
 
-Queue (promoted graph identity, one collective knob each, hash-checked
-against the authority, telemetry bypassed): A164
-`CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=0` (offline: the same all-reduce
-halves, exact), A165 `CCL_SYCL_ALLREDUCE_LL_THRESHOLD=8192` (the
-low-latency path, graph-replay correctness retest with oneCCL 4ceafd1),
-A166 `CCL_SYCL_ALLREDUCE_ARC=1`. Beyond knobs: balance the per-rank expert
-load (routing-aware expert placement across the four ranks) or overlap
-the MoE collective.
+Midday results (promoted graph identity, one change each, telemetry
+bypassed, 2K request, hash against the authority `afffd211`):
+
+| attempt | change | hash | rate / step | verdict |
+|---|---|---|---|---|
+| A164 | `CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=0` | differs | 13.65 tok/s, 75.8 ms | rejected |
+| A165 | `CCL_SYCL_ALLREDUCE_LL_THRESHOLD=8192` (low-latency path) | authority | 13.69 tok/s | exact, neutral (graph replay is correct with oneCCL 4ceafd1 now) |
+| A166 | `CCL_SYCL_ALLREDUCE_ARC=1` | differs | 14.19 tok/s | rejected |
+| A169 | split-K 4 MoE GEMMs (`VLLM_XPU_MOE_SPLIT_K=4`) | authority | 12.54 tok/s, median 63.7 with 90-118 ms outliers | exact, not faster |
+| A168 | routing dump (eager, real text) | authority | slowest rank 204 blocks/step vs mean 120; round-robin 202, frequency-balanced 195 | static placement recovers at most 10% of the skew |
+
+Offline, a deliberately late rank makes each captured all-reduce cost
+exactly the extra arrival time (no fixed poll or backoff penalty), so the
+40 ms is genuine per-layer arrival skew of the MoE block on the real
+trajectory. Queue: A170 (split-K 8), then A171/A172 with forced
+pseudo-random routing, balanced across ranks versus all on one rank
+(timing only), to separate imbalance from per-hit weight streaming.
 
 ## Host
 
