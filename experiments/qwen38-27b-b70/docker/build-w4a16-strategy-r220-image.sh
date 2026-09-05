@@ -3,7 +3,7 @@
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-repo_root=$(cd -- "${script_dir}/../.." && pwd)
+repo_root=$(cd -- "${script_dir}/../../.." && pwd)
 build_root=${BUILD_ROOT:?set BUILD_ROOT to a new empty local build directory}
 host_oneapi_root=${HOST_ONEAPI_ROOT:-/opt/intel/oneapi}
 base_image=${BASE_IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-w4a16-detpad-op-r213b}
