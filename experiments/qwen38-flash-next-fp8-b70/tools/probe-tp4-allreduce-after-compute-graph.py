@@ -39,6 +39,7 @@ def worker(rank, world, args, result_path):
     else:
         def busy(k):
             for _ in range(k): torch.matmul(buf, buf)
+    L = 48
     def make_data(kind):
         g = torch.Generator(device="cpu").manual_seed(1234 + rank)
         if kind == "zeros": t = torch.zeros(1, 2560)
@@ -50,15 +51,19 @@ def worker(rank, world, args, result_path):
         elif kind == "nan": t = torch.randn(1, 2560, generator=g); t[0, ::7] = float("nan")
         elif kind == "inf": t = torch.randn(1, 2560, generator=g); t[0, ::7] = float("inf")
         elif kind == "huge": t = torch.randn(1, 2560, generator=g) * 1e30
-        elif kind == "file": t = torch.load(args.data_file, map_location="cpu")[:1].float()
+        elif kind == "file": t = torch.load(args.data_file, map_location="cpu")[args.data_index][:1].float()
         else: raise SystemExit(kind)
         return t.to(torch.bfloat16).to(device)
     x = make_data(args.data)
-    L = 48
+    xs = None
+    if args.data == "file" and args.data_index < 0:
+        dumped = torch.load(args.data_file, map_location="cpu")
+        xs = [t[:1].to(torch.bfloat16).to(device) for t in dumped[: L]]
+        if rank == 0: print(f"file: {len(dumped)} dumped tensors, replaying {len(xs)} per sequence; abs max {max(float(t.float().abs().max()) for t in xs):.3g}", flush=True)
     def seq(k, do_busy, do_ar):
-        for _ in range(L):
+        for i in range(L):
             if do_busy: busy(k)
-            if do_ar: dist.all_reduce(x)
+            if do_ar: dist.all_reduce(xs[i % len(xs)] if xs is not None else x)
     def wall(fn, n):
         for _ in range(5): fn()
         torch.xpu.synchronize(); dist.barrier(); ts = []
@@ -92,7 +97,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", required=True); ap.add_argument("--iters", type=int, default=30)
     ap.add_argument("--pad-iters", default="0,1,3,6"); ap.add_argument("--port", type=int, default=29517)
-    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None)
+    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence")
     args = ap.parse_args(); refuse_active_model_server()
     import torch.multiprocessing as mp
     mp.set_start_method("spawn", force=True)
