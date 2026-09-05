@@ -47,7 +47,10 @@ if FRESH:
             s = sets[_ % 8]; fused_experts(x, s[0], s[2], tw, fresh_ids(), global_num_experts=E_GLOBAL, expert_map=em, quant_config=s[4])
         torch.xpu.synchronize(); q38.snapshot_and_clear()
         n = 96
+        touch = os.getenv("Q38_BENCH_FILLER_TOUCH", "") == "1" and _FILLER is not None
         for i in range(n):
+            if touch:
+                _FILLER.fill_(i & 0xFF)  # keep the filler hot so the expert weights are the LRU eviction victims
             s = sets[i % 8]; fused_experts(x, s[0], s[2], tw, fresh_ids(), global_num_experts=E_GLOBAL, expert_map=em, quant_config=s[4])
         acc = q38.snapshot_and_clear()
         print(f"FRESH routing, {hits_per_call} local hits per call, rotating weights:", {k: round(1e3*v/n, 4) for k, v in acc.items() if not k.endswith('_n')}, "ms per launch")
