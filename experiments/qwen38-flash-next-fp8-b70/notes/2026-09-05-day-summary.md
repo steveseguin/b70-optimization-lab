@@ -138,3 +138,7 @@ Under 1 GiB of headroom already ends the paging, and each offloaded expert layer
 ## 18:54 MTP1 with headroom is lossless and faster than MTP0
 
 A184 = the graph MTP1 lineage (A120/A135) with the same expert offload (13.78 GiB per rank), the USB checkpoint copy and overlay `08df70ea`. Both exact-2K requests reproduce the MTP0 authority ids (`afffd211…`): r1 20.42 tok/s, r2 28.52 tok/s (MTP0 with headroom: 25.1-25.2). The two-token step is 57.7 ms forward plus 2.5 ms draft, where the same step cost 120-220 ms under paging (A143), so MTP1's "0.60x on real text" was paging, not the draft. Allocator reserved 30.93 GiB with the device again full to the byte, so MTP may want a little more budget. A185 (MTP1 headroom on the realistic suite) and A186 (MTP2 with headroom) are queued after the certification battery and the floor probe.
+
+## 19:28 A178: the embedding alone is not enough headroom
+
+A178 (budget 12.25 GiB: embedding + PLE, 12.22 GiB offloaded, the lineage's original "PLE plus embedding" placement) keeps the hash but runs at 14.58 / 15.97 tok/s at exact 2K, i.e. still in the paging regime (A175 14.42). One expert layer (A181, 0.88 GiB freed) is the smallest placement that ends the paging; the floor lies between 0.3 and 0.9 GiB of freed VRAM.
