@@ -5,7 +5,7 @@ script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/t
 base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a179-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
-expected_derived=f245bb75bb3ca2b71894e3729c82c19941d2e05195edd5de7ff11a11c9d38da6
+expected_derived=9d50e326c76e0cdcf7e0f69edc6ea80021eb1da8c4371c4b302acb2041227d50
 campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
@@ -170,8 +170,8 @@ $0 == "setsid \"${vllm_bin}\" serve \"${args[@]}\" >\"${server_log}\" 2>&1 &" {
   gsub(/tp4_ep4_triton_eager_mtp/, "tp4_ep4_triton_fullgraphdet_mtp")
   gsub(/First-load launcher/, "Full-graph launcher")
   gsub(/12\.25/, "13.4")
-  gsub(/12\.22/, "13.39")
-  gsub(/exact_12\.22/, "exact_13.39")
+  gsub(/12\.22/, "13.78")
+  gsub(/exact_12\.22/, "exact_13.78")
   gsub(/ple_embedding\.ngram_embedding\.weight,embed_tokens\.weight/, "ple_embedding.ngram_embedding.weight,embed_tokens.weight,mlp.experts")
   gsub(/ple_embedding\.ngram_embedding\.weight embed_tokens\.weight/, "ple_embedding.ngram_embedding.weight embed_tokens.weight mlp.experts")
   print

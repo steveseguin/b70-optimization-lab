@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 supervisor=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp0-4352-ple-only-a179-fullgraphdet-w13n32.sh
-expected_supervisor=77eeb7949d382186fe33aa55ed3674b6f54407b83972598a6a7b0df12d4397d5
+expected_supervisor=56951d7132518dc158e39cc097a2d2f5325bbef02f280c8a1c9f63f753344b6b
 aspm_policy=/sys/module/pcie_aspm/parameters/policy
 original_policy=""
 original_swap_path=""
