@@ -1,0 +1,5 @@
+# R211: R156 + prefill-band row padding for the ARK W4A16 GEMM (INT4 AutoRound determinism). FP8 paths untouched.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+COPY r211-ark-prefill-pad.py /tmp/r211.py
+RUN python /tmp/r211.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/inc/schemes/inc_ark_ops.py && rm /tmp/r211.py
+LABEL neural.download.build.lane="qwen38-int4-ark-prefill-pad-r211"

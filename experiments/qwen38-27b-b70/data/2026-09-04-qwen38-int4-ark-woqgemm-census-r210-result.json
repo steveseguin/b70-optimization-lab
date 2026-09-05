@@ -1,0 +1,314 @@
+{
+ "kind": "ark-woqgemm-census",
+ "repeats": 12,
+ "layers": {
+  "model.language_model.layers.1.mlp.down_proj": {
+   "K": 17408,
+   "N": 5120,
+   "run_to_run": {
+    "1": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "2": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "3": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "4": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "5": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "8": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "12": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "16": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "32": {
+     "bit_identical": false,
+     "max_differing_elements": 7
+    },
+    "48": {
+     "bit_identical": false,
+     "max_differing_elements": 57
+    },
+    "64": {
+     "bit_identical": false,
+     "max_differing_elements": 54
+    },
+    "128": {
+     "bit_identical": false,
+     "max_differing_elements": 151
+    },
+    "256": {
+     "bit_identical": false,
+     "max_differing_elements": 8
+    },
+    "512": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    }
+   },
+   "row_invariance_vs_m1": {
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "12": false,
+    "16": false,
+    "32": false,
+    "48": false,
+    "64": false,
+    "128": false,
+    "256": false,
+    "512": false
+   }
+  },
+  "model.language_model.layers.1.mlp.gate_proj": {
+   "K": 5120,
+   "N": 17408,
+   "run_to_run": {
+    "1": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "2": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "3": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "4": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "5": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "8": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "12": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "16": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "32": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "48": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "64": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "128": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "256": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "512": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    }
+   },
+   "row_invariance_vs_m1": {
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "12": false,
+    "16": false,
+    "32": false,
+    "48": false,
+    "64": false,
+    "128": false,
+    "256": false,
+    "512": false
+   }
+  },
+  "model.language_model.layers.3.self_attn.q_proj": {
+   "K": 5120,
+   "N": 12288,
+   "run_to_run": {
+    "1": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "2": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "3": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "4": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "5": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "8": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "12": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "16": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "32": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "48": {
+     "bit_identical": false,
+     "max_differing_elements": 11
+    },
+    "64": {
+     "bit_identical": false,
+     "max_differing_elements": 17
+    },
+    "128": {
+     "bit_identical": false,
+     "max_differing_elements": 25
+    },
+    "256": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "512": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    }
+   },
+   "row_invariance_vs_m1": {
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "12": false,
+    "16": false,
+    "32": false,
+    "48": false,
+    "64": false,
+    "128": false,
+    "256": false,
+    "512": false
+   }
+  },
+  "model.language_model.layers.1.linear_attn.out_proj": {
+   "K": 6144,
+   "N": 5120,
+   "run_to_run": {
+    "1": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "2": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "3": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "4": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "5": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "8": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "12": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "16": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "32": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    },
+    "48": {
+     "bit_identical": false,
+     "max_differing_elements": 20
+    },
+    "64": {
+     "bit_identical": false,
+     "max_differing_elements": 28
+    },
+    "128": {
+     "bit_identical": false,
+     "max_differing_elements": 89
+    },
+    "256": {
+     "bit_identical": false,
+     "max_differing_elements": 12
+    },
+    "512": {
+     "bit_identical": true,
+     "max_differing_elements": 0
+    }
+   },
+   "row_invariance_vs_m1": {
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "12": false,
+    "16": false,
+    "32": false,
+    "48": false,
+    "64": false,
+    "128": false,
+    "256": false,
+    "512": false
+   }
+  }
+ }
+}
