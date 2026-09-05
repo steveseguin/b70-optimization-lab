@@ -48,6 +48,9 @@ expected_layernorm_sha256=${EXPECTED_LAYERNORM_SHA256:-}
 expected_xpu_ops_sha256=${EXPECTED_XPU_OPS_SHA256:-}
 # R207 candidates replace the XPU communicator module; opt in with its exact digest.
 expected_xpu_communicator_sha256=${EXPECTED_XPU_COMMUNICATOR_SHA256:-}
+# R220/R221 candidates replace the vllm-xpu-kernels extension (_xpu_C.abi3.so, rebuilt with the W4A16 fixed-K
+# oneDNN patch); opt in with its exact digest.
+expected_xpu_c_sha256=${EXPECTED_XPU_C_SHA256:-}
 
 # Experimental overlays may intentionally replace only the XPU communicator.
 # Keep the ordinary package hash immutable and require candidates to provide
@@ -118,6 +121,11 @@ fi
 if [[ -n "${expected_xpu_communicator_sha256}" ]]; then
   for index in "${!paths[@]}"; do
     [[ "${paths[index]}" == */device_communicators/xpu_communicator.py ]] && expected[index]=${expected_xpu_communicator_sha256}
+  done
+fi
+if [[ -n "${expected_xpu_c_sha256}" ]]; then
+  for index in "${!paths[@]}"; do
+    [[ "${paths[index]}" == */vllm_xpu_kernels/_xpu_C.abi3.so ]] && expected[index]=${expected_xpu_c_sha256}
   done
 fi
 if [[ -n "${expected_layernorm_sha256}" ]]; then
