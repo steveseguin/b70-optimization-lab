@@ -4,6 +4,67 @@
 > promoted reproduction; see its entry in
 > [`repro/guide-catalog.json`](../guide-catalog.json).
 
+## Fixed-K batch-invariant profile on the R187 stack (2026-09-05, research-status)
+
+The 2026-09-04/05 refresh runs the same AutoRound tensors on the FP8 lane's R187 stack (whole-graph compile,
+deterministic Inductor, no autotune, r152 harness) with two kernel-level changes and three runtime switches. Every
+number below is class-balanced median decode at concurrency 1 unless a ladder is named; the two-run identity rule and
+the MTP-vs-MTP0 oracle gate are the FP8 lane's.
+
+**What changed and why**
+
+1. *Kernel routing.* vLLM routes `quant_method: auto-round` to INC/ARK `woqgemm`, which is nondeterministic for 32-256
+   rows, never batch-shape invariant (so speculative decoding can never be lossless on it) and 6-10x slower at two rows
+   than one. The identical tensors relabelled as plain `gptq` select `XPUwNa16LinearKernel -> _xpu_C.int4_gemm_w4a16`
+   (oneDNN). Builder: [`scripts/make-gptq-relabel.py`](scripts/make-gptq-relabel.py) (hard links plus rewritten
+   `config.json`/`quantization_config.json`; the `mtp.fc` exclusion is spelled `mt[p]\.fc` so vLLM keeps the INT4 draft
+   layers quantized); manifest [`manifests/model-gptq-relabel-r212.json`](manifests/model-gptq-relabel-r212.json).
+2. *Fixed-K W4A16 GEMM.* The oneDNN catalog splits K 8-way for 1-8 token rows, 2-way to 128 and not at all above, so a
+   request's rows get different bits depending on batch composition. The R221 kernel library pins a two-tier strategy
+   (the natural 1-8-row entry for n <= 8, the 9-24 tile with the same 8-way K split above; bitwise equal on all 14 TP1/TP2
+   shapes for n = 1..1024): decode unchanged, prefill GEMMs about 2x. Patches
+   `experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-{strategy-override-dump-r220,fixed-k-two-tier-r221}-20260905.patch`,
+   build `experiments/qwen38-27b-b70/docker/{build-w4a16-strategy-r220-image.sh,rebuild-w4a16-incremental-r221.sh}`
+   (the R139 flow: vllm-xpu-kernels 1e90ffa6 + r35 + r50, oneDNN 0e2a5bfe + r137a + r137b). `QWEN38_W4A16_FIXED_K=0`
+   restores the catalog.
+3. *FP16 linears in 32-row pieces* (R224, `docker/r224-fp16-linear-rowchunk.py`, `VLLM_XPU_FP16_LINEAR_ROWCHUNK`): the
+   oneDNN f16 GEMM behind `lm_head` and `mtp.fc` keeps the single-row class only to 32 rows.
+4. *Runtime switches:* `VLLM_BATCH_INVARIANT=1` (single-split flash-decoding) and Inductor `"split_reductions": false`
+   in `inductor_compile_config` (size-independent reduction order for the compiled RMSNorm and other reductions);
+   `VLLM_XPU_GDN_SPEC_GROUP` / `VLLM_XPU_GDN_PREFILL_GROUP` (R228/R236) group the GDN launches.
+
+Images: `neural-download/vllm-openai-xpu:qwen38-int4-w4a16-fixed-k-r221` (699e2699, `_xpu_C` 271db0d4) ->
+`...:qwen38-int4-fp16-rowchunk-r224` (a23ff249) -> `...:qwen38-int4-gdn-spec-group-r228` (aaf920b0, `_xpu_ops.py`
+c91d6b0d) -> `...:qwen38-int4-gdn-prefill-group-r236` (9488db61, `_xpu_ops.py` 015b4dce). Launch through the FP8 lane's
+launchers with `MODEL_DIR=<relabel dir> MODEL_MANIFEST=<relabel manifest> QUANTIZATION=gptq VLLM_XPU_FP8_BLOCK_W8A16=0
+VLLM_XPU_DRAFT_LM_HEAD_INT4=0 VLLM_XPU_W4A16_DETERMINISM_PAD=0 XPU_EXTENSION_SHA256_OVERRIDE=<_xpu_C sha256>
+XPU_OPS_SHA256_OVERRIDE=<_xpu_ops.py sha256>` (see the R222-R239 wrappers under `experiments/qwen38-27b-b70/scripts/`).
+
+**Single-request results, TP2 (R222/R227, R224 + batch-invariant):** MTP0 36.00 / 34.92 tok/s; MTP depth 1
+50.83 / 51.12; depth 4 68.62 / 68.23; G1 (MTP0 pair), G2 (MTP pair) and G3 (each MTP server vs the MTP0 oracle) 12/12 at
+every depth measured; G5 probe identical at 224/250/300 prompt tokens. Old ARK routing on the same stack: 32.8 tok/s and
+no lossless speculation possible.
+
+**Concurrency identity (c1-c64 ladder, 128 tokens per request, TP2):**
+
+| configuration | MTP0 | MTP depth 4 |
+|---|---|---|
+| ARK routing (R216) | exact to c2 | exact to c2 |
+| fixed-K kernel (R222) | exact to c32, c64 63/64 | c4 3/4, c8-c32 exact, c64 59/64 |
+| + FP16 32-row pieces (R225) | c32 31/32, c64 64/64 | c8 7/8, c32 31/32, c64 60/64 |
+| + `VLLM_BATCH_INVARIANT=1` (R226) | **exact c1-c64** | exact c1-c16, c32 30/32, c64 59/64 |
+| + Inductor `split_reductions=false` (R232) | exact c1-c64 | exact c1-c16, c32 31/32, c64 63/64 |
+
+The remaining c32/c64 flips are a handful of near-tie prompts whose result depends on how the ladder's arrival timing
+mixes prefills into the first steps (the MTP0 ladder with an unchanged configuration is all-exact in one run and one miss
+at c32 or c64 in others). Every INT4 GEMM, FP16 linear and the attention decode are batch-invariant; the residual sits in
+the GDN kernel's dependence on launch composition (grouping its launches, R229-R238, does not reproduce the
+single-request arithmetic). Notes: `experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-{w4a16-fixed-k-two-tier-r220-r221,concurrency-identity-r222-r226}.md`;
+data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-*`.
+
+**Matrix (TP2 and TP1, depths 0-4; R239):** pending at the time of writing; results land in
+`data/2026-09-05-qwen38-int4-r239-matrix-result.json` and this table.
+
 New optimization lane, opened 2026-08-18, superseding the Qwen3.6 27B INT4
 speculative lane. The two checkpoints have the same tensor architecture, so the
 pinned Qwen3.6 source stack is mechanically compatible. New weights still
