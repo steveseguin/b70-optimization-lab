@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 wrapper="${script_dir}/launch-tp4-mtp0-4352-ple-only-a173-fullgraphdet-w13n32.sh"
-expected_wrapper=666d772362d09db195c7afb6f68eb8d6a0f0d0787929ac0da67a97bf067e0601
+expected_wrapper=60356a5ce8cb40c80d86e4fa0c6a96686ef8c1f47c269090b9ef41c9976c8a27
 client="${script_dir}/run-tp4-mtp0-4352-ple-only-a173-fullgraphdet-w13n32-client.sh"
 expected_client=91b6b8618c40e9393975e89b8f0eaa9beb791cf4967db8a016c4618d26b6eb42
 state=/tmp/q38-mtp0-ple-only-a173
