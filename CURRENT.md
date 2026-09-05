@@ -389,6 +389,17 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   (`scripts/boot-20260905-qwen38-int4-r222-matrix-autolaunch.sh`, self-removing). **Host rebooted by the agent
   right after this commit.** When the session resumes: watch `/mnt/fast-ai/bench-results/logs/r222-matrix.log`
   (TP2 depth-1 full campaign first, then depths 2, 3; then TP1), then notes, data, package/recipe, README.
+- **R222 on the fresh boot (12:00):** TP2 depth 4 on R221: all strict gates 12/12, MTP0 35.5/36.2, MTP4 68.6/68.2
+  tok/s (pad off). Identity ladders now exact through c32 for both MTP0 and MTP4 (old kernel: c2); residual
+  MTP0 c64 63/64 (one prompt, token 77) and MTP4 c4 3/4 (token 60), c64 59/64 (tokens 11-92). Census: the FP16
+  oneDNN GEMM behind lm_head and mtp.fc keeps the single-row class only to 32 rows (c64 sampled rows = 64/320),
+  in_proj_a/b are invariant at every M. Chain stopped after the depth-4 ladders (data
+  `data/2026-09-05-qwen38-int4-fixed-k-r222-matrix-partial-result.json`).
+- **R224 image** (a23ff249) = R221 + every unquantized XPU linear in <=32-row pieces via an opaque custom op
+  (`docker/r224-fp16-linear-rowchunk.py`, env `VLLM_XPU_FP16_LINEAR_ROWCHUNK`, default 32). **R225 running:**
+  depth-4 TP2 ladders on R224 with `VLLM_XPU_FA_SERIAL_SPEC_DECODE=1` (per-request attention for verify rows,
+  the candidate for the MTP4 c4 miss). If exact through c64, the final matrix (R222 chain with the fixed DEPTH
+  handling, R224 image, FA serial on) reruns for TP2/TP1 x depths 0-3.
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
   (`scripts/run-20260905-qwen38-int4-fixed-k-r222-matrix-tp2-tp1-mtp0-3.sh`: TP2 then TP1; depth-1 full
   campaign as oracle + MTP0/MTP1 ladders; depths 2, 3 strict + ladders; pad off), reboot.
