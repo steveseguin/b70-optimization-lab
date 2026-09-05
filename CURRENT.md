@@ -425,6 +425,16 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   TP2 then TP1, depth-1 full + depths 2, 3, 4 strict + ladders; logs `logs/r229-ladders.log`, `logs/r230-matrix.log`).
   Two weight-staging faults on the same card in 12 h is a host reliability item for the user (cookbook reliability
   report: multi-GPU xe wedges).
+- **Fresh boot 14:12 (third today):** cron ran R229 (R228 grouped GDN spec, depth 4, TP2): grouping engaged (log
+  marker) but identity unchanged (c32 30/32, c64 59/64) -> the GDN launch size is not the source. **R232** (same +
+  Inductor `split_reductions=false` in `inductor_compile_config`): **c32 31/32, c64 63/64**, four of the six flipping
+  prompts cleared -> Inductor's size-dependent reduction splitting was a real source. Remaining: rollback-c018@123 (c32),
+  monitoring-c036@41 (c64). oneCCL thresholds are already pinned by the launcher (not a source). R233/R234 (grouping
+  off / 4) queued to tell whether the grouped GDN path itself perturbs. Launcher now forwards
+  `VLLM_XPU_GDN_SPEC_GROUP` (16) and `VLLM_XPU_FP16_LINEAR_ROWCHUNK` (32).
+- **Best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
+  (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
+  needs the split_reductions flag added before it runs.
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
   (`scripts/run-20260905-qwen38-int4-fixed-k-r222-matrix-tp2-tp1-mtp0-3.sh`: TP2 then TP1; depth-1 full
   campaign as oracle + MTP0/MTP1 ladders; depths 2, 3 strict + ladders; pad off), reboot.
