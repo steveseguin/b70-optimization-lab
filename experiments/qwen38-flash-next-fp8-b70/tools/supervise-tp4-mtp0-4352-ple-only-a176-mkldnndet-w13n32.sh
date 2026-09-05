@@ -77,7 +77,7 @@ owned_server_pid() {
   pid=$(cat "${run_dir}/server.pid" 2>/dev/null || true)
   [[ "$pid" =~ ^[1-9][0-9]*$ && -e "/proc/${pid}" ]] || return 1
   command=$(tr '\0' ' ' <"/proc/${pid}/cmdline" 2>/dev/null || true)
-  [[ "$command" == *"vllm serve /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"* && \
+  [[ "$command" == *"vllm serve /mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"* && \
      "$command" == *"--port ${port}"* && "$command" == *"--max-model-len 4352"* ]] || return 1
   printf '%s\n' "$pid"
 }

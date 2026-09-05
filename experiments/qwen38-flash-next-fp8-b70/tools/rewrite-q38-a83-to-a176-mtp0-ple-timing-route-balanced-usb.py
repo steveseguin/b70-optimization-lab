@@ -90,6 +90,7 @@ def main():
     XPU_OLD = '  timeout 30s xpu-smi discovery -j >"${evidence_dir}/xpu-discovery.json" \\\n    2>"${evidence_dir}/xpu-discovery.err" || true\n  for device in 0 1 2 3; do\n    timeout 30s xpu-smi stats -d "$device" -j \\\n      >"${evidence_dir}/xpu-stats-${device}.json" \\\n      2>"${evidence_dir}/xpu-stats-${device}.err" || true\n  done\n'
     XPU_NEW = '  # Freeze mitigation (2026-09-05): xpu-smi (Intel MEI telemetry) was the last journal entry\n  # before five of six silent host freezes; receipts are copied from attempt 146 instead.\n  xpu_ref=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/xpu-receipts-reference\n  cp -- "${xpu_ref}/xpu-discovery.json" "${evidence_dir}/xpu-discovery.json"\n  printf \'bypassed: cached receipt from attempt 146\\n\' >"${evidence_dir}/xpu-discovery.err"\n  for device in 0 1 2 3; do\n    cp -- "${xpu_ref}/xpu-stats-${device}.json" "${evidence_dir}/xpu-stats-${device}.json"\n    printf \'bypassed: cached receipt from attempt 146\\n\' >"${evidence_dir}/xpu-stats-${device}.err"\n  done\n'
     supervisor = replace_once(supervisor, XPU_OLD, XPU_NEW)
+    supervisor = replace_once(supervisor, '*"vllm serve /mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8"*', '*"vllm serve /mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"*')
     if MTP0:
         supervisor = replace_once(supervisor, ".identity.mtp == 1 and", ".identity.mtp == 0 and")
         supervisor = replace_once(supervisor, ".identity.kv_cache_memory_bytes == 376569856 and", ".identity.kv_cache_memory_bytes == 134217728 and")
