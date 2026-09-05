@@ -39,7 +39,21 @@ def worker(rank, world, args, result_path):
     else:
         def busy(k):
             for _ in range(k): torch.matmul(buf, buf)
-    x = torch.randn(1, 2560, device=device).to(torch.bfloat16)
+    def make_data(kind):
+        g = torch.Generator(device="cpu").manual_seed(1234 + rank)
+        if kind == "zeros": t = torch.zeros(1, 2560)
+        elif kind == "normal": t = torch.randn(1, 2560, generator=g)
+        elif kind == "activation": t = torch.randn(1, 2560, generator=g) * 0.05; t[0, ::37] *= 40.0
+        elif kind == "const": t = torch.full((1, 2560), 0.123)
+        elif kind == "denormal": t = torch.randn(1, 2560, generator=g) * 1e-39
+        elif kind == "tiny": t = torch.randn(1, 2560, generator=g) * 1e-20
+        elif kind == "nan": t = torch.randn(1, 2560, generator=g); t[0, ::7] = float("nan")
+        elif kind == "inf": t = torch.randn(1, 2560, generator=g); t[0, ::7] = float("inf")
+        elif kind == "huge": t = torch.randn(1, 2560, generator=g) * 1e30
+        elif kind == "file": t = torch.load(args.data_file, map_location="cpu")[:1].float()
+        else: raise SystemExit(kind)
+        return t.to(torch.bfloat16).to(device)
+    x = make_data(args.data)
     L = 48
     def seq(k, do_busy, do_ar):
         for _ in range(L):
@@ -69,7 +83,7 @@ def worker(rank, world, args, result_path):
             torch.xpu.synchronize(); dist.barrier()
             row[f"graph_{name}"] = wall(lambda: g.replay(), args.iters)
         res[f"pad{k}"] = row
-        if rank == 0: print(f"{args.busy} pad{k}", json.dumps(row), flush=True)
+        if rank == 0: print(f"{args.busy} data={args.data} pad{k}", json.dumps(row), flush=True)
     dist.barrier()
     if rank == 0: json.dump(res, open(result_path, "w"), indent=1)
     dist.destroy_process_group()
@@ -78,7 +92,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", required=True); ap.add_argument("--iters", type=int, default=30)
     ap.add_argument("--pad-iters", default="0,1,3,6"); ap.add_argument("--port", type=int, default=29517)
-    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul")
+    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None)
     args = ap.parse_args(); refuse_active_model_server()
     import torch.multiprocessing as mp
     mp.set_start_method("spawn", force=True)
