@@ -13,8 +13,12 @@ import torch
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("dump"); ap.add_argument("--experts", type=int, default=512); ap.add_argument("--ranks", type=int, default=4); ap.add_argument("--out")
     a = ap.parse_args()
-    entries = torch.load(a.dump, map_location="cpu")
-    layers = sorted({name for name, _ in entries}, key=lambda n: int(n.split("layers.")[1].split(".")[0]) if "layers." in n else 0)
+    import re
+    raw = torch.load(a.dump, map_location="cpu", weights_only=False)
+    entries = []
+    for n, t in raw:
+        m = re.search(r"layers\.(\d+)\.", str(getattr(n, "value", n)))
+        entries.append((f"layer{int(m.group(1)):02d}" if m else str(n), t))
     per_layer = collections.defaultdict(list)
     for name, ids in entries:
         if ids.shape[0] != 1: continue

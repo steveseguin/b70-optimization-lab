@@ -72,6 +72,7 @@ def worker(rank, world, args, result_path):
         outs.clear()
         for i in range(L):
             if do_busy: busy(k)
+            if args.skew_iters and rank == args.skew_rank: busy(args.skew_iters)
             if do_ar:
                 src = xs[i % len(xs)] if xs is not None else x
                 y = src.clone()  # the vLLM path: clone, then in-place all-reduce; inputs stay fresh
@@ -111,7 +112,7 @@ def worker(rank, world, args, result_path):
                     if not torch.equal(outs[i], ref): bad += 1
                 row[f"graph_{name}_verify_mismatches"] = bad
         res[f"pad{k}"] = row
-        if rank == 0: print(f"{args.busy} data={args.data}/{args.data_mode}/{args.dtype} pad{k}", json.dumps(row), flush=True)
+        if rank == 0: print(f"{args.busy} data={args.data}/{args.data_mode}/{args.dtype} skew={args.skew_rank}x{args.skew_iters} pad{k}", json.dumps(row), flush=True)
     dist.barrier()
     if rank == 0: json.dump(res, open(result_path, "w"), indent=1)
     dist.destroy_process_group()
@@ -120,7 +121,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", required=True); ap.add_argument("--iters", type=int, default=30)
     ap.add_argument("--pad-iters", default="0,1,3,6"); ap.add_argument("--port", type=int, default=29517)
-    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--dtype", choices=("bf16","int8"), default="bf16"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence"); ap.add_argument("--data-mode", choices=("identical","rankdistinct","rank0only"), default="identical"); ap.add_argument("--verify", action="store_true", help="check every graph replay output against the eager all-gather sum")
+    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--dtype", choices=("bf16","int8"), default="bf16"); ap.add_argument("--skew-rank", type=int, default=0); ap.add_argument("--skew-iters", type=int, default=0, help="extra busy matmuls only on --skew-rank before every all-reduce (deliberate arrival skew)"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence"); ap.add_argument("--data-mode", choices=("identical","rankdistinct","rank0only"), default="identical"); ap.add_argument("--verify", action="store_true", help="check every graph replay output against the eager all-gather sum")
     args = ap.parse_args(); refuse_active_model_server()
     import torch.multiprocessing as mp
     mp.set_start_method("spawn", force=True)
