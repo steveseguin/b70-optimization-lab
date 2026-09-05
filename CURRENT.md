@@ -369,6 +369,22 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   identity ladders; the bar is the FP8 lane's (MTP0 exact through c64, MTP1+ at least through c16) or
   better; (4) publish. Fallback if the port fails: `VLLM_XPU_W4A16_ROW_CHUNK8=1` (exact at every
   concurrency, prefill several times slower).
+- **R220 (2026-09-05 morning): the fixed-K port works.** Kernel-library build on the R139 flow with a oneDNN
+  generator patch that dumps and pins the W4A16 strategy (image r220 36360702, patch
+  `patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch`). The natural catalog splits K
+  8-way for 1-8 rows, 2-way to 128, not at all above (dump data
+  `data/2026-09-05-qwen38-int4-w4a16-natural-strategy-dump-r220-result.json`). Pinning ONE strategy for
+  all rows makes all 14 TP1/TP2 shapes bit-invariant (classes 1, run-to-run, permutation, padding; screen
+  `scripts/bench-qwen38-int4-w4a16-strategy-screen.py`, results `data/qwen38-int4-w4a16-strategy-screen-r220/`).
+  Candidate E (the 9-24-row catalog tile with the decode entry's `wg 4x2x8`) is **bitwise equal to the natural
+  decode entry A on 14/14 shapes at every n=1..1024**, so the two-tier rule "A for n<=8, E above" is fully
+  invariant at zero decode cost; E costs ~2x on prefill GEMMs and up to +20% at 32-128 rows. R221 patch
+  (`onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch`, env `QWEN38_W4A16_FIXED_K=0` to disable,
+  `_STRATEGY_SMALL/_LARGE` to override) is building incrementally (`docker/rebuild-w4a16-incremental-r221.sh`).
+  Wider E variants (E1-E4) are being screened for a cheaper large-row tier.
+- **Then:** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
+  (`scripts/run-20260905-qwen38-int4-fixed-k-r222-matrix-tp2-tp1-mtp0-3.sh`: TP2 then TP1; depth-1 full
+  campaign as oracle + MTP0/MTP1 ladders; depths 2, 3 strict + ladders; pad off), reboot.
 - **After the reboot, if the cron did not fire, run one command:** `bash experiments/qwen38-27b-b70/scripts/run-20260905-qwen38-int4-post-reboot-r219-resume-queue.sh`
   (removes the aborted roots, then R216 chain depths 5, 3, 2, 1, 6, 7 -> R215 TP1 -> R218 chunk-8
   ladders; logs under `/mnt/fast-ai/bench-results/logs/r21*.log`).
