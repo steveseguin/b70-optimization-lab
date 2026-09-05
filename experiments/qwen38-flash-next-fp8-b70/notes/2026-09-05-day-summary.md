@@ -76,3 +76,16 @@ Notes: [MoE share and attribution](2026-09-04-tp4-mtp0-a145-a146-moe-share-of-th
 [sub-op timing](2026-09-04-tp4-mtp1-a141-a142-subop-timing-attribution.md).
 Data: `../data/20260905-tp4-*`, `../data/20260905-b70-moe-*`,
 `../data/20260905-tp4-allreduce-data-and-knob-probes/`.
+
+## Afternoon: forced-routing runs point at VRAM oversubscription
+
+| run | routing | step (ms, forward) | note |
+|---|---|---|---|
+| promoted graph MTP0 | real | 72.7 | authority |
+| A171 | forced balanced pseudo-random, ≤3 hits/rank | ~125 | identical on all ranks, no recompiles, output collapsed to one token |
+| A172 | forced, all 10 hits on one rank | 159.3 | identical on all ranks, coherent output |
+| A173 | A171 + `Q38_LAYER_TIMING_LOG=3` | capture failed | the layer hook synchronizes; illegal while recording a graph → sub-op timing is eager-only |
+
+Offline, the same Triton MoE GEMMs with fresh random experts every call (cold, `Q38_BENCH_FRESH_ROUTING`) cost 0.35 ms/layer at 1 hit and 0.54 ms/layer at 10 hits, so the server's extra ~2 ms/layer under forced routing is not the kernel. Linear fit across A171/A172: ≈0.09 ms per hit plus a fixed ≈2 ms per layer that appears only when cold experts are touched.
+
+Per rank the weights take 31.57 GiB of the B70's 31.89 GiB (routed experts 114.86 GiB / 4 = 28.7 GiB; the rest is GDN, attention, the vocab-sharded embedding and head, shared expert, router). Card 0 showed 0.09 GiB free during a load. The runtime is already minimal (64-token prefill chunks, one sequence, one graph size, 128 MiB KV). Hypothesis: the xe driver evicts weight buffers to host memory under pressure and pages them back on first touch at PCIe speed (≈7 GB/s, the A171 rate). Hot experts stay resident, which is why degenerate trajectories (a few warm experts) run in 22–34 ms and PLE on the device (A161) ran at 313 ms. Probes queued: free VRAM after startup, an offline VRAM-filler run of the fresh-routing bench (chain19), and A174 (eager forced routing with the sub-op split).
