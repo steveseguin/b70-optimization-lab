@@ -12,6 +12,8 @@ inert unless set), one exact-2K request each, `Q38_STEP_TIMING_LOG=10`
 | A144 (MTP1 graph identity, three selectors, size-2 steps; control is A127 at mean 181 ms, 144-255) | `Q38_DIAG_SKIP=moe` | median **32.9 ms**, range 32.86-32.96 (drafter 2.0) | garbage by construction | 25.9 tok/s |
 | A148 (overlay `edfd2155`) | `Q38_DIAG_SKIP=moe_gemm`: only the two Triton grouped-GEMM launches skipped (output zeroed); routing, alignment, activation quantization, sum and all-reduce kept | median **22.4 ms**, range 22.35-22.6 | garbage by construction | 40.0 tok/s |
 | A151 (overlay `330901f2`) | `Q38_DIAG_SKIP=moe_allreduce`: the MoE final TP all-reduce replaced by a no-op; GEMMs and everything else kept | median **32.9 ms**, range 31.9-61.4 (four ranks 32.9-33.3) | garbage by construction | 22.6 tok/s |
+| A152 (overlay `26a9e5c8`) | GEMMs skipped plus three identical 1024x1024 bf16 matmuls before every MoE all-reduce on every rank | median 25.4 ms (pad ~0.02 ms each: too small to test a wait) | garbage | 35.7 tok/s |
+| A154 (overlay `7fb55089`) | `Q38_DIAG_SKIP=moe_allreduce_zero_input`: real GEMMs, the MoE all-reduce runs at the same site on a static zero buffer (result discarded) | median **34.2 ms**, range 33.4-54.4 | garbage | 22.7 tok/s |
 
 The MoE block costs about 50-54 ms of the 71-73 ms step, three quarters
 of it, and all of the step's variance (the remainder of the network is a
@@ -46,7 +48,22 @@ all-reduces behind identical per-rank work at a flat 19.1 ms). Either the
 ranks arrive skewed (data-dependent expert hits) or each captured
 collective waits on the host for the preceding compute; A152 (GEMMs
 skipped, identical busy matmuls inserted before every MoE all-reduce on
-every rank, `Q38_DIAG_MOE_PAD_ITERS=3`) separates the two. Streaming the local experts a token touches (about 2.5 of
+every rank, `Q38_DIAG_MOE_PAD_ITERS=3`) separates the two.
+
+The offline four-rank probes then cleared the collective itself: 48
+captured [1,2560] BF16 all-reduces replay in 0.55 ms, and identical matmul
+or Triton compute before each adds ~0.015 ms per collective
+(`../data/20260905-tp4-allreduce-after-{matmul,triton}-graph-probe.json`).
+A154 settled it in the server: with the real GEMMs running and the MoE
+all-reduce operating on a static zero buffer at the same call site the
+step is 34.2 ms, only 1.3 ms above the no-all-reduce run, so rank skew is
+about 1 ms per step and **the 40 ms is data-dependent collective time**:
+the same 5,120-byte all-reduce costs about 0.8 ms when it reduces the real
+routed MoE output and about 0.03 ms on zeros, on random data (offline) or
+on the shared-expert-only output (A148). The next step is to find the data
+property (an offline probe over value classes, then real dumped MoE
+outputs) and the protocol path that trips on it (`Rt64_128_PCIE`, LL
+threshold 4096, public oneCCL 4ceafd1). Streaming the local experts a token touches (about 2.5 of
 the 128 experts per rank per layer, 4.9 MB each) is a few ms per step at
 this card's bandwidth, so the block runs an order of magnitude off the
 memory bound: the Triton fused MoE at M=1 launches about 100 valid
@@ -72,6 +89,8 @@ Data: `../data/20260904-tp4-mtp0-a146-graph-step-timing-2k.json`,
 `../data/20260904-tp4-mtp1-a144-graph-step-timing-skip-moe-2k.json`,
 `../data/20260905-tp4-mtp0-a148-graph-step-timing-skip-moe-gemm-2k.json`,
 `../data/20260905-tp4-mtp0-a151-graph-step-timing-skip-moe-allreduce-2k.json`,
+`../data/20260905-tp4-mtp0-a152-graph-step-timing-skip-gemm-pad3-2k.json`,
+`../data/20260905-tp4-mtp0-a154-graph-step-timing-allreduce-zero-input-2k.json`,
 `../data/20260905-tp4-mtp0-a150-gemm-event-timing-2k.json`,
 `../data/20260905-b70-moe-gemm-offline-probes.json`,
 `../data/20260904-tp4-mtp0-a145-graph-step-timing-skip-moe-2k.json`,
