@@ -353,15 +353,36 @@
         "hashes": true
       },
       "dependency_links": [
+        "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md",
         "experiments/qwen38-27b-b70/MULTI-HOST-HANDOFF.md",
-        "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md"
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-final-config.env",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r227-matrix-partial-result.json",
+        "experiments/qwen38-27b-b70/docker/Dockerfile.w4a16-strategy-r220",
+        "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
+        "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
+        "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
+        "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+        "experiments/qwen38-27b-b70/docker/rebuild-w4a16-incremental-r221.sh",
+        "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-ark-woqgemm-census-r210.md",
+        "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
+        "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-w4a16-fixed-k-two-tier-r220-r221.md",
+        "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+        "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+        "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh"
       ],
       "missing": [
         "promoted deterministic lane",
         "published AOT binaries or portable rebuild",
         "portable compile-cache identity",
-        "clean-host replay"
-      ]
+        "clean-host replay",
+        "R239 TP2/TP1 depth 0-4 matrix results",
+        "public GHCR visibility of the R228 image"
+      ],
+      "package": "packages/qwen38-27b-int4-fixed-k-tp2-b70/package.json"
     },
     {
       "id": "qwen38-27b-fp8-vllm-tp2-asrock-b70",

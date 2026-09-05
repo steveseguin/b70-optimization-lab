@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Qwen3.8-27B AutoRound INT4, fixed-K batch-invariant profile (2026-09-05): launch one vLLM server through the FP8 lane's
 # contract-checked launcher with the INT4 identity. Depth via MTP_DEPTH (0 = no speculation; default 4).
-#   MODEL_DIR   the gptq-relabelled model directory (scripts/make-gptq-relabel.py); default below
+#   MODEL_DIR   the gptq-relabelled model directory (built by the relabel builder in this scripts directory); default below
 #   IMAGE / EXPECTED_IMAGE_ID  the R228 image (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...)
 #   PORT, VLLM_CACHE_DIR, CONTAINER_NAME, SERVED_MODEL_NAME, TENSOR_PARALLEL_SIZE (2), XPU_DEVICE_MASK (0,1)
 set -euo pipefail

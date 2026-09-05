@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards — strict benchmark pending — neural.download</title>
+<meta name="description" content="devan-carlin&#x27;s AutoRound INT4 tensors served through vLLM&#x27;s plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane&#x27;s whole-graph deterministic stack.">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/models/qwen38-27b-autoround-int4-b70.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/models/qwen38-27b-autoround-int4-b70.html">
+<meta property="og:title" content="Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards — strict benchmark pending">
+<meta property="og:description" content="devan-carlin&#x27;s AutoRound INT4 tensors served through vLLM&#x27;s plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane&#x27;s whole-graph deterministic stack.">
+<meta property="og:image" content="https://neural.download/models/cards/qwen38-27b-autoround-int4-b70.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-27b-autoround-int4-b70.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/models/qwen38-27b-autoround-int4-b70.html">
+<meta name="twitter:title" content="Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards — strict benchmark pending">
+<meta name="twitter:description" content="devan-carlin&#x27;s AutoRound INT4 tensors served through vLLM&#x27;s plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane&#x27;s whole-graph deterministic stack.">
+<meta name="twitter:image" content="https://neural.download/models/cards/qwen38-27b-autoround-int4-b70.png">
+<meta name="twitter:image:alt" content="Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards: strict benchmark pending on Intel Arc Pro B70 — neural.download">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards", "description": "devan-carlin's AutoRound INT4 tensors served through vLLM's plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane's whole-graph deterministic stack. Single-request output is repeat-exact and speculative decoding is lossless against the MTP0 oracle at every depth measured; MTP0 output is byte-identical to a single request through 64 concurrent users (a near-tie prompt can differ in some runs), speculative depths through 16. Research-status (2026-09-05). TP2 strict single-request pairs on the fixed-K stack: MTP0 36.004/34.916 tok/s matched 12/12; depth 1 50.828/51.119 matched 12/12 vs each other and vs the MTP0 oracle (R227); depth 4 68.622/68.230 matched 12/12 vs each other and vs the oracle (R222); probe exact at 224/250/300 prompt tokens. Identity ladders (R226/R232, final configuration): MTP0 exact c1-c64 (998 tok/s aggregate at c64; a near-tie prompt differs at c32 or c64 in some runs, arrival-timing dependent); depth 4 exact through c16 (517 tok/s aggregate), c32 31/32, c64 63/64. The R239 TP2/TP1 depth 0-4 matrix is running; no promotion or LocalMaxxing submission yet.. Exact recipe and diagnostic evidence are retained, but no unqualified headline is published.", "url": "https://neural.download/models/qwen38-27b-autoround-int4-b70.html", "dateModified": "2026-09-05", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8", "Intel Arc Pro B70", "local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards", "item": "https://neural.download/models/qwen38-27b-autoround-int4-b70.html"}]}
+</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
+  .facts div { min-width: 0; }
+  .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }
+  .placeholder { margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .placeholder p { margin: 0; font-size: 13.5px; }
+  .badge.todo { background: var(--surface); color: var(--muted); border-color: var(--muted); }
+  .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
+  .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+  .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .limitations { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }
+  .limitations-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+  .limitations ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
+  .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
+  .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
+  .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .actions .button.secondary { background: transparent; color: var(--ink); }
+  .actions .button.secondary:hover { background: var(--ink); color: var(--paper); }
+  .copy-md { appearance: none; border: 2px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); min-height: 36px; padding: 6px 10px; font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin: 0 0 12px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font: 900 15px var(--display); text-transform: uppercase; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font: 10.5px var(--mono); }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font: 900 26px/1 var(--display); color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font: 10.5px var(--mono); }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font: 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  @media (max-width: 520px) { .hr-bar-row { grid-template-columns: 92px 1fr 70px; } .measured .big { font-size: 36px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html" aria-current="page">Models</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / 27B AutoRound INT4 W4A16</p>
+  <p class="eyebrow">Candidate package · vLLM XPU · 2× Intel Arc Pro B70</p>
+  <h1>Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards</h1>
+  <p>devan-carlin&#x27;s AutoRound INT4 tensors served through vLLM&#x27;s plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane&#x27;s whole-graph deterministic stack. Single-request output is repeat-exact and speculative decoding is lossless against the MTP0 oracle at every depth measured; MTP0 output is byte-identical to a single request through 64 concurrent users (a near-tie prompt can differ in some runs), speculative depths through 16.</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose" id="package-page">
+
+  <h2 id="measured">Public headline <span class="badge todo">Pending</span></h2><div class="placeholder"><p>Research-status (2026-09-05). TP2 strict single-request pairs on the fixed-K stack: MTP0 36.004/34.916 tok/s matched 12/12; depth 1 50.828/51.119 matched 12/12 vs each other and vs the MTP0 oracle (R227); depth 4 68.622/68.230 matched 12/12 vs each other and vs the oracle (R222); probe exact at 224/250/300 prompt tokens. Identity ladders (R226/R232, final configuration): MTP0 exact c1-c64 (998 tok/s aggregate at c64; a near-tie prompt differs at c32 or c64 in some runs, arrival-timing dependent); depth 4 exact through c16 (517 tok/s aggregate), c32 31/32, c64 63/64. The R239 TP2/TP1 depth 0-4 matrix is running; no promotion or LocalMaxxing submission yet. Diagnostic measurements remain in the guide and evidence, but none is presented as the package headline.</p></div>
+  <div class="actions">
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-27b-autoround-int4-b70/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-27b-autoround-int4-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Qwen3.8%2027B%20AutoRound%20INT4,%20fixed-K%20batch-invariant%20profile,%20on%20two%20Intel%20Arc%20Pro%20B70%20cards">Submit an improvement</a>
+  </div>
+
+  <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 27B AutoRound INT4 W4A16</dd></div><div><dt>Publisher</dt><dd>devan-carlin (AutoRound INT4 of Alibaba / Qwen)</dd></div><div><dt>Checkpoint</dt><dd>devan-carlin/Qwen3.8-27B-int4-AutoRound</dd></div><div><dt>Compression</dt><dd>AutoRound INT4 W4A16 (group 128, symmetric)</dd></div><div><dt>Software</dt><dd>vLLM XPU</dd></div><div><dt>Cards</dt><dd>2× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>19.0 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>Docker / container</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">long context</span></dd></div><div><dt>Published</dt><dd>2026-09-05</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
+<div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>R239 matrix (TP2 and TP1, depths 0-4) results and profiles</li><li>clean-host replay</li><li>public GHCR visibility of the R228 image (private until flipped)</li><li>speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)</li></ul></div>
+
+<h2 id="profiles">Measured performance profiles <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified structured context or depth profile is published for this package. Diagnostic evidence may still be linked under “What to know” or in the full guide; nothing is estimated in its place.</p></div>
+<h2 id="multi-user">Many people at once <span class="badge lab">Lab-measured</span></h2><figure class="chart"><h4>INT4 fixed-K TP2 MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64) <span class="badge lab">Lab-measured</span></h4><svg viewBox="0 0 640 260" width="100%" role="img" aria-label="INT4 fixed-K TP2 MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)" xmlns="http://www.w3.org/2000/svg"><line x1="64" y1="216.0" x2="620" y2="216.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,209.9 L156.7,203.9 L249.3,191.7 L342.0,169.3 L434.7,125.9 L527.3,65.8 L620.0,37.8" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="209.9" r="4" fill="var(--spot)"></circle><text x="64.0" y="200.9" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">34.3</text><circle cx="156.7" cy="203.9" r="4" fill="var(--spot)"></circle><text x="156.7" y="194.9" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">67.6</text><circle cx="249.3" cy="191.7" r="4" fill="var(--spot)"></circle><text x="249.3" y="182.7" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">136</text><circle cx="342.0" cy="169.3" r="4" fill="var(--spot)"></circle><text x="342.0" y="160.3" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">262</text><circle cx="434.7" cy="125.9" r="4" fill="var(--spot)"></circle><text x="434.7" y="116.9" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">505</text><circle cx="527.3" cy="65.8" r="4" fill="var(--spot)"></circle><text x="527.3" y="56.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">841</text><circle cx="620.0" cy="37.8" r="4" fill="var(--spot)"></circle><text x="620.0" y="28.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">998</text><text x="64.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">1</text><text x="156.7" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">2</text><text x="249.3" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">4</text><text x="342.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">8</text><text x="434.7" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">16</text><text x="527.3" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">32</text><text x="620.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">64</text><text x="64" y="254" font-size="11" font-family="var(--mono)" fill="var(--muted)">Concurrent HTTP users · log2 spacing · y: tok/s</text></svg><figcaption>Measured vLLM HTTP completions on two B70s with the R224 image (fixed-K W4A16, FP16 row-chunk linears) and VLLM_BATCH_INVARIANT=1, no speculation, FP16 activations/KV, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R226). Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte. One server, one pass per point; not a promoted concurrency speed record. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json">evidence</a></figcaption></figure><figure class="chart"><h4>INT4 fixed-K TP2 MTP depth-4 identity-qualified aggregate decode vs concurrent users (c1-c16) <span class="badge lab">Lab-measured</span></h4><svg viewBox="0 0 640 260" width="100%" role="img" aria-label="INT4 fixed-K TP2 MTP depth-4 identity-qualified aggregate decode vs concurrent users (c1-c16)" xmlns="http://www.w3.org/2000/svg"><line x1="64" y1="216.0" x2="620" y2="216.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,193.8 L203.0,190.8 L342.0,140.4 L481.0,93.3 L620.0,37.8" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="193.8" r="4" fill="var(--spot)"></circle><text x="64.0" y="184.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">64.4</text><circle cx="203.0" cy="190.8" r="4" fill="var(--spot)"></circle><text x="203.0" y="181.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">73.0</text><circle cx="342.0" cy="140.4" r="4" fill="var(--spot)"></circle><text x="342.0" y="131.4" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">219</text><circle cx="481.0" cy="93.3" r="4" fill="var(--spot)"></circle><text x="481.0" y="84.3" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">356</text><circle cx="620.0" cy="37.8" r="4" fill="var(--spot)"></circle><text x="620.0" y="28.8" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">517</text><text x="64.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">1</text><text x="203.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">2</text><text x="342.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">4</text><text x="481.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">8</text><text x="620.0" y="236" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--muted)">16</text><text x="64" y="254" font-size="11" font-family="var(--mono)" fill="var(--muted)">Concurrent HTTP users · log2 spacing · y: tok/s</text></svg><figcaption>As above with MTP depth 4 on the R228 image, VLLM_BATCH_INVARIANT=1 and Inductor split_reductions=false (R232). Points through c16 are output-identity-qualified; c32 (31/32) and c64 (63/64) were measured but are withheld because near-tie prompts took a different valid branch. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json">evidence</a></figcaption></figure>
+
+  <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
+  <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      
+      <a href="qwen38-27b-q4km-mtp2-tp1-b70.html"><b>Qwen3.8 27B Q4_K_M + MTP2 on one Intel Arc Pro B70</b><span>42.6 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-q4km-tp1-b70.html"><b>Qwen3.8 27B Q4_K_M on one Intel Arc Pro B70</b><span>27.8 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-q8-q4mtp-mtp2-tp1-b70.html"><b>Qwen3.8 27B Q8_0 + MTP2 on one Intel Arc Pro B70</b><span>37.1 tok/s · llama.cpp SYCL</span></a><a href="qwen38-27b-q8-tp1-b70.html"><b>Qwen3.8 27B Q8_0 on one Intel Arc Pro B70</b><span>19.6 tok/s · llama.cpp SYCL</span></a>
+      <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
+      <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=1d7b21a0d3"></script>
+<script>
+(() => {
+  document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+      try {
+        const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+        if (!response.ok) throw new Error("fetch failed");
+        await navigator.clipboard.writeText(await response.text());
+        button.textContent = "Copied"; button.classList.add("copied");
+      } catch (error) { button.textContent = "Copy failed"; button.classList.add("failed"); }
+      window.setTimeout(() => { button.textContent = original; button.classList.remove("copied", "failed"); button.disabled = false; }, 1800);
+    });
+  });
+})();
+</script>
+</body>
+</html>
