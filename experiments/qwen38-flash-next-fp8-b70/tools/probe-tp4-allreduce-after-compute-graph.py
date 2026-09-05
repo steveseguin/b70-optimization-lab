@@ -60,10 +60,16 @@ def worker(rank, world, args, result_path):
         dumped = torch.load(args.data_file, map_location="cpu")
         xs = [t[:1].to(torch.bfloat16).to(device) for t in dumped[: L]]
         if rank == 0: print(f"file: {len(dumped)} dumped tensors, replaying {len(xs)} per sequence; abs max {max(float(t.float().abs().max()) for t in xs):.3g}", flush=True)
+    outs = []
     def seq(k, do_busy, do_ar):
+        outs.clear()
         for i in range(L):
             if do_busy: busy(k)
-            if do_ar: dist.all_reduce(xs[i % len(xs)] if xs is not None else x)
+            if do_ar:
+                src = xs[i % len(xs)] if xs is not None else x
+                y = src.clone()  # the vLLM path: clone, then in-place all-reduce; inputs stay fresh
+                dist.all_reduce(y)
+                outs.append(y)
     def wall(fn, n):
         for _ in range(5): fn()
         torch.xpu.synchronize(); dist.barrier(); ts = []
@@ -87,6 +93,16 @@ def worker(rank, world, args, result_path):
                 fn()
             torch.xpu.synchronize(); dist.barrier()
             row[f"graph_{name}"] = wall(lambda: g.replay(), args.iters)
+            if da and args.verify:
+                bad = 0
+                for i in range(L):
+                    src = xs[i % len(xs)] if xs is not None else x
+                    gathered = [torch.empty_like(src) for _ in range(world)]
+                    dist.all_gather(gathered, src)
+                    ref = torch.stack(gathered).float().sum(0).to(torch.bfloat16)
+                    g.replay(); torch.xpu.synchronize()
+                    if not torch.equal(outs[i], ref): bad += 1
+                row[f"graph_{name}_verify_mismatches"] = bad
         res[f"pad{k}"] = row
         if rank == 0: print(f"{args.busy} data={args.data} pad{k}", json.dumps(row), flush=True)
     dist.barrier()
@@ -97,7 +113,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", required=True); ap.add_argument("--iters", type=int, default=30)
     ap.add_argument("--pad-iters", default="0,1,3,6"); ap.add_argument("--port", type=int, default=29517)
-    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence")
+    ap.add_argument("--world", type=int, default=4); ap.add_argument("--dim", type=int, default=2048); ap.add_argument("--busy", choices=("matmul","triton"), default="matmul"); ap.add_argument("--data", default="normal"); ap.add_argument("--data-file", default=None); ap.add_argument("--data-index", type=int, default=-1, help="-1 = replay the first 48 dumped tensors in sequence"); ap.add_argument("--verify", action="store_true", help="check every graph replay output against the eager all-gather sum")
     args = ap.parse_args(); refuse_active_model_server()
     import torch.multiprocessing as mp
     mp.set_start_method("spawn", force=True)
