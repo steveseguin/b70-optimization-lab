@@ -1,0 +1,5 @@
+# R224: R221 (fixed-K W4A16) + FP16 linears (lm_head, mtp.fc, in_proj_a/b) in <=32-row pieces via an opaque custom op.
+FROM neural-download/vllm-openai-xpu:qwen38-int4-w4a16-fixed-k-r221
+COPY r224-fp16-linear-rowchunk.py /tmp/r224.py
+RUN python /tmp/r224.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py && rm /tmp/r224.py
+LABEL neural.download.build.lane="qwen38-int4-fp16-linear-rowchunk-r224"
