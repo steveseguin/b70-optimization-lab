@@ -4267,3 +4267,27 @@ short `32.21/37.03/32.00 tok/s`, 1.42x; depth 0.55x): the three selectors
 generalize to three verifier rows without further trace work. See the
 [A133 result](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp2-a133-graph-battery-result.md)
 and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-day-summary.md).
+The same day's afternoon and evening reframed the MTP work. The realistic
+suite on the MTP1 identity (A135) is lossless (12/12 responses equal to
+the approved MTP0 line) but 0.60x on the suite metric, and the
+request-shape matrix A143 showed every request shape stepping at 120-220
+ms per size-2 step on real prompts: the frozen client's short bench makes
+the model emit ` benchmark benchmark ...`, so its 22.66/27.15/32.2 tok/s
+short rows are degenerate-output rows, the realistic suite is the speed on
+text (MTP0 14.43, MTP1 8.66 class-balanced), and the two-row cost is an
+M=2 MoE cost rather than a depth cost (short-context MTP claims withdrawn,
+MTP2 certification on hold). Sub-operation hooks (A141/A142) put 130-155 ms
+of the 166 ms two-row delta in the MoE block, and the graph-mode skip
+diagnostics (A146 control `72.7 ms` per step, A145 with the MoE expert path
+replaced by zeros a flat `19.1 ms`) make the MoE block three quarters of
+the promoted decode step and all of its variance. The platform XPU FP8 MoE
+backend (A147) is a negative on this stack (interface mismatch with the
+staged kernel package; rebuild plus block-FP8 scale path needed). The
+kernel lever is a decode-specialized Triton MoE (deterministic split-K,
+`VLLM_XPU_MOE_SPLIT_K`, patch written and dry-run; offline bench
+`tools/equivalence-and-timing-moe-splitk.py`), re-oracled at promotion.
+Two more silent host freezes (11:25, 22:12) landed inside the launcher's
+reset-then-start window. See the
+[A143 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp1-a143-request-shape-matrix-result.md),
+the [A145/A146 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp0-a145-a146-moe-share-of-the-graph-step.md)
+and the [A141/A142 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp1-a141-a142-subop-timing-attribution.md).
