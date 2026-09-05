@@ -409,7 +409,8 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
 - **R227 running (queued behind R226):** the final matrix on R224 + `VLLM_BATCH_INVARIANT=1` (+ FA serial env):
   TP2 then TP1; depth-1 full campaign (oracle, G2/G3, G5, MTP1/MTP0 ladders), then depths 2, 3, 4 strict + ladders
   (`scripts/run-20260905-qwen38-int4-r227-matrix-r224-fa-serial-binv-tp2-tp1-mtp0-3.sh`, log `logs/r227-matrix.log`).
-  Bar reached so far: MTP0 exact through c64, MTP depth 4 exact through c16 (= the FP8 lane's published bar).
+  Bar reached so far (R226): **MTP0 exact at every concurrency c1-c64**; MTP depth 4 exact through c16 (= the FP8
+  lane's published bar), c32 30/32, c64 59/64 (residual in the batched GDN spec kernel).
   Next on the residual: kernel-level census of `gdn_attention_core_xpu` spec path vs number of sequences (GPU 1
   during the TP1 phase).
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
