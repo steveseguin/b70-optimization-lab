@@ -5,7 +5,7 @@ script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/t
 base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a147-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
-expected_derived=b1494eea299b71376ef7ec64cfd6d4a356cb712817872e2ba5c1ef79f2e66b64
+expected_derived=f848f390181255c80b50407d9d341fd3b34ce7f6e5c221bddf5c1517339d8f07
 campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
@@ -156,10 +156,10 @@ $0 == "setsid \"${vllm_bin}\" serve \"${args[@]}\" >\"${server_log}\" 2>&1 &" {
 {
   gsub(/diagnostics=none/, "diagnostics=full-decode-graph-public-oneccl-torch-trace")
   gsub(/enforce_eager=True/, "enforce_eager=False")
-  gsub(/moe_backend=triton eager=1/, "moe_backend=xpu eager=0 graph=FULL_DECODE_ONLY")
-  gsub(/moe_backend=.triton./, "moe_backend=\047xpu\047")
-  gsub(/moe_backend == .triton./, "moe_backend == \047xpu\047")
-  gsub(/--moe-backend triton/, "--moe-backend xpu")
+  gsub(/moe_backend=triton eager=1/, "moe_backend=auto eager=0 graph=FULL_DECODE_ONLY")
+  gsub(/moe_backend=.triton./, "moe_backend=\047auto\047")
+  gsub(/moe_backend == .triton./, "moe_backend == \047auto\047")
+  gsub(/--moe-backend triton/, "--moe-backend auto")
   gsub(/qwen38-flash-next-fp8-tp4-ep4-eager-mtp/, "qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp")
   gsub(/tp4_ep4_triton_eager_mtp/, "tp4_ep4_xpumoe_fullgraphdet_mtp")
   gsub(/First-load launcher/, "Full-graph launcher")

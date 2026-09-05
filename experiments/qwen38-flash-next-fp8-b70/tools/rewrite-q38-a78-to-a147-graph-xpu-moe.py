@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create the A147 packet from frozen A78: byte-identical apart from attempt, port and state names (graph MTP0 step timing graph MTP0 step timing with the platform XPU FP8 MoE backend (grouped GEMM) instead of Triton, screening for exactness and step time)."""
+"""Create the A147 packet from frozen A78: byte-identical apart from attempt, port and state names (graph MTP0 step timing graph MTP0 step timing with --moe-backend auto (which selects the platform XPU FP8 MoE backend, grouped GEMM) instead of the explicit Triton backend, screening for exactness and step time)."""
 from __future__ import annotations
 import hashlib, os, re, subprocess
 from pathlib import Path
@@ -44,18 +44,18 @@ def main():
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
     launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=134217728\n", "export KV_CACHE_MEMORY_BYTES=134217728\nexport Q38_STEP_TIMING_LOG=10\n")
     launcher = replace_once(launcher, '  gsub(/moe_backend=triton eager=1/, "moe_backend=triton eager=0 graph=FULL_DECODE_ONLY")\n',
-        '  gsub(/moe_backend=triton eager=1/, "moe_backend=xpu eager=0 graph=FULL_DECODE_ONLY")\n'
-        '  gsub(/moe_backend=.triton./, "moe_backend=\\047xpu\\047")\n'
-        '  gsub(/moe_backend == .triton./, "moe_backend == \\047xpu\\047")\n'
-        '  gsub(/--moe-backend triton/, "--moe-backend xpu")\n')
+        '  gsub(/moe_backend=triton eager=1/, "moe_backend=auto eager=0 graph=FULL_DECODE_ONLY")\n'
+        '  gsub(/moe_backend=.triton./, "moe_backend=\\047auto\\047")\n'
+        '  gsub(/moe_backend == .triton./, "moe_backend == \\047auto\\047")\n'
+        '  gsub(/--moe-backend triton/, "--moe-backend auto")\n')
     assert launcher.count("tp4_ep4_triton_fullgraphdet_mtp") >= 3
     launcher = launcher.replace("tp4_ep4_triton_fullgraphdet_mtp", "tp4_ep4_xpumoe_fullgraphdet_mtp")
     env = os.environ.copy(); env["Q38_A147_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
     Path("/tmp/q38-ple2k-a147-base.sh").unlink(missing_ok=True)
     assert "q38-ple2k-a147" in derived
-    assert "moe_backend='xpu'" in derived and "--moe-backend xpu" in derived and "moe_backend == 'xpu'" in derived
-    assert "moe_backend=xpu eager=0" in derived and "tp4_ep4_xpumoe_fullgraphdet_mtp" in derived
+    assert "moe_backend='auto'" in derived and "--moe-backend auto" in derived and "moe_backend == 'auto'" in derived
+    assert "moe_backend=auto eager=0" in derived and "tp4_ep4_xpumoe_fullgraphdet_mtp" in derived
     assert "moe_backend=triton" not in derived and "'triton'" not in derived and "--moe-backend triton" not in derived, [l for l in derived.splitlines() if "triton" in l][:8]
     assert f'expected_vllm_head="{NEW_HEAD}"' in derived and OLD_HEAD not in derived
     "export Q38_STEP_TIMING_LOG=10\n" in derived
