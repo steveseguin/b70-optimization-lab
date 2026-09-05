@@ -4,24 +4,8 @@
 import hashlib
 p = "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/inc/schemes/inc_ark_ops.py"
 s = open(p).read()
-old = '''    ark = get_ark_state()[2]
-    assert ark is not None
-    return ark.woqgemm_linear(
-        x,
-        qweight,
-        bias,
-        out_features,
-        in_features,
-        group_size,
-        compute_type,
-        weight_type,
-        scale_type,
-        asym,
-    )
-'''
-new = '''    ark = get_ark_state()[2]
-    assert ark is not None
-    m = x.shape[0] if x.dim() == 2 else x.reshape(-1, x.shape[-1]).shape[0]
+old = "    ark = get_ark_state()[2]\n    assert ark is not None\n"
+new = old + """    m = x.reshape(-1, x.shape[-1]).shape[0]
     pad_to = 0
     if _R211_PAD and 16 < m < 512:
         pad_to = 512
@@ -35,19 +19,7 @@ new = '''    ark = get_ark_state()[2]
         xp[:m].copy_(x2)
         out = ark.woqgemm_linear(xp, qweight, bias, out_features, in_features, group_size, compute_type, weight_type, scale_type, asym)
         return out[:m].reshape(x.shape[:-1] + (out_features,))
-    return ark.woqgemm_linear(
-        x,
-        qweight,
-        bias,
-        out_features,
-        in_features,
-        group_size,
-        compute_type,
-        weight_type,
-        scale_type,
-        asym,
-    )
-'''
+"""
 assert s.count(old) == 1, "anchor"
 s = s.replace(old, new)
 assert "import torch" in s
