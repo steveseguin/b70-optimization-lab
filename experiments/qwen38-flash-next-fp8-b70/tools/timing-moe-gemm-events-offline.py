@@ -22,6 +22,27 @@ for _ in range(8):
     sets.append((w1q,w1s,w2q,w2s, fp8_w8a8_moe_quant_config(w1_scale=w1s, w2_scale=w2s, block_shape=[BLK,BLK])))
 em = torch.full((E_GLOBAL,), -1, dtype=torch.int32); em[:E_LOCAL] = torch.arange(E_LOCAL, dtype=torch.int32); em = em.to(device)
 g = torch.Generator(device="cpu").manual_seed(2)
+import os
+FRESH = os.getenv("Q38_BENCH_FRESH_ROUTING", "")
+if FRESH:
+    hits_per_call = int(FRESH)
+    for M in (1,):
+        x = torch.randn(M, K, generator=g).to(torch.bfloat16).to(device)
+        tw = torch.full((M, TOPK), 1.0 / TOPK, device=device)
+        gd2 = torch.Generator(device=device).manual_seed(7)
+        def fresh_ids():
+            loc = torch.randperm(E_LOCAL, generator=gd2, device=device)[:hits_per_call]
+            rem = torch.randint(E_LOCAL, E_GLOBAL, (TOPK - hits_per_call,), generator=gd2, device=device)
+            return torch.cat([loc, rem]).unsqueeze(0).to(torch.int32)
+        for _ in range(10):
+            s = sets[_ % 8]; fused_experts(x, s[0], s[2], tw, fresh_ids(), global_num_experts=E_GLOBAL, expert_map=em, quant_config=s[4])
+        torch.xpu.synchronize(); q38.snapshot_and_clear()
+        n = 96
+        for i in range(n):
+            s = sets[i % 8]; fused_experts(x, s[0], s[2], tw, fresh_ids(), global_num_experts=E_GLOBAL, expert_map=em, quant_config=s[4])
+        acc = q38.snapshot_and_clear()
+        print(f"FRESH routing, {hits_per_call} local hits per call, rotating weights:", {k: round(1e3*v/n, 4) for k, v in acc.items() if not k.endswith('_n')}, "ms per launch")
+    raise SystemExit(0)
 for M in (1, 2):
   for local_hits in ("all-local", "ep-like"):
     x = torch.randn(M, K, generator=g).to(torch.bfloat16).to(device)
