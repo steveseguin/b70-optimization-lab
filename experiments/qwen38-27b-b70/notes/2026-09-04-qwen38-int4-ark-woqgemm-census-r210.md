@@ -82,3 +82,15 @@ Same-config MTP0 pair on the R211 image: **G1 12/12** (R208 unpadded: 7/12), rat
 Data: `data/2026-09-04-qwen38-int4-autoround-ark-prefill-pad-r211-result.json`. This closes the determinism question for
 the ARK path; the lane still moves to the plain-GPTQ kernel (R213) because ARK cannot be row-invariant for lossless MTP.
 The R211 depth-4 stage aborted on the launcher's draft-INT4 lm_head default (fixed in the r62 launcher: override honored).
+
+## R213 -> R213b (2026-09-05 01:00): the pad must be an opaque custom op
+
+R213's pad branched on the row count in Python inside `XPUwNa16LinearKernel.apply_weights`. Under the whole-graph
+compile that survived the strict stage (profile M=1024) but the ladder config (512 batched tokens) hit
+`ConstraintViolationError: You marked L['input_ids'].size()[0] as dynamic but your code specialized it to be a constant
+(512)` while creating guards: `128 < m < 512` evaluated at m == 512 specializes the dynamic batch dim. R213b moves the
+branch into `torch.ops.vllm.xpu_w4a16_detpad_gemm` (registered with a fake impl), which Dynamo treats as opaque; the R211
+ARK pad never had the problem because the INC bridge is already such an op. Cost: R216 mtp0-a on R213b reads 35.65 tok/s
+against R213's 37.23/36.75, consistent with one extra Python-level op dispatch per linear layer (~233 per step). The
+zero-overhead form is the August C++ pad inside `_xpu_C` (`patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-20260820.patch`),
+which needs a kernel-library rebuild; that is an optimization item, not a determinism one.
