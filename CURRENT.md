@@ -438,7 +438,18 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   with an unchanged configuration gave all-exact (R232), c64 63/64 (R233), c32 31/32 (R234): arrival timing
   changes prefill mixing, and that residual is now as large as the effects under test. R236 image (9488db61,
   `_xpu_ops.py` 015b4dce) launches GDN prefill sequences per prompt; R237/R238 screens queued.
-- **Best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
+- **R237 (16:12, R236 prefill launches per prompt):** c4 3/4, c32 31/32, c64 58/64 -> no help. Across R229-R237
+  the sensitive prompt benchmark-c003@60 flips whenever its batch goes through the GDN gather/scatter split path,
+  so that path is not arithmetic-preserving and launch grouping cannot close the residual; R238 cancelled.
+- **Final configuration (R239 matrix, queued 16:15 behind R237):** R228 image (aaf920b0; `_xpu_ops.py` c91d6b0d,
+  `_xpu_C` 271db0d4) + `VLLM_BATCH_INVARIANT=1` + Inductor `split_reductions=false` + `VLLM_XPU_GDN_SPEC_GROUP=16`,
+  from `/mnt/fast-ai/bench-results/final-int4-config.env` (copy in `data/2026-09-05-qwen38-int4-final-config.env`).
+  Chain `scripts/run-20260905-qwen38-int4-r239-matrix-final-config-tp2-tp1-mtp0-4.sh`, log `logs/r239-matrix.log`:
+  TP2 then TP1; depth-1 full campaign (oracle, G2/G3, G5, MTP1 + MTP0 ladders), depths 2, 3, 4 strict + ladders.
+  Expected bar: MTP0 exact c1-c64 (timing residual: single miss in some runs), MTP depths exact through c16,
+  c32 >= 31/32, c64 >= 59/64. Then: summarize (`scripts/summarize-qwen38-int4-r222-matrix.py`), note, README table
+  (`repro/qwen38-27b-autoround-int4-b70/README.md` fixed-K section already drafted), package/catalog, pages.
+- **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
