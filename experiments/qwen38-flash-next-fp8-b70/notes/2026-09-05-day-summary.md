@@ -123,3 +123,14 @@ A177's per-layer selectors (`layers.46.mlp.experts`) matched nothing: the UVA of
 | output token ids | authority `afffd211…` | identical |
 
 The same Triton kernels read the same bytes (two and a half layers' experts now cross PCIe each step, ≈6 ms), so the change is numerically inert by construction and the ids match token for token. A180 (fresh server, exact-2K twice) is the certification pair; A181 (budget 12.5 GiB: embedding + one expert layer) probes how little headroom is enough. MTP1/MTP2, whose 0.60x on real text was measured under the same paging, are next in line for re-evaluation with headroom.
+
+## 18:12 headroom certification pair and budget probe
+
+| run | host offload per rank | allocator reserved | forward step | exact-2K tok/s | output |
+|---|---|---|---|---|---|
+| A175 (promoted identity + memory note) | 11.92 GiB (PLE) | 31.746 GiB | 74.5 ms | 14.42 | authority `afffd211…` |
+| A179 (budget 13.4: +embed, L0/L1 experts, L2 w13) | 13.78 GiB | 29.891 GiB | 37.0 ms | 25.13 | identical |
+| A180 (A179 identity, fresh server, r1 / r2) | 13.78 GiB | 29.891 GiB | 37.1 ms | 25.14 / 25.20 | identical / identical |
+| A181 (budget 12.5: +embed, L0 experts) | 12.8 GiB | 30.867 GiB | 35.8 ms | 24.44 / 25.94 | identical / identical |
+
+Under 1 GiB of headroom already ends the paging, and each offloaded expert layer costs about 1 ms of PCIe reads per step, so the smallest offload that fits is the fastest. Certification (A182 realistic suite, A183 frozen-client battery) continues on the A179 identity that was already in flight; the embedding-only placement (A178) is the follow-up floor probe, and A184 re-evaluates MTP1 with headroom.
