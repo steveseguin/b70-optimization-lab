@@ -37,7 +37,8 @@ health=${repo}/scripts/check-qwen36-xpu-xccl-health.sh
 health_timeout=2700
 fault_re='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup'
 
-export EXPECTED_XPU_EXTENSION_SHA256=${ext_sha}
+# XPU_EXTENSION_SHA256_OVERRIDE: candidates that replace _xpu_C.abi3.so (R139-style rebuilt kernel library, e.g. R221) pass their exact digest.
+export EXPECTED_XPU_EXTENSION_SHA256=${XPU_EXTENSION_SHA256_OVERRIDE:-${ext_sha}}
 export MODEL_DIR=${model_dir}
 
 log() { printf '[r147 %s] %s\n' "$(date +%H:%M:%S)" "$*" | tee -a "${root}/campaign.log"; }
