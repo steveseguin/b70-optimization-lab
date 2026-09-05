@@ -349,9 +349,17 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   depths 4, 5, 3, 2, 1, each a strict pair against the R213 MTP0 oracle then the c1-c64 ladders
   (log `/mnt/fast-ai/bench-results/logs/r214-chain.log`). Prediction on record: G3 lossless at
   every depth <= 7 because verify rows (depth+1) stay inside the kernel's row-invariant band.
-- **Next after the chain:** G1 re-pair on the final relabel config for the record, a note per
-  result, the ladders into the INT4 package/recipe, then optimization (the FP8 lane's
-  launch-overhead work applies unchanged).
+- **R216 (01:22, image r213b = pad as Dynamo-opaque custom op after R213's in-graph branch failed the
+  ladder config):** depth 4 G1/G2/G3 all 12/12, G5 probe identical; MTP0 35.65/35.19, MTP4
+  **67.63/68.01 tok/s**. Ladder exact at c1 and c2 only (c64 59/64): R217 class map shows the kernel
+  has five row-count classes and only M<=8 reproduces the single-request bits, so concurrency identity
+  on this kernel needs either the opt-in 8-row-chunk mode (R213c, `VLLM_XPU_W4A16_ROW_CHUNK8=1`, R218
+  queued to measure it) or a row-invariant W4A16 GEMM (the real optimization item).
+- **Queue (01:45):** R216 chain depths 5, 3, 2, 1, 6, 7 (strict vs the R216 oracle + ladders) ->
+  R215 TP1 full campaign -> R218 chunk-8 ladders. Logs under `/mnt/fast-ai/bench-results/logs/r21*.log`.
+- **Next after the queue:** result note per depth, the c1 spectrum into the INT4 package/recipe (headline
+  = deepest lossless depth by the two-run rule), then optimization: row-invariant W4A16 GEMM (also removes
+  the ~4% custom-op dispatch cost and both pads), then the FP8 lane's launch-overhead work.
 
 ## Paused Qwen3.8 AutoRound INT4 Two-B70 Optimization
 

@@ -94,3 +94,22 @@ ARK pad never had the problem because the INC bridge is already such an op. Cost
 against R213's 37.23/36.75, consistent with one extra Python-level op dispatch per linear layer (~233 per step). The
 zero-overhead form is the August C++ pad inside `_xpu_C` (`patches/vllm-xpu-kernels-qwen38-onednn-int4-determinism-pad-20260820.patch`),
 which needs a kernel-library rebuild; that is an optimization item, not a determinism one.
+
+## R216 / R217 (2026-09-05 01:40): lossless at one request; concurrency identity needs a row-invariant kernel
+
+R216 (R213b image, depth 4, full campaign): G1 12/12, G2 12/12, G3 12/12 both, G5 probe identical at 224/250/300 prompt
+tokens; MTP0 35.65/35.19, MTP4 67.63/68.01 tok/s class-balanced. The c1-c64 ladder is exact at c1 and c2 and then
+loses exactness (3/4, 6/8, 13/16, 28/32, 59/64; MTP0 ladder the same way). Data:
+`data/2026-09-05-qwen38-int4-gptq-relabel-r216-depth4-full-result.json`.
+
+R217 class map (`scripts/qwen38-int4-xpuc-w4a16-classmap.py`, data `...-classmap-r217-result.json`, run on GPU 1 during
+the depth-5 server boot so no rate was being measured): `int4_gemm_w4a16` has about five row-count classes with
+different reduction orders (1-8, 9-16, 17-48, 64-128, 257-512; 129-256 is the nondeterministic band), row 0 never
+depends on the other rows' content (zero vs random padding gives the same bits at P=16/64/512), and only the 1-8 class
+reproduces the single-request result. So a request's tokens are bit-identical across batch compositions only if every
+call lands in the 1-8 class. R213c adds that as an opt-in (`VLLM_XPU_W4A16_ROW_CHUNK8=1`: compute every call in 8-row
+pieces inside the custom op); single-request decode is unchanged, prefill and M>8 batches pay several times more.
+R218 (queued after R215) runs the depth-4 ladders in that mode to confirm exactness at every concurrency and to
+measure the throughput cost. The default stays fast-and-exact-at-c1. The proper fix, and the optimization
+centerpiece for this lane, is a W4A16 GEMM whose per-row reduction order does not depend on M (the FP8 lane's fixed-K
+result, R136-R147): it would give concurrency identity at native throughput and remove both pads.
