@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# R213: R212 (gptq-relabel, XPUwNa16 kernel) on the r213 image that zero-pads the 128<M<512 (and 512<M<1024) W4A16 rows for run-to-run determinism.
+# R208 (2026-09-04): Qwen3.8-27B INT4 AutoRound (devan-carlin, bce40cac) on the R187 stack: R156 image, whole-graph compile,
+# TP2, MTP depth ${DEPTH:-4}. Full r152 campaign: G1 same-config MTP0 repeat pair (determinism), G2/G3 MTP pairs (lossless),
+# G5 probe, G6 ladders. The r152 runner's pre-canaries are the quality gate; any canary miss aborts before speed.
+set -uo pipefail
+out=/mnt/fast-ai/bench-results; S=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts; R=/home/steve/b70-optimization-lab/repro
+[[ -n "${1:-}" ]] && while kill -0 "$1" 2>/dev/null; do sleep 30; done
+env MODEL_DIR=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel MODEL_MANIFEST=$R/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json QUANTIZATION=${QUANTIZATION:-gptq} VLLM_XPU_FP8_BLOCK_W8A16=0   XPU_OPS_SHA256_OVERRIDE=6a7761930cd8b9e3f67902648ba5aaaf708567cebf70fcedda595d698f26b064 LAYERNORM_SHA256_OVERRIDE=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 GEMMA_TRITON=0 RMSNORM_TRITON=0 GDN_SPLIT_MIXED=1   COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}' IMAGE_OVERRIDE=neural-download/vllm-openai-xpu:qwen38-int4-w4a16-detpad-r213 IMAGE_ID_OVERRIDE=sha256:3f34e5d515f2c2d2b7a5cbc1b020ab51a574049cc40bfaa4330e6a210748cd0f   SPECULATIVE_CONFIG="{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":${DEPTH:-4}}" ROOT=$out/qwen38-int4-gptq-relabel-r187-stack-mtp${DEPTH:-4}-detpad-full-20260904-r213 bash $S/run-20260902-qwen38-fp8-triton-rmsnorm-r152.sh

@@ -1,0 +1,5 @@
+# R213: R156 + Python-level determinism pad on the plain-GPTQ XPU W4A16 kernel path (128<M<512 -> 512, 512<M<1024 -> 1024).
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+COPY r213-w4a16-determinism-pad.py /tmp/r213.py
+RUN python /tmp/r213.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/mixed_precision/xpu.py && rm /tmp/r213.py
+LABEL neural.download.build.lane="qwen38-int4-w4a16-determinism-pad-r213"
