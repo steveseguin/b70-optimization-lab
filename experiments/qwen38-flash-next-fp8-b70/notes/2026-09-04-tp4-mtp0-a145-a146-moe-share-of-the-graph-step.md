@@ -14,6 +14,7 @@ inert unless set), one exact-2K request each, `Q38_STEP_TIMING_LOG=10`
 | A151 (overlay `330901f2`) | `Q38_DIAG_SKIP=moe_allreduce`: the MoE final TP all-reduce replaced by a no-op; GEMMs and everything else kept | median **32.9 ms**, range 31.9-61.4 (four ranks 32.9-33.3) | garbage by construction | 22.6 tok/s |
 | A152 (overlay `26a9e5c8`) | GEMMs skipped plus three identical 1024x1024 bf16 matmuls before every MoE all-reduce on every rank | median 25.4 ms (pad ~0.02 ms each: too small to test a wait) | garbage | 35.7 tok/s |
 | A154 (overlay `7fb55089`) | `Q38_DIAG_SKIP=moe_allreduce_zero_input`: real GEMMs, the MoE all-reduce runs at the same site on a static zero buffer (result discarded) | median **34.2 ms**, range 33.4-54.4 | garbage | 22.7 tok/s |
+| A155 (overlay `7fb55089`, config `moe-m1-w13-n32-warps4-stages2`) | the M=1 MoE Triton config at num_warps 4 / num_stages 2 instead of 8 / 4 (register-mode hypothesis) | median 74.8 ms, range 49.9-125.5 | `afffd211...` (exact) | 14.18 tok/s |
 
 The MoE block costs about 50-54 ms of the 71-73 ms step, three quarters
 of it, and all of the step's variance (the remainder of the network is a
@@ -63,7 +64,8 @@ routed MoE output and about 0.03 ms on zeros, on random data (offline) or
 on the shared-expert-only output (A148). The next step is to find the data
 property (an offline probe over value classes, then real dumped MoE
 outputs) and the protocol path that trips on it (`Rt64_128_PCIE`, LL
-threshold 4096, public oneCCL 4ceafd1). Streaming the local experts a token touches (about 2.5 of
+threshold 4096, public oneCCL 4ceafd1). A155 rules out the GEMM's launch
+configuration (4 warps, 2 stages: same step, exact output). Streaming the local experts a token touches (about 2.5 of
 the 128 experts per rank per layer, 4.9 MB each) is a few ms per step at
 this card's bandwidth, so the block runs an order of magnitude off the
 memory bound: the Triton fused MoE at M=1 launches about 100 valid
@@ -91,6 +93,7 @@ Data: `../data/20260904-tp4-mtp0-a146-graph-step-timing-2k.json`,
 `../data/20260905-tp4-mtp0-a151-graph-step-timing-skip-moe-allreduce-2k.json`,
 `../data/20260905-tp4-mtp0-a152-graph-step-timing-skip-gemm-pad3-2k.json`,
 `../data/20260905-tp4-mtp0-a154-graph-step-timing-allreduce-zero-input-2k.json`,
+`../data/20260905-tp4-mtp0-a155-graph-step-timing-moe-warps4-stages2-2k.json`,
 `../data/20260905-tp4-mtp0-a150-gemm-event-timing-2k.json`,
 `../data/20260905-b70-moe-gemm-offline-probes.json`,
 `../data/20260904-tp4-mtp0-a145-graph-step-timing-skip-moe-2k.json`,
