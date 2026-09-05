@@ -24,6 +24,15 @@ em = torch.full((E_GLOBAL,), -1, dtype=torch.int32); em[:E_LOCAL] = torch.arange
 g = torch.Generator(device="cpu").manual_seed(2)
 import os
 FRESH = os.getenv("Q38_BENCH_FRESH_ROUTING", "")
+FILLER_GIB = float(os.getenv("Q38_BENCH_FILLER_GIB", "0"))
+_FILLER = None
+if FILLER_GIB > 0:
+    # Occupy VRAM so the expert weights + this filler approach the card's capacity (oversubscription probe).
+    _FILLER = torch.empty(int(FILLER_GIB * 2**30), dtype=torch.uint8, device=device)
+    _FILLER.fill_(1)
+    torch.xpu.synchronize()
+    f, t = torch.xpu.mem_get_info(device)
+    print(f"FILLER {FILLER_GIB} GiB allocated; free now {f/2**30:.2f} GiB of {t/2**30:.2f} GiB")
 if FRESH:
     hits_per_call = int(FRESH)
     for M in (1,):
