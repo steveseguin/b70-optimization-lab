@@ -54,3 +54,24 @@ The R211 padding makes MTP0 a candidate for repeat-exact G1 (pending the R211 ca
 faster than MTP0 needs a batch-shape-invariant W4A16 kernel for M <= 8 whose per-row cost stays near the M=1 GEMV cost:
 dequantize-on-the-fly, fixed per-row K reduction order, one program per (row-block, N-block). That kernel is the INT4
 analog of the FP8 lane's fixed-K GEMM and is the next build item after the R211 result lands.
+
+## R212 addendum: the plain-GPTQ kernel path is the right foundation (2026-09-04)
+
+vLLM routes this checkpoint (`quant_method: auto-round`, `packing_format: auto_round:auto_gptq`) to INC/ARK only because
+of the config label. Relabelled as plain `gptq` (identical safetensors, symlinked; `desc_act: false`, the fp16 layers as
+`dynamic` exclusions) the same tensors load through `AutoGPTQConfig -> XPUwNa16LinearKernel -> torch.ops._xpu_C.int4_gemm_w4a16`
+(vllm-xpu-kernels), which is the kernel the August INT4 line and the community single-card GPTQ line run on. Census
+(`scripts/qwen38-int4-xpuc-w4a16-census.py`, data `data/2026-09-04-qwen38-int4-xpuc-w4a16-census-r212-result.json`;
+run on GPU 1 while the R211 campaign held GPU 0/1, so its timings are contaminated and are not reported here):
+
+| property | ARK woqgemm | _xpu_C int4_gemm_w4a16 |
+|---|---|---|
+| run-to-run identical, M <= 16 | yes | yes |
+| run-to-run identical, 16 < M < 512 | no (32-256) | no at M=256 only among the sampled points (128 ok, 512 ok); August finding: band is 128 < M < 512 |
+| row 0 of an M-row call equals the M=1 result | never | **yes for M = 1..8**, no from 16 up |
+| small-M cost | M=2 costs 6-10x M=1 | flat (to be re-timed idle) |
+
+Row invariance for M <= 8 is exactly what a lossless MTP verify step needs (depth+1 rows must reproduce the MTP0
+single-row logits), and the deterministic band gap is the same one the August C++ pad closed. The R213 image applies
+that pad in Python (`docker/r213-w4a16-determinism-pad.py`: 128 < M < 512 -> 512, 512 < M < 1024 -> 1024, env
+`VLLM_XPU_W4A16_DETERMINISM_PAD`) because this image's `_xpu_C.abi3.so` (sha256 f912e12d...) does not carry the C++ pad.
