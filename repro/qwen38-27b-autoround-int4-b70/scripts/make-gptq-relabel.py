@@ -14,7 +14,7 @@ import argparse, json, os, subprocess, sys
 NOTE = ("R212: identical safetensors to devan-carlin/Qwen3.8-27B-int4-AutoRound bce40cac (hard-linked); config relabelled "
         "from auto-round/auto_round:auto_gptq packing to plain gptq so vLLM routes to XPUwNa16LinearKernel "
         "(_xpu_C.int4_gemm_w4a16) instead of INC/ARK woqgemm. fp16 layers carried over as gptq dynamic exclusions. "
-        "The mtp.fc exclusion is spelled 'mt[p]\\\\.fc' so vLLM's qwen3_5_mtp does not null the draft quant config "
+        "The mtp.fc exclusion is spelled 'mt[p]\\.fc' so vLLM's qwen3_5_mtp does not null the draft quant config "
         "(the AutoRound draft layers are INT4).")
 
 
