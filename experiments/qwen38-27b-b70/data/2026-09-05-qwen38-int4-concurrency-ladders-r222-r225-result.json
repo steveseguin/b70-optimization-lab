@@ -242,7 +242,7 @@
    }
   ]
  },
- "note": "R222: R221 fixed-K W4A16 kernel, pad off. R225: + FP16 linears in <=32-row pieces (R224) + VLLM_XPU_FA_SERIAL_SPEC_DECODE=1. Same near-tie prompts (benchmark-c003@60, cache-c016@75, capacity-c006@11, capacity-c046@18, rollback-c018) flip depending on batch composition; MTP0 c64 went 63/64 -> 64/64 with the lm_head chunking but c32 gained a miss at token 11. Attention decode num_splits is a batch-size heuristic unless VLLM_BATCH_INVARIANT=1 (R226). R226 (+VLLM_BATCH_INVARIANT=1): MTP0 ladder exact c1-c64 (harness exit 0, 998 tok/s at c64); depth 4 exact through c16, c32 30/32, c64 59/64.",
+ "note": "R222: R221 fixed-K W4A16 kernel, pad off. R225: + FP16 linears in <=32-row pieces (R224) + VLLM_XPU_FA_SERIAL_SPEC_DECODE=1. Same near-tie prompts (benchmark-c003@60, cache-c016@75, capacity-c006@11, capacity-c046@18, rollback-c018) flip depending on batch composition; MTP0 c64 went 63/64 -> 64/64 with the lm_head chunking but c32 gained a miss at token 11. Attention decode num_splits is a batch-size heuristic unless VLLM_BATCH_INVARIANT=1 (R226). R226 (+VLLM_BATCH_INVARIANT=1): MTP0 ladder exact c1-c64 (harness exit 0, 998 tok/s at c64); depth 4 exact through c16, c32 30/32, c64 59/64. R229 (R228: GDN spec rows grouped by <=16 sequences, marker confirmed in the log): unchanged, c32 30/32, c64 59/64 -> the GDN launch size is not the source. R227 depth 1: exact through c16, c32 29/32, c64 59/64.",
  "r226_r224_rowchunk_batch_invariant_depth4": {
   "ladder": [
    {
@@ -360,6 +360,82 @@
     "exact": "64/64",
     "aggregate_tok_s_wall": 998.3,
     "misses": []
+   }
+  ]
+ },
+ "r229_r228_gdn_spec_group16_depth4": {
+  "ladder": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 64.2,
+    "misses": []
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 72.0,
+    "misses": []
+   },
+   {
+    "concurrency": 4,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 215.0,
+    "misses": []
+   },
+   {
+    "concurrency": 8,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 367.5,
+    "misses": []
+   },
+   {
+    "concurrency": 16,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 518.4,
+    "misses": []
+   },
+   {
+    "concurrency": 32,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 352.4,
+    "misses": [
+     {
+      "prompt_id": "benchmark-c003",
+      "first_divergence": 60
+     },
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     }
+    ]
+   },
+   {
+    "concurrency": 64,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 432.5,
+    "misses": [
+     {
+      "prompt_id": "benchmark-c003",
+      "first_divergence": 60
+     },
+     {
+      "prompt_id": "capacity-c014",
+      "first_divergence": 18
+     },
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     },
+     {
+      "prompt_id": "monitoring-c036",
+      "first_divergence": 41
+     },
+     {
+      "prompt_id": "testing-c061",
+      "first_divergence": 49
+     }
+    ]
    }
   ]
  }
