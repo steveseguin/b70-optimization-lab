@@ -1,0 +1,6 @@
+# R228: R224 + GDN speculative rows processed in groups of <=16 sequences (VLLM_XPU_GDN_SPEC_GROUP) for batch invariance.
+FROM neural-download/vllm-openai-xpu:qwen38-int4-fp16-rowchunk-r224
+COPY r228-gdn-spec-group.py /tmp/r228.py
+RUN python /tmp/r228.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py && rm /tmp/r228.py \
+    && sha256sum /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+LABEL neural.download.build.lane="qwen38-int4-gdn-spec-group-r228"
