@@ -109,3 +109,17 @@ A174 (eager lineage, checkpoint on the root NVMe) launched 14:40:31; its server 
 The 48-set cost is the same for 3 and 10 hits and equals one whole 419 MB / 210 MB buffer crossing PCIe at ~19 GB/s: the xe driver migrates entire buffers on touch once the footprint no longer fits, and there is no watermark slack below that (0.33 GiB free is still clean). A175's memory note puts the server at 31.746 GiB reserved of 31.891 per rank, i.e. at the edge, so transients evict weight buffers and every later touch of a cold expert pays a migration. This is the mechanism behind the promoted 72.7 ms step (real routing keeps hot experts resident), the 125–159 ms forced-routing steps (A171/A172), the 313 ms PLE-on-device step (A161), and the fast degenerate trajectories (a few warm experts).
 
 Fix under test: A177 = promoted graph identity with `embed_tokens.weight`, `layers.46.mlp.experts` and `layers.47.mlp.experts` added to the UVA offload (≈1.56 GiB/rank freed for ≈5 ms/step of PCIe expert reads; the kernel reads the same bytes, so the output hash must stay `afffd211…`).
+
+## 17:37 A179: bit-exact 2x from VRAM headroom
+
+A177's per-layer selectors (`layers.46.mlp.experts`) matched nothing: the UVA offloader wraps decoder layers through `make_layers` with the prefix `…layers.` and the layer module's own parameter names carry no index, so the total stayed at 12.22 GiB (embedding + PLE) and the base script's receipt guard stopped the run. A179 uses the selector `mlp.experts` under a 13.4 GiB budget; the greedy fill takes the embedding, layer 0's experts, PLE, layer 1's experts and layer 2's `w13_weight`, and every rank logged the predicted 13.78 GiB.
+
+| | A175 (promoted identity, memory note) | A179 (+ expert offload) |
+|---|---|---|
+| host-offloaded per rank | 11.92 GiB (PLE) | 13.78 GiB |
+| allocator reserved per rank | 31.746 GiB | 29.891 GiB |
+| forward step (graph, M=1) | 74.5 ms | **37.0 ms** |
+| exact-2K conventional tok/s | 14.42 | **25.13** |
+| output token ids | authority `afffd211…` | identical |
+
+The same Triton kernels read the same bytes (two and a half layers' experts now cross PCIe each step, ≈6 ms), so the change is numerically inert by construction and the ids match token for token. A180 (fresh server, exact-2K twice) is the certification pair; A181 (budget 12.5 GiB: embedding + one expert layer) probes how little headroom is enough. MTP1/MTP2, whose 0.60x on real text was measured under the same paging, are next in line for re-evaluation with headroom.
