@@ -1,0 +1,405 @@
+{
+ "cells": {
+  "suite": {
+   "api": "chat",
+   "seed": true,
+   "top_p": true,
+   "ids": true,
+   "usage": true
+  },
+  "chat-noids": {
+   "api": "chat",
+   "seed": true,
+   "top_p": true,
+   "ids": false,
+   "usage": true
+  },
+  "chat-plain": {
+   "api": "chat",
+   "seed": false,
+   "top_p": false,
+   "ids": false,
+   "usage": true
+  },
+  "chat-plain-nousage": {
+   "api": "chat",
+   "seed": false,
+   "top_p": false,
+   "ids": false,
+   "usage": false
+  },
+  "completions-raw": {
+   "api": "completions",
+   "seed": true,
+   "top_p": false,
+   "ids": false,
+   "usage": true
+  },
+  "completions-ignore-eos": {
+   "api": "completions",
+   "seed": true,
+   "top_p": false,
+   "ids": false,
+   "usage": true,
+   "ignore_eos": true
+  },
+  "completions-ids": {
+   "api": "completions",
+   "seed": true,
+   "top_p": false,
+   "ids": true,
+   "usage": true
+  }
+ },
+ "model": "qwen38-flash-next-fp8-tp4",
+ "base_url": "http://127.0.0.1:19814",
+ "max_tokens": 512,
+ "seed": 20260609,
+ "results": [
+  {
+   "cell": "warmup",
+   "prompt_id": "architecture-tradeoff",
+   "ttft_s": 28.754,
+   "chunk_count": 37,
+   "completion_tokens": 64,
+   "tokens": 64,
+   "tok_per_chunk": 1.73,
+   "interval_ms_first50": 228.4,
+   "interval_ms_mid50": 212.1,
+   "interval_ms_last50": 228.4,
+   "interval_ms_max": 1309.1,
+   "tok_s_post_ttft": 7.099,
+   "text_sha256": "08703b455b41c403cd8b6a48ea66521b5926de048c87a2a4185f8ddfb3c8c6da",
+   "total_s": 37.63,
+   "tok_s_1_100_chunk_estimate": 7.017
+  },
+  {
+   "cell": "suite",
+   "prompt_id": "incident-retrospective",
+   "request": {
+    "model": "qwen38-flash-next-fp8-tp4",
+    "max_tokens": 512,
+    "temperature": 0,
+    "stream": true,
+    "stream_options": {
+     "include_usage": true
+    },
+    "seed": 20260609,
+    "top_p": 1,
+    "return_token_ids": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+     }
+    ],
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    }
+   },
+   "ttft_s": 36.919,
+   "chunk_count": 287,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.784,
+   "interval_ms_first50": 178.4,
+   "interval_ms_mid50": 175.4,
+   "interval_ms_last50": 191.0,
+   "interval_ms_max": 653.9,
+   "tok_s_post_ttft": 9.674,
+   "text_sha256": "8df4459ccdd0949f4331204b5b10457bd6640a9a2bc58684c3f964d1e1960b9f",
+   "total_s": 89.74,
+   "tok_s_1_100_chunk_estimate": 9.072
+  },
+  {
+   "cell": "chat-noids",
+   "prompt_id": "incident-retrospective",
+   "request": null,
+   "ttft_s": 3.735,
+   "chunk_count": 287,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.784,
+   "interval_ms_first50": 189.9,
+   "interval_ms_mid50": 192.8,
+   "interval_ms_last50": 169.1,
+   "interval_ms_max": 567.9,
+   "tok_s_post_ttft": 9.7,
+   "text_sha256": "8df4459ccdd0949f4331204b5b10457bd6640a9a2bc58684c3f964d1e1960b9f",
+   "total_s": 56.42,
+   "tok_s_1_100_chunk_estimate": 8.848
+  },
+  {
+   "cell": "chat-plain",
+   "prompt_id": "incident-retrospective",
+   "request": null,
+   "ttft_s": 2.458,
+   "chunk_count": 287,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.784,
+   "interval_ms_first50": 178.2,
+   "interval_ms_mid50": 172.8,
+   "interval_ms_last50": 162.9,
+   "interval_ms_max": 382.2,
+   "tok_s_post_ttft": 10.118,
+   "text_sha256": "8df4459ccdd0949f4331204b5b10457bd6640a9a2bc58684c3f964d1e1960b9f",
+   "total_s": 52.96,
+   "tok_s_1_100_chunk_estimate": 9.96
+  },
+  {
+   "cell": "chat-plain-nousage",
+   "prompt_id": "incident-retrospective",
+   "request": null,
+   "ttft_s": 3.02,
+   "chunk_count": 287,
+   "completion_tokens": null,
+   "tokens": null,
+   "tok_per_chunk": null,
+   "interval_ms_first50": 203.2,
+   "interval_ms_mid50": 162.8,
+   "interval_ms_last50": 161.0,
+   "interval_ms_max": 481.2,
+   "tok_s_post_ttft": null,
+   "text_sha256": "8df4459ccdd0949f4331204b5b10457bd6640a9a2bc58684c3f964d1e1960b9f",
+   "total_s": 54.54
+  },
+  {
+   "cell": "completions-raw",
+   "prompt_id": "incident-retrospective",
+   "request": null,
+   "ttft_s": 3.345,
+   "chunk_count": 294,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.741,
+   "interval_ms_first50": 205.5,
+   "interval_ms_mid50": 146.4,
+   "interval_ms_last50": 177.1,
+   "interval_ms_max": 454.1,
+   "tok_s_post_ttft": 9.609,
+   "text_sha256": "7f3d966e7d07e6aa2dc7ae3915dbeb1cacd8ad73c581509e2022e77b24a80d60",
+   "total_s": 56.52,
+   "tok_s_1_100_chunk_estimate": 7.754
+  },
+  {
+   "cell": "completions-ignore-eos",
+   "prompt_id": "incident-retrospective",
+   "request": null,
+   "ttft_s": 2.265,
+   "chunk_count": 294,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.741,
+   "interval_ms_first50": 221.9,
+   "interval_ms_mid50": 151.6,
+   "interval_ms_last50": 162.1,
+   "interval_ms_max": 421.3,
+   "tok_s_post_ttft": 9.615,
+   "text_sha256": "7f3d966e7d07e6aa2dc7ae3915dbeb1cacd8ad73c581509e2022e77b24a80d60",
+   "total_s": 55.41,
+   "tok_s_1_100_chunk_estimate": 7.448
+  },
+  {
+   "cell": "completions-ids",
+   "prompt_id": "incident-retrospective",
+   "request": null,
+   "ttft_s": 2.112,
+   "chunk_count": 294,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.741,
+   "interval_ms_first50": 208.1,
+   "interval_ms_mid50": 161.2,
+   "interval_ms_last50": 172.0,
+   "interval_ms_max": 445.9,
+   "tok_s_post_ttft": 9.569,
+   "text_sha256": "7f3d966e7d07e6aa2dc7ae3915dbeb1cacd8ad73c581509e2022e77b24a80d60",
+   "total_s": 55.52,
+   "tok_s_1_100_intervals_after_ttft": 7.739
+  },
+  {
+   "cell": "suite",
+   "prompt_id": "architecture-tradeoff",
+   "request": {
+    "model": "qwen38-flash-next-fp8-tp4",
+    "max_tokens": 512,
+    "temperature": 0,
+    "stream": true,
+    "stream_options": {
+     "include_usage": true
+    },
+    "seed": 20260609,
+    "top_p": 1,
+    "return_token_ids": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "Compare two deployment options for a local inference service: tensor parallel across four GPUs versus four independent one-GPU replicas behind a router. Discuss latency, throughput, PCIe traffic, memory pressure, failure isolation, scheduling, model-loading time, and when each option is the right choice."
+     }
+    ],
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    }
+   },
+   "ttft_s": 2.08,
+   "chunk_count": 283,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.809,
+   "interval_ms_first50": 171.3,
+   "interval_ms_mid50": 139.6,
+   "interval_ms_last50": 140.8,
+   "interval_ms_max": 531.9,
+   "tok_s_post_ttft": 11.305,
+   "text_sha256": "39fd02e5b528cc8ac9341ae2fb1185f221abe6ad80ab1a201bc68e13ef740a75",
+   "total_s": 47.28,
+   "tok_s_1_100_chunk_estimate": 9.833
+  },
+  {
+   "cell": "chat-noids",
+   "prompt_id": "architecture-tradeoff",
+   "request": null,
+   "ttft_s": 1.55,
+   "chunk_count": 283,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.809,
+   "interval_ms_first50": 171.0,
+   "interval_ms_mid50": 140.5,
+   "interval_ms_last50": 118.3,
+   "interval_ms_max": 496.3,
+   "tok_s_post_ttft": 11.48,
+   "text_sha256": "39fd02e5b528cc8ac9341ae2fb1185f221abe6ad80ab1a201bc68e13ef740a75",
+   "total_s": 46.06,
+   "tok_s_1_100_chunk_estimate": 9.976
+  },
+  {
+   "cell": "chat-plain",
+   "prompt_id": "architecture-tradeoff",
+   "request": null,
+   "ttft_s": 1.599,
+   "chunk_count": 283,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.809,
+   "interval_ms_first50": 151.5,
+   "interval_ms_mid50": 140.8,
+   "interval_ms_last50": 140.5,
+   "interval_ms_max": 494.5,
+   "tok_s_post_ttft": 11.69,
+   "text_sha256": "39fd02e5b528cc8ac9341ae2fb1185f221abe6ad80ab1a201bc68e13ef740a75",
+   "total_s": 45.31,
+   "tok_s_1_100_chunk_estimate": 11.131
+  },
+  {
+   "cell": "chat-plain-nousage",
+   "prompt_id": "architecture-tradeoff",
+   "request": null,
+   "ttft_s": 1.905,
+   "chunk_count": 283,
+   "completion_tokens": null,
+   "tokens": null,
+   "tok_per_chunk": null,
+   "interval_ms_first50": 167.2,
+   "interval_ms_mid50": 127.4,
+   "interval_ms_last50": 130.3,
+   "interval_ms_max": 407.9,
+   "tok_s_post_ttft": null,
+   "text_sha256": "39fd02e5b528cc8ac9341ae2fb1185f221abe6ad80ab1a201bc68e13ef740a75",
+   "total_s": 46.51
+  },
+  {
+   "cell": "completions-raw",
+   "prompt_id": "architecture-tradeoff",
+   "request": null,
+   "ttft_s": 4.258,
+   "chunk_count": 286,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.79,
+   "interval_ms_first50": 155.9,
+   "interval_ms_mid50": 151.1,
+   "interval_ms_last50": 143.7,
+   "interval_ms_max": 502.9,
+   "tok_s_post_ttft": 11.24,
+   "text_sha256": "12ecc1ad65cd7f607311aebd6faa2a688098c06303f3e5d9d2a72c828d0a713e",
+   "total_s": 49.72,
+   "tok_s_1_100_chunk_estimate": 10.366
+  },
+  {
+   "cell": "completions-ignore-eos",
+   "prompt_id": "architecture-tradeoff",
+   "request": null,
+   "ttft_s": 1.014,
+   "chunk_count": 286,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.79,
+   "interval_ms_first50": 163.1,
+   "interval_ms_mid50": 168.8,
+   "interval_ms_last50": 137.2,
+   "interval_ms_max": 579.7,
+   "tok_s_post_ttft": 11.233,
+   "text_sha256": "12ecc1ad65cd7f607311aebd6faa2a688098c06303f3e5d9d2a72c828d0a713e",
+   "total_s": 46.51,
+   "tok_s_1_100_chunk_estimate": 10.489
+  },
+  {
+   "cell": "completions-ids",
+   "prompt_id": "architecture-tradeoff",
+   "request": null,
+   "ttft_s": 1.202,
+   "chunk_count": 286,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.79,
+   "interval_ms_first50": 149.4,
+   "interval_ms_mid50": 155.5,
+   "interval_ms_last50": 122.1,
+   "interval_ms_max": 464.8,
+   "tok_s_post_ttft": 11.557,
+   "text_sha256": "12ecc1ad65cd7f607311aebd6faa2a688098c06303f3e5d9d2a72c828d0a713e",
+   "total_s": 45.42,
+   "tok_s_1_100_intervals_after_ttft": 10.571
+  },
+  {
+   "cell": "suite",
+   "prompt_id": "incident-retrospective",
+   "request": {
+    "model": "qwen38-flash-next-fp8-tp4",
+    "max_tokens": 512,
+    "temperature": 0,
+    "stream": true,
+    "stream_options": {
+     "include_usage": true
+    },
+    "seed": 20260609,
+    "top_p": 1,
+    "return_token_ids": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+     }
+    ],
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    }
+   },
+   "ttft_s": 2.3,
+   "chunk_count": 287,
+   "completion_tokens": 512,
+   "tokens": 512,
+   "tok_per_chunk": 1.784,
+   "interval_ms_first50": 200.0,
+   "interval_ms_mid50": 163.5,
+   "interval_ms_last50": 170.4,
+   "interval_ms_max": 481.0,
+   "tok_s_post_ttft": 9.903,
+   "text_sha256": "8df4459ccdd0949f4331204b5b10457bd6640a9a2bc58684c3f964d1e1960b9f",
+   "total_s": 53.9,
+   "tok_s_1_100_chunk_estimate": 8.705
+  }
+ ]
+}
