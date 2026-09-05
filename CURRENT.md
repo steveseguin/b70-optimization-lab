@@ -432,6 +432,12 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   monitoring-c036@41 (c64). oneCCL thresholds are already pinned by the launcher (not a source). R233/R234 (grouping
   off / 4) queued to tell whether the grouped GDN path itself perturbs. Launcher now forwards
   `VLLM_XPU_GDN_SPEC_GROUP` (16) and `VLLM_XPU_FP16_LINEAR_ROWCHUNK` (32).
+- **R233-R235 (15:30-16:00):** GDN spec grouping off: c64 57/64; group 4: c16 15/16, c32 32/32, c64 60/64;
+  group 1 (per sequence): c4 3/4, c64 61/64 and c64 aggregate drops 432 -> 332 tok/s. Grouped launches are not
+  arithmetically equivalent to the single-request launch, so the launch size is not the lever. The MTP0 ladder
+  with an unchanged configuration gave all-exact (R232), c64 63/64 (R233), c32 31/32 (R234): arrival timing
+  changes prefill mixing, and that residual is now as large as the effects under test. R236 image (9488db61,
+  `_xpu_ops.py` 015b4dce) launches GDN prefill sequences per prompt; R237/R238 screens queued.
 - **Best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
