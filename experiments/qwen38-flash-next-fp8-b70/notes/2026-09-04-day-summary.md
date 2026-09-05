@@ -42,3 +42,37 @@ B70s keep minors 0/2/3/4, tuning), no GPU faults since.
   index updated. vLLM XPU payloads need `--engine-name vllm`, KV dtype
   `auto`, attention backend `triton` and the frozen server command as the
   snippet (`patch-localmaxxing-payload.py` step in the post-run script).
+
+## Afternoon and evening (two more silent host freezes: 11:25 and 22:12)
+
+- **Freezes:** the host froze at 11:24:57 (A141 launching) and again at
+  22:12:29 (A143 relaunch, during the launcher's host reset, no engine
+  process yet). Four silent freezes in two days, all inside the launcher's
+  reset-then-start window, nothing in the journal, PCIe error counters
+  zero. Frozen directories are kept as `*-frozen-1122` and `*-frozen-2212`.
+- **A135 (realistic suite on the MTP1 line):** outputs identical to the
+  approved MTP0 line 12/12, but 8.66 tok/s class-balanced against 14.43;
+  withheld from LocalMaxxing.
+- **A141/A142 (eager sub-operation split, M=2 vs M=1):** the MoE block
+  pays 130-155 ms of the 166 ms two-row delta; the serial verifier GDN
+  path about 45 ms; QSA and the hyperconnection mix near-flat.
+- **A143 (request-shape matrix):** every request shape steps at 120-220
+  ms per size-2 step on real prompts. The frozen client's short bench
+  makes the model emit ` benchmark benchmark ...`, so its 22.66/27.15/32.2
+  tok/s rows are degenerate-output rows; the realistic suite is the speed
+  on text, the MTP lines are 0.60x on text, and the two-row cost is an
+  M=2 MoE cost rather than a depth cost. Short-context MTP claims
+  withdrawn; MTP2 certification (A139/A140) on hold.
+- **A146/A145 (graph MTP0, control vs MoE skipped):** 72.7 ms per step
+  with the MoE block, a flat 19.1 ms without it (46 tok/s): the MoE block
+  is three quarters of the promoted decode step and all of its variance.
+- **A147 (platform XPU FP8 MoE backend):** negative, the overlay's backend
+  and the staged kernel package disagree on the interface; needs a rebuild
+  plus the block-FP8 scale path.
+- **Kernel lever identified:** the Triton fused MoE at M=1 launches about
+  100 valid programs per GEMM per rank with split-K forced to 1. A
+  deterministic split-K variant (partials to a workspace, fixed-order
+  reduce, env `VLLM_XPU_MOE_SPLIT_K`) is written and dry-run; the offline
+  equivalence-and-timing bench `tools/equivalence-and-timing-moe-splitk.py`
+  is committed. A144 (graph MTP1, MoE skipped) and A148 (only the two
+  GEMM launches skipped) are queued to finish the attribution.
