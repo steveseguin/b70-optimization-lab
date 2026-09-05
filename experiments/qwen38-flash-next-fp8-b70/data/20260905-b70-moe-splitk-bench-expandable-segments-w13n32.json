@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "classification": "b70_triton_block_fp8_moe_splitk_equivalence_timing",
+ "config_folder": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+ "iters": 100,
+ "seed": 20260903,
+ "shape": {
+  "E_LOCAL": 128,
+  "E_GLOBAL": 512,
+  "K": 2560,
+  "N": 640,
+  "TOPK": 10,
+  "block": 128
+ },
+ "weight_sets": 8,
+ "results": {
+  "M1": {
+   "stock": {
+    "mean_ms": 0.6720311600111017,
+    "median_ms": 0.6667019997621537,
+    "min_ms": 0.6614020003326004,
+    "max_ms": 0.7394490003207466,
+    "repeat_equal": true
+   },
+   "split2": {
+    "mean_ms": 0.6917903000248771,
+    "median_ms": 0.6835590002083336,
+    "min_ms": 0.6728540001859074,
+    "max_ms": 0.7718300003034528,
+    "bit_equal_to_stock": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0,
+    "mean_abs_diff": 0.0,
+    "ref_max_abs": 0.70703125,
+    "mismatch_elements": 0,
+    "elements": 2560
+   }
+  },
+  "M2": {
+   "stock": {
+    "mean_ms": 1.0286924500451278,
+    "median_ms": 1.0267839998050476,
+    "min_ms": 1.0166900001422619,
+    "max_ms": 1.0808109991558013,
+    "repeat_equal": true
+   },
+   "split2": {
+    "mean_ms": 1.0439662099724956,
+    "median_ms": 1.0438159997647745,
+    "min_ms": 1.029884999297792,
+    "max_ms": 1.0636389997671358,
+    "bit_equal_to_stock": true,
+    "repeat_equal": true,
+    "max_abs_diff": 0.0,
+    "mean_abs_diff": 0.0,
+    "ref_max_abs": 0.69140625,
+    "mismatch_elements": 0,
+    "elements": 5120
+   }
+  }
+ }
+}
