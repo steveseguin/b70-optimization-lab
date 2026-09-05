@@ -1,0 +1,7 @@
+{"schema_version": 1, "classification": "b70_moe_gemm_offline_probes", "date": "2026-09-05", "card": "xpu:0 (serving env, w13-n32 map)",
+ "graph_triton_launch_penalty": {"eager_96_triton_launches_ms": 1.692, "eager_96_native_launches_ms": 0.63, "replay_96_triton_ms": 0.088, "replay_96_native_ms": 0.087, "replay_96_mixed_ms": 0.161, "conclusion": "XPU graph replay adds nothing per Triton launch"},
+ "empty_triton_kernel_event_ms": {"1_program": 0.0995, "400_programs": 0.0982, "4000_programs": 0.0976, "note": "idle-queue launch latency captured by the events"},
+ "moe_gemm_event_ms_per_launch_M1": {"hits0": {"w13": 0.1449, "w2": 0.1439}, "hits1": {"w13": 0.199, "w2": 0.146}, "hits2": {"w13": 0.2207, "w2": 0.1459}, "hits5": {"w13": 0.2209, "w2": 0.1519}, "hits10": {"w13": 0.3578, "w2": 0.1755}},
+ "moe_gemm_event_ms_per_launch_rotating_weights": {"M1_all_local_10": {"w13": 0.3898, "w2": 0.1827}, "M1_ep_like_2": {"w13": 0.2171, "w2": 0.1359}, "M2_all_local_20": {"w13": 0.4969, "w2": 0.236}, "M2_ep_like_6": {"w13": 0.2223, "w2": 0.1546}},
+ "in_server_eager_A150_per_launch_M1": {"w13": "0.289-0.309", "w2": "0.175-0.186", "per_step_both_gemms_ms": 23},
+ "graph_subtraction": {"A146_control_ms": 72.7, "A148_gemms_skipped_ms": 22.4, "gemm_attributed_ms": 50.3}}
