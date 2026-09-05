@@ -74,7 +74,7 @@ def main():
         tim = {} if a.skip_timing else {str(m): time_us(lambda m=m: f(x[:m])) for m in TIMED_MS if m <= max(ms)}
         report["shapes"][name] = {"K": k, "N": n, "run_to_run": r2r, "row0_classes": {c: v for c, v in classes.items()},
                                   "row0_class_count": len(classes), "row0_eq_m1_for_all_M": len(classes) == 1,
-                                  "prefix_exact_vs_largest": prefix_exact, "perm200_invariant": perm_ok, "pad168to200_exact": pad_ok,
+                                  "prefix_exact_vs_largest": prefix_exact, "row0_digest_by_m": {str(m): digest(outs[m][0]) for m in ms}, "full_digest_by_m": {str(m): digest(outs[m]) for m in ms}, "perm200_invariant": perm_ok, "pad168to200_exact": pad_ok,
                                   "invariant": invariant, "us": tim}
         print(f"{name:12s} K={k:5d} N={n:5d} classes={len(classes)} r2r={r2r} perm={perm_ok} pad={pad_ok} INVARIANT={invariant} us={tim}", flush=True)
     report["all_shapes_invariant"] = all_invariant
