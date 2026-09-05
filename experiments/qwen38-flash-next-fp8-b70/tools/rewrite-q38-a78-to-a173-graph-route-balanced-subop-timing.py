@@ -20,7 +20,7 @@ def successor(text):
     def rename(seg):
         seg = seg.replace("tp4-mtp0-4352-ple-only-a78", "tp4-mtp0-4352-ple-only-a173")
         seg = seg.replace("attempt78", "attempt173").replace("19750", "19844")
-        seg = seg.replace("ATTEMPT=78", "ATTEMPT=171").replace("a78", "a173").replace("A78", "A173")
+        seg = seg.replace("ATTEMPT=78", "ATTEMPT=173").replace("a78", "a173").replace("A78", "A173")
         return seg
     parts=[]; last=0
     for m in HASH_TOKEN.finditer(text):
