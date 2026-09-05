@@ -359,7 +359,7 @@ summary = {
         "tp": 4, "ep": 4, "mtp": 0, "graph": "FULL_DECODE_ONLY",
         "compilation_mode": "NONE", "cudagraph_capture_sizes": [1],
         "max_model_len": 4352,
-        "placement": "ple_only_uva", "ple_host_bytes_per_rank": 12800061440,
+        "placement": "ple_embed_experts_budget13p4_uva", "ple_host_bytes_per_rank": 12800061440, "host_offload_bytes_per_rank": 14795939840, "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight,mlp.experts",
         "async_uva_ple_prefetch": False,
         "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
         "ccl_kernel_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",

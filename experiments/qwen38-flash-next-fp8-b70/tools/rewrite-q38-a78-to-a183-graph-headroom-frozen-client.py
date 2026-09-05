@@ -69,6 +69,8 @@ def patch_a183(l):
     l = replace_once(l, '! grep -Fq "\'embed_tokens.weight\'" "$derived"\n', 'grep -Fq "\'mlp.experts\'" "$derived"\n')
     return l
 def patch_client(c):
+    # the frozen client's summary carries the placement as a literal; describe the headroom identity honestly
+    c = replace_once(c, '"placement": "ple_only_uva", "ple_host_bytes_per_rank": 12800061440,', '"placement": "ple_embed_experts_budget13p4_uva", "ple_host_bytes_per_rank": 12800061440, "host_offload_bytes_per_rank": 14795939840, "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight,mlp.experts",')
     return replace_once(c, "'cpu_offload_gb=12.0' 'cpu_offload_params=ple_embedding.ngram_embedding.weight'", "'cpu_offload_gb=13.4' 'cpu_offload_params=" + PARAMS4_CSV + "'")
 
 def main():
