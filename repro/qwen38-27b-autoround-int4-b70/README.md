@@ -62,8 +62,20 @@ the GDN kernel's dependence on launch composition (grouping its launches, R229-R
 single-request arithmetic). Notes: `experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-{w4a16-fixed-k-two-tier-r220-r221,concurrency-identity-r222-r226}.md`;
 data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-*`.
 
-**Matrix (TP2 and TP1, depths 0-4; R239):** pending at the time of writing; results land in
-`data/2026-09-05-qwen38-int4-r239-matrix-result.json` and this table.
+**Matrix R239, TP2 (2026-09-05, final configuration: R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions=false`,
+data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json`):**
+
+| depth | strict pair (tok/s) | gates | identity ladder c1 / c2 / c4 / c8 / c16 / c32 / c64 (aggregate tok/s at c16) |
+|---|---|---|---|
+| 0 (MTP0) | 34.21 / 35.64 | G1 12/12 | exact at every level in 3 of 4 ladders (c64 998.6 tok/s); one run c32 31/32, c64 63/64 |
+| 1 | 51.10 / 50.09 | G2, G3 x2 12/12, probe exact | exact to c16 (650.1), c32 30/32, c64 58/64 |
+| 2 | 61.14 / 61.54 | G2, G3 x2 12/12 | exact to c16 (522.3), c32 30/32, c64 60/64 |
+| 3 | 67.61 / 67.83 | G2, G3 x2 12/12 | exact to c16 (599.4), c32 30/32, c64 59/64 |
+| 4 | 68.22 / (candidate b: worker died at engine start; R240 re-run) | - | c8 7/8, c16 exact (516.1), c32 30/32, c64 59/64 |
+
+Depth 4 in R222/R227 on the same tensors and kernel: 68.62 / 68.23 with all gates 12/12. Aggregate ladder rates are
+identity-qualified only where the level is exact. The TP1 half of the matrix follows in the same data file.
+
 
 New optimization lane, opened 2026-08-18, superseding the Qwen3.6 27B INT4
 speculative lane. The two checkpoints have the same tensor architecture, so the

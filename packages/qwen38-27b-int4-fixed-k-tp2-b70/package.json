@@ -41,7 +41,7 @@
       "fixed-k"
     ],
     "published_at": "2026-09-05",
-    "benchmark_status": "Research-status (2026-09-05). TP2 strict single-request pairs on the fixed-K stack: MTP0 36.004/34.916 tok/s matched 12/12; depth 1 50.828/51.119 matched 12/12 vs each other and vs the MTP0 oracle (R227); depth 4 68.622/68.230 matched 12/12 vs each other and vs the oracle (R222); probe exact at 224/250/300 prompt tokens. Identity ladders (R226/R232, final configuration): MTP0 exact c1-c64 (998 tok/s aggregate at c64; a near-tie prompt differs at c32 or c64 in some runs, arrival-timing dependent); depth 4 exact through c16 (517 tok/s aggregate), c32 31/32, c64 63/64. The R239 TP2/TP1 depth 0-4 matrix is running; no promotion or LocalMaxxing submission yet."
+    "benchmark_status": "Research-status (2026-09-05, R239 matrix, TP2, final configuration): strict pairs MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831 (each pair 12/12 vs each other and vs the MTP0 oracle; depth 1 probe exact), depth 4 68.218 single arm (candidate b failed at engine start; re-run queued; 68.622/68.230 12/12 in R222). Identity ladders: MTP0 exact c1-c64 in three of four runs (998.6 tok/s aggregate at c64; one run c32 31/32, c64 63/64); depths 1-4 exact through c16 (650/522/599/516 tok/s aggregate; depth 4 one run c8 7/8), c32 30/32, c64 58-60/64. TP1 half running. No promotion or LocalMaxxing submission yet."
   },
   "contributors": [
     {
@@ -224,9 +224,9 @@
     }
   ],
   "missing": [
-    "R239 matrix (TP2 and TP1, depths 0-4) results and profiles",
     "clean-host replay",
     "public GHCR visibility of the R228 image (private until flipped)",
-    "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)"
+    "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)",
+    "R239 TP1 half and the depth-4 TP2 pair re-run (R240)"
   ]
 }
