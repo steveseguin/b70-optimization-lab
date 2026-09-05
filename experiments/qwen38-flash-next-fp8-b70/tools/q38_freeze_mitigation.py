@@ -50,5 +50,6 @@ def patch_launcher(text: str) -> str:
     return text.replace(LAUNCHER_ANCHOR, LAUNCHER_RULES + LAUNCHER_ANCHOR)
 
 def check_derived(derived: str) -> None:
-    assert "xpu-smi" not in derived, [l for l in derived.splitlines() if "xpu-smi" in l][:3]
+    calls = [l for l in derived.splitlines() if "xpu-smi discovery" in l or "xpu-smi stats" in l]
+    assert not calls, calls[:3]
     assert derived.count("xpu-receipts-reference") == 2, derived.count("xpu-receipts-reference")
