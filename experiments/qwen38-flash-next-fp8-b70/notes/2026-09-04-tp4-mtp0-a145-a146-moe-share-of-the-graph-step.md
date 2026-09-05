@@ -11,6 +11,7 @@ inert unless set), one exact-2K request each, `Q38_STEP_TIMING_LOG=10`
 | A145 | `Q38_DIAG_SKIP=moe`: the MoE runner returns zeros instead of calling the expert path (router top-k, alignment, quantization, both grouped GEMMs, sum; the TP all-reduce after it stays) | median **19.1 ms**, range 19.08-19.17 | garbage by construction | 46.0 tok/s |
 | A144 (MTP1 graph identity, three selectors, size-2 steps; control is A127 at mean 181 ms, 144-255) | `Q38_DIAG_SKIP=moe` | median **32.9 ms**, range 32.86-32.96 (drafter 2.0) | garbage by construction | 25.9 tok/s |
 | A148 (overlay `edfd2155`) | `Q38_DIAG_SKIP=moe_gemm`: only the two Triton grouped-GEMM launches skipped (output zeroed); routing, alignment, activation quantization, sum and all-reduce kept | median **22.4 ms**, range 22.35-22.6 | garbage by construction | 40.0 tok/s |
+| A151 (overlay `330901f2`) | `Q38_DIAG_SKIP=moe_allreduce`: the MoE final TP all-reduce replaced by a no-op; GEMMs and everything else kept | median **32.9 ms**, range 31.9-61.4 (four ranks 32.9-33.3) | garbage by construction | 22.6 tok/s |
 
 The MoE block costs about 50-54 ms of the 71-73 ms step, three quarters
 of it, and all of the step's variance (the remainder of the network is a
@@ -27,7 +28,25 @@ about 3.3 ms. Per rank and layer the two GEMMs stream about 12 MB of
 expert weights in about 1.05 ms, an effective 11 GB/s, forty times off the
 card's bandwidth: the launch is latency-bound (about a hundred valid
 programs per GEMM, each walking K in serial 128-wide steps), which is what
-the split-K variant attacks. Streaming the local experts a token touches (about 2.5 of
+the split-K variant attacks.
+
+That attribution was wrong in a way the next three measurements fixed. The
+split-K variant is a negative offline (no speedup at any split, cold or
+cached weights, allocator neutral: `../data/20260905-b70-moe-splitk-bench-*.json`),
+the fixed cost per launch is idle-queue launch latency (0.098 ms for an
+empty kernel), XPU graph replay adds nothing per Triton launch (96
+trivial launches replay in 0.088 ms), and the in-server GPU-event time of
+the two GEMMs (A150, eager, overlay `dad52087`) is 0.31 + 0.18 ms per
+layer, the same as offline: about 23 ms of event time per step, of which
+only ~10 ms is execution (A151 minus A148). A151 then showed where the
+rest goes: with the MoE final all-reduce replaced by a no-op the step is
+32.9 ms, so about **40 ms of the 72.7 ms step is spent at the 48 MoE
+all-reduces**, and only when real GEMMs precede them (A145 kept the same
+all-reduces behind identical per-rank work at a flat 19.1 ms). Either the
+ranks arrive skewed (data-dependent expert hits) or each captured
+collective waits on the host for the preceding compute; A152 (GEMMs
+skipped, identical busy matmuls inserted before every MoE all-reduce on
+every rank, `Q38_DIAG_MOE_PAD_ITERS=3`) separates the two. Streaming the local experts a token touches (about 2.5 of
 the 128 experts per rank per layer, 4.9 MB each) is a few ms per step at
 this card's bandwidth, so the block runs an order of magnitude off the
 memory bound: the Triton fused MoE at M=1 launches about 100 valid
@@ -52,5 +71,8 @@ accumulation order is new.
 Data: `../data/20260904-tp4-mtp0-a146-graph-step-timing-2k.json`,
 `../data/20260904-tp4-mtp1-a144-graph-step-timing-skip-moe-2k.json`,
 `../data/20260905-tp4-mtp0-a148-graph-step-timing-skip-moe-gemm-2k.json`,
+`../data/20260905-tp4-mtp0-a151-graph-step-timing-skip-moe-allreduce-2k.json`,
+`../data/20260905-tp4-mtp0-a150-gemm-event-timing-2k.json`,
+`../data/20260905-b70-moe-gemm-offline-probes.json`,
 `../data/20260904-tp4-mtp0-a145-graph-step-timing-skip-moe-2k.json`,
 `../data/20260904-tp4-mtp0-a14{5,6}-exact-depth-2k-r1.json`.
