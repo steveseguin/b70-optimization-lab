@@ -1,0 +1,71 @@
+{
+ "run": "R211",
+ "date": "2026-09-04",
+ "lane": "qwen38-int4-autoround (INC/ARK woqgemm) on the R187 whole-graph stack, TP2",
+ "image": "neural-download/vllm-openai-xpu:qwen38-int4-ark-prefill-pad-r211 sha256:a7022858f72c724e5bce160e18b69507c95d6def79d2846461a7836844718be2 (r156 + docker/r211-ark-prefill-pad.py)",
+ "g1_same_config_mtp0_repeat_pair": "12/12",
+ "mtp0_a_class_balanced_median_tok_s": 32.773548747495,
+ "mtp0_b_class_balanced_median_tok_s": 33.065344987544,
+ "note": "G1 went from 7/12 (R208, unpadded ARK) to 12/12 with the ARK prefill band (16<M<512) zero-padded to 512 rows; decode rows untouched. The mtp1-a (MTP depth 4) launch then failed on the draft-INT4 lm_head feature (target lm_head quant method cannot prepare a draft copy) - a launcher default, not a kernel fault; ARK MTP is not pursued because the kernel is never row-invariant (R210) and costs 6-10x at M>=2. mtp0-a overlapped a ~2 min kernel census on GPU 1 (R212, 22:23-22:25); token identity is unaffected, the rate is within R208's band.",
+ "compare": {
+  "comparison": {
+   "complete_token_arrays_exact": true,
+   "divergent_prompts": [],
+   "exact_prompts": 12,
+   "total_prompts": 12
+  },
+  "left": {
+   "artifacts": {
+    "canaries": {
+     "path": "/mnt/fast-ai/bench-results/qwen38-int4-autoround-r187-stack-mtp4-ark-prefill-pad-full-20260904-r211/mtp0-a/strict/canaries.json",
+     "sha256": "71e90facb64468b0f768c7adc767b9341ffe9eab0efb1f1c3f37d907ca7842c8"
+    },
+    "identity": {
+     "path": "/mnt/fast-ai/bench-results/qwen38-int4-autoround-r187-stack-mtp4-ark-prefill-pad-full-20260904-r211/mtp0-a/strict/campaign-identity.json",
+     "sha256": "9167c9bca132686aeb760327b11545374fe415f1480b3520caab1c3e5e830e32"
+    },
+    "performance": {
+     "path": "/mnt/fast-ai/bench-results/qwen38-int4-autoround-r187-stack-mtp4-ark-prefill-pad-full-20260904-r211/mtp0-a/strict/performance.json",
+     "sha256": "96e3158d24861518386d620567ef64495c849b69b93f939f79837355dc5657c1"
+    }
+   },
+   "attempt": "fresh-cache-mtp0-a",
+   "cached_tokens_all_zero": true,
+   "canaries_passed": true,
+   "class_balanced_median_tok_s": 32.77354874749508,
+   "fresh_response_valid": true,
+   "performance_gate_passed": true,
+   "profile": "r147-mtp0-a"
+  },
+  "qualification": {
+   "all_workload_and_canary_gates_passed": true,
+   "required": "both complete fixed-suite attempts pass every workload/canary gate and match every complete token array",
+   "strict_pair_qualified": true
+  },
+  "right": {
+   "artifacts": {
+    "canaries": {
+     "path": "/mnt/fast-ai/bench-results/qwen38-int4-autoround-r187-stack-mtp4-ark-prefill-pad-full-20260904-r211/mtp0-b/strict/canaries.json",
+     "sha256": "71e90facb64468b0f768c7adc767b9341ffe9eab0efb1f1c3f37d907ca7842c8"
+    },
+    "identity": {
+     "path": "/mnt/fast-ai/bench-results/qwen38-int4-autoround-r187-stack-mtp4-ark-prefill-pad-full-20260904-r211/mtp0-b/strict/campaign-identity.json",
+     "sha256": "2fe0d80f32266f97c3034ce343f3e231c32c077ace2d9fce40d5f6bc3b4f1889"
+    },
+    "performance": {
+     "path": "/mnt/fast-ai/bench-results/qwen38-int4-autoround-r187-stack-mtp4-ark-prefill-pad-full-20260904-r211/mtp0-b/strict/performance.json",
+     "sha256": "4f284961889307a27ce15b1ad7544ae8b6db8d30cca6c3110a789bb5ddc626ec"
+    }
+   },
+   "attempt": "fresh-cache-mtp0-b",
+   "cached_tokens_all_zero": true,
+   "canaries_passed": true,
+   "class_balanced_median_tok_s": 33.0653449875443,
+   "fresh_response_valid": true,
+   "performance_gate_passed": true,
+   "profile": "r147-mtp0-b"
+  },
+  "schema": "neural.download.strict-attempt-output-comparison.v1",
+  "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+ }
+}

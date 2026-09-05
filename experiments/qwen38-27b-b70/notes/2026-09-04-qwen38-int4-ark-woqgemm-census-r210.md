@@ -75,3 +75,10 @@ Row invariance for M <= 8 is exactly what a lossless MTP verify step needs (dept
 single-row logits), and the deterministic band gap is the same one the August C++ pad closed. The R213 image applies
 that pad in Python (`docker/r213-w4a16-determinism-pad.py`: 128 < M < 512 -> 512, 512 < M < 1024 -> 1024, env
 `VLLM_XPU_W4A16_DETERMINISM_PAD`) because this image's `_xpu_C.abi3.so` (sha256 f912e12d...) does not carry the C++ pad.
+
+## R211 result (2026-09-04 22:31): the ARK prefill pad makes MTP0 repeat-exact
+
+Same-config MTP0 pair on the R211 image: **G1 12/12** (R208 unpadded: 7/12), rates 32.77 / 33.07 tok/s class-balanced.
+Data: `data/2026-09-04-qwen38-int4-autoround-ark-prefill-pad-r211-result.json`. This closes the determinism question for
+the ARK path; the lane still moves to the plain-GPTQ kernel (R213) because ARK cannot be row-invariant for lossless MTP.
+The R211 depth-4 stage aborted on the launcher's draft-INT4 lm_head default (fixed in the r62 launcher: override honored).
