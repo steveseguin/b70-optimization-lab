@@ -1,0 +1,108 @@
+--- a/src/gpu/intel/gemm/jit/gen_kernel.cpp
++++ b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+@@ -14,6 +14,10 @@
+ * limitations under the License.
+ *******************************************************************************/
+ 
++#include <cstdio>
++#include <cstdlib>
++#include <sstream>
++#include <string>
+ #include "gpu/intel/gemm/jit/gen_kernel.hpp"
+ 
+ #include "common/c_types_map.hpp"
+@@ -107,6 +111,47 @@
+ // change the FP16 result. This is intentionally restricted to the exact
+ // production datatype, layout, scale grouping, shape family, and tested row
+ // range. All other GEMMs continue to use their catalog-selected strategy.
++// Qwen3.8-27B AutoRound INT4 on BMG (R220/R221, 2026-09-05): the oneDNN catalog
++// splits K 8 ways for 1-8 token rows, 2 ways up to 128 and not at all above
++// for the W4A16 (u4/s4 weights, f16 activations) matmul, so the same request's
++// rows get different FP16 bits depending on batch composition (R217 class map,
++// R220 dump). Fixed two-tier selection, both tiers carrying the natural decode
++// entry's 8-way K partition (screened bitwise equal on all 14 TP1/TP2 shapes
++// for n = 1..1024, R220 candidates A/E):
++//   n <= 8   : the natural decode entry itself (no decode cost);
++//   9..MAXN  : the 9-24 catalog tile with wg 4x2x8 instead of 4x2x2.
++// Environment (plain getenv, read once):
++//   QWEN38_W4A16_FIXED_K=0            disable (natural catalog selection);
++//   QWEN38_W4A16_GEMM_STRATEGY        "<unrollM> <unrollN> <strategy>": pin one
++//                                     strategy for every W4A16 problem (screening);
++//   QWEN38_W4A16_GEMM_STRATEGY_SMALL / _LARGE: override one tier;
++//   QWEN38_W4A16_GEMM_MAXN            upper row bound for the pin (1024);
++//   QWEN38_GEMM_DUMP=1                print the selected entry/derived params.
++static const char *QWEN38_W4A16_SMALL_DEFAULT
++        = "16 8 at32 am128 aB wg 2x1x8 ikr xaf st vav hi pt sr br sb128 bk0 bm0 nmk sys";
++static const char *QWEN38_W4A16_LARGE_DEFAULT
++        = "16 16 at64+m128@96 am32+m32@160 aB wg 4x2x8 ikr xaf st vav bo pt sr br sb64 bk0 sm sn bm0 sys";
++
++static bool qwen38_w4a16_problem(const gemmstone::GEMMProblem &problem) {
++    using namespace gemmstone;
++    return (problem.Ta_ext == Type::u4 || problem.Ta_ext == Type::s4)
++            && problem.Tb_ext == Type::f16;
++}
++
++static const char *qwen38_w4a16_override(int n) {
++    static const char *enabled = std::getenv("QWEN38_W4A16_FIXED_K");
++    static const char *env = std::getenv("QWEN38_W4A16_GEMM_STRATEGY");
++    static const char *env_small = std::getenv("QWEN38_W4A16_GEMM_STRATEGY_SMALL");
++    static const char *env_large = std::getenv("QWEN38_W4A16_GEMM_STRATEGY_LARGE");
++    static const char *maxn_env = std::getenv("QWEN38_W4A16_GEMM_MAXN");
++    static const int maxn = maxn_env ? std::atoi(maxn_env) : 1024;
++    if (enabled && *enabled == '0') return nullptr;
++    if (n < 1 || n > maxn) return nullptr;
++    if (env && *env) return env;
++    if (n <= 8) return (env_small && *env_small) ? env_small : QWEN38_W4A16_SMALL_DEFAULT;
++    return (env_large && *env_large) ? env_large : QWEN38_W4A16_LARGE_DEFAULT;
++}
++
+ static bool use_qwen38_w8a16_fixed_k_strategy(ngen::HW hw,
+         const ngen::Product &product, const gemmstone::GEMMProblem &problem,
+         int m, int n, int k) {
+@@ -254,12 +299,46 @@
+             aux_params_.wgK = std::max(1,
+                     std::min(strategy_.wg[LoopK],
+                             int(utils::div_up(k_, aux_params_.k0))));
++        } else if (qwen38_w4a16_problem(problem_)
++                && qwen38_w4a16_override(n_)) {
++            std::stringstream ss(qwen38_w4a16_override(n_));
++            ss >> strategy_.unroll[LoopM];
++            ss >> strategy_.unroll[LoopN];
++            std::string rest = ss.str().substr(ss.tellg());
++            parseStrategy(rest, hw_, problem_, strategy_);
++            // Same W-model derivation as the W8A16 fixed-K hook above.
++            aux_params_.k0
++                    = utils::rnd_up(utils::div_up(k_, strategy_.wg[LoopK]),
++                            strategy_.unroll[LoopK]);
++            aux_params_.wgK = std::max(1,
++                    std::min(strategy_.wg[LoopK],
++                            int(utils::div_up(k_, aux_params_.k0))));
+         } else {
+             strategy_.unroll[LoopM] = entry_->driverInfo.unroll[LoopM];
+             strategy_.unroll[LoopN] = entry_->driverInfo.unroll[LoopN];
+             parseStrategy(entry_->strategy, hw_, problem_, strategy_);
+             modifyStrategy(strategy_, aux_params_);
+         }
++        if (qwen38_w4a16_problem(problem_)) {
++            static const bool dump = std::getenv("QWEN38_GEMM_DUMP") != nullptr;
++            if (dump) {
++                std::fprintf(stderr,
++                        "QWEN38_GEMM_W4A16 m=%d n=%d k=%d unroll=%dx%d "
++                        "wg=%dx%dx%d k0=%d wgK=%d aScale2D=%d aqGroupM=%d "
++                        "aqGroupK=%d aOffset=%d A=%d B=%d C=%d "
++                        "override=%d entry=%s\n",
++                        m_, n_, k_, strategy_.unroll[LoopM],
++                        strategy_.unroll[LoopN], strategy_.wg[LoopM],
++                        strategy_.wg[LoopN], strategy_.wg[LoopK],
++                        aux_params_.k0, aux_params_.wgK,
++                        int(problem_.aScale2D()), problem_.aqGroupM,
++                        problem_.aqGroupK, int(problem_.aOffset),
++                        int(problem_.A.layout), int(problem_.B.layout),
++                        int(problem_.C.layout),
++                        qwen38_w4a16_override(n_) ? 1 : 0,
++                        entry_->str().c_str());
++            }
++        }
+ #ifdef DNNL_DEV_MODE
+     }
+ #endif
