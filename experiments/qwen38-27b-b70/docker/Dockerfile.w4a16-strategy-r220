@@ -1,0 +1,16 @@
+# R220: R213b + a rebuilt _xpu_C whose oneDNN generator dumps and can pin the W4A16 (u4/s4 x f16) GEMM strategy
+# (QWEN38_GEMM_DUMP, QWEN38_W4A16_GEMM_STRATEGY, QWEN38_W4A16_GEMM_MAXN). Source: vllm-xpu-kernels 1e90ffa6 + r35 + r50,
+# oneDNN 0e2a5bfe + r137a + r137b + r220. Only _xpu_C.abi3.so is replaced.
+ARG BASE_IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-w4a16-detpad-op-r213b
+FROM ${BASE_IMAGE}
+ARG XPU_EXTENSION_SHA256
+ARG ONEDNN_PATCH_SHA256
+COPY _xpu_C.abi3.so /tmp/r220/_xpu_C.abi3.so
+RUN set -eux; \
+    echo "${XPU_EXTENSION_SHA256}  /tmp/r220/_xpu_C.abi3.so" | sha256sum -c -; \
+    install -m 0755 /tmp/r220/_xpu_C.abi3.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so; \
+    rm -rf /tmp/r220; \
+    strings /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so | grep -Fq QWEN38_W4A16_GEMM_STRATEGY
+LABEL neural.download.build.lane="qwen38-int4-w4a16-strategy-r220" \
+      neural.download.onednn.patch.sha256="${ONEDNN_PATCH_SHA256}" \
+      neural.download.xpu.extension.sha256="${XPU_EXTENSION_SHA256}"
