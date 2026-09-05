@@ -1,0 +1,5 @@
+# R213b: R156 + the W4A16 determinism pad as an opaque custom op (Dynamo-safe), plain-GPTQ XPU path only.
+FROM neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156
+COPY r213b-w4a16-determinism-pad-op.py /tmp/r213b.py
+RUN python /tmp/r213b.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/mixed_precision/xpu.py && rm /tmp/r213b.py
+LABEL neural.download.build.lane="qwen38-int4-w4a16-determinism-pad-op-r213b"
