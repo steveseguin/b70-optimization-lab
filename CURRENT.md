@@ -360,7 +360,16 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   census or other process was on the GPUs at the time. Preflight refuses every launch on this boot, so
   the queue aborted. Depth-5 candidate a had already finished: **68.28 tok/s**, 12/12 vs the R216 oracle
   (single arm; the two-run rule still needs candidate b).
-- **After the reboot, run one command:** `bash experiments/qwen38-27b-b70/scripts/run-20260905-qwen38-int4-post-reboot-r219-resume-queue.sh`
+- **Directive (2026-09-05 03:00, user):** the INT4 lane must be lossless for concurrent users too, on
+  TP1 and TP2, at MTP depths 0-3; rebooting is authorized. Plan: (1) reboot; the `@reboot` cron
+  launches R215 (TP1 depth 4, GPU 0) and leaves GPU 1 free; (2) port the FP8 lane's fixed-K row-invariant
+  strategy selector (the rebuilt `_xpu_C` of R139/R156, `fp8_gemm_w8a16`) to `int4_gemm_w4a16` and
+  gate it with the R217 class-map census (every M must reproduce the M=1 rows); (3) with that kernel,
+  run the final matrix {TP1, TP2} x {MTP0, 1, 2, 3}: strict pairs, MTP-vs-MTP0 oracle, c1-c64
+  identity ladders; the bar is the FP8 lane's (MTP0 exact through c64, MTP1+ at least through c16) or
+  better; (4) publish. Fallback if the port fails: `VLLM_XPU_W4A16_ROW_CHUNK8=1` (exact at every
+  concurrency, prefill several times slower).
+- **After the reboot, if the cron did not fire, run one command:** `bash experiments/qwen38-27b-b70/scripts/run-20260905-qwen38-int4-post-reboot-r219-resume-queue.sh`
   (removes the aborted roots, then R216 chain depths 5, 3, 2, 1, 6, 7 -> R215 TP1 -> R218 chunk-8
   ladders; logs under `/mnt/fast-ai/bench-results/logs/r21*.log`).
 - **Next after the queue:** result note per depth, the c1 spectrum into the INT4 package/recipe (headline
