@@ -449,6 +449,11 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   Expected bar: MTP0 exact c1-c64 (timing residual: single miss in some runs), MTP depths exact through c16,
   c32 >= 31/32, c64 >= 59/64. Then: summarize (`scripts/summarize-qwen38-int4-r222-matrix.py`), note, README table
   (`repro/qwen38-27b-autoround-int4-b70/README.md` fixed-K section already drafted), package/catalog, pages.
+- **Publication scaffolding (16:40):** `packages/qwen38-27b-int4-fixed-k-tp2-b70/{package.json,README.md}` registered
+  on the INT4 guide entry (validator clean, catalog regenerated, model pages rebuilt); launcher
+  `repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh` (MTP_DEPTH 0-4, TP1 via env); image pushed to
+  `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...` (**private: user must flip visibility**). After
+  R239: matrix table into the recipe README and package, top-level README row, publication-manifest chain entry.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.

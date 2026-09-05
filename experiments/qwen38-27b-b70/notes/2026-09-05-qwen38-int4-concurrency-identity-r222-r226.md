@@ -31,3 +31,25 @@ remaining batch-dependent kernel is in the GDN path (`gdn_attention_core_xpu`: o
 the FP8 lane traced its own c32/c64 residual to the same place and published MTP1+ "exact through c16"). This lane now
 matches that bar for depth 4 and exceeds it for MTP0 (**exact at every concurrency c1-c64**, R226). Next: a kernel-level census of `_xpu_C.gdn_attention`
 per-sequence output vs number of sequences (needs the real metadata layout), during the R227 TP1 phase on GPU 1.
+
+## Afternoon screens R227-R237 and the final configuration (16:30)
+
+| run | change | MTP4 ladder (c4 / c16 / c32 / c64) | MTP0 ladder |
+|---|---|---|---|
+| R227 | R224 + batch-invariant, depth 1 | exact / exact / 29/32 / 59/64 | - |
+| R229 | R228: GDN spec rows grouped by 16 (marker confirmed) | exact / exact / 30/32 / 59/64 | - |
+| R232 | + Inductor `split_reductions=false` | exact / exact / **31/32** / **63/64** | exact c1-c64 |
+| R233 | spec grouping off | exact / exact / 31/32 / 57/64 | c64 63/64 |
+| R234 | spec group 4 | exact / 15/16 / 32/32 / 60/64 | c32 31/32 |
+| R235 | spec group 1 (per sequence) | 3/4 / exact / 31/32 / 61/64 (c64 aggregate 332 vs 432 tok/s) | exact c1-c64 |
+| R237 | R236: GDN prefill launches per prompt | 3/4 / exact / 31/32 / 58/64 | c64 63/64 |
+
+Reading: `split_reductions=false` is a real fix (four of the six flipping prompts cleared). GDN launch grouping is not
+a lever: the gather/scatter split path is not arithmetic-equivalent to the plain launch (benchmark-c003@60 flips
+whenever its batch goes through it), and per-sequence launches cost a quarter of the c64 throughput. The MTP0 ladder,
+whose configuration never changed across R232-R237, is all-exact in three runs and one miss (c32 or c64) in three
+others: arrival timing decides how the first prefill steps mix, and one composition-dependent kernel remains in the
+mixed-prefill regime (GDN). Final configuration for the matrix (R239): R228 image + `VLLM_BATCH_INVARIANT=1` +
+`split_reductions=false` + spec group 16 (`data/2026-09-05-qwen38-int4-final-config.env`). Package
+`packages/qwen38-27b-int4-fixed-k-tp2-b70` registered (validator clean) with the R226 MTP0 c1-c64 and R232 depth-4 c1-c16
+identity-qualified profiles; image on GHCR (`vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...`, private until flipped).
