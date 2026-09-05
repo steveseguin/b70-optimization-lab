@@ -69,6 +69,9 @@ def patch_a183(l):
     l = replace_once(l, '! grep -Fq "\'embed_tokens.weight\'" "$derived"\n', 'grep -Fq "\'mlp.experts\'" "$derived"\n')
     return l
 def patch_client(c):
+    # verify-moe-m1-w13-n32-selection.py changed on 2026-09-03 21:14 (ea58981c: the resolver accepts overlay 1b2a17c1),
+    # after the A78 client was frozen; pin the current file (its check logic, not the selection it verifies)
+    c = replace_once(c, "4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52", "0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753")
     # the frozen client's summary carries the placement as a literal; describe the headroom identity honestly
     c = replace_once(c, '"placement": "ple_only_uva", "ple_host_bytes_per_rank": 12800061440,', '"placement": "ple_embed_experts_budget13p4_uva", "ple_host_bytes_per_rank": 12800061440, "host_offload_bytes_per_rank": 14795939840, "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight,mlp.experts",')
     return replace_once(c, "'cpu_offload_gb=12.0' 'cpu_offload_params=ple_embedding.ngram_embedding.weight'", "'cpu_offload_gb=13.4' 'cpu_offload_params=" + PARAMS4_CSV + "'")
