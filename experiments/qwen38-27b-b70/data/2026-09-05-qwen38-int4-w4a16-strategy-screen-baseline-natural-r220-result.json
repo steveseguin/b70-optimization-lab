@@ -1,0 +1,1288 @@
+{
+ "schema": "neural.download.qwen38-int4-w4a16-strategy-screen.v1",
+ "strategy": null,
+ "maxn": null,
+ "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+ "ms": [
+  1,
+  2,
+  4,
+  5,
+  8,
+  9,
+  12,
+  16,
+  17,
+  24,
+  32,
+  33,
+  48,
+  64,
+  65,
+  96,
+  128,
+  129,
+  168,
+  200,
+  256,
+  257,
+  384,
+  512,
+  513,
+  768,
+  1024
+ ],
+ "shapes": {
+  "tp1_down": {
+   "K": 17408,
+   "N": 5120,
+   "run_to_run": false,
+   "row0_classes": {
+    "d29f0bb9878ec958": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "c5d8b505ef9b005e": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "b9fe772b84cad6a4": [
+     33,
+     48
+    ],
+    "625d3a008a235682": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "9098b21f0aa088eb": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "7035aa2fc54c4670": [
+     257,
+     384,
+     512
+    ],
+    "7dbe0ce8f02d40ed": [
+     513
+    ],
+    "f1d73ea7007791e7": [
+     768,
+     1024
+    ]
+   },
+   "row0_class_count": 8,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": false,
+    "48": false,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": false,
+    "513": false,
+    "768": false,
+    "1024": true
+   },
+   "perm200_invariant": false,
+   "pad168to200_exact": false,
+   "invariant": false,
+   "us": {
+    "1": 230.1,
+    "5": 79.3,
+    "8": 79.5,
+    "32": 92.5,
+    "128": 229.2,
+    "512": 621.6,
+    "1024": 1345.4
+   }
+  },
+  "tp1_gate_up": {
+   "K": 5120,
+   "N": 34816,
+   "run_to_run": true,
+   "row0_classes": {
+    "f9f0e2a323430fb5": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "8000be9162595006": [
+     9,
+     12,
+     16
+    ],
+    "a9041e17a5f13bae": [
+     17,
+     24,
+     33,
+     48,
+     64,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "0bede3d26fd6c932": [
+     32
+    ],
+    "80998841f7397e00": [
+     65,
+     96,
+     128
+    ],
+    "46e6efabd77f2abc": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "e351c75f653da6ae": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 7,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": true,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 160.2,
+    "5": 161.2,
+    "8": 162.9,
+    "32": 193.3,
+    "128": 545.0,
+    "512": 1319.5,
+    "1024": 3321.6
+   }
+  },
+  "tp1_in_qkv": {
+   "K": 5120,
+   "N": 10240,
+   "run_to_run": true,
+   "row0_classes": {
+    "82360408315ee1ef": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "ae31fddac57d67a8": [
+     9,
+     12,
+     16
+    ],
+    "62a47086368bd593": [
+     17,
+     24,
+     33,
+     48,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "089d20ca3dc05a79": [
+     32
+    ],
+    "2a86bd3d3dbf65da": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "9d212d161961cf36": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "9b28bc352154c91d": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 7,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 27.5,
+    "5": 22.9,
+    "8": 24.2,
+    "32": 48.8,
+    "128": 104.1,
+    "512": 350.9,
+    "1024": 769.3
+   }
+  },
+  "tp1_in_z": {
+   "K": 5120,
+   "N": 6144,
+   "run_to_run": true,
+   "row0_classes": {
+    "fb30de897299e754": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "c40143276d36c350": [
+     9,
+     12,
+     16
+    ],
+    "603264c4453398d4": [
+     17,
+     24,
+     33,
+     48,
+     129,
+     168,
+     200,
+     256,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "59259749a62f5d22": [
+     32
+    ],
+    "251ffa530813bd04": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "5225634be008f30f": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 6,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": true,
+    "168": true,
+    "200": true,
+    "256": true,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 16.0,
+    "5": 13.0,
+    "8": 13.1,
+    "32": 22.0,
+    "128": 63.2,
+    "512": 208.2,
+    "1024": 414.8
+   }
+  },
+  "tp1_o": {
+   "K": 6144,
+   "N": 5120,
+   "run_to_run": false,
+   "row0_classes": {
+    "ceb431628f50687e": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "08265a5b9d4869a2": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "e19e03992e20895a": [
+     33,
+     48,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "4d4c298c837ed96b": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "92c2e99d010d0051": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "14ca29ba33c4e7b4": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 6,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": false,
+   "invariant": false,
+   "us": {
+    "1": 18.2,
+    "5": 15.3,
+    "8": 15.6,
+    "32": 26.7,
+    "128": 64.7,
+    "512": 236.9,
+    "1024": 414.8
+   }
+  },
+  "tp1_out": {
+   "K": 6144,
+   "N": 5120,
+   "run_to_run": false,
+   "row0_classes": {
+    "280d42ba2379123c": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "feeba4313f4cac37": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "df5727732c602638": [
+     33,
+     48,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "10755288f9308a5d": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "dedf5766c4dd5a4d": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "31371d8b3307e79f": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 6,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": false,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 18.2,
+    "5": 15.1,
+    "8": 14.9,
+    "32": 26.2,
+    "128": 66.5,
+    "512": 238.2,
+    "1024": 419.5
+   }
+  },
+  "tp1_qkv": {
+   "K": 5120,
+   "N": 14336,
+   "run_to_run": true,
+   "row0_classes": {
+    "957a2b98d570bebe": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "1724275cdd3bf24c": [
+     9,
+     12,
+     16
+    ],
+    "d00dd59aceac0813": [
+     17,
+     24,
+     33,
+     48,
+     129,
+     168,
+     200,
+     256,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "c5401655261b53f6": [
+     32
+    ],
+    "e86cee7393f6cf58": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "ca59ad0c237d567e": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 6,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": true,
+    "168": true,
+    "200": true,
+    "256": true,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 62.7,
+    "5": 63.5,
+    "8": 64.0,
+    "32": 70.0,
+    "128": 166.4,
+    "512": 475.4,
+    "1024": 1095.8
+   }
+  },
+  "tp2_down": {
+   "K": 8704,
+   "N": 5120,
+   "run_to_run": true,
+   "row0_classes": {
+    "ce9e65e97dd9e60f": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "af7502701a0e9acb": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "8434fb6548ad929e": [
+     33,
+     48,
+     513
+    ],
+    "606cb66f455988d9": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "089771057dbb94c1": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "3ad2a02480ff1c01": [
+     257,
+     384,
+     512
+    ],
+    "85aed4865f05e9aa": [
+     768,
+     1024
+    ]
+   },
+   "row0_class_count": 7,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": false,
+    "48": false,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": false,
+    "513": false,
+    "768": false,
+    "1024": true
+   },
+   "perm200_invariant": false,
+   "pad168to200_exact": false,
+   "invariant": false,
+   "us": {
+    "1": 25.6,
+    "5": 22.7,
+    "8": 23.1,
+    "32": 37.0,
+    "128": 102.2,
+    "512": 328.9,
+    "1024": 656.3
+   }
+  },
+  "tp2_gate_up": {
+   "K": 5120,
+   "N": 17408,
+   "run_to_run": true,
+   "row0_classes": {
+    "3b7850d8b309e543": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "18014959687bc4dd": [
+     9,
+     12,
+     16
+    ],
+    "6c569149a1cd03c8": [
+     17,
+     24,
+     33,
+     48,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "8462d61b5df426d4": [
+     32
+    ],
+    "9352f2375e331815": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "2fea09c6522801b9": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "3afc3479425510db": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 7,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 79.0,
+    "5": 80.1,
+    "8": 80.7,
+    "32": 99.4,
+    "128": 238.9,
+    "512": 623.2,
+    "1024": 1388.2
+   }
+  },
+  "tp2_in_qkv": {
+   "K": 5120,
+   "N": 5120,
+   "run_to_run": true,
+   "row0_classes": {
+    "852218611ec31129": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "85214e57c09e0b25": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "b4cda159ac4894e9": [
+     33,
+     48,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "ce7f759a5f17a031": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "cd8054c85afd7833": [
+     129,
+     168,
+     200,
+     256
+    ],
+    "b18206d7eb485d38": [
+     257,
+     384
+    ]
+   },
+   "row0_class_count": 6,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": false,
+    "257": false,
+    "384": false,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": false,
+   "pad168to200_exact": false,
+   "invariant": false,
+   "us": {
+    "1": 17.2,
+    "5": 14.7,
+    "8": 14.9,
+    "32": 23.8,
+    "128": 58.6,
+    "512": 210.4,
+    "1024": 373.0
+   }
+  },
+  "tp2_in_z": {
+   "K": 5120,
+   "N": 3072,
+   "run_to_run": false,
+   "row0_classes": {
+    "8b23407661acbbbf": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "c9f33084c987e6fc": [
+     9,
+     12,
+     16
+    ],
+    "1dc2bd93660ccba3": [
+     17,
+     24,
+     33,
+     48,
+     256,
+     257,
+     384,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "5144610299e3e064": [
+     32
+    ],
+    "77bb1b269972a0fd": [
+     64,
+     65,
+     96,
+     128
+    ],
+    "c7de487d0677526b": [
+     129,
+     168
+    ],
+    "735a9479fe13a01f": [
+     200
+    ]
+   },
+   "row0_class_count": 7,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": false,
+    "168": false,
+    "200": false,
+    "256": true,
+    "257": true,
+    "384": true,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": false,
+   "pad168to200_exact": false,
+   "invariant": false,
+   "us": {
+    "1": 11.0,
+    "5": 10.8,
+    "8": 10.5,
+    "32": 16.7,
+    "128": 28.6,
+    "512": 133.2,
+    "1024": 203.3
+   }
+  },
+  "tp2_o": {
+   "K": 3072,
+   "N": 5120,
+   "run_to_run": true,
+   "row0_classes": {
+    "2b1eccd9628550b4": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "35faa4551a81e9b7": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "95ee43ddb590ed22": [
+     33,
+     48,
+     129,
+     168,
+     200,
+     256,
+     257,
+     384,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "f9be7ebb706fbd12": [
+     64,
+     65,
+     96,
+     128
+    ]
+   },
+   "row0_class_count": 4,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": true,
+    "168": true,
+    "200": true,
+    "256": true,
+    "257": true,
+    "384": true,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 11.5,
+    "5": 11.0,
+    "8": 10.9,
+    "32": 13.9,
+    "128": 35.7,
+    "512": 122.2,
+    "1024": 206.1
+   }
+  },
+  "tp2_out": {
+   "K": 3072,
+   "N": 5120,
+   "run_to_run": true,
+   "row0_classes": {
+    "fd91225e7a8dfaae": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "36bd9e56f4e73aca": [
+     9,
+     12,
+     16,
+     17,
+     24,
+     32
+    ],
+    "5712696a6a9d0bf2": [
+     33,
+     48,
+     129,
+     168,
+     200,
+     256,
+     257,
+     384,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "145760c45fb63b28": [
+     64,
+     65,
+     96,
+     128
+    ]
+   },
+   "row0_class_count": 4,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": false,
+    "24": false,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": true,
+    "168": true,
+    "200": true,
+    "256": true,
+    "257": true,
+    "384": true,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 11.4,
+    "5": 11.0,
+    "8": 11.2,
+    "32": 14.1,
+    "128": 36.6,
+    "512": 121.9,
+    "1024": 203.0
+   }
+  },
+  "tp2_qkv": {
+   "K": 5120,
+   "N": 7168,
+   "run_to_run": true,
+   "row0_classes": {
+    "cf48fe2f5c972aff": [
+     1,
+     2,
+     4,
+     5,
+     8
+    ],
+    "6b8f1357af0d8620": [
+     9,
+     12,
+     16
+    ],
+    "1c5713e3137f458b": [
+     17,
+     24,
+     33,
+     48,
+     129,
+     168,
+     200,
+     256,
+     257,
+     384,
+     512,
+     513,
+     768,
+     1024
+    ],
+    "a2052b067447ae31": [
+     32
+    ],
+    "19e5cba16816ab0e": [
+     64,
+     65,
+     96,
+     128
+    ]
+   },
+   "row0_class_count": 5,
+   "row0_eq_m1_for_all_M": false,
+   "prefix_exact_vs_largest": {
+    "1": false,
+    "2": false,
+    "4": false,
+    "5": false,
+    "8": false,
+    "9": false,
+    "12": false,
+    "16": false,
+    "17": true,
+    "24": true,
+    "32": false,
+    "33": true,
+    "48": true,
+    "64": false,
+    "65": false,
+    "96": false,
+    "128": false,
+    "129": true,
+    "168": true,
+    "200": true,
+    "256": true,
+    "257": true,
+    "384": true,
+    "512": true,
+    "513": true,
+    "768": true,
+    "1024": true
+   },
+   "perm200_invariant": true,
+   "pad168to200_exact": true,
+   "invariant": false,
+   "us": {
+    "1": 17.7,
+    "5": 14.1,
+    "8": 13.2,
+    "32": 32.7,
+    "128": 69.0,
+    "512": 267.6,
+    "1024": 489.1
+   }
+  }
+ },
+ "all_shapes_invariant": false
+}
