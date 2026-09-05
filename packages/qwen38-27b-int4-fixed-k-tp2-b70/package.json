@@ -1,0 +1,101 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-int4-fixed-k-tp2-b70",
+  "name": "Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "intermediate",
+  "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "devan-carlin (AutoRound INT4 of Alibaba / Qwen)",
+    "variant": "27B AutoRound INT4 W4A16",
+    "summary": "devan-carlin's AutoRound INT4 tensors served through vLLM's plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane's whole-graph deterministic stack. Single-request output is repeat-exact and speculative decoding is lossless against the MTP0 oracle at every depth measured; MTP0 output is byte-identical to a single request through 64 concurrent users (a near-tie prompt can differ in some runs), speculative depths through 16."
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "B70/XPU integration, strict output validation, direct-I/O model verification, direct-P2P concurrency tuning, block-W8A16 dispatch, deterministic GDN state handling, explicit oneCCL completion ordering, exact packed MTP1 Gemma RMSNorm replay, dynamic-width GDN repair, active Mamba-state allocation, and the digest-pinned package.",
+      "status": "integrated",
+      "validated_effect": "The deterministic compiled TP2 work historically raised MTP0 from 18.910242 to 34.031596 tok/s, and block W8A16 separately raised matched target-only single/c128 shapes by 60.07%/29.30%. Clean-boot R119 qualified the draft-only INT4 R62 MTP1 profile at 54.424603 tok/s, 5.0504% above the prior qualified MTP1 profile, with both candidate and MTP0-oracle comparisons exact on 12/12 complete arrays in scope.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-09-02-qwen38-fp8-mtp1-draft-int4-r62-cleanboot-r119-promotion.md"
+    },
+    {
+      "id": "vllm-xpu-kernel-contributors",
+      "name": "vLLM XPU kernel contributors",
+      "kind": "external",
+      "profile": "https://github.com/vllm-project/vllm-xpu-kernels/commit/1d5b4f5e5ddd8da96ea23c76d7e7421b00083fdb",
+      "contribution": "Split and corrected the native GDN speculative/non-speculative paths so continuous batching can mix MTP decode and newly arriving prefill rows.",
+      "status": "integrated",
+      "validated_effect": "The older kernel aborted the c16 mixed workload. With the pinned upstream correction integrated, c16 completed and the selected MTP1 profile reached 1091.642460 tok/s at c64 while passing 512/512 concurrent semantic checks.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md"
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "host_ram_min_bytes": 16106127360,
+    "host_ram_plus_swap_min_bytes": 21474836480,
+    "model_weight_bytes": 19016930167
+  },
+  "model": {
+    "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "note": "Identical tensors to the published revision, hard-linked into a directory whose config.json/quantization_config.json are relabelled from auto-round to plain gptq by repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py; the manifest verifies that directory."
+  },
+  "runtime": {
+    "kind": "container",
+    "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
+    "image_id_validated": "sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
+    "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228",
+    "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+    "xpu_ops_sha256": "c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1",
+    "base": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156 (R156 chain) + R213b/R224/R228 Python overlays + R221 rebuilt _xpu_C",
+    "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_head": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+      "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
+      "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
+      "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py"
+    ]
+  },
+  "commands": {
+    "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "launch": "PORT=18134 MTP_DEPTH=4 MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18134/health",
+    "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
+  },
+  "dependencies": [
+    "repro/qwen38-27b-autoround-int4-b70/README.md",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+    "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "scripts/bench-openai-realistic-suite.py"
+  ],
+  "performance_profiles": [],
+  "missing": [
+    "R239 matrix (TP2 and TP1, depths 0-4) results and profiles",
+    "clean-host replay",
+    "public GHCR visibility of the R228 image (private until flipped)",
+    "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)"
+  ]
+}
