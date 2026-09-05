@@ -322,6 +322,37 @@ scripts still carry four-B70-host paths; that host owns the fix per
 [`audits/public-closure/HANDOFF-four-b70-host.md`](audits/public-closure/HANDOFF-four-b70-host.md).
 The daily efficiency auditor runs the scanner.
 
+## Active: Qwen3.8 AutoRound INT4 refresh on the R187 stack (2026-09-04/05)
+
+Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP under test.
+
+- **Finding:** the current image routes the AutoRound checkpoint to INC/ARK `woqgemm` purely
+  because of its `quant_method: auto-round` label. R210 census on real layers: ARK is
+  nondeterministic for 32-256 rows, never row-invariant (so MTP can never be lossless on
+  it), and costs 6-10x more at M=2 than at M=1 (no small-M path). The same image's
+  plain-GPTQ path (`XPUwNa16LinearKernel` -> `_xpu_C.int4_gemm_w4a16`, the August line's
+  kernel) is bit-identical run to run except for 129-256 rows, row-invariant for M<=8, and
+  faster than ARK at every M<=8 (down_proj 78 vs 135 us at M=1; 79 vs 748 us at M=8).
+  Notes: `experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-ark-woqgemm-census-r210.md`,
+  pre-registration `...-gptq-relabel-r212-r213-prereg.md`.
+- **R211** (r156 + Python pad of the ARK prefill band to 512 rows, image a7022858): G1 12/12
+  (R208 unpadded was 7/12), MTP0 32.8/33.1 tok/s. ARK MTP not pursued.
+- **R213** (identical tensors hard-linked into
+  `/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel` with a plain-gptq
+  config, manifest `repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json`;
+  r156 + Python determinism pad 128<M<512 -> 512 on the W4A16 path, image 3f34e5d5): G1 12/12,
+  MTP0 **37.23 / 36.75 tok/s** (+13% over ARK). Two launcher faults fixed on the way: the r62 MTP
+  launcher now honors `VLLM_XPU_DRAFT_LM_HEAD_INT4=0` (INT4 targets cannot supply a draft head
+  copy), and the relabel spells the `mtp.fc` exclusion as `mt[p]\.fc` so vLLM's qwen3_5_mtp
+  keeps the INT4 draft layers quantized.
+- **Running:** R214 chain (`scripts/run-20260905-qwen38-int4-gptq-relabel-r214-depth-spectrum-after-r213.sh`):
+  depths 4, 5, 3, 2, 1, each a strict pair against the R213 MTP0 oracle then the c1-c64 ladders
+  (log `/mnt/fast-ai/bench-results/logs/r214-chain.log`). Prediction on record: G3 lossless at
+  every depth <= 7 because verify rows (depth+1) stay inside the kernel's row-invariant band.
+- **Next after the chain:** G1 re-pair on the final relabel config for the record, a note per
+  result, the ladders into the INT4 package/recipe, then optimization (the FP8 lane's
+  launch-overhead work applies unchanged).
+
 ## Paused Qwen3.8 AutoRound INT4 Two-B70 Optimization
 
 The paused local lane is the dense Qwen3.8-27B AutoRound INT4 checkpoint on
