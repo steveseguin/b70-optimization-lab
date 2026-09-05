@@ -21,6 +21,7 @@ container_memory_swap="${CONTAINER_MEMORY_SWAP:-12g}"
 ccl_p2p_access="${CCL_P2P_ACCESS:-0}"
 fp8_block_w8a16="${VLLM_XPU_FP8_BLOCK_W8A16:-0}"
 xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
+quantization="${QUANTIZATION:-fp8}"
 tensor_parallel_size="${TENSOR_PARALLEL_SIZE:-2}"
 xpu_device_mask="${XPU_DEVICE_MASK:-0,1}"
 inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
@@ -75,7 +76,7 @@ for value_name in batch_invariant qwen_gemma_rmsnorm_batch_invariant \
 done
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-"${script_dir}/verify-model-direct.sh" "${model_dir}"
+MODEL_MANIFEST="${MODEL_MANIFEST:-${script_dir}/model-direct.json}" "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
 docker image inspect "${image}" >/dev/null 2>&1 || {
     printf 'image is missing: %s\n' "${image}" >&2
@@ -123,6 +124,7 @@ exec docker run --rm --name "${container}" \
     -e ZE_AFFINITY_MASK="${xpu_device_mask}" \
     -e ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_mask}" \
     -e REPRO_TP="${tensor_parallel_size}" \
+    -e REPRO_QUANTIZATION="${quantization}" \
     -e VLLM_TARGET_DEVICE=xpu \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
     -e VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
@@ -160,4 +162,4 @@ exec docker run --rm --name "${container}" \
     -e REPRO_COMPILATION_CONFIG="${compilation_config}" \
     --entrypoint bash \
     "${image}" -lc \
-    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size "${REPRO_TP}" --dtype float16 --quantization fp8 --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'
+    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size "${REPRO_TP}" --dtype float16 --quantization "${REPRO_QUANTIZATION}" --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'

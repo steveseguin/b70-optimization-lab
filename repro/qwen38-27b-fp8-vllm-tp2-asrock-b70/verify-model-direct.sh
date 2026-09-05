@@ -13,4 +13,4 @@ if (( $# > 0 )); then
 fi
 
 exec "${repo_root}/repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py" \
-    "${script_dir}/model-direct.json" "${model_dir}" "$@"
+    "${MODEL_MANIFEST:-${script_dir}/model-direct.json}" "${model_dir}" "$@"

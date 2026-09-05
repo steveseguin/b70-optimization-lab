@@ -19,6 +19,7 @@ gpu_memory_utilization=${GPU_MEMORY_UTILIZATION:-0.96}
 container_memory=${CONTAINER_MEMORY:-9g}
 container_memory_swap=${CONTAINER_MEMORY_SWAP:-12g}
 xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
+quantization=${QUANTIZATION:-fp8}
 allreduce_host_wait=${VLLM_XPU_ALLREDUCE_HOST_WAIT:-1}
 tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
 xpu_device_mask=${XPU_DEVICE_MASK:-0,1}
@@ -234,7 +235,7 @@ esac
   exit 1
 }
 
-"${script_dir}/verify-model-direct.sh" "${model_dir}"
+MODEL_MANIFEST="${MODEL_MANIFEST:-${script_dir}/model-direct.json}" "${script_dir}/verify-model-direct.sh" "${model_dir}"
 command -v docker >/dev/null || { printf 'docker is required\n' >&2; exit 1; }
 docker image inspect "${image}" >/dev/null 2>&1 || {
   printf 'image is missing: %s\nBuild the kernel and W8A16 overlays first.\n' "${image}" >&2
@@ -358,7 +359,7 @@ exec docker run --rm --name "${container}" \
   --model /model --served-model-name "${served_model}" \
   --host 0.0.0.0 --port 8000 \
   --tensor-parallel-size "${tensor_parallel_size}" \
-  --dtype float16 --quantization fp8 --kv-cache-dtype auto \
+  --dtype float16 --quantization "${quantization}" --kv-cache-dtype auto \
   --gpu-memory-utilization "${gpu_memory_utilization}" \
   --max-model-len "${max_model_len}" --block-size 64 \
   --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens "${max_num_batched_tokens}" \
