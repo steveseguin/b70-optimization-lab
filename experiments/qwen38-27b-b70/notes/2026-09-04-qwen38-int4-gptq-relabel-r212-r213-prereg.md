@@ -4,7 +4,7 @@ Written 2026-09-04 before either campaign ran. Directive: make the INT4 lane det
 the full spectrum, then optimize.
 
 ## Identity
-- Tensors: devan-carlin/Qwen3.8-27B-int4-AutoRound bce40cac, unchanged (symlinked into
+- Tensors: devan-carlin/Qwen3.8-27B-int4-AutoRound bce40cac, unchanged (hard-linked (same filesystem; symlinks are invisible inside the container) into
   `/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel`; manifest
   `repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json`, verified O_DIRECT).
 - Config relabelled to plain gptq so vLLM selects `XPUwNa16LinearKernel` (`_xpu_C.int4_gemm_w4a16`) instead of INC/ARK.
