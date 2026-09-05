@@ -413,6 +413,18 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   lane's published bar), c32 30/32, c64 59/64 (residual in the batched GDN spec kernel).
   Next on the residual: kernel-level census of `gdn_attention_core_xpu` spec path vs number of sequences (GPU 1
   during the TP1 phase).
+- **R227 (13:03) TP2 depth 1 on R224 + batch-invariant:** G1/G2/G3 12/12, MTP0 36.0/34.9, MTP1 50.8/51.1 tok/s;
+  ladder exact through c16, c32 29/32, c64 59/64 (same residual as depth 4; MTP0 c64 exact). Stopped to test R228.
+- **R228 image** (aaf920b0; `_xpu_ops.py` sha256 c91d6b0d, pass it as `XPU_OPS_SHA256_OVERRIDE`) = R224 + GDN
+  speculative rows processed in groups of <=16 sequences inside the existing gather/scatter split path
+  (`docker/r228-gdn-spec-group.py`, env `VLLM_XPU_GDN_SPEC_GROUP`, default 16). Hypothesis: the SYCL GDN kernel's
+  per-sequence arithmetic depends on the number of sequences in the launch above 16.
+- **Second GPU fault 13:07:50 on 0000:03:00.0** (weight staging of the R229 ladder server, 75% of shards, same
+  signature as 01:43). Preflight refuses this boot; agent reboots again. Cron on the fresh boot: R229 ladder screen
+  (R228, depth 4, TP2) then the R230 matrix (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`,
+  TP2 then TP1, depth-1 full + depths 2, 3, 4 strict + ladders; logs `logs/r229-ladders.log`, `logs/r230-matrix.log`).
+  Two weight-staging faults on the same card in 12 h is a host reliability item for the user (cookbook reliability
+  report: multi-GPU xe wedges).
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
   (`scripts/run-20260905-qwen38-int4-fixed-k-r222-matrix-tp2-tp1-mtp0-3.sh`: TP2 then TP1; depth-1 full
   campaign as oracle + MTP0/MTP1 ladders; depths 2, 3 strict + ladders; pad off), reboot.
