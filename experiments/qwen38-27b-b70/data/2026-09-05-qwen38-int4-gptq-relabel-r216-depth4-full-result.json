@@ -1,0 +1,60 @@
+{
+ "run": "R216",
+ "date": "2026-09-05",
+ "lane": "Qwen3.8-27B AutoRound INT4 tensors on the plain-GPTQ XPU W4A16 kernel, R187 whole-graph stack, TP2, MTP depth 4",
+ "image": "neural-download/vllm-openai-xpu:qwen38-int4-w4a16-detpad-op-r213b sha256:cbdc81afe43c28ccd523f6e858c09146f0a4a667a97082a2f1f44dffa3cb8144",
+ "model_dir": "/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel",
+ "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+ "gates": {
+  "G1 mtp0-a vs mtp0-b": "12/12",
+  "G2 mtp1-a vs mtp1-b": "12/12",
+  "G3 mtp1-a vs mtp0-a": "12/12",
+  "G3 mtp1-b vs mtp0-a": "12/12",
+  "G5 probe (224/250/300 tokens)": "ids, logprobs, top identical",
+  "G6 ladder identity": "c1 1/1, c2 2/2, c4 3/4, c8 6/8, c16 13/16, c32 28/32, c64 59/64 (harness exit 4)"
+ },
+ "class_balanced_median_tok_s": {
+  "mtp0-a": 35.647564158072,
+  "mtp0-b": 35.192917518264,
+  "mtp4-a": 67.628160086724,
+  "mtp4-b": 68.01288979284
+ },
+ "ladder_mtp4": [
+  {
+   "concurrency": 1,
+   "aggregate_tok_s_wall": 64.40207328509409,
+   "oracle_exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "aggregate_tok_s_wall": 70.26126805123363,
+   "oracle_exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "aggregate_tok_s_wall": 215.7964617518711,
+   "oracle_exact": "3/4"
+  },
+  {
+   "concurrency": 8,
+   "aggregate_tok_s_wall": 395.9135850463282,
+   "oracle_exact": "6/8"
+  },
+  {
+   "concurrency": 16,
+   "aggregate_tok_s_wall": 534.7157094883956,
+   "oracle_exact": "13/16"
+  },
+  {
+   "concurrency": 32,
+   "aggregate_tok_s_wall": 549.3283477828805,
+   "oracle_exact": "28/32"
+  },
+  {
+   "concurrency": 64,
+   "aggregate_tok_s_wall": 650.3183346393687,
+   "oracle_exact": "59/64"
+  }
+ ],
+ "interpretation": "Single-request results are repeat-exact and lossless (MTP depth 4 reproduces MTP0 12/12). Above two concurrent requests the ladder loses exactness because _xpu_C.int4_gemm_w4a16 is row-invariant only for M<=8 (R212b): a request batched with others gets last-bit-different GEMM results and near-tie tokens flip. Aggregate throughput at c2-c64 is reported as measured but not identity-qualified. The custom-op pad dispatch costs ~4% at MTP0 (35.6/35.2 vs 37.2/36.7 on R213)."
+}
