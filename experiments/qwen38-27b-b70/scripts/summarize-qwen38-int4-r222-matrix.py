@@ -3,8 +3,8 @@
 import glob, json, os, re, sys
 OUT = "/mnt/fast-ai/bench-results"
 rows = []
-for root in sorted(glob.glob(f"{OUT}/qwen38-int4-fixed-k-tp*-mtp*-*-20260905-r22[23]")):
-    name = os.path.basename(root); m = re.match(r"qwen38-int4-fixed-k-tp(\d)-mtp(\d)-(full|strict|ladders)-", name)
+for root in sorted(glob.glob(f"{OUT}/qwen38-int4-*-tp*-mtp*-*-20260905-r22[237]")):
+    name = os.path.basename(root); m = re.match(r"qwen38-int4-(?:fixed-k|r224-binv)-tp(\d)-mtp(\d)-(full|strict|ladders)-", name)
     tp, depth, kind = m.groups(); log = f"{root}/campaign.log"
     # the R222 chain's "full" stage ran at depth 4 (DEPTH expanded before assignment); trust the server log
     for sl in glob.glob(f"{root}/mtp1-a/server.log") + glob.glob(f"{root}/ladder/server.log"):
