@@ -53,3 +53,11 @@ mixed-prefill regime (GDN). Final configuration for the matrix (R239): R228 imag
 `split_reductions=false` + spec group 16 (`data/2026-09-05-qwen38-int4-final-config.env`). Package
 `packages/qwen38-27b-int4-fixed-k-tp2-b70` registered (validator clean) with the R226 MTP0 c1-c64 and R232 depth-4 c1-c16
 identity-qualified profiles; image on GHCR (`vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...`, private until flipped).
+
+## R239 matrix, first TP1 result (18:46)
+
+TP1 (one card, no all-reduce), final configuration: MTP0 pair 32.960/32.945 tok/s G1 12/12; depth 1 49.640/49.468,
+G2/G3 12/12, probe exact; depth-1 ladder exact through c8, c16 15/16 (benchmark-c003), c32 30/32, c64 60/64
+(aggregate 393 tok/s at c16). The residual is identical in kind without any collective, so the oneCCL all-reduce is
+excluded as a source; single-card decode is within 5% of TP2 (33.0 vs 34.2-35.6 MTP0; 49.6 vs 50.1-51.1 depth 1),
+consistent with the launch-overhead-bound profile.
