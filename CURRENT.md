@@ -400,6 +400,18 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   depth-4 TP2 ladders on R224 with `VLLM_XPU_FA_SERIAL_SPEC_DECODE=1` (per-request attention for verify rows,
   the candidate for the MTP4 c4 miss). If exact through c64, the final matrix (R222 chain with the fixed DEPTH
   handling, R224 image, FA serial on) reruns for TP2/TP1 x depths 0-3.
+- **R225/R226 (12:25):** on R224, MTP0 ladder c64 64/64 (c32 31/32); depth 4 with `VLLM_BATCH_INVARIANT=1`
+  (single-split flash-decoding, `flash_attn.py` num_splits) exact through **c16**, c32 30/32, c64 59/64; the
+  `VLLM_XPU_FA_SERIAL_SPEC_DECODE` path never engaged (no "reached" marker). The same near-tie prompts flip
+  (benchmark-c003@60, cache-c016@75, capacity-c006@11, capacity-c046@18, rollback-c018) whenever batch composition
+  changes at c32+, which is where the FP8 lane also stopped (its residual sits in the batched GDN spec kernel).
+  Data `data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json`.
+- **R227 running (queued behind R226):** the final matrix on R224 + `VLLM_BATCH_INVARIANT=1` (+ FA serial env):
+  TP2 then TP1; depth-1 full campaign (oracle, G2/G3, G5, MTP1/MTP0 ladders), then depths 2, 3, 4 strict + ladders
+  (`scripts/run-20260905-qwen38-int4-r227-matrix-r224-fa-serial-binv-tp2-tp1-mtp0-3.sh`, log `logs/r227-matrix.log`).
+  Bar reached so far: MTP0 exact through c64, MTP depth 4 exact through c16 (= the FP8 lane's published bar).
+  Next on the residual: kernel-level census of `gdn_attention_core_xpu` spec path vs number of sequences (GPU 1
+  during the TP1 phase).
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix
   (`scripts/run-20260905-qwen38-int4-fixed-k-r222-matrix-tp2-tp1-mtp0-3.sh`: TP2 then TP1; depth-1 full
   campaign as oracle + MTP0/MTP1 ladders; depths 2, 3 strict + ladders; pad off), reboot.
