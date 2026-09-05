@@ -15,6 +15,8 @@ inert unless set), one exact-2K request each, `Q38_STEP_TIMING_LOG=10`
 | A152 (overlay `26a9e5c8`) | GEMMs skipped plus three identical 1024x1024 bf16 matmuls before every MoE all-reduce on every rank | median 25.4 ms (pad ~0.02 ms each: too small to test a wait) | garbage | 35.7 tok/s |
 | A154 (overlay `7fb55089`) | `Q38_DIAG_SKIP=moe_allreduce_zero_input`: real GEMMs, the MoE all-reduce runs at the same site on a static zero buffer (result discarded) | median **34.2 ms**, range 33.4-54.4 | garbage | 22.7 tok/s |
 | A155 (overlay `7fb55089`, config `moe-m1-w13-n32-warps4-stages2`) | the M=1 MoE Triton config at num_warps 4 / num_stages 2 instead of 8 / 4 (register-mode hypothesis) | median 74.8 ms, range 49.9-125.5 | `afffd211...` (exact) | 14.18 tok/s |
+| A159 (overlay `185a1dc0`) | `Q38_DIAG_SKIP=moe_allreduce_discard`: the MoE all-reduce runs on the real data, its result is discarded (unreduced flows on) | median **34.1 ms**, range 33.0-79.4 | garbage | 22.7 tok/s |
+| A161 (overlay `dee67ee2`, `cpu_offload_gb=0`) | the PLE n-gram table on device instead of the 12 GiB per-rank UVA offload | median 313 ms (4.43 tok/s) | `afffd211...` (exact) | placement is pathological the other way |
 
 The MoE block costs about 50-54 ms of the 71-73 ms step, three quarters
 of it, and all of the step's variance (the remainder of the network is a
@@ -65,7 +67,30 @@ on the shared-expert-only output (A148). The next step is to find the data
 property (an offline probe over value classes, then real dumped MoE
 outputs) and the protocol path that trips on it (`Rt64_128_PCIE`, LL
 threshold 4096, public oneCCL 4ceafd1). A155 rules out the GEMM's launch
-configuration (4 warps, 2 stages: same step, exact output). Streaming the local experts a token touches (about 2.5 of
+configuration (4 warps, 2 stages: same step, exact output).
+
+A159 reframed the attribution: with the real data all-reduced but the
+result discarded the step is 34.1 ms, so every perturbed run (memset GEMMs,
+no all-reduce, zero input, discarded result) is a *wrong trajectory* costing
+22-34 ms and only the real trajectory (A146, A155) costs 72-75. The
+subtraction table above is therefore not additive; the honest statement is
+that the real trajectory pays about 40 ms per step that a wrong one does
+not. The per-layer embedding (PLE, 12.8 GiB per rank in host memory) was the
+first suspect: A161 put it on device (exact, but 313 ms per step, a red
+herring from the on-device dequantization path), and A162, an eager
+real-trajectory run with the XPU PLE path itself instrumented, cleared it
+(id hashing 1.3 ms, gather plus all-reduce 1.1 ms, the PLE all-reduce
+event 0.3-0.7 ms per step). A163, the same eager instrumentation on a wrong
+trajectory, gives the differential: real minus wrong is +18.5 ms per
+forward, entirely in the MoE block (the MoE all-reduce segment +11.4 ms,
+the expert kernel +6.1 ms, the w13 GEMM event +4.3 ms), every other
+sub-operation flat within 1 ms. So the real trajectory routes to more
+distinct local experts per rank (more GEMM work) and arrives at the MoE
+collective more skewed; the graph replay, where nothing else resynchronizes
+the ranks, doubles that into the 40 ms. Offline, forcing
+`CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=0` halved the same 5,120-byte
+all-reduce and stayed exact (`../data/20260905-tp4-allreduce-data-and-knob-probes/`);
+A164 tries it on the promoted identity, hash-checked. Streaming the local experts a token touches (about 2.5 of
 the 128 experts per rank per layer, 4.9 MB each) is a few ms per step at
 this card's bandwidth, so the block runs an order of magnitude off the
 memory bound: the Triton fused MoE at M=1 launches about 100 valid
@@ -94,6 +119,10 @@ Data: `../data/20260904-tp4-mtp0-a146-graph-step-timing-2k.json`,
 `../data/20260905-tp4-mtp0-a152-graph-step-timing-skip-gemm-pad3-2k.json`,
 `../data/20260905-tp4-mtp0-a154-graph-step-timing-allreduce-zero-input-2k.json`,
 `../data/20260905-tp4-mtp0-a155-graph-step-timing-moe-warps4-stages2-2k.json`,
+`../data/20260905-tp4-mtp0-a159-graph-step-timing-allreduce-discard-2k.json`,
+`../data/20260905-tp4-mtp0-a161-graph-step-timing-ple-on-device-2k.json`,
+`../data/20260905-tp4-mtp0-a162-subop-timing-real-trajectory-2k.json`,
+`../data/20260905-tp4-mtp0-a163-subop-timing-wrong-trajectory-2k.json`,
 `../data/20260905-tp4-mtp0-a150-gemm-event-timing-2k.json`,
 `../data/20260905-b70-moe-gemm-offline-probes.json`,
 `../data/20260904-tp4-mtp0-a145-graph-step-timing-skip-moe-2k.json`,
