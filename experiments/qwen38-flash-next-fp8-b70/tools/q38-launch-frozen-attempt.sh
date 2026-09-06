@@ -50,8 +50,14 @@ if root journalctl -k --since "-6h" --no-pager 2>/dev/null | grep -Eiq 'xe 0000:
   fail "kernel GPU event in the last six hours; inspect before launching"
 fi
 
-# Host reset: unused swap, cold page cache.
-root sh -c 'swapoff /swap.img; swapon --priority -1 /swap.img; sync; echo 1 > /proc/sys/vm/drop_caches'
+# Host reset: unused swap, cold page cache. The swap toggle runs only when swap holds
+# pages: toggling an empty swap file right after killed workers released large pinned
+# mappings put the kernel into soft lockups (2026-09-06 01:18, eighth freeze).
+swap_used_before=$(swapon --show=NAME,USED --noheadings --raw --bytes | awk '$1 == "/swap.img" {print $2}')
+if [[ "${swap_used_before:-0}" != 0 ]]; then
+  root sh -c 'swapoff /swap.img; swapon --priority -1 /swap.img'
+fi
+root sh -c 'sync; echo 1 > /proc/sys/vm/drop_caches'
 swap_used=$(swapon --show=NAME,USED --noheadings --raw --bytes | awk '$1 == "/swap.img" {print $2}')
 [[ "$swap_used" == 0 ]] || fail "swap still in use after reset: ${swap_used} bytes"
 mem_available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
