@@ -4,7 +4,7 @@
   "publication_status": "draft",
   "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
   "repository": {
-    "source_commit": "706a5d240b73b2fd93bf4f49b56b8259124da2af",
+    "source_commit": "5e04c9e00cf9e82ec898234a523bb9053d76fd08",
     "build_scripts": [
       {
         "path": "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
@@ -24,7 +24,7 @@
       },
       {
         "path": "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
-        "sha256": "4aab5d9f98afd1a12066e5b8a942fd7c4b94afb4615e0240f865afa306295c7b"
+        "sha256": "9f793bebafb359fa80e0581ea117de0b55f2d4d68c2caa436a11ffd546a54a88"
       },
       {
         "path": "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
@@ -95,6 +95,14 @@
       {
         "path": "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
         "sha256": "e0ca50bc001036321d69f058ecc8b3d768fb775518e72324632a5d04f7cd453b"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/r276-gdn-spec-group-sync-free.py",
+        "sha256": "1d751688425ba00d5b8c6783816033a42d08f8ed1eaf35eec04269378f7067a6"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/Dockerfile.gdn-spec-group-sync-free-r276",
+        "sha256": "399e106545d5fc7b27570d93d3206803605690298cf2c54a4f2b3ded3bf649dc"
       }
     ]
   },
@@ -145,6 +153,17 @@
         }
       },
       "note": "Fallback branch not exercised by this model; served R258/R259/R260b/R265b. The R257 headline pair ran R228 (identical code path)."
+    },
+    "r276": {
+      "description": "R256 + docker/r276-gdn-spec-group-sync-free.py: the R228 grouped GDN speculative branch computes its sequence-group boundaries arithmetically (uniform k+1 rows) instead of a device->host sync, so XPU graph capture covers verify batches above 16 sequences (capture sizes to 320). Served image since 2026-09-06 afternoon. Strict pair R283 112.90/113.00 (12/12 vs the eager MTP0 oracle); ladders R282 c2 191.0 / c4 294.7 / c8 422.6 / c16 578.9 / c32 634.5 / c64 589.0.",
+      "image": {
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276",
+        "id": "sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+        "ghcr": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+        "xpu_ops_sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
+        "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+        "base": "neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256"
+      }
     }
   },
   "source_repositories": [
@@ -243,7 +262,7 @@
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-        "sha256": "ffca13583c8e575263bf2f4534e1eb3a5ad0f31dfb13f7e8f421f21ac302ca00"
+        "sha256": "873ce18230907c0a374959c962e2fa6ba86f78493ea51a8451032751470aa0c1"
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
@@ -344,6 +363,6 @@
   },
   "research_overlays_2026_09_06": {
     "r266": "docker/r266-v2-draft-int4-head.py + Dockerfile.v2-draft-int4-head-r266: draft-only INT4 head for vLLM's V2 model runner (VLLM_USE_V2_MODEL_RUNNER=1); lossless and speed-equal to V1 (R269 112.70/112.96, 12/12). Local image sha256:1d12b64e46f9…; not part of the published closure.",
-    "r276": "docker/r276-gdn-spec-group-sync-free.py + Dockerfile.gdn-spec-group-sync-free-r276: arithmetic group boundaries in the grouped GDN speculative branch so XPU graph capture works above 16 sequences. Local image sha256:521eb277c073…; its first ladder (R277) was interrupted by a host GPU fault; R277b pending."
+    "r276": "ADOPTED 2026-09-06 pm (see chains.r276): docker/r276-gdn-spec-group-sync-free.py + Dockerfile.gdn-spec-group-sync-free-r276; GHCR @sha256:521eb277…; R283 strict pair 112.90/113.00 12/12; R282 ladders."
   }
 }

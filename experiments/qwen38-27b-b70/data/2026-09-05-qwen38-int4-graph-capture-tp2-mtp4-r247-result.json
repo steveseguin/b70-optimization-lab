@@ -2176,6 +2176,325 @@
     "ttft_s_max": 8.81
    }
   ],
-  "verdict": "warm pass c1 107.5, c2 156.4, c4 267.9 (3/4), c8 424.4 (8/8), c16 583.8 (16/16), c32 632.6 (30/32), c64 603.7 (62/64): c32 now matches the direct-launch servers (R278c-i); c64 is admission-limited (42 running / 22 waiting at max-model-len 256). Identity through c16 unchanged; c32/c64 near-tie residual unchanged."
+  "verdict": "warm pass c1 107.5, c2 156.4, c4 267.9 (3/4), c8 424.4 (8/8), c16 583.8 (16/16), c32 632.6 (30/32), c64 603.7 (62/64): c32 now matches the direct-launch servers (R278c-i); c64 is admission-limited (42 running / 22 waiting at max-model-len 256). Identity through c16 unchanged; c32/c64 near-tie residual unchanged.",
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.1,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.9,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.6,
+    "ttft_s_max": 0.13
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 328.4,
+    "ttft_s_max": 0.18
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 537.1,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 848.9,
+    "ttft_s_max": 0.49
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1008.8,
+    "ttft_s_max": 1.01
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.3,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 95.3,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 180.1,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 330.1,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 538.1,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 851.8,
+    "ttft_s_max": 0.49
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1009.0,
+    "ttft_s_max": 1.02
+   }
+  ]
+ },
+ "R282_ladders_r276_sizes_320_pad_off": {
+  "date": "2026-09-06",
+  "boot": "bf8e504b",
+  "image": "R276 (sync-free grouped GDN branch)",
+  "config": "group 16, capture sizes to 320, pad off (forwarded), two passes through the runner",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.9,
+    "ttft_s_max": 0.07
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 90.2,
+    "ttft_s_max": 1.0
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 285.6,
+    "ttft_s_max": 0.21
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 420.8,
+    "ttft_s_max": 0.22
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 562.2,
+    "ttft_s_max": 0.27
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 639.6,
+    "ttft_s_max": 0.55
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 588.9,
+    "ttft_s_max": 9.48
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.4,
+    "ttft_s_max": 0.07
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 191.0,
+    "ttft_s_max": 0.14
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 294.7,
+    "ttft_s_max": 0.15
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "7/8",
+    "aggregate_tok_s_wall": 422.6,
+    "ttft_s_max": 0.2
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 578.9,
+    "ttft_s_max": 0.25
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 634.5,
+    "ttft_s_max": 0.56
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 589.0,
+    "ttft_s_max": 9.47
+   }
+  ],
+  "verdict": "warm pass c1 107.4, c2 191.0 (+22% vs R281), c4 294.7 (+10%), c8 422.6 (7/8 near-tie), c16 578.9 (16/16), c32 634.5 (30/32), c64 589.0 (60/64): the captured 10-20-token verify lifts two- and four-user throughput; from eight users on it equals the R256 image with sizes 1-8. Strict pair: R283.",
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.1,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 95.0,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 180.1,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 330.0,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 538.2,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 816.4,
+    "ttft_s_max": 0.5
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 989.1,
+    "ttft_s_max": 1.02
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.2,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 95.3,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 180.1,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 330.2,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 538.9,
+    "ttft_s_max": 0.27
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 815.8,
+    "ttft_s_max": 0.49
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 989.8,
+    "ttft_s_max": 1.02
+   }
+  ]
+ },
+ "R283_tp2_depth4_r276_sizes_320_strict": {
+  "date": "2026-09-06",
+  "boot": "bf8e504b",
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276 sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad (_xpu_ops.py 6ee6b8db)",
+  "config": "R257 headline + R276 sync-free grouped GDN branch + capture sizes to 320 + pad switches forwarded (0)",
+  "rates": [
+   112.901762812902,
+   113.002612273593
+  ],
+  "gates": "G2 12/12, G3 12/12 x2 vs the eager R239 MTP0 oracle",
+  "verdict": "lossless and equal to the R257 headline at one user (112.36/112.33); with R282's +22%/+10% at c2/c4 the R276 image with capture sizes to 320 becomes the served/recommended image; the LocalMaxxing-approved headline stays the R257 pair."
  }
 }

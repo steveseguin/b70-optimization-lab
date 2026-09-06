@@ -211,3 +211,13 @@ launcher now forwards the pad switches with 0 as the default; R281 re-measures t
 Warm pass: c1 107.5, c2 156.4, c4 267.9 (3/4), c8 424.4 (8/8), **c16 583.8 (16/16), c32 632.6 (30/32), c64 603.7 (62/64)**.
 c32 now equals the direct-launch servers; c64 is admission-limited (42 running / 22 waiting at max-model-len 256, TTFT up to
 8.8 s). The site's identity-qualified cell moves to R281 (583.8 at c16); c32/c64 stay withheld for the near-tie residual.
+
+## R282 / R283 - the R276 image adopted
+
+R282 (R276 image, group 16, capture sizes to 320, pad off, two passes through the runner): warm c2 191.0 (+22% vs R281),
+c4 294.7 (+10%), c8 422.6 (7/8 near-tie), c16 578.9 (16/16), c32 634.5 (30/32), c64 589.0 (60/64); MTP0 exact c1-c64.
+R283 (its strict pair): **112.90 / 113.00 tok/s, G2 12/12, G3 12/12 x2** vs the eager MTP0 oracle. Lossless and equal at one
+user, better at two and four: R276 is the served image from now on (GHCR `@sha256:521eb277…`, published 2026-09-06 pm;
+launcher default with `cudagraph_capture_sizes` to 320; `XPU_GRAPH_SIZES=8` keeps the R228/R256 behaviour). The
+LocalMaxxing-approved headline remains the R257 pair (112.344 center); the site's identity-qualified many-users cell stays
+R265b's exact chain (580.4 at c16), with R281/R282's c32/c64 recorded as withheld near-tie rungs.
