@@ -127,3 +127,13 @@ TP1 depth 4, INT4 draft, `VLLM_XPU_ENABLE_XPU_GRAPH=1`, `cudagraph_mode FULL_DEC
 candidate a **56.9 tok/s vs 56.3** without graphs. The log shows exactly one graph captured ("decode, FULL 1/1") and no
 drafter capture: the four draft passes per step, which carry the launch overhead, stayed eager. Same conclusion as
 R198 on FP8 TP2. R248/R249 test the community line's other difference, vLLM's generic `mtp` proposer.
+
+## R247: graph capture on two cards is the INT4 headline (22:21)
+
+TP2 depth 4, INT4 draft, final configuration + `VLLM_XPU_ENABLE_XPU_GRAPH=1` with `cudagraph_mode FULL_DECODE_ONLY`
+and capture sizes 1-8: **91.00 / 91.01 tok/s**, G2 12/12, G3 12/12 against the eager R239 MTP0 oracle (graph replay is
+bit-identical). Without graphs the same pair is 68.55 / 67.79 (R240); acceptance is unchanged (3.00 per step), so the
+whole gain is per-step time: the captured verify step no longer pays the per-op all-reduce host waits. On TP1 the same
+capture gives +1% (R246b, 56.9/56.9) because there is no collective to remove. This exceeds the FP8 lane's best
+(86.18 at depth 5, R200/R204, captured without graphs at depth 1 only in R198); R252 re-tests FP8 depth 5 with the
+same capture. Data `data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json`.

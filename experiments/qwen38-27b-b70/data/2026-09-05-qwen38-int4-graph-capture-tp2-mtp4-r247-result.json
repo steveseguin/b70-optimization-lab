@@ -1,0 +1,45 @@
+{
+ "run": "R247",
+ "date": "2026-09-05",
+ "lane": "Qwen3.8-27B AutoRound INT4 (gptq relabel, INT4 draft), R228 image, final configuration + XPU graph capture (VLLM_XPU_ENABLE_XPU_GRAPH=1, cudagraph_mode FULL_DECODE_ONLY, capture sizes 1-8), TP2, MTP depth 4",
+ "class_balanced_median_tok_s": {
+  "mtp4-a": 91.004503602551,
+  "mtp4-b": 91.011836751112,
+  "reference_no_graph_r240": [
+   68.551940727226,
+   67.789154644511
+  ]
+ },
+ "gates": {
+  "G2 mtp1-a vs mtp1-b": "12/12",
+  "G3 mtp1-a vs oracle (R239 TP2 MTP0, eager)": "12/12",
+  "G3 mtp1-b vs oracle": "12/12"
+ },
+ "acceptance": {
+  "mean_acceptance_length": 3.0,
+  "per_position": 0.819
+ },
+ "graphs": "one graph captured (decode, FULL); the drafter stays eager",
+ "companions": {
+  "R246b TP1 depth 4 + graphs": {
+   "rates": [
+    56.91110116607,
+    56.898169538447
+   ],
+   "gates": "12/12 all",
+   "reference_no_graph": [
+    56.292,
+    56.251
+   ]
+  },
+  "R245 TP1 depth 4 BF16 draft": {
+   "rates": [
+    51.977580258288,
+    52.087788903123
+   ],
+   "gates": "12/12 all",
+   "acceptance": 3.21
+  }
+ },
+ "interpretation": "On TP2 the captured verify step drops the per-op all-reduce host waits, so the step time falls ~25% at unchanged acceptance: 68.2 -> 91.0 tok/s, lossless. On TP1 there is no collective to remove (+1%). The BF16 draft accepts fewer tokens than the AutoRound INT4 draft and is slower."
+}
