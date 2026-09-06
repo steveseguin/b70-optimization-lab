@@ -466,6 +466,13 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   the XE2 prefill chunk-scan across prompts, or something uncensused; next is a per-layer boundary trace at c1 vs c32
   (needs hooks; see the note). Published bar stands: MTP0 exact c1-c64 (6/8 runs), speculation exact through c16
   (TP2) / c8 (TP1), c32 >= 29/32, c64 >= 58/64.
+- **R247 (22:21) new INT4 headline: TP2 depth 4 with XPU graph capture 91.00 / 91.01 tok/s, lossless** (G2/G3
+  12/12 vs the eager MTP0 oracle; acceptance unchanged at 3.00). Mechanism: the captured verify step (`FULL_DECODE_ONLY`,
+  capture sizes 1-8, `VLLM_XPU_ENABLE_XPU_GRAPH=1`) drops the per-op all-reduce host waits; TP1 gains only 1% (R246b
+  56.9/56.9). The BF16 draft (R244/R245) is lossless but slower (52.0/52.1; acceptance 3.21 vs 3.52). Queue: R248/R249
+  (generic `mtp` proposer, TP1, without/with graphs), R250 (TP2 depths 5, 6 with graphs), R251 (TP2 depth-4 identity
+  ladders with graphs), R252 (FP8 R187 depth 5 with graphs, vs the R187 oracle). Then: republish the INT4 recipe/package
+  with the graph configuration (launcher option), and the FP8 line if R252 gains.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
