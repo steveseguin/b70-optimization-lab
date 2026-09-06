@@ -208,6 +208,8 @@ require independent numerical, quality, determinism, and performance gates.
 > families, and averaged only 60.938 tok/s preferred. That treatment is also
 > terminal and insufficient; no retry or T3 is authorized.
 
+**LocalMaxxing:** the depth-4 headline is approved as `cmtq3mx7e03gen701xxpwu67z` (112.344 tok/s, center of the R257 pair; ledger `results/localmaxxing-submissions.md`, attestation `experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r257-graph-drafthead-depth4-strict-result.json`).
+
 ## Optimization pass after the headline (2026-09-06 night, R261-R277)
 
 Everything below was measured on the headline stack (R256/R228 images, TP2, XPU graph capture, draft-only INT4 head, MTP

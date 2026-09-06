@@ -684,6 +684,14 @@ All three approved on submission (HTTP 201). Attestations: `experiments/qwen38-2
 | `qwen38-27b-official-fp8-whole-graph-r187-tp2-mtp4-strict-82tok-20260904` | `cmtmk61qo01x8l601vtqbitg5` | 1 | 56 | 512 | **82.396 median 1-100 after TTFT** | R197 depth-4 strict pair 82.447/82.345, 12/12 vs oracle; identity c1-c16 (two ladders, R197/R201) |
 | `qwen38-27b-official-fp8-whole-graph-r187-tp2-mtp5-strict-86tok-20260904` | `cmtn23c500005mm010ierd4g3` | 1 | 56 | 512 | **86.182 median 1-100 after TTFT** | R200 depth-5 strict pair 86.266/86.097, 12/12 vs oracle; identity c1-c16 (two ladders, R204a/b) |
 
+## Qwen3.8 27B AutoRound INT4 (2x B70, vLLM XPU) — fixed-K W4A16 line with XPU graph capture and the draft-only INT4 head (2026-09-06)
+
+Approved on submission (HTTP 201). Attestation: `experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r257-graph-drafthead-depth4-strict-result.json`; response in `data/localmaxxing-responses/`. Model `devan-carlin/Qwen3.8-27B-int4-AutoRound` bce40cac served through the plain gptq kernel path (identical tensors, relabelled); R228 image (`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b0…`), fixed-K row-invariant oneDNN W4A16 extension 271db0d4 (GitHub release `qwen38-int4-fixed-k-r221-20260906`), FP16 32-row linears, grouped GDN speculative rows, `FULL_DECODE_ONLY` capture sizes 1-8, draft-only INT4 lm_head, MTP depth 4, TP2.
+
+| label | run id | c | prompt tok | output tok | headline | notes |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| `qwen38-27b-autoround-int4-fixed-k-graph-drafthead-tp2-mtp4-strict-112tok-20260906` | `cmtq3mx7e03gen701xxpwu67z` | 1 | 56 | 512 | **112.344 median 1-100 after TTFT** | R257 depth-4 strict pair 112.362/112.325, 12/12 vs sibling and vs the eager MTP0 oracle (R239: 34.21/35.64; with graphs R253: 49.83/49.89); identity-qualified through c16 on the warm two-pass ladder (R265b, 580.4 tok/s aggregate); 2K-32K real-content depth ladder 18/18 oracle-exact (R260b); recipe `repro/qwen38-27b-autoround-int4-b70` |
+
 ## Qwen3.8 Flash-Next 125B-A6B official FP8 (4x B70, vLLM XPU) — deterministic full-decode-graph line (2026-09-04)
 
 Approved on submission (HTTP 201). Identity: the promoted MTP0 line (overlay

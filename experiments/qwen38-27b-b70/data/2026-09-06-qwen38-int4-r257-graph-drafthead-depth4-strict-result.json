@@ -1,0 +1,180 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-int4-graph-drafthead-tp2-mtp4-strict-20260905-r257",
+ "status": "MTP depth 4 on the INT4 fixed-K line with XPU graph capture and the draft-only INT4 head: strict pair 112.362301/112.325266 tok/s (center 112.343784), 12/12 vs sibling and vs the eager MTP0 oracle; identity through c16 on the warm two-pass ladder (R265b)",
+ "image_id": "sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
+ "image_tag": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228",
+ "image_ghcr": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
+ "compilation_config": {
+  "cudagraph_mode": "FULL_DECODE_ONLY",
+  "cudagraph_capture_sizes": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   8
+  ],
+  "max_cudagraph_capture_size": 8,
+  "splitting_ops": [],
+  "inductor_compile_config": {
+   "combo_kernels": false,
+   "benchmark_combo_kernel": false,
+   "deterministic": true,
+   "split_reductions": false,
+   "triton.autotune_pointwise": false,
+   "benchmark_epilogue_fusion": false
+  }
+ },
+ "speculative_config": {
+  "method": "qwen3_next_mtp",
+  "num_speculative_tokens": 4
+ },
+ "oracle_root": "qwen38-int4-final-tp2-mtp1-full-20260905-r239/mtp0-a (eager MTP0, R239)",
+ "boot_id": "ed4d21d5-0c16-4e74-9aac-79476d203966",
+ "repo_head_at_launch": "0e7c5e934fcdf613930967d1876c083ec5358736",
+ "model": {
+  "hf_id": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+  "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+  "served_as": "gptq relabel of the identical tensors (repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py, manifest model-gptq-relabel-r212.json)"
+ },
+ "runtime_env": {
+  "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+  "VLLM_XPU_DRAFT_LM_HEAD_INT4": "1",
+  "VLLM_XPU_GDN_SPEC_GROUP": "16",
+  "VLLM_XPU_GDN_SPLIT_MIXED": "1",
+  "VLLM_XPU_FP16_LINEAR_ROWCHUNK": "32",
+  "VLLM_BATCH_INVARIANT": "0",
+  "TORCHINDUCTOR_DETERMINISTIC": "1",
+  "PYTHONHASHSEED": "0",
+  "QUANTIZATION": "gptq"
+ },
+ "gates_passed": {
+  "G2 mtp1-a vs mtp1-b": "12/12",
+  "G3 mtp1-a vs oracle": "12/12",
+  "G3 mtp1-b vs oracle": "12/12",
+  "G6_identity_through_warm_ladder": "c16 (R265b pass 2: 16/16; c32 31/32, c64 58/64 withheld)"
+ },
+ "attempts": {
+  "mtp4-a": {
+   "label": "mtp1-a",
+   "class_balanced_median_tok_s": 112.36230137401066,
+   "class_medians": {
+    "analysis": 103.69324492258254,
+    "code": 111.53008505053026,
+    "documentation": 124.36883663457941,
+    "operations": 155.1021435272682,
+    "prose": 111.05210303058706,
+    "structured-writing": 113.19451769749107
+   },
+   "tok_s_wall_full_median": 106.42656593877241,
+   "ttft_ms_median": 79.32735949725611
+  },
+  "mtp4-b": {
+   "label": "mtp1-b",
+   "class_balanced_median_tok_s": 112.3252660569856,
+   "class_medians": {
+    "analysis": 103.70545900685354,
+    "code": 111.55714731642041,
+    "documentation": 123.39672597065352,
+    "operations": 155.27716405882623,
+    "prose": 110.97990370381046,
+    "structured-writing": 113.09338479755078
+   },
+   "tok_s_wall_full_median": 106.43973032733135,
+   "ttft_ms_median": 79.50090849772096
+  }
+ },
+ "centers": {
+  "mtp4_class_balanced_tok_s": 112.34378371549812
+ },
+ "performance_evidence": {
+  "mtp4-a": {
+   "path": "/mnt/fast-ai/bench-results/qwen38-int4-graph-drafthead-tp2-mtp4-strict-20260905-r257/mtp1-a/strict/performance.json",
+   "sha256": "3b47a1faaa27bbc45b0965edfe7358e2706f4eabe344d1a6c282218773eadbbe"
+  },
+  "mtp4-b": {
+   "path": "/mnt/fast-ai/bench-results/qwen38-int4-graph-drafthead-tp2-mtp4-strict-20260905-r257/mtp1-b/strict/performance.json",
+   "sha256": "a9f9861c90ef76079e5099f3c96ba6d9e78b26d10fe150591d1116a4a05035ae"
+  }
+ },
+ "output_sha256": {
+  "mtp4-a": [
+   "6873749aa450aa84cf9dbe5faa536eabcf4491a7ee7214743226700623605eab",
+   "d31a227a2bd4ef53ad9c968f3f2e7d8df2b76901b28d2aafec2bba970dc9058a",
+   "70e9b446a3940f7d6742748e3f09ddd9337003b3fd4967433baec515a5663c5c",
+   "a3b96aa1c31afa2aa7a37abcc0493516a86692d3b1eccb41c1933aeb262db95c",
+   "7908e1a5f6cf188d7e57e28e45dde52e725fa0890352d284ef359624e21f6645",
+   "b287ca1252759c9141888f524390672cf9b4c088786b7da0332ee69d9b9390c8",
+   "e6656cd0420517d64742eeaf22a357e81dd634098dbb8b2f3171d65e06c111eb",
+   "5020360bbc93e62a41aaea0a34106c43eb4c084ca563b1c1d59759acdf5beebc",
+   "d82d9c871fecbfc5676d01eebc9629cbceb97827b30718fb5b302f50f277b8cc",
+   "c985432ab3f704a20292af3df07bd7d75693f02679349ff18713ce2a03549db4",
+   "e36124f16352a996e30491235f2ccb1b01a0d4f402c6b78785b3124b222eb566",
+   "5d75041d7db0aa99119377b88c978f500280020aa783686670a4aa133384c5c9"
+  ],
+  "mtp4-b": [
+   "6873749aa450aa84cf9dbe5faa536eabcf4491a7ee7214743226700623605eab",
+   "d31a227a2bd4ef53ad9c968f3f2e7d8df2b76901b28d2aafec2bba970dc9058a",
+   "70e9b446a3940f7d6742748e3f09ddd9337003b3fd4967433baec515a5663c5c",
+   "a3b96aa1c31afa2aa7a37abcc0493516a86692d3b1eccb41c1933aeb262db95c",
+   "7908e1a5f6cf188d7e57e28e45dde52e725fa0890352d284ef359624e21f6645",
+   "b287ca1252759c9141888f524390672cf9b4c088786b7da0332ee69d9b9390c8",
+   "e6656cd0420517d64742eeaf22a357e81dd634098dbb8b2f3171d65e06c111eb",
+   "5020360bbc93e62a41aaea0a34106c43eb4c084ca563b1c1d59759acdf5beebc",
+   "d82d9c871fecbfc5676d01eebc9629cbceb97827b30718fb5b302f50f277b8cc",
+   "c985432ab3f704a20292af3df07bd7d75693f02679349ff18713ce2a03549db4",
+   "e36124f16352a996e30491235f2ccb1b01a0d4f402c6b78785b3124b222eb566",
+   "5d75041d7db0aa99119377b88c978f500280020aa783686670a4aa133384c5c9"
+  ]
+ },
+ "ladders": {
+  "mtp4_r265b_warm_pass": {
+   "classification": "output-identity-qualified through c16",
+   "rungs": [
+    {
+     "concurrency": 1,
+     "oracle_exact": "1/1",
+     "aggregate_tok_s_wall": 107.3
+    },
+    {
+     "concurrency": 2,
+     "oracle_exact": "2/2",
+     "aggregate_tok_s_wall": 147.6
+    },
+    {
+     "concurrency": 4,
+     "oracle_exact": "4/4",
+     "aggregate_tok_s_wall": 252.9
+    },
+    {
+     "concurrency": 8,
+     "oracle_exact": "8/8",
+     "aggregate_tok_s_wall": 405.4
+    },
+    {
+     "concurrency": 16,
+     "oracle_exact": "16/16",
+     "aggregate_tok_s_wall": 580.4
+    },
+    {
+     "concurrency": 32,
+     "oracle_exact": "31/32",
+     "aggregate_tok_s_wall": 360.7
+    },
+    {
+     "concurrency": 64,
+     "oracle_exact": "58/64",
+     "aggregate_tok_s_wall": 445.3
+    }
+   ]
+  }
+ },
+ "identity_claim": "depth 4 exact through c16 on the warm pass (16/16); c32 31/32 and c64 58/64 (near-tie residual); MTP0 exact c1-c64",
+ "acceptance": {
+  "mean_length": 3.51,
+  "source": "R257 server log SpecDecoding metrics"
+ },
+ "notes": "Every published INT4 measurement ran with VLLM_BATCH_INVARIANT=0 (strict launcher); the R257 pair ran the R228 image (aaf920b0), whose code path equals the R256 image on this model. Depth curve 2K-32K on this configuration: R260b (MTP4 120.6 -> 100.3 tok/s, 18/18 oracle-exact)."
+}
