@@ -1814,7 +1814,7 @@
           "fixed-k"
         ],
         "published_at": "2026-09-05",
-        "benchmark_status": "Research-status (2026-09-05, R239 matrix, final configuration). TP2 strict pairs: MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831, depth 4 68.218 (+ re-run R240) - every pair 12/12 vs each other and vs the MTP0 oracle, depth-1 probe exact. TP1 (one card): MTP0 32.960/32.945 (G1 12/12), depth 1 49.640/49.468, depth 2 56.505/56.449, depth 3 58.471/58.474, depth 4 56.292/56.251, all 12/12 vs each other and vs the oracle. Identity ladders: MTP0 exact c1-c64 in 6 of 8 ladders on TP2 and TP1 (TP2 998.6, TP1 447.6 tok/s aggregate at c64; the others one near-tie miss at c32 or c64); TP2 speculative depths exact through c16 (650/522/599/516 tok/s aggregate), c32 30/32, c64 58-60/64; TP1 depths exact through c8 (c16 15/16 or 16/16), c32 29-31/32, c64 60-62/64. No promotion or LocalMaxxing submission yet."
+        "benchmark_status": "Research-status (2026-09-05, R239 matrix, final configuration). TP2 strict pairs: MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831, depth 4 68.552/67.789 (R240 re-run; first pass 68.218 single arm) - every pair 12/12 vs each other and vs the MTP0 oracle, depth-1 probe exact. TP1 (one card): MTP0 32.960/32.945 (G1 12/12), depth 1 49.640/49.468, depth 2 56.505/56.449, depth 3 58.471/58.474, depth 4 56.292/56.251, all 12/12 vs each other and vs the oracle. Identity ladders: MTP0 exact c1-c64 in 6 of 8 ladders on TP2 and TP1 (TP2 998.6, TP1 447.6 tok/s aggregate at c64; the others one near-tie miss at c32 or c64); TP2 speculative depths exact through c16 (650/522/599/516 tok/s aggregate), c32 30/32, c64 58-60/64; TP1 depths exact through c8 (c16 15/16 or 16/16), c32 29-31/32, c64 60-62/64. No promotion or LocalMaxxing submission yet."
       },
       "contributors": [
         {
@@ -2054,8 +2054,7 @@
       "missing": [
         "clean-host replay",
         "public GHCR visibility of the R228 image (private until flipped)",
-        "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)",
-        "TP2 depth-4 strict pair (R240 re-run pending)"
+        "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)"
       ]
     },
     {

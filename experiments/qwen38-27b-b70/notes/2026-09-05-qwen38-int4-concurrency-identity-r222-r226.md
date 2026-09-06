@@ -72,7 +72,7 @@ Data `data/2026-09-05-qwen38-int4-r239-matrix-result.json`; tables in `repro/qwe
 | depth 1 | 51.10 / 50.09 | 49.64 / 49.47 |
 | depth 2 | 61.14 / 61.54 | 56.51 / 56.45 |
 | depth 3 | 67.61 / 67.83 | 58.47 / 58.47 |
-| depth 4 | 68.22 / (re-run R240) | 56.29 / 56.25 |
+| depth 4 | 68.55 / 67.79 (R240) | 56.29 / 56.25 |
 | gates | every pair 12/12 vs each other and vs the MTP0 oracle; depth-1 probe exact | same |
 | MTP0 ladder | exact c1-c64 in 3 of 4 (998.6 tok/s at c64); one run c32 31/32, c64 63/64 | exact c1-c64 in 3 of 4 (447.6 at c64); one run c64 63/64 |
 | speculative ladders | exact through c16 at every depth (one run c8 7/8); c32 30/32; c64 58-60/64 | exact through c8; c16 15/16 (depth 3: 16/16); c32 29-31/32; c64 60-62/64 |

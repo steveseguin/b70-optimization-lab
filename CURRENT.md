@@ -454,12 +454,12 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   `repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh` (MTP_DEPTH 0-4, TP1 via env); image pushed to
   `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b0...` (**private: user must flip visibility**). After
   R239: matrix table into the recipe README and package, top-level README row, publication-manifest chain entry.
-- **R239 matrix complete (20:11):** TP2 MTP0 34.21/35.64, d1 51.10/50.09, d2 61.14/61.54, d3 67.61/67.83, d4 68.22
-  (+R240 re-run); TP1 MTP0 32.96/32.95, d1 49.64/49.47, d2 56.51/56.45, d3 58.47/58.47, d4 56.29/56.25; every pair
+- **R239 matrix complete (20:11):** TP2 MTP0 34.21/35.64, d1 51.10/50.09, d2 61.14/61.54, d3 67.61/67.83, d4 68.55/67.79 (R240); TP1 MTP0 32.96/32.95, d1 49.64/49.47, d2 56.51/56.45, d3 58.47/58.47, d4 56.29/56.25; every pair
   12/12 vs each other and vs the oracle. MTP0 ladders exact c1-c64 in 6 of 8 (others one near-tie miss); TP2 speculative
   depths exact through c16, TP1 through c8 (c16 15/16), c32 29-31/32, c64 58-62/64. Recipe README tables, package
-  (three identity-qualified profiles), catalog and pages updated. Remaining: R240 depth-4 pair, top-level README row,
-  INT4 publication manifest, then the GDN residual as a separate research item.
+  (three identity-qualified profiles), catalog and pages updated. All publication surfaces updated (recipe, package, catalog, pages, top-level README rows,
+  `repro/qwen38-27b-autoround-int4-b70/publication-manifest.json`). Open: GHCR visibility flip (user), the GDN
+  composition residual at c32+/c64 with speculation (research item), clean-host replay.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.

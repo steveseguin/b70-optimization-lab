@@ -157,13 +157,13 @@
     "auto_round_kernel": "0.9.2.1 (not used on this path)"
   },
   "validation": {
-    "strict_matrix": "R239 (2026-09-05): TP2 and TP1, depths 0-4; every pair 12/12 vs each other and vs the MTP0 oracle; MTP0 identity ladders exact c1-c64 in 6 of 8; speculative depths exact through c16 (TP2) / c8 (TP1).",
+    "strict_matrix": "R239 (2026-09-05): TP2 and TP1, depths 0-4 (TP2 depth 4 pair 68.552/67.789 in R240); every pair 12/12 vs each other and vs the MTP0 oracle; MTP0 identity ladders exact c1-c64 in 6 of 8; speculative depths exact through c16 (TP2) / c8 (TP1).",
     "kernel_census": "R210-R217, R220 screen: 14 shapes bitwise invariant across n=1..1024 under the two-tier strategy.",
     "quality_gate": "r152 pre-canaries on every server",
     "evidence": [
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
-        "sha256": "50022df89173afd64822e61aab8a1fe9ad1139422e6a44038d995e2d74262f88"
+        "sha256": "fdf996ae5a2eb0b04f5dcadf2a62856d1ef2590d0d7535dffc8bb59eeb484801"
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
@@ -195,7 +195,7 @@
       },
       {
         "path": "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
-        "sha256": "2842c61158a10a9f373f22b30ba85ab9d7198341ca9abec6d98f11b77932a6d8"
+        "sha256": "a1f7ef85f9138bb91b1968e914d743be0852feb9b629bd93ef033cbd8365f5a6"
       },
       {
         "path": "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-gptq-relabel-r212-r213-prereg.md",
@@ -205,6 +205,6 @@
   },
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
-    "R239 TP2 depth-4 candidate b failed at engine start; R240 re-run."
+    "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12)."
   ]
 }
