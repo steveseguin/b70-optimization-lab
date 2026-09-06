@@ -1,0 +1,8 @@
+per-expert placement test (card 0, tools/equivalence-and-timing-moe-expert-placement.py, overlay 567117d18eff67b9048e33f3bb095d892aa326ab)
+EXACT table-no-host: bit-identical on 32 routings = True
+EXACT table-half-host: bit-identical on 32 routings = True
+TIMING reference resident (no table): w13 0.224 ms  w2 0.1435 ms per launch
+TIMING table, all resident:            w13 0.2264   w2 0.1463
+TIMING table, half host, routing hits resident only: w13 0.4289  w2 0.0987
+TIMING table, half host, routing hits host every call (3 host hits): w13 0.5894  w2 0.2331
+(before the tl.multiple_of(offset, 256) hint the table path ran 0.65 / 0.17 on resident rows)

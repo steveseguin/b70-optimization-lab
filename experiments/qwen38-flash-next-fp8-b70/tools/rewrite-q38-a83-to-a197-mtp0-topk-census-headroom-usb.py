@@ -20,7 +20,7 @@ HASH_TOKEN = re.compile(r"[0-9a-f]{64}|[0-9a-f]{40}")
 MTP0 = True
 EXACT = False
 OLD_HEAD = "2169dbfe38c2954edc5ae50e94f68d45be071b79"
-NEW_HEAD = "08df70ea5a8e9f6c7112701c968aaf9a775ff0df"
+NEW_HEAD = "567117d18eff67b9048e33f3bb095d892aa326ab"
 MTP_RULE = '$0 == "[[ \\"${mtp}\\" == \\"0\\" ]] || {" {\n  print "[[ \\"${mtp}\\" == \\"1\\" ]] || {"\n  next\n}\n'
 EXACT_RULE = '$0 == "[[ \\"${mtp_exact}\\" == \\"0\\" ]] || {" {\n  print "[[ \\"${mtp_exact}\\" == \\"1\\" ]] || {"\n  next\n}\n'
 MTP_GREPS = 'grep -Fxq \'[[ "${mtp}" == "1" ]] || {\' "$derived"\n! grep -Fq \'[[ "${mtp}" == "0" ]] || {\' "$derived"\n'
