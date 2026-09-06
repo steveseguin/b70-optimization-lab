@@ -63,7 +63,7 @@ def successor(text: str, attempt: int, port: str) -> str:
     parts.append(rename(text[last:]))
     out = "".join(parts)
     assert sorted(HASH_TOKEN.findall(out)) == sorted(HASH_TOKEN.findall(text))
-    assert SRC_PORT not in out and "attempt189" not in out
+    assert SRC_PORT not in out and "attempt189" not in out and "ATTEMPT=189" not in out and "a189-" not in out
     return out
 
 

@@ -53,7 +53,7 @@ def successor(text: str, attempt: int, port: str) -> str:
     def rename(seg: str) -> str:
         seg = seg.replace("tp4-mtp1-4352-ple-only-a226", f"tp4-mtp1-4352-ple-only-a{attempt}")
         seg = seg.replace("attempt226", f"attempt{attempt}").replace(SRC_PORT, port)
-        seg = seg.replace("ATTEMPT=189", f"ATTEMPT={attempt}").replace("a226", f"a{attempt}").replace("A226", f"A{attempt}")
+        seg = seg.replace("ATTEMPT=226", f"ATTEMPT={attempt}").replace("a226", f"a{attempt}").replace("A226", f"A{attempt}")
         return seg
     parts, last = [], 0
     for m in HASH_TOKEN.finditer(text):
@@ -63,7 +63,7 @@ def successor(text: str, attempt: int, port: str) -> str:
     parts.append(rename(text[last:]))
     out = "".join(parts)
     assert sorted(HASH_TOKEN.findall(out)) == sorted(HASH_TOKEN.findall(text))
-    assert SRC_PORT not in out and "attempt226" not in out
+    assert SRC_PORT not in out and "attempt226" not in out and "ATTEMPT=226" not in out and "a226-" not in out
     return out
 
 

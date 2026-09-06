@@ -49,6 +49,7 @@ The narrative is in the [result packet](../../results/qwen38-flash-next-fp8-b70/
 | Model | publisher revision `bcd9f01d`, [contract](../qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json) and [`verify-model.py`](../qwen38-flash-next-fp8-tp4-mtp3-b70/verify-model.py) |
 | Configuration | the frozen A189 packet (four scripts pinned by [`frozen-a189-packet.sha256`](frozen-a189-packet.sha256)); server line in [`container-serve.sh`](container-serve.sh) |
 | Execution | `verify-identity.sh`, `run-record-gate.sh` (below); container route unbuilt |
+| Verifier pin | the frozen packet pins the exactness verifier by bytes; [`verifier-pin.txt`](verifier-pin.txt) records its SHA-256, git blob and the last lab commit that carries it, and `verify-identity.sh` names that commit when the file has moved on |
 | Validation | frozen client: fixed cold realistic suite once, exactness verifier `verify-moe-m1-w13-n32-selection.py` (`0bd36f13…`), fresh-response gates; `check-replay-result.py` compares output pins and gates with the record |
 
 ## Restore source
@@ -102,6 +103,10 @@ process or listener on the packet port remains.
 
 ## What is not certified
 
+- the exactness verifier file moved on 2026-09-06 for the placement line; the frozen
+  A189 packet pins the earlier bytes, so this replay must run from a worktree of the
+  lab repository at the commit named in `verifier-pin.txt` (the successor line
+  [31.93 tok/s](../qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md) replays at head);
 - no clean-host install: the venv, oneAPI runtime, xe driver and model copy
   are assumed; `pip-freeze-observed.txt` is a receipt, not a hash lock;
 - non-originating-host replay: none yet; the host-controlled launcher assumes

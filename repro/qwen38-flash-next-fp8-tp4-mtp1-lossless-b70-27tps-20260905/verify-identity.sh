@@ -32,7 +32,9 @@ REPRO_VLLM_TREE="$vllm_tree" "$repo/patches/qwen38-flash-next-fp8-b70/vllm-lossl
 [[ "$(ls "$model"/model-*.safetensors | wc -l)" == 131 ]] || die "model shard count is not 131"
 # 5. tuned MoE map, exactness verifier, frozen packet
 [[ "$(sha256sum "$repo/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/"*.json | sha256sum | cut -d' ' -f1)" != "" ]] || die "tuned map missing"
-[[ "$(sha256sum "$repo/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == 0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753 ]] || die "exactness verifier drifted"
+pin_sha=$(sed -n 's/^sha256=//p' "$script_dir/verifier-pin.txt"); pin_blob=$(sed -n 's/^blob=//p' "$script_dir/verifier-pin.txt"); pin_commit=$(sed -n 's/^lab_commit=//p' "$script_dir/verifier-pin.txt")
+git -C "$repo" cat-file -e "$pin_blob" 2>/dev/null || die "the pinned exactness verifier blob $pin_blob is not in this clone's history"
+[[ "$(sha256sum "$repo/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == "$pin_sha" ]] || die "the exactness verifier has moved on since the record; the frozen packet pins sha $pin_sha (git blob $pin_blob). Replay from a worktree of the lab repository at commit $pin_commit (git worktree add /path/to/replay $pin_commit) or restore that file from the blob before launching"
 (cd "$repo/experiments/qwen38-flash-next-fp8-b70/tools" && sha256sum --quiet -c "$script_dir/frozen-a189-packet.sha256") || die "frozen A189 packet drifted"
 # 6. python runtime, imported the way the launcher runs the server (kernel stage and overlay
 #    first on PYTHONPATH; the venv's own vllm package is shadowed and its version is not the record's)
