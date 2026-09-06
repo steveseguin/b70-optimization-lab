@@ -137,3 +137,13 @@ whole gain is per-step time: the captured verify step no longer pays the per-op 
 capture gives +1% (R246b, 56.9/56.9) because there is no collective to remove. This exceeds the FP8 lane's best
 (86.18 at depth 5, R200/R204, captured without graphs at depth 1 only in R198); R252 re-tests FP8 depth 5 with the
 same capture. Data `data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json`.
+
+## R248-R252 (23:30): what else the community difference was, and was not
+
+Generic `mtp` proposer (R248/R249): identical rates to `qwen3_next_mtp` (56.29/56.24 eager, 56.81/56.87 with graphs on
+TP1), lossless. Graph capture depth curve on TP2 (R250): depth 5 88.84/89.12, depth 6 84.06/83.98, all 12/12; turnover
+at depth 4 (91.0). Ladders under graphs (R251): MTP0 exact c1-c64 (999 tok/s at c64; c1 50.0 in the harness, vs 34-35
+eager), depth 4 exact at c1/c2/c16 with the composition-sensitive prompt at c4/c8 and the usual c32/c64 residual. FP8
+R187 depth 5 with the same capture (R252): 85.13/85.14 vs 86.27/86.10 eager, lossless, no gain. So the INT4 line with
+graph capture on two cards is now the lab's fastest lossless Qwen3.8 configuration (91.0 at depth 4), and R253 checks
+whether MTP0 itself gains under graphs on a strict pair.
