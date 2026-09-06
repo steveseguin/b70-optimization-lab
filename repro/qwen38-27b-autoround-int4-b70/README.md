@@ -20,16 +20,17 @@
 | R228 | 2 | 4 | on | FP16 | 91.00 / 91.01 | G2 12/12, G3 12/12 x2 | c1 1/1, c2 2/2, c4 3/4, c8 7/8, c16 16/16, c32 30/32, c64 58/64 | R247/R251 |
 | R228 | 2 | 5 | on | FP16 | 88.84 / 89.12 | G2 12/12, G3 12/12 x2 | - | R250 |
 | R228 | 2 | 6 | on | FP16 | 84.06 / 83.98 | G2 12/12, G3 12/12 x2 | - | R250 |
+| R228 (R257 pair; R256 identical code path) | 2 | 4 | on | INT4 draft-only | 112.36 / 112.33 | G2 12/12, G3 12/12 x2 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 31/32, c64 58/64 (warm pass; first pass c2 86 with the recompile stall) | R257/R265b |
 | R228 | 1 | 0 | off | FP16 | 32.96 / 32.95 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 64/64 | R239 |
 | R228 | 1 | 1 | off | FP16 | 49.64 / 49.47 | G2 12/12, G3 12/12 x2, probe exact | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 15/16, c32 30/32, c64 60/64 | R239 |
 | R228 | 1 | 2 | off | FP16 | 56.51 / 56.45 | G2 12/12, G3 12/12, G3 12/12 | - | R239 |
 | R228 | 1 | 3 | off | FP16 | 58.47 / 58.47 | G2 12/12, G3 12/12, G3 12/12 | - | R239 |
 | R228 | 1 | 4 | off | FP16 | 56.29 / 56.25 | G2 12/12, G3 12/12, G3 12/12 | - | R239 |
 | R228 | 1 | 4 | on | FP16 | 56.91 / 56.90 | 12/12 all | - | R246b |
-| R256 | 2 | 4 | on | INT4 draft-only | 112.36 / 112.33 | G2 12/12, G3 12/12 x2 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 14/16, c32 30/32, c64 59/64 | R257/R259 |
 | R256 | 2 | 5 | on | INT4 draft-only | 109.97 / 110.07 | G2 12/12, G3 12/12 x2 | - | R258 |
 | R256 | 2 | 6 | on | INT4 draft-only | 108.34 / 108.37 | G2 12/12, G3 12/12 x2 | - | R258 |
 | R256 | 2 | 0 | on | n/a | - | MTP0 ladder | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 31/32, c64 64/64 | R259 |
+| R266 | 2 | 4 | on | INT4 draft-only (V2 runner, R266) | 112.70 / 112.96 | G2 12/12, G3 12/12 x2 | c1 1/1, c2 2/2, c4 3/4, c8 8/8, c16 16/16, c32 31/32, c64 62/64 (warm pass) | R269/R270 |
 
 **Settings common to every row:** vLLM 0.27.2rc1.dev77+gac7509e2b (XPU), `--dtype float16 --quantization gptq --kv-cache-dtype auto --block-size 64 --no-enable-prefix-caching --language-model-only`, `VLLM_BATCH_INVARIANT=0` (vLLM's own switch is off: the strict launchers pin it and vLLM refuses to boot the GDN backend with it on; batch invariance on this lane comes from the kernels and the switches below), `TORCHINDUCTOR_DETERMINISTIC=1`, `VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0`, `VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0`, `PYTHONHASHSEED=0`, `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`, `VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1`, `VLLM_XPU_GDN_NATIVE_FALLBACK=1`, `VLLM_XPU_FP8_BLOCK_W8A16=1` (inert on the gptq path), `VLLM_XPU_GDN_SPLIT_MIXED=1`, `VLLM_XPU_GDN_SPEC_GROUP=16`, `VLLM_XPU_FP16_LINEAR_ROWCHUNK=32`, `VLLM_XPU_W4A16_DETERMINISM_PAD=0`, `VLLM_XPU_ALLREDUCE_HOST_WAIT=1`, `VLLM_XPU_RMSNORM_TRITON=0`, `VLLM_XPU_GEMMA_RMSNORM_TRITON=0`, whole-graph `torch.compile` (`splitting_ops: []`) with `inductor_compile_config {deterministic: true, split_reductions: false, triton.autotune_pointwise: false, combo_kernels: false, benchmark_combo_kernel: false, benchmark_epilogue_fusion: false}`, oneCCL `CCL_ATL_TRANSPORT=ofi FI_PROVIDER=tcp CCL_ZE_IPC_EXCHANGE=pidfd CCL_SEND=direct CCL_RECV=direct CCL_TOPO_P2P_ACCESS=1` with the three `CCL_SYCL_*_SIMPLE_THRESHOLD=4294967296`, greedy decoding (`temperature 0`), speculative config `{"method":"qwen3_next_mtp","num_speculative_tokens":<depth>}` (omitted for MTP0). Model: `devan-carlin/Qwen3.8-27B-int4-AutoRound` bce40cac relabelled to plain gptq (manifest `model-gptq-relabel-r212.json`).
 
@@ -46,7 +47,7 @@
 | TP1 | `TENSOR_PARALLEL_SIZE=1 XPU_DEVICE_MASK=0` (`ZE_AFFINITY_MASK=0`) | same |
 | TP2 | `TENSOR_PARALLEL_SIZE=2 XPU_DEVICE_MASK=0,1` | same |
 
-Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d` (`_xpu_ops.py` sha256 c91d6b0d…, `_xpu_C.abi3.so` 271db0d4…); R256 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3` (R228 + draft-only INT4 head fallback). Registry digest equals the local image id; pass it as `EXPECTED_IMAGE_ID` and the two file digests as `XPU_OPS_SHA256_OVERRIDE` / `XPU_EXTENSION_SHA256_OVERRIDE` (the launcher does this).
+Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d` (`_xpu_ops.py` sha256 c91d6b0d…, `_xpu_C.abi3.so` 271db0d4…); R256 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3` (R228 + a draft-only INT4 head fallback whose branch is never taken on this model: the relabelled head is unquantized and already carries `make_xpu_int4_draft_copy`, so both images run the same code here; the container records show the R257 headline pair ran R228 and R258/R259/R260b/R265b ran R256); R266 = `neural-download/vllm-openai-xpu:qwen38-int4-v2-draft-int4-head-r266 sha256:1d12b64e46f99a6092014319b2b66f14f380f24da82c6ce7b852db7ee6ebd10e (local; R256 + docker/r266-v2-draft-int4-head.py)` (V2 model runner variant, not the published path). Registry digest equals the local image id; pass it as `EXPECTED_IMAGE_ID` and the two file digests as `XPU_OPS_SHA256_OVERRIDE` / `XPU_EXTENSION_SHA256_OVERRIDE` (the launcher does this).
 
 <!-- replication-matrix:end -->
 
@@ -206,6 +207,38 @@ require independent numerical, quality, determinism, and performance gates.
 > only 24/25, splitting at prompt 24 token 469 between two sane historical
 > families, and averaged only 60.938 tok/s preferred. That treatment is also
 > terminal and insufficient; no retry or T3 is authorized.
+
+## Optimization pass after the headline (2026-09-06 night, R261-R277)
+
+Everything below was measured on the headline stack (R256/R228 images, TP2, XPU graph capture, draft-only INT4 head, MTP
+depth 4, strict launcher env) unless stated; full detail in
+[`notes/2026-09-06-qwen38-int4-optimization-night-r261-r268.md`](../../experiments/qwen38-27b-b70/notes/2026-09-06-qwen38-int4-optimization-night-r261-r268.md)
+and the result files `2026-09-06-qwen38-int4-r262-headline-decode-profile-result.json` and the R261-R277 entries of
+`2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json`.
+
+**Single user is at the practical floor of this stack.** The step is ~27 ms: ~12 ms of weight reads for the 5-token verify,
+~6 ms for the four draft passes with the INT4 head, and ~8 ms of two-rank host round trip. Tested and equivalent or worse:
+
+| lever | result | run |
+|---|---|---|
+| XPU graph capture sizes extended to 80 tokens | no change at any concurrency | R261 |
+| vLLM V2 model runner (fused draft loop + prefill in FULL graphs), draft-only INT4 head ported to its loader (`docker/r266-v2-draft-int4-head.py`) | **112.70 / 112.96 tok/s, 12/12 vs the oracle**: lossless, speed-equal to V1 (112.36 / 112.33); identical text and acceptance on a shared prompt; no first-batch recompile stall at c2 | R263/R268/R269/R270 |
+| `--async-scheduling` | already on by default for MTP in this vLLM (identical rates) | R267 |
+| per-rank CPU binding (`--numa-bind --numa-bind-cpus`) | no change (each worker's main thread already spins on its own core) | R272 |
+| GDN speculative group size 64 / 1 | 64: no change at c32; 1: uniformly slower | R273 |
+
+**Multi-user findings.**
+
+- Single-pass ladders under-report c2: the first two-sequence batch costs ~1.05 s of Dynamo recompilation (R264b). With a
+  warm pass (R265b, every rung run twice) the steady curve is c2 147.6, c4 252.9, c8 405.4, c16 580.4 tok/s, identity-exact
+  through c16 (16/16); c32 360.7 (31/32) and c64 445.3 (58/64) keep the near-tie residual. Warm-up the server with one
+  two-user request after boot, or run ladders with `LADDER_REPEATS=2`.
+- The c16 -> c32 collapse has two device-side causes measured in R274/R274b: the W4A16 verify GEMMs are dequant-bound and
+  scale ~linearly above ~32 rows (55 ms at M=160), and the GDN speculative recurrent kernel streams each sequence's fp32
+  SSM state per layer (27 ms at 32 sequences, linear in sequences). The grouped GDN branch (group 16) added ~40 ms of host
+  work per step and, because it syncs (`.tolist()`), cannot be graph-captured: no verify batch above 16 sequences was ever
+  captured (R275 fails capture at 320 tokens). `docker/r276-gdn-spec-group-sync-free.py` computes the group boundaries
+  arithmetically (uniform k+1 rows) so capture succeeds with the published group size.
 
 ### Real-content 2K-32K depth ladder on the headline configuration (R260b, 2026-09-06)
 

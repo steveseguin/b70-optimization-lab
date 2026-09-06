@@ -1,0 +1,5 @@
+# R266: R256 + draft-only INT4 lm_head for the V2 model runner's speculator (VLLM_USE_V2_MODEL_RUNNER=1).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256
+COPY r266-v2-draft-int4-head.py /tmp/r266.py
+RUN python /tmp/r266.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu/spec_decode/eagle/utils.py && rm /tmp/r266.py
+LABEL neural.download.build.lane="qwen38-int4-v2-draft-int4-head-r266"

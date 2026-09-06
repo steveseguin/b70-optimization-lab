@@ -1,0 +1,5 @@
+# R276: R256 + sync-free grouped GDN speculative branch (graph-capturable above 16 sequences).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256
+COPY r276-gdn-spec-group-sync-free.py /tmp/r276.py
+RUN python /tmp/r276.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py && rm /tmp/r276.py
+LABEL neural.download.build.lane="qwen38-int4-gdn-spec-group-sync-free-r276"

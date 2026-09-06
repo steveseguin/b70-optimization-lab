@@ -159,7 +159,7 @@ if [[ "${PROBE_AND_LADDER_MTP1:-0}" == 1 ]]; then
   postflight probe-mtp1-post
   launch ladder mtp1 256 64 512
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
-    --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+    --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
     --return-token-ids --require-output-identity \
     --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
@@ -185,7 +185,7 @@ if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   log "LADDERS_ONLY: skipping the strict oracle and candidate stages"
   launch ladder mtp1 256 64 512
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
-    --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+    --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
     --return-token-ids --require-output-identity \
     --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
@@ -194,7 +194,7 @@ if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   postflight ladder-post
   launch ladder-mtp0 mtp0 256 64 512
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
-    --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+    --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
     --return-token-ids --require-output-identity \
     --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
@@ -242,7 +242,7 @@ log "information: mtp1-a vs frozen R54a: $(compare_pair "${root}/mtp1-a/strict" 
 # ---------------- identity ladder ----------------
 launch ladder mtp1 256 64 512
 python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
-  --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+  --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
   --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
   --return-token-ids --require-output-identity \
   --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
@@ -255,7 +255,7 @@ stop_server "${server_name}" "${server_pid}" "${server_dir}"
 postflight ladder-post
 launch ladder-mtp0 mtp0 256 64 512
 python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
-  --suite "${ladder_suite}" --concurrency 1,2,4,8,16,32,64 --repeats 1 --max-tokens 128 \
+  --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
   --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
   --return-token-ids --require-output-identity \
   --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1

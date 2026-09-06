@@ -1,0 +1,84 @@
+{
+ "schema": "b70-lab.result.v1",
+ "run": "R262",
+ "date": "2026-09-06",
+ "lane": "Qwen3.8-27B INT4 headline (R256 image, TP2, XPU graphs FULL_DECODE_ONLY 1-8, draft-only INT4 head, MTP depth 4, strict launcher env)",
+ "method": "vLLM torch profiler over one 64-token greedy completion (22-token prompt) after two warm-ups; traces per rank; python_function tracing inflates wall time (62 tok/s inside the window vs 112 unprofiled), so only the relative split is used",
+ "root": "/mnt/fast-ai/bench-results/qwen38-int4-headline-decode-profile-20260906-r262-mtp4",
+ "rank1_window_ms": 1030.5,
+ "rank1_execute_model_ms": 624.2,
+ "rank1_execute_model_calls": 25,
+ "rank1_propose_ms": 319.7,
+ "rank1_propose_calls": 23,
+ "rank1_model_forward_ms": 333.1,
+ "rank1_prefill_forward_ms": 331.2,
+ "rank1_sample_tokens_ms": 370.2,
+ "rank1_all_reduce_calls": 405,
+ "rank1_all_reduce_cpu_ms": 77.2,
+ "device_kernels_rank1": {
+  "int4_gemm_w4a16_ms": 82.8,
+  "int4_gemm_calls": 716,
+  "aten_mm_ms": 59.4,
+  "gdn_attention_ms": 11.4,
+  "argmax_ms": 4.6,
+  "allreduce_ms": 3.5,
+  "allgather_ms": 2.5
+ },
+ "device_kernels_rank0": {
+  "oneccl_allreduce_ms": 279.8,
+  "note": "rank 0 spends 280 ms inside the ring all-reduce kernel where rank 1 spends 3.5 ms: rank 0 waits for rank 1 at every eager all-reduce (the drafter runs eagerly; the verify step is a captured graph whose kernels the XPU profiler does not itemize)"
+ },
+ "reading": "The step is host-bound. Within execute_model the eager draft passes (propose) are about half of the CPU time; the verify graph's replay costs little CPU; between steps the worker idles on the scheduler round trip. 716 int4 GEMM launches for 22 decode steps (about 40 per step from the 4 draft passes) plus 405 all-reduce calls. Capturing the draft loop (V2 model runner, R263) or cutting the per-step host path is the lever; larger decode graphs (R261) are not.",
+ "profiled_request_usage": {
+  "prompt_tokens": 22,
+  "completion_tokens": 64
+ },
+ "R264b_c2_c8_profile_no_stack": {
+  "root": "/mnt/fast-ai/bench-results/qwen38-int4-headline-decode-profile-concurrency-20260906-r264b-mtp4",
+  "c2": "window 2.8 s: 1.05 s of Dynamo recompilation (3 frames) on the first two-sequence batch = the single-pass ladder c2 stall; not recurring at c4/c8",
+  "c8": "window 1735 ms, 20 uniform steps of 8x5 tokens: device kernels 381 ms (gemm 290, GDN chunk kernels ~25), CPU dominated by aten::index/copy_/to in the eager draft passes and sampling; cards busy ~25% of the time; 300 tok/s under the profiler (398 unprofiled)"
+ },
+ "R274_c32_profile_no_stack": {
+  "root": "/mnt/fast-ai/bench-results/qwen38-int4-headline-decode-profile-concurrency-20260906-r274-mtp4",
+  "window": "6.6 s: 1.08 s Dynamo recompilation on the first 32-sequence batch, 1.0 s mixed prefill step (583 prompt tokens), 20 uniform decode steps of 32x5=160 tokens in 3.24 s (162 ms/step)",
+  "one_steady_step_rank1": {
+   "wall_ms": 145.6,
+   "device_busy_ms": 107.9,
+   "gemm_ms": 58.1,
+   "gdn_gated_delta_rule_spec_kernel_ms": 27.0,
+   "allreduce_ms": 12.6,
+   "cpu_gdn_attention_core_xpu_ms": 42.7,
+   "cpu_compiled_graph_call_ms": 134.0,
+   "gdn_calls": 48,
+   "all_reduce_calls": 129,
+   "int4_gemm_calls": 256
+  },
+  "reading": "At c32 the cards are ~74% busy: the step is device-bound, not host-bound. Two components explain the c16->c32 collapse: (1) the GDN speculative path switches from the chunked kernels seen at c8 (~1 ms/step) to gdn::gated_delta_rule_spec_kernel at 27 ms/step; (2) the W4A16 verify GEMMs scale ~linearly above M~32 (dequant-bound), 58 ms at M=160. The verify runs eagerly (160 tokens > captured sizes), costing ~24 ms of launch CPU per step that larger capture sizes would remove (R275)."
+ },
+ "R274b_c32_profile_group64": {
+  "root": "/mnt/fast-ai/bench-results/qwen38-int4-headline-decode-profile-concurrency-20260906-r274b-mtp4",
+  "config": "R274 with VLLM_XPU_GDN_SPEC_GROUP=64 (ungrouped GDN spec branch at 32 sequences)",
+  "uniform_steps": 20,
+  "mean_step_wall_ms": 124.9,
+  "one_steady_step_rank1": {
+   "wall_ms": 107.5,
+   "device_kernels_ms": 96.1,
+   "gemm_ms": 54.96,
+   "gemm_calls": 306,
+   "gdn_gated_delta_rule_spec_kernel_ms": 27.07,
+   "gdn_calls": 48,
+   "allreduce_ms": 7.22,
+   "cpu_compiled_graph_call_ms": 96.0
+  },
+  "reading": "Without grouping the c32 step is device-bound (96 of 108 ms): W4A16 GEMM 55 ms at M=160 and the GDN speculative recurrent kernel 27 ms (48 layers x 0.56 ms for 32 sequences; grouped 2x16 cost the same 27 ms, so the kernel's time is linear in sequences: ~17.6 us per sequence per layer, no cross-sequence parallelism). The grouped path (R274) added ~40 ms of host work per step (sync + gather/scatter per layer). Graph capture above 16 sequences fails on the grouped branch's .tolist() (R275); R276 makes the boundaries arithmetic."
+ },
+ "R274c_c16_profile_group16": {
+  "root": "/mnt/fast-ai/bench-results/qwen38-int4-headline-decode-profile-concurrency-20260906-r274c-mtp4",
+  "config": "R274 script at c16 (80-token verify inside a captured graph, capture sizes to 80)",
+  "uniform_steps": 20,
+  "mean_step_wall_ms": 72.1,
+  "steady_step_wall_ms": 57.6,
+  "visible_device_kernels_ms": 13.5,
+  "note": "the captured verify's kernels are not itemized by the XPU profiler; the visible 13.5 ms are the eager draft passes (29 gemm launches, 1 all-gather per pass) and the CPU side is one blocking copy waiting on the graph. 16 x ~2.7 tokens per 65 ms step is ~650 tok/s of steady aggregate, in line with the warm ladder's 580 once prefill and ramp are included."
+ }
+}

@@ -529,5 +529,717 @@
     "aggregate_tok_s_wall": 998.7
    }
   ]
+ },
+ "R261_ladders_tp2_depth4_graphs_capture_sizes_to_80": {
+  "date": "2026-09-06",
+  "image": "R256",
+  "config": "R259 headline + cudagraph_capture_sizes [1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64,80] (12 decode graphs captured)",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.4,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 87.6,
+    "ttft_s_max": 1.02
+   },
+   {
+    "concurrency": 4,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 290.3,
+    "ttft_s_max": 0.19
+   },
+   {
+    "concurrency": 8,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 397.8,
+    "ttft_s_max": 0.35
+   },
+   {
+    "concurrency": 16,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 530.8,
+    "ttft_s_max": 0.65
+   },
+   {
+    "concurrency": 32,
+    "exact": "29/32",
+    "aggregate_tok_s_wall": 355.0,
+    "ttft_s_max": 0.81
+   },
+   {
+    "concurrency": 64,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 445.0,
+    "ttft_s_max": 13.53
+   }
+  ],
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.0,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.3,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.2,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 316.6,
+    "ttft_s_max": 0.28
+   },
+   {
+    "concurrency": 16,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 535.0,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 32,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 807.7,
+    "ttft_s_max": 0.54
+   },
+   {
+    "concurrency": 64,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 979.2,
+    "ttft_s_max": 1.08
+   }
+  ],
+  "verdict": "no aggregate gain at any rung vs R259 (sizes <=8): batch size is not what limits multi-user speculative throughput. Observation: at c2 one request waits ~1.0 s before its first token (TTFT 1.02 s vs 0.04 s), a first-encounter stall in a single-pass ladder; R265 reruns every rung twice to measure the steady state. MTP0 ladder exact c1-c64 (64/64)."
+ },
+ "R265b_ladders_tp2_depth4_graphs_draft_head_two_passes": {
+  "date": "2026-09-06",
+  "image": "R256",
+  "config": "R259 headline configuration; every rung run twice on one server (LADDER_REPEATS=2)",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.7,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 85.4,
+    "ttft_s_max": 1.01
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 208.5,
+    "ttft_s_max": 0.22
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "7/8",
+    "aggregate_tok_s_wall": 406.9,
+    "ttft_s_max": 0.31
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 514.3,
+    "ttft_s_max": 0.75
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 361.0,
+    "ttft_s_max": 0.59
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 446.8,
+    "ttft_s_max": 13.56
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.3,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 147.6,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 252.9,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 405.4,
+    "ttft_s_max": 0.3
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 580.4,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 360.7,
+    "ttft_s_max": 0.58
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 445.3,
+    "ttft_s_max": 13.27
+   }
+  ],
+  "verdict": "pass 2 is the steady state: c1 107.3, c2 147.6 (pass 1: 85.4 with a 1.01 s first-token stall = Dynamo recompilation on the first two-sequence batch, R264b), c4 252.9, c8 405.4 (8/8), c16 580.4 (16/16 exact), c32 360.7 (31/32), c64 445.3 (58/64). Identity-qualified through c16 in the warm pass; the c32/c64 near-tie residual remains. Throughput collapses between c16 (80 verify tokens) and c32 (160).",
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.0,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.3,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.5,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 317.9,
+    "ttft_s_max": 0.27
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 509.6,
+    "ttft_s_max": 0.28
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 842.9,
+    "ttft_s_max": 0.53
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1000.1,
+    "ttft_s_max": 1.08
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.1,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.8,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.6,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 319.3,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 505.4,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 839.2,
+    "ttft_s_max": 0.55
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 998.6,
+    "ttft_s_max": 1.07
+   }
+  ]
+ },
+ "R269_tp2_depth4_v2_model_runner_draft_int4_head": {
+  "date": "2026-09-06",
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-v2-draft-int4-head-r266 sha256:1d12b64e46f99a6092014319b2b66f14f380f24da82c6ce7b852db7ee6ebd10e (R256 + V2-loader draft-only INT4 head overlay)",
+  "config": "VLLM_USE_V2_MODEL_RUNNER=1 (target decode graph + speculator prefill graph + fused 4-step draft-loop graph), otherwise the R257 headline (TP2, FULL_DECODE_ONLY sizes 1-8, VLLM_XPU_DRAFT_LM_HEAD_INT4=1, strict launcher env)",
+  "rates": [
+   112.701617723191,
+   112.959657721175
+  ],
+  "gates": "G2 12/12, G3 12/12 x2 vs the eager R239 MTP0 oracle",
+  "smoke_same_prompt": {
+   "V1_r267a2": [
+    97.07,
+    97.44,
+    97.35
+   ],
+   "V2_r268a": [
+    97.49,
+    98.11,
+    98.06
+   ],
+   "acceptance_both": "795 accepted / 485 drafts",
+   "text_identical": true
+  },
+  "verdict": "lossless and speed-equivalent to the V1 headline at one user (112.36/112.33): the fused draft graph removes launch overhead the step was not bound by. Multi-user ladders: R270."
+ },
+ "R270_ladders_tp2_depth4_v2_model_runner_two_passes": {
+  "date": "2026-09-06",
+  "image": "R266 (V2 loader draft INT4 head)",
+  "config": "R269 configuration (V2 runner), LADDER_REPEATS=2",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.5,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 150.4,
+    "ttft_s_max": 0.14
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 253.6,
+    "ttft_s_max": 0.17
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 408.3,
+    "ttft_s_max": 0.3
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 587.2,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 363.0,
+    "ttft_s_max": 0.57
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 439.5,
+    "ttft_s_max": 13.4
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.8,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 149.7,
+    "ttft_s_max": 0.14
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 260.7,
+    "ttft_s_max": 0.15
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 412.1,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 588.5,
+    "ttft_s_max": 0.25
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 362.7,
+    "ttft_s_max": 0.58
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "62/64",
+    "aggregate_tok_s_wall": 437.8,
+    "ttft_s_max": 13.44
+   }
+  ],
+  "verdict": "same curve as V1 (R265b pass 2) at every rung: c1 107.8, c2 149.7, c4 260.7, c8 412.1, c16 588.5, c32 362.7, c64 437.8 tok/s; no first-pass c2 stall (V2 does not recompile on the two-sequence batch); identity c16 16/16, c32 31/32, c64 62/64. The c16->c32 collapse is common to both runners.",
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.0,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.4,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.4,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 318.1,
+    "ttft_s_max": 0.27
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 508.4,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 838.7,
+    "ttft_s_max": 0.56
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1000.3,
+    "ttft_s_max": 1.08
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.1,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.8,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.5,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 317.0,
+    "ttft_s_max": 0.28
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 509.8,
+    "ttft_s_max": 0.31
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 841.4,
+    "ttft_s_max": 0.54
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1000.6,
+    "ttft_s_max": 1.07
+   }
+  ]
+ },
+ "R273_gdn_spec_group_c16_c32": {
+  "date": "2026-09-06",
+  "config": "V1 headline, single-pass c16/c32 ladders with VLLM_XPU_GDN_SPEC_GROUP overridden",
+  "group16_R273a": [
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 407.7,
+    "ttft_s_max": 1.21
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 352.6,
+    "ttft_s_max": 0.58
+   }
+  ],
+  "group64_R273b": [
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 407.3,
+    "ttft_s_max": 1.22
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "29/32",
+    "aggregate_tok_s_wall": 355.1,
+    "ttft_s_max": 0.81
+   }
+  ],
+  "note": "single-pass rungs carry the first-encounter recompile at c16 (TTFT 1.2 s); c32 is the steady-state comparison: 352.6 (group 16) / 355.1 (group 64) / 288.2 (group 1, per-sequence serial) tok/s. Grouping is not the c16->c32 collapse; group 1 is uniformly slower. MTP0 c32: 32/32 (R273a), 31/32 (R273b near-tie).",
+  "group1_R273c": [
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 294.4,
+    "ttft_s_max": 1.24
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 288.2,
+    "ttft_s_max": 0.62
+   }
+  ],
+  "group16_R273a_mtp0": [
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 496.4,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 842.4,
+    "ttft_s_max": 0.54
+   }
+  ],
+  "group64_R273b_mtp0": [
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 505.7,
+    "ttft_s_max": 0.3
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 837.6,
+    "ttft_s_max": 0.55
+   }
+  ]
+ },
+ "R275_R275b_graph_sizes_320_c16_c64": {
+  "date": "2026-09-06",
+  "R275": "capture sizes to 320 with GDN spec group 16: graph capture fails at sizes above 16 sequences ('wait method cannot be used for an event associated with a command graph' from the grouped branch's .tolist())",
+  "R275b": {
+   "config": "capture sizes to 320 (18 decode graphs), VLLM_XPU_GDN_SPEC_GROUP=64, two-pass c16/c32/c64",
+   "ladder": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "15/16",
+     "aggregate_tok_s_wall": 387.1,
+     "ttft_s_max": 1.25
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "29/32",
+     "aggregate_tok_s_wall": 363.3,
+     "ttft_s_max": 0.81
+    },
+    {
+     "concurrency": 64,
+     "repeat": 1,
+     "exact": "61/64",
+     "aggregate_tok_s_wall": 455.4,
+     "ttft_s_max": 13.11
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 573.9,
+     "ttft_s_max": 0.26
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "32/32",
+     "aggregate_tok_s_wall": 364.4,
+     "ttft_s_max": 0.57
+    },
+    {
+     "concurrency": 64,
+     "repeat": 2,
+     "exact": "60/64",
+     "aggregate_tok_s_wall": 447.3,
+     "ttft_s_max": 13.29
+    }
+   ],
+   "ladder-mtp0": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 531.3,
+     "ttft_s_max": 0.3
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "32/32",
+     "aggregate_tok_s_wall": 806.4,
+     "ttft_s_max": 0.54
+    },
+    {
+     "concurrency": 64,
+     "repeat": 1,
+     "exact": "64/64",
+     "aggregate_tok_s_wall": 979.2,
+     "ttft_s_max": 1.07
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 533.2,
+     "ttft_s_max": 0.29
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "32/32",
+     "aggregate_tok_s_wall": 804.2,
+     "ttft_s_max": 0.54
+    },
+    {
+     "concurrency": 64,
+     "repeat": 2,
+     "exact": "64/64",
+     "aggregate_tok_s_wall": 979.4,
+     "ttft_s_max": 1.08
+    }
+   ]
+  },
+  "verdict": "captured verify graphs at c32/c64 change nothing in the ladder (c32 364.4 32/32, c64 447.3 60/64; c16 573.9 16/16), although the profiled uniform step at c32 is ~110 ms (R274b) which would give ~750 tok/s: the ladder's per-request pace (~12 tok/s each, ~225 ms per step) is set outside the model step. R278 A/B on request shape."
  }
 }

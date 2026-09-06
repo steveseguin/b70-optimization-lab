@@ -338,37 +338,43 @@
     },
     {
       "id": "http-int4-fixed-k-graph-drafthead-tp2-mtp4-identity-qualified-aggregate-vs-concurrent-users",
-      "label": "INT4 fixed-K TP2 MTP depth 4 with graph capture and the draft-only INT4 head, identity-qualified aggregate decode vs concurrent users (c1-c8)",
+      "label": "INT4 fixed-K TP2 MTP depth 4 with graph capture and the draft-only INT4 head, identity-qualified aggregate decode vs concurrent users (c1-c16, warm pass)",
       "metric": "aggregate_decode",
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Two B70s, R256 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 (FULL_DECODE_ONLY, sizes 1-8), VLLM_XPU_DRAFT_LM_HEAD_INT4=1, MTP depth 4, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R259). Points through c8 are output-identity-qualified; c16 (14/16), c32 (30/32) and c64 (59/64) withheld because near-tie prompts took a different valid branch.",
+      "scope": "Two B70s, R256 image, split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 (FULL_DECODE_ONLY, sizes 1-8), VLLM_XPU_DRAFT_LM_HEAD_INT4=1, MTP depth 4, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite; every rung run twice on one server and the second (warm) pass shown (R265b, 2026-09-06): the first pass of a fresh server carries a one-time Dynamo recompilation on the first multi-user batch. Points through c16 are output-identity-qualified (16/16); c32 (31/32) and c64 (58/64) withheld because near-tie prompts took a different valid branch. VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06).",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
       "points": [
         {
           "concurrent_sequences": 1,
-          "value": 106.8,
+          "value": 107.3,
           "samples": 1,
-          "per_user_value": 106.8
+          "per_user_value": 107.3
         },
         {
           "concurrent_sequences": 2,
-          "value": 86.3,
+          "value": 147.6,
           "samples": 1,
-          "per_user_value": 43.15
+          "per_user_value": 73.8
         },
         {
           "concurrent_sequences": 4,
-          "value": 218.9,
+          "value": 252.9,
           "samples": 1,
-          "per_user_value": 54.725
+          "per_user_value": 63.225
         },
         {
           "concurrent_sequences": 8,
-          "value": 403.2,
+          "value": 405.4,
           "samples": 1,
-          "per_user_value": 50.4
+          "per_user_value": 50.675
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 580.4,
+          "samples": 1,
+          "per_user_value": 36.275
         }
       ]
     },

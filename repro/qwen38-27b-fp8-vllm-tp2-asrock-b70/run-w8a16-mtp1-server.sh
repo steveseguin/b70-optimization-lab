@@ -260,6 +260,16 @@ if [[ "${enforce_eager}" == 1 ]]; then
   eager_args=(--enforce-eager)
 fi
 hash_seed_args=()
+# V2 model runner opt-in (R268/R269): only forwarded when set, so the default stays vLLM's auto choice (V1 here).
+v2_runner_args=()
+# oneDNN fixed-K W4A16 strategy switches (R220/R221 patches): forwarded only when set.
+fixed_k_args=()
+for fixed_k_var in QWEN38_W4A16_FIXED_K QWEN38_W4A16_GEMM_MAXN QWEN38_W4A16_GEMM_STRATEGY_SMALL QWEN38_W4A16_GEMM_STRATEGY_LARGE QWEN38_GEMM_DUMP; do
+  if [[ -n "${!fixed_k_var:-}" ]]; then fixed_k_args+=(--env "${fixed_k_var}=${!fixed_k_var}"); fi
+done
+if [[ -n "${VLLM_USE_V2_MODEL_RUNNER:-}" ]]; then
+  v2_runner_args=(--env "VLLM_USE_V2_MODEL_RUNNER=${VLLM_USE_V2_MODEL_RUNNER}")
+fi
 if [[ -n "${python_hash_seed}" ]]; then
   hash_seed_args=(--env "PYTHONHASHSEED=${python_hash_seed}")
 fi
@@ -351,6 +361,8 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN="${lm_head_batch_repair_margin}" \
   --env VLLM_XPU_LM_HEAD_GLOBAL_BATCH_REPAIR_MARGIN="${lm_head_global_batch_repair_margin}" \
   "${hash_seed_args[@]}" \
+  "${v2_runner_args[@]}" \
+  "${fixed_k_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
   --env CCL_ZE_IPC_EXCHANGE=pidfd \

@@ -143,7 +143,8 @@
           "url": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
           "note": "registry digest equals the local image id; public package"
         }
-      }
+      },
+      "note": "Fallback branch not exercised by this model; served R258/R259/R260b/R265b. The R257 headline pair ran R228 (identical code path)."
     }
   },
   "source_repositories": [
@@ -242,7 +243,7 @@
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-        "sha256": "cbf04af5d271fb0bc3d6bcd5ec37a47449c040495e11ca3c5a5e1c3bd5dfeef4"
+        "sha256": "261191889e523e8591318ce1ad209d61cdc176c4cb8a4878ca8bf420f0f1f7c4"
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
@@ -253,7 +254,8 @@
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
     "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12).",
-    "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0)."
+    "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0).",
+    "2026-09-06: container records show the R257 headline pair (112.36/112.33 tok/s) ran the R228 image (aaf920b0…), not R256; R258, R259, R260b and R265b ran R256. The R256 overlay's fallback branch is never taken on this model (the relabelled lm_head is unquantized and already provides make_xpu_int4_draft_copy), so both images execute the same code on this lane and both are public on GHCR; the recipe text and matrix were corrected."
   ],
   "release": {
     "tag": "qwen38-int4-fixed-k-r221-20260906",
@@ -338,5 +340,9 @@
         "OFFLOAD_DEVICE_CODE": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7"
       }
     }
+  },
+  "research_overlays_2026_09_06": {
+    "r266": "docker/r266-v2-draft-int4-head.py + Dockerfile.v2-draft-int4-head-r266: draft-only INT4 head for vLLM's V2 model runner (VLLM_USE_V2_MODEL_RUNNER=1); lossless and speed-equal to V1 (R269 112.70/112.96, 12/12). Local image sha256:1d12b64e46f9…; not part of the published closure.",
+    "r276": "docker/r276-gdn-spec-group-sync-free.py + Dockerfile.gdn-spec-group-sync-free-r276: arithmetic group boundaries in the grouped GDN speculative branch so XPU graph capture works above 16 sequences. Local image sha256:521eb277c073…; its first ladder (R277) was interrupted by a host GPU fault; R277b pending."
   }
 }
