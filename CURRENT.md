@@ -4454,7 +4454,7 @@ already uses (`mlp.experts` under a 13.4 GiB budget) halves the step to 37.0
 ms with every output pin unchanged: exact-2K `afffd211…` on A179, on a fresh server twice (A180) and on the
 promoted overlay (A187, whose frozen-client battery also reproduces the exact-4K
 authority `c6193cc6…` at 25.4 tok/s and passes 6/7 quality, 16/16 repeat, needle), and the fixed cold realistic suite at
-25.273193 tok/s class-balanced (A188) with all twelve row hashes equal to the
+25.617613 tok/s class-balanced on the promoted overlay (A188, LocalMaxxing-approved `cmtp3g14502cun701y5ey93rh`; 25.273 on the diagnostic overlay, A182) with all twelve row hashes equal to the
 approved A134 run (14.433684). Under 1 GiB of headroom already suffices
 (A181, 35.8 ms). The seventh host freeze (14:42) left a kernel trace for the
 first time: CPU soft lockups in the vLLM worker during a checkpoint load from
