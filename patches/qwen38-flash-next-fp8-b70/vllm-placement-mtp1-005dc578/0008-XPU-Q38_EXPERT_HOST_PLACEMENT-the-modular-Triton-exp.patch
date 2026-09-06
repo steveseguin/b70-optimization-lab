@@ -1,0 +1,38 @@
+From 2e04cdbd98127bc95660a718023a53cbe1d5e1fb Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 11:51:32 -0400
+Subject: [PATCH 8/9] [XPU] Q38_EXPERT_HOST_PLACEMENT: the modular Triton
+ experts path keys its tuned-config lookup on the logical expert count too
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../layers/fused_moe/experts/triton_moe.py           | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+index a34d160b0..1ce573eb6 100644
+--- a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+@@ -660,9 +660,17 @@ class TritonWNA16Experts(TritonExperts):
+         if global_num_experts == -1:
+             global_num_experts = E
+ 
++        # Q38_EXPERT_HOST_PLACEMENT: placed layers carry resident-sized weight tensors;
++        # key the tuned map on the layer's logical expert count.
++        _q38_logical_e = getattr(w1, "_q38_num_experts", None)
++        if _q38_logical_e:
++            _w1_cfg_shape = (int(_q38_logical_e),) + tuple(w1.size())[1:]
++            _w2_cfg_shape = (int(_q38_logical_e),) + tuple(w2.size())[1:]
++        else:
++            _w1_cfg_shape, _w2_cfg_shape = w1.size(), w2.size()
+         config = try_get_optimal_moe_config(
+-            w1.size(),
+-            w2.size(),
++            _w1_cfg_shape,
++            _w2_cfg_shape,
+             top_k_num,
+             self.quant_config.config_name(hidden_states.dtype),
+             num_tokens,
+-- 
+2.43.0
+

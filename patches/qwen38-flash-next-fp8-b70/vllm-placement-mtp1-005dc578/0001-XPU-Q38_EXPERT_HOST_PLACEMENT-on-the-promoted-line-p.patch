@@ -1,0 +1,228 @@
+From 0c4843c4d3f325e8017b964019f68ca9c311dbb5 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 00:21:49 -0400
+Subject: [PATCH 1/9] [XPU] Q38_EXPERT_HOST_PLACEMENT on the promoted line:
+ per-expert offset table in the Triton MoE kernel (USE_B_TABLE,
+ 256-byte-aligned offsets), cold expert rows in pinned host memory (UVA),
+ per-rank placement file; bit-identical outputs, resident rows at reference
+ speed
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../layers/fused_moe/fused_moe.py             |  21 +++-
+ .../model_executor/layers/quantization/fp8.py |   4 +
+ vllm/q38_expert_placement.py                  | 103 ++++++++++++++++++
+ 3 files changed, 123 insertions(+), 5 deletions(-)
+ create mode 100644 vllm/q38_expert_placement.py
+
+diff --git a/vllm/model_executor/layers/fused_moe/fused_moe.py b/vllm/model_executor/layers/fused_moe/fused_moe.py
+index a57a654e7..e17cb4cf4 100644
+--- a/vllm/model_executor/layers/fused_moe/fused_moe.py
++++ b/vllm/model_executor/layers/fused_moe/fused_moe.py
+@@ -300,6 +300,7 @@ def fused_moe_kernel(
+     # Pointers to matrices
+     a_ptr,
+     b_ptr,
++    b_table_ptr,
+     c_ptr,
+     b_bias_ptr,
+     a_scale_ptr,
+@@ -350,6 +351,7 @@ def fused_moe_kernel(
+     per_channel_quant: tl.constexpr,
+     HAS_BIAS: tl.constexpr,
+     SWAP_AB: tl.constexpr,
++    USE_B_TABLE: tl.constexpr = False,
+     # Tensor-descriptor path for the A gather and B load in the K-loop.
+     USE_TD: tl.constexpr = False,
+ ):
+@@ -421,6 +423,14 @@ def fused_moe_kernel(
+     token_mask = offs_token < num_valid_tokens
+ 
+     off_experts = tl.load(expert_ids_ptr + pid_m).to(tl.int64)
++    if USE_B_TABLE:
++        # Q38 per-expert placement: rows of B may live in device or (UVA) host memory;
++        # the table holds each expert's row offset (elements, signed) from b_ptr. Same bytes, same math.
++        b_off = tl.load(b_table_ptr + tl.maximum(off_experts, 0))
++        b_off = tl.multiple_of(b_off, 256)  # rows are 256-byte-aligned allocations; keeps vector loads
++        b_base = b_ptr + b_off
++    else:
++        b_base = b_ptr + off_experts * stride_be
+     if off_experts == -1:
+         # -----------------------------------------------------------
+         # Write back zeros to the output when the expert is not
+@@ -453,7 +463,7 @@ def fused_moe_kernel(
+             block_shape=(1, BLOCK_SIZE_K),
+         )
+         b_desc = tl.make_tensor_descriptor(
+-            base=b_ptr + off_experts * stride_be,
++            base=b_base,
+             shape=(N, K),
+             strides=(stride_bn, stride_bk),
+             block_shape=(BLOCK_SIZE_N, BLOCK_SIZE_K),
+@@ -464,8 +474,7 @@ def fused_moe_kernel(
+             offs_k[:, None] * stride_ak + offs_token[None, :] // top_k * stride_am
+         )
+         b_ptrs = (
+-            b_ptr
+-            + off_experts * stride_be
++            b_base
+             + (offs_bn[:, None] * stride_bn + offs_k[None, :] * stride_bk)
+         )
+     else:
+@@ -473,8 +482,7 @@ def fused_moe_kernel(
+             offs_token[:, None] // top_k * stride_am + offs_k[None, :] * stride_ak
+         )
+         b_ptrs = (
+-            b_ptr
+-            + off_experts * stride_be
++            b_base
+             + (offs_k[:, None] * stride_bk + offs_bn[None, :] * stride_bn)
+         )
+     if use_int8_w8a16:
+@@ -863,9 +871,11 @@ def invoke_fused_moe_triton_kernel(
+     if A_scale is not None and A_scale.ndim == 0:
+         A_scale = A_scale.reshape(1)
+ 
++    _q38_b_table = getattr(B, "_q38_base_table", None)
+     fused_moe_kernel[grid](
+         A,
+         B,
++        B if _q38_b_table is None else _q38_b_table,
+         C,
+         B_bias,
+         A_scale,
+@@ -905,6 +915,7 @@ def invoke_fused_moe_triton_kernel(
+         HAS_BIAS=HAS_BIAS,
+         BLOCK_SIZE_K=BLOCK_SIZE_K,
+         SWAP_AB=SWAP_AB,
++        USE_B_TABLE=_q38_b_table is not None,
+         USE_TD=use_td,
+         **config,
+     )
+diff --git a/vllm/model_executor/layers/quantization/fp8.py b/vllm/model_executor/layers/quantization/fp8.py
+index 1b7db21be..6d2950685 100644
+--- a/vllm/model_executor/layers/quantization/fp8.py
++++ b/vllm/model_executor/layers/quantization/fp8.py
+@@ -725,6 +725,10 @@ class Fp8MoEMethod(FusedMoEMethodBase):
+         replace_parameter(layer, f"w13_{self.weight_scale_name}", w13_scale)
+         replace_parameter(layer, f"w2_{self.weight_scale_name}", w2_scale)
+ 
++        from vllm import q38_expert_placement as _q38_place
++
++        _q38_place.maybe_place(layer)
++
+         self.moe_quant_config = self.get_fused_moe_quant_config(layer)
+         assert self.moe_quant_config is not None
+         assert self.experts_cls is not None
+diff --git a/vllm/q38_expert_placement.py b/vllm/q38_expert_placement.py
+new file mode 100644
+index 000000000..2c123307d
+--- /dev/null
++++ b/vllm/q38_expert_placement.py
+@@ -0,0 +1,103 @@
++"""Q38 per-expert host placement (timing-only diagnostics lane, bit-exact by construction).
++
++`Q38_EXPERT_HOST_PLACEMENT=<json>`: {"<layer_idx>": [local expert ids]} names routed experts
++whose weight rows live in pinned host memory (UVA view) instead of VRAM. After the FP8 MoE
++post-load step, each MoE layer's `w13_weight` / `w2_weight` [E, N, K] is split into a resident
++device tensor and a host tensor, the original is freed, and an int64 base-address table
++(one entry per local expert) is attached to the resident tensor as `_q38_base_table`; the
++Triton kernel then loads each expert's row base from the table (`USE_B_TABLE`) and runs the
++unchanged math on the unchanged bytes. Block scales stay on the device in full.
++"""
++import json
++import os
++import re
++
++import torch
++
++from vllm.logger import init_logger
++
++logger = init_logger(__name__)
++
++PLACEMENT_PATH = os.getenv("Q38_EXPERT_HOST_PLACEMENT", "")
++_PLACEMENT: dict[int, list[int]] | None = None
++_STATS = {"layers": 0, "host_experts": 0, "host_bytes": 0}
++
++
++def _placement() -> dict[int, list[int]]:
++    """Placement for this rank. File format: {"<rank>": {"<layer>": [local ids]}} (per-rank, EP
++    linear placement) or the flat {"<layer>": [local ids]} form applied to every rank."""
++    global _PLACEMENT
++    if _PLACEMENT is None:
++        raw = json.loads(open(PLACEMENT_PATH).read()) if PLACEMENT_PATH else {}
++        if raw and all(isinstance(v, dict) for v in raw.values()):
++            from vllm.distributed import get_tensor_model_parallel_rank
++            raw = raw.get(str(get_tensor_model_parallel_rank()), {})
++        _PLACEMENT = {int(k): sorted(int(e) for e in v) for k, v in raw.items()}
++    return _PLACEMENT
++
++
++def _layer_index(layer: torch.nn.Module) -> int | None:
++    name = getattr(layer, "layer_name", None) or getattr(layer, "prefix", "") or ""
++    m = re.search(r"layers\.(\d+)\.", str(name))
++    return int(m.group(1)) if m else None
++
++
++def _split(weight: torch.Tensor, host_rows: list[int]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++    """Return (resident, host_uva_view, base_table) for a [E, N, K] weight."""
++    from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
++
++    E = weight.shape[0]
++    host_set = set(host_rows)
++    res_rows = [e for e in range(E) if e not in host_set]
++    resident = weight[res_rows].contiguous() if res_rows else weight[:0].contiguous()
++    host_cpu = torch.empty((len(host_rows),) + tuple(weight.shape[1:]), dtype=weight.dtype, pin_memory=True)
++    if host_rows:
++        host_cpu.copy_(weight[host_rows].cpu())
++    host = get_accelerator_view_from_cpu_tensor(host_cpu)
++    row_bytes = weight[0].numel() * weight.element_size()
++    # the kernel adds the table entry to the resident tensor's base pointer, so entries are
++    # signed element offsets (host rows are far away in the same virtual address space)
++    esz = weight.element_size(); base = resident.data_ptr()
++    def _off(addr: int) -> int:
++        # signed 64-bit element offset from the resident base (pointer arithmetic wraps mod 2**64)
++        d = ((addr - base) + 2**63) % 2**64 - 2**63
++        assert d % esz == 0, (addr, base, esz)
++        return d // esz
++    table = torch.empty(E, dtype=torch.int64)
++    for i, e in enumerate(res_rows):
++        table[e] = _off(resident.data_ptr() + i * row_bytes)
++    for i, e in enumerate(host_rows):
++        table[e] = _off(host.data_ptr() + i * row_bytes)
++    return resident, host, table.to(weight.device)
++
++
++def maybe_place(layer: torch.nn.Module) -> None:
++    """Split this MoE layer's expert weights per the placement file (no-op when unset)."""
++    if not PLACEMENT_PATH:
++        return
++    idx = _layer_index(layer)
++    rows = _placement().get(idx, []) if idx is not None else []
++    if not rows:
++        return
++    for name in ("w13_weight", "w2_weight"):
++        param = getattr(layer, name)
++        weight = param.data
++        assert weight.dim() == 3 and weight.is_contiguous(), (name, weight.shape, weight.is_contiguous())
++        resident, host, table = _split(weight, rows)
++        new_param = torch.nn.Parameter(resident, requires_grad=False)
++        for attr in ("weight_loader",):
++            if hasattr(param, attr):
++                setattr(new_param, attr, getattr(param, attr))
++        new_param._q38_base_table = table
++        new_param._q38_host_storage = host  # keep the UVA view alive
++        new_param._q38_num_experts = weight.shape[0]
++        setattr(layer, name, new_param)
++        _STATS["host_bytes"] += host.numel() * host.element_size()
++        del weight, param
++    _STATS["layers"] += 1
++    _STATS["host_experts"] += len(rows)
++    torch.xpu.empty_cache()
++    logger.info(
++        "Q38_EXPERT_HOST_PLACEMENT layer %s: %d experts host-resident (%d/%d layers so far, %.2f GiB host)",
++        idx, len(rows), _STATS["layers"], _STATS["layers"], _STATS["host_bytes"] / 2**30,
++    )
+-- 
+2.43.0
+

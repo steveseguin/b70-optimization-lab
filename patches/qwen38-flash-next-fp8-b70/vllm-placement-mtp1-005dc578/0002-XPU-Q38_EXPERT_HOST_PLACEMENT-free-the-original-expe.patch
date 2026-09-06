@@ -1,0 +1,148 @@
+From 6fc1721806dc7df61709b2e830c93ea96e42893d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 00:40:15 -0400
+Subject: [PATCH 2/9] [XPU] Q38_EXPERT_HOST_PLACEMENT: free the original expert
+ tensor before allocating the compact resident copy (per-layer host staging),
+ empty_cache after the last placed layer
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ vllm/q38_expert_placement.py | 105 ++++++++++++++++++++++-------------
+ 1 file changed, 66 insertions(+), 39 deletions(-)
+
+diff --git a/vllm/q38_expert_placement.py b/vllm/q38_expert_placement.py
+index 2c123307d..917cdf3e3 100644
+--- a/vllm/q38_expert_placement.py
++++ b/vllm/q38_expert_placement.py
+@@ -42,12 +42,27 @@ def _layer_index(layer: torch.nn.Module) -> int | None:
+     return int(m.group(1)) if m else None
+ 
+ 
++def _table(resident: torch.Tensor, host: torch.Tensor, res_rows: list[int], host_rows: list[int], E: int, row_bytes: int) -> torch.Tensor:
++    """Signed element offsets of every expert's row from the resident tensor's base (pointer
++    arithmetic wraps mod 2**64; host rows are far away in the same virtual address space)."""
++    esz = resident.element_size(); base = resident.data_ptr()
++    def _off(addr: int) -> int:
++        d = ((addr - base) + 2**63) % 2**64 - 2**63
++        assert d % esz == 0, (addr, base, esz)
++        return d // esz
++    table = torch.empty(E, dtype=torch.int64)
++    for i, e in enumerate(res_rows):
++        table[e] = _off(resident.data_ptr() + i * row_bytes)
++    for i, e in enumerate(host_rows):
++        table[e] = _off(host.data_ptr() + i * row_bytes)
++    return table.to(resident.device)
++
++
+ def _split(weight: torch.Tensor, host_rows: list[int]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+-    """Return (resident, host_uva_view, base_table) for a [E, N, K] weight."""
++    """Single-layer split (used by the offline test): (resident, host_uva_view, table)."""
+     from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
+ 
+-    E = weight.shape[0]
+-    host_set = set(host_rows)
++    E = weight.shape[0]; host_set = set(host_rows)
+     res_rows = [e for e in range(E) if e not in host_set]
+     resident = weight[res_rows].contiguous() if res_rows else weight[:0].contiguous()
+     host_cpu = torch.empty((len(host_rows),) + tuple(weight.shape[1:]), dtype=weight.dtype, pin_memory=True)
+@@ -55,20 +70,44 @@ def _split(weight: torch.Tensor, host_rows: list[int]) -> tuple[torch.Tensor, to
+         host_cpu.copy_(weight[host_rows].cpu())
+     host = get_accelerator_view_from_cpu_tensor(host_cpu)
+     row_bytes = weight[0].numel() * weight.element_size()
+-    # the kernel adds the table entry to the resident tensor's base pointer, so entries are
+-    # signed element offsets (host rows are far away in the same virtual address space)
+-    esz = weight.element_size(); base = resident.data_ptr()
+-    def _off(addr: int) -> int:
+-        # signed 64-bit element offset from the resident base (pointer arithmetic wraps mod 2**64)
+-        d = ((addr - base) + 2**63) % 2**64 - 2**63
+-        assert d % esz == 0, (addr, base, esz)
+-        return d // esz
+-    table = torch.empty(E, dtype=torch.int64)
+-    for i, e in enumerate(res_rows):
+-        table[e] = _off(resident.data_ptr() + i * row_bytes)
+-    for i, e in enumerate(host_rows):
+-        table[e] = _off(host.data_ptr() + i * row_bytes)
+-    return resident, host, table.to(weight.device)
++    return resident, host, _table(resident, host, res_rows, host_rows, E, row_bytes)
++
++
++# Server path: per layer, stage the rows on the host, FREE the original device tensor, then
++# allocate the compact resident tensor so it lands in the block the original just released.
++# Allocating the copy while the original is alive grows the caching pool and leaves the card
++# full (A196: reserved +0.85 GiB, device free 0.01 GiB, partial paging).
++
++
++def _place_param(layer: torch.nn.Module, name: str, rows: list[int]) -> None:
++    from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
++
++    param = getattr(layer, name); weight = param.data
++    assert weight.dim() == 3 and weight.is_contiguous(), (name, weight.shape, weight.is_contiguous())
++    E = weight.shape[0]; host_set = set(rows); tail = tuple(weight.shape[1:]); dtype = weight.dtype; device = weight.device
++    res_rows = [e for e in range(E) if e not in host_set]
++    res_cpu = torch.empty((len(res_rows),) + tail, dtype=dtype, pin_memory=True)
++    res_cpu.copy_(weight[res_rows].cpu())
++    host_cpu = torch.empty((len(rows),) + tail, dtype=dtype, pin_memory=True)
++    host_cpu.copy_(weight[rows].cpu())
++    loader = getattr(param, "weight_loader", None)
++    # release the original before allocating the resident copy
++    setattr(layer, name, torch.nn.Parameter(torch.empty(0, dtype=dtype, device=device), requires_grad=False))
++    del weight, param
++    torch.xpu.synchronize()
++    resident = torch.empty((len(res_rows),) + tail, dtype=dtype, device=device)
++    resident.copy_(res_cpu)
++    del res_cpu
++    host = get_accelerator_view_from_cpu_tensor(host_cpu)
++    row_bytes = int(torch.tensor(tail).prod().item()) * resident.element_size()
++    new_param = torch.nn.Parameter(resident, requires_grad=False)
++    if loader is not None:
++        new_param.weight_loader = loader
++    new_param._q38_base_table = _table(resident, host, res_rows, rows, E, row_bytes)
++    new_param._q38_host_storage = host
++    new_param._q38_num_experts = E
++    setattr(layer, name, new_param)
++    _STATS["host_bytes"] += host.numel() * host.element_size()
+ 
+ 
+ def maybe_place(layer: torch.nn.Module) -> None:
+@@ -76,28 +115,16 @@ def maybe_place(layer: torch.nn.Module) -> None:
+     if not PLACEMENT_PATH:
+         return
+     idx = _layer_index(layer)
+-    rows = _placement().get(idx, []) if idx is not None else []
++    pl = _placement()
++    rows = pl.get(idx, []) if idx is not None else []
+     if not rows:
+         return
+     for name in ("w13_weight", "w2_weight"):
+-        param = getattr(layer, name)
+-        weight = param.data
+-        assert weight.dim() == 3 and weight.is_contiguous(), (name, weight.shape, weight.is_contiguous())
+-        resident, host, table = _split(weight, rows)
+-        new_param = torch.nn.Parameter(resident, requires_grad=False)
+-        for attr in ("weight_loader",):
+-            if hasattr(param, attr):
+-                setattr(new_param, attr, getattr(param, attr))
+-        new_param._q38_base_table = table
+-        new_param._q38_host_storage = host  # keep the UVA view alive
+-        new_param._q38_num_experts = weight.shape[0]
+-        setattr(layer, name, new_param)
+-        _STATS["host_bytes"] += host.numel() * host.element_size()
+-        del weight, param
+-    _STATS["layers"] += 1
+-    _STATS["host_experts"] += len(rows)
+-    torch.xpu.empty_cache()
+-    logger.info(
+-        "Q38_EXPERT_HOST_PLACEMENT layer %s: %d experts host-resident (%d/%d layers so far, %.2f GiB host)",
+-        idx, len(rows), _STATS["layers"], _STATS["layers"], _STATS["host_bytes"] / 2**30,
+-    )
++        _place_param(layer, name, rows)
++    _STATS["layers"] += 1; _STATS["host_experts"] += len(rows)
++    last = _STATS["layers"] == len(pl)
++    if last:
++        torch.xpu.synchronize(); torch.xpu.empty_cache()
++    logger.info("Q38_EXPERT_HOST_PLACEMENT layer %s: %d experts host-resident (%d/%d placed layers, %.2f GiB host%s)",
++                idx, len(rows), _STATS["layers"], len(pl), _STATS["host_bytes"] / 2**30,
++                f"; allocator reserved {torch.xpu.memory_reserved() / 2**30:.3f} GiB after empty_cache" if last else "")
+-- 
+2.43.0
+

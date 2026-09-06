@@ -1,0 +1,180 @@
+From ddbc661a14bf39afde92af28469544404dd9fb72 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 10:28:55 -0400
+Subject: [PATCH 5/9] [XPU] Q38_EXPERT_HOST_PLACEMENT v5 on the promoted line:
+ load-time placement (resident-sized device tensors at weight creation, loader
+ writes cold rows to pinned host memory through row_view; post-load
+ re-attaches the offset tables)
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../layers/fused_moe/routed_experts.py        |  10 +-
+ vllm/q38_expert_placement.py                  | 117 +++++++++++-------
+ 2 files changed, 82 insertions(+), 45 deletions(-)
+
+diff --git a/vllm/model_executor/layers/fused_moe/routed_experts.py b/vllm/model_executor/layers/fused_moe/routed_experts.py
+index 59562ed8b..155ea7ec5 100644
+--- a/vllm/model_executor/layers/fused_moe/routed_experts.py
++++ b/vllm/model_executor/layers/fused_moe/routed_experts.py
+@@ -174,6 +174,9 @@ class RoutedExperts(PluggableLayer):
+             )
+ 
+         self.quant_method.create_weights(layer=self, **moe_quant_params)
++        from vllm import q38_expert_placement as _q38_place
++
++        _q38_place.prepare_layer(self)
+ 
+         self.lora_base_layer_prefix = ""
+ 
+@@ -679,7 +682,12 @@ class RoutedExperts(PluggableLayer):
+         if full_load:
+             shard_dim += 1
+ 
+-        expert_data = param.data if full_load else param.data[expert_id]
++        if full_load:
++            expert_data = param.data
++        else:
++            from vllm import q38_expert_placement as _q38_place
++
++            expert_data = _q38_place.row_view(param, expert_id)
+ 
+         if "bias" in weight_name:
+             self._loaded_expert_biases.add(weight_name.rsplit(".", 1)[-1])
+diff --git a/vllm/q38_expert_placement.py b/vllm/q38_expert_placement.py
+index 638e98f6c..31df26666 100644
+--- a/vllm/q38_expert_placement.py
++++ b/vllm/q38_expert_placement.py
+@@ -73,57 +73,86 @@ def _split(weight: torch.Tensor, host_rows: list[int]) -> tuple[torch.Tensor, to
+     return resident, host, _table(resident, host, res_rows, host_rows, E, row_bytes)
+ 
+ 
+-# Server path (v4): per layer, stage the rows on the host (~760 MB pinned, transient), FREE the
+-# original device tensor, empty the cache so its dedicated large segment goes back to the driver,
+-# and only then allocate the compact resident copy, which gets a fresh exact-size segment.
+-# (v2 allocated the copy before empty_cache and it landed inside the old segment, leaving holes
+-# the driver never got back; v3 staged all rows at once and exceeded the host memory left next
+-# to the PLE offload.)
++# Server path (v5, load time): right after the MoE weights are created, a placed layer's
++# `w13_weight`/`w2_weight` are re-created at their RESIDENT size on the device plus a pinned host
++# tensor for the cold rows (UVA view); the weight loader writes each expert row through
++# `row_view()`, so cold experts land in host memory during loading and the device pool is compact
++# from the start (post-load compaction cannot release the loader's shared segments: A196/A199/A207).
+ 
+ 
+-def _place_param(layer: torch.nn.Module, name: str, rows: list[int]) -> None:
++def _layer_rows(layer: torch.nn.Module) -> list[int]:
++    if not PLACEMENT_PATH:
++        return []
++    idx = _layer_index(layer)
++    return _placement().get(idx, []) if idx is not None else []
++
++
++def prepare_layer(layer: torch.nn.Module) -> None:
++    """Called once after create_weights(): replace the expert weight parameters of a placed layer
++    with resident-sized device tensors, host tensors for the cold rows, per-expert row maps and
++    the kernel's offset tables."""
+     from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
+ 
+-    param = getattr(layer, name); weight = param.data
+-    assert weight.dim() == 3 and weight.is_contiguous(), (name, weight.shape, weight.is_contiguous())
+-    E = weight.shape[0]; host_set = set(rows); tail = tuple(weight.shape[1:]); dtype = weight.dtype; device = weight.device
+-    res_rows = [e for e in range(E) if e not in host_set]
+-    res_cpu = torch.empty((len(res_rows),) + tail, dtype=dtype, pin_memory=True)
+-    res_cpu.copy_(weight[res_rows].cpu())
+-    host_cpu = torch.empty((len(rows),) + tail, dtype=dtype, pin_memory=True)
+-    host_cpu.copy_(weight[rows].cpu())
+-    loader = getattr(param, "weight_loader", None)
+-    setattr(layer, name, torch.nn.Parameter(torch.empty(0, dtype=dtype, device=device), requires_grad=False))
+-    del weight, param
+-    torch.xpu.synchronize(); torch.xpu.empty_cache()  # return the original's dedicated segment to the driver
+-    resident = torch.empty((len(res_rows),) + tail, dtype=dtype, device=device)
+-    resident.copy_(res_cpu)
+-    del res_cpu
+-    host = get_accelerator_view_from_cpu_tensor(host_cpu)
+-    row_bytes = int(torch.tensor(tail).prod().item()) * resident.element_size()
+-    new_param = torch.nn.Parameter(resident, requires_grad=False)
+-    if loader is not None:
+-        new_param.weight_loader = loader
+-    new_param._q38_base_table = _table(resident, host, res_rows, rows, E, row_bytes)
+-    new_param._q38_host_storage = host
+-    new_param._q38_num_experts = E
+-    setattr(layer, name, new_param)
+-    _STATS["host_bytes"] += host.numel() * host.element_size()
++    rows = _layer_rows(layer)
++    if not rows:
++        return
++    host_set = set(rows)
++    for name in ("w13_weight", "w2_weight"):
++        param = getattr(layer, name); weight = param.data
++        E = weight.shape[0]; tail = tuple(weight.shape[1:]); dtype = weight.dtype; device = weight.device
++        res_rows = [e for e in range(E) if e not in host_set]
++        attrs = {k: v for k, v in param.__dict__.items() if k != "_parameters"}
++        loader = getattr(param, "weight_loader", None)
++        # drop the full-size tensor before allocating the resident one
++        setattr(layer, name, torch.nn.Parameter(torch.empty(0, dtype=dtype, device=device), requires_grad=False))
++        del weight, param
++        resident = torch.empty((len(res_rows),) + tail, dtype=dtype, device=device)
++        host_cpu = torch.empty((len(rows),) + tail, dtype=dtype, pin_memory=True)
++        host = get_accelerator_view_from_cpu_tensor(host_cpu)
++        row_bytes = int(torch.tensor(tail).prod().item()) * resident.element_size()
++        new_param = torch.nn.Parameter(resident, requires_grad=False)
++        for k, v in attrs.items():
++            if k not in ("data", "grad"):
++                try: setattr(new_param, k, v)
++                except Exception: pass
++        if loader is not None:
++            new_param.weight_loader = loader
++        new_param._q38_row_map = {e: ("resident", i) for i, e in enumerate(res_rows)} | {e: ("host", i) for i, e in enumerate(rows)}
++        new_param._q38_host_storage = host
++        new_param._q38_host_cpu = host_cpu
++        new_param._q38_num_experts = E
++        new_param._q38_base_table = _table(resident, host, res_rows, rows, E, row_bytes)
++        setattr(layer, name, new_param)
++        setattr(layer, f"_q38_placed_{name}", new_param)
++        _STATS["host_bytes"] += host.numel() * host.element_size()
++    _STATS["layers"] += 1; _STATS["host_experts"] += len(rows)
++    logger.info("Q38_EXPERT_HOST_PLACEMENT (load time) layer %s: %d of %d experts host-resident (%d placed layers so far, %.2f GiB host)",
++                _layer_index(layer), len(rows), _STATS.get("E", 0) or 0, _STATS["layers"], _STATS["host_bytes"] / 2**30)
++
++
++def row_view(param: torch.nn.Parameter, expert_id: int) -> torch.Tensor:
++    """The tensor the weight loader should write expert `expert_id` (local id) into."""
++    rm = getattr(param, "_q38_row_map", None)
++    if rm is None:
++        return param.data[expert_id]
++    kind, i = rm[expert_id]
++    return param.data[i] if kind == "resident" else param._q38_host_cpu[i]
+ 
+ 
+ def maybe_place(layer: torch.nn.Module) -> None:
+-    """Split this MoE layer's expert weights per the placement file (no-op when unset)."""
+-    if not PLACEMENT_PATH:
+-        return
+-    idx = _layer_index(layer)
+-    pl = _placement()
+-    rows = pl.get(idx, []) if idx is not None else []
++    """Post-load: re-attach the placement attributes after replace_parameter() rebuilt the
++    parameters (TRITON keeps the tensors, so the tables stay valid; recompute otherwise)."""
++    rows = _layer_rows(layer)
+     if not rows:
+         return
+     for name in ("w13_weight", "w2_weight"):
+-        _place_param(layer, name, rows)
+-    _STATS["layers"] += 1; _STATS["host_experts"] += len(rows)
+-    last = _STATS["layers"] == len(pl)
+-    logger.info("Q38_EXPERT_HOST_PLACEMENT layer %s: %d experts host-resident (%d/%d placed layers, %.2f GiB host%s)",
+-                idx, len(rows), _STATS["layers"], len(pl), _STATS["host_bytes"] / 2**30,
+-                f"; allocator reserved {torch.xpu.memory_reserved() / 2**30:.3f} GiB, allocated {torch.xpu.memory_allocated() / 2**30:.3f} GiB" if last else "")
++        param = getattr(layer, name)
++        if getattr(param, "_q38_base_table", None) is not None:
++            continue
++        # find the attributes on any earlier parameter object sharing this storage
++        cand = getattr(layer, f"_q38_placed_{name}", None)
++        if cand is not None and cand.data.data_ptr() == param.data.data_ptr():
++            for k in ("_q38_row_map", "_q38_host_storage", "_q38_host_cpu", "_q38_num_experts", "_q38_base_table"):
++                setattr(param, k, getattr(cand, k))
++        else:
++            raise RuntimeError(f"Q38_EXPERT_HOST_PLACEMENT: {name} lost its placement attributes after post-load processing")
+-- 
+2.43.0
+

@@ -1,0 +1,39 @@
+From 005dc57895896f770157ea94f68e473e7447139e Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 12:20:56 -0400
+Subject: [PATCH 9/9] [XPU] Q38_EXPERT_HOST_PLACEMENT: the M1 phase-config
+ lookup (try_get_optimal_moe_gemm_configs) keys on the logical expert count
+ too
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../layers/fused_moe/experts/triton_moe.py           | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+index 1ce573eb6..5c1477487 100644
+--- a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+@@ -284,9 +284,17 @@ class TritonExperts(LoRAExpertsMixin, mk.FusedMoEExpertsModular):
+         if global_num_experts == -1:
+             global_num_experts = E
+ 
++        # Q38_EXPERT_HOST_PLACEMENT: placed layers carry resident-sized weight tensors;
++        # key the tuned map (and its M1 phase deltas) on the logical expert count.
++        _q38_logical_e = getattr(w1, "_q38_num_experts", None)
++        if _q38_logical_e:
++            _w1_cfg_shape = (int(_q38_logical_e),) + tuple(w1.size())[1:]
++            _w2_cfg_shape = (int(_q38_logical_e),) + tuple(w2.size())[1:]
++        else:
++            _w1_cfg_shape, _w2_cfg_shape = w1.size(), w2.size()
+         w1_config, w2_config = try_get_optimal_moe_gemm_configs(
+-            w1.size(),
+-            w2.size(),
++            _w1_cfg_shape,
++            _w2_cfg_shape,
+             top_k_num,
+             self.quant_config.config_name(hidden_states.dtype),
+             num_tokens,
+-- 
+2.43.0
+

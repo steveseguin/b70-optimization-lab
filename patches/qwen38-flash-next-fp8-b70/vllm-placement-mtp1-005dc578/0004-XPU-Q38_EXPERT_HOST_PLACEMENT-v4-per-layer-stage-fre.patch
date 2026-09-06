@@ -1,0 +1,136 @@
+From 6d2cab04ef81efd9d6ebddd269ba5adc67ea6c9a Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 01:10:44 -0400
+Subject: [PATCH 4/9] [XPU] Q38_EXPERT_HOST_PLACEMENT v4: per-layer stage,
+ free, empty_cache, compact reallocation
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ vllm/q38_expert_placement.py | 102 +++++++++++++++--------------------
+ 1 file changed, 42 insertions(+), 60 deletions(-)
+
+diff --git a/vllm/q38_expert_placement.py b/vllm/q38_expert_placement.py
+index 7013cc71d..638e98f6c 100644
+--- a/vllm/q38_expert_placement.py
++++ b/vllm/q38_expert_placement.py
+@@ -73,75 +73,57 @@ def _split(weight: torch.Tensor, host_rows: list[int]) -> tuple[torch.Tensor, to
+     return resident, host, _table(resident, host, res_rows, host_rows, E, row_bytes)
+ 
+ 
+-# Server path (v3): record the placed layers as their post-load hook runs; when the last placed
+-# layer arrives, ranks take turns (distributed barrier) to stage ALL their resident rows on the
+-# host, free every original device tensor, empty the cache so the allocator returns the
+-# dedicated large segments to the driver, and only then allocate the compact resident copies.
+-# Splitting layer by layer leaves each copy inside its original's segment (39 MB holes that the
+-# driver never gets back: A196 reserved 30.7 GiB, A199 31.2 GiB).
+-_PENDING: list[tuple[torch.nn.Module, int, list[int]]] = []
++# Server path (v4): per layer, stage the rows on the host (~760 MB pinned, transient), FREE the
++# original device tensor, empty the cache so its dedicated large segment goes back to the driver,
++# and only then allocate the compact resident copy, which gets a fresh exact-size segment.
++# (v2 allocated the copy before empty_cache and it landed inside the old segment, leaving holes
++# the driver never got back; v3 staged all rows at once and exceeded the host memory left next
++# to the PLE offload.)
+ 
+ 
+-def _stage_rows(weight: torch.Tensor, rows: list[int]) -> torch.Tensor:
+-    t = torch.empty((len(rows),) + tuple(weight.shape[1:]), dtype=weight.dtype, pin_memory=True)
+-    if rows:
+-        t.copy_(weight[rows].cpu())
+-    return t
+-
+-
+-def _finalize_rank() -> None:
++def _place_param(layer: torch.nn.Module, name: str, rows: list[int]) -> None:
+     from vllm.utils.torch_utils import get_accelerator_view_from_cpu_tensor
+ 
+-    staged = []
+-    for layer, idx, rows in _PENDING:
+-        for name in ("w13_weight", "w2_weight"):
+-            param = getattr(layer, name); weight = param.data
+-            assert weight.dim() == 3 and weight.is_contiguous(), (name, weight.shape)
+-            E = weight.shape[0]; host_set = set(rows)
+-            res_rows = [e for e in range(E) if e not in host_set]
+-            staged.append((layer, name, _stage_rows(weight, res_rows), _stage_rows(weight, rows), res_rows, rows, E,
+-                           tuple(weight.shape[1:]), weight.dtype, weight.device, getattr(param, "weight_loader", None)))
+-            setattr(layer, name, torch.nn.Parameter(torch.empty(0, dtype=weight.dtype, device=weight.device), requires_grad=False))
+-            del weight, param
+-    torch.xpu.synchronize(); torch.xpu.empty_cache()
+-    reserved_after_free = torch.xpu.memory_reserved() / 2**30
+-    for layer, name, res_cpu, host_cpu, res_rows, rows, E, tail, dtype, device, loader in staged:
+-        resident = torch.empty((len(res_rows),) + tail, dtype=dtype, device=device)
+-        resident.copy_(res_cpu)
+-        host = get_accelerator_view_from_cpu_tensor(host_cpu)
+-        row_bytes = int(torch.tensor(tail).prod().item()) * resident.element_size()
+-        new_param = torch.nn.Parameter(resident, requires_grad=False)
+-        if loader is not None:
+-            new_param.weight_loader = loader
+-        new_param._q38_base_table = _table(resident, host, res_rows, rows, E, row_bytes)
+-        new_param._q38_host_storage = host
+-        new_param._q38_num_experts = E
+-        setattr(layer, name, new_param)
+-        _STATS["host_bytes"] += host.numel() * host.element_size()
+-    del staged
+-    torch.xpu.synchronize(); torch.xpu.empty_cache()
+-    logger.info("Q38_EXPERT_HOST_PLACEMENT finalized: %d layers, %.2f GiB host-resident; allocator reserved %.3f GiB after freeing the originals, %.3f GiB after the compact reallocation",
+-                len(_PENDING), _STATS["host_bytes"] / 2**30, reserved_after_free, torch.xpu.memory_reserved() / 2**30)
+-    _PENDING.clear()
++    param = getattr(layer, name); weight = param.data
++    assert weight.dim() == 3 and weight.is_contiguous(), (name, weight.shape, weight.is_contiguous())
++    E = weight.shape[0]; host_set = set(rows); tail = tuple(weight.shape[1:]); dtype = weight.dtype; device = weight.device
++    res_rows = [e for e in range(E) if e not in host_set]
++    res_cpu = torch.empty((len(res_rows),) + tail, dtype=dtype, pin_memory=True)
++    res_cpu.copy_(weight[res_rows].cpu())
++    host_cpu = torch.empty((len(rows),) + tail, dtype=dtype, pin_memory=True)
++    host_cpu.copy_(weight[rows].cpu())
++    loader = getattr(param, "weight_loader", None)
++    setattr(layer, name, torch.nn.Parameter(torch.empty(0, dtype=dtype, device=device), requires_grad=False))
++    del weight, param
++    torch.xpu.synchronize(); torch.xpu.empty_cache()  # return the original's dedicated segment to the driver
++    resident = torch.empty((len(res_rows),) + tail, dtype=dtype, device=device)
++    resident.copy_(res_cpu)
++    del res_cpu
++    host = get_accelerator_view_from_cpu_tensor(host_cpu)
++    row_bytes = int(torch.tensor(tail).prod().item()) * resident.element_size()
++    new_param = torch.nn.Parameter(resident, requires_grad=False)
++    if loader is not None:
++        new_param.weight_loader = loader
++    new_param._q38_base_table = _table(resident, host, res_rows, rows, E, row_bytes)
++    new_param._q38_host_storage = host
++    new_param._q38_num_experts = E
++    setattr(layer, name, new_param)
++    _STATS["host_bytes"] += host.numel() * host.element_size()
+ 
+ 
+ def maybe_place(layer: torch.nn.Module) -> None:
+-    """Record this MoE layer's placement (no-op when unset); the last placed layer triggers the
+-    rank-serialized compaction of every recorded layer."""
++    """Split this MoE layer's expert weights per the placement file (no-op when unset)."""
+     if not PLACEMENT_PATH:
+         return
+     idx = _layer_index(layer)
+     pl = _placement()
+     rows = pl.get(idx, []) if idx is not None else []
+-    if rows:
+-        _PENDING.append((layer, idx, rows))
+-        _STATS["layers"] += 1; _STATS["host_experts"] += len(rows)
+-    if pl and _STATS["layers"] == len(pl) and _PENDING:
+-        from vllm.distributed import get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size, get_tp_group
+-        rank, world = get_tensor_model_parallel_rank(), get_tensor_model_parallel_world_size()
+-        group = get_tp_group().cpu_group  # host-side barrier (gloo)
+-        for r in range(world):
+-            if r == rank:
+-                logger.info("Q38_EXPERT_HOST_PLACEMENT rank %d/%d: compacting %d layers", rank, world, len(_PENDING))
+-                _finalize_rank()
+-            torch.distributed.barrier(group=group)
++    if not rows:
++        return
++    for name in ("w13_weight", "w2_weight"):
++        _place_param(layer, name, rows)
++    _STATS["layers"] += 1; _STATS["host_experts"] += len(rows)
++    last = _STATS["layers"] == len(pl)
++    logger.info("Q38_EXPERT_HOST_PLACEMENT layer %s: %d experts host-resident (%d/%d placed layers, %.2f GiB host%s)",
++                idx, len(rows), _STATS["layers"], len(pl), _STATS["host_bytes"] / 2**30,
++                f"; allocator reserved {torch.xpu.memory_reserved() / 2**30:.3f} GiB, allocated {torch.xpu.memory_allocated() / 2**30:.3f} GiB" if last else "")
+-- 
+2.43.0
+

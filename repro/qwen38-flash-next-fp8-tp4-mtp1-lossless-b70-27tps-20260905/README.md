@@ -85,8 +85,11 @@ elsewhere, and an absent default stops with the variable's name.
 state names, internal hashes recomputed), runs the packet's own static
 validation, launches it through the lab's host-controlled launcher (root:
 swap and ASPM reset, page-cache drop, fail-closed preflight on processes,
-ports, mounts and free space), waits for `/health`, runs the frozen client
-once, and compares `realistic-suite-v1-result.json` with the record: all 12
+ports, mounts and free space), waits for `/health`, sends the fixed cold
+realistic suite once with the record's flags (the packet's frozen client is the
+separate certification battery, A190, and is not re-run), stops the server
+through the packet's stop file, and compares `realistic-suite-v1-result.json`
+with the record: all 12
 prompt and output SHA-256s must match and every gate must equal the record's.
 The replay's class-balanced median is printed beside 27.048435 tok/s; speed is
 reported, not gated, because an exact replay that is slower is still exact.

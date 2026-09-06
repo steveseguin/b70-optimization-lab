@@ -1,0 +1,36 @@
+From b6a6806d30aecc95d999599d0990ec1dbfdddc08 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 6 Sep 2026 10:32:24 -0400
+Subject: [PATCH 6/9] [XPU] Q38_EXPERT_HOST_PLACEMENT: pinned host rows
+ allocated with device=cpu explicitly
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ vllm/q38_expert_placement.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vllm/q38_expert_placement.py b/vllm/q38_expert_placement.py
+index 31df26666..0b0f4ed51 100644
+--- a/vllm/q38_expert_placement.py
++++ b/vllm/q38_expert_placement.py
+@@ -65,7 +65,7 @@ def _split(weight: torch.Tensor, host_rows: list[int]) -> tuple[torch.Tensor, to
+     E = weight.shape[0]; host_set = set(host_rows)
+     res_rows = [e for e in range(E) if e not in host_set]
+     resident = weight[res_rows].contiguous() if res_rows else weight[:0].contiguous()
+-    host_cpu = torch.empty((len(host_rows),) + tuple(weight.shape[1:]), dtype=weight.dtype, pin_memory=True)
++    host_cpu = torch.empty((len(host_rows),) + tuple(weight.shape[1:]), dtype=weight.dtype, device="cpu", pin_memory=True)
+     if host_rows:
+         host_cpu.copy_(weight[host_rows].cpu())
+     host = get_accelerator_view_from_cpu_tensor(host_cpu)
+@@ -107,7 +107,7 @@ def prepare_layer(layer: torch.nn.Module) -> None:
+         setattr(layer, name, torch.nn.Parameter(torch.empty(0, dtype=dtype, device=device), requires_grad=False))
+         del weight, param
+         resident = torch.empty((len(res_rows),) + tail, dtype=dtype, device=device)
+-        host_cpu = torch.empty((len(rows),) + tail, dtype=dtype, pin_memory=True)
++        host_cpu = torch.empty((len(rows),) + tail, dtype=dtype, device="cpu", pin_memory=True)
+         host = get_accelerator_view_from_cpu_tensor(host_cpu)
+         row_bytes = int(torch.tensor(tail).prod().item()) * resident.element_size()
+         new_param = torch.nn.Parameter(resident, requires_grad=False)
+-- 
+2.43.0
+
