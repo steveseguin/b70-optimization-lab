@@ -11,11 +11,19 @@
   "featured_results": [
     {
       "role": "hero",
-      "label": "Qwen3.8 Flash-Next FP8 · TP4 deterministic full-decode graph, exact-4K (no speculation)",
-      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-context4k-a78",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 deterministic full-decode graph, exact-4K, never-routed experts host-placed (no speculation)",
+      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp0-placement-context4k-a223",
       "metric": "decode_tok_s",
       "sample_index": 0,
-      "quality_label": "Promoted deterministic line: outputs bit-identical across five servers; 6/7 semantic with the inherited miss, 16/16 repeat, exact needle"
+      "quality_label": "Certified line: outputs bit-identical to the promoted authorities on two servers; 6/7 semantic with the inherited miss, 16/16 repeat, exact needle; LocalMaxxing 27.64 tok/s approved"
+    },
+    {
+      "role": "support",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 lossless MTP1, exact-4K, never-routed experts host-placed",
+      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-placement-context4k-a225",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Every output pin equal to the MTP0 line at exact 2K and 4K; certified battery on one server, suite row pending"
     },
     {
       "role": "support",
@@ -1533,6 +1541,104 @@
         }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260903-tp4-mtp1-a121-frozen-client-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-placement-context4k-a223",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU cb59004b (placement overlay on 2169dbfe) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 4096,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-placement-ctx4096-v1",
+      "measurement_class": "certified frozen-client exact-4K p4096/o128 rows (conventional 99 inter-token intervals) with never-routed experts host-placed",
+      "promotion_status": "certified on two servers 2026-09-06 (A223, A224); LocalMaxxing cmtq4elns03ivn701hgvpo053 approved 2026-09-06 on the fixed realistic suite (27.640875 tok/s class-balanced median); supersedes the 25.62 headroom row as the fastest no-speculation line",
+      "quality_scope": "6/7 semantic (sole miss code_execution=30), 16/16 repeat with one hash, exact cache-zero 2K needle; exact-2K afffd211 and exact-4K c6193cc6 authorities reproduced on both servers; tuned W13/N32 map selected on every layer (verifier receipt)",
+      "workload": "two exact p4096/o128 requests per server on two servers, cache zero; 99-interval rate; PLE and embeddings host-offloaded over UVA (12.22 GiB/rank), every hot routed expert resident, 3.5 GiB/rank of never-routed experts in pinned host memory behind a per-expert offset table",
+      "metrics": {
+        "decode_tok_s": [
+          27.397903
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          27.398396,
+          27.426248,
+          27.397409,
+          27.359961
+        ],
+        "aggregation": "median of four rows on two servers (A223 r1/r2, A224 r1/r2)",
+        "output_sha256": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 27.397903,
+          "label": "never-routed experts host-placed, hot experts resident: 1.08x the headroom line, bit-identical"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a223-fresh-repeat-deterministic-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-context4k-a225",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 005dc578 (placement overlay on the lossless MTP1 head 1b2a17c1) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 4096,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-placement-ctx4096-v1",
+      "measurement_class": "certified lossless frozen-client exact-4K p4096/o128 rows with one speculative token and never-routed experts host-placed",
+      "promotion_status": "certified lossless on one server 2026-09-06 (A225: every output pin equal to the MTP0 line); realistic-suite row pending",
+      "quality_scope": "6/7 semantic (sole miss code_execution=30), 16/16 repeat with one hash, exact needle; exact-2K afffd211 and exact-4K c6193cc6 authorities reproduced with MTP1 (lossless)",
+      "workload": "two exact p4096/o128 requests per server on two servers, cache zero; 99-interval rate; PLE and embeddings host-offloaded over UVA (12.22 GiB/rank), every hot routed expert resident, 3.5 GiB/rank of never-routed experts in pinned host memory behind a per-expert offset table",
+      "metrics": {
+        "decode_tok_s": [
+          32.489874
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          32.479529,
+          32.50022
+        ],
+        "aggregation": "median of two rows on one server (A225 r1/r2)",
+        "output_sha256": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 32.489874,
+          "label": "lossless MTP1 with never-routed experts host-placed: 1.19x the MTP0 placement line at exact 4K"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a225-fresh-repeat-deterministic-summary.json"
     }
   ],
   "series_measurements": [
