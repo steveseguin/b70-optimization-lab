@@ -60,6 +60,9 @@ Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04
 
 <!-- replication-matrix:end -->
 
+**Context depth (R260b, 2026-09-06):** on the headline configuration, exact real-content active context 2K-32K, one slot: MTP0 50.0 -> 42.8 tok/s, MTP depth 4 120.6 -> 100.3 tok/s (medians of three content classes), every MTP4 array equal to the MTP0 oracle (18/18). Table and per-class values in the recipe; evidence `experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json`.
+
+
 ## What makes it exact
 
 | layer | problem | fix |

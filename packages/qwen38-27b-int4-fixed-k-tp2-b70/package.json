@@ -104,6 +104,7 @@
     "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
     "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
     "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
     "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
     "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
     "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
@@ -368,6 +369,88 @@
           "value": 403.2,
           "samples": 1,
           "per_user_value": 50.4
+        }
+      ]
+    },
+    {
+      "id": "http-int4-mtp0-decode-vs-active-context",
+      "label": "INT4 fixed-K TP2 MTP0 (graphs) HTTP decode over exact active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Exact active prompt tokens",
+      "scope": "Measured 2026-09-06 (R260b, clean boot) on the headline configuration (R256 image, two B70s, XPU graph capture FULL_DECODE_ONLY sizes 1-8, strict launcher env): one-slot vLLM HTTP completions at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, max-model-len 33024, max-num-batched-tokens 4096, cache zero, canaries before and after. MTP0 (target only). No value is interpolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
+      "points": [
+        {
+          "context_tokens": 2048,
+          "value": 50.023492143506274,
+          "samples": 3
+        },
+        {
+          "context_tokens": 4096,
+          "value": 48.78019783970367,
+          "samples": 3
+        },
+        {
+          "context_tokens": 8192,
+          "value": 47.46198372409749,
+          "samples": 3
+        },
+        {
+          "context_tokens": 16384,
+          "value": 45.92111530825193,
+          "samples": 3
+        },
+        {
+          "context_tokens": 24576,
+          "value": 44.174870800726,
+          "samples": 3
+        },
+        {
+          "context_tokens": 32768,
+          "value": 42.832649479370204,
+          "samples": 3
+        }
+      ]
+    },
+    {
+      "id": "http-int4-mtp4-decode-vs-active-context",
+      "label": "INT4 fixed-K TP2 MTP depth 4 (graphs, draft-only INT4 head) HTTP decode over exact active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Exact active prompt tokens",
+      "scope": "Measured 2026-09-06 (R260b, clean boot) on the headline configuration (R256 image, two B70s, XPU graph capture FULL_DECODE_ONLY sizes 1-8, strict launcher env): one-slot vLLM HTTP completions at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, max-model-len 33024, max-num-batched-tokens 4096, cache zero, canaries before and after. MTP depth 4 with the FP16 target verifier and draft-only INT4 head; every output matched the same-configuration MTP0 oracle (18/18 complete arrays). Class spread is wide at every depth (Python code accepts more draft tokens); the median of the three classes is shown.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
+      "points": [
+        {
+          "context_tokens": 2048,
+          "value": 120.55879982780635,
+          "samples": 3
+        },
+        {
+          "context_tokens": 4096,
+          "value": 125.72167735144107,
+          "samples": 3
+        },
+        {
+          "context_tokens": 8192,
+          "value": 124.3502018967137,
+          "samples": 3
+        },
+        {
+          "context_tokens": 16384,
+          "value": 90.18189154611792,
+          "samples": 3
+        },
+        {
+          "context_tokens": 24576,
+          "value": 84.62792054167177,
+          "samples": 3
+        },
+        {
+          "context_tokens": 32768,
+          "value": 100.271460163712,
+          "samples": 3
         }
       ]
     }

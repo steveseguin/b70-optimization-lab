@@ -1,0 +1,391 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen38-int4-r256-real-content-depth-20260906-r260b",
+ "run": "R260b",
+ "date": "2026-09-06",
+ "lane": "Qwen3.8-27B AutoRound INT4 (gptq relabel), headline configuration: R256 image, TP2, XPU graph capture FULL_DECODE_ONLY sizes 1-8, draft-only INT4 head, strict launcher env (VLLM_BATCH_INVARIANT=0, TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0)",
+ "image_id": "sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
+ "model": "devan-carlin/Qwen3.8-27B-int4-AutoRound bce40cac relabelled to gptq (model-gptq-relabel-r212.json)",
+ "server_shape": {
+  "max_model_len": 33024,
+  "max_num_seqs": 1,
+  "max_num_batched_tokens": 4096,
+  "gpu_memory_utilization": 0.95,
+  "tensor_parallel": 2
+ },
+ "wrapper": "experiments/qwen38-27b-b70/scripts/run-20260906-qwen38-int4-r256-real-content-depth-r260.sh",
+ "bench": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-real-content-depth.sh",
+ "fixture": {
+  "natural_task_or_retrieval_prompt": false,
+  "path": "/home/steve/b70-optimization-lab/data/qwen27-exact-depth/qwen38-bce40ca-mixed-content-depth-v1.json",
+  "sha256": "a8a48b3549062759cc94b28f2360bea119f8adde582ace04928111b624d952ed",
+  "source_repetition": false
+ },
+ "boot_id": "ed4d21d5-0c16-4e74-9aac-79476d203966",
+ "repo_head_at_launch": "6a23650202398002eb9474b01b914c6d5fc341a2",
+ "campaign_start": "2026-09-06T01:31:45-04:00",
+ "campaign_end": "2026-09-06T01:43:11-04:00",
+ "status": "pass: MTP depth 4 matched the same-configuration MTP0 oracle at every depth 2K-32K (all_target_oracle_exact at 6/6 depths, 3 classes each, 18/18 arrays); all request gates passed; canaries before/after both arms; cache zero; postflight clean (devices normal, no kernel fault signature, compute/XCCL health)",
+ "classification": "Grade B three-class unrepeated real-content exact-depth HTTP evidence",
+ "note": "First attempt (R260, same root name without the b suffix) aborted at the MTP4 arm: the public launcher then exported VLLM_BATCH_INVARIANT=1, which vLLM rejects for the GDN attention backend; the launcher was corrected to the strict-launcher environment every published campaign actually used (VLLM_BATCH_INVARIANT=0) and the campaign rerun from the MTP0 arm. Per-depth values are medians over the three content classes; MTP4 decode varies strongly by class (Python code accepts more draft tokens), which the per_class entries record.",
+ "mtp0_points": [
+  {
+   "ctx": 2048,
+   "decode": 50.023492143506274,
+   "ttft": 617.360665994056,
+   "samples": 3,
+   "exact": null,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 50.244199726922446,
+     "ttft_ms": 666.5360589977354,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "ebc27427a9bf341829bfc80667674f3362b1235b1a0e7f6c988ac88538bae919"
+    },
+    "python-code": {
+     "decode_tok_s": 50.023492143506274,
+     "ttft_ms": 617.360665994056,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "48d7a7c57fe3d09fc0228ef95b0c57df434570935019c30459e08cf26fd269da"
+    },
+    "structured-docs": {
+     "decode_tok_s": 49.63625929986106,
+     "ttft_ms": 603.8873819998116,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "212acb7e829c2d6b87532c5f20f4c77df25d1bc3dbd1fc4b4e8263292e27c0c1"
+    }
+   }
+  },
+  {
+   "ctx": 4096,
+   "decode": 48.78019783970367,
+   "ttft": 1193.9827579990379,
+   "samples": 3,
+   "exact": null,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 48.81476714827099,
+     "ttft_ms": 1193.9827579990379,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "1f3b2b0d4db40ed90c33aed96baa2fcbf221dc8d11faa80db3832bcb3be60751"
+    },
+    "python-code": {
+     "decode_tok_s": 48.6139646034833,
+     "ttft_ms": 1186.2952149967896,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "3c6c62456c63729413b30c302d110e0a88e79b1d849fd850f47dcaf941219cd9"
+    },
+    "structured-docs": {
+     "decode_tok_s": 48.78019783970367,
+     "ttft_ms": 1196.3308109989157,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "83f6dc3ea3e8e1be7523aa0428eb61336b0f8d44574b05decba327e2b26e3f67"
+    }
+   }
+  },
+  {
+   "ctx": 8192,
+   "decode": 47.46198372409749,
+   "ttft": 2417.6529139949707,
+   "samples": 3,
+   "exact": null,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 47.74833485970383,
+     "ttft_ms": 2429.166264999367,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "8b6a8b93d95ac2b8eca53fe551e86ceb22748487c8ef3b1a3668bc0de1e6308a"
+    },
+    "python-code": {
+     "decode_tok_s": 47.404613023039175,
+     "ttft_ms": 2410.6442219999735,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "96599c342cf675986c718aae04931e5bbe717afc7a2a9b2217048a3683c5d62a"
+    },
+    "structured-docs": {
+     "decode_tok_s": 47.46198372409749,
+     "ttft_ms": 2417.6529139949707,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "71d8475660d37e757d876031c7161de0567e94a454cd7dad3407044ef37623bc"
+    }
+   }
+  },
+  {
+   "ctx": 16384,
+   "decode": 45.92111530825193,
+   "ttft": 5020.884902005491,
+   "samples": 3,
+   "exact": null,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 45.97248429608791,
+     "ttft_ms": 5020.884902005491,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "02834d95153ec3222743c89e6d1e64f8fff41d77d4b15abd414e183b1898a7ee"
+    },
+    "python-code": {
+     "decode_tok_s": 45.71876177768085,
+     "ttft_ms": 5006.291621000855,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "82ab581f9bde1f08efe7b2bb94880b844d1cae8831dd6b469a8a81429724241f"
+    },
+    "structured-docs": {
+     "decode_tok_s": 45.92111530825193,
+     "ttft_ms": 5023.593849997269,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "bbe7532bbc0f91c905a81846f16eab9a09b3eed4da60604391a0645c9ec63e6d"
+    }
+   }
+  },
+  {
+   "ctx": 24576,
+   "decode": 44.174870800726,
+   "ttft": 7835.196332001942,
+   "samples": 3,
+   "exact": null,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 44.2104494219972,
+     "ttft_ms": 7826.188849998289,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "47b6e0575783bddd44680f97717b70d17b9fdbbe00395b39e9b3c9bc61e50296"
+    },
+    "python-code": {
+     "decode_tok_s": 44.15181058470378,
+     "ttft_ms": 7838.969625001482,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "beab933f6ef4ae4dcb38ba1952cceb4a1045a932c4a0dbe48c45e79fae5f8a95"
+    },
+    "structured-docs": {
+     "decode_tok_s": 44.174870800726,
+     "ttft_ms": 7835.196332001942,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "1ad2bd6678a4df592c072dc9ef4ad42235aeb1f844745c530994b3f2905b9abe"
+    }
+   }
+  },
+  {
+   "ctx": 32768,
+   "decode": 42.832649479370204,
+   "ttft": 10838.110156000766,
+   "samples": 3,
+   "exact": null,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 42.83215387402886,
+     "ttft_ms": 10828.374097996857,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "4d0aacb8adb99a595b0760e04772f0ad7cc97ef01c16d7d7b4960ef41da3e52d"
+    },
+    "python-code": {
+     "decode_tok_s": 42.88077998676536,
+     "ttft_ms": 10842.060007998953,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "94c1e2dc77ffd719961982807a920800d8f2424c40ec4b7ea8669973ba85616f"
+    },
+    "structured-docs": {
+     "decode_tok_s": 42.832649479370204,
+     "ttft_ms": 10838.110156000766,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "ff81c49a87bd9f1c1ab32ff0ff5bec9f7d9a16ada2b5db57a6b388158a3dfc59"
+    }
+   }
+  }
+ ],
+ "mtp4_points": [
+  {
+   "ctx": 2048,
+   "decode": 120.55879982780635,
+   "ttft": 621.3424820016371,
+   "samples": 3,
+   "exact": true,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 110.90889742855119,
+     "ttft_ms": 675.5547439970542,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "ebc27427a9bf341829bfc80667674f3362b1235b1a0e7f6c988ac88538bae919"
+    },
+    "python-code": {
+     "decode_tok_s": 183.02765410298028,
+     "ttft_ms": 621.3424820016371,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "48d7a7c57fe3d09fc0228ef95b0c57df434570935019c30459e08cf26fd269da"
+    },
+    "structured-docs": {
+     "decode_tok_s": 120.55879982780635,
+     "ttft_ms": 612.2253380017355,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "212acb7e829c2d6b87532c5f20f4c77df25d1bc3dbd1fc4b4e8263292e27c0c1"
+    }
+   }
+  },
+  {
+   "ctx": 4096,
+   "decode": 125.72167735144107,
+   "ttft": 1221.8037499987986,
+   "samples": 3,
+   "exact": true,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 87.29417237754967,
+     "ttft_ms": 1241.0339479974937,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "1f3b2b0d4db40ed90c33aed96baa2fcbf221dc8d11faa80db3832bcb3be60751"
+    },
+    "python-code": {
+     "decode_tok_s": 125.72167735144107,
+     "ttft_ms": 1217.7359420020366,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "3c6c62456c63729413b30c302d110e0a88e79b1d849fd850f47dcaf941219cd9"
+    },
+    "structured-docs": {
+     "decode_tok_s": 153.27024334784556,
+     "ttft_ms": 1221.8037499987986,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "83f6dc3ea3e8e1be7523aa0428eb61336b0f8d44574b05decba327e2b26e3f67"
+    }
+   }
+  },
+  {
+   "ctx": 8192,
+   "decode": 124.3502018967137,
+   "ttft": 2480.283585995494,
+   "samples": 3,
+   "exact": true,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 124.3502018967137,
+     "ttft_ms": 2485.885109999799,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "8b6a8b93d95ac2b8eca53fe551e86ceb22748487c8ef3b1a3668bc0de1e6308a"
+    },
+    "python-code": {
+     "decode_tok_s": 169.31232480640588,
+     "ttft_ms": 2479.1826240034425,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "96599c342cf675986c718aae04931e5bbe717afc7a2a9b2217048a3683c5d62a"
+    },
+    "structured-docs": {
+     "decode_tok_s": 111.50582207298244,
+     "ttft_ms": 2480.283585995494,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "71d8475660d37e757d876031c7161de0567e94a454cd7dad3407044ef37623bc"
+    }
+   }
+  },
+  {
+   "ctx": 16384,
+   "decode": 90.18189154611792,
+   "ttft": 5168.505089000973,
+   "samples": 3,
+   "exact": true,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 85.2547986658534,
+     "ttft_ms": 5153.424403004465,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "02834d95153ec3222743c89e6d1e64f8fff41d77d4b15abd414e183b1898a7ee"
+    },
+    "python-code": {
+     "decode_tok_s": 156.16093650823913,
+     "ttft_ms": 5171.455957999569,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "82ab581f9bde1f08efe7b2bb94880b844d1cae8831dd6b469a8a81429724241f"
+    },
+    "structured-docs": {
+     "decode_tok_s": 90.18189154611792,
+     "ttft_ms": 5168.505089000973,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "bbe7532bbc0f91c905a81846f16eab9a09b3eed4da60604391a0645c9ec63e6d"
+    }
+   }
+  },
+  {
+   "ctx": 24576,
+   "decode": 84.62792054167177,
+   "ttft": 8086.135206998733,
+   "samples": 3,
+   "exact": true,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 82.6544211889686,
+     "ttft_ms": 8056.368666999333,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "47b6e0575783bddd44680f97717b70d17b9fdbbe00395b39e9b3c9bc61e50296"
+    },
+    "python-code": {
+     "decode_tok_s": 151.6928208617714,
+     "ttft_ms": 8094.569027998659,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "beab933f6ef4ae4dcb38ba1952cceb4a1045a932c4a0dbe48c45e79fae5f8a95"
+    },
+    "structured-docs": {
+     "decode_tok_s": 84.62792054167177,
+     "ttft_ms": 8086.135206998733,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "1ad2bd6678a4df592c072dc9ef4ad42235aeb1f844745c530994b3f2905b9abe"
+    }
+   }
+  },
+  {
+   "ctx": 32768,
+   "decode": 100.271460163712,
+   "ttft": 11187.553329997172,
+   "samples": 3,
+   "exact": true,
+   "gates": true,
+   "per_class": {
+    "technical-prose": {
+     "decode_tok_s": 100.271460163712,
+     "ttft_ms": 11182.917070997064,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "4d0aacb8adb99a595b0760e04772f0ad7cc97ef01c16d7d7b4960ef41da3e52d"
+    },
+    "python-code": {
+     "decode_tok_s": 134.16544894976548,
+     "ttft_ms": 11187.553329997172,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "94c1e2dc77ffd719961982807a920800d8f2424c40ec4b7ea8669973ba85616f"
+    },
+    "structured-docs": {
+     "decode_tok_s": 94.25977884215202,
+     "ttft_ms": 11197.609101000126,
+     "gate_status": "passed",
+     "output_token_ids_sha256": "ff81c49a87bd9f1c1ab32ff0ff5bec9f7d9a16ada2b5db57a6b388158a3dfc59"
+    }
+   }
+  }
+ ],
+ "mtp0_identity": {
+  "cards": 2,
+  "context_capacity": 33024,
+  "kv_dtype": "f16",
+  "model": "Qwen3.8-27B AutoRound INT4 (gptq relabel), R256 image",
+  "mtp_depth": 0,
+  "parallel_slots": 1,
+  "prompt_cache": false,
+  "tensor_parallel": 2
+ },
+ "mtp4_identity": {
+  "cards": 2,
+  "context_capacity": 33024,
+  "kv_dtype": "f16",
+  "model": "Qwen3.8-27B AutoRound INT4 (gptq relabel), R256 image",
+  "mtp_depth": 1,
+  "parallel_slots": 1,
+  "prompt_cache": false,
+  "tensor_parallel": 2
+ }
+}

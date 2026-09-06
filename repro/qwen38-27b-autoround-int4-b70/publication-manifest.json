@@ -1,10 +1,10 @@
 {
   "format": "neural.download.recipe-publication.v2",
   "recipe_id": "qwen38-27b-autoround-int4-b70-fixed-k",
-  "publication_status": "candidate",
+  "publication_status": "draft",
   "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
   "repository": {
-    "source_commit": "28ebbc8e3a0592aa594c2c603a0e84d8628baeb6",
+    "source_commit": "706a5d240b73b2fd93bf4f49b56b8259124da2af",
     "build_scripts": [
       {
         "path": "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
@@ -16,7 +16,7 @@
       },
       {
         "path": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
-        "sha256": "5cbdadc200626ed9da03b6aa4808a59ee848348c671ce76d4d7ada4a37ca464f"
+        "sha256": "7646d9e8fefbb791f10f970e25dfafbe1b8bc042ee853b20cbe85617ae331a16"
       },
       {
         "path": "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
@@ -24,7 +24,7 @@
       },
       {
         "path": "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
-        "sha256": "9bff471fdb173b0ae2a344484963b2bf14cbd320f1b14b5c6049539a2a76de01"
+        "sha256": "4aab5d9f98afd1a12066e5b8a942fd7c4b94afb4615e0240f865afa306295c7b"
       },
       {
         "path": "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
@@ -171,16 +171,19 @@
     "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json"
   },
   "toolchain": {
-    "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1 (host /opt/intel/oneapi mounted into the base image)",
+    "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (intel-oneapi-compiler-dpcpp-cpp-2026.1 2026.1.1-325, host /opt/intel/oneapi mounted into the build container)",
     "python": "3.12.3",
     "torch": "2.13.0+xpu",
     "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
-    "auto_round_kernel": "0.9.2.1 (not used on this path)"
+    "auto_round_kernel": "0.9.2.1 (not used on this path)",
+    "vllm_xpu_kernels_source_version": "0.1.dev1+g1e90ffa67 (vllm-xpu-kernels 1e90ffa672 + r35 + r50; _xpu_C rebuilt against oneDNN 0e2a5bfeef + r137a + r137b + r220 + r221)",
+    "oneapi_inventory_asset": "r221-oneapi-packages.txt",
+    "runtime_inventory_asset": "r256-runtime-packages.txt"
   },
   "validation": {
     "strict_matrix": "R239 (2026-09-05): TP2 and TP1, depths 0-4 (TP2 depth 4 pair 68.552/67.789 in R240); every pair 12/12 vs each other and vs the MTP0 oracle; MTP0 identity ladders exact c1-c64 in 6 of 8; speculative depths exact through c16 (TP2) / c8 (TP1).",
     "kernel_census": "R210-R217, R220 screen: 14 shapes bitwise invariant across n=1..1024 under the two-tier strategy.",
-    "quality_gate": "r152 pre-canaries on every server",
+    "quality_gate": true,
     "evidence": [
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
@@ -227,11 +230,113 @@
         "sha256": "a1b16fc6c78af65665599ac17f440d334f5975c58b89615b6f0faa7b1956d265"
       }
     ],
-    "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16. R257 (R256 image, draft-only INT4 head + graphs): TP2 depth 4 112.362/112.325, 12/12 vs each other and vs the eager oracle."
+    "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16. R257 (R256 image, draft-only INT4 head + graphs): TP2 depth 4 112.362/112.325, 12/12 vs each other and vs the eager oracle.",
+    "clean_source_build": false,
+    "clean_source_build_note": "R220 was a clean build in a fresh build root (r220-clean-build.log; its extension 64c4422a was superseded); the shipped _xpu_C (271db0d4) came from the R221 incremental rebuild in that root (r221-incremental-rebuild.log). A clean-clone replay of the full R220+R221 chain has not been run yet.",
+    "runtime_smoke": true,
+    "build_log_asset": "r221-incremental-rebuild.log",
+    "quality_evidence": [
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
+        "sha256": "fdf996ae5a2eb0b04f5dcadf2a62856d1ef2590d0d7535dffc8bb59eeb484801"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+        "sha256": "cbf04af5d271fb0bc3d6bcd5ec37a47449c040495e11ca3c5a5e1c3bd5dfeef4"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+        "sha256": "e9cc0c0d151480a78f352067b0502f0be181413f5ae54149f5146d0db648a26f"
+      }
+    ]
   },
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
     "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12).",
     "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0)."
-  ]
+  ],
+  "release": {
+    "tag": "qwen38-int4-fixed-k-r221-20260906",
+    "url": "https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-int4-fixed-k-r221-20260906",
+    "remote_verified_at": "2026-09-06T05:38:22Z",
+    "description": "Binary closure of the served R256 image: the R221 fixed-K _xpu_C.abi3.so (271db0d4), the GDN library (byte-identical to the r55c release asset), the R220 clean build log and the R221 incremental rebuild log that produced the shipped extension, the host oneAPI inventory used for the build, the R256 runtime inventory, and the served _xpu_ops.py overlay.",
+    "assets": [
+      {
+        "name": "_xpu_C.abi3.so",
+        "kind": "xpu-extension",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/_xpu_C.abi3.so",
+        "sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+        "size": 61898352
+      },
+      {
+        "name": "libgdn_attn_kernels_xe_2.so",
+        "kind": "gdn-library",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/libgdn_attn_kernels_xe_2.so",
+        "sha256": "2c343620d689409bfa371a8b4c3db680e4786f23bc092411e7d03140f1b2a355",
+        "size": 5914352
+      },
+      {
+        "name": "_xpu_ops.py",
+        "kind": "runtime-overlay",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/_xpu_ops.py",
+        "sha256": "c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1",
+        "size": 50075
+      },
+      {
+        "name": "r220-clean-build.log",
+        "kind": "historical-build-log",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/r220-clean-build.log",
+        "sha256": "d4b7b37fff5d9b035cd0096b5e838cb87645ca3ad9a8ae60082a9dfab1f70fb6",
+        "size": 103179
+      },
+      {
+        "name": "r221-incremental-rebuild.log",
+        "kind": "build-log",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/r221-incremental-rebuild.log",
+        "sha256": "e38a426026173ccc7392593090bee875f102adeb95912312369ad795baccf5a2",
+        "size": 12018
+      },
+      {
+        "name": "r221-oneapi-packages.txt",
+        "kind": "toolchain-inventory",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/r221-oneapi-packages.txt",
+        "sha256": "9a6edaebc69c2636858c9ce0e564999c1622b3ecf1a6f18758f3d7b317f66006",
+        "size": 4323
+      },
+      {
+        "name": "r256-runtime-packages.txt",
+        "kind": "runtime-inventory",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/r256-runtime-packages.txt",
+        "sha256": "d178d2bc7916c47b26e8892f4e1a27e13068bc0b22554518bfd32c28e326fe52",
+        "size": 5511
+      },
+      {
+        "name": "SHA256SUMS",
+        "kind": "checksum-manifest",
+        "url": "https://github.com/steveseguin/b70-optimization-lab/releases/download/qwen38-int4-fixed-k-r221-20260906/SHA256SUMS",
+        "sha256": "bfc2682755928ee2ec3f6af2d1ad1b4d5396310f3beb8ea30afc4a0f9cdc6102",
+        "size": 618
+      }
+    ]
+  },
+  "binary_sections": {
+    "_xpu_C.abi3.so": {
+      "runpath": "$ORIGIN",
+      "sections": {
+        ".text": "8c952fb6630269e432b86ec266ac18675aa245c0fd242f8c77d513584c4652c4",
+        ".rodata": "6a3362634945a2e0c0bcd56c945fc299c4b196812fa2e9950ab0eab7b41e977e",
+        ".data": "c76c51b7cd7a0499e70997b1bac330ad59502fe7ed3da842ea8552d5b0a1ea75",
+        "OFFLOAD_DEVICE_CODE": "84661a68aeed81f44ce1ccc5581faa27c033e019a408017d893c6c7158bbb2c7"
+      }
+    },
+    "libgdn_attn_kernels_xe_2.so": {
+      "runpath": "$ORIGIN",
+      "sections": {
+        ".text": "1640dcf159af927e5282c45b80aad25e2c78d50521b46b35203ed92556b32914",
+        ".rodata": "3a15b3ec75f8af75b4b41196ab4f32e68c1f8015a4f385c9c5751be8e8f2b6ca",
+        ".data": "154c9111c82ac7509d6245b64d84a8cc29e34d499ee7e9a6495f29f915a699d7",
+        "OFFLOAD_DEVICE_CODE": "88bf2317b00c74afc9700f3ca3a05fb3c260d69c2277d9dd9eca84a6dad03db7"
+      }
+    }
+  }
 }

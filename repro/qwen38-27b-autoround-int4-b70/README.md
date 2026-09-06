@@ -207,6 +207,27 @@ require independent numerical, quality, determinism, and performance gates.
 > families, and averaged only 60.938 tok/s preferred. That treatment is also
 > terminal and insufficient; no retry or T3 is authorized.
 
+### Real-content 2K-32K depth ladder on the headline configuration (R260b, 2026-09-06)
+
+Same harness as the FP8 lane's R189 (`bench-w8a16-real-content-depth.sh`, fixture `qwen38-bce40ca-mixed-content-depth-v1`): one slot,
+`--max-model-len 33024 --max-num-seqs 1 --max-num-batched-tokens 4096`, exact active context of unrepeated technical prose, Python
+code and structured documents, 128 returned token IDs, cache zero, canaries before and after each arm. R256 image, TP2, XPU graph
+capture, draft-only INT4 head, strict launcher env. The MTP0 arm is the oracle; every MTP depth-4 array equalled it (18/18).
+Per-depth values are medians of the three classes; the MTP4 class spread is wide because Python code accepts more draft tokens.
+
+| active context | MTP0 tok/s | MTP0 TTFT s | MTP4 tok/s | MTP4 TTFT s | MTP4 prose / Python / docs | MTP4 vs MTP0 oracle |
+|---|---|---|---|---|---|---|
+| 2,048 | 50.02 | 0.62 | 120.56 | 0.62 | 110.9 / 183.0 / 120.6 | 3/3 exact |
+| 4,096 | 48.78 | 1.19 | 125.72 | 1.22 | 87.3 / 125.7 / 153.3 | 3/3 exact |
+| 8,192 | 47.46 | 2.42 | 124.35 | 2.48 | 124.4 / 169.3 / 111.5 | 3/3 exact |
+| 16,384 | 45.92 | 5.02 | 90.18 | 5.17 | 85.3 / 156.2 / 90.2 | 3/3 exact |
+| 24,576 | 44.17 | 7.84 | 84.63 | 8.09 | 82.7 / 151.7 / 84.6 | 3/3 exact |
+| 32,768 | 42.83 | 10.84 | 100.27 | 11.19 | 100.3 / 134.2 / 94.3 | 3/3 exact |
+
+Evidence: [`2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json`](../../experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json); wrapper
+`experiments/qwen38-27b-b70/scripts/run-20260906-qwen38-int4-r256-real-content-depth-r260.sh`. The first attempt (R260) aborted at the
+MTP4 arm because the public launcher then exported `VLLM_BATCH_INVARIANT=1`, which vLLM rejects for the GDN backend; see the correction above.
+
 ### Standalone `docker run` (no lab scripts)
 
 The launcher above is the contract-checked path (it routes through the FP8 lane's strict launchers, which pin the process-level determinism env below). This is the same container invocation written out, for anyone replicating the
