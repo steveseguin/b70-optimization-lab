@@ -51,8 +51,17 @@ EXPECTED_VLLM_HEADS = frozenset(
         # 1b2a17c1: the exact-verify MTP1 selectors (serial GDN rows, row-wise
         # all-reduce, row-wise HC norm) on the 2169dbfe line; MoE map untouched.
         "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
+        # 05db911b: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line — the Triton MoE kernel
+        # gains an optional per-expert offset table (USE_B_TABLE; cold expert rows in pinned
+        # host memory, placed at load time); the MoE map, tiles and math are untouched
+        # (bit-identical outputs).
+        "21633cea623b7a552e95afd1035834113e48f7af",
     }
 )
+# fused_moe.py hash per accepted head family (the placement head changes that file only)
+EXPECTED_FUSED_MOE_SHA256_BY_HEAD = {
+    "21633cea623b7a552e95afd1035834113e48f7af": "4e611de00db346c00e7c4786807950cc43c731be4af831e3c7668732f518a38b",
+}
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
 EXPECTED_PHASE_CONFIG_PATCH_SHA256 = (
     "ad820bad443bba32f15b114ea76b4deb4dade754fe1bc362faddfef07eb6c519"
@@ -157,7 +166,7 @@ def read_bound_map(path: Path, expected_sha256: str, *, label: str) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def validate_source(vllm_source: Path) -> dict[str, str]:
+def validate_source(vllm_source: Path, head: str | None = None) -> dict[str, str]:
     paths = {
         "fused_moe": vllm_source / "vllm/model_executor/layers/fused_moe/fused_moe.py",
         "triton_moe": vllm_source
@@ -166,7 +175,7 @@ def validate_source(vllm_source: Path) -> dict[str, str]:
         / "vllm/model_executor/layers/fused_moe/modular_kernel.py",
     }
     expected = {
-        "fused_moe": EXPECTED_FUSED_MOE_SHA256,
+        "fused_moe": EXPECTED_FUSED_MOE_SHA256_BY_HEAD.get(head or "", EXPECTED_FUSED_MOE_SHA256),
         "triton_moe": EXPECTED_TRITON_MOE_SHA256,
         "modular_kernel": EXPECTED_MODULAR_KERNEL_SHA256,
     }
@@ -226,8 +235,8 @@ def build_receipt(
         label="candidate",
     )
     base, candidate = validate_maps(base_raw, candidate_raw)
-    source_hashes = validate_source(vllm_source)
     prerequisite = validate_prerequisite(vllm_source, phase_config_patch)
+    source_hashes = validate_source(vllm_source, prerequisite["vllm_head"])
 
     expected_by_m = {
         requested_m: expected_resolution(base, candidate, requested_m)
