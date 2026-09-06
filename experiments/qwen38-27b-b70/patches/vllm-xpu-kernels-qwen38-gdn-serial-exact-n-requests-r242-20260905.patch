@@ -1,0 +1,150 @@
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -220,13 +220,17 @@
+   if (gdn_env_truthy(
+           "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT") ||
+       gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT")) {
++    // R242 (2026-09-05): generalized from one request to N pure-spec requests
++    // with a uniform verifier width; each request is replayed row by row with
++    // the same snapshot discipline, so every verifier row uses the ordinary
++    // one-token kernel regardless of how many requests share the step.
+     TORCH_CHECK(
+-        num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 9 &&
++        num_spec_decodes >= 1 && num_spec_tokens >= 2 && num_spec_tokens <= 9 &&
+             num_actual_tokens == spec_token &&
+-            spec_state_indices_tensor.size(0) == 1 &&
+-            spec_state_indices_tensor.size(1) == spec_token,
+-        "serial-exact GDN convolution requires one pure-spec request with "
+-        "two to nine verifier rows and one state-cache column per row");
++            spec_state_indices_tensor.size(0) == num_spec_decodes &&
++            spec_state_indices_tensor.size(1) >= num_spec_tokens,
++        "serial-exact GDN convolution requires pure-spec requests with a "
++        "uniform two-to-nine verifier width and one state-cache column per row");
+     TORCH_CHECK(
+         queue.has_property<sycl::property::queue::in_order>(),
+         "serial-exact GDN convolution requires an in-order XPU queue");
+@@ -242,25 +246,29 @@
+     auto exact_query_start_loc = torch::arange(0, 2, index_options);
+     auto accepted_column =
+         torch::clamp_min(num_accepted_tokens - 1, 0).to(torch::kLong);
++    auto starts_cpu = spec_query_start_loc.to(torch::kCPU);
++    for (int64_t req = 0; req < num_spec_decodes; ++req) {
++    const int64_t row0 = starts_cpu[req].item<int64_t>();
++    TORCH_CHECK(
++        starts_cpu[req + 1].item<int64_t>() - row0 == num_spec_tokens,
++        "serial-exact GDN convolution requires a uniform verifier width");
++    auto state_row = spec_state_indices_tensor.select(0, req);
+     auto source_state_indices =
+-        spec_state_indices_tensor
+-            .gather(1, accepted_column.unsqueeze(1))
+-            .select(1, 0);
+-
+-    for (int64_t spec_pos = 0; spec_pos < spec_token; ++spec_pos) {
+-      auto current_state_indices =
+-          spec_state_indices_tensor.select(1, spec_pos);
++        state_row.index_select(0, accepted_column.narrow(0, req, 1));
++
++    for (int64_t spec_pos = 0; spec_pos < num_spec_tokens; ++spec_pos) {
++      auto current_state_indices = state_row.narrow(0, spec_pos, 1);
+       auto source_snapshot = conv_state.index_select(
+           0, source_state_indices.to(torch::kLong));
+       conv_state.index_copy_(
+           0, current_state_indices.to(torch::kLong), source_snapshot);
+ 
+-      auto q_step = q.narrow(0, spec_pos, 1);
+-      auto k_step = k.narrow(0, spec_pos, 1);
+-      auto v_step = v.narrow(0, spec_pos, 1);
+-      auto b_step = b.narrow(0, spec_pos, 1);
+-      auto a_step = a.narrow(0, spec_pos, 1);
+-      auto token_step = spec_token_indx.narrow(0, spec_pos, 1);
++      auto q_step = q.narrow(0, row0 + spec_pos, 1);
++      auto k_step = k.narrow(0, row0 + spec_pos, 1);
++      auto v_step = v.narrow(0, row0 + spec_pos, 1);
++      auto b_step = b.narrow(0, row0 + spec_pos, 1);
++      auto a_step = a.narrow(0, row0 + spec_pos, 1);
++      auto token_step = spec_token_indx.narrow(0, row0 + spec_pos, 1);
+       gdn::causal_conv1d(
+           queue,
+           q_step,
+@@ -287,6 +295,7 @@
+           reorder_input);
+       source_state_indices = current_state_indices;
+     }
++    }
+     queue.ext_oneapi_submit_barrier();
+     return {q, k, v, b, a};
+   }
+@@ -711,13 +720,18 @@
+   if (gdn_env_truthy(
+           "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT") ||
+       gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT")) {
++    // R242: N pure-spec requests, uniform verifier width (see conv lane).
++    TORCH_CHECK(
++        spec_token % num_spec_decodes == 0,
++        "serial-exact GDN requires a uniform verifier width");
++    const int64_t rec_spec_tokens = spec_token / num_spec_decodes;
+     TORCH_CHECK(
+-        num_spec_decodes == 1 && spec_token >= 2 && spec_token <= 9 &&
++        num_spec_decodes >= 1 && rec_spec_tokens >= 2 && rec_spec_tokens <= 9 &&
+             num_actual_tokens == spec_token &&
+-            spec_state_indices_tensor.size(0) == 1 &&
+-            spec_state_indices_tensor.size(1) == spec_token,
+-        "serial-exact GDN requires one pure-spec request with two to nine "
+-        "verifier rows and one state-cache column per row");
++            spec_state_indices_tensor.size(0) == num_spec_decodes &&
++            spec_state_indices_tensor.size(1) >= rec_spec_tokens,
++        "serial-exact GDN requires pure-spec requests with a uniform "
++        "two-to-nine verifier width and one state-cache column per row");
+     TORCH_CHECK(
+         queue.has_property<sycl::property::queue::in_order>(),
+         "serial-exact GDN requires an in-order XPU queue");
+@@ -736,14 +750,15 @@
+     auto exact_query_start_loc = torch::arange(0, 2, index_options);
+     auto accepted_column =
+         torch::clamp_min(num_accepted_tokens - 1, 0).to(torch::kLong);
++    auto rec_starts_cpu = spec_query_start_loc.to(torch::kCPU);
++    for (int64_t req = 0; req < num_spec_decodes; ++req) {
++    const int64_t row0 = rec_starts_cpu[req].item<int64_t>();
++    auto state_row = spec_state_indices_tensor.select(0, req);
+     auto source_state_indices =
+-        spec_state_indices_tensor
+-            .gather(1, accepted_column.unsqueeze(1))
+-            .select(1, 0);
+-
+-    for (int64_t spec_pos = 0; spec_pos < spec_token; ++spec_pos) {
+-      auto current_state_indices =
+-          spec_state_indices_tensor.select(1, spec_pos);
++        state_row.index_select(0, accepted_column.narrow(0, req, 1));
++
++    for (int64_t spec_pos = 0; spec_pos < rec_spec_tokens; ++spec_pos) {
++      auto current_state_indices = state_row.narrow(0, spec_pos, 1);
+ 
+       // index_select materializes the complete source row before index_copy_
+       // mutates the destination.  This is intentional: the cache allocator
+@@ -754,12 +769,12 @@
+       ssm_state.index_copy_(
+           0, current_state_indices.to(torch::kLong), source_snapshot);
+ 
+-      auto core_step = core_attn_out_active.narrow(0, spec_pos, 1);
+-      auto q_step = q.narrow(0, spec_pos, 1);
+-      auto k_step = k.narrow(0, spec_pos, 1);
+-      auto v_step = v.narrow(0, spec_pos, 1);
+-      auto b_step = b.narrow(0, spec_pos, 1);
+-      auto a_step = a.narrow(0, spec_pos, 1);
++      auto core_step = core_attn_out_active.narrow(0, row0 + spec_pos, 1);
++      auto q_step = q.narrow(0, row0 + spec_pos, 1);
++      auto k_step = k.narrow(0, row0 + spec_pos, 1);
++      auto v_step = v.narrow(0, row0 + spec_pos, 1);
++      auto b_step = b.narrow(0, row0 + spec_pos, 1);
++      auto a_step = a.narrow(0, row0 + spec_pos, 1);
+       gdn::gated_delta_rule(
+           queue,
+           core_step,
+@@ -781,6 +796,7 @@
+           0);
+       source_state_indices = current_state_indices;
+     }
++    }
+     queue.ext_oneapi_submit_barrier();
+     return;
+   }
