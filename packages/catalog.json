@@ -1814,7 +1814,7 @@
           "fixed-k"
         ],
         "published_at": "2026-09-05",
-        "benchmark_status": "Research-status (2026-09-05, R239 matrix, TP2, final configuration): strict pairs MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831 (each pair 12/12 vs each other and vs the MTP0 oracle; depth 1 probe exact), depth 4 68.218 single arm (candidate b failed at engine start; re-run queued; 68.622/68.230 12/12 in R222). Identity ladders: MTP0 exact c1-c64 in three of four runs (998.6 tok/s aggregate at c64; one run c32 31/32, c64 63/64); depths 1-4 exact through c16 (650/522/599/516 tok/s aggregate; depth 4 one run c8 7/8), c32 30/32, c64 58-60/64. TP1 half running. No promotion or LocalMaxxing submission yet."
+        "benchmark_status": "Research-status (2026-09-05, R239 matrix, final configuration). TP2 strict pairs: MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831, depth 4 68.218 (+ re-run R240) - every pair 12/12 vs each other and vs the MTP0 oracle, depth-1 probe exact. TP1 (one card): MTP0 32.960/32.945 (G1 12/12), depth 1 49.640/49.468, depth 2 56.505/56.449, depth 3 58.471/58.474, depth 4 56.292/56.251, all 12/12 vs each other and vs the oracle. Identity ladders: MTP0 exact c1-c64 in 6 of 8 ladders on TP2 and TP1 (TP2 998.6, TP1 447.6 tok/s aggregate at c64; the others one near-tie miss at c32 or c64); TP2 speculative depths exact through c16 (650/522/599/516 tok/s aggregate), c32 30/32, c64 58-60/64; TP1 depths exact through c8 (c16 15/16 or 16/16), c32 29-31/32, c64 60-62/64. No promotion or LocalMaxxing submission yet."
       },
       "contributors": [
         {
@@ -1874,6 +1874,7 @@
       },
       "dependencies": [
         "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
         "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
         "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
         "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
@@ -1994,13 +1995,67 @@
               "per_user_value": 32.3
             }
           ]
+        },
+        {
+          "id": "http-int4-fixed-k-tp1-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+          "label": "INT4 fixed-K TP1 (one card) MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "One B70 (TENSOR_PARALLEL_SIZE=1), R228 image, VLLM_BATCH_INVARIANT=1, Inductor split_reductions=false, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R239 TP1 depth-1 campaign MTP0 ladder). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 32.8,
+              "samples": 1,
+              "per_user_value": 32.8
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 62.7,
+              "samples": 1,
+              "per_user_value": 31.35
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 118.6,
+              "samples": 1,
+              "per_user_value": 29.65
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 206.5,
+              "samples": 1,
+              "per_user_value": 25.8125
+            },
+            {
+              "concurrent_sequences": 16,
+              "value": 342.9,
+              "samples": 1,
+              "per_user_value": 21.4312
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 506.0,
+              "samples": 1,
+              "per_user_value": 15.8125
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 447.6,
+              "samples": 1,
+              "per_user_value": 6.9938
+            }
+          ]
         }
       ],
       "missing": [
         "clean-host replay",
         "public GHCR visibility of the R228 image (private until flipped)",
         "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)",
-        "R239 TP1 half and the depth-4 TP2 pair re-run (R240)"
+        "TP2 depth-4 strict pair (R240 re-run pending)"
       ]
     },
     {

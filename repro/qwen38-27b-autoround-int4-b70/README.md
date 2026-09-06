@@ -74,7 +74,23 @@ data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.
 | 4 | 68.22 / (candidate b: worker died at engine start; R240 re-run) | - | c8 7/8, c16 exact (516.1), c32 30/32, c64 59/64 |
 
 Depth 4 in R222/R227 on the same tensors and kernel: 68.62 / 68.23 with all gates 12/12. Aggregate ladder rates are
-identity-qualified only where the level is exact. The TP1 half of the matrix follows in the same data file.
+identity-qualified only where the level is exact.
+
+**Matrix R239, TP1 (one card, `TENSOR_PARALLEL_SIZE=1 XPU_DEVICE_MASK=0 GPU_MEMORY_UTILIZATION=0.96`, same
+configuration):**
+
+| depth | strict pair (tok/s) | gates | identity ladder c1 / c2 / c4 / c8 / c16 / c32 / c64 (aggregate tok/s at c8) |
+|---|---|---|---|
+| 0 (MTP0) | 32.96 / 32.95 | G1 12/12 | exact at every level in 3 of 4 ladders (c64 447.6 tok/s); one run c64 63/64 |
+| 1 | 49.64 / 49.47 | G2, G3 x2 12/12, probe exact | exact to c8 (261.6), c16 15/16, c32 30/32, c64 60/64 |
+| 2 | 56.51 / 56.45 | G2, G3 x2 12/12 | exact to c8 (283.6), c16 15/16, c32 29/32, c64 62/64 |
+| 3 | 58.47 / 58.47 | G2, G3 x2 12/12 | exact to c16 (270.3 at c8), c32 31/32, c64 61/64 |
+| 4 | 56.29 / 56.25 | G2, G3 x2 12/12 | exact to c8 (216.3), c16 15/16, c32 31/32, c64 61/64 |
+
+On one card the speculative turnover is at depth 3 (58.5 tok/s); on two cards depth 4 still gains (68.2). Single-card
+MTP0 is within 5% of TP2 (33.0 vs 34.2-35.6), consistent with the launch-overhead-bound profile: the second card adds
+almost nothing at one request and doubles aggregate throughput at concurrency. The single-card residual has the same
+shape as TP2 without any collective, so the oneCCL all-reduce is excluded as a source.
 
 
 New optimization lane, opened 2026-08-18, superseding the Qwen3.6 27B INT4

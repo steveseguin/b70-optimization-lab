@@ -61,3 +61,22 @@ G2/G3 12/12, probe exact; depth-1 ladder exact through c8, c16 15/16 (benchmark-
 (aggregate 393 tok/s at c16). The residual is identical in kind without any collective, so the oneCCL all-reduce is
 excluded as a source; single-card decode is within 5% of TP2 (33.0 vs 34.2-35.6 MTP0; 49.6 vs 50.1-51.1 depth 1),
 consistent with the launch-overhead-bound profile.
+
+## R239 matrix complete (20:11): TP2 and TP1, depths 0-4, final configuration
+
+Data `data/2026-09-05-qwen38-int4-r239-matrix-result.json`; tables in `repro/qwen38-27b-autoround-int4-b70/README.md`.
+
+| | TP2 | TP1 |
+|---|---|---|
+| MTP0 pair | 34.21 / 35.64 (G1 12/12) | 32.96 / 32.95 (G1 12/12) |
+| depth 1 | 51.10 / 50.09 | 49.64 / 49.47 |
+| depth 2 | 61.14 / 61.54 | 56.51 / 56.45 |
+| depth 3 | 67.61 / 67.83 | 58.47 / 58.47 |
+| depth 4 | 68.22 / (re-run R240) | 56.29 / 56.25 |
+| gates | every pair 12/12 vs each other and vs the MTP0 oracle; depth-1 probe exact | same |
+| MTP0 ladder | exact c1-c64 in 3 of 4 (998.6 tok/s at c64); one run c32 31/32, c64 63/64 | exact c1-c64 in 3 of 4 (447.6 at c64); one run c64 63/64 |
+| speculative ladders | exact through c16 at every depth (one run c8 7/8); c32 30/32; c64 58-60/64 | exact through c8; c16 15/16 (depth 3: 16/16); c32 29-31/32; c64 60-62/64 |
+
+Turnover: depth 4 on two cards (68.2), depth 3 on one card (58.5). One card is within 5% of two at a single request.
+The residual is the same without a collective, so the all-reduce is excluded; what remains is the GDN kernel's
+composition dependence, most visible with speculative rows and at c32+.
