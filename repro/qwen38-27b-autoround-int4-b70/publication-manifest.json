@@ -122,6 +122,10 @@
           "url": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
           "note": "registry digest equals the local image id; package public since 2026-09-05 20:40 (anonymous manifest fetch verified)"
         }
+      },
+      "serving_configurations": {
+        "eager_r239": "VLLM_BATCH_INVARIANT=1, split_reductions=false, cudagraph_mode PIECEWISE sizes [1], VLLM_XPU_ENABLE_XPU_GRAPH=0",
+        "graph_r247": "same + VLLM_XPU_ENABLE_XPU_GRAPH=1, cudagraph_mode FULL_DECODE_ONLY, capture sizes [1,2,3,4,5,6,8]; TP2 depth 4 91.004/91.012 tok/s lossless (launcher default XPU_GRAPH=1)"
       }
     }
   },
@@ -200,8 +204,13 @@
       {
         "path": "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-gptq-relabel-r212-r213-prereg.md",
         "sha256": "1b330a98ad0bf0f594991aea9bf4856f274c5ae35674a5972bc519ca8f458d3e"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+        "sha256": "7fb9ad9cba5b2bfe32a56f6ad2db9c39d14a42a5861f4cc75abf4c53c2d46088"
       }
-    ]
+    ],
+    "graph_capture": "R246b/R247/R250: TP1 depth 4 56.911/56.898; TP2 depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders pending."
   },
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
