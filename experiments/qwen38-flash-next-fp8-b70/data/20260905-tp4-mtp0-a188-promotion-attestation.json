@@ -1,0 +1,56 @@
+{
+ "schema": "neural.download.promotion-attestation.v1",
+ "created_utc": "2026-09-06T00:48:34Z",
+ "profile_id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-4352-headroom-realistic-v1",
+ "decision": "promote",
+ "promotion_authorized": true,
+ "headline": {
+  "value": 25.617612828325008,
+  "unit": "tok/s",
+  "aggregation": "median of prompt-class medians, 99 inter-token intervals after TTFT, fixed realistic suite run once cold",
+  "metric_events": 100,
+  "metric_intervals": 99,
+  "note": "deterministic full-decode-graph line, no speculation, promoted overlay 2169dbfe; placement flags only: embed_tokens + routed experts (mlp.experts, 13.4 GiB budget, 13.78 GiB/rank) host-offloaded over UVA to end the xe driver's VRAM paging; every output pin equal to the approved 14.43 line (twelve suite rows, exact-2K and exact-4K authorities)"
+ },
+ "performance_evidence": {
+  "path": "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-realistic-suite-v1-result.json",
+  "sha256": "6bc8b9a0cca7a82ea6fa09ad0392d6785459b8bfdcd194b1786b7e8ff27875f8"
+ },
+ "identity": {
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "runtime_revision": "2169dbfe38c2954edc5ae50e94f68d45be071b79",
+  "optimization_identity": "tp4-ep4-fullgraphdet-mtp0-4352-ple-embed-experts-budget13p4-uva-w13n32-mkldnndet-oneccl-twoshots",
+  "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+ },
+ "gates": {
+  "varied_task_quality_passed": true,
+  "exact_or_target_oracle_passed": true,
+  "deterministic_repeats_passed": true,
+  "fresh_server_repeat_passed": true,
+  "target_model_unchanged": true,
+  "no_quality_loss": true
+ },
+ "quality_evidence": [
+  {
+   "path": "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a187-fresh-repeat-deterministic-summary.json",
+   "sha256": "e2ccfda0f3ecb25e06be88565f4f3d5f4f71a653df7cbc1158b2b7d7d27f20c8",
+   "supports": [
+    "varied_task_quality_passed",
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed",
+    "fresh_server_repeat_passed",
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a179-a180-a187-exact-2k-pair-summary.json",
+   "sha256": "f80d7a5bb4c2eee25497e950f423e2199cdcc0dbbc206f612ca84d9bc994f707",
+   "supports": [
+    "fresh_server_repeat_passed",
+    "deterministic_repeats_passed",
+    "exact_or_target_oracle_passed"
+   ]
+  }
+ ]
+}
