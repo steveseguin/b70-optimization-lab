@@ -208,3 +208,7 @@ A197 (eager lineage, headroom, top-k dump over the whole realistic suite; 250,00
 ## 00:30 A196 (placement) running; clean placement branch prepared
 
 A196 = the promoted PLE-only identity plus the 2 GiB/rank cold-expert placement at overlay `68a410ba` (diagnostics + placement). For publication, the placement patch is re-applied on the promoted overlay alone as branch `q38-placement` (`c5228465`, three files, no diagnostics; `fused_moe.py` sha `4e611de0…`); the W13-N32 verifier's source contract has to learn that head and hash before the frozen client can certify it, which is a certification-policy change to be reviewed rather than slipped in.
+
+## 00:36 A196: placement applies and stays bit-exact, but the split fragments the pool
+
+A196 (promoted PLE-only identity + 2 GiB/rank cold-expert placement, overlay `68a410ba`) applied the placement on every layer (1.86-1.91 GiB per rank host-resident) and keeps the authority hash on both requests, but runs at 19.17 / 21.07 tok/s with a 44.9 ms step. The memory note explains it: allocator allocated 29.78 GiB (the weights did shrink, as in A179), but reserved 30.73-30.79 GiB and device free 0.01 GiB, i.e. copying each layer's resident rows into a new tensor while the original was alive left about 1 GiB of fragmentation in the caching pool and the card full again, so the driver pages partially. Fix: a two-phase split that stages every layer's resident rows to pinned host memory, frees all originals, empties the cache, then reallocates the resident tensors compactly and copies back.
