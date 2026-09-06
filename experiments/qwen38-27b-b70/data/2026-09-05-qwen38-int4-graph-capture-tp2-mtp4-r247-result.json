@@ -41,5 +41,38 @@
    "acceptance": 3.21
   }
  },
- "interpretation": "On TP2 the captured verify step drops the per-op all-reduce host waits, so the step time falls ~25% at unchanged acceptance: 68.2 -> 91.0 tok/s, lossless. On TP1 there is no collective to remove (+1%). The BF16 draft accepts fewer tokens than the AutoRound INT4 draft and is slower."
+ "interpretation": "On TP2 the captured verify step drops the per-op all-reduce host waits, so the step time falls ~25% at unchanged acceptance: 68.2 -> 91.0 tok/s, lossless. On TP1 there is no collective to remove (+1%). The BF16 draft accepts fewer tokens than the AutoRound INT4 draft and is slower.",
+ "R250_depth_curve_tp2_graphs": {
+  "depth5": {
+   "rates": [
+    88.843663447859,
+    89.117454302107
+   ],
+   "gates": "G2 12/12, G3 12/12 x2"
+  },
+  "depth6": {
+   "rates": [
+    84.059987417136,
+    83.982337907919
+   ],
+   "gates": "G2 12/12, G3 12/12 x2"
+  },
+  "depth4_R247": [
+   91.004503602551,
+   91.011836751112
+  ],
+  "turnover": "depth 4"
+ },
+ "R248_R249_generic_mtp_proposer_tp1": {
+  "no_graph": [
+   56.292464429811,
+   56.235602937615
+  ],
+  "graph": [
+   56.806609536167,
+   56.867543908712
+  ],
+  "gates": "12/12 all",
+  "note": "identical to qwen3_next_mtp; proposer choice inert"
+ }
 }
