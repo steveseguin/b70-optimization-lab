@@ -178,3 +178,7 @@ A192 = the eager lineage (USB checkpoint, overlay `08df70ea`) with the headroom 
 ## 22:56 A193: split-K 4 re-screened with headroom is exact and neutral
 
 A193 (the A179 identity plus `VLLM_XPU_MOE_SPLIT_K=4`, `VLLM_XPU_MOE_SPLIT_K_MAX_TOKENS=40`) keeps the authority hash at 25.15 / 25.18 tok/s with a 37.2 ms step, i.e. the same as without split-K (A179/A180 25.13-25.20, 37.0 ms). The paged-era negative (A169) stands for the right reason now: at M=1 the two MoE GEMMs are not bandwidth-bound on a resident weight set either, so splitting K does not help. A194 (split-K 8) follows for completeness; the next MoE lever is the M=1 tile configuration (the W13-N32 map was selected under paging, A155's config negative too).
+
+## 23:13 A194: split-K 8 with headroom, exact and neutral
+
+A194 (`VLLM_XPU_MOE_SPLIT_K=8`) keeps the authority hash at 25.08 / 25.07 tok/s with the same step as A179/A193. Split-K is closed as a lever on this model: exact at 4 and 8, never faster, with or without paging. The offline M=1 tile-config sweep (54 candidates: block N 32/64/128, W1 block 16/32/64, warps 4/8, stages 2/3/4, hot clocks) runs next on card 0.
