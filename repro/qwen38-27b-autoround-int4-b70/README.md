@@ -90,7 +90,9 @@ the AutoRound INT4 draft (3.21 vs 3.52 per step on TP1; 52.0 vs 56.3 tok/s), and
 identical in rate to `qwen3_next_mtp` (R248/R249). Concurrency identity under graph capture (R251, TP2): MTP0 exact at every level c1-c64 (aggregate 999.4 tok/s at c64);
 depth 4 exact at c1, c2 and c16, benchmark-c003 (the composition-sensitive near-tie prompt) at c4 3/4 and c8 7/8,
 c32 30/32, c64 58/64; depth 1 exact through c8 (358.5 tok/s), c16 12/16, c32 30/32, c64 61/64 (R253). Batches above
-8 tokens run eagerly, so this is the same composition residual as the eager ladders, at a different mix.
+8 tokens run eagerly, so this is the same composition residual as the eager ladders, at a different mix. On the
+headline configuration (graphs + draft-only INT4 head, R259): depth 4 exact through c8 (403 tok/s aggregate, 106.8 at
+c1), c16 14/16, c32 30/32, c64 59/64; MTP0 exact except c32 31/32 (benchmark-c003; c64 64/64, 998.7 tok/s).
 
 **Matrix R239, TP2 (2026-09-05, final configuration: R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions=false`,
 data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json`):**

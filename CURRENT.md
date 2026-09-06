@@ -482,8 +482,10 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
 - **R254-R257 (00:35, 2026-09-06):** FULL_AND_PIECEWISE equivalent to decode-only capture (91.06/90.97); the breakable
   wrapper is rejected (71.3 and G3 9/12); **R257: graph capture + draft-only INT4 lm_head (R256 image, fallback for the
   gptq relabel's head method) = 112.36 / 112.33 tok/s at depth 4, G2/G3 12/12, acceptance 3.51.** New headline; R256
-  pushed to GHCR (`@sha256:f7696bca...`), launcher defaults XPU_GRAPH=1 DRAFT_HEAD_INT4=1 on R256. R258 (depths 5, 6)
-  and R259 (ladders) running on this configuration.
+  pushed to GHCR (`@sha256:f7696bca...`), launcher defaults XPU_GRAPH=1 DRAFT_HEAD_INT4=1 on R256. R258: depth 5
+  109.97/110.07, depth 6 108.34/108.37 (turnover at 4); R259 ladders: depth 4 exact through c8, c16 14/16, c32 30/32,
+  c64 59/64; MTP0 c32 31/32, c64 64/64. Queue empty, GPUs idle (01:05, 2026-09-06). Open: the composition residual
+  above 8-16 users with speculation (boundary trace), clean-host replay, LocalMaxxing submission on the user's go.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
