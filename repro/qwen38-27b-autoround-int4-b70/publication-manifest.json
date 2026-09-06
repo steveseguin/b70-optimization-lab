@@ -1,0 +1,210 @@
+{
+  "format": "neural.download.recipe-publication.v2",
+  "recipe_id": "qwen38-27b-autoround-int4-b70-fixed-k",
+  "publication_status": "candidate",
+  "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
+  "repository": {
+    "source_commit": "28ebbc8e3a0592aa594c2c603a0e84d8628baeb6",
+    "build_scripts": [
+      {
+        "path": "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
+        "sha256": "caa8ec21ef3e6e641510e86183bf3a67964db4430b35b845e7e0593d5e371352"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/rebuild-w4a16-incremental-r221.sh",
+        "sha256": "9d765939b58e7ce8abe8a4df807c1a475ba6fec97c8d7213e8afad213706bcc8"
+      },
+      {
+        "path": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
+        "sha256": "5cbdadc200626ed9da03b6aa4808a59ee848348c671ce76d4d7ada4a37ca464f"
+      },
+      {
+        "path": "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
+        "sha256": "45d1fc65ac369c87adb646b614796944d38d5ff430075ae98b2d2d6fed902f1c"
+      },
+      {
+        "path": "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+        "sha256": "9bff471fdb173b0ae2a344484963b2bf14cbd320f1b14b5c6049539a2a76de01"
+      },
+      {
+        "path": "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
+        "sha256": "34493e5af5462099dd4e1031c21affd907e88a440f3afe20459bb6c148dc59e1"
+      }
+    ],
+    "immutable_inputs": [
+      {
+        "path": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+        "sha256": "5d2a93f0a36fa89f0ef13cf21ed5332a72491dd5856519bbe2eb21414112464f"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+        "sha256": "feb4f125f69b36dbc3f579ad93743abe655678b7540ba2743fcff797fe35ebd9"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+        "sha256": "63873506f3031d36193c9746be3a26239cbf230582c0fb296d9e90a4d92ed464"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+        "sha256": "180112219b5b8d2f44eae5e32134fe3b80e50b75f332c000a37eec17c7557e13"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-dynamic-active-width-serial-gdn-r35-20260828.patch",
+        "sha256": "ad583014c92b8611a9e4e87868a3d492c3b6802ee557814b9ec794f147cd973e"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/patches/vllm-xpu-kernels-qwen38-gdn-split-serial-gates-r50-20260901.patch",
+        "sha256": "40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da7600585fe750f"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/Dockerfile.w4a16-strategy-r220",
+        "sha256": "637b71ac38f6971b61d55c4a574fd2cb520c132b31410d11b90e4ac7c681d97d"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
+        "sha256": "9290726ca4251c03be7cad10ed082ea428f0175e92182d2e2645c87cc2fd58d0"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/Dockerfile.w4a16-determinism-pad-op-r213b",
+        "sha256": "5298d3b599c12ef1a6e428b6d6aeb09f61e599d7d3e857408b07d83864bbc689"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
+        "sha256": "9525878e4bf4fe0a6caa99b514bca80b7f0c55b0c0aa4a5e0210f8c8a8992b4b"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-rowchunk-r224",
+        "sha256": "3711a4c15de3ae99b2e84c98673c2b89f604a063aa9776977c701ecc6b25ac7f"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+        "sha256": "e9f3daef0c8e0cf48ab20d14bf88db4502633350a9c2a4e67fc8c553b2e72ce6"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/Dockerfile.gdn-spec-group-r228",
+        "sha256": "8ef140cc54788c46893c8e1fbf24b87174eccd87304826ef3b1b4f63af2857b1"
+      },
+      {
+        "path": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+        "sha256": "9452940dfba238c08eaa6c430310ad73c16e86afbed60400f1bd4e76fc904547"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-final-config.env",
+        "sha256": "0762e0c605ecb2b608fcf7d5317561351cb7931a342b5b044710cb74dd651564"
+      }
+    ]
+  },
+  "chains": {
+    "r221": {
+      "description": "Rebuilt _xpu_C: vllm-xpu-kernels 1e90ffa6 + r35 + r50 with oneDNN 0e2a5bfe + r137a + r137b + r220 (strategy override/dump) + r221 (two-tier fixed-K W4A16); incremental rebuild in the R220 build root.",
+      "image": {
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-w4a16-fixed-k-r221",
+        "id": "sha256:699e2699a820e45ca0aee9f0dc8169358127a95bf54de0cefae05df94d15920b",
+        "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+        "base": "neural-download/vllm-openai-xpu:qwen38-int4-w4a16-detpad-op-r213b (r156 + r213b Python pad op)"
+      }
+    },
+    "r224": {
+      "description": "R221 + every unquantized XPU linear in <=32-row pieces via an opaque custom op.",
+      "image": {
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-fp16-rowchunk-r224",
+        "id": "sha256:a23ff24939de0a7367c23393b00a9d1d901fe3d58ba699b49d3da0a4131cec10"
+      }
+    },
+    "r228": {
+      "description": "R224 + GDN speculative rows processed in groups of <=16 sequences (VLLM_XPU_GDN_SPEC_GROUP). Served with VLLM_BATCH_INVARIANT=1 and Inductor split_reductions=false (final configuration).",
+      "image": {
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228",
+        "id": "sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
+        "xpu_ops_sha256": "c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1",
+        "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+        "prebuilt": {
+          "url": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
+          "note": "registry digest equals the local image id; package private until the owner flips visibility"
+        }
+      }
+    }
+  },
+  "source_repositories": [
+    {
+      "url": "https://github.com/vllm-project/vllm.git",
+      "commit": "ac7509e2b1db40fec2f03dde1ed4e9dfdc2338c9"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm-xpu-kernels.git",
+      "commit": "1e90ffa672ba02f17a909da11838a4c55b199783"
+    },
+    {
+      "url": "https://github.com/uxlfoundation/oneDNN.git",
+      "commit": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
+    },
+    {
+      "url": "https://github.com/intel/sycl-tla.git",
+      "commit": "cd763790ad2f74d7294435ecf77682bac0062c3a"
+    }
+  ],
+  "model": {
+    "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "relabel": "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
+    "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json"
+  },
+  "toolchain": {
+    "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1 (host /opt/intel/oneapi mounted into the base image)",
+    "python": "3.12.3",
+    "torch": "2.13.0+xpu",
+    "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "auto_round_kernel": "0.9.2.1 (not used on this path)"
+  },
+  "validation": {
+    "strict_matrix": "R239 (2026-09-05): TP2 and TP1, depths 0-4; every pair 12/12 vs each other and vs the MTP0 oracle; MTP0 identity ladders exact c1-c64 in 6 of 8; speculative depths exact through c16 (TP2) / c8 (TP1).",
+    "kernel_census": "R210-R217, R220 screen: 14 shapes bitwise invariant across n=1..1024 under the two-tier strategy.",
+    "quality_gate": "r152 pre-canaries on every server",
+    "evidence": [
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
+        "sha256": "50022df89173afd64822e61aab8a1fe9ad1139422e6a44038d995e2d74262f88"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+        "sha256": "4ab75bdeedf93830dafb45f3e62878a4041ab363890e1677efdcc001f320b8cb"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-gptq-relabel-r213-r214-depth4-result.json",
+        "sha256": "2675eb830c1586e47bcd27fcace48b565faa137fc7814408da7e6b1ddae05635"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-w4a16-natural-strategy-dump-r220-result.json",
+        "sha256": "99441a01ff57d66b98e35cae248146b872e3108c2761eb77bbc7e458727a75fe"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/qwen38-int4-w4a16-strategy-screen-r220/r221-default.json",
+        "sha256": "4dabd311912d0c6f5d96271090d80945f2a58ec35f2069898b8365085e0f0b86"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r220-kernel-build.log",
+        "sha256": "d4b7b37fff5d9b035cd0096b5e838cb87645ca3ad9a8ae60082a9dfab1f70fb6"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-ark-woqgemm-census-r210.md",
+        "sha256": "f8d3915e533de3b5d1dad426b58045c56aef3bc6a1a93f3568948ea1b48b47e1"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-w4a16-fixed-k-two-tier-r220-r221.md",
+        "sha256": "a2ed5847312c004963d90834138167c2502d5796b4e79b5da2e51d6d7fdcd2fa"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
+        "sha256": "2842c61158a10a9f373f22b30ba85ab9d7198341ca9abec6d98f11b77932a6d8"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-int4-gptq-relabel-r212-r213-prereg.md",
+        "sha256": "1b330a98ad0bf0f594991aea9bf4856f274c5ae35674a5972bc519ca8f458d3e"
+      }
+    ]
+  },
+  "known_corrections": [
+    "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
+    "R239 TP2 depth-4 candidate b failed at engine start; R240 re-run."
+  ]
+}
