@@ -102,7 +102,7 @@ The same Triton kernels read the same bytes, so every output pin is unchanged:
 
 Notes: [A182 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md),
 [day summary](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md);
-data: [A182 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-realistic-suite-v1-result.json),
+data: [A188 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-realistic-suite-v1-result.json), [A188 identity](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-identity.txt), [A187 deterministic summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a187-fresh-repeat-deterministic-summary.json),
 [A179/A180 exact-2K pair](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a179-a180-exact-2k-pair-summary.json),
 [full-rank cliff](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-b70-moe-gemm-full-rank-sets-probe-card0.log).
 Certification battery (frozen client on the promoted overlay `2169dbfe`, flags-only change): [A187 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a187-certification-battery-headroom-result.md), 6/7 quality with the inherited miss, 16/16 repeat, exact needle, both depth authorities reproduced; [A188 suite note](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md) (A182 diagnostic-overlay twin), [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-promotion-attestation.json).
