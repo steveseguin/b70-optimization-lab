@@ -41,7 +41,7 @@
       "fixed-k"
     ],
     "published_at": "2026-09-05",
-    "benchmark_status": "Research-status (2026-09-05, R239 matrix, final configuration). TP2 strict pairs: MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831, depth 4 68.552/67.789 (R240 re-run; first pass 68.218 single arm) - every pair 12/12 vs each other and vs the MTP0 oracle, depth-1 probe exact. TP1 (one card): MTP0 32.960/32.945 (G1 12/12), depth 1 49.640/49.468, depth 2 56.505/56.449, depth 3 58.471/58.474, depth 4 56.292/56.251, all 12/12 vs each other and vs the oracle. Identity ladders: MTP0 exact c1-c64 in 6 of 8 ladders on TP2 and TP1 (TP2 998.6, TP1 447.6 tok/s aggregate at c64; the others one near-tie miss at c32 or c64); TP2 speculative depths exact through c16 (650/522/599/516 tok/s aggregate), c32 30/32, c64 58-60/64; TP1 depths exact through c8 (c16 15/16 or 16/16), c32 29-31/32, c64 60-62/64. No promotion or LocalMaxxing submission yet."
+    "benchmark_status": "Research-status (2026-09-05). Headline: TP2 depth 4 with XPU graph capture (FULL_DECODE_ONLY, sizes 1-8) 91.004/91.012 tok/s, G2 12/12 and G3 12/12 vs the eager MTP0 oracle (R247); depth 5 88.844/89.117, depth 6 84.060/83.982 (R250); TP1 depth 4 with graphs 56.911/56.898 (R246b). Eager R239 matrix: TP2 strict pairs: MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831, depth 4 68.552/67.789 (R240 re-run; first pass 68.218 single arm) - every pair 12/12 vs each other and vs the MTP0 oracle, depth-1 probe exact. TP1 (one card): MTP0 32.960/32.945 (G1 12/12), depth 1 49.640/49.468, depth 2 56.505/56.449, depth 3 58.471/58.474, depth 4 56.292/56.251, all 12/12 vs each other and vs the oracle. Identity ladders: MTP0 exact c1-c64 in 6 of 8 ladders on TP2 and TP1 (TP2 998.6, TP1 447.6 tok/s aggregate at c64; the others one near-tie miss at c32 or c64); TP2 speculative depths exact through c16 (650/522/599/516 tok/s aggregate), c32 30/32, c64 58-60/64; TP1 depths exact through c8 (c16 15/16 or 16/16), c32 29-31/32, c64 60-62/64. No promotion or LocalMaxxing submission yet."
   },
   "contributors": [
     {
@@ -94,7 +94,7 @@
   },
   "commands": {
     "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-    "launch": "PORT=18134 MTP_DEPTH=4 MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
     "health": "curl -fsS http://127.0.0.1:18134/health",
     "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
     "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
@@ -280,6 +280,7 @@
   ],
   "missing": [
     "clean-host replay",
-    "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)"
+    "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)",
+    "identity ladders under graph capture (R251)"
   ]
 }

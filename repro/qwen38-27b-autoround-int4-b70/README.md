@@ -62,6 +62,24 @@ the GDN kernel's dependence on launch composition (grouping its launches, R229-R
 single-request arithmetic). Notes: `experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-{w4a16-fixed-k-two-tier-r220-r221,concurrency-identity-r222-r226}.md`;
 data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-*`.
 
+**XPU graph capture (R246b/R247/R250, 2026-09-05 evening): the two-card headline.** With `VLLM_XPU_ENABLE_XPU_GRAPH=1`
+and `cudagraph_mode FULL_DECODE_ONLY` (capture sizes 1-8) on the same final configuration, the captured verify step
+no longer pays the per-op all-reduce host waits:
+
+| depth | TP2 strict pair, graphs (tok/s) | TP2 eager (R239/R240) | gates |
+|---|---|---|---|
+| 4 | **91.00 / 91.01** | 68.55 / 67.79 | G2 12/12, G3 12/12 x2 vs the eager MTP0 oracle |
+| 5 | 88.84 / 89.12 | - | G2 12/12, G3 12/12 x2 |
+| 6 | 84.06 / 83.98 | - | G2 12/12, G3 12/12 x2 |
+| 4, TP1 | 56.91 / 56.90 | 56.29 / 56.25 | G2 12/12, G3 12/12 x2 |
+
+Acceptance is unchanged (3.00 per step at depth 4), so the whole gain is per-step time; on one card there is no
+collective to remove. Graph replay is bit-identical to eager execution (every pair matched the eager oracle). The
+launcher `scripts/run-fixed-k-mtp-server.sh` enables this by default (`XPU_GRAPH=0` restores eager). Two negatives from
+the same evening: the community checkpoint's BF16 draft tensors (R244/R245) are lossless but accept fewer tokens than
+the AutoRound INT4 draft (3.21 vs 3.52 per step on TP1; 52.0 vs 56.3 tok/s), and vLLM's generic `mtp` proposer is
+identical in rate to `qwen3_next_mtp` (R248/R249). Concurrency identity under graph capture: R251 (below when done).
+
 **Matrix R239, TP2 (2026-09-05, final configuration: R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions=false`,
 data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json`):**
 

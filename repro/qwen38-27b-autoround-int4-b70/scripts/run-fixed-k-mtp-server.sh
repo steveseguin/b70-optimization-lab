@@ -9,7 +9,15 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd); repo_root=$(cd -
 fp8=${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70
 depth=${MTP_DEPTH:-4}
 spec=""; [[ "${depth}" == 0 ]] || spec="{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":${depth}}"
-compilation='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
+# XPU_GRAPH=1 (default): capture the decode/verify step as an XPU graph (FULL_DECODE_ONLY, sizes 1-8). On two cards the
+# captured verify step drops the per-op all-reduce host waits: depth 4 91.0 tok/s vs 68.2 eager (R247, lossless vs the
+# eager MTP0 oracle); on one card it is neutral (+1%). XPU_GRAPH=0 restores the eager R239 configuration.
+xpu_graph=${XPU_GRAPH:-1}
+if [[ "${xpu_graph}" == 1 ]]; then
+  compilation='{"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2,3,4,5,6,8],"max_cudagraph_capture_size":8,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
+else
+  compilation='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
+fi
 export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228}
 export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d}
 export EXPECTED_XPU_EXTENSION_SHA256=${EXPECTED_XPU_EXTENSION_SHA256:-271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f}
@@ -19,7 +27,7 @@ export MODEL_DIR=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround
 export MODEL_MANIFEST=${MODEL_MANIFEST:-${script_dir}/../manifests/model-gptq-relabel-r212.json}
 export QUANTIZATION=gptq VLLM_XPU_FP8_BLOCK_W8A16=0 VLLM_XPU_DRAFT_LM_HEAD_INT4=0 VLLM_XPU_W4A16_DETERMINISM_PAD=0
 export VLLM_BATCH_INVARIANT=1 VLLM_XPU_GDN_SPLIT_MIXED=1 VLLM_XPU_GDN_SPEC_GROUP=${VLLM_XPU_GDN_SPEC_GROUP:-16}
-export VLLM_XPU_GEMMA_RMSNORM_TRITON=0 VLLM_XPU_RMSNORM_TRITON=0 VLLM_XPU_ENABLE_XPU_GRAPH=0
+export VLLM_XPU_GEMMA_RMSNORM_TRITON=0 VLLM_XPU_RMSNORM_TRITON=0 VLLM_XPU_ENABLE_XPU_GRAPH=${xpu_graph}
 export COMPILATION_CONFIG=${COMPILATION_CONFIG:-${compilation}}
 export SPECULATIVE_CONFIG=${SPECULATIVE_CONFIG:-${spec}}
 export CONTAINER_NAME=${CONTAINER_NAME:-qwen38-int4-fixed-k-mtp${depth}} SERVED_MODEL_NAME=${SERVED_MODEL_NAME:-qwen38-int4-fixed-k-mtp${depth}}
