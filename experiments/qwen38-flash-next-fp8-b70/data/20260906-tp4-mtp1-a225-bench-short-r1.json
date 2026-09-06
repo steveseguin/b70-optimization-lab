@@ -1,0 +1,92 @@
+{
+  "base_url": "http://127.0.0.1:19895",
+  "model": "qwen38-flash-next-fp8-tp4",
+  "model_info": {
+    "id": "qwen38-flash-next-fp8-tp4",
+    "object": "model",
+    "created": 1788715338,
+    "owned_by": "vllm",
+    "root": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "parent": null,
+    "max_model_len": 4352,
+    "permission": [
+      {
+        "id": "modelperm-91b7279cd621d2b5",
+        "object": "model_permission",
+        "created": 1788715338,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+  "requested_prompt_tokens": 128,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "",
+  "requested_output_tokens": 256,
+  "warmups": 1,
+  "scenarios": {
+    "c1": {
+      "concurrency": 1,
+      "records": [
+        {
+          "started_s": 13212.21929592,
+          "first_text_at_s": 13213.077301333,
+          "ended_s": 13220.053384394,
+          "elapsed_s": 7.834088473999145,
+          "ttft_s": 0.8580054129997734,
+          "post_ttft_s": 6.976083060999372,
+          "prompt_tokens": 146,
+          "completion_tokens": 256,
+          "total_tokens": 402,
+          "tok_s_out_wall": 32.67770090287443,
+          "tok_s_out_after_ttft": 36.69681076924079,
+          "tok_s_total_wall": 51.314202199045,
+          "chunks": 129,
+          "sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        }
+      ],
+      "summary": {
+        "requests": 1,
+        "total_prompt_tokens": 146,
+        "total_completion_tokens": 256,
+        "wall_s": 7.834088473999145,
+        "aggregate_output_tok_s_wall": 32.67770090287443,
+        "decode_wall_s_from_first_text": 6.976083060999372,
+        "aggregate_output_tok_s_from_first_text": 36.69681076924079,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 36.69681076924079,
+          "median": 36.69681076924079,
+          "min": 36.69681076924079,
+          "max": 36.69681076924079
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 32.67770090287443,
+          "median": 32.67770090287443,
+          "min": 32.67770090287443,
+          "max": 32.67770090287443
+        },
+        "per_request_ttft_s": {
+          "mean": 0.8580054129997734,
+          "median": 0.8580054129997734,
+          "min": 0.8580054129997734,
+          "max": 0.8580054129997734
+        },
+        "per_request_elapsed_s": {
+          "mean": 7.834088473999145,
+          "median": 7.834088473999145,
+          "min": 7.834088473999145,
+          "max": 7.834088473999145
+        }
+      }
+    }
+  }
+}
