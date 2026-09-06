@@ -35,11 +35,15 @@ REPRO_VLLM_TREE="$vllm_tree" "$repo/patches/qwen38-flash-next-fp8-b70/vllm-place
 [[ "$(sha256sum "$repo/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/"*.json | sha256sum | cut -d' ' -f1)" != "" ]] || die "tuned map missing"
 [[ "$(sha256sum "$repo/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == 13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0 ]] || die "exactness verifier drifted"
 (cd "$repo/experiments/qwen38-flash-next-fp8-b70/tools" && sha256sum --quiet -c "$script_dir/frozen-a226-packet.sha256") || die "frozen A189 packet drifted"
-# 6. python runtime
-"$venv/bin/python" - <<'PY' || die "python runtime versions differ from the record"
-import torch, triton, vllm
+# 6. python runtime, imported the way the launcher runs the server (kernel stage and overlay
+#    first on PYTHONPATH; the venv's own vllm package is shadowed and its version is not the record's)
+PYTHONPATH="$stage:$vllm_tree" "$venv/bin/python" - "$vllm_tree" <<'PY' || die "python runtime versions differ from the record"
+import sys, importlib.metadata, torch, triton, vllm
 assert torch.__version__ == "2.11.0+xpu", torch.__version__
 assert triton.__version__ == "3.7.0", triton.__version__
-assert vllm.__version__ == "0.20.2rc1.dev2+gc51df4300.d20260523.xpu", vllm.__version__
+# the record's runtime-versions.txt reads the installed vllm distribution's metadata (the
+# launcher records importlib.metadata.version); the overlay tree in front of it is the code
+assert importlib.metadata.version("vllm") == "0.20.2rc1.dev2+gc51df4300.d20260523.xpu", importlib.metadata.version("vllm")
+assert vllm.__file__.startswith(sys.argv[1]), vllm.__file__
 PY
 echo "placement MTP1 identity verified: vLLM 005dc578 over 1b2a17c1 over 76cfe1cd, stage 2f829747, oneCCL 4ceafd1 public, model bcd9f01d"
