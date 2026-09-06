@@ -94,7 +94,7 @@ def main():
     client = replace_once(client, '"placement": "ple_only_uva", "ple_host_bytes_per_rank": 12800061440,', '"placement": "ple_embed_budget12p25_uva_cold_expert_host_placement", "ple_host_bytes_per_rank": 12800061440, "host_offload_bytes_per_rank": 13117911040, "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight", "expert_host_placement": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",')
     client = patch_client(client)
     client = client.replace(OLD_HEAD, NEW_HEAD)
-    client = client.replace("0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753", "d25568edc5d31e1bf9075c4a22dd821fbeb74a4f77878c9cb27b39078091055d")
+    client = client.replace("0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753", "d25568edc5d31e1bf9075c4a22dd821fbeb74a4f77878c9cb27b39078091055d").replace("4f4942289f3853f0dec60b9fcd14c644ca300abaaa9d9fa2ea56135f4d9f9c52", "d25568edc5d31e1bf9075c4a22dd821fbeb74a4f77878c9cb27b39078091055d")
     assert client.count("d25568edc5d31e1bf9075c4a22dd821fbeb74a4f77878c9cb27b39078091055d") >= 1
     supervisor = successor(source("supervise-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32.sh"))
     supervisor = _fm.patch_supervisor(supervisor)
