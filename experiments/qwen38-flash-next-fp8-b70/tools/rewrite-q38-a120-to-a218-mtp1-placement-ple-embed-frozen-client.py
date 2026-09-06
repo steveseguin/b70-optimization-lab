@@ -91,7 +91,7 @@ def main():
     launcher = successor(launcher)
     launcher = patch_a218_launcher(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=134217728\n", "export KV_CACHE_MEMORY_BYTES=134217728\nexport Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n")
+    launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\nexport Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n")
     env = os.environ.copy(); env["Q38_A218_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
     Path("/tmp/q38-ple2k-a218-base.sh").unlink(missing_ok=True)
