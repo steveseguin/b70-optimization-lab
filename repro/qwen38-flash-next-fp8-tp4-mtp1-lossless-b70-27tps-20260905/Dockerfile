@@ -18,16 +18,17 @@ RUN git clone --quiet --filter=blob:none https://github.com/vllm-project/vllm.gi
  && git -C /opt/vllm-src checkout --quiet q38-lossless-mtp1-1b2a17c1 \
  && test "$(git -C /opt/vllm-src rev-parse HEAD^{tree})" = 1cb86e078991895906e75544207733ee7373c55d \
  && rm /tmp/overlay.bundle
-# 2. Hosted kernel stage (18 loadable files, verified against the tracked manifest).
-COPY repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256 /tmp/runtime-stage.sha256
-COPY repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py /opt/prepare-runtime.py
-RUN mkdir -p /tmp/stage && cd /tmp/stage \
- && curl -fsSL -o part0 ${STAGE_RELEASE}/qwen38-flash-next-runtime-stage-2f829747.tar.part-0000 \
- && curl -fsSL -o part1 ${STAGE_RELEASE}/qwen38-flash-next-runtime-stage-2f829747.tar.part-0001 \
- && cat part0 part1 > stage.tar && rm part0 part1 \
- && test "$(sha256sum stage.tar | cut -d' ' -f1)" = 6bf1b547e3887c86007f5ef5ad7c67be365ce4888f0e2c0a1f360dde7a7b13c3 \
- && mkdir -p /opt/kernel-stage && tar -C /opt/kernel-stage -xf stage.tar && rm -rf /tmp/stage \
- && cd /opt/kernel-stage/vllm_xpu_kernels && sha256sum --quiet -c /tmp/runtime-stage.sha256
+# 2. Hosted kernel stage, installed by the mtp3 guide's frozen installer against
+#    its download contract (parts, receipt, archive prefix, 18-file manifest).
+COPY repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py \
+     repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-contract.json \
+     repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256 /opt/flash-next-stage-installer/
+RUN mkdir -p /tmp/parts /tmp/stage-work /opt/kernel-stage && cd /tmp/parts \
+ && for f in qwen38-flash-next-runtime-stage-2f829747.tar.part-0000 qwen38-flash-next-runtime-stage-2f829747.tar.part-0001 qwen38-flash-next-runtime-stage-2f829747.tar.receipt.json; do curl -fsSL -o "$f" "${STAGE_RELEASE}/$f"; done \
+ && python3 /opt/flash-next-stage-installer/prepare-runtime.py --parts-dir /tmp/parts --kernel-stage /opt/kernel-stage --receipt /opt/kernel-stage/install-receipt.json --work-dir /tmp/stage-work \
+ && rm -rf /tmp/parts /tmp/stage-work \
+ && cd /opt/kernel-stage/vllm_xpu_kernels && sha256sum --quiet -c /opt/flash-next-stage-installer/runtime-stage.sha256 \
+ && test "$(find /opt/kernel-stage/vllm_xpu_kernels -type f \( -name '*.py' -o -name '*.so' \) | wc -l)" = 18
 # 3. Hosted public oneCCL 4ceafd1 build.
 COPY patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/lib.sha256 /tmp/oneccl-lib.sha256
 RUN mkdir -p /opt/oneccl-4ceafd1-b70-public && cd /opt/oneccl-4ceafd1-b70-public \
