@@ -1,0 +1,92 @@
+{
+  "base_url": "http://127.0.0.1:19894",
+  "model": "qwen38-flash-next-fp8-tp4",
+  "model_info": {
+    "id": "qwen38-flash-next-fp8-tp4",
+    "object": "model",
+    "created": 1788713897,
+    "owned_by": "vllm",
+    "root": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+    "parent": null,
+    "max_model_len": 4352,
+    "permission": [
+      {
+        "id": "modelperm-ae9baaa4d07050a9",
+        "object": "model_permission",
+        "created": 1788713897,
+        "allow_create_engine": false,
+        "allow_sampling": true,
+        "allow_logprobs": true,
+        "allow_search_indices": false,
+        "allow_view": true,
+        "allow_fine_tuning": false,
+        "organization": "*",
+        "group": null,
+        "is_blocking": false
+      }
+    ]
+  },
+  "tokenizer": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+  "requested_prompt_tokens": 128,
+  "shared_prefix_tokens": 0,
+  "prompt_salt": "",
+  "requested_output_tokens": 256,
+  "warmups": 1,
+  "scenarios": {
+    "c1": {
+      "concurrency": 1,
+      "records": [
+        {
+          "started_s": 11771.52109629,
+          "first_text_at_s": 11772.365442386,
+          "ended_s": 11781.764286464,
+          "elapsed_s": 10.24319017400012,
+          "ttft_s": 0.8443460960006632,
+          "post_ttft_s": 9.398844077999456,
+          "prompt_tokens": 146,
+          "completion_tokens": 256,
+          "total_tokens": 402,
+          "tok_s_out_wall": 24.992213914937807,
+          "tok_s_out_after_ttft": 27.237391946871153,
+          "tok_s_total_wall": 39.24558591330077,
+          "chunks": 256,
+          "sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+          "text_preview": " benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark benchmark"
+        }
+      ],
+      "summary": {
+        "requests": 1,
+        "total_prompt_tokens": 146,
+        "total_completion_tokens": 256,
+        "wall_s": 10.24319017400012,
+        "aggregate_output_tok_s_wall": 24.992213914937807,
+        "decode_wall_s_from_first_text": 9.398844077999456,
+        "aggregate_output_tok_s_from_first_text": 27.237391946871153,
+        "per_request_tok_s_out_after_ttft": {
+          "mean": 27.237391946871153,
+          "median": 27.237391946871153,
+          "min": 27.237391946871153,
+          "max": 27.237391946871153
+        },
+        "per_request_tok_s_out_wall": {
+          "mean": 24.992213914937807,
+          "median": 24.992213914937807,
+          "min": 24.992213914937807,
+          "max": 24.992213914937807
+        },
+        "per_request_ttft_s": {
+          "mean": 0.8443460960006632,
+          "median": 0.8443460960006632,
+          "min": 0.8443460960006632,
+          "max": 0.8443460960006632
+        },
+        "per_request_elapsed_s": {
+          "mean": 10.24319017400012,
+          "median": 10.24319017400012,
+          "min": 10.24319017400012,
+          "max": 10.24319017400012
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "cb59004b5c51e603ba06579382e66139d9a18bb6",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 0,
+    "graph": "FULL_DECODE_ONLY",
+    "compilation_mode": "NONE",
+    "cudagraph_capture_sizes": [
+      1
+    ],
+    "max_model_len": 4352,
+    "placement": "ple_embed_budget12p25_uva_cold_expert_host_placement",
+    "ple_host_bytes_per_rank": 12800061440,
+    "host_offload_bytes_per_rank": 13117911040,
+    "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight",
+    "expert_host_placement": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",
+    "async_uva_ple_prefetch": false,
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "ccl_kernel_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "ccl_sycl_allreduce_ll": "twoshots",
+    "tuned_config_folder": "moe-m1-w13-n32",
+    "tuned_config_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
+    "diagnostics": "full-decode-graph-public-oneccl-torch-trace",
+    "torch_trace_policy": "dynamo-exact-target-allowlist-v1",
+    "input_embedding": "device",
+    "kv_cache_memory_bytes": 134217728
+  },
+  "recovery_canary": "passed",
+  "quality": {
+    "semantic": "6/7; sole known miss code_execution=30",
+    "repeat": "16/16 one hash",
+    "long_context": "2048 prompt tokens, exact needle, cache zero"
+  },
+  "short": {
+    "protocol": "row 1 follows one conditioning request in its invocation; rows 2-3 have no warmup; all three use the established identical p146/o256/c1 prompt",
+    "rates_tok_s_after_ttft": [
+      27.237391946871153,
+      27.250039459839073,
+      27.20195034617794
+    ],
+    "median_tok_s_after_ttft": 27.237391946871153,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "cache_finish_boundary": "The established harness does not retain cache-detail or finish-reason fields; do not claim those per-row receipts."
+  },
+  "exact_2k": {
+    "repeats": 2,
+    "rates_tok_s_conventional_99_interval": [
+      27.41683190861573,
+      27.410653459854952
+    ],
+    "median_tok_s_conventional_99_interval": 27.41374268423534,
+    "ttft_s": [
+      11.338159158000053,
+      11.335957027000404
+    ],
+    "output_token_ids_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+    "same_boot_output_repeat": true,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "exact_4k": {
+    "repeats": 2,
+    "protocol": "p4096/o128; conventional 99 inter-token intervals; served capacity 4352",
+    "rates_tok_s_conventional_99_interval": [
+      27.397409304961343,
+      27.35996118507088
+    ],
+    "median_tok_s_conventional_99_interval": 27.37868524501611,
+    "ttft_s": [
+      22.694709943001726,
+      22.69601774399962
+    ],
+    "output_token_ids_sha256": "c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639",
+    "same_boot_output_repeat": true,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "protected_results_changed": false,
+  "interpretation": "Additive PLE-only TP4 compilation-free FULL_DECODE_ONLY deterministic-line quality, short, exact-2K and exact-4K screen at 4352 served tokens; both depth hashes are the deterministic line's own two-server authorities; it does not replace or lower any prior row or native-line record.",
+  "sha256": {
+    "recovery-canary.json": "1a2abe62aac47ea57d561edd0f02adbda126c4421e232357c75f0c96d9bcb2c2",
+    "quality-current.json": "3970c1b4cdc1804eefec13e9dbe2c74d381ee2e7b1a5ccc424169df8deff821e",
+    "bench-short-r1.json": "ebbd329344d80e590eb0b717244769960f51948781b7fd898484587ea8be7992",
+    "bench-short-r2.json": "0371b4099e42d044c5bed8a82dadab4daf023a53cbed7f99c9cfb5010bcf05bf",
+    "bench-short-r3.json": "f1f16708e60f145765d5e3bb4b0a1b6d343f026a75da465d7796b3432545eeeb",
+    "exact-depth-2k-r1.json": "4093e258ad74a5134bb8f6c1306f68348b2cb12fdf12d60b662d6798b66da0d7",
+    "exact-depth-2k-r2.json": "954f7ce234ce5a53832c1d40cdc36ff4d434c54906d97a7b89af010bd5bb74d8",
+    "exact-depth-4k-r1.json": "32f9426060a58f4585bd5b0d300e332e2ee0f87285d2810f223eae017e6949cc",
+    "exact-depth-4k-r2.json": "5bbd4fd96053f957a3c21e83a76e242694ba8dc3a6f15fd3d388c4401c9d7dde"
+  }
+}

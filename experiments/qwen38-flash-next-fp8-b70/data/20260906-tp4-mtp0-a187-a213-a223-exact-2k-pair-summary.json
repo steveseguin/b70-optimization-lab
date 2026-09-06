@@ -3,7 +3,8 @@
  "servers": {
   "A187": "2169dbfe (promoted overlay, 13.4 GiB headroom identity, 25.43 tok/s)",
   "A213": "c4f921f5 (placement identity before the tuned-map fix: default MoE config on placed layers)",
-  "A223": "cb59004b (clean placement head: PLE + embeddings offloaded at 12.25, hot experts resident, 3.5 GiB/rank never-hit experts host-placed, tuned map keyed on the logical expert count)"
+  "A223": "cb59004b (clean placement head: PLE + embeddings offloaded at 12.25, hot experts resident, 3.5 GiB/rank never-hit experts host-placed, tuned map keyed on the logical expert count)",
+  "A224": "cb59004b (second fresh server on the clean placement head, same identity)"
  },
  "rows": [
   {
@@ -47,6 +48,20 @@
    "output_sha12": "afffd2110812",
    "ids_equal_to_reference": true,
    "tok_s": 27.344
+  },
+  {
+   "run": "a224-exact-depth-2k-r1",
+   "overlay_head": "cb59004b",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 27.417
+  },
+  {
+   "run": "a224-exact-depth-2k-r2",
+   "overlay_head": "cb59004b",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 27.411
   }
  ],
  "all_identical": true
