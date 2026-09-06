@@ -1,0 +1,79 @@
+From 1b2a17c1e7c41985d6a5e0eb324ada4775c25e60 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 16:42:45 -0400
+Subject: [PATCH 55/55] [XPU] VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS: per-row
+ variance in the Qwen4Exp grouped RMSNorm torch fallback
+
+On XPU the hyperconnection grouped Gemma RMSNorm runs the torch fallback,
+whose mean over the 2560-wide groups is reduced in a shape-dependent order:
+a two-row batch differs from the same rows alone in about 1.5% of random
+draws (one BF16 element flips). With this flag set to num_spec + 1, inputs
+with 2..N rows compute the variance one row at a time, which reproduces the
+M=1 decode step exactly. Default 0 keeps the batched mean.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ vllm/envs.py                        |  8 ++++++++
+ vllm/models/qwen4_exp/amd/ops/hc.py | 13 ++++++++++++-
+ 2 files changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 75484bc91..20f1bb917 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -326,6 +326,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_QSA_SERIAL_SPEC_INDEXER: bool = False
+     VLLM_XPU_GDN_SERIAL_SPEC_DECODE: bool = False
+     VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS: int = 0
++    VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS: int = 0
+     VLLM_XPU_USE_SAMPLER_KERNEL: bool = True
+     VLLM_XPU_INC_WNA16_BACKEND: Literal["auto", "ark", "w4a16", "w4a8"] = "auto"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+@@ -2177,6 +2178,13 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS": lambda: int(
+         os.getenv("VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS", "0")
+     ),
++    # XPU: compute the Qwen4Exp hyperconnection grouped-RMSNorm variance one
++    # row at a time for inputs with 2..N rows, so a speculative verification
++    # step reduces exactly like the M=1 decode step (the torch reduction
++    # order depends on the tensor shape). 0 (default) keeps the batched mean.
++    "VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS": lambda: int(
++        os.getenv("VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS", "0")
++    ),
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
+diff --git a/vllm/models/qwen4_exp/amd/ops/hc.py b/vllm/models/qwen4_exp/amd/ops/hc.py
+index ff329881e..d641a5ea8 100644
+--- a/vllm/models/qwen4_exp/amd/ops/hc.py
++++ b/vllm/models/qwen4_exp/amd/ops/hc.py
+@@ -4,6 +4,7 @@
+ 
+ import torch
+ 
++import vllm.envs as envs
+ from vllm.platforms import current_platform
+ from vllm.triton_utils import tl, triton
+ from vllm.utils.torch_utils import direct_register_custom_op
+@@ -19,7 +20,17 @@ def _grouped_gemma_rmsnorm_torch(
+     input_dtype = x.dtype
+     group_dim = x.shape[-1] // num_groups
+     grouped = x.float().unflatten(-1, (num_groups, group_dim))
+-    variance = grouped.square().mean(dim=-1, keepdim=True)
++    max_rows = envs.VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS
++    if max_rows > 0 and grouped.dim() == 3 and 1 < grouped.shape[0] <= max_rows:
++        variance = torch.cat(
++            [
++                grouped[row : row + 1].square().mean(dim=-1, keepdim=True)
++                for row in range(grouped.shape[0])
++            ],
++            dim=0,
++        )
++    else:
++        variance = grouped.square().mean(dim=-1, keepdim=True)
+     normalized = grouped * torch.rsqrt(variance + eps)
+     if weight.numel() == group_dim:
+         normalized = normalized * (1.0 + weight.float())
+-- 
+2.43.0
+

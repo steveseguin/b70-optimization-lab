@@ -1,0 +1,71 @@
+From c027fe2d12a8002996c5448654ef9d87fb26cdeb Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 2 Sep 2026 20:19:31 -0400
+Subject: [PATCH 40/55] [Qwen4Exp] Read repeatability-trace settings through
+ Q38_ aliases
+
+The lab launchers unset inherited VLLM_* variables before serving, so the
+rank, min-position, exact-position, count and GDN-layer settings never
+reached the workers (A64 wrote no trace). Each setting now also reads
+Q38_REPEATABILITY_TRACE_<NAME>, matching the existing file-path alias.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01XfKD1km1ZX1bLGJQ7wdyFR
+---
+ .../qwen4_exp/amd/repeatability_trace.py      | 28 +++++++++----------
+ 1 file changed, 13 insertions(+), 15 deletions(-)
+
+diff --git a/vllm/models/qwen4_exp/amd/repeatability_trace.py b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+index 5bd8718d2..1642ce0de 100644
+--- a/vllm/models/qwen4_exp/amd/repeatability_trace.py
++++ b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+@@ -12,6 +12,14 @@ from pathlib import Path
+ import torch
+ 
+ 
++def _setting(name: str, default: str) -> str:
++    """Read a trace setting; the Q38_ alias survives launcher env filtering."""
++    return os.environ.get(
++        f"VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_{name}",
++        os.environ.get(f"Q38_REPEATABILITY_TRACE_{name}", default),
++    )
++
++
+ class Qwen4ExpRepeatabilityTrace:
+     """Capture one selected rank's first forward at or beyond a position."""
+ 
+@@ -19,26 +27,16 @@ class Qwen4ExpRepeatabilityTrace:
+         self.raw_path = os.environ.get(
+             "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", ""
+         ) or os.environ.get("Q38_REPEATABILITY_TRACE_FILE", "")
+-        rank_filter = os.environ.get("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK", "0")
++        rank_filter = _setting("RANK", "0")
+         self.rank = None if rank_filter.lower() == "all" else int(rank_filter)
+-        self.min_position = int(
+-            os.environ.get(
+-                "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_MIN_POSITION", "4000"
+-            )
+-        )
+-        exact = os.environ.get(
+-            "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_EXACT_POSITIONS", ""
+-        )
++        self.min_position = int(_setting("MIN_POSITION", "4000"))
++        exact = _setting("EXACT_POSITIONS", "")
+         self.exact_positions: tuple[int, int] | None = None
+         if exact:
+             lo, hi = exact.split(":")
+             self.exact_positions = (int(lo), int(hi))
+-        self.count = int(
+-            os.environ.get("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_COUNT", "1")
+-        )
+-        gdn_layers = os.environ.get(
+-            "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_GDN_LAYERS", ""
+-        )
++        self.count = int(_setting("COUNT", "1"))
++        gdn_layers = _setting("GDN_LAYERS", "")
+         self.gdn_layers: frozenset[int] = frozenset(
+             int(item) for item in gdn_layers.split(",") if item.strip()
+         )
+-- 
+2.43.0
+

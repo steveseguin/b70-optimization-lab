@@ -1,0 +1,35 @@
+From a6356d5d13696b6f62d8996bca7a6c449fae9f4d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 12:57:14 -0400
+Subject: [PATCH 46/55] [XPU] One-time entry diagnostic in
+ FlashAttentionImpl.forward (attn type, cascade, query len, serial flag)
+
+---
+ vllm/v1/attention/backends/flash_attn.py | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 6435757bc..858aa30f4 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -996,6 +996,17 @@ class FlashAttentionImpl(AttentionImpl):
+         # performance to make sure it does not introduce any overhead.
+ 
+         num_actual_tokens = attn_metadata.num_actual_tokens
++        logger.warning_once(
++            "FA forward entry diagnostic: attn_type=%s use_cascade=%s "
++            "max_query_len=%s num_actual_tokens=%s dcp_world_size=%s "
++            "serial_spec_env=%s",
++            attn_type,
++            attn_metadata.use_cascade,
++            attn_metadata.max_query_len,
++            num_actual_tokens,
++            self.dcp_world_size,
++            envs.VLLM_XPU_FA_SERIAL_SPEC_DECODE,
++        )
+ 
+         # Handle encoder attention differently - no KV cache needed
+         if attn_type in (AttentionType.ENCODER_ONLY, AttentionType.ENCODER):
+-- 
+2.43.0
+

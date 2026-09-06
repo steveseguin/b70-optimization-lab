@@ -1,0 +1,511 @@
+From 797769b34b6db5c934609b75dc04cc61ec66e5f9 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 31 Aug 2026 03:26:05 -0400
+Subject: [PATCH 37/55] Qualify Qwen HC grouped-up dynamic shapes
+
+---
+ .../qwen4_exp/test_amd_hc_grouped_up.py       | 218 ++++++++++++++++--
+ vllm/models/qwen4_exp/amd/low_latency_gemm.py | 120 ++++++++--
+ 2 files changed, 307 insertions(+), 31 deletions(-)
+
+diff --git a/tests/models/qwen4_exp/test_amd_hc_grouped_up.py b/tests/models/qwen4_exp/test_amd_hc_grouped_up.py
+index 5195cd0fd..40d76c9f1 100644
+--- a/tests/models/qwen4_exp/test_amd_hc_grouped_up.py
++++ b/tests/models/qwen4_exp/test_amd_hc_grouped_up.py
+@@ -47,6 +47,11 @@ def _fake_vllm_config() -> SimpleNamespace:
+             tensor_parallel_size=4,
+             pipeline_parallel_size=1,
+         ),
++        scheduler_config=SimpleNamespace(
++            max_num_seqs=1,
++            max_num_batched_tokens=64,
++            max_num_scheduled_tokens=None,
++        ),
+         compilation_config=SimpleNamespace(
+             mode=CompilationMode.NONE,
+             cudagraph_mode=CUDAGraphMode.NONE,
+@@ -134,6 +139,18 @@ def test_grouped_up_selects_exact_97_and_rejects_draft(
+             target, torch.bfloat16, pp_config
+         )
+ 
++    for field, value in (
++        ("max_num_seqs", 2),
++        ("max_num_batched_tokens", 65),
++        ("max_num_scheduled_tokens", 64),
++    ):
++        scheduler_config = _fake_vllm_config()
++        setattr(scheduler_config.scheduler_config, field, value)
++        with pytest.raises(RuntimeError, match="64-token scheduler"):
++            low_latency_gemm.enable_qwen4_exp_low_latency_gemm(
++                target, torch.bfloat16, scheduler_config
++            )
++
+     mtp_config = _fake_vllm_config()
+     mtp_config.speculative_config = object()
+     with pytest.raises(RuntimeError, match="MTP0-only"):
+@@ -210,6 +227,7 @@ def test_grouped_up_shared_storage_exact_fallback_and_reload(
+     ):
+         assert scales is None and bias is None
+         assert rows.shape == (1,) and rows.dtype == torch.int32
++        assert rows.cpu().tolist() == [input_value.shape[0]]
+         assert (n, k, experts, is_int4, is_mxfp4) == (
+             10240,
+             320,
+@@ -245,22 +263,32 @@ def test_grouped_up_shared_storage_exact_fallback_and_reload(
+         torch.randn((10240, 320), dtype=torch.bfloat16, generator=generator) * 0.01
+     ).contiguous()
+     linear.weight_loader(linear.weight, weight_cpu)
+-    x1 = (torch.randn((1, 320), dtype=torch.bfloat16, generator=generator) * 0.01).to(
+-        "xpu"
+-    )
+-    x2 = (torch.randn((2, 320), dtype=torch.bfloat16, generator=generator) * 0.01).to(
+-        "xpu"
+-    )
+-    authority1 = F.linear(x1, linear.weight)
++    x_all = (
++        torch.randn((65, 320), dtype=torch.bfloat16, generator=generator) * 0.01
++    ).to("xpu")
++    authority_weight = linear.weight.detach().clone()
++    authority1 = F.linear(x_all[:1], authority_weight)
+     torch.xpu.synchronize()
+ 
+     original_parameter = linear.weight
+     method.process_weights_after_loading(linear)
+     method.process_weights_after_loading(linear)
+     packed = linear._qwen4_exp_xpu_grouped_up_weight
++    rows_table = linear._qwen4_exp_xpu_grouped_up_rows
++    rows_identity = linear._qwen4_exp_xpu_grouped_up_rows_identity
++    rows_storage = rows_table.untyped_storage().data_ptr()
+     assert linear.weight is original_parameter
+     assert packed.shape == (1, 320, 10240)
+     assert packed.is_contiguous()
++    assert rows_table.shape == (65,)
++    assert rows_table.stride() == (1,)
++    assert rows_table.dtype == torch.int32
++    assert rows_table.is_contiguous()
++    assert not rows_table.requires_grad
++    assert rows_table.cpu().tolist() == list(range(65))
++    assert rows_identity is not rows_table
++    assert rows_identity.data_ptr() == rows_table.data_ptr()
++    assert rows_identity.untyped_storage().data_ptr() == rows_storage
+     assert (
+         packed.untyped_storage().data_ptr()
+         == original_parameter.untyped_storage().data_ptr()
+@@ -268,8 +296,8 @@ def test_grouped_up_shared_storage_exact_fallback_and_reload(
+     assert torch.equal(packed[0].t().cpu(), weight_cpu)
+     assert not any("qwen4_exp_xpu_grouped" in name for name in linear.state_dict())
+ 
+-    candidate1 = linear(x1)
+-    candidate1_second = linear(x1)
++    candidate1 = linear(x_all[:1])
++    candidate1_second = linear(x_all[:1])
+     torch.xpu.synchronize()
+     assert torch.equal(candidate1.cpu(), authority1.cpu())
+     assert torch.equal(candidate1_second.cpu(), authority1.cpu())
+@@ -277,12 +305,84 @@ def test_grouped_up_shared_storage_exact_fallback_and_reload(
+         candidate1.untyped_storage().data_ptr()
+         != candidate1_second.untyped_storage().data_ptr()
+     )
+-    with pytest.raises(RuntimeError, match="non-M1 dispatch is not qualified"):
+-        linear(x2)
++    for m in range(1, 65):
++        candidate = linear(x_all[:m])
++        fake_expected = x_all[:m] @ packed[0]
++        torch.xpu.synchronize()
++        assert torch.equal(candidate.cpu(), fake_expected.cpu())
++        rows = rows_table[m : m + 1]
++        assert rows.shape == (1,) and rows.stride() == (1,)
++        assert rows.storage_offset() == m
++        assert rows.data_ptr() == rows_table.data_ptr() + m * rows.element_size()
++        assert rows.untyped_storage().data_ptr() == rows_storage
++        assert rows.cpu().tolist() == [m]
++    assert rows_table.cpu().tolist() == list(range(65))
++
++    with pytest.raises(RuntimeError, match="outside 1..64"):
++        linear(x_all[:0])
++    with pytest.raises(RuntimeError, match="outside 1..64"):
++        linear(x_all)
++
++    with pytest.raises(RuntimeError, match="outside the qualified lane"):
++        linear(x_all[:2].float())
++    noncontiguous = x_all[:2].t().contiguous().t()
++    assert not noncontiguous.is_contiguous()
++    with pytest.raises(RuntimeError, match="outside the qualified lane"):
++        linear(noncontiguous)
++    with pytest.raises(RuntimeError, match="outside the qualified lane"):
++        method.apply(linear, torch.randn((2, 320), dtype=torch.bfloat16))
++    with pytest.raises(RuntimeError, match="outside the qualified lane"):
++        linear(x_all[:1].reshape(1, 1, 320))
++    with pytest.raises(RuntimeError, match="outside the qualified lane"):
++        linear(x_all[:2, :319].contiguous())
++    with pytest.raises(RuntimeError, match="outside the qualified lane"):
++        method.apply(
++            linear,
++            x_all[:2],
++            torch.zeros((10240,), dtype=torch.bfloat16, device="xpu"),
++        )
++
++    original_rows_buffer = linear._qwen4_exp_xpu_grouped_up_rows
++    linear._qwen4_exp_xpu_grouped_up_rows = original_rows_buffer.clone()
++    with pytest.raises(RuntimeError, match="rows metadata drifted"):
++        linear(x_all[:2])
++    linear._qwen4_exp_xpu_grouped_up_rows = original_rows_buffer
++
++    original_packed_buffer = linear._qwen4_exp_xpu_grouped_up_weight
++    linear._qwen4_exp_xpu_grouped_up_weight = original_packed_buffer.clone()
++    with pytest.raises(RuntimeError, match="packed metadata drifted"):
++        linear(x_all[:2])
++    linear._qwen4_exp_xpu_grouped_up_weight = original_packed_buffer
++
++    malformed_results = (
++        lambda output: output[:, :1],
++        lambda output: output.float(),
++        lambda output: output.cpu(),
++        lambda output: output.t().contiguous().t(),
++        lambda output: torch.empty_like(output),
++        lambda output: torch.empty(
++            (output.shape[0] + 1, output.shape[1]),
++            dtype=output.dtype,
++            device=output.device,
++        )[1:],
++    )
++    for make_result in malformed_results:
++        monkeypatch.setattr(
++            torch.ops._xpu_C,
++            "cutlass_grouped_gemm_interface",
++            lambda *args, make_result=make_result: make_result(args[4]),
++        )
++        with pytest.raises(RuntimeError, match="returned unexpected output"):
++            linear(x_all[:2])
++    monkeypatch.setattr(
++        torch.ops._xpu_C,
++        "cutlass_grouped_gemm_interface",
++        grouped_gemm,
++    )
+ 
+     monkeypatch.setattr(torch.compiler, "is_compiling", lambda: True)
+     with pytest.raises(RuntimeError, match="does not support compilation"):
+-        linear(x1)
++        linear(x_all[:1])
+     monkeypatch.setattr(torch.compiler, "is_compiling", lambda: False)
+ 
+     replacement_cpu = (
+@@ -290,23 +390,111 @@ def test_grouped_up_shared_storage_exact_fallback_and_reload(
+     ).contiguous()
+     linear.weight_loader(original_parameter, replacement_cpu)
+     assert torch.equal(packed[0].t().cpu(), replacement_cpu)
+-    replacement_authority = F.linear(x1, replacement_cpu.to("xpu"))
+-    replacement_output = linear(x1)
++    replacement_expected = x_all[:1] @ packed[0]
++    replacement_output = linear(x_all[:1])
+     torch.xpu.synchronize()
+-    assert torch.equal(replacement_output.cpu(), replacement_authority.cpu())
++    assert torch.equal(replacement_output.cpu(), replacement_expected.cpu())
+ 
+     official_reload_cpu = (
+         torch.randn((10240, 320), dtype=torch.bfloat16, generator=generator) * 0.01
+     ).contiguous()
+     kernel_parameter = linear.weight
+     kernel_packed = linear._qwen4_exp_xpu_grouped_up_weight
++    kernel_rows_table = linear._qwen4_exp_xpu_grouped_up_rows
++    kernel_rows_identity = linear._qwen4_exp_xpu_grouped_up_rows_identity
+     kernel_storage = kernel_packed.untyped_storage().data_ptr()
++    kernel_rows_storage = kernel_rows_table.untyped_storage().data_ptr()
+     initialize_layerwise_reload(linear)
+     reload_parameter = linear.weight
+     reload_parameter.weight_loader(reload_parameter, official_reload_cpu)
+     finalize_layerwise_reload(linear, model_config=None)
+     assert linear.weight is kernel_parameter
+     assert linear._qwen4_exp_xpu_grouped_up_weight is kernel_packed
++    assert linear._qwen4_exp_xpu_grouped_up_rows is kernel_rows_table
++    assert linear._qwen4_exp_xpu_grouped_up_rows_identity is kernel_rows_identity
+     assert linear.weight.untyped_storage().data_ptr() == kernel_storage
+     assert kernel_packed.untyped_storage().data_ptr() == kernel_storage
++    assert kernel_rows_table.untyped_storage().data_ptr() == kernel_rows_storage
++    assert kernel_rows_identity.data_ptr() == kernel_rows_table.data_ptr()
++    assert kernel_rows_identity.untyped_storage().data_ptr() == kernel_rows_storage
++    assert kernel_rows_table.cpu().tolist() == list(range(65))
+     assert torch.equal(kernel_packed[0].t().cpu(), official_reload_cpu)
++    reload_expected = x_all[:37] @ kernel_packed[0]
++    reload_output = linear(x_all[:37])
++    torch.xpu.synchronize()
++    assert torch.equal(reload_output.cpu(), reload_expected.cpu())
++
++
++@pytest.mark.skipif(
++    not torch.xpu.is_available(),
++    reason="requires one XPU",
++)
++def test_grouped_up_real_operator_all_m_and_two_streams(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setattr(
++        "vllm.model_executor.parameter.get_tensor_model_parallel_rank", lambda: 0
++    )
++    monkeypatch.setattr(
++        "vllm.model_executor.parameter.get_tensor_model_parallel_world_size",
++        lambda: 1,
++    )
++    monkeypatch.setattr(
++        "vllm.model_executor.layers.linear.get_tensor_model_parallel_rank", lambda: 0
++    )
++    monkeypatch.setattr(
++        "vllm.model_executor.layers.linear.get_tensor_model_parallel_world_size",
++        lambda: 1,
++    )
++    assert hasattr(torch.ops._xpu_C, "cutlass_grouped_gemm_interface")
++
++    config = HyperConnectionConfig(
++        hc_count=4,
++        hidden_size=2560,
++        params_dtype=torch.bfloat16,
++        hc_lowrank=320,
++        rms_norm_eps=1e-6,
++        hc_per_branch_norm=True,
++    )
++    module = GatedResidual(config).to("xpu")
++    linear = module.input_mix_weight_up
++    method = low_latency_gemm.Qwen4ExpXPUGroupedUpLinearMethod()
++    linear.quant_method = method
++    generator = torch.Generator(device="cpu").manual_seed(20260901)
++    weight_cpu = (
++        torch.randn((10240, 320), dtype=torch.bfloat16, generator=generator) * 0.01
++    ).contiguous()
++    linear.weight_loader(linear.weight, weight_cpu)
++    authority_weight = linear.weight.detach().clone()
++    x_all = (
++        torch.randn((64, 320), dtype=torch.bfloat16, generator=generator) * 0.01
++    ).to("xpu")
++    x_before = x_all.cpu()
++    method.process_weights_after_loading(linear)
++    packed = linear._qwen4_exp_xpu_grouped_up_weight
++    packed_before = packed.cpu()
++    rows_table = linear._qwen4_exp_xpu_grouped_up_rows
++    rows_identity = linear._qwen4_exp_xpu_grouped_up_rows_identity
++
++    for m in range(1, 65):
++        authority = F.linear(x_all[:m], authority_weight)
++        candidate = linear(x_all[:m])
++        torch.xpu.synchronize()
++        assert torch.equal(candidate.cpu(), authority.cpu())
++
++    expected7 = F.linear(x_all[:7], authority_weight)
++    expected37 = F.linear(x_all[:37], authority_weight)
++    stream_a = torch.xpu.Stream()
++    stream_b = torch.xpu.Stream()
++    with torch.xpu.stream(stream_a):
++        output7 = linear(x_all[:7])
++    with torch.xpu.stream(stream_b):
++        output37 = linear(x_all[:37])
++    torch.xpu.synchronize()
++    assert torch.equal(output7.cpu(), expected7.cpu())
++    assert torch.equal(output37.cpu(), expected37.cpu())
++    assert output7.data_ptr() != output37.data_ptr()
++    assert torch.equal(x_all.cpu(), x_before)
++    assert torch.equal(packed.cpu(), packed_before)
++    assert rows_table.cpu().tolist() == list(range(65))
++    assert rows_identity.data_ptr() == rows_table.data_ptr()
+diff --git a/vllm/models/qwen4_exp/amd/low_latency_gemm.py b/vllm/models/qwen4_exp/amd/low_latency_gemm.py
+index 191fc0cf1..86599b627 100644
+--- a/vllm/models/qwen4_exp/amd/low_latency_gemm.py
++++ b/vllm/models/qwen4_exp/amd/low_latency_gemm.py
+@@ -22,16 +22,18 @@ _HC_UP_TARGET_COUNT = 2 * _HC_UP_LAYER_COUNT + 1
+ 
+ 
+ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+-    """M=1 grouped GEMM over one packed HC-up weight bank."""
++    """Scheduler-bounded grouped GEMM over one packed HC-up weight bank."""
+ 
+     _PACKED_BUFFER = "_qwen4_exp_xpu_grouped_up_weight"
+     _ROWS_BUFFER = "_qwen4_exp_xpu_grouped_up_rows"
++    _ROWS_IDENTITY_BUFFER = "_qwen4_exp_xpu_grouped_up_rows_identity"
+ 
+     def process_weights_after_loading(self, layer: nn.Module) -> None:
+         super().process_weights_after_loading(layer)
+         weight = layer.weight
+         packed = getattr(layer, self._PACKED_BUFFER, None)
+-        rows = getattr(layer, self._ROWS_BUFFER, None)
++        rows_table = getattr(layer, self._ROWS_BUFFER, None)
++        rows_identity = getattr(layer, self._ROWS_IDENTITY_BUFFER, None)
+ 
+         if packed is None:
+             if (
+@@ -46,18 +48,25 @@ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+                     "[10240,320] without bias"
+                 )
+             packed = weight.detach().t().contiguous().unsqueeze(0)
+-            rows = torch.ones((1,), dtype=torch.int32, device=weight.device)
++            rows_table = torch.arange(65, dtype=torch.int32, device=weight.device)
++            rows_identity = rows_table.view_as(rows_table)
+             weight.data = packed[0].t()
+             layer.register_buffer(self._PACKED_BUFFER, packed, persistent=False)
+-            layer.register_buffer(self._ROWS_BUFFER, rows, persistent=False)
++            layer.register_buffer(self._ROWS_BUFFER, rows_table, persistent=False)
++            layer.register_buffer(
++                self._ROWS_IDENTITY_BUFFER,
++                rows_identity,
++                persistent=False,
++            )
+ 
+-        self._validate_packed_state(layer, packed, rows)
++        self._validate_packed_state(layer, packed, rows_table, rows_identity)
+ 
+     @staticmethod
+     def _validate_packed_state(
+         layer: nn.Module,
+         packed: torch.Tensor,
+-        rows: torch.Tensor | None,
++        rows_table: torch.Tensor | None,
++        rows_identity: torch.Tensor | None,
+     ) -> None:
+         weight = layer.weight
+         if (
+@@ -67,11 +76,24 @@ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+             or packed.dtype != torch.bfloat16
+             or packed.device.type != "xpu"
+             or not packed.is_contiguous()
+-            or rows is None
+-            or rows.shape != (1,)
+-            or rows.dtype != torch.int32
+-            or rows.device != packed.device
+-            or int(rows.item()) != 1
++            or rows_table is None
++            or rows_table.shape != (65,)
++            or rows_table.stride() != (1,)
++            or rows_table.dtype != torch.int32
++            or rows_table.device != packed.device
++            or not rows_table.is_contiguous()
++            or rows_table.requires_grad
++            or rows_identity is None
++            or rows_identity.shape != rows_table.shape
++            or rows_identity.stride() != rows_table.stride()
++            or rows_identity.dtype != rows_table.dtype
++            or rows_identity.device != rows_table.device
++            or not rows_identity.is_contiguous()
++            or rows_identity.requires_grad
++            or rows_identity.storage_offset() != rows_table.storage_offset()
++            or rows_identity.data_ptr() != rows_table.data_ptr()
++            or rows_identity.untyped_storage().data_ptr()
++            != rows_table.untyped_storage().data_ptr()
+             or weight.shape != (_HC_UP_OUTPUT_SIZE, _HC_UP_INPUT_SIZE)
+             or weight.stride() != (1, _HC_UP_OUTPUT_SIZE)
+             or weight.dtype != packed.dtype
+@@ -80,6 +102,8 @@ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+             != packed.untyped_storage().data_ptr()
+         ):
+             raise RuntimeError("Qwen4Exp grouped HC-up packed state drifted")
++        if not torch.equal(rows_table.cpu(), torch.arange(65, dtype=torch.int32)):
++            raise RuntimeError("Qwen4Exp grouped HC-up rows table drifted")
+ 
+     def apply(
+         self,
+@@ -88,8 +112,9 @@ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
+         packed = getattr(layer, self._PACKED_BUFFER, None)
+-        rows = getattr(layer, self._ROWS_BUFFER, None)
+-        if packed is None or rows is None:
++        rows_table = getattr(layer, self._ROWS_BUFFER, None)
++        rows_identity = getattr(layer, self._ROWS_IDENTITY_BUFFER, None)
++        if packed is None or rows_table is None or rows_identity is None:
+             raise RuntimeError("Qwen4Exp grouped HC-up weight was not prepared")
+         if torch.compiler.is_compiling():
+             raise RuntimeError("Qwen4Exp grouped HC-up does not support compilation")
+@@ -99,14 +124,63 @@ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+             or x.device != packed.device
+             or x.dtype != torch.bfloat16
+             or x.ndim != 2
+-            or x.shape != (1, _HC_UP_INPUT_SIZE)
++            or x.shape[1] != _HC_UP_INPUT_SIZE
+             or not x.is_contiguous()
+         ):
+             raise RuntimeError(
+-                "Qwen4Exp grouped HC-up non-M1 dispatch is not qualified"
++                "Qwen4Exp grouped HC-up input is outside the qualified lane"
+             )
++        m = x.shape[0]
++        if m < 1 or m > 64:
++            raise RuntimeError("Qwen4Exp grouped HC-up M is outside 1..64")
++        weight = layer.weight
++        if (
++            packed.shape != (1, _HC_UP_INPUT_SIZE, _HC_UP_OUTPUT_SIZE)
++            or packed.stride()
++            != (_HC_UP_INPUT_SIZE * _HC_UP_OUTPUT_SIZE, _HC_UP_OUTPUT_SIZE, 1)
++            or packed.dtype != torch.bfloat16
++            or packed.device.type != "xpu"
++            or not packed.is_contiguous()
++            or weight.shape != (_HC_UP_OUTPUT_SIZE, _HC_UP_INPUT_SIZE)
++            or weight.stride() != (1, _HC_UP_OUTPUT_SIZE)
++            or weight.dtype != packed.dtype
++            or weight.device != packed.device
++            or weight.untyped_storage().data_ptr()
++            != packed.untyped_storage().data_ptr()
++        ):
++            raise RuntimeError("Qwen4Exp grouped HC-up packed metadata drifted")
++        if (
++            rows_table.shape != (65,)
++            or rows_table.stride() != (1,)
++            or rows_table.dtype != torch.int32
++            or rows_table.device != packed.device
++            or not rows_table.is_contiguous()
++            or rows_table.requires_grad
++            or rows_identity.shape != rows_table.shape
++            or rows_identity.stride() != rows_table.stride()
++            or rows_identity.dtype != rows_table.dtype
++            or rows_identity.device != rows_table.device
++            or not rows_identity.is_contiguous()
++            or rows_identity.requires_grad
++            or rows_identity.storage_offset() != rows_table.storage_offset()
++            or rows_identity.data_ptr() != rows_table.data_ptr()
++            or rows_identity.untyped_storage().data_ptr()
++            != rows_table.untyped_storage().data_ptr()
++        ):
++            raise RuntimeError("Qwen4Exp grouped HC-up rows metadata drifted")
++        rows = rows_table[m : m + 1]
++        if (
++            rows.shape != (1,)
++            or rows.stride() != (1,)
++            or not rows.is_contiguous()
++            or rows.storage_offset() != m
++            or rows.data_ptr() != rows_table.data_ptr() + m * rows.element_size()
++            or rows.untyped_storage().data_ptr()
++            != rows_table.untyped_storage().data_ptr()
++        ):
++            raise RuntimeError("Qwen4Exp grouped HC-up rows view drifted")
+ 
+-        output = torch.empty((1, _HC_UP_OUTPUT_SIZE), dtype=x.dtype, device=x.device)
++        output = torch.empty((m, _HC_UP_OUTPUT_SIZE), dtype=x.dtype, device=x.device)
+         result = torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+             x,
+             packed,
+@@ -125,6 +199,9 @@ class Qwen4ExpXPUGroupedUpLinearMethod(UnquantizedLinearMethod):
+             or result.shape != output.shape
+             or result.dtype != output.dtype
+             or result.device != output.device
++            or result.stride() != (_HC_UP_OUTPUT_SIZE, 1)
++            or result.storage_offset() != 0
++            or result.data_ptr() != output.data_ptr()
+             or result.untyped_storage().data_ptr()
+             != output.untyped_storage().data_ptr()
+         ):
+@@ -165,6 +242,17 @@ def _validate_grouped_up_config(
+     ):
+         raise RuntimeError("Qwen4Exp grouped HC-up requires TP4 and PP1")
+ 
++    scheduler_config = vllm_config.scheduler_config
++    if (
++        scheduler_config.max_num_seqs != 1
++        or scheduler_config.max_num_batched_tokens != 64
++        or scheduler_config.max_num_scheduled_tokens is not None
++    ):
++        raise RuntimeError(
++            "Qwen4Exp grouped HC-up requires the exact one-sequence, "
++            "64-token scheduler contract"
++        )
++
+     compilation_config = vllm_config.compilation_config
+     if (
+         compilation_config.mode != CompilationMode.NONE
+-- 
+2.43.0
+

@@ -1,0 +1,44 @@
+From d132de8c2bb70244960b523ddf8472195b8ba14f Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 13:50:22 -0400
+Subject: [PATCH 50/55] [XPU] Repeatability trace: per-row digests for small
+ multi-row captures (MTP verification batches)
+
+---
+ vllm/models/qwen4_exp/amd/repeatability_trace.py | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/vllm/models/qwen4_exp/amd/repeatability_trace.py b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+index 1642ce0de..85a9169b9 100644
+--- a/vllm/models/qwen4_exp/amd/repeatability_trace.py
++++ b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+@@ -55,13 +55,25 @@ class Qwen4ExpRepeatabilityTrace:
+         detached = tensor.detach().contiguous()
+         raw = detached.view(torch.uint8).cpu().numpy().tobytes()
+         head = detached.flatten()[:8].float().cpu().tolist()
+-        return {
++        record: dict[str, object] = {
+             "dtype": str(detached.dtype),
+             "head": head,
+             "numel": detached.numel(),
+             "sha256": hashlib.sha256(raw).hexdigest(),
+             "shape": list(detached.shape),
+         }
++        # Per-row digests let a multi-row step (an MTP verification batch)
++        # be compared row by row against single-row decode captures.
++        if detached.dim() >= 2 and 1 < detached.shape[0] <= 16:
++            rows = detached.reshape(detached.shape[0], -1)
++            record["row_sha256"] = [
++                hashlib.sha256(
++                    rows[i].contiguous().view(torch.uint8).cpu().numpy().tobytes()
++                ).hexdigest()
++                for i in range(rows.shape[0])
++            ]
++            record["row_head"] = rows[:, :4].float().cpu().tolist()
++        return record
+ 
+     def begin(self, positions: torch.Tensor, rank: int) -> bool:
+         if (
+-- 
+2.43.0
+

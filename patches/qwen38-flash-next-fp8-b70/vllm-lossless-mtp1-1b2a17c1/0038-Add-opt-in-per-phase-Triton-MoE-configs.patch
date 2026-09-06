@@ -1,0 +1,255 @@
+From cbc3cb588a7cae8dcc489fb4dfc1a800d19980d9 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Tue, 1 Sep 2026 09:02:21 -0400
+Subject: [PATCH 38/55] Add opt-in per-phase Triton MoE configs
+
+---
+ tests/kernels/moe/test_moe_phase_configs.py   | 67 +++++++++++++
+ .../layers/fused_moe/experts/triton_moe.py    |  9 +-
+ .../layers/fused_moe/fused_moe.py             | 95 ++++++++++++++++++-
+ 3 files changed, 165 insertions(+), 6 deletions(-)
+ create mode 100644 tests/kernels/moe/test_moe_phase_configs.py
+
+diff --git a/tests/kernels/moe/test_moe_phase_configs.py b/tests/kernels/moe/test_moe_phase_configs.py
+new file mode 100644
+index 000000000..b3531fcd2
+--- /dev/null
++++ b/tests/kernels/moe/test_moe_phase_configs.py
+@@ -0,0 +1,67 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import pytest
++
++from vllm.model_executor.layers.fused_moe.fused_moe import (
++    resolve_moe_gemm_configs,
++)
++
++BASE = {
++    "BLOCK_SIZE_M": 16,
++    "BLOCK_SIZE_N": 64,
++    "BLOCK_SIZE_K": 128,
++    "GROUP_SIZE_M": 1,
++    "SPLIT_K": 1,
++    "num_warps": 4,
++    "num_stages": 4,
++}
++
++
++def test_flat_config_is_copied_for_both_gemms() -> None:
++    w1, w2 = resolve_moe_gemm_configs(BASE, M=1, enable_phase_configs=True)
++    assert w1 == BASE
++    assert w2 == BASE
++    assert w1 is not w2
++
++
++def test_m1_phase_deltas_merge_without_mutating_source() -> None:
++    source = BASE | {
++        "W1_CONFIG": {"num_warps": 8},
++        "W2_CONFIG": {"BLOCK_SIZE_N": 128, "num_warps": 8},
++    }
++    original = source | {
++        "W1_CONFIG": source["W1_CONFIG"].copy(),
++        "W2_CONFIG": source["W2_CONFIG"].copy(),
++    }
++    w1, w2 = resolve_moe_gemm_configs(source, M=1, enable_phase_configs=True)
++    assert w1 == BASE | {"num_warps": 8}
++    assert w2 == BASE | {"BLOCK_SIZE_N": 128, "num_warps": 8}
++    assert source == original
++
++
++@pytest.mark.parametrize("M", [2, 4, 64])
++def test_non_m1_ignores_phase_deltas(M: int) -> None:
++    source = BASE | {"W1_CONFIG": {"num_warps": 8}}
++    assert resolve_moe_gemm_configs(source, M=M, enable_phase_configs=True) == (
++        BASE,
++        BASE,
++    )
++
++
++@pytest.mark.parametrize(
++    "delta",
++    [
++        {"BLOCK_SIZE_M": 32},
++        {"SPLIT_K": 2},
++        {"BLOCK_SIZE_K": 256},
++        {"num_warps": 2},
++        {"num_stages": True},
++        {"unknown": 1},
++    ],
++)
++def test_unsafe_phase_delta_fails_closed(delta: dict[str, int]) -> None:
++    with pytest.raises(ValueError):
++        resolve_moe_gemm_configs(
++            BASE | {"W2_CONFIG": delta}, M=1, enable_phase_configs=True
++        )
+diff --git a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+index 9887423e7..a34d160b0 100644
+--- a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+@@ -23,6 +23,7 @@ from vllm.model_executor.layers.fused_moe.fused_moe import (
+     invoke_fused_moe_triton_kernel,
+     invoke_fused_moe_wna16_triton_kernel,
+     try_get_optimal_moe_config,
++    try_get_optimal_moe_gemm_configs,
+ )
+ from vllm.model_executor.layers.fused_moe.moe_align_block_size import (
+     moe_align_block_size,
+@@ -283,7 +284,7 @@ class TritonExperts(LoRAExpertsMixin, mk.FusedMoEExpertsModular):
+         if global_num_experts == -1:
+             global_num_experts = E
+ 
+-        config = try_get_optimal_moe_config(
++        w1_config, w2_config = try_get_optimal_moe_gemm_configs(
+             w1.size(),
+             w2.size(),
+             top_k_num,
+@@ -320,7 +321,7 @@ class TritonExperts(LoRAExpertsMixin, mk.FusedMoEExpertsModular):
+         sorted_token_ids, expert_ids, num_tokens_post_padded = (
+             _prepare_expert_assignment(
+                 topk_ids,
+-                config,
++                w1_config,
+                 num_tokens,
+                 top_k_num,
+                 num_align_experts,
+@@ -383,7 +384,7 @@ class TritonExperts(LoRAExpertsMixin, mk.FusedMoEExpertsModular):
+                 num_tokens_post_padded,
+                 False,  # mul_routed_weights
+                 top_k_num,
+-                config,
++                w1_config,
+                 compute_type=compute_type,
+                 use_fp8_w8a8=self.quant_config.use_fp8_w8a8,
+                 use_int8_w8a8=self.quant_config.use_int8_w8a8,
+@@ -501,7 +502,7 @@ class TritonExperts(LoRAExpertsMixin, mk.FusedMoEExpertsModular):
+                 num_tokens_post_padded,
+                 not apply_router_weight_on_input,
+                 1,
+-                config,
++                w2_config,
+                 compute_type=compute_type,
+                 use_fp8_w8a8=self.quant_config.use_fp8_w8a8,
+                 use_int8_w8a8=self.quant_config.use_int8_w8a8,
+diff --git a/vllm/model_executor/layers/fused_moe/fused_moe.py b/vllm/model_executor/layers/fused_moe/fused_moe.py
+index dc619b2b1..a57a654e7 100644
+--- a/vllm/model_executor/layers/fused_moe/fused_moe.py
++++ b/vllm/model_executor/layers/fused_moe/fused_moe.py
+@@ -1419,14 +1419,60 @@ def get_default_config(
+     return config
+ 
+ 
+-def try_get_optimal_moe_config(
++_MOE_PHASE_CONFIG_KEYS = ("W1_CONFIG", "W2_CONFIG")
++_MOE_PHASE_CONFIG_VALUES = {
++    "BLOCK_SIZE_N": {32, 64, 128, 256},
++    "BLOCK_SIZE_K": {64, 128},
++    "GROUP_SIZE_M": {1, 16, 32, 64},
++    "num_warps": {4, 8},
++    "num_stages": {2, 3, 4, 5},
++}
++
++
++def resolve_moe_gemm_configs(
++    config: dict[str, Any], *, M: int, enable_phase_configs: bool
++) -> tuple[dict[str, int], dict[str, int]]:
++    """Resolve optional per-GEMM deltas without mutating cached config data.
++
++    Expert assignment is shared by both GEMMs, so phase deltas deliberately
++    cannot change ``BLOCK_SIZE_M``. ``SPLIT_K`` is also excluded because the
++    Triton launcher currently forces it to one.
++    """
++    raw = config.copy()
++    phase_configs = {key: raw.pop(key, None) for key in _MOE_PHASE_CONFIG_KEYS}
++    base = raw.copy()
++    if not enable_phase_configs or M != 1:
++        return base, base.copy()
++
++    resolved = []
++    for phase in _MOE_PHASE_CONFIG_KEYS:
++        delta = phase_configs[phase]
++        if delta is None:
++            resolved.append(base.copy())
++            continue
++        if not isinstance(delta, dict):
++            raise ValueError(f"{phase} must be an object")
++        unknown = set(delta) - set(_MOE_PHASE_CONFIG_VALUES)
++        if unknown:
++            raise ValueError(f"{phase} contains unsupported fields: {sorted(unknown)}")
++        phase_config = base.copy()
++        for key, value in delta.items():
++            if type(value) is not int or value not in _MOE_PHASE_CONFIG_VALUES[key]:
++                allowed = sorted(_MOE_PHASE_CONFIG_VALUES[key])
++                raise ValueError(f"{phase}.{key} must be one of {allowed}")
++            phase_config[key] = value
++        resolved.append(phase_config)
++    return resolved[0], resolved[1]
++
++
++def _get_optimal_moe_config_entry(
+     w1_shape: tuple[int, ...],
+     w2_shape: tuple[int, ...],
+     top_k: int,
+     dtype: str | None,
+     M: int,
+     block_shape: list[int] | None = None,
+-) -> dict[str, int]:
++) -> dict[str, Any]:
+     from vllm.model_executor.layers.fused_moe import get_config
+ 
+     override_config = get_config()
+@@ -1451,6 +1497,51 @@ def try_get_optimal_moe_config(
+     return config
+ 
+ 
++def try_get_optimal_moe_config(
++    w1_shape: tuple[int, ...],
++    w2_shape: tuple[int, ...],
++    top_k: int,
++    dtype: str | None,
++    M: int,
++    block_shape: list[int] | None = None,
++) -> dict[str, int]:
++    config = _get_optimal_moe_config_entry(
++        w1_shape, w2_shape, top_k, dtype, M, block_shape
++    )
++    # Legacy/functional callers retain one flat config even when a modular
++    # XPU experiment supplies opt-in phase deltas in its tuned entry.
++    flat, _ = resolve_moe_gemm_configs(config, M=M, enable_phase_configs=False)
++    return flat
++
++
++def try_get_optimal_moe_gemm_configs(
++    w1_shape: tuple[int, ...],
++    w2_shape: tuple[int, ...],
++    top_k: int,
++    dtype: str | None,
++    M: int,
++    block_shape: list[int] | None = None,
++) -> tuple[dict[str, int], dict[str, int]]:
++    """Return separate static configs for modular w13 and w2 launches.
++
++    The split is opt-in through nested tuned-config deltas and is restricted
++    to the XPU M1 block-FP8 shape. Every other caller receives two copies of
++    the historical flat configuration.
++    """
++    config = _get_optimal_moe_config_entry(
++        w1_shape, w2_shape, top_k, dtype, M, block_shape
++    )
++    enable_phase_configs = (
++        current_platform.is_xpu()
++        and M == 1
++        and dtype == "fp8_w8a8"
++        and block_shape == [128, 128]
++    )
++    return resolve_moe_gemm_configs(
++        config, M=M, enable_phase_configs=enable_phase_configs
++    )
++
++
+ def fused_experts_op(
+     hidden_states: torch.Tensor,
+     w1: torch.Tensor,
+-- 
+2.43.0
+

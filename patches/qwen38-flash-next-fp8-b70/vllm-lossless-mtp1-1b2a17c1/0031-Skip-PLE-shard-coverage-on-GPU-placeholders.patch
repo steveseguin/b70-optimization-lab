@@ -1,0 +1,54 @@
+From 6955105032d99c22d4ffbdfea9b48a1940655b47 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 16:56:00 -0400
+Subject: [PATCH 31/55] Skip PLE shard coverage on GPU placeholders
+
+---
+ tests/models/qwen4_exp/test_ple.py        | 12 ++++++++++++
+ vllm/models/qwen4_exp/nvidia/ple_layer.py |  7 +++++++
+ 2 files changed, 19 insertions(+)
+
+diff --git a/tests/models/qwen4_exp/test_ple.py b/tests/models/qwen4_exp/test_ple.py
+index 1b5845b73..e7cb7378e 100644
+--- a/tests/models/qwen4_exp/test_ple.py
++++ b/tests/models/qwen4_exp/test_ple.py
+@@ -362,6 +362,18 @@ def test_ngram_gpu_offload_retains_only_fp8_global_scale(monkeypatch) -> None:
+     )
+ 
+ 
++def test_ngram_gpu_offload_placeholder_skips_shard_coverage(monkeypatch) -> None:
++    module = Qwen4ExpNGramEmbedding.__new__(Qwen4ExpNGramEmbedding)
++    nn.Module.__init__(module)
++    monkeypatch.setattr(ple_layer_module.envs, "VLLM_PLE_CPU_OFFLOAD", True)
++    monkeypatch.setattr(ple_layer_module, "is_offload_process", lambda: False)
++
++    module.begin_checkpoint_shard_coverage()
++    module.validate_checkpoint_shard_coverage()
++
++    assert module._observed_checkpoint_shard_indices is None
++
++
+ def _make_fp8_embedding_layer(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> embedding_module.VocabParallelEmbedding:
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index 5c68e0887..0a3c634b1 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -466,6 +466,13 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+         has been consumed.
+         """
+ 
++        # The GPU-side placeholder intentionally skips this subclass's
++        # constructor and owns no split embedding table.  Only the dedicated
++        # CPU process can validate coverage of the PLE checkpoint shards.
++        if envs.VLLM_PLE_CPU_OFFLOAD and not is_offload_process():
++            self._observed_checkpoint_shard_indices = None
++            return
++
+         self._observed_checkpoint_shard_indices: set[int] | None = set()
+ 
+     def validate_checkpoint_shard_coverage(self) -> None:
+-- 
+2.43.0
+

@@ -1,0 +1,242 @@
+From 3ea29d343f25b9374d8279d229c8fb36408bda5c Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 12:01:41 -0400
+Subject: [PATCH 25/55] Trace Qwen4Exp PLE layer boundaries
+
+---
+ .../test_repeatability_trace_boundaries.py    | 112 ++++++++++++++++++
+ vllm/models/qwen4_exp/amd/model.py            |  65 +++++++++-
+ 2 files changed, 171 insertions(+), 6 deletions(-)
+ create mode 100644 tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+
+diff --git a/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py b/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+new file mode 100644
+index 000000000..e3d9d555c
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+@@ -0,0 +1,112 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import torch
++import torch.nn as nn
++
++from vllm.models.qwen4_exp.amd.model import Qwen4ExpDecoderLayer
++
++
++class _FakePLE(nn.Module):
++    def forward(
++        self,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor,
++        query_start_loc: torch.Tensor,
++        ngram_context: torch.Tensor,
++    ) -> torch.Tensor:
++        del input_ids, query_start_loc, ngram_context
++        return hidden_states * 0.25
++
++
++class _FakeAttention(nn.Module):
++    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
++        return hidden_states + 3
++
++
++class _FakeMLP(nn.Module):
++    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
++        return hidden_states - 2
++
++
++class _FakeHyperConnection(nn.Module):
++    def mix(
++        self, hidden_states: torch.Tensor
++    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++        return hidden_states, hidden_states + 1, hidden_states + 2
++
++    def combine_and_mix(
++        self,
++        hidden_states: torch.Tensor,
++        block_output: torch.Tensor,
++        injection: torch.Tensor,
++    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++        combined = hidden_states + block_output + injection
++        return combined, combined + 1, combined + 2
++
++
++class _TraceSpy:
++    def __init__(self) -> None:
++        self.labels: list[str] = []
++
++    def record(self, label: str, **_tensors: torch.Tensor | None) -> None:
++        self.labels.append(label)
++
++
++def _make_layer(*, with_ple: bool) -> Qwen4ExpDecoderLayer:
++    layer = Qwen4ExpDecoderLayer.__new__(Qwen4ExpDecoderLayer)
++    nn.Module.__init__(layer)
++    layer.layer_idx = 1
++    layer.layer_type = "linear_attention"
++    layer.ple = _FakePLE() if with_ple else None
++    layer.attn_hyper_connection = _FakeHyperConnection()
++    layer.linear_attn = _FakeAttention()
++    layer.mlp_hyper_connection = _FakeHyperConnection()
++    layer.mlp = _FakeMLP()
++    return layer
++
++
++def _forward_kwargs() -> dict[str, object]:
++    return {
++        "hidden_states": torch.arange(8, dtype=torch.float32).reshape(2, 4),
++        "prev_block_output": None,
++        "prev_injection": None,
++        "positions": torch.tensor([4000, 4001]),
++        "input_ids": torch.tensor([10, 11]),
++        "query_start_loc": torch.tensor([0, 2]),
++        "ngram_context": torch.tensor([[8, 9]]),
++    }
++
++
++def test_disabled_trace_preserves_default_fast_path() -> None:
++    layer = _make_layer(with_ple=True)
++    default_result = layer(**_forward_kwargs())
++    explicit_none_result = layer(**_forward_kwargs(), repeatability_trace=None)
++    for default_tensor, explicit_none_tensor in zip(
++        default_result, explicit_none_result, strict=True
++    ):
++        torch.testing.assert_close(default_tensor, explicit_none_tensor)
++
++
++def test_ple_trace_records_inner_boundaries_in_order() -> None:
++    layer = _make_layer(with_ple=True)
++    trace = _TraceSpy()
++    layer(**_forward_kwargs(), repeatability_trace=trace)
++    assert trace.labels == [
++        "layer_1_ple_input",
++        "layer_1_ple_output",
++        "layer_1_post_ple",
++        "layer_1_attn_mix",
++        "layer_1_attn_output",
++        "layer_1_mlp_mix",
++        "layer_1_mlp_output",
++    ]
++
++
++def test_non_ple_layer_records_no_inner_boundaries() -> None:
++    layer = _make_layer(with_ple=False)
++    trace = _TraceSpy()
++    kwargs = _forward_kwargs()
++    kwargs.update(input_ids=None, query_start_loc=None, ngram_context=None)
++    layer(**kwargs, repeatability_trace=trace)
++    assert trace.labels == []
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index a37f1ad82..765a703dd 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -294,6 +294,7 @@ class Qwen4ExpDecoderLayer(nn.Module):
+         input_ids: torch.Tensor | None,
+         query_start_loc: torch.Tensor | None,
+         ngram_context: torch.Tensor | None,
++        repeatability_trace: Qwen4ExpRepeatabilityTrace | None = None,
+     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+         attn_hc = self.attn_hyper_connection
+         if self.ple is not None:
+@@ -307,12 +308,39 @@ class Qwen4ExpDecoderLayer(nn.Module):
+ 
+             if input_ids is None or query_start_loc is None or ngram_context is None:
+                 raise RuntimeError("PLE inputs were not prepared")
+-            hidden_states = hidden_states + self.ple(
+-                hidden_states,
+-                input_ids,
+-                query_start_loc,
+-                ngram_context,
+-            )
++            if repeatability_trace is None:
++                # Preserve the production fast path exactly: keeping a named
++                # PLE output alive can affect eager peak memory even when no
++                # trace is requested.
++                hidden_states = hidden_states + self.ple(
++                    hidden_states,
++                    input_ids,
++                    query_start_loc,
++                    ngram_context,
++                )
++            else:
++                repeatability_trace.record(
++                    f"layer_{self.layer_idx}_ple_input",
++                    hidden_states=hidden_states,
++                    input_ids=input_ids,
++                    query_start_loc=query_start_loc,
++                    ngram_context=ngram_context,
++                )
++                ple_output = self.ple(
++                    hidden_states,
++                    input_ids,
++                    query_start_loc,
++                    ngram_context,
++                )
++                repeatability_trace.record(
++                    f"layer_{self.layer_idx}_ple_output",
++                    ple_output=ple_output,
++                )
++                hidden_states = hidden_states + ple_output
++                repeatability_trace.record(
++                    f"layer_{self.layer_idx}_post_ple",
++                    hidden_states=hidden_states,
++                )
+ 
+         # Fuse a pending combine with this HC module's mix when possible.
+         if prev_block_output is not None and prev_injection is not None:
+@@ -321,6 +349,13 @@ class Qwen4ExpDecoderLayer(nn.Module):
+             )
+         else:
+             hidden_states, block_input, injection = attn_hc.mix(hidden_states)
++        if self.ple is not None and repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_attn_mix",
++                hidden_states=hidden_states,
++                block_input=block_input,
++                injection=injection,
++            )
+ 
+         if self.layer_type == "linear_attention":
+             attn_out = self.linear_attn(hidden_states=block_input)
+@@ -331,12 +366,29 @@ class Qwen4ExpDecoderLayer(nn.Module):
+             )
+         else:
+             raise ValueError("Invalid layer_type")
++        if self.ple is not None and repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_attn_output",
++                attn_out=attn_out,
++            )
+ 
+         mlp_hc = self.mlp_hyper_connection
+         hidden_states, block_input, injection = mlp_hc.combine_and_mix(
+             hidden_states, attn_out, injection
+         )
++        if self.ple is not None and repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_mlp_mix",
++                hidden_states=hidden_states,
++                block_input=block_input,
++                injection=injection,
++            )
+         mlp_out = self.mlp(block_input)
++        if self.ple is not None and repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_mlp_output",
++                mlp_out=mlp_out,
++            )
+         return hidden_states, mlp_out, injection
+ 
+ 
+@@ -526,6 +578,7 @@ class Qwen4ExpModel(nn.Module):
+                 input_ids=input_ids,
+                 query_start_loc=query_start_loc,
+                 ngram_context=ngram_context,
++                repeatability_trace=trace if trace_active else None,
+             )
+             if trace_active:
+                 trace.record(
+-- 
+2.43.0
+

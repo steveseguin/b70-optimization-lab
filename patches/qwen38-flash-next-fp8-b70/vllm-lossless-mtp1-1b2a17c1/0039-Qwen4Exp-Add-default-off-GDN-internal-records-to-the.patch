@@ -1,0 +1,182 @@
+From 69f905f1fb062cce782bbcb4850f3856924dc24b Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 2 Sep 2026 20:01:54 -0400
+Subject: [PATCH 39/55] [Qwen4Exp] Add default-off GDN-internal records to the
+ repeatability trace
+
+Report-only diagnostics for the Flash-Next TP4 logit jitter. The trace gains
+an exact position window (VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_EXACT_POSITIONS
+"min:max"), a capture count (..._TRACE_COUNT, files suffixed .N.json when >1),
+and a GDN layer selection (..._TRACE_GDN_LAYERS). For selected layers the
+decoder layer hands the trace to QwenGatedDeltaNetAttention.forward_xpu, which
+records the input projection (hidden, qkvz, ba), the core kernel output
+(core_attn_out, z), the gated norm output, and the output projection. With no
+trace file set nothing changes on the production path.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01XfKD1km1ZX1bLGJQ7wdyFR
+---
+ .../layers/mamba/gdn/qwen_gdn_linear_attn.py  | 18 +++++++++
+ vllm/models/qwen4_exp/amd/model.py            | 16 +++++++-
+ .../qwen4_exp/amd/repeatability_trace.py      | 38 ++++++++++++++++++-
+ 3 files changed, 69 insertions(+), 3 deletions(-)
+
+diff --git a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+index 6a7cee300..6fe4c72c4 100644
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+@@ -961,12 +961,22 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+         3. Output projection
+         """
+         num_tokens = hidden_states.size(0)
++        # Report-only repeatability trace handle set by the Qwen4Exp decoder
++        # layer for selected layers; None on the production path.
++        trace = getattr(self, "_repeatability_trace", None)
+ 
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+         projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+         projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if trace is not None:
++            trace[0].record(
++                f"{trace[1]}_gdn_in_proj",
++                hidden_states=hidden_states,
++                qkvz=projected_states_qkvz,
++                ba=projected_states_ba,
++            )
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -985,6 +995,10 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+             projected_states_ba,
+             self.prefix,
+         )
++        if trace is not None:
++            trace[0].record(
++                f"{trace[1]}_gdn_core", core_attn_out=core_attn_out, z=z
++            )
+ 
+         # ============================================================
+         # Part 3: Output Projection
+@@ -996,7 +1010,11 @@ class QwenGatedDeltaNetAttention(GatedDeltaNetAttention):
+         core_attn_out = self.norm(core_attn_out, z)
+         core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = core_attn_out.flatten(-2)  # ... h d -> ... (h d)
++        if trace is not None:
++            trace[0].record(f"{trace[1]}_gdn_norm", normed=core_attn_out)
+         out, _ = self.out_proj(core_attn_out)
++        if trace is not None:
++            trace[0].record(f"{trace[1]}_gdn_out_proj", out=out)
+         return out
+ 
+     def forward_cpu(
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index 250c6e968..eecdf5a95 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -393,7 +393,21 @@ class Qwen4ExpDecoderLayer(nn.Module):
+             )
+ 
+         if self.layer_type == "linear_attention":
+-            attn_out = self.linear_attn(hidden_states=block_input)
++            wants_gdn = getattr(repeatability_trace, "wants_gdn", None)
++            if wants_gdn is not None and wants_gdn(self.layer_idx):
++                self.linear_attn._repeatability_trace = (
++                    repeatability_trace,
++                    f"layer_{self.layer_idx}",
++                )
++                try:
++                    attn_out = self.linear_attn(hidden_states=block_input)
++                finally:
++                    self.linear_attn._repeatability_trace = None
++                repeatability_trace.record(
++                    f"layer_{self.layer_idx}_gdn_attn_output", attn_out=attn_out
++                )
++            else:
++                attn_out = self.linear_attn(hidden_states=block_input)
+         elif self.layer_type == "full_attention":
+             attn_out = self.self_attn(
+                 hidden_states=block_input,
+diff --git a/vllm/models/qwen4_exp/amd/repeatability_trace.py b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+index 3d566291e..5bd8718d2 100644
+--- a/vllm/models/qwen4_exp/amd/repeatability_trace.py
++++ b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+@@ -26,6 +26,23 @@ class Qwen4ExpRepeatabilityTrace:
+                 "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_MIN_POSITION", "4000"
+             )
+         )
++        exact = os.environ.get(
++            "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_EXACT_POSITIONS", ""
++        )
++        self.exact_positions: tuple[int, int] | None = None
++        if exact:
++            lo, hi = exact.split(":")
++            self.exact_positions = (int(lo), int(hi))
++        self.count = int(
++            os.environ.get("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_COUNT", "1")
++        )
++        gdn_layers = os.environ.get(
++            "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_GDN_LAYERS", ""
++        )
++        self.gdn_layers: frozenset[int] = frozenset(
++            int(item) for item in gdn_layers.split(",") if item.strip()
++        )
++        self.captured = 0
+         self.active = False
+         self.complete = False
+         self._records: list[dict[str, object]] = []
+@@ -57,7 +74,10 @@ class Qwen4ExpRepeatabilityTrace:
+             return False
+         position_min = int(positions.min().item())
+         position_max = int(positions.max().item())
+-        if position_max < self.min_position:
++        if self.exact_positions is not None:
++            if (position_min, position_max) != self.exact_positions:
++                return False
++        elif position_max < self.min_position:
+             return False
+         self.active = True
+         self._position_min = position_min
+@@ -66,6 +86,9 @@ class Qwen4ExpRepeatabilityTrace:
+         self.record("model_positions", positions=positions)
+         return True
+ 
++    def wants_gdn(self, layer_idx: int) -> bool:
++        return self.active and layer_idx in self.gdn_layers
++
+     def record(self, label: str, **tensors: torch.Tensor | None) -> None:
+         if not self.active:
+             return
+@@ -84,8 +107,16 @@ class Qwen4ExpRepeatabilityTrace:
+         if self._active_rank is None:
+             raise RuntimeError("repeatability trace finished without an active rank")
+         path = Path(self.raw_path.format(rank=self._active_rank))
++        if self.count > 1:
++            path = path.with_name(f"{path.stem}.{self.captured}{path.suffix}")
+         path.parent.mkdir(parents=True, exist_ok=True)
+         report = {
++            "capture_index": self.captured,
++            "capture_count": self.count,
++            "exact_positions": list(self.exact_positions)
++            if self.exact_positions is not None
++            else None,
++            "gdn_layers": sorted(self.gdn_layers),
+             "min_position_gate": self.min_position,
+             "position_max": self._position_max,
+             "position_min": self._position_min,
+@@ -97,7 +128,10 @@ class Qwen4ExpRepeatabilityTrace:
+             json.dump(report, handle, indent=2, sort_keys=True)
+             handle.write("\n")
+         self.active = False
+-        self.complete = True
++        self.captured += 1
++        self.complete = self.captured >= self.count
++        self._records = []
++        self._position_min = self._position_max = self._active_rank = None
+ 
+ 
+ __all__ = ["Qwen4ExpRepeatabilityTrace"]
+-- 
+2.43.0
+

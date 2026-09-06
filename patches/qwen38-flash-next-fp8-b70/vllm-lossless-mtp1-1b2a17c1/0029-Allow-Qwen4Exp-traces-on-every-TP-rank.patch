@@ -1,0 +1,100 @@
+From 613afcc501331aa6ff7d5a238a6c9a5d45777b3e Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 12:22:38 -0400
+Subject: [PATCH 29/55] Allow Qwen4Exp traces on every TP rank
+
+---
+ .../qwen4_exp/test_repeatability_trace.py     | 16 ++++++++++++++++
+ .../qwen4_exp/amd/repeatability_trace.py      | 19 +++++++++++++------
+ 2 files changed, 29 insertions(+), 6 deletions(-)
+
+diff --git a/tests/models/qwen4_exp/test_repeatability_trace.py b/tests/models/qwen4_exp/test_repeatability_trace.py
+index 3d5d9c267..d28290bdb 100644
+--- a/tests/models/qwen4_exp/test_repeatability_trace.py
++++ b/tests/models/qwen4_exp/test_repeatability_trace.py
+@@ -60,3 +60,19 @@ def test_trace_accepts_launcher_safe_path_alias(
+     monkeypatch.setenv("Q38_REPEATABILITY_TRACE_FILE", str(tmp_path / "trace.json"))
+     trace = Qwen4ExpRepeatabilityTrace()
+     assert trace.begin(torch.tensor([4095]), rank=0)
++
++
++def test_trace_accepts_all_ranks_with_rank_specific_path(
++    monkeypatch: pytest.MonkeyPatch, tmp_path
++) -> None:
++    monkeypatch.setenv(
++        "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE",
++        str(tmp_path / "trace-{rank}.json"),
++    )
++    monkeypatch.setenv("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK", "all")
++    trace = Qwen4ExpRepeatabilityTrace()
++
++    assert trace.begin(torch.tensor([4095]), rank=3)
++    trace.finish()
++    report = json.loads((tmp_path / "trace-3.json").read_text())
++    assert report["rank"] == 3
+diff --git a/vllm/models/qwen4_exp/amd/repeatability_trace.py b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+index 39a7ede98..3d566291e 100644
+--- a/vllm/models/qwen4_exp/amd/repeatability_trace.py
++++ b/vllm/models/qwen4_exp/amd/repeatability_trace.py
+@@ -19,9 +19,8 @@ class Qwen4ExpRepeatabilityTrace:
+         self.raw_path = os.environ.get(
+             "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_FILE", ""
+         ) or os.environ.get("Q38_REPEATABILITY_TRACE_FILE", "")
+-        self.rank = int(
+-            os.environ.get("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK", "0")
+-        )
++        rank_filter = os.environ.get("VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK", "0")
++        self.rank = None if rank_filter.lower() == "all" else int(rank_filter)
+         self.min_position = int(
+             os.environ.get(
+                 "VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_MIN_POSITION", "4000"
+@@ -32,6 +31,7 @@ class Qwen4ExpRepeatabilityTrace:
+         self._records: list[dict[str, object]] = []
+         self._position_min: int | None = None
+         self._position_max: int | None = None
++        self._active_rank: int | None = None
+ 
+     @staticmethod
+     def tensor_record(tensor: torch.Tensor | None) -> dict[str, object] | None:
+@@ -49,7 +49,11 @@ class Qwen4ExpRepeatabilityTrace:
+         }
+ 
+     def begin(self, positions: torch.Tensor, rank: int) -> bool:
+-        if self.complete or not self.raw_path or rank != self.rank:
++        if (
++            self.complete
++            or not self.raw_path
++            or (self.rank is not None and rank != self.rank)
++        ):
+             return False
+         position_min = int(positions.min().item())
+         position_max = int(positions.max().item())
+@@ -58,6 +62,7 @@ class Qwen4ExpRepeatabilityTrace:
+         self.active = True
+         self._position_min = position_min
+         self._position_max = position_max
++        self._active_rank = rank
+         self.record("model_positions", positions=positions)
+         return True
+ 
+@@ -76,13 +81,15 @@ class Qwen4ExpRepeatabilityTrace:
+     def finish(self) -> None:
+         if not self.active:
+             return
+-        path = Path(self.raw_path.format(rank=self.rank))
++        if self._active_rank is None:
++            raise RuntimeError("repeatability trace finished without an active rank")
++        path = Path(self.raw_path.format(rank=self._active_rank))
+         path.parent.mkdir(parents=True, exist_ok=True)
+         report = {
+             "min_position_gate": self.min_position,
+             "position_max": self._position_max,
+             "position_min": self._position_min,
+-            "rank": self.rank,
++            "rank": self._active_rank,
+             "records": self._records,
+             "schema_version": 1,
+         }
+-- 
+2.43.0
+

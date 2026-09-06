@@ -1,0 +1,365 @@
+From f69a0ef46338f93636671c87caa527b3ac2ca129 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 13:32:40 -0400
+Subject: [PATCH 30/55] Validate Qwen4Exp PLE shards after root load
+
+---
+ tests/models/qwen4_exp/test_embed_offload.py |  59 +++++++++-
+ tests/models/qwen4_exp/test_ple.py           | 114 +++++++++++++++++++
+ vllm/models/qwen4_exp/amd/model.py           |  33 +++++-
+ vllm/models/qwen4_exp/nvidia/ple_layer.py    |  44 +++++--
+ 4 files changed, 235 insertions(+), 15 deletions(-)
+
+diff --git a/tests/models/qwen4_exp/test_embed_offload.py b/tests/models/qwen4_exp/test_embed_offload.py
+index d7c20957a..8673bfb96 100644
+--- a/tests/models/qwen4_exp/test_embed_offload.py
++++ b/tests/models/qwen4_exp/test_embed_offload.py
+@@ -1,3 +1,5 @@
++import pytest
++import torch
+ from torch import nn
+ 
+ from vllm.models.qwen4_exp.amd import model as qwen4_exp_model
+@@ -19,9 +21,7 @@ def test_embed_tokens_reaches_supported_offloader(monkeypatch) -> None:
+     monkeypatch.setattr(qwen4_exp_model, "get_offloader", lambda: offloader)
+     module = nn.Embedding(16, 8)
+ 
+-    qwen4_exp_model._maybe_offload_embed_tokens(
+-        module, "language_model.model"
+-    )
++    qwen4_exp_model._maybe_offload_embed_tokens(module, "language_model.model")
+ 
+     assert offloader.calls == [([module], "language_model.model.embed_tokens")]
+ 
+@@ -33,3 +33,56 @@ def test_embed_tokens_skips_unsupported_offloader(monkeypatch) -> None:
+     qwen4_exp_model._maybe_offload_embed_tokens(nn.Embedding(16, 8), "")
+ 
+     assert offloader.calls == []
++
++
++class _CoverageTracker(nn.Module):
++    def __init__(self, events: list[str]) -> None:
++        super().__init__()
++        self.events = events
++
++    def begin_checkpoint_shard_coverage(self) -> None:
++        self.events.append("begin")
++
++    def validate_checkpoint_shard_coverage(self) -> None:
++        self.events.append("validate")
++
++
++def test_root_loader_owns_ple_checkpoint_coverage_lifecycle(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    events: list[str] = []
++    model = qwen4_exp_model.Qwen4ExpForConditionalGeneration.__new__(
++        qwen4_exp_model.Qwen4ExpForConditionalGeneration
++    )
++    nn.Module.__init__(model)
++    model.language_model_only = True
++    model.tracker = _CoverageTracker(events)
++    model.placeholder = nn.Module()
++
++    class _Loader:
++        def __init__(self, *_args, **_kwargs) -> None:
++            events.append("loader_init")
++
++        def load_weights(self, weights, *, mapper):
++            assert list(weights) == [("weight", torch.tensor(1.0))]
++            assert mapper is model.hf_to_vllm_mapper
++            events.append("load")
++            return {"weight"}
++
++    monkeypatch.setattr(qwen4_exp_model, "AutoWeightsLoader", _Loader)
++
++    loaded = model.load_weights(iter([("weight", torch.tensor(1.0))]))
++
++    assert loaded == {"weight"}
++    assert events == ["begin", "loader_init", "load", "validate"]
++
++
++def test_ple_checkpoint_coverage_discovery_ignores_placeholders() -> None:
++    events: list[str] = []
++    model = nn.Module()
++    model.tracker = _CoverageTracker(events)
++    model.placeholder = nn.Module()
++
++    assert qwen4_exp_model._ple_checkpoint_shard_coverage_trackers(model) == (
++        model.tracker,
++    )
+diff --git a/tests/models/qwen4_exp/test_ple.py b/tests/models/qwen4_exp/test_ple.py
+index e1dcb1a94..1b5845b73 100644
+--- a/tests/models/qwen4_exp/test_ple.py
++++ b/tests/models/qwen4_exp/test_ple.py
+@@ -68,6 +68,21 @@ def _make_fp8_ngram_embedding_for_load_test() -> Qwen4ExpNGramEmbedding:
+     return module
+ 
+ 
++def _make_128_part_ngram_embedding_for_load_test() -> Qwen4ExpNGramEmbedding:
++    module = _make_ngram_embedding_for_load_test()
++    module.split_ngram_parts = 128
++    module.ngram_embedding = SimpleNamespace(
++        org_vocab_size=128,
++        embedding_dim=1,
++        weight=nn.Parameter(torch.full((128, 1), -1.0)),
++        shard_indices=SimpleNamespace(
++            org_vocab_start_index=0,
++            org_vocab_end_index=128,
++        ),
++    )
++    return module
++
++
+ def test_ngram_embedding_marks_only_checkpoint_table_as_discardable(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+@@ -181,13 +196,112 @@ def test_ngram_embedding_rejects_incomplete_checkpoint_shard_coverage() -> None:
+     module = _make_ngram_embedding_for_load_test()
+     shard_0 = torch.arange(8, dtype=torch.float32).reshape(4, 2)
+ 
++    module.load_weights([("ngram_embedding.shard_0.weight", shard_0)])
++
+     with pytest.raises(
+         RuntimeError,
+         match=r"PLE embedding checkpoint shard coverage is incomplete: missing=\[1\]",
+     ):
++        module.validate_checkpoint_shard_coverage()
++
++
++def test_ngram_embedding_rejects_total_checkpoint_shard_omission() -> None:
++    module = _make_ngram_embedding_for_load_test()
++
++    module.begin_checkpoint_shard_coverage()
++    with pytest.raises(
++        RuntimeError,
++        match=(
++            r"PLE embedding checkpoint shard coverage is incomplete: "
++            r"missing=\[0, 1\]"
++        ),
++    ):
++        module.validate_checkpoint_shard_coverage()
++
++
++def test_ngram_embedding_accumulates_checkpoint_shards_across_calls() -> None:
++    module = _make_ngram_embedding_for_load_test()
++    shard_0 = torch.arange(8, dtype=torch.float32).reshape(4, 2)
++    shard_1 = torch.arange(8, 16, dtype=torch.float32).reshape(4, 2)
++
++    module.begin_checkpoint_shard_coverage()
++    module.load_weights([("ngram_embedding.shard_0.weight", shard_0)])
++    module.load_weights([("ngram_embedding.shard_1.weight", shard_1)])
++    module.validate_checkpoint_shard_coverage()
++
++    torch.testing.assert_close(
++        module.ngram_embedding.weight,
++        torch.cat((shard_0[2:4], shard_1[0:2])),
++    )
++
++
++def test_ngram_embedding_rejects_duplicate_shard_across_calls() -> None:
++    module = _make_ngram_embedding_for_load_test()
++    shard_0 = torch.arange(8, dtype=torch.float32).reshape(4, 2)
++
++    module.begin_checkpoint_shard_coverage()
++    module.load_weights([("ngram_embedding.shard_0.weight", shard_0)])
++    with pytest.raises(ValueError, match="Duplicate PLE embedding shard 0"):
+         module.load_weights([("ngram_embedding.shard_0.weight", shard_0)])
+ 
+ 
++def test_ngram_embedding_coverage_resets_for_complete_reload() -> None:
++    module = _make_ngram_embedding_for_load_test()
++    shards = [
++        torch.arange(8, dtype=torch.float32).reshape(4, 2),
++        torch.arange(8, 16, dtype=torch.float32).reshape(4, 2),
++    ]
++
++    for _ in range(2):
++        module.begin_checkpoint_shard_coverage()
++        for shard_index, shard in enumerate(shards):
++            module.load_weights(
++                [(f"ngram_embedding.shard_{shard_index}.weight", shard)]
++            )
++        module.validate_checkpoint_shard_coverage()
++
++
++def test_ngram_embedding_accepts_a22_126_then_2_fragment_boundary() -> None:
++    module = _make_128_part_ngram_embedding_for_load_test()
++
++    module.begin_checkpoint_shard_coverage()
++    module.load_weights(
++        [
++            (f"ngram_embedding.shard_{index}.weight", torch.tensor([[index]]))
++            for index in range(126)
++        ]
++    )
++    module.load_weights(
++        [
++            (f"ngram_embedding.shard_{index}.weight", torch.tensor([[index]]))
++            for index in range(126, 128)
++        ]
++    )
++    module.validate_checkpoint_shard_coverage()
++
++    torch.testing.assert_close(
++        module.ngram_embedding.weight,
++        torch.arange(128, dtype=torch.float32).reshape(128, 1),
++    )
++
++
++def test_ngram_embedding_rejects_missing_a22_final_fragment() -> None:
++    module = _make_128_part_ngram_embedding_for_load_test()
++
++    module.begin_checkpoint_shard_coverage()
++    module.load_weights(
++        [
++            (f"ngram_embedding.shard_{index}.weight", torch.tensor([[index]]))
++            for index in range(127)
++        ]
++    )
++    with pytest.raises(
++        RuntimeError,
++        match=r"PLE embedding checkpoint shard coverage is incomplete: missing=\[127\]",
++    ):
++        module.validate_checkpoint_shard_coverage()
++
++
+ def test_ngram_embedding_loads_fp8_shards_and_global_scale() -> None:
+     module = _make_fp8_ngram_embedding_for_load_test()
+     shard_0 = torch.arange(8, dtype=torch.float32).reshape(4, 2).to(torch.float8_e4m3fn)
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index cf44f4856..7f9f337ec 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -4,6 +4,7 @@
+ 
+ from collections.abc import Iterable
+ from itertools import islice
++from typing import Protocol, cast
+ 
+ import torch
+ from torch import nn
+@@ -143,6 +144,30 @@ def _remap_qsa_cache_scale_name(
+     return name
+ 
+ 
++class _PLECheckpointShardCoverageTracker(Protocol):
++    def begin_checkpoint_shard_coverage(self) -> None: ...
++
++    def validate_checkpoint_shard_coverage(self) -> None: ...
++
++
++def _ple_checkpoint_shard_coverage_trackers(
++    module: nn.Module,
++) -> tuple[_PLECheckpointShardCoverageTracker, ...]:
++    """Find split-PLE loaders that own an explicit coverage lifecycle.
++
++    XPU CPU-offload workers contain the split embedding loader. GPU placeholder
++    modules and the GPU-resident AMD implementation do not, so capability
++    discovery keeps the root load boundary valid for every worker/backend.
++    """
++
++    return tuple(
++        cast(_PLECheckpointShardCoverageTracker, child)
++        for child in module.modules()
++        if callable(getattr(child, "begin_checkpoint_shard_coverage", None))
++        and callable(getattr(child, "validate_checkpoint_shard_coverage", None))
++    )
++
++
+ _QWEN4_EXP_IGNORED_MISSING_SUFFIXES = [
+     ".bias",
+     "_bias",
+@@ -1096,13 +1121,19 @@ class Qwen4ExpForConditionalGeneration(
+         return hidden_states
+ 
+     def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
++        ple_trackers = _ple_checkpoint_shard_coverage_trackers(self)
++        for tracker in ple_trackers:
++            tracker.begin_checkpoint_shard_coverage()
+         loader = AutoWeightsLoader(
+             self,
+             skip_prefixes=["visual."] if self.language_model_only else None,
+             skip_substrs=["mtp."],
+             ignore_unexpected_suffixes=_QWEN4_EXP_IGNORED_MISSING_SUFFIXES.copy(),
+         )
+-        return loader.load_weights(weights, mapper=self.hf_to_vllm_mapper)
++        loaded = loader.load_weights(weights, mapper=self.hf_to_vllm_mapper)
++        for tracker in ple_trackers:
++            tracker.validate_checkpoint_shard_coverage()
++        return loaded
+ 
+     @classmethod
+     def get_mamba_state_dtype_from_config(
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index 2dfdd3f25..5c68e0887 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -457,6 +457,33 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+             return torch.float8_e4m3fn
+         return default_dtype
+ 
++    def begin_checkpoint_shard_coverage(self) -> None:
++        """Start one split-checkpoint load session.
++
++        AutoWeightsLoader may deliver one child module in multiple contiguous
++        prefix groups. Coverage therefore persists across ``load_weights``
++        calls and is finalized only by the parent model after its full stream
++        has been consumed.
++        """
++
++        self._observed_checkpoint_shard_indices: set[int] | None = set()
++
++    def validate_checkpoint_shard_coverage(self) -> None:
++        """Fail closed when a split checkpoint load omitted any shard."""
++
++        observed = getattr(self, "_observed_checkpoint_shard_indices", None)
++        if observed is None:
++            return
++        expected = set(range(self.split_ngram_parts))
++        if observed != expected:
++            missing = sorted(expected - observed)
++            unexpected = sorted(observed - expected)
++            raise RuntimeError(
++                "PLE embedding checkpoint shard coverage is incomplete: "
++                f"missing={missing}, unexpected={unexpected}"
++            )
++        self._observed_checkpoint_shard_indices = None
++
+     def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+         """Load hash buffers and checkpoint-split embedding rows."""
+ 
+@@ -483,7 +510,12 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+         loaded: set[str] = set()
+         regular_weights: list[tuple[str, torch.Tensor]] = []
+         shard_prefix = "ngram_embedding.shard_"
+-        observed_shard_indices: set[int] = set()
++        observed_shard_indices = getattr(
++            self, "_observed_checkpoint_shard_indices", None
++        )
++        if observed_shard_indices is None:
++            self.begin_checkpoint_shard_coverage()
++            observed_shard_indices = self._observed_checkpoint_shard_indices
+ 
+         for name, loaded_weight in weights:
+             leaf_name = name.rsplit(".", 1)[-1]
+@@ -540,16 +572,6 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+                 continue
+             regular_weights.append((name, loaded_weight))
+ 
+-        if observed_shard_indices:
+-            expected_shard_indices = set(range(self.split_ngram_parts))
+-            if observed_shard_indices != expected_shard_indices:
+-                missing = sorted(expected_shard_indices - observed_shard_indices)
+-                unexpected = sorted(observed_shard_indices - expected_shard_indices)
+-                raise RuntimeError(
+-                    "PLE embedding checkpoint shard coverage is incomplete: "
+-                    f"missing={missing}, unexpected={unexpected}"
+-                )
+-
+         if regular_weights:
+             loaded.update(AutoWeightsLoader(self).load_weights(regular_weights))
+         return loaded
+-- 
+2.43.0
+

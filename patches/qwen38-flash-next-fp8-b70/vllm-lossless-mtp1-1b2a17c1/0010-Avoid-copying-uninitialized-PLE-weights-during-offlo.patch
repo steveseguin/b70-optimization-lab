@@ -1,0 +1,181 @@
+From bb4ad1cca6459ab3246b1685cce0993f03fdbc93 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 19:58:37 -0400
+Subject: [PATCH 10/55] Avoid copying uninitialized PLE weights during offload
+
+---
+ tests/basic_correctness/test_cpu_offload.py | 36 +++++++++++++++++
+ tests/models/qwen4_exp/test_ple.py          | 44 +++++++++++++++++++++
+ vllm/model_executor/offloader/uva.py        | 23 +++++++++--
+ vllm/models/qwen4_exp/nvidia/ple_layer.py   |  5 +++
+ 4 files changed, 105 insertions(+), 3 deletions(-)
+
+diff --git a/tests/basic_correctness/test_cpu_offload.py b/tests/basic_correctness/test_cpu_offload.py
+index a63f1189a..68dc9b1ac 100644
+--- a/tests/basic_correctness/test_cpu_offload.py
++++ b/tests/basic_correctness/test_cpu_offload.py
+@@ -4,6 +4,7 @@
+ from operator import attrgetter
+ 
+ import pytest
++import torch
+ import torch.nn as nn
+ 
+ import vllm.envs as envs
+@@ -91,6 +92,41 @@ def _is_offloaded(p: nn.Parameter) -> bool:
+     return p.device.type == "cpu" or getattr(p, "_vllm_is_uva_offloaded", False)
+ 
+ 
++def test_uva_discard_initial_data_is_explicit(monkeypatch):
++    """Only opted-in checkpoint parameters may skip the initial data copy."""
++    offloader = UVAOffloader.__new__(UVAOffloader)
++    offloader.pin_memory = False
++    offloader.uva_offloading = False
++    offloader.cpu_offload_max_bytes = 1024
++    offloader.cpu_offload_bytes = 0
++    offloader.cpu_offload_params = set()
++
++    ordinary = nn.Linear(2, 2, bias=False)
++    ordinary.weight.data.fill_(7)
++    ordinary_cpu_data = offloader._make_cpu_data(ordinary.weight)
++    assert torch.equal(ordinary_cpu_data, torch.full((2, 2), 7.0))
++
++    discarded = nn.Linear(2, 2, bias=False)
++    discarded.weight._vllm_offload_discard_initial_data = True
++    empty_like = torch.empty_like
++    calls = []
++
++    def record_empty_like(input_, **kwargs):
++        calls.append((input_.shape, kwargs))
++        return empty_like(input_, **kwargs)
++
++    monkeypatch.setattr(torch, "empty_like", record_empty_like)
++    discarded_cpu_data = offloader._make_cpu_data(discarded.weight)
++
++    assert calls == [
++        (
++            torch.Size([2, 2]),
++            {"device": "cpu", "pin_memory": False},
++        )
++    ]
++    assert discarded_cpu_data.device.type == "cpu"
++
++
+ @pytest.mark.parametrize("disable_uva", [False, True])
+ def test_tower_weight_offloading(vllm_runner, monkeypatch, disable_uva):
+     """`cpu_offload_params` segments must reach towers built outside make_layers.
+diff --git a/tests/models/qwen4_exp/test_ple.py b/tests/models/qwen4_exp/test_ple.py
+index 968e39b72..562faea51 100644
+--- a/tests/models/qwen4_exp/test_ple.py
++++ b/tests/models/qwen4_exp/test_ple.py
+@@ -68,6 +68,50 @@ def _make_fp8_ngram_embedding_for_load_test() -> Qwen4ExpNGramEmbedding:
+     return module
+ 
+ 
++def test_ngram_embedding_marks_only_checkpoint_table_as_discardable(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setattr(embedding_module, "get_tensor_model_parallel_rank", lambda: 0)
++    monkeypatch.setattr(
++        embedding_module, "get_tensor_model_parallel_world_size", lambda: 1
++    )
++    monkeypatch.setattr(parameter_module, "get_tensor_model_parallel_rank", lambda: 0)
++    monkeypatch.setattr(
++        parameter_module, "get_tensor_model_parallel_world_size", lambda: 1
++    )
++    monkeypatch.setattr(
++        ple_layer_module,
++        "_get_ple_embedding_quant_method",
++        lambda *args, **kwargs: Qwen4ExpPLEFp8EmbeddingMethod(),
++    )
++    config = SimpleNamespace(
++        ngram_size=2,
++        heads_per_ngram=1,
++        eos_token_id=7,
++        vocab_size=8,
++        split_ngram_parts=2,
++        ngram_vocab_size_base=11,
++        make_ngram_vocab_size_divisible_by=1,
++        seed=1234,
++    )
++
++    module = Qwen4ExpNGramEmbedding(
++        config,
++        embedding_dim=2,
++        ple_dense_layer_id=0,
++        max_total_tokens=4,
++        max_num_reqs=1,
++        prefix="ple",
++        params_dtype=torch.float32,
++    )
++
++    assert module.ngram_embedding.weight._vllm_offload_discard_initial_data is True
++    assert not hasattr(
++        module.ngram_embedding.weight_scale,
++        "_vllm_offload_discard_initial_data",
++    )
++
++
+ def test_ple_shard_overlap_and_copy() -> None:
+     overlap = compute_ple_shard_overlap(
+         checkpoint_start=2, checkpoint_rows=5, tp_start=4, tp_end=8
+diff --git a/vllm/model_executor/offloader/uva.py b/vllm/model_executor/offloader/uva.py
+index 5107870ff..ab22f8cd5 100644
+--- a/vllm/model_executor/offloader/uva.py
++++ b/vllm/model_executor/offloader/uva.py
+@@ -68,6 +68,25 @@ class UVAOffloader(BaseOffloader):
+             )
+         return modules
+ 
++    def _make_cpu_data(self, p: nn.Parameter) -> torch.Tensor:
++        if getattr(p, "_vllm_offload_discard_initial_data", False):
++            # Some checkpoint-backed parameters are intentionally created with
++            # uninitialized accelerator storage.  Copying those bytes to the
++            # host is both unnecessary and, for very large tables, can dominate
++            # model startup.  The model must opt in explicitly and guarantee
++            # that checkpoint loading fills every row that can be read before
++            # the first forward pass.
++            return torch.empty_like(
++                p.data,
++                device="cpu",
++                pin_memory=self.pin_memory,
++            )
++
++        cpu_data = p.data.to(device="cpu")
++        if self.pin_memory:
++            cpu_data = cpu_data.pin_memory()
++        return cpu_data
++
+     def _maybe_offload_to_cpu(self, module: nn.Module, prefix: str = "") -> nn.Module:
+         """Offload module parameters to CPU using UVA if budget allows."""
+         if (params := next(module.parameters(), None)) is None:
+@@ -108,9 +127,7 @@ class UVAOffloader(BaseOffloader):
+                 if not should_offload:
+                     continue
+ 
+-            cpu_data = p.data.to(device="cpu")
+-            if self.pin_memory:
+-                cpu_data = cpu_data.pin_memory()
++            cpu_data = self._make_cpu_data(p)
+ 
+             if not self.uva_offloading:
+                 p.data = cpu_data
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index 5f9c6f28b..09f5393ce 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -289,6 +289,11 @@ class Qwen4ExpNGramEmbedding(PleOffloadLayer):
+                 quant_config, f"{prefix}.ngram_embedding"
+             ),
+         )
++        # The checkpoint shards fill every non-padding row before the first
++        # lookup.  Let selective UVA offload allocate fresh host storage instead
++        # of copying this enormous, still-uninitialized table from the
++        # accelerator during construction.  Padding rows are never addressable.
++        self.ngram_embedding.weight._vllm_offload_discard_initial_data = True
+         self.register_buffer(
+             "positions_buffer",
+             torch.arange(max_total_tokens, dtype=torch.int64),
+-- 
+2.43.0
+

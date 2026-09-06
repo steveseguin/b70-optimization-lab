@@ -1,0 +1,66 @@
+From c23ad8e1f60566b217f4b951c4d495f5aa4b3e87 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 13:07:07 -0400
+Subject: [PATCH 47/55] [XPU] Remove the two one-time attention diagnostics
+ (A88/A90 answered: this forward is not on the Flash-Next path; its
+ full-attention layers run Qwen4ExpQSAFlashAttentionImpl.forward_qsa)
+
+---
+ vllm/v1/attention/backends/flash_attn.py | 34 ------------------------
+ 1 file changed, 34 deletions(-)
+
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 858aa30f4..d50637693 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -996,17 +996,6 @@ class FlashAttentionImpl(AttentionImpl):
+         # performance to make sure it does not introduce any overhead.
+ 
+         num_actual_tokens = attn_metadata.num_actual_tokens
+-        logger.warning_once(
+-            "FA forward entry diagnostic: attn_type=%s use_cascade=%s "
+-            "max_query_len=%s num_actual_tokens=%s dcp_world_size=%s "
+-            "serial_spec_env=%s",
+-            attn_type,
+-            attn_metadata.use_cascade,
+-            attn_metadata.max_query_len,
+-            num_actual_tokens,
+-            self.dcp_world_size,
+-            envs.VLLM_XPU_FA_SERIAL_SPEC_DECODE,
+-        )
+ 
+         # Handle encoder attention differently - no KV cache needed
+         if attn_type in (AttentionType.ENCODER_ONLY, AttentionType.ENCODER):
+@@ -1177,29 +1166,6 @@ class FlashAttentionImpl(AttentionImpl):
+                 # uses, so its attention output is the decode step's, bit for
+                 # bit, at the cost of one launch per row.
+                 serial_spec = envs.VLLM_XPU_FA_SERIAL_SPEC_DECODE
+-                if serial_spec and max_seqlen_q > 1:
+-                    logger.warning_once(
+-                        "FA serial-spec diagnostic: xpu=%s max_seqlen_q=%s "
+-                        "dynamic_causal=%s mm_mask_mod=%s rswa=%s "
+-                        "num_actual_tokens=%s cu_seqlens_q=%s seqused_k=%s "
+-                        "fa_version=%s",
+-                        current_platform.is_xpu(),
+-                        max_seqlen_q,
+-                        is_dynamic_causal,
+-                        mm_mask_mod is not None,
+-                        rswa_mask_mod_fn is not None,
+-                        num_actual_tokens,
+-                        cu_seqlens_q.tolist(),
+-                        seqused_k.tolist(),
+-                        self.vllm_flash_attn_version,
+-                    )
+-                elif serial_spec:
+-                    logger.warning_once(
+-                        "FA serial-spec diagnostic: single-row batch seen "
+-                        "(max_seqlen_q=%s num_actual_tokens=%s)",
+-                        max_seqlen_q,
+-                        num_actual_tokens,
+-                    )
+                 if (
+                     current_platform.is_xpu()
+                     and serial_spec
+-- 
+2.43.0
+

@@ -1,0 +1,75 @@
+From 8ca2cbc288e22e8d657247c86a924afc172c39fc Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 15:38:59 -0400
+Subject: [PATCH 53/55] [XPU] VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS: all-reduce
+ small multi-row inputs one row at a time
+
+XCCL's all-reduce result depends on the message size (four B70s, BF16:
+a [2, N] all-reduce differs bit for bit from two [1, N] all-reduces), so a
+speculative verification step cannot reproduce the M=1 decode step through
+the TP all-reduce. With this flag set to num_spec + 1, inputs with 2..N rows
+are reduced row by row with the same calls the M=1 step makes. Default 0
+keeps the batched all-reduce.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../distributed/device_communicators/xpu_communicator.py | 9 +++++++++
+ vllm/envs.py                                             | 8 ++++++++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+index 7ca132824..c77bd96cf 100644
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -6,6 +6,7 @@ import torch
+ import torch.distributed as dist
+ from torch.distributed import ProcessGroup
+ 
++import vllm.envs as envs
+ from vllm.logger import init_logger
+ 
+ from .base_device_communicator import DeviceCommunicatorBase
+@@ -46,6 +47,14 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 logger.info("Using AgRs manager on XPU device.")
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
++        max_rows = envs.VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS
++        if max_rows > 0 and input_.dim() >= 2 and 1 < input_.shape[0] <= max_rows:
++            output = torch.empty_like(input_)
++            for row in range(input_.shape[0]):
++                row_out = input_[row : row + 1].clone()
++                dist.all_reduce(row_out, group=self.device_group)
++                output[row : row + 1].copy_(row_out)
++            return output
+         output = input_.clone()
+         dist.all_reduce(output, group=self.device_group)
+         return output
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 2fe9ed092..75484bc91 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -325,6 +325,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_FA_SERIAL_SPEC_DECODE: bool = False
+     VLLM_XPU_QSA_SERIAL_SPEC_INDEXER: bool = False
+     VLLM_XPU_GDN_SERIAL_SPEC_DECODE: bool = False
++    VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS: int = 0
+     VLLM_XPU_USE_SAMPLER_KERNEL: bool = True
+     VLLM_XPU_INC_WNA16_BACKEND: Literal["auto", "ark", "w4a16", "w4a8"] = "auto"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+@@ -2169,6 +2170,13 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_GDN_SERIAL_SPEC_DECODE": lambda: bool(
+         int(os.getenv("VLLM_XPU_GDN_SERIAL_SPEC_DECODE", "0"))
+     ),
++    # XPU: all-reduce inputs with 2..N rows one row at a time so a
++    # speculative verification step (M = num_spec + 1) reduces exactly like
++    # the M=1 decode step; XCCL's reduction order depends on message size.
++    # 0 (default) keeps the single batched all-reduce.
++    "VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS": lambda: int(
++        os.getenv("VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS", "0")
++    ),
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
+-- 
+2.43.0
+

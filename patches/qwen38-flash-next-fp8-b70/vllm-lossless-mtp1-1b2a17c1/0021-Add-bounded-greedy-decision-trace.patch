@@ -1,0 +1,321 @@
+From 5d5081b2b1e145067bce6ec99492eac7ce042e23 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 28 Aug 2026 23:22:44 -0400
+Subject: [PATCH 21/55] Add bounded greedy decision trace
+
+---
+ tests/v1/worker/test_greedy_decision_trace.py |  72 ++++++++++++
+ vllm/envs.py                                  |  19 ++++
+ vllm/v1/worker/gpu_model_runner.py            |  57 ++++++++++
+ vllm/v1/worker/greedy_decision_trace.py       | 105 ++++++++++++++++++
+ 4 files changed, 253 insertions(+)
+ create mode 100644 tests/v1/worker/test_greedy_decision_trace.py
+ create mode 100644 vllm/v1/worker/greedy_decision_trace.py
+
+diff --git a/tests/v1/worker/test_greedy_decision_trace.py b/tests/v1/worker/test_greedy_decision_trace.py
+new file mode 100644
+index 000000000..61ae669b8
+--- /dev/null
++++ b/tests/v1/worker/test_greedy_decision_trace.py
+@@ -0,0 +1,72 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++import json
++
++import pytest
++
++from vllm.v1.worker.greedy_decision_trace import GreedyDecisionTrace
++
++
++def make_trace(tmp_path, *, max_records=4):
++    return GreedyDecisionTrace(
++        directory=str(tmp_path / "trace"),
++        request_prefix="depth-repeat-",
++        max_records=max_records,
++        topk=2,
++    )
++
++
++def test_matching_indices_are_greedy_prefix_and_discard_scoped(tmp_path):
++    trace = make_trace(tmp_path)
++    assert trace.matching_indices(
++        ["depth-repeat-a", "other", "depth-repeat-b"],
++        [False, False, True],
++        all_greedy=True,
++    ) == [0]
++    assert not trace.matching_indices(["depth-repeat-a"], [False], all_greedy=False)
++
++
++def test_records_occurrences_and_exact_float_hex(tmp_path):
++    trace = make_trace(tmp_path)
++    common = {
++        "request_id": "depth-repeat-a",
++        "batch_index": 0,
++        "logits_shape": [1, 8],
++        "logits_dtype": "torch.float32",
++        "top_token_ids": [7, 3],
++        "top_logits": [2.5, 2.0],
++        "sampled_token_id": 7,
++    }
++    trace.record(output_index_before_sample=0, **common)
++    trace.record(output_index_before_sample=1, **common)
++    trace.record(output_index_before_sample=0, **common)
++
++    rows = [json.loads(line) for line in trace.path.read_text().splitlines()]
++    assert [row["request_occurrence"] for row in rows] == [1, 1, 2]
++    assert [row["output_index_before_sample"] for row in rows] == [0, 1, 0]
++    assert rows[0]["top_logits_float_hex"] == [
++        "0x1.4000000000000p+1",
++        "0x1.0000000000000p+1",
++    ]
++    assert rows[0]["top1_top2_margin_float_hex"] == "0x1.0000000000000p-1"
++    assert rows[0]["sampled_equals_top1"] is True
++
++
++def test_refuses_existing_trace_and_honors_record_cap(tmp_path):
++    trace = make_trace(tmp_path, max_records=1)
++    kwargs = {
++        "request_id": "depth-repeat-a",
++        "output_index_before_sample": 0,
++        "batch_index": 0,
++        "logits_shape": [1, 8],
++        "logits_dtype": "torch.float32",
++        "top_token_ids": [7, 3],
++        "top_logits": [2.5, 2.0],
++        "sampled_token_id": 7,
++    }
++    trace.record(**kwargs)
++    trace.record(**kwargs)
++    assert len(trace.path.read_text().splitlines()) == 1
++    with pytest.raises(FileExistsError):
++        make_trace(tmp_path)
+diff --git a/vllm/envs.py b/vllm/envs.py
+index dad07c2f1..8b676a019 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -319,6 +319,10 @@ if TYPE_CHECKING:
+     VLLM_NIXL_EP_MAX_NUM_RANKS: int = 32
+     VLLM_XPU_ENABLE_XPU_GRAPH: bool = False
+     VLLM_XPU_USE_SAMPLER_KERNEL: bool = True
++    VLLM_GREEDY_DECISION_TRACE_DIR: str = ""
++    VLLM_GREEDY_DECISION_TRACE_REQUEST_PREFIX: str = ""
++    VLLM_GREEDY_DECISION_TRACE_MAX_RECORDS: int = 0
++    VLLM_GREEDY_DECISION_TRACE_TOPK: int = 4
+     VLLM_XPU_INC_WNA16_BACKEND: Literal["auto", "ark", "w4a16", "w4a8"] = "auto"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+     VLLM_GPU_NIC_PCIE_MAPPING: str = ""
+@@ -2132,6 +2136,21 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_USE_SAMPLER_KERNEL": lambda: bool(
+         int(os.getenv("VLLM_XPU_USE_SAMPLER_KERNEL", "1"))
+     ),
++    # Diagnostic only: write bounded greedy top-logit decisions for matching
++    # request IDs. Enabling this adds device synchronization and invalidates
++    # performance measurements.
++    "VLLM_GREEDY_DECISION_TRACE_DIR": lambda: os.getenv(
++        "VLLM_GREEDY_DECISION_TRACE_DIR", ""
++    ),
++    "VLLM_GREEDY_DECISION_TRACE_REQUEST_PREFIX": lambda: os.getenv(
++        "VLLM_GREEDY_DECISION_TRACE_REQUEST_PREFIX", ""
++    ),
++    "VLLM_GREEDY_DECISION_TRACE_MAX_RECORDS": lambda: int(
++        os.getenv("VLLM_GREEDY_DECISION_TRACE_MAX_RECORDS", "0")
++    ),
++    "VLLM_GREEDY_DECISION_TRACE_TOPK": lambda: int(
++        os.getenv("VLLM_GREEDY_DECISION_TRACE_TOPK", "4")
++    ),
+     # Kernel backend for INC weight-only intN (WNA16) linear layers on XPU.
+     # "auto" keeps the default preference order (ARK when importable, else the
+     # oneDNN w4a16 path). "ark" forces the auto_round_kernel backend, "w4a16"
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 502812c4d..4a284bc65 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -1041,6 +1041,16 @@ class GPUModelRunner(
+         # Ephemeral state transferred between execute_model() and sample_tokens().
+         self.execute_model_state: ExecuteModelState | None = None
+         self.kv_connector_output: KVConnectorOutput | None = None
++        self.greedy_decision_trace = None
++        if envs.VLLM_GREEDY_DECISION_TRACE_DIR and is_global_first_rank():
++            from vllm.v1.worker.greedy_decision_trace import GreedyDecisionTrace
++
++            self.greedy_decision_trace = GreedyDecisionTrace(
++                directory=envs.VLLM_GREEDY_DECISION_TRACE_DIR,
++                request_prefix=envs.VLLM_GREEDY_DECISION_TRACE_REQUEST_PREFIX,
++                max_records=envs.VLLM_GREEDY_DECISION_TRACE_MAX_RECORDS,
++                topk=envs.VLLM_GREEDY_DECISION_TRACE_TOPK,
++            )
+         self.mamba_state_idx: dict[str, int] = {}
+         self._mamba_bufs: mamba_utils.MambaBuffers | None = None
+         self._mamba_state_copy_funcs: MambaStateCopyFuncsByType | None = None
+@@ -4914,9 +4924,56 @@ class GPUModelRunner(
+                 scheduler_output, grammar_output, self.input_batch, logits
+             )
+ 
++        greedy_trace_rows = []
++        if self.greedy_decision_trace is not None:
++            sampling_metadata = self.input_batch.sampling_metadata
++            trace_indices = self.greedy_decision_trace.matching_indices(
++                self.input_batch.req_ids,
++                self.discard_request_mask.np[: self.input_batch.num_reqs],
++                sampling_metadata.all_greedy,
++            )
++            topk = min(self.greedy_decision_trace.topk, logits.shape[-1])
++            for req_index in trace_indices:
++                output_token_ids = self.input_batch.req_output_token_ids[req_index]
++                assert output_token_ids is not None
++                top_logits, top_token_ids = torch.topk(
++                    logits[req_index].to(torch.float32), topk
++                )
++                greedy_trace_rows.append(
++                    (
++                        req_index,
++                        self.input_batch.req_ids[req_index],
++                        len(output_token_ids),
++                        top_logits,
++                        top_token_ids,
++                    )
++                )
++
+         with record_function_or_nullcontext("gpu_model_runner: sample"):
+             sampler_output = self._sample(logits, spec_decode_metadata)
+ 
++        if greedy_trace_rows:
++            with gpu_sync_allowed():
++                for (
++                    req_index,
++                    request_id,
++                    output_index,
++                    top_logits,
++                    top_token_ids,
++                ) in greedy_trace_rows:
++                    self.greedy_decision_trace.record(
++                        request_id=request_id,
++                        output_index_before_sample=output_index,
++                        batch_index=req_index,
++                        logits_shape=logits.shape,
++                        logits_dtype=str(logits.dtype),
++                        top_token_ids=top_token_ids.cpu().tolist(),
++                        top_logits=top_logits.cpu().tolist(),
++                        sampled_token_id=sampler_output.sampled_token_ids[
++                            req_index, 0
++                        ].item(),
++                    )
++
+         self._update_states_after_model_execute(
+             sampler_output.sampled_token_ids, scheduler_output
+         )
+diff --git a/vllm/v1/worker/greedy_decision_trace.py b/vllm/v1/worker/greedy_decision_trace.py
+new file mode 100644
+index 000000000..b48bfd26d
+--- /dev/null
++++ b/vllm/v1/worker/greedy_decision_trace.py
+@@ -0,0 +1,105 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++from __future__ import annotations
++
++import json
++from collections.abc import Sequence
++from pathlib import Path
++
++
++class GreedyDecisionTrace:
++    """Bounded JSONL writer for opt-in greedy-decision diagnostics."""
++
++    schema = "vllm.greedy-decision-trace.v1"
++
++    def __init__(
++        self,
++        directory: str,
++        request_prefix: str,
++        max_records: int,
++        topk: int,
++    ) -> None:
++        if not directory:
++            raise ValueError("greedy decision trace directory must not be empty")
++        if not request_prefix:
++            raise ValueError("greedy decision trace request prefix must not be empty")
++        if max_records <= 0:
++            raise ValueError("greedy decision trace max records must be positive")
++        if topk < 2:
++            raise ValueError("greedy decision trace topk must be at least 2")
++
++        root = Path(directory)
++        root.mkdir(parents=True, exist_ok=True)
++        self.path = root / "greedy-decisions-rank0.jsonl"
++        if self.path.exists():
++            raise FileExistsError(f"refusing to append to existing trace: {self.path}")
++
++        self.request_prefix = request_prefix
++        self.max_records = max_records
++        self.topk = topk
++        self.record_count = 0
++        self._occurrence_by_request: dict[str, int] = {}
++
++    def matching_indices(
++        self,
++        req_ids: Sequence[str],
++        discard_mask: Sequence[bool],
++        all_greedy: bool,
++    ) -> list[int]:
++        if not all_greedy:
++            return []
++        return [
++            index
++            for index, (req_id, discard) in enumerate(zip(req_ids, discard_mask))
++            if not discard and req_id.startswith(self.request_prefix)
++        ]
++
++    def record(
++        self,
++        *,
++        request_id: str,
++        output_index_before_sample: int,
++        batch_index: int,
++        logits_shape: Sequence[int],
++        logits_dtype: str,
++        top_token_ids: Sequence[int],
++        top_logits: Sequence[float],
++        sampled_token_id: int,
++    ) -> None:
++        if self.record_count >= self.max_records:
++            return
++        if len(top_token_ids) != len(top_logits):
++            raise ValueError("top token IDs and logits must have equal lengths")
++        if len(top_token_ids) < 2:
++            raise ValueError("at least two top logits are required")
++
++        if output_index_before_sample == 0:
++            occurrence = self._occurrence_by_request.get(request_id, 0) + 1
++            self._occurrence_by_request[request_id] = occurrence
++        else:
++            occurrence = self._occurrence_by_request.get(request_id)
++            if occurrence is None:
++                raise ValueError("trace occurrence must start at output index zero")
++
++        top_logits_float = [float(value) for value in top_logits]
++        top_ids_int = [int(token_id) for token_id in top_token_ids]
++        margin = top_logits_float[0] - top_logits_float[1]
++        row = {
++            "schema": self.schema,
++            "record_index": self.record_count,
++            "request_id": request_id,
++            "request_occurrence": occurrence,
++            "output_index_before_sample": output_index_before_sample,
++            "batch_index": batch_index,
++            "logits_shape": [int(dim) for dim in logits_shape],
++            "logits_dtype": logits_dtype,
++            "top_token_ids": top_ids_int,
++            "top_logits_float_hex": [value.hex() for value in top_logits_float],
++            "top1_top2_margin_float_hex": margin.hex(),
++            "sampled_token_id": int(sampled_token_id),
++            "sampled_equals_top1": int(sampled_token_id) == top_ids_int[0],
++        }
++        with self.path.open("a", encoding="utf-8") as output:
++            output.write(json.dumps(row, sort_keys=True, allow_nan=False) + "\n")
++        self.record_count += 1
+-- 
+2.43.0
+

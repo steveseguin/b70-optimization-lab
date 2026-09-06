@@ -1,0 +1,252 @@
+From 396b4e688d02c0922761fb98fe9fb26f6df6e5ff Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 21:44:19 -0400
+Subject: [PATCH 13/55] Capture routed MoE replay inputs on demand
+
+---
+ .../fused_moe/test_xpu_moe_sync_trace.py      |  51 ++++++++
+ vllm/envs.py                                  |   5 +
+ .../layers/fused_moe/runner/moe_runner.py     | 109 ++++++++++++++++++
+ 3 files changed, 165 insertions(+)
+
+diff --git a/tests/model_executor/layers/fused_moe/test_xpu_moe_sync_trace.py b/tests/model_executor/layers/fused_moe/test_xpu_moe_sync_trace.py
+index 4a433d4ca..a9f2fb56f 100644
+--- a/tests/model_executor/layers/fused_moe/test_xpu_moe_sync_trace.py
++++ b/tests/model_executor/layers/fused_moe/test_xpu_moe_sync_trace.py
+@@ -3,6 +3,7 @@ from types import SimpleNamespace
+ import torch
+ 
+ import vllm.envs as envs
++from vllm.model_executor.layers.fused_moe.runner import moe_runner as moe_runner_module
+ from vllm.model_executor.layers.fused_moe.runner.moe_runner import MoERunner
+ 
+ 
+@@ -42,3 +43,53 @@ def test_xpu_moe_sync_trace_enabled(monkeypatch, caplog) -> None:
+     assert synchronize_calls == 1
+     assert "phase=entry shape=[1, 2]" in caplog.text
+     assert "allocated_bytes=11 reserved_bytes=22 max_allocated_bytes=33" in caplog.text
++
++
++def test_xpu_moe_capture_is_default_off(monkeypatch, tmp_path) -> None:
++    monkeypatch.setattr(envs, "VLLM_XPU_MOE_CAPTURE_DIR", "")
++    runner = SimpleNamespace(_xpu_capture_done=False)
++
++    MoERunner._xpu_capture_routed_inputs(
++        runner,
++        torch.ones(1, 2),
++        torch.ones(1, 1),
++        torch.zeros(1, 1, dtype=torch.int32),
++    )
++
++    assert not list(tmp_path.iterdir())
++
++
++def test_xpu_moe_capture_enabled(monkeypatch, tmp_path) -> None:
++    monkeypatch.setattr(envs, "VLLM_XPU_MOE_CAPTURE_DIR", str(tmp_path))
++    monkeypatch.setattr(torch.accelerator, "synchronize", lambda: None)
++    monkeypatch.setattr(
++        moe_runner_module,
++        "get_world_group",
++        lambda: SimpleNamespace(rank=2, local_rank=3),
++    )
++    runner = SimpleNamespace(
++        _xpu_capture_done=False,
++        layer_name="model.layers.0.mlp.experts",
++        moe_config=SimpleNamespace(ep_rank=2, tp_rank=0),
++        routed_experts=torch.nn.Linear(2, 2, bias=False),
++        _quant_method=SimpleNamespace(moe_kernel=object()),
++    )
++    hidden_states = torch.ones(1, 2)
++    topk_weights = torch.full((1, 1), 0.5)
++    topk_ids = torch.full((1, 1), 7, dtype=torch.int32)
++
++    MoERunner._xpu_capture_routed_inputs(
++        runner, hidden_states, topk_weights, topk_ids
++    )
++
++    files = list(tmp_path.glob("*.pt"))
++    assert len(files) == 1
++    assert files[0].name.startswith("routed-input-r2-lr3-")
++    assert not list(tmp_path.glob("*.tmp"))
++    payload = torch.load(files[0], weights_only=True)
++    assert torch.equal(payload["inputs"]["hidden_states"]["value"], hidden_states)
++    assert torch.equal(payload["inputs"]["topk_weights"]["value"], topk_weights)
++    assert torch.equal(payload["inputs"]["topk_ids"]["value"], topk_ids)
++    assert payload["ep_rank"] == 2
++    assert payload["parameter_metadata"]["weight"]["shape"] == [2, 2]
++    assert runner._xpu_capture_done
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 3c1d2b1e1..900179bae 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -292,6 +292,7 @@ if TYPE_CHECKING:
+     VLLM_GC_DEBUG: str = ""
+     VLLM_DEBUG_WORKSPACE: bool = False
+     VLLM_XPU_MOE_SYNC_TRACE: bool = False
++    VLLM_XPU_MOE_CAPTURE_DIR: str = ""
+     VLLM_DISABLE_SHARED_EXPERTS_STREAM: bool = False
+     VLLM_DISABLE_DSV4_MEGAMOE_SHARED_EXPERT_FUSION: bool = False
+     VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD: int = 256
+@@ -2006,6 +2007,10 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_MOE_SYNC_TRACE": lambda: bool(
+         int(os.getenv("VLLM_XPU_MOE_SYNC_TRACE", "0"))
+     ),
++    # Diagnostic-only destination for exact inputs to the first routed MoE call.
++    "VLLM_XPU_MOE_CAPTURE_DIR": lambda: os.getenv(
++        "VLLM_XPU_MOE_CAPTURE_DIR", ""
++    ),
+     # Disables parallel execution of shared_experts via separate cuda stream
+     "VLLM_DISABLE_SHARED_EXPERTS_STREAM": lambda: bool(
+         int(os.getenv("VLLM_DISABLE_SHARED_EXPERTS_STREAM", "0"))
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 43a48b566..707b1c9ce 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -1,7 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
++import re
+ from collections.abc import Callable, Iterable
+ from contextlib import nullcontext
++from pathlib import Path
+ from typing import TYPE_CHECKING, cast
+ 
+ import torch
+@@ -13,6 +16,7 @@ from vllm.config.parallel import ExpertPlacementStrategy
+ from vllm.distributed import (
+     get_ep_group,
+     get_pcp_group,
++    get_world_group,
+     tensor_model_parallel_all_reduce,
+ )
+ from vllm.distributed.eplb.eplb_state import EplbLayerState
+@@ -293,6 +297,7 @@ class MoERunner(MoERunnerInterface):
+ 
+         # Needed for string -> MoERunner layer lookup in custom ops.
+         self.layer_name = layer_name
++        self._xpu_capture_done = False
+ 
+         self._forward_entry = self._select_forward()
+ 
+@@ -599,6 +604,109 @@ class MoERunner(MoERunnerInterface):
+             torch.xpu.max_memory_allocated(),
+         )
+ 
++    @staticmethod
++    def _tensor_metadata(value: torch.Tensor) -> dict[str, object]:
++        storage = value.untyped_storage()
++        return {
++            "shape": list(value.shape),
++            "stride": list(value.stride()),
++            "dtype": str(value.dtype),
++            "device": str(value.device),
++            "layout": str(value.layout),
++            "numel": value.numel(),
++            "element_size": value.element_size(),
++            "data_ptr": value.data_ptr(),
++            "storage_ptr": storage.data_ptr(),
++            "storage_offset": value.storage_offset(),
++            "storage_nbytes": storage.nbytes(),
++            "contiguous": value.is_contiguous(),
++            "ptr_mod_16": value.data_ptr() % 16,
++            "ptr_mod_64": value.data_ptr() % 64,
++            "ptr_mod_4096": value.data_ptr() % 4096,
++        }
++
++    def _xpu_capture_routed_inputs(
++        self,
++        hidden_states: torch.Tensor,
++        topk_weights: torch.Tensor,
++        topk_ids: torch.Tensor,
++    ) -> None:
++        capture_dir = envs.VLLM_XPU_MOE_CAPTURE_DIR
++        if not capture_dir or self._xpu_capture_done:
++            return
++        torch.accelerator.synchronize()
++        root = Path(capture_dir)
++        root.mkdir(parents=True, exist_ok=True)
++        world = get_world_group()
++        layer_slug = re.sub(r"[^A-Za-z0-9_.-]+", "_", self.layer_name)
++        destination = root / (
++            f"routed-input-r{world.rank}-lr{world.local_rank}-p{os.getpid()}-"
++            f"{layer_slug}.pt"
++        )
++        temporary = destination.with_suffix(".tmp")
++        parameters = {
++            name: MoERunner._tensor_metadata(parameter)
++            for name, parameter in self.routed_experts.named_parameters(
++                remove_duplicate=False
++            )
++        }
++        buffers = {
++            name: MoERunner._tensor_metadata(buffer)
++            for name, buffer in self.routed_experts.named_buffers(
++                remove_duplicate=False
++            )
++        }
++        routing_names = {
++            "_expert_map",
++            "expert_mask",
++            "expert_global_to_physical",
++            "expert_physical_to_global",
++        }
++        routing_tensors = {
++            name: buffer.detach().to("cpu", copy=True)
++            for name, buffer in self.routed_experts.named_buffers(
++                remove_duplicate=False
++            )
++            if name.rsplit(".", 1)[-1] in routing_names
++        }
++        payload = {
++            "format_version": 1,
++            "layer_name": self.layer_name,
++            "rank": world.rank,
++            "local_rank": world.local_rank,
++            "pid": os.getpid(),
++            "ep_rank": self.moe_config.ep_rank,
++            "tp_rank": self.moe_config.tp_rank,
++            "quant_method": type(self._quant_method).__qualname__,
++            "moe_kernel": type(
++                getattr(self._quant_method, "moe_kernel", None)
++            ).__qualname__,
++            "inputs": {
++                "hidden_states": {
++                    "value": hidden_states.detach().to("cpu", copy=True),
++                    "source": MoERunner._tensor_metadata(hidden_states),
++                },
++                "topk_weights": {
++                    "value": topk_weights.detach().to("cpu", copy=True),
++                    "source": MoERunner._tensor_metadata(topk_weights),
++                },
++                "topk_ids": {
++                    "value": topk_ids.detach().to("cpu", copy=True),
++                    "source": MoERunner._tensor_metadata(topk_ids),
++                },
++            },
++            "parameter_metadata": parameters,
++            "buffer_metadata": buffers,
++            "routing_tensors": routing_tensors,
++        }
++        with temporary.open("wb") as output:
++            torch.save(payload, output)
++            output.flush()
++            os.fsync(output.fileno())
++        os.replace(temporary, destination)
++        self._xpu_capture_done = True
++        logger.warning("Captured XPU routed MoE inputs at %s", destination)
++
+     def _apply_quant_method(
+         self,
+         hidden_states: torch.Tensor,
+@@ -634,6 +742,7 @@ class MoERunner(MoERunnerInterface):
+                 input_ids=input_ids,
+             )
+             self._xpu_sync_trace("router_complete", topk_ids)
++            self._xpu_capture_routed_inputs(hidden_states, topk_weights, topk_ids)
+ 
+             fused_out = self.routed_experts.forward_modular(
+                 x=hidden_states,
+-- 
+2.43.0
+

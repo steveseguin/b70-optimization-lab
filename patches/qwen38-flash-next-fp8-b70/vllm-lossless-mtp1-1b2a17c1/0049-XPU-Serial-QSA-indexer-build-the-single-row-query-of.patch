@@ -1,0 +1,29 @@
+From 695599519cf7a772603581586ef6c4440bcca768 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 13:29:37 -0400
+Subject: [PATCH 49/55] [XPU] Serial QSA indexer: build the single-row query
+ offsets on the device so graph capture can record the path
+
+---
+ vllm/models/qwen4_exp/amd/indexer_qsa.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/vllm/models/qwen4_exp/amd/indexer_qsa.py b/vllm/models/qwen4_exp/amd/indexer_qsa.py
+index c3d54d7dc..f2349839b 100644
+--- a/vllm/models/qwen4_exp/amd/indexer_qsa.py
++++ b/vllm/models/qwen4_exp/amd/indexer_qsa.py
+@@ -304,8 +304,9 @@ class QSAIndexer(nn.Module):
+         """
+         num_tokens = raw_metadata.num_actual_tokens
+         device = raw_metadata.query_start_loc.device
+-        single_start = torch.tensor(
+-            [0, 1], dtype=raw_metadata.query_start_loc.dtype, device=device
++        # Built on the device (no host copy) so the path can be graph-captured.
++        single_start = torch.arange(
++            0, 2, dtype=raw_metadata.query_start_loc.dtype, device=device
+         )
+         result = out
+         if result is None:
+-- 
+2.43.0
+

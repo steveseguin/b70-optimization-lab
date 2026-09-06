@@ -6,7 +6,7 @@
   "name": "Qwen Flash-Next",
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
-  "updated_at": "2026-09-04",
+  "updated_at": "2026-09-06",
   "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. The retained current runtime now independently qualifies TP4 eager MTP0 at short context and exact active 4K: 5.224 tok/s on the established short screen and 4.758 tok/s conventional at exact 4K, with 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K needle, and card-clean teardown. At 16K, current-source MTP0 completed one exact generic-depth request, then the semantic program produced one correct fresh response, a corrupted same-server repeat, and a separate fresh-server worker timeout at 1,600 computed prompt tokens. This is Grade-D quarantined capability and nondeterministic runtime-stability evidence; it does not authorize 24K/32K. MTP2's bounded 16K treatment tranche is exhausted. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. The target-only official-thinking MTP0 profile passed 25/25, and graph, vision, other topologies, clean-host replay, and deployment qualification remain open.",
   "featured_results": [
     {
@@ -1667,6 +1667,47 @@
     }
   ],
   "packets": [
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4+EP4 graph + lossless MTP1",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 1b2a17c1e7c41985d6a5e0eb324ada4775c25e60 + staged kernels 2f829747 + public oneCCL 4ceafd1",
+      "cards": 4,
+      "status": "candidate",
+      "evidence_level": "B70-verified originating-host replay",
+      "coverage": [
+        "decode",
+        "exactness",
+        "quality",
+        "runtime provenance",
+        "recipe"
+      ],
+      "manifest": "packages/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/package.json",
+      "grades": {
+        "capability": {
+          "grade": "B",
+          "scope": "user-facing TP4/EP4 deterministic full-decode-graph text serving with lossless MTP1 at configured max 4,352, one sequence, on the fixed cold realistic suite",
+          "basis": "The certified line answers the 12-prompt realistic suite with every output identical to the no-speculation line, passed the direct-answer (6/7) and official-thinking (25/25) quality profiles, and reproduced its exact-2K and exact-4K authorities on a fresh server; long-context, concurrency, and clean-host installation are not covered, so it is a candidate package rather than a starter guide.",
+          "reviewed_at": "2026-09-06",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-promotion-attestation.json"
+          ]
+        },
+        "evidence": {
+          "grade": "B",
+          "scope": "exact TP4/EP4 graph MTP1 record at 27.048 tok/s class-balanced (A189) with the A190 fresh-server frozen-client repeat",
+          "basis": "Model, overlay commit, hosted kernel stage, hosted oneCCL build, tuned map, and frozen packet are pinned by hash; the record run retained every prompt and output SHA-256, cache-zero fresh-response gates, and the exactness verifier; a second server reproduced the exact-depth authorities bit-for-bit. Only the originating host has replayed it.",
+          "reviewed_at": "2026-09-06",
+          "evidence": [
+            "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json"
+          ]
+        }
+      }
+    },
     {
       "id": "qwen38-flash-next-fp8-tp4-research",
       "label": "Qwen3.8 Flash-Next FP8 · TP4 research server",

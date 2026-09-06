@@ -113,7 +113,7 @@ reproduces both MTP0 depth authorities in its frozen-client battery (A190: 6/7 q
 16/16 repeat, exact needle; exact-2K 28.27 / 28.73 tok/s, exact-4K 27.31 / 30.26) and
 scores **27.048435 tok/s** class-balanced on the fixed cold realistic suite (A189,
 all twelve row hashes equal to the MTP0 rows; TTFT median 0.96 s), LocalMaxxing run
-`cmtp5u0ip02eln701lntsl2ns` approved. Under paging the same MTP1 line scored 8.66 (A135). MTP2 with
+`cmtp5u0ip02eln701lntsl2ns` approved. Replay guide: [`repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/`](../../repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md) (`lab-replay`, candidate package). Under paging the same MTP1 line scored 8.66 (A135). MTP2 with
 headroom is lossless but not faster than MTP1 (A186). Data: [A189 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json),
 [A190 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json),
 [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-promotion-attestation.json).

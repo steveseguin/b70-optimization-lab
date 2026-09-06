@@ -1,0 +1,187 @@
+From 2722a891374de99bba4aca9ffbe6776a620569a5 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 12:05:53 -0400
+Subject: [PATCH 26/55] Trace Qwen4Exp PLE internals
+
+---
+ .../test_repeatability_trace_boundaries.py    | 18 ++++++++-
+ vllm/models/qwen4_exp/amd/model.py            | 21 +++++++---
+ vllm/models/qwen4_exp/nvidia/ple_layer.py     | 39 +++++++++++++++++++
+ 3 files changed, 70 insertions(+), 8 deletions(-)
+
+diff --git a/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py b/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+index e3d9d555c..d701dda6e 100644
+--- a/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
++++ b/tests/models/qwen4_exp/test_repeatability_trace_boundaries.py
+@@ -1,9 +1,11 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import pytest
+ import torch
+ import torch.nn as nn
+ 
++from vllm.models.qwen4_exp.amd import model as model_module
+ from vllm.models.qwen4_exp.amd.model import Qwen4ExpDecoderLayer
+ 
+ 
+@@ -14,9 +16,17 @@ class _FakePLE(nn.Module):
+         input_ids: torch.Tensor,
+         query_start_loc: torch.Tensor,
+         ngram_context: torch.Tensor,
++        *,
++        repeatability_trace: object | None = None,
+     ) -> torch.Tensor:
+         del input_ids, query_start_loc, ngram_context
+-        return hidden_states * 0.25
++        output = hidden_states * 0.25
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                "layer_1_ple_fake_internal",
++                output=output,
++            )
++        return output
+ 
+ 
+ class _FakeAttention(nn.Module):
+@@ -88,12 +98,16 @@ def test_disabled_trace_preserves_default_fast_path() -> None:
+         torch.testing.assert_close(default_tensor, explicit_none_tensor)
+ 
+ 
+-def test_ple_trace_records_inner_boundaries_in_order() -> None:
++def test_ple_trace_records_inner_boundaries_in_order(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setattr(model_module.current_platform, "is_xpu", lambda: True)
+     layer = _make_layer(with_ple=True)
+     trace = _TraceSpy()
+     layer(**_forward_kwargs(), repeatability_trace=trace)
+     assert trace.labels == [
+         "layer_1_ple_input",
++        "layer_1_ple_fake_internal",
+         "layer_1_ple_output",
+         "layer_1_post_ple",
+         "layer_1_attn_mix",
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index 765a703dd..cf44f4856 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -326,12 +326,21 @@ class Qwen4ExpDecoderLayer(nn.Module):
+                     query_start_loc=query_start_loc,
+                     ngram_context=ngram_context,
+                 )
+-                ple_output = self.ple(
+-                    hidden_states,
+-                    input_ids,
+-                    query_start_loc,
+-                    ngram_context,
+-                )
++                if current_platform.is_xpu():
++                    ple_output = self.ple(
++                        hidden_states,
++                        input_ids,
++                        query_start_loc,
++                        ngram_context,
++                        repeatability_trace=repeatability_trace,
++                    )
++                else:
++                    ple_output = self.ple(
++                        hidden_states,
++                        input_ids,
++                        query_start_loc,
++                        ngram_context,
++                    )
+                 repeatability_trace.record(
+                     f"layer_{self.layer_idx}_ple_output",
+                     ple_output=ple_output,
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index 09f5393ce..b7c96de4b 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -4,6 +4,7 @@
+ 
+ import math
+ from collections.abc import Iterable, Sequence
++from typing import Protocol
+ 
+ import torch
+ import torch.nn.functional as F
+@@ -61,6 +62,10 @@ _SPLITMIX_M2 = 0x94D049BB133111EB
+ _PLE_LAYER_PRIME = 10007
+ 
+ 
++class _RepeatabilityTrace(Protocol):
++    def record(self, label: str, **tensors: torch.Tensor | None) -> None: ...
++
++
+ def _splitmix64(value: int) -> int:
+     value = (value + _SPLITMIX_GAMMA) & _MASK64
+     value = ((value ^ (value >> 30)) * _SPLITMIX_M1) & _MASK64
+@@ -1181,6 +1186,8 @@ class Qwen4ExpPLELayer(nn.Module, MambaBase):
+         input_ids: torch.Tensor,
+         query_start_loc: torch.Tensor,
+         ngram_context: torch.Tensor,
++        *,
++        repeatability_trace: _RepeatabilityTrace | None = None,
+     ) -> torch.Tensor:
+         input_ids = input_ids.reshape(-1)
+         if input_ids.shape[0] != hidden_states.shape[0]:
+@@ -1195,9 +1202,25 @@ class Qwen4ExpPLELayer(nn.Module, MambaBase):
+             query_start_loc,
+             ngram_context,
+         )
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_ple_embedding_raw",
++                embeddings=embeddings,
++            )
+         embeddings = self._dequantize_embeddings(embeddings, hidden_states.dtype)
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_ple_embedding_dequantized",
++                embeddings=embeddings,
++            )
+         key, _ = self.key_proj(embeddings)
+         value, _ = self.value_proj(embeddings)
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_ple_projection",
++                key=key,
++                value=value,
++            )
+         token_count = hidden_states.shape[0]
+         key = key.reshape(token_count, self.hc_count, self.hidden_size)
+         query = hidden_states.reshape(token_count, self.hc_count, self.hidden_size)
+@@ -1206,13 +1229,29 @@ class Qwen4ExpPLELayer(nn.Module, MambaBase):
+         gate = (key * query).sum(dim=-1, keepdim=True) / math.sqrt(self.hidden_size)
+         gate = torch.sigmoid(gate.sign() * gate.abs().clamp_min(1e-6).sqrt())
+         gated_value = gate * value.unsqueeze(-2)
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_ple_gate",
++                gate=gate,
++                gated_value=gated_value,
++            )
+         normalized = self._apply_norm(self.norm_conv, gated_value).flatten(-2)
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_ple_conv_input",
++                normalized=normalized,
++            )
+         conv_output = torch.zeros_like(normalized)
+         torch.ops.vllm.qwen4_exp_ple_short_conv(
+             normalized,
+             conv_output,
+             self.prefix,
+         )
++        if repeatability_trace is not None:
++            repeatability_trace.record(
++                f"layer_{self.layer_idx}_ple_conv_output",
++                conv_output=conv_output,
++            )
+         return gated_value.flatten(-2) + conv_output
+ 
+ 
+-- 
+2.43.0
+

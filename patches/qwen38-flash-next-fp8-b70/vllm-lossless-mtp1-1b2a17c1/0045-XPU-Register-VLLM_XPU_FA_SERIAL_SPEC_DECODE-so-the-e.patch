@@ -1,0 +1,66 @@
+From 0a03a84cc3c82c20a805bfe8655b65a5149117d7 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 12:42:32 -0400
+Subject: [PATCH 45/55] [XPU] Register VLLM_XPU_FA_SERIAL_SPEC_DECODE so the
+ engine core and workers receive it
+
+Unregistered VLLM_* variables are not forwarded to the engine core or the
+TP workers (A87/A88: the API server had the flag, the workers did not), so
+the serial verifier-row attention gate never ran. The flag is now an
+envs.py entry read through envs, like VLLM_XPU_MKLDNN_DETERMINISTIC.
+---
+ vllm/envs.py                             | 7 +++++++
+ vllm/v1/attention/backends/flash_attn.py | 5 +----
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 4681dcb95..e3b20f3c1 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -322,6 +322,7 @@ if TYPE_CHECKING:
+     VLLM_NIXL_EP_MAX_NUM_RANKS: int = 32
+     VLLM_XPU_ENABLE_XPU_GRAPH: bool = False
+     VLLM_XPU_MKLDNN_DETERMINISTIC: bool = False
++    VLLM_XPU_FA_SERIAL_SPEC_DECODE: bool = False
+     VLLM_XPU_USE_SAMPLER_KERNEL: bool = True
+     VLLM_XPU_INC_WNA16_BACKEND: Literal["auto", "ark", "w4a16", "w4a8"] = "auto"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+@@ -2147,6 +2148,12 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_MKLDNN_DETERMINISTIC": lambda: bool(
+         int(os.getenv("VLLM_XPU_MKLDNN_DETERMINISTIC", "0"))
+     ),
++    # Attend multi-row verifier queries (the MTP verification step) one row at
++    # a time through the single-row decode call on XPU, so the full-attention
++    # layers' output equals the plain decode step's. Off by default.
++    "VLLM_XPU_FA_SERIAL_SPEC_DECODE": lambda: bool(
++        int(os.getenv("VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"))
++    ),
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 667901b7c..6435757bc 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -4,7 +4,6 @@
+ 
+ import copy
+ import functools
+-import os
+ from dataclasses import dataclass
+ from typing import ClassVar
+ 
+@@ -1166,9 +1165,7 @@ class FlashAttentionImpl(AttentionImpl):
+                 # time through the same single-row call the plain decode step
+                 # uses, so its attention output is the decode step's, bit for
+                 # bit, at the cost of one launch per row.
+-                serial_spec = os.environ.get(
+-                    "VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"
+-                ).strip().lower() in ("1", "true", "yes", "on")
++                serial_spec = envs.VLLM_XPU_FA_SERIAL_SPEC_DECODE
+                 if serial_spec and max_seqlen_q > 1:
+                     logger.warning_once(
+                         "FA serial-spec diagnostic: xpu=%s max_seqlen_q=%s "
+-- 
+2.43.0
+

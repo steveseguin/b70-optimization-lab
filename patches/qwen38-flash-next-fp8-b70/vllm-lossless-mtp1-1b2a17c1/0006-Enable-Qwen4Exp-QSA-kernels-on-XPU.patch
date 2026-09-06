@@ -1,0 +1,219 @@
+From 48a350bcf63e83a1d87d361415088113b038a662 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 17:56:45 -0400
+Subject: [PATCH 06/55] Enable Qwen4Exp QSA kernels on XPU
+
+---
+ tests/models/qwen4_exp/test_xpu.py       | 119 +++++++++++++++++++++++
+ vllm/models/qwen4_exp/amd/indexer_qsa.py |   2 +-
+ vllm/models/qwen4_exp/amd/ops/qsa.py     |  12 +--
+ 3 files changed, 126 insertions(+), 7 deletions(-)
+
+diff --git a/tests/models/qwen4_exp/test_xpu.py b/tests/models/qwen4_exp/test_xpu.py
+index 709bf53eb..fd60ff7c7 100644
+--- a/tests/models/qwen4_exp/test_xpu.py
++++ b/tests/models/qwen4_exp/test_xpu.py
+@@ -11,6 +11,11 @@ from vllm.models.qwen4_exp.amd.ops.hc import (
+     _hc_gate_mix_torch,
+     _hc_silu_torch,
+ )
++from vllm.models.qwen4_exp.amd.ops.qsa import (
++    expand_qsa_block_indices_cuda,
++    qsa_mqa_paged,
++    qsa_sparse_paged_attention,
++)
+ from vllm.platforms import current_platform
+ 
+ pytestmark = pytest.mark.skipif(
+@@ -88,3 +93,117 @@ def test_xpu_hc_torch_fallback_matches_reference() -> None:
+     expected_combined_norm = expected_combined_norm.flatten(-2) * (1.0 + weight.float())
+     torch.testing.assert_close(actual_combine, expected_combine)
+     torch.testing.assert_close(actual_norm, expected_combined_norm.to(dtype))
++
++
++def test_xpu_qsa_index_and_sparse_attention_match_reference() -> None:
++    torch.manual_seed(7)
++    device = torch.device("xpu")
++    rows, query_heads, kv_heads, head_dim, page_size = 2, 6, 1, 256, 16
++    q = torch.randn(
++        rows,
++        query_heads,
++        head_dim,
++        dtype=torch.bfloat16,
++        device=device,
++    )
++    kv = torch.randn(
++        8,
++        page_size,
++        kv_heads,
++        2 * head_dim,
++        dtype=torch.bfloat16,
++        device=device,
++    )
++    k_cache, v_cache = kv.split(head_dim, dim=-1)
++    block_table = torch.tensor(
++        [[0, 1, 2, 3], [4, 5, 6, 7]],
++        dtype=torch.int32,
++        device=device,
++    )
++    token_to_req = torch.tensor([0, 1], dtype=torch.int32, device=device)
++    block_indices = torch.tensor([[0, 1], [0, 1]], dtype=torch.int32, device=device)
++    positions = torch.tensor([11, 11], dtype=torch.int64, device=device)
++    sequence_lengths = torch.tensor([12, 12], dtype=torch.int32, device=device)
++    logical_indices = expand_qsa_block_indices_cuda(
++        block_indices,
++        positions,
++        sequence_lengths,
++        token_to_req,
++        compress_ratio=4,
++        token_topk=8,
++    )
++    actual = qsa_sparse_paged_attention(
++        q,
++        k_cache,
++        v_cache,
++        logical_indices,
++        block_table,
++        token_to_req,
++    )
++
++    expected = torch.zeros_like(q)
++    repeats = query_heads // kv_heads
++    for row in range(rows):
++        selected = logical_indices[row]
++        selected = selected[selected >= 0].long()
++        request = token_to_req[row].long()
++        pages = block_table[request, selected // page_size].long()
++        offsets = selected % page_size
++        keys = k_cache[pages, offsets].repeat_interleave(repeats, dim=1)
++        values = v_cache[pages, offsets].repeat_interleave(repeats, dim=1)
++        scores = torch.einsum("hd,khd->hk", q[row].float(), keys.float())
++        probabilities = torch.softmax(scores * head_dim**-0.5, dim=-1)
++        expected[row] = torch.einsum("hk,khd->hd", probabilities, values.float()).to(
++            q.dtype
++        )
++
++    torch.testing.assert_close(actual, expected, rtol=2e-2, atol=2e-2)
++
++
++def test_xpu_qsa_paged_scoring_matches_reference() -> None:
++    torch.manual_seed(11)
++    device = torch.device("xpu")
++    rows, heads, head_dim, page_size = 2, 4, 128, 8
++    q = torch.randn(rows, heads, head_dim, dtype=torch.bfloat16, device=device)
++    cache = torch.randn(8, page_size, 1, head_dim, dtype=torch.bfloat16, device=device)
++    page_table = torch.tensor(
++        [[0, 1, 2, 3], [4, 5, 6, 7]],
++        dtype=torch.int32,
++        device=device,
++    )
++    token_to_req = torch.tensor([0, 1], dtype=torch.int32, device=device)
++    positions = torch.tensor([31, 31], dtype=torch.int32, device=device)
++    sequence_lengths = torch.tensor([32, 32], dtype=torch.int32, device=device)
++
++    actual, visible = qsa_mqa_paged(
++        q,
++        cache,
++        page_table,
++        token_to_req,
++        positions,
++        sequence_lengths,
++        compress_ratio=4,
++    )
++    expected = torch.full_like(actual, -float("inf"))
++    for row in range(rows):
++        request = int(token_to_req[row].item())
++        num_visible = min(
++            (int(positions[row].item()) + 1) // 4,
++            int(sequence_lengths[request].item()) // 4,
++        )
++        for column in range(num_visible):
++            key = cache[
++                page_table[request, column // page_size].long(),
++                column % page_size,
++                0,
++            ]
++            score = sum(
++                max(float(torch.dot(q[row, head].float(), key.float()).item()), 0.0)
++                for head in range(heads)
++            )
++            expected[row, column] = score / head_dim**0.5
++
++    assert visible.tolist() == [8, 8]
++    assert torch.equal(torch.isfinite(actual), torch.isfinite(expected))
++    finite = torch.isfinite(expected)
++    torch.testing.assert_close(actual[finite], expected[finite], rtol=2e-2, atol=2e-2)
+diff --git a/vllm/models/qwen4_exp/amd/indexer_qsa.py b/vllm/models/qwen4_exp/amd/indexer_qsa.py
+index 6b7d8f9f9..684d3dfd9 100644
+--- a/vllm/models/qwen4_exp/amd/indexer_qsa.py
++++ b/vllm/models/qwen4_exp/amd/indexer_qsa.py
+@@ -201,7 +201,7 @@ class QSAIndexer(nn.Module):
+         )
+         if raw.num_actual_tokens != compressed.num_actual_tokens:
+             raise RuntimeError("QSA side-cache metadata token counts disagree")
+-        if not raw.logical_positions.is_cuda and (
++        if raw.logical_positions.device.type == "cpu" and (
+             not torch.equal(raw.logical_positions, compressed.logical_positions)
+         ):
+             raise RuntimeError("QSA side-cache metadata positions disagree")
+diff --git a/vllm/models/qwen4_exp/amd/ops/qsa.py b/vllm/models/qwen4_exp/amd/ops/qsa.py
+index 2e45db711..9fb5cf1b9 100644
+--- a/vllm/models/qwen4_exp/amd/ops/qsa.py
++++ b/vllm/models/qwen4_exp/amd/ops/qsa.py
+@@ -602,7 +602,7 @@ def qsa_mqa_paged(
+     """Compute QSA scores directly from a paged compressed-key cache."""
+ 
+     _validate_mqa(q)
+-    if not q.is_cuda or not HAS_TRITON:
++    if q.device.type not in {"cuda", "xpu"} or not HAS_TRITON:
+         raise RuntimeError("paged QSA scoring requires a GPU and Triton")
+     if k_cache.ndim != 4 or k_cache.shape[2] != 1:
+         raise ValueError("QSA cache must be [pages, page_size, 1, head_dim]")
+@@ -679,7 +679,7 @@ def expand_qsa_block_indices_cuda(
+ ) -> torch.Tensor:
+     """Expand compressed blocks and compact the causal tail of the open group."""
+ 
+-    if not block_indices.is_cuda or not HAS_TRITON:
++    if block_indices.device.type not in {"cuda", "xpu"} or not HAS_TRITON:
+         raise RuntimeError("QSA index expansion requires a GPU and Triton")
+     if token_topk % compress_ratio:
+         raise ValueError("QSA token top-k must be divisible by compression ratio")
+@@ -830,7 +830,7 @@ def qsa_sparse_paged_attention(
+ ) -> torch.Tensor:
+     """Run sparse GQA directly over paged BF16 K/V caches."""
+ 
+-    if not q.is_cuda or not HAS_TRITON:
++    if q.device.type not in {"cuda", "xpu"} or not HAS_TRITON:
+         raise RuntimeError("paged QSA sparse attention requires a GPU and Triton")
+     if q.ndim != 3 or k_cache.ndim != 4 or v_cache.shape != k_cache.shape:
+         raise ValueError("QSA sparse attention received invalid Q/K/V shapes")
+@@ -883,7 +883,7 @@ def qsa_sparse_paged_attention(
+         block_n, target_splits, partial_warps = 64, 1, 2
+     # gfx942 and gfx950 have a 64 KiB LDS limit. One software-pipelining
+     # stage keeps the wide TP4 tile within that shared-memory budget.
+-    partial_stages = 1 if current_platform.is_rocm() else 2
++    partial_stages = 1 if current_platform.is_rocm() or current_platform.is_xpu() else 2
+ 
+     num_tiles = triton.cdiv(logical_indices.shape[1], block_n)
+     # Avoid empty splits when the selection width is smaller than the profile.
+@@ -972,7 +972,7 @@ def qsa_store_cache_rows(
+ ) -> None:
+     """Store fixed-width rows in a QSA cache without boolean indexing."""
+ 
+-    if not cache.is_cuda or not HAS_TRITON:
++    if cache.device.type not in {"cuda", "xpu"} or not HAS_TRITON:
+         raise RuntimeError("QSA cache stores require a GPU and Triton")
+     if cache.ndim != 4 or cache.shape[2] != 1:
+         raise ValueError("QSA cache must be [pages, page_size, 1, width]")
+@@ -1018,7 +1018,7 @@ def qsa_compress_groups_with_ratio(
+ ) -> tuple[torch.Tensor, torch.Tensor]:
+     """Pool completed groups from the compressor-state ring and raw token rows."""
+ 
+-    if not raw_keys.is_cuda or not HAS_TRITON:
++    if raw_keys.device.type not in {"cuda", "xpu"} or not HAS_TRITON:
+         raise RuntimeError("QSA compression requires a GPU and Triton")
+     rows = token_to_req.numel()
+     if compress_ratio <= 0:
+-- 
+2.43.0
+

@@ -1,0 +1,47 @@
+From 53d6594b9f60418ad66be5c3155717761c406a76 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 12:31:44 -0400
+Subject: [PATCH 44/55] [XPU] One-time diagnostic of the serial-spec attention
+ gate (which clause blocks it)
+
+---
+ vllm/v1/attention/backends/flash_attn.py | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 1552d662b..667901b7c 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -1169,6 +1169,29 @@ class FlashAttentionImpl(AttentionImpl):
+                 serial_spec = os.environ.get(
+                     "VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"
+                 ).strip().lower() in ("1", "true", "yes", "on")
++                if serial_spec and max_seqlen_q > 1:
++                    logger.warning_once(
++                        "FA serial-spec diagnostic: xpu=%s max_seqlen_q=%s "
++                        "dynamic_causal=%s mm_mask_mod=%s rswa=%s "
++                        "num_actual_tokens=%s cu_seqlens_q=%s seqused_k=%s "
++                        "fa_version=%s",
++                        current_platform.is_xpu(),
++                        max_seqlen_q,
++                        is_dynamic_causal,
++                        mm_mask_mod is not None,
++                        rswa_mask_mod_fn is not None,
++                        num_actual_tokens,
++                        cu_seqlens_q.tolist(),
++                        seqused_k.tolist(),
++                        self.vllm_flash_attn_version,
++                    )
++                elif serial_spec:
++                    logger.warning_once(
++                        "FA serial-spec diagnostic: single-row batch seen "
++                        "(max_seqlen_q=%s num_actual_tokens=%s)",
++                        max_seqlen_q,
++                        num_actual_tokens,
++                    )
+                 if (
+                     current_platform.is_xpu()
+                     and serial_spec
+-- 
+2.43.0
+

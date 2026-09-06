@@ -1,0 +1,89 @@
+From 08d7747af3b4c98f3e8cf0ce4afef9c375c85707 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 26 Aug 2026 21:41:03 -0400
+Subject: [PATCH 12/55] Allow selective UVA offload of Qwen4Exp embeddings
+
+---
+ tests/models/qwen4_exp/test_embed_offload.py | 35 ++++++++++++++++++++
+ vllm/models/qwen4_exp/amd/model.py           |  9 +++++
+ 2 files changed, 44 insertions(+)
+ create mode 100644 tests/models/qwen4_exp/test_embed_offload.py
+
+diff --git a/tests/models/qwen4_exp/test_embed_offload.py b/tests/models/qwen4_exp/test_embed_offload.py
+new file mode 100644
+index 000000000..d7c20957a
+--- /dev/null
++++ b/tests/models/qwen4_exp/test_embed_offload.py
+@@ -0,0 +1,35 @@
++from torch import nn
++
++from vllm.models.qwen4_exp.amd import model as qwen4_exp_model
++
++
++class _FakeOffloader:
++    def __init__(self, enabled: bool) -> None:
++        self.supports_tower_offload = enabled
++        self.calls: list[tuple[list[nn.Module], str]] = []
++
++    def wrap_modules(self, modules, prefix: str = "") -> list[nn.Module]:
++        materialized = list(modules)
++        self.calls.append((materialized, prefix))
++        return materialized
++
++
++def test_embed_tokens_reaches_supported_offloader(monkeypatch) -> None:
++    offloader = _FakeOffloader(enabled=True)
++    monkeypatch.setattr(qwen4_exp_model, "get_offloader", lambda: offloader)
++    module = nn.Embedding(16, 8)
++
++    qwen4_exp_model._maybe_offload_embed_tokens(
++        module, "language_model.model"
++    )
++
++    assert offloader.calls == [([module], "language_model.model.embed_tokens")]
++
++
++def test_embed_tokens_skips_unsupported_offloader(monkeypatch) -> None:
++    offloader = _FakeOffloader(enabled=False)
++    monkeypatch.setattr(qwen4_exp_model, "get_offloader", lambda: offloader)
++
++    qwen4_exp_model._maybe_offload_embed_tokens(nn.Embedding(16, 8), "")
++
++    assert offloader.calls == []
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index 3a979e607..96298b2fc 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -63,6 +63,7 @@ from vllm.model_executor.models.utils import (
+     maybe_fuse_shared_experts,
+     maybe_prefix,
+ )
++from vllm.model_executor.offloader import get_offloader
+ from vllm.multimodal import MULTIMODAL_REGISTRY
+ from vllm.multimodal.inputs import MultiModalFeatureSpec
+ from vllm.platforms import current_platform
+@@ -87,6 +88,13 @@ else:
+ from .qsa import Qwen4ExpQSAAttention
+ 
+ 
++def _maybe_offload_embed_tokens(module: nn.Module, prefix: str) -> None:
++    """Route the directly constructed input embedding through UVA offload."""
++    offloader = get_offloader()
++    if offloader.supports_tower_offload:
++        offloader.wrap_modules(iter([module]), prefix=f"{prefix}.embed_tokens")
++
++
+ def without_modelopt_fp4(
+     quant_config: QuantizationConfig | None,
+ ) -> QuantizationConfig | None:
+@@ -410,6 +418,7 @@ class Qwen4ExpModel(nn.Module):
+             and getattr(config, "indexer_n_heads", None) is not None
+         )
+         self.embed_tokens = VocabParallelEmbedding(self.vocab_size, config.hidden_size)
++        _maybe_offload_embed_tokens(self.embed_tokens, prefix)
+ 
+         def get_layer(prefix: str) -> Qwen4ExpDecoderLayer:
+             layer_idx = extract_layer_index(prefix)
+-- 
+2.43.0
+

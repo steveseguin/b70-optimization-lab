@@ -1,0 +1,126 @@
+{
+  "format": "b70-model-package-v1",
+  "id": "qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905",
+  "name": "Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "expert",
+  "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8 Flash-Next",
+    "publisher": "Qwen",
+    "variant": "official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1",
+    "summary": "Qwen's 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with the expert and n-gram tables that do not fit placed in host memory. One speculative token per step with every output identical to the no-speculation line. A replay of the lab's certified run.",
+    "quantization": "FP8 block-128 weights / BF16 KV",
+    "runtime_label": "vLLM XPU",
+    "operating_systems": ["Linux"],
+    "delivery": ["native"],
+    "modalities": ["text"],
+    "use_cases": ["general", "coding", "deterministic serving research"],
+    "tags": ["four cards", "TP4", "EP4", "MTP1", "lossless speculation", "XPU graph", "UVA offload", "lab replay", "originating host"],
+    "published_at": "2026-09-06",
+    "featured_metric": {
+      "value": 27.048435404121527,
+      "unit": "tok/s",
+      "label": "class-balanced decode median",
+      "scope": "Median of prompt-class medians over 99 inter-token intervals after TTFT on the fixed cold 12-prompt realistic suite, sent once (A189, 2026-09-05).",
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json"
+    }
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "Flash-Next XPU bring-up (PLE and embedding UVA placement, Qwen4Exp dispatch, QSA and GDN exactness), deterministic full-decode graph, lossless MTP1 verification, the VRAM-headroom root cause and fix, frozen-packet certification, and record packaging.",
+      "status": "integrated",
+      "validated_effect": "27.048435 tok/s class-balanced with 12/12 outputs identical to the MTP0 line, against 14.43 tok/s for the previously approved Flash-Next line; fresh-server repeat reproduced every output pin.",
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-promotion-attestation.json"
+    }
+  ],
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 4
+  },
+  "model": {
+    "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "manifest": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json"
+  },
+  "runtime": {
+    "kind": "native",
+    "repository": "vllm-project/vllm",
+    "revision": "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
+    "build": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/vllm-q38-lossless-mtp1-1b2a17c1-20260906.bundle",
+      "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/series.sha256",
+      "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/lib.sha256",
+      "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256"
+    ],
+    "reason": "The record loads the lab's 55-commit XPU overlay over public vLLM 76cfe1cd, the hosted 2f829747 kernel stage, and the hosted public oneCCL 4ceafd1 build; all three are pinned by bytes."
+  },
+  "commands": {
+    "preflight": "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/verify-identity.sh",
+    "launch": "REPRO_ATTEMPT=<unused number above 189> repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/run-record-gate.sh",
+    "health": "curl -fsS http://127.0.0.1:19900/health",
+    "benchmark": "The record gate sends the fixed cold 12-prompt realistic suite exactly once through the frozen client and compares every output SHA-256 and gate with the record (check-replay-result.py).",
+    "stop": "The packet supervisor tears the server down after the client run and writes /tmp/q38-mtp1-ple-only-a<N>.rc; verify no Worker_TP process or listener on the packet port remains."
+  },
+  "dependencies": [
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/identity.json",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/verify-identity.sh",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/run-record-gate.sh",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/make-replay-attempt.py",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/wait-and-run-client.sh",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/check-replay-result.py",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/frozen-a189-packet.sha256",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/evidence/a189-run.sha256",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/evidence/a190-run.sha256",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/Dockerfile",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/container-serve.sh",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/build-image.sh",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/CONTAINER-STATUS.md",
+    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json",
+    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/verify-model.py",
+    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256",
+    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py",
+    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md",
+    "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/pip-freeze-observed.txt",
+    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/verify-series.sh",
+    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/series.sha256",
+    "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/vllm-q38-lossless-mtp1-1b2a17c1-20260906.bundle",
+    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+    "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/lib.sha256",
+    "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-mtp1-4352-ple-only-a189-fullgraphdet-w13n32.sh",
+    "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a189-fullgraphdet-w13n32-client.sh",
+    "experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp1-4352-ple-only-a189-fullgraphdet-w13n32.sh",
+    "experiments/qwen38-flash-next-fp8-b70/tools/run-q38-a189-host-controlled.sh",
+    "experiments/qwen38-flash-next-fp8-b70/tools/q38-launch-frozen-attempt.sh",
+    "experiments/qwen38-flash-next-fp8-b70/tools/launch-tp4-ep4-eager-mtp0-long-context-base.sh",
+    "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+    "experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-promotion-attestation.json",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json",
+    "data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp1-headroom-realistic-20260905.json",
+    "scripts/bench-openai-concurrency.py",
+    "scripts/bench-openai-token-depth-suite.py",
+    "results/qwen38-flash-next-fp8-b70/README.md"
+  ],
+  "missing": [
+    "tested platform installation (venv, oneAPI runtime, xe driver)",
+    "installable dependency hash lock",
+    "record-specific model acquisition helper",
+    "non-originating-host replay",
+    "built and replayed container image",
+    "beginner recovery flow",
+    "decode, prefill, and TTFT context sweep"
+  ]
+}

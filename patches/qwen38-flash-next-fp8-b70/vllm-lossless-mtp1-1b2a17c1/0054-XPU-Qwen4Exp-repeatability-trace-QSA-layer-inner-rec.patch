@@ -1,0 +1,103 @@
+From 76b787e239cb539f830224bf9eddf271e97607fe Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 16:14:19 -0400
+Subject: [PATCH 54/55] [XPU] Qwen4Exp repeatability trace: QSA layer inner
+ records for traced layers
+
+For layers named in the trace's GDN_LAYERS list that are full-attention
+layers, record the QKV projection, the indexer's selected indices, the
+attention output before and after gating, and the o_proj output.
+Report-only; no effect without the trace armed.
+
+Co-authored-by: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ vllm/models/qwen4_exp/amd/model.py | 25 +++++++++++++++++++++----
+ vllm/models/qwen4_exp/amd/qsa.py   | 19 +++++++++++++++++++
+ 2 files changed, 40 insertions(+), 4 deletions(-)
+
+diff --git a/vllm/models/qwen4_exp/amd/model.py b/vllm/models/qwen4_exp/amd/model.py
+index eecdf5a95..7e6c6fc51 100644
+--- a/vllm/models/qwen4_exp/amd/model.py
++++ b/vllm/models/qwen4_exp/amd/model.py
+@@ -409,10 +409,27 @@ class Qwen4ExpDecoderLayer(nn.Module):
+             else:
+                 attn_out = self.linear_attn(hidden_states=block_input)
+         elif self.layer_type == "full_attention":
+-            attn_out = self.self_attn(
+-                hidden_states=block_input,
+-                positions=positions,
+-            )
++            wants_gdn = getattr(repeatability_trace, "wants_gdn", None)
++            if wants_gdn is not None and wants_gdn(self.layer_idx):
++                self.self_attn._repeatability_trace = (
++                    repeatability_trace,
++                    f"layer_{self.layer_idx}",
++                )
++                try:
++                    attn_out = self.self_attn(
++                        hidden_states=block_input,
++                        positions=positions,
++                    )
++                finally:
++                    self.self_attn._repeatability_trace = None
++                repeatability_trace.record(
++                    f"layer_{self.layer_idx}_qsa_attn_output", attn_out=attn_out
++                )
++            else:
++                attn_out = self.self_attn(
++                    hidden_states=block_input,
++                    positions=positions,
++                )
+         else:
+             raise ValueError("Invalid layer_type")
+         if self.ple is not None and repeatability_trace is not None:
+diff --git a/vllm/models/qwen4_exp/amd/qsa.py b/vllm/models/qwen4_exp/amd/qsa.py
+index 8e5d064ff..010ff4b8b 100644
+--- a/vllm/models/qwen4_exp/amd/qsa.py
++++ b/vllm/models/qwen4_exp/amd/qsa.py
+@@ -355,6 +355,9 @@ class Qwen4ExpQSAAttention(Qwen3NextAttention, AttentionLayerBase):
+             self.indexer.output_width,
+         ):
+             raise RuntimeError("QSA indexer returned an invalid selection shape")
++        trace = getattr(self, "_repeatability_trace", None)
++        if trace is not None:
++            trace[0].record(f"{trace[1]}_qsa_selected", selected=selected)
+         impl = cast(Qwen4ExpQSAFlashAttentionImpl, self.impl)
+         impl.do_kv_cache_update(
+             self,
+@@ -382,6 +385,16 @@ class Qwen4ExpQSAAttention(Qwen3NextAttention, AttentionLayerBase):
+         qkv, _ = self.qkv_proj(hidden_states)
+         q, k, v, gate = self._project_qkv_gate(qkv, positions)
+         num_tokens = hidden_states.shape[0]
++        trace = getattr(self, "_repeatability_trace", None)
++        if trace is not None:
++            trace[0].record(
++                f"{trace[1]}_qsa_proj",
++                hidden_states=hidden_states,
++                q=q,
++                k=k,
++                v=v,
++                gate=gate if gate is not None else q.new_zeros(1),
++            )
+         query = q.view(num_tokens, self.num_heads, self.head_dim)
+         key = k.view(num_tokens, self.num_kv_heads, self.head_dim)
+         value = v.view(num_tokens, self.num_kv_heads, self.head_dim)
+@@ -408,9 +421,15 @@ class Qwen4ExpQSAAttention(Qwen3NextAttention, AttentionLayerBase):
+                 encoded_layer_name,
+             )
+         flat_output = attn_output.view(num_tokens, -1)
++        if trace is not None:
++            trace[0].record(f"{trace[1]}_qsa_attn_output", attn_output=flat_output)
+         if gate is not None:
+             flat_output = flat_output * torch.sigmoid(gate)
++        if trace is not None:
++            trace[0].record(f"{trace[1]}_qsa_gated", gated=flat_output)
+         output, _ = self.o_proj(flat_output)
++        if trace is not None:
++            trace[0].record(f"{trace[1]}_qsa_o_proj", out=output)
+         return output
+ 
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,153 @@
+From 2ebbf2a61f0e3ef0b3036f59b5aec47489c8e6f6 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 13:23:43 -0400
+Subject: [PATCH 48/55] [XPU] Per-row QSA index update and selection for small
+ multi-row batches behind VLLM_XPU_QSA_SERIAL_SPEC_INDEXER
+
+In a multi-row step (the MTP verification step) rows in the same
+compression group race for one compressed slot and an earlier row's
+selection can see a later row's key; sequential decode never does. With
+the flag, batches of 2-8 rows from one request are compressed, stored and
+scored one row at a time with the sequence length rolled back per row.
+Off by default; no other path changes.
+---
+ vllm/envs.py                             |  7 +++
+ vllm/models/qwen4_exp/amd/indexer_qsa.py | 70 ++++++++++++++++++++++++
+ 2 files changed, 77 insertions(+)
+
+diff --git a/vllm/envs.py b/vllm/envs.py
+index e3b20f3c1..f195ae9e8 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -323,6 +323,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_ENABLE_XPU_GRAPH: bool = False
+     VLLM_XPU_MKLDNN_DETERMINISTIC: bool = False
+     VLLM_XPU_FA_SERIAL_SPEC_DECODE: bool = False
++    VLLM_XPU_QSA_SERIAL_SPEC_INDEXER: bool = False
+     VLLM_XPU_USE_SAMPLER_KERNEL: bool = True
+     VLLM_XPU_INC_WNA16_BACKEND: Literal["auto", "ark", "w4a16", "w4a8"] = "auto"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+@@ -2154,6 +2155,12 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_FA_SERIAL_SPEC_DECODE": lambda: bool(
+         int(os.getenv("VLLM_XPU_FA_SERIAL_SPEC_DECODE", "0"))
+     ),
++    # Update and select the QSA index one row at a time for small multi-row
++    # batches (the MTP verification step) on XPU, so each verifier row sees
++    # exactly the side-cache state single-row decode would. Off by default.
++    "VLLM_XPU_QSA_SERIAL_SPEC_INDEXER": lambda: bool(
++        int(os.getenv("VLLM_XPU_QSA_SERIAL_SPEC_INDEXER", "0"))
++    ),
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
+diff --git a/vllm/models/qwen4_exp/amd/indexer_qsa.py b/vllm/models/qwen4_exp/amd/indexer_qsa.py
+index 684d3dfd9..c3d54d7dc 100644
+--- a/vllm/models/qwen4_exp/amd/indexer_qsa.py
++++ b/vllm/models/qwen4_exp/amd/indexer_qsa.py
+@@ -4,12 +4,15 @@
+ 
+ from __future__ import annotations
+ 
++import dataclasses
+ from typing import cast
+ 
+ import torch
+ from torch import nn
+ 
++import vllm.envs as envs
+ from vllm.config import VllmConfig
++from vllm.logger import init_logger
+ from vllm.forward_context import get_forward_context
+ from vllm.model_executor.layers.layernorm import GemmaRMSNorm
+ from vllm.model_executor.layers.linear import ReplicatedLinear
+@@ -71,6 +74,10 @@ def apply_qsa_rmsnorm(
+     return cast(torch.Tensor, norm(tensor))
+ 
+ 
++logger = init_logger(__name__)
++_SERIAL_SPEC_INDEXER_MAX_ROWS = 8
++
++
+ class QSAIndexer(nn.Module):
+     """Replicated Q/K projection plus paged, weight-free QSA selection.
+ 
+@@ -277,6 +284,60 @@ class QSAIndexer(nn.Module):
+             out,
+         )
+ 
++    def _forward_serial_rows(
++        self,
++        q: torch.Tensor,
++        token_k: torch.Tensor,
++        positions: torch.Tensor,
++        raw_metadata: QSAForwardMetadata,
++        compressed_metadata: QSAForwardMetadata,
++        out: torch.Tensor | None,
++    ) -> torch.Tensor:
++        """Update the side caches and select one row at a time.
++
++        In a multi-row step (the MTP verification step) rows that fall in the
++        same compression group race for one compressed slot, and an earlier
++        row's selection can see a later row's key. Sequential decode never
++        does that, so with VLLM_XPU_QSA_SERIAL_SPEC_INDEXER each row is
++        compressed, stored and scored exactly as its own decode step would
++        be, with the request's sequence length rolled back to that row.
++        """
++        num_tokens = raw_metadata.num_actual_tokens
++        device = raw_metadata.query_start_loc.device
++        single_start = torch.tensor(
++            [0, 1], dtype=raw_metadata.query_start_loc.dtype, device=device
++        )
++        result = out
++        if result is None:
++            result = torch.empty(
++                (num_tokens, self.output_width), dtype=torch.int32, device=q.device
++            )
++
++        def row_view(meta: QSAForwardMetadata, i: int) -> QSAForwardMetadata:
++            back = num_tokens - 1 - i
++            return dataclasses.replace(
++                meta,
++                slot_mapping=meta.slot_mapping[i : i + 1],
++                token_to_req=meta.token_to_req[i : i + 1],
++                logical_positions=meta.logical_positions[i : i + 1],
++                query_start_loc=single_start,
++                seq_lens=meta.seq_lens - back,
++                num_actual_tokens=1,
++            )
++
++        for i in range(num_tokens):
++            raw_i = row_view(raw_metadata, i)
++            compressed_i = row_view(compressed_metadata, i)
++            self._update_and_compress(
++                token_k[i : i + 1], positions[..., i : i + 1], raw_i, compressed_i
++            )
++            self._select(q[i : i + 1], compressed_i, result[i : i + 1])
++        logger.warning_once(
++            "VLLM_XPU_QSA_SERIAL_SPEC_INDEXER reached for %d-row batches",
++            num_tokens,
++        )
++        return result
++
+     def forward(
+         self,
+         hidden_states: torch.Tensor,
+@@ -305,6 +366,15 @@ class QSAIndexer(nn.Module):
+         q, token_k = self.project_qk(
+             hidden_states[:num_tokens], positions[..., :num_tokens]
+         )
++        if (
++            envs.VLLM_XPU_QSA_SERIAL_SPEC_INDEXER
++            and not self.skip_topk
++            and 1 < num_tokens <= _SERIAL_SPEC_INDEXER_MAX_ROWS
++            and raw_metadata.query_start_loc.numel() == 2
++        ):
++            return self._forward_serial_rows(
++                q, token_k, positions, raw_metadata, compressed_metadata, out
++            )
+         self._update_and_compress(
+             token_k,
+             positions[..., :num_tokens],
+-- 
+2.43.0
+

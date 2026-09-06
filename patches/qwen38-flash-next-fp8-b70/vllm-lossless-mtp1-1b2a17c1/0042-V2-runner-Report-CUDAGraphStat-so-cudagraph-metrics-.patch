@@ -1,0 +1,85 @@
+From 2169dbfe38c2954edc5ae50e94f68d45be071b79 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 01:05:43 -0400
+Subject: [PATCH 42/55] [V2 runner] Report CUDAGraphStat so --cudagraph-metrics
+ logs dispatches on the XPU line
+
+The XPU worker selects the V2 model runner, which never built the
+CUDAGraphStat that the legacy runner reports, so the API-side metrics
+table (the runtime receipt the Flash-Next frozen clients verify) could
+never appear. Build the stat after dispatch when cudagraph_metrics is on,
+carry it in ExecuteModelState, and attach it to ModelRunnerOutput in
+sample_tokens. No dispatch or numerical behavior changes.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01B7mWrbKroA1KT3rYtmhP8J
+---
+ vllm/v1/worker/gpu/model_runner.py | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/vllm/v1/worker/gpu/model_runner.py b/vllm/v1/worker/gpu/model_runner.py
+index 6e60b994d..1ecac19c0 100644
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -25,6 +25,8 @@ from typing import Any, NamedTuple
+ 
+ import numpy as np
+ import torch
++
++from vllm.compilation.cuda_graph import CUDAGraphStat
+ import torch.nn as nn
+ 
+ import vllm.envs as envs
+@@ -1598,6 +1600,17 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             need_eager=is_profile or skip_compiled,
+             num_active_loras=num_active_loras,
+         )
++        # Report the graph dispatch decision like the legacy runner does so
++        # that --cudagraph-metrics has something to log (receipt for the
++        # XPU full-decode-graph line, which runs this V2 runner).
++        cudagraph_stats = None
++        if self.observability_config.cudagraph_metrics:
++            cudagraph_stats = CUDAGraphStat(
++                num_unpadded_tokens=num_toks,
++                num_padded_tokens=batch_desc.num_tokens,
++                num_paddings=batch_desc.num_tokens - num_toks,
++                runtime_mode=str(batch_desc.cg_mode),
++            )
+ 
+         if batch_desc.num_tokens == 0:
+             # All DP ranks have zero tokens to run.
+@@ -1837,6 +1850,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             finished_req_ids=finished_req_ids,
+             ec_connector_output=ec_connector_output,
+             routed_experts=routed_experts,
++            cudagraph_stats=cudagraph_stats,
+         )
+ 
+         if not self.is_last_pp_rank:
+@@ -1861,6 +1875,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+         finished_req_ids = self.execute_model_state.finished_req_ids
+         ec_connector_output = self.execute_model_state.ec_connector_output
+         routed_experts = self.execute_model_state.routed_experts
++        cudagraph_stats = self.execute_model_state.cudagraph_stats
+         self.execute_model_state = None
+ 
+         if not self.is_last_pp_rank:
+@@ -1919,6 +1934,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             req_id_to_index={req_id: i for i, req_id in enumerate(input_batch.req_ids)},
+             sampled_token_ids=None,  # type: ignore
+             prompt_logprobs_dict=prompt_logprobs_dict,  # type: ignore[arg-type]
++            cudagraph_stats=cudagraph_stats,
+         )
+         # Start async output copy here so that it can overlap with speculator proposal.
+         async_output = AsyncOutput(
+@@ -2129,6 +2145,7 @@ class ExecuteModelState(NamedTuple):
+     finished_req_ids: set[str]
+     ec_connector_output: ECConnectorOutput | None
+     routed_experts: RoutedExpertsTensors | None
++    cudagraph_stats: CUDAGraphStat | None = None
+ 
+ 
+ class BatchReqState(NamedTuple):
+-- 
+2.43.0
+

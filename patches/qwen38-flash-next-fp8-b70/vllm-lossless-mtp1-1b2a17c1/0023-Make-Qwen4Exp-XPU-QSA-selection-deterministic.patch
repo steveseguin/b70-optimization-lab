@@ -1,0 +1,111 @@
+From f68c9386fe5af54055bdf20684b269b9c1340e44 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 00:08:30 -0400
+Subject: [PATCH 23/55] Make Qwen4Exp XPU QSA selection deterministic
+
+---
+ tests/models/qwen4_exp/test_xpu.py   | 55 ++++++++++++++++++++++++++++
+ vllm/models/qwen4_exp/amd/ops/qsa.py | 17 +++++++++
+ 2 files changed, 72 insertions(+)
+
+diff --git a/tests/models/qwen4_exp/test_xpu.py b/tests/models/qwen4_exp/test_xpu.py
+index fd60ff7c7..b1e4025be 100644
+--- a/tests/models/qwen4_exp/test_xpu.py
++++ b/tests/models/qwen4_exp/test_xpu.py
+@@ -14,6 +14,7 @@ from vllm.models.qwen4_exp.amd.ops.hc import (
+ from vllm.models.qwen4_exp.amd.ops.qsa import (
+     expand_qsa_block_indices_cuda,
+     qsa_mqa_paged,
++    qsa_select_paged_tokens,
+     qsa_sparse_paged_attention,
+ )
+ from vllm.platforms import current_platform
+@@ -207,3 +208,57 @@ def test_xpu_qsa_paged_scoring_matches_reference() -> None:
+     assert torch.equal(torch.isfinite(actual), torch.isfinite(expected))
+     finite = torch.isfinite(expected)
+     torch.testing.assert_close(actual[finite], expected[finite], rtol=2e-2, atol=2e-2)
++
++
++def test_xpu_qsa_selection_is_repeatable_at_exact_tie_boundary() -> None:
++    device = torch.device("xpu")
++    compress_ratio = 4
++    token_topk = 2048
++    compressed_blocks = 1024
++    page_size = 16
++    q = torch.zeros(1, 4, 16, dtype=torch.bfloat16, device=device)
++    cache = torch.zeros(
++        compressed_blocks // page_size,
++        page_size,
++        1,
++        16,
++        dtype=torch.bfloat16,
++        device=device,
++    )
++    page_table = torch.arange(
++        compressed_blocks // page_size,
++        dtype=torch.int32,
++        device=device,
++    ).unsqueeze(0)
++    token_to_req = torch.zeros(1, dtype=torch.int32, device=device)
++    query_positions = torch.tensor([4095], dtype=torch.int32, device=device)
++    sequence_lengths = torch.tensor([4096], dtype=torch.int32, device=device)
++
++    outputs = [
++        qsa_select_paged_tokens(
++            q,
++            cache,
++            page_table,
++            token_to_req,
++            query_positions,
++            sequence_lengths,
++            token_topk,
++            compress_ratio,
++        )
++        for _ in range(32)
++    ]
++    torch.xpu.synchronize()
++
++    expected = torch.cat(
++        (
++            torch.arange(token_topk, dtype=torch.int32, device=device),
++            torch.full(
++                (compress_ratio - 1,),
++                -1,
++                dtype=torch.int32,
++                device=device,
++            ),
++        )
++    ).unsqueeze(0)
++    for output in outputs:
++        torch.testing.assert_close(output, expected)
+diff --git a/vllm/models/qwen4_exp/amd/ops/qsa.py b/vllm/models/qwen4_exp/amd/ops/qsa.py
+index 9fb5cf1b9..82f5de786 100644
+--- a/vllm/models/qwen4_exp/amd/ops/qsa.py
++++ b/vllm/models/qwen4_exp/amd/ops/qsa.py
+@@ -796,6 +796,23 @@ def qsa_select_paged_tokens(
+                 block_topk,
+                 columns,
+             )
++        elif current_platform.is_xpu():
++            # The generic XPU top-k kernel emits strict winners through atomic
++            # reservations and resolves threshold ties by reservation order.
++            # Both the order and, for ties, the selected set can therefore
++            # change between identical launches. QSA consumes the returned
++            # order directly, so even a fixed set would change the attention
++            # reduction order. Stable argsort gives QSA an exact score-desc,
++            # logical-index-asc order without perturbing scores.
++            ranked = torch.argsort(
++                logits,
++                dim=1,
++                descending=True,
++                stable=True,
++            )[:, :block_topk]
++            blocks.copy_(ranked)
++            ranks = torch.arange(block_topk, device=blocks.device)
++            blocks.masked_fill_(ranks[None, :] >= visible_blocks[:, None], -1)
+         else:
+             ops.top_k_per_row_decode(
+                 logits,
+-- 
+2.43.0
+

@@ -1,0 +1,168 @@
+From da0c927a228e1a154ce4846d6fbed99ba3c8265d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 14:37:39 -0400
+Subject: [PATCH 51/55] [XPU] GDN verifier rows through the single-row decode
+ kernel behind VLLM_XPU_GDN_SERIAL_SPEC_DECODE
+
+The two-row spec-decode kernel path does not reproduce the decode kernel
+bit for bit (A96/A97 layer trace: layer 0's block output differs at the
+first verification step from the same state and token). With the flag,
+each verifier row runs the plain decode kernel with the recurrent state
+copied between the request's spec state columns, preserving the native
+'state after row j in column j' layout. Device-only ops; off by default.
+---
+ vllm/_xpu_ops.py | 97 ++++++++++++++++++++++++++++++++++++++++++++++++
+ vllm/envs.py     |  8 ++++
+ 2 files changed, 105 insertions(+)
+
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index c2067307f..59d6bee38 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -5,6 +5,8 @@ from collections.abc import Callable
+ from typing import TYPE_CHECKING
+ 
+ import torch
++
++import vllm.envs as envs
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+ 
+ from vllm.compilation.breakable_cudagraph import eager_break_during_capture
+@@ -159,6 +161,87 @@ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+         return torch.empty((M, N), dtype=input.dtype, device=input.device)
+ 
+ 
++def _gdn_serial_spec_rows_via_decode(
++    self,
++    core_attn_out: torch.Tensor,
++    z: torch.Tensor,
++    projected_states_qkvz: torch.Tensor,
++    projected_states_ba: torch.Tensor,
++    conv_weights: torch.Tensor,
++    spec_query_start_loc: torch.Tensor,
++    spec_state_indices_tensor: torch.Tensor,
++    num_accepted_tokens: torch.Tensor | None,
++    num_spec_decodes: int,
++) -> None:
++    """Verifier rows through the single-row decode kernel, one row at a time.
++
++    The native spec-decode kernel keeps "state after packed row j" in the
++    request's spec state column j and starts the next pass from column
++    N_accepted-1. This path reproduces that layout with the plain decode
++    kernel: the accepted state is copied into column 0, row 0 is decoded in
++    place there, column 0 is copied into column 1, row 1 is decoded there,
++    and so on. Every operation is a device op, so graph capture records it.
++    Requires a pure speculative batch whose requests all carry the same
++    number of rows (spec_state_indices_tensor.shape[1]).
++    """
++    rows_per_request = int(spec_state_indices_tensor.shape[1])
++    device = projected_states_qkvz.device
++    conv_state = self.kv_cache[0]
++    ssm_state = self.kv_cache[1]
++    starts = spec_query_start_loc[:num_spec_decodes]
++    columns = spec_state_indices_tensor[:num_spec_decodes]
++    if num_accepted_tokens is not None:
++        source_offset = (num_accepted_tokens[:num_spec_decodes] - 1).clamp_(min=0)
++        source_slots = columns.gather(1, source_offset.view(-1, 1)).view(-1)
++        first_slots = columns[:, 0]
++        conv_state.index_copy_(0, first_slots, conv_state.index_select(0, source_slots))
++        ssm_state.index_copy_(0, first_slots, ssm_state.index_select(0, source_slots))
++    query_start_loc = torch.arange(
++        0, num_spec_decodes + 1, dtype=torch.int32, device=device
++    )
++    has_initial_state = torch.ones(num_spec_decodes, dtype=torch.bool, device=device)
++    row_out = torch.empty(
++        (num_spec_decodes, *core_attn_out.shape[1:]),
++        dtype=core_attn_out.dtype,
++        device=device,
++    )
++    row_z = torch.empty((num_spec_decodes, *z.shape[1:]), dtype=z.dtype, device=device)
++    for j in range(rows_per_request):
++        if j > 0:
++            prev_slots = columns[:, j - 1]
++            slots = columns[:, j]
++            conv_state.index_copy_(0, slots, conv_state.index_select(0, prev_slots))
++            ssm_state.index_copy_(0, slots, ssm_state.index_select(0, prev_slots))
++        row_index = starts + j
++        torch.ops._xpu_C.gdn_attention(
++            row_out,
++            row_z,
++            projected_states_qkvz.index_select(0, row_index).contiguous(),
++            projected_states_ba.index_select(0, row_index).contiguous(),
++            self.num_k_heads,
++            self.num_v_heads,
++            self.head_k_dim,
++            self.head_v_dim,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias,
++            activation=self.activation,
++            A_log=self.A_log,
++            dt_bias=self.dt_bias,
++            num_prefills=0,
++            num_decodes=num_spec_decodes,
++            has_initial_state=has_initial_state,
++            non_spec_query_start_loc=query_start_loc,
++            non_spec_state_indices_tensor=columns[:, j].contiguous(),
++            num_actual_tokens=num_spec_decodes,
++            tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++        core_attn_out.index_copy_(0, row_index, row_out)
++        z.index_copy_(0, row_index, row_z)
++
++
+ def _gdn_attention_core_xpu_impl(
+     core_attn_out: torch.Tensor,
+     z: torch.Tensor,
+@@ -232,6 +315,20 @@ def _gdn_attention_core_xpu_impl(
+             assert spec_state_indices_tensor is not None
+             assert non_spec_query_start_loc is None
+             assert non_spec_state_indices_tensor is None
++            if envs.VLLM_XPU_GDN_SERIAL_SPEC_DECODE:
++                _gdn_serial_spec_rows_via_decode(
++                    self,
++                    core_attn_out,
++                    z,
++                    projected_states_qkvz,
++                    projected_states_ba,
++                    conv_weights,
++                    spec_query_start_loc,
++                    spec_state_indices_tensor,
++                    num_accepted_tokens,
++                    num_spec_decodes,
++                )
++                return
+             torch.ops._xpu_C.gdn_attention_spec_decode(
+                 core_attn_out,
+                 z,
+diff --git a/vllm/envs.py b/vllm/envs.py
+index f195ae9e8..2fe9ed092 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -324,6 +324,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_MKLDNN_DETERMINISTIC: bool = False
+     VLLM_XPU_FA_SERIAL_SPEC_DECODE: bool = False
+     VLLM_XPU_QSA_SERIAL_SPEC_INDEXER: bool = False
++    VLLM_XPU_GDN_SERIAL_SPEC_DECODE: bool = False
+     VLLM_XPU_USE_SAMPLER_KERNEL: bool = True
+     VLLM_XPU_INC_WNA16_BACKEND: Literal["auto", "ark", "w4a16", "w4a8"] = "auto"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+@@ -2161,6 +2162,13 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_QSA_SERIAL_SPEC_INDEXER": lambda: bool(
+         int(os.getenv("VLLM_XPU_QSA_SERIAL_SPEC_INDEXER", "0"))
+     ),
++    # Run each speculative verifier row of the GDN layers through the
++    # single-row decode kernel, copying the recurrent state between the
++    # request's spec state columns, so the verification step's linear
++    # attention is the decode kernel's bit for bit. Off by default.
++    "VLLM_XPU_GDN_SERIAL_SPEC_DECODE": lambda: bool(
++        int(os.getenv("VLLM_XPU_GDN_SERIAL_SPEC_DECODE", "0"))
++    ),
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
+-- 
+2.43.0
+

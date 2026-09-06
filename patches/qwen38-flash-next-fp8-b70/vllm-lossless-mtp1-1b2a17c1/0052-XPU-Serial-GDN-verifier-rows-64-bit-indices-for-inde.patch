@@ -1,0 +1,40 @@
+From fd81d8110522371d3ac27e6466961f087e2f47fc Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 14:47:51 -0400
+Subject: [PATCH 52/55] [XPU] Serial GDN verifier rows: 64-bit indices for
+ index_copy_/index_select, int32 slots for the kernel
+
+---
+ vllm/_xpu_ops.py | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 59d6bee38..04f17ee26 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -188,10 +188,10 @@ def _gdn_serial_spec_rows_via_decode(
+     device = projected_states_qkvz.device
+     conv_state = self.kv_cache[0]
+     ssm_state = self.kv_cache[1]
+-    starts = spec_query_start_loc[:num_spec_decodes]
+-    columns = spec_state_indices_tensor[:num_spec_decodes]
++    starts = spec_query_start_loc[:num_spec_decodes].long()
++    columns = spec_state_indices_tensor[:num_spec_decodes].long()
+     if num_accepted_tokens is not None:
+-        source_offset = (num_accepted_tokens[:num_spec_decodes] - 1).clamp_(min=0)
++        source_offset = (num_accepted_tokens[:num_spec_decodes].long() - 1).clamp_(min=0)
+         source_slots = columns.gather(1, source_offset.view(-1, 1)).view(-1)
+         first_slots = columns[:, 0]
+         conv_state.index_copy_(0, first_slots, conv_state.index_select(0, source_slots))
+@@ -233,7 +233,7 @@ def _gdn_serial_spec_rows_via_decode(
+             num_decodes=num_spec_decodes,
+             has_initial_state=has_initial_state,
+             non_spec_query_start_loc=query_start_loc,
+-            non_spec_state_indices_tensor=columns[:, j].contiguous(),
++            non_spec_state_indices_tensor=columns[:, j].to(torch.int32).contiguous(),
+             num_actual_tokens=num_spec_decodes,
+             tp_size=self.tp_size,
+             reorder_input=not self.gqa_interleaved_layout,
+-- 
+2.43.0
+

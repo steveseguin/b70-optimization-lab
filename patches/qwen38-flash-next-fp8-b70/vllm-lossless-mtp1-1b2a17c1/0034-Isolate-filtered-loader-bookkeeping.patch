@@ -1,0 +1,74 @@
+From ca20c4465ca34fc733aac70416b75d7cb8a1c46f Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 30 Aug 2026 17:10:39 -0400
+Subject: [PATCH 34/55] Isolate filtered loader bookkeeping
+
+---
+ .../model_loader/test_filtered_safetensors.py | 23 +++++++++++++++++++
+ .../model_loader/weight_utils.py              |  7 +++---
+ 2 files changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/tests/model_executor/model_loader/test_filtered_safetensors.py b/tests/model_executor/model_loader/test_filtered_safetensors.py
+index f01a9d23d..aa7ff39e4 100644
+--- a/tests/model_executor/model_loader/test_filtered_safetensors.py
++++ b/tests/model_executor/model_loader/test_filtered_safetensors.py
+@@ -117,6 +117,29 @@ def test_safetensors_name_filter_precedes_materialization(
+     assert opened_names == ["selected"]
+ 
+ 
++def test_unfiltered_safetensors_iterator_skips_filter_bookkeeping(
++    monkeypatch: pytest.MonkeyPatch,
++    tmp_path,
++) -> None:
++    path = tmp_path / "model.safetensors"
++    save_file({"ordinary": torch.arange(4)}, path)
++
++    class RejectSet(set):
++        def __init__(self, *args, **kwargs):
++            raise AssertionError("ordinary loading must not allocate a filter set")
++
++    monkeypatch.setattr(weight_utils, "set", RejectSet, raising=False)
++
++    loaded = dict(
++        weight_utils.safetensors_weights_iterator(
++            [str(path)],
++            False,
++        )
++    )
++
++    assert set(loaded) == {"ordinary"}
++
++
+ def test_filtered_loader_requires_valid_index(
+     monkeypatch: pytest.MonkeyPatch,
+     tmp_path,
+diff --git a/vllm/model_executor/model_loader/weight_utils.py b/vllm/model_executor/model_loader/weight_utils.py
+index c2ac76e8d..78ebfe84c 100644
+--- a/vllm/model_executor/model_loader/weight_utils.py
++++ b/vllm/model_executor/model_loader/weight_utils.py
+@@ -925,7 +925,7 @@ def safetensors_weights_iterator(
+         )
+ 
+     leftover_state_dict: dict[str, torch.Tensor] = {}
+-    observed_weight_names: set[str] = set()
++    observed_weight_names: set[str] | None = set() if weight_names is not None else None
+     for st_file in tqdm(
+         sorted_files,
+         desc=loading_desc,
+@@ -976,10 +976,11 @@ def safetensors_weights_iterator(
+                     if should_skip_weight(name, local_expert_ids):
+                         continue
+                     param = f.get_tensor(name)
+-                    observed_weight_names.add(name)
++                    if observed_weight_names is not None:
++                        observed_weight_names.add(name)
+                     yield name, param
+ 
+-    if weight_names is not None and observed_weight_names != weight_names:
++    if observed_weight_names is not None and observed_weight_names != weight_names:
+         missing = sorted(weight_names.difference(observed_weight_names))
+         unexpected = sorted(observed_weight_names.difference(weight_names))
+         raise RuntimeError(
+-- 
+2.43.0
+
