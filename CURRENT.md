@@ -473,6 +473,12 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   (generic `mtp` proposer, TP1, without/with graphs), R250 (TP2 depths 5, 6 with graphs), R251 (TP2 depth-4 identity
   ladders with graphs), R252 (FP8 R187 depth 5 with graphs, vs the R187 oracle). Then: republish the INT4 recipe/package
   with the graph configuration (launcher option), and the FP8 line if R252 gains.
+- **R248-R252 (23:30):** generic `mtp` proposer inert (same rates, lossless); graph depth curve on TP2: d4 91.0,
+  d5 88.8/89.1, d6 84.1/84.0, all 12/12; ladders under graphs: MTP0 exact c1-c64 (c1 50.0 in the harness vs 34-35
+  eager), depth 4 exact c1/c2/c16 with the usual composition residual; FP8 R187 depth 5 under the same capture
+  85.13/85.14 vs 86.18 eager (no gain, lossless). INT4 TP2 depth 4 with graphs (91.0) is now the lab's fastest lossless
+  Qwen3.8 line. R253 (running): full depth-1 campaign under graphs for a strict MTP0-with-graphs pair and its ladders.
+  Published: recipe graph section + identity row, package profile, README rows, manifest, launcher `XPU_GRAPH=1` default.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
