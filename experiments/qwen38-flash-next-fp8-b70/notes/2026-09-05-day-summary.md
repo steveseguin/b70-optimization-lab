@@ -142,3 +142,7 @@ A184 = the graph MTP1 lineage (A120/A135) with the same expert offload (13.78 Gi
 ## 19:28 A178: the embedding alone is not enough headroom
 
 A178 (budget 12.25 GiB: embedding + PLE, 12.22 GiB offloaded, the lineage's original "PLE plus embedding" placement) keeps the hash but runs at 14.58 / 15.97 tok/s at exact 2K, i.e. still in the paging regime (A175 14.42). One expert layer (A181, 0.88 GiB freed) is the smallest placement that ends the paging; the floor lies between 0.3 and 0.9 GiB of freed VRAM.
+
+## 20:08 A185: MTP1 with headroom on the realistic suite is lossless and edges past MTP0
+
+A185 (the A184 identity) passes the fixed cold realistic gate at **25.933214 tok/s** class-balanced median (all-prompt 26.34, p10 23.31, wall 25.09, TTFT median 0.86 s), with all twelve row hashes equal to the approved MTP0 A134 run. The same MTP1 line scored 8.66 class-balanced under paging (A135), so the withdrawn "MTP1 slower on real text" conclusion was a paging artifact; the draft costs ~2.5 ms per step and the two-token step is 57 ms. MTP0 with headroom is 25.27 on the same suite, so MTP1 is a small net gain at this budget; the MTP line is reopened (A186 = MTP2 with headroom queued).
