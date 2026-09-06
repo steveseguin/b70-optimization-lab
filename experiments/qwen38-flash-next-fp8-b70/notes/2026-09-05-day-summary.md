@@ -146,3 +146,7 @@ A178 (budget 12.25 GiB: embedding + PLE, 12.22 GiB offloaded, the lineage's orig
 ## 20:08 A185: MTP1 with headroom on the realistic suite is lossless and edges past MTP0
 
 A185 (the A184 identity) passes the fixed cold realistic gate at **25.933214 tok/s** class-balanced median (all-prompt 26.34, p10 23.31, wall 25.09, TTFT median 0.86 s), with all twelve row hashes equal to the approved MTP0 A134 run. The same MTP1 line scored 8.66 class-balanced under paging (A135), so the withdrawn "MTP1 slower on real text" conclusion was a paging artifact; the draft costs ~2.5 ms per step and the two-token step is 57 ms. MTP0 with headroom is 25.27 on the same suite, so MTP1 is a small net gain at this budget; the MTP line is reopened (A186 = MTP2 with headroom queued).
+
+## 20:27 A187: the certification battery passes on the promoted overlay
+
+The frozen client's W13-N32 verifier also hashes the MoE source files, so the diagnostic overlay `08df70ea` can never pass it (A183, three launches). Publishing on the promoted overlay `2169dbfe` with nothing but the placement flags changed is the stronger claim anyway. A187 (battery) passed every gate: 6/7 quality with the inherited miss, 16/16 repeat, exact needle, exact-2K `afffd211…` at 25.43/25.43 (TTFT 12.6 s, was 58), exact-4K `c6193cc6…` at 25.43/25.40 (TTFT 25 s, was 100; rate was 12.9). See the [A187 note](2026-09-05-tp4-mtp0-a187-certification-battery-headroom-result.md). A188 (realistic suite at `2169dbfe`) is the LocalMaxxing run.
