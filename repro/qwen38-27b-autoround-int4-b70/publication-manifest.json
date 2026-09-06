@@ -116,7 +116,7 @@
       }
     },
     "r228": {
-      "description": "R224 + GDN speculative rows processed in groups of <=16 sequences (VLLM_XPU_GDN_SPEC_GROUP). Served with VLLM_BATCH_INVARIANT=1 and Inductor split_reductions=false (final configuration).",
+      "description": "R224 + GDN speculative rows processed in groups of <=16 sequences (VLLM_XPU_GDN_SPEC_GROUP). Served with VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set) and Inductor split_reductions=false (final configuration).",
       "image": {
         "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228",
         "id": "sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
@@ -128,7 +128,7 @@
         }
       },
       "serving_configurations": {
-        "eager_r239": "VLLM_BATCH_INVARIANT=1, split_reductions=false, cudagraph_mode PIECEWISE sizes [1], VLLM_XPU_ENABLE_XPU_GRAPH=0",
+        "eager_r239": "VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), split_reductions=false, cudagraph_mode PIECEWISE sizes [1], VLLM_XPU_ENABLE_XPU_GRAPH=0",
         "graph_r247": "same + VLLM_XPU_ENABLE_XPU_GRAPH=1, cudagraph_mode FULL_DECODE_ONLY, capture sizes [1,2,3,4,5,6,8]; TP2 depth 4 91.004/91.012 tok/s lossless (launcher default XPU_GRAPH=1)"
       }
     },
@@ -231,6 +231,7 @@
   },
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
-    "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12)."
+    "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12).",
+    "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0)."
   ]
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-KERNELS_DIR="${KERNELS_DIR:-/home/steve/src/vllm-xpu-kernels}"
-VENV_DIR="${VENV_DIR:-/home/steve/.venvs/vllm-xpu}"
+KERNELS_DIR="${KERNELS_DIR:?set KERNELS_DIR to the vllm-xpu-kernels checkout}"
+VENV_DIR="${VENV_DIR:?set VENV_DIR to the build virtualenv}"
 ONEAPI_VARS="${ONEAPI_VARS:-/opt/intel/oneapi/compiler/2025.3/env/vars.sh}"
 BUILD_DIR="${BUILD_DIR:-${KERNELS_DIR}/build/xpu-c-only-2025}"
 INSTALL_PREFIX="${INSTALL_PREFIX:-/tmp/vllm-xpu-xpu-c-only-2025}"

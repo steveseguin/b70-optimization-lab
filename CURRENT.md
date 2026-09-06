@@ -400,13 +400,14 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   depth-4 TP2 ladders on R224 with `VLLM_XPU_FA_SERIAL_SPEC_DECODE=1` (per-request attention for verify rows,
   the candidate for the MTP4 c4 miss). If exact through c64, the final matrix (R222 chain with the fixed DEPTH
   handling, R224 image, FA serial on) reruns for TP2/TP1 x depths 0-3.
-- **R225/R226 (12:25):** on R224, MTP0 ladder c64 64/64 (c32 31/32); depth 4 with `VLLM_BATCH_INVARIANT=1`
+- **Correction (2026-09-06, R260):** every INT4 campaign container ran with `VLLM_BATCH_INVARIANT=0` (the strict launchers pin it), and vLLM refuses to boot the GDN backend with it set; the flag was never part of the measured profile. Results stand; setting text corrected across the recipe, package, pages and manifest; the public launcher pins 0 and routes through the strict launchers.
+- **R225/R226 (12:25):** on R224, MTP0 ladder c64 64/64 (c32 31/32); depth 4 with `VLLM_BATCH_INVARIANT=1` (never in effect, see the 2026-09-06 correction)
   (single-split flash-decoding, `flash_attn.py` num_splits) exact through **c16**, c32 30/32, c64 59/64; the
   `VLLM_XPU_FA_SERIAL_SPEC_DECODE` path never engaged (no "reached" marker). The same near-tie prompts flip
   (benchmark-c003@60, cache-c016@75, capacity-c006@11, capacity-c046@18, rollback-c018) whenever batch composition
   changes at c32+, which is where the FP8 lane also stopped (its residual sits in the batched GDN spec kernel).
   Data `data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json`.
-- **R227 running (queued behind R226):** the final matrix on R224 + `VLLM_BATCH_INVARIANT=1` (+ FA serial env):
+- **R227 running (queued behind R226):** the final matrix on R224 + `VLLM_BATCH_INVARIANT=1` (never in effect, see the 2026-09-06 correction) (+ FA serial env):
   TP2 then TP1; depth-1 full campaign (oracle, G2/G3, G5, MTP1/MTP0 ladders), then depths 2, 3, 4 strict + ladders
   (`scripts/run-20260905-qwen38-int4-r227-matrix-r224-fa-serial-binv-tp2-tp1-mtp0-3.sh`, log `logs/r227-matrix.log`).
   Bar reached so far (R226): **MTP0 exact at every concurrency c1-c64**; MTP depth 4 exact through c16 (= the FP8
@@ -442,7 +443,7 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   the sensitive prompt benchmark-c003@60 flips whenever its batch goes through the GDN gather/scatter split path,
   so that path is not arithmetic-preserving and launch grouping cannot close the residual; R238 cancelled.
 - **Final configuration (R239 matrix, queued 16:15 behind R237):** R228 image (aaf920b0; `_xpu_ops.py` c91d6b0d,
-  `_xpu_C` 271db0d4) + `VLLM_BATCH_INVARIANT=1` + Inductor `split_reductions=false` + `VLLM_XPU_GDN_SPEC_GROUP=16`,
+  `_xpu_C` 271db0d4) + `VLLM_BATCH_INVARIANT=1` (never in effect, see the 2026-09-06 correction) + Inductor `split_reductions=false` + `VLLM_XPU_GDN_SPEC_GROUP=16`,
   from `/mnt/fast-ai/bench-results/final-int4-config.env` (copy in `data/2026-09-05-qwen38-int4-final-config.env`).
   Chain `scripts/run-20260905-qwen38-int4-r239-matrix-final-config-tp2-tp1-mtp0-4.sh`, log `logs/r239-matrix.log`:
   TP2 then TP1; depth-1 full campaign (oracle, G2/G3, G5, MTP1 + MTP0 ladders), depths 2, 3, 4 strict + ladders.
@@ -486,7 +487,7 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   109.97/110.07, depth 6 108.34/108.37 (turnover at 4); R259 ladders: depth 4 exact through c8, c16 14/16, c32 30/32,
   c64 59/64; MTP0 c32 31/32, c64 64/64. Queue empty, GPUs idle (01:05, 2026-09-06). Open: the composition residual
   above 8-16 users with speculation (boundary trace), clean-host replay, LocalMaxxing submission on the user's go.
-- **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
+- **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` (never in effect, see the 2026-09-06 correction) + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
 - **Superseded (was):** write `/mnt/fast-ai/bench-results/r221-image.env`, replace the @reboot cron with the R222 matrix

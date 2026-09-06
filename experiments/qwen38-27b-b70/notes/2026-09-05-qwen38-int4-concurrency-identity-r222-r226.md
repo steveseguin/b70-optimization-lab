@@ -1,5 +1,7 @@
 # INT4 concurrency identity on the fixed-K kernel: R222-R226 (2026-09-05)
 
+> **Correction (2026-09-06):** the container records of R222-R259 show `VLLM_BATCH_INVARIANT=0` in every server (the strict launchers pin it) and vLLM refuses to boot the GDN backend with it set (R260). Wherever this note says the flag was on, read it as off; the R226 arm is a repeat of R224/R225 without the FA serial env.
+
 Directive: lossless for concurrent users on TP1 and TP2 at MTP depths 0-3. Method: the r152 c1-c64 identity ladder
 (each concurrency level's complete token streams vs a sequential oracle), TP2, 128 output tokens, short prompts.
 

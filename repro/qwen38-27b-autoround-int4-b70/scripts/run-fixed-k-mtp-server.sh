@@ -23,12 +23,15 @@ export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:f7696bcaefab1bc1c93e12cbde6
 export EXPECTED_XPU_EXTENSION_SHA256=${EXPECTED_XPU_EXTENSION_SHA256:-271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f}
 export EXPECTED_XPU_OPS_SHA256=${EXPECTED_XPU_OPS_SHA256:-c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1}
 export EXPECTED_LAYERNORM_SHA256=${EXPECTED_LAYERNORM_SHA256:-50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8}
-export MODEL_DIR=${MODEL_DIR:-/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel}
+export MODEL_DIR=${MODEL_DIR:?set MODEL_DIR to the gptq-relabelled model directory built by make-gptq-relabel.py in this directory}
 export MODEL_MANIFEST=${MODEL_MANIFEST:-${script_dir}/../manifests/model-gptq-relabel-r212.json}
 # DRAFT_HEAD_INT4=1 (default): the MTP draft passes use a draft-only INT4 copy of the lm_head (R257: depth 4 112.4 tok/s vs
 # 91.0 with the FP16 head; acceptance 3.51 vs 3.00); the target verifier head stays FP16, so outputs are unchanged.
 export QUANTIZATION=gptq VLLM_XPU_FP8_BLOCK_W8A16=0 VLLM_XPU_DRAFT_LM_HEAD_INT4=${DRAFT_HEAD_INT4:-1} VLLM_XPU_W4A16_DETERMINISM_PAD=0
-export VLLM_BATCH_INVARIANT=1 VLLM_XPU_GDN_SPLIT_MIXED=1 VLLM_XPU_GDN_SPEC_GROUP=${VLLM_XPU_GDN_SPEC_GROUP:-16}
+# VLLM_BATCH_INVARIANT stays 0: upstream vLLM refuses to boot the GDN attention backend with it set (R260), and every
+# published INT4 measurement ran with it off (the strict launchers pin 0). Batch invariance on this lane comes from the
+# fixed-K W4A16 kernel, the 32-row FP16 linears, GDN spec grouping and Inductor split_reductions=false instead.
+export VLLM_BATCH_INVARIANT=0 VLLM_XPU_GDN_SPLIT_MIXED=1 VLLM_XPU_GDN_SPEC_GROUP=${VLLM_XPU_GDN_SPEC_GROUP:-16}
 export VLLM_XPU_GEMMA_RMSNORM_TRITON=0 VLLM_XPU_RMSNORM_TRITON=0 VLLM_XPU_ENABLE_XPU_GRAPH=${xpu_graph}
 export COMPILATION_CONFIG=${COMPILATION_CONFIG:-${compilation}}
 export SPECULATIVE_CONFIG=${SPECULATIVE_CONFIG:-${spec}}
@@ -39,4 +42,6 @@ if [[ "${depth}" == 0 ]]; then
   unset SPECULATIVE_CONFIG
   exec "${fp8}/run-w8a16-mtp0-strict-server.sh"
 fi
-exec "${fp8}/run-w8a16-mtp1-server.sh"
+# The strict launcher pins the same process-level determinism env the published campaigns ran with (TORCHINDUCTOR_DETERMINISTIC=1,
+# Inductor autotune off, PYTHONHASHSEED=0, GDN persistent scratch, packed-serial-exact Gemma RMSNorm; VLLM_XPU_FP8_BLOCK_W8A16=1 is inert on gptq).
+exec "${fp8}/run-w8a16-mtp1-strict-server.sh"

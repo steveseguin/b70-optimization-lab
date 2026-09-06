@@ -84,7 +84,7 @@ class FamilyCoverageTest(unittest.TestCase):
             "packages/qwen38-27b-q4km-mtp2-tp1-b70/package.json": ("http-decode-vs-active-context", 36.50506489790905),
             "packages/qwen38-27b-q4km-tp2-asrock-b70/package.json": ("http-decode-vs-active-context", 44.43728051677345),
             "packages/qwen38-27b-q8-tp2-b70/package.json": ("http-decode-vs-active-context", 33.848820185540816),
-            "packages/qwen38-27b-fp8-tp2-b70/package.json": ("http-decode-vs-active-context", 31.48958732345858),
+            "packages/qwen38-27b-fp8-tp2-b70/package.json": ("http-decode-vs-active-context", 29.77809869783394),
         }
         for manifest, (profile_id, expected) in expected_context.items():
             package = json.loads((MODULE.ROOT / manifest).read_text())
@@ -108,7 +108,6 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertIn(">68.6&dagger;</a>", index_html)
         self.assertIn(">192.3&dagger;</a>", index_html)
         self.assertIn(">163.6&dagger;</a>", index_html)
-        self.assertIn(">1,112.6&dagger;</a>", index_html)
         self.assertIn(">68.3&dagger;</a>", index_html)
         self.assertNotIn("raw&dagger;", index_html)
         self.assertNotIn("HTTP&dagger;", index_html)
@@ -116,15 +115,17 @@ class FamilyCoverageTest(unittest.TestCase):
             r"official FP8.*?</tr>", index_html, flags=re.DOTALL
         )
         self.assertIsNotNone(fp8_row)
-        self.assertIn(">31.49&dagger;</a>", fp8_row.group(0))
-        self.assertIn(">1,112.6&dagger;</a>", fp8_row.group(0))
-        self.assertIn("128 active users", fp8_row.group(0))
-        self.assertIn("256-token service profile", fp8_row.group(0))
+        self.assertIn(">29.78&dagger;</a>", fp8_row.group(0))
+        # Many-users cell is the identity-qualified c64 aggregate (raw 128-user
+        # throughput without output identity is no longer surfaced).
+        self.assertIn(">931.4</a>", fp8_row.group(0))
+        self.assertIn("64 simultaneous users", fp8_row.group(0))
+        self.assertIn("byte-identical to its sequential oracle", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )
         self.assertIsNotNone(laguna_row)
-        self.assertNotIn(">31.49&dagger;</a>", laguna_row.group(0))
+        self.assertNotIn(">29.78&dagger;</a>", laguna_row.group(0))
         self.assertIn("Multi-user greedy output is batch-shape-dependent", index_html)
 
     def test_fp8_tp2_concurrency_profiles_match_qualified_source(self) -> None:
@@ -140,24 +141,37 @@ class FamilyCoverageTest(unittest.TestCase):
                 / "experiments/qwen38-27b-b70/data/2026-08-26-qwen38-fp8-tp2-http-p64-p2p1-confirmation-r10-result.json"
             ).read_text()
         )
+        ladder = json.loads(
+            (
+                MODULE.ROOT
+                / "experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r187-whole-graph-depth2-result.json"
+            ).read_text()
+        )["ladders"]["mtp0"]["rungs"]
         profiles = {item["id"]: item for item in package["performance_profiles"]}
-        aggregate = profiles["http-output-audited-aggregate-vs-concurrent-users"]
+        aggregate = profiles[
+            "http-r156-mtp0-identity-qualified-aggregate-vs-concurrent-users"
+        ]
         p50 = profiles["http-ttft-p50-vs-concurrent-users"]
         p95 = profiles["http-ttft-p95-vs-concurrent-users"]
         self.assertEqual(len(result["points"]), 7)
-        for index, source in enumerate(result["points"]):
+        self.assertEqual(len(ladder), 7)
+        for index, rung in enumerate(ladder):
+            self.assertEqual(
+                rung["oracle_exact"], f"{rung['concurrency']}/{rung['concurrency']}"
+            )
             self.assertEqual(
                 aggregate["points"][index]["concurrent_sequences"],
-                source["concurrent_users"],
+                rung["concurrency"],
             )
             self.assertEqual(
                 aggregate["points"][index]["value"],
-                source["median_aggregate_tok_s"],
+                rung["aggregate_tok_s_wall"],
             )
-            self.assertEqual(
+            self.assertAlmostEqual(
                 aggregate["points"][index]["per_user_value"],
-                source["median_per_user_tok_s"],
+                rung["aggregate_tok_s_wall"] / rung["concurrency"],
             )
+        for index, source in enumerate(result["points"]):
             self.assertEqual(
                 p50["points"][index]["value"],
                 source["latency_ms"]["ttft_ms_p50"]["median"],

@@ -138,7 +138,7 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Measured vLLM HTTP completions on two B70s with the R224 image (fixed-K W4A16, FP16 row-chunk linears) and VLLM_BATCH_INVARIANT=1, no speculation, FP16 activations/KV, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R226). Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte. One server, one pass per point; not a promoted concurrency speed record.",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R224 image (fixed-K W4A16, FP16 row-chunk linears) and VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), no speculation, FP16 activations/KV, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R226). Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte. One server, one pass per point; not a promoted concurrency speed record.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
       "points": [
         {
@@ -192,7 +192,7 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "As above with MTP depth 4 on the R228 image, VLLM_BATCH_INVARIANT=1 and Inductor split_reductions=false (R232). Points through c16 are output-identity-qualified; c32 (31/32) and c64 (63/64) were measured but are withheld because near-tie prompts took a different valid branch.",
+      "scope": "As above with MTP depth 4 on the R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set) and Inductor split_reductions=false (R232). Points through c16 are output-identity-qualified; c32 (31/32) and c64 (63/64) were measured but are withheld because near-tie prompts took a different valid branch.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
       "points": [
         {
@@ -234,7 +234,7 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "One B70 (TENSOR_PARALLEL_SIZE=1), R228 image, VLLM_BATCH_INVARIANT=1, Inductor split_reductions=false, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R239 TP1 depth-1 campaign MTP0 ladder). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
+      "scope": "One B70 (TENSOR_PARALLEL_SIZE=1), R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), Inductor split_reductions=false, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R239 TP1 depth-1 campaign MTP0 ladder). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
       "points": [
         {
@@ -288,7 +288,7 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Two B70s, R228 image, VLLM_BATCH_INVARIANT=1, split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 with FULL_DECODE_ONLY capture sizes 1-8, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R251). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
+      "scope": "Two B70s, R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 with FULL_DECODE_ONLY capture sizes 1-8, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R251). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
       "points": [
         {
@@ -342,7 +342,7 @@
       "unit": "tok/s",
       "x_metric": "concurrent_sequences",
       "x_label": "Concurrent HTTP users",
-      "scope": "Two B70s, R256 image, VLLM_BATCH_INVARIANT=1, split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 (FULL_DECODE_ONLY, sizes 1-8), VLLM_XPU_DRAFT_LM_HEAD_INT4=1, MTP depth 4, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R259). Points through c8 are output-identity-qualified; c16 (14/16), c32 (30/32) and c64 (59/64) withheld because near-tie prompts took a different valid branch.",
+      "scope": "Two B70s, R256 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 (FULL_DECODE_ONLY, sizes 1-8), VLLM_XPU_DRAFT_LM_HEAD_INT4=1, MTP depth 4, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R259). Points through c8 are output-identity-qualified; c16 (14/16), c32 (30/32) and c64 (59/64) withheld because near-tie prompts took a different valid branch.",
       "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
       "points": [
         {

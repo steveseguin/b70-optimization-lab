@@ -5,7 +5,7 @@
   "name": "Qwen 27B",
   "display_name": "Qwen 27B · 3.6 → 3.8",
   "publisher": "Qwen / Alibaba",
-  "updated_at": "2026-08-30",
+  "updated_at": "2026-09-06",
   "summary": "Alibaba's dense 27B Qwen line (3.6 and the newer 3.8), the lab's most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM.",
   "featured_results": [
     {
@@ -516,6 +516,19 @@
       "evidence_level": "B70-verified",
       "coverage": ["decode", "context", "prefill", "TTFT", "quality", "recipe", "concurrency", "queued latency"],
       "manifest": "packages/qwen38-27b-fp8-tp2-b70/package.json"
+    },
+    {
+      "id": "qwen38-27b-autoround-int4-b70",
+      "label": "Qwen3.8 AutoRound INT4 · fixed-K · TP2 MTP4",
+      "revision": "qwen3.8-27b",
+      "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+      "quantization": "AutoRound INT4",
+      "runtime": "vLLM XPU 0.27.2rc1 + lab R256 image (fixed-K oneDNN W4A16, FP16 32-row linears, GDN spec grouping, draft-only INT4 head), XPU graph capture",
+      "cards": 2,
+      "status": "research-lossless-profile",
+      "evidence_level": "B70-verified",
+      "coverage": ["decode", "TP1/2", "MTP0-6", "determinism", "concurrency", "recipe"],
+      "manifest": "packages/qwen38-27b-int4-fixed-k-tp2-b70/package.json"
     },
     {
       "id": "qwen38-27b-autoround-int4-tp1-f01e-graphmodes-depth-grade-c",
