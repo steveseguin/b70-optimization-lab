@@ -182,3 +182,7 @@ A193 (the A179 identity plus `VLLM_XPU_MOE_SPLIT_K=4`, `VLLM_XPU_MOE_SPLIT_K_MAX
 ## 23:13 A194: split-K 8 with headroom, exact and neutral
 
 A194 (`VLLM_XPU_MOE_SPLIT_K=8`) keeps the authority hash at 25.08 / 25.07 tok/s with the same step as A179/A193. Split-K is closed as a lever on this model: exact at 4 and 8, never faster, with or without paging. The offline M=1 tile-config sweep (54 candidates: block N 32/64/128, W1 block 16/32/64, warps 4/8, stages 2/3/4, hot clocks) runs next on card 0.
+
+## 23:22 offline M=1 tile-config sweep: the W13-N32 map is already the optimum
+
+54 configs (block N 32/64/128 × W1 block 16/32/64 × warps 4/8 × stages 2/3/4) on card 0 with hot clocks and fresh 10-hit routing. Warps 4 is 1.3-4x slower everywhere; stages do not matter; the W1 block does not change the w13 timing in this path; block N 64 with 8 warps is the floor at 0.30 / 0.15 ms per launch and the shipped map (N 64, W1 32, warps 8, stages 4) sits on it. No tile change beats it; the next MoE lever has to change the kernel's shape of work (fused w13→silu→w2 for M=1, or fewer launches), not its tiles. Data: `../data/20260905-b70-moe-m1-tile-config-sweep-hot-card0.log`.
