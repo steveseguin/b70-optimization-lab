@@ -1,0 +1,1391 @@
+[
+ {
+  "label": "baseline-M1-entry",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.5,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3818, 'moe_gemm_N2560_K640_ev': 0.1721} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2203, 'moe_gemm_N2560_K640_ev': 0.1407} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.4903, 'moe_gemm_N2560_K640_ev': 0.2343} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2229, 'moe_gemm_N2560_K640_ev': 0.1539} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3818,
+   "moe_gemm_N2560_K640_ev": 0.1721
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2203,
+   "moe_gemm_N2560_K640_ev": 0.1407
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.4903,
+   "moe_gemm_N2560_K640_ev": 0.2343
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2229,
+   "moe_gemm_N2560_K640_ev": 0.1539
+  }
+ },
+ {
+  "label": "bn32-w4-s2",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 2
+  },
+  "seconds": 11.9,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3978, 'moe_gemm_N2560_K640_ev': 0.2168} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.219, 'moe_gemm_N2560_K640_ev': 0.1385} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7597, 'moe_gemm_N2560_K640_ev': 0.3885} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.3062, 'moe_gemm_N2560_K640_ev': 0.2005} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3978,
+   "moe_gemm_N2560_K640_ev": 0.2168
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.219,
+   "moe_gemm_N2560_K640_ev": 0.1385
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7597,
+   "moe_gemm_N2560_K640_ev": 0.3885
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.3062,
+   "moe_gemm_N2560_K640_ev": 0.2005
+  }
+ },
+ {
+  "label": "bn32-w4-s2-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 2,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3921, 'moe_gemm_N2560_K640_ev': 0.1756} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2223, 'moe_gemm_N2560_K640_ev': 0.1433} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6629, 'moe_gemm_N2560_K640_ev': 0.3418} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2959, 'moe_gemm_N2560_K640_ev': 0.1897} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3921,
+   "moe_gemm_N2560_K640_ev": 0.1756
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2223,
+   "moe_gemm_N2560_K640_ev": 0.1433
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6629,
+   "moe_gemm_N2560_K640_ev": 0.3418
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2959,
+   "moe_gemm_N2560_K640_ev": 0.1897
+  }
+ },
+ {
+  "label": "bn32-w4-s3",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 3
+  },
+  "seconds": 8.8,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3924, 'moe_gemm_N2560_K640_ev': 0.1773} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.22, 'moe_gemm_N2560_K640_ev': 0.1376} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7306, 'moe_gemm_N2560_K640_ev': 0.375} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2981, 'moe_gemm_N2560_K640_ev': 0.1934} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3924,
+   "moe_gemm_N2560_K640_ev": 0.1773
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.22,
+   "moe_gemm_N2560_K640_ev": 0.1376
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7306,
+   "moe_gemm_N2560_K640_ev": 0.375
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2981,
+   "moe_gemm_N2560_K640_ev": 0.1934
+  }
+ },
+ {
+  "label": "bn32-w4-s3-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 3,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3898, 'moe_gemm_N2560_K640_ev': 0.185} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2217, 'moe_gemm_N2560_K640_ev': 0.1429} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6625, 'moe_gemm_N2560_K640_ev': 0.3418} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2958, 'moe_gemm_N2560_K640_ev': 0.191} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3898,
+   "moe_gemm_N2560_K640_ev": 0.185
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2217,
+   "moe_gemm_N2560_K640_ev": 0.1429
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6625,
+   "moe_gemm_N2560_K640_ev": 0.3418
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2958,
+   "moe_gemm_N2560_K640_ev": 0.191
+  }
+ },
+ {
+  "label": "bn32-w4-s4",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 4
+  },
+  "seconds": 8.9,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3903, 'moe_gemm_N2560_K640_ev': 0.1746} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2271, 'moe_gemm_N2560_K640_ev': 0.1503} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7565, 'moe_gemm_N2560_K640_ev': 0.389} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2943, 'moe_gemm_N2560_K640_ev': 0.189} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3903,
+   "moe_gemm_N2560_K640_ev": 0.1746
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2271,
+   "moe_gemm_N2560_K640_ev": 0.1503
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7565,
+   "moe_gemm_N2560_K640_ev": 0.389
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2943,
+   "moe_gemm_N2560_K640_ev": 0.189
+  }
+ },
+ {
+  "label": "bn32-w4-s4-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3765, 'moe_gemm_N2560_K640_ev': 0.1844} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2253, 'moe_gemm_N2560_K640_ev': 0.15} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6664, 'moe_gemm_N2560_K640_ev': 0.342} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2928, 'moe_gemm_N2560_K640_ev': 0.1879} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3765,
+   "moe_gemm_N2560_K640_ev": 0.1844
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2253,
+   "moe_gemm_N2560_K640_ev": 0.15
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6664,
+   "moe_gemm_N2560_K640_ev": 0.342
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2928,
+   "moe_gemm_N2560_K640_ev": 0.1879
+  }
+ },
+ {
+  "label": "bn32-w8-s2",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 2
+  },
+  "seconds": 10.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3917, 'moe_gemm_N2560_K640_ev': 0.2015} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2196, 'moe_gemm_N2560_K640_ev': 0.1389} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.662, 'moe_gemm_N2560_K640_ev': 0.3868} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2634, 'moe_gemm_N2560_K640_ev': 0.1852} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3917,
+   "moe_gemm_N2560_K640_ev": 0.2015
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2196,
+   "moe_gemm_N2560_K640_ev": 0.1389
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.662,
+   "moe_gemm_N2560_K640_ev": 0.3868
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2634,
+   "moe_gemm_N2560_K640_ev": 0.1852
+  }
+ },
+ {
+  "label": "bn32-w8-s2-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 2,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3894, 'moe_gemm_N2560_K640_ev': 0.1739} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2228, 'moe_gemm_N2560_K640_ev': 0.1463} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.5524, 'moe_gemm_N2560_K640_ev': 0.3269} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2607, 'moe_gemm_N2560_K640_ev': 0.1823} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3894,
+   "moe_gemm_N2560_K640_ev": 0.1739
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2228,
+   "moe_gemm_N2560_K640_ev": 0.1463
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.5524,
+   "moe_gemm_N2560_K640_ev": 0.3269
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2607,
+   "moe_gemm_N2560_K640_ev": 0.1823
+  }
+ },
+ {
+  "label": "bn32-w8-s3",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 3
+  },
+  "seconds": 8.8,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3782, 'moe_gemm_N2560_K640_ev': 0.1705} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2298, 'moe_gemm_N2560_K640_ev': 0.156} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6564, 'moe_gemm_N2560_K640_ev': 0.3855} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2607, 'moe_gemm_N2560_K640_ev': 0.1823} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3782,
+   "moe_gemm_N2560_K640_ev": 0.1705
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2298,
+   "moe_gemm_N2560_K640_ev": 0.156
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6564,
+   "moe_gemm_N2560_K640_ev": 0.3855
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2607,
+   "moe_gemm_N2560_K640_ev": 0.1823
+  }
+ },
+ {
+  "label": "bn32-w8-s3-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 3,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3849, 'moe_gemm_N2560_K640_ev': 0.1791} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2203, 'moe_gemm_N2560_K640_ev': 0.1382} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.5524, 'moe_gemm_N2560_K640_ev': 0.3268} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2752, 'moe_gemm_N2560_K640_ev': 0.2398} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3849,
+   "moe_gemm_N2560_K640_ev": 0.1791
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2203,
+   "moe_gemm_N2560_K640_ev": 0.1382
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.5524,
+   "moe_gemm_N2560_K640_ev": 0.3268
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2752,
+   "moe_gemm_N2560_K640_ev": 0.2398
+  }
+ },
+ {
+  "label": "bn32-w8-s4",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4
+  },
+  "seconds": 8.7,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3937, 'moe_gemm_N2560_K640_ev': 0.1825} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2206, 'moe_gemm_N2560_K640_ev': 0.1415} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6516, 'moe_gemm_N2560_K640_ev': 0.3825} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2811, 'moe_gemm_N2560_K640_ev': 0.2012} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3937,
+   "moe_gemm_N2560_K640_ev": 0.1825
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2206,
+   "moe_gemm_N2560_K640_ev": 0.1415
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6516,
+   "moe_gemm_N2560_K640_ev": 0.3825
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2811,
+   "moe_gemm_N2560_K640_ev": 0.2012
+  }
+ },
+ {
+  "label": "bn32-w8-s4-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 32,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3791, 'moe_gemm_N2560_K640_ev': 0.1712} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2203, 'moe_gemm_N2560_K640_ev': 0.1417} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.5532, 'moe_gemm_N2560_K640_ev': 0.3269} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2613, 'moe_gemm_N2560_K640_ev': 0.1827} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3791,
+   "moe_gemm_N2560_K640_ev": 0.1712
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2203,
+   "moe_gemm_N2560_K640_ev": 0.1417
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.5532,
+   "moe_gemm_N2560_K640_ev": 0.3269
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2613,
+   "moe_gemm_N2560_K640_ev": 0.1827
+  }
+ },
+ {
+  "label": "bn64-w4-s2",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 2
+  },
+  "seconds": 15.7,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3707, 'moe_gemm_N2560_K640_ev': 0.1711} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2238, 'moe_gemm_N2560_K640_ev': 0.1453} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7946, 'moe_gemm_N2560_K640_ev': 0.3338} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4312, 'moe_gemm_N2560_K640_ev': 0.1024} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3707,
+   "moe_gemm_N2560_K640_ev": 0.1711
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2238,
+   "moe_gemm_N2560_K640_ev": 0.1453
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7946,
+   "moe_gemm_N2560_K640_ev": 0.3338
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4312,
+   "moe_gemm_N2560_K640_ev": 0.1024
+  }
+ },
+ {
+  "label": "bn64-w4-s2-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 2,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.39, 'moe_gemm_N2560_K640_ev': 0.1898} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2284, 'moe_gemm_N2560_K640_ev': 0.1558} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6931, 'moe_gemm_N2560_K640_ev': 0.2917} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4311, 'moe_gemm_N2560_K640_ev': 0.1023} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.39,
+   "moe_gemm_N2560_K640_ev": 0.1898
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2284,
+   "moe_gemm_N2560_K640_ev": 0.1558
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6931,
+   "moe_gemm_N2560_K640_ev": 0.2917
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4311,
+   "moe_gemm_N2560_K640_ev": 0.1023
+  }
+ },
+ {
+  "label": "bn64-w4-s3",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 3
+  },
+  "seconds": 9.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3832, 'moe_gemm_N2560_K640_ev': 0.1785} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2221, 'moe_gemm_N2560_K640_ev': 0.1445} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7952, 'moe_gemm_N2560_K640_ev': 0.331} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.438, 'moe_gemm_N2560_K640_ev': 0.1136} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3832,
+   "moe_gemm_N2560_K640_ev": 0.1785
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2221,
+   "moe_gemm_N2560_K640_ev": 0.1445
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7952,
+   "moe_gemm_N2560_K640_ev": 0.331
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.438,
+   "moe_gemm_N2560_K640_ev": 0.1136
+  }
+ },
+ {
+  "label": "bn64-w4-s3-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 3,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3977, 'moe_gemm_N2560_K640_ev': 0.185} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.227, 'moe_gemm_N2560_K640_ev': 0.151} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6901, 'moe_gemm_N2560_K640_ev': 0.2915} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4341, 'moe_gemm_N2560_K640_ev': 0.1024} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3977,
+   "moe_gemm_N2560_K640_ev": 0.185
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.227,
+   "moe_gemm_N2560_K640_ev": 0.151
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6901,
+   "moe_gemm_N2560_K640_ev": 0.2915
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4341,
+   "moe_gemm_N2560_K640_ev": 0.1024
+  }
+ },
+ {
+  "label": "bn64-w4-s4",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 4
+  },
+  "seconds": 9.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3895, 'moe_gemm_N2560_K640_ev': 0.1747} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2194, 'moe_gemm_N2560_K640_ev': 0.1397} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7659, 'moe_gemm_N2560_K640_ev': 0.322} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4383, 'moe_gemm_N2560_K640_ev': 0.1156} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3895,
+   "moe_gemm_N2560_K640_ev": 0.1747
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2194,
+   "moe_gemm_N2560_K640_ev": 0.1397
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7659,
+   "moe_gemm_N2560_K640_ev": 0.322
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4383,
+   "moe_gemm_N2560_K640_ev": 0.1156
+  }
+ },
+ {
+  "label": "bn64-w4-s4-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3919, 'moe_gemm_N2560_K640_ev': 0.1761} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.22, 'moe_gemm_N2560_K640_ev': 0.1392} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6892, 'moe_gemm_N2560_K640_ev': 0.2915} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4323, 'moe_gemm_N2560_K640_ev': 0.1024} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3919,
+   "moe_gemm_N2560_K640_ev": 0.1761
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.22,
+   "moe_gemm_N2560_K640_ev": 0.1392
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6892,
+   "moe_gemm_N2560_K640_ev": 0.2915
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4323,
+   "moe_gemm_N2560_K640_ev": 0.1024
+  }
+ },
+ {
+  "label": "bn64-w8-s2",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 2
+  },
+  "seconds": 11.3,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3919, 'moe_gemm_N2560_K640_ev': 0.1747} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2224, 'moe_gemm_N2560_K640_ev': 0.1446} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.5153, 'moe_gemm_N2560_K640_ev': 0.2801} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2279, 'moe_gemm_N2560_K640_ev': 0.1589} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3919,
+   "moe_gemm_N2560_K640_ev": 0.1747
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2224,
+   "moe_gemm_N2560_K640_ev": 0.1446
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.5153,
+   "moe_gemm_N2560_K640_ev": 0.2801
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2279,
+   "moe_gemm_N2560_K640_ev": 0.1589
+  }
+ },
+ {
+  "label": "bn64-w8-s2-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 2,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3872, 'moe_gemm_N2560_K640_ev': 0.1764} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2198, 'moe_gemm_N2560_K640_ev': 0.1393} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.4914, 'moe_gemm_N2560_K640_ev': 0.2343} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2244, 'moe_gemm_N2560_K640_ev': 0.1548} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3872,
+   "moe_gemm_N2560_K640_ev": 0.1764
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2198,
+   "moe_gemm_N2560_K640_ev": 0.1393
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.4914,
+   "moe_gemm_N2560_K640_ev": 0.2343
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2244,
+   "moe_gemm_N2560_K640_ev": 0.1548
+  }
+ },
+ {
+  "label": "bn64-w8-s3",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 3
+  },
+  "seconds": 8.8,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3897, 'moe_gemm_N2560_K640_ev': 0.1767} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2264, 'moe_gemm_N2560_K640_ev': 0.1496} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.5586, 'moe_gemm_N2560_K640_ev': 0.2996} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2253, 'moe_gemm_N2560_K640_ev': 0.1565} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3897,
+   "moe_gemm_N2560_K640_ev": 0.1767
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2264,
+   "moe_gemm_N2560_K640_ev": 0.1496
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.5586,
+   "moe_gemm_N2560_K640_ev": 0.2996
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2253,
+   "moe_gemm_N2560_K640_ev": 0.1565
+  }
+ },
+ {
+  "label": "bn64-w8-s3-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 3,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3922, 'moe_gemm_N2560_K640_ev': 0.1877} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2193, 'moe_gemm_N2560_K640_ev': 0.1377} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.4933, 'moe_gemm_N2560_K640_ev': 0.234} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2246, 'moe_gemm_N2560_K640_ev': 0.1542} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3922,
+   "moe_gemm_N2560_K640_ev": 0.1877
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2193,
+   "moe_gemm_N2560_K640_ev": 0.1377
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.4933,
+   "moe_gemm_N2560_K640_ev": 0.234
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2246,
+   "moe_gemm_N2560_K640_ev": 0.1542
+  }
+ },
+ {
+  "label": "bn64-w8-s4",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3943, 'moe_gemm_N2560_K640_ev': 0.1863} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2223, 'moe_gemm_N2560_K640_ev': 0.1449} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.5009, 'moe_gemm_N2560_K640_ev': 0.2347} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2358, 'moe_gemm_N2560_K640_ev': 0.1674} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3943,
+   "moe_gemm_N2560_K640_ev": 0.1863
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2223,
+   "moe_gemm_N2560_K640_ev": 0.1449
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.5009,
+   "moe_gemm_N2560_K640_ev": 0.2347
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2358,
+   "moe_gemm_N2560_K640_ev": 0.1674
+  }
+ },
+ {
+  "label": "bn64-w8-s4-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 64,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3887, 'moe_gemm_N2560_K640_ev': 0.1765} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.22, 'moe_gemm_N2560_K640_ev': 0.1396} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.4928, 'moe_gemm_N2560_K640_ev': 0.2346} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.2259, 'moe_gemm_N2560_K640_ev': 0.1555} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3887,
+   "moe_gemm_N2560_K640_ev": 0.1765
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.22,
+   "moe_gemm_N2560_K640_ev": 0.1396
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.4928,
+   "moe_gemm_N2560_K640_ev": 0.2346
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2259,
+   "moe_gemm_N2560_K640_ev": 0.1555
+  }
+ },
+ {
+  "label": "bn128-w4-s2",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 2
+  },
+  "seconds": 30.7,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3901, 'moe_gemm_N2560_K640_ev': 0.1736} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2235, 'moe_gemm_N2560_K640_ev': 0.146} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 1.5696, 'moe_gemm_N2560_K640_ev': 0.6214} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 1.5246, 'moe_gemm_N2560_K640_ev': 0.3995} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3901,
+   "moe_gemm_N2560_K640_ev": 0.1736
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2235,
+   "moe_gemm_N2560_K640_ev": 0.146
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 1.5696,
+   "moe_gemm_N2560_K640_ev": 0.6214
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 1.5246,
+   "moe_gemm_N2560_K640_ev": 0.3995
+  }
+ },
+ {
+  "label": "bn128-w4-s2-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 2,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.3,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3906, 'moe_gemm_N2560_K640_ev': 0.1727} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2202, 'moe_gemm_N2560_K640_ev': 0.1377} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 1.5438, 'moe_gemm_N2560_K640_ev': 0.614} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 1.5196, 'moe_gemm_N2560_K640_ev': 0.3995} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3906,
+   "moe_gemm_N2560_K640_ev": 0.1727
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2202,
+   "moe_gemm_N2560_K640_ev": 0.1377
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 1.5438,
+   "moe_gemm_N2560_K640_ev": 0.614
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 1.5196,
+   "moe_gemm_N2560_K640_ev": 0.3995
+  }
+ },
+ {
+  "label": "bn128-w4-s3",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 3
+  },
+  "seconds": 9.9,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3895, 'moe_gemm_N2560_K640_ev': 0.175} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2208, 'moe_gemm_N2560_K640_ev': 0.1405} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 1.5715, 'moe_gemm_N2560_K640_ev': 0.625} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 1.5274, 'moe_gemm_N2560_K640_ev': 0.3993} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3895,
+   "moe_gemm_N2560_K640_ev": 0.175
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2208,
+   "moe_gemm_N2560_K640_ev": 0.1405
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 1.5715,
+   "moe_gemm_N2560_K640_ev": 0.625
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 1.5274,
+   "moe_gemm_N2560_K640_ev": 0.3993
+  }
+ },
+ {
+  "label": "bn128-w4-s3-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 3,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.3,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3907, 'moe_gemm_N2560_K640_ev': 0.1737} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2189, 'moe_gemm_N2560_K640_ev': 0.1394} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 1.5413, 'moe_gemm_N2560_K640_ev': 0.6136} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 1.5184, 'moe_gemm_N2560_K640_ev': 0.3992} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3907,
+   "moe_gemm_N2560_K640_ev": 0.1737
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2189,
+   "moe_gemm_N2560_K640_ev": 0.1394
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 1.5413,
+   "moe_gemm_N2560_K640_ev": 0.6136
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 1.5184,
+   "moe_gemm_N2560_K640_ev": 0.3992
+  }
+ },
+ {
+  "label": "bn128-w4-s4",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 4
+  },
+  "seconds": 9.9,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.372, 'moe_gemm_N2560_K640_ev': 0.1694} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2231, 'moe_gemm_N2560_K640_ev': 0.1462} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 1.5454, 'moe_gemm_N2560_K640_ev': 0.614} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 1.5188, 'moe_gemm_N2560_K640_ev': 0.4017} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.372,
+   "moe_gemm_N2560_K640_ev": 0.1694
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2231,
+   "moe_gemm_N2560_K640_ev": 0.1462
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 1.5454,
+   "moe_gemm_N2560_K640_ev": 0.614
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 1.5188,
+   "moe_gemm_N2560_K640_ev": 0.4017
+  }
+ },
+ {
+  "label": "bn128-w4-s4-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 4,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.4,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3894, 'moe_gemm_N2560_K640_ev': 0.1767} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2203, 'moe_gemm_N2560_K640_ev': 0.1414} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 1.5413, 'moe_gemm_N2560_K640_ev': 0.6148} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 1.5136, 'moe_gemm_N2560_K640_ev': 0.4018} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3894,
+   "moe_gemm_N2560_K640_ev": 0.1767
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2203,
+   "moe_gemm_N2560_K640_ev": 0.1414
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 1.5413,
+   "moe_gemm_N2560_K640_ev": 0.6148
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 1.5136,
+   "moe_gemm_N2560_K640_ev": 0.4018
+  }
+ },
+ {
+  "label": "bn128-w8-s2",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 2
+  },
+  "seconds": 14.7,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3896, 'moe_gemm_N2560_K640_ev': 0.1751} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2212, 'moe_gemm_N2560_K640_ev': 0.1398} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7796, 'moe_gemm_N2560_K640_ev': 0.3155} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4161, 'moe_gemm_N2560_K640_ev': 0.0965} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3896,
+   "moe_gemm_N2560_K640_ev": 0.1751
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2212,
+   "moe_gemm_N2560_K640_ev": 0.1398
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7796,
+   "moe_gemm_N2560_K640_ev": 0.3155
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4161,
+   "moe_gemm_N2560_K640_ev": 0.0965
+  }
+ },
+ {
+  "label": "bn128-w8-s2-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 2,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3772, 'moe_gemm_N2560_K640_ev': 0.1788} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2193, 'moe_gemm_N2560_K640_ev': 0.1402} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6673, 'moe_gemm_N2560_K640_ev': 0.273} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4149, 'moe_gemm_N2560_K640_ev': 0.0963} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3772,
+   "moe_gemm_N2560_K640_ev": 0.1788
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2193,
+   "moe_gemm_N2560_K640_ev": 0.1402
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6673,
+   "moe_gemm_N2560_K640_ev": 0.273
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4149,
+   "moe_gemm_N2560_K640_ev": 0.0963
+  }
+ },
+ {
+  "label": "bn128-w8-s3",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 3
+  },
+  "seconds": 9.1,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3903, 'moe_gemm_N2560_K640_ev': 0.1759} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2274, 'moe_gemm_N2560_K640_ev': 0.1512} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7791, 'moe_gemm_N2560_K640_ev': 0.3135} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4173, 'moe_gemm_N2560_K640_ev': 0.0964} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3903,
+   "moe_gemm_N2560_K640_ev": 0.1759
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2274,
+   "moe_gemm_N2560_K640_ev": 0.1512
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7791,
+   "moe_gemm_N2560_K640_ev": 0.3135
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4173,
+   "moe_gemm_N2560_K640_ev": 0.0964
+  }
+ },
+ {
+  "label": "bn128-w8-s3-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 3,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3893, 'moe_gemm_N2560_K640_ev': 0.1756} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2197, 'moe_gemm_N2560_K640_ev': 0.1396} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6795, 'moe_gemm_N2560_K640_ev': 0.2735} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4148, 'moe_gemm_N2560_K640_ev': 0.0963} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3893,
+   "moe_gemm_N2560_K640_ev": 0.1756
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2197,
+   "moe_gemm_N2560_K640_ev": 0.1396
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6795,
+   "moe_gemm_N2560_K640_ev": 0.2735
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4148,
+   "moe_gemm_N2560_K640_ev": 0.0963
+  }
+ },
+ {
+  "label": "bn128-w8-s4",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4
+  },
+  "seconds": 9.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.392, 'moe_gemm_N2560_K640_ev': 0.1969} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.2207, 'moe_gemm_N2560_K640_ev': 0.1394} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.7796, 'moe_gemm_N2560_K640_ev': 0.3135} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4168, 'moe_gemm_N2560_K640_ev': 0.0964} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.392,
+   "moe_gemm_N2560_K640_ev": 0.1969
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.2207,
+   "moe_gemm_N2560_K640_ev": 0.1394
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.7796,
+   "moe_gemm_N2560_K640_ev": 0.3135
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4168,
+   "moe_gemm_N2560_K640_ev": 0.0964
+  }
+ },
+ {
+  "label": "bn128-w8-s4-w1bn32",
+  "config": {
+   "BLOCK_SIZE_M": 16,
+   "BLOCK_SIZE_N": 128,
+   "BLOCK_SIZE_K": 128,
+   "GROUP_SIZE_M": 1,
+   "SPLIT_K": 1,
+   "num_warps": 8,
+   "num_stages": 4,
+   "W1_CONFIG": {
+    "BLOCK_SIZE_N": 32
+   }
+  },
+  "seconds": 8.2,
+  "lines": [
+   "M=1 all-local local_hits=10/10: {'moe_gemm_N1280_K2560_ev': 0.3903, 'moe_gemm_N2560_K640_ev': 0.177} ms per launch (mean over 48 )",
+   "M=1 ep-like local_hits=2/10: {'moe_gemm_N1280_K2560_ev': 0.221, 'moe_gemm_N2560_K640_ev': 0.1397} ms per launch (mean over 48 )",
+   "M=2 all-local local_hits=20/20: {'moe_gemm_N1280_K2560_ev': 0.6772, 'moe_gemm_N2560_K640_ev': 0.273} ms per launch (mean over 48 )",
+   "M=2 ep-like local_hits=6/20: {'moe_gemm_N1280_K2560_ev': 0.4237, 'moe_gemm_N2560_K640_ev': 0.1102} ms per launch (mean over 48 )"
+  ],
+  "rc": 0,
+  "M1_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.3903,
+   "moe_gemm_N2560_K640_ev": 0.177
+  },
+  "M1_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.221,
+   "moe_gemm_N2560_K640_ev": 0.1397
+  },
+  "M2_all-local": {
+   "moe_gemm_N1280_K2560_ev": 0.6772,
+   "moe_gemm_N2560_K640_ev": 0.273
+  },
+  "M2_ep-like": {
+   "moe_gemm_N1280_K2560_ev": 0.4237,
+   "moe_gemm_N2560_K640_ev": 0.1102
+  }
+ }
+]
