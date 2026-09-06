@@ -1,0 +1,5 @@
+# R256: R228 + draft-only INT4 lm_head fallback for the gptq relabel (VLLM_XPU_DRAFT_LM_HEAD_INT4=1 now works here).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228
+COPY r256-draft-int4-head-fallback.py /tmp/r256.py
+RUN python /tmp/r256.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/spec_decode/llm_base_proposer.py && rm /tmp/r256.py
+LABEL neural.download.build.lane="qwen38-int4-draft-int4-head-r256"
