@@ -23,9 +23,9 @@ RUN git clone --quiet --filter=blob:none https://github.com/vllm-project/vllm.gi
 COPY repro/qwen38-flash-next-fp8-tp4-mtp3-b70/prepare-runtime.py \
      repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-contract.json \
      repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256 /opt/flash-next-stage-installer/
-RUN mkdir -p /tmp/parts /tmp/stage-work /opt/kernel-stage && cd /tmp/parts \
+RUN mkdir -p /tmp/parts /tmp/stage-work && cd /tmp/parts \
  && for f in qwen38-flash-next-runtime-stage-2f829747.tar.part-0000 qwen38-flash-next-runtime-stage-2f829747.tar.part-0001 qwen38-flash-next-runtime-stage-2f829747.tar.receipt.json; do curl -fsSL -o "$f" "${STAGE_RELEASE}/$f"; done \
- && python3 /opt/flash-next-stage-installer/prepare-runtime.py --parts-dir /tmp/parts --kernel-stage /opt/kernel-stage --receipt /opt/kernel-stage/install-receipt.json --work-dir /tmp/stage-work \
+ && python3 /opt/flash-next-stage-installer/prepare-runtime.py --parts-dir /tmp/parts --kernel-stage /opt/kernel-stage --receipt /opt/flash-next-stage-installer/install-receipt.json --work-dir /tmp/stage-work \
  && rm -rf /tmp/parts /tmp/stage-work \
  && cd /opt/kernel-stage/vllm_xpu_kernels && sha256sum --quiet -c /opt/flash-next-stage-installer/runtime-stage.sha256 \
  && test "$(find /opt/kernel-stage/vllm_xpu_kernels -type f \( -name '*.py' -o -name '*.so' \) | wc -l)" = 18
