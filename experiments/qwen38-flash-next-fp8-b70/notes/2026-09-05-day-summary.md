@@ -166,3 +166,7 @@ A190 = the MTP1 lineage's frozen client on its own overlay `1b2a17c1` (the head 
 ## 21:56 published: lossless MTP1 headroom line approved, run `cmtp5u0ip02eln701lntsl2ns` at 27.048435 tok/s
 
 A189 (MTP1 lineage overlay `1b2a17c1`, headroom flags) passed the fixed cold realistic gate at 27.048435 tok/s class-balanced (all-prompt 27.53, p10 24.12, wall 26.05, TTFT median 0.96 s), all twelve row hashes equal to the MTP0 rows; attestation binds it to the A190 battery and the A184/A190 exact-2K pair. Approved on submission. Ledger, results packet, README, index, model page and CURRENT.md updated; both prior rows stay listed.
+
+## 22:19 A191: the MTP1 line needs the larger offload budget
+
+A191 (MTP1 lineage, budget 12.5 GiB → 12.8 GiB offloaded: embedding + layer-0 experts + PLE, 0.88 GiB of headroom) keeps the authority ids but runs at 9.43 / 9.66 tok/s at exact 2K: the M=2 step, its draft buffers and the larger KV fill the card again and the driver pages. MTP0 is fine at this budget (A181, 35.8 ms); MTP1 needs the 13.4 GiB budget it was certified with (13.78 GiB offloaded). The headroom floor is workload-dependent, so the budget is part of each line's identity.
