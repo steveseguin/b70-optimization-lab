@@ -242,7 +242,7 @@
    }
   ]
  },
- "note": "R222: R221 fixed-K W4A16 kernel, pad off. R225: + FP16 linears in <=32-row pieces (R224) + VLLM_XPU_FA_SERIAL_SPEC_DECODE=1. Same near-tie prompts (benchmark-c003@60, cache-c016@75, capacity-c006@11, capacity-c046@18, rollback-c018) flip depending on batch composition; MTP0 c64 went 63/64 -> 64/64 with the lm_head chunking but c32 gained a miss at token 11. Attention decode num_splits is a batch-size heuristic unless VLLM_BATCH_INVARIANT=1 (R226). R226 (+VLLM_BATCH_INVARIANT=1): MTP0 ladder exact c1-c64 (harness exit 0, 998 tok/s at c64); depth 4 exact through c16, c32 30/32, c64 59/64. R229 (R228: GDN spec rows grouped by <=16 sequences, marker confirmed in the log): unchanged, c32 30/32, c64 59/64 -> the GDN launch size is not the source. R227 depth 1: exact through c16, c32 29/32, c64 59/64. R232 (+ inductor split_reductions=false): c32 31/32, c64 63/64; four of the six flipping prompts cleared (Inductor's size-dependent reduction splitting was a real source); rollback-c018@123 and monitoring-c036@41 remain. R233 (grouping off): depth 4 c32 31/32, c64 57/64 (worse than group 16's 63/64 -> GDN launch size is a real partial source); MTP0 c64 63/64 (benchmark-c003@60) although R232's MTP0 was 64/64 with an identical MTP0 configuration -> the ladder's arrival timing changes prefill mixing; the mixed-prefill regime still carries a composition-dependent kernel (GDN prefill launches, R236). R234 (spec group 4): c16 15/16 (benchmark-c003@60), c32 32/32, c64 60/64 -> grouped launches are not arithmetically equivalent to the single-sequence launch; only per-sequence launches (R235) can reproduce c1. MTP0 ladders with an unchanged MTP0 configuration: R232 all exact, R233 c64 63/64, R234 c32 31/32 (capacity-c006@11): arrival timing changes prefill mixing -> a composition-dependent kernel in the mixed-prefill regime (GDN prefill launch sharing; R236/R237). R235 (spec group 1, per-sequence launches): c4 3/4, c32 31/32, c64 61/64, aggregate at c64 332 tok/s (vs 432): per-sequence GDN launches do not reproduce the c1 arithmetic either; the gathered split path is not equivalent to the plain path, and run-to-run timing noise is now comparable to the effects. R237 (R236: GDN prefill launches per prompt): c4 3/4, c32 31/32, c64 58/64 -> no help; the gather/scatter split path is not arithmetic-preserving (benchmark-c003@60 flips whenever its batch goes through it). R235 MTP0 ladder all exact. Final matrix config (R239): R228 + VLLM_BATCH_INVARIANT=1 + split_reductions=false + spec group 16.",
+ "note": "R222: R221 fixed-K W4A16 kernel, pad off. R225: + FP16 linears in <=32-row pieces (R224) + VLLM_XPU_FA_SERIAL_SPEC_DECODE=1. Same near-tie prompts (benchmark-c003@60, cache-c016@75, capacity-c006@11, capacity-c046@18, rollback-c018) flip depending on batch composition; MTP0 c64 went 63/64 -> 64/64 with the lm_head chunking but c32 gained a miss at token 11. Attention decode num_splits is a batch-size heuristic unless VLLM_BATCH_INVARIANT=1 (R226). R226 (+VLLM_BATCH_INVARIANT=1): MTP0 ladder exact c1-c64 (harness exit 0, 998 tok/s at c64); depth 4 exact through c16, c32 30/32, c64 59/64. R229 (R228: GDN spec rows grouped by <=16 sequences, marker confirmed in the log): unchanged, c32 30/32, c64 59/64 -> the GDN launch size is not the source. R227 depth 1: exact through c16, c32 29/32, c64 59/64. R232 (+ inductor split_reductions=false): c32 31/32, c64 63/64; four of the six flipping prompts cleared (Inductor's size-dependent reduction splitting was a real source); rollback-c018@123 and monitoring-c036@41 remain. R233 (grouping off): depth 4 c32 31/32, c64 57/64 (worse than group 16's 63/64 -> GDN launch size is a real partial source); MTP0 c64 63/64 (benchmark-c003@60) although R232's MTP0 was 64/64 with an identical MTP0 configuration -> the ladder's arrival timing changes prefill mixing; the mixed-prefill regime still carries a composition-dependent kernel (GDN prefill launches, R236). R234 (spec group 4): c16 15/16 (benchmark-c003@60), c32 32/32, c64 60/64 -> grouped launches are not arithmetically equivalent to the single-sequence launch; only per-sequence launches (R235) can reproduce c1. MTP0 ladders with an unchanged MTP0 configuration: R232 all exact, R233 c64 63/64, R234 c32 31/32 (capacity-c006@11): arrival timing changes prefill mixing -> a composition-dependent kernel in the mixed-prefill regime (GDN prefill launch sharing; R236/R237). R235 (spec group 1, per-sequence launches): c4 3/4, c32 31/32, c64 61/64, aggregate at c64 332 tok/s (vs 432): per-sequence GDN launches do not reproduce the c1 arithmetic either; the gathered split path is not equivalent to the plain path, and run-to-run timing noise is now comparable to the effects. R237 (R236: GDN prefill launches per prompt): c4 3/4, c32 31/32, c64 58/64 -> no help; the gather/scatter split path is not arithmetic-preserving (benchmark-c003@60 flips whenever its batch goes through it). R235 MTP0 ladder all exact. Final matrix config (R239): R228 + VLLM_BATCH_INVARIANT=1 + split_reductions=false + spec group 16. R243 (R242 kernel library: serial-exact GDN conv+recurrent lanes generalized to N requests, markers confirmed on both ranks): c32 31/32, c64 60/64 with the same prompts and ~3x lower throughput -> the GDN spec kernel's arithmetic and state transaction are excluded as the source.",
  "r226_r224_rowchunk_batch_invariant_depth4": {
   "ladder": [
    {
@@ -931,6 +931,74 @@
      {
       "prompt_id": "capacity-c046",
       "first_divergence": 92
+     }
+    ]
+   }
+  ]
+ },
+ "r243_r242_gdn_serial_exact_n_requests_depth4": {
+  "ladder": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 47.5,
+    "misses": []
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 54.7,
+    "misses": []
+   },
+   {
+    "concurrency": 4,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 115.2,
+    "misses": []
+   },
+   {
+    "concurrency": 8,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 150.8,
+    "misses": []
+   },
+   {
+    "concurrency": 16,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 174.0,
+    "misses": []
+   },
+   {
+    "concurrency": 32,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 159.8,
+    "misses": [
+     {
+      "prompt_id": "rollback-c018",
+      "first_divergence": 123
+     }
+    ]
+   },
+   {
+    "concurrency": 64,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 169.6,
+    "misses": [
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     },
+     {
+      "prompt_id": "rollback-c018",
+      "first_divergence": 77
+     },
+     {
+      "prompt_id": "monitoring-c036",
+      "first_divergence": 41
+     },
+     {
+      "prompt_id": "capacity-c046",
+      "first_divergence": 18
      }
     ]
    }
