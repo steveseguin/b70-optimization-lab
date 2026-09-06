@@ -234,3 +234,7 @@ With the per-layer stage → free → `empty_cache` → reallocate order, the al
 ## 10:28 A206: expandable segments have no effect on the XPU allocator; load-time placement next
 
 With `PYTORCH_ALLOC_CONF=expandable_segments:True` the placement run lands on the same figures as A207 (31.2 GiB reserved after the last placed layer, 30.7 at the decode note, 0.014 GiB free), so the setting is ignored by the XPU caching allocator here. Placement v5 moves the split to weight-creation time: a placed layer's `w13_weight`/`w2_weight` are created at their resident size plus pinned host rows, the weight loader writes each expert through `row_view()` (cold experts straight to host memory), and the post-load hook only re-attaches the offset tables; the device pool is then compact by construction. It lives on the overlay branch `q38-placement-v5` (`ba1f4cde`); the offline check `test-q38-expert-placement-loadtime.py` runs before A209 (promoted MTP0 identity + load-time placement).
+
+## 10:29 load-time placement passes the offline check
+
+`test-q38-expert-placement-loadtime.py` on card 0: a placed layer created at resident size (110 of 128 rows on the device, 18 cold rows in pinned host memory), every expert written through the loader's `row_view()`, and `fused_experts` bit-identical to the full resident reference on 48 routings, 22 of which touch host-resident experts. A209 (promoted MTP0 identity + load-time placement, overlay `q38-placement-v5`) relaunched after a first launch tripped on a worktree holding the branch.
