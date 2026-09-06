@@ -51,16 +51,23 @@ EXPECTED_VLLM_HEADS = frozenset(
         # 1b2a17c1: the exact-verify MTP1 selectors (serial GDN rows, row-wise
         # all-reduce, row-wise HC norm) on the 2169dbfe line; MoE map untouched.
         "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
-        # 823d4e42: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line (tuned-map key on the logical expert count) — the Triton MoE kernel
+        # 823d4e42: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line (tuned-map key on the logical expert count in both lookup paths) — the Triton MoE kernel
         # gains an optional per-expert offset table (USE_B_TABLE; cold expert rows in pinned
         # host memory, placed at load time); the MoE map, tiles and math are untouched
         # (bit-identical outputs).
-        "823d4e4258ab19e08eab7d479e6423c05962dace",
+        "bcabdf2f892952e65161f2e4fbe21661c7ec80da",
+        # 2e04cdbd: the same placement commits on the lossless MTP1 head 1b2a17c1
+        "2e04cdbd98127bc95660a718023a53cbe1d5e1fb",
     }
 )
 # fused_moe.py hash per accepted head family (the placement head changes that file only)
 EXPECTED_FUSED_MOE_SHA256_BY_HEAD = {
-    "823d4e4258ab19e08eab7d479e6423c05962dace": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
+    "bcabdf2f892952e65161f2e4fbe21661c7ec80da": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
+    "2e04cdbd98127bc95660a718023a53cbe1d5e1fb": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
+}
+EXPECTED_TRITON_MOE_SHA256_BY_HEAD = {
+    "bcabdf2f892952e65161f2e4fbe21661c7ec80da": "621811630c602824fa04f6212e9e092246b01919372da3f27e25ef1c7be1869a",
+    "2e04cdbd98127bc95660a718023a53cbe1d5e1fb": "621811630c602824fa04f6212e9e092246b01919372da3f27e25ef1c7be1869a",
 }
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
 EXPECTED_PHASE_CONFIG_PATCH_SHA256 = (
@@ -176,7 +183,7 @@ def validate_source(vllm_source: Path, head: str | None = None) -> dict[str, str
     }
     expected = {
         "fused_moe": EXPECTED_FUSED_MOE_SHA256_BY_HEAD.get(head or "", EXPECTED_FUSED_MOE_SHA256),
-        "triton_moe": EXPECTED_TRITON_MOE_SHA256,
+        "triton_moe": EXPECTED_TRITON_MOE_SHA256_BY_HEAD.get(head or "", EXPECTED_TRITON_MOE_SHA256),
         "modular_kernel": EXPECTED_MODULAR_KERNEL_SHA256,
     }
     actual = {name: sha256_file(path) for name, path in paths.items()}
