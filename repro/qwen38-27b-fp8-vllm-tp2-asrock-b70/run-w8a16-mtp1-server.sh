@@ -310,6 +310,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_BATCH_INVARIANT="${batch_invariant}" \
   --env VLLM_XPU_GDN_SPEC_GROUP="${VLLM_XPU_GDN_SPEC_GROUP:-16}" \
   --env VLLM_XPU_GDN_PREFILL_GROUP="${VLLM_XPU_GDN_PREFILL_GROUP:-1}" \
+  --env VLLM_USE_BREAKABLE_CUDAGRAPH="${VLLM_USE_BREAKABLE_CUDAGRAPH:-0}" \
   --env VLLM_XPU_FP16_LINEAR_ROWCHUNK="${VLLM_XPU_FP16_LINEAR_ROWCHUNK:-32}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
   --env VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
