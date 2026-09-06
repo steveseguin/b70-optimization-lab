@@ -74,5 +74,96 @@
   ],
   "gates": "12/12 all",
   "note": "identical to qwen3_next_mtp; proposer choice inert"
+ },
+ "R251_ladders_tp2_depth4_graphs": {
+  "ladder": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 86.4,
+    "misses": []
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 72.5,
+    "misses": []
+   },
+   {
+    "concurrency": 4,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 229.1,
+    "misses": [
+     {
+      "prompt_id": "benchmark-c003",
+      "first_divergence": 60
+     }
+    ]
+   },
+   {
+    "concurrency": 8,
+    "exact": "7/8",
+    "aggregate_tok_s_wall": 361.1,
+    "misses": [
+     {
+      "prompt_id": "benchmark-c003",
+      "first_divergence": 60
+     }
+    ]
+   },
+   {
+    "concurrency": 16,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 519.9,
+    "misses": []
+   },
+   {
+    "concurrency": 32,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 351.9,
+    "misses": [
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     },
+     {
+      "prompt_id": "rollback-c018",
+      "first_divergence": 123
+     }
+    ]
+   },
+   {
+    "concurrency": 64,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 431.9,
+    "misses": [
+     {
+      "prompt_id": "capacity-c006",
+      "first_divergence": 11
+     },
+     {
+      "prompt_id": "capacity-c014",
+      "first_divergence": 18
+     },
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     },
+     {
+      "prompt_id": "rollback-c018",
+      "first_divergence": 77
+     },
+     {
+      "prompt_id": "monitoring-c036",
+      "first_divergence": 41
+     },
+     {
+      "prompt_id": "testing-c061",
+      "first_divergence": 49
+     }
+    ]
+   }
+  ],
+  "note": "batches above 8 tokens (c2+) run eagerly; the c4/c8 miss is the composition-sensitive prompt benchmark-c003@60 seen in eager runs too; c32/c64 as eager."
  }
 }
