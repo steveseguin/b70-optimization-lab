@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Create the A215 packet from frozen A78 for the A213 identity: PLE + embeddings offloaded at 12.25 (12.22 GiB), hot experts resident, never-hit experts host-placed at load time (/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json) on clean head 21633cea623b; realistic suite (LocalMaxxing metric)."""
+"""Create the A217 packet from frozen A78 for the A213 identity: PLE + embeddings offloaded at 12.25 (12.22 GiB), hot experts resident, never-hit experts host-placed at load time (/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json) on clean head 823d4e4258ab; realistic suite (LocalMaxxing metric)."""
 from __future__ import annotations
 import hashlib, os, re, subprocess, sys
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent))
 import q38_freeze_mitigation as _fm
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
-VALIDATE_ONLY = os.environ.get("Q38_A215_REWRITE_VALIDATE_ONLY") == "1"
+VALIDATE_ONLY = os.environ.get("Q38_A217_REWRITE_VALIDATE_ONLY") == "1"
 SOURCES = {'launch-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32.sh': '736b5b92a757e4fd22ba271f42eabba72bf0c889018578d80c9a9246d3cd6a37', 'run-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32-client.sh': '38e0388cce6a39f9348a4e76051f96b0d912f7a4cd60d0e42aa9022d9a79185d', 'supervise-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32.sh': '8a2b632651fdb14340f7f3643a839c7de9739b65be154f178e6871979da35134', 'run-q38-a78-host-controlled.sh': '7444be0bf492b73f4fd3a5aed2c8e54b32600d51b9d3f7dc0c4e0d32b9fea910'}
 OLD_HEAD = "2169dbfe38c2954edc5ae50e94f68d45be071b79"
-NEW_HEAD = "21633cea623b7a552e95afd1035834113e48f7af"  # q38-placement-clean-v5: promoted overlay + table kernel + load-time never-hit expert placement
+NEW_HEAD = "823d4e4258ab19e08eab7d479e6423c05962dace"  # q38-placement-clean-v5: promoted overlay + table kernel + load-time never-hit expert placement
 HASH_TOKEN = re.compile(r"[0-9a-f]{64}|[0-9a-f]{40}")
 def digest(data):
     if isinstance(data, str): data = data.encode()
@@ -18,9 +18,9 @@ def source(name):
     data = (ROOT / name).read_bytes(); assert digest(data) == SOURCES[name], name; return data.decode()
 def successor(text):
     def rename(seg):
-        seg = seg.replace("tp4-mtp0-4352-ple-only-a78", "tp4-mtp0-4352-ple-only-a215")
-        seg = seg.replace("attempt78", "attempt215").replace("19750", "19885")
-        seg = seg.replace("ATTEMPT=78", "ATTEMPT=215").replace("a78", "a215").replace("A78", "A215")
+        seg = seg.replace("tp4-mtp0-4352-ple-only-a78", "tp4-mtp0-4352-ple-only-a217")
+        seg = seg.replace("attempt78", "attempt217").replace("19750", "19887")
+        seg = seg.replace("ATTEMPT=78", "ATTEMPT=217").replace("a78", "a217").replace("A78", "A217")
         return seg
     parts=[]; last=0
     for m in HASH_TOKEN.finditer(text):
@@ -44,7 +44,7 @@ PARAMS4_SP = "ple_embedding.ngram_embedding.weight embed_tokens.weight"
 SQ = "'\\''"  # how a single quote is spelled inside the launcher's single-quoted awk program
 def q(t):
     return t.replace("'", SQ)
-def patch_a215(l):
+def patch_a217(l):
     l = replace_once(l, '  print substr($0, 1, RLENGTH) "' + q("'ple_embedding.ngram_embedding.weight',") + '"\n', '  print substr($0, 1, RLENGTH) "' + q(PARAMS4_PY) + '"\n')
     l = replace_once(l, '$0 == "embed_selector = ' + q("'embed_tokens.weight'") + '" { next }\n', '')
     l = replace_once(l, 'index($0, "assert f' + q("'.{embed_selector}.'") + '") == 1 { next }\n', '')
@@ -80,12 +80,12 @@ def main():
     launcher = successor(launcher)
     launcher = _fm.patch_launcher(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    launcher = patch_a215(launcher)
+    launcher = patch_a217(launcher)
     launcher = replace_once(launcher, "export KV_CACHE_MEMORY_BYTES=134217728\n", "export KV_CACHE_MEMORY_BYTES=134217728\nexport Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n")
-    env = os.environ.copy(); env["Q38_A215_DERIVED_SOURCE_ONLY"] = "1"
+    env = os.environ.copy(); env["Q38_A217_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
-    Path("/tmp/q38-ple2k-a215-base.sh").unlink(missing_ok=True)
-    assert "q38-ple2k-a215" in derived
+    Path("/tmp/q38-ple2k-a217-base.sh").unlink(missing_ok=True)
+    assert "q38-ple2k-a217" in derived
     _fm.check_derived(derived)
     assert f'expected_vllm_head="{NEW_HEAD}"' in derived and OLD_HEAD not in derived
     assert "Q38_MEM_NOTE" not in launcher and "Q38_STEP_TIMING_LOG" not in launcher and "Q38_DIAG_ROUTE" not in launcher
@@ -94,15 +94,15 @@ def main():
     client = replace_once(client, '"placement": "ple_only_uva", "ple_host_bytes_per_rank": 12800061440,', '"placement": "ple_embed_budget12p25_uva_cold_expert_host_placement", "ple_host_bytes_per_rank": 12800061440, "host_offload_bytes_per_rank": 13117911040, "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight", "expert_host_placement": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",')
     client = patch_client(client)
     client = client.replace(OLD_HEAD, NEW_HEAD)
-    client = client.replace("0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753", "b061ff1bb737ad1f3443ff10fe4ddbbb88518add993c0632ced315d65f719c18")
-    assert client.count("b061ff1bb737ad1f3443ff10fe4ddbbb88518add993c0632ced315d65f719c18") >= 1
+    client = client.replace("0bd36f13056d79924e7598bf8d844db3a5b8b35639737c0ef0b5af68cad14753", "d25568edc5d31e1bf9075c4a22dd821fbeb74a4f77878c9cb27b39078091055d")
+    assert client.count("d25568edc5d31e1bf9075c4a22dd821fbeb74a4f77878c9cb27b39078091055d") >= 1
     supervisor = successor(source("supervise-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32.sh"))
     supervisor = _fm.patch_supervisor(supervisor)
     supervisor = replace_once(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher))
     supervisor = replace_once(supervisor, "expected_client=" + SOURCES["run-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client))
     host = successor(source("run-q38-a78-host-controlled.sh"))
     host = replace_once(host, "expected_supervisor=" + SOURCES["supervise-tp4-mtp0-4352-ple-only-a78-fullgraphdet-w13n32.sh"], "expected_supervisor=" + digest(supervisor))
-    out_names = ("launch-tp4-mtp0-4352-ple-only-a215-fullgraphdet-w13n32.sh", "run-tp4-mtp0-4352-ple-only-a215-fullgraphdet-w13n32-client.sh", "supervise-tp4-mtp0-4352-ple-only-a215-fullgraphdet-w13n32.sh", "run-q38-a215-host-controlled.sh")
+    out_names = ("launch-tp4-mtp0-4352-ple-only-a217-fullgraphdet-w13n32.sh", "run-tp4-mtp0-4352-ple-only-a217-fullgraphdet-w13n32-client.sh", "supervise-tp4-mtp0-4352-ple-only-a217-fullgraphdet-w13n32.sh", "run-q38-a217-host-controlled.sh")
     for name, text in zip(out_names, (launcher, client, supervisor, host)): emit(name, text)
     for name in out_names: print(digest((ROOT / name).read_bytes()), name)
 if __name__ == "__main__":

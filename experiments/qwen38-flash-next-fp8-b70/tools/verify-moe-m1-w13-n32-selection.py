@@ -51,16 +51,16 @@ EXPECTED_VLLM_HEADS = frozenset(
         # 1b2a17c1: the exact-verify MTP1 selectors (serial GDN rows, row-wise
         # all-reduce, row-wise HC norm) on the 2169dbfe line; MoE map untouched.
         "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
-        # 05db911b: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line — the Triton MoE kernel
+        # 823d4e42: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line (tuned-map key on the logical expert count) — the Triton MoE kernel
         # gains an optional per-expert offset table (USE_B_TABLE; cold expert rows in pinned
         # host memory, placed at load time); the MoE map, tiles and math are untouched
         # (bit-identical outputs).
-        "21633cea623b7a552e95afd1035834113e48f7af",
+        "823d4e4258ab19e08eab7d479e6423c05962dace",
     }
 )
 # fused_moe.py hash per accepted head family (the placement head changes that file only)
 EXPECTED_FUSED_MOE_SHA256_BY_HEAD = {
-    "21633cea623b7a552e95afd1035834113e48f7af": "4e611de00db346c00e7c4786807950cc43c731be4af831e3c7668732f518a38b",
+    "823d4e4258ab19e08eab7d479e6423c05962dace": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
 }
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
 EXPECTED_PHASE_CONFIG_PATCH_SHA256 = (
