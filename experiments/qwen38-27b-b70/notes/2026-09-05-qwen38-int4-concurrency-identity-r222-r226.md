@@ -80,3 +80,13 @@ Data `data/2026-09-05-qwen38-int4-r239-matrix-result.json`; tables in `repro/qwe
 Turnover: depth 4 on two cards (68.2), depth 3 on one card (58.5). One card is within 5% of two at a single request.
 The residual is the same without a collective, so the all-reduce is excluded; what remains is the GDN kernel's
 composition dependence, most visible with speculative rows and at c32+.
+
+## Residual mechanism from the kernel source (20:50)
+
+`VLLM_XPU_GDN_NATIVE_SPEC_MULTI_REQUEST_SPLIT` is a launcher pass-through with no implementation in the library (R241
+screen cancelled). The r35/r50 source says what the normal speculative GDN kernel does: all verifier rows of a launch
+are carried in one work-group, and the state transaction can alias adjacent speculative cache columns physically; the
+serial-exact lanes (`VLLM_XPU_GDN_NATIVE_SPEC_{CONV,RECURRENT,DELTA}_SERIAL_EXACT`) replay every verifier row through
+the ordinary one-token kernels with an explicit source-row snapshot, but are gated to exactly one pure-spec request
+(`num_spec_decodes == 1`). Every launcher sets them to 0, so c1 and c32 both used the batched kernel. Next: generalize
+the serial-exact lanes to N requests (R242 kernel-library patch) and screen the ladders with them on.
