@@ -1,0 +1,26 @@
+campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1
+model=/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8
+vllm_head=2169dbfe38c2954edc5ae50e94f68d45be071b79
+kernels_head=e421889999bc1e5a5f11044d14548b9afdba644d
+runtime_stage_build_head=2f829747503c77d4814834dffd0840fb1dd9f75a
+stage=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70
+compile_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt187-compile
+offload_backend=uva
+cpu_offload_gb=13.4
+cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight,mlp.experts
+ple_cpu_process=absent
+tp=4 ep=4 all2all=allgather_reducescatter
+moe_backend=triton eager=0 graph=FULL_DECODE_ONLY mtp=0 max_model_len=4352 max_num_batched_tokens=64
+mtp_exact_recurrent=0
+kv_cache_memory_bytes=134217728
+kv_cache_layout=BLHNC
+reasoning_parser=absent
+diagnostics=full-decode-graph-public-oneccl-torch-trace
+graph_enable_env=VLLM_XPU_ENABLE_XPU_GRAPH=1
+compilation_config={"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"compile_sizes":[],"cudagraph_num_of_warmups":1}
+libccl_sha256=43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700
+ccl_kernel_sha256=0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9
+ccl_sycl_allreduce_ll=twoshots
+tuned_config_folder=moe-m1-w13-n32
+mkldnn_deterministic=1
+tuned_config_map_sha256=a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be
