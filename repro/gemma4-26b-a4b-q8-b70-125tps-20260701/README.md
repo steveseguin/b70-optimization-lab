@@ -165,6 +165,63 @@ LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1
 LLAMA_SYCL_MUL_MAT_ID_ROUTE_CACHE=1
 ```
 
+## Container Build Path (pinned oneAPI 2026.0)
+
+The host that set the record no longer carries the oneAPI 2026.0 compiler (it
+has 2025.3 and 2026.1), and a beginner's clean host has none of the stack. The
+`docker/` directory therefore packages the record toolchain as an image so the
+rebuild does not depend on what is installed on the host:
+
+```bash
+cd /path/to/b70-optimization-lab/repro/gemma4-26b-a4b-q8-b70-125tps-20260701/docker
+docker build --network=host -f Dockerfile.record-build-oneapi-2026.0 \
+  -t gemma4-26b-q8-record:oneapi-2026.0-b9769 .
+```
+
+The Dockerfile starts from `ubuntu:24.04`, adds Intel's GPU (`noble/intel-omix/0.3
+unified`) and oneAPI apt repositories, installs the 2026.0 DPC++ compiler,
+oneMKL and oneDNN plus the Level Zero/OpenCL runtime and `ocloc`, clones
+official llama.cpp tag `b9769`, verifies the base commit, decodes and
+hash-checks the same aggregate patch that `restore-and-build.sh` uses, and
+builds `llama-server` and `llama-quantize` with the record cmake definition
+(`-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2`, AOT `bmg-g31`, SYCL graph, oneDNN).
+The build writes the same `b70-gemma4-record-source.json` receipt that
+`preflight.sh` validates, with the binary digests added. The image entrypoint
+sources `setvars.sh` and execs the tool named by `LLAMA_TOOL`
+(default `llama-server`).
+
+The host side needs only the Intel GPU kernel driver (`xe`), Docker, and
+`/opt/intel/oneapi/setvars.sh` for the harness's own environment step (any
+oneAPI version; the container uses its own). Materialise a shim build
+directory so the unchanged guide commands work:
+
+```bash
+docker/install-container-build-dir.sh /path/to/gemma4-record-container
+# prints LLAMA_SERVER=/path/to/gemma4-record-container/bin/llama-server
+#        LLAMA_QUANTIZE=/path/to/gemma4-record-container/bin/llama-quantize
+```
+
+`bin/llama-server` there is `llama-server-docker-shim.sh`: it forwards the
+harness's arguments verbatim, passes through only the `GGML_*`, `LLAMA_*`,
+`ONEAPI_DEVICE_SELECTOR`, `ZE_*`, `SYCL_*`, `OMP_*` variables, mounts the model
+directories read-only at their host paths (`GEMMA4_MOUNT_DIRS`, default
+`/home/steve/llm-models /mnt/fast-ai/llm-models`), exposes `/dev/dri` with the
+`render`/`video` groups, and stays in the foreground so the harness's kill of
+the shim stops the container. Use the printed paths as `LLAMA_QUANTIZE` for
+`prepare-draft.sh` and `LLAMA_SERVER` for `run.sh` exactly as documented above.
+
+Status (2026-09-06): the Dockerfile, shim and install helper are committed;
+the image build on the lab host was still fetching the oneAPI 2026.0 packages
+when this text was written (the host WAN was throttled to ~0.4 MB/s all
+afternoon), so the container path is **not yet verified** here. A clearly
+labelled compatibility rebuild of the same source with the host's oneAPI
+2026.1.1 compiler (`icx`/`icpx` 2026.1, same cmake definition, receipt field
+`compatibility_build`) completed in 12 minutes and enumerates both B70s
+(`llama-server --list-devices`: `SYCL0`/`SYCL1` Intel Arc Pro B70, 32656 MiB);
+its `llama-server` SHA-256 is `26fc4868e496ebdb93724b64f0e228c75bb6317129eaf5b942a281673f1b8fb4`.
+The record gate replay for both binaries is queued behind the model download
+and will be recorded here when it lands.
+
 ## Reproduce
 
 The wrapper below runs the strict final gate. Pick a free GPU/port pair.

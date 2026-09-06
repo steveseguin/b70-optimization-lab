@@ -1,0 +1,40 @@
+# Gemma 4 26B A4B Q8 record stack, reproducible container build (2026-09-06).
+# Builds llama.cpp tag b9769 (c926ad098) + the lab's canonical aggregate patch with the record toolchain (oneAPI 2026.0 from
+# Intel's apt repository) and the record's cmake definition (VDR_MMVQ=2, AOT bmg-g31, SYCL graph, oneDNN). The result image
+# carries llama-server and llama-quantize plus a build receipt with the binary digest; serve it with the run helper.
+FROM ubuntu:24.04 AS build
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ONEAPI_VERSION=2026.0
+ARG LLAMA_TAG=b9769
+ARG BASE_COMMIT=c926ad09857517978575d6a74d225b463f7417a0
+ARG PATCH_SHA=2dab9dce3d6a41cba8edad559eb754088c6f5ca1de6531f408c069e45b7f727a
+ARG BUILD_JOBS=8
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg git cmake ninja-build pkg-config jq python3 \
+ && curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key | gpg --dearmor -o /usr/share/keyrings/intel-graphics.gpg \
+ && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble/intel-omix/0.3 unified" > /etc/apt/sources.list.d/intel-gpu-noble.list \
+ && curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg \
+ && echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" > /etc/apt/sources.list.d/oneAPI.list \
+ && apt-get update && apt-get install -y --no-install-recommends \
+    intel-oneapi-compiler-dpcpp-cpp-${ONEAPI_VERSION} intel-oneapi-mkl-devel-${ONEAPI_VERSION} intel-oneapi-dnnl-devel-${ONEAPI_VERSION} \
+    libze1 libze-dev libze-intel-gpu1 intel-opencl-icd intel-ocloc \
+ && rm -rf /var/lib/apt/lists/*
+COPY llama-cpp-c926ad098-gemma4-q8-record-source-20260701.diff.gz.b64 /tmp/patch.b64
+RUN git clone --branch ${LLAMA_TAG} --depth 1 https://github.com/ggml-org/llama.cpp.git /src/llama.cpp \
+ && [ "$(git -C /src/llama.cpp rev-parse HEAD)" = "${BASE_COMMIT}" ] \
+ && base64 -d /tmp/patch.b64 | gzip -dc > /tmp/patch.diff \
+ && echo "${PATCH_SHA}  /tmp/patch.diff" | sha256sum --check --status \
+ && git -C /src/llama.cpp apply --check /tmp/patch.diff && git -C /src/llama.cpp apply /tmp/patch.diff && git -C /src/llama.cpp diff --check
+RUN bash -lc 'set -e; source /opt/intel/oneapi/setvars.sh --force >/dev/null; \
+  cmake -S /src/llama.cpp -B /src/llama.cpp/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=/opt/intel/oneapi/compiler/'"${ONEAPI_VERSION}"'/bin/icx -DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/'"${ONEAPI_VERSION}"'/bin/icpx \
+    -DCMAKE_CXX_FLAGS=-DGGML_SYCL_REORDER_Q8_0_VDR_MMVQ=2 -DGGML_SYCL=ON -DGGML_SYCL_TARGET=INTEL -DGGML_SYCL_DEVICE_ARCH=bmg-g31 \
+    -DGGML_SYCL_F16=ON -DGGML_SYCL_GRAPH=ON -DGGML_SYCL_DNN=ON -DGGML_SYCL_HOST_MEM_FALLBACK=ON -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF; \
+  cmake --build /src/llama.cpp/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2 --target llama-server llama-quantize -j'"${BUILD_JOBS}"'; \
+  B=/src/llama.cpp/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2; S=$(sha256sum $B/bin/llama-server | cut -d" " -f1); Q=$(sha256sum $B/bin/llama-quantize | cut -d" " -f1); \
+  printf "{\n  \"base_commit\": \"%s\",\n  \"aggregate_patch_sha256\": \"%s\",\n  \"compiler_c\": \"/opt/intel/oneapi/compiler/%s/bin/icx\",\n  \"compiler_cxx\": \"/opt/intel/oneapi/compiler/%s/bin/icpx\",\n  \"vdr_mmvq\": 2,\n  \"llama_server_sha256\": \"%s\",\n  \"llama_quantize_sha256\": \"%s\",\n  \"historical_binary_identity\": false,\n  \"container_build\": true\n}\n" '"${BASE_COMMIT}"' '"${PATCH_SHA}"' '"${ONEAPI_VERSION}"' '"${ONEAPI_VERSION}"' $S $Q > $B/b70-gemma4-record-source.json; cat $B/b70-gemma4-record-source.json'
+ENV ONEAPI_ROOT=/opt/intel/oneapi
+RUN printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'set +u; source /opt/intel/oneapi/setvars.sh --force >/dev/null; set -u' \
+      'B=/src/llama.cpp/build-sycl-b70-aot-bmg-g31-q8reorder-vdr2/bin' 'tool=${LLAMA_TOOL:-llama-server}' 'exec "$B/$tool" "$@"' > /usr/local/bin/llama-entry \
+ && chmod +x /usr/local/bin/llama-entry
+ENTRYPOINT ["/usr/local/bin/llama-entry"]
+CMD ["--help"]
