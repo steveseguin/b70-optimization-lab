@@ -4467,3 +4467,11 @@ first time: CPU soft lockups in the vLLM worker during a checkpoint load from
 the root NVMe, so eager-lineage runs now load from the USB copy. See the
 [A182 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md)
 and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md).
+The MTP1 line followed the same evening: on its lineage overlay `1b2a17c1` with the
+identical placement flags, the frozen-client battery (A190) reproduces both MTP0
+depth authorities at 28.3-28.7 (2K) and 27.3-30.3 (4K) tok/s, and the fixed cold
+realistic suite (A189) scores 27.048435 tok/s class-balanced with all twelve row
+hashes equal to the MTP0 rows, LocalMaxxing-approved `cmtp5u0ip02eln701lntsl2ns` (the paged MTP1 line
+scored 8.66). MTP2 with headroom is lossless but no faster than MTP1 (A186). The
+embedding alone (0.3 GiB) is not enough headroom (A178, 58.7 ms); one expert layer
+(A181, 35.8 ms) is the floor.

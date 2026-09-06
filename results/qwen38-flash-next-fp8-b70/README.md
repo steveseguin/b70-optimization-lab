@@ -107,6 +107,17 @@ data: [A188 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4
 [full-rank cliff](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-b70-moe-gemm-full-rank-sets-probe-card0.log).
 Certification battery (frozen client on the promoted overlay `2169dbfe`, flags-only change): [A187 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a187-certification-battery-headroom-result.md), 6/7 quality with the inherited miss, 16/16 repeat, exact needle, both depth authorities reproduced; [A188 suite note](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md) (A182 diagnostic-overlay twin), [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-promotion-attestation.json).
 
+Lossless MTP1 with the same headroom: the MTP1 lineage overlay `1b2a17c1` (three
+exact-verify selectors on the promoted line) with the identical placement flags
+reproduces both MTP0 depth authorities in its frozen-client battery (A190: 6/7 quality,
+16/16 repeat, exact needle; exact-2K 28.27 / 28.73 tok/s, exact-4K 27.31 / 30.26) and
+scores **27.048435 tok/s** class-balanced on the fixed cold realistic suite (A189,
+all twelve row hashes equal to the MTP0 rows; TTFT median 0.96 s), LocalMaxxing run
+`cmtp5u0ip02eln701lntsl2ns` approved. Under paging the same MTP1 line scored 8.66 (A135). MTP2 with
+headroom is lossless but not faster than MTP1 (A186). Data: [A189 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json),
+[A190 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json),
+[attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-promotion-attestation.json).
+
 LocalMaxxing: the promoted MTP0 line is submitted and approved
 (`cmtn32b2w000tmm01t7j2wlpn`, 2026-09-04) on the fixed realistic suite run
 once cold: 14.433684 tok/s class-balanced median of prompt-class medians

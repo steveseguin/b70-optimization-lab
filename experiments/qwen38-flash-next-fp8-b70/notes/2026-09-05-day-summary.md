@@ -162,3 +162,7 @@ A186 (graph MTP2 lineage A139/A140 with the same expert offload, USB checkpoint,
 ## 21:31 A190: the MTP1 headroom line passes the certification battery
 
 A190 = the MTP1 lineage's frozen client on its own overlay `1b2a17c1` (the head the W13-N32 verifier accepts) with the headroom flags and the USB checkpoint. Every gate passed: 6/7 quality with the inherited miss, 16/16 repeat, exact needle; exact-2K `afffd211…` at 28.27 / 28.73 tok/s (MTP0 headroom 25.43), exact-4K `c6193cc6…` at 27.31 / 30.26 (MTP0 headroom 25.4; the paged MTP0 line was 12.87); short rows 35.3. Both depth hashes are the MTP0 line's own two-server authorities, so MTP1 is lossless at every measured pin. A189 (realistic suite, same identity) is the LocalMaxxing run for this line.
+
+## 21:56 published: lossless MTP1 headroom line approved, run `cmtp5u0ip02eln701lntsl2ns` at 27.048435 tok/s
+
+A189 (MTP1 lineage overlay `1b2a17c1`, headroom flags) passed the fixed cold realistic gate at 27.048435 tok/s class-balanced (all-prompt 27.53, p10 24.12, wall 26.05, TTFT median 0.96 s), all twelve row hashes equal to the MTP0 rows; attestation binds it to the A190 battery and the A184/A190 exact-2K pair. Approved on submission. Ledger, results packet, README, index, model page and CURRENT.md updated; both prior rows stay listed.
