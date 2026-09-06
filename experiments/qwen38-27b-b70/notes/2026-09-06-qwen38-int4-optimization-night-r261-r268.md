@@ -137,3 +137,21 @@ sha256 6ee6b8db…) launched at 04:45; at 04:47:00 the kernel logged `xe 0000:03
 plus a device coredump during the weight load (the same weight-staging fault seen twice on 2026-09-05) and the server hung
 until the 45-minute health timeout. The compute/XCCL health check passes afterwards, but this boot carries the fault
 signature, so runner-gated campaigns refuse to start; R277b is queued behind a reboot (`boot-20260906-…-r277b-r278-autolaunch.sh`).
+
+## R278 - request-shape A/B: second GPU fault, deferred to the reboot
+
+The c32 A/B server (headline, group 64, capture sizes to 320, max-num-seqs 64) hung during its weight load at 05:34:15 on a
+second xe fault, this time on `0000:e3:00.0` (device coredump). Two weight-staging faults on one boot (03:00.0 at 04:47,
+e3:00.0 at 05:34) after ten hours of clean campaigns: the boot is retired. `boot-20260906-qwen38-int4-r277b-r278-autolaunch.sh`
+(crontab `@reboot`, self-removing) runs R277b (R276 image, group 16, capture sizes to 320, two-pass c1-c64 ladders) and then
+the R278 A/B on the fresh boot; results land in `/mnt/fast-ai/bench-results/qwen38-int4-graph-drafthead-tp2-mtp4-ladders-20260906-r277b`
+and `…/qwen38-int4-c32-request-shape-ab-20260906-r278-mtp4/campaign.log`.
+
+## Where this leaves the lane
+
+- Published headline unchanged: **112.36 / 112.33 tok/s** single user (R257, R228 image), lossless, identity-qualified
+  through c16 on the warm pass (580.4 tok/s aggregate); MTP0 49.8 tok/s, exact c1-c64 at ~1000 tok/s.
+- Single-user levers are exhausted for this stack (V2 runner equivalent; scheduling, binding, graph sizes inert); the
+  remaining ~8 ms/step is the two-rank host round trip and all-reduce sync.
+- Multi-user above c16 is bounded by the W4A16 dequant cost at large M and the GDN state traffic; the open question is why
+  the ladder's per-step pace at c32 (~225 ms) is twice the profiled uniform step (~110 ms) - R278 answers it on the next boot.
