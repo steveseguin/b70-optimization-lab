@@ -477,7 +477,7 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   d5 88.8/89.1, d6 84.1/84.0, all 12/12; ladders under graphs: MTP0 exact c1-c64 (c1 50.0 in the harness vs 34-35
   eager), depth 4 exact c1/c2/c16 with the usual composition residual; FP8 R187 depth 5 under the same capture
   85.13/85.14 vs 86.18 eager (no gain, lossless). INT4 TP2 depth 4 with graphs (91.0) is now the lab's fastest lossless
-  Qwen3.8 line. R253: MTP0 under graphs **49.83/49.89 tok/s**, G1 12/12 and 12/12 vs the eager oracle (+43% with no speculation); depth-1 pair and ladders running.
+  Qwen3.8 line. R253 complete: MTP0 under graphs **49.83/49.89 tok/s** (G1 12/12, 12/12 vs the eager oracle), depth 1 **76.72/76.63** (12/12, probe exact); ladders: MTP0 exact c1-c64, depth 1 exact through c8 (c16 12/16, c32 30/32, c64 61/64). Queue empty, GPUs idle (00:02).
   Published: recipe graph section + identity row, package profile, README rows, manifest, launcher `XPU_GRAPH=1` default.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)

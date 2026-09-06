@@ -147,3 +147,13 @@ eager), depth 4 exact at c1/c2/c16 with the composition-sensitive prompt at c4/c
 R187 depth 5 with the same capture (R252): 85.13/85.14 vs 86.27/86.10 eager, lossless, no gain. So the INT4 line with
 graph capture on two cards is now the lab's fastest lossless Qwen3.8 configuration (91.0 at depth 4), and R253 checks
 whether MTP0 itself gains under graphs on a strict pair.
+
+## R253 (00:02): the graph-capture configuration, complete
+
+TP2, full depth-1 campaign under graph capture: MTP0 pair **49.83 / 49.89 tok/s** (G1 12/12, and 12/12 against the
+eager R239 MTP0 oracle, so graph replay is bit-identical), depth 1 **76.72 / 76.63** (G2/G3 12/12, probe exact). Ladders:
+MTP0 exact c1-c64 (second all-exact sample under graphs); depth 1 exact through c8, c16 12/16, c32 30/32, c64 61/64.
+The INT4 two-card line under graph capture is therefore: MTP0 49.8, depth 1 76.7, depth 4 91.0 (headline), depth 5
+89.0, depth 6 84.0 tok/s, every pair lossless against the eager MTP0 oracle; MTP0 output identical to a single request
+through 64 concurrent users; speculative depths identical through c8 (depth 1) / c2 and c16 (depth 4), with the
+composition residual beyond. The FP8 line does not gain from the same capture (R252).
