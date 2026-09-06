@@ -164,6 +164,43 @@
     ]
    }
   ],
-  "note": "batches above 8 tokens (c2+) run eagerly; the c4/c8 miss is the composition-sensitive prompt benchmark-c003@60 seen in eager runs too; c32/c64 as eager."
+  "note": "batches above 8 tokens (c2+) run eagerly; the c4/c8 miss is the composition-sensitive prompt benchmark-c003@60 seen in eager runs too; c32/c64 as eager.",
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.0
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.4
+   },
+   {
+    "concurrency": 4,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 178.7
+   },
+   {
+    "concurrency": 8,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 317.7
+   },
+   {
+    "concurrency": 16,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 501.2
+   },
+   {
+    "concurrency": 32,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 842.1
+   },
+   {
+    "concurrency": 64,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 999.4
+   }
+  ]
  }
 }

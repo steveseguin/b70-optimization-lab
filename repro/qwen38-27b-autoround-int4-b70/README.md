@@ -78,7 +78,9 @@ collective to remove. Graph replay is bit-identical to eager execution (every pa
 launcher `scripts/run-fixed-k-mtp-server.sh` enables this by default (`XPU_GRAPH=0` restores eager). Two negatives from
 the same evening: the community checkpoint's BF16 draft tensors (R244/R245) are lossless but accept fewer tokens than
 the AutoRound INT4 draft (3.21 vs 3.52 per step on TP1; 52.0 vs 56.3 tok/s), and vLLM's generic `mtp` proposer is
-identical in rate to `qwen3_next_mtp` (R248/R249). Concurrency identity under graph capture: R251 (below when done).
+identical in rate to `qwen3_next_mtp` (R248/R249). Concurrency identity under graph capture (R251, TP2): MTP0 exact at every level c1-c64 (aggregate 999.4 tok/s at c64);
+depth 4 exact at c1, c2 and c16, benchmark-c003 (the composition-sensitive near-tie prompt) at c4 3/4 and c8 7/8,
+c32 30/32, c64 58/64. Batches above 8 tokens run eagerly, so this is the same residual as the eager ladders.
 
 **Matrix R239, TP2 (2026-09-05, final configuration: R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions=false`,
 data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json`):**

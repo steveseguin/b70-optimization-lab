@@ -1874,6 +1874,7 @@
       },
       "dependencies": [
         "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+        "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
         "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
         "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
         "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
@@ -2049,12 +2050,65 @@
               "per_user_value": 6.9938
             }
           ]
+        },
+        {
+          "id": "http-int4-fixed-k-graph-tp2-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+          "label": "INT4 fixed-K TP2 MTP0 with XPU graph capture, identity-qualified aggregate decode vs concurrent users (c1-c64)",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "Two B70s, R228 image, VLLM_BATCH_INVARIANT=1, split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 with FULL_DECODE_ONLY capture sizes 1-8, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R251). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
+          "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 50.0,
+              "samples": 1,
+              "per_user_value": 50.0
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 94.4,
+              "samples": 1,
+              "per_user_value": 47.2
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 178.7,
+              "samples": 1,
+              "per_user_value": 44.675
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 317.7,
+              "samples": 1,
+              "per_user_value": 39.7125
+            },
+            {
+              "concurrent_sequences": 16,
+              "value": 501.2,
+              "samples": 1,
+              "per_user_value": 31.325
+            },
+            {
+              "concurrent_sequences": 32,
+              "value": 842.1,
+              "samples": 1,
+              "per_user_value": 26.3156
+            },
+            {
+              "concurrent_sequences": 64,
+              "value": 999.4,
+              "samples": 1,
+              "per_user_value": 15.6156
+            }
+          ]
         }
       ],
       "missing": [
         "clean-host replay",
-        "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)",
-        "identity ladders under graph capture (R251)"
+        "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)"
       ]
     },
     {
