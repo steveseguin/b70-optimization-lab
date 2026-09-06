@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-supervisor=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp1-4352-ple-only-a219-fullgraphdet-w13n32.sh
-expected_supervisor=ef4018f45a81edad5bd99b0d62fc59fdf8fae91fab024fd2db7307dbe35c2147
+supervisor=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp0-4352-ple-only-a224-fullgraphdet-w13n32.sh
+expected_supervisor=36561b988faba330049722d75892d4ce05d2523794746a589a3866945b475153
 aspm_policy=/sys/module/pcie_aspm/parameters/policy
 original_policy=""
 original_swap_path=""
@@ -26,7 +26,7 @@ restore_host() {
       sleep 1
     done
     if kill -0 "$child" 2>/dev/null; then
-      printf 'FAIL: A219 child remained live after bounded teardown\n' >&2
+      printf 'FAIL: A224 child remained live after bounded teardown\n' >&2
       restore_rc=1
     else
       wait "$child" 2>/dev/null || true
@@ -44,7 +44,7 @@ restore_host() {
     [[ "$restored_swap" == "$original_swap_path $original_swap_priority" ]] || restore_rc=1
   fi
   if (( restore_rc != 0 )); then
-    printf 'FAIL: A219 host-control restoration was incomplete\n' >&2
+    printf 'FAIL: A224 host-control restoration was incomplete\n' >&2
     rc=71
   fi
   trap - EXIT
@@ -53,34 +53,34 @@ restore_host() {
 trap restore_host EXIT
 trap 'exit 130' INT TERM HUP
 
-[[ $EUID == 0 ]] || { printf 'FAIL: A219 host control must run as root\n' >&2; exit 1; }
-[[ $# == 0 ]] || { printf 'FAIL: A219 host control takes no arguments\n' >&2; exit 2; }
+[[ $EUID == 0 ]] || { printf 'FAIL: A224 host control must run as root\n' >&2; exit 1; }
+[[ $# == 0 ]] || { printf 'FAIL: A224 host control takes no arguments\n' >&2; exit 2; }
 [[ "$(sha256sum "$supervisor" | cut -d' ' -f1)" == "$expected_supervisor" ]] || {
-  printf 'FAIL: A219 supervisor hash changed\n' >&2
+  printf 'FAIL: A224 supervisor hash changed\n' >&2
   exit 1
 }
 [[ "$(findmnt -no SOURCE,FSTYPE --target /mnt/usb-models)" == "/dev/sda2 fuseblk" ]] || {
-  printf 'FAIL: A219 evidence mount is not /dev/sda2 fuseblk\n' >&2
+  printf 'FAIL: A224 evidence mount is not /dev/sda2 fuseblk\n' >&2
   exit 1
 }
 [[ "$(findmnt -no SOURCE,FSTYPE --target /mnt/fast-ai)" == "/dev/nvme0n1p2 ext4" ]] || {
-  printf 'FAIL: A219 model mount is not /dev/nvme0n1p2 ext4\n' >&2
+  printf 'FAIL: A224 model mount is not /dev/nvme0n1p2 ext4\n' >&2
   exit 1
 }
 original_policy=$(sed -n 's/.*\[\([^]]*\)\].*/\1/p' "$aspm_policy")
 [[ -n "$original_policy" ]] || { printf 'FAIL: cannot identify original ASPM policy\n' >&2; exit 1; }
 mapfile -t active_swaps < <(swapon --show=NAME,USED,PRIO --noheadings --raw --bytes)
-[[ "${#active_swaps[@]}" == 1 ]] || { printf 'FAIL: A219 requires exactly one active swap device\n' >&2; exit 1; }
+[[ "${#active_swaps[@]}" == 1 ]] || { printf 'FAIL: A224 requires exactly one active swap device\n' >&2; exit 1; }
 read -r original_swap_path original_swap_used original_swap_priority <<<"${active_swaps[0]}"
 [[ "$original_swap_path" == /swap.img && "$original_swap_used" == 0 && \
    "$original_swap_priority" =~ ^-?[0-9]+$ ]] || {
-  printf 'FAIL: A219 requires an unused /swap.img with a recorded priority\n' >&2
+  printf 'FAIL: A224 requires an unused /swap.img with a recorded priority\n' >&2
   exit 1
 }
 mem_available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
-(( mem_available_kib >= 120000000 )) || { printf 'FAIL: A219 host-control memory floor failed\n' >&2; exit 1; }
-if [[ "${Q38_A219_HOST_VALIDATE_ONLY:-0}" == 1 ]]; then
-  printf 'PASS: A219 host-control static identity; ASPM=%s swap=%s used=%s priority=%s\n' \
+(( mem_available_kib >= 120000000 )) || { printf 'FAIL: A224 host-control memory floor failed\n' >&2; exit 1; }
+if [[ "${Q38_A224_HOST_VALIDATE_ONLY:-0}" == 1 ]]; then
+  printf 'PASS: A224 host-control static identity; ASPM=%s swap=%s used=%s priority=%s\n' \
     "$original_policy" "$original_swap_path" "$original_swap_used" "$original_swap_priority"
   exit 0
 fi
@@ -95,16 +95,16 @@ root_port_pci=$(lspci -vv -s 00:03.1)
 nvme_pci=$(lspci -vv -s 01:00.0)
 grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled' <<<"$root_port_pci"
 grep -Eq 'LnkCtl:[[:space:]]+ASPM Disabled' <<<"$nvme_pci"
-export Q38_A219_NVME_AER_BASELINE
-export Q38_A219_ROOT_AER_BASELINE
-export Q38_A219_NVME_SECTORS_READ_BASELINE
-Q38_A219_NVME_AER_BASELINE=$(awk '$1 == "TOTAL_ERR_COR" {print $2}' \
+export Q38_A224_NVME_AER_BASELINE
+export Q38_A224_ROOT_AER_BASELINE
+export Q38_A224_NVME_SECTORS_READ_BASELINE
+Q38_A224_NVME_AER_BASELINE=$(awk '$1 == "TOTAL_ERR_COR" {print $2}' \
   /sys/bus/pci/devices/0000:01:00.0/aer_dev_correctable)
-Q38_A219_ROOT_AER_BASELINE=$(< /sys/bus/pci/devices/0000:00:03.1/aer_rootport_total_err_cor)
-Q38_A219_NVME_SECTORS_READ_BASELINE=$(awk '$3 == "nvme0n1" {print $6}' /proc/diskstats)
-[[ "$Q38_A219_NVME_AER_BASELINE" =~ ^[0-9]+$ && "$Q38_A219_ROOT_AER_BASELINE" =~ ^[0-9]+$ && \
-   "$Q38_A219_NVME_SECTORS_READ_BASELINE" =~ ^[0-9]+$ ]] || {
-  printf 'FAIL: A219 could not establish numeric AER baselines\n' >&2
+Q38_A224_ROOT_AER_BASELINE=$(< /sys/bus/pci/devices/0000:00:03.1/aer_rootport_total_err_cor)
+Q38_A224_NVME_SECTORS_READ_BASELINE=$(awk '$3 == "nvme0n1" {print $6}' /proc/diskstats)
+[[ "$Q38_A224_NVME_AER_BASELINE" =~ ^[0-9]+$ && "$Q38_A224_ROOT_AER_BASELINE" =~ ^[0-9]+$ && \
+   "$Q38_A224_NVME_SECTORS_READ_BASELINE" =~ ^[0-9]+$ ]] || {
+  printf 'FAIL: A224 could not establish numeric AER baselines\n' >&2
   exit 1
 }
 

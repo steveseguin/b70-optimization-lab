@@ -2,12 +2,12 @@
 set -Eeuo pipefail
 
 repo=/home/steve/llm-optimizations
-supervisor="${repo}/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp1-4352-ple-only-a218-fullgraphdet-w13n32.sh"
-state=/tmp/q38-mtp1-ple-only-a218
+supervisor="${repo}/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp1-4352-ple-only-a226-fullgraphdet-w13n32.sh"
+state=/tmp/q38-mtp1-ple-only-a226
 stop_file="${state}.stop"
 failure_file="${state}.failed"
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt218
-base_url=http://127.0.0.1:19888
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt226
+base_url=http://127.0.0.1:19896
 model=qwen38-flash-next-fp8-tp4
 tokenizer=/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8
 python=/home/steve/.venvs/vllm-xpu/bin/python
@@ -17,7 +17,7 @@ depth_harness="${repo}/scripts/bench-openai-token-depth-suite.py"
 fixture="${repo}/data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json"
 runtime_verifier=${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-q38-a118-fullgraph-runtime.py
 expected_runtime_verifier=6c5c3ca9a3b93d0e6da6f2e6f93d66172920384e709f812e98cb34103fe52bf1
-torchinductor_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt218-compile/torchinductor
+torchinductor_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt226-compile/torchinductor
 torch_trace=${run_dir}/torch-trace
 compilation_json='{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2],"max_cudagraph_capture_size":2,"compile_sizes":[],"cudagraph_num_of_warmups":1}'
 completed=0
@@ -61,7 +61,7 @@ done
 supervisor_pid=$(cat "${state}.pid" 2>/dev/null || true)
 [[ "$supervisor_pid" =~ ^[1-9][0-9]*$ && -e "/proc/${supervisor_pid}" ]] || { printf 'FAIL: supervisor is absent\n' >&2; exit 1; }
 supervisor_command=$(tr '\0' ' ' <"/proc/${supervisor_pid}/cmdline")
-[[ "$supervisor_command" == *"supervise-tp4-mtp1-4352-ple-only-a218-fullgraphdet-w13n32.sh"* ]] || {
+[[ "$supervisor_command" == *"supervise-tp4-mtp1-4352-ple-only-a226-fullgraphdet-w13n32.sh"* ]] || {
   printf 'FAIL: supervisor identity mismatch\n' >&2
   exit 1
 }
@@ -76,7 +76,7 @@ if grep -zFq 'VLLM_XPU_PLE_UVA_PREFETCH=' "/proc/${server_pid}/environ"; then
   exit 1
 fi
 grep -zFxq 'VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32' "/proc/${server_pid}/environ" || {
-  printf 'FAIL: live server lacks the exact A218 tuned M1 map folder\n' >&2
+  printf 'FAIL: live server lacks the exact A226 tuned M1 map folder\n' >&2
   exit 1
 }
 [[ "$(grep -zc 'VLLM_TUNED_CONFIG_FOLDER=' "/proc/${server_pid}/environ" | tr -d '\n')" == 1 ]] || {
@@ -84,10 +84,10 @@ grep -zFxq 'VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/q
   exit 1
 }
 [[ "$(sha256sum '/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json' | cut -d' ' -f1)" == a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be ]] || {
-  printf 'FAIL: A218 tuned M1 map drifted before client work\n' >&2
+  printf 'FAIL: A226 tuned M1 map drifted before client work\n' >&2
   exit 1
 }
-[[ "$(sha256sum "${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == f3ef3b37e6106bf57d2933068306c3e43ed91e27348ec37f216d36bbb977da33 ]] || {
+[[ "$(sha256sum "${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == 13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0 ]] || {
   printf 'FAIL: W13-N32 selection verifier drifted\n' >&2
   exit 1
 }
@@ -142,7 +142,7 @@ if grep -zEq '^(Q38_REPEATABILITY_TRACE_FILE|VLLM_XPU_QWEN4_EXP_REPEATABILITY_TR
   printf 'FAIL: trace selector unexpectedly present in live server environment\n' >&2
   exit 1
 fi
-[[ "$(git -C /home/steve/src/vllm-current-main rev-parse HEAD)" == 2e04cdbd98127bc95660a718023a53cbe1d5e1fb ]] || {
+[[ "$(git -C /home/steve/src/vllm-current-main rev-parse HEAD)" == 005dc57895896f770157ea94f68e473e7447139e ]] || {
   printf 'FAIL: live vLLM checkout head changed\n' >&2
   exit 1
 }
@@ -151,7 +151,7 @@ fi
   exit 1
 }
 [[ "$server_command" == *"vllm serve /mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"* && \
-   "$server_command" == *"--port 19888"* && "$server_command" == *"--max-model-len 4352"* ]] || {
+   "$server_command" == *"--port 19896"* && "$server_command" == *"--max-model-len 4352"* ]] || {
   printf 'FAIL: server command identity mismatch\n' >&2
   exit 1
 }
@@ -162,11 +162,11 @@ fi
 }
 [[ "$server_command" != *"--enforce-eager"* && "$server_command" == *"--cudagraph-metrics"* && \
    "$server_command" == *"--compilation-config ${compilation_json}"* ]] || {
-  printf 'FAIL: frozen A218 graph command identity mismatch\n' >&2
+  printf 'FAIL: frozen A226 graph command identity mismatch\n' >&2
   exit 1
 }
 for receipt in \
-  'vllm_head=2e04cdbd98127bc95660a718023a53cbe1d5e1fb' \
+  'vllm_head=005dc57895896f770157ea94f68e473e7447139e' \
   'kernels_head=e421889999bc1e5a5f11044d14548b9afdba644d' \
   'runtime_stage_build_head=2f829747503c77d4814834dffd0840fb1dd9f75a' \
   'cpu_offload_gb=12.25' 'cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight' \
@@ -203,7 +203,7 @@ assert labels.get("kv_cache_memory_bytes") == "376569856", labels
 assert labels.get("enable_prefix_caching") == "False", labels
 assert int(labels.get("kv_cache_size_tokens", "0")) >= 4224, labels
 PY
-journal_start=$(cat "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt218-supervisor/journal-start-epoch.txt")
+journal_start=$(cat "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt226-supervisor/journal-start-epoch.txt")
 journalctl -k --since "@${journal_start}" --no-pager >"${run_dir}/journal-before-client.log"
 ! grep -Eqi 'xe 0000:(23|27|43|47):00\.0.*(reset|fault|timeout|timed out|fatal|wedged|failed)' \
   "${run_dir}/journal-before-client.log" || { printf 'FAIL: B70 event before client work\n' >&2; exit 1; }
@@ -223,7 +223,7 @@ payload = {
 }
 request = urllib.request.Request(
     f"{base_url}/v1/chat/completions", data=json.dumps(payload).encode(),
-    headers={"Content-Type": "application/json", "X-Request-Id": "q38-ple-only-a218-recovery-canary"},
+    headers={"Content-Type": "application/json", "X-Request-Id": "q38-ple-only-a226-recovery-canary"},
     method="POST")
 destination = pathlib.Path(output)
 try:
@@ -251,7 +251,7 @@ PY
 set +e
 timeout --signal=TERM --kill-after=10s 1200s "$python" "$quality" \
   --base-url "$base_url" --model "$model" --tokenizer "$tokenizer" --timeout 900 \
-  --seed 20260609 --repeat-runs 16 --request-id-prefix q38-ple-only-a218 \
+  --seed 20260609 --repeat-runs 16 --request-id-prefix q38-ple-only-a226 \
   --long-context-tokens 2157 --chat-template-kwargs-json '{"enable_thinking":false}' \
   --output-json "${run_dir}/quality-current.json" >"${run_dir}/quality-current.log" 2>&1
 quality_rc=$?
@@ -369,7 +369,7 @@ summary = {
     "status": "passed",
     "identity": {
         "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
-        "vllm_head": "2e04cdbd98127bc95660a718023a53cbe1d5e1fb",
+        "vllm_head": "005dc57895896f770157ea94f68e473e7447139e",
         "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
         "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
         "tp": 4, "ep": 4, "mtp": 1, "graph": "FULL_DECODE_ONLY",

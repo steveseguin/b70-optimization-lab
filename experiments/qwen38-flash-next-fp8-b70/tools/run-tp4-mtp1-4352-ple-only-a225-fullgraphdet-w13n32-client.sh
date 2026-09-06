@@ -2,24 +2,24 @@
 set -Eeuo pipefail
 
 repo=/home/steve/llm-optimizations
-supervisor="${repo}/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp0-4352-ple-only-a220-fullgraphdet-w13n32.sh"
-state=/tmp/q38-mtp0-ple-only-a220
+supervisor="${repo}/experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp1-4352-ple-only-a225-fullgraphdet-w13n32.sh"
+state=/tmp/q38-mtp1-ple-only-a225
 stop_file="${state}.stop"
 failure_file="${state}.failed"
-run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt220
-base_url=http://127.0.0.1:19890
+run_dir=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt225
+base_url=http://127.0.0.1:19895
 model=qwen38-flash-next-fp8-tp4
-tokenizer=/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8
+tokenizer=/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8
 python=/home/steve/.venvs/vllm-xpu/bin/python
 quality="${repo}/scripts/qwen38-text-quality-suite.py"
 short_harness="${repo}/scripts/bench-openai-concurrency.py"
 depth_harness="${repo}/scripts/bench-openai-token-depth-suite.py"
 fixture="${repo}/data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json"
-runtime_verifier=${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-q38-a48-fullgraph-runtime.py
-expected_runtime_verifier=a3acec5018c4b1147f8efddb75f6678acee7f9802d4fb11f3c56bc7b2bd74ca8
-torchinductor_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt220-compile/torchinductor
+runtime_verifier=${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-q38-a118-fullgraph-runtime.py
+expected_runtime_verifier=6c5c3ca9a3b93d0e6da6f2e6f93d66172920384e709f812e98cb34103fe52bf1
+torchinductor_cache=/tmp/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt225-compile/torchinductor
 torch_trace=${run_dir}/torch-trace
-compilation_json='{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"compile_sizes":[],"cudagraph_num_of_warmups":1}'
+compilation_json='{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2],"max_cudagraph_capture_size":2,"compile_sizes":[],"cudagraph_num_of_warmups":1}'
 completed=0
 
 write_atomic() {
@@ -32,7 +32,7 @@ write_atomic() {
 fail_sentinel() {
   local rc=$?
   if (( completed == 0 )); then
-    write_atomic "$failure_file" "FAIL PLE-only 2K MTP0 QSA-stable treatment client rc=${rc}"
+    write_atomic "$failure_file" "FAIL PLE-only 2K MTP1 QSA-stable treatment client rc=${rc}"
   fi
 }
 trap fail_sentinel EXIT
@@ -61,7 +61,7 @@ done
 supervisor_pid=$(cat "${state}.pid" 2>/dev/null || true)
 [[ "$supervisor_pid" =~ ^[1-9][0-9]*$ && -e "/proc/${supervisor_pid}" ]] || { printf 'FAIL: supervisor is absent\n' >&2; exit 1; }
 supervisor_command=$(tr '\0' ' ' <"/proc/${supervisor_pid}/cmdline")
-[[ "$supervisor_command" == *"supervise-tp4-mtp0-4352-ple-only-a220-fullgraphdet-w13n32.sh"* ]] || {
+[[ "$supervisor_command" == *"supervise-tp4-mtp1-4352-ple-only-a225-fullgraphdet-w13n32.sh"* ]] || {
   printf 'FAIL: supervisor identity mismatch\n' >&2
   exit 1
 }
@@ -76,7 +76,7 @@ if grep -zFq 'VLLM_XPU_PLE_UVA_PREFETCH=' "/proc/${server_pid}/environ"; then
   exit 1
 fi
 grep -zFxq 'VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32' "/proc/${server_pid}/environ" || {
-  printf 'FAIL: live server lacks the exact A220 tuned M1 map folder\n' >&2
+  printf 'FAIL: live server lacks the exact A225 tuned M1 map folder\n' >&2
   exit 1
 }
 [[ "$(grep -zc 'VLLM_TUNED_CONFIG_FOLDER=' "/proc/${server_pid}/environ" | tr -d '\n')" == 1 ]] || {
@@ -84,10 +84,10 @@ grep -zFxq 'VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/q
   exit 1
 }
 [[ "$(sha256sum '/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json' | cut -d' ' -f1)" == a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be ]] || {
-  printf 'FAIL: A220 tuned M1 map drifted before client work\n' >&2
+  printf 'FAIL: A225 tuned M1 map drifted before client work\n' >&2
   exit 1
 }
-[[ "$(sha256sum "${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == f3ef3b37e6106bf57d2933068306c3e43ed91e27348ec37f216d36bbb977da33 ]] || {
+[[ "$(sha256sum "${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" | cut -d' ' -f1)" == 13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0 ]] || {
   printf 'FAIL: W13-N32 selection verifier drifted\n' >&2
   exit 1
 }
@@ -119,6 +119,21 @@ grep -zFxq 'CCL_SYCL_ALLREDUCE_LL=twoshots' "/proc/${server_pid}/environ" || {
   printf 'FAIL: live server lacks exact twoshots selector\n' >&2
   exit 1
 }
+grep -zFxq 'VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1' "/proc/${server_pid}/environ" || {
+  printf 'FAIL: live server lacks the serial GDN verifier-row selector
+' >&2
+  exit 1
+}
+grep -zFxq 'VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2' "/proc/${server_pid}/environ" || {
+  printf 'FAIL: live server lacks the row-wise all-reduce selector
+' >&2
+  exit 1
+}
+grep -zFxq 'VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2' "/proc/${server_pid}/environ" || {
+  printf 'FAIL: live server lacks the row-wise hyperconnection norm selector
+' >&2
+  exit 1
+}
 grep -zFxq 'PYTHONPATH=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70:/home/steve/src/vllm-current-main' "/proc/${server_pid}/environ" || {
   printf 'FAIL: live server PYTHONPATH identity mismatch\n' >&2
   exit 1
@@ -127,7 +142,7 @@ if grep -zEq '^(Q38_REPEATABILITY_TRACE_FILE|VLLM_XPU_QWEN4_EXP_REPEATABILITY_TR
   printf 'FAIL: trace selector unexpectedly present in live server environment\n' >&2
   exit 1
 fi
-[[ "$(git -C /home/steve/src/vllm-current-main rev-parse HEAD)" == bcabdf2f892952e65161f2e4fbe21661c7ec80da ]] || {
+[[ "$(git -C /home/steve/src/vllm-current-main rev-parse HEAD)" == 005dc57895896f770157ea94f68e473e7447139e ]] || {
   printf 'FAIL: live vLLM checkout head changed\n' >&2
   exit 1
 }
@@ -136,31 +151,32 @@ fi
   exit 1
 }
 [[ "$server_command" == *"vllm serve /mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"* && \
-   "$server_command" == *"--port 19890"* && "$server_command" == *"--max-model-len 4352"* ]] || {
+   "$server_command" == *"--port 19895"* && "$server_command" == *"--max-model-len 4352"* ]] || {
   printf 'FAIL: server command identity mismatch\n' >&2
   exit 1
 }
 
-[[ "$server_command" != *"--speculative-config"* && "$server_command" != *"--reasoning-parser"* ]] || {
-  printf 'FAIL: MTP or reasoning parser unexpectedly present\n' >&2
+[[ "$server_command" == *"--speculative-config"* && "$server_command" != *"--reasoning-parser"* ]] || {
+  printf 'FAIL: MTP absent or reasoning parser present\n' >&2
   exit 1
 }
 [[ "$server_command" != *"--enforce-eager"* && "$server_command" == *"--cudagraph-metrics"* && \
    "$server_command" == *"--compilation-config ${compilation_json}"* ]] || {
-  printf 'FAIL: frozen A220 graph command identity mismatch\n' >&2
+  printf 'FAIL: frozen A225 graph command identity mismatch\n' >&2
   exit 1
 }
 for receipt in \
-  'vllm_head=bcabdf2f892952e65161f2e4fbe21661c7ec80da' \
+  'vllm_head=005dc57895896f770157ea94f68e473e7447139e' \
   'kernels_head=e421889999bc1e5a5f11044d14548b9afdba644d' \
   'runtime_stage_build_head=2f829747503c77d4814834dffd0840fb1dd9f75a' \
   'cpu_offload_gb=12.25' 'cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight' \
   'tp=4 ep=4 all2all=allgather_reducescatter' \
-  'moe_backend=triton eager=0 graph=FULL_DECODE_ONLY mtp=0 max_model_len=4352 max_num_batched_tokens=64' \
-  'kv_cache_memory_bytes=134217728' 'kv_cache_layout=BLHNC' \
+  'moe_backend=triton eager=0 graph=FULL_DECODE_ONLY mtp=1 max_model_len=4352 max_num_batched_tokens=64' \
+  'mtp_exact_recurrent=0' \
+  'kv_cache_memory_bytes=376569856' 'kv_cache_layout=BLHNC' \
   'reasoning_parser=absent' 'diagnostics=full-decode-graph-public-oneccl-torch-trace' \
   'graph_enable_env=VLLM_XPU_ENABLE_XPU_GRAPH=1' \
-  'compilation_config={"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"compile_sizes":[],"cudagraph_num_of_warmups":1}' \
+  'compilation_config={"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2],"max_cudagraph_capture_size":2,"compile_sizes":[],"cudagraph_num_of_warmups":1}' \
   'libccl_sha256=43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700' 'ccl_kernel_sha256=0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9' \
   'ccl_sycl_allreduce_ll=twoshots' \
   'tuned_config_folder=moe-m1-w13-n32' 'tuned_config_map_sha256=a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be' \
@@ -183,11 +199,11 @@ line = next((line for line in pathlib.Path(sys.argv[1]).read_text().splitlines()
              if line.startswith("vllm:cache_config_info{")), None)
 assert line is not None
 labels = dict(re.findall(r'(\w+)="([^"]*)"', line))
-assert labels.get("kv_cache_memory_bytes") == "134217728", labels
+assert labels.get("kv_cache_memory_bytes") == "376569856", labels
 assert labels.get("enable_prefix_caching") == "False", labels
 assert int(labels.get("kv_cache_size_tokens", "0")) >= 4224, labels
 PY
-journal_start=$(cat "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt220-supervisor/journal-start-epoch.txt")
+journal_start=$(cat "/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1-attempt225-supervisor/journal-start-epoch.txt")
 journalctl -k --since "@${journal_start}" --no-pager >"${run_dir}/journal-before-client.log"
 ! grep -Eqi 'xe 0000:(23|27|43|47):00\.0.*(reset|fault|timeout|timed out|fatal|wedged|failed)' \
   "${run_dir}/journal-before-client.log" || { printf 'FAIL: B70 event before client work\n' >&2; exit 1; }
@@ -207,7 +223,7 @@ payload = {
 }
 request = urllib.request.Request(
     f"{base_url}/v1/chat/completions", data=json.dumps(payload).encode(),
-    headers={"Content-Type": "application/json", "X-Request-Id": "q38-ple-only-a220-recovery-canary"},
+    headers={"Content-Type": "application/json", "X-Request-Id": "q38-ple-only-a225-recovery-canary"},
     method="POST")
 destination = pathlib.Path(output)
 try:
@@ -235,7 +251,7 @@ PY
 set +e
 timeout --signal=TERM --kill-after=10s 1200s "$python" "$quality" \
   --base-url "$base_url" --model "$model" --tokenizer "$tokenizer" --timeout 900 \
-  --seed 20260609 --repeat-runs 16 --request-id-prefix q38-ple-only-a220 \
+  --seed 20260609 --repeat-runs 16 --request-id-prefix q38-ple-only-a225 \
   --long-context-tokens 2157 --chat-template-kwargs-json '{"enable_thinking":false}' \
   --output-json "${run_dir}/quality-current.json" >"${run_dir}/quality-current.log" 2>&1
 quality_rc=$?
@@ -353,11 +369,12 @@ summary = {
     "status": "passed",
     "identity": {
         "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
-        "vllm_head": "bcabdf2f892952e65161f2e4fbe21661c7ec80da",
+        "vllm_head": "005dc57895896f770157ea94f68e473e7447139e",
         "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
         "stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
-        "tp": 4, "ep": 4, "mtp": 0, "graph": "FULL_DECODE_ONLY",
-        "compilation_mode": "NONE", "cudagraph_capture_sizes": [1],
+        "tp": 4, "ep": 4, "mtp": 1, "graph": "FULL_DECODE_ONLY",
+        "compilation_mode": "NONE", "cudagraph_capture_sizes": [1, 2],
+        "exact_verify_selectors": ["VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1", "VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2", "VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2"],
         "max_model_len": 4352,
         "placement": "ple_embed_budget12p25_uva_cold_expert_host_placement", "ple_host_bytes_per_rank": 12800061440, "host_offload_bytes_per_rank": 13117911040, "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight", "expert_host_placement": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",
         "async_uva_ple_prefetch": False,
@@ -368,7 +385,7 @@ summary = {
         "tuned_config_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
         "diagnostics": "full-decode-graph-public-oneccl-torch-trace",
         "torch_trace_policy": "dynamo-exact-target-allowlist-v1",
-        "input_embedding": "device", "kv_cache_memory_bytes": 134217728,
+        "input_embedding": "device", "kv_cache_memory_bytes": 376569856,
     },
     "recovery_canary": "passed",
     "quality": {
@@ -421,16 +438,16 @@ PY
   --torchinductor-cache "$torchinductor_cache" --torch-trace "$torch_trace" --phase after \
   --output "${run_dir}/fullgraphdet-runtime-after.json"
 jq -e '.status == "passed" and .phase == "after" and
-  .size_1_full_dispatch_count > 0 and (.collective_processes | length) >= 4 and
+  .size_2_full_dispatch_count > 0 and .size_1_full_dispatch_count >= 0 and (.collective_processes | length) >= 4 and
   .libccl.sha256 == "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700" and
   .ccl_kernel.sha256 == "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9" and
   .ccl_sycl_allreduce_ll == "twoshots" and
-  .schema_version == 2 and .compilation_mode == "NONE" and
+  .schema_version == 3 and .compilation_mode == "NONE" and
   .inductor_disabled_receipts > 0 and
   .torchinductor_cache.interpretation == "trace_attributed_nested_operator_cache" and
   .torchinductor_cache.file_count > 0 and
   .torch_trace.compile_event_count > 0' "${run_dir}/fullgraphdet-runtime-after.json" >/dev/null
 
-write_atomic "${run_dir}/client-gates-passed.txt" 'PASS recovery quality short-repeat exact-2K-repeat exact-4K-repeat PLE-only 4352 MTP0 QSA-stable treatment'
-write_atomic "$stop_file" 'STOP after passed PLE-only 2K MTP0 QSA-stable treatment'
+write_atomic "${run_dir}/client-gates-passed.txt" 'PASS recovery quality short-repeat exact-2K-repeat exact-4K-repeat PLE-only 4352 MTP1 QSA-stable treatment'
+write_atomic "$stop_file" 'STOP after passed PLE-only 2K MTP1 QSA-stable treatment'
 completed=1

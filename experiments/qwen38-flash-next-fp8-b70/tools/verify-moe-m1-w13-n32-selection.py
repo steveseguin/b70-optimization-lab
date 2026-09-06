@@ -51,23 +51,23 @@ EXPECTED_VLLM_HEADS = frozenset(
         # 1b2a17c1: the exact-verify MTP1 selectors (serial GDN rows, row-wise
         # all-reduce, row-wise HC norm) on the 2169dbfe line; MoE map untouched.
         "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60",
-        # 823d4e42: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line (tuned-map key on the logical expert count in both lookup paths) — the Triton MoE kernel
+        # 823d4e42: Q38_EXPERT_HOST_PLACEMENT on the 2169dbfe line (tuned-map key on the logical expert count in all three lookup paths) — the Triton MoE kernel
         # gains an optional per-expert offset table (USE_B_TABLE; cold expert rows in pinned
         # host memory, placed at load time); the MoE map, tiles and math are untouched
         # (bit-identical outputs).
-        "bcabdf2f892952e65161f2e4fbe21661c7ec80da",
+        "cb59004b5c51e603ba06579382e66139d9a18bb6",
         # 2e04cdbd: the same placement commits on the lossless MTP1 head 1b2a17c1
-        "2e04cdbd98127bc95660a718023a53cbe1d5e1fb",
+        "005dc57895896f770157ea94f68e473e7447139e",
     }
 )
 # fused_moe.py hash per accepted head family (the placement head changes that file only)
 EXPECTED_FUSED_MOE_SHA256_BY_HEAD = {
-    "bcabdf2f892952e65161f2e4fbe21661c7ec80da": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
-    "2e04cdbd98127bc95660a718023a53cbe1d5e1fb": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
+    "cb59004b5c51e603ba06579382e66139d9a18bb6": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
+    "005dc57895896f770157ea94f68e473e7447139e": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
 }
 EXPECTED_TRITON_MOE_SHA256_BY_HEAD = {
-    "bcabdf2f892952e65161f2e4fbe21661c7ec80da": "621811630c602824fa04f6212e9e092246b01919372da3f27e25ef1c7be1869a",
-    "2e04cdbd98127bc95660a718023a53cbe1d5e1fb": "621811630c602824fa04f6212e9e092246b01919372da3f27e25ef1c7be1869a",
+    "cb59004b5c51e603ba06579382e66139d9a18bb6": "c0ef7d8b64cb18621a43a78c99e9726a244d2b6dc1db6d9d4c9fb4eb0440cfa6",
+    "005dc57895896f770157ea94f68e473e7447139e": "c0ef7d8b64cb18621a43a78c99e9726a244d2b6dc1db6d9d4c9fb4eb0440cfa6",
 }
 EXPECTED_PHASE_CONFIG_PATCH_NAME = "0021-Add-opt-in-per-phase-Triton-MoE-configs.patch"
 EXPECTED_PHASE_CONFIG_PATCH_SHA256 = (

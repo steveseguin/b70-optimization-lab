@@ -3,14 +3,14 @@ set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
-derived=/tmp/q38-ple2k-a220-base.sh
+derived=/tmp/q38-ple2k-a223-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
-expected_derived=c66173177bbf883572d311c3e65dc50967ca32695f57693b55d6c48ad17ea778
+expected_derived=29180cf27a3a7d2c0f59100ec19b55445a6f9cdcdeb936dd6808a1fdcbce0d91
 campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
-[[ "$(sha256sum "$tuned_config_map" | cut -d' ' -f1)" == a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be ]] || { printf 'FAIL: A220 tuned M1 map drifted\n' >&2; exit 1; }
-[[ "$(jq -r '."1".num_warps' "$tuned_config_map")" == 8 && "$(jq -r '."1".W1_CONFIG.BLOCK_SIZE_N' "$tuned_config_map")" == 32 && "$(jq -r '."1" | has("W2_CONFIG")' "$tuned_config_map")" == false ]] || { printf 'FAIL: A220 tuned M1 map entry is not the qualified W13-N32 shape\n' >&2; exit 1; }
+[[ "$(sha256sum "$tuned_config_map" | cut -d' ' -f1)" == a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be ]] || { printf 'FAIL: A223 tuned M1 map drifted\n' >&2; exit 1; }
+[[ "$(jq -r '."1".num_warps' "$tuned_config_map")" == 8 && "$(jq -r '."1".W1_CONFIG.BLOCK_SIZE_N' "$tuned_config_map")" == 32 && "$(jq -r '."1" | has("W2_CONFIG")' "$tuned_config_map")" == false ]] || { printf 'FAIL: A223 tuned M1 map entry is not the qualified W13-N32 shape\n' >&2; exit 1; }
 
 cleanup() { rm -f -- "$derived"; }
 trap cleanup EXIT
@@ -41,11 +41,11 @@ index($0, "repo_root=$(cd --") == 1 {
   next
 }
 $0 == "rpc_dir=\"/tmp/${campaign}-attempt${attempt}-rpc\"" {
-  print "rpc_dir=/tmp/q38-ple2k-a220-rpc"
+  print "rpc_dir=/tmp/q38-ple2k-a223-rpc"
   next
 }
 $0 == "expected_vllm_head=\"1372c62d975c554f4b465c8299bc5f3295301ceb\"" {
-  print "expected_vllm_head=\"bcabdf2f892952e65161f2e4fbe21661c7ec80da\""
+  print "expected_vllm_head=\"cb59004b5c51e603ba06579382e66139d9a18bb6\""
   next
 }
 /^[[:space:]]*'\''ple_embedding.ngram_embedding.weight'\'', '\''embed_tokens.weight'\''$/ {
@@ -177,7 +177,7 @@ $0 == "setsid \"${vllm_bin}\" serve \"${args[@]}\" >\"${server_log}\" 2>&1 &" {
 }
 ' "$base" >"$derived"
 chmod 700 "$derived"
-if [[ "${Q38_A220_DERIVED_SOURCE_ONLY:-0}" == 1 ]]; then cat "$derived"; exit 0; fi
+if [[ "${Q38_A223_DERIVED_SOURCE_ONLY:-0}" == 1 ]]; then cat "$derived"; exit 0; fi
 [[ "$(sha256sum "$derived" | cut -d' ' -f1)" == "$expected_derived" ]]
 bash -n "$derived"
 grep -Fxq '    max_model_len=int(os.environ['\''Q38_MAX_MODEL_LEN'\'']),' "$derived"
@@ -192,10 +192,10 @@ grep -Fxq '  --cpu-offload-gb 12.25' "$derived"
 grep -Fxq '  --cpu-offload-params ple_embedding.ngram_embedding.weight embed_tokens.weight' "$derived"
 grep -Fxq '  printf '\''cpu_offload_gb=12.25\n'\''' "$derived"
 grep -Fxq '  printf '\''cpu_offload_params=ple_embedding.ngram_embedding.weight,embed_tokens.weight\n'\''' "$derived"
-grep -Fxq 'expected_vllm_head="bcabdf2f892952e65161f2e4fbe21661c7ec80da"' "$derived"
+grep -Fxq 'expected_vllm_head="cb59004b5c51e603ba06579382e66139d9a18bb6"' "$derived"
 grep -Fxq "  printf 'diagnostics=full-decode-graph-public-oneccl-torch-trace\n'" "$derived"
 ! grep -Fq "diagnostics=none" "$derived"
-grep -Fxq 'rpc_dir=/tmp/q38-ple2k-a220-rpc' "$derived"
+grep -Fxq 'rpc_dir=/tmp/q38-ple2k-a223-rpc' "$derived"
 grep -Fxq '[[ "${max_model_len}" == "4352" ]] || {' "$derived"
 grep -Fq "'embed_tokens.weight'" "$derived"
 grep -Fq -- '--cpu-offload-gb 12.25' "$derived"
@@ -217,27 +217,27 @@ grep -Fxq 'export CCL_KERNEL_PATH=/home/steve/.venvs/vllm-xpu/lib/ccl/kernels' "
 ! grep -Fq 'q38-flash-next-full-load.boot-id' "$derived"
 ! grep -Fq 'ep4-eager' "$derived"
 ! grep -Fq 'triton_eager' "$derived"
-if [[ "${Q38_A220_VALIDATE_ONLY:-0}" == 1 ]]; then
+if [[ "${Q38_A223_VALIDATE_ONLY:-0}" == 1 ]]; then
   sed -n '1,180p' "$derived"
   sed -n '320,510p' "$derived"
   exit 0
 fi
 
-if [[ "${Q38_A220_VALIDATE_ONLY:-0}" != 1 ]]; then
+if [[ "${Q38_A223_VALIDATE_ONLY:-0}" != 1 ]]; then
   [[ "$(findmnt -no SOURCE,FSTYPE --target /mnt/usb-models)" == "/dev/sda2 fuseblk" ]] || {
-    printf 'FAIL: A220 evidence mount is not /dev/sda2 fuseblk\n' >&2
+    printf 'FAIL: A223 evidence mount is not /dev/sda2 fuseblk\n' >&2
     exit 1
   }
   [[ "$(findmnt -no SOURCE,FSTYPE --target /mnt/fast-ai)" == "/dev/nvme0n1p2 ext4" ]] || {
-    printf 'FAIL: A220 model mount is not /dev/nvme0n1p2 ext4\n' >&2
+    printf 'FAIL: A223 model mount is not /dev/nvme0n1p2 ext4\n' >&2
     exit 1
   }
-  expected_nvme_aer_cor=${Q38_A220_NVME_AER_BASELINE:-}
-  expected_root_aer_cor=${Q38_A220_ROOT_AER_BASELINE:-}
-  expected_nvme_sectors_read=${Q38_A220_NVME_SECTORS_READ_BASELINE:-}
+  expected_nvme_aer_cor=${Q38_A223_NVME_AER_BASELINE:-}
+  expected_root_aer_cor=${Q38_A223_ROOT_AER_BASELINE:-}
+  expected_nvme_sectors_read=${Q38_A223_NVME_SECTORS_READ_BASELINE:-}
   [[ "$expected_nvme_aer_cor" =~ ^[0-9]+$ && "$expected_root_aer_cor" =~ ^[0-9]+$ && \
      "$expected_nvme_sectors_read" =~ ^[0-9]+$ ]] || {
-    printf 'FAIL: A220 requires numeric host-control AER baselines\n' >&2
+    printf 'FAIL: A223 requires numeric host-control AER baselines\n' >&2
     exit 1
   }
   mem_available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
@@ -248,16 +248,16 @@ if [[ "${Q38_A220_VALIDATE_ONLY:-0}" != 1 ]]; then
   root_aer_cor=$(< /sys/bus/pci/devices/0000:00:03.1/aer_rootport_total_err_cor)
   nvme_sectors_read=$(awk '$3 == "nvme0n1" {print $6}' /proc/diskstats)
   nvme_available_bytes=$(df -B1 --output=avail /mnt/fast-ai | tail -1 | tr -d ' ')
-  (( mem_available_kib >= 120000000 )) || { printf 'FAIL: A220 requires MemAvailable >= 120000000 KiB\n' >&2; exit 1; }
-  (( swap_total_kib == 0 )) || { printf 'FAIL: A220 requires disk-backed swap disabled\n' >&2; exit 1; }
-  [[ "$aspm_policy" == *'[performance]'* ]] || { printf 'FAIL: A220 requires PCIe ASPM performance policy\n' >&2; exit 1; }
+  (( mem_available_kib >= 120000000 )) || { printf 'FAIL: A223 requires MemAvailable >= 120000000 KiB\n' >&2; exit 1; }
+  (( swap_total_kib == 0 )) || { printf 'FAIL: A223 requires disk-backed swap disabled\n' >&2; exit 1; }
+  [[ "$aspm_policy" == *'[performance]'* ]] || { printf 'FAIL: A223 requires PCIe ASPM performance policy\n' >&2; exit 1; }
   (( root_aer_cor == expected_root_aer_cor && nvme_aer_cor >= expected_nvme_aer_cor && \
      nvme_aer_cor - expected_nvme_aer_cor <= 64 && \
      nvme_sectors_read >= expected_nvme_sectors_read && \
      nvme_sectors_read - expected_nvme_sectors_read <= 134217728 )) || {
-    printf 'FAIL: A220 bounded local-NVMe guard failed\n' >&2; exit 1;
+    printf 'FAIL: A223 bounded local-NVMe guard failed\n' >&2; exit 1;
   }
-  (( nvme_available_bytes >= 220000000000 )) || { printf 'FAIL: A220 requires >= 220000000000 free NVMe bytes\n' >&2; exit 1; }
+  (( nvme_available_bytes >= 220000000000 )) || { printf 'FAIL: A223 requires >= 220000000000 free NVMe bytes\n' >&2; exit 1; }
 fi
 
 export MODEL_PATH=/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8
@@ -267,12 +267,12 @@ export KERNELS_SRC=/home/steve/src/vllm-xpu-kernels
 export VLLM_PYTHON=/home/steve/.venvs/vllm-xpu/bin/python
 export VLLM_BIN=/home/steve/.venvs/vllm-xpu/bin/vllm
 export RUN_PARENT=/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70
-export TORCH_TRACE=${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt220/torch-trace
+export TORCH_TRACE=${RUN_PARENT}/qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1-attempt223/torch-trace
 unset Q38_REPEATABILITY_TRACE_FILE
 unset VLLM_XPU_QWEN4_EXP_REPEATABILITY_TRACE_RANK
 unset VLLM_XPU_PLE_UVA_PREFETCH
 export CACHE_PARENT=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70
-export MTP=0 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=220 PORT=19890
+export MTP=0 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=223 PORT=19893
 export KV_CACHE_MEMORY_BYTES=134217728
 export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json
 export REASONING_PARSER=
