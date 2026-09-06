@@ -71,6 +71,8 @@ no longer pays the per-op all-reduce host waits:
 | depth | TP2 strict pair, graphs (tok/s) | TP2 eager (R239/R240) | gates |
 |---|---|---|---|
 | 4, + draft-only INT4 head (R257, R256 image) | **112.36 / 112.33** | 68.55 / 67.79 | G2 12/12, G3 12/12 x2 vs the eager MTP0 oracle; acceptance 3.51 |
+| 5, + draft-only INT4 head (R258) | 109.97 / 110.07 | - | G2 12/12, G3 12/12 x2 |
+| 6, + draft-only INT4 head (R258) | 108.34 / 108.37 | - | G2 12/12, G3 12/12 x2 |
 | 0 (MTP0) | **49.83 / 49.89** | 34.21 / 35.64 | G1 12/12; 12/12 vs the eager R239 MTP0 oracle (R253) |
 | 1 | 76.72 / 76.63 | 51.10 / 50.09 | G2 12/12, G3 12/12 x2, probe exact (R253) |
 | 4 | **91.00 / 91.01** | 68.55 / 67.79 | G2 12/12, G3 12/12 x2 vs the eager MTP0 oracle |
