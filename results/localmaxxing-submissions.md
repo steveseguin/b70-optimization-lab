@@ -706,6 +706,26 @@ events. Payload queue:
 | label | run id | c | headline | notes |
 | --- | --- | ---: | ---: | --- |
 | `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-realistic-20260904` | `cmtn32b2w000tmm01t7j2wlpn` | 1 | **14.433684 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 14.757123, p10 14.015291, full after-TTFT 16.058, wall 15.046, TTFT median 1.86 s) | attestation `20260904-tp4-mtp0-a134-promotion-attestation.json` binds the suite JSON to the A73/A78 quality and determinism evidence |
+### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, MTP0, never-routed experts host-placed (2026-09-06)
+
+Approved on submission (HTTP 201, run `cmtq4elns03ivn701hgvpo053`). Identity: the promoted
+MTP0 line with the clean placement overlay `cb59004b` (on `2169dbfe`; per-expert
+offset table in the Triton MoE kernel, load-time placement, tuned map keyed on the
+logical expert count), `FULL_DECODE_ONLY` capture size 1, `VLLM_XPU_MKLDNN_DETERMINISTIC=1`,
+public oneCCL twoshots, W13-N32 MoE map, TP4/EP4, 4352 served tokens. Placement: PLE
+table and input embeddings host-offloaded over UVA (12.25 GiB budget, 12.22 GiB/rank),
+every hot routed expert resident, 3.5 GiB/rank of never-routed experts (census of the
+exact-2K trajectory and the realistic suite) in pinned host memory. Frozen packets
+A223/A224 (battery, two servers) and A227 (suite). Fixed realistic suite v1 run once
+cold, cache zero on all twelve prompts, 512 requested output tokens; all twelve row
+hashes equal to the approved A188 and A134 runs. Payload queue:
+`experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a227-localmaxxing-payload-queue.json`;
+receipt `data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp0-placement-realistic-20260906.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-placement-realistic-20260906` | `cmtq4elns03ivn701hgvpo053` | 1 | **27.640875 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 27.645364, p10 27.632006, wall 26.767, TTFT median 0.55 s) | attestation `20260906-tp4-mtp0-a227-promotion-attestation.json`; supersedes `cmtp3g14502cun701y5ey93rh` (25.617613) as the fastest no-speculation row; every output pin unchanged |
+
 ### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, VRAM headroom (2026-09-05)
 
 Approved on submission (HTTP 201, run `cmtp5u0ip02eln701lntsl2ns`). Identity: the MTP1 lineage overlay `1b2a17c1`

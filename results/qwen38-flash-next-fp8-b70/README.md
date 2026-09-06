@@ -118,6 +118,37 @@ headroom is lossless but not faster than MTP1 (A186). Data: [A189 suite](../../e
 [A190 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json),
 [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-promotion-attestation.json).
 
+## 2026-09-06: hot experts resident, never-routed experts on the host, +8% bit-identical
+
+The headroom line still read its layer-0/1 routed experts over PCIe on every step
+(they are hot: routed for every token). The clean placement overlay `cb59004b` on the
+promoted `2169dbfe` line keeps the PLE table and input embeddings host-offloaded over
+UVA (`--cpu-offload-gb 12.25`, 12.22 GiB/rank), keeps every hot routed expert resident,
+and places 3.5 GiB/rank of experts that a census of the exact-2K trajectory and the
+realistic suite never routes to (543-587 experts per rank, [placement](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json))
+in pinned host memory at load time, behind a per-expert offset table in the Triton
+MoE kernel (same tiles, same math, bit-identical outputs). The tuned W13/N32 map is
+keyed on the logical expert count, which the first three placement screens
+(A210-A213) silently lost: placed layers had fallen back to the default MoE config at
+21 tok/s until all three lookup sites were fixed.
+
+| screen | headroom placement (2026-09-05) | expert placement (2026-09-06) | outputs |
+|---|---|---|---|
+| exact-2K conventional 99-interval | 25.43 / 25.43 (A187) | **27.48 / 27.34** (A223), 27.42 / 27.41 on a second server (A224) | `afffd211…` on every run |
+| exact-4K conventional 99-interval | 25.43 / 25.40 (A187) | **27.40 / 27.43** (A223), 27.40 / 27.36 (A224) | `c6193cc6…` |
+| fixed cold realistic suite, class-balanced median | 25.617613 (A188) | **27.640875 tok/s** (A227; all-prompt 27.65, p10 27.63, wall 26.77, TTFT median 0.55 s), LocalMaxxing run `cmtq4elns03ivn701hgvpo053` approved | all twelve row hashes equal to A188 and A134 |
+| allocator reserved / device free at the first step | 30.8 GiB / 0.02 GiB (PLE-only) | 28.8 GiB / 0.82 GiB | — |
+
+Certification: frozen-client battery on the clean head on two servers (A223, A224:
+6/7 quality with the inherited miss, 16/16 repeat, exact needle, both depth
+authorities), verifier receipt for the tuned-map selection, [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a227-promotion-attestation.json).
+Data: [A227 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a227-realistic-suite-v1-result.json), [A227 identity](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a227-identity.txt),
+[A223 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a223-fresh-repeat-deterministic-summary.json), [A224 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a224-fresh-repeat-deterministic-summary.json),
+[exact-2K pair summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a187-a213-a223-exact-2k-pair-summary.json), [day summary](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md).
+The same placement on the lossless MTP1 head (`005dc578`) reproduces both depth
+authorities at exact-2K 33.21 / 33.22 and exact-4K 32.48 / 32.50 tok/s (A225 battery,
+6/7 quality, 16/16 repeat, exact needle); its realistic-suite row follows.
+
 LocalMaxxing: the promoted MTP0 line is submitted and approved
 (`cmtn32b2w000tmm01t7j2wlpn`, 2026-09-04) on the fixed realistic suite run
 once cold: 14.433684 tok/s class-balanced median of prompt-class medians

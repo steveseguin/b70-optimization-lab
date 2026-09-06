@@ -4490,6 +4490,17 @@ first time: CPU soft lockups in the vLLM worker during a checkpoint load from
 the root NVMe, so eager-lineage runs now load from the USB copy. See the
 [A182 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md)
 and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md).
+On 2026-09-06 the never-routed experts moved to host memory instead of the hot ones:
+the clean placement overlay `cb59004b` (per-expert offset table in the Triton MoE
+kernel, load-time placement of 3.5 GiB/rank of experts a census never routes to, PLE
+and embeddings still over UVA, every hot expert resident) holds every output pin at
+exact-2K 27.48/27.34 and exact-4K 27.40/27.43 on two servers (A223, A224) and scores
+27.640875 tok/s class-balanced on the fixed cold realistic suite (A227,
+LocalMaxxing-approved `cmtq4elns03ivn701hgvpo053`). The first three placement screens
+read 21 tok/s because the tuned MoE map is keyed on the weight tensor's expert count
+and placed layers are resident-sized; three lookup sites now use the logical count.
+The same placement on the lossless MTP1 head reproduces both depth authorities at
+33.2 (2K) / 32.5 (4K) tok/s (A225); its suite row is running.
 The MTP1 line followed the same evening: on its lineage overlay `1b2a17c1` with the
 identical placement flags, the frozen-client battery (A190) reproduces both MTP0
 depth authorities at 28.3-28.7 (2K) and 27.3-30.3 (4K) tok/s, and the fixed cold
