@@ -1,0 +1,53 @@
+{
+ "reference": "A175 (promoted identity, PLE-only placement, overlay 08df70ea): the exact-2K authority afffd211\u2026 token ids",
+ "servers": {
+  "A187": "2169dbfe (promoted overlay, 13.4 GiB headroom identity, 25.43 tok/s)",
+  "A213": "c4f921f5 (placement identity before the tuned-map fix: default MoE config on placed layers)",
+  "A223": "cb59004b (clean placement head: PLE + embeddings offloaded at 12.25, hot experts resident, 3.5 GiB/rank never-hit experts host-placed, tuned map keyed on the logical expert count)"
+ },
+ "rows": [
+  {
+   "run": "a187-exact-depth-2k-r1",
+   "overlay_head": "2169dbfe",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 25.428
+  },
+  {
+   "run": "a187-exact-depth-2k-r2",
+   "overlay_head": "2169dbfe",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 25.434
+  },
+  {
+   "run": "a213-exact-depth-2k-r1",
+   "overlay_head": "c4f921f5 (placement, tuned map lost)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 21.194
+  },
+  {
+   "run": "a213-exact-depth-2k-r2",
+   "overlay_head": "c4f921f5 (placement, tuned map lost)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 21.179
+  },
+  {
+   "run": "a223-exact-depth-2k-r1",
+   "overlay_head": "cb59004b",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 27.479
+  },
+  {
+   "run": "a223-exact-depth-2k-r2",
+   "overlay_head": "cb59004b",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 27.344
+  }
+ ],
+ "all_identical": true
+}
