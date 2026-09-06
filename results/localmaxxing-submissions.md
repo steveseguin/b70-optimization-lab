@@ -706,6 +706,25 @@ events. Payload queue:
 | label | run id | c | headline | notes |
 | --- | --- | ---: | ---: | --- |
 | `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-realistic-20260904` | `cmtn32b2w000tmm01t7j2wlpn` | 1 | **14.433684 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 14.757123, p10 14.015291, full after-TTFT 16.058, wall 15.046, TTFT median 1.86 s) | attestation `20260904-tp4-mtp0-a134-promotion-attestation.json` binds the suite JSON to the A73/A78 quality and determinism evidence |
+### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, never-routed experts host-placed (2026-09-06)
+
+Approved on submission (HTTP 201, run `cmtq59cy503jvn701kgvg62zt`). Identity: the lossless
+MTP1 line (head `1b2a17c1`) with the same nine placement commits as the MTP0 row
+(overlay `005dc578`): PLE table and input embeddings host-offloaded over UVA (12.25 GiB
+budget, 12.22 GiB/rank), every hot routed expert resident, 3.5 GiB/rank of
+never-routed experts in pinned host memory behind a per-expert offset table, tuned
+W13-N32 map keyed on the logical expert count, one publisher speculative token.
+Frozen packets A225 (battery: exact-2K 33.21/33.22, exact-4K 32.48/32.50, both MTP0
+authorities reproduced, 6/7 quality, 16/16 repeat, exact needle) and A226 (suite).
+Fixed realistic suite v1 run once cold, cache zero on all twelve prompts; all twelve
+row hashes equal to the approved MTP0 and MTP1 rows. Payload queue:
+`experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-localmaxxing-payload-queue.json`;
+receipt `data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp1-placement-realistic-20260906.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp1-placement-realistic-20260906` | `cmtq59cy503jvn701kgvg62zt` | 1 | **31.929484 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 31.523812, p10 30.192517, wall 30.993, TTFT median 0.57 s) | attestation `20260906-tp4-mtp1-a226-promotion-attestation.json`; supersedes `cmtp5u0ip02eln701lntsl2ns` (27.048435) as the fastest quality-preserving row; every output pin equal to the MTP0 line |
+
 ### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, MTP0, never-routed experts host-placed (2026-09-06)
 
 Approved on submission (HTTP 201, run `cmtq4elns03ivn701hgvpo053`). Identity: the promoted

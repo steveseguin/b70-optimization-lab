@@ -4500,7 +4500,9 @@ LocalMaxxing-approved `cmtq4elns03ivn701hgvpo053`). The first three placement sc
 read 21 tok/s because the tuned MoE map is keyed on the weight tensor's expert count
 and placed layers are resident-sized; three lookup sites now use the logical count.
 The same placement on the lossless MTP1 head reproduces both depth authorities at
-33.2 (2K) / 32.5 (4K) tok/s (A225); its suite row is running.
+33.2 (2K) / 32.5 (4K) tok/s (A225) and scores 31.929484 tok/s class-balanced on
+the fixed cold realistic suite (A226, LocalMaxxing-approved `cmtq59cy503jvn701kgvg62zt`),
+the fastest quality-preserving Flash-Next line.
 The MTP1 line followed the same evening: on its lineage overlay `1b2a17c1` with the
 identical placement flags, the frozen-client battery (A190) reproduces both MTP0
 depth authorities at 28.3-28.7 (2K) and 27.3-30.3 (4K) tok/s, and the fixed cold
