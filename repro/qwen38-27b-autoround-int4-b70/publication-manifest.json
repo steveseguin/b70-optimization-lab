@@ -91,6 +91,10 @@
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-final-config.env",
         "sha256": "0762e0c605ecb2b608fcf7d5317561351cb7931a342b5b044710cb74dd651564"
+      },
+      {
+        "path": "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
+        "sha256": "e0ca50bc001036321d69f058ecc8b3d768fb775518e72324632a5d04f7cd453b"
       }
     ]
   },
@@ -126,6 +130,19 @@
       "serving_configurations": {
         "eager_r239": "VLLM_BATCH_INVARIANT=1, split_reductions=false, cudagraph_mode PIECEWISE sizes [1], VLLM_XPU_ENABLE_XPU_GRAPH=0",
         "graph_r247": "same + VLLM_XPU_ENABLE_XPU_GRAPH=1, cudagraph_mode FULL_DECODE_ONLY, capture sizes [1,2,3,4,5,6,8]; TP2 depth 4 91.004/91.012 tok/s lossless (launcher default XPU_GRAPH=1)"
+      }
+    },
+    "r256": {
+      "description": "R228 + draft-only INT4 lm_head fallback (docker/r256-draft-int4-head-fallback.py). Served with graph capture and VLLM_XPU_DRAFT_LM_HEAD_INT4=1: TP2 depth 4 112.362/112.325 tok/s lossless (R257).",
+      "image": {
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256",
+        "id": "sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
+        "xpu_ops_sha256": "c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1",
+        "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+        "prebuilt": {
+          "url": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
+          "note": "registry digest equals the local image id; public package"
+        }
       }
     }
   },
@@ -207,10 +224,10 @@
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-        "sha256": "489de520bb97b1ded126ed6caaef10e6e18bd8e44815fb091ab496b23d0b27c8"
+        "sha256": "a1b16fc6c78af65665599ac17f440d334f5975c58b89615b6f0faa7b1956d265"
       }
     ],
-    "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16."
+    "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16. R257 (R256 image, draft-only INT4 head + graphs): TP2 depth 4 112.362/112.325, 12/12 vs each other and vs the eager oracle."
   },
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",

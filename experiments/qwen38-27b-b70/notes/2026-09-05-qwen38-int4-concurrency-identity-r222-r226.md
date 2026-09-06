@@ -157,3 +157,15 @@ The INT4 two-card line under graph capture is therefore: MTP0 49.8, depth 1 76.7
 89.0, depth 6 84.0 tok/s, every pair lossless against the eager MTP0 oracle; MTP0 output identical to a single request
 through 64 concurrent users; speculative depths identical through c8 (depth 1) / c2 and c16 (depth 4), with the
 composition residual beyond. The FP8 line does not gain from the same capture (R252).
+
+## R254-R257 (2026-09-06 00:35): the draft passes
+
+FULL_AND_PIECEWISE (R254) captures the same single decode graph (91.06/90.97); the drafter is not compiled through a
+piecewise path here. `VLLM_USE_BREAKABLE_CUDAGRAPH=1` (R255) wraps the drafter but breaks the capture at every custom
+op: 71.3 tok/s and G3 9/12, rejected. The draft-only INT4 lm_head (the FP8 lane's r62 feature) refused this lane
+because the gptq relabel's head carries an AutoGPTQ method object without `make_xpu_int4_draft_copy`; R256
+(`docker/r256-draft-int4-head-fallback.py`) falls back to the generic embedding method's implementation (RTN INT4,
+group 128, `_xpu_C.int4_gemm_w4a16` under the fixed-K library). R257 (R256 image, graphs, head on): **112.36 / 112.33
+tok/s** at depth 4, G2 12/12, G3 12/12 vs the eager oracle, acceptance 3.51 (vs 3.00 with the FP16 head). The
+verifier head is FP16 throughout. Headline configuration: R256 image, batch-invariant, split_reductions=false, graph
+capture FULL_DECODE_ONLY 1-8, draft-only INT4 head.

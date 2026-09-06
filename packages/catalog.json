@@ -1814,7 +1814,7 @@
           "fixed-k"
         ],
         "published_at": "2026-09-05",
-        "benchmark_status": "Research-status (2026-09-05). Headline: TP2 with XPU graph capture (FULL_DECODE_ONLY, sizes 1-8): MTP0 49.833/49.887 tok/s (G1 12/12, 12/12 vs the eager oracle, R253), depth 1 76.723/76.629 (R253), depth 4 91.004/91.012 tok/s, G2 12/12 and G3 12/12 vs the eager MTP0 oracle (R247); depth 5 88.844/89.117, depth 6 84.060/83.982 (R250); TP1 depth 4 with graphs 56.911/56.898 (R246b). Eager R239 matrix: TP2 strict pairs: MTP0 34.210/35.640 tok/s (G1 12/12), depth 1 51.098/50.088, depth 2 61.140/61.541, depth 3 67.613/67.831, depth 4 68.552/67.789 (R240 re-run; first pass 68.218 single arm) - every pair 12/12 vs each other and vs the MTP0 oracle, depth-1 probe exact. TP1 (one card): MTP0 32.960/32.945 (G1 12/12), depth 1 49.640/49.468, depth 2 56.505/56.449, depth 3 58.471/58.474, depth 4 56.292/56.251, all 12/12 vs each other and vs the oracle. Identity ladders: MTP0 exact c1-c64 in 6 of 8 ladders on TP2 and TP1 (TP2 998.6, TP1 447.6 tok/s aggregate at c64; the others one near-tie miss at c32 or c64); TP2 speculative depths exact through c16 (650/522/599/516 tok/s aggregate), c32 30/32, c64 58-60/64; TP1 depths exact through c8 (c16 15/16 or 16/16), c32 29-31/32, c64 60-62/64. No promotion or LocalMaxxing submission yet."
+        "benchmark_status": "Research-status (2026-09-06). Headline: TP2 depth 4 with XPU graph capture and the draft-only INT4 lm_head (R257, R256 image) 112.362/112.325 tok/s, G2 12/12 and G3 12/12 vs the eager MTP0 oracle, acceptance 3.51. Graphs without the draft head (R247/R250/R253): MTP0 49.833/49.887, depth 1 76.723/76.629, depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982. Eager R239 matrix: TP2 MTP0 34.210/35.640, d1 51.098/50.088, d2 61.140/61.541, d3 67.613/67.831, d4 68.552/67.789; TP1 MTP0 32.960/32.945, d1 49.640/49.468, d2 56.505/56.449, d3 58.471/58.474, d4 56.292/56.251; every pair 12/12 vs each other and vs the MTP0 oracle. Identity ladders: MTP0 exact c1-c64 (eager and under graphs); speculative depths exact through c16 (eager TP2) / c8 (TP1, graphs), c32 >= 29/32, c64 >= 58/64. R258/R259 (depths 5-6 and ladders on the headline configuration) pending. No promotion or LocalMaxxing submission yet."
       },
       "contributors": [
         {
@@ -1843,12 +1843,12 @@
       },
       "runtime": {
         "kind": "container",
-        "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
-        "image_id_validated": "sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d",
-        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228",
+        "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
+        "image_id_validated": "sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256",
         "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
         "xpu_ops_sha256": "c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1",
-        "base": "neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-gdn-split-mixed-r156 (R156 chain) + R213b/R224/R228 Python overlays + R221 rebuilt _xpu_C",
+        "base": "R228 (fixed-K _xpu_C + FP16 row chunks + GDN spec grouping) + R256 draft-only INT4 lm_head fallback",
         "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
         "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
         "onednn_head": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
@@ -1856,18 +1856,19 @@
       "project_patches": {
         "required": true,
         "items": [
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
-          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
           "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
           "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
-          "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py"
+          "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+          "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
+          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+          "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch"
         ]
       },
       "commands": {
-        "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04224cb3f4be881ae41dbef4fa7841f4ab26fbbe09e4e780fe361ff7d neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-r228 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-        "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+        "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3 neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256 EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=c91d6b0d56a68b179a0fb3124ffc2c77082248600b6ad98fa5b5220ae233d4f1 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+        "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
         "health": "curl -fsS http://127.0.0.1:18134/health",
         "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
         "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
@@ -1879,6 +1880,7 @@
         "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
         "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
         "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+        "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
         "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
         "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
         "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
@@ -1890,6 +1892,7 @@
         "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
         "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
         "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
+        "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r256-image-ghcr.sh",
         "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
         "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
         "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
@@ -2108,7 +2111,7 @@
       ],
       "missing": [
         "clean-host replay",
-        "speculative-depth output identity above 16 concurrent users (near-tie prompts differ at c32/c64; MTP0 is exact through c64 in most runs)"
+        "R258/R259 on the graph + draft-head configuration"
       ]
     },
     {

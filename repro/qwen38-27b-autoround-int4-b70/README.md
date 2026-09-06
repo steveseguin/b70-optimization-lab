@@ -33,7 +33,9 @@ the MTP-vs-MTP0 oracle gate are the FP8 lane's.
    in `inductor_compile_config` (size-independent reduction order for the compiled RMSNorm and other reductions);
    `VLLM_XPU_GDN_SPEC_GROUP` / `VLLM_XPU_GDN_PREFILL_GROUP` (R228/R236) group the GDN launches.
 
-Images: `neural-download/vllm-openai-xpu:qwen38-int4-w4a16-fixed-k-r221` (699e2699, `_xpu_C` 271db0d4) ->
+Images: `neural-download/vllm-openai-xpu:qwen38-int4-w4a16-fixed-k-r221` (699e2699, `_xpu_C` 271db0d4) -> ... ->
+`...:qwen38-int4-draft-int4-head-r256` (f7696bca, the served image; GHCR
+`vllm-openai-xpu-qwen38-int4@sha256:f7696bca...`). Earlier: `...:qwen38-int4-w4a16-fixed-k-r221` ->
 `...:qwen38-int4-fp16-rowchunk-r224` (a23ff249) -> `...:qwen38-int4-gdn-spec-group-r228` (aaf920b0, `_xpu_ops.py`
 c91d6b0d) -> `...:qwen38-int4-gdn-prefill-group-r236` (9488db61, `_xpu_ops.py` 015b4dce). Launch through the FP8 lane's
 launchers with `MODEL_DIR=<relabel dir> MODEL_MANIFEST=<relabel manifest> QUANTIZATION=gptq VLLM_XPU_FP8_BLOCK_W8A16=0
@@ -68,6 +70,7 @@ no longer pays the per-op all-reduce host waits:
 
 | depth | TP2 strict pair, graphs (tok/s) | TP2 eager (R239/R240) | gates |
 |---|---|---|---|
+| 4, + draft-only INT4 head (R257, R256 image) | **112.36 / 112.33** | 68.55 / 67.79 | G2 12/12, G3 12/12 x2 vs the eager MTP0 oracle; acceptance 3.51 |
 | 0 (MTP0) | **49.83 / 49.89** | 34.21 / 35.64 | G1 12/12; 12/12 vs the eager R239 MTP0 oracle (R253) |
 | 1 | 76.72 / 76.63 | 51.10 / 50.09 | G2 12/12, G3 12/12 x2, probe exact (R253) |
 | 4 | **91.00 / 91.01** | 68.55 / 67.79 | G2 12/12, G3 12/12 x2 vs the eager MTP0 oracle |
@@ -75,8 +78,10 @@ no longer pays the per-op all-reduce host waits:
 | 6 | 84.06 / 83.98 | - | G2 12/12, G3 12/12 x2 |
 | 4, TP1 | 56.91 / 56.90 | 56.29 / 56.25 | G2 12/12, G3 12/12 x2 |
 
-Acceptance is unchanged (3.00 per step at depth 4), so the whole gain is per-step time; on one card there is no
-collective to remove. Graph replay is bit-identical to eager execution (every pair matched the eager oracle). The
+Acceptance is unchanged by graph capture (3.00 per step at depth 4), so that gain is per-step time; on one card there
+is no collective to remove. The draft-only INT4 lm_head (the FP8 lane's feature, unlocked for this lane by the R256
+fallback, `docker/r256-draft-int4-head-fallback.py`) makes each draft pass a quarter of the bytes and, measured, raises
+acceptance to 3.51: depth 4 goes from 91.0 to **112.4 tok/s**. The verifier head stays FP16; every gate stays 12/12. Graph replay is bit-identical to eager execution (every pair matched the eager oracle). The
 launcher `scripts/run-fixed-k-mtp-server.sh` enables this by default (`XPU_GRAPH=0` restores eager). Two negatives from
 the same evening: the community checkpoint's BF16 draft tensors (R244/R245) are lossless but accept fewer tokens than
 the AutoRound INT4 draft (3.21 vs 3.52 per step on TP1; 52.0 vs 56.3 tok/s), and vLLM's generic `mtp` proposer is
