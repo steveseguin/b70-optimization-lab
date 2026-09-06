@@ -90,3 +90,22 @@ serial-exact lanes (`VLLM_XPU_GDN_NATIVE_SPEC_{CONV,RECURRENT,DELTA}_SERIAL_EXAC
 the ordinary one-token kernels with an explicit source-row snapshot, but are gated to exactly one pure-spec request
 (`num_spec_decodes == 1`). Every launcher sets them to 0, so c1 and c32 both used the batched kernel. Next: generalize
 the serial-exact lanes to N requests (R242 kernel-library patch) and screen the ladders with them on.
+
+## R242/R243 and the argmax census (21:45): what the residual is not
+
+R242 (`patches/vllm-xpu-kernels-qwen38-gdn-serial-exact-n-requests-r242-20260905.patch`, image
+`qwen38-int4-gdn-serial-n-r242` 9634a783, `_xpu_C` 06e3ae6c) generalizes both serial-exact GDN lanes from one pure-spec
+request to N: every verifier row of every request is replayed through the ordinary one-token conv and recurrent
+kernels with the source-row snapshot. R243 (lanes engaged on both ranks): depth-4 ladder exact through c16, c32 31/32
+(rollback-c018@123), c64 60/64 (cache-c016@75, rollback-c018@77, monitoring-c036@41, capacity-c046@18) at a third of
+the throughput (c16 174 vs 517 tok/s). A planted exact-tie argmax census on XPU returns the first index at every batch
+size 1-320 in fp16 and fp32. So the residual is not the W4A16 GEMM, not the FP16 linears, not attention splits, not
+Inductor reductions, not the GDN speculative arithmetic or state transaction, not the all-reduce (TP1 identical), and
+not argmax tie-breaking. What is left: (a) position-in-buffer dependence inside a kernel (gathering rows into a
+contiguous buffer changes results even for a single request, R235/R237 c4 flips), (b) the XE2 prefill chunk-scan
+batched across prompts in the first mixed steps (would explain the MTP0 timing residual), (c) something outside the
+censused kernels. The decisive next step is the lab's boundary-trace method: dump per-layer hidden states for a
+flipping prompt at c1 and at c32 from the same server and find the first op whose bits differ. This image has no trace
+hooks (the older lane's `VLLM_XPU_*_TRACE_FILE` switches are not in r156-derived images); adding one inside the GDN
+custom op and after each decoder layer is a Python patch, but the compiled graph must be split at those points, which
+changes the arithmetic it measures. That trade-off is the next design decision.

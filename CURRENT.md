@@ -460,6 +460,12 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   (three identity-qualified profiles), catalog and pages updated. All publication surfaces updated (recipe, package, catalog, pages, top-level README rows,
   `repro/qwen38-27b-autoround-int4-b70/publication-manifest.json`). Open: the GDN
   composition residual at c32+/c64 with speculation (research item), clean-host replay.
+- **Residual hunt closed for today (21:45):** R241 switch unimplemented; R242/R243 N-request serial-exact GDN lanes
+  engaged and did not move the flips (c32 31/32, c64 60/64, 3x slower); XPU argmax tie-break is first-index at every
+  batch size. Excluded: every censused kernel plus the all-reduce and argmax. Remaining: position-in-buffer dependence,
+  the XE2 prefill chunk-scan across prompts, or something uncensused; next is a per-layer boundary trace at c1 vs c32
+  (needs hooks; see the note). Published bar stands: MTP0 exact c1-c64 (6/8 runs), speculation exact through c16
+  (TP2) / c8 (TP1), c32 >= 29/32, c64 >= 58/64.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
   needs the split_reductions flag added before it runs.
