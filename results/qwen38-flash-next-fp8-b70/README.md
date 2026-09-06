@@ -2,9 +2,10 @@
 
 Status: **research screen; not deployment-qualified.** The deterministic
 full-decode-graph MTP0 line (below) is the lab's promoted TP4 record as of
-2026-09-03; it is still not a portable recipe.
+2026-09-03, and on 2026-09-05 it doubled with no output change by ending the
+driver's VRAM paging (see the headroom section); it is still not a portable recipe.
 
-Last updated: 2026-09-03
+Last updated: 2026-09-05
 
 This packet covers the first instrumentation-free TP4/EP4 server results for the official
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves
@@ -77,6 +78,34 @@ eager MTP0, `4.67` MTP3 formal), it is 2.4-2.7x faster with no speculation,
 because the full decode graph removes the host submission cost that bound
 the eager line. MTP on this line is the next lever; the previous MTP screens
 were blocked from exact verification by the jitter.
+
+## 2026-09-05: the promoted line at 2x, bit-identical, from VRAM headroom
+
+The promoted deterministic full-decode-graph MTP0 line was paying its decode step
+to the GPU driver, not to the model. Each rank's weights fill the B70 to 31.75 GiB
+of 31.89 GiB, and the xe driver pages whole 419 MB expert buffers back over PCIe on
+every touch of a cold expert (offline: a full rank of expert weight sets costs
+21.7 / 12.2 ms per MoE GEMM at 30.2 GB resident and 0.23 / 0.16 ms at 29 GB).
+Offloading the vocab-sharded embedding and the first routed-expert tensors to
+pinned host memory through the UVA path the PLE already uses (`--cpu-offload-params
+ple_embedding.ngram_embedding.weight embed_tokens.weight mlp.experts`,
+`--cpu-offload-gb 13.4`; every rank reports 13.78 GiB offloaded) ends the paging.
+The same Triton kernels read the same bytes, so every output pin is unchanged:
+
+| screen | promoted placement (PLE-only) | headroom placement | outputs |
+|---|---|---|---|
+| graph decode step, M=1 | 74.5 ms (A175) | **37.0 ms** (A179), 35.8 ms at budget 12.5 (A181) | — |
+| exact-2K conventional 99-interval | 14.42 tok/s (A175) | **25.43 / 25.43** (A187, promoted overlay; 25.13-25.20 on A179/A180) | `afffd211…` on every run |
+| exact-4K conventional 99-interval | 12.87 tok/s (A73/A78) | **25.43 / 25.40** (A187) | `c6193cc6…` |
+| fixed cold realistic suite, class-balanced median | 14.433684 tok/s (A134, approved) | **25.617613 tok/s** (A188, promoted overlay; 25.273 on the diagnostic overlay A182), LocalMaxxing run `cmtp3g14502cun701y5ey93rh` approved | all twelve row hashes equal to A134 |
+| realistic TTFT median | 1.856 s | **0.589 s** | — |
+
+Notes: [A182 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md),
+[day summary](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md);
+data: [A182 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-realistic-suite-v1-result.json),
+[A179/A180 exact-2K pair](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a179-a180-exact-2k-pair-summary.json),
+[full-rank cliff](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-b70-moe-gemm-full-rank-sets-probe-card0.log).
+Certification battery (frozen client on the promoted overlay `2169dbfe`, flags-only change): [A187 result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a187-certification-battery-headroom-result.md), 6/7 quality with the inherited miss, 16/16 repeat, exact needle, both depth authorities reproduced; [A188 suite note](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md) (A182 diagnostic-overlay twin), [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-promotion-attestation.json).
 
 LocalMaxxing: the promoted MTP0 line is submitted and approved
 (`cmtn32b2w000tmm01t7j2wlpn`, 2026-09-04) on the fixed realistic suite run

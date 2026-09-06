@@ -4442,3 +4442,22 @@ reset-then-start window. See the
 [A143 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp1-a143-request-shape-matrix-result.md),
 the [A145/A146 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp0-a145-a146-moe-share-of-the-graph-step.md)
 and the [A141/A142 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-04-tp4-mtp1-a141-a142-subop-timing-attribution.md).
+
+On 2026-09-05 the Flash-Next lane found where the promoted 72.7 ms graph
+decode step actually goes: VRAM paging. Each rank's weights fill the B70 to
+31.75 GiB of 31.89, and the xe driver pages whole 419 MB expert buffers back
+over PCIe on every cold touch (forced-routing steps A171/A172 at 125-159 ms;
+an offline full rank of expert weight sets costs 21.7/12.2 ms per MoE GEMM at
+30.2 GB resident and 0.23/0.16 ms at 29 GB, with no watermark slack). Moving
+1.6 GiB of expert weights to pinned host memory through the UVA path the PLE
+already uses (`mlp.experts` under a 13.4 GiB budget) halves the step to 37.0
+ms with every output pin unchanged: exact-2K `afffd211…` on A179, on a fresh server twice (A180) and on the
+promoted overlay (A187, whose frozen-client battery also reproduces the exact-4K
+authority `c6193cc6…` at 25.4 tok/s and passes 6/7 quality, 16/16 repeat, needle), and the fixed cold realistic suite at
+25.273193 tok/s class-balanced (A188) with all twelve row hashes equal to the
+approved A134 run (14.433684). Under 1 GiB of headroom already suffices
+(A181, 35.8 ms). The seventh host freeze (14:42) left a kernel trace for the
+first time: CPU soft lockups in the vLLM worker during a checkpoint load from
+the root NVMe, so eager-lineage runs now load from the USB copy. See the
+[A182 note](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-tp4-mtp0-a182-realistic-suite-headroom-result.md)
+and the [day summary](experiments/qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md).

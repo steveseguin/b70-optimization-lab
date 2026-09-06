@@ -126,6 +126,7 @@ the conventional 99-interval field.
 | Qwen3.8 27B AutoRound INT4, TP2 MTP4 | 2x Arc Pro B70 | Historical `100.497083` is preserved as a measured margin-on speed observation; it used the same output-changing margin and margin-on baseline, and upstream disposition remains a human decision | `cmszarna10e0nms0103hv0tve` | [corrected evidence](../data/qwen38-27b-autoround-int4-baseline-20260818.json); [receipt](../data/localmaxxing-responses/qwen38-27b-int4-autoround-tp2-mtp4-20260818.json); [position](../experiments/qwen38-27b-b70/notes/2026-08-23-lmx-position-and-candidates.md) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0 | 4x Arc Pro B70 | **14.433684 conventional interval median (class-balanced; 14.757123 all-prompt median)**, fixed cold realistic gate, no speculation, outputs bit-identical across five servers | [`cmtn32b2w000tmm01t7j2wlpn`](https://www.localmaxxing.com/runs/cmtn32b2w000tmm01t7j2wlpn) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260904-tp4-mtp0-a134-realistic-suite-v1-result.json); [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260904-tp4-mtp0-a134-promotion-attestation.json) |
+| Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, VRAM headroom | 4x Arc Pro B70 | **25.617613 conventional interval median (class-balanced; 25.880608 all-prompt median)**, fixed cold realistic gate, no speculation, outputs identical to the approved 14.43 line on every row (1.6 GiB of expert weights host-offloaded ends the xe driver's whole-buffer VRAM paging) | [`cmtp3g14502cun701y5ey93rh`](https://www.localmaxxing.com/runs/cmtp3g14502cun701y5ey93rh) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-realistic-suite-v1-result.json); [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-promotion-attestation.json) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 47.819 median tok/s, fixed cold realistic gate | `cmrjbx8bc02g8mj01yzz2v701` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json) |
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
@@ -696,4 +697,24 @@ events. Payload queue:
 | label | run id | c | headline | notes |
 | --- | --- | ---: | ---: | --- |
 | `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-realistic-20260904` | `cmtn32b2w000tmm01t7j2wlpn` | 1 | **14.433684 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 14.757123, p10 14.015291, full after-TTFT 16.058, wall 15.046, TTFT median 1.86 s) | attestation `20260904-tp4-mtp0-a134-promotion-attestation.json` binds the suite JSON to the A73/A78 quality and determinism evidence |
+### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, MTP0, VRAM headroom (2026-09-05)
+
+Approved on submission (HTTP 201, run `cmtp3g14502cun701y5ey93rh`). Identity: the promoted MTP0
+line's exact code (overlay `2169dbfe` on `1372c62d` + staged kernels `2f829747`,
+`FULL_DECODE_ONLY` capture size 1, `VLLM_XPU_MKLDNN_DETERMINISTIC=1`, public oneCCL
+twoshots, W13-N32 MoE map, TP4/EP4, 4352 served tokens) with only the placement
+changed: `embed_tokens.weight` and the routed experts matched by `mlp.experts`
+host-offloaded under a 13.4 GiB UVA budget (every rank 13.78 GiB: embedding,
+layer-0 experts, PLE, layer-1 experts, layer-2 `w13_weight`), frozen packet A187/A188
+at attempt 188. Fixed realistic suite v1 run once cold, cache zero on all twelve
+prompts, 512 requested output tokens, every row past 100 generated events; all
+twelve row hashes equal to the approved A134 run. The old step was the xe driver
+paging whole expert buffers over PCIe with the card full to the byte. Payload queue:
+`experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-localmaxxing-payload-queue.json`;
+receipt `data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp0-headroom-realistic-20260905.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-headroom-realistic-20260905` | `cmtp3g14502cun701y5ey93rh` | 1 | **25.617613 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 25.880608, p10 25.816470, full after-TTFT 25.652, wall 24.830, TTFT median 0.59 s) | attestation `20260905-tp4-mtp0-a188-promotion-attestation.json` binds the suite JSON to the A187 frozen-client battery (6/7 quality, 16/16 repeat, exact needle, exact-2K/4K authorities) and the three-server exact-2K pair |
+
 
