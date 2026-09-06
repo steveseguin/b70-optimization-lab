@@ -150,7 +150,7 @@ authorities at exact-2K 33.21 / 33.22 and exact-4K 32.48 / 32.50 tok/s (A225 bat
 6/7 quality, 16/16 repeat, exact needle) and scores **31.929484 tok/s** class-balanced on the
 fixed cold realistic suite (A226; all-prompt 31.52, p10 30.19, wall 30.99, TTFT median
 0.57 s; all twelve row hashes equal to the MTP0 rows), LocalMaxxing run
-`cmtq59cy503jvn701kgvg62zt` approved: the fastest quality-preserving Flash-Next line. Replay guide: [`repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/`](../../repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md) (`lab-replay`, candidate package).
+`cmtq59cy503jvn701kgvg62zt` approved: the fastest quality-preserving Flash-Next line. Replay guide: [`repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/`](../../repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md) (`lab-replay`, candidate package). MTP2 on the same identity is lossless but slower (A228: exact-2K 30.94 tok/s on the warm pass), so MTP1 remains the record.
 Data: [A226 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-realistic-suite-v1-result.json),
 [A225 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a225-fresh-repeat-deterministic-summary.json),
 [A190/A225 pair](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a190-a225-exact-2k-pair-summary.json),
