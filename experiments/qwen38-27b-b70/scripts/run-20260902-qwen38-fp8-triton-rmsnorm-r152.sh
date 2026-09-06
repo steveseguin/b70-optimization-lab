@@ -157,7 +157,7 @@ if [[ "${PROBE_AND_LADDER_MTP1:-0}" == 1 ]]; then
   log "G5 probe: $(tail -n 3 "${server_dir}/medium-prefill-probe.stdout" | tr '\n' ' ')"
   stop_server "${server_name}" "${server_pid}" "${server_dir}"
   postflight probe-mtp1-post
-  launch ladder mtp1 256 64 512
+  launch ladder mtp1 "${LADDER_MML:-256}" "${LADDER_MNS:-64}" "${LADDER_MBT:-512}"
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
     --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
@@ -183,7 +183,7 @@ if [[ "${STRICT_MTP1_ONLY:-0}" == 1 ]]; then
 fi
 if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   log "LADDERS_ONLY: skipping the strict oracle and candidate stages"
-  launch ladder mtp1 256 64 512
+  launch ladder mtp1 "${LADDER_MML:-256}" "${LADDER_MNS:-64}" "${LADDER_MBT:-512}"
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
     --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
@@ -192,7 +192,7 @@ if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   log "G6 ladder harness exit $?"
   stop_server "${server_name}" "${server_pid}" "${server_dir}"
   postflight ladder-post
-  launch ladder-mtp0 mtp0 256 64 512
+  launch ladder-mtp0 mtp0 "${LADDER_MML:-256}" "${LADDER_MNS:-64}" "${LADDER_MBT:-512}"
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
     --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
@@ -240,7 +240,7 @@ log "G3 mtp1-b vs mtp0-a: $(compare_pair "${root}/mtp1-b/strict" "${root}/mtp0-a
 log "information: mtp1-a vs frozen R54a: $(compare_pair "${root}/mtp1-a/strict" "${frozen_oracle}" "${root}/compare-mtp1-a-vs-r54a.json")"
 
 # ---------------- identity ladder ----------------
-launch ladder mtp1 256 64 512
+launch ladder mtp1 "${LADDER_MML:-256}" "${LADDER_MNS:-64}" "${LADDER_MBT:-512}"
 python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
   --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
   --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
@@ -253,7 +253,7 @@ grep -c "R152 Gemma RMSNorm Triton route armed" "${server_dir}/server.log" >"${s
 log "ladder: R152 marker lines $(cat "${server_dir}/r152-marker-count.txt")"
 stop_server "${server_name}" "${server_pid}" "${server_dir}"
 postflight ladder-post
-launch ladder-mtp0 mtp0 256 64 512
+launch ladder-mtp0 mtp0 "${LADDER_MML:-256}" "${LADDER_MNS:-64}" "${LADDER_MBT:-512}"
 python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
   --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
   --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \

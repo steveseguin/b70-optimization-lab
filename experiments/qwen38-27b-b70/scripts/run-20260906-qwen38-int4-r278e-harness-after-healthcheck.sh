@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# R278 (2026-09-06): why is the c32 ladder step ~225 ms when the profiled uniform step is ~110 ms? A/B on one headline server
+# R278e (2026-09-06): R278c (harness against the script-launched A/B server) but with the campaign runner's compute/XCCL health check run immediately before the server launch, to test whether that host-side step is what doubles the c32 step time in runner-launched servers.
 # (V1, INT4 head, graphs to 320, GDN spec group 64, max-num-seqs 64): 32 concurrent 128-token requests as (a) plain
 # non-streaming completions, (b) streaming, (c) streaming with logprobs=1 and return_token_ids (the ladder harness shape),
 # (d) plain again. Reports aggregate tok/s per shape. Waits for pid $1 and for no qwen38 container.
 set -uo pipefail
 while docker ps --format "{{.Names}}" | grep -q qwen38; do sleep 30; done
 [[ -n "${1:-}" ]] && while kill -0 "$1" 2>/dev/null; do sleep 30; done
-DEPTH=${DEPTH:-4}; RUN=${RUN:-r278}
+DEPTH=${DEPTH:-4}; RUN=${RUN:-r278e}
 out=/mnt/fast-ai/bench-results/qwen38-int4-c32-request-shape-ab-20260906-${RUN}-mtp${DEPTH}; mkdir -p "$out/profile" "$out/cache"
 img=${IMG:-neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256}; model=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel; port=18138; name=qwen38-int4-${RUN}-profile
 CC='{"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64,80,100,120,160,200,240,320],"max_cudagraph_capture_size":320,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
 spec=(); [[ "$DEPTH" == 0 ]] || spec=(--speculative-config "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":${DEPTH}}")
+ROOT=/home/steve/b70-optimization-lab /home/steve/b70-optimization-lab/scripts/check-qwen36-xpu-xccl-health.sh > "$out/preflight-compute-xccl.txt" 2>&1; echo "[$RUN $(date +%T)] health check rc=$? (as the campaign runner does before launching)" >> "$out/campaign.log"
 docker run -d --rm --name "$name" --ulimit core=0 --memory 12g --memory-swap 16g --device /dev/dri:/dev/dri --group-add render --cap-add SYS_PTRACE --security-opt label=disable --ipc=host --shm-size=8g \
   -p 127.0.0.1:$port:8000 -v "$model:/model:ro" -v "$out/cache:/root/.cache/vllm" \
   -e ZE_AFFINITY_MASK=0,1 -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 -e VLLM_TARGET_DEVICE=xpu -e VLLM_WORKER_MULTIPROC_METHOD=spawn -e VLLM_XPU_ENABLE_XPU_GRAPH=1 -e VLLM_XPU_ALLREDUCE_HOST_WAIT=1 \
@@ -27,35 +28,13 @@ log "launched depth $DEPTH"
 deadline=$(( $(date +%s) + 2700 )); ok=0
 while (( $(date +%s) < deadline )); do curl -fsS "http://127.0.0.1:$port/health" >/dev/null 2>&1 && { ok=1; break; }; docker ps --format '{{.Names}}' | grep -q "^$name$" || break; sleep 15; done
 if (( ok )); then
-  log "healthy"
+  log "healthy"; docker inspect "$name" > "$out/container-inspect.json" 2>/dev/null
   suite=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json
-  python3 - "$out" "$RUN" "$port" "$suite" <<'PY' 2>&1 | tee -a "$out/campaign.log"
-import json,sys,time,threading,urllib.request
-out,model,port,suite=sys.argv[1:5]; base=json.load(open(suite)); base=base.get("prompts") or base
-prompts=[(p["prompt"]+f" Variant {i//len(base)}.") for i,p in enumerate(base*4)][:32]
-def one(i,shape,res):
-    body={"model":model,"prompt":prompts[i],"max_tokens":128,"temperature":0,"ignore_eos":True}
-    ep="completions"
-    if shape.startswith("stream"): body.update({"stream":True,"stream_options":{"include_usage":True},"return_token_ids":True,"seed":42,"top_p":1})
-    if shape=="stream_chat": ep="chat/completions"; body["messages"]=[{"role":"user","content":body.pop("prompt")}]
-    if shape=="stream_logprobs": body["logprobs"]=1
-    req=urllib.request.Request(f"http://127.0.0.1:{port}/v1/{ep}",data=json.dumps(body).encode(),headers={"Content-Type":"application/json"})
-    t0=time.perf_counter(); n=0
-    with urllib.request.urlopen(req,timeout=600) as r:
-        if body.get("stream"):
-            for line in r:
-                if line.startswith(b"data: ") and b"[DONE]" not in line:
-                    d=json.loads(line[6:]); u=d.get("usage")
-                    if u: n=u["completion_tokens"]
-        else:
-            d=json.load(r); n=d["usage"]["completion_tokens"]
-    res[i]=(time.perf_counter()-t0,n)
-for rep in (1,2):
-  for shape in ("plain","stream","stream_chat","stream_logprobs","plain"):
-    res={}; ths=[threading.Thread(target=one,args=(i,shape,res)) for i in range(32)]
-    t0=time.perf_counter(); [t.start() for t in ths]; [t.join() for t in ths]; wall=time.perf_counter()-t0
-    toks=sum(v[1] for v in res.values()); print(f"[{model} {time.strftime('%H:%M:%S')}] rep{rep} c32 {shape:16s} wall {wall:6.2f}s tokens {toks} aggregate {toks/wall:7.1f} tok/s")
-PY
+  mkdir -p "$out/ladder"; log "ladder harness (runner invocation) c16,32 x2 against this server"
+  python3 /home/steve/b70-optimization-lab/scripts/bench-openai-concurrency-oracle.py --base-url "http://127.0.0.1:$port" --model "$RUN" --api-mode completions \
+    --suite "$suite" --concurrency 16,32 --repeats 2 --max-tokens 128 --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
+    --return-token-ids --require-output-identity --out "$out/ladder/ladder.json" >"$out/ladder.stdout" 2>&1; log "harness exit $?"
+  python3 /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/summarize-int4-ladders-repeats.py "$out" 2>&1 | tee -a "$out/campaign.log"
 else log "ABORT: server did not become healthy"; fi
 docker logs "$name" >"$out/server.log" 2>&1 || true; docker stop -t 120 "$name" >/dev/null 2>&1 || true
 log "campaign complete"

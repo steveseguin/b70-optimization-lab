@@ -1241,5 +1241,834 @@
    ]
   },
   "verdict": "captured verify graphs at c32/c64 change nothing in the ladder (c32 364.4 32/32, c64 447.3 60/64; c16 573.9 16/16), although the profiled uniform step at c32 is ~110 ms (R274b) which would give ~750 tok/s: the ladder's per-request pace (~12 tok/s each, ~225 ms per step) is set outside the model step. R278 A/B on request shape."
+ },
+ "R277b_ladders_tp2_depth4_r276_sync_free_sizes_320": {
+  "date": "2026-09-06",
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276 sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad (_xpu_ops.py 6ee6b8db)",
+  "config": "headline + GDN spec group 16 + capture sizes to 320 (grouped branch now capturable), two-pass c1-c64, fresh boot 0f3e2d24",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.9,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 84.7,
+    "ttft_s_max": 1.14
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 293.9,
+    "ttft_s_max": 0.17
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "7/8",
+    "aggregate_tok_s_wall": 410.1,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 526.3,
+    "ttft_s_max": 0.6
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "28/32",
+    "aggregate_tok_s_wall": 358.6,
+    "ttft_s_max": 0.81
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 444.7,
+    "ttft_s_max": 13.34
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.2,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 191.3,
+    "ttft_s_max": 0.14
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 293.6,
+    "ttft_s_max": 0.15
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 405.1,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 574.7,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 359.4,
+    "ttft_s_max": 0.57
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 445.4,
+    "ttft_s_max": 13.32
+   }
+  ],
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.0,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.3,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 178.4,
+    "ttft_s_max": 0.13
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 317.9,
+    "ttft_s_max": 0.27
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 536.3,
+    "ttft_s_max": 0.28
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 808.4,
+    "ttft_s_max": 0.53
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "63/64",
+    "aggregate_tok_s_wall": 978.7,
+    "ttft_s_max": 1.07
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.1,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 95.5,
+    "ttft_s_max": 0.08
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.4,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 316.8,
+    "ttft_s_max": 0.28
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 533.3,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 807.8,
+    "ttft_s_max": 0.53
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "63/64",
+    "aggregate_tok_s_wall": 978.1,
+    "ttft_s_max": 1.08
+   }
+  ],
+  "verdict": "warm pass: c1 107.2, c2 191.3 (+30% vs R265b 147.6), c4 293.6 (+16%), c8 405.1, c16 574.7 (16/16), c32 359.4 (30/32), c64 445.4 (59/64): captured verify graphs at 10-20 tokens lift c2/c4; c8+ unchanged; the c32/c64 pace is unchanged."
+ },
+ "R278_c32_request_shape_ab": {
+  "date": "2026-09-06",
+  "config": "headline (V1, INT4 head), GDN spec group 64, capture sizes to 320, --max-num-seqs 64 --max-num-batched-tokens 512 --max-model-len 1024; 32 concurrent 128-token requests (8 suite prompts x 4 variants), fresh boot",
+  "results": [
+   {
+    "rep": "rep1",
+    "shape": "plain",
+    "wall_s": 9.02,
+    "tokens": 4096,
+    "aggregate_tok_s": 454.2
+   },
+   {
+    "rep": "rep1",
+    "shape": "stream",
+    "wall_s": 6.45,
+    "tokens": 4096,
+    "aggregate_tok_s": 634.8
+   },
+   {
+    "rep": "rep1",
+    "shape": "stream_chat",
+    "wall_s": 7.05,
+    "tokens": 4096,
+    "aggregate_tok_s": 581.0
+   },
+   {
+    "rep": "rep1",
+    "shape": "stream_logprobs",
+    "wall_s": 52.47,
+    "tokens": 4096,
+    "aggregate_tok_s": 78.1
+   },
+   {
+    "rep": "rep1",
+    "shape": "plain",
+    "wall_s": 6.21,
+    "tokens": 4096,
+    "aggregate_tok_s": 659.9
+   },
+   {
+    "rep": "rep2",
+    "shape": "plain",
+    "wall_s": 6.21,
+    "tokens": 4096,
+    "aggregate_tok_s": 659.3
+   },
+   {
+    "rep": "rep2",
+    "shape": "stream",
+    "wall_s": 6.21,
+    "tokens": 4096,
+    "aggregate_tok_s": 659.2
+   },
+   {
+    "rep": "rep2",
+    "shape": "stream_chat",
+    "wall_s": 7.02,
+    "tokens": 4096,
+    "aggregate_tok_s": 583.5
+   },
+   {
+    "rep": "rep2",
+    "shape": "stream_logprobs",
+    "wall_s": 6.49,
+    "tokens": 4096,
+    "aggregate_tok_s": 630.9
+   },
+   {
+    "rep": "rep2",
+    "shape": "plain",
+    "wall_s": 6.23,
+    "tokens": 4096,
+    "aggregate_tok_s": 657.2
+   }
+  ],
+  "verdict": "steady state ~660 tok/s for plain and for the harness shape (stream + usage + return_token_ids + seed); first-encounter reps are one-time compiles (plain 454, logprobs 78 -> 631). The ladder harness's 361 at c32 is therefore not the request shape; R278b repeats with --max-model-len 256 (the ladder server's value)."
+ },
+ "R278b_c32_request_shape_ab_mml256": {
+  "date": "2026-09-06",
+  "config": "R278 with --max-model-len 256 (the ladder server's value)",
+  "results": [
+   {
+    "rep": "rep1",
+    "shape": "plain",
+    "wall_s": 9.17,
+    "tokens": 4096,
+    "aggregate_tok_s": 446.7
+   },
+   {
+    "rep": "rep1",
+    "shape": "stream",
+    "wall_s": 6.3,
+    "tokens": 4096,
+    "aggregate_tok_s": 650.6
+   },
+   {
+    "rep": "rep1",
+    "shape": "stream_chat",
+    "wall_s": 7.04,
+    "tokens": 4096,
+    "aggregate_tok_s": 581.4
+   },
+   {
+    "rep": "rep1",
+    "shape": "stream_logprobs",
+    "wall_s": 52.32,
+    "tokens": 4096,
+    "aggregate_tok_s": 78.3
+   },
+   {
+    "rep": "rep1",
+    "shape": "plain",
+    "wall_s": 6.2,
+    "tokens": 4096,
+    "aggregate_tok_s": 660.5
+   },
+   {
+    "rep": "rep2",
+    "shape": "plain",
+    "wall_s": 6.2,
+    "tokens": 4096,
+    "aggregate_tok_s": 660.4
+   },
+   {
+    "rep": "rep2",
+    "shape": "stream",
+    "wall_s": 6.21,
+    "tokens": 4096,
+    "aggregate_tok_s": 659.7
+   },
+   {
+    "rep": "rep2",
+    "shape": "stream_chat",
+    "wall_s": 7.0,
+    "tokens": 4096,
+    "aggregate_tok_s": 584.8
+   },
+   {
+    "rep": "rep2",
+    "shape": "stream_logprobs",
+    "wall_s": 6.49,
+    "tokens": 4096,
+    "aggregate_tok_s": 631.5
+   },
+   {
+    "rep": "rep2",
+    "shape": "plain",
+    "wall_s": 6.23,
+    "tokens": 4096,
+    "aggregate_tok_s": 657.1
+   }
+  ],
+  "verdict": "identical to R278 (~660 tok/s steady for plain and harness-shaped streaming): the ladder server shape is not the cause either; R278c runs the ladder harness itself against this server."
+ },
+ "R278c_harness_on_ab_server": {
+  "date": "2026-09-06",
+  "config": "R278 A/B server (script-launched: R256 image, group 64, sizes to 320, mns 64, mbt 512, mml 1024); ladder harness with the runner's exact invocation, c16/c32 x2",
+  "ladder": [
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 413.9,
+    "ttft_s_max": 1.17
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 632.9,
+    "ttft_s_max": 0.55
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 581.3,
+    "ttft_s_max": 0.24
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 657.5,
+    "ttft_s_max": 0.55
+   }
+  ],
+  "verdict": "c16 581.3 (16/16), c32 632.9 (32/32) / 657.5 (30/32): the harness itself reaches ~650 at c32 on a script-launched server. Per-token cadence: 118 ms per step here vs 235 ms per step (same acceptance, same batch) on every runner-launched ladder server (R265b, R275b, R277b, R279). Container config, env, args and HostConfig are identical apart from 21 explicitly-zeroed (mostly unused) env vars; R278d/R278e bisect."
+ },
+ "R279_ladders_r276_mml1024": {
+  "date": "2026-09-06",
+  "config": "R277b with the ladder server's --max-model-len raised to 1024 (runner-launched)",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.3,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 89.7,
+    "ttft_s_max": 1.0
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 294.7,
+    "ttft_s_max": 0.17
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "7/8",
+    "aggregate_tok_s_wall": 408.3,
+    "ttft_s_max": 0.31
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 532.3,
+    "ttft_s_max": 0.57
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "28/32",
+    "aggregate_tok_s_wall": 352.3,
+    "ttft_s_max": 0.86
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "61/64",
+    "aggregate_tok_s_wall": 444.6,
+    "ttft_s_max": 13.85
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.7,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 189.4,
+    "ttft_s_max": 0.11
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 297.3,
+    "ttft_s_max": 0.15
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 404.0,
+    "ttft_s_max": 0.3
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 574.7,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 358.9,
+    "ttft_s_max": 0.57
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "63/64",
+    "aggregate_tok_s_wall": 439.0,
+    "ttft_s_max": 13.35
+   }
+  ],
+  "verdict": "warm pass c2 189.4, c4 297.3, c8 404.0, c16 574.7 (16/16), c32 358.9 (31/32), c64 439.0 (63/64): max-model-len is not the c32 cap."
+ },
+ "R278d_R278e_bisect": {
+  "date": "2026-09-06",
+  "R278d": {
+   "config": "R278c server + the 21 explicitly-zeroed env vars the campaign launcher forwards + max-model-len 256; harness c16/c32 x2",
+   "ladder": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 410.9,
+     "ttft_s_max": 1.2
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "28/32",
+     "aggregate_tok_s_wall": 628.3,
+     "ttft_s_max": 0.7
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "14/16",
+     "aggregate_tok_s_wall": 571.6,
+     "ttft_s_max": 0.42
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 657.9,
+     "ttft_s_max": 0.55
+    }
+   ]
+  },
+  "R278e": {
+   "config": "R278c server launched immediately after the runner's compute/XCCL health check; harness c16/c32 x2",
+   "ladder": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 411.7,
+     "ttft_s_max": 1.2
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "28/32",
+     "aggregate_tok_s_wall": 627.3,
+     "ttft_s_max": 0.7
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 580.3,
+     "ttft_s_max": 0.25
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 660.1,
+     "ttft_s_max": 0.55
+    }
+   ]
+  },
+  "verdict": "both fast at c32 (628/658 and 627/660 tok/s): neither the zeroed env vars nor the health check cause the 235 ms step of runner-launched servers. R278f: the runner's launcher chain (r62 -> strict -> mtp1) started from a script."
+ },
+ "R278c_to_R278i_launch_path_bisect": {
+  "date": "2026-09-06",
+  "harness": "bench-openai-concurrency-oracle.py with the campaign runner's exact invocation, c16/c32 x2, same 64-prompt suite",
+  "script_launched_fast": {
+   "r278c": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 413.9,
+     "ttft_s_max": 1.17
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "32/32",
+     "aggregate_tok_s_wall": 632.9,
+     "ttft_s_max": 0.55
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 581.3,
+     "ttft_s_max": 0.24
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "30/32",
+     "aggregate_tok_s_wall": 657.5,
+     "ttft_s_max": 0.55
+    }
+   ],
+   "r278d": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 410.9,
+     "ttft_s_max": 1.2
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "28/32",
+     "aggregate_tok_s_wall": 628.3,
+     "ttft_s_max": 0.7
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "14/16",
+     "aggregate_tok_s_wall": 571.6,
+     "ttft_s_max": 0.42
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 657.9,
+     "ttft_s_max": 0.55
+    }
+   ],
+   "r278e": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 411.7,
+     "ttft_s_max": 1.2
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "28/32",
+     "aggregate_tok_s_wall": 627.3,
+     "ttft_s_max": 0.7
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 580.3,
+     "ttft_s_max": 0.25
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 660.1,
+     "ttft_s_max": 0.55
+    }
+   ],
+   "r278g": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "15/16",
+     "aggregate_tok_s_wall": 409.3,
+     "ttft_s_max": 1.24
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "27/32",
+     "aggregate_tok_s_wall": 625.5,
+     "ttft_s_max": 0.71
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 580.5,
+     "ttft_s_max": 0.25
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 661.7,
+     "ttft_s_max": 0.55
+    }
+   ],
+   "r278h": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 414.9,
+     "ttft_s_max": 1.18
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "29/32",
+     "aggregate_tok_s_wall": 629.3,
+     "ttft_s_max": 0.68
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 580.6,
+     "ttft_s_max": 0.24
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "30/32",
+     "aggregate_tok_s_wall": 656.6,
+     "ttft_s_max": 0.55
+    }
+   ],
+   "r278i": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 439.6,
+     "ttft_s_max": 0.9
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "30/32",
+     "aggregate_tok_s_wall": 637.1,
+     "ttft_s_max": 0.53
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 580.1,
+     "ttft_s_max": 0.24
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 660.9,
+     "ttft_s_max": 0.53
+    }
+   ]
+  },
+  "launcher_chain_slow": {
+   "r278f4": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 433.4,
+     "ttft_s_max": 0.94
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "32/32",
+     "aggregate_tok_s_wall": 357.7,
+     "ttft_s_max": 0.55
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 577.0,
+     "ttft_s_max": 0.26
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 365.9,
+     "ttft_s_max": 0.55
+    }
+   ],
+   "r278f5": [
+    {
+     "concurrency": 16,
+     "repeat": 1,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 409.7,
+     "ttft_s_max": 1.21
+    },
+    {
+     "concurrency": 32,
+     "repeat": 1,
+     "exact": "29/32",
+     "aggregate_tok_s_wall": 354.4,
+     "ttft_s_max": 0.81
+    },
+    {
+     "concurrency": 16,
+     "repeat": 2,
+     "exact": "16/16",
+     "aggregate_tok_s_wall": 577.9,
+     "ttft_s_max": 0.26
+    },
+    {
+     "concurrency": 32,
+     "repeat": 2,
+     "exact": "31/32",
+     "aggregate_tok_s_wall": 364.6,
+     "ttft_s_max": 0.57
+    }
+   ]
+  },
+  "variants": {
+   "r278c": "docker run -d, mml 1024, group 64, sizes 320",
+   "r278d": "+21 launcher env zeros, mml 256",
+   "r278e": "+compute/XCCL health check before launch",
+   "r278g": "+13 more launcher-only env vars (trace paths, isolate flags)",
+   "r278h": "attached docker run in a background shell, port 18134",
+   "r278i": "VLLM_XPU_GDN_SPLIT_MIXED=0",
+   "r278f4": "the runner's launcher chain (r62 -> strict -> mtp1 launcher) from a script, group 64, SPLIT_MIXED=0",
+   "r278f5": "launcher chain, group 64, SPLIT_MIXED=1"
+  },
+  "verdict": "Every script-launched server: c32 626-662 tok/s (118 ms per step), c16 ~580. Every launcher-chain server: c32 354-366 (235 ms per step), c16 ~577, with the same acceptance and identity, and a docker-inspect record identical to the fast servers in Config.Env, Cmd and HostConfig (only the attach flags differ, and R278h shows attached runs are fast). The cause is not the request shape, the server shape, the harness, the env, the health check, or the process model; it is tied to the launcher chain in a way not visible in the container record. R278j (profiled launcher-chain server) was interrupted by a GPU fault; pending on the next boot. Published ladder figures above c16 come from runner-launched servers and are therefore ~2x pessimistic at c32/c64 relative to script-launched servers of the same configuration."
  }
 }

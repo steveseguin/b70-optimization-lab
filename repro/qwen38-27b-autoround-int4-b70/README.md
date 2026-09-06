@@ -233,7 +233,12 @@ and the result files `2026-09-06-qwen38-int4-r262-headline-decode-profile-result
   warm pass (R265b, every rung run twice) the steady curve is c2 147.6, c4 252.9, c8 405.4, c16 580.4 tok/s, identity-exact
   through c16 (16/16); c32 360.7 (31/32) and c64 445.3 (58/64) keep the near-tie residual. Warm-up the server with one
   two-user request after boot, or run ladders with `LADDER_REPEATS=2`.
-- The c16 -> c32 collapse has two device-side causes measured in R274/R274b: the W4A16 verify GEMMs are dequant-bound and
+- The c32/c64 rungs of the published ladders (~360 / ~445 tok/s) are set by the launch path, not the model: the same
+  configuration launched directly (`docker run` from a script) sustains **~660 tok/s at c32** with the same harness, same
+  acceptance and same identity (R278c-R278i), while every server launched through the campaign runner's launcher chain
+  steps twice as slowly at c32 (235 vs 118 ms per step) with an identical container record (R278f4/f5). The cause is open
+  (a profiled launcher-chain server, R278j, is pending). c16 is unaffected (580 on both paths).
+- Below that, the device-side costs at c32 measured in R274/R274b: the W4A16 verify GEMMs are dequant-bound and
   scale ~linearly above ~32 rows (55 ms at M=160), and the GDN speculative recurrent kernel streams each sequence's fp32
   SSM state per layer (27 ms at 32 sequences, linear in sequences). The grouped GDN branch (group 16) added ~40 ms of host
   work per step and, because it syncs (`.tolist()`), cannot be graph-captured: no verify batch above 16 sequences was ever

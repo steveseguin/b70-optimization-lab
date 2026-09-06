@@ -155,3 +155,40 @@ and `…/qwen38-int4-c32-request-shape-ab-20260906-r278-mtp4/campaign.log`.
   remaining ~8 ms/step is the two-rank host round trip and all-reduce sync.
 - Multi-user above c16 is bounded by the W4A16 dequant cost at large M and the GDN state traffic; the open question is why
   the ladder's per-step pace at c32 (~225 ms) is twice the profiled uniform step (~110 ms) - R278 answers it on the next boot.
+
+## After the reboot (boot 0f3e2d24, 05:48): R277b and R278
+
+**R277b** (R276 sync-free image, group 16, capture sizes to 320, two-pass c1-c64; graph capture now succeeds at every size):
+warm pass c1 107.2, **c2 191.3 (+30% vs 147.6), c4 293.6 (+16% vs 252.9)**, c8 405.1, c16 574.7 (16/16), c32 359.4 (30/32),
+c64 445.4 (59/64). Captured verify graphs at 10-20 tokens lift the two- and four-user rungs; from eight users on nothing
+changes, and c32/c64 keep the ~12 tok/s per-request pace.
+
+**R278** (one headline server, group 64, capture sizes to 320, max-num-seqs 64, max-num-batched-tokens 512, max-model-len
+1024; 32 concurrent 128-token requests): steady state **~660 tok/s** for plain completions and for the ladder harness's
+exact request shape (streaming, usage, token ids, seed); the first plain rep (454) and the first logprobs rep (78) are
+one-time compiles. So the request shape is not what holds the ladder at 361; R278b repeats the A/B with the ladder server's
+max-model-len 256.
+
+## R278b-R278f - the c32 ladder cap is not the model, the shape, or the harness
+
+Per-token cadence inside the c32 rung: **every runner-launched ladder server steps every 235 ms** (R265b, R275b, R277b,
+R279), while a script-launched server with the same image, env, serve args and Docker HostConfig steps every **118 ms**
+(R278c/d/e) with the same acceptance (2.8) and the same harness (c32 628-660 tok/s, 30-32/32 exact). Ruled out one by one:
+request shape (R278: plain, streaming, streaming+usage+token ids, logprobs all ~660), `--max-model-len` 256 vs 1024 (R278b,
+R279), the ladder harness itself (R278c), the launcher's 21 explicitly-zeroed env vars (R278d), the runner's compute/XCCL
+health check before launch (R278e). R278f starts the runner's own launcher chain (r62 -> strict -> mtp1) from a script
+without the runner around it.
+
+R278f4/R278f5 (the runner's launcher chain r62 -> strict -> mtp1 started from a script, group 64, split-mixed 0 and 1):
+**slow, c32 354-366** (235 ms/step). R278d/e/g/h/i (direct `docker run` with, cumulatively, the launcher's 21 zeroed env
+vars, the health check before launch, the 13 remaining launcher-only env vars, an attached run on port 18134, and
+split-mixed off): **all fast, c32 626-662** (118 ms/step), c16 ~580 on both. The slow and fast containers' `docker inspect`
+records are identical in Config.Env, Cmd and HostConfig (only AttachStdout/Stderr differ, and R278h shows attached runs
+are fast). Acceptance (2.8) and identity (27-32/32) are the same on both. So the 2x c32 step of runner-launched servers is
+real, reproducible, and tied to the launcher chain in a way that the container record does not show. The profiled
+launcher-chain server (R278j) was interrupted by a third xe fault on this boot (12:48) and reruns after the reboot.
+
+**Consequence for the published tables:** the ladder rungs above c16 (c32 ~360, c64 ~445) were all measured on
+runner-launched servers and are about half of what the same configuration sustains when launched directly (c32 ~660 with the
+same harness). The identity-qualified figure the site shows (c16 580.4, 16/16) is unaffected (c16 is the same on both
+paths). c32/c64 stay withheld (near-tie identity residual) and the discrepancy is recorded as open.
