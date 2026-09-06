@@ -458,7 +458,7 @@ Status (2026-09-05 00:45): deterministic on both kernel paths; lossless MTP unde
   12/12 vs each other and vs the oracle. MTP0 ladders exact c1-c64 in 6 of 8 (others one near-tie miss); TP2 speculative
   depths exact through c16, TP1 through c8 (c16 15/16), c32 29-31/32, c64 58-62/64. Recipe README tables, package
   (three identity-qualified profiles), catalog and pages updated. All publication surfaces updated (recipe, package, catalog, pages, top-level README rows,
-  `repro/qwen38-27b-autoround-int4-b70/publication-manifest.json`). Open: GHCR visibility flip (user), the GDN
+  `repro/qwen38-27b-autoround-int4-b70/publication-manifest.json`). Open: the GDN
   composition residual at c32+/c64 with speculation (research item), clean-host replay.
 - **Superseded (was) best configuration so far for the matrix:** R228 image + `VLLM_BATCH_INVARIANT=1` + `split_reductions:false`
   (+ `GDN_SPEC_GROUP` per R233/R234). R230 chain (`scripts/run-20260905-qwen38-int4-r230-matrix-r228-binv-tp2-tp1-mtp0-4.sh`)
