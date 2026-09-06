@@ -158,3 +158,7 @@ A188 (realistic suite on the promoted overlay `2169dbfe`, headroom placement) pa
 ## 21:08 A186: MTP2 with headroom is lossless but no faster than MTP1
 
 A186 (graph MTP2 lineage A139/A140 with the same expert offload, USB checkpoint, overlay `08df70ea`) reproduces the MTP0 authority ids on both exact-2K requests at 19.72 / 25.82 tok/s, against MTP1's 20.42 / 28.52 (A184) and MTP0's 25.4 (A187). The three-token step costs more than its extra accepted token buys at this budget, so MTP1 is the speculative depth to certify; MTP2 stays research.
+
+## 21:31 A190: the MTP1 headroom line passes the certification battery
+
+A190 = the MTP1 lineage's frozen client on its own overlay `1b2a17c1` (the head the W13-N32 verifier accepts) with the headroom flags and the USB checkpoint. Every gate passed: 6/7 quality with the inherited miss, 16/16 repeat, exact needle; exact-2K `afffd211…` at 28.27 / 28.73 tok/s (MTP0 headroom 25.43), exact-4K `c6193cc6…` at 27.31 / 30.26 (MTP0 headroom 25.4; the paged MTP0 line was 12.87); short rows 35.3. Both depth hashes are the MTP0 line's own two-server authorities, so MTP1 is lossless at every measured pin. A189 (realistic suite, same identity) is the LocalMaxxing run for this line.
