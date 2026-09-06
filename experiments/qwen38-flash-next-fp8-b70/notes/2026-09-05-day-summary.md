@@ -204,3 +204,7 @@ The offline test passes: with a per-expert offset table the fused MoE kernel pro
 ## 00:18 A197 census over the realistic suite
 
 A197 (eager lineage, headroom, top-k dump over the whole realistic suite; 250,000 tensors ≈ 5,200 decode rows × 48 layers; outputs identical to A134): 3,141 of 24,576 (layer, expert) pairs (12.8%) are never routed to, the coldest 5% of experts per layer receive 0.002% of hits and the coldest 10% receive 0.035%. A 2.0 GiB per-rank host placement needs 6.8% of each rank's experts, so it is filled entirely from never-hit experts of the union census (A168 + A197); on other prompts a placed expert that does get hit costs about 0.1 ms per hit instead of a driver page migration. The eager rate with the dump hook (5.2 tok/s) is the hook's cost, not the line's.
+
+## 00:30 A196 (placement) running; clean placement branch prepared
+
+A196 = the promoted PLE-only identity plus the 2 GiB/rank cold-expert placement at overlay `68a410ba` (diagnostics + placement). For publication, the placement patch is re-applied on the promoted overlay alone as branch `q38-placement` (`c5228465`, three files, no diagnostics; `fused_moe.py` sha `4e611de0…`); the W13-N32 verifier's source contract has to learn that head and hash before the frozen client can certify it, which is a certification-policy change to be reviewed rather than slipped in.
