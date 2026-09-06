@@ -68,6 +68,7 @@ no longer pays the per-op all-reduce host waits:
 
 | depth | TP2 strict pair, graphs (tok/s) | TP2 eager (R239/R240) | gates |
 |---|---|---|---|
+| 0 (MTP0) | **49.83 / 49.89** | 34.21 / 35.64 | G1 12/12; 12/12 vs the eager R239 MTP0 oracle (R253) |
 | 4 | **91.00 / 91.01** | 68.55 / 67.79 | G2 12/12, G3 12/12 x2 vs the eager MTP0 oracle |
 | 5 | 88.84 / 89.12 | - | G2 12/12, G3 12/12 x2 |
 | 6 | 84.06 / 83.98 | - | G2 12/12, G3 12/12 x2 |
