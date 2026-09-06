@@ -109,3 +109,14 @@ flipping prompt at c1 and at c32 from the same server and find the first op whos
 hooks (the older lane's `VLLM_XPU_*_TRACE_FILE` switches are not in r156-derived images); adding one inside the GDN
 custom op and after each decoder layer is a Python patch, but the compiled graph must be split at those points, which
 changes the arithmetic it measures. That trade-off is the next design decision.
+
+## Why INT4 speculation trails FP8, and the BF16-draft test (R245, 22:00)
+
+Acceptance per step: INT4 depth 4 TP2 3.05 (per-position 0.813), TP1 3.52 (0.882); FP8 depth 4 3.54 (0.855), depth 5
+3.88 (0.857). The INT4 lane also runs every draft step through the full FP16 lm_head (the draft-only INT4 head refuses
+this lane's head type). R245 swapped the draft for the community checkpoint's BF16 mtp.* tensors (R244 relabel,
+`scripts/make-gptq-relabel-bf16-draft.py`, manifest `model-gptq-relabel-bf16-draft-r244.json`, draft built
+unquantized): TP1 depth 4 **52.0 tok/s vs 56.3** with the INT4 draft, acceptance **3.21 vs 3.52** (0.811 vs 0.882).
+The AutoRound draft was quantized with its backbone and predicts the INT4 target better than the pristine BF16 draft;
+the BF16 draft is also 4x the bytes per draft pass. The community single-card 83.7 tok/s at depth 4 is therefore not
+a draft effect; their remaining differences are XPU graph capture (R246) and a much larger batched-token budget.
