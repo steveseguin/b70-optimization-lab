@@ -80,5 +80,34 @@
   "steady_step_wall_ms": 57.6,
   "visible_device_kernels_ms": 13.5,
   "note": "the captured verify's kernels are not itemized by the XPU profiler; the visible 13.5 ms are the eager draft passes (29 gemm launches, 1 all-gather per pass) and the CPU side is one blocking copy waiting on the graph. 16 x ~2.7 tokens per 65 ms step is ~650 tok/s of steady aggregate, in line with the warm ladder's 580 once prefill and ramp are included."
+ },
+ "R278j2_R278k_launcher_chain_c32_profiles": {
+  "boot": "bf8e504b (fresh, no faults)",
+  "R278j2": {
+   "root": "/mnt/fast-ai/bench-results/qwen38-int4-c32-request-shape-ab-20260906-r278j2-mtp4",
+   "config": "launcher chain, group 64, capture sizes to 320",
+   "c32_steps": 19,
+   "mean_step_ms": 208.2,
+   "steady_step_ms": 219.0,
+   "visible_kernels_ms": 22.9,
+   "note": "verify inside a captured graph (not itemized); plain-client batches 337-368 tok/s"
+  },
+  "R278k": {
+   "root": "/mnt/fast-ai/bench-results/qwen38-int4-c32-request-shape-ab-20260906-r278k-mtp4",
+   "config": "launcher chain, group 64, capture sizes 1-8 (eager verify)",
+   "c32_steps": 18,
+   "mean_step_ms": 215.3,
+   "steady_step_ms": 220.6,
+   "kernels_ms": 206.5,
+   "gemm_ms": 163.54,
+   "gemm_calls": 309,
+   "gemm_avg_us": 529.3,
+   "gdn_spec_ms": 24.28,
+   "allreduce_ms": 6.27,
+   "cpu_ops": {
+    "vllm::xpu_w4a16_detpad_gemm": 256
+   }
+  },
+  "root_cause": "VLLM_XPU_W4A16_DETERMINISM_PAD absent from every runner-launched container (the launcher chain did not forward it); the R213b overlay defaults to ON and pads 128-512 rows to 512 before the W4A16 GEMM: 3x GEMM work at M=160 (529 vs 180 us per launch), no effect below 128 rows (c1-c16). Direct docker-run scripts passed the variable as 0. GPU clocks 2.4-2.8 GHz on both cards throughout (not frequency). Fix: both launchers now forward the pad switches with 0 as the default; R281 re-measures the published ladders."
  }
 }

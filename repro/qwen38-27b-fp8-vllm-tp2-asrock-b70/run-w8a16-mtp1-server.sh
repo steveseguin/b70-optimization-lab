@@ -262,6 +262,11 @@ fi
 hash_seed_args=()
 # V2 model runner opt-in (R268/R269): only forwarded when set, so the default stays vLLM's auto choice (V1 here).
 v2_runner_args=()
+# R213b W4A16 determinism pad (rows 128-512 padded to 512 before the oneDNN W4A16 GEMM). The overlay defaults to ON when the
+# variable is absent; the published INT4 profile runs with it OFF (the fixed-K library is batch-invariant without it), so
+# forward it explicitly with 0 as the default (R278k, 2026-09-06: an absent variable cost 2x per step above 25 users).
+w4a16_pad_args=(--env "VLLM_XPU_W4A16_DETERMINISM_PAD=${VLLM_XPU_W4A16_DETERMINISM_PAD:-0}" --env "VLLM_XPU_W4A16_DETERMINISM_PAD_HIGH=${VLLM_XPU_W4A16_DETERMINISM_PAD_HIGH:-0}")
+if [[ -n "${VLLM_XPU_W4A16_DETERMINISM_PAD_LOW:-}" ]]; then w4a16_pad_args+=(--env "VLLM_XPU_W4A16_DETERMINISM_PAD_LOW=${VLLM_XPU_W4A16_DETERMINISM_PAD_LOW}"); fi
 # oneDNN fixed-K W4A16 strategy switches (R220/R221 patches): forwarded only when set.
 fixed_k_args=()
 for fixed_k_var in QWEN38_W4A16_FIXED_K QWEN38_W4A16_GEMM_MAXN QWEN38_W4A16_GEMM_STRATEGY_SMALL QWEN38_W4A16_GEMM_STRATEGY_LARGE QWEN38_GEMM_DUMP; do
@@ -363,6 +368,7 @@ exec docker run --rm --name "${container}" \
   "${hash_seed_args[@]}" \
   "${v2_runner_args[@]}" \
   "${fixed_k_args[@]}" \
+  "${w4a16_pad_args[@]}" \
   --env PYTORCH_ALLOC_CONF=expandable_segments:True \
   --env CCL_ATL_TRANSPORT=ofi --env FI_PROVIDER=tcp --env FI_TCP_IFACE=lo \
   --env CCL_ZE_IPC_EXCHANGE=pidfd \

@@ -143,6 +143,7 @@ exec docker run --rm --name "${container}" \
     -e VLLM_XPU_GEMMA_RMSNORM_TRITON="${gemma_rmsnorm_triton}" \
     -e VLLM_XPU_RMSNORM_TRITON="${rmsnorm_triton}" \
     -e VLLM_XPU_GDN_SPLIT_MIXED="${gdn_split_mixed}" \
+    -e "VLLM_XPU_W4A16_DETERMINISM_PAD=${VLLM_XPU_W4A16_DETERMINISM_PAD:-0}" -e "VLLM_XPU_W4A16_DETERMINISM_PAD_HIGH=${VLLM_XPU_W4A16_DETERMINISM_PAD_HIGH:-0}" \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e CCL_ATL_TRANSPORT=ofi \
     -e FI_PROVIDER=tcp \

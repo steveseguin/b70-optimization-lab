@@ -192,3 +192,22 @@ launcher-chain server (R278j) was interrupted by a third xe fault on this boot (
 runner-launched servers and are about half of what the same configuration sustains when launched directly (c32 ~660 with the
 same harness). The identity-qualified figure the site shows (c16 580.4, 16/16) is unaffected (c16 is the same on both
 paths). c32/c64 stay withheld (near-tie identity residual) and the discrepancy is recorded as open.
+
+## R278j/R278k - root cause of the c32 cap: the R213b determinism pad was on in every runner-launched server
+
+Profiling the launcher-chain server at c32 with an eager verify (R278k, fresh boot bf8e504b): each W4A16 GEMM takes
+**529 us instead of 180 us** (163 ms vs 55 ms of GEMM per step; 309 launches in both), the CPU op list shows
+`vllm::xpu_w4a16_detpad_gemm` 256 times per step, and the step is 220 ms vs 108 ms. The R213b overlay pads row counts between
+128 and 512 up to 512 before the oneDNN W4A16 GEMM and **defaults to on when `VLLM_XPU_W4A16_DETERMINISM_PAD` is absent**.
+Every wrapper set the variable to 0, but the launcher chain (r62 -> strict -> mtp1 launcher) never forwarded it into the
+container, while the direct `docker run` scripts passed it explicitly (`docker inspect`: absent in R257/R275b/R278k, `0` in
+R278c-i). Below 128 rows nothing is padded, which is why c1-c16 (5-80 verify rows) were identical on both paths and c32/c64
+(160/320 rows) were ~2x slower on the runner path. GPU clocks were 2.4-2.8 GHz throughout (excluded), the harness, request
+shape, server shape, health check, process model and the other env vars were excluded one by one (R278b-R278i). The mtp1
+launcher now forwards the pad switches with 0 as the default; R281 re-measures the published ladders through the runner.
+
+## R281 - the published ladder through the runner with the pad off
+
+Warm pass: c1 107.5, c2 156.4, c4 267.9 (3/4), c8 424.4 (8/8), **c16 583.8 (16/16), c32 632.6 (30/32), c64 603.7 (62/64)**.
+c32 now equals the direct-launch servers; c64 is admission-limited (42 running / 22 waiting at max-model-len 256, TTFT up to
+8.8 s). The site's identity-qualified cell moves to R281 (583.8 at c16); c32/c64 stay withheld for the near-tie residual.

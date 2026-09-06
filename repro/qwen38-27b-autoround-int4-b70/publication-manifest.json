@@ -243,7 +243,7 @@
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-        "sha256": "c6bc1425490bf41b881c16d6fd64f342c717796e7cfb36f33658b109ac46de84"
+        "sha256": "ffca13583c8e575263bf2f4534e1eb3a5ad0f31dfb13f7e8f421f21ac302ca00"
       },
       {
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
@@ -255,7 +255,8 @@
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
     "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12).",
     "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0).",
-    "2026-09-06: container records show the R257 headline pair (112.36/112.33 tok/s) ran the R228 image (aaf920b0…), not R256; R258, R259, R260b and R265b ran R256. The R256 overlay's fallback branch is never taken on this model (the relabelled lm_head is unquantized and already provides make_xpu_int4_draft_copy), so both images execute the same code on this lane and both are public on GHCR; the recipe text and matrix were corrected."
+    "2026-09-06: container records show the R257 headline pair (112.36/112.33 tok/s) ran the R228 image (aaf920b0…), not R256; R258, R259, R260b and R265b ran R256. The R256 overlay's fallback branch is never taken on this model (the relabelled lm_head is unquantized and already provides make_xpu_int4_draft_copy), so both images execute the same code on this lane and both are public on GHCR; the recipe text and matrix were corrected.",
+    "2026-09-06 (R278k): every runner-launched server ran with the R213b W4A16 determinism pad active above 128 rows (VLLM_XPU_W4A16_DETERMINISM_PAD absent from the container; the overlay defaults to on), because the launcher chain did not forward the variable. The single-user headline (5 verify rows), the strict gates, the identity ladders, and every rung through c16 (80 rows) are unaffected; the c32/c64 rungs of the published ladders (~360/~445 tok/s) were measured with 160/320 rows padded to 512 and are ~2x pessimistic. Both launchers now forward the switch with 0 as the default; R281/R282 re-measure the ladders."
   ],
   "release": {
     "tag": "qwen38-int4-fixed-k-r221-20260906",

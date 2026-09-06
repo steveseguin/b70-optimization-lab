@@ -2070,5 +2070,112 @@
    "r278f5": "launcher chain, group 64, SPLIT_MIXED=1"
   },
   "verdict": "Every script-launched server: c32 626-662 tok/s (118 ms per step), c16 ~580. Every launcher-chain server: c32 354-366 (235 ms per step), c16 ~577, with the same acceptance and identity, and a docker-inspect record identical to the fast servers in Config.Env, Cmd and HostConfig (only the attach flags differ, and R278h shows attached runs are fast). The cause is not the request shape, the server shape, the harness, the env, the health check, or the process model; it is tied to the launcher chain in a way not visible in the container record. R278j (profiled launcher-chain server) was interrupted by a GPU fault; pending on the next boot. Published ladder figures above c16 come from runner-launched servers and are therefore ~2x pessimistic at c32/c64 relative to script-launched servers of the same configuration."
+ },
+ "R281_ladders_published_config_pad_off": {
+  "date": "2026-09-06",
+  "boot": "bf8e504b",
+  "image": "R256",
+  "config": "R265b (published headline: group 16, capture sizes 1-8) through the campaign runner after the launcher forwards VLLM_XPU_W4A16_DETERMINISM_PAD=0; two passes",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.0,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 88.3,
+    "ttft_s_max": 1.02
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 230.0,
+    "ttft_s_max": 0.18
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 414.8,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 535.5,
+    "ttft_s_max": 0.61
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "28/32",
+    "aggregate_tok_s_wall": 628.9,
+    "ttft_s_max": 0.67
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 601.4,
+    "ttft_s_max": 8.89
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 107.5,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 156.4,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "3/4",
+    "aggregate_tok_s_wall": 267.9,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 424.4,
+    "ttft_s_max": 0.21
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 583.8,
+    "ttft_s_max": 0.25
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 632.6,
+    "ttft_s_max": 0.56
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "62/64",
+    "aggregate_tok_s_wall": 603.7,
+    "ttft_s_max": 8.81
+   }
+  ],
+  "verdict": "warm pass c1 107.5, c2 156.4, c4 267.9 (3/4), c8 424.4 (8/8), c16 583.8 (16/16), c32 632.6 (30/32), c64 603.7 (62/64): c32 now matches the direct-launch servers (R278c-i); c64 is admission-limited (42 running / 22 waiting at max-model-len 256). Identity through c16 unchanged; c32/c64 near-tie residual unchanged."
  }
 }
