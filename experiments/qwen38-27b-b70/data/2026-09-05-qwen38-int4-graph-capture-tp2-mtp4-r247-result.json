@@ -377,5 +377,14 @@
   ],
   "gates": "G2 12/12, G3 9/12 both",
   "verdict": "rejected: slower and not lossless"
+ },
+ "R257_tp2_depth4_graphs_draft_int4_head": {
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-draft-int4-head-r256 sha256:f7696bcaefab1bc1c93e12cbde630b6e81bed8e00e41154ca2198e246c35dea3",
+  "rates": [
+   112.362301374011,
+   112.325266056986
+  ],
+  "gates": "G2 12/12, G3 12/12 x2 vs the eager R239 MTP0 oracle",
+  "note": "draft-only INT4 lm_head (RTN group 128, _xpu_C.int4_gemm_w4a16 under the fixed-K library) for the draft passes; the target verifier head stays FP16"
  }
 }
