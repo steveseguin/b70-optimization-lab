@@ -1,0 +1,56 @@
+{
+ "schema": "neural.download.promotion-attestation.v1",
+ "created_utc": "2026-09-06T18:03:37Z",
+ "profile_id": "qwen38-flash-next-fp8-tp4-mtp0-fullgraphdet-4352-placement-realistic-v1",
+ "decision": "promote",
+ "promotion_authorized": true,
+ "headline": {
+  "value": 27.64087480500324,
+  "unit": "tok/s",
+  "aggregation": "median of prompt-class medians, 99 inter-token intervals after TTFT, fixed realistic suite run once cold",
+  "metric_events": 100,
+  "metric_intervals": 99,
+  "note": "deterministic full-decode-graph line, no speculation, clean placement overlay cb59004b on the promoted 2169dbfe line; PLE n-gram table and input embeddings host-offloaded over UVA (12.25 GiB budget, 12.22 GiB/rank), every hot routed expert resident, and 3.5 GiB/rank of never-routed experts (census of the exact-2K trajectory and the realistic suite; placement experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json sha f3f4812cfae2) placed in pinned host memory at load time behind a per-expert offset table in the Triton MoE kernel; tuned W13/N32 map keyed on the logical expert count; every output pin equal to the approved 25.62 and 14.43 lines (twelve suite rows, exact-2K and exact-4K authorities)"
+ },
+ "performance_evidence": {
+  "path": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a227-realistic-suite-v1-result.json",
+  "sha256": "c90fab89d3b01bab121eca9b077c706bcada07de5d9113ae3e50e8765a414b18"
+ },
+ "identity": {
+  "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "runtime_revision": "cb59004b5c51e603ba06579382e66139d9a18bb6",
+  "optimization_identity": "tp4-ep4-fullgraphdet-mtp0-4352-ple-embed-budget12p25-uva-coldexperts-hostplaced-3p5gib-w13n32-mkldnndet-oneccl-twoshots",
+  "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+ },
+ "gates": {
+  "varied_task_quality_passed": true,
+  "exact_or_target_oracle_passed": true,
+  "deterministic_repeats_passed": true,
+  "fresh_server_repeat_passed": true,
+  "target_model_unchanged": true,
+  "no_quality_loss": true
+ },
+ "quality_evidence": [
+  {
+   "path": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a223-fresh-repeat-deterministic-summary.json",
+   "sha256": "6c138cf763a16e0e0aef680fb228975091b0a924d51863ee2b33bcb616231dc6",
+   "supports": [
+    "varied_task_quality_passed",
+    "exact_or_target_oracle_passed",
+    "deterministic_repeats_passed",
+    "fresh_server_repeat_passed",
+    "target_model_unchanged",
+    "no_quality_loss"
+   ]
+  },
+  {
+   "path": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp0-a187-a213-a223-exact-2k-pair-summary.json",
+   "sha256": "c6e734d467a3703a03411386497bc28fae1c18c68257fca1b114ddcbbcf419ac",
+   "supports": [
+    "fresh_server_repeat_passed",
+    "deterministic_repeats_passed",
+    "exact_or_target_oracle_passed"
+   ]
+  }
+ ]
+}
