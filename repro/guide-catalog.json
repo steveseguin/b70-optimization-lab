@@ -902,6 +902,38 @@
         "built and replayed container image"
       ],
       "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/package.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906",
+      "guide": "repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md",
+      "classification": "lab-replay",
+      "audience": "expert",
+      "clean_host_tested": false,
+      "components": {
+        "platform_install": false,
+        "model_download": false,
+        "source_restore": true,
+        "build": false,
+        "launch": true,
+        "validation": true,
+        "patch_links": true,
+        "hashes": true
+      },
+      "dependency_links": [
+        "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/README.md",
+        "patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/README.md",
+        "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+        "results/qwen38-flash-next-fp8-b70/README.md",
+        "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/RELEASE-NOTES.md"
+      ],
+      "missing": [
+        "portable runtime rebuild",
+        "platform installation",
+        "model acquisition",
+        "non-originating-host replay",
+        "built and replayed container image"
+      ],
+      "package": "packages/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/package.json"
     }
   ]
 }

@@ -3,39 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards — 27.0 tok/s measured — neural.download</title>
-<meta name="description" content="Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with the expert and n-gram tables that do not fit placed in host memory. One speculative token per step with every output identical to the no-speculation line. A replay of the lab&#x27;s certified run.">
+<title>Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards — 31.9 tok/s measured — neural.download</title>
+<meta name="description" content="Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards. The n-gram table and embeddings live in host memory, every hot expert stays on the cards, and the experts a routing census never selects are parked in host memory behind a per-expert table in the MoE kernel.">
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="manifest" href="../site.webmanifest">
-<link rel="canonical" href="https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.html">
+<link rel="canonical" href="https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.html">
 <meta name="theme-color" content="#0f62e8">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="neural.download">
 <meta property="og:locale" content="en_US">
-<meta property="og:url" content="https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.html">
-<meta property="og:title" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards — 27.0 tok/s measured">
-<meta property="og:description" content="Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with the expert and n-gram tables that do not fit placed in host memory. One speculative token per step with every output identical to the no-speculation line. A replay of the lab&#x27;s certified run.">
-<meta property="og:image" content="https://neural.download/models/cards/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.png">
-<meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.png">
+<meta property="og:url" content="https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.html">
+<meta property="og:title" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards — 31.9 tok/s measured">
+<meta property="og:description" content="Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards. The n-gram table and embeddings live in host memory, every hot expert stays on the cards, and the experts a routing census never selects are parked in host memory behind a per-expert table in the MoE kernel.">
+<meta property="og:image" content="https://neural.download/models/cards/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards: 27.0 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta property="og:image:alt" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards: 31.9 tok/s measured on Intel Arc Pro B70 — neural.download">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@xyster">
 <meta name="twitter:creator" content="@xyster">
-<meta name="twitter:url" content="https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.html">
-<meta name="twitter:title" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards — 27.0 tok/s measured">
-<meta name="twitter:description" content="Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with the expert and n-gram tables that do not fit placed in host memory. One speculative token per step with every output identical to the no-speculation line. A replay of the lab&#x27;s certified run.">
-<meta name="twitter:image" content="https://neural.download/models/cards/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.png">
-<meta name="twitter:image:alt" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards: 27.0 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:url" content="https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.html">
+<meta name="twitter:title" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards — 31.9 tok/s measured">
+<meta name="twitter:description" content="Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards. The n-gram table and embeddings live in host memory, every hot expert stays on the cards, and the experts a routing census never selects are parked in host memory behind a per-expert table in the MoE kernel.">
+<meta name="twitter:image" content="https://neural.download/models/cards/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.png">
+<meta name="twitter:image:alt" content="Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards: 31.9 tok/s measured on Intel Arc Pro B70 — neural.download">
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards", "description": "Qwen's 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with the expert and n-gram tables that do not fit placed in host memory. One speculative token per step with every output identical to the no-speculation line. A replay of the lab's certified run. Measured 27.0 tok/s class-balanced decode median on 4× Intel Arc Pro B70 32 GiB with vLLM XPU (FP8 block-128 weights / BF16 KV). Exact pins, patches, and proof; no unmatched projection is implied.", "url": "https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.html", "dateModified": "2026-09-06", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8 Flash-Next", "Intel Arc Pro B70", "local LLM inference"]}
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards", "description": "Qwen's 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards. The n-gram table and embeddings live in host memory, every hot expert stays on the cards, and the experts a routing census never selects are parked in host memory behind a per-expert table in the MoE kernel. One speculative token per step with every output identical to the no-speculation line. A replay of the lab's certified run. Measured 31.9 tok/s class-balanced decode median on 4× Intel Arc Pro B70 32 GiB with vLLM XPU (FP8 block-128 weights / BF16 KV). Exact pins, patches, and proof; no unmatched projection is implied.", "url": "https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.html", "dateModified": "2026-09-06", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["Qwen3.8 Flash-Next", "Intel Arc Pro B70", "local LLM inference"]}
 </script>
 <script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen3.8 Flash-Next · 125B-A6B", "item": "https://neural.download/models/qwen-flash-next.html"}, {"@type": "ListItem", "position": 4, "name": "Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards", "item": "https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.html"}]}
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "Qwen3.8 Flash-Next · 125B-A6B", "item": "https://neural.download/models/qwen-flash-next.html"}, {"@type": "ListItem", "position": 4, "name": "Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards", "item": "https://neural.download/models/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.html"}]}
 </script>
 <link rel="stylesheet" href="../learn/learn.css">
 <link rel="preconnect" href="https://mlbottleneck.com">
@@ -105,22 +105,22 @@
 </div></div>
 
 <header class="hero"><div class="wrap">
-  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="qwen-flash-next.html">Qwen3.8 Flash-Next · 125B-A6B</a> / official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1</p>
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="qwen-flash-next.html">Qwen3.8 Flash-Next · 125B-A6B</a> / official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1, never-routed experts host-placed</p>
   <p class="eyebrow">Candidate package · vLLM XPU · 4× Intel Arc Pro B70</p>
-  <h1>Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards</h1>
-  <p>Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards with the expert and n-gram tables that do not fit placed in host memory. One speculative token per step with every output identical to the no-speculation line. A replay of the lab&#x27;s certified run.</p>
+  <h1>Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards</h1>
+  <p>Qwen&#x27;s 125B-A6B hybrid-attention MoE, served from its official FP8 weights across four Arc Pro B70 cards. The n-gram table and embeddings live in host memory, every hot expert stays on the cards, and the experts a routing census never selects are parked in host memory behind a per-expert table in the MoE kernel. One speculative token per step with every output identical to the no-speculation line. A replay of the lab&#x27;s certified run.</p>
 </div></header>
 
 <main id="main"><div class="wrap"><div class="col prose" id="package-page">
 
-  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">27.0</span><span class="unit">tok/s class-balanced decode median</span></div><p class="scope">Median of prompt-class medians over 99 inter-token intervals after TTFT on the fixed cold 12-prompt realistic suite, sent once (A189, 2026-09-05). <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json">proof file</a></p><p class="scope-gloss">MTP = multi-token prediction, a small draft the main model verifies</p>
+  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">31.9</span><span class="unit">tok/s class-balanced decode median</span></div><p class="scope">Median of prompt-class medians over 99 inter-token intervals after TTFT on the fixed cold 12-prompt realistic suite, sent once (A226, 2026-09-06). <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-realistic-suite-v1-result.json">proof file</a></p><p class="scope-gloss">MTP = multi-token prediction, a small draft the main model verifies</p>
   <div class="actions">
-    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md">Open the full guide</a>
-    <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
-    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Qwen3.8%20Flash-Next%20FP8%20with%20lossless%20MTP1%20on%20four%20Intel%20Arc%20Pro%20B70%20cards">Submit an improvement</a>
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=Qwen3.8%20Flash-Next%20FP8%20with%20lossless%20MTP1%20and%20never-routed%20experts%20host-placed%20on%20four%20Intel%20Arc%20Pro%20B70%20cards">Submit an improvement</a>
   </div>
 
-  <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 Flash-Next official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1</dd></div><div><dt>Publisher</dt><dd>Qwen</dd></div><div><dt>Checkpoint</dt><dd>Qwen/Qwen3.8-Flash-Next-FP8</dd></div><div><dt>Compression</dt><dd>FP8 block-128 weights / BF16 KV</dd></div><div><dt>Software</dt><dd>vLLM XPU</dd></div><div><dt>Cards</dt><dd>4× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>—</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">deterministic serving research</span></dd></div><div><dt>Published</dt><dd>2026-09-06</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
+  <dl class="facts"><div><dt>Model</dt><dd>Qwen3.8 Flash-Next official FP8 export, TP4/EP4, deterministic full-decode graph, lossless MTP1, never-routed experts host-placed</dd></div><div><dt>Publisher</dt><dd>Qwen</dd></div><div><dt>Checkpoint</dt><dd>Qwen/Qwen3.8-Flash-Next-FP8</dd></div><div><dt>Compression</dt><dd>FP8 block-128 weights / BF16 KV</dd></div><div><dt>Software</dt><dd>vLLM XPU</dd></div><div><dt>Cards</dt><dd>4× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model weight bytes</dt><dd>—</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">coding</span> <span class="use-chip">deterministic serving research</span></dd></div><div><dt>Published</dt><dd>2026-09-06</dd></div><div><dt>Clean-host replay</dt><dd>not yet</dd></div></dl>
 <div class="missing"><p class="missing-tag">Still missing before this becomes an install guide</p><ul><li>tested platform installation (venv, oneAPI runtime, xe driver)</li><li>installable dependency hash lock</li><li>record-specific model acquisition helper</li><li>non-originating-host replay</li><li>built and replayed container image</li><li>beginner recovery flow</li><li>decode, prefill, and TTFT context sweep</li></ul></div>
 
 <h2 id="profiles">Measured performance profiles <span class="badge todo">Not published</span></h2><div class="placeholder"><p>No qualified structured context or depth profile is published for this package. Diagnostic evidence may still be linked under “What to know” or in the full guide; nothing is estimated in its place.</p></div>
@@ -133,7 +133,7 @@
     <h2>Keep going</h2>
     <div class="related-grid">
       <a href="qwen-flash-next.html"><b>Qwen3.8 Flash-Next · 125B-A6B coverage</b><span>Variants, evidence, gaps, and recipes</span></a>
-      <a href="qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906.html"><b>Qwen3.8 Flash-Next FP8 with lossless MTP1 and never-routed experts host-placed on four Intel Arc Pro B70 cards</b><span>31.9 tok/s · vLLM XPU</span></a>
+      <a href="qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905.html"><b>Qwen3.8 Flash-Next FP8 with lossless MTP1 on four Intel Arc Pro B70 cards</b><span>27.0 tok/s · vLLM XPU</span></a>
       <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
       <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
       <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>

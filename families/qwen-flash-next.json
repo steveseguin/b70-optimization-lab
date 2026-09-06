@@ -1774,6 +1774,47 @@
   ],
   "packets": [
     {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4+EP4 graph + lossless MTP1 + never-routed experts host-placed",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 005dc57895896f770157ea94f68e473e7447139e (placement overlay on 1b2a17c1) + staged kernels 2f829747 + public oneCCL 4ceafd1",
+      "cards": 4,
+      "status": "candidate",
+      "evidence_level": "B70-verified originating-host replay",
+      "coverage": [
+        "decode",
+        "exactness",
+        "quality",
+        "runtime provenance",
+        "recipe"
+      ],
+      "manifest": "packages/qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906/package.json",
+      "grades": {
+        "capability": {
+          "grade": "B",
+          "scope": "user-facing TP4/EP4 deterministic full-decode-graph text serving with lossless MTP1 at configured max 4,352, one sequence, on the fixed cold realistic suite",
+          "basis": "The certified line answers the 12-prompt realistic suite with every output identical to the no-speculation line, passed the quality profiles, and reproduced its exact-2K and exact-4K authorities on a separate server; a workload that routes to a host-placed expert pays a PCIe read for that row; long-context, concurrency, and clean-host installation are not covered.",
+          "reviewed_at": "2026-09-06",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-promotion-attestation.json"
+          ]
+        },
+        "evidence": {
+          "grade": "B",
+          "scope": "exact TP4/EP4 graph lossless-MTP1 placement record at 31.929 tok/s class-balanced (A226) with the A225 battery on a separate server",
+          "basis": "Model, placement overlay commit, hosted kernel stage, hosted oneCCL build, tuned map, placement file and frozen packet are pinned by hash; the record run retained every prompt and output SHA-256 (equal to the approved MTP0 and MTP1 rows), cache-zero fresh-response gates and the tuned-map selection receipt; a separate server reproduced both exact-depth authorities bit-for-bit. Only the originating host has replayed it.",
+          "reviewed_at": "2026-09-06",
+          "evidence": [
+            "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-realistic-suite-v1-result.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a225-fresh-repeat-deterministic-summary.json"
+          ]
+        }
+      }
+    },
+    {
       "id": "qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905",
       "label": "Qwen3.8 Flash-Next FP8 · TP4+EP4 graph + lossless MTP1",
       "revision": "qwen38-flash-next",

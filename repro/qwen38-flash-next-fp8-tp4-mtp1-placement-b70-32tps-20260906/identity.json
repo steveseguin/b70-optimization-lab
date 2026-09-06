@@ -1,0 +1,92 @@
+{
+  "format": "qwen38-flash-next-placement-mtp1-record-identity-v1",
+  "record": {
+    "profile_id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-4352-placement-realistic-v1",
+    "class_balanced_median_tok_s": 31.929483735220813,
+    "aggregation": "median of prompt-class medians, 99 inter-token intervals after TTFT, fixed cold realistic suite run once",
+    "localmaxxing_run": "cmtq59cy503jvn701kgvg62zt",
+    "measured_run": "A226 (2026-09-06)",
+    "fresh_server_repeat": "A225 (2026-09-06): frozen-client battery, exact-depth 2K 33.21/33.22 and 4K 32.48/32.50 tok/s, short suite, every pin equal to the MTP0 authorities",
+    "attestation": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-promotion-attestation.json",
+    "performance_evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-realistic-suite-v1-result.json",
+    "performance_evidence_sha256": "e4a277cecca8dc1b4366eb7dbd916abc4f2379dd247a9b63f1c1d016e10d2760",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "model": {
+    "repository": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "config_sha256": "99c11efba4012d0f760f4e4831a8d6cafd845044e21d0aa9e6d9e70a15a90a8d",
+    "safetensors_index_sha256": "0419e2c2dfbb925257d7409405433a793cf7ff7d96f3eba882a815ec6d9fe7a6",
+    "shard_count": 131,
+    "root_total_bytes": 185563783127,
+    "contract": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json"
+  },
+  "runtime": {
+    "vllm_public_base": "76cfe1cd88d30d525eec8be5bff75f8b77471c88",
+    "vllm_overlay_head": "005dc57895896f770157ea94f68e473e7447139e",
+    "vllm_overlay_tree": "d82fb5f2461be1a1f1050c1f681d17f5e7325a17",
+    "vllm_overlay_series": "patches/qwen38-flash-next-fp8-b70/vllm-placement-mtp1-005dc578/ (nine placement commits over the lossless MTP1 head 1b2a17c1; that head's series in patches/qwen38-flash-next-fp8-b70/vllm-lossless-mtp1-1b2a17c1/)",
+    "vllm_package_version": "0.20.2rc1.dev2+gc51df4300.d20260523.xpu",
+    "kernel_stage_build_head": "2f829747503c77d4814834dffd0840fb1dd9f75a",
+    "kernel_stage_manifest": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256",
+    "kernel_stage_release": "https://github.com/steveseguin/b70-optimization-lab/releases/tag/qwen38-flash-next-runtime-2f829747-20260827",
+    "kernel_source_head_in_venv": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "oneccl_public_commit": "4ceafd1",
+    "oneccl_libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "oneccl_kernels_spv_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "oneccl_receipt": "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
+    "torch": "2.11.0+xpu",
+    "triton": "3.7.0",
+    "python": "3.12",
+    "compiler_for_stage": "oneAPI 2025.3 icpx",
+    "vllm_lossless_mtp1_head": "1b2a17c1e7c41985d6a5e0eb324ada4775c25e60"
+  },
+  "configuration": {
+    "cards": 4,
+    "tensor_parallel": 4,
+    "expert_parallel": 4,
+    "all2all_backend": "allgather_reducescatter",
+    "moe_backend": "triton",
+    "tuned_config_folder": "experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
+    "tuned_config_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
+    "graph": "FULL_DECODE_ONLY, capture sizes [1, 2], one warmup",
+    "graph_enable_env": "VLLM_XPU_ENABLE_XPU_GRAPH=1",
+    "speculation": "publisher MTP, one speculative token (lossless: every output pin equal to the MTP0 line)",
+    "max_model_len": 4352,
+    "max_num_seqs": 1,
+    "max_num_batched_tokens": 64,
+    "kv_cache_memory_bytes": 376569856,
+    "kv_cache_layout": "BLHNC",
+    "offload_backend": "uva",
+    "cpu_offload_gb": 12.25,
+    "cpu_offload_params": [
+      "ple_embedding.ngram_embedding.weight",
+      "embed_tokens.weight"
+    ],
+    "offloaded_bytes_per_rank_expected": "12.22 GiB (PLE n-gram 11.92 + embeddings 0.30); every hot routed expert resident",
+    "mkldnn_deterministic": 1,
+    "ccl_sycl_allreduce_ll": "twoshots",
+    "dtype": "bfloat16 activations over the publisher FP8 block-128 weights",
+    "prefix_caching": false,
+    "async_scheduling": false,
+    "expert_host_placement": {
+      "file": "experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",
+      "sha256": "f3f4812cfae2f4f704e75cc9b47a4031a476f846b353e3def23141b9d9c05f96",
+      "host_gib_per_rank_budget": 3.5,
+      "experts_per_rank": {
+        "0": 543,
+        "1": 587,
+        "2": 550,
+        "3": 586
+      },
+      "selection": "experts never routed to in the A168 exact-2K trajectory census and the A197 realistic-suite census; placed in pinned host memory at load time behind a per-expert offset table in the Triton MoE kernel (USE_B_TABLE)"
+    },
+    "tuned_config_key": "logical expert count (placed layers are resident-sized; all three lookup sites key on _q38_num_experts)"
+  },
+  "exactness": {
+    "mtp0_authority_exact_2k_output_sha256_prefix": "afffd211",
+    "exact_4k_authority_sha256_prefix": "c6193cc6",
+    "verifier": "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+    "verifier_sha256": "13073e712ba4743cd0da1d43e4eddc4d7a246b5eda28cdff0ba9f9999243cef0"
+  }
+}
