@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GPU-event time per Triton MoE GEMM launch on one B70 (Q38_MOE_GEMM_EVENT_TIMING hook, overlay dad52087+), 8 rotating block-FP8 weight sets, M=1/2, all-local vs EP-like routing. Needs the full serving env (stage PYTHONPATH, LD_LIBRARY_PATH, VLLM_TARGET_DEVICE=xpu, one card)."""
 import os, sys, statistics
-os.environ["VLLM_TUNED_CONFIG_FOLDER"] = "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32"
+os.environ.setdefault("VLLM_TUNED_CONFIG_FOLDER", "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32")
 os.environ["Q38_MOE_GEMM_EVENT_TIMING"] = "1"
 import torch
 from vllm.platforms import current_platform
