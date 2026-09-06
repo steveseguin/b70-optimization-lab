@@ -154,3 +154,7 @@ The frozen client's W13-N32 verifier also hashes the MoE source files, so the di
 ## 20:52 published: LocalMaxxing run `cmtp3g14502cun701y5ey93rh` approved at 25.617613 tok/s
 
 A188 (realistic suite on the promoted overlay `2169dbfe`, headroom placement) passed the gate at 25.617613 tok/s class-balanced (all-prompt 25.88, p10 25.82, wall 24.83, TTFT median 0.59 s), all twelve row hashes equal to the approved A134 run. Attestation `20260905-tp4-mtp0-a188-promotion-attestation.json` binds the suite JSON to the A187 battery and the three-server exact-2K pair; payload queue `20260905-tp4-mtp0-a188-localmaxxing-payload-queue.json`; submission approved on the first attempt (HTTP 201). The ledger, results packet, top README row, index research-preview paragraph, model page result strip and CURRENT.md are updated. The prior approved row (14.43, `cmtn32b2w000tmm01t7j2wlpn`) stays listed; nothing was lowered or overwritten.
+
+## 21:08 A186: MTP2 with headroom is lossless but no faster than MTP1
+
+A186 (graph MTP2 lineage A139/A140 with the same expert offload, USB checkpoint, overlay `08df70ea`) reproduces the MTP0 authority ids on both exact-2K requests at 19.72 / 25.82 tok/s, against MTP1's 20.42 / 28.52 (A184) and MTP0's 25.4 (A187). The three-token step costs more than its extra accepted token buys at this budget, so MTP1 is the speculative depth to certify; MTP2 stays research.
