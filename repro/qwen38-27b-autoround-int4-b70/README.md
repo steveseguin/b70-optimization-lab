@@ -251,6 +251,19 @@ and the result files `2026-09-06-qwen38-int4-r262-headline-decode-profile-result
   captured (R275 fails capture at 320 tokens). `docker/r276-gdn-spec-group-sync-free.py` computes the group boundaries
   arithmetically (uniform k+1 rows) so capture succeeds with the published group size.
 
+### Kernel-library build reproducibility (clean-clone replay, 2026-09-06)
+
+The published R220 + R221 build scripts were re-run from fresh clones of the
+pinned commits (vllm-xpu-kernels `1e90ffa6`, oneDNN `0e2a5bfe`, sycl-tla
+`cd763790`) with the in-repository patches. The rebuilt `_xpu_C` matched the
+shipped extension bit-for-bit (`271db0d4…`) and both chain images reproduced
+their ids (R220 `36360702…`, R221 `699e2699…`), so the kernel library in every
+image above is reproducible from source, not only from the GHCR digest. Two
+script defects found by the replay (a stale hash pin on the builder helper and
+a `grep -q` under `pipefail`) were fixed in place; see the manifest's
+`known_corrections` and
+`experiments/qwen38-27b-b70/data/replay-w4a16-r220-r221-clean-clone-20260906T192527Z/`.
+
 ### Real-content 2K-32K depth ladder on the headline configuration (R260b, 2026-09-06)
 
 Same harness as the FP8 lane's R189 (`bench-w8a16-real-content-depth.sh`, fixture `qwen38-bce40ca-mixed-content-depth-v1`): one slot,

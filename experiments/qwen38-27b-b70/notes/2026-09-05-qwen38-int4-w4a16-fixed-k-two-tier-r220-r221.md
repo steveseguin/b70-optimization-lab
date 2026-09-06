@@ -60,3 +60,22 @@ in the R222 wrappers (`VLLM_XPU_W4A16_DETERMINISM_PAD=0`), removing its ~4% disp
 R222 matrix on a fresh boot: TP2 then TP1; depth-1 full campaign (G1 MTP0 pair, G2/G3, G5, c1-c64 identity ladders
 for MTP1 and MTP0), depths 2 and 3 strict pairs against that oracle plus ladders. Bar: exact at every concurrency for
 every depth; the FP8 lane's residual (MTP1+ misses at c32/c64 "not in any censused kernel") may or may not apply here.
+
+## Clean-clone replay (2026-09-06)
+
+`experiments/qwen38-27b-b70/scripts/replay-20260906-w4a16-r220-r221-clean-clone.sh` re-ran the two published build
+scripts from fresh blobless clones of the pinned commits (vllm-xpu-kernels 1e90ffa6, oneDNN 0e2a5bfe, sycl-tla cd763790;
+the GitHub URLs were redirected with `git url.<mirror>.insteadOf` to local bare mirrors because the WAN was crawling at
+~0.5 MB/s, and each script's own `checkout --detach <sha>` still enforced commit identity). Host oneAPI 2026.1 mounted into
+the R213b base as before, JOBS=4 (JOBS=8 exhausted the 15 GiB host).
+
+| stage | wall | `_xpu_C` sha256 | image id | identical to shipped |
+| --- | --- | --- | --- | --- |
+| R220 | 930 s | 64c4422a… | 36360702… | yes (both) |
+| R221 incremental | ~1 min | 271db0d4… | 699e2699… | yes (both) |
+
+Two script defects surfaced and were fixed in place: the R220 script's hash pin on the builder helper had gone stale after the
+morning's public-closure edit of that helper (defaults only), and the R221 script's `strings | grep -Fq` check aborted under
+`set -o pipefail` when `grep -q` closed the pipe early (the last two steps, image build and import smoke, were run by hand
+with identical arguments and reproduced the image id; the check now uses `grep -c`). Evidence:
+`experiments/qwen38-27b-b70/data/replay-w4a16-r220-r221-clean-clone-20260906T192527Z/` (summary JSON, both stage logs).

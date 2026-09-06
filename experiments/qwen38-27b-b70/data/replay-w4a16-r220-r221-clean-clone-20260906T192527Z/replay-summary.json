@@ -1,0 +1,31 @@
+{
+  "replay": "Clean-clone replay of the published R220 + R221 kernel-library chain (2026-09-06T19:25Z), JOBS=4, host oneAPI 2026.1 compiler mounted into the R213b base image exactly as the scripts do",
+  "method": "experiments/qwen38-27b-b70/scripts/replay-20260906-w4a16-r220-r221-clean-clone.sh: the published build scripts ran unmodified apart from the builder hash pin (see known_corrections); git url.<mirror>.insteadOf redirected the three GitHub clone URLs to local bare mirrors of the pinned commits because the WAN was crawling; the scripts' own checkout --detach <sha> enforced commit identity",
+  "mirror_heads": {
+    "vllm-xpu-kernels": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn": "0e2a5bfeef1bfbffc3137464606540233086ce9b",
+    "sycl-tla": "cd763790ad2f74d7294435ecf77682bac0062c3a"
+  },
+  "build_root": "/home/steve/builds/w4a16-r220-r221-clean-clone-replay-20260906T192527Z",
+  "r220": {
+    "seconds": 930,
+    "xpu_extension_sha256": "64c4422a74f765202ee3883abd9401ac2d3890ed0a432a92fe552b07e1b1d55d",
+    "image": "neural-download/vllm-openai-xpu:qwen38-int4-w4a16-strategy-r220-clean-replay-20260906",
+    "image_id": "sha256:36360702cbb8acb1fec1f43fcc405135b76edfe7b72d343fa8af4cdac2f012e8",
+    "published_image_id": "sha256:36360702cbb8acb1fec1f43fcc405135b76edfe7b72d343fa8af4cdac2f012e8",
+    "published_xpu_extension_prefix": "64c4422a",
+    "identical_to_published": true
+  },
+  "r221": {
+    "seconds_incremental": "~60 (install 15:41:25 local after the R220 stage finished 15:40:53)",
+    "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+    "published_xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+    "image": "neural-download/vllm-openai-xpu:qwen38-int4-w4a16-fixed-k-r221-clean-replay-20260906",
+    "image_id": "sha256:699e2699a820e45ca0aee9f0dc8169358127a95bf54de0cefae05df94d15920b",
+    "published_image_id": "sha256:699e2699a820e45ca0aee9f0dc8169358127a95bf54de0cefae05df94d15920b",
+    "identical_to_published": true,
+    "script_abort": "rebuild-w4a16-incremental-r221.sh exited after the install step: its `strings | grep -Fq` check under `set -o pipefail` aborted when grep -q closed the pipe early (SIGPIPE on strings). The last two script steps (docker build with the same args; import smoke) were run by hand with identical arguments; the check now uses grep -c."
+  },
+  "import_smoke": "python -c 'import torch; import vllm_xpu_kernels._xpu_C' -> 2.13.0+xpu in the replayed R221 image",
+  "conclusion": "The shipped _xpu_C (271db0d4) and both chain images are bit-for-bit reproducible from a clean clone of the pinned commits plus the in-repo patches."
+}

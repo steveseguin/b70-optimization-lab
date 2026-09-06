@@ -22,7 +22,7 @@ docker run --rm --network none --memory 14g --memory-swap 28g --entrypoint /bin/
   --env GDN_KERNELS=ON --env MOE_KERNELS=OFF "${base_image}" /lab/scripts/build-vllm-xpu-kernels-xpu-c-only.sh
 install -m 0755 "${compile_dir}/install/vllm_xpu_kernels/_xpu_C.abi3.so" "${context_dir}/_xpu_C.abi3.so"
 xpu_sha256=$(sha256sum "${context_dir}/_xpu_C.abi3.so" | awk '{print $1}')
-strings "${context_dir}/_xpu_C.abi3.so" | grep -Fq QWEN38_W4A16_FIXED_K
+strings "${context_dir}/_xpu_C.abi3.so" | grep -Fc QWEN38_W4A16_FIXED_K >/dev/null  # -c (not -q) reads to EOF: -q under pipefail let SIGPIPE on strings abort the 2026-09-06 replay
 docker build --pull=false --build-arg "BASE_IMAGE=${base_image}" --build-arg "XPU_EXTENSION_SHA256=${xpu_sha256}" \
   --build-arg "ONEDNN_PATCH_SHA256=$(sha256sum "${new_patch}" | awk '{print $1}')" --file "${script_dir}/Dockerfile.w4a16-strategy-r220" --tag "${image}" "${context_dir}"
 printf 'image=%s\nimage_id=%s\nxpu_extension_sha256=%s\n' "${image}" "$(docker image inspect "${image}" --format '{{.Id}}')" "${xpu_sha256}"

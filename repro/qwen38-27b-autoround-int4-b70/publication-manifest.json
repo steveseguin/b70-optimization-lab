@@ -8,11 +8,11 @@
     "build_scripts": [
       {
         "path": "experiments/qwen38-27b-b70/docker/build-w4a16-strategy-r220-image.sh",
-        "sha256": "caa8ec21ef3e6e641510e86183bf3a67964db4430b35b845e7e0593d5e371352"
+        "sha256": "55f26d07c8f215357a4702632df9d883663c4419d94539a3fee80428b4796266"
       },
       {
         "path": "experiments/qwen38-27b-b70/docker/rebuild-w4a16-incremental-r221.sh",
-        "sha256": "9d765939b58e7ce8abe8a4df807c1a475ba6fec97c8d7213e8afad213706bcc8"
+        "sha256": "5aaa1a0939f432a3a1a76aeaf038bf5f61da558d3f46c17607a90af76dbf3000"
       },
       {
         "path": "scripts/build-vllm-xpu-kernels-xpu-c-only.sh",
@@ -251,8 +251,8 @@
       }
     ],
     "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16. R257 (R256 image, draft-only INT4 head + graphs): TP2 depth 4 112.362/112.325, 12/12 vs each other and vs the eager oracle.",
-    "clean_source_build": false,
-    "clean_source_build_note": "R220 was a clean build in a fresh build root (r220-clean-build.log; its extension 64c4422a was superseded); the shipped _xpu_C (271db0d4) came from the R221 incremental rebuild in that root (r221-incremental-rebuild.log). A clean-clone replay of the full R220+R221 chain has not been run yet.",
+    "clean_source_build": true,
+    "clean_source_build_note": "2026-09-06 clean-clone replay (replay-w4a16-r220-r221-clean-clone-20260906T192527Z): the published R220 and R221 scripts, run from fresh blobless clones of the pinned commits (local bare mirrors via git url.insteadOf; checkout --detach <sha> enforced) with the host oneAPI 2026.1 compiler mounted into the R213b base, rebuilt _xpu_C bit-for-bit: R220 64c4422a… and image id 36360702…, R221 271db0d4… and image id 699e2699…, both identical to the shipped artifacts; the replayed R221 image imports _xpu_C (torch 2.13.0+xpu). R220 took 930 s at JOBS=4, the R221 incremental stage about a minute.",
     "runtime_smoke": true,
     "build_log_asset": "r221-incremental-rebuild.log",
     "quality_evidence": [
@@ -268,14 +268,19 @@
         "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
         "sha256": "e9cc0c0d151480a78f352067b0502f0be181413f5ae54149f5146d0db648a26f"
       }
-    ]
+    ],
+    "clean_source_build_evidence": {
+      "path": "experiments/qwen38-27b-b70/data/replay-w4a16-r220-r221-clean-clone-20260906T192527Z/replay-summary.json",
+      "sha256": "c543d30db423fddaa26d73753d9b4fc9bada3e2906c494416e3af25a51a82137"
+    }
   },
   "known_corrections": [
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
     "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12).",
     "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0).",
     "2026-09-06: container records show the R257 headline pair (112.36/112.33 tok/s) ran the R228 image (aaf920b0…), not R256; R258, R259, R260b and R265b ran R256. The R256 overlay's fallback branch is never taken on this model (the relabelled lm_head is unquantized and already provides make_xpu_int4_draft_copy), so both images execute the same code on this lane and both are public on GHCR; the recipe text and matrix were corrected.",
-    "2026-09-06 (R278k): every runner-launched server ran with the R213b W4A16 determinism pad active above 128 rows (VLLM_XPU_W4A16_DETERMINISM_PAD absent from the container; the overlay defaults to on), because the launcher chain did not forward the variable. The single-user headline (5 verify rows), the strict gates, the identity ladders, and every rung through c16 (80 rows) are unaffected; the c32/c64 rungs of the published ladders (~360/~445 tok/s) were measured with 160/320 rows padded to 512 and are ~2x pessimistic. Both launchers now forward the switch with 0 as the default; R281/R282 re-measure the ladders."
+    "2026-09-06 (R278k): every runner-launched server ran with the R213b W4A16 determinism pad active above 128 rows (VLLM_XPU_W4A16_DETERMINISM_PAD absent from the container; the overlay defaults to on), because the launcher chain did not forward the variable. The single-user headline (5 verify rows), the strict gates, the identity ladders, and every rung through c16 (80 rows) are unaffected; the c32/c64 rungs of the published ladders (~360/~445 tok/s) were measured with 160/320 rows padded to 512 and are ~2x pessimistic. Both launchers now forward the switch with 0 as the default; R281/R282 re-measure the ladders.",
+    "2026-09-06: build-w4a16-strategy-r220-image.sh pinned scripts/build-vllm-xpu-kernels-xpu-c-only.sh at 5cbdadc2…, but that helper's hash became 7646d9e8… the same day when its /home/steve KERNELS_DIR/VENV_DIR defaults were replaced by required variables for public closure (the R220 script sets both explicitly, so the build is unchanged); the pin was updated after it refused to run. rebuild-w4a16-incremental-r221.sh's `strings | grep -Fq` check aborted under `set -o pipefail` (SIGPIPE on strings) during the replay; it now uses grep -c. Both scripts' digests in repository.build_scripts were refreshed; the clean-clone replay results are recorded in the chain's clean_source_build fields."
   ],
   "release": {
     "tag": "qwen38-int4-fixed-k-r221-20260906",

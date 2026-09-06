@@ -1,0 +1,241 @@
+-- CMPLR_ROOT: /opt/intel/oneapi/compiler/2026.1
+-- Build type: Release
+-- Target device: xpu
+-- Kernel build configuration:
+--   ONEDNN_GIT_REPO              = https://github.com/uxlfoundation/oneDNN.git
+--   ONEDNN_GIT_TAG               = 0e2a5bfeef1bfbffc3137464606540233086ce9b
+--   BUILD_SYCL_TLA_KERNELS       = ON
+--   VLLM_XPU_ENABLE_XE2          = ON
+--   VLLM_XPU_ENABLE_XE_DEFAULT   = OFF
+--   BASIC_KERNELS_ENABLED        = OFF
+--   FA2_KERNELS_ENABLED          = OFF
+--   MOE_KERNELS_ENABLED          = OFF
+--   GDN_KERNELS_ENABLED          = ON
+--   MQA_LOGITS_KERNELS_ENABLED   = OFF
+--   MHC_KERNELS_ENABLED          = ON
+--   XPU_SPECIFIC_KERNELS_ENABLED = ON
+--   XPUMEM_ALLOCATOR_ENABLED     = OFF
+--   VLLM_PAGED_DECODE_CONFIG     = /src/csrc/xpu/attn/kernel_configs/paged_decode_full.conf
+--   VLLM_CHUNK_PREFILL_CONFIG    = /src/csrc/xpu/attn/kernel_configs/chunk_prefill_full.conf
+-- 
+-- Found python matching: /opt/venv/bin/python3.
+-- Python include dirs: /usr/include/python3.12
+-- Python libraries: /usr/lib/x86_64-linux-gnu/libpython3.12.so
+-- Python version: 3.12.3
+CMake Warning (author) at /opt/venv/lib/python3.12/site-packages/cmake/data/share/cmake-4.4/Modules/FindPackageHandleStandardArgs.cmake:493 (message):
+  The package name passed to find_package_handle_standard_args() (SYCL) does
+  not match the name of the calling package (SYCLToolkit).  This can lead to
+  problems in calling code that expects find_package() result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  /opt/venv/lib/python3.12/site-packages/torch/share/cmake/Caffe2/FindSYCLToolkit.cmake:171 (find_package_handle_standard_args)
+  /opt/venv/lib/python3.12/site-packages/torch/share/cmake/Caffe2/public/xpu.cmake:26 (find_package)
+  /opt/venv/lib/python3.12/site-packages/torch/share/cmake/Caffe2/Caffe2Config.cmake:101 (include)
+  /opt/venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:62 (find_package)
+  CMakeLists.txt:175 (find_package)
+This warning is for project developers.  Use -Wno-author to suppress it.
+
+CMake Warning at /opt/venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  library kineto not found.
+Call Stack (most recent call first):
+  /opt/venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:119 (append_torchlib_if_found)
+  CMakeLists.txt:175 (find_package)
+
+
+-- oneDNN: fetching from https://github.com/uxlfoundation/oneDNN.git (commit: 0e2a5bfeef1bfbffc3137464606540233086ce9b)
+CMake Warning (deprecated) at /deps/onednn/CMakeLists.txt:36 (cmake_policy):
+  The OLD behavior for policy CMP0146 will be removed from a future version
+  of CMake.
+
+  The cmake-policies(7) manual explains that the OLD behaviors of all
+  policies are deprecated and that a policy should be set to OLD only under
+  specific short-term circumstances.  Projects should be ported to the NEW
+  behavior and not rely on setting a policy to OLD.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- DNNL_TARGET_ARCH: X64
+-- ONEDNN_LIBRARY_TYPE: STATIC (default: SHARED)
+-- ONEDNN_ENABLE_CONCURRENT_EXEC: TRUE (default: OFF)
+-- ONEDNN_EXPERIMENTAL: TRUE (default: OFF)
+-- ONEDNN_CPU_RUNTIME: NONE (default: OMP)
+-- ONEDNN_GPU_RUNTIME: SYCL (default: NONE)
+-- DPC++ support is enabled (OpenCL and Level Zero)
+-- Found OpenCL headers: /deps/onednn/third_party/opencl
+-- Found Level Zero headers: /deps/onednn/third_party/level_zero
+-- Enabled testing coverage: CI
+-- Enabled workload: TRAINING
+-- Enabled primitives: ALL
+-- Enabled primitive CPU ISA: ALL
+-- Enabled primitive GPU ISA: ALL
+-- Enabled GeMM kernels ISA: ALL
+-- Primitive cache is enabled
+-- Experimental features are enabled
+-- GPU Compute reference kernels are enabled
+-- Graph component is enabled
+-- Found oneDNN: TRUE
+-- Building XPU
+-- SYCL supported arches: intel_gpu_pvc;intel_gpu_bmg_g21;intel_gpu_bmg_g31
+-- Querying torch for GPU compiler flags for SYCL...
+-- Torch GPU compiler flags: -fsycl
+-- FetchContent base directory: /run/fetchcontent
+-- Final SYCL compile options: -fsycl;-lze_loader;-Wno-unused-command-line-argument;-O3;-DNDEBUG;-fsycl-targets=spir64_gen
+-- Final SYCL link options: -fsycl;-lze_loader;-Wno-unused-command-line-argument;-fsycl-max-parallel-link-jobs=16;-flink-huge-device-code;-Xspirv-translator;-spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate;-fsycl-targets=spir64_gen;-Xsycl-target-backend=spir64_gen;-device bmg-g21-a0
+-- Setting up SYCL-TLA dependency...
+-- The VLLM_CUTLASS_SRC_DIR is set, using /deps/cutlass for compilation
+-- CMake Version: 4.4.2
+-- CUTLASS 4.2.1
+-- DPCPP_SYCL_TARGET as list intel_gpu_bmg_g21
+-- DPCPP INCLUDE DIR: /opt/intel/oneapi/compiler/2026.1/bin/../include/sycl;/opt/intel/oneapi/compiler/2026.1/bin/../include
+-- Using DPCPP compile flags: -fsycl;;-fno-sycl-instrument-device-code;
+-- Using DPCPP link flags: -fsycl;;-fno-sycl-instrument-device-code;-fsycl-targets=spir64;-Xs;-device bmg_g21;-Xspirv-translator;-spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate
+-- Default Install Location: install
+-- Enable caching of reference results in conv unit tests
+-- Enable rigorous conv problem sizes in conv unit tests
+-- Using the following NVCC flags: 
+  --expt-relaxed-constexpr
+  -ftemplate-backtrace-limit=0
+  -DCUTLASS_TEST_LEVEL=0
+  -DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1
+  -DCUTLASS_CONV_UNIT_TEST_RIGOROUS_SIZE_ENABLED=1
+  -DCUTLASS_DEBUG_TRACE_LEVEL=0
+  -Xcompiler=-Wconversion
+  -Xcompiler=-fno-strict-aliasing
+  -Xcudafe
+  --diag_suppress=implicit_return_from_non_void_function
+CUDA_VERSION check pass 
+-- Configuring cublas ...
+-- cuBLAS Disabled.
+-- Configuring cuBLAS ... done.
+-- cutlass dir: /deps/cutlass/include and /deps/cutlass/tools/util/include and /deps/cutlass/applications
+-- Setting library output directory for target 'gdn_attn_kernels_xe_2' to '/run/build/'.
+-- Setting library output directory for target 'mhc_kernels_xe_2' to '/run/build/'.
+-- VLLM_XPU_INCLUDE_DIR: /opt/intel/oneapi/compiler/2026.1/include/;/opt/intel/oneapi/compiler/2026.1/include/sycl/;/opt/intel/oneapi/compiler/2026.1/include/syclcompat/
+-- Enabling _xpu_C extension.
+-- -------_xpu_C , , SYCL
+-- GPU_MOD_NAME: _xpu_C
+-- Configuring done (2.7s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    CMAKE_TOOLCHAIN_FILE
+
+
+-- Generating done (0.1s)
+-- Build files have been written to: /run/build
+[1/5] Linking CXX shared library libmhc_kernels_xe_2.so
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+[2/5] Linking CXX shared library libgdn_attn_kernels_xe_2.so
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+[3/5] Building CXX object /run/fetchcontent/onednn-build/src/gpu/intel/gemm/jit/CMakeFiles/dnnl_gpu_intel_gemm_jit.dir/gen_kernel.cpp.o
+/deps/onednn/src/gpu/intel/gemm/jit/gen_kernel.cpp:333:25: warning: format specifies type 'int' but the argument has type 'int64_t' (aka 'long') [-Wformat]
+  327 |                         "wg=%dx%dx%d k0=%d wgK=%d aScale2D=%d aqGroupM=%d "
+      |                                         ~~
+      |                                         %ld
+  328 |                         "aqGroupK=%d aOffset=%d A=%d B=%d C=%d "
+  329 |                         "override=%d entry=%s\n",
+  330 |                         m_, n_, k_, strategy_.unroll[LoopM],
+  331 |                         strategy_.unroll[LoopN], strategy_.wg[LoopM],
+  332 |                         strategy_.wg[LoopN], strategy_.wg[LoopK],
+  333 |                         aux_params_.k0, aux_params_.wgK,
+      |                         ^~~~~~~~~~~~~~
+1 warning generated.
+/deps/onednn/src/gpu/intel/gemm/jit/gen_kernel.cpp:333:25: warning: format specifies type 'int' but the argument has type 'int64_t' (aka 'long') [-Wformat]
+  327 |                         "wg=%dx%dx%d k0=%d wgK=%d aScale2D=%d aqGroupM=%d "
+      |                                         ~~
+      |                                         %ld
+  328 |                         "aqGroupK=%d aOffset=%d A=%d B=%d C=%d "
+  329 |                         "override=%d entry=%s\n",
+  330 |                         m_, n_, k_, strategy_.unroll[LoopM],
+  331 |                         strategy_.unroll[LoopN], strategy_.wg[LoopM],
+  332 |                         strategy_.wg[LoopN], strategy_.wg[LoopK],
+  333 |                         aux_params_.k0, aux_params_.wgK,
+      |                         ^~~~~~~~~~~~~~
+1 warning generated.
+[4/5] Linking CXX static library /run/fetchcontent/onednn-build/src/libdnnl.a
+[5/5] Linking CXX shared module _xpu_C.abi3.so
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+
+warning: in kernel 'typeinfo name for gdn::gated_delta_rule_spec_kernel<sycl::_V1::detail::half_impl::half, float, 8>': compiled SIMD32 allocated 128 regs and spilled around 1
+
+warning: in kernel 'typeinfo name for gdn::gated_delta_rule_spec_kernel<float, sycl::_V1::detail::half_impl::half, 8>': compiled SIMD32 allocated 128 regs and spilled around 7
+
+warning: in kernel 'typeinfo name for gdn::gated_delta_rule_spec_kernel<sycl::_V1::detail::half_impl::half, sycl::_V1::ext::oneapi::bfloat16, 8>': [RetryManager] Start recompilation of the kernel
+
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+Compilation from IR - skipping loading of FCL
+
+warning: in kernel 'typeinfo name for gdn::causal_conv1d_spec_kernel<float, 5, false>': compiled SIMD32 allocated 128 regs and spilled around 10
+
+warning: in kernel 'typeinfo name for gdn::gated_delta_rule_spec_kernel<sycl::_V1::ext::oneapi::bfloat16, sycl::_V1::ext::oneapi::bfloat16, 8>': [RetryManager] Start recompilation of the kernel
+
+Build succeeded.
+-- Install configuration: "Release"
+-- Installing: /run/install/vllm_xpu_kernels/_xpu_C.abi3.so
+-- Set non-toolchain portion of runtime path of "/run/install/vllm_xpu_kernels/_xpu_C.abi3.so" to "$ORIGIN"
+61898352 /run/install/vllm_xpu_kernels/_xpu_C.abi3.so
+2569976 /run/install/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so

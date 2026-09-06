@@ -32,7 +32,9 @@ expected_gdn_split_sha256=40ca8c3fc15fea1b7dda8d268761f0b1339eb821f5d8357b3da760
 expected_fixed_k_sha256=5d2a93f0a36fa89f0ef13cf21ed5332a72491dd5856519bbe2eb21414112464f
 expected_c_align_sha256=feb4f125f69b36dbc3f579ad93743abe655678b7540ba2743fcff797fe35ebd9
 expected_w4a16_sha256=63873506f3031d36193c9746be3a26239cbf230582c0fb296d9e90a4d92ed464
-expected_builder_sha256=5cbdadc200626ed9da03b6aa4808a59ee848348c671ce76d4d7ada4a37ca464f
+# 2026-09-06: the builder's hash moved from 5cbdadc2 to 7646d9e8 when its originating-host defaults for KERNELS_DIR/VENV_DIR were
+# replaced by required variables (public closure); this script sets both explicitly, so the build is unchanged.
+expected_builder_sha256=7646d9e8fefbb791f10f970e25dfafbe1b8bc042ee853b20cbe85617ae331a16
 
 for command_name in docker git readelf sha256sum; do
   command -v "${command_name}" >/dev/null || {
