@@ -407,5 +407,90 @@
    112.325266056986
   ],
   "turnover": "depth 4"
+ },
+ "R259_ladders_tp2_depth4_graphs_draft_head": {
+  "ladder": [
+   {
+    "concurrency": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 106.8,
+    "misses": []
+   },
+   {
+    "concurrency": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 86.3,
+    "misses": []
+   },
+   {
+    "concurrency": 4,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 218.9,
+    "misses": []
+   },
+   {
+    "concurrency": 8,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 403.2,
+    "misses": []
+   },
+   {
+    "concurrency": 16,
+    "exact": "14/16",
+    "aggregate_tok_s_wall": 532.2,
+    "misses": [
+     {
+      "prompt_id": "benchmark-c003",
+      "first_divergence": 60
+     },
+     {
+      "prompt_id": "capacity-c006",
+      "first_divergence": 11
+     }
+    ]
+   },
+   {
+    "concurrency": 32,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 358.7,
+    "misses": [
+     {
+      "prompt_id": "rollback-c010",
+      "first_divergence": 68
+     },
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     }
+    ]
+   },
+   {
+    "concurrency": 64,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 450.2,
+    "misses": [
+     {
+      "prompt_id": "benchmark-c003",
+      "first_divergence": 60
+     },
+     {
+      "prompt_id": "capacity-c006",
+      "first_divergence": 11
+     },
+     {
+      "prompt_id": "cache-c016",
+      "first_divergence": 75
+     },
+     {
+      "prompt_id": "monitoring-c036",
+      "first_divergence": 41
+     },
+     {
+      "prompt_id": "testing-c061",
+      "first_divergence": 49
+     }
+    ]
+   }
+  ]
  }
 }
