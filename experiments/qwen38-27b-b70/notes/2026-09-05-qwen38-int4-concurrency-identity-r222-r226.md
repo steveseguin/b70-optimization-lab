@@ -120,3 +120,10 @@ unquantized): TP1 depth 4 **52.0 tok/s vs 56.3** with the INT4 draft, acceptance
 The AutoRound draft was quantized with its backbone and predicts the INT4 target better than the pristine BF16 draft;
 the BF16 draft is also 4x the bytes per draft pass. The community single-card 83.7 tok/s at depth 4 is therefore not
 a draft effect; their remaining differences are XPU graph capture (R246) and a much larger batched-token budget.
+
+## R246b: XPU graph capture on one card (22:05)
+
+TP1 depth 4, INT4 draft, `VLLM_XPU_ENABLE_XPU_GRAPH=1`, `cudagraph_mode FULL_DECODE_ONLY`, capture sizes 1-8:
+candidate a **56.9 tok/s vs 56.3** without graphs. The log shows exactly one graph captured ("decode, FULL 1/1") and no
+drafter capture: the four draft passes per step, which carry the launch overhead, stayed eager. Same conclusion as
+R198 on FP8 TP2. R248/R249 test the community line's other difference, vLLM's generic `mtp` proposer.
