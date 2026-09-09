@@ -79,3 +79,11 @@ x32kr	3	depth32k	DEPTH_MML=33024
 # super-linearly, so its size matters more than any remaining knob's.
 # Step-cost decomposition control: depth 1 with and without the INT4 draft head isolates the draft
 # pass at the depth where it is the largest fraction of the step.
+#
+# Promoted 2026-09-09 after a13dh0 measured the draft lm_head at 9.64 ms of a 34.62 ms step. These
+# tune a term that is ~28% of the step; nothing else reachable in this lane acts on anything that
+# large. Values shown are the live defaults read from the running container.
+a15sdf32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=fp32
+a16apply	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS=1
+a17dch512	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=512
+a18g256	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=256
