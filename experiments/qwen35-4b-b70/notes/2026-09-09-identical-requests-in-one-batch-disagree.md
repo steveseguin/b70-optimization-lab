@@ -104,24 +104,38 @@ So copies do see different step compositions, and the within-batch disagreement
 does not by itself rule out shape or composition dependence. The claim is
 withdrawn.
 
-## Why the pad fails, on the 9B lane's account rather than mine
+## Why the pad fails, on the 9B lane's current account
 
-The better explanation was already on record.
-`2026-09-08-the-fp16-vocabulary-projection-switches-strategy-above-32-rows.md`
-found that the target's **FP16 vocabulary projection switches strategy above 32
-rows**: at 32 rows and below a row is bitwise identical computed alone or in a
-batch, and from 33 rows up every row differs by up to `3.9e-3` in logit space. The
-lab's fixed-K row-invariance work predicates on weight-quantised inputs
-(`(u4 || s4) && f16`), and on this route the target `lm_head` is plain FP16 — only
-the *draft* head is INT4 — so the last matmul before the argmax was never
-covered.
+An intermediate version of this note credited the FP16 vocabulary projection's
+33-row strategy switch. That was reading one note in a chronology and stopping.
+The lane went on to **test** it: `2026-09-08-the-divergence-originates-upstream-of-the-vocabulary-projection.md`
+chunked the projection to 32 rows — value-preserving by construction, verified
+in-container to make every row's logits bitwise equal to its single-row value —
+and found no effect, 22 against 20 divergent of 1280, `p = 0.88`. The projection
+is row-dependent *and* is not the cause; the hidden states arriving at it already
+differ.
 
-`VLLM_XPU_W4A16_DETERMINISM_PAD` is a W4A16 knob. It does not touch the FP16
-projection either. So tonight's pad null is exactly what that note predicts, and
-its own explanation for why the row-wise all-reduce and serialised norm failed —
-"the largest row-count-dependent perturbation in the model, sitting directly
-before the argmax, was left in place in every arm including the control" — covers
-the pad as well.
+Their settled position, from
+`2026-09-08-a-lockstep-batch-is-deterministic-the-ladder-is-not.md`, is better
+than any single-op story:
+
+- a batch of **constant composition is deterministic** — 64 identical prompts in
+  lockstep gave 64 identical outputs at 64 rows, on two cards, eager *and* under
+  `FULL_DECODE_ONLY` capture;
+- the divergence needs the composition to **vary**, which is what a real server
+  does and what the ladder does, its requests drifting about three decode steps;
+- so **every row-count-dependent op contributes** — the norm from 16 rows, the
+  projection from 33, and whatever else in the body shares the property — and
+  fixing them one at a time cannot move the number.
+
+That explains the pad exactly, and it explains it better than a single-op account
+would: the pad is one more row-count intervention in a model where several ops
+carry the dependence. Four powered arms had already found this; tonight's is the
+fifth, on a second model.
+
+It also means the graph-capture question is settled from their side and not mine:
+capture was tested directly in the lockstep probe and did not reproduce the
+divergence.
 
 ## What it does not settle, and why
 
@@ -176,9 +190,14 @@ before this note was read, at 8/12/16/20/24/32, and reads:
 
 The only fully exact rung is the only one at or below 32 rows, and the first
 non-zero rung is the first one above it. The threshold tracks the **row count**,
-not the user count, on a different model at a different depth — which is the
-prediction that separates the vocabulary-projection mechanism from anything
-indexed on concurrency.
+not the user count, on a different model at a different depth.
+
+Stated at the right strength: this does **not** identify the vocabulary
+projection, which the lane eliminated. What it supports is the broader framing —
+that the relevant variable is decode rows rather than concurrent users. Several
+ops in the body carry a row-count dependence with thresholds in this region (the
+norm from 16 rows, the projection from 33), so a boundary near 32 rows is
+consistent with the family rather than with any member of it.
 
 It is one clean rung and 48 requests, so it is corroboration rather than proof.
 But it is corroboration of a kind the 9B lane could not produce from its own
