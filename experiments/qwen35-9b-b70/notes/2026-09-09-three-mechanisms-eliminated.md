@@ -1,4 +1,4 @@
-# Three divergence mechanisms eliminated, and a better-targeted lead (2026-09-09)
+# Four divergence mechanisms eliminated, and a better-targeted lead (2026-09-09)
 
 All three arms are depth-1 concurrency ladders matched 1:1 against `d1` - same depth, rungs, host,
 card, serial on a quiet card - with the intervention verified present in the container.
@@ -9,9 +9,14 @@ card, serial on a quiet card - with the intervention verified present in the con
 | `b1sn` | `VLLM_XPU_RMSNORM_SERIAL_ROWS=256` | 8/254 (3.15%) | not a fix |
 | `c1cap` | capture ceiling 64 -> 256 | 10/254 (3.94%) | not a fix |
 | `b3lm` | `VLLM_XPU_LM_HEAD_BATCH_INVARIANT=1` | 8/254 (3.15%) | not a fix |
+| `b2rs` | `VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1` | 13/254 (5.12%) | not a fix |
 
-Each is two events or fewer from baseline against a Poisson standard error of about 3.2 on the
-baseline count.
+Each is three events or fewer from baseline against a Poisson standard error of about 3.2 on the
+baseline count. `b2rs` landed slightly worse than baseline, which is the same non-result in the
+other direction and a useful reminder that two of these arms scoring 8/254 was scatter, not signal.
+
+`b2rs` was re-run after its first dispatch was invalidated by the queue parser dropping empty
+columns; the value above is from the corrected run with the knob verified in the container.
 
 **What is excluded:** none of these is *the fix*. A near-zero divergence rate would have been
 obvious at this sample size and none of them produced it.
