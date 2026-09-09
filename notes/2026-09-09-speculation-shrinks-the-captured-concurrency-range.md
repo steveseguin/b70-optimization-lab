@@ -42,6 +42,21 @@ MTP0    :  Capturing CUDA graphs (decode, FULL): 18/18
 
 The MTP0 server captures all 18 because its tokens equal its sequence count.
 
+### Confirmed prospectively
+
+The rule was then used to predict a count before reading it. The `f4` arm raises
+`max_cudagraph_capture_size` to 128 with capture sizes
+`1..64, 80, 96, 112, 128`. Rounding those to multiples of 4, keeping
+`4 <= x <= 128` and deduplicating gives fifteen shapes —
+`4, 8, 12, 16, 20, 28, 32, 40, 52, 60, 64, 80, 96, 112, 128` — topping out at 128
+tokens, which is 32 sequences at depth 3.
+
+The server reports `Capturing CUDA graphs (decode, FULL): 15/15`.
+
+So even with the ceiling doubled, `f4`'s depth-3 rungs at c64, c96 and c128 (256,
+384 and 512 tokens) are still uncaptured; only its MTP0 arm, whose tokens equal
+its sequence count, is captured across the whole ladder.
+
 ## Consequences for this lab
 
 **Every depth-3 ladder rung above c16 has been running without cudagraph replay.**
