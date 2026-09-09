@@ -17,7 +17,7 @@
 # from a TP2 MTP0 c64 pass of 128 requests; it has not recurred in f1's 1920. t5 puts 1280 TP2 MTP0
 # c64 requests against it on the configuration where it appeared.
 #
-# Waits for chain 2, which waits for chain 1. One lane per host.
+# Waits for chain 5, which waits for chain 2, which waits for chain 1. One lane per host.
 set -uo pipefail
 
 repo=/home/steve/b70-optimization-lab
@@ -32,10 +32,10 @@ export LOAD_MEMORY_MIB=7000
 echo $$ >"${out}/qwen35-4b-depth-20260909.pid"
 log() { printf '[dose %s] %s\n' "$(date '+%m-%d %H:%M:%S')" "$*" | tee -a "${wrap}"; }
 
-log "waiting for chain 2"
-while [[ ! -e "${out}/qwen35-4b-fragile-20260909-DONE" && ! -e "${out}/qwen35-4b-fragile-20260909-STOPPED" ]]; do sleep 60; done
-[[ -e "${out}/qwen35-4b-fragile-20260909-STOPPED" ]] && { log "chain 2 stopped; not starting"; exit 1; }
-log "chain 2 done"
+log "waiting for chain 5 (GDN group dose-response)"
+while [[ ! -e "${out}/qwen35-4b-gdn-20260909-DONE" && ! -e "${out}/qwen35-4b-gdn-20260909-STOPPED" ]]; do sleep 60; done
+[[ -e "${out}/qwen35-4b-gdn-20260909-STOPPED" ]] && { log "chain 5 stopped; not starting"; exit 1; }
+log "chain 5 done"
 
 wait_free() { while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]'; do sleep 30; done; sleep 10; }
 hardware_abort() {
