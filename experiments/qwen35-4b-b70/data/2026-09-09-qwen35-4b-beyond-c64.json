@@ -1,0 +1,29 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 f4: past c64, one B70 (2026-09-09)",
+ "question": "Every ladder on this lane stops at c64 because the capture set stops there. f4 raises capture sizes and max_cudagraph_capture_size together to 128, lifts max_num_seqs to 128 and max_num_batched_tokens to 1024, and runs c64, c96 and c128.",
+ "config": "one B70, TP1, depth 3 and MTP0, draft INT4 head, pad off, capture sizes 1..64 plus 80/96/112/128 with ceiling 128, max_num_seqs 128, max_num_batched_tokens 1024, 2026-08-25 small-context suite, 128 tokens, 6 passes per rung",
+
+ "table": [
+  {"rung": 64,  "mtp0_exact": "383/384", "mtp0_div_pct": 0.26, "mtp0_minority_pct": 0.22, "mtp0_tok_s": 1732.5,
+   "depth3_exact": "364/384", "depth3_div_pct": 5.21, "depth3_minority_pct": 3.79, "depth3_tok_s": 1217.2},
+  {"rung": 96,  "mtp0_exact": "576/576", "mtp0_div_pct": 0.00, "mtp0_minority_pct": 0.00, "mtp0_tok_s": 1779.8,
+   "depth3_exact": "537/576", "depth3_div_pct": 6.77, "depth3_minority_pct": 3.57, "depth3_tok_s": 1150.2},
+  {"rung": 128, "mtp0_exact": "765/768", "mtp0_div_pct": 0.39, "mtp0_minority_pct": 0.34, "mtp0_tok_s": 1811.2,
+   "depth3_exact": "720/768", "depth3_div_pct": 6.25, "depth3_minority_pct": 4.02, "depth3_tok_s": 1166.6}
+ ],
+
+ "findings": {
+  "no_speculation_is_near_exact_to_c128": "The no-speculation arm produced 4 divergent requests in 1728, and one whole rung - c96, 576 of 576 - was perfectly exact. This is the first measurement past c64 on this lane, and the W4A16 kernel's row invariance evidently holds all the way to 128 concurrent users. It is not perfect: c64 and c128 each produced a few, so the honest statement is a rate of roughly 0.2 to 0.4%, not zero.",
+  "speculation_stays_expensive": "Depth 3 reads 3.6 to 4.0% on the oracle-free measure at every rung, an order of magnitude above MTP0, and its throughput is flat at 1150 to 1217 tok/s while MTP0 climbs to 1811. Past c64 the gap is 49 to 55%.",
+  "throughput_still_scales_without_speculation": "MTP0 goes 1732.5, 1779.8, 1811.2 tok/s across c64, c96 and c128 - still rising, though flattening. Depth 3 is flat from c64 onward and slightly lower at c96 than at c64.",
+  "extends_the_c16_rule": "f3 put the speculation crossover between c16 and c20. Nothing above it reverses: at four times and eight times that concurrency, turning speculation off remains both faster and far more reproducible."
+ },
+
+ "the_capture_ceiling_still_binds_the_speculative_arm": "Raising the ceiling to 128 tokens covers 32 sequences at depth 3, so c64, c96 and c128 - 256, 384 and 512 tokens - are still uncaptured in the depth-3 arm. The MTP0 arm, whose tokens equal its sequence count, is captured across the whole ladder. That asymmetry is the point of the note on the capture range, and it is why the MTP0 column here is a clean high-concurrency measurement while the depth-3 column is not a capture measurement at all.",
+
+ "not_comparable_to_f1": "f4's rates must not be set beside f1's. The two differ in max_num_seqs, max_num_batched_tokens and the capture configuration, and f4's depth-3 c64 rate is 2.55x lower than f1's, of which about 1.94x is a real reduction in minority-branch output and 1.31x is the oracle-position artifact. Within f4 the MTP0 and depth-3 columns share a server configuration and are directly comparable; across arms they are not. The mb arm isolates which setting is responsible.",
+
+ "campaign_root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f4",
+ "closes": "chain 1, which also produced f1 (20-pass identity), f2 (graph capture), t3 (TP2 strict replication), f3 (the c16 crossover) and t4 (TP2 long context)"
+}
