@@ -81,7 +81,7 @@
   "seven_events": "SUPERSEDED. The MTP0 lane contributed 7; the depth-3 lane contributes 165 with the same structure, so the finding rests on 172 events at many more than four sites.",
   "mtp0_only_so_far": "SUPERSEDED. Both lanes are measured: MTP0 contributed 7 events and depth 3 contributed 165, with the same structure and no gap above 0.03125 in either.",
   "does_not_identify_the_op": "Knowing the sites are exact ties says any perturbation suffices, which makes identifying the specific op that supplies it less important than it looked - and also harder, since every candidate is sufficient.",
-  "no_control_over_non_divergent_positions": "This measures the gap at positions that diverged. It does not measure the gap distribution over all positions, so strictly it says 'divergences occur only at gaps at or below 0.03125' rather than 'small gaps cause divergence'. The two would be separated by recording top-2 gaps at every position of every response, which the probe captures per request but does not currently retain. Given that these completions are otherwise fluent and reproducible, positions with gaps this small are evidently rare, but that is an inference and not a measurement here."
+  "no_control_over_non_divergent_positions": "RESOLVED by m2. The baseline is 8192 positions with a median gap of 2.109375 and only 2.64% at or below 0.03125, against 100% of divergences. See THE_CONTROL_ARRIVED."
  },
  "campaign_root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-m1",
  "probe": "experiments/qwen35-4b-b70/scripts/probe-tie-margin.py",
@@ -96,5 +96,18 @@
   "summary": "min 0.0, median 0.015625, max 0.03125. Every value is an exact multiple of 2^-6, which is the reported resolution at these magnitudes, so the observed population takes only three values: a tie, one quantum, and two quanta.",
   "the_headline_number": "Across both lanes, 172 divergences in total, not one has an oracle top1-top2 gap above 0.03125 nats. Divergence happens only where the model's top two candidates are separated by at most two quanta of the reported precision, and in 38.8% of the speculative cases by nothing at all.",
   "and_speculation_does_not_change_the_character": "The speculative lane's population is 24 times larger and has the same structure, shifted by one quantum in the median. Speculation finds more of these positions; it does not create a different kind of divergence."
+ },
+ "THE_CONTROL_ARRIVED": {
+  "what_was_missing": "The measurement showed divergences occur at tiny gaps. It did not show tiny gaps are rare, and without that the claim was close to unfalsifiable.",
+  "baseline_over_all_positions": {
+   "positions": 8192,
+   "gap_exactly_0": "40 (0.49%)",
+   "gap_le_0.03125": "216 (2.64%)",
+   "median_gap": 2.109375,
+   "max_gap": 16.601562
+  },
+  "the_enrichment": "A typical generated position has a top1-top2 gap of 2.11 nats. Only 2.64% of positions sit at or below 0.03125, and 100% of divergences sit there - 172 in the m1 arms and 159 more in the m2 depth-3 lane, none above 0.03125 in any of them. That is a 37.9-fold enrichment. Under independence the probability of 172 divergences all landing in the tiny-gap 2.64% is 2.6e-272.",
+  "what_it_upgrades": "The claim moves from 'divergences occur at ties' to 'ties are where divergence happens, and they are rare'. The correlation is not vacuous.",
+  "arm": "m2, chain 8, run with the probe extended to report the gap at every generated position of the sequential pass"
  }
 }
