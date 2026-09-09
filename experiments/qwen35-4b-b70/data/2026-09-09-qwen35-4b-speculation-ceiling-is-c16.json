@@ -1,0 +1,39 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 f3: locating the speculation crossover, one B70 (2026-09-09)",
+ "question": "Depth 3 is a large win single-user and a loss at c32. Earlier data bracketed the crossing between c16 and c32 without locating it. f3 measures 8, 12, 16, 20, 24 and 32 with six passes, on both the depth-3 and the no-speculation ladder.",
+ "config": "one B70, TP1, depth 3 via qwen3_5_mtp, draft INT4 head, FULL_DECODE_ONLY capture 1-64, pad off, 2026-08-25 small-context suite, 128 tokens, seed 42, temperature 0, ignore_eos, 6 passes per rung",
+
+ "table": [
+  {"rung": 8,  "mtp0_tok_s": 654.4,  "mtp3_tok_s": 882.0,  "delta_pct": 34.8,  "mtp0_divergent": "0/48",   "mtp3_divergent": "0/48"},
+  {"rung": 12, "mtp0_tok_s": 839.8,  "mtp3_tok_s": 917.8,  "delta_pct": 9.3,   "mtp0_divergent": "0/72",   "mtp3_divergent": "1/72"},
+  {"rung": 16, "mtp0_tok_s": 1058.7, "mtp3_tok_s": 1088.5, "delta_pct": 2.8,   "mtp0_divergent": "0/96",   "mtp3_divergent": "1/96"},
+  {"rung": 20, "mtp0_tok_s": 1196.6, "mtp3_tok_s": 1024.6, "delta_pct": -14.4, "mtp0_divergent": "1/120",  "mtp3_divergent": "11/120"},
+  {"rung": 24, "mtp0_tok_s": 1345.9, "mtp3_tok_s": 1121.3, "delta_pct": -16.7, "mtp0_divergent": "1/144",  "mtp3_divergent": "13/144"},
+  {"rung": 32, "mtp0_tok_s": 1595.5, "mtp3_tok_s": 1155.5, "delta_pct": -27.6, "mtp0_divergent": "1/192",  "mtp3_divergent": "14/192"}
+ ],
+
+ "finding_1_both_axes_turn_at_the_same_rung": {
+  "statement": "Speculation's throughput advantage and its identity advantage end together, between c16 and c20. At c16 depth 3 is still ahead by 2.8% and diverges in 1 of 96 requests. At c20 it is 14.4% behind and diverges in 11 of 120.",
+  "throughput_shape": "Depth 3 stops scaling at c16: 1088.5 to 1155.5 tok/s from c16 to c32, a 6% gain over a doubling of users, while no-speculation rises 1058.7 to 1595.5, a 51% gain. The speculative server is not merely losing its lead, it has stopped converting extra concurrency into throughput.",
+  "c20_dip": "Depth 3 reads 1024.6 at c20, below its own 1088.5 at c16. On six passes that dip is not separable from noise and is not claimed as a regression; the flatness from c16 to c32 is the robust part."
+ },
+
+ "finding_2_the_identity_change_is_a_step": {
+  "statement": "Depth-3 divergence does not rise smoothly with concurrency. It is 2 of 216 requests across c8, c12 and c16 pooled (0.93%) and 38 of 456 across c20, c24 and c32 (8.33%), a factor of nine, and then roughly flat.",
+  "significance": "Under the rate measured below the step, the rungs above it would give about 4.2 divergent requests. They give 38.",
+  "mtp0_is_not_established": "The no-speculation ladder reads 0 of 216 below and 3 of 456 above. Suggestive of the same shape, but at its measured rate of roughly 0.5% the lower rungs would only have been expected to produce about 1.4 events, so 0 is unremarkable. This arm cannot locate a step for MTP0 and none is claimed."
+ },
+
+ "two_confounded_explanations": {
+  "note": "Both predict a boundary at exactly c16 for depth 3, and f3 cannot separate them.",
+  "a_gdn_speculative_group": "The lane runs VLLM_XPU_GDN_SPEC_GROUP=16, documented as processing GDN speculative rows in groups of at most 16 sequences. At or below 16 every speculative row is in one group; above it the rows are partitioned and which group a request lands in depends on the rest of the batch. Pooling by group count, ceil(c/16), gives 0.93% for one group, 6.66% for two and 13.28% for four - near-proportional once there is more than one.",
+  "b_uncaptured_decode_shape": "A uniform decode step is (1 + depth) tokens per sequence, so depth 3 at n sequences is 4n tokens, and max_cudagraph_capture_size is 64 tokens - exactly 16 sequences. c16 is the largest depth-3 concurrency with a captured decode shape. Confirmed directly: a depth-3 server reports capturing 11 shapes where an MTP0 server on the same capture list reports 18.",
+  "how_they_separate": "Chain 5 varies the group size at a fixed capture ceiling (s08, s16, s32) and the capture ceiling at a fixed group size (k128). If the step follows the group size it is the grouping; if it follows the ceiling it is the uncaptured shape; if both, both."
+ },
+
+ "operational_reading": "c16 is the speculation ceiling on this model and this card. Below it depth 3 is worth having - 35% at c8, and the strict gates pass. From c20 up it costs 14 to 28% of throughput and multiplies divergence ninefold. A server sized for 16 or fewer concurrent users should run depth 3; one sized for more should run without speculation, and gets both more throughput and better reproducibility for it.",
+
+ "caveat_on_two_rungs": "c12 and c24 are not in the capture list, so their decode shapes pad to the next captured size. That is realistic serving behaviour and does not affect the throughput reading, but it means those two rungs are not clean points for an identity comparison. The step is located by c16 against c20, both of which are captured sizes for MTP0 and, in the depth-3 arm, sit either side of the capture ceiling.",
+ "campaign_root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f3"
+}
