@@ -62,19 +62,26 @@ Evidence: `data/2026-09-08-divergence-positions.json`; analyser
 
 ---
 
-## Correction (2026-09-09): the largest site is an insertion, not a substitution
+## Follow-up (2026-09-09): the tie reading is confirmed by bidirectional sites
 
-The `466 -> 5787` reading above comes from comparing position by position, which
-cannot distinguish a substitution from an inserted token. Alignment-based
-re-analysis of every ladder on disk shows all 1295 occurrences of that site have
-the same structure: the run emits `5787` at position 90 — the token the oracle
-emits at position 95 — then emits `466`, the oracle's position-90 token, and
-diverges from 92. The model does not choose between 466 and 5787; it emits one
-five positions early and then the other. "A site always flips the same way" holds;
-"that is what an exact two-way tie looks like" does not, for this site.
+A 2026-09-09 re-analysis briefly claimed the `466 -> 5787` site was an inserted
+token rather than a substitution. That claim was withdrawn: `466` is `" or"` and
+`5787` is `" errors"`, and the two continuations are `HTTP 500 or 503 errors)`
+against `HTTP 500 errors or timeouts)` - a two-way fork on exactly the pair this
+note names. difflib aligned it as an insertion only because both branches reuse
+the same words.
 
-`rollback-c042` @38 and `index-c041` @77 do classify as substitutions in every
-occurrence, so the tie reading stands for them. Across 2532 divergences in the 9B
-and 4B ladders the split is 51% early-emission insertion, 46% substitution.
+The re-analysis did add direct support for the reading here. Censusing every
+ladder in the 27B, 9B and 4B lanes for sites where the same (prompt, index) pair
+appears in *both* directions across campaigns - each campaign regenerating its
+own sequential oracle - finds 39 such sites, several near even: 27B
+`capacity-c006` @11 (`" fixed"` / `" finite"`) at 42/33, `capacity-c014` @18 at
+27/19, `monitoring-c028` @32 at 5/5, and this note's `monitoring-c036` @90 at
+27/4. A site whose own single-stream oracle is unstable is a tie.
+
+Separately, four divergences lab-wide are clean single-token insertions with the
+remainder identical, which is a different phenomenon from the sites here: 4B
+`benchmark-c043` @124 (a duplicated `" inference"`) and three occurrences of 27B
+`evidence-c151` @123.
 
 See `experiments/qwen35-4b-b70/notes/2026-09-09-divergence-classification-retrospective.md`.

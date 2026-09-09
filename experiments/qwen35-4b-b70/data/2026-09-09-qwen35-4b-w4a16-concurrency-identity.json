@@ -9,26 +9,88 @@
   "model": "RedHatAI/Qwen3.5-4B-quantized.w4a16 7a613872f394578b0b52b683ff4ac47516b4bcaf",
   "image": "R276 sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad"
  },
-
  "finding_1_the_c32_break_is_speculative_not_kernel": {
   "statement": "Speculation raises the divergence rate at high concurrency by about 18x. It does not create divergence that is otherwise absent: the no-speculation ladder is also not exact above c16, only far closer to it.",
   "SUPERSEDES": "An earlier version of this file read the four published 2-pass ladders as 'MTP0 is exact at every rung through c32' and concluded c32 separates the two arms cleanly. The 20-pass f1 arm shows that was underpowered, not wrong-as-stated: at a 0.31% per-request rate a 32-request pass comes back clean about 90% of the time, so two clean passes carry almost no information. The corrected reading is a large rate difference, not exact-versus-broken. See powered_20_pass below.",
   "powered_20_pass": {
    "campaign": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
    "config": "one B70, TP1, graph capture on, draft INT4 head, pad off, 20 passes per rung",
-   "mtp0": {"c32": {"exact": "638/640", "rate_pct": 99.69, "divergent": 2, "fully_clean_passes": "18/20", "agg_tok_s_median": 1591.3},
-            "c64": {"exact": "1271/1280", "rate_pct": 99.30, "divergent": 9, "fully_clean_passes": "12/20", "agg_tok_s_median": 1722.7}},
-   "mtp3": {"c32": {"exact": "605/640", "rate_pct": 94.53, "divergent": 35, "fully_clean_passes": "1/20", "agg_tok_s_median": 1153.6},
-            "c64": {"exact": "1110/1280", "rate_pct": 86.72, "divergent": 170, "fully_clean_passes": "0/20", "agg_tok_s_median": 1200.3}},
-   "speculation_penalty": {"c32": "5.47% vs 0.31% per request, 17.6x", "c64": "13.28% vs 0.70% per request, 19.0x"},
+   "mtp0": {
+    "c32": {
+     "exact": "638/640",
+     "rate_pct": 99.69,
+     "divergent": 2,
+     "fully_clean_passes": "18/20",
+     "agg_tok_s_median": 1591.3
+    },
+    "c64": {
+     "exact": "1271/1280",
+     "rate_pct": 99.3,
+     "divergent": 9,
+     "fully_clean_passes": "12/20",
+     "agg_tok_s_median": 1722.7
+    }
+   },
+   "mtp3": {
+    "c32": {
+     "exact": "605/640",
+     "rate_pct": 94.53,
+     "divergent": 35,
+     "fully_clean_passes": "1/20",
+     "agg_tok_s_median": 1153.6
+    },
+    "c64": {
+     "exact": "1110/1280",
+     "rate_pct": 86.72,
+     "divergent": 170,
+     "fully_clean_passes": "0/20",
+     "agg_tok_s_median": 1200.3
+    }
+   },
+   "speculation_penalty": {
+    "c32": "5.47% vs 0.31% per request, 17.6x",
+    "c64": "13.28% vs 0.70% per request, 19.0x"
+   },
    "throughput": "Turning speculation off is also faster at these rungs: +38% at c32, +44% at c64."
   },
   "original_2_pass_observation": "Recorded as measured; it is consistent with the powered rates and simply cannot distinguish 99.7% from 100%.",
   "identity": {
-   "tp1_mtp0": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "32/32, 32/32", "c64": "64/64, 63/64"},
-   "tp1_mtp3": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "31/32, 30/32", "c64": "53/64, 55/64"},
-   "tp2_mtp0": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "32/32, 32/32", "c64": "62/64, 64/64"},
-   "tp2_mtp3": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "30/32, 28/32", "c64": "60/64, 59/64"}
+   "tp1_mtp0": {
+    "c1": "1/1, 1/1",
+    "c2": "2/2, 2/2",
+    "c4": "4/4, 4/4",
+    "c8": "8/8, 8/8",
+    "c16": "16/16, 16/16",
+    "c32": "32/32, 32/32",
+    "c64": "64/64, 63/64"
+   },
+   "tp1_mtp3": {
+    "c1": "1/1, 1/1",
+    "c2": "2/2, 2/2",
+    "c4": "4/4, 4/4",
+    "c8": "8/8, 8/8",
+    "c16": "16/16, 16/16",
+    "c32": "31/32, 30/32",
+    "c64": "53/64, 55/64"
+   },
+   "tp2_mtp0": {
+    "c1": "1/1, 1/1",
+    "c2": "2/2, 2/2",
+    "c4": "4/4, 4/4",
+    "c8": "8/8, 8/8",
+    "c16": "16/16, 16/16",
+    "c32": "32/32, 32/32",
+    "c64": "62/64, 64/64"
+   },
+   "tp2_mtp3": {
+    "c1": "1/1, 1/1",
+    "c2": "2/2, 2/2",
+    "c4": "4/4, 4/4",
+    "c8": "8/8, 8/8",
+    "c16": "16/16, 16/16",
+    "c32": "30/32, 28/32",
+    "c64": "60/64, 59/64"
+   }
   },
   "caveat": "These are the 2-pass observations, retained as measured. Read against the 20-pass rates above they are consistent with both arms diverging at some rate above c16; they cannot establish exactness anywhere. The lane should not quote a rung as 'exact' from two passes again: the f1 arm needed 20 to see 2 events in 640 at c32.",
   "fragile_sites_mtp0_20_pass": {
@@ -37,41 +99,115 @@
    "mtp3_for_contrast": "c32: 5 prompts, rates to 65%, 1 clean pass. c64: 16 prompts, rates to 95%, 0 clean passes. The speculative arm's fragile set contains the no-speculation one."
   }
  },
-
- "finding_2_the_flips_are_not_near_ties": {
-  "statement": "The lane has treated high-concurrency flips as near-tie token substitutions. None of the three MTP0 flips is one. Not one of them is a single substituted token with an identical remainder.",
-  "events": [
-   {"prompt": "benchmark-c043", "arm": "tp2 c64 pass1", "similarity": 0.992, "class": "insertion(1)",
-    "detail": "One token (42903) inserted at index 124; every other token identical, with one token pushed off the end by the 128-token cap. This is the inserted-token signature AGENTS.md documents for the MTP first-token phantom, occurring here with speculation off."},
-   {"prompt": "capacity-c022", "arm": "tp2 c64 pass1", "similarity": 0.734, "class": "shift-then-drift",
-    "detail": "Four tokens deleted at index 17, then progressive content divergence."},
-   {"prompt": "rollback-c034", "arm": "tp1 c64 pass2", "similarity": 0.117, "class": "content-divergence",
-    "detail": "Divergence from index 5; the two continuations share almost nothing."}
+ "finding_2_flip_shapes": {
+  "statement": "The near-tie model is correct and is confirmed here; a separate, much rarer stutter class also exists. An earlier version of this file claimed the tie model was wrong for half of all divergences. That claim is retracted: it rested on difflib aligning two fluent continuations that reuse the same words as an insertion. See the retrospective note.",
+  "tie_evidence": "39 sites across the 27B, 9B and 4B lanes show the same (prompt, index) substitution in both directions across campaigns, each with its own regenerated sequential oracle. 27B capacity-c006 @11 is ' fixed' vs ' finite' at 42/33. A site whose own single-stream oracle is unstable is a tie.",
+  "note_on_the_three_4B_flips": "None of the three is a single substituted token with an identical remainder, which is expected and was already noted on 2026-09-08: once a token changes the continuation is conditioned on it.",
+  "events_detail": [
+   {
+    "prompt": "benchmark-c043",
+    "arm": "tp2 c64 pass1",
+    "similarity": 0.992,
+    "class": "insertion(1) - genuine stutter",
+    "detail": "Token 42903 = ' inference' inserted at index 124; remainder identical, one token pushed off by the 128 cap. Oracle reads 'Inference performance is highly dependent', run reads 'Inference inference performance is highly'. Both 128 tokens / 128 chunks / finish_reason=length, so it is a generated token, not a streaming artifact. One of only four such events lab-wide."
+   },
+   {
+    "prompt": "capacity-c022",
+    "arm": "tp2 c64 pass1",
+    "similarity": 0.734,
+    "class": "shift-then-drift",
+    "detail": "Four tokens deleted at index 17, then content divergence. Not a clean shift."
+   },
+   {
+    "prompt": "rollback-c034",
+    "arm": "tp1 c64 pass2",
+    "similarity": 0.117,
+    "class": "content-divergence",
+    "detail": "Divergence from index 5; the two continuations share almost nothing."
+   }
   ]
  },
-
  "finding_3_speculation_crossover": {
   "statement": "Depth 3 is a large win single-user and a loss above c16. The crossing sits between c16 and c32 on one card and on two, and it coincides with the rung where the depth-3 identity ladder starts failing. Above c16 speculation is worse on both axes at once.",
   "note": "Pass 1 of a ladder is warmup-contaminated at low concurrency (tp1 mtp3 pass1 c2 reads 134.1 tok/s, below its own c1). These ratios use pass 2.",
   "aggregate_tok_s_wall_pass2": {
-   "tp1": {"c1": {"mtp0": 101.9, "mtp3": 159.2, "delta": "+56%"},
-           "c2": {"mtp0": 193.5, "mtp3": 300.8, "delta": "+55%"},
-           "c4": {"mtp0": 362.3, "mtp3": 537.8, "delta": "+48%"},
-           "c8": {"mtp0": 655.5, "mtp3": 898.0, "delta": "+37%"},
-           "c16": {"mtp0": 1059.3, "mtp3": 1089.9, "delta": "+3%"},
-           "c32": {"mtp0": 1593.9, "mtp3": 1147.4, "delta": "-28%"},
-           "c64": {"mtp0": 1725.1, "mtp3": 1201.0, "delta": "-30%"}},
-   "tp2": {"c1": {"mtp0": 136.3, "mtp3": 227.3, "delta": "+67%"},
-           "c2": {"mtp0": 258.9, "mtp3": 428.4, "delta": "+65%"},
-           "c4": {"mtp0": 492.1, "mtp3": 759.6, "delta": "+54%"},
-           "c8": {"mtp0": 900.3, "mtp3": 1289.6, "delta": "+43%"},
-           "c16": {"mtp0": 1492.3, "mtp3": 1588.1, "delta": "+6%"},
-           "c32": {"mtp0": 2353.9, "mtp3": 1848.9, "delta": "-21%"},
-           "c64": {"mtp0": 2777.7, "mtp3": 2020.6, "delta": "-27%"}}
+   "tp1": {
+    "c1": {
+     "mtp0": 101.9,
+     "mtp3": 159.2,
+     "delta": "+56%"
+    },
+    "c2": {
+     "mtp0": 193.5,
+     "mtp3": 300.8,
+     "delta": "+55%"
+    },
+    "c4": {
+     "mtp0": 362.3,
+     "mtp3": 537.8,
+     "delta": "+48%"
+    },
+    "c8": {
+     "mtp0": 655.5,
+     "mtp3": 898.0,
+     "delta": "+37%"
+    },
+    "c16": {
+     "mtp0": 1059.3,
+     "mtp3": 1089.9,
+     "delta": "+3%"
+    },
+    "c32": {
+     "mtp0": 1593.9,
+     "mtp3": 1147.4,
+     "delta": "-28%"
+    },
+    "c64": {
+     "mtp0": 1725.1,
+     "mtp3": 1201.0,
+     "delta": "-30%"
+    }
+   },
+   "tp2": {
+    "c1": {
+     "mtp0": 136.3,
+     "mtp3": 227.3,
+     "delta": "+67%"
+    },
+    "c2": {
+     "mtp0": 258.9,
+     "mtp3": 428.4,
+     "delta": "+65%"
+    },
+    "c4": {
+     "mtp0": 492.1,
+     "mtp3": 759.6,
+     "delta": "+54%"
+    },
+    "c8": {
+     "mtp0": 900.3,
+     "mtp3": 1289.6,
+     "delta": "+43%"
+    },
+    "c16": {
+     "mtp0": 1492.3,
+     "mtp3": 1588.1,
+     "delta": "+6%"
+    },
+    "c32": {
+     "mtp0": 2353.9,
+     "mtp3": 1848.9,
+     "delta": "-21%"
+    },
+    "c64": {
+     "mtp0": 2777.7,
+     "mtp3": 2020.6,
+     "delta": "-27%"
+    }
+   }
   },
   "operational_reading": "For a single-user or lightly loaded endpoint keep depth 3: it is the published 177 tok/s lossless configuration. For a server expecting 32 or more concurrent users, turning speculation off is faster (+39% one card, +27% two cards at c64) and simultaneously restores exact identity at c32. This is a serving-policy result, not a new record."
  },
-
  "status": "Re-analysis only; no new measurement. The 2026-09-09 exhaustive campaign was preregistered to put a rate on finding 2, test whether the decode graph capture is responsible, and locate the crossover in finding 3 directly.",
  "preregistration": "experiments/qwen35-4b-b70/notes/2026-09-09-qwen35-4b-exhaustive-preregistration.md",
  "tooling": "experiments/qwen35-9b-b70/scripts/analyze-divergence-positions.py, extended 2026-09-09 with difflib alignment classification; the prior version reported an inserted token as a substitution followed by total divergence."

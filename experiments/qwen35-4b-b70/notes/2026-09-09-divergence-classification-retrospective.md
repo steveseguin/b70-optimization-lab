@@ -1,131 +1,127 @@
-# Half the divergences are not tie flips: one token is emitted five positions early (2026-09-09)
+# Divergence classification: the tie model holds, and there is a separate rare stutter (2026-09-09)
 
-Read entirely out of ladder files already on disk — no cards, no new runs. This
-extends `2026-09-08-the-divergences-are-a-dozen-fixed-tie-sites.md` and corrects
-one of its claims.
+Read entirely out of ladder files already on disk — no cards, no new runs.
 
-## What the 2026-09-08 note established, and what it assumed
+**This note retracts a claim an earlier version of it made.** That version argued
+that half the lab's concurrent divergences were a token emitted five positions
+early rather than a tie flip, and a correction to that effect was appended to
+`experiments/qwen35-9b-b70/notes/2026-09-08-the-divergences-are-a-dozen-fixed-tie-sites.md`.
+That was wrong. The 2026-09-08 tie model is correct. What follows is what the
+data actually supports.
 
-That note resolved the two-card divergences into a dozen fixed sites, each a
-`(prompt, token position, substitution)` triple that always flips the same way,
-and argued this is what an exact two-way tie looks like. Two of its observations
-hold up completely: sites are highly repeatable, and nothing is a single-token
-substitution with an identical remainder (once a token changes, the continuation
-is conditioned on it).
+## The retracted claim, and why it was wrong
 
-The assumption underneath is that the first differing index is a **substitution**
-— that `466 -> 5787` means the tie between candidates 466 and 5787 broke the
-other way. `analyze-divergence-positions.py` could not test that assumption
-because it only compared position by position; an inserted token makes every
-later position differ and looks identical to a substitution followed by
-divergence.
+Alignment analysis (difflib) of the dominant 9B site reported the run inserting
+token `5787` at position 90, five positions before the oracle emits it. Decoding
+the tokens settles it:
 
-## What alignment shows
+- `466` = `" or"`, `5787` = `" errors"`
 
-The analyser is now alignment-based (difflib). Censusing every divergence in
-every 9B and 4B ladder on disk — 2532 divergent requests across 135 sites:
+The oracle continues `HTTP 500 or 503 errors)` and the run continues
+`HTTP 500 errors or timeouts)`. Both are fluent, both are correct, and they fork
+at position 90 on exactly two candidates — `" or"` against `" errors"`. That is a
+two-way substitution: precisely what the 2026-09-08 note described.
 
-| leading edit | count | share |
-| --- | ---: | ---: |
-| `insert(early+5)` | 1295 | 51% |
-| `replace` | 1171 | 46% |
-| `delete` | 42 | 1.7% |
-| `insert` (other) | 23 | 0.9% |
-| `insert(novel)` | 1 | — |
+difflib called it an insertion because the two continuations reuse the same
+words in a different order, so the later `" errors"` in the oracle aligns with the
+earlier `" errors"` in the run. On natural language that alignment is routine and
+means nothing about mechanism.
 
-Split by model, the two are not the same population:
+The specific defect in the analysis was in an ad-hoc census script, not in the
+committed tool: the census classified on difflib's **first** opcode without
+requiring the remainder to realign. `analyze-divergence-positions.py` is stricter
+— it reports `insertion(n)` only when a single edit survives after the response
+cap's overhang is discounted — and it correctly reported **0** pure alignment
+shifts in 183 MTP0 and 2308 speculative 9B divergences. The tool was right and
+the conclusion drawn around it was not.
 
-| leading edit | 9B (2491 divergences, 102 sites) | 4B (246, 22 sites) |
-| --- | ---: | ---: |
-| `insert(early+5)` | 1295 (52.0%) | 0 |
-| `replace` | 1141 (45.8%) | 206 (83.7%) |
-| `delete` | 35 (1.4%) | 9 (3.7%) |
-| `insert` (other) | 20 (0.8%) | 30 (12.2%) |
-| `insert(novel)` | 0 | 1 (0.4%) |
+## What the data does support
 
-The early-emission class is **entirely a 9B phenomenon**; the 4B has none of it.
-And the 4B's 12.2% `insert` column is not a third phenomenon: it is two content
-divergences that difflib happens to open with an insert opcode — `cache-c016` @26
-(a 19-token insert, similarity 0.383, 12 edits, 20 occurrences) and
-`capacity-c022` @17 (4 tokens, 0.727, 7 edits, 10 occurrences). On the 4B exactly
-**one** divergence out of 246 is a clean single-token insertion.
+### 1. The tie model, now with direct evidence
 
-**The single largest class is not a tie.** All 1295 members of the `466 -> 5787`
-family — every `monitoring-c020`, `monitoring-c044`, `monitoring-c036` variant,
-across both the speculative and the no-speculation ladders, in every arm — have
-the same structure, with no exceptions:
+A substitution site that is a genuine tie should sometimes resolve the other way
+even in the sequential oracle, because each campaign regenerates its own oracle.
+Censusing every ladder in the 27B, 9B and 4B lanes for sites where the same
+`(prompt, index)` pair appears in **both** directions across campaigns finds 39
+such sites. Several are close to even:
 
-- at position 90 the run emits `5787`, which is the token the **oracle emits at
-  position 95**, five positions later;
-- the run then emits `466`, the token the oracle emits at position 90;
-- divergence follows from position 92.
+| lane | prompt | idx | pair | seen |
+| --- | --- | ---: | --- | --- |
+| 27B | `capacity-c006` | 11 | `" fixed"` ↔ `" finite"` | 42 / 33 |
+| 27B | `capacity-c014` | 18 | `466` ↔ `326` | 27 / 19 |
+| 27B | `cache-c000` | 96 | `348` ↔ `2972` | 12 / 10 |
+| 27B | `monitoring-c028` | 32 | `5222` ↔ `7695` | 5 / 5 |
+| 9B | `monitoring-c036` | 90 | `" or"` ↔ `" errors"` | 27 / 4 |
 
-That is not two candidates tying and the tie-break going the other way. Under a
-tie the model picks 466 *or* 5787. Here it picks 5787 **and then still picks**
-466. The correct description of the site is "a token is emitted five positions
-early," and `466 -> 5787` is an artifact of reading only the first differing
-index.
+A site whose own single-stream oracle is unstable is a tie by any reasonable
+definition. This is stronger evidence for the 2026-09-08 reading than that note
+had available, and it is the useful new result here.
 
-**The tie model does hold for the other half.** `rollback-c042` @38
-(`16070 -> 24141`, 83 occurrences) and `index-c041` @77 (`10993 -> 24816`, 82)
-classify as `replace` in every occurrence. For those sites the 2026-09-08
-reasoning stands as written.
+### 2. A genuinely distinct stutter class — four events lab-wide
 
-So the dozen sites are better described as (at least) two mechanisms, not one:
-a repeatable early-emission event that accounts for just over half of all
-divergences, and a set of genuine tie substitutions accounting for most of the
-rest.
+Requiring the strict definition (one edit, remainder identical after discounting
+the cap overhang), the whole corpus contains **four** clean single-token
+insertions:
 
-## The 4B, and the phantom without speculation
+- 4B `benchmark-c043` @124, token `42903` = `" inference"`, similarity 0.992,
+  TP2 c64 **MTP0**. The oracle reads `Inference performance is highly dependent`;
+  the run reads `Inference inference performance is highly`. A duplicated word.
+  Both responses have 128 tokens, 128 chunks and `finish_reason=length`, so this
+  is a generated token, not a streaming artifact.
+- 27B `evidence-c151` @123, token `82` = `"s"`, similarity 0.992, three
+  occurrences in the `qwen38-int4-graph-drafthead-tp2-mtp1` ladders.
 
-The 4B's three MTP0 c64 flips (2026-09-07 `v1`/`t1`) are one clean
-`insertion(1)` — `benchmark-c043`, one token inserted at index 124, everything
-else identical, similarity 0.992 — one four-token deletion, and one content
-divergence. AGENTS.md documents that inserted-token signature for the MTP
-first-token phantom. Here speculation is off. It is one event and should be
-treated as one until the 2026-09-09 campaign puts a rate on it, but combined
-with the 9B early-emission class it is the second insertion-shaped defect
-visible on this stack with no draft model in the loop.
+Both sites sit at index 123-124 of a 128-token cap. With four events that is not
+a pattern to build on, but it is the reason to look at the end of the response
+first if anyone chases this.
 
-Tonight's `f1` arm adds 20 passes of c32/c64 at depth 3 on one card: 205
-divergences in 1920 requests, and **not one** of them is a clean insertion
-(165 content-divergence, 29 shift-then-drift, 11 `replacement(3->2)`). So the
-4B's single phantom has not recurred under speculation. The MTP0 arm of the same
-campaign is the one that can put a rate on it, since the original event was an
-MTP0 event; that arm contributes 1280 c64 requests against the 256 that produced
-the one observation.
+The 4B event occurred with speculation **off**, which is still worth noting
+because AGENTS.md documents the inserted-token signature for the MTP first-token
+phantom. It has not recurred in the 1920 TP1 MTP0 requests of tonight's `f1` arm,
+so it is either TP2-specific or rarer than 1/1920.
 
-## Why it matters for experiment design
+### 3. Class split by model, using the strict classifier
 
-The interventions this lane has built and measured — the W4A16 determinism pad,
-row-wise all-reduce, serialised norm — all target **row-count dependence in
-tie-breaking**. That is the right instrument for the `replace` half. There is no
-argument on record that it addresses an early-emission insertion, and the pad was
-measured inert at MTP0 below 128 rows anyway. Splitting the divergence rate by
-leading-edit class before comparing arms would make those comparisons much
-sharper: the two classes may respond to different interventions, and pooling them
-dilutes both.
+| leading edit | 27B (947 div.) | 9B (2491) | 4B (246) |
+| --- | ---: | ---: | ---: |
+| substitution / replace | 73.5% | 45.8% | 83.7% |
+| insert (incl. forks) | 15.4% | 52.0% | 12.2% |
+| delete | 9.8% | 1.4% | 3.7% |
+| clean `insertion(1)` | 3 | 0 | 1 |
 
-The 2026-09-08 note's proposal to fill batches with fragile prompts is still the
-right move for throughput of evidence, with one amendment: `monitoring-c*` and
-`rollback-c042` should be run as **separate** fragile sets, because they are now
-known to be different phenomena.
+The middle row is **not** a mechanism claim — as established above, most of it is
+forks between continuations that share vocabulary. It is reported so the number
+is not rediscovered and misread again.
 
-## Second-order finding: pass 1 of a ladder is warmup-contaminated
+## Independent findings that stand
 
-While tabulating throughput: `tp1 mtp3` pass 1 reports c2 at 134.1 tok/s, *below*
-its own c1 at 158.8, against 300.8 in pass 2. TP2 shows the same shape (c2 150.9
-vs 428.4; c4 400.4 vs 759.6). The low-concurrency rungs of the first pass are not
-usable as throughput. Identity is unaffected — exactness does not care about
-warmup — but any speed reading from a ladder should use pass 2 onward, and the
-two-pass default leaves exactly one usable pass.
+### Divergence is concentrated and stochastic
+
+From tonight's 20-pass `f1` arm on one card, at c64 with depth 3: 16 prompts of
+64 carry all 170 divergences, at per-pass rates from 10% to 95%, and **none**
+diverges in every pass. At c32, 5 prompts of 32, and one pass in 20 is fully
+clean. When a site does fire it produces a byte-identical divergence every time —
+`cache-c056` fired three times in the MTP0 arm, always at token 50 with the same
+pair. A prompt can carry more than one site: `index-c041` diverged at token 53 in
+one pass and token 2 in another.
+
+This is what the 2026-09-08 note predicted, and it is what `build-fragile-suite.py`
+is for.
+
+### Ladder pass 1 is warmup-contaminated
+
+`tp1 mtp3` pass 1 reports c2 at 134.1 tok/s, *below* its own c1 at 158.8, against
+300.8 in pass 2. TP2 shows the same shape. Low-concurrency rungs of the first
+pass are not usable as throughput; identity is unaffected. The two-pass default
+leaves exactly one usable throughput pass.
 
 ## Changes
 
-- `experiments/qwen35-9b-b70/scripts/analyze-divergence-positions.py` extended
-  with difflib alignment classification. Output gains a class and a similarity;
-  the JSON gains `kind_counts` and `alignment_shifts`. Existing fields unchanged.
-  Not pinned by any hash gate.
-- No published result is invalidated: nothing in `results/`, `repro/` or
-  `packages/` claims a mechanism for these flips. What changes is the mechanism
-  sentence in the 2026-09-08 note and the design of the next intervention test.
+- `analyze-divergence-positions.py` keeps the alignment classification; it was
+  correct. A future reader should note that `shift-then-drift` means only that
+  difflib's first opcode is a shift, and on prose that is usually a shared-word
+  fork rather than a real insertion. Only `insertion(n)`/`deletion(n)`, which
+  require the remainder to realign, carry mechanism.
+- `analyze-site-fragility.py` and `build-fragile-suite.py` are new and unaffected
+  by the retraction.
+- No published result is affected in either direction.
