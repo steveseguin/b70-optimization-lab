@@ -2,7 +2,7 @@
  "schema": "b70-lab.result.v1",
  "campaign_id": "qwen35-4b-w4a16 m1: the divergence sites are exact ties, measured (2026-09-09)",
  "question": "Every account of this phenomenon has assumed the sites are near-ties, and the 9B lane's vocabulary-projection note said explicitly that a 3.9e-3 logit shift 'only changes a token when the top two candidates are within that of each other, which is precisely the near-tie condition the divergences show'. It could not demonstrate that: its probe used random weights whose logit margins are enormous, so the argmax never moved. This measures the margin at real divergence points on the real model.",
- "method": "A standalone probe - not the pinned shared harness - generates a sequential oracle with logprobs=5 on /v1/completions, reissues the same prompts at c64, and for every divergent request reports the top-5 logprobs at the first differing index from both passes. One B70, TP1, MTP0, fragile suite verbatim, 5 passes.",
+ "method": "A standalone probe - not the pinned shared harness - generates a sequential oracle with logprobs=5 on /v1/completions, reissues the same prompts at c64, and for every divergent request reports the top-5 logprobs at the first differing index from both passes. One B70, TP1, fragile suite verbatim, 5 passes, run on both an MTP0 and a depth-3 server.",
  "the_measurement": {
   "example": {
    "site": "cache-c056 index 50",
@@ -79,7 +79,7 @@
  "the_honest_limits": {
   "resolution": "The API reports logprobs at finite precision and the observed separations are all exactly 0.015625 = 2^-6, which is the quantum at this magnitude. A reported gap of 0.0 means equal to that resolution. It is a very strong statement - the values agree to sixteen printed digits - but it is not a bitwise comparison of the pre-softmax logits.",
   "seven_events": "SUPERSEDED. The MTP0 lane contributed 7; the depth-3 lane contributes 165 with the same structure, so the finding rests on 172 events at many more than four sites.",
-  "mtp0_only_so_far": "This is the no-speculation lane. The depth-3 arm of the same probe is running and will say whether the speculative lane's much larger divergent population has the same character or a different one.",
+  "mtp0_only_so_far": "SUPERSEDED. Both lanes are measured: MTP0 contributed 7 events and depth 3 contributed 165, with the same structure and no gap above 0.03125 in either.",
   "does_not_identify_the_op": "Knowing the sites are exact ties says any perturbation suffices, which makes identifying the specific op that supplies it less important than it looked - and also harder, since every candidate is sufficient.",
   "no_control_over_non_divergent_positions": "This measures the gap at positions that diverged. It does not measure the gap distribution over all positions, so strictly it says 'divergences occur only at gaps at or below 0.03125' rather than 'small gaps cause divergence'. The two would be separated by recording top-2 gaps at every position of every response, which the probe captures per request but does not currently retain. Given that these completions are otherwise fluent and reproducible, positions with gaps this small are evidently rare, but that is an inference and not a measurement here."
  },
