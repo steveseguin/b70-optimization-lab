@@ -159,8 +159,26 @@ this path**. The `g2` arm queued in chain 2 will therefore be a replicate of `g1
 not a slot test, and must be read that way — it is still useful as a same-config
 repeat for a noise estimate.
 
-`g3`, which staggers arrivals by 25 ms, is a real manipulation of this variable:
-it changes arrival order and step composition rather than trying to pin a row.
+`g3`, which staggers arrivals by 25 ms, is a real manipulation, and under the
+lane's settled account it is a **directional test of that account** rather than
+just another arm.
+
+The account says a constant-composition batch is deterministic and divergence
+requires composition to vary. A 25 ms stagger over 64 requests spreads arrivals
+across roughly the whole generation window — a token takes about 31 ms at these
+rates — so requests join and leave the batch at more different times than they do
+behind a thread barrier. That is *more* composition variance, and the account
+therefore predicts **more** divergence in `g3` than in `g1`.
+
+Recorded before the arm runs. If `g3` comes back at or below `g1`, the account's
+central variable does not behave monotonically and that is worth more than the
+arm was queued to find. If it comes back higher, it is the first evidence that
+composition variance can be *dialled* from the client, which would make the
+lane's proposed offline drift reproduction easier to calibrate.
+
+Its sibling `g2` is a no-op and is a same-config replicate of `g1`, so the three
+together also give a noise estimate for the comparison: `g1` against `g2` is the
+null distribution, `g1` against `g3` the effect.
 
 ## Only the 9B has verbatim data so far
 
