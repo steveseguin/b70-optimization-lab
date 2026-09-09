@@ -133,3 +133,28 @@ the step change between no speculation (~0.4%) and any speculation (~3-6%).
 
 The crossover is between 8 and 16 users for every depth. Below it speculation is worth 45-75%;
 above it, it costs up to 39% and an order of magnitude in divergence.
+
+
+## Pooled no-speculation result (three arms, six passes)
+
+Every depth arm measures its own MTP0 ladder, so `d1`, `d2` and `d3` give three independent
+no-speculation ladders on three separate server pairs. Pooled:
+
+| users | divergent / requests | rate |
+| ---: | ---: | ---: |
+| 1 | 0 / 6 | 0% |
+| 2 | 0 / 12 | 0% |
+| 4 | 0 / 24 | 0% |
+| 8 | 0 / 48 | 0% |
+| 16 | 0 / 96 | 0% |
+| 32 | 0 / 192 | 0% |
+| 64 | 2 / 384 | **0.52%** |
+
+**Exact through 32 concurrent users on 378 requests with zero divergences**, and near-exact at 64
+(382/384). This is the strongest statement the campaign can make about determinism under
+concurrency, and it is well powered rather than inferred from two passes.
+
+The aggregate rate at 64 users across the same six passes: `1206.7 / 1206.0 / 1208.0 / 1205.7 /
+1206.5 / 1205.5` - a **0.21% spread across three arms and three server pairs**. Publish as
+**1206 tok/s aggregate at 64 concurrent users, near-exact 382/384**, scoped as capacity evidence and
+never as a single-user headline.
