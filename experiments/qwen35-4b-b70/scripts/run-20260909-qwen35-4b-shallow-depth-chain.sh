@@ -56,6 +56,17 @@ arm() {
 arm d1s DEPTH=1 || exit 1
 arm d2s DEPTH=2 || exit 1
 
+# How small can the stagger be? 5 ms gives full MTP0 exactness at 1.0% throughput cost where 25 ms
+# gives it at 14.2%, so the ordering is what buys determinism and the ramp is what costs throughput.
+# These find the floor. At 2 ms the cohort ramp is 126 ms and at 1 ms it is 63 ms, against a decode
+# step of roughly 31 ms at c64 - so 1 ms is about two steps of total spread across all 64 requests,
+# which is where ordering should start to become unreliable.
+fragile=${repo}/experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-fragile-suite-c64.json
+arm q2 DEPTH=3 STAGES="ladders" LADDER_CONCURRENCY="64" LADDER_REPEATS=20 \
+    LADDER_SUITE="${fragile}" LADDER_EXTRA_ARGS="--verbatim-prompts --launch-stagger-ms 2" || exit 1
+arm q1 DEPTH=3 STAGES="ladders" LADDER_CONCURRENCY="64" LADDER_REPEATS=20 \
+    LADDER_SUITE="${fragile}" LADDER_EXTRA_ARGS="--verbatim-prompts --launch-stagger-ms 1" || exit 1
+
 # mb: isolate why f4's depth-3 c64 rate (20/384, 5.21%) is far below f1's (170/1280, 13.28%);
 # Poisson P(<=20 | 51.0) = 6.7e-07, so the difference is real. The two arms differ in three settings
 # at once - capture ceiling 64 vs 128, max_num_seqs 64 vs 128, max_num_batched_tokens 512 vs 1024 -
