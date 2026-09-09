@@ -108,21 +108,41 @@ sites, and the oracle-free `min%`), `probe-tie-margin.py`.
 
 Six chained runners, each waiting on the previous one's DONE file, wrappers at
 `/mnt/fast-ai/bench-results/qwen35-4b-{exhaustive,fragile,gdn,depth,margin,shallow}-20260909-wrapper.log`.
-Chain 1 is complete. Outstanding:
+Chain 1 is complete, as are `d1` (the determinism pad, a null at an 11.7% cost)
+and `g1` (the fragile-suite baseline). Outstanding:
 
-- **d1** determinism pad at depth 3 c64, against f1's matched control.
-- **g1/g2/g3** fragile suite plain, with `--pin-slots`, with 25 ms arrival stagger
-  — the clean test of whether divergence follows slot position or same-step
-  co-residency, which the default expansion cannot separate.
+- **g2** was queued as a slot-pinning test and is not one: `--pin-slots` sets an
+  `id_slot` field that vLLM accepts under `extra="allow"` and never reads, so it
+  is a same-config replicate of `g1` and gives the noise estimate for the `g1`
+  against `g3` comparison. Read it that way.
+- **g3** staggers arrivals by 25 ms. Under the 9B lane's account — constant
+  composition is deterministic, divergence needs composition to vary — this is a
+  directional test of that account, and the prediction that it should raise the
+  rate is on record before the arm runs.
 - **s08/s16/s32/k128** the GDN speculative group size against the capture ceiling,
-  the two confounded explanations of the c16 step. A prediction is on record in
+  the two confounded explanations of the c16 step. Both are predicted to fail
+  under the 9B account; the arms eliminate them by measurement. See
   `notes/2026-09-09-preliminary-the-gdn-group-is-probably-not-the-driver.md`.
 - **e1/e2/e6, t5, t6** depth as a dose at c64, plus TP2 statistics and TP2 fragile.
-- **m1** the logit margin at divergence points, the first direct measurement of a
-  tie on this lane.
+- **m1** the logit margin at divergence points. The 9B lane's projection probe
+  used random weights whose margins are enormous, so it could not show an argmax
+  move; this reads top-k logprobs at real divergence points.
 - **d1s/d2s** strict gates at depths 1 and 2, which the depth sweep never covered.
 - **mb** isolates whether f4's genuinely lower divergence comes from the capture
   ceiling or from `max_num_seqs`/`max_num_batched_tokens`.
+- **t8/t7** the TP2 crossover rungs and TP2 past c64, the two holes in the
+  consolidated throughput matrix.
+
+## Where the mechanism work stands, and whose it is
+
+The mechanism line is the 9B lane's, not this one's, and its notes are ahead of
+anything here: `experiments/qwen35-9b-b70/notes/` rules out the cross-card
+all-reduce, the norm's variance reduction, the two together, slot position,
+decode-step drift, the weight-quantised GEMM's strategy selection, the FP16
+vocabulary projection and graph capture — and establishes that a
+constant-composition batch is deterministic while a drifting one is not. Read
+those before proposing a mechanism here. This campaign contributes measurements
+on a second model, not a competing account.
 
 ## Scope
 
