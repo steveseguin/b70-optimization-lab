@@ -1,0 +1,61 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 concurrency identity and speculation crossover (2026-09-09 re-analysis of the 2026-09-07 v1/t1 ladders)",
+ "question": "The published 4B matrix records the MTP3 identity ladder breaking at c32 and reports the c64 flips without classifying them. Two things were never asked of the data already on disk: whether the break is a property of the W4A16 kernel or of the speculative verify path, and what the flips actually are.",
+ "method": "No new GPU time. Re-read the token arrays already captured in the ladder files of the two published campaigns, comparing every concurrent request against the sequential oracle recorded in the same file, and aligning divergent pairs with difflib rather than reporting only the first differing index.",
+ "sources": {
+  "tp1": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp1-mtp3-graph1-dhint4-20260907-v1",
+  "tp2": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1",
+  "model": "RedHatAI/Qwen3.5-4B-quantized.w4a16 7a613872f394578b0b52b683ff4ac47516b4bcaf",
+  "image": "R276 sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad"
+ },
+
+ "finding_1_the_c32_break_is_speculative_not_kernel": {
+  "statement": "The no-speculation ladder is exact at every rung through c32 in all four passes across both TP configurations. The depth-3 ladder breaks at c32 in all four. The row-invariance claim for the W4A16 kernel survives; what fails above c16 is the speculative verify path.",
+  "identity": {
+   "tp1_mtp0": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "32/32, 32/32", "c64": "64/64, 63/64"},
+   "tp1_mtp3": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "31/32, 30/32", "c64": "53/64, 55/64"},
+   "tp2_mtp0": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "32/32, 32/32", "c64": "62/64, 64/64"},
+   "tp2_mtp3": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "30/32, 28/32", "c64": "60/64, 59/64"}
+  },
+  "caveat": "MTP0 is not perfect at c64 either: three requests diverged across the four c64 passes. c64 is a boundary for both arms, c32 separates them."
+ },
+
+ "finding_2_the_flips_are_not_near_ties": {
+  "statement": "The lane has treated high-concurrency flips as near-tie token substitutions. None of the three MTP0 flips is one. Not one of them is a single substituted token with an identical remainder.",
+  "events": [
+   {"prompt": "benchmark-c043", "arm": "tp2 c64 pass1", "similarity": 0.992, "class": "insertion(1)",
+    "detail": "One token (42903) inserted at index 124; every other token identical, with one token pushed off the end by the 128-token cap. This is the inserted-token signature AGENTS.md documents for the MTP first-token phantom, occurring here with speculation off."},
+   {"prompt": "capacity-c022", "arm": "tp2 c64 pass1", "similarity": 0.734, "class": "shift-then-drift",
+    "detail": "Four tokens deleted at index 17, then progressive content divergence."},
+   {"prompt": "rollback-c034", "arm": "tp1 c64 pass2", "similarity": 0.117, "class": "content-divergence",
+    "detail": "Divergence from index 5; the two continuations share almost nothing."}
+  ]
+ },
+
+ "finding_3_speculation_crossover": {
+  "statement": "Depth 3 is a large win single-user and a loss above c16. The crossing sits between c16 and c32 on one card and on two, and it coincides with the rung where the depth-3 identity ladder starts failing. Above c16 speculation is worse on both axes at once.",
+  "note": "Pass 1 of a ladder is warmup-contaminated at low concurrency (tp1 mtp3 pass1 c2 reads 134.1 tok/s, below its own c1). These ratios use pass 2.",
+  "aggregate_tok_s_wall_pass2": {
+   "tp1": {"c1": {"mtp0": 101.9, "mtp3": 159.2, "delta": "+56%"},
+           "c2": {"mtp0": 193.5, "mtp3": 300.8, "delta": "+55%"},
+           "c4": {"mtp0": 362.3, "mtp3": 537.8, "delta": "+48%"},
+           "c8": {"mtp0": 655.5, "mtp3": 898.0, "delta": "+37%"},
+           "c16": {"mtp0": 1059.3, "mtp3": 1089.9, "delta": "+3%"},
+           "c32": {"mtp0": 1593.9, "mtp3": 1147.4, "delta": "-28%"},
+           "c64": {"mtp0": 1725.1, "mtp3": 1201.0, "delta": "-30%"}},
+   "tp2": {"c1": {"mtp0": 136.3, "mtp3": 227.3, "delta": "+67%"},
+           "c2": {"mtp0": 258.9, "mtp3": 428.4, "delta": "+65%"},
+           "c4": {"mtp0": 492.1, "mtp3": 759.6, "delta": "+54%"},
+           "c8": {"mtp0": 900.3, "mtp3": 1289.6, "delta": "+43%"},
+           "c16": {"mtp0": 1492.3, "mtp3": 1588.1, "delta": "+6%"},
+           "c32": {"mtp0": 2353.9, "mtp3": 1848.9, "delta": "-21%"},
+           "c64": {"mtp0": 2777.7, "mtp3": 2020.6, "delta": "-27%"}}
+  },
+  "operational_reading": "For a single-user or lightly loaded endpoint keep depth 3: it is the published 177 tok/s lossless configuration. For a server expecting 32 or more concurrent users, turning speculation off is faster (+39% one card, +27% two cards at c64) and simultaneously restores exact identity at c32. This is a serving-policy result, not a new record."
+ },
+
+ "status": "Re-analysis only; no new measurement. The 2026-09-09 exhaustive campaign was preregistered to put a rate on finding 2, test whether the decode graph capture is responsible, and locate the crossover in finding 3 directly.",
+ "preregistration": "experiments/qwen35-4b-b70/notes/2026-09-09-qwen35-4b-exhaustive-preregistration.md",
+ "tooling": "experiments/qwen35-9b-b70/scripts/analyze-divergence-positions.py, extended 2026-09-09 with difflib alignment classification; the prior version reported an inserted token as a substitution followed by total divergence."
+}
