@@ -12,45 +12,92 @@
   "container_env": "f1 VLLM_XPU_ENABLE_XPU_GRAPH=1; f2 VLLM_XPU_ENABLE_XPU_GRAPH=0",
   "server_log": "f1 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY; f2 'cudagraph_mode': <CUDAGraphMode.PIECEWISE (and NONE)"
  },
-
  "result": {
   "identity_divergent_requests": {
-   "mtp0_c32": {"graph_on": "2/640", "graph_off": "3/640"},
-   "mtp0_c64": {"graph_on": "9/1280", "graph_off": "6/1280"},
-   "mtp3_c32": {"graph_on": "35/640", "graph_off": "41/640"},
-   "mtp3_c64": {"graph_on": "170/1280", "graph_off": "170/1280"}
+   "mtp0_c32": {
+    "graph_on": "2/640",
+    "graph_off": "3/640"
+   },
+   "mtp0_c64": {
+    "graph_on": "9/1280",
+    "graph_off": "6/1280"
+   },
+   "mtp3_c32": {
+    "graph_on": "35/640",
+    "graph_off": "41/640"
+   },
+   "mtp3_c64": {
+    "graph_on": "170/1280",
+    "graph_off": "170/1280"
+   }
   },
   "pooled": {
    "mtp0": "11/1920 (0.57%) on, 9/1920 (0.47%) off",
    "mtp3": "205/1920 (10.68%) on, 211/1920 (10.99%) off"
   },
   "aggregate_tok_s_wall_median": {
-   "mtp0_c32": {"on": 1591.3, "off": 1584.1},
-   "mtp0_c64": {"on": 1722.7, "off": 1717.9},
-   "mtp3_c32": {"on": 1153.6, "off": 1151.4},
-   "mtp3_c64": {"on": 1200.3, "off": 1197.6}
+   "mtp0_c32": {
+    "on": 1591.3,
+    "off": 1584.1
+   },
+   "mtp0_c64": {
+    "on": 1722.7,
+    "off": 1717.9
+   },
+   "mtp3_c32": {
+    "on": 1153.6,
+    "off": 1151.4
+   },
+   "mtp3_c64": {
+    "on": 1200.3,
+    "off": 1197.6
+   }
   }
  },
-
- "finding": "A null, and a well-powered one. Every difference is inside Poisson noise on counts this size; the depth-3 c64 rung, which carries the most events, is identically 170/1280 in both arms. The decode-only graph capture is not the source of high-concurrency divergence, and disabling it does not help.",
-
+ "CORRECTION_2026-09-09": {
+  "what_was_wrong": "This file first read the whole table as one null and concluded that decode graph capture is not the source of high-concurrency divergence. That conclusion is only supported for the MTP0 rows. At depth 3 the two arms were not capture-on versus capture-off at c32 and c64, because capture was already inactive in the 'on' arm at those rungs.",
+  "why": "With speculation, a uniform decode step processes (1 + num_speculative_tokens) tokens per sequence, so at depth 3 a batch of n sequences is 4n tokens. max_cudagraph_capture_size is 64 tokens, i.e. 16 sequences at depth 3. c32 and c64 are 128 and 256 tokens and are past it, so both arms ran those rungs without cudagraph replay.",
+  "direct_evidence": "The depth-3 servers report 'Capturing CUDA graphs (decode, FULL): 11/11' while the MTP0 servers on the same capture list report 18/18. The MTP0 lane's tokens equal its sequence count, so all 18 listed sizes through 64 sequences are captured; the depth-3 lane captures 11 shapes and tops out at 16 sequences. The f2 arm captured nothing at all (0 capture lines, PIECEWISE).",
+  "what_still_stands": "The MTP0 comparison is a genuine capture-versus-no-capture test at both rungs, since MTP0 c32 and c64 are inside the captured range in the f1 arm and absent in f2. It is a null: 11 divergent of 1920 with capture, 9 of 1920 without, and 1722.7 against 1717.9 tok/s at c64.",
+  "what_is_withdrawn": "The depth-3 rows are not evidence about capture in either direction. Their identical 170/1280 compares whole-graph compilation without replay against piecewise compilation without replay, which is a real difference but not the one this arm was designed to test. Capture's effect on depth-3 divergence at c32 and c64 is unmeasured.",
+  "what_it_suggests_instead": "That c16 is the largest depth-3 concurrency with a captured decode shape is itself a candidate explanation for the step f3 found between c16 and c20, competing with the GDN speculative group size of 16. Chain 5 separates them."
+ },
+ "finding": "A null for MTP0, where the comparison is valid: every difference is inside Poisson noise, 11 against 9 divergent of 1920. See CORRECTION above for why the depth-3 rows do not test capture.",
  "finding_the_sites_are_identical_too": {
   "statement": "The two arms do not merely diverge at the same rate; they diverge in the same places. Treating a site as (prompt_id, first differing index, oracle token, run token), the depth-3 c64 arms share 18 of f1's 18 sites, f2 adds one, and 99.4% of all 340 events across both arms sit at a shared site. The MTP0 arms share 3 sites carrying 67% of their 15 events, which is what 15 events can say.",
   "why_it_matters": "Full decode-only graph capture and piecewise Inductor are different execution paths, and they produce the same fragile set with the same substitutions at the same token positions. That makes the sites a property of the model and the prompt rather than of the runtime configuration, and it is a stronger null than the rate comparison alone.",
   "top_shared_sites_depth3": [
-   {"prompt": "cache-c056", "index": 50, "events_both_arms": 36},
-   {"prompt": "capacity-c062", "index": 54, "events_both_arms": 36},
-   {"prompt": "cache-c000", "index": 39, "events_both_arms": 35},
-   {"prompt": "cache-c048", "index": 89, "events_both_arms": 35},
-   {"prompt": "index-c041", "index": 53, "events_both_arms": 27}
+   {
+    "prompt": "cache-c056",
+    "index": 50,
+    "events_both_arms": 36
+   },
+   {
+    "prompt": "capacity-c062",
+    "index": 54,
+    "events_both_arms": 36
+   },
+   {
+    "prompt": "cache-c000",
+    "index": 39,
+    "events_both_arms": 35
+   },
+   {
+    "prompt": "cache-c048",
+    "index": 89,
+    "events_both_arms": 35
+   },
+   {
+    "prompt": "index-c041",
+    "index": 53,
+    "events_both_arms": 27
+   }
   ],
-  "position": "First-divergence index spans 5 to 124 with a median of 53 of a 128-token cap, so divergence is spread through the response rather than accumulating toward the end."
+  "position": "First-divergence index spans 5 to 124 with a median of 53 of a 128-token cap, so divergence is spread through the response rather than accumulating toward the end.",
+  "scope_note": "This site comparison holds regardless of the correction: it says the two compilation configurations produce the same fragile set at the same positions, which is a statement about the sites, not about capture."
  },
-
- "second_finding": "Capture also buys no throughput at these rungs: 1200.3 against 1197.6 tok/s at depth 3 c64, and 1722.7 against 1717.9 at MTP0 c64, all within the 0.4% that separates the two. The lane ships capture on, which is justified at low concurrency (the 9B lane measured it worth 1-2% there and this campaign did not test c1), but at c32 and above it is doing nothing for either axis on this model.",
-
+ "second_finding": "Capture buys no throughput where it was actually active: MTP0 c64 reads 1722.7 with capture and 1717.9 without, and MTP0 c32 1591.3 against 1584.1. The depth-3 throughput rows (1200.3 vs 1197.6 at c64) compare two uncaptured configurations and are not a statement about capture. The lane ships capture on, which is justified at low concurrency; this campaign did not test c1.",
  "what_it_leaves": "The remaining candidate for the 18x speculative penalty is the verify step itself. Chain 3 tests that as a dose: the c64 rate at depth 1, 2 and 6 against f1's depth 3. If the verify step is the source, the rate should scale with the number of speculative tokens per step.",
-
  "caveat": "Both arms diverge, so this does not say the two configurations produce identical output - only that they diverge at the same rate. It is a rate comparison, not an equivalence claim.",
  "campaign_roots": {
   "f1": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
