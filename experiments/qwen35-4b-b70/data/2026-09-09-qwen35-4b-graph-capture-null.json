@@ -1,0 +1,47 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 f1 vs f2: does the XPU decode graph capture cause high-concurrency divergence? (2026-09-09)",
+ "question": "f1 established that depth 3 raises the c64 per-request divergence rate from 0.70% to 13.28% on one B70. The decode-only XPU graph capture was the leading non-speculative suspect: it fixes a set of captured decode shapes and replays them, so a request's arithmetic depends on which captured shape its batch lands in. f2 repeats f1 with the capture disabled.",
+ "arms": {
+  "f1": "TP1, depth 3, FULL_DECODE_ONLY capture over sizes 1..64, VLLM_XPU_ENABLE_XPU_GRAPH=1",
+  "f2": "TP1, depth 3, PIECEWISE Inductor compile, VLLM_XPU_ENABLE_XPU_GRAPH=0",
+  "shared": "RedHatAI/Qwen3.5-4B-quantized.w4a16 7a613872, R276 image sha256:521eb277, draft INT4 head on, determinism pad off, 2026-08-25 small-context ladder suite, 128 tokens, seed 42, temperature 0, ignore_eos, 20 passes per rung"
+ },
+ "intervention_verified": {
+  "why": "The engine's own comment records two experiments that were run and written up while comparing arms that were in fact identical, because a knob never reached the container. Its automatic check covers the row-wise all-reduce, serialised norm and lm-head knobs but not the compilation config, so this was checked by hand.",
+  "container_env": "f1 VLLM_XPU_ENABLE_XPU_GRAPH=1; f2 VLLM_XPU_ENABLE_XPU_GRAPH=0",
+  "server_log": "f1 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY; f2 'cudagraph_mode': <CUDAGraphMode.PIECEWISE (and NONE)"
+ },
+
+ "result": {
+  "identity_divergent_requests": {
+   "mtp0_c32": {"graph_on": "2/640", "graph_off": "3/640"},
+   "mtp0_c64": {"graph_on": "9/1280", "graph_off": "6/1280"},
+   "mtp3_c32": {"graph_on": "35/640", "graph_off": "41/640"},
+   "mtp3_c64": {"graph_on": "170/1280", "graph_off": "170/1280"}
+  },
+  "pooled": {
+   "mtp0": "11/1920 (0.57%) on, 9/1920 (0.47%) off",
+   "mtp3": "205/1920 (10.68%) on, 211/1920 (10.99%) off"
+  },
+  "aggregate_tok_s_wall_median": {
+   "mtp0_c32": {"on": 1591.3, "off": 1584.1},
+   "mtp0_c64": {"on": 1722.7, "off": 1717.9},
+   "mtp3_c32": {"on": 1153.6, "off": 1151.4},
+   "mtp3_c64": {"on": 1200.3, "off": 1197.6}
+  }
+ },
+
+ "finding": "A null, and a well-powered one. Every difference is inside Poisson noise on counts this size; the depth-3 c64 rung, which carries the most events, is identically 170/1280 in both arms. The decode-only graph capture is not the source of high-concurrency divergence, and disabling it does not help.",
+
+ "second_finding": "Capture also buys no throughput at these rungs: 1200.3 against 1197.6 tok/s at depth 3 c64, and 1722.7 against 1717.9 at MTP0 c64, all within the 0.4% that separates the two. The lane ships capture on, which is justified at low concurrency (the 9B lane measured it worth 1-2% there and this campaign did not test c1), but at c32 and above it is doing nothing for either axis on this model.",
+
+ "what_it_leaves": "The remaining candidate for the 18x speculative penalty is the verify step itself. Chain 3 tests that as a dose: the c64 rate at depth 1, 2 and 6 against f1's depth 3. If the verify step is the source, the rate should scale with the number of speculative tokens per step.",
+
+ "caveat": "Both arms diverge, so this does not say the two configurations produce identical output - only that they diverge at the same rate. It is a rate comparison, not an equivalence claim.",
+ "campaign_roots": {
+  "f1": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+  "f2": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f2"
+ },
+ "preregistration": "experiments/qwen35-4b-b70/notes/2026-09-09-qwen35-4b-exhaustive-preregistration.md"
+}
