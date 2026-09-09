@@ -1,23 +1,29 @@
-# Qwen3.5-9B W4A16 TP1 lever queue. Columns, tab-separated:
-#   run <TAB> depth <TAB> stages <TAB> harness_env <TAB> extra_env
-# harness_env = variables the harness names; extra_env = container knobs it does not (verified in-container).
-# Tier A - untested speed levers, strict stage gives identity plus a screening rate.
-a1g8	3	strict	GDN_SPEC_GROUP=8	
-a1g32	3	strict	GDN_SPEC_GROUP=32	
-a2scr	3	strict		VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
-a6de	3	strict		VLLM_XPU_MTP_DRAFT_EAGER=1
-a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
-a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
-# A4: depth re-sweep. W4A16 is lossless to 6; 4/5/6 were slower at SHORT context only.
+# Qwen3.5-9B W4A16 TP1 lever queue, revised 2026-09-09 after the depth/concurrency map.
+# Columns: run <TAB> depth <TAB> stages <TAB> harness_env <TAB> extra_env
+# All arms run serially on card 0 (non-zero cards cannot host a server on this stack).
+#
+# Tier B first: the exactness mechanism is the campaign's open question and b1sn is the
+# discriminator. Depth 1 is the probe depth because it has the highest measured divergence rate
+# (7/128 at 64 users, 3/64 at 32), so it is the most sensitive detector of a fix. d1 is already the
+# matched baseline - same depth, same rungs, same capture - so no separate control arm is needed.
+b1sn	1	ladders	RMSNORM_SERIAL_ROWS=256	
+b2rs	1	ladders		VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
+b3lm	1	ladders	LM_HEAD_BATCH_INVARIANT=1	
+#
+# Tier A speed levers. a4d4/5/6 are promoted: depth 3 buys only 0.53% over depth 2 here, so the
+# curve is already flat and deeper drafts are predicted to be pure loss. Closing that with a
+# measurement is worth more than another knob sweep.
 a4d4	4	strict		
 a4d5	5	strict		
 a4d6	6	strict		
-# A3: capture sizes matched to the shape a depth-3 decode actually presents (4 rows/seq), rather
-# than the 27B lane's [1..64]. Tight list first; an uncaptured shape falls back to eager silently.
+a1g8	3	strict	GDN_SPEC_GROUP=8	
+a1g32	3	strict	GDN_SPEC_GROUP=32	
+a2scr	3	strict		VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
+a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
 a3tight	3	strict	CAPTURE_SIZES=1,2,3,4,5,6,8,12,16	
-# Tier B: determinism reach at high concurrency. Capture must be raised with the rungs or the top
-# rungs run eager and confound the identity answer (the x1 campaign's lesson).
-b0base	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024	
-b1sn256	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024 RMSNORM_SERIAL_ROWS=256	
-b2rowstable	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024	VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
-b3lmbi	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024 LM_HEAD_BATCH_INVARIANT=1	
+#
+# Capture confound: were the 32/64-user speculative rungs running captured or eager? At depth 1,
+# 64 users is 128 rows against a capture ceiling of 64. If raising the ceiling changes the
+# divergence rate, capture fallback is part of the story rather than the norm.
+c1cap	1	ladders	CAPTURE_MAX=256 LADDER_MNS=64	
