@@ -10,6 +10,11 @@ b1sn	1	ladders	RMSNORM_SERIAL_ROWS=256
 c1cap	1	ladders	CAPTURE_MAX=256 LADDER_MNS=64	
 b3lm	1	ladders	LM_HEAD_BATCH_INVARIANT=1	
 b2rs	1	ladders		VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
+# GDN speculative-path knobs, promoted: b7all decides whether the path matters at all.
+b7all	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
+b4rec	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+b5conv	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1
+b6delta	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
 #
 # Tier A speed levers. a4d4/5/6 are promoted: depth 3 buys only 0.53% over depth 2 here, so the
 # curve is already flat and deeper drafts are predicted to be pure loss. Closing that with a
@@ -60,7 +65,3 @@ x32kr	3	depth32k	DEPTH_MML=33024
 # GDN *speculative* path directly, which is where the divergence actually lives: it appears only
 # with speculation and at every depth. All three default to 0 and the strict wrapper passes them
 # through with a ${VAR:-0} escape, so they are reachable.
-b4rec	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
-b5conv	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1
-b6delta	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
-b7all	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
