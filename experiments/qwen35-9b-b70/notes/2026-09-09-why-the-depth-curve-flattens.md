@@ -49,3 +49,44 @@ Acceptance length is averaged over the metric windows the server happened to emi
 suite, not over exactly the measured tokens, so the step-cost figures carry that imprecision. The
 comparison across depths is like-for-like because every arm was measured the same way, but the
 absolute step-ms values should not be quoted as kernel timings.
+
+## Depth 4 measured: the model is right about acceptance and wrong about step cost
+
+`a4d4` measured **105.186 tok/s** against a predicted 108.1 - directionally correct (depth 4 is
+slower than depth 3, as the model required) but 2.7% low. Decomposing rather than accepting the
+product:
+
+| component | predicted | measured | error |
+| --- | ---: | ---: | ---: |
+| acceptance length | 3.035 | 3.018 | **-0.6%** |
+| step cost | 28.07 ms | 28.69 ms | **+2.2%** |
+| rate | 108.1 | 105.19 | -2.7% |
+
+**The acceptance decay is essentially exact.** The measured gain was +0.254 against a predicted
++0.271, an actual decay ratio of 0.656 rather than the assumed 0.70.
+
+**Step cost is where the model failed.** The increments are +2.16, +3.38, **+3.72** ms per depth -
+growing, not the constant +3.1 ms assumed. Each additional draft depth costs more than the one
+before it, so step cost is mildly super-linear. Both errors push the same way, which is why the
+product missed by more than either component did.
+
+That distinction matters for what to do next: a longer draft is losing on *two* fronts at once, not
+one, so the depth ladder closes harder than the original model implied.
+
+### Revised projection
+
+Using the measured 0.656 decay and a step increment growing about +0.34 ms per depth:
+
+| depth | acceptance | step ms | projected tok/s | original projection |
+| ---: | ---: | ---: | ---: | ---: |
+| 5 | 3.185 | 32.75 | **97.3** | 103.4 |
+| 6 | 3.294 | 37.15 | **88.7** | 98.0 |
+
+`a4d5` and `a4d6` test this. Note the revised figures are materially lower than the first pass, so
+they are a real test rather than a restatement.
+
+### Where this leaves the depth ladder
+
+Measured on this host: **64.16 / 93.09 / 110.09 / 110.68 / 105.19** for depths 0-4. Depth 3 is the
+peak by 0.53% over depth 2, and depth 4 is already 5.0% down. No depth setting beats ~110 tok/s
+here, and single-stream gains must come from a cheaper step rather than a longer draft.
