@@ -38,15 +38,15 @@
     8,
     654.5,
     883.1,
-    900.3,
-    1289.6
+    899.1,
+    1229.0
    ],
    [
     12,
     839.6,
     917.8,
-    null,
-    null
+    1183.5,
+    1378.0
    ],
    [
     16,
@@ -59,15 +59,15 @@
     20,
     1196.6,
     1024.3,
-    null,
-    null
+    1739.6,
+    1421.4
    ],
    [
     24,
     1345.9,
     1120.6,
-    null,
-    null
+    1984.1,
+    1629.7
    ],
    [
     32,
@@ -94,28 +94,28 @@
     96,
     1779.2,
     1147.5,
-    null,
-    null
+    3013.1,
+    2113.7
    ],
    [
     128,
     1810.9,
     1166.6,
-    null,
-    null
+    3103.9,
+    2157.0
    ]
   ]
  },
  "readings": {
-  "crossover": "On one card speculation leads through c16 (1088.9 against 1058.8) and trails from c20 (1024.3 against 1196.6). On two cards it leads at c16 (1588.1 against 1492.3) and trails at c32 (1848.9 against 2353.9); c20 and c24 were not run on two cards, so the TP2 crossing is bracketed between c16 and c32 rather than located.",
+  "crossover": "Both topologies cross between c16 and c20. On one card speculation leads by 2.8% at c16 and trails by 14.4% at c20; on two cards it leads by 5.9% at c16 and trails by 18.3% at c20. The ceiling is a property of the concurrency, not of the card count.",
   "single_user": "Depth 3 is worth 1.56x on one card (159.2 against 101.9) and 1.67x on two (227.3 against 136.3).",
-  "peak_aggregate": "The highest aggregate measured is 2777.7 tok/s, two cards without speculation at c64. On one card the peak is 1810.9 at c128 and still rising slowly.",
+  "peak_aggregate": "The highest aggregate measured anywhere in this campaign is 3103.9 tok/s, two cards without speculation at c128, and it is still rising. On one card the peak is 1810.9 at c128. Two cards without speculation at c128 is 1.71x one card at the same rung, against 1.36x at c32 and c64 - the second card helps more the more concurrency there is.",
   "speculation_stops_scaling": "Depth 3 on one card is flat from c16 to c128 - 1088.9 to 1166.6, a 7% gain over an eightfold increase in users - while no-speculation rises 1058.8 to 1810.9, a 71% gain.",
   "second_card": "TP2 over TP1 is 1.34x to 1.61x depending on rung and mode, with the largest gains at c32 and c64 where a single card is closer to saturation."
  },
  "caveats": {
   "mixed_server_configs_at_high_rungs": "c96 and c128 come only from f4, which ran max_num_seqs 128 and max_num_batched_tokens 1024 against the 64/512 used elsewhere, and c64 pools f1, f4 and v1. Those settings materially change the divergence rate but barely change throughput - f1 and f4 read 1201.0 and 1217.2 at depth-3 c64, and 1723.0 and 1732.5 without speculation - so the throughput matrix tolerates the mix. An identity comparison would not.",
-  "tp2_above_c64_unmeasured": "Two cards were never run past c64. That is the largest remaining gap in this table.",
+  "tp2_above_c64_unmeasured": "CLOSED by t7, which ran TP2 at c64, c96 and c128 with f4's settings so the two columns are comparable at those rungs. The remaining gaps are minor: TP2 was never run at c1-c4 with these settings, and neither topology was run between c40 and c64.",
   "identity_is_elsewhere": "This is throughput only. The identity rates at these rungs, and the reasons the depth-3 column stops scaling, are in 2026-09-09-qwen35-4b-speculation-ceiling-is-c16.json and 2026-09-09-qwen35-4b-beyond-c64.json."
  },
  "sources": [
@@ -123,7 +123,9 @@
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f3",
-  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f4"
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f4",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t8",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t7"
  ],
  "a_non_monotone_dip_at_c40": {
   "statement": "Aggregate throughput is not monotone in concurrency. Without speculation, one card reads 1595 tok/s at c32, 1360 at c40 and 1732 at c64 - a 15% drop going from 32 to 40 concurrent users, recovering by 64.",
