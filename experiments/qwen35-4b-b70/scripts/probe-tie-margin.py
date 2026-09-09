@@ -25,6 +25,7 @@ usage: probe-tie-margin.py --base-url URL --model NAME --suite SUITE [--concurre
 from __future__ import annotations
 
 import argparse
+import collections
 import concurrent.futures
 import json
 import threading
@@ -96,6 +97,26 @@ def main() -> int:
     if not any(o["tokens"] for o in oracle.values()):
         raise SystemExit("no logprobs returned; the server may not support logprobs on /v1/completions")
 
+    # The control the divergence measurement needs. Reporting the gap only where a request diverged
+    # shows that divergences sit at tiny gaps, but not that tiny gaps are rare - and without that,
+    # "divergence happens at ties" is unfalsifiable. This is the gap at *every* generated position of
+    # the sequential pass, which is the population the divergent positions are drawn from.
+    baseline = collections.Counter()
+    for o in oracle.values():
+        for top in o["top_logprobs"]:
+            m = margin(top)
+            if m is not None:
+                baseline[m] += 1
+    total = sum(baseline.values())
+    if total:
+        tied = sum(n for g, n in baseline.items() if g <= 0.0)
+        near = sum(n for g, n in baseline.items() if g <= 0.03125)
+        print(f"\nbaseline over all {total} generated positions of the sequential pass:")
+        print(f"  gap exactly 0      : {tied} ({100*tied/total:.2f}%)")
+        print(f"  gap <= 0.03125     : {near} ({100*near/total:.2f}%)")
+        qs = sorted(baseline)
+        print(f"  min={qs[0]}  median={sorted(baseline.elements())[total//2]}  max={qs[-1]}")
+
     events = []
     for rep in range(1, a.repeats + 1):
         barrier = threading.Barrier(a.concurrency)
@@ -140,7 +161,9 @@ def main() -> int:
         print(f"  at or below 1e-3: {sum(1 for m in margins if m <= 1e-3)}/{len(margins)}")
         print(f"  at or below 1e-2: {sum(1 for m in margins if m <= 1e-2)}/{len(margins)}")
     if a.out:
-        json.dump({"config": vars(a), "events": events}, open(a.out, "w"), indent=1)
+        json.dump({"config": vars(a), "events": events,
+                   "baseline_all_positions": {str(g): n for g, n in sorted(baseline.items())}},
+                  open(a.out, "w"), indent=1)
         print(f"\nwrote {a.out}")
     return 0
 
