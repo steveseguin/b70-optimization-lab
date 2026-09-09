@@ -85,6 +85,12 @@ launch() {
   if [[ "${kind}" != mtp0 ]]; then launcher=run-w8a16-mtp1-strict-server.sh; spec="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${DEPTH}}"; fi
   date --iso-8601=seconds >"${dir}/started-at.txt"
   local specenv=(); [[ "${kind}" == mtp0 ]] || specenv=(SPECULATIVE_CONFIG="${spec}")
+  # EXTRA_ENV: arbitrary "KEY=VALUE KEY=VALUE" passthrough for knobs this harness does not name.
+  # Every entry is verified in the container below; a knob that never reaches the container
+  # produces a clean null that is indistinguishable from a real no-effect result, which this lane
+  # has already been burned by once.
+  local extraenv=(); local _kv
+  for _kv in ${EXTRA_ENV:-}; do extraenv+=("${_kv}"); done
   env IMAGE="${image}" EXPECTED_IMAGE_ID="${image_id}" EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f \
     EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 \
     VLLM_BATCH_INVARIANT=0 VLLM_XPU_GDN_SPLIT_MIXED=1 VLLM_XPU_GDN_SPEC_GROUP=${GDN_SPEC_GROUP:-16} VLLM_XPU_GEMMA_RMSNORM_TRITON=0 VLLM_XPU_RMSNORM_TRITON=0 \
@@ -92,7 +98,7 @@ launch() {
     EXPECTED_XPU_COMMUNICATOR_SHA256="${EXPECTED_XPU_COMMUNICATOR_SHA256:-}" VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS="${ROWWISE_ALLREDUCE_MAX_ROWS:-0}" \
     EXPECTED_LOGITS_PROCESSOR_SHA256="${EXPECTED_LOGITS_PROCESSOR_SHA256:-}" EXPECTED_IR_LAYERNORM_SHA256="${EXPECTED_IR_LAYERNORM_SHA256:-}" VLLM_XPU_RMSNORM_SERIAL_ROWS="${RMSNORM_SERIAL_ROWS:-0}" \
     VLLM_XPU_LM_HEAD_BATCH_INVARIANT="${LM_HEAD_BATCH_INVARIANT:-0}" VLLM_XPU_LM_HEAD_ROW_CHUNK="${LM_HEAD_ROW_CHUNK:-0}" \
-    MODEL_DIR="${model_dir}" MODEL_MANIFEST="${manifest}" VLLM_CACHE_DIR="${cache}" "${specenv[@]}" \
+    MODEL_DIR="${model_dir}" MODEL_MANIFEST="${manifest}" VLLM_CACHE_DIR="${cache}" "${specenv[@]}" "${extraenv[@]}" \
     CONTAINER_NAME="${name}" PORT="${port}" SERVED_MODEL_NAME="${served}" COMPILATION_CONFIG="${comp}" \
     TENSOR_PARALLEL_SIZE="${TP}" XPU_DEVICE_MASK="${mask}" QUANTIZATION="${QUANT}" VLLM_XPU_FP8_BLOCK_W8A16=0 \
     MAX_MODEL_LEN="${mml}" MAX_NUM_SEQS="${mns}" MAX_NUM_BATCHED_TOKENS="${mbt}" ENFORCE_EAGER="${eager}" VLLM_XPU_ENABLE_XPU_GRAPH="${xgraph}" \
@@ -111,6 +117,10 @@ launch() {
     [[ "${want}" == 0 ]] && continue
     grep -q "\"${name_}=${want}\"" "${dir}/container-inspect.json" 2>/dev/null \
       || abort "${label}: ${name_}=${want} was requested but is not in the container environment"
+  done
+  for _kv in ${EXTRA_ENV:-}; do
+    grep -q "\"${_kv}\"" "${dir}/container-inspect.json" 2>/dev/null \
+      || abort "${label}: EXTRA_ENV ${_kv} was requested but is not in the container environment"
   done
   log "${label}: healthy"; server_name=${name}; server_dir=${dir}; served_model=${served}
 }

@@ -1,0 +1,14 @@
+# Qwen3.5-9B W4A16 TP1 lever queue. Columns, tab-separated:
+#   run <TAB> depth <TAB> stages <TAB> harness_env <TAB> extra_env
+# harness_env = variables the harness names; extra_env = container knobs it does not (verified in-container).
+# Tier A - untested speed levers, strict stage gives identity plus a screening rate.
+a1g8	3	strict	GDN_SPEC_GROUP=8	
+a1g32	3	strict	GDN_SPEC_GROUP=32	
+a2scr	3	strict		VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+a6de	3	strict		VLLM_XPU_MTP_DRAFT_EAGER=1
+a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
+a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
+# A4: depth re-sweep. W4A16 is lossless to 6; 4/5/6 were slower at SHORT context only.
+a4d4	4	strict		
+a4d5	5	strict		
+a4d6	6	strict		
