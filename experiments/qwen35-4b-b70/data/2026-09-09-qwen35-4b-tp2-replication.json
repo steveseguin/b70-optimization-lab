@@ -1,0 +1,48 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 TP2 strict replication: resolving the 5.7% spread (2026-09-09 t3)",
+ "question": "The 2026-09-07 t1 campaign measured the TP2 depth-3 strict pair at 240.615 and 227.533 tok/s. A 5.7% spread is well outside this host's documented ~3% back-to-back control drift, so the pair could not be quoted as a number. Two more fresh servers settle which value is real.",
+ "config": "two B70s (mask 0,1), TP2, depth 3 via qwen3_5_mtp, draft INT4 head, FULL_DECODE_ONLY capture 1-64, determinism pad off, strict 12-prompt six-class realistic suite over completions, 512-token cap, class-balanced median tok/s over tokens 1-100 after TTFT",
+ "model": "RedHatAI/Qwen3.5-4B-quantized.w4a16 7a613872f394578b0b52b683ff4ac47516b4bcaf",
+ "image": "R276 sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+
+ "measurements": {
+  "note": "Four fresh servers per arm across two days and two host boots. t1 boot bf8e504b (2026-09-07), t3 boot fe4d4edd (2026-09-09).",
+  "depth3": [
+   {"campaign": "t1", "arm": "mtp3-a", "class_balanced_median_tok_s": 240.615071838347},
+   {"campaign": "t1", "arm": "mtp3-b", "class_balanced_median_tok_s": 227.533318664104},
+   {"campaign": "t3", "arm": "mtp3-a", "class_balanced_median_tok_s": 240.878655737812},
+   {"campaign": "t3", "arm": "mtp3-b", "class_balanced_median_tok_s": 241.182116896297}
+  ],
+  "mtp0": [
+   {"campaign": "t1", "arm": "mtp0-a", "class_balanced_median_tok_s": 138.169463987260},
+   {"campaign": "t1", "arm": "mtp0-b", "class_balanced_median_tok_s": 138.062554353923},
+   {"campaign": "t3", "arm": "mtp0-a", "class_balanced_median_tok_s": 138.120438289217},
+   {"campaign": "t3", "arm": "mtp0-b", "class_balanced_median_tok_s": 137.853392124747}
+  ]
+ },
+
+ "finding": {
+  "statement": "227.533 is an outlier, not a spread. Three of the four depth-3 passes fall in 240.615 to 241.182, a 0.24% band; the fourth sits 5.44% below it, beyond this host's ~3% drift bound. The operating number for TP2 depth 3 is 240.9 tok/s.",
+  "corroboration": "The MTP0 arm, measured the same four times across the same two days and boots, spans 137.853 to 138.169 - a 0.23% band. This lane's strict measurement is normally reproducible to a quarter of a percent, which is what makes the single 227.533 anomalous rather than characteristic.",
+  "cause_of_the_outlier": "Not determined. Nothing in t1's logs flags it: its postflights were clean and its gates passed. Recorded as an unexplained low pass rather than assigned a cause."
+ },
+
+ "gates": {
+  "t3": {"G1 mtp0-a vs mtp0-b": "12/12", "G2 mtp3-a vs mtp3-b": "12/12", "G3 mtp3-a vs mtp0-a": "12/12", "G3 mtp3-b vs mtp0-a": "12/12"},
+  "t1": {"G1": "12/12", "G2": "12/12", "G3 a": "12/12", "G3 b": "12/12"},
+  "reading": "Eight strict servers across two campaigns, every comparison exact. TP2 depth 3 is lossless on this suite by the lane's own gate definition."
+ },
+
+ "scaling": {
+  "depth3": "TP1 177.4 -> TP2 240.9 tok/s, 1.36x on two cards",
+  "mtp0": "TP1 102.6 -> TP2 138.1 tok/s, 1.35x",
+  "note": "The speed-up is the same with and without speculation, so the second card is not helping or hurting the draft path specifically."
+ },
+
+ "status_and_scope": "Evidence only, per the campaign's agreed scope. families/qwen-4b.json still lists tp: [1] and packages/qwen35-4b-w4a16-b70 is a one-card packet. TP2 now has four strict passes across two days and two boots, all gates exact, and a settled throughput number, so it is ready to be added as a dimension whenever the owner wants that - which is a packaging decision, not a measurement one, and was explicitly out of scope tonight.",
+ "campaign_roots": {
+  "t1": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1",
+  "t3": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t3"
+ }
+}
