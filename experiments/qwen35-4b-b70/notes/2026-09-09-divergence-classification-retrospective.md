@@ -33,6 +33,23 @@ every 9B and 4B ladder on disk — 2532 divergent requests across 135 sites:
 | `insert` (other) | 23 | 0.9% |
 | `insert(novel)` | 1 | — |
 
+Split by model, the two are not the same population:
+
+| leading edit | 9B (2491 divergences, 102 sites) | 4B (246, 22 sites) |
+| --- | ---: | ---: |
+| `insert(early+5)` | 1295 (52.0%) | 0 |
+| `replace` | 1141 (45.8%) | 206 (83.7%) |
+| `delete` | 35 (1.4%) | 9 (3.7%) |
+| `insert` (other) | 20 (0.8%) | 30 (12.2%) |
+| `insert(novel)` | 0 | 1 (0.4%) |
+
+The early-emission class is **entirely a 9B phenomenon**; the 4B has none of it.
+And the 4B's 12.2% `insert` column is not a third phenomenon: it is two content
+divergences that difflib happens to open with an insert opcode — `cache-c016` @26
+(a 19-token insert, similarity 0.383, 12 edits, 20 occurrences) and
+`capacity-c022` @17 (4 tokens, 0.727, 7 edits, 10 occurrences). On the 4B exactly
+**one** divergence out of 246 is a clean single-token insertion.
+
 **The single largest class is not a tie.** All 1295 members of the `466 -> 5787`
 family — every `monitoring-c020`, `monitoring-c044`, `monitoring-c036` variant,
 across both the speculative and the no-speculation ladders, in every arm — have
@@ -69,6 +86,14 @@ first-token phantom. Here speculation is off. It is one event and should be
 treated as one until the 2026-09-09 campaign puts a rate on it, but combined
 with the 9B early-emission class it is the second insertion-shaped defect
 visible on this stack with no draft model in the loop.
+
+Tonight's `f1` arm adds 20 passes of c32/c64 at depth 3 on one card: 205
+divergences in 1920 requests, and **not one** of them is a clean insertion
+(165 content-divergence, 29 shift-then-drift, 11 `replacement(3->2)`). So the
+4B's single phantom has not recurred under speculation. The MTP0 arm of the same
+campaign is the one that can put a rate on it, since the original event was an
+MTP0 event; that arm contributes 1280 c64 requests against the 256 that produced
+the one observation.
 
 ## Why it matters for experiment design
 

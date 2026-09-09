@@ -1,0 +1,95 @@
+{
+ "suite_id": "fragile-qwen35-4b-w4a16-20260909-f1-c64",
+ "version": 1,
+ "description": "Prompts that diverged in at least 5% of 20 c64 passes of qwen35-4b-w4a16-20260909-f1/ladder. Texts reconstructed from 2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json expansion and verified against the recorded prompt_sha256. Run with --verbatim-prompts.",
+ "metric": "Measured aggregate completion tokens divided by synchronized HTTP batch wall time; output identity is checked against a sequential oracle for every expanded prompt.",
+ "source": {
+  "root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+  "lane": "ladder",
+  "passes": 20,
+  "rates": {
+   "cache-c056": 0.95,
+   "capacity-c062": 0.9,
+   "cache-c048": 0.85,
+   "cache-c000": 0.8,
+   "cache-c016": 0.65,
+   "rollback-c034": 0.65,
+   "index-c041": 0.65,
+   "cache-c040": 0.65,
+   "capacity-c022": 0.55,
+   "rollback-c010": 0.4,
+   "index-c017": 0.35,
+   "benchmark-c019": 0.3,
+   "cache-c024": 0.3,
+   "cache-c008": 0.25,
+   "rollback-c042": 0.15,
+   "rollback-c002": 0.1
+  }
+ },
+ "prompts": [
+  {
+   "id": "cache-c056",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 056; variant 07]"
+  },
+  {
+   "id": "capacity-c062",
+   "prompt": "Explain the tradeoff between context length and concurrent model-server slots.\n\n[Independent validation case 062; variant 07]"
+  },
+  {
+   "id": "cache-c048",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 048; variant 06]"
+  },
+  {
+   "id": "cache-c000",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 000; variant 00]"
+  },
+  {
+   "id": "cache-c016",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 016; variant 02]"
+  },
+  {
+   "id": "rollback-c034",
+   "prompt": "Describe a safe rollback trigger for a staged software deployment.\n\n[Independent validation case 034; variant 04]"
+  },
+  {
+   "id": "index-c041",
+   "prompt": "Name two checks to perform before adding a database index to production.\n\n[Independent validation case 041; variant 05]"
+  },
+  {
+   "id": "cache-c040",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 040; variant 05]"
+  },
+  {
+   "id": "capacity-c022",
+   "prompt": "Explain the tradeoff between context length and concurrent model-server slots.\n\n[Independent validation case 022; variant 02]"
+  },
+  {
+   "id": "rollback-c010",
+   "prompt": "Describe a safe rollback trigger for a staged software deployment.\n\n[Independent validation case 010; variant 01]"
+  },
+  {
+   "id": "index-c017",
+   "prompt": "Name two checks to perform before adding a database index to production.\n\n[Independent validation case 017; variant 02]"
+  },
+  {
+   "id": "benchmark-c019",
+   "prompt": "Explain why an inference benchmark should record uncached and cached results separately.\n\n[Independent validation case 019; variant 02]"
+  },
+  {
+   "id": "cache-c024",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 024; variant 03]"
+  },
+  {
+   "id": "cache-c008",
+   "prompt": "Explain one practical reason a cache invalidation rule can cause stale API responses.\n\n[Independent validation case 008; variant 01]"
+  },
+  {
+   "id": "rollback-c042",
+   "prompt": "Describe a safe rollback trigger for a staged software deployment.\n\n[Independent validation case 042; variant 05]"
+  },
+  {
+   "id": "rollback-c002",
+   "prompt": "Describe a safe rollback trigger for a staged software deployment.\n\n[Independent validation case 002; variant 00]"
+  }
+ ]
+}
