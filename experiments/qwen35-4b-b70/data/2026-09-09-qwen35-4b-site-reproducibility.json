@@ -1,0 +1,51 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 fragile sites: reproducibility across days, boots and execution paths (2026-09-09)",
+ "question": "The lane treats a divergence site as a stable property. Nothing had tested how stable. If sites survive a reboot, a different day and a different compilation mode, then an intervention that removes one is doing real work; if they wander, every intervention comparison is measuring noise.",
+ "method": "A site is (prompt_id, first differing index, oracle token, run token). Compared the c64 depth-3 site sets of three campaigns on the same model, image and suite.",
+
+ "campaigns": {
+  "v1": {"date": "2026-09-07", "boot": "bf8e504b-4d60-4142-8b2b-e60d65fec77e", "passes": 2, "graph": "FULL_DECODE_ONLY", "sites": 14, "events": 20},
+  "f1": {"date": "2026-09-09", "boot": "fe4d4edd-f7cb-40d8-81f0-b4ce8905dbf9", "passes": 20, "graph": "FULL_DECODE_ONLY", "sites": 18, "events": 170},
+  "f2": {"date": "2026-09-09", "boot": "fe4d4edd-f7cb-40d8-81f0-b4ce8905dbf9", "passes": 20, "graph": "PIECEWISE", "sites": 19, "events": 170}
+ },
+
+ "result": {
+  "across_days_and_boots": "All 14 of v1's sites reappear in tonight's campaigns. Not 13, not approximately: every one, with the same substitution at the same index, two days and one reboot later.",
+  "across_execution_paths": "f1 and f2 share 18 of f1's 18 sites; f2 adds one. 99.4% of the 340 events across both arms sit at a shared site.",
+  "rates_are_stable_too": "v1's 2 passes and f1's 20 rank the sites consistently: cache-c056 @50 and capacity-c062 @54 are the top sites in both."
+ },
+
+ "the_pairs_are_synonyms": {
+  "statement": "Decoding the substitutions makes the tie reading concrete. Every site is a choice between two continuations that are both fluent and both correct at that position.",
+  "sites": [
+   {"prompt": "cache-c056", "index": 50, "pair": "' HTTP' / ' Redis'", "f1_events": 19},
+   {"prompt": "capacity-c062", "index": 54, "pair": "' resource' / ' constraint'", "f1_events": 18},
+   {"prompt": "cache-c048", "index": 89, "pair": "' comes' / ' arrives'", "f1_events": 17},
+   {"prompt": "cache-c000", "index": 39, "pair": "' if' / ' this'", "f1_events": 16},
+   {"prompt": "index-c041", "index": 53, "pair": "' Column' / ' Index'", "f1_events": 13},
+   {"prompt": "cache-c040", "index": 108, "pair": "' A' / ' The'", "f1_events": 13},
+   {"prompt": "rollback-c010", "index": 112, "pair": "' hang' / ' leave'", "f1_events": 8},
+   {"prompt": "cache-c016", "index": 26, "pair": "' \"' / ' update'", "f1_events": 6}
+  ]
+ },
+
+ "a_tie_caught_resolving_both_ways_within_one_campaign": {
+  "statement": "cache-c016 and cache-c056 are two case-suffix variants of the same base prompt. At index 50 both sit on the same pair, and their sequential oracles resolved it in opposite directions: cache-c056's oracle emits ' HTTP' and its concurrent runs emit ' Redis', while cache-c016's oracle emits ' Redis' and its concurrent runs emit ' HTTP'.",
+  "why_it_matters": "This is the bidirectional test inside a single campaign rather than across campaigns. The same two candidates, the same position, and which one the single-stream oracle picks is not determined by the pair. That is a tie, not a defect with a preferred direction.",
+  "detail": {"cache-c056@50": "9830 -> 33028, ' HTTP' -> ' Redis', 19 events", "cache-c016@50": "33028 -> 9830, ' Redis' -> ' HTTP', 7 events"}
+ },
+
+ "consequences": {
+  "for_intervention_tests": "Sites are stable enough to be a unit of measurement. An arm that removes a specific site has done something real; comparing arms by total divergence count is now known not to be comparing shifting populations.",
+  "for_the_fragile_suite": "The 4B c64 fragile suite generated from f1 should stay valid across reboots and runtime configurations, which is what makes it worth reusing.",
+  "for_published_language": "'Lossless' on this lane means the strict suite passes its gates, not that the model has no ambiguous branch points. These sites exist in the unmodified model and are visible at concurrency 1 on the FP8 build across fresh servers."
+ },
+
+ "not_established": "The logit margin at these sites is still unmeasured; no ladder captured logprobs. The synonym reading is inferred from the decoded pairs and from bidirectional resolution, not from a measured margin. Chain 4's probe measures it directly.",
+ "sources": [
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp1-mtp3-graph1-dhint4-20260907-v1",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f2"
+ ]
+}
