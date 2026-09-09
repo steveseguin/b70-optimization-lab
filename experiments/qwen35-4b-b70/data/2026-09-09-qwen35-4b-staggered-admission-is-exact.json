@@ -45,7 +45,7 @@
  },
  "why_it_works": "The 9B lane established that a batch of constant composition is deterministic and that the divergence needs composition to vary. A per-index stagger does not remove the variation - the cohort still ramps from 1 request to 64 over 1.575 s - but it makes the variation the same on every pass, so each request sees a reproducible composition history. On the speculative lane the same manipulation makes which slot diverges reproducible, 33.8% modal recurrence under a barrier against 95.45% under stagger. At MTP0 it goes further and the concurrent output matches the sequential oracle outright.",
  "the_practical_lever": {
-  "statement": "Exact reproducibility at 64 concurrent users costs about 1% of throughput with a 5 ms admission stagger, on a configuration otherwise 1.88-2.73% divergent on its worst prompts and 0.47-0.70% on the full suite. The 14.2% figure was an artifact of choosing 25 ms first.",
+  "statement": "Exact reproducibility at 64 concurrent users costs about 1% of throughput with a 5 ms admission stagger. 5 ms is the floor: 2 ms leaves 0.94% divergent and 1 ms leaves 2.89%, no better than no stagger at all, even though 1 ms already makes the run highly reproducible pass-to-pass.",
   "combines_with_the_c16_result": "Above c16 speculation already costs throughput and multiplies divergence, so the recipe for a server that needs bit-exactness at high concurrency is: no speculation, plus staggered admission. Without speculation and without stagger, c64 is 1719 tok/s at ~2% divergent; with stagger it is 1474 tok/s at 0%.",
   "what_it_does_not_offer": "Depth 3 with the same stagger is still 44.61% divergent on this suite. Stagger does not rescue the speculative path, it only makes which slot diverges reproducible there."
  },
@@ -116,5 +116,56 @@
   "why": "The cohort ramp is (concurrency - 1) * stagger: 315 ms at 5 ms against 1.575 s at 25 ms, both inside a roughly 7 s response at c64. The ramp is what costs throughput and the ordering is what buys determinism, so a stagger only needs to be long enough to order arrivals reliably, not long enough to be a large fraction of the response.",
   "depth3_at_5ms": "Slot recurrence 92.83% against 95.45% at 25 ms and 33.8% under a barrier; oracle-free minority 5.28% against 4.02% and 27.31%. Slightly weaker than 25 ms on the speculative lane, and at 1173.5 tok/s against the barrier's 1171.4 - no throughput cost at all there.",
   "four_arms_now_show_exactness": "g3 and r1 at 25 ms on the fragile suite, r2 at 25 ms on the full suite, r3 at 5 ms on the fragile suite. Every one certified output-identity-qualified by the harness."
+ },
+ "THE_FLOOR_AND_A_CORRECTION": {
+  "dose_response": [
+   {
+    "stagger": "barrier",
+    "ramp_ms": 0,
+    "mtp0_divergent": "35/1280 and 24/1280",
+    "div_pct": "2.73 / 1.88",
+    "slot_recurrence_pct": "33.8 / 31.0",
+    "tok_s": 1719.0
+   },
+   {
+    "stagger": "1 ms",
+    "ramp_ms": 63,
+    "mtp0_divergent": "37/1280",
+    "div_pct": 2.89,
+    "slot_recurrence_pct": 99.1,
+    "tok_s": 1723.7
+   },
+   {
+    "stagger": "2 ms",
+    "ramp_ms": 126,
+    "mtp0_divergent": "12/1280",
+    "div_pct": 0.94,
+    "slot_recurrence_pct": 85.7,
+    "tok_s": 1717.7
+   },
+   {
+    "stagger": "5 ms",
+    "ramp_ms": 315,
+    "mtp0_divergent": "0/1280",
+    "div_pct": 0.0,
+    "slot_recurrence_pct": 92.8,
+    "tok_s": 1701.5
+   },
+   {
+    "stagger": "25 ms",
+    "ramp_ms": 1575,
+    "mtp0_divergent": "0/1280",
+    "div_pct": 0.0,
+    "slot_recurrence_pct": 95.5,
+    "tok_s": 1474.0
+   }
+  ],
+  "the_correction": "An earlier reading of the 2 ms point said exactness tracks slot recurrence and arrives once ordering becomes essentially deterministic. The 1 ms arm refutes that: it has the highest recurrence of any arm at 99.1% and still diverges from the sequential oracle at 2.89%, no better than a barrier launch. Reproducibility and oracle-agreement are two different things with two different thresholds.",
+  "the_two_thresholds": {
+   "reproducibility_is_cheap": "Any deterministic stagger buys it. At 1 ms the modal minority-slot set recurs in 99.1% of disagreeing passes against 31-34% under a barrier. A deterministic arrival schedule gives a deterministic output, and 63 ms of total ramp is enough for that.",
+   "matching_the_sequential_oracle_costs_more": "That needs 5 ms, a 315 ms ramp of about ten decode steps at c64. The plausible reason is that a longer ramp keeps each request in a smaller batch for more of its life, so its composition history is closer to the single-stream condition the oracle was generated under. Being reproducible does not make a run agree with a differently-composed one.",
+   "why_it_matters": "The deployable claim is oracle-agreement, not reproducibility, so 5 ms is the floor and 1 ms and 2 ms do not suffice. But the distinction is worth keeping: a server that only needs run-to-run reproducibility, rather than agreement with single-stream output, may be able to buy it at 1 ms for no measurable throughput cost at all - 1723.7 tok/s against the barrier's 1719.0."
+  },
+  "the_2ms_recurrence_is_not_read": "2 ms reports 85.7% recurrence, below both 1 ms and 5 ms. The recurrence metric is not monotone across these arms and this campaign has not established its noise level, so the ordering of 85.7, 92.8 and 99.1 is not interpreted. What is solid is that every staggered arm is far above the barrier's 31-34%, and that oracle-agreement appears only from 5 ms."
  }
 }
