@@ -17,8 +17,21 @@
 #   group 16 -> step between c16 and c20   (f3, already measured)
 #   group 32 -> step between c32 and c40
 #
-# If instead the step stays between c16 and c20 at every group size, the grouping is not the cause and
-# something else changes at 16-20 concurrent requests.
+# If instead the step stays between c16 and c20 at every group size, the grouping is not the cause.
+#
+# There is a second hypothesis that predicts the same boundary, and the two are confounded in f3. With
+# speculation a uniform decode step is (1 + depth) tokens per sequence, so at depth 3 a batch of n
+# sequences is 4n tokens, and max_cudagraph_capture_size is 64 tokens - exactly 16 sequences. c16 is
+# therefore also the largest depth-3 concurrency with a captured decode shape. The servers confirm it:
+# a depth-3 server captures 11 shapes, an MTP0 server on the same list captures 18.
+#
+# So s08/s16/s32 vary the group size at a fixed capture ceiling, and k128 varies the capture ceiling at
+# a fixed group size. Between them the two explanations separate:
+#
+#   step moves with the group size only        -> GDN grouping
+#   step moves with the capture ceiling only   -> uncaptured decode shape
+#   step moves with both                       -> both contribute
+#   step moves with neither                    -> something else changes at 16-20 sequences
 #
 # Each arm also runs the engine's MTP0 ladder, which is a built-in negative control: the group size is
 # a speculative-path setting and should do nothing without speculation.
@@ -67,6 +80,12 @@ arm() {
 arm s08 GDN_SPEC_GROUP=8  || exit 1
 arm s16 GDN_SPEC_GROUP=16 || exit 1
 arm s32 GDN_SPEC_GROUP=32 || exit 1
+
+# k128: group size back to the default 16, capture ceiling raised to 128 tokens so that depth-3 shapes
+# through c32 are captured (4n tokens: c8->32, c12->48, c16->64, c20->80, c24->96, c32->128; c40 needs
+# 160 and stays uncaptured). Capture sizes and the ceiling must rise together.
+arm k128 GDN_SPEC_GROUP=16 \
+    CAPTURE_SIZES="1,2,3,4,5,6,8,10,15,16,20,24,25,30,32,40,48,50,60,64,80,96,112,128" CAPTURE_MAX=128 || exit 1
 
 log "=== chain 5 complete ==="
 echo done >"${out}/qwen35-4b-gdn-20260909-DONE"
