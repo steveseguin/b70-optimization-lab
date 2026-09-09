@@ -56,5 +56,22 @@ arm() {
 arm d1s DEPTH=1 || exit 1
 arm d2s DEPTH=2 || exit 1
 
+# mb: isolate why f4's depth-3 c64 rate (20/384, 5.21%) is far below f1's (170/1280, 13.28%);
+# Poisson P(<=20 | 51.0) = 6.7e-07, so the difference is real. The two arms differ in three settings
+# at once - capture ceiling 64 vs 128, max_num_seqs 64 vs 128, max_num_batched_tokens 512 vs 1024 -
+# and at c64 depth 3 the decode step is 256 tokens, past both ceilings, so capture is inactive in
+# both. That points at the scheduler settings rather than capture, and on a GDN hybrid the prefill
+# chunking is a live suspect: all 64 prompts arrive together and the chunk boundaries set how the
+# recurrent state is accumulated. This arm holds the capture ceiling at f1's 64 and takes f4's
+# max_num_seqs and max_num_batched_tokens, completing the 2x2:
+#
+#   f1  capture 64,  mns 64,  mbt 512   -> 13.28%
+#   mb  capture 64,  mns 128, mbt 1024  -> ?
+#   f4  capture 128, mns 128, mbt 1024  -> 5.21%
+#
+# mb near 5% blames the scheduler settings; near 13% blames the capture configuration.
+arm mb DEPTH=3 STAGES="ladders" LADDER_CONCURRENCY="64" LADDER_REPEATS=20 \
+    LADDER_MNS=128 LADDER_MBT=1024 || exit 1
+
 log "=== chain 6 complete ==="
 echo done >"${out}/qwen35-4b-shallow-20260909-DONE"
