@@ -93,6 +93,27 @@ The middle row is **not** a mechanism claim — as established above, most of it
 forks between continuations that share vocabulary. It is reported so the number
 is not rediscovered and misread again.
 
+### 4. The FP8 fresh-server failure has the same structure at concurrency 1
+
+`2026-09-07-qwen35-4b-fp8-repeat-exactness.json` recorded the 4B FP8 build
+failing G1 on the strict 12-prompt suite across three independent campaigns, at
+`max-num-seqs 1` — no concurrency at all, just fresh servers. Its structure is
+the same as the ladder's:
+
+- exactly 3 of 12 prompts are tie-prone; the other 9 are stable across all six
+  servers;
+- each tie-prone prompt has **exactly two variants**, never a third, with servers
+  partitioning between them (`code-review`: q1a+q2a+q3a+q3b against q1b+q2b).
+
+Two variants and no third is the signature of a two-way tie, and it is visible
+here without any batching at all. That is the same phenomenon the ladders see;
+only the perturbation differs. On FP8 the tie is broken differently by whatever
+varies between fresh servers, and on W4A16 — which is repeat-exact across fresh
+servers, G1 12/12 — it takes concurrency to move it.
+
+So the row-invariant kernel does not remove the ambiguous branch points. It
+removes one source of perturbation at them.
+
 ## Independent findings that stand
 
 ### Divergence is concentrated and stochastic

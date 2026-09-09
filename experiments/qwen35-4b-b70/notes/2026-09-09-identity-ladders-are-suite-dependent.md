@@ -23,6 +23,33 @@ over them:
 Three of the eight never diverge, in 160 requests each, in either arm. One
 diverges in more than half of them.
 
+## Which prompt is fragile is a property of the model, not the text
+
+Pooling every ladder on disk per lane (mixed concurrencies and configs, so the
+totals are not comparable across lanes — only the shape within a lane is):
+
+| base prompt | 4B, c64 depth 3 | 9B, all ladders | 27B, all ladders |
+| --- | ---: | ---: | ---: |
+| `cache` | **55.62%** | 0.62% | 4.00% |
+| `monitoring` | 0% | **19.16%** | 1.22% |
+| `index` | 12.50% | 14.39% | 4.87% |
+| `rollback` | 16.25% | 9.71% | 5.81% |
+| `capacity` | 18.12% | 0.49% | 6.22% |
+| `benchmark` | 3.75% | 4.31% | 4.46% |
+| `testing` | 0% | 1.64% | 2.05% |
+| `evidence` | 0% | 0.37% | 4.17% |
+
+The same eight prompts produce three different profiles. `cache` is the 4B's
+worst prompt and among the 9B's quietest; `monitoring` is the reverse. So a
+fragile site is not a property of the prompt — it is a point where that
+particular model's own decoding is ambiguous, and each model has its own.
+
+Two consequences. A fragile suite must be rebuilt per model; the 9B's cannot be
+reused on the 4B. And the 27B's flat profile (1.2% to 6.2%, no dominant prompt)
+is a different regime from the other two, matching its site statistics: 126 sites
+over 947 divergences, about 7.5 events per site, against the 9B's 102 sites over
+2491, about 24 per site.
+
 ## Why it matters
 
 Every identity claim this lab has made — the W4A16 row-invariance argument, the
