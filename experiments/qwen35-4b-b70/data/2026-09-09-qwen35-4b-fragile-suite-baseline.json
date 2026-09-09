@@ -1,0 +1,38 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 g1: the generated fragile suite as a baseline (2026-09-09)",
+ "question": "Two things at once. Does the fragile suite built from f1's per-prompt rates deliver the event concentration it was designed for, and does the 9B lane's copy-group diagnostic replicate on a second model?",
+ "config": "one B70, TP1, depth 3 and MTP0, draft INT4 head, pad off, capture 1-64, c64, 20 passes, the 16-prompt fragile suite run with --verbatim-prompts so each prompt occupies four slots with byte-identical text",
+
+ "result": {
+  "depth3": {"divergent": "691/1280 (53.98%)", "minority_pct": 27.31, "bistable_prompts": 64,
+             "oracle_on_minority_branch": 31, "tok_s": 1171.4, "distinct_sites": 71,
+             "copy_groups_disagreeing": "216/320 (67.5%)", "distinct_output_histogram": {"1": 104, "2": 200, "3": 16}},
+  "mtp0": {"divergent": "35/1280 (2.73%)", "minority_pct": 2.60, "bistable_prompts": 24,
+           "oracle_on_minority_branch": 0, "tok_s": 1719.0, "distinct_sites": 24,
+           "copy_groups_disagreeing": "32/320 (10.0%)", "distinct_output_histogram": {"1": 288, "2": 32}}
+ },
+
+ "finding_1_the_suite_works": {
+  "statement": "Against the full 2026-08-25 suite at the same rung, the fragile suite concentrates events about fourfold on both lanes: 53.98% against 13.28% at depth 3, and 2.73% against 0.70% at MTP0. That is what build-fragile-suite.py was for, and it is what makes the remaining intervention arms affordable.",
+  "caveat": "These rates are not comparable to any full-suite number as absolute measurements. The suite is a deliberately biased instrument selected on measured rate; it compares arms, it does not characterise a configuration."
+ },
+
+ "finding_2_the_copy_group_rate_replicates_across_models": {
+  "statement": "The 9B lane's MTP0 fragile campaigns give 23 of 240 copy-groups disagreeing, 9.58%. The 4B gives 32 of 320, 10.0%. Two different models, different fragile suites built independently from each model's own rates, and the same disagreement rate to within a few tenths of a percent.",
+  "reading": "Suggestive rather than settled - two points, and the suites differ in size - but if the rate is a property of the serving regime rather than of the model, that is worth knowing before anyone reads a change in it as a model effect."
+ },
+
+ "finding_3_speculation_dominates_here_too": {
+  "statement": "Copy-group disagreement is 10.0% without speculation and 67.5% at depth 3 on the same suite and rung, and the oracle-free minority rate is 2.60% against 27.31%. The speculative lane is where this phenomenon lives.",
+  "context": "The 9B depth-3 lane reads 30.8% and 41.7% in its two fragile arms, so the 4B is worse at depth 3 while matching at MTP0."
+ },
+
+ "finding_4_three_outputs_are_two_sites": {
+  "statement": "The depth-3 histogram includes 16 groups with three distinct outputs, which the MTP0 lane never produces. All 16 diverge at two distinct indices rather than one: they are cache-c016 (sites at 26 and 50) and capacity-c022 (17 and 93), the two prompts already independently known to carry a second site. A site remains binary everywhere; a prompt with n sites can show up to 2^n outputs, and only the higher-rate lane fires both often enough to see three.",
+  "why_it_matters": "It closes what looked like a counterexample to the binary-fork model without weakening it."
+ },
+
+ "context_from_the_9b_lane": "The copy-group diagnostic is not this campaign's. experiments/qwen35-9b-b70/notes/2026-09-08-identical-prompts-in-one-batch-diverge-from-each-other.md introduced it, and the lane's settled reading is in 2026-09-08-a-lockstep-batch-is-deterministic-the-ladder-is-not.md: a constant-composition batch is deterministic and the divergence needs the composition to vary. Copies in a group are spread about three decode steps, so they do not share a composition, which is why they can disagree at all.",
+ "campaign_root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g1"
+}
