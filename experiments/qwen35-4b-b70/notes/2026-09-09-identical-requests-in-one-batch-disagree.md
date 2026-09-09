@@ -74,19 +74,40 @@ on which these two interventions are worth enabling.
 This is an observation on the 9B lane from a 4B campaign's tooling, not a
 conclusion of that lane's owner, and it is offered as such.
 
-## What it rules out
+## A framing this note previously got wrong
 
-Batch composition is identical for every copy in a group — they are in the same
-batch, in the same steps, with the same neighbours. Prompt text is identical.
-So neither content nor batch shape decides which branch a request takes.
+An earlier version argued that copies in a group "are in the same batch, in the
+same steps, with the same neighbours", and concluded from that that batch shape
+cannot decide the branch. **That is contradicted by measurement.**
+`2026-09-08-three-candidates-eliminated-for-the-two-card-divergence.md`
+reconstructed absolute per-token arrival times and found copies of one prompt
+routinely spread over **2.7 to 2.9 decode steps**, whether or not they disagree —
+"copies of one prompt are simply not in the same step, ever", which as that note
+says retires the same-batch-different-row framing. It also eliminated slot index
+as a predictor: minority slots are scattered and nothing recurs.
 
-That is why the determinism pad cannot help, and the measurement agrees: padding
-decode row counts to fixed tiers costs 11.7% at depth-3 c64 and leaves the site
-set, the per-site counts and both divergence measures unchanged. The pad makes
-the batch *shape* constant; the disagreement here happens at constant shape.
+So copies do see different step compositions, and the within-batch disagreement
+does not by itself rule out shape or composition dependence. The claim is
+withdrawn.
 
-More generally, any intervention whose mechanism is "remove dependence on how
-many rows are in the batch" is aimed at the wrong thing for this phenomenon.
+## Why the pad fails, on the 9B lane's account rather than mine
+
+The better explanation was already on record.
+`2026-09-08-the-fp16-vocabulary-projection-switches-strategy-above-32-rows.md`
+found that the target's **FP16 vocabulary projection switches strategy above 32
+rows**: at 32 rows and below a row is bitwise identical computed alone or in a
+batch, and from 33 rows up every row differs by up to `3.9e-3` in logit space. The
+lab's fixed-K row-invariance work predicates on weight-quantised inputs
+(`(u4 || s4) && f16`), and on this route the target `lm_head` is plain FP16 — only
+the *draft* head is INT4 — so the last matmul before the argmax was never
+covered.
+
+`VLLM_XPU_W4A16_DETERMINISM_PAD` is a W4A16 knob. It does not touch the FP16
+projection either. So tonight's pad null is exactly what that note predicts, and
+its own explanation for why the row-wise all-reduce and serialised norm failed —
+"the largest row-count-dependent perturbation in the model, sitting directly
+before the argmax, was left in place in every arm including the control" — covers
+the pad as well.
 
 ## What it does not settle, and why
 
@@ -119,6 +140,42 @@ Scanning every lane, the 9B fragile campaigns are the only verbatim runs on disk
 the 27B and 4B have none. Chain 2's `g1`, `g2` and `g3` arms are verbatim and will
 give the first 4B copy-groups, so this can be checked on a second model tonight.
 
+## An independent test of the 33-row threshold, from the 4B at depth 3
+
+The 9B evidence for the threshold is a direct kernel probe plus the observation
+that its ladders are exact at 32 users. At MTP0 the row count *is* the user count,
+so "32 rows" and "32 users" cannot be separated there.
+
+Speculation separates them. A uniform decode step at depth 3 is four tokens per
+sequence, so rows = 4 x concurrency, and a 33-row threshold should appear between
+**c8 (32 rows) and c12 (48 rows)** — nowhere near 32 users. The `f3` arm was run
+before this note was read, at 8/12/16/20/24/32, and reads:
+
+| rung | decode rows | divergent |
+| ---: | ---: | --- |
+| c8 | **32** | **0/48** |
+| c12 | 48 | 1/72 |
+| c16 | 64 | 1/96 |
+| c20 | 80 | 11/120 |
+| c24 | 96 | 13/144 |
+| c32 | 128 | 14/192 |
+
+The only fully exact rung is the only one at or below 32 rows, and the first
+non-zero rung is the first one above it. The threshold tracks the **row count**,
+not the user count, on a different model at a different depth — which is the
+prediction that separates the vocabulary-projection mechanism from anything
+indexed on concurrency.
+
+It is one clean rung and 48 requests, so it is corroboration rather than proof.
+But it is corroboration of a kind the 9B lane could not produce from its own
+ladders, and it costs nothing: the arm was already run.
+
+It also leaves the larger step intact and unexplained. The jump from 1.04% at c16
+to 9.17% at c20 is 64 to 80 rows, well above the projection's threshold, so the
+projection cannot be what changes there. The two candidates for that step remain
+the GDN speculative group of 16 sequences and the capture ceiling of 64 tokens,
+which chain 5 separates.
+
 ## Where this leaves the mechanism
 
 Established: the fork is between two whole continuations; the sites are stable
@@ -126,12 +183,16 @@ across days, reboots, compilation modes and the pad; the direction flips when th
 arithmetic changes under TP2; and now, identical requests in one batch take
 different sides.
 
-So whatever chooses the branch is neither the prompt, nor the batch shape, nor
-the batch composition. It is something that differs between two identical rows of
-the same step — reduction order, work-group scheduling, or an atomics ordering
-inside the kernel are the obvious candidates, and this data cannot distinguish
-them.
+The 9B lane's reading is the one the evidence supports: the FP16 vocabulary
+projection changes strategy above 32 rows and moves every row's logits by up to
+`3.9e-3`, which flips a token exactly when the top two candidates are within that
+of each other. Everything this campaign found about the sites is consistent with
+it — the pairs are synonyms, the fork is binary, both branches are whole
+continuations, and the direction moves when the arithmetic changes under TP2.
 
-The margin probe in chain 4 is the next useful measurement: if the logit gap at
-these sites is at or near zero, then any of those candidates suffices and the
-question becomes which one, not whether.
+The margin probe in chain 4 is the measurement that would close it. The 9B note
+is explicit that its probe used random weights, whose logit margins are enormous,
+so it could not show the argmax moving. `probe-tie-margin.py` reads the top-k
+logprobs at the actual divergence points on the real model. If those margins sit
+at or below `3.9e-3`, the projection's perturbation is sufficient to explain the
+flips and the chain closes.
