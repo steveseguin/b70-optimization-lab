@@ -26,11 +26,20 @@ if [[ $rc -ne 0 ]]; then
   exit 2
 fi
 
+H=$REPO/experiments/qwen35-9b-b70/scripts/run-20260909-qwen35-campaign-v3.sh
+# Freeze the harness for this run. Bash reads a script incrementally: rewriting the source under a
+# live process shifts its read offset and can make it execute garbage. Executing an immutable copy
+# means an edit to the source can never reach a running arm.
+FROZEN_DIR=/mnt/fast-ai/bench-results/chain-logs/frozen; mkdir -p "$FROZEN_DIR"
+FROZEN=$FROZEN_DIR/campaign-v3-$(date +%Y%m%dT%H%M%S)-$$.sh
+cp "$H" "$FROZEN"; chmod 0444 "$FROZEN"
+echo "$(date -u +%FT%TZ) frozen harness $FROZEN sha256=$(sha256sum "$FROZEN" | cut -d" " -f1)"
+H=$FROZEN
 echo "$(date -u +%FT%TZ) launching P0 strict stage (card 0, MTP3, W4A16)"
 env RUN=p0 LANE=qwen35-9b-w4a16 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 \
     STAGES="strict" PORT=18131 XPU_DEVICE_MASK=0 ARM_DEVICES=0 \
     MODEL_DIR="$M" MODEL_MANIFEST="$N" QUANT=compressed-tensors \
     CAMPAIGN_DATE=20260909 \
-    bash "$REPO/experiments/qwen35-9b-b70/scripts/run-20260909-qwen35-campaign-v3.sh"
+    bash "$H"
 echo "$(date -u +%FT%TZ) P0 harness exit $?"
 echo "P0-CHAIN-DONE"

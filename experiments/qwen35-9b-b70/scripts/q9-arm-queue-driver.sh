@@ -19,6 +19,15 @@
 set -uo pipefail
 REPO=/home/steve/llm-optimizations
 H=$REPO/experiments/qwen35-9b-b70/scripts/run-20260909-qwen35-campaign-v3.sh
+
+# Freeze the harness for this run. Bash reads a script incrementally: rewriting the source under a
+# live process shifts its read offset and can make it execute garbage. Executing an immutable copy
+# means an edit to the source can never reach a running arm.
+FROZEN_DIR=/mnt/fast-ai/bench-results/chain-logs/frozen; mkdir -p "$FROZEN_DIR"
+FROZEN=$FROZEN_DIR/campaign-v3-$(date +%Y%m%dT%H%M%S)-$$.sh
+cp "$H" "$FROZEN"; chmod 0444 "$FROZEN"
+echo "$(date -u +%FT%TZ) frozen harness $FROZEN sha256=$(sha256sum "$FROZEN" | cut -d" " -f1)"
+H=$FROZEN
 QUEUE=${QUEUE:-$REPO/experiments/qwen35-9b-b70/data/q9-arm-queue.tsv}
 PARALLELISM=${PARALLELISM:-4}
 LANE=${LANE:-qwen35-9b-w4a16}

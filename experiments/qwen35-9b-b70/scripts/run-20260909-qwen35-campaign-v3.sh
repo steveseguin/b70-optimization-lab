@@ -34,8 +34,25 @@ health_python=${HEALTH_PYTHON:-/home/steve/.venvs/deepseek-v4-xpu/bin/python}
 fault_re='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup'
 if [[ "$TP" == 2 ]]; then mask=${XPU_DEVICE_MASK:-0,1}; else mask=${XPU_DEVICE_MASK:-0}; fi
 ARM_DEVICES=${ARM_DEVICES:-${mask}}
+# Capture sizes are a lever, not a constant. The inherited [1..64] list comes from the 27B lane; at
+# MTP depth d each sequence presents d+1 rows, and an uncaptured decode shape silently falls back to
+# eager - a different execution path that would confound both a rate and an identity comparison.
+# CAPTURE_SIZES gives an explicit list; CAPTURE_MAX extends the default ladder to a higher ceiling.
+default_sizes='1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64'
+if [[ -n "${CAPTURE_SIZES:-}" ]]; then
+  cap_sizes=${CAPTURE_SIZES}
+elif [[ -n "${CAPTURE_MAX:-}" ]]; then
+  cap_sizes=${default_sizes}
+  for extra in 72 80 96 112 128 160 192 256; do
+    (( extra > CAPTURE_MAX )) && break
+    cap_sizes="${cap_sizes},${extra}"
+  done
+else
+  cap_sizes=${default_sizes}
+fi
+cap_max=${cap_sizes##*,}
 if [[ "$GRAPH" == 1 ]]; then
-  comp=${COMPILATION_CONFIG_OVERRIDE:-'{"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'}
+  comp=${COMPILATION_CONFIG_OVERRIDE:-"{\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[${cap_sizes}],\"max_cudagraph_capture_size\":${cap_max},\"splitting_ops\":[],\"inductor_compile_config\":{\"combo_kernels\":false,\"benchmark_combo_kernel\":false,\"deterministic\":true,\"split_reductions\":false,\"triton.autotune_pointwise\":false,\"benchmark_epilogue_fusion\":false}}"}
   eager=0; xgraph=1
 else
   comp=${COMPILATION_CONFIG_OVERRIDE:-'{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'}
