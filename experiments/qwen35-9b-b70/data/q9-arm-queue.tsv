@@ -23,6 +23,10 @@ a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
 a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
 a3tight	3	strict	CAPTURE_SIZES=1,2,3,4,5,6,8,12,16	
 #
+# d2's ladders ran with a leftover diagnostic container resident on card 0, which does not affect
+# identity counts but makes their aggregate figures soft. Repeat on a genuinely quiet card.
+d2r	2	ladders		
+#
 # Capture confound: were the 32/64-user speculative rungs running captured or eager? At depth 1,
 # 64 users is 128 rows against a capture ceiling of 64. If raising the ceiling changes the
 # divergence rate, capture fallback is part of the story rather than the norm.
