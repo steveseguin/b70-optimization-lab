@@ -9,46 +9,120 @@
   "g3": "identical plus --launch-stagger-ms 25",
   "shared": "one B70, TP1, depth 3, draft INT4 head, pad off, capture 1-64, c64, 20 passes, 16-prompt fragile suite at four slots each"
  },
-
  "headline": {
   "statement": "With deterministic arrival, which copy diverges becomes deterministic. Taking each disagreeing pass's set of minority-branch slots and asking how often a prompt's modal set recurs: 73 of 216 under barrier launch (33.8%), 231 of 242 under stagger (95.5%).",
   "examples": [
-   {"prompt": "rollback-c034", "disagreeing_passes": 20, "modal_minority_slots": [53], "times_seen": 20},
-   {"prompt": "rollback-c010", "disagreeing_passes": 20, "modal_minority_slots": [25, 57], "times_seen": 20},
-   {"prompt": "cache-c056", "disagreeing_passes": 20, "modal_minority_slots": [32, 48], "times_seen": 19},
-   {"prompt": "capacity-c062", "disagreeing_passes": 20, "modal_minority_slots": [17, 33], "times_seen": 19},
-   {"prompt": "cache-c016", "disagreeing_passes": 20, "modal_minority_slots": [36, 52], "times_seen": 19},
-   {"prompt": "index-c041", "disagreeing_passes": 20, "modal_minority_slots": [22, 54], "times_seen": 19}
+   {
+    "prompt": "rollback-c034",
+    "disagreeing_passes": 20,
+    "modal_minority_slots": [
+     53
+    ],
+    "times_seen": 20
+   },
+   {
+    "prompt": "rollback-c010",
+    "disagreeing_passes": 20,
+    "modal_minority_slots": [
+     25,
+     57
+    ],
+    "times_seen": 20
+   },
+   {
+    "prompt": "cache-c056",
+    "disagreeing_passes": 20,
+    "modal_minority_slots": [
+     32,
+     48
+    ],
+    "times_seen": 19
+   },
+   {
+    "prompt": "capacity-c062",
+    "disagreeing_passes": 20,
+    "modal_minority_slots": [
+     17,
+     33
+    ],
+    "times_seen": 19
+   },
+   {
+    "prompt": "cache-c016",
+    "disagreeing_passes": 20,
+    "modal_minority_slots": [
+     36,
+     52
+    ],
+    "times_seen": 19
+   },
+   {
+    "prompt": "index-c041",
+    "disagreeing_passes": 20,
+    "modal_minority_slots": [
+     22,
+     54
+    ],
+    "times_seen": 19
+   }
   ]
  },
-
  "the_dissociation_that_makes_it_credible": {
   "statement": "Three measures move in different directions, and only one account explains all three.",
   "table": {
-   "copy_groups_disagreeing": {"g1": "67.5%", "g2": "70.6%", "g3": "76.6%", "direction": "up"},
-   "oracle_free_minority_pct": {"g1": 27.31, "g2": 28.72, "g3": 3.94, "direction": "down sevenfold"},
-   "bistable_slots": {"g1": 64, "g2": 64, "g3": 42, "direction": "down"},
-   "distinct_sites": {"g1": 71, "g2": 73, "g3": 44, "direction": "down"},
-   "tok_s": {"g1": 1171.4, "g2": 1172.4, "g3": 1109.0, "direction": "down 5.3%"}
+   "copy_groups_disagreeing": {
+    "g1": "67.5%",
+    "g2": "70.6%",
+    "g3": "76.6%",
+    "direction": "up"
+   },
+   "oracle_free_minority_pct": {
+    "g1": 27.31,
+    "g2": 28.72,
+    "g3": 3.94,
+    "direction": "down sevenfold"
+   },
+   "bistable_slots": {
+    "g1": 64,
+    "g2": 64,
+    "g3": 42,
+    "direction": "down"
+   },
+   "distinct_sites": {
+    "g1": 71,
+    "g2": 73,
+    "g3": 44,
+    "direction": "down"
+   },
+   "tok_s": {
+    "g1": 1171.4,
+    "g2": 1172.4,
+    "g3": 1109.0,
+    "direction": "down 5.3%"
+   }
   },
   "why_they_fit_together": "Under stagger each slot occupies a reproducible position in every batch. So a given slot returns the same completion pass after pass - which collapses the per-slot minority rate from 27% to 3.9% and drops 22 slots out of the bistable set - while different slots systematically take different branches, which raises the number of copy-groups containing both. Slot-level reproducibility up and within-batch disagreement up at the same time is exactly what a deterministic position-to-branch map predicts, and nothing else here predicts both."
  },
-
  "what_it_settles": {
-  "the_variation_is_arrival_jitter_not_hardware": "The run-to-run component of this phenomenon is not intrinsic device nondeterminism. Hold the arrival order fixed and the output is reproducible per slot at 95.5%. What varies between passes under barrier launch is which request lands where, not what the hardware does with it.",
+  "the_variation_is_arrival_jitter_not_hardware": "The run-to-run component is arrival jitter, not intrinsic device nondeterminism. Hold the arrival schedule fixed and the output is reproducible per slot at 95.5%. That matters for what kind of problem this is: a schedulable one rather than a race.",
   "reconciles_the_earlier_negative": "2026-09-08-three-candidates-eliminated reported that slot index does not predict the minority, with minority slots scattered and nothing recurring more than three times in 23 events. That was measured under barrier launch, and this campaign reproduces it: 33.8% modal recurrence in g1. Both are right. Slot index does not predict the branch when arrival order is free, and does predict it when arrival order is fixed. The predictive variable is the request's actual position, which the client can influence through timing but not through id_slot.",
   "does_not_identify_the_op": "This says the branch is a deterministic function of scheduling position. It does not say which op reads that position. The lane's established finding that a constant-composition batch is deterministic remains the complementary half: composition must vary for the phenomenon to appear at all, and given that it varies, position decides the outcome."
  },
-
  "significance": "The g1/g2 replicate gives the empirical floor: two identical configurations differ by 3.1 points of copy-group rate and z = 2.93 on divergence. The modal-recurrence difference here is 33.8% against 95.5% on comparable counts, which is not close to that floor. See notes/2026-09-09-the-binomial-z-understates-ladder-variance.md.",
-
  "prediction_was_recorded_first": "The directional prediction - that more arrival stagger means more composition variance and therefore more divergence - was committed before the arm ran, in the g3 section of notes/2026-09-09-identical-requests-in-one-batch-disagree.md. Copy-group disagreement did rise, 67.5 and 70.6 to 76.6, so the prediction held on the measure it named. The per-slot collapse was not predicted and is the more informative half.",
-
  "what_to_do_next": "The lane's proposed offline reproduction now has a working recipe from the server side: staggered arrival reproduces the divergence and makes it repeatable, which is what an offline probe needs in order to bisect. A probe that submits 64 identical prompts with a fixed 25 ms stagger, in eager mode where the per-layer hook works, should now both diverge and diverge the same way every time - and that is a bisectable object, which a scattered one was not.",
-
  "campaign_roots": {
   "barrier": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g1",
   "replicate": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g2",
   "stagger": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g3"
+ },
+ "what_the_harness_already_knew": {
+  "stated_purpose": "The stagger is used here as designed. bench-openai-concurrency-oracle.py's own comment reads 'Preserve a concurrent cohort while making prompt-to-server-slot ordering reproducible', which is exactly the manipulation this result relies on: time.sleep(index * launch_stagger_ms / 1000.0) after a barrier, so slot i arrives i*25 ms after slot 0.",
+  "the_lab_already_suspected_slot_non_equivalence": "The adjacent comment says 'The server normally assigns slots by HTTP arrival order. At high concurrency that order is timing-dependent even with staggered clients, and some optimized TP paths are not bit-equivalent across slots.' So slot non-equivalence was already believed in the codebase; what was missing was a measurement. This is that measurement, and it agrees."
+ },
+ "an_important_qualification": {
+  "the_cohort_ramps": "The same comment records that the server's admission window must exceed (concurrency - 1) * stagger, here 63 * 25 ms = 1.575 s. At c64 a 128-token response takes roughly 7 s, so the cohort does hold - but during the first 1.575 s the batch grows from 1 request to 64. So g3 does not merely reorder arrivals within a fixed batch; it also gives every slot a different, and reproducible, history of batch compositions.",
+  "why_that_strengthens_rather_than_weakens": "It fits the 9B lane's account instead of competing with it. Their finding is that composition must vary for the divergence to appear at all - a constant-composition batch is deterministic. This adds that when the variation is made reproducible, the outcome becomes reproducible per slot. Composition variance is necessary; its particular pattern is what selects the branch.",
+  "what_it_costs_the_claim": "The precise statement is 'deterministic arrival timing yields a deterministic per-slot composition history and hence a deterministic branch', not 'row position in a fixed batch decides the branch'. The second is stronger and this experiment does not establish it."
  }
 }
