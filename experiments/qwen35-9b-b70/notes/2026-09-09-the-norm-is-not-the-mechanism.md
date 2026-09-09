@@ -34,6 +34,14 @@ The knob is **free at TP1**, extending the earlier TP2 cost measurement: 95.9 ag
 user and 1033.5 against 1034.5 at 64 users, with every intermediate rung inside a percent. If a use
 for it is ever found, it costs nothing to switch on.
 
+## It does not fix the no-speculation divergence either
+
+`b1sn` also ran its own MTP0 ladder with the knob on. At 64 users it measured **1/128 divergent
+(0.78%)** against the pooled three-arm baseline of **2/384 (0.52%)** - indistinguishable at these
+counts. So the serialised norm changes neither the speculative divergence (3-6%) nor the rare
+no-speculation one (~0.5%). It is not the mechanism for anything observed on this lane, which is a
+stronger elimination than the speculative arm alone would support.
+
 ## Where the search goes next
 
 Remaining candidates, in queue order:
