@@ -29,20 +29,34 @@ Split by lane, the speculative half is three to four times worse:
 
 | campaign | MTP0 lane | depth-3 lane |
 | --- | ---: | ---: |
-| `fragile-f0` | 23/240 (9.6%) | **74/240 (30.8%)** |
-| `fragile-f1` | 23/240 (9.6%) | **100/240 (41.7%)** |
+| 9B `fragile-f0` | 23/240 (9.6%) | **74/240 (30.8%)** |
+| 9B `fragile-f1` | 23/240 (9.6%) | **100/240 (41.7%)** |
+| 4B `g1` | pending | **216/320 (67.5%)** |
 
 The MTP0 column is the 2026-09-08 measurement. The depth-3 column is new, and it
-matters because it is where the lane actually serves.
+matters because it is where the lane actually serves. The 4B replicates the
+phenomenon on a second model at a higher rate still.
+
+The 4B `g1` arm also confirms the fragile suite works as designed: 53.98%
+divergence against the full suite's 13.28% at the same rung, a fourfold
+concentration of events for the same card time, which is what
+`build-fragile-suite.py` was built to buy.
 
 Two further properties:
 
-- **Always exactly two distinct outputs**, never three, from five or six copies.
-  The distinct-output histogram over all 1920 copy-groups is `{1: 1491, 2: 429}`:
-  a group of identical copies produces either one completion or exactly two, and
-  a third was never observed. That is the strongest single statement of the
-  binary-fork model in this campaign, because it is 429 independent chances for a
-  third branch to appear and it never did.
+- **Every site is binary, and no true three-way tie has been seen.** The 9B
+  corpus histogram is `{1: 1491, 2: 429}` — 429 disagreements, never a third
+  output. The 4B fragile arm `g1` then produced `{1: 104, 2: 200, 3: 16}`, which
+  looks like a counterexample and is not: all **16 of 16** three-output groups
+  diverge at *two* distinct indices, none at one. They are prompts carrying two
+  independent binary sites, showing three of the four reachable combinations.
+
+  The indices identify themselves — `cache-c016` at 26 and 50, `capacity-c022` at
+  17 and 93 — and those are exactly the two prompts already known to carry a
+  second site, from the TP 2x2 test where they were the pair that failed to close
+  at precisely those positions. So the corrected statement is stronger than the
+  original: a *site* is always binary, and a prompt's number of distinct outputs
+  is 2^(number of its sites).
 - **Almost always exactly one copy in the minority.** A typical group reads
   `majority slots [2, 14, 26, 38, 62], minority slot [50]`.
 
