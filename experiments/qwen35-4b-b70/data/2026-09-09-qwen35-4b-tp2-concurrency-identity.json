@@ -1,0 +1,35 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 t5: TP2 identity at c64, 20 passes (2026-09-09)",
+ "question": "TP2 had only ever been run at c64 with two passes, which produced 9 divergences and could not separate anything. The working assumption on this lab's lanes has been that two cards are more fragile at the same row count. This measures it at 20 passes on both lanes.",
+ "config": "two B70s (mask 0,1), TP2, depth 3 and MTP0, draft INT4 head, pad off, capture 1-64, 2026-08-25 small-context suite, c64, 20 passes, barrier launch",
+
+ "result": {
+  "columns": ["lane", "TP1 (f1)", "TP2 (t5)"],
+  "rows": [
+   {"lane": "MTP0 divergent", "tp1": "9/1280 (0.70%)", "tp2": "2/1280 (0.16%)"},
+   {"lane": "MTP0 oracle-free minority", "tp1": "0.67%", "tp2": "0.15%"},
+   {"lane": "MTP0 throughput", "tp1": "1722.7 tok/s", "tp2": "2786.5 tok/s"},
+   {"lane": "depth-3 divergent", "tp1": "170/1280 (13.28%)", "tp2": "83/1280 (6.48%)"},
+   {"lane": "depth-3 oracle-free minority", "tp1": "7.37%", "tp2": "4.69%"},
+   {"lane": "depth-3 throughput", "tp1": "1200.3 tok/s", "tp2": "2029.1 tok/s"},
+   {"lane": "depth-3 bistable prompts", "tp1": 16, "tp2": 10},
+   {"lane": "depth-3 distinct sites", "tp1": 18, "tp2": 11}
+  ]
+ },
+
+ "finding": "At the same concurrency, two cards are better on identity than one, not worse. MTP0 divergence is 0.16% against 0.70% - a quarter - and depth 3 is 6.48% against 13.28% - a half. Two cards are also 62% and 69% faster on the two lanes. On both axes at c64, TP2 dominates TP1.",
+
+ "it_contradicts_a_working_assumption": "The 9B lane's note on the vocabulary projection offered as a hypothesis that 'this projection supplies the perturbation on both topologies and two cards are more fragile at the same row count', flagged there as a hypothesis rather than a result. On the 4B at c64 the opposite holds. That does not refute it for the 9B, which is a different model with a different fragile set, but the assumption should not be carried across lanes without measurement.",
+
+ "the_comparison_is_within_topology": "Each arm is measured against its own sequential oracle, regenerated on its own configuration, which is required because TP flips which side of a tie the sequential path takes (see 2026-09-09-qwen35-4b-tp-flips-tie-direction.json). So this compares how far each topology's concurrent output strays from its own single-stream output, which is the meaningful question for a server, and not whether the two topologies agree with each other - they do not, and are not expected to.",
+
+ "the_stutter_insertion_did_not_recur": {
+  "context": "The one clean single-token insertion on this lane - benchmark-c043 at index 124, a duplicated ' inference' with the remainder identical - came from a TP2 MTP0 c64 pass of 128 requests on 2026-09-07. t5 puts 1280 TP2 MTP0 requests against it on the same configuration.",
+  "result": "It did not recur. The arm produced 2 divergences in 1280, one shift-then-drift on cache-c016 and one content divergence on cache-c008, neither a clean insertion.",
+  "bound": "Combined with f1's 1920 TP1 MTP0 requests, the clean-insertion rate is now under 1 in 3200 on this model. It remains a real observed event, not an artifact - both responses had 128 tokens and finish_reason length - but it is rare enough that chasing it further would need a dedicated high-volume arm."
+ },
+
+ "campaign_roots": {"tp2": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t5",
+                    "tp1": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1"}
+}
