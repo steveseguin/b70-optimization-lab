@@ -6,9 +6,16 @@ another. It applies to every identity ladder this lab runs.
 ## The problem
 
 A ladder reports `n/N exact`: how many concurrent responses match a **sequential
-oracle** generated on the same server. The oracle is one sample. It is drawn from
-the same model, at the same fragile sites, as every other sample — and at a
-bistable site it lands on one branch or the other.
+oracle** generated on the same server. That oracle sits on the same fragile sites
+as every other response, and at a bistable site it takes one branch or the other.
+
+**It is not random.** Measured across the `g1`, `g2` and `g3` arms — three fresh
+servers — the sequential oracles are identical 64 of 64 on both the MTP0 and the
+depth-3 lane. Single-stream generation on this stack is deterministic, with and
+without speculation, and the divergence is purely a concurrency phenomenon. So the
+oracle's branch is a **deterministic function of the configuration**: it does not
+vary between runs of the same configuration, and it can move when the
+configuration changes.
 
 When the oracle lands on a site's **minority** branch, every concurrent request
 that takes the majority branch is counted as divergent. The rate at that site
@@ -16,7 +23,9 @@ inverts: a site where 80% of runs agree with each other is reported as 80%
 divergent.
 
 So the rate mixes two things: how often the server produces the minority branch,
-and which branch the oracle happened to draw.
+and which branch that configuration's sequential path takes. The second is stable
+within a configuration and can shift when one changes — which is exactly the
+situation in an intervention comparison.
 
 ## How large the effect is
 
@@ -124,4 +133,5 @@ fraction above is the unbiased comparison; the per-prompt list is not.
 
 Report `min%` beside `n/N exact` in every identity result. Where an intervention
 is being compared, prefer `min%`, and treat a `div%` change unaccompanied by a
-`min%` change as an oracle draw rather than a finding.
+`min%` change as the configuration having moved its own sequential reference
+rather than as a finding.
