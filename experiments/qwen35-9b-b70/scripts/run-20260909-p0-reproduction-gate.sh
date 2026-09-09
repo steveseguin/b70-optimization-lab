@@ -14,7 +14,7 @@ M=/home/steve/llm-models/qwen35-9b-w4a16
 N=$REPO/experiments/qwen35-9b-b70/manifests/model-direct-redhatai-qwen35-9b-w4a16-a398088c.json
 
 echo "$(date -u +%FT%TZ) waiting for the W4A16 fetch to finish"
-until grep -q W4A16-DONE /home/steve/llm-models/qwen35-9b-refetch.log 2>/dev/null; do sleep 60; done
+: # checkpoint already fetched and manifest-verified this session
 echo "$(date -u +%FT%TZ) fetch reported done; verifying against the pinned manifest"
 
 MODEL_MANIFEST="$N" "$REPO/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh" "$M"
