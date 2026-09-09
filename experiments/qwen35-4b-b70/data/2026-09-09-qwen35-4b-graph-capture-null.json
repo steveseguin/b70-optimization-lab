@@ -34,6 +34,19 @@
 
  "finding": "A null, and a well-powered one. Every difference is inside Poisson noise on counts this size; the depth-3 c64 rung, which carries the most events, is identically 170/1280 in both arms. The decode-only graph capture is not the source of high-concurrency divergence, and disabling it does not help.",
 
+ "finding_the_sites_are_identical_too": {
+  "statement": "The two arms do not merely diverge at the same rate; they diverge in the same places. Treating a site as (prompt_id, first differing index, oracle token, run token), the depth-3 c64 arms share 18 of f1's 18 sites, f2 adds one, and 99.4% of all 340 events across both arms sit at a shared site. The MTP0 arms share 3 sites carrying 67% of their 15 events, which is what 15 events can say.",
+  "why_it_matters": "Full decode-only graph capture and piecewise Inductor are different execution paths, and they produce the same fragile set with the same substitutions at the same token positions. That makes the sites a property of the model and the prompt rather than of the runtime configuration, and it is a stronger null than the rate comparison alone.",
+  "top_shared_sites_depth3": [
+   {"prompt": "cache-c056", "index": 50, "events_both_arms": 36},
+   {"prompt": "capacity-c062", "index": 54, "events_both_arms": 36},
+   {"prompt": "cache-c000", "index": 39, "events_both_arms": 35},
+   {"prompt": "cache-c048", "index": 89, "events_both_arms": 35},
+   {"prompt": "index-c041", "index": 53, "events_both_arms": 27}
+  ],
+  "position": "First-divergence index spans 5 to 124 with a median of 53 of a 128-token cap, so divergence is spread through the response rather than accumulating toward the end."
+ },
+
  "second_finding": "Capture also buys no throughput at these rungs: 1200.3 against 1197.6 tok/s at depth 3 c64, and 1722.7 against 1717.9 at MTP0 c64, all within the 0.4% that separates the two. The lane ships capture on, which is justified at low concurrency (the 9B lane measured it worth 1-2% there and this campaign did not test c1), but at c32 and above it is doing nothing for either axis on this model.",
 
  "what_it_leaves": "The remaining candidate for the 18x speculative penalty is the verify step itself. Chain 3 tests that as a dose: the c64 rate at depth 1, 2 and 6 against f1's depth 3. If the verify step is the source, the rate should scale with the number of speculative tokens per step.",
