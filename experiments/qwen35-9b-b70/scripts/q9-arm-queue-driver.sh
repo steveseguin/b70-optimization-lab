@@ -94,7 +94,11 @@ echo "$(date -u +%FT%TZ) queue snapshot: ${#QUEUE_LINES[@]} lines from $QUEUE"
 for line in "${QUEUE_LINES[@]}"; do
   line=${line%%#*}
   [[ -z "${line// /}" ]] && continue
-  IFS=$'\t' read -r run depth stages harness_env extra_env <<<"$line"
+  # Tab is a whitespace character, and bash `read` collapses consecutive whitespace delimiters and
+  # drops empty fields. A line whose harness_env column is empty therefore shifts extra_env one slot
+  # left, silently routing a knob past the in-container verification that only extra_env gets.
+  # Translating to a non-whitespace delimiter first preserves empty fields.
+  IFS='|' read -r run depth stages harness_env extra_env <<<"${line//$'\t'/|}"
   [[ -z "${run:-}" || -z "${depth:-}" ]] && continue
   harness_env=${harness_env:-}; extra_env=${extra_env:-}
   # Skip an arm whose root already exists: the harness refuses a reused root anyway, and this makes

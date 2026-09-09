@@ -50,3 +50,33 @@ These should have been queued before the norm and the lm_head. The reason they w
 earlier hypothesis came from the two-card campaign's history rather than from this lane's own
 evidence, and the evidence here - speculation-only, depth-independent - was pointing at the
 speculative path the whole time.
+
+
+## Correction to the earlier b2rs post-mortem (same day)
+
+The first `b2rs` dispatch was blamed on the queue file being rewritten under the driver's open fd.
+That diagnosis was wrong. The real cause is a bash parsing rule:
+
+```
+line='b2rs\t1\tladders\t\tVLLM_XPU_GDN_ROW_STABLE_RMSNORM=1'
+IFS=$'\t' read -r run depth stages harness_env extra_env <<<"$line"
+  -> harness_env='VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1'   extra_env=''
+IFS='|'   read -r ... <<<"${line//$'\t'/|}"
+  -> harness_env=''   extra_env='VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1'
+```
+
+**Tab is a whitespace character.** When `IFS` contains whitespace, `read` collapses consecutive
+delimiters and drops empty fields, so any queue line with an empty `harness_env` column shifts its
+`extra_env` one slot left. Translating tabs to a non-whitespace delimiter first preserves them.
+
+Why it matters more than a cosmetic mis-log: `extra_env` is the only path with in-container
+verification. Routed through `harness_env` a knob bypasses that check entirely, so the arm can run
+without the intervention applying and still report a clean result. Every remaining knob arm in the
+queue - `b2rs`, `b4rec`, `b5conv`, `b6delta`, `b7all`, the draft-head arms and the row-chunk arms -
+has an empty `harness_env` column and would have been affected.
+
+The fd-snapshot change made earlier is still correct hardening in its own right - streaming a file
+that is being rewritten is genuinely unsafe - but it fixed a hazard that had not fired, while the
+actual defect went unnoticed for one more arm. A plausible mechanism that explains the symptom is
+not the same as the mechanism, and the way to tell them apart is a two-line reproduction, which is
+what settled it here.
