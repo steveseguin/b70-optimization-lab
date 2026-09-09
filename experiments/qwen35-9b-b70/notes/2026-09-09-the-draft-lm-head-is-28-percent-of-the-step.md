@@ -44,3 +44,43 @@ a 9B model's other per-token work.
 
 It also predicts that the head's share should be **larger at low depth**, where it is amortised over
 fewer accepted tokens. `a14dh0d1` measures the same delta at depth 1 to test that.
+
+## Depth 1 (`a14dh0d1`): the prediction was backwards, and the correction closes the loop
+
+I predicted the head's share of the step would be **larger** at depth 1, on the reasoning that it is
+amortised over fewer accepted tokens. It is smaller:
+
+| | head ON | head OFF | head worth | head removes |
+| --- | ---: | ---: | ---: | --- |
+| depth 1 | 93.09 tok/s (19.43 ms) | 82.96 tok/s (22.12 ms) | +12.2% | 2.69 ms (12.1% of step) |
+| depth 3 | 110.68 tok/s (24.97 ms) | 81.24 tok/s (34.62 ms) | +36.2% | 9.65 ms (27.9% of step) |
+
+The reasoning was simply wrong. The draft head runs **once per drafted token**, so depth `d` pays
+`d` passes through it. The share therefore grows with depth. Per pass:
+
+```
+depth 1:  2.69 ms / 1 pass = 2.69 ms per draft pass
+depth 3:  9.65 ms / 3 pass = 3.22 ms per draft pass
+```
+
+**And that closes the loop with the depth ladder.** The step-cost growth measured independently from
+the slope of seven rate measurements is **+2.87 ms per depth**. The head's per-pass cost measured by
+toggling a flag at two depths is **2.7-3.2 ms**. Two quantities obtained by completely different
+means agree.
+
+So the draft lm_head is not merely the largest term - it is essentially **the entire mechanism by
+which depth costs anything**. Acceptance saturates near three tokens while each additional depth
+buys one more ~3 ms pass through a 248,320-row projection. That is the depth curve, explained end to
+end:
+
+- gains: accepted tokens per step, saturating (+0.809, +0.568, +0.387, +0.254, +0.142, +0.028)
+- costs: one draft-head pass per depth, ~2.9 ms each
+
+Peak at depth 3 is where those cross, and nothing about that is coincidental.
+
+### Consequence
+
+Cheapening this head improves **every** depth and improves deeper ones most - it would also move the
+optimum depth rightward, since the cost side of the crossing gets shallower. That makes the seven
+queued head-tuning arms the only remaining work in this lane that acts on the term governing both
+the peak's height and its location.
