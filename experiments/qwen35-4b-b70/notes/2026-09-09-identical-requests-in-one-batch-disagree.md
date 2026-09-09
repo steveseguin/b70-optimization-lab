@@ -13,7 +13,11 @@ same steps, different completions.
 Two further properties:
 
 - **Always exactly two distinct outputs**, never three, from five or six copies.
-  The same binary fork seen everywhere else in this campaign.
+  The distinct-output histogram over all 1920 copy-groups is `{1: 1491, 2: 429}`:
+  a group of identical copies produces either one completion or exactly two, and
+  a third was never observed. That is the strongest single statement of the
+  binary-fork model in this campaign, because it is 429 independent chances for a
+  third branch to appear and it never did.
 - **Almost always exactly one copy in the minority.** A typical group reads
   `majority slots [2, 14, 26, 38, 62], minority slot [50]`.
 
@@ -55,6 +59,12 @@ repeat for a noise estimate.
 
 `g3`, which staggers arrivals by 25 ms, is a real manipulation of this variable:
 it changes arrival order and step composition rather than trying to pin a row.
+
+## Only the 9B has verbatim data so far
+
+Scanning every lane, the 9B fragile campaigns are the only verbatim runs on disk;
+the 27B and 4B have none. Chain 2's `g1`, `g2` and `g3` arms are verbatim and will
+give the first 4B copy-groups, so this can be checked on a second model tonight.
 
 ## Where this leaves the mechanism
 
