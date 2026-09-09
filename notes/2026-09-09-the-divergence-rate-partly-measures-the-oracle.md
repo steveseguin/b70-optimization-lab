@@ -1,0 +1,92 @@
+# The divergence rate partly measures where the oracle landed
+
+Found while trying to explain why one 4B arm looked twice as deterministic as
+another. It applies to every identity ladder this lab runs.
+
+## The problem
+
+A ladder reports `n/N exact`: how many concurrent responses match a **sequential
+oracle** generated on the same server. The oracle is one sample. It is drawn from
+the same model, at the same fragile sites, as every other sample — and at a
+bistable site it lands on one branch or the other.
+
+When the oracle lands on a site's **minority** branch, every concurrent request
+that takes the majority branch is counted as divergent. The rate at that site
+inverts: a site where 80% of runs agree with each other is reported as 80%
+divergent.
+
+So the rate mixes two things: how often the server produces the minority branch,
+and which branch the oracle happened to draw.
+
+## How large the effect is
+
+Same model, same suite, same rung, matched at six passes:
+
+| arm | oracle-based | oracle-free | bistable prompts | oracle on minority |
+| --- | ---: | ---: | ---: | ---: |
+| `f1` c64 | 14.06% | 6.70% | 15 | 6 |
+| `f2` c64 | 14.84% | 6.92% | 17 | 8 |
+| `f4` c64 | 5.21% | 3.79% | 8 | 1 |
+
+`f1` and `f2` report roughly double their oracle-free rate because their oracles
+sit on the minority branch at six and eight prompts. `f4`'s oracle sits on the
+minority branch once, and its two numbers nearly agree.
+
+At full power the same shape holds for `f4`'s other rungs: c96 reads 6.77%
+oracle-based against 3.57% oracle-free with six oracle-minority prompts, and c128
+reads 6.25% against 4.02% with six.
+
+## The oracle really does move
+
+This is not hypothetical. Comparing the `f1` and `f4` oracles directly, **11 of 64
+oracle responses differ**, and at six of eight high-rate sites the oracle token
+itself changed side:
+
+| site | `f1` oracle | `f4` oracle |
+| --- | --- | --- |
+| `cache-c056` @50 | `" HTTP"` | `" Redis"` |
+| `capacity-c062` @54 | `" resource"` | `" constraint"` |
+| `cache-c048` @89 | `" comes"` | `" arrives"` |
+| `rollback-c010` @112 | `" hang"` | `" leave"` |
+
+`f1`'s highest-rate sites are simply **absent** from `f4`'s site list, because
+`f4`'s oracle moved to the branch its concurrent runs already preferred, so those
+requests stopped counting as divergent.
+
+## The better instrument
+
+Count **minority-branch samples against each prompt's own modal completion**,
+with the oracle included as one more sample. It needs no reference response, so
+nothing depends on which branch a single draw took, and it is comparable across
+pass counts.
+
+`summarize-arm.py` now reports it as `min%`, alongside `bist` (how many prompts
+showed more than one completion) and `oMin` (how many had the oracle on the
+minority branch). A large gap between `div%` and `min%` means the arm's oracle
+was unlucky, not that the server was worse.
+
+## What it does and does not change
+
+**It does not invalidate the gates.** G1, G2 and G3 ask whether two runs are
+byte-identical, which is a different and still-correct question, and the strict
+suite is unaffected. "Lossless" claims that rest on exact gates stand.
+
+**It does affect rate comparisons between arms.** Any two arms that regenerated
+their own oracles can differ in reported rate purely because their oracles drew
+differently. That is the intended behaviour under AGENTS.md rule 2 — an oracle is
+bound to its arithmetic and must be regenerated — but the consequence for the
+*rate* was not on record. The powered intervention comparisons on the 9B lane
+(pad, row-wise all-reduce, serialised norm) each regenerate an oracle, so their
+control-versus-candidate rate differences carry this term.
+
+**It changes the reading of `f4` versus `f1`.** About half the apparent
+improvement is the oracle artifact and about half is real: `f4`'s oracle-free
+rate is 3.79% against `f1`'s 6.70%, with half as many bistable prompts. The `mb`
+arm isolates whether the real half is the capture ceiling or the scheduler
+settings.
+
+## Recommendation
+
+Report `min%` beside `n/N exact` in every identity result. Where an intervention
+is being compared, prefer `min%`, and treat a `div%` change unaccompanied by a
+`min%` change as an oracle draw rather than a finding.

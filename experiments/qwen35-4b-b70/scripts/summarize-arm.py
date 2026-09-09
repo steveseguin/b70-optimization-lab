@@ -28,7 +28,8 @@ def summarize(root: Path, lane: str):
         return None
     d = json.loads(p.read_text())
     oracle = {r["prompt_id"]: r.get("token_ids") for r in (d.get("oracle") or {}).get("rows", [])}
-    per = collections.defaultdict(lambda: {"exact": 0, "total": 0, "agg": [], "sites": collections.Counter()})
+    per = collections.defaultdict(lambda: {"exact": 0, "total": 0, "agg": [], "sites": collections.Counter(),
+                                           "obs": collections.defaultdict(collections.Counter)})
     for b in d.get("batches", []):
         e = per[b["concurrency"]]
         e["exact"] += b["oracle_exact_count"]
@@ -40,10 +41,30 @@ def summarize(root: Path, lane: str):
                 continue
             i = next((k for k, (x, y) in enumerate(zip(o, t)) if x != y), 0)
             e["sites"][(r["prompt_id"], i, o[i], t[i])] += 1
+        for r in b.get("rows", []):
+            if r.get("token_ids"):
+                e["obs"][r["prompt_id"]][tuple(r["token_ids"])] += 1
     out = {}
     for c, e in sorted(per.items()):
         agg = sorted(e["agg"])
+        # Oracle-free view. The oracle-based rate counts disagreement with one sampled sequential
+        # response, and that response sits on the same ties as every other sample: when it lands on a
+        # site's minority branch, the whole majority is counted as divergent and the rate roughly
+        # doubles. Counting minority-branch samples against each prompt's own modal completion removes
+        # that dependence, and the oracle is included as one more sample.
+        obs = {pid: cnt.copy() for pid, cnt in e["obs"].items()}
+        for pid in obs:
+            if oracle.get(pid):
+                obs[pid][tuple(oracle[pid])] += 1
+        samples = sum(sum(c.values()) for c in obs.values())
+        minority = sum(sum(c.values()) - max(c.values()) for c in obs.values())
+        bistable = sum(1 for c in obs.values() if len(c) > 1)
+        on_min = sum(1 for pid, c in obs.items()
+                     if len(c) > 1 and oracle.get(pid) and c[tuple(oracle[pid])] != max(c.values()))
         out[c] = {
+            "minority_pct": round(100 * minority / samples, 3) if samples else None,
+            "bistable_prompts": bistable,
+            "oracle_on_minority_branch": on_min,
             "exact": e["exact"], "total": e["total"],
             "divergent": e["total"] - e["exact"],
             "rate_pct": round(100 * (e["total"] - e["exact"]) / max(e["total"], 1), 3),
@@ -72,7 +93,7 @@ def main() -> int:
         print(__doc__)
         return 2
     report = {}
-    print(f"{'arm':<34}{'lane':<13}{'rung':<6}{'exact':<14}{'div%':>7}{'tok/s':>9}{'sites':>7}")
+    print(f"{'arm':<30}{'lane':<13}{'rung':<6}{'exact':<13}{'div%':>7}{'min%':>7}{'bist':>5}{'oMin':>5}{'tok/s':>9}{'sites':>6}")
     for root in roots:
         for lane in lanes:
             res = summarize(root, lane)
@@ -80,9 +101,10 @@ def main() -> int:
                 continue
             report.setdefault(root.name, {})[lane] = res
             for c, r in res.items():
-                print(f"  {root.name[-30:]:<32}{lane:<13}c{c:<5}"
-                      f"{r['exact']}/{r['total']:<9}{r['rate_pct']:>6.2f}%"
-                      f"{r['agg_tok_s_median'] or 0:>9.1f}{r['distinct_sites']:>7}")
+                print(f"  {root.name[-26:]:<28}{lane:<13}c{c:<5}"
+                      f"{r['exact']}/{r['total']:<8}{r['rate_pct']:>6.2f}%"
+                      f"{(r['minority_pct'] or 0):>6.2f}%{r['bistable_prompts']:>5}{r['oracle_on_minority_branch']:>5}"
+                      f"{r['agg_tok_s_median'] or 0:>9.1f}{r['distinct_sites']:>6}")
                 if show_sites:
                     for s, n in list(r["sites"].items())[:12]:
                         print(f"        {n:>4}  {s}")
