@@ -40,7 +40,7 @@ echo "$(date -u +%FT%TZ) P0 passed; fanning out four arms"
 # arm <run> <depth> <card> <port> <stages>
 arm() {
   local run=$1 depth=$2 card=$3 port=$4 stages=$5
-  env RUN="$run" LANE=qwen35-9b-w4a16 TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1 \
+  env REPO="$REPO" RUN="$run" LANE=qwen35-9b-w4a16 TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1 \
       STAGES="$stages" PORT="$port" XPU_DEVICE_MASK="$card" ARM_DEVICES="$card" \
       MODEL_DIR=/home/steve/llm-models/qwen35-9b-w4a16 \
       MODEL_MANIFEST=$REPO/experiments/qwen35-9b-b70/manifests/model-direct-redhatai-qwen35-9b-w4a16-a398088c.json \

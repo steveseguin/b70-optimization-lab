@@ -89,7 +89,14 @@ devices_normal() {
 journal_check() { journalctl -k -b 0 --no-pager --since "${campaign_start}" >"${root}/$1-kernel-journal.txt" 2>&1 || true; ! grep -qiE "${fault_re}" "${root}/$1-kernel-journal.txt"; }
 # v3: only this arm's own containers, so parallel arms on other cards do not abort each other.
 lane_containers() { docker ps --format '{{.Names}}' | grep -cE "^${LANE}-${RUN}-" || true; }
-arm_health() { PYTHON="${health_python}" PHYSICAL_DEVICES="${ARM_DEVICES}" XCCL_DEVICES="${ARM_DEVICES}" ROOT="${repo}" "${health}"; }
+# TP1 arms get the per-device compute smoke and no collective. TP>1 arms get both, on a per-arm
+# master port so that parallel arms do not collide on the default 29500.
+arm_health() {
+  local ndev; ndev=$(awk -F, '{print NF}' <<<"${ARM_DEVICES}")
+  local skip=0; (( ndev < 2 )) && skip=1
+  PYTHON="${health_python}" PHYSICAL_DEVICES="${ARM_DEVICES}" XCCL_DEVICES="${ARM_DEVICES}" \
+    XPU_HEALTH_SKIP_XCCL="${skip}" XCCL_MASTER_PORT=$((29500 + port - 18131)) ROOT="${repo}" "${health}"
+}
 postflight() { devices_normal "$1" || abort "$1: a B70 this arm owns is not healthy"; journal_check "$1" || abort "$1: fault signature in the kernel journal"; arm_health >"${root}/$1-compute-xccl.txt" 2>&1 || abort "$1: compute/XCCL health failed"; [[ "$(lane_containers)" == 0 ]] || abort "$1: this arm's container is still running"; log "$1: postflight clean"; }
 wait_health() { local pid=$1 deadline=$(( $(date +%s) + health_timeout )); while (( $(date +%s) < deadline )); do curl -fsS "http://127.0.0.1:${port}/health" >/dev/null 2>&1 && return 0; kill -0 "${pid}" 2>/dev/null || return 1; sleep 15; done; return 1; }
 stop_server() { docker inspect "$1" >"$3/container-inspect.json" 2>/dev/null || true; docker stop -t 180 "$1" >/dev/null 2>&1 || true; wait "$2" 2>/dev/null || true; for _ in $(seq 1 24); do docker ps -a --format '{{.Names}}' | grep -q "^$1$" || break; sleep 5; done; grep -iE "${fault_re}" "$3/server.log" >"$3/server-fault-lines.txt" || true; [[ ! -s "$3/server-fault-lines.txt" ]] || abort "$(basename "$3"): fault signature in server.log"; }
@@ -163,6 +170,15 @@ compare_pair() { python3 "${compare}" "$1" "$2" --output "$3" >/dev/null 2>&1 ||
 run_ladder() { python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-2}" --max-tokens 128 --seed 42 --timeout 900 --request-extra-json '{"ignore_eos":true,"temperature":0}' --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1; log "$1 ladder harness exit $?"; }
 
 # ---------------- preflight ----------------
+# Resolve-and-check the dependencies first. A frozen copy of this script lives outside the repo, so
+# self-location cannot find the repo and every path below would be wrong; failing here names the
+# cause instead of surfacing as "compute/XCCL health failed" after a model load.
+for dep in "${repro}/run-w8a16-mtp0-strict-server.sh" "${repro}/run-w8a16-mtp1-strict-server.sh" \
+           "${repro}/bench-w8a16-mtp1-strict.sh" "${ladder}" "${compare}" "${health}" \
+           "${strict_suite}" "${ladder_suite}" "${model_dir}" "${manifest}"; do
+  [[ -e "${dep}" ]] || abort "preflight: dependency missing: ${dep} (REPO=${repo})"
+done
+[[ -x "${health_python}" ]] || abort "preflight: XPU python missing: ${health_python}"
 [[ "$(lane_containers)" == 0 ]] || abort "preflight: this arm's container is already running"
 [[ "$(docker image inspect "${image}" --format '{{.Id}}')" == "${image_id}" ]] || abort "preflight: image id mismatch"
 devices_normal preflight || abort "preflight: a B70 this arm owns is not healthy"

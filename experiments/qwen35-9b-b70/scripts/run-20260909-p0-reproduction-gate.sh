@@ -36,7 +36,7 @@ cp "$H" "$FROZEN"; chmod 0444 "$FROZEN"
 echo "$(date -u +%FT%TZ) frozen harness $FROZEN sha256=$(sha256sum "$FROZEN" | cut -d" " -f1)"
 H=$FROZEN
 echo "$(date -u +%FT%TZ) launching P0 strict stage (card 0, MTP3, W4A16)"
-env RUN=p0 LANE=qwen35-9b-w4a16 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 \
+env REPO="$REPO" RUN=p0 LANE=qwen35-9b-w4a16 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 \
     STAGES="strict" PORT=18131 XPU_DEVICE_MASK=0 ARM_DEVICES=0 \
     MODEL_DIR="$M" MODEL_MANIFEST="$N" QUANT=compressed-tensors \
     CAMPAIGN_DATE=20260909 \

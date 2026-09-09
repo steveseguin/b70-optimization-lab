@@ -67,7 +67,7 @@ free_card() {
 run_arm() {
   local run=$1 depth=$2 stages=$3 card=$4 harness_env=$5 extra_env=$6
   local port=$((18131 + card))
-  local envs=(RUN="$run" LANE="$LANE" TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1
+  local envs=(REPO="$REPO" RUN="$run" LANE="$LANE" TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1
               STAGES="$stages" PORT="$port" XPU_DEVICE_MASK="$card" ARM_DEVICES="$card"
               MODEL_DIR="$MODEL" MODEL_MANIFEST="$MANIFEST" QUANT=compressed-tensors
               CAMPAIGN_DATE=20260909)
