@@ -57,9 +57,18 @@ are stable across days, reboots and compilation modes — all 14 from 2026-09-07
 reappeared — and the token pairs decode as synonyms (`" HTTP"`/`" Redis"`,
 `" Column"`/`" Index"`). For a single-site prompt, four execution conditions map
 onto exactly two continuations as a clean 2x2, byte-for-byte. Adding a second
-card flips which side the sequential oracle takes. **No kernel change can give
-this model one determined output at these positions; "lossless" here means the
-strict gates pass.**
+card flips which side the sequential oracle takes.
+
+An earlier version of this section said "no kernel change can give this model one
+determined output at these positions". That is too strong, and the 9B lane has
+the counterexample: a batch of **constant composition is deterministic** — 64
+identical prompts in lockstep gave 64 identical outputs at 64 rows, on two cards,
+eager and under graph capture. The accurate statement is that **no
+row-count-invariance fix removes it under varying composition**, because several
+ops in the body carry the dependence and fixing one leaves the rest; five powered
+arms have now found exactly that, tonight's determinism pad being the fifth. So
+**"lossless" here means the strict gates pass**, not that a server under real,
+drifting load has a single determined output at these positions.
 
 **Speculation's 18x penalty is two effects.** Six intrinsic sites amplify 9.69x;
 thirteen more appear only under speculation and carry 63% of its events, where
