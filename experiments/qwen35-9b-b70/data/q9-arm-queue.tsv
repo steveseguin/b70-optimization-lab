@@ -1,3 +1,12 @@
+# Reordered 2026-09-09 after the depth ladder closed. The ladder established that no depth
+# setting beats ~110 tok/s and that single-stream gains must come from a cheaper step, so the
+# draft-pass MEASUREMENT arms run first: they size the term the remaining knobs act on, and
+# decide whether those knobs can matter at all or whether ~110 is this configuration ceiling.
+# Ranking levers by measured size beats ranking them by plausibility.
+a13dh0	3	strict	DRAFT_HEAD=0	
+a14dh0d1	1	strict	DRAFT_HEAD=0	
+a8rc16	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=16
+a8rc64	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=64
 # Qwen3.5-9B W4A16 TP1 lever queue, revised 2026-09-09 after the depth/concurrency map.
 # Columns: run <TAB> depth <TAB> stages <TAB> harness_env <TAB> extra_env
 # All arms run serially on card 0 (non-zero cards cannot host a server on this stack).
@@ -45,8 +54,6 @@ d2r	2	ladders
 #   VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0  VLLM_XPU_MTP_DRAFT_EAGER=0
 #   VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=2048
 #   VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0  VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
-a8rc16	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=16
-a8rc64	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=64
 a11lmc	3	strict		VLLM_XPU_LM_HEAD_CHUNK_ROWS=128
 a12dch	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=1024
 # Autotune is off in the strict lane, presumably for determinism. Screening it is worth doing
@@ -70,7 +77,5 @@ x32kr	3	depth32k	DEPTH_MML=33024
 # is the default here and was worth +27.6% on the FP8 route; turning it off measures what the draft
 # head costs on THIS route. That is the term the depth decomposition says is growing
 # super-linearly, so its size matters more than any remaining knob's.
-a13dh0	3	strict	DRAFT_HEAD=0	
 # Step-cost decomposition control: depth 1 with and without the INT4 draft head isolates the draft
 # pass at the depth where it is the largest fraction of the step.
-a14dh0d1	1	strict	DRAFT_HEAD=0	
