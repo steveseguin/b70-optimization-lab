@@ -93,3 +93,43 @@ and reported those rungs as near-exact rather than folding them into the claim.
 The practical consequence is unchanged and now better founded: for many concurrent sessions,
 speculation off is both faster in aggregate and an order of magnitude less likely to flip a token.
 The 64-user MTP0 rung should be published as **near-exact (255/256)**, never as exact.
+
+
+## Complete matrix (all four depths, 2026-09-09)
+
+`d3`'s ladder closes it. Warm-pass aggregate tok/s, exact counts in brackets:
+
+| users | MTP0 | MTP1 | MTP2 | MTP3 |
+| ---: | --- | --- | --- | --- |
+| 1 | 63.9 (1/1) | 95.6 (1/1) | 112.6 (1/1) | **113.9 (1/1)** |
+| 2 | 122.7 (2/2) | 184.8 (2/2) | 217.6 (2/2) | **218.1 (2/2)** |
+| 4 | 234.3 (4/4) | 322.7 (4/4) | 342.2 (4/4) | **357.7 (4/4)** |
+| 8 | 431.2 (8/8) | 554.9 (8/8) | 595.8 (8/8) | **623.0 (8/8)** |
+| 16 | **725.3 (16/16)** | 905.0 (16/16) | 667.1 (16/16) | 704.4 (16/16) |
+| 32 | **1147.6 (32/32)** | 988.4 (31/32) | 877.6 (32/32) | 769.1 (31/32) |
+| 64 | **1206.0 (64/64)** | 1034.5 (61/64) | 909.4 (62/64) | 735.0 (62/64) |
+
+**Aggregate falls monotonically with depth once the batch is full.** At 64 users: 1206 / 1035 / 909
+/ 735 - depth 3 is **39% slower** than no speculation, a larger penalty than the -33% quoted from
+depth 2 alone before this arm ran.
+
+Divergence rates, pooled over both passes at each rung:
+
+| rung | MTP0 | MTP1 | MTP2 | MTP3 |
+| ---: | ---: | ---: | ---: | ---: |
+| 32 users | 0/128 | 3/64 | 1/64 | 2/64 |
+| 64 users | 1/256 | 7/128 | 4/128 | 6/128 |
+
+There is no depth trend inside the speculative columns - 3-6% at 64 users regardless of depth - so
+the earlier suggestion that deeper drafts diverge less does not survive the third arm. What holds is
+the step change between no speculation (~0.4%) and any speculation (~3-6%).
+
+### The operating recommendation, final form
+
+| sessions | setting | single-stream | aggregate | exactness |
+| --- | --- | ---: | ---: | --- |
+| 1-8 | **depth 3** | 110.7 tok/s | 623 at 8 users | 12/12 strict; exact to 8 users |
+| 16+ | **speculation off** | 64.2 tok/s | **1206 at 64 users** | near-exact, 255/256 |
+
+The crossover is between 8 and 16 users for every depth. Below it speculation is worth 45-75%;
+above it, it costs up to 39% and an order of magnitude in divergence.
