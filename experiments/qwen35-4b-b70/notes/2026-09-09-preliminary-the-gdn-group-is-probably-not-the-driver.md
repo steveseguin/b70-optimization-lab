@@ -77,6 +77,30 @@ then be neither the grouping nor the ceiling, and the arms are worth running
 mainly to eliminate them by measurement rather than by inference — which is what
 that lane's own history suggests is the reliable route.
 
+## How many row-count thresholds are actually in play
+
+Enumerating the ones visible in this lane's own container environment and in the
+9B lane's probes, with the concurrency each lands at when depth 3 puts four rows
+per sequence:
+
+| threshold | at | depth-3 concurrency |
+| --- | ---: | ---: |
+| RMSNorm row dependence (9B probe) | 16 rows | c4 |
+| `VLLM_XPU_FP16_LINEAR_ROWCHUNK` | 32 rows | c8 |
+| FP16 vocabulary projection strategy switch (9B probe) | 33 rows | c9 |
+| `VLLM_XPU_GDN_SPEC_GROUP` | 16 sequences | c16 |
+| `max_cudagraph_capture_size` | 64 tokens | c16 |
+
+Five thresholds, four distinct concurrencies, and only the last two sit at c16.
+That is the concrete form of the 9B lane's conclusion that every
+row-count-dependent op contributes and fixing them one at a time cannot move the
+number: an arm that makes one of these invariant leaves four others in place.
+
+It also bounds what chain 5 can conclude. Eliminating the GDN group and the
+capture ceiling removes the two candidates at c16 but says nothing about the
+three below it, and the ladder is already non-exact from c12 - so whatever the
+c16 step is, something is already happening before it.
+
 ## The prediction on record
 
 If (b) is right, chain 5 should show:
