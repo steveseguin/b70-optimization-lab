@@ -49,7 +49,7 @@ card_port_free() {
 free_card() {
   local c
   while :; do
-    for c in 0 1 2 3; do
+    for c in ${CARDS:-0 1 2 3}; do
       local p=${CARD_PID[$c]:-}
       if [[ -z "$p" ]] || ! kill -0 "$p" 2>/dev/null; then
         local running=0 k
