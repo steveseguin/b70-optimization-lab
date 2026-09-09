@@ -32,6 +32,11 @@ echo "=== $(date -u +%FT%TZ) queue driver start (queue=$QUEUE parallelism=$PARAL
 
 declare -A CARD_PID=()   # card -> pid of the arm holding it
 
+card_port_free() {
+  local p=$((18131 + $1))
+  ! ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":${p}\$"
+}
+
 free_card() {
   local c
   while :; do
@@ -43,7 +48,7 @@ free_card() {
           local q=${CARD_PID[$k]:-}
           [[ -n "$q" ]] && kill -0 "$q" 2>/dev/null && running=$((running+1))
         done
-        (( running < PARALLELISM )) && { echo "$c"; return 0; }
+        (( running < PARALLELISM )) && card_port_free "$c" && { echo "$c"; return 0; }
       fi
     done
     sleep 20
@@ -62,7 +67,10 @@ run_arm() {
   [[ -n "$extra_env" ]] && envs+=(EXTRA_ENV="$extra_env")
   echo "$(date -u +%FT%TZ) START arm=$run depth=$depth stages='$stages' card=$card port=$port harness_env='$harness_env' extra_env='$extra_env'"
   env "${envs[@]}" bash "$H" >"$LOGDIR/q9-arm-$run.log" 2>&1
-  echo "$(date -u +%FT%TZ) END   arm=$run exit=$?"
+  local rc=$?
+  local why=""
+  [[ $rc -ne 0 ]] && why=" reason='$(grep -o 'ABORT: .*' "$LOGDIR/q9-arm-$run.log" 2>/dev/null | tail -1 | cut -c1-120)'"
+  echo "$(date -u +%FT%TZ) END   arm=$run exit=$rc$why"
 }
 
 processed=0

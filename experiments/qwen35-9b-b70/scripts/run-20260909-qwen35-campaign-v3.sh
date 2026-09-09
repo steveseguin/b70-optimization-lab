@@ -42,7 +42,17 @@ else
   eager=0; xgraph=0
 fi
 log() { printf '[q35 %s] %s\n' "$(date +%H:%M:%S)" "$*" | tee -a "${root}/campaign.log"; }
-abort() { log "ABORT: $*"; printf '%s\n' "$*" >"${root}/ABORTED"; exit 2; }
+abort() {
+  log "ABORT: $*"; printf '%s\n' "$*" >"${root}/ABORTED"
+  # Release the card and port before leaving. A failed arm that leaves its container up holds the
+  # device and the bound port, so the next arm dispatched there dies for a reason that has nothing
+  # to do with its own lever - which is how one bad assertion took out a whole queue on 2026-09-09.
+  local c
+  for c in $(docker ps --format '{{.Names}}' | grep -E "^${LANE}-${RUN}-" || true); do
+    log "ABORT: stopping ${c}"; docker stop -t 120 "${c}" >/dev/null 2>&1 || true
+  done
+  exit 2
+}
 mkdir -p "${root}"; [[ -e "${root}/campaign-start.txt" ]] && { echo "campaign root already used: ${root}" >&2; exit 1; }
 date --iso-8601=seconds >"${root}/campaign-start.txt"; campaign_start=$(date '+%Y-%m-%d %H:%M:%S')
 cat /proc/sys/kernel/random/boot_id >"${root}/boot-id.txt"; git -C "${repo}" rev-parse HEAD >"${root}/repo-head.txt"
@@ -111,13 +121,16 @@ launch() {
               VLLM_XPU_RMSNORM_SERIAL_ROWS:${RMSNORM_SERIAL_ROWS:-0} \
               VLLM_XPU_LM_HEAD_BATCH_INVARIANT:${LM_HEAD_BATCH_INVARIANT:-0} \
               VLLM_XPU_LM_HEAD_ROW_CHUNK:${LM_HEAD_ROW_CHUNK:-0} \
-              VLLM_XPU_W4A16_DETERMINISM_PAD:${W4A16_PAD} \
-              VLLM_XPU_GDN_SPEC_GROUP:${GDN_SPEC_GROUP:-16}; do
+              VLLM_XPU_W4A16_DETERMINISM_PAD:${W4A16_PAD}; do
     want=${knob#*:}; name_=${knob%%:*}
     [[ "${want}" == 0 ]] && continue
     grep -q "\"${name_}=${want}\"" "${dir}/container-inspect.json" 2>/dev/null \
       || abort "${label}: ${name_}=${want} was requested but is not in the container environment"
   done
+  if [[ "${kind}" != mtp0 && "${GDN_SPEC_GROUP:-16}" != 16 ]]; then
+    grep -q "\"VLLM_XPU_GDN_SPEC_GROUP=${GDN_SPEC_GROUP}\"" "${dir}/container-inspect.json" 2>/dev/null \
+      || abort "${label}: VLLM_XPU_GDN_SPEC_GROUP=${GDN_SPEC_GROUP} requested but not in the container environment"
+  fi
   for _kv in ${EXTRA_ENV:-}; do
     grep -q "\"${_kv}\"" "${dir}/container-inspect.json" 2>/dev/null \
       || abort "${label}: EXTRA_ENV ${_kv} was requested but is not in the container environment"
