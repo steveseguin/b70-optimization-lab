@@ -1,0 +1,45 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 m1: the divergence sites are exact ties, measured (2026-09-09)",
+ "question": "Every account of this phenomenon has assumed the sites are near-ties, and the 9B lane's vocabulary-projection note said explicitly that a 3.9e-3 logit shift 'only changes a token when the top two candidates are within that of each other, which is precisely the near-tie condition the divergences show'. It could not demonstrate that: its probe used random weights whose logit margins are enormous, so the argmax never moved. This measures the margin at real divergence points on the real model.",
+ "method": "A standalone probe - not the pinned shared harness - generates a sequential oracle with logprobs=5 on /v1/completions, reissues the same prompts at c64, and for every divergent request reports the top-5 logprobs at the first differing index from both passes. One B70, TP1, MTP0, fragile suite verbatim, 5 passes.",
+
+ "the_measurement": {
+  "example": {
+   "site": "cache-c056 index 50",
+   "oracle_top5": {" HTTP": -1.670863151550293, " Redis": -1.670863151550293, " CD": -2.217738151550293, " CDN": -2.358363151550293, " browsers": -2.569300651550293},
+   "concurrent_top5": {" Redis": -1.6588398218154907, " HTTP": -1.6744648218154907, " CD": -2.221339702606201, " CDN": -2.361964702606201, " browsers": -2.572902202606201},
+   "oracle_gap": 0.0,
+   "concurrent_gap": 0.015625
+  },
+  "all_seven_events": [
+   {"site": "rollback-c002 @14", "pair": "' mechanism' / ' for'", "oracle_gap": 0.015625, "run_gap": 0.0},
+   {"site": "cache-c056 @50", "pair": "' HTTP' / ' Redis'", "oracle_gap": 0.0, "run_gap": 0.015625},
+   {"site": "capacity-c062 @54", "pair": "' resource' / ' constraint'", "oracle_gap": 0.0, "run_gap": 0.015625},
+   {"site": "cache-c048 @89", "pair": "' comes' / ' arrives'", "oracle_gap": 0.0, "run_gap": 0.015625},
+   {"site": "rollback-c002 @14", "pair": "' mechanism' / ' for'", "oracle_gap": 0.015625, "run_gap": 0.0},
+   {"site": "cache-c056 @50", "pair": "' HTTP' / ' Redis'", "oracle_gap": 0.0, "run_gap": 0.015625},
+   {"site": "cache-c048 @89", "pair": "' comes' / ' arrives'", "oracle_gap": 0.0, "run_gap": 0.015625}
+  ],
+  "summary": "min 0.0, median 0.0, max 0.015625. Five of seven have an oracle gap of exactly zero; the other two have exactly zero in the concurrent pass instead."
+ },
+
+ "finding": "These are not near-ties. They are exact ties. At cache-c056 index 50 the sequential pass assigns ' HTTP' and ' Redis' the identical logprob -1.670863151550293 to every reported digit, and the concurrent pass separates them by 0.015625 - one quantum at this magnitude - and takes the other one. At every site one of the two conditions has a numerically exact tie and the other has a one-quantum separation.",
+
+ "what_it_explains": {
+  "why_the_sites_are_perfectly_reproducible": "A tie is a deterministic property of the weights and the prefix, not a random event. That is why all 14 sites from 2026-09-07 reappeared two days and a reboot later, why the pairs are always the same two tokens, and why a site never produces a third branch.",
+  "why_every_row_invariance_fix_failed": "Five interventions - the cross-card all-reduce, the norm's variance reduction, the two together, the vocabulary projection chunked to 32 rows, and the determinism pad - were all nulls. None of them could have worked. They change which arithmetic runs; they do not remove a tie. Any arithmetic difference of any magnitude resolves an exact tie one way or the other, so making one operation row-invariant simply hands the decision to the next one.",
+  "why_staggered_admission_does_work": "It does not remove the tie either. It makes the perturbation reproducible, so the same side wins every time. That is why it produces exact agreement with the sequential oracle at MTP0 rather than merely reducing the rate, and why it costs almost nothing.",
+  "why_both_branches_are_fluent": "The model genuinely does not prefer one. ' HTTP' and ' Redis', ' resource' and ' constraint', ' comes' and ' arrives' - the decoded pairs were already synonyms, and now the logits say the model is exactly indifferent between them."
+ },
+
+ "the_honest_limits": {
+  "resolution": "The API reports logprobs at finite precision and the observed separations are all exactly 0.015625 = 2^-6, which is the quantum at this magnitude. A reported gap of 0.0 means equal to that resolution. It is a very strong statement - the values agree to sixteen printed digits - but it is not a bitwise comparison of the pre-softmax logits.",
+  "seven_events": "Seven divergences across five passes, at four distinct sites. Every one shows the same structure, but it is seven.",
+  "mtp0_only_so_far": "This is the no-speculation lane. The depth-3 arm of the same probe is running and will say whether the speculative lane's much larger divergent population has the same character or a different one.",
+  "does_not_identify_the_op": "Knowing the sites are exact ties says any perturbation suffices, which makes identifying the specific op that supplies it less important than it looked - and also harder, since every candidate is sufficient."
+ },
+
+ "campaign_root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-m1",
+ "probe": "experiments/qwen35-4b-b70/scripts/probe-tie-margin.py"
+}
