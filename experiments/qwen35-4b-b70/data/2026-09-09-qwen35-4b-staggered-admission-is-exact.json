@@ -1,0 +1,41 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 g3 MTP0: staggered admission is bit-exact at c64 (2026-09-09)",
+ "headline": "With 25 ms of arrival stagger and no speculation, the ladder returned 1280 of 1280 requests byte-identical to the sequential oracle at 64 concurrent users, on the suite chosen for being the most divergence-prone. The harness certified it as output-identity-qualified. This is the first intervention on this lane that has moved the number.",
+
+ "measurement": {
+  "config": "one B70, TP1, MTP0, draft INT4 head, pad off, FULL_DECODE_ONLY capture 1-64, 16-prompt fragile suite run verbatim at four slots each, c64, 20 passes, 128-token responses, temperature 0, ignore_eos",
+  "arms": [
+   {"arm": "g1", "admission": "thread barrier", "divergent": "35/1280", "pct": 2.73, "copy_groups_disagreeing": "32/320", "tok_s": 1719.0},
+   {"arm": "g2", "admission": "thread barrier (replicate)", "divergent": "24/1280", "pct": 1.88, "copy_groups_disagreeing": "23/320", "tok_s": 1719.2},
+   {"arm": "g3", "admission": "25 ms per-index stagger", "divergent": "0/1280", "pct": 0.00, "copy_groups_disagreeing": "0/320", "tok_s": 1474.3}
+  ],
+  "significance": "The two barrier arms average 30 events per 1280. Poisson P(0 | 30) = 1.5e-13. The g1/g2 pair is a genuine same-config replicate, so this is measured against an empirical baseline rather than a nominal one.",
+  "cost": "1474.3 against 1719.1 tok/s, -14.2%",
+  "harness_verdict": {"classification": "output-identity-qualified", "complete_outputs_exact_vs_sequential_oracle": true, "fresh_and_complete": true, "public_quality_equivalence_eligible": true},
+  "copy_group_histogram": {"1": 320, "note": "every group of four byte-identical copies returned a single completion"}
+ },
+
+ "why_it_works": "The 9B lane established that a batch of constant composition is deterministic and that the divergence needs composition to vary. A per-index stagger does not remove the variation - the cohort still ramps from 1 request to 64 over 1.575 s - but it makes the variation the same on every pass, so each request sees a reproducible composition history. On the speculative lane the same manipulation makes which slot diverges reproducible, 33.8% modal recurrence under a barrier against 95.45% under stagger. At MTP0 it goes further and the concurrent output matches the sequential oracle outright.",
+
+ "the_practical_lever": {
+  "statement": "Exact reproducibility at 64 concurrent users is purchasable for about 14% of throughput, by staggering admission, on a configuration that is otherwise 1.88-2.73% divergent on its worst prompts.",
+  "combines_with_the_c16_result": "Above c16 speculation already costs throughput and multiplies divergence, so the recipe for a server that needs bit-exactness at high concurrency is: no speculation, plus staggered admission. Without speculation and without stagger, c64 is 1719 tok/s at ~2% divergent; with stagger it is 1474 tok/s at 0%.",
+  "what_it_does_not_offer": "Depth 3 with the same stagger is still 44.61% divergent on this suite. Stagger does not rescue the speculative path, it only makes which slot diverges reproducible there."
+ },
+
+ "how_much_to_believe": {
+  "strong": "1280 requests, 20 passes, a matched same-config replicate pair as the baseline, zero events against an expected 30, and the harness's own identity qualification rather than only this campaign's arithmetic.",
+  "unreplicated": "It is one arm. Nothing here has been run twice with stagger, and every other single-arm result tonight that looked clean has been worth re-checking. It should be replicated before it is quoted anywhere outside this file.",
+  "suite_specific": "The fragile suite is a biased instrument selected for divergence. Exactness on it is a stronger statement than exactness on the full suite would be, but the rate it is compared against (2.73%, 1.88%) is also suite-specific and is not the full-suite rate of 0.70%.",
+  "not_tested_elsewhere": "Only c64, only one card, only this model, only 25 ms. Whether the effect survives at other rungs, on two cards, at other stagger values, or on the full suite is unmeasured.",
+  "throughput_caveat": "The 14.2% cost is measured as aggregate wall throughput on a ladder whose requests are deliberately delayed, so part of it is the stagger's own latency rather than lost efficiency. A server-side admission policy would not necessarily pay the same price."
+ },
+
+ "next": "Replicate it. Then test whether a smaller stagger suffices, whether it holds at other rungs and on two cards, and whether the full suite also goes exact. The 9B lane's proposed offline drift reproduction also becomes easier: a staggered cohort diverges reproducibly on the speculative lane, which is a bisectable object.",
+ "campaign_roots": {
+  "barrier": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g1",
+  "replicate": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g2",
+  "stagger": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-g3"
+ }
+}
