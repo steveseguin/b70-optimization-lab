@@ -191,6 +191,11 @@ for dep in "${repro}/run-w8a16-mtp0-strict-server.sh" "${repro}/run-w8a16-mtp1-s
 done
 [[ -x "${health_python}" ]] || abort "preflight: XPU python missing: ${health_python}"
 [[ "$(lane_containers)" == 0 ]] || abort "preflight: this arm's container is already running"
+# Any OTHER container built on the lane image is a foreign resident on the cards and invalidates a
+# timed row. lane_containers() only sees this arm's own names, so a leftover diagnostic container is
+# invisible to it - one of mine sat on card 0 for 25 minutes during d2's ladders on 2026-09-09.
+foreign=$(docker ps --filter "ancestor=${image}" --format '{{.Names}}' | grep -vE "^${LANE}-${RUN}-" || true)
+[[ -z "${foreign}" ]] || abort "preflight: foreign container(s) on the lane image still running: $(echo ${foreign} | tr '\n' ' ')"
 [[ "$(docker image inspect "${image}" --format '{{.Id}}')" == "${image_id}" ]] || abort "preflight: image id mismatch"
 devices_normal preflight || abort "preflight: a B70 this arm owns is not healthy"
 arm_health >"${root}/preflight-compute-xccl.txt" 2>&1 || abort "preflight: compute/XCCL health failed"
