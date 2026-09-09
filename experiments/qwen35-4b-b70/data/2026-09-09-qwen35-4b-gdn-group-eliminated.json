@@ -1,0 +1,31 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 s08/s16/s32: the GDN speculative group size is not the c16 step (2026-09-09)",
+ "question": "f3 found a step in depth-3 divergence between c16 and c20 - about 1% below, about 9% above. Two settings predict a boundary at exactly 16 sequences and were confounded there: VLLM_XPU_GDN_SPEC_GROUP=16, which processes speculative rows in groups of at most 16 sequences, and max_cudagraph_capture_size=64 tokens, which is 16 sequences at depth 3. These three arms vary the group size at a fixed capture ceiling.",
+ "config": "one B70, TP1, depth 3, draft INT4 head, pad off, capture 1-64 with ceiling 64, 2026-08-25 small-context suite, rungs 8/12/16/20/24/32/40, 10 passes each",
+
+ "result": {
+  "depth3_divergence_pct": {
+   "gdn_group_8":  {"c8": 0.00, "c12": 1.67, "c16": 1.88, "c20": 8.50, "c24": 8.33, "c32": 5.00, "c40": 10.00},
+   "gdn_group_16": {"c8": 0.00, "c12": 0.83, "c16": 0.00, "c20": 9.50, "c24": 10.42, "c32": 5.00, "c40": 9.75},
+   "gdn_group_32": {"c8": 0.00, "c12": 0.00, "c16": 3.12, "c20": 7.50, "c24": 9.58, "c32": 5.31, "c40": 8.75}
+  },
+  "predicted_step_if_the_group_were_the_driver": {"group_8": "c8 to c12", "group_16": "c16 to c20", "group_32": "c32 to c40"},
+  "observed_step_in_every_arm": "c16 to c20"
+ },
+
+ "finding": "The GDN speculative group size does not set the boundary. Varying it over a fourfold range moves the step nowhere: all three arms are quiet through c16 and jump at c20, and the rung-by-rung rates are indistinguishable from each other across the whole ladder. The hypothesis is eliminated.",
+
+ "it_was_predicted": "notes/2026-09-09-preliminary-the-gdn-group-is-probably-not-the-driver.md, written before these arms ran, argued the same from the 27B lane's existing mtp4 ladders at group sizes 0, 1, 4, 16 and 64: group 1 puts every sequence in its own group and should have been the worst arm but was among the quietest, and group 64 fits all 64 requests in one group and should have been near-exact but was not. That inference was weak - small, uncontrolled cells - and this is the controlled version of it.",
+
+ "what_remains": "The capture ceiling is the other candidate at exactly 16 sequences and is tested by the k128 arm, which raises it to 128 tokens (32 sequences at depth 3) at the default group size. Under the 9B lane's account it should also fail, since a constant-composition batch is deterministic under FULL_DECODE_ONLY capture and the divergence needs composition to vary.",
+
+ "the_bound_on_what_these_arms_can_settle": "Five row-count thresholds are in play on this lane and only two sit at c16 - the RMSNorm from 16 rows, VLLM_XPU_FP16_LINEAR_ROWCHUNK at 32 rows and the FP16 vocabulary projection at 33 rows are all below it, at c4, c8 and c9 respectively. The ladder is already non-exact from c12, so something is happening before the step regardless of what the step is. Eliminating both c16 candidates would leave the step unexplained rather than explained.",
+
+ "a_side_result": "These arms are the only ones on this lane to measure c40, and they found aggregate throughput is not monotone in concurrency: without speculation one card reads about 1595 tok/s at c32, 1360 at c40 and 1732 at c64. Two arms agree on c40 to 0.1%. Recorded in 2026-09-09-qwen35-4b-concurrency-throughput-matrix.json.",
+
+ "mtp0_control": "The group size is a speculative-path setting and should do nothing without speculation, and it does nothing: the MTP0 ladders are exact through c24 in s08 and read 0.31-0.94% at c32 and 0.50-0.75% at c40 across the arms, with no ordering by group size.",
+ "campaign_roots": ["/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-s08",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-s16",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-s32"]
+}
