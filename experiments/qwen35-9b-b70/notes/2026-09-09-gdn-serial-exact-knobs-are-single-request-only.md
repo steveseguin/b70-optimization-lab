@@ -36,10 +36,12 @@ Five interventions are now excluded, four by measurement and one by construction
 | Row-stable RMSNorm | 13/254 - not a fix |
 | GDN serial-exact conv (and any set containing it) | **cannot run at concurrency at all** |
 
-`b4rec` (recurrent only) and `b6delta` (delta only) remain queued and may start, since only the
-convolution variant names this constraint in its error. If they do run, they are still measuring
-whether an arithmetic change to one stage moves a batch-level property, which the evidence so far
-suggests it will not.
+`b4rec` set **only** `VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1` and failed with the same
+**convolution** error. The three knobs are coupled: engaging any one puts the GDN speculative path
+into a serial-exact mode whose convolution stage demands a single pure-spec request. So the
+constraint is not specific to the conv flag - it applies to the whole group, and `b6delta` is
+expected to fail identically. It is left queued so that expectation is confirmed by a run rather
+than assumed.
 
 **The honest position:** the divergence is a property of how the server batches and schedules
 speculative work, not of any single kernel's arithmetic that a knob can serialise. Nothing reachable
