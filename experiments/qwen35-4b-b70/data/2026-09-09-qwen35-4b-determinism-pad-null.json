@@ -8,28 +8,58 @@
   "candidate": "d1, VLLM_XPU_W4A16_DETERMINISM_PAD=1 and _PAD_HIGH=1, verified in the container environment because the engine's automatic knob check does not cover the pad",
   "otherwise_identical": "one B70, TP1, depth 3, draft INT4 head, FULL_DECODE_ONLY capture 1-64, max_num_seqs 64, max_num_batched_tokens 512, 2026-08-25 suite, 20 passes per rung"
  },
-
  "result": {
   "identity": {
-   "c32": {"pad_off_div_pct": 5.47, "pad_on_div_pct": 6.72, "pad_off_minority_pct": 4.61, "pad_on_minority_pct": 4.46},
-   "c64": {"pad_off_div_pct": 13.28, "pad_on_div_pct": 13.36, "pad_off_minority_pct": 7.37, "pad_on_minority_pct": 7.14},
+   "c32": {
+    "pad_off_div_pct": 5.47,
+    "pad_on_div_pct": 6.72,
+    "pad_off_minority_pct": 4.61,
+    "pad_on_minority_pct": 4.46
+   },
+   "c64": {
+    "pad_off_div_pct": 13.28,
+    "pad_on_div_pct": 13.36,
+    "pad_off_minority_pct": 7.37,
+    "pad_on_minority_pct": 7.14
+   },
    "significance": "On the oracle-free measure at c64 the two arms give about 99 and 96 minority samples of 1344, a difference of 3 against a standard deviation of roughly 14. A null."
   },
   "throughput": {
-   "c32": {"pad_off": 1153.6, "pad_on": 1152.3, "delta_pct": -0.1},
-   "c64": {"pad_off": 1200.3, "pad_on": 1059.5, "delta_pct": -11.7},
+   "c32": {
+    "pad_off": 1153.6,
+    "pad_on": 1152.3,
+    "delta_pct": -0.1
+   },
+   "c64": {
+    "pad_off": 1200.3,
+    "pad_on": 1059.5,
+    "delta_pct": -11.7
+   },
    "note": "The pad is inert at c32, where depth-3 decode is 128 rows and sits at the threshold, and costs 11.7% at c64 where it is 256 rows. That matches the 9B lane's -13% measurement."
   },
   "sites": {
    "statement": "The pad does not change which sites fire or how often. All 18 of the control's c64 sites appear in the pad arm, which adds three low-rate ones, and the per-site counts track closely: cache-c056 @50 19 against 19, cache-c048 @89 17 against 19, capacity-c062 @54 18 against 16, cache-c000 @39 16 against 18. Total events 170 against 171.",
    "why_this_is_the_strongest_part": "A rate null can hide two offsetting changes. An unchanged site set with unchanged per-site counts cannot: the pad is not acting on this phenomenon at all."
+  },
+  "mtp0_control": {
+   "purpose": "The pad is inert below 128 decode rows, so at MTP0 c32 and c64 (32 and 64 rows) it should do nothing at all. If it changed anything there, the arm would be measuring something other than the pad.",
+   "identity": {
+    "c32": "0.31% -> 0.00% (2 events -> 0 of 640)",
+    "c64": "0.70% -> 0.62% (9 -> 8 of 1280)"
+   },
+   "throughput": {
+    "c32": "1591.3 -> 1588.9",
+    "c64": "1722.7 -> 1721.2"
+   },
+   "reading": "Inert, as expected: throughput is unchanged to a tenth of a percent and the small identity differences are a handful of events. This is what makes the depth-3 throughput cost interpretable - the pad only bites where it is active."
   }
  },
-
- "finding": "The determinism pad costs 11.7% of throughput at depth-3 c64 and buys nothing. Identity is unchanged on both the oracle-based and the oracle-free measure, and the fragile sites are the same sites at the same rates. Keep it off, which is what the lane already does.",
-
+ "finding": "The determinism pad costs 11.7% of throughput at depth-3 c64 and buys nothing. Identity is unchanged on both the oracle-based and the oracle-free measure, the fragile sites are the same sites at the same rates, and its MTP0 control confirms it is inert below 128 rows. Keep it off, which is what the lane already does.",
  "why_it_fails": "The pad removes row-count dependence, which is the right instrument for tie-breaking perturbed by batch shape. The two-populations result says that is at most a tenth of what happens at depth-3 c64; the majority is a speculation-specific population that the pad has no mechanism to touch. And the tie-flip half is not obviously row-count driven either - the same sites survive a reboot, two days, both compilation modes and now the pad, while flipping direction when the arithmetic itself changes under TP2.",
-
  "confirms": "The 9B lane's earlier reading, recorded as '-13% at c64 depth 3, no identity gain', on a second model with 20 passes per rung and an oracle-free measure.",
- "campaign_roots": {"control": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1", "candidate": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-d1"}
+ "campaign_roots": {
+  "control": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+  "candidate": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-d1"
+ },
+ "mechanism_now_understood": "The 9B verbatim ladders show byte-identical copies of one prompt disagreeing with each other inside a single batch, in 22.3% of copy-groups. Batch composition and prompt are identical across those copies, so the branch is not chosen by batch shape - and fixing the row count is exactly what the pad does. See experiments/qwen35-4b-b70/notes/2026-09-09-identical-requests-in-one-batch-disagree.md."
 }
