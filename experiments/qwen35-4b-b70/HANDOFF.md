@@ -100,6 +100,21 @@ away from the sequential one.
 Still open: `r2` tests the same stagger on the unbiased full suite and `r3` a 5 ms
 stagger. Other rungs, two cards and other models are unmeasured.
 
+**The divergence sites are exact ties — measured, not inferred.** At
+`cache-c056` index 50 the sequential pass assigns `" HTTP"` and `" Redis"` the
+identical logprob `-1.670863151550293`, and the concurrent pass separates them by
+one quantum and takes the other. Across seven divergences at four sites the oracle
+gap is min 0.0, median 0.0, max 0.015625.
+
+That answers the mechanism question and closes several loose ends at once. A tie
+is a deterministic property of the weights and the prefix, which is why sites
+survive reboots and never produce a third branch. It is why **five
+row-invariance interventions were all nulls** — they change which arithmetic runs
+and cannot remove a tie, so any difference of any magnitude still resolves it, and
+making one op invariant hands the decision to the next. And it is why staggered
+admission works instead: it makes the perturbation reproducible rather than trying
+to eliminate it.
+
 **Speculation's 18x penalty is two effects.** Six intrinsic sites amplify 9.69x;
 thirteen more appear only under speculation and carry 63% of its events, where
 uniform amplification predicts 22 MTP0 events and zero were seen (p 2.6e-10). A
