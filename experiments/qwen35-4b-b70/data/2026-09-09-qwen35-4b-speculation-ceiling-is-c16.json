@@ -61,7 +61,8 @@
  "finding_2_the_identity_change_is_a_step": {
   "statement": "Depth-3 divergence does not rise smoothly with concurrency. It is 2 of 216 requests across c8, c12 and c16 pooled (0.93%) and 38 of 456 across c20, c24 and c32 (8.33%), a factor of nine, and then roughly flat.",
   "significance": "Under the rate measured below the step, the rungs above it would give about 4.2 divergent requests. They give 38.",
-  "mtp0_is_not_established": "The no-speculation ladder reads 0 of 216 below and 3 of 456 above. Suggestive of the same shape, but at its measured rate of roughly 0.5% the lower rungs would only have been expected to produce about 1.4 events, so 0 is unremarkable. This arm cannot locate a step for MTP0 and none is claimed."
+  "mtp0_is_not_established": "The no-speculation ladder reads 0 of 216 below and 3 of 456 above. Suggestive of the same shape, but at its measured rate of roughly 0.5% the lower rungs would only have been expected to produce about 1.4 events, so 0 is unremarkable. This arm cannot locate a step for MTP0 and none is claimed.",
+  "significance_audited": "Re-checked against an empirical noise floor that did not exist when this was written. The g1/g2 replicate - two identical configurations, since --pin-slots is inert - returns z = 2.93 on the same measure, so z near 3 is what this ladder gives when there is nothing to find, because requests inside a pass are correlated and the effective sample is nearer the pass count than the request count. The single-rung c16-against-c20 comparison is z = 2.87 and does NOT clear that floor. The pooled comparison used above - 2 of 216 below the step against 38 of 456 above - is z = 5.11 and does. The claim rests on the pooled form and stands; the single-rung form of it would not have. See notes/2026-09-09-the-binomial-z-understates-ladder-variance.md."
  },
  "two_confounded_explanations": {
   "note": "Both predict a boundary at exactly c16 for depth 3, and f3 cannot separate them.",
