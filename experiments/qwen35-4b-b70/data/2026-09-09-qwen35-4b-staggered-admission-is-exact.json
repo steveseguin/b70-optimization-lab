@@ -47,7 +47,8 @@
  "the_practical_lever": {
   "statement": "Exact reproducibility at 64 concurrent users costs about 1% of throughput with a 5 ms admission stagger. 5 ms is the floor: 2 ms leaves 0.94% divergent and 1 ms leaves 2.89%, no better than no stagger at all, even though 1 ms already makes the run highly reproducible pass-to-pass.",
   "combines_with_the_c16_result": "Above c16 speculation costs throughput and multiplies divergence on both topologies, so the recipe for a server needing bit-exactness at high concurrency is: no speculation, plus a 5 ms admission stagger. On one card that is 1701.5 tok/s at c64; on two it is 2711.1.",
-  "what_it_does_not_offer": "Depth 3 with the same stagger is still 44.61% divergent on this suite. Stagger does not rescue the speculative path, it only makes which slot diverges reproducible there."
+  "what_it_does_not_offer": "Depth 3 with the same stagger is still 44.61% divergent on this suite. Stagger does not rescue the speculative path, it only makes which slot diverges reproducible there.",
+  "proven_range": "c16 to c128 on two cards, and c64 on one. Below c16 the campaign did not test the stagger, but below c16 speculation is the better configuration anyway and the barrier-launch divergence rate at those rungs is already zero or near it."
  },
  "how_much_to_believe": {
   "strong": "1280 requests, 20 passes, a matched same-config replicate pair as the baseline, zero events against an expected 30, and the harness's own identity qualification rather than only this campaign's arithmetic.",
@@ -210,5 +211,26 @@
   "finding": "The 5 ms stagger gives bit-exactness on two cards as well as one, on both the unbiased and the fragile suite, at a 2.7% throughput cost. Six arms now show exactness under stagger: g3, r1, r2 and r3 on one card and w1 and w2 on two.",
   "the_deployable_configuration": "Two cards, no speculation, 5 ms admission stagger: 2711 tok/s at c64, byte-identical to single-stream output, harness-certified. That is 1.59x the throughput of the equivalent one-card configuration at 1701.5 tok/s, at the same exactness.",
   "the_speculative_lane_again_gets_reproducibility_not_exactness": "Depth 3 under stagger on two cards stays divergent - 10.08% on the full suite and 28.52% on the fragile one - but its oracle-free minority rate collapses, 4.69% to 1.79% and 13.91% to 3.42%, the same per-slot determinism seen on one card. Stagger does not rescue speculation on either topology."
+ },
+ "IT_HOLDS_ACROSS_THE_WHOLE_CONCURRENCY_RANGE": {
+  "why_this_arm_existed": "Every exactness arm before it ran at c64, so the recommendation had no concurrency range attached and a deployment sized for 32 or 128 users was outside everything measured.",
+  "arm": "x1, TP2 with a 5 ms stagger at c16, c32, c96 and c128, 10 passes each",
+  "mtp0_result": {
+   "c16": "160/160",
+   "c32": "320/320",
+   "c96": "960/960",
+   "c128": "1280/1280",
+   "total": "2720/2720 exact, 0.00% at every rung",
+   "harness": "output-identity-qualified"
+  },
+  "throughput": {
+   "c16": 1470.0,
+   "c32": 2290.8,
+   "c96": 2930.7,
+   "c128": 3022.0,
+   "cost_at_c128": "3022.0 against the unstaggered 3103.9, -2.6%"
+  },
+  "finding": "The recipe holds across the whole measured range. Not one of 2720 requests diverged at any of the four rungs, and the harness certified the arm. Combined with the c64 arms, staggered admission on two cards without speculation is bit-exact from c16 to c128, which is the full range this campaign measured at all.",
+  "depth3_at_every_rung": "The speculative lane behaves the same way at every rung as it did at c64: still divergent on the oracle-based measure - 6.25%, 12.50%, 7.60%, 7.03% - while the oracle-free minority rate collapses to 0.57%, 1.14%, 1.42% and 0.64%, against 4.69% unstaggered. Per-slot determinism holds across the range; agreement with the sequential oracle does not."
  }
 }
