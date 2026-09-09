@@ -18,7 +18,8 @@ a4d5	5	strict
 a4d6	6	strict		
 a1g8	3	strict	GDN_SPEC_GROUP=8	
 a1g32	3	strict	GDN_SPEC_GROUP=32	
-a2scr	3	strict		VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1
+# a2scr REMOVED: VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH is already 1 in the live container, so the arm
+# would have compared a configuration against itself - inert, not neutral.
 a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
 a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
 a3tight	3	strict	CAPTURE_SIZES=1,2,3,4,5,6,8,12,16	
@@ -31,3 +32,20 @@ d2r	2	ladders
 # 64 users is 128 rows against a capture ceiling of 64. If raising the ceiling changes the
 # divergence rate, capture fallback is part of the story rather than the norm.
 c1cap	1	ladders	CAPTURE_MAX=256 LADDER_MNS=64	
+#
+# Knobs verified present in the live speculative container and currently at these values, so each of
+# these is a real change rather than a no-op. Read from mtp3-a's container-inspect, not from the
+# launcher's defaults, which the strict wrapper overrides.
+#   VLLM_XPU_FP16_LINEAR_ROWCHUNK=32   VLLM_XPU_LM_HEAD_CHUNK_ROWS=0
+#   VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0  VLLM_XPU_MTP_DRAFT_EAGER=0
+#   VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=2048
+#   VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0  VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
+a8rc16	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=16
+a8rc64	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=64
+a11lmc	3	strict		VLLM_XPU_LM_HEAD_CHUNK_ROWS=128
+a12dch	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=1024
+a6de	3	strict		VLLM_XPU_MTP_DRAFT_EAGER=1
+a10bonus	3	strict		VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=1
+# Autotune is off in the strict lane, presumably for determinism. Screening it is worth doing
+# precisely because the identity gates will say whether that caution is still required.
+a9auto	3	strict		VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=1 VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=1
