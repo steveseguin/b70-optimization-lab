@@ -1,0 +1,25 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 mb: max_num_batched_tokens halves divergence at no cost (2026-09-09)",
+ "question": "f4's depth-3 c64 divergence was 5.21% against f1's 13.28% - Poisson P = 6.7e-07, so real - but the arms differed in three settings at once: the capture ceiling (64 against 128), max_num_seqs (64 against 128) and max_num_batched_tokens (512 against 1024). mb holds the capture ceiling at f1's value and takes f4's scheduler settings, completing the 2x2.",
+
+ "the_2x2": [
+  {"arm": "f1", "capture_ceiling": 64,  "max_num_seqs": 64,  "max_num_batched_tokens": 512,  "div_pct": 13.28, "minority_pct": 7.37, "bistable": 16, "sites": 18, "tok_s": 1200.3, "passes": 20},
+  {"arm": "mb", "capture_ceiling": 64,  "max_num_seqs": 128, "max_num_batched_tokens": 1024, "div_pct": 5.23,  "minority_pct": 3.57, "bistable": 9,  "sites": 9,  "tok_s": 1218.1, "passes": 20},
+  {"arm": "f4", "capture_ceiling": 128, "max_num_seqs": 128, "max_num_batched_tokens": 1024, "div_pct": 5.21,  "minority_pct": 3.79, "bistable": 8,  "sites": 8,  "tok_s": 1217.2, "passes": 6}
+ ],
+
+ "finding": "The scheduler settings account for the whole effect and the capture ceiling contributes nothing. mb, which keeps f1's 64-token capture ceiling - verified in the server log - and takes only max_num_seqs 128 and max_num_batched_tokens 1024, reproduces f4's rate almost exactly: 5.23% against 5.21% divergent, 3.57% against 3.79% oracle-free, 9 sites against 8. It is also the better-powered of the two, 20 passes against 6.",
+
+ "the_lever": {
+  "statement": "Raising max_num_batched_tokens from 512 to 1024, with max_num_seqs from 64 to 128, halves depth-3 divergence at c64 - 13.28% to 5.23%, and 7.37% to 3.57% on the oracle-free measure - at slightly better throughput, 1218.1 against 1200.3 tok/s. It costs nothing.",
+  "why_it_probably_works": "The ladder issues all 64 prompts together, so prefill is chunked by max_num_batched_tokens. At 512 the cohort's prefill spans more steps than at 1024, which changes the composition history every request sees before it starts decoding. The campaign's other result on this - that a deterministic arrival schedule gives a deterministic output - says composition history is what selects the branch, so it is unsurprising that a setting which reshapes it moves the rate.",
+  "what_it_does_not_do": "It halves the rate; it does not reach zero. The 5 ms admission stagger does reach zero at MTP0, and these are different mechanisms - one reshapes the composition history, the other makes it reproducible. Whether they compose has not been measured."
+ },
+
+ "why_it_matters_beyond_the_number": "Divergence rates are not a property of (model, depth, concurrency). Two servers differing only in max_num_batched_tokens differ by a factor of 2.5 in reported divergence at the same rung on the same suite. Any comparison across arms that do not hold these settings fixed is measuring them as much as whatever it intended to measure. Every arm in this campaign's chains 2, 3, 5 and 7 uses the engine defaults, so those comparisons are unaffected - but it is a trap worth naming.",
+
+ "campaign_roots": ["/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-mb",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f4"]
+}
