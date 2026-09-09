@@ -7,8 +7,9 @@
 # (7/128 at 64 users, 3/64 at 32), so it is the most sensitive detector of a fix. d1 is already the
 # matched baseline - same depth, same rungs, same capture - so no separate control arm is needed.
 b1sn	1	ladders	RMSNORM_SERIAL_ROWS=256	
-b2rs	1	ladders		VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
+c1cap	1	ladders	CAPTURE_MAX=256 LADDER_MNS=64	
 b3lm	1	ladders	LM_HEAD_BATCH_INVARIANT=1	
+b2rs	1	ladders		VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
 #
 # Tier A speed levers. a4d4/5/6 are promoted: depth 3 buys only 0.53% over depth 2 here, so the
 # curve is already flat and deeper drafts are predicted to be pure loss. Closing that with a
@@ -31,7 +32,6 @@ d2r	2	ladders
 # Capture confound: were the 32/64-user speculative rungs running captured or eager? At depth 1,
 # 64 users is 128 rows against a capture ceiling of 64. If raising the ceiling changes the
 # divergence rate, capture fallback is part of the story rather than the norm.
-c1cap	1	ladders	CAPTURE_MAX=256 LADDER_MNS=64	
 #
 # Knobs verified present in the live speculative container and currently at these values, so each of
 # these is a real change rather than a no-op. Read from mtp3-a's container-inspect, not from the
