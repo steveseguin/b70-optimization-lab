@@ -22,7 +22,9 @@ def rows_for(root: Path):
             yield (root.name, ladder.parent.name, None, None, None, f"unreadable: {exc}")
             continue
         lane = ladder.parent.name
-        qualified = d.get("output_identity_qualified")
+        iq = d.get("identity_qualification") or {}
+        qualified = iq.get("complete_outputs_exact_vs_sequential_oracle")
+        classification = d.get("classification", "")
         by_rung: dict[int, list] = {}
         for b in d.get("batches", []):
             by_rung.setdefault(b.get("concurrency"), []).append(b)
@@ -40,7 +42,7 @@ def rows_for(root: Path):
             note = "" if allx else "  <-- NOT EXACT"
             if not cz:
                 note += "  <-- CACHE NOT ZERO"
-            yield (root.name, lane, conc, rate, exact, ("qualified" if qualified else "unqualified") + note)
+            yield (root.name, lane, conc, rate, exact, ("identity-qualified" if qualified else classification or "unqualified") + note)
 
 
 def main() -> int:
