@@ -4,25 +4,108 @@
  "what": "Aggregate wall throughput across every concurrency rung measured on this model, for one and two B70s, with and without speculation. Assembled from five campaigns; no new GPU time.",
  "metric": "aggregate_tok_s_wall from the concurrency-oracle ladder, median over passes, 128-token responses, temperature 0, ignore_eos, 2026-08-25 small-context suite",
  "pass_policy": "Pass 1 of every ladder is discarded. It is warmup-contaminated at low concurrency - the TP1 depth-3 pass 1 reads c2 at 134.1 tok/s, below its own c1 at 158.8, against 300.8 in pass 2.",
-
  "matrix_tok_s": {
-  "columns": ["concurrency", "tp1_mtp0", "tp1_depth3", "tp2_mtp0", "tp2_depth3"],
+  "columns": [
+   "concurrency",
+   "tp1_mtp0",
+   "tp1_depth3",
+   "tp2_mtp0",
+   "tp2_depth3"
+  ],
   "rows": [
-   [1, 101.9, 159.2, 136.3, 227.3],
-   [2, 193.5, 300.8, 258.9, 428.4],
-   [4, 362.3, 537.8, 492.1, 759.6],
-   [8, 654.5, 883.1, 900.3, 1289.6],
-   [12, 839.6, 917.8, null, null],
-   [16, 1058.8, 1088.9, 1492.3, 1588.1],
-   [20, 1196.6, 1024.3, null, null],
-   [24, 1345.9, 1120.6, null, null],
-   [32, 1591.7, 1153.6, 2353.9, 1848.9],
-   [64, 1723.0, 1201.0, 2777.7, 2020.6],
-   [96, 1779.2, 1147.5, null, null],
-   [128, 1810.9, 1166.6, null, null]
+   [
+    1,
+    101.9,
+    159.2,
+    136.3,
+    227.3
+   ],
+   [
+    2,
+    193.5,
+    300.8,
+    258.9,
+    428.4
+   ],
+   [
+    4,
+    362.3,
+    537.8,
+    492.1,
+    759.6
+   ],
+   [
+    8,
+    654.5,
+    883.1,
+    900.3,
+    1289.6
+   ],
+   [
+    12,
+    839.6,
+    917.8,
+    null,
+    null
+   ],
+   [
+    16,
+    1058.8,
+    1088.9,
+    1492.3,
+    1588.1
+   ],
+   [
+    20,
+    1196.6,
+    1024.3,
+    null,
+    null
+   ],
+   [
+    24,
+    1345.9,
+    1120.6,
+    null,
+    null
+   ],
+   [
+    32,
+    1591.7,
+    1153.6,
+    2353.9,
+    1848.9
+   ],
+   [
+    40,
+    1360.0,
+    1149.5,
+    null,
+    null
+   ],
+   [
+    64,
+    1723.0,
+    1201.0,
+    2777.7,
+    2020.6
+   ],
+   [
+    96,
+    1779.2,
+    1147.5,
+    null,
+    null
+   ],
+   [
+    128,
+    1810.9,
+    1166.6,
+    null,
+    null
+   ]
   ]
  },
-
  "readings": {
   "crossover": "On one card speculation leads through c16 (1088.9 against 1058.8) and trails from c20 (1024.3 against 1196.6). On two cards it leads at c16 (1588.1 against 1492.3) and trails at c32 (1848.9 against 2353.9); c20 and c24 were not run on two cards, so the TP2 crossing is bracketed between c16 and c32 rather than located.",
   "single_user": "Depth 3 is worth 1.56x on one card (159.2 against 101.9) and 1.67x on two (227.3 against 136.3).",
@@ -30,18 +113,31 @@
   "speculation_stops_scaling": "Depth 3 on one card is flat from c16 to c128 - 1088.9 to 1166.6, a 7% gain over an eightfold increase in users - while no-speculation rises 1058.8 to 1810.9, a 71% gain.",
   "second_card": "TP2 over TP1 is 1.34x to 1.61x depending on rung and mode, with the largest gains at c32 and c64 where a single card is closer to saturation."
  },
-
  "caveats": {
   "mixed_server_configs_at_high_rungs": "c96 and c128 come only from f4, which ran max_num_seqs 128 and max_num_batched_tokens 1024 against the 64/512 used elsewhere, and c64 pools f1, f4 and v1. Those settings materially change the divergence rate but barely change throughput - f1 and f4 read 1201.0 and 1217.2 at depth-3 c64, and 1723.0 and 1732.5 without speculation - so the throughput matrix tolerates the mix. An identity comparison would not.",
   "tp2_above_c64_unmeasured": "Two cards were never run past c64. That is the largest remaining gap in this table.",
   "identity_is_elsewhere": "This is throughput only. The identity rates at these rungs, and the reasons the depth-3 column stops scaling, are in 2026-09-09-qwen35-4b-speculation-ceiling-is-c16.json and 2026-09-09-qwen35-4b-beyond-c64.json."
  },
-
  "sources": [
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp1-mtp3-graph1-dhint4-20260907-v1",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f3",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f4"
- ]
+ ],
+ "a_non_monotone_dip_at_c40": {
+  "statement": "Aggregate throughput is not monotone in concurrency. Without speculation, one card reads 1595 tok/s at c32, 1360 at c40 and 1732 at c64 - a 15% drop going from 32 to 40 concurrent users, recovering by 64.",
+  "measurements": {
+   "s08 MTP0 c32": 1596.0,
+   "s16 MTP0 c32": 1594.0,
+   "s08 MTP0 c40": 1360.8,
+   "s16 MTP0 c40": 1359.2,
+   "f4 MTP0 c64": 1732.5
+  },
+  "why_it_is_believable": "Two independent arms measured c40 and agree to 0.1% (1360.8 and 1359.2), against a c32 pair that also agrees to 0.1% (1596.0 and 1594.0). Throughput is the tightest measurement on this lane - the g1/g2 replicate reproduces it to a tenth of a percent - so a 15% gap is far outside anything the measurement can manufacture.",
+  "speculation_shows_it_too": "Depth 3 reads 1136.5 and 1156.3 at c32 against 1142.3 and 1156.6 at c40, so the dip is much smaller there - the speculative path is already throughput-limited by c32 and has less to lose.",
+  "not_explained": "32 and 64 are powers of two and 40 is not, which points at a tiling or occupancy effect in the decode kernels, but nothing here tests that. c40 is captured in the graph set, so it is not an uncaptured-shape fallback.",
+  "why_it_was_found": "c40 exists in these arms only because it was added to give a GDN-group-of-32 hypothesis somewhere to show up. No previous ladder on this lane measured it.",
+  "operational": "Sizing a server for 40 concurrent users would be measurably worse than sizing it for either 32 or 64. Rungs between the usual powers of two are worth measuring before a capacity decision."
+ }
 }
