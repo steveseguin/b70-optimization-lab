@@ -73,5 +73,18 @@ arm d2s DEPTH=2 || exit 1
 arm mb DEPTH=3 STAGES="ladders" LADDER_CONCURRENCY="64" LADDER_REPEATS=20 \
     LADDER_MNS=128 LADDER_MBT=1024 || exit 1
 
+# t8: the TP2 crossover. f3 located the one-card crossing between c16 and c20; on two cards the
+# matrix only has c16 and c32, so the crossing is bracketed rather than found. Same rungs and repeat
+# count as f3 so the two are directly comparable.
+arm t8 TP=2 DEPTH=3 STAGES="ladders" LADDER_CONCURRENCY="8,12,16,20,24,32" LADDER_REPEATS=6 || exit 1
+
+# t7: two cards past c64, the largest remaining gap in the throughput matrix. Settings match f4 -
+# capture sizes and ceiling raised together to 128, max_num_seqs 128, max_num_batched_tokens 1024 -
+# so the TP1 and TP2 columns at c64, c96 and c128 come from the same server configuration and can be
+# compared to each other.
+arm t7 TP=2 DEPTH=3 STAGES="ladders" \
+    CAPTURE_SIZES="1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64,80,96,112,128" CAPTURE_MAX=128 \
+    LADDER_CONCURRENCY="64,96,128" LADDER_REPEATS=6 LADDER_MNS=128 LADDER_MBT=1024 || exit 1
+
 log "=== chain 6 complete ==="
 echo done >"${out}/qwen35-4b-shallow-20260909-DONE"
