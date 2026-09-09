@@ -27,6 +27,15 @@
 
  "reading": "At each of these four positions the model is choosing between two continuations and four different execution conditions distribute over the two candidates: single-stream TP1 takes side A, concurrent TP1 takes side B, single-stream TP2 takes side B, and concurrent TP2 takes side A. TP1's concurrent answer is TP2's sequential answer at every one of the four. The site is a property of the model and the prompt; which side wins is set by the arithmetic, and a change as ordinary as adding a second card is enough to move it.",
 
+ "the_branches_are_whole_continuations": {
+  "test": "If a site is a binary fork between two coherent continuations, then a TP1 concurrent response that flipped the fork should not merely differ at that one token - it should be the entire TP2 sequential response.",
+  "result": "It is, exactly, in three of the four sites: capacity-c062, rollback-c010 and cache-c016 each have a TP1 concurrent response byte-identical to the TP2 sequential oracle across all 128 tokens, while the TP1 and TP2 oracles themselves diverge at the site index (54, 112 and 26 respectively).",
+  "the_fourth": "capacity-c022 agrees with the TP2 oracle for 17 tokens and then parts. That prompt carries a second, independent site at index 93, so the two responses take the same branch at the first fork and different branches at the second. Consistent with the model rather than an exception to it.",
+  "why_it_matters": "This is the strongest form of the claim available from output alone. A site is not a corrupted token; it is a fork between two complete, deterministic continuations, and every execution condition lands cleanly on one branch or the other. Flipping the fork by any means - concurrency, a second card - returns the other branch in full."
+ },
+
+ "how_to_say_this_publicly": "A divergence at one of these sites is not a wrong answer. Both branches are fluent, both are correct, and the model is choosing between synonyms at a point where its own logits do not separate them. 'Lossless' on this lane means the strict gates pass, not that the model has a single determined output at every position - it does not, and no kernel change can give it one.",
+
  "strength_and_limits": {
   "statistics": "4 of 4 reversed is p = 1/16 = 0.0625 against a null in which direction is set at random per site per configuration. On its own that is suggestive, not conclusive.",
   "why_it_is_still_strong": "It is not an isolated observation. It agrees with the 39 bidirectional sites found across the 27B, 9B and 4B lanes, with cache-c016 and cache-c056 resolving the same pair oppositely inside one campaign, with the decoded pairs being synonyms in every case, and with the FP8 build showing exactly two variants per tie-prone prompt at concurrency 1. Five independent lines, one model.",
