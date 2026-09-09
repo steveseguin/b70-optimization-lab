@@ -59,6 +59,24 @@ So the weight moves toward (b), the uncaptured decode shape.
 A qualitative prediction failing at both ends is worth more than the cell counts
 suggest, but not enough to close the question.
 
+## What the 9B lane's lockstep result says about hypothesis (b)
+
+Read after this note was drafted, and it weakens the capture hypothesis
+independently. `2026-09-08-a-lockstep-batch-is-deterministic-the-ladder-is-not.md`
+ran 64 identical prompts in a constant-composition batch **under
+`FULL_DECODE_ONLY` capture at sizes 1 to 64**, matching the ladder, and got 64
+identical outputs — capture did not reproduce the divergence. Their conclusion is
+that divergence needs the batch composition to vary, and that every
+row-count-dependent op contributes so no single one can be fixed to remove it.
+
+If that is right, the capture ceiling is unlikely to be what creates the step
+either, and `k128` should be a null. That is a cleaner prediction than the one
+this note started with, and it is worth stating that under their account **both**
+of the hypotheses here are expected to fail. The step between c16 and c20 would
+then be neither the grouping nor the ceiling, and the arms are worth running
+mainly to eliminate them by measurement rather than by inference — which is what
+that lane's own history suggests is the reliable route.
+
 ## The prediction on record
 
 If (b) is right, chain 5 should show:
