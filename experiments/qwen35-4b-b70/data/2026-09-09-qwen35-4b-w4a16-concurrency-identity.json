@@ -11,14 +11,31 @@
  },
 
  "finding_1_the_c32_break_is_speculative_not_kernel": {
-  "statement": "The no-speculation ladder is exact at every rung through c32 in all four passes across both TP configurations. The depth-3 ladder breaks at c32 in all four. The row-invariance claim for the W4A16 kernel survives; what fails above c16 is the speculative verify path.",
+  "statement": "Speculation raises the divergence rate at high concurrency by about 18x. It does not create divergence that is otherwise absent: the no-speculation ladder is also not exact above c16, only far closer to it.",
+  "SUPERSEDES": "An earlier version of this file read the four published 2-pass ladders as 'MTP0 is exact at every rung through c32' and concluded c32 separates the two arms cleanly. The 20-pass f1 arm shows that was underpowered, not wrong-as-stated: at a 0.31% per-request rate a 32-request pass comes back clean about 90% of the time, so two clean passes carry almost no information. The corrected reading is a large rate difference, not exact-versus-broken. See powered_20_pass below.",
+  "powered_20_pass": {
+   "campaign": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+   "config": "one B70, TP1, graph capture on, draft INT4 head, pad off, 20 passes per rung",
+   "mtp0": {"c32": {"exact": "638/640", "rate_pct": 99.69, "divergent": 2, "fully_clean_passes": "18/20", "agg_tok_s_median": 1591.3},
+            "c64": {"exact": "1271/1280", "rate_pct": 99.30, "divergent": 9, "fully_clean_passes": "12/20", "agg_tok_s_median": 1722.7}},
+   "mtp3": {"c32": {"exact": "605/640", "rate_pct": 94.53, "divergent": 35, "fully_clean_passes": "1/20", "agg_tok_s_median": 1153.6},
+            "c64": {"exact": "1110/1280", "rate_pct": 86.72, "divergent": 170, "fully_clean_passes": "0/20", "agg_tok_s_median": 1200.3}},
+   "speculation_penalty": {"c32": "5.47% vs 0.31% per request, 17.6x", "c64": "13.28% vs 0.70% per request, 19.0x"},
+   "throughput": "Turning speculation off is also faster at these rungs: +38% at c32, +44% at c64."
+  },
+  "original_2_pass_observation": "Recorded as measured; it is consistent with the powered rates and simply cannot distinguish 99.7% from 100%.",
   "identity": {
    "tp1_mtp0": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "32/32, 32/32", "c64": "64/64, 63/64"},
    "tp1_mtp3": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "31/32, 30/32", "c64": "53/64, 55/64"},
    "tp2_mtp0": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "32/32, 32/32", "c64": "62/64, 64/64"},
    "tp2_mtp3": {"c1": "1/1, 1/1", "c2": "2/2, 2/2", "c4": "4/4, 4/4", "c8": "8/8, 8/8", "c16": "16/16, 16/16", "c32": "30/32, 28/32", "c64": "60/64, 59/64"}
   },
-  "caveat": "MTP0 is not perfect at c64 either: three requests diverged across the four c64 passes. c64 is a boundary for both arms, c32 separates them."
+  "caveat": "These are the 2-pass observations, retained as measured. Read against the 20-pass rates above they are consistent with both arms diverging at some rate above c16; they cannot establish exactness anywhere. The lane should not quote a rung as 'exact' from two passes again: the f1 arm needed 20 to see 2 events in 640 at c32.",
+  "fragile_sites_mtp0_20_pass": {
+   "c32": "2 of 32 prompts ever diverged (index-c017 5%, rollback-c002 5%); 18 of 20 passes fully clean",
+   "c64": "4 of 64 prompts ever diverged (cache-c056 15%, capacity-c062 10%, rollback-c002 10%, index-c041 10%); 12 of 20 passes fully clean",
+   "mtp3_for_contrast": "c32: 5 prompts, rates to 65%, 1 clean pass. c64: 16 prompts, rates to 95%, 0 clean passes. The speculative arm's fragile set contains the no-speculation one."
+  }
  },
 
  "finding_2_the_flips_are_not_near_ties": {
