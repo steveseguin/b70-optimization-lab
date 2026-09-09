@@ -1,3 +1,13 @@
+# Reordered 2026-09-09 after a13dh0 measured the draft lm_head at 9.64 ms of a 34.62 ms step.
+# All seven draft-head knobs run first: they tune the largest component this campaign has
+# found, and a 20% gain on a 10 ms term is ~8% end to end - more than anything else reachable.
+a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
+a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
+a12dch	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=1024
+a18g256	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=256
+a17dch512	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=512
+a15sdf32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=fp32
+a16apply	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS=1
 # Reordered 2026-09-09 after the depth ladder closed. The ladder established that no depth
 # setting beats ~110 tok/s and that single-stream gains must come from a cheaper step, so the
 # draft-pass MEASUREMENT arms run first: they size the term the remaining knobs act on, and
@@ -35,8 +45,6 @@ a1g8	3	strict	GDN_SPEC_GROUP=8
 a1g32	3	strict	GDN_SPEC_GROUP=32	
 # a2scr REMOVED: VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH is already 1 in the live container, so the arm
 # would have compared a configuration against itself - inert, not neutral.
-a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
-a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
 a3tight	3	strict	CAPTURE_SIZES=1,2,3,4,5,6,8,12,16	
 #
 # d2's ladders ran with a leftover diagnostic container resident on card 0, which does not affect
@@ -55,7 +63,6 @@ d2r	2	ladders
 #   VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=2048
 #   VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0  VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
 a11lmc	3	strict		VLLM_XPU_LM_HEAD_CHUNK_ROWS=128
-a12dch	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=1024
 # Autotune is off in the strict lane, presumably for determinism. Screening it is worth doing
 # precisely because the identity gates will say whether that caution is still required.
 x32kr	3	depth32k	DEPTH_MML=33024	
@@ -83,7 +90,3 @@ x32kr	3	depth32k	DEPTH_MML=33024
 # Promoted 2026-09-09 after a13dh0 measured the draft lm_head at 9.64 ms of a 34.62 ms step. These
 # tune a term that is ~28% of the step; nothing else reachable in this lane acts on anything that
 # large. Values shown are the live defaults read from the running container.
-a15sdf32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=fp32
-a16apply	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS=1
-a17dch512	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=512
-a18g256	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=256
