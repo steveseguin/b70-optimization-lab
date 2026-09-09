@@ -85,9 +85,20 @@ Single-stream generation is fully deterministic here: the `g1`, `g2` and `g3`
 oracles are identical 64 of 64 on both lanes across three fresh servers. The whole
 phenomenon is a concurrency artifact, and it is removable rather than intrinsic.
 
-**Unreplicated as of writing.** Chain 7 was queued immediately to check it: an
-exact replicate, the same stagger on the unbiased full suite, and a 5 ms stagger
-to see whether the lever costs less than 14%.
+**Replicated.** The `r1` arm repeated it on a fresh server: 1280 of 1280 again,
+1474.0 tok/s against 1474.3. The speculative lane replicated to the individual
+request — 709/1280 exact in both, 42 bistable slots, 28 oracle-on-minority, 44
+sites and 95.45% slot recurrence in both — so with deterministic arrival the whole
+ladder outcome is reproducible across independent servers, not just the exactness.
+
+That gives the cleaner statement: **deterministic arrival gives deterministic
+output**, and the lanes differ only in what that output equals. At MTP0 it equals
+the single-stream oracle; at depth 3 it is equally reproducible but different from
+it. Speculation does not reintroduce randomness, it moves the deterministic answer
+away from the sequential one.
+
+Still open: `r2` tests the same stagger on the unbiased full suite and `r3` a 5 ms
+stagger. Other rungs, two cards and other models are unmeasured.
 
 **Speculation's 18x penalty is two effects.** Six intrinsic sites amplify 9.69x;
 thirteen more appear only under speculation and carry 63% of its events, where
