@@ -79,11 +79,27 @@ bound to its arithmetic and must be regenerated — but the consequence for the
 (pad, row-wise all-reduce, serialised norm) each regenerate an oracle, so their
 control-versus-candidate rate differences carry this term.
 
-**It changes the reading of `f4` versus `f1`.** About half the apparent
-improvement is the oracle artifact and about half is real: `f4`'s oracle-free
-rate is 3.79% against `f1`'s 6.70%, with half as many bistable prompts. The `mb`
-arm isolates whether the real half is the capture ceiling or the scheduler
-settings.
+**It changes the reading of `f4` versus `f1`, but less than first stated.** An
+earlier version of this note said the improvement was about half artifact and
+half real. Quantified against `f1` at full power — 99 minority samples of 1344,
+7.37% — `f4`'s 17 of 448 is significantly lower (Poisson P(<=17 | 33.0) = 0.0017).
+The decomposition is:
+
+| | factor |
+| --- | ---: |
+| oracle-based reduction, 13.28% -> 5.21% | 2.55x |
+| oracle-free reduction, 7.37% -> 3.79% | **1.94x**, p = 0.0017 |
+| the oracle artifact | 1.31x |
+
+So most of the reduction is real and the artifact accounts for the remaining
+1.31x. `f4` genuinely produces the minority branch about half as often. The `mb`
+arm isolates whether that is the capture ceiling or the scheduler settings, and if
+it is the latter it is an easy operational win.
+
+One caution on a tempting sub-analysis: nine prompts bistable in `f1` are
+monomorphic in `f4` at matched passes, but that set was selected *by* being
+bistable in `f1`, so regression to the mean inflates it. The pooled minority
+fraction above is the unbiased comparison; the per-prompt list is not.
 
 ## Recommendation
 
