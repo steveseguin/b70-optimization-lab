@@ -1,0 +1,43 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16: tensor parallelism flips which side of a tie the sequential oracle takes (2026-09-09)",
+ "question": "Sites have been shown stable across days, boots and compilation modes. Tensor parallelism is the one change that alters the arithmetic itself - the all-reduce introduces a different summation order. If these sites are ties, TP should not remove them; it should be able to move which side wins.",
+ "method": "Compared the c64 depth-3 site sets of the TP1 arms (f1+f2 pooled, 40 passes, 340 events) and the TP2 arm (t1, 2 passes, 9 events). A site was first defined as (prompt_id, index, oracle token, run token) and then, when that made the sets look disjoint, as (prompt_id, index, unordered token pair) with the direction reported separately.",
+
+ "the_ordered_definition_is_misleading_here": "By the ordered definition, 0 of 7 TP2 sites match any of the 19 TP1 sites. That reads as two unrelated fragile sets. It is an artifact: by the unordered definition 4 of the 7 match, and every one of the four is direction-reversed.",
+
+ "result": {
+  "shared_unordered_sites": "4 of 7",
+  "direction_reversed": "4 of 4",
+  "sites": [
+   {"site": "capacity-c062@54", "pair": "' resource' / ' constraint'",
+    "tp1": "oracle emits ' resource', concurrent runs emit ' constraint' (36 events)",
+    "tp2": "oracle emits ' constraint', concurrent runs emit ' resource' (2 events)"},
+   {"site": "rollback-c010@112", "pair": "' leave' / ' hang'",
+    "tp1": "oracle emits ' hang', concurrent runs emit ' leave' (17 events)",
+    "tp2": "oracle emits ' leave', concurrent runs emit ' hang' (2 events)"},
+   {"site": "cache-c016@26", "pair": "' \"' / ' update'",
+    "tp1": "oracle emits ' \"', concurrent runs emit ' update' (8 events)",
+    "tp2": "oracle emits ' update', concurrent runs emit ' \"' (1 event)"},
+   {"site": "capacity-c022@17", "pair": "' data' / ' historical'",
+    "tp1": "oracle emits ' data', concurrent runs emit ' historical' (6 events)",
+    "tp2": "oracle emits ' historical', concurrent runs emit ' data' (1 event)"}
+  ]
+ },
+
+ "reading": "At each of these four positions the model is choosing between two continuations and four different execution conditions distribute over the two candidates: single-stream TP1 takes side A, concurrent TP1 takes side B, single-stream TP2 takes side B, and concurrent TP2 takes side A. TP1's concurrent answer is TP2's sequential answer at every one of the four. The site is a property of the model and the prompt; which side wins is set by the arithmetic, and a change as ordinary as adding a second card is enough to move it.",
+
+ "strength_and_limits": {
+  "statistics": "4 of 4 reversed is p = 1/16 = 0.0625 against a null in which direction is set at random per site per configuration. On its own that is suggestive, not conclusive.",
+  "why_it_is_still_strong": "It is not an isolated observation. It agrees with the 39 bidirectional sites found across the 27B, 9B and 4B lanes, with cache-c016 and cache-c056 resolving the same pair oppositely inside one campaign, with the decoded pairs being synonyms in every case, and with the FP8 build showing exactly two variants per tie-prone prompt at concurrency 1. Five independent lines, one model.",
+  "sample_size": "The TP2 arm is 2 passes and 9 events. Its three non-shared sites are the low-rate tail that two passes cannot separate from the shared set, not evidence of TP2-specific sites. Chain 3's t5 arm adds 20 TP2 passes at c64 and will settle that.",
+  "not_claimed": "This does not say TP2 is better or worse. Both configurations diverge under concurrency; they simply disagree about which side of these ties is the sequential answer."
+ },
+
+ "consequence_for_the_lane": "An oracle is bound to an arithmetic, which AGENTS.md rule 2 already states for kernels. This extends it to topology: a TP1 oracle is not a valid reference for a TP2 candidate at these sites, and a cross-topology exactness comparison would report divergence that is entirely the oracle's side of the tie changing. Every campaign on this lane already regenerates its oracle per configuration, so nothing measured is affected - but the rule is worth stating explicitly for topology, not only for kernels.",
+
+ "sources": {
+  "tp1": ["/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1", "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f2"],
+  "tp2": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1"
+ }
+}
