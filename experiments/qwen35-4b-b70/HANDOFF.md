@@ -1,8 +1,7 @@
 # Qwen3.5-4B W4A16 on B70 — lane handoff
 
-Last updated **2026-09-09**, during the overnight identity campaign. Chains 2-6
-were still running when this was written; the "In flight" section says what is
-outstanding.
+Last updated **2026-09-09**. The overnight identity campaign is **complete**:
+nine chained runners, 31 arms, zero hardware aborts, finished 07:26.
 
 ## What this lane is
 
@@ -149,54 +148,43 @@ In `experiments/qwen35-9b-b70/scripts/` (shared with that lane):
 In this lane's `scripts/`: `summarize-arm.py` (per-rung identity, throughput,
 sites, and the oracle-free `min%`), `probe-tie-margin.py`.
 
-## In flight
+## What the campaign ran
 
-Six chained runners, each waiting on the previous one's DONE file, wrappers at
-`/mnt/fast-ai/bench-results/qwen35-4b-{exhaustive,fragile,gdn,depth,margin,shallow}-20260909-wrapper.log`.
-Chain 1 is complete, as are `d1` (the determinism pad, a null at an 11.7% cost)
-and `g1` (the fragile-suite baseline). Outstanding:
+Nine chained runners, 31 arms, 07:26 finish, no hardware aborts. Scripts in
+`scripts/run-20260909-*`, wrappers at
+`/mnt/fast-ai/bench-results/qwen35-4b-{exhaustive,fragile,gdn,stagger,depth,margin,shallow,mbase,tp2stag}-20260909-wrapper.log`.
+A chain sleeping in its wait loop can be stopped by pid, edited and relaunched;
+that is how arms were inserted mid-campaign without disturbing the cards.
 
-- **g2** was queued as a slot-pinning test and is not one: `--pin-slots` sets an
-  `id_slot` field that vLLM accepts under `extra="allow"` and never reads, so it
-  is a same-config replicate of `g1` and gives the noise estimate for the `g1`
-  against `g3` comparison. Read it that way.
-- **g3** staggers arrivals by 25 ms. Under the 9B lane's account — constant
-  composition is deterministic, divergence needs composition to vary — this is a
-  directional test of that account, and the prediction that it should raise the
-  rate is on record before the arm runs.
-- **s08/s16/s32/k128** the GDN speculative group size against the capture ceiling,
-  the two confounded explanations of the c16 step. Both are predicted to fail
-  under the 9B account; the arms eliminate them by measurement. See
-  `notes/2026-09-09-preliminary-the-gdn-group-is-probably-not-the-driver.md`.
-- **e1/e2/e6, t5, t6** depth as a dose at c64, plus TP2 statistics and TP2 fragile.
-- **m1** the logit margin at divergence points. The 9B lane's projection probe
-  used random weights whose margins are enormous, so it could not show an argmax
-  move; this reads top-k logprobs at real divergence points.
-- **d1s/d2s** strict gates at depths 1 and 2, which the depth sweep never covered.
-- **mb** isolates whether f4's genuinely lower divergence comes from the capture
-  ceiling or from `max_num_seqs`/`max_num_batched_tokens`.
-- **t8/t7** the TP2 crossover rungs and TP2 past c64, the two holes in the
-  consolidated throughput matrix.
-- **r1/r2/r3** (chain 7, queued ahead of the rest) replicate the staggered
-  exactness result, test it on the full suite, and test a 5 ms stagger.
+**Eliminated by measurement**, each by moving its own knob and watching nothing
+change: the GDN speculative group size (three arms over a fourfold range), the
+capture ceiling (doubled), the determinism pad (20 passes, and the site set
+unchanged), and the verify batch's row count (flat across depths 1, 2, 3 and 6).
 
-Chain order is 1 -> 2 -> 5 -> 7 -> 3 -> 4 -> 6. Chains that are only sleeping in a
-wait loop can be stopped by pid, edited and relaunched; that is how arms were
-inserted mid-campaign without disturbing the cards.
+**The deployable configuration.** Two cards, no speculation, 5 ms admission
+stagger: **2711 tok/s at c64, byte-identical to single-stream output**,
+harness-certified `output-identity-qualified`. One card is 1701.5 tok/s at the
+same exactness. Six arms show it; 5 ms is the floor, 2 ms leaves 0.94% and 1 ms
+leaves 2.89%.
 
-## Where the mechanism work stands, and whose it is
+**Free levers found along the way.** `max_num_batched_tokens` 512 to 1024 halves
+depth-3 divergence at c64 at slightly better throughput. Depth 2 is level with
+depth 3 single-user and 14% better at c64. And a warning: a divergence rate is not
+a property of (model, depth, concurrency) — two servers differing only in
+`max_num_batched_tokens` differ 2.5x at the same rung.
 
-The mechanism line is the 9B lane's, not this one's, and its notes are ahead of
-anything here: `experiments/qwen35-9b-b70/notes/` rules out the cross-card
-all-reduce, the norm's variance reduction, the two together, slot position,
-decode-step drift, the weight-quantised GEMM's strategy selection, the FP16
-vocabulary projection and graph capture — and establishes that a
-constant-composition batch is deterministic while a drifting one is not. Read
-those before proposing a mechanism here. This campaign contributes measurements
-on a second model, not a competing account.
+**Known and unexplained.** Aggregate throughput is not monotone in concurrency:
+one card reads 1595 tok/s at c32, **1360 at c40**, 1732 at c64, reproduced to 0.1%
+across two arms. And the c16 identity step survives the elimination of both
+candidates that sat at 16 sequences, so it has no named mechanism.
 
 ## Scope
 
 In-repository evidence only, by agreement: no package or catalog updates, no
 LocalMaxxing submission. Results live in this lane's `data/` and `notes/`, plus
-three lab-level notes under `notes/`.
+four lab-level notes under `notes/`.
+
+Two findings are packaging-relevant whenever the owner wants them:
+`families/qwen-4b.json` still lists `tp: [1]` and context `[1024, 8192]` while TP2
+is measured lossless on the strict suite, at 32K context and under concurrency;
+and depth 2 may be the better operating point for any server with load.
