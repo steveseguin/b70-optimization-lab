@@ -1,0 +1,37 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 e1/e2/e6: speculation depth is binary for identity and monotone for throughput (2026-09-09)",
+ "question": "Speculation raises the c64 divergence rate about tenfold. If the speculative verify step is the source, the rate should scale with the number of speculative tokens per step, because that is what sets the verify batch's row count. This measures the c64 rate at depths 1, 2, 3 and 6 against MTP0.",
+ "config": "one B70, TP1, draft INT4 head, pad off, capture 1-64, 2026-08-25 small-context suite, c64, 20 passes per arm, barrier launch",
+
+ "table": [
+  {"depth": 0, "rows_per_seq": 1, "div_pct": 0.70, "minority_pct": 0.67, "bistable_prompts": 4,  "tok_s": 1722.7, "vs_mtp0_pct": null},
+  {"depth": 1, "rows_per_seq": 2, "div_pct": 10.78, "minority_pct": 7.07, "bistable_prompts": 15, "tok_s": 1520.0, "vs_mtp0_pct": -11.8},
+  {"depth": 2, "rows_per_seq": 3, "div_pct": 13.28, "minority_pct": 7.07, "bistable_prompts": 18, "tok_s": 1364.4, "vs_mtp0_pct": -20.8},
+  {"depth": 3, "rows_per_seq": 4, "div_pct": 13.28, "minority_pct": 7.37, "bistable_prompts": 16, "tok_s": 1200.3, "vs_mtp0_pct": -30.3},
+  {"depth": 6, "rows_per_seq": 7, "div_pct": 12.50, "minority_pct": 7.14, "bistable_prompts": 18, "tok_s": 763.7,  "vs_mtp0_pct": -55.7}
+ ],
+
+ "finding_1_identity_is_binary": {
+  "statement": "The oracle-free divergence rate is 0.67% without speculation and 7.07, 7.07, 7.37, 7.14 percent at depths 1, 2, 3 and 6. The entire effect is the step from off to on; depth beyond 1 adds nothing measurable.",
+  "against_the_noise_floor": "The measured replicate floor on this lane is 1.4 points of oracle-free rate. The four speculative arms span 0.30 points. They are one number.",
+  "what_it_rules_out": "The rate does not scale with speculative tokens per step, which go 2, 3, 4, 7 across these arms. So the verify batch's row count is not what drives it - which is the hypothesis this chain was built to test, and it fails cleanly."
+ },
+
+ "finding_2_throughput_is_monotone": {
+  "statement": "Throughput falls with every added speculative token at c64: -11.8%, -20.8%, -30.3%, -55.7% against MTP0. Depth 6 costs more than half the server.",
+  "why": "Above the c16 crossover the target is already saturated, so each extra draft token is verification work whose tokens are mostly rejected. The deeper the draft, the more of it is wasted."
+ },
+
+ "operational": {
+  "primary": "At high concurrency do not speculate at all: MTP0 is 1722.7 tok/s at 0.67%, better than every speculative arm on both axes.",
+  "if_speculation_is_required": "Use depth 1. It carries the same identity cost as depth 3 or depth 6 - the rate is flat - and returns 1520.0 tok/s against 1200.3 and 763.7. Depth 6 at c64 is strictly dominated: 56% of the throughput for no identity benefit.",
+  "contrast_with_single_user": "This inverts the single-user picture, where depth 3 is worth 1.56x and the 2026-09-08 sweep found depths 3 to 6 all lossless on the strict suite. Depth is a low-concurrency optimisation; at c64 it is a liability whose cost grows with depth and whose identity penalty is paid in full at depth 1."
+ },
+
+ "note_on_the_capture_range": "Each depth captures a different set of decode shapes, since capture sizes are rounded to multiples of (1 + depth) and the 64-token ceiling is 64/(1+depth) sequences. The servers reported 14 shapes at depth 1 and 11 at depth 3, giving captured concurrencies of 32 and 16 - so c64 is uncaptured in every speculative arm here, and the flatness is not an artifact of capture differences.",
+ "campaign_roots": ["/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-e1",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-e2",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-e6"]
+}
