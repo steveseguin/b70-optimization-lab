@@ -70,7 +70,7 @@
   "b_uncaptured_decode_shape": "A uniform decode step is (1 + depth) tokens per sequence, so depth 3 at n sequences is 4n tokens, and max_cudagraph_capture_size is 64 tokens - exactly 16 sequences. c16 is the largest depth-3 concurrency with a captured decode shape. Confirmed directly: a depth-3 server reports capturing 11 shapes where an MTP0 server on the same capture list reports 18.",
   "how_they_separate": "Chain 5 varies the group size at a fixed capture ceiling (s08, s16, s32) and the capture ceiling at a fixed group size (k128). If the step follows the group size it is the grouping; if it follows the ceiling it is the uncaptured shape; if both, both."
  },
- "operational_reading": "c16 is the speculation ceiling on this model and this card. Below it depth 3 is worth having - 35% at c8, and the strict gates pass. From c20 up it costs 14 to 28% of throughput and multiplies divergence ninefold. A server sized for 16 or fewer concurrent users should run depth 3; one sized for more should run without speculation, and gets both more throughput and better reproducibility for it.",
+ "operational_reading": "c16 is the speculation ceiling on this model, on one card and on two. Below it depth 3 is worth having - 35% at c8 on one card, 37% on two - and the strict gates pass. From c20 up it costs 14 to 28% of throughput and multiplies divergence, and that does not reverse at any rung measured up to c128. A server sized for 16 or fewer concurrent users should run depth 3; one sized for more should run without speculation, on either topology.",
  "caveat_on_two_rungs": "c12 and c24 are not in the capture list, so their decode shapes pad to the next captured size. That is realistic serving behaviour and does not affect the throughput reading, but it means those two rungs are not clean points for an identity comparison. The step is located by c16 against c20, both of which are captured sizes for MTP0 and, in the depth-3 arm, sit either side of the capture ceiling.",
  "campaign_root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f3",
  "a_weak_cross_model_look": {
@@ -85,5 +85,45 @@
   "reading": "Not decisive, and the two clearest rows disagree. mtp5 is exact through c16 where the capture ceiling would have predicted a step after c10, which favours the group size. mtp1 is flat from c4 to c32 and jumps only at c64, which is where its capture ceiling sits and not where the group boundary is, so it favours the ceiling. mtp4 is non-monotone.",
   "why_it_cannot_settle_it": "These pool dozens of campaigns that were testing different patches, at different TP degrees and on a different model, with sample sizes from 4 to 2240 requests per cell. It is a heterogeneous convenience sample, not a controlled comparison, and it is reported only so the observation is on record rather than rediscovered.",
   "the_one_thing_it_does_support": "The 27B mtp3 row is exact through c16 and 7.03% at c32 - the same boundary and roughly the same magnitude as the 4B at the same depth. The depth-3 c16 boundary reproduces on a second model."
+ },
+ "CONFIRMED_ON_TWO_CARDS": {
+  "arm": "t8, the same rungs and pass count as f3, on two B70s",
+  "throughput_crossover": {
+   "c8": {
+    "tp2": "+36.7%",
+    "tp1": "+34.8%"
+   },
+   "c12": {
+    "tp2": "+16.4%",
+    "tp1": "+9.3%"
+   },
+   "c16": {
+    "tp2": "+5.9%",
+    "tp1": "+2.8%"
+   },
+   "c20": {
+    "tp2": "-18.3%",
+    "tp1": "-14.4%"
+   },
+   "c24": {
+    "tp2": "-17.9%",
+    "tp1": "-16.7%"
+   },
+   "c32": {
+    "tp2": "-21.9%",
+    "tp1": "-27.6%"
+   }
+  },
+  "identity_by_rung_tp2": {
+   "c8": 0.0,
+   "c12": 0.0,
+   "c16": 0.0,
+   "c20": 10.0,
+   "c24": 5.56,
+   "c32": 7.81
+  },
+  "finding": "The crossover is at the same rung on two cards as on one: speculation leads through c16 and trails from c20, on both topologies, on both axes. TP2's identity step lands in the same place too - fully exact at c8, c12 and c16, then 10.00% at c20 - and is if anything cleaner than TP1's, which showed 1 of 72 and 1 of 96 at c12 and c16.",
+  "why_it_matters": "The c16 ceiling was measured on one card and could have been a property of that configuration. It is not. It survives doubling the hardware, which makes it a property of the concurrency - or of the decode rows per sequence that concurrency implies - rather than of the topology, and it means the serving rule applies to whichever card count a deployment uses.",
+  "closes_a_gap": "The consolidated throughput matrix had TP2 only at c16 and c32, so the two-card crossing was bracketed rather than located. It is now located, at the same place as the one-card crossing."
  }
 }
