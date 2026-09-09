@@ -71,13 +71,32 @@ was unlucky, not that the server was worse.
 byte-identical, which is a different and still-correct question, and the strict
 suite is unaffected. "Lossless" claims that rest on exact gates stand.
 
-**It does affect rate comparisons between arms.** Any two arms that regenerated
-their own oracles can differ in reported rate purely because their oracles drew
-differently. That is the intended behaviour under AGENTS.md rule 2 — an oracle is
-bound to its arithmetic and must be regenerated — but the consequence for the
-*rate* was not on record. The powered intervention comparisons on the 9B lane
-(pad, row-wise all-reduce, serialised norm) each regenerate an oracle, so their
-control-versus-candidate rate differences carry this term.
+**It affects rate comparisons between arms, but only when their oracles land
+differently.** Any two arms that regenerated their own oracles can differ in
+reported rate purely because their oracles drew differently. That regeneration is
+required by AGENTS.md rule 2 — an oracle is bound to its arithmetic — but the
+consequence for the *rate* was not on record.
+
+**Checked, and the 9B powered comparisons survive it.** The five 20-pass
+`identitypower` arms at c64 read:
+
+| arm | `div%` | `min%` | oracle on minority |
+| --- | ---: | ---: | ---: |
+| `p0` | 6.17% | 2.46% | 4 |
+| `p1` | 6.25% | 2.68% | 4 |
+| `p2` | 6.09% | 2.23% | 4 |
+| `q1` | 6.25% | 2.83% | 4 |
+| `q2` | 6.56% | 2.68% | 4 |
+
+Every arm's oracle sat on the minority branch at exactly four prompts, so the
+artifact is a near-constant multiplier of about 2.4x across all five and the
+ratios between them are preserved. Those comparisons are not distorted. The
+confound bit in `f1` versus `f4` because there the oracles landed differently —
+six oracle-minority prompts against one.
+
+So the rule is not "past rate comparisons are wrong"; it is "a rate comparison is
+only safe when both arms' oracles landed similarly, and `oMin` is what tells
+you". Report it.
 
 **It changes the reading of `f4` versus `f1`, but less than first stated.** An
 earlier version of this note said the improvement was about half artifact and
