@@ -1,14 +1,39 @@
-# Byte-identical requests in the same batch disagree with each other
+# The within-batch disagreement, extended to the speculative lane
 
-Read out of the 9B verbatim fragile ladders already on disk. It explains why the
-determinism pad does nothing, and it narrows what could.
+**This phenomenon is not new here.** The 9B lane established it on 2026-09-08 in
+`experiments/qwen35-9b-b70/notes/2026-09-08-identical-prompts-in-one-batch-diverge-from-each-other.md`,
+which reported 23 of 240 copy-groups disagreeing in each of the `f0` and `f1`
+arms, drew the conclusion that "the result depends on which row a request
+occupies" rather than on how many rows share the step, and stated the same limit
+about step composition that is restated below. It also recorded the two
+shape-invariance interventions as flat at that power and told the lab to stop
+testing shape-invariance against this metric. That note found it; this one
+extends it.
+
+Reproducing its numbers exactly on the lane it used — MTP0 — gives 23 of 240 in
+both arms, 9.58%, with divergence 1.80% and 1.88% and throughput 2095.3 and
+728.9 tok/s against its 2093.6 and 728.9.
+
+**What is new here** is the same diagnostic applied to the *speculative* lane of
+the same campaigns, which that note did not examine, plus the histogram result
+over the whole corpus and the connection to tonight's 4B pad null.
 
 ## The observation
 
 A verbatim ladder fills its slots with byte-identical copies of the same prompt.
-Across the 9B fragile campaigns, **429 of 1920 copy-groups (22.3%) contain copies
-that disagree with each other inside a single batch** — same text, same batch,
-same steps, different completions.
+Pooled across every verbatim run on disk and both lanes, **429 of 1920
+copy-groups (22.3%) contain copies that disagree with each other inside a single
+batch** — same text, same batch, same steps, different completions.
+
+Split by lane, the speculative half is three to four times worse:
+
+| campaign | MTP0 lane | depth-3 lane |
+| --- | ---: | ---: |
+| `fragile-f0` | 23/240 (9.6%) | **74/240 (30.8%)** |
+| `fragile-f1` | 23/240 (9.6%) | **100/240 (41.7%)** |
+
+The MTP0 column is the 2026-09-08 measurement. The depth-3 column is new, and it
+matters because it is where the lane actually serves.
 
 Two further properties:
 
@@ -20,6 +45,34 @@ Two further properties:
   third branch to appear and it never did.
 - **Almost always exactly one copy in the minority.** A typical group reads
   `majority slots [2, 14, 26, 38, 62], minority slot [50]`.
+
+## The two interventions are flat at MTP0 and look worse under speculation
+
+The 2026-09-08 note compared `f0` (no intervention) against `f1` (row-wise
+all-reduce **and** serialised norm) on the MTP0 lane and found them flat: 23
+against 24 divergent of 1280, two-sided binomial p = 1.00, and copy-groups
+identical at 23 against 23. That conclusion stands exactly as written.
+
+On the speculative lane the same pair is not flat, and all three measures move
+the same way — against the intervention:
+
+| measure | `f0` | `f1` |
+| --- | ---: | ---: |
+| oracle-based divergence | 33.91% | 35.55% |
+| oracle-free minority | 10.64% | 13.54% |
+| disagreeing copy-groups | 74/240 | 100/240 |
+| throughput | 1405.9 | 1288.6 tok/s |
+
+The oracle artifact is matched (`oMin` is 23 in both), so the comparison is fair.
+None of the three is individually decisive — the copy-group difference gives a
+naive z of 2.47, and groups inside one pass share a batch so the effective sample
+is nearer 20 than 240 — but three independent measures agreeing in direction, at
+an 8.3% throughput cost, is worth recording. Combined with the 65% throughput
+cost the same pair carries at MTP0 (2095.3 to 728.9 tok/s), there is no reading
+on which these two interventions are worth enabling.
+
+This is an observation on the 9B lane from a 4B campaign's tooling, not a
+conclusion of that lane's owner, and it is offered as such.
 
 ## What it rules out
 
