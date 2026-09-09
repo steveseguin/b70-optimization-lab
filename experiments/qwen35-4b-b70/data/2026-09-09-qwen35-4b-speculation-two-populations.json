@@ -1,0 +1,48 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16: speculation amplifies intrinsic sites and creates its own (2026-09-09)",
+ "question": "Depth 3 raises the c64 per-request divergence rate about 18x over MTP0. Two readings fit that number and they have different consequences: speculation makes the model's existing ambiguous branch points fire more often, or it introduces divergence of its own. This separates them at the level of individual sites.",
+ "method": "A site is (prompt_id, first differing index, oracle token, run token). Pooled the f1 and f2 c64 arms - 2560 requests per depth, across two compilation modes - and compared the depth-3 and MTP0 site sets. Under the null that speculation amplifies every site by one common factor, the factor measured on shared sites predicts how many MTP0 events the remaining depth-3 sites should have produced.",
+
+ "counts": {
+  "requests_per_arm": 2560,
+  "mtp0": {"sites": 8, "events": 15, "rate_pct": 0.59},
+  "depth3": {"sites": 19, "events": 340, "rate_pct": 13.28}
+ },
+
+ "population_1_amplified_intrinsic_sites": {
+  "statement": "Six of the eight MTP0 sites also fire at depth 3, and they fire about ten times more often. These are the model's own ambiguous branch points; speculation makes an existing coin land more often, it does not invent them.",
+  "amplification": "13 MTP0 events at those six sites become 126 at depth 3, a factor of 9.69",
+  "examples": [
+   {"site": "cache-c056 @50", "pair": "' HTTP' / ' Redis'", "mtp0": 4, "depth3": 36},
+   {"site": "capacity-c062 @54", "pair": "' resource' / ' constraint'", "mtp0": 3, "depth3": 36},
+   {"site": "index-c041 @53", "pair": "' Column' / ' Index'", "mtp0": 1, "depth3": 27},
+   {"site": "cache-c024 @58", "mtp0": 1, "depth3": 14},
+   {"site": "rollback-c002 @14", "mtp0": 3, "depth3": 7},
+   {"site": "capacity-c022 @17", "mtp0": 1, "depth3": 6}
+  ]
+ },
+
+ "population_2_speculation_specific_sites": {
+  "statement": "Thirteen sites appear only at depth 3 and carry 214 of its 340 events, 62.9%. They are not simply below MTP0's detection floor: under the 9.69x factor measured on the shared sites they should have produced about 22 MTP0 events, and produced none.",
+  "test": {"expected_mtp0_events_under_uniform_amplification": 22.1, "observed": 0, "poisson_p": 2.58e-10},
+  "reading": "The uniform-amplification null is rejected. Speculation contributes a second population of divergence that does not exist without it, and that population is the majority of its events."
+ },
+
+ "consequences": {
+  "for_the_18x": "The 18x penalty is not one effect. Roughly a tenth of it is the model's own ties firing more often, and the rest is divergence introduced by the speculative path. An intervention aimed at tie-breaking can at best address the smaller part.",
+  "for_serving": "Unchanged and reinforced: above c16, depth 3 is slower and far less reproducible, so turn speculation off there. Below c16 it is a large win and the strict gates pass.",
+  "for_the_next_experiment": "If the second population comes from the verify step, its size should scale with the number of speculative tokens per step. Chain 3 measures the c64 rate at depth 1, 2 and 6 against this depth-3 baseline, which turns the question into a dose-response.",
+  "two_mtp0_only_sites": "index-c041 @2 and evidence-c063 @17, one event each, are consistent with noise at this sample size and are not evidence that speculation removes sites."
+ },
+
+ "caveats": [
+  "MTP0 has 15 events, so per-site MTP0 rates are not individually meaningful; only the pooled comparison is.",
+  "Sites are defined by first differing index and token pair, so a prompt with two distinct sites is counted twice - index-c041 has one at index 2 and one at index 53.",
+  "Both arms pool f1 and f2, which is justified by the graph-capture null: the two share 18 of 18 sites and 99.4% of events."
+ ],
+ "sources": [
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f1",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f2"
+ ]
+}
