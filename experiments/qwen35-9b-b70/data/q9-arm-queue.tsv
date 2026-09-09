@@ -65,3 +65,12 @@ x32kr	3	depth32k	DEPTH_MML=33024
 # GDN *speculative* path directly, which is where the divergence actually lives: it appears only
 # with speculation and at every depth. All three default to 0 and the strict wrapper passes them
 # through with a ${VAR:-0} escape, so they are reachable.
+#
+# Direct measurement of the draft pass's share of step cost. DRAFT_HEAD=1 (draft-only INT4 lm_head)
+# is the default here and was worth +27.6% on the FP8 route; turning it off measures what the draft
+# head costs on THIS route. That is the term the depth decomposition says is growing
+# super-linearly, so its size matters more than any remaining knob's.
+a13dh0	3	strict	DRAFT_HEAD=0	
+# Step-cost decomposition control: depth 1 with and without the INT4 draft head isolates the draft
+# pass at the depth where it is the largest fraction of the step.
+a14dh0d1	1	strict	DRAFT_HEAD=0	
