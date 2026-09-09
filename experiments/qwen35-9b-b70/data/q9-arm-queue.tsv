@@ -55,3 +55,12 @@ x32kr	3	depth32k	DEPTH_MML=33024
 #   a10bonus  VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
 # The strict lane pins determinism-relevant settings by design; autotune is one of them. Testing it
 # needs a separate non-strict identity, which is a different lane and a different oracle, not a knob.
+#
+# The three eliminated candidates all perturb something upstream and generic. These target the
+# GDN *speculative* path directly, which is where the divergence actually lives: it appears only
+# with speculation and at every depth. All three default to 0 and the strict wrapper passes them
+# through with a ${VAR:-0} escape, so they are reachable.
+b4rec	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+b5conv	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1
+b6delta	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
+b7all	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
