@@ -83,7 +83,15 @@ run_arm() {
 }
 
 processed=0
-while IFS= read -r line || [[ -n "$line" ]]; do
+# Read the whole queue up front. Streaming it with `done < "$QUEUE"` holds an open fd, so
+# rewriting the file shifts the read offset underneath and the driver parses mangled lines - it
+# dispatched an arm with its knob in the wrong column on 2026-09-09, which would have been a
+# silent no-op. Appending to a streamed file is safe; reordering or rewriting is not. Reading once
+# removes the distinction. To add work, restart the driver: arms whose campaign root already
+# exists are skipped, so a re-run is idempotent and cheap.
+mapfile -t QUEUE_LINES < "$QUEUE"
+echo "$(date -u +%FT%TZ) queue snapshot: ${#QUEUE_LINES[@]} lines from $QUEUE"
+for line in "${QUEUE_LINES[@]}"; do
   line=${line%%#*}
   [[ -z "${line// /}" ]] && continue
   IFS=$'\t' read -r run depth stages harness_env extra_env <<<"$line"
@@ -100,7 +108,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   CARD_PID[$card]=$!
   processed=$((processed+1))
   sleep "${DISPATCH_STAGGER:-120}"
-done < "$QUEUE"
+done
 
 for k in "${!CARD_PID[@]}"; do p=${CARD_PID[$k]:-}; [[ -n "$p" ]] && wait "$p" 2>/dev/null; done
 echo "=== $(date -u +%FT%TZ) queue driver done; $processed arms dispatched ==="
