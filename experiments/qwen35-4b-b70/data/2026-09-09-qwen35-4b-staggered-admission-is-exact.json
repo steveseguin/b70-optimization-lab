@@ -52,7 +52,7 @@
  "how_much_to_believe": {
   "strong": "1280 requests, 20 passes, a matched same-config replicate pair as the baseline, zero events against an expected 30, and the harness's own identity qualification rather than only this campaign's arithmetic.",
   "unreplicated": "SUPERSEDED. It has now been replicated on a fresh server, exactly, and the depth-3 lane replicated to the individual request. What remains untested is generality: r2 runs the same stagger on the unbiased full suite and r3 tests whether 5 ms suffices, and neither has reported yet. Other rungs, two cards and other models are still unmeasured.",
-  "suite_specific": "The fragile suite is a biased instrument selected for divergence. Exactness on it is a stronger statement than exactness on the full suite would be, but the rate it is compared against (2.73%, 1.88%) is also suite-specific and is not the full-suite rate of 0.70%.",
+  "suite_specific": "SUPERSEDED by r2. The result holds on the unbiased full suite as well as the fragile one, so it is not an artifact of prompt selection.",
   "not_tested_elsewhere": "Only c64, only one card, only this model, only 25 ms. Whether the effect survives at other rungs, on two cards, at other stagger values, or on the full suite is unmeasured.",
   "throughput_caveat": "The 14.2% cost is measured as aggregate wall throughput on a ladder whose requests are deliberately delayed, so part of it is the stagger's own latency rather than lost efficiency. A server-side admission policy would not necessarily pay the same price."
  },
@@ -68,5 +68,17 @@
   "depth3_replicates_to_the_request": "The speculative lane agrees to the individual request: 709/1280 exact in both arms, 44.61% divergent in both, 42 bistable slots in both, 28 oracle-on-minority in both, 44 distinct sites in both, and slot recurrence 95.45% in both. Throughput 1109.0 against 1108.7.",
   "what_that_adds": "The replication is stronger than the original claim. It is not only that MTP0 came back exact twice; it is that the entire ladder outcome is reproducible across independent servers when arrival is deterministic - the same requests diverge, in the same slots, at the same sites, in the same numbers. Without a stagger, two identical arms differ by 3.1 points of copy-group rate and z = 2.93 on divergence, which is the measured noise floor. With a stagger the noise floor collapses."
  },
- "the_cleaner_statement": "Deterministic arrival gives deterministic output. That is the general form, and the two lanes then differ in what the deterministic output equals: at MTP0 it equals the single-stream sequential oracle, so the ladder reports 0/1280; at depth 3 it is equally reproducible but does not equal the oracle, so the ladder reports 709/1280 twice over. Speculation does not reintroduce run-to-run randomness - it moves the deterministic answer away from the sequential one."
+ "the_cleaner_statement": "Deterministic arrival gives deterministic output. That is the general form, and the two lanes then differ in what the deterministic output equals: at MTP0 it equals the single-stream sequential oracle, so the ladder reports 0/1280; at depth 3 it is equally reproducible but does not equal the oracle, so the ladder reports 709/1280 twice over. Speculation does not reintroduce run-to-run randomness - it moves the deterministic answer away from the sequential one.",
+ "GENERALISES_TO_THE_FULL_SUITE": {
+  "arm": "r2, the same 25 ms stagger on the unbiased 2026-08-25 small-context suite rather than the fragile one",
+  "mtp0_c64": {
+   "barrier_f1": "1271/1280, 0.70%, 1722.7 tok/s",
+   "barrier_f2": "1274/1280, 0.47%, 1717.9 tok/s",
+   "stagger_r2": "1280/1280, 0.00%, 1472.7 tok/s",
+   "harness": "output-identity-qualified"
+  },
+  "significance": "The barrier arms give 9 and 6 events per 1280, so about 7.5 expected; observed 0. Poisson P(0 | 7.5) = 5.5e-04. Weaker on its own than the fragile-suite result because the base rate is lower, and conclusive in combination with it.",
+  "why_it_matters": "Exactness is not an artifact of a suite selected for divergence. Three arms now show it - g3 and r1 on the fragile suite, r2 on the unbiased one - at the same 14-15% throughput cost.",
+  "depth3_on_the_full_suite": "13.28% divergent under a barrier against 8.20% under stagger, with the oracle-free minority rate collapsing from 7.37% to 1.34% and bistable prompts from 16 to 10. The same partial effect as on the fragile suite: per-slot output becomes reproducible while the answer still differs from the sequential oracle."
+ }
 }
