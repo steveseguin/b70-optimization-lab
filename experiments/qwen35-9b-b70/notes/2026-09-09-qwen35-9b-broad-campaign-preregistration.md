@@ -45,6 +45,11 @@ nondeterminism (25 divergences over 12 fixed tie sites, ~0.7% of requests) and i
 
 ## Phases
 
+> **Correction (same day):** the published `w1` pair was measured on a two-card, 15.5 GiB host, not
+> on `steve-b70s` (125.7 GiB, four B70s). P0 is therefore this host's own baseline, not a
+> cross-host reproduction, and levers are ranked against it. See the
+> [P0 note](2026-09-09-p0-reproduction-and-a-lying-pcie-register.md).
+
 **P0 - reproduction gate (serial, card 0).** Re-run the published w1 configuration on the
 re-fetched checkpoint: strict MTP0 pair + MTP3 pair, G1/G2/G3. Passes only if G1/G2/G3 are 12/12
 and the MTP3 class-balanced median lands within the host's known 3% back-to-back drift of

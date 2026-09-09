@@ -55,3 +55,45 @@ error.
 This is the same discipline as the torch-profiler and expandable-segments distortions already
 recorded for this hardware: check what a diagnostic actually reports against a direct measurement
 before letting it steer a campaign.
+
+## Correction (2026-09-09, same day): the published w1 pair is a DIFFERENT HOST
+
+The comparison table above is a cross-host comparison and must not be read as a reproduction.
+
+No artifact in this lane records a measuring hostname, which is why this was not caught before P0
+ran. The evidence that `w1` was measured elsewhere is in the 2026-09-07 harness itself:
+
+- `run-20260907-qwen35-campaign.sh:54` - "Weight loading needs about 10.7 GiB for the 9B on a
+  **15.5 GiB host**".
+- `2026-09-08-serialnorm-single-request-cost.json` - "the 9B checkpoint is 10.65 GiB, the host has
+  **15.5 GiB**", explaining a server death as cgroup OOM under the container's 12g cap.
+
+`steve-b70s` has **125.7 GiB of RAM and four B70s**. The published `w1` campaign ran on a two-card,
+15.5 GiB machine. Per this repository's own rule - a result keeps the hardware identity on which it
+was measured - the published `113.627 / 112.904` pair is not a target this host is obliged to hit,
+and the -2.3% is the expected shape of a cross-host difference rather than an anomaly to chase.
+
+Note which half moved. MTP0 reproduces across four independent fresh servers to **0.0096%**
+(64.152265 / 64.158181 / 64.158439 / 64.154632), while only the speculative path differs from the
+published figure. That is consistent with different silicon showing up in the draft/verify step
+rather than in plain decode, and it is a reason to re-sweep depth and capture geometry here rather
+than inherit choices made on the other machine.
+
+**What P0 does establish, all of it on this host:** the checkpoint is hash-identical to the pinned
+revision on both the O_DIRECT and ordinary read paths; the runtime is digest-identical to pinned
+R276; MTP0 is stable to one part in ten thousand across four fresh servers; and depth-3 speculation
+is byte-identical to no speculation on two fresh servers against a same-configuration oracle
+(G1/G2/G3 all 12/12).
+
+**Consequence:** this host gets its own baseline, and P0 is it. Every lever is ranked against
+`64.155` (MTP0) and `110.666` (MTP3 pair median) measured here. Any submission carries this hardware
+identity and does not inherit the other machine's.
+
+### This host's baseline, as it accumulates
+
+| depth | tok/s (class-balanced median) | source |
+| ---: | ---: | --- |
+| 0 | 64.152265 / 64.158181 | p0 |
+| 0 | 64.158439 / 64.154632 | d1 |
+| 1 | 93.074862 | d1 |
+| 3 | 110.703734 / 110.628907 | p0 |
