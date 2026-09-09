@@ -70,6 +70,25 @@ arms have now found exactly that, tonight's determinism pad being the fifth. So
 **"lossless" here means the strict gates pass**, not that a server under real,
 drifting load has a single determined output at these positions.
 
+**Staggered admission is bit-exact, and is the first intervention that has moved
+this number.** With `--launch-stagger-ms 25` and no speculation, the ladder
+returned **1280 of 1280** requests byte-identical to the sequential oracle at c64,
+on the suite selected for being the most divergence-prone, against 35/1280 and
+24/1280 in two matched barrier arms. Poisson `P(0 | 30) = 1.5e-13`; the harness
+certified it `output-identity-qualified` on its own. Cost is 14.2% of throughput.
+On the speculative lane the same stagger does not give exactness (44.61%
+divergent) but makes *which* slot diverges reproducible — modal minority-slot-set
+recurrence 33.8% under a barrier against 95.45% under stagger, which answers the
+9B lane's open "slot index or step membership" question.
+
+Single-stream generation is fully deterministic here: the `g1`, `g2` and `g3`
+oracles are identical 64 of 64 on both lanes across three fresh servers. The whole
+phenomenon is a concurrency artifact, and it is removable rather than intrinsic.
+
+**Unreplicated as of writing.** Chain 7 was queued immediately to check it: an
+exact replicate, the same stagger on the unbiased full suite, and a 5 ms stagger
+to see whether the lever costs less than 14%.
+
 **Speculation's 18x penalty is two effects.** Six intrinsic sites amplify 9.69x;
 thirteen more appear only under speculation and carry 63% of its events, where
 uniform amplification predicts 22 MTP0 events and zero were seen (p 2.6e-10). A
@@ -132,6 +151,12 @@ and `g1` (the fragile-suite baseline). Outstanding:
   ceiling or from `max_num_seqs`/`max_num_batched_tokens`.
 - **t8/t7** the TP2 crossover rungs and TP2 past c64, the two holes in the
   consolidated throughput matrix.
+- **r1/r2/r3** (chain 7, queued ahead of the rest) replicate the staggered
+  exactness result, test it on the full suite, and test a 5 ms stagger.
+
+Chain order is 1 -> 2 -> 5 -> 7 -> 3 -> 4 -> 6. Chains that are only sleeping in a
+wait loop can be stopped by pid, edited and relaunched; that is how arms were
+inserted mid-campaign without disturbing the cards.
 
 ## Where the mechanism work stands, and whose it is
 
