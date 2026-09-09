@@ -28,6 +28,10 @@ Warm-pass aggregate tok/s, and exact-vs-sequential-oracle counts:
 | 32 | **1147.6 (32/32)** | 988.4 (31/32) | 877.6 (32/32, other pass 31/32) |
 | 64 | **1206.0 (64/64)** | 1034.5 (61/64) | 909.4 (62/64) |
 
+(The MTP0 column is `d1`'s arm. `d2`'s independent MTP0 ladder measured 1208.0 / 1205.7 at 64 users
+- four measurements across two arms spanning 0.19% - but scored **64/64 then 63/64**. See the
+correction below: the MTP0 column is near-exact, not exact.)
+
 At 64 users, no speculation is **+16.6%** over depth 1 and **+32.6%** over depth 2, and it is the
 only column that stays exact. Speculation is a latency lever, not a throughput lever: it wins ~72%
 at one user and loses a third of aggregate throughput at 64.
@@ -49,9 +53,9 @@ it:
 - MTP2 at 64 users is **192 rows** and diverges *less* (62/64) than MTP1 at **128 rows** (60-61/64).
   More rows, fewer divergences - the wrong direction for a row-count mechanism.
 
-What survives is narrower and still useful: **speculation, not batch width, is what costs exactness
-here.** Every no-speculation rung measured on this host is exact; every speculative rung at 32 users
-and above is not. A plausible remaining mechanism is that divergence opportunities scale with the
+What survives is narrower and still useful: **speculation raises the divergence rate by about an
+order of magnitude.** It does not make an otherwise-exact system inexact - see the correction below;
+no-speculation is *near*-exact at 64 users, not exact. A plausible remaining mechanism is that divergence opportunities scale with the
 number of verify steps rather than with rows, which would also explain why deeper drafts - fewer
 verify steps for the same output length - diverge slightly less. That is a hypothesis, not a result.
 
@@ -65,3 +69,27 @@ First-pass aggregate figures are still warming (2 users: 104.5 then 217.6; 16 us
 667.1); the table uses pass 2. Aggregate throughput is scoped capacity evidence and is never a
 single-user headline. The 16-user MTP2 rung is anomalously low against its own 8-user rung and wants
 a repeat before it is quoted.
+
+
+## Second correction (same session): no-speculation is near-exact, not exact
+
+`d2`'s own MTP0 ladder lost one request at 64 users in its second pass, which falsifies the
+statement above that every no-speculation rung on this host is exact. Pooling both arms' 64-user
+rungs:
+
+| arm/depth | divergent / requests at 64 users | rate |
+| --- | ---: | ---: |
+| MTP0 (d1 + d2, four passes) | 1 / 256 | **0.39%** |
+| MTP1 (two passes) | 7 / 128 | 5.5% |
+| MTP2 (two passes) | 4 / 128 | 3.1% |
+
+And at 32 users: MTP0 0/128, MTP1 3/64 (4.7%), MTP2 1/64 (1.6%).
+
+So the honest claim is **rate, not category**. Speculation raises divergence roughly an order of
+magnitude at these rungs; it does not create a defect that is otherwise absent. This matches the
+published W4A16 record, which also saw one request in 448 diverge at 96 users without speculation
+and reported those rungs as near-exact rather than folding them into the claim.
+
+The practical consequence is unchanged and now better founded: for many concurrent sessions,
+speculation off is both faster in aggregate and an order of magnitude less likely to flip a token.
+The 64-user MTP0 rung should be published as **near-exact (255/256)**, never as exact.
