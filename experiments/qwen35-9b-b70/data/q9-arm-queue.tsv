@@ -12,3 +12,12 @@ a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
 a4d4	4	strict		
 a4d5	5	strict		
 a4d6	6	strict		
+# A3: capture sizes matched to the shape a depth-3 decode actually presents (4 rows/seq), rather
+# than the 27B lane's [1..64]. Tight list first; an uncaptured shape falls back to eager silently.
+a3tight	3	strict	CAPTURE_SIZES=1,2,3,4,5,6,8,12,16	
+# Tier B: determinism reach at high concurrency. Capture must be raised with the rungs or the top
+# rungs run eager and confound the identity answer (the x1 campaign's lesson).
+b0base	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024	
+b1sn256	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024 RMSNORM_SERIAL_ROWS=256	
+b2rowstable	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024	VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
+b3lmbi	3	ladders	CAPTURE_MAX=128 LADDER_CONCURRENCY=1,2,4,8,16,32,64,96,128 LADDER_MNS=128 LADDER_MBT=1024 LM_HEAD_BATCH_INVARIANT=1	
