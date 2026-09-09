@@ -32,10 +32,10 @@ export LOAD_MEMORY_MIB=7000
 echo $$ >"${out}/qwen35-4b-depth-20260909.pid"
 log() { printf '[dose %s] %s\n' "$(date '+%m-%d %H:%M:%S')" "$*" | tee -a "${wrap}"; }
 
-log "waiting for chain 5 (GDN group dose-response)"
-while [[ ! -e "${out}/qwen35-4b-gdn-20260909-DONE" && ! -e "${out}/qwen35-4b-gdn-20260909-STOPPED" ]]; do sleep 60; done
-[[ -e "${out}/qwen35-4b-gdn-20260909-STOPPED" ]] && { log "chain 5 stopped; not starting"; exit 1; }
-log "chain 5 done"
+log "waiting for chain 7 (stagger replication)"
+while [[ ! -e "${out}/qwen35-4b-stagger-20260909-DONE" && ! -e "${out}/qwen35-4b-stagger-20260909-STOPPED" ]]; do sleep 60; done
+[[ -e "${out}/qwen35-4b-stagger-20260909-STOPPED" ]] && { log "chain 7 stopped; not starting"; exit 1; }
+log "chain 7 done"
 
 wait_free() { while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]'; do sleep 30; done; sleep 10; }
 hardware_abort() {
