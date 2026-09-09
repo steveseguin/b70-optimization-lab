@@ -44,9 +44,14 @@ a8rc16	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=16
 a8rc64	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=64
 a11lmc	3	strict		VLLM_XPU_LM_HEAD_CHUNK_ROWS=128
 a12dch	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=1024
-a6de	3	strict		VLLM_XPU_MTP_DRAFT_EAGER=1
-a10bonus	3	strict		VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=1
 # Autotune is off in the strict lane, presumably for determinism. Screening it is worth doing
 # precisely because the identity gates will say whether that caution is still required.
-a9auto	3	strict		VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=1 VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=1
 x32kr	3	depth32k	DEPTH_MML=33024	
+#
+# REMOVED as unrunnable in this lane. run-w8a16-mtp1-strict-server.sh hard-pins these with no
+# ${VAR:-} escape, so passing them has no effect and the arm would abort on the in-container check:
+#   a9auto    VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0, ..._COORDINATE_DESCENT_TUNING=0
+#   a6de      VLLM_XPU_MTP_DRAFT_EAGER=0
+#   a10bonus  VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
+# The strict lane pins determinism-relevant settings by design; autotune is one of them. Testing it
+# needs a separate non-strict identity, which is a different lane and a different oracle, not a knob.
