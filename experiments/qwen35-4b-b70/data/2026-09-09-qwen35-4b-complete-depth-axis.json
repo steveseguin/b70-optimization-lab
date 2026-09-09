@@ -1,0 +1,33 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 d1s/d2s: the strict-suite depth axis completed at depths 1 and 2 (2026-09-09)",
+ "question": "The 2026-09-08 sweep ran the strict suite at depths 3, 4, 5 and 6 and found all four lossless with 3 and 4 tied at the top. Depths 1 and 2 were never run there, so the lane could say depth 3 is the best of 3-6 without knowing whether something shallower was as good.",
+ "config": "one B70, TP1, draft INT4 head, pad off, FULL_DECODE_ONLY capture 1-64, strict 12-prompt six-class realistic suite over completions, 512-token cap, class-balanced median tok/s over tokens 1-100 after TTFT, two fresh servers per arm",
+
+ "axis": [
+  {"depth": 0, "a": 102.53, "b": 102.50, "vs_mtp0": 1.00, "gates": "G1 12/12", "source": "d1s oracle, 2026-09-09"},
+  {"depth": 1, "a": 151.10, "b": 151.01, "vs_mtp0": 1.47, "gates": "G1 12/12, G2 12/12, G3 12/12 twice", "source": "d1s, 2026-09-09"},
+  {"depth": 2, "a": 176.20, "b": 176.28, "vs_mtp0": 1.72, "gates": "G1 12/12, G2 12/12, G3 12/12 twice", "source": "d2s, 2026-09-09"},
+  {"depth": 3, "a": 177.41, "b": 177.17, "vs_mtp0": 1.73, "gates": "all 12/12", "source": "v1, 2026-09-07"},
+  {"depth": 4, "a": 177.69, "b": 177.45, "vs_mtp0": 1.73, "gates": "all 12/12", "source": "e4, 2026-09-08"},
+  {"depth": 5, "a": 167.12, "b": 167.00, "vs_mtp0": 1.63, "gates": "all 12/12", "source": "e5, 2026-09-08"},
+  {"depth": 6, "a": 160.74, "b": 160.48, "vs_mtp0": 1.57, "gates": "all 12/12", "source": "e6, 2026-09-08"}
+ ],
+
+ "finding_1_every_depth_is_lossless": "All seven settings pass every gate: G1 on the MTP0 pair, G2 on the candidate pair, and G3 against the MTP0 oracle twice, 12/12 each. Speculation on this model and kernel is lossless on the strict suite at every depth from 1 to 6, which completes the axis rather than extending it.",
+
+ "finding_2_the_plateau_is_wider_than_published": {
+  "statement": "The 2026-09-08 sweep described depths 3 and 4 as tied at the top. Depth 2 belongs in that group: 176.20 and 176.28 against depth 3's 177.41 and 177.17, a 0.7% difference. The plateau is depths 2 through 4, and only depth 1 at 1.47x is clearly below it.",
+  "caveat": "0.7% is larger than the within-arm spread, which is 0.05% for depth 2 and 0.14% for depth 3, and smaller than this host's documented ~3% back-to-back drift. Depth 3 is very slightly ahead single-user; it is not a difference to choose on."
+ },
+
+ "finding_3_depth_2_may_be_the_better_default": {
+  "statement": "Single-user, depth 2 gives up 0.7% against depth 3. At c64 it returns 1364.4 tok/s against depth 3's 1200.3, which is 14% more, with an identical identity cost - the depth dose-response showed the oracle-free rate flat at 7.07% and 7.37% across depths 1, 2, 3 and 6.",
+  "reading": "For a server that sees any meaningful concurrency, depth 2 dominates depth 3: it is level single-user and materially better under load. The published operating point of depth 3 was chosen from a sweep that never measured depth 2.",
+  "not_a_recommendation_to_change_the_package": "This is one comparison on one card. The packaged headline is a strict-suite single-user number where depth 3 is legitimately, if marginally, the fastest. Changing the operating point is a packaging decision that wants its own replication, and it was out of scope tonight."
+ },
+
+ "closes_the_requested_axis": "The campaign was asked for MTP 0, 1, 2 and 3. Depths 0 and 3 were already published; 1 and 2 are measured here to the same standard, on the same suite, with the same gates.",
+ "campaign_roots": ["/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-d1s",
+                    "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-d2s"]
+}
