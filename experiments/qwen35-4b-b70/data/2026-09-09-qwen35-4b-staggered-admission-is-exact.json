@@ -46,7 +46,7 @@
  "why_it_works": "The 9B lane established that a batch of constant composition is deterministic and that the divergence needs composition to vary. A per-index stagger does not remove the variation - the cohort still ramps from 1 request to 64 over 1.575 s - but it makes the variation the same on every pass, so each request sees a reproducible composition history. On the speculative lane the same manipulation makes which slot diverges reproducible, 33.8% modal recurrence under a barrier against 95.45% under stagger. At MTP0 it goes further and the concurrent output matches the sequential oracle outright.",
  "the_practical_lever": {
   "statement": "Exact reproducibility at 64 concurrent users costs about 1% of throughput with a 5 ms admission stagger. 5 ms is the floor: 2 ms leaves 0.94% divergent and 1 ms leaves 2.89%, no better than no stagger at all, even though 1 ms already makes the run highly reproducible pass-to-pass.",
-  "combines_with_the_c16_result": "Above c16 speculation already costs throughput and multiplies divergence, so the recipe for a server that needs bit-exactness at high concurrency is: no speculation, plus staggered admission. Without speculation and without stagger, c64 is 1719 tok/s at ~2% divergent; with stagger it is 1474 tok/s at 0%.",
+  "combines_with_the_c16_result": "Above c16 speculation costs throughput and multiplies divergence on both topologies, so the recipe for a server needing bit-exactness at high concurrency is: no speculation, plus a 5 ms admission stagger. On one card that is 1701.5 tok/s at c64; on two it is 2711.1.",
   "what_it_does_not_offer": "Depth 3 with the same stagger is still 44.61% divergent on this suite. Stagger does not rescue the speculative path, it only makes which slot diverges reproducible there."
  },
  "how_much_to_believe": {
@@ -167,5 +167,48 @@
    "why_it_matters": "The deployable claim is oracle-agreement, not reproducibility, so 5 ms is the floor and 1 ms and 2 ms do not suffice. But the distinction is worth keeping: a server that only needs run-to-run reproducibility, rather than agreement with single-stream output, may be able to buy it at 1 ms for no measurable throughput cost at all - 1723.7 tok/s against the barrier's 1719.0."
   },
   "the_2ms_recurrence_is_not_read": "2 ms reports 85.7% recurrence, below both 1 ms and 5 ms. The recurrence metric is not monotone across these arms and this campaign has not established its noise level, so the ordering of 85.7, 92.8 and 99.1 is not interpreted. What is solid is that every staggered arm is far above the barrier's 31-34%, and that oracle-agreement appears only from 5 ms."
+ },
+ "IT_WORKS_ON_TWO_CARDS_TOO": {
+  "arms": "w1 (full suite) and w2 (fragile suite), both TP2 at c64 with a 5 ms stagger, 20 passes each",
+  "result": [
+   {
+    "arm": "t5",
+    "topology": "TP2",
+    "suite": "full",
+    "admission": "barrier",
+    "mtp0": "1278/1280 (0.16%)",
+    "tok_s": 2786.5
+   },
+   {
+    "arm": "w1",
+    "topology": "TP2",
+    "suite": "full",
+    "admission": "5 ms",
+    "mtp0": "1280/1280 (0.00%)",
+    "tok_s": 2711.1,
+    "harness": "output-identity-qualified"
+   },
+   {
+    "arm": "t6",
+    "topology": "TP2",
+    "suite": "fragile",
+    "admission": "barrier",
+    "mtp0": "1263/1280 (1.33%)",
+    "tok_s": 2790.0
+   },
+   {
+    "arm": "w2",
+    "topology": "TP2",
+    "suite": "fragile",
+    "admission": "5 ms",
+    "mtp0": "1280/1280 (0.00%)",
+    "tok_s": 2708.9,
+    "harness": "output-identity-qualified"
+   }
+  ],
+  "cost": "2711.1 against 2786.5 tok/s, -2.7%",
+  "finding": "The 5 ms stagger gives bit-exactness on two cards as well as one, on both the unbiased and the fragile suite, at a 2.7% throughput cost. Six arms now show exactness under stagger: g3, r1, r2 and r3 on one card and w1 and w2 on two.",
+  "the_deployable_configuration": "Two cards, no speculation, 5 ms admission stagger: 2711 tok/s at c64, byte-identical to single-stream output, harness-certified. That is 1.59x the throughput of the equivalent one-card configuration at 1701.5 tok/s, at the same exactness.",
+  "the_speculative_lane_again_gets_reproducibility_not_exactness": "Depth 3 under stagger on two cards stays divergent - 10.08% on the full suite and 28.52% on the fragile one - but its oracle-free minority rate collapses, 4.69% to 1.79% and 13.91% to 3.42%, the same per-slot determinism seen on one card. Stagger does not rescue speculation on either topology."
  }
 }
