@@ -23,6 +23,6 @@ if [[ "$n" -eq 0 ]]; then
   echo "P3-CHAIN-DONE"; exit 0
 fi
 echo "$(date -u +%FT%TZ) confirming $n arms serially on a quiet host"
-QUEUE="$Q" PARALLELISM=1 bash "$REPO/experiments/qwen35-9b-b70/scripts/q9-arm-queue-driver.sh"
+QUEUE="$Q" PARALLELISM=1 SKIP_XPU_SMI=0 DISPATCH_STAGGER=30 bash "$REPO/experiments/qwen35-9b-b70/scripts/q9-arm-queue-driver.sh"
 echo "$(date -u +%FT%TZ) confirm driver exit $?"
 echo "P3-CHAIN-DONE"

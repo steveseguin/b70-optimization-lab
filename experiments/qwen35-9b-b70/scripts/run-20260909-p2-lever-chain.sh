@@ -9,14 +9,14 @@ LOG=$LOGDIR/q9-p2-chain.log
 exec >>"$LOG" 2>&1
 echo "=== $(date -u +%FT%TZ) P2 chain start ==="
 echo "$(date -u +%FT%TZ) waiting for P1"
-until grep -q P1-CHAIN-DONE "$LOGDIR/q9-p1-chain.log" 2>/dev/null; do sleep 60; done
+until grep -q P1B-CHAIN-DONE "$LOGDIR/q9-p1b-chain.log" 2>/dev/null; do sleep 60; done
 # P1 writing DONE is not P1 succeeding. On 2026-09-09 P1 aborted because P0 aborted, wrote
 # P1-CHAIN-DONE, and this chain cheerfully started the whole lever queue against a lane that had
 # never passed its reproduction gate.
-if grep -q "P1-ABORT" "$LOGDIR/q9-p1-chain.log" 2>/dev/null; then
+if grep -q "P1-ABORT" "$LOGDIR/q9-p1b-chain.log" 2>/dev/null; then
   echo "P2-ABORT: P1 aborted; not starting the lever queue"; echo "P2-CHAIN-DONE"; exit 2
 fi
-if ! grep -q "all P1 arms finished" "$LOGDIR/q9-p1-chain.log" 2>/dev/null; then
+if ! grep -q "P1b driver exit 0" "$LOGDIR/q9-p1b-chain.log" 2>/dev/null; then
   echo "P2-ABORT: P1 did not report all arms finished"; echo "P2-CHAIN-DONE"; exit 2
 fi
 echo "$(date -u +%FT%TZ) P1 finished cleanly; starting the lever queue at parallelism ${PARALLELISM:-2}"

@@ -67,7 +67,7 @@ free_card() {
 run_arm() {
   local run=$1 depth=$2 stages=$3 card=$4 harness_env=$5 extra_env=$6
   local port=$((18131 + card))
-  local envs=(REPO="$REPO" RUN="$run" LANE="$LANE" TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1
+  local envs=(REPO="$REPO" SKIP_XPU_SMI="${SKIP_XPU_SMI:-1}" RUN="$run" LANE="$LANE" TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1
               STAGES="$stages" PORT="$port" XPU_DEVICE_MASK="$card" ARM_DEVICES="$card"
               MODEL_DIR="$MODEL" MODEL_MANIFEST="$MANIFEST" QUANT=compressed-tensors
               CAMPAIGN_DATE=20260909)
@@ -99,7 +99,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   run_arm "$run" "$depth" "$stages" "$card" "$harness_env" "$extra_env" &
   CARD_PID[$card]=$!
   processed=$((processed+1))
-  sleep 5
+  sleep "${DISPATCH_STAGGER:-120}"
 done < "$QUEUE"
 
 for k in "${!CARD_PID[@]}"; do p=${CARD_PID[$k]:-}; [[ -n "$p" ]] && wait "$p" 2>/dev/null; done

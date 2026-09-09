@@ -77,8 +77,19 @@ printf 'LANE=%s RUN=%s TP=%s DEPTH=%s GRAPH=%s DRAFT_HEAD=%s QUANT=%s PAD=%s mas
   "$LANE" "$RUN" "$TP" "$DEPTH" "$GRAPH" "$DRAFT_HEAD" "$QUANT" "$W4A16_PAD" "$mask" "$ARM_DEVICES" "$model_dir" "$image_id" "$port" >"${root}/config.txt"
 
 # v3: per-device health. Requires rc=0 and no non-OK Status line for every card this arm owns.
+# SKIP_XPU_SMI: parallel arms must not run xpu-smi. Polling GPU stats while another server is
+# initialising soft-locks the cards on this hardware; three of four P1 arms died with
+# "No XPU devices are available" on 2026-09-09 while a fourth, whose preflight ran first, survived.
+# Simultaneous container init on its own is fine - three concurrent probes on cards 1-3 all saw
+# their device - so xpu-smi during a neighbour's init is what is left. The torch compute smoke in
+# arm_health still runs and is the stronger check anyway: it executes on the device and verifies the
+# arithmetic, where xpu-smi only reads a status register.
 devices_normal() {
   local tag=$1 f="${root}/$1-xpu-smi-health.txt" d rc=0
+  if [[ "${SKIP_XPU_SMI:-0}" == 1 ]]; then
+    echo "skipped: SKIP_XPU_SMI=1 (parallel arm; compute smoke covers device health)" >"${f}"
+    return 0
+  fi
   : >"${f}"
   for d in ${ARM_DEVICES//,/ }; do
     { echo "--- device ${d} ---"; timeout 60 xpu-smi health -d "${d}" 2>&1; } >>"${f}" || rc=1

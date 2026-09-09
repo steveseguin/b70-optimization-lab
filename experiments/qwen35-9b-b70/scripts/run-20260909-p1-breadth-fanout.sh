@@ -40,7 +40,7 @@ echo "$(date -u +%FT%TZ) P0 passed; fanning out four arms"
 # arm <run> <depth> <card> <port> <stages>
 arm() {
   local run=$1 depth=$2 card=$3 port=$4 stages=$5
-  env REPO="$REPO" RUN="$run" LANE=qwen35-9b-w4a16 TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1 \
+  env REPO="$REPO" SKIP_XPU_SMI=1 RUN="$run" LANE=qwen35-9b-w4a16 TP=1 DEPTH="$depth" GRAPH=1 DRAFT_HEAD=1 \
       STAGES="$stages" PORT="$port" XPU_DEVICE_MASK="$card" ARM_DEVICES="$card" \
       MODEL_DIR=/home/steve/llm-models/qwen35-9b-w4a16 \
       MODEL_MANIFEST=$REPO/experiments/qwen35-9b-b70/manifests/model-direct-redhatai-qwen35-9b-w4a16-a398088c.json \
@@ -49,12 +49,22 @@ arm() {
   echo "$(date -u +%FT%TZ) arm $run (depth $depth, card $card) exit $?"
 }
 
-arm d1   1 0 18131 "strict ladders" &  p_d1=$!
-arm d2   2 1 18132 "strict ladders" &  p_d2=$!
-arm d3   3 2 18133 "strict ladders" &  p_d3=$!
+# Stagger the launches. Even with xpu-smi out of the way, four servers entering device
+# initialisation in the same second is a shape nothing here has ever run.
+arm d1   1 0 18131 "strict ladders" &  p_d1=$!; sleep 120
+arm d2   2 1 18132 "strict ladders" &  p_d2=$!; sleep 120
+arm d3   3 2 18133 "strict ladders" &  p_d3=$!; sleep 120
 arm x32k 3 3 18134 "depth32k"       &  p_x=$!
 echo "$(date -u +%FT%TZ) arms launched: d1=$p_d1 d2=$p_d2 d3=$p_d3 x32k=$p_x"
 
 for p in $p_d1 $p_d2 $p_d3 $p_x; do wait "$p"; done
+# An arm that aborted is a P1 failure. Waiting on the pids only proves they exited; the previous
+# version would have reported success with three of four arms dead and let the lever queue run on
+# a breadth phase that never happened.
+failed=0
+for d in /mnt/fast-ai/bench-results/qwen35-9b-w4a16-*-20260909-{d1,d2,d3,x32k}; do
+  [[ -e "$d/ABORTED" ]] && { echo "P1 arm $(basename "$d") aborted: $(cat "$d/ABORTED")"; failed=1; }
+done
+if (( failed )); then echo "P1-ABORT: one or more arms aborted"; echo "P1-CHAIN-DONE"; exit 2; fi
 echo "$(date -u +%FT%TZ) all P1 arms finished"
 echo "P1-CHAIN-DONE"
