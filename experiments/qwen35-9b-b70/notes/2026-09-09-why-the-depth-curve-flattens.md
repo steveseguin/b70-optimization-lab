@@ -90,3 +90,57 @@ they are a real test rather than a restatement.
 Measured on this host: **64.16 / 93.09 / 110.09 / 110.68 / 105.19** for depths 0-4. Depth 3 is the
 peak by 0.53% over depth 2, and depth 4 is already 5.0% down. No depth setting beats ~110 tok/s
 here, and single-stream gains must come from a cheaper step rather than a longer draft.
+
+## Depth 5 measured: the revision was an overcorrection
+
+`a4d5` measured **101.800 tok/s**. The original model said 103.4 (-1.5% error); the revision made
+after depth 4 said 97.2 (+4.7% error). **The revision was worse than the model it replaced.**
+
+| | acceptance | step ms | rate |
+| --- | ---: | ---: | ---: |
+| measured | 3.160 | 31.04 | 101.80 |
+| original model | 3.225 | 31.17 | 103.4 |
+| revised model | 3.185 | 32.75 | 97.2 |
+
+With five increments in hand the shape is legible:
+
+```
+step increments  : +3.84  +2.16  +3.38  +3.72  +2.35     mean +3.09
+accept increments: +0.809 +0.568 +0.387 +0.254 +0.142
+accept ratios    :  0.702  0.681  0.656  0.559
+```
+
+**Step cost is not super-linear.** The increments oscillate around **+3.09 ms**, essentially the
++3.1 originally assumed. The "growing" increments that prompted the revision (+2.16, +3.38, +3.72)
+are within a series whose own scatter runs 2.16 to 3.84; refitting a linear parameter from the
+single highest one was overfitting a noisy observation, and it produced a worse model.
+
+**Acceptance is where the original model was genuinely optimistic.** The decay ratio is not constant
+at 0.70 - it is itself decaying (0.702, 0.681, 0.656, 0.559), so deep drafts fall off faster than a
+geometric series predicts. That is a real effect and it is what made the original 103.4 land 1.5%
+high.
+
+The revision compounded a real acceptance error with a fabricated step-cost error, both pushing the
+same way. **Do not refit a parameter on one residual that lies inside the series' existing scatter.**
+
+### Depth 6 projection, third pass
+
+Constant +3.09 ms per depth, acceptance ratio continuing to decay at about 0.56:
+**acceptance 3.240, step 34.13 ms -> 94.9 tok/s.** Original said 98.0, the overcorrection said 88.7.
+
+This projection should be treated as directional. It is fitted to five points of a noisy series, and
+its value is that it says "depth 6 is clearly worse than depth 3" - a claim all three versions of
+the model agree on - not that it pins a number.
+
+### The depth ladder, closed
+
+Measured on this host, all lossless (G1/G2/G3 12/12 at every depth tested):
+
+```
+depth   0       1       2       3        4        5
+tok/s   64.16   93.09   110.09  110.68   105.15   101.80
+```
+
+Depth 3 is the peak. Nothing beyond it recovers, and the mechanism is understood: acceptance gains
+decay faster than geometrically while step cost grows at a constant ~3.1 ms per depth. **No depth
+setting beats ~110 tok/s on this host**, and single-stream gains must come from a cheaper step.
