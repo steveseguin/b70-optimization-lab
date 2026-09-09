@@ -1,0 +1,34 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 t4: real-content 2K-32K depth ladder on two B70s (2026-09-09)",
+ "question": "The 4B's long-context curve had only ever been measured on one card. TP2 was packaged for neither context nor concurrency, so whether the second card's advantage holds as the KV cache grows was unknown.",
+ "config": "two B70s (mask 0,1), TP2, depth 3 via qwen3_5_mtp, draft INT4 head, FULL_DECODE_ONLY capture 1-64, pad off, max-model-len 33024, max-num-batched-tokens 4096, real-content exact-depth fixture qwen38-bce40ca-mixed-content-depth-v1, three content classes, 128-token measurement window",
+ "metric": "conventional 99-interval tok/s after TTFT, median across the three content classes. Verified to be the same field the published TP1 v2 row reports as median_decode_tok_s: recomputing TP1 from its raw case files reproduces 99.6 / 98.1 / 95.7 / 91.6 / 87.8 / 84.4 exactly.",
+
+ "table": [
+  {"active_context_tokens": 2048,  "tp1_mtp0": 99.6, "tp2_mtp0": 138.7, "tp2_over_tp1_mtp0": 1.39, "tp1_depth3": 177.0, "tp2_depth3": 247.7, "tp2_over_tp1_depth3": 1.40},
+  {"active_context_tokens": 4096,  "tp1_mtp0": 98.1, "tp2_mtp0": 135.2, "tp2_over_tp1_mtp0": 1.38, "tp1_depth3": 188.3, "tp2_depth3": 261.5, "tp2_over_tp1_depth3": 1.39},
+  {"active_context_tokens": 8192,  "tp1_mtp0": 95.7, "tp2_mtp0": 130.8, "tp2_over_tp1_mtp0": 1.37, "tp1_depth3": 188.8, "tp2_depth3": 271.4, "tp2_over_tp1_depth3": 1.44},
+  {"active_context_tokens": 16384, "tp1_mtp0": 91.6, "tp2_mtp0": 125.8, "tp2_over_tp1_mtp0": 1.37, "tp1_depth3": 191.6, "tp2_depth3": 276.8, "tp2_over_tp1_depth3": 1.44},
+  {"active_context_tokens": 24576, "tp1_mtp0": 87.8, "tp2_mtp0": 119.5, "tp2_over_tp1_mtp0": 1.36, "tp1_depth3": 161.5, "tp2_depth3": 235.8, "tp2_over_tp1_depth3": 1.46},
+  {"active_context_tokens": 32768, "tp1_mtp0": 84.4, "tp2_mtp0": 114.7, "tp2_over_tp1_mtp0": 1.36, "tp1_depth3": 149.9, "tp2_depth3": 222.0, "tp2_over_tp1_depth3": 1.48}
+ ],
+
+ "findings": {
+  "lossless_everywhere": "All 18 TP2 cases are byte-identical to the same-configuration MTP0 oracle, by output_token_ids_sha256, at every context depth and in all three content classes. Every gate check passed on all 36 cases across both arms. TP2 long context is lossless on this fixture.",
+  "the_second_card_holds_its_advantage": "TP2 over TP1 is 1.36 to 1.39x without speculation at every depth from 2K to 32K - flat, and matching the 1.35x measured on the strict suite. So the second card's benefit does not decay as the KV cache grows.",
+  "speculation_gains_with_context": "Under depth 3 the TP2 advantage rises with context, 1.40x at 2K to 1.48x at 32K. Within TP2, speculation is worth 1.79x at 2K and 1.94x at 32K over its own MTP0. Both point the same way: the longer the context, the more expensive the target forward pass relative to the draft, so accepted draft tokens save more.",
+  "headline": "At 32K on two cards: 114.7 tok/s without speculation and 222.0 tok/s at depth 3, both exact."
+ },
+
+ "caveats": {
+  "class_spread": "Depth-3 rates vary widely by content class - at 32K the three classes read 185.5, 222.0 and 272.9 - because draft acceptance depends on how predictable the text is. The median across classes is the summary; a single-class number would be misleading in either direction.",
+  "ttft": "TTFT at 32K is 3.72 s on two cards. The published TP1 v2 row reports 6.40 s at the same depth, so prefill scales roughly with the card count, but this campaign did not measure prefill separately.",
+  "concurrency": "This is a single-stream depth ladder. It says nothing about TP2 under concurrency, which chain 3's t5 arm measures.",
+  "scope": "Evidence only. families/qwen-4b.json lists configured_max_context_tokens [1024, 8192] and tp [1]; both dimensions now have measurements that would support extending them, which is a packaging decision left to the owner."
+ },
+ "campaign_roots": {
+  "tp2": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t4",
+  "tp1_published": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-tp1-mtp3-graph1-dhint4-20260907-v2"
+ }
+}
