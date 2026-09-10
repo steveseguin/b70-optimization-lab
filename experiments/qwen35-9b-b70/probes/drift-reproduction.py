@@ -22,10 +22,14 @@ from vllm import LLM, SamplingParams
 
 def main() -> None:
     n = int(os.environ.get("REQUESTS", "64"))
-    compare = int(os.environ.get("COMPARE", "64"))
     drift = os.environ.get("DRIFT", "1") == "1"
     cap_min = int(os.environ.get("CAP_MIN", "32"))
     cap_max = int(os.environ.get("CAP_MAX", "128"))
+    # Compare the whole generation by default. Comparing a prefix is how the first five runs of this
+    # probe returned a clean pass that meant nothing: they generated 128 tokens and compared 64, while
+    # in the ladder data 78% of divergences first appear at position 64 or later and the median first
+    # difference sits at token 90. A short window does not weaken this test, it removes it.
+    compare = int(os.environ.get("COMPARE", str(cap_max)))
     # A prompt with no near-tie cannot show this effect however the batch is composed, and the
     # divergences in the ladder come from twelve prompts selected for sitting on ties. SUITE points at
     # that suite; without it the probe uses one generic prompt and is only a control.
@@ -37,6 +41,9 @@ def main() -> None:
             "Summarise the operational impact of a cache invalidation rule that fires on every write "
             "to the primary index, for an on-call engineer paged at 3am."
         ]
+    if compare < cap_max:
+        print(f"WARNING compare={compare} < cap_max={cap_max}: most ladder divergences first appear "
+              f"at position >=64 (median 90), so this window will miss them", flush=True)
     llm = LLM(
         model="/model", dtype="float16", quantization="compressed-tensors",
         tensor_parallel_size=int(os.environ.get("TP", "2")),

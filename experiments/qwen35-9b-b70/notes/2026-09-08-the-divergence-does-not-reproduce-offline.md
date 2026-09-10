@@ -51,3 +51,22 @@ launcher can run eager, so a server arm with the hook enabled and the fragile su
 divergence next to per-layer digests for the first time.
 
 Evidence: probe `probes/drift-reproduction.py`.
+
+## Amendment 2026-09-09: a fourth flaw, and the rerun that never happened
+
+The five configurations above generated 128 tokens and compared the first 64. In the ladder data 78% of
+divergences first appear at position 64 or later and the median first difference is at token 90, so the
+comparison window excluded most of the effect it was looking for. This is the same class of mistake as
+the constant-composition window in the first flaw, found the same morning; the probe's `COMPARE` now
+defaults to the full generation and warns when it is shorter than `CAP_MAX`.
+
+The full-window rerun (`scripts/run-20260908-drift-reproduction.sh`, 2026-09-08 14:07 UTC) did not
+complete: the TP2 worker failed in oneCCL with `opendir failed: could not open device directory`, because
+the runner set none of the oneCCL transport environment the strict launchers set
+(`CCL_ZE_IPC_EXCHANGE=pidfd` and the rest), and the lockstep control was cut off during weight loading.
+The runner now carries those lines and is queued behind the 4B row-chunk chain.
+
+Until it reports, the headline of this note is **weaker than written**: the offline API has not been
+shown to reproduce the divergence, but it has not been given a fair chance to either. The serving-path
+conclusion in "What is left" stands on the 4B lane's staggered-admission result, which is independent of
+this probe, and not on the five nulls above.
