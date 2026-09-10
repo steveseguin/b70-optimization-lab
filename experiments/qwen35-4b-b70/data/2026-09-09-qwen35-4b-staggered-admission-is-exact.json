@@ -232,5 +232,25 @@
   },
   "finding": "The recipe holds across the whole measured range. Not one of 2720 requests diverged at any of the four rungs, and the harness certified the arm. Combined with the c64 arms, staggered admission on two cards without speculation is bit-exact from c16 to c128, which is the full range this campaign measured at all.",
   "depth3_at_every_rung": "The speculative lane behaves the same way at every rung as it did at c64: still divergent on the oracle-based measure - 6.25%, 12.50%, 7.60%, 7.03% - while the oracle-free minority rate collapses to 0.57%, 1.14%, 1.42% and 0.64%, against 4.69% unstaggered. Per-slot determinism holds across the range; agreement with the sequential oracle does not."
+ },
+ "THE_LEVERS_COMPOSE": {
+  "why_this_arm_existed": "max_num_batched_tokens 512->1024 (with max_num_seqs 128) halves depth-3 divergence by reshaping the composition history; the stagger makes that history reproducible. Different mechanisms, so their combination was not predictable from either alone. x3 applies both on the fragile suite at c64, 20 passes, and r3 (5 ms stagger, engine defaults 64/512) is the matched comparator.",
+  "mtp0": {
+   "x3": "1280/1280 exact at 1699.7 tok/s, harness classification output-identity-qualified",
+   "r3_comparator": "1280/1280 at 1701.5 tok/s",
+   "reading": "The exact recipe is unchanged by the scheduler budget. Seven arms now show MTP0 exactness under a 5 ms or 25 ms stagger."
+  },
+  "depth3": {
+   "x3": "1041/1280 exact, 18.67% divergent, oracle-free minority 9.90%, 23 bistable sites, 1180.5 tok/s",
+   "r3_comparator": "646/1280, 49.53% divergent, minority 5.28%, 40 bistable, 1173.5 tok/s",
+   "barrier_comparators_g1_g2": "53.98% and 51.80% divergent, minority 27-29%",
+   "reading": "On the oracle measure the levers compose: 49.53% to 18.67% at the same stagger, a 2.65x reduction, Poisson P(<=239 | 634) far below 1e-100. On the oracle-free measure they do not: minority 9.90% against 5.28%, so a larger budget makes the staggered speculative cohort less self-consistent while bringing its majority closer to the sequential oracle. The two thresholds identified under THE_FLOOR_AND_A_CORRECTION move in opposite directions here.",
+   "what_is_not_measured": "No fragile-suite arm ran the scheduler budget alone at depth 3 (mb ran it on the full suite, 13.28% -> 5.23%). So x3 says the combination beats the stagger alone by 2.65x; whether it beats the budget alone on this suite is not separated."
+  },
+  "operational": "The deployable recipe (no speculation, 5 ms stagger) is exact with either scheduler budget, so the budget can be chosen for throughput. For a speculative server the pair is the best depth-3 configuration measured on the fragile suite, 18.67% against 44-54% for every other depth-3 c64 arm on it.",
+  "roots": [
+   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-x3",
+   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-r3"
+  ]
  }
 }

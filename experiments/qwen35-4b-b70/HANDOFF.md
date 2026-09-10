@@ -1,7 +1,11 @@
 # Qwen3.5-4B W4A16 on B70 — lane handoff
 
-Last updated **2026-09-09**. The overnight identity campaign is **complete**:
-nine chained runners, 31 arms, zero hardware aborts, finished 07:26.
+Last updated **2026-09-09 evening**. The overnight identity campaign is
+**complete**: nine chained runners, 31 arms, zero hardware aborts, finished 07:26.
+Chain 10 (the three open questions, `x1`-`x3`) finished 19:27. **Chain 11 is
+running** (`y1`-`y3`, the row-chunk hypothesis for the throughput dip, wrapper
+`/mnt/fast-ai/bench-results/qwen35-4b-rowchunk-20260909-wrapper.log`), with the
+corrected 9B offline drift probe queued behind it.
 
 ## What this lane is
 
@@ -96,8 +100,16 @@ the single-stream oracle; at depth 3 it is equally reproducible but different fr
 it. Speculation does not reintroduce randomness, it moves the deterministic answer
 away from the sequential one.
 
-Still open: `r2` tests the same stagger on the unbiased full suite and `r3` a 5 ms
-stagger. Other rungs, two cards and other models are unmeasured.
+All of that has since closed. `r2` is exact on the unbiased full suite, `r3`
+shows 5 ms is as exact as 25 ms at 1.0% cost, `w1`/`w2` show it on two cards, and
+chain 10's `x1` shows it at **every rung**: TP2 with a 5 ms stagger is 160/160,
+320/320, 960/960 and 1280/1280 at c16, c32, c96 and c128 — 2720 of 2720 requests,
+at 3022.0 tok/s for the top rung against 3103.9 unstaggered. `x3` shows the two
+levers compose: with `max_num_batched_tokens` 1024 the MTP0 recipe is still
+1280/1280 (1699.7 tok/s), and on the speculative lane the pair reads 18.67%
+divergent against 49.53% for the stagger alone — though oracle-free minority rises
+from 5.28% to 9.90%, so the two thresholds move in opposite directions. Other
+models remain unmeasured.
 
 **The divergence sites are exact ties — measured, not inferred.** At
 `cache-c056` index 50 the sequential pass assigns `" HTTP"` and `" Redis"` the
@@ -150,9 +162,10 @@ sites, and the oracle-free `min%`), `probe-tie-margin.py`.
 
 ## What the campaign ran
 
-Nine chained runners, 31 arms, 07:26 finish, no hardware aborts. Scripts in
-`scripts/run-20260909-*`, wrappers at
-`/mnt/fast-ai/bench-results/qwen35-4b-{exhaustive,fragile,gdn,stagger,depth,margin,shallow,mbase,tp2stag}-20260909-wrapper.log`.
+Nine chained runners, 31 arms, 07:26 finish, no hardware aborts; then chain 10
+(`gen`, three arms, 18:46-19:27) and chain 11 (`rowchunk`, three arms, from 20:00).
+Scripts in `scripts/run-20260909-*`, wrappers at
+`/mnt/fast-ai/bench-results/qwen35-4b-{exhaustive,fragile,gdn,stagger,depth,margin,shallow,mbase,tp2stag,gen,rowchunk}-20260909-wrapper.log`.
 A chain sleeping in its wait loop can be stopped by pid, edited and relaunched;
 that is how arms were inserted mid-campaign without disturbing the cards.
 
@@ -173,10 +186,20 @@ depth 3 single-user and 14% better at c64. And a warning: a divergence rate is n
 a property of (model, depth, concurrency) — two servers differing only in
 `max_num_batched_tokens` differ 2.5x at the same rung.
 
-**Known and unexplained.** Aggregate throughput is not monotone in concurrency:
-one card reads 1595 tok/s at c32, **1360 at c40**, 1732 at c64, reproduced to 0.1%
-across two arms. And the c16 identity step survives the elimination of both
-candidates that sat at 16 sequences, so it has no named mechanism.
+**The throughput dip is at c36, not c40, and is not padding.** `x2` mapped
+c32-c64 at every rung with every rung graph-captured: 1593 tok/s at c32, **1253 at
+c36**, then 1360, 1438, 1508, 1623, 1727 — a 21% cliff at 32→36 and a linear
+recovery to c64. Padding to a captured shape is eliminated by construction. The
+one thing in the server with that shape is the R224 overlay's 32-row FP16 linear
+chunk: above 32 sequences the tail piece holds 4, 8, 12, 16, 24 then 32 rows and
+throughput tracks it, and at depth 3 (four rows per sequence) the only rungs that
+dip, c36 and c44, are the only two leaving a 16-row tail. **Chain 11 tests it**:
+`y1` reruns x2 with the chunk disabled, `y2` predicts the next cliff at c68 with
+it on, `y3` checks the exact recipe survives the change. Until `y1` reports this is
+a hypothesis. If it holds it applies to every lane running R224, and every
+published exact-throughput rung (16, 32, 64, 96, 128) happens to sit where the
+cost is zero. Also still unexplained: the c16 identity step survives the
+elimination of both candidates that sat at 16 sequences.
 
 ## Scope
 

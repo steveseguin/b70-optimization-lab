@@ -77,9 +77,37 @@
     1848.9
    ],
    [
+    36,
+    1252.9,
+    1102.2,
+    null,
+    null
+   ],
+   [
     40,
     1360.0,
-    1149.5,
+    1156.4,
+    null,
+    null
+   ],
+   [
+    44,
+    1438.4,
+    1143.5,
+    null,
+    null
+   ],
+   [
+    48,
+    1508.2,
+    1189.7,
+    null,
+    null
+   ],
+   [
+    56,
+    1622.5,
+    1190.1,
     null,
     null
    ],
@@ -104,7 +132,8 @@
     3103.9,
     2157.0
    ]
-  ]
+  ],
+  "note_on_tp1_c36_to_c56": "c36, c40, c44, c48 and c56 in the TP1 columns are x2 (2026-09-09, ten passes, every rung in the capture set, max_num_seqs 64, max_num_batched_tokens 512). x2 also re-read c32 (1593.4 / 1153.1) and c64 (1726.9 / 1201.4), within 0.2% of the pooled values kept in those rows."
  },
  "readings": {
   "crossover": "Both topologies cross between c16 and c20. On one card speculation leads by 2.8% at c16 and trails by 14.4% at c20; on two cards it leads by 5.9% at c16 and trails by 18.3% at c20. The ceiling is a property of the concurrency, not of the card count.",
@@ -115,7 +144,7 @@
  },
  "caveats": {
   "mixed_server_configs_at_high_rungs": "c96 and c128 come only from f4, which ran max_num_seqs 128 and max_num_batched_tokens 1024 against the 64/512 used elsewhere, and c64 pools f1, f4 and v1. Those settings materially change the divergence rate but barely change throughput - f1 and f4 read 1201.0 and 1217.2 at depth-3 c64, and 1723.0 and 1732.5 without speculation - so the throughput matrix tolerates the mix. An identity comparison would not.",
-  "tp2_above_c64_unmeasured": "CLOSED by t7, which ran TP2 at c64, c96 and c128 with f4's settings so the two columns are comparable at those rungs. The remaining gaps are minor: TP2 was never run at c1-c4 with these settings, and neither topology was run between c40 and c64.",
+  "tp2_above_c64_unmeasured": "CLOSED by t7, which ran TP2 at c64, c96 and c128 with f4's settings so the two columns are comparable at those rungs. The remaining gaps are minor: TP2 was never run at c1-c4 with these settings, and TP2 has not been run between c40 and c64 (TP1 now has c36 through c56 from x2).",
   "identity_is_elsewhere": "This is throughput only. The identity rates at these rungs, and the reasons the depth-3 column stops scaling, are in 2026-09-09-qwen35-4b-speculation-ceiling-is-c16.json and 2026-09-09-qwen35-4b-beyond-c64.json."
  },
  "sources": [
@@ -125,7 +154,8 @@
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f3",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-f4",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t8",
-  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t7"
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-t7",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-x2"
  ],
  "a_non_monotone_dip_at_c40": {
   "statement": "Aggregate throughput is not monotone in concurrency. Without speculation, one card reads 1595 tok/s at c32, 1360 at c40 and 1732 at c64 - a 15% drop going from 32 to 40 concurrent users, recovering by 64.",
@@ -140,6 +170,37 @@
   "speculation_shows_it_too": "Depth 3 reads 1136.5 and 1156.3 at c32 against 1142.3 and 1156.6 at c40, so the dip is much smaller there - the speculative path is already throughput-limited by c32 and has less to lose.",
   "not_explained": "32 and 64 are powers of two and 40 is not, which points at a tiling or occupancy effect in the decode kernels, but nothing here tests that. c40 is captured in the graph set, so it is not an uncaptured-shape fallback.",
   "why_it_was_found": "c40 exists in these arms only because it was added to give a GDN-group-of-32 hypothesis somewhere to show up. No previous ladder on this lane measured it.",
-  "operational": "Sizing a server for 40 concurrent users would be measurably worse than sizing it for either 32 or 64. Rungs between the usual powers of two are worth measuring before a capacity decision."
+  "operational": "Sizing a server for 40 concurrent users would be measurably worse than sizing it for either 32 or 64. Rungs between the usual powers of two are worth measuring before a capacity decision.",
+  "superseded": "See the_dip_is_at_c36 below: x2 mapped the region at every rung and the cliff is at 32->36, not at 40. The c40 reading itself reproduced a third time to 0.1% (1360.0)."
+ },
+ "the_dip_is_at_c36": {
+  "arm": "x2: TP1, rungs 32/36/40/44/48/56/64, ten passes each, both lanes, with every rung in the cudagraph capture set (1,2,4,8,16,24,32,36,40,44,48,52,56,60,64) so no rung pads to a larger captured shape.",
+  "mtp0_tok_s": {
+   "c32": 1593.4,
+   "c36": 1252.9,
+   "c40": 1360.0,
+   "c44": 1438.4,
+   "c48": 1508.2,
+   "c56": 1622.5,
+   "c64": 1726.9
+  },
+  "depth3_tok_s": {
+   "c32": 1153.1,
+   "c36": 1102.2,
+   "c40": 1156.4,
+   "c44": 1143.5,
+   "c48": 1189.7,
+   "c56": 1190.1,
+   "c64": 1201.4
+  },
+  "shape": "Not a dip at 40. A 21.4% cliff between c32 and c36, then a monotone, roughly linear recovery: each four extra users add about 80-115 tok/s until c64 is 8.4% above c32. c40 reads 1360.0, the third arm to put it within 0.1% of 1360.",
+  "padding_is_eliminated": "Every rung was a captured shape and the server log confirms the capture set, so the previous candidate - an uncaptured c36 padding to 40 and c44 to 50 - cannot be the cause. The dip is a property of the arithmetic at those row counts, not of graph replay.",
+  "identity_at_these_rungs": "MTP0 stays near-exact through the region: 319/320, 358/360, 400/400, 439/440, 478/480, 558/560, 633/640. Depth 3 runs 5-14% divergent as it does everywhere above c16.",
+  "the_candidate": {
+   "statement": "One thing in this server has exactly this shape. The R224 overlay runs every unquantized FP16 linear - the vocabulary projection and the MTP fc - in pieces of at most VLLM_XPU_FP16_LINEAR_ROWCHUNK rows, default 32. At c36 the last piece holds 4 rows; at c40, 8; c44, 12; c48, 16; c56, 24; c64, 32 (two full pieces). Throughput rises monotonically with the size of that tail piece and is back to a clean value exactly where the tail is full.",
+   "the_depth3_lane_agrees": "At depth 3 each sequence contributes four rows per step, so c32 is already four full pieces. The only rungs whose row count leaves a partial piece are c36 (144 rows: four full plus 16) and c44 (176: five plus 16), and those are the only two rungs where the depth-3 column dips (1102.2 and 1143.5 against 1153.1-1201.4 elsewhere). Rungs with no tail (c40 = 160, c48 = 192, c56 = 224, c64 = 256) do not dip.",
+   "status": "HYPOTHESIS, under test in chain 11 (y1: the same rungs with the chunk disabled; y2: the prediction that with the chunk on the next cliff is at c68 and is gone by c96; y3: that the 5 ms stagger recipe stays exact with the chunk off). Not a finding until y1 reports.",
+   "why_it_matters": "The chunk was added for batch invariance and every server in this lane and the 27B and 9B lanes runs it. If it is the cause, every no-speculation rung that is not a multiple of 32 pays up to 21% for it, and every published exact-throughput figure at c16/c32/c64/c96/c128 happens to sit where the cost is zero."
+  }
  }
 }
