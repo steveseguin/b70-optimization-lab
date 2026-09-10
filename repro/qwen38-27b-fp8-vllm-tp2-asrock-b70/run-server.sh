@@ -133,6 +133,15 @@ fi
 # comes through this script rather than run-w8a16-mtp1-server.sh, so forwarding it only there left
 # every mtp0 arm silently unserialised - a comparison of two identical configurations. Forwarded only
 # when set, so the published profiles are unchanged.
+# FP16 linear row chunk (R224 overlay images: lm_head, mtp.fc and every other unquantized linear run in
+# pieces of at most N rows; the patched code defaults to 32 when the variable is absent, and 0 disables
+# the split). The no-speculation path comes through this script and did not forward it, so an MTP0 arm
+# asking for a different chunk was silently the control. Forwarded only when set, including 0.
+fp16_rowchunk_env=()
+if [[ -n "${VLLM_XPU_FP16_LINEAR_ROWCHUNK:-}" ]]; then
+    [[ "${VLLM_XPU_FP16_LINEAR_ROWCHUNK}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_ROWCHUNK must be a non-negative integer\n' >&2; exit 1; }
+    fp16_rowchunk_env=(-e "VLLM_XPU_FP16_LINEAR_ROWCHUNK=${VLLM_XPU_FP16_LINEAR_ROWCHUNK}")
+fi
 rmsnorm_serial_env=()
 if [[ -n "${VLLM_XPU_RMSNORM_SERIAL_ROWS:-}" && "${VLLM_XPU_RMSNORM_SERIAL_ROWS}" != 0 ]]; then
     rmsnorm_serial_env=(-e "VLLM_XPU_RMSNORM_SERIAL_ROWS=${VLLM_XPU_RMSNORM_SERIAL_ROWS}")
@@ -165,6 +174,7 @@ exec docker run --rm --name "${container}" \
     "${lm_head_chunk_env[@]}" \
     "${rowwise_allreduce_env[@]}" \
     "${rmsnorm_serial_env[@]}" \
+    "${fp16_rowchunk_env[@]}" \
     -e VLLM_BATCH_INVARIANT="${batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
