@@ -1,0 +1,149 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 y1 + census: the 32-row FP16 linear chunk is a throughput tax, and R290 removes it (2026-09-09)",
+ "headline": "The R224 overlay runs every unquantized FP16 linear in 32-row pieces so that the oneDNN GEMM stays in its single-row rounding class. At the 4B vocabulary shape the weight is 1.2 GB and each piece re-reads it, so the chunk costs 25-30% of no-speculation throughput above 32 users and 41-54% of depth-3 throughput from c32 up. Turning it off (y1) recovers that throughput but breaks row invariance - MTP0 divergence goes from under 1% to 11-15%, even at c32. An offline census shows why and gives the fix: the GEMM has four M-classes, each internally position-invariant and pad-invariant, so padding or splitting every call into ONE class (R290, VLLM_XPU_FP16_LINEAR_CLASSPAD=1) gives bit-identical rows at every batch size for ~0.1 ms per single-row step.",
+ "y1_versus_x2": {
+  "arm": "y1: x2's rungs (32,36,40,44,48,56,64), capture set and settings, with VLLM_XPU_FP16_LINEAR_ROWCHUNK=0; verified in both container envs. x2 ran the default 32 (the MTP0 path did not forward the variable; the patched code defaults to 32 when absent).",
+  "mtp0_tok_s": {
+   "x2_chunk32": {
+    "c32": 1593.4,
+    "c36": 1252.9,
+    "c40": 1360.0,
+    "c44": 1438.4,
+    "c48": 1508.2,
+    "c56": 1622.5,
+    "c64": 1726.9
+   },
+   "y1_chunk0": {
+    "c32": 1645.8,
+    "c36": 1622.8,
+    "c40": 1755.2,
+    "c44": 1844.3,
+    "c48": 1903.6,
+    "c56": 2052.6,
+    "c64": 2161.7
+   },
+   "gain_pct": {
+    "c32": 3.3,
+    "c36": 29.5,
+    "c40": 29.1,
+    "c44": 28.2,
+    "c48": 26.2,
+    "c56": 26.5,
+    "c64": 25.2
+   }
+  },
+  "depth3_tok_s": {
+   "x2_chunk32": {
+    "c32": 1153.1,
+    "c36": 1102.2,
+    "c40": 1156.4,
+    "c44": 1143.5,
+    "c48": 1189.7,
+    "c56": 1190.1,
+    "c64": 1201.4
+   },
+   "y1_chunk0": {
+    "c32": 1626.0,
+    "c36": 1601.7,
+    "c40": 1685.8,
+    "c44": 1719.2,
+    "c48": 1781.2,
+    "c56": 1807.7,
+    "c64": 1850.2
+   },
+   "gain_pct": {
+    "c32": 41.0,
+    "c36": 45.3,
+    "c40": 45.8,
+    "c44": 50.3,
+    "c48": 49.7,
+    "c56": 51.9,
+    "c64": 54.0
+   }
+  },
+  "mtp0_identity": {
+   "x2_chunk32_div_pct": {
+    "c32": 0.31,
+    "c36": 0.56,
+    "c40": 0.0,
+    "c44": 0.23,
+    "c48": 0.42,
+    "c56": 0.36,
+    "c64": 1.09
+   },
+   "y1_chunk0_div_pct": {
+    "c32": 15.0,
+    "c36": 10.83,
+    "c40": 13.25,
+    "c44": 14.32,
+    "c48": 11.67,
+    "c56": 13.93,
+    "c64": 15.0
+   },
+   "y1_chunk0_minority_pct": {
+    "c32": 8.24,
+    "c36": 1.77,
+    "c40": 7.73,
+    "c44": 7.85,
+    "c48": 8.33,
+    "c56": 7.63,
+    "c64": 7.96
+   }
+  },
+  "depth3_identity": {
+   "x2_chunk32_div_pct": {
+    "c32": 5.0,
+    "c36": 11.39,
+    "c40": 9.5,
+    "c44": 11.14,
+    "c48": 10.0,
+    "c56": 11.79,
+    "c64": 14.22
+   },
+   "y1_chunk0_div_pct": {
+    "c32": 10.94,
+    "c36": 17.5,
+    "c40": 11.75,
+    "c44": 15.68,
+    "c48": 13.12,
+    "c56": 14.11,
+    "c64": 15.31
+   }
+  },
+  "reading": "The tail-piece hypothesis was wrong in form and right in substance. The dip was not a partial last piece; it is that every piece re-reads the whole weight. Depth 3 at c32 is already 128 rows, four pieces, and loses 41%. And the chunk is not an identity null: with it off, MTP0 at c32 - one piece, 32 rows, where the chunked op and the plain call should agree - diverges 15%, because with the chunk off the projection runs through torch.compile rather than the opaque eager op and that path is not row-invariant at any M."
+ },
+ "census": {
+  "tool": "probes/fp16-linear-mclass-census.py, -extended.py, fp16-linear-classmap.py (R276 image, one card, random weights of the real shape; kernel selection depends on shape, not values)",
+  "shape": "N=248320 K=2560 fp16, torch 2.13.0+xpu, eager torch.nn.functional.linear (what the opaque op calls)",
+  "class_map_by_rows": {
+   "1-32": "class 0 = bit-identical to the single-row result",
+   "33-128": "class 1",
+   "129-320": "class 2",
+   "321-512": "class 1"
+  },
+  "within_class_properties": "position-invariant (rolling the rows and un-rolling gives identical bits), pad-invariant (a zero-padded call's real rows equal the un-padded call's rows), deterministic over five repeats - at every M tested",
+  "ms_per_call": {
+   "M1": 2.13,
+   "M32": 2.24,
+   "M33": 2.35,
+   "M64": 2.47,
+   "M128": 2.56,
+   "M256": 2.88,
+   "M512": 4.52
+  },
+  "the_tax_in_numbers": "Eight 32-row pieces at c64 depth 3 (256 rows) = 8 x 2.23 = 17.8 ms per step against 2.88 ms for one 256-row call; at 1.2 GB per read the GEMM is bandwidth-bound (~570 GB/s).",
+  "tp2_shard_shape": "N=124160: classes 1-32, 33-128, 129-320, 321-512 all distinct (four classes); mtp.fc-like N=2560 K=5120: eight classes with a fragmented 129-192 region. Both handled by the per-shape census in R290.",
+  "transposed_layout": "x @ W^T with the weight stored K x N: no better - class boundary at 32 (M=32 already leaves the single-row class) and slower."
+ },
+ "r290": {
+  "what": "experiments/qwen38-27b-b70/docker/r290-fp16-linear-classpad.py on top of R276 -> image qwen38-int4-fp16-linear-classpad-r290 sha256:fe23db2f. On first use of each weight shape the op measures the class of row 0 for M=1..512, picks the most populous class as canonical, and for every call pads with zero rows to the next canonical size or splits into pieces no larger than the largest canonical size. Logged once per shape as 'R290 classpad census ...'. Off by default; VLLM_XPU_FP16_LINEAR_CLASSPAD=1 enables it and R224's chunk is then unused.",
+  "offline_validation": "probes/validate-r290-classpad.py: for the TP1 lm_head, TP2 shard and mtp.fc shapes, rows are bit-identical across M in {1,2,8,16,32,33,64,100,128,129,200,256,320,321,400,512,513,600} and to 64 single-row calls, deterministic. Cost: TP1 lm_head M=1 2.23 ms (plain 2.12), M=256 3.05 ms (R224: ~17.8), M=512 4.38 ms; TP2 shard M=1 1.22 ms (plain 1.08), M=256 1.48 ms, M=512 3.78 ms (two 320-row pieces).",
+  "predicted_cost": "single-row step +0.11 ms on one card: ~0.5% at depth 3 (about 20 ms per step at 177 tok/s), ~1% at MTP0. Measured on the server by chain 13 (p1-p9, wrapper qwen35-4b-classpad-20260909).",
+  "status": "UNDER TEST on the server (chain 13). Offline exactness is not the ladder; the ladder is the claim."
+ },
+ "campaign_roots": [
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-x2",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y1"
+ ]
+}

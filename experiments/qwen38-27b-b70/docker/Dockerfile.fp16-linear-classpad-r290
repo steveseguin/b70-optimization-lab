@@ -1,0 +1,7 @@
+# R290: R276 + class-consistent FP16 linears (VLLM_XPU_FP16_LINEAR_CLASSPAD=1 pads/splits every unquantized
+# linear call into one measured oneDNN M-class, so rows agree bit-for-bit across batch sizes without the
+# R224 32-row re-read tax). Default env leaves R224 behaviour unchanged.
+FROM neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276
+COPY r290-fp16-linear-classpad.py /tmp/r290.py
+RUN python /tmp/r290.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py && rm /tmp/r290.py
+LABEL neural.download.build.lane="qwen38-int4-fp16-linear-classpad-r290"

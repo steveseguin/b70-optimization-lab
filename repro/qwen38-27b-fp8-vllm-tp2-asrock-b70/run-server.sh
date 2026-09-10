@@ -142,6 +142,13 @@ if [[ -n "${VLLM_XPU_FP16_LINEAR_ROWCHUNK:-}" ]]; then
     [[ "${VLLM_XPU_FP16_LINEAR_ROWCHUNK}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_ROWCHUNK must be a non-negative integer\n' >&2; exit 1; }
     fp16_rowchunk_env=(-e "VLLM_XPU_FP16_LINEAR_ROWCHUNK=${VLLM_XPU_FP16_LINEAR_ROWCHUNK}")
 fi
+# Class-consistent FP16 linears (R290 overlay images). Forwarded only when set.
+classpad_env=()
+if [[ -n "${VLLM_XPU_FP16_LINEAR_CLASSPAD:-}" ]]; then
+    [[ "${VLLM_XPU_FP16_LINEAR_CLASSPAD}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_CLASSPAD must be a non-negative integer\n' >&2; exit 1; }
+    classpad_env=(-e "VLLM_XPU_FP16_LINEAR_CLASSPAD=${VLLM_XPU_FP16_LINEAR_CLASSPAD}")
+    [[ -z "${VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM:-}" ]] || classpad_env+=(-e "VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM=${VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM}")
+fi
 rmsnorm_serial_env=()
 if [[ -n "${VLLM_XPU_RMSNORM_SERIAL_ROWS:-}" && "${VLLM_XPU_RMSNORM_SERIAL_ROWS}" != 0 ]]; then
     rmsnorm_serial_env=(-e "VLLM_XPU_RMSNORM_SERIAL_ROWS=${VLLM_XPU_RMSNORM_SERIAL_ROWS}")
@@ -175,6 +182,7 @@ exec docker run --rm --name "${container}" \
     "${rowwise_allreduce_env[@]}" \
     "${rmsnorm_serial_env[@]}" \
     "${fp16_rowchunk_env[@]}" \
+    "${classpad_env[@]}" \
     -e VLLM_BATCH_INVARIANT="${batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \
