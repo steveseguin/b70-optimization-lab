@@ -28,6 +28,11 @@ speculation ceiling, the "depth 3 stops scaling" reading, the depth plateau, the
 every no-speculation rung above c32. The published exact rungs (16, 32, 64, 96, 128) happen to sit where
 the no-speculation cost is zero or smallest, which is why the shape was never obvious.
 
+`y2` was registered as a prediction before it ran: with the chunk at 32 the next cliff is at c68, where a
+third piece holds four rows, and it is gone by c96. Measured: 1720 tok/s at c64, **1513 at c68**, 1560, 1631,
+then 1766 at c96, pass spread under 0.3%, identity unchanged at 0.6-1.25%. Two boundaries, one shape,
+the second one called in advance.
+
 ## But the chunk is not an identity null
 
 With the chunk off, MTP0 divergence at c32-c64 goes from under 1% to 11-15% - including at c32, where a

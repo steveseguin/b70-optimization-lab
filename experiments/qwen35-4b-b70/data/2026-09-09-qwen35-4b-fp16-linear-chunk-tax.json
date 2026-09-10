@@ -144,6 +144,34 @@
  },
  "campaign_roots": [
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-x2",
-  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y1"
- ]
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y1",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y2"
+ ],
+ "y2_prospective_prediction": {
+  "prediction_registered_in_chain_11_header": "With the chunk left at 32, the next cliff after c64 (two full pieces) is at c68 (a third piece holding 4 rows) and it is gone again by c96 (three full pieces).",
+  "arm": "y2: TP1, chunk 32 verified in both containers, max_num_seqs 128, rungs 64/68/72/80/96 all in the capture set, ten passes.",
+  "mtp0_tok_s": {
+   "c64": 1720.2,
+   "c68": 1512.7,
+   "c72": 1560.4,
+   "c80": 1630.6,
+   "c96": 1765.6
+  },
+  "mtp0_div_pct": {
+   "c64": 0.78,
+   "c68": 0.59,
+   "c72": 1.11,
+   "c80": 0.75,
+   "c96": 1.25
+  },
+  "depth3_tok_s": {
+   "c64": 1198.3,
+   "c68": 1159.3,
+   "c72": 1182.2,
+   "c80": 1193.0,
+   "c96": 1130.4
+  },
+  "result": "CONFIRMED. A 12.1% cliff between c64 and c68, a monotone recovery of about 1.5 tok/s per row through c80, and c96 above c64. Pass-to-pass spread is under 0.3% at every rung, so the shape is not noise. Identity is unaffected: MTP0 stays 0.6-1.25% divergent with the chunk on, as everywhere else on this lane.",
+  "what_it_adds": "The dip family is now mapped at two piece boundaries (32->36 and 64->68) with the same shape, predicted before measurement the second time. Together with y1 (the whole ramp disappears with the chunk off) the mechanism is not in doubt: per-step cost rises by one full weight read at every 32-row boundary and falls slowly as the last piece fills."
+ }
 }
