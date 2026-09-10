@@ -40,6 +40,13 @@ With the chunk off, MTP0 divergence at c32-c64 goes from under 1% to 11-15% - in
 off the projection is lowered by `torch.compile` instead of running as the opaque eager op, and that path
 is not row-invariant at any M. So "turn it off" buys throughput at the price the chunk was bought to avoid.
 
+`y3` put the 5 ms stagger recipe on the chunk-off server: 715/1280 at MTP0 against r3's 1280/1280, and the
+oracle-free minority rate 21% against 0%. That is worse than row-variance. A deterministic arrival order gives
+every pass the same composition history, so a row-count-dependent but deterministic op would still
+reproduce; a 21% minority rate means the `torch.compile`-lowered projection returns different bits on
+different passes of the same composition. The chunk was buying determinism as well as row invariance, and
+every exactness result on this lane stands on the opaque eager op.
+
 ## The census
 
 `probes/fp16-linear-mclass-census.py` and friends run eager `F.linear` at the real shape on one card and

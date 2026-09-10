@@ -145,7 +145,8 @@
  "campaign_roots": [
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-x2",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y1",
-  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y2"
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y2",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-y3"
  ],
  "y2_prospective_prediction": {
   "prediction_registered_in_chain_11_header": "With the chunk left at 32, the next cliff after c64 (two full pieces) is at c68 (a third piece holding 4 rows) and it is gone again by c96 (three full pieces).",
@@ -173,5 +174,19 @@
   },
   "result": "CONFIRMED. A 12.1% cliff between c64 and c68, a monotone recovery of about 1.5 tok/s per row through c80, and c96 above c64. Pass-to-pass spread is under 0.3% at every rung, so the shape is not noise. Identity is unaffected: MTP0 stays 0.6-1.25% divergent with the chunk on, as everywhere else on this lane.",
   "what_it_adds": "The dip family is now mapped at two piece boundaries (32->36 and 64->68) with the same shape, predicted before measurement the second time. Together with y1 (the whole ramp disappears with the chunk off) the mechanism is not in doubt: per-step cost rises by one full weight read at every 32-row boundary and falls slowly as the last piece fills."
- }
+ },
+ "y3_the_stagger_recipe_with_the_chunk_off": {
+  "arm": "y3: TP1, chunk 0 verified in both containers, fragile suite, c64, 20 passes, 5 ms stagger - the shape of r3 (chunk 32), which gave 1280/1280 at MTP0.",
+  "mtp0": {
+   "y3": "715/1280 exact, 44.14% divergent, oracle-free minority 20.76%, 48 bistable slots, 2103.9 tok/s, harness classification measured-output-variant",
+   "r3": "1280/1280, 0%, 1701.5 tok/s, output-identity-qualified"
+  },
+  "depth3": {
+   "y3": "596/1280, 53.44% divergent, minority 25.97%, 1797.4 tok/s",
+   "r3": "646/1280, 49.53%, minority 5.28%, 1173.5 tok/s"
+  },
+  "reading": "The chunk was buying two things. Row invariance of the projection (the census: 1-32 rows equal the single-row result) and, it turns out, determinism: with the chunk off and a deterministic arrival order the oracle-free minority rate is 21-26% against 4-5% with it on, so the torch.compile-lowered projection gives different bits on different passes of the same composition. Every exactness result on this lane stands on the opaque eager op. R290 keeps the opaque op and changes only which class it runs in, so it inherits the determinism; the ladder decides whether it inherits the exactness.",
+  "throughput": "2103.9 tok/s at MTP0 c64 with the stagger and chunk 0, against 1701.5 with chunk 32: the same +24% as y1 without the stagger. The 5 ms stagger still costs about 1%."
+ },
+ "chain_11_status": "complete 20:43, three arms, no hardware aborts, every knob verified in every container"
 }
