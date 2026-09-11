@@ -38,6 +38,17 @@ gdn_serial_exact="${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}"
 gdn_persistent_scratch="${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}"
 gdn_native_fallback="${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}"
 lm_head_chunk_rows="${VLLM_XPU_LM_HEAD_CHUNK_ROWS:-0}"
+# Same passthrough and default as run-w8a16-mtp1-server.sh: a no-speculation oracle for a rowchunk
+# arm has to run the same linear reduction as the speculative server it is compared with.
+fp16_linear_rowchunk="${VLLM_XPU_FP16_LINEAR_ROWCHUNK:-32}"
+# VLLM_USE_V2_MODEL_RUNNER: forwarded only when set (see run-w8a16-mtp1-server.sh).
+v2_runner_args=()
+if [[ -n "${VLLM_USE_V2_MODEL_RUNNER:-}" ]]; then
+  v2_runner_args=(-e "VLLM_USE_V2_MODEL_RUNNER=${VLLM_USE_V2_MODEL_RUNNER}")
+fi
+# 0 is legal: it disables the R224 pieces (the compiled path; nondeterministic, measured 2026-09-09 on the 4B lane - a
+# diagnostic setting, not a serving one). The patched code defaults to 32 when the variable is absent.
+[[ "${fp16_linear_rowchunk}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_ROWCHUNK must be a non-negative integer\n' >&2; exit 1; }
 gemma_rmsnorm_triton="${VLLM_XPU_GEMMA_RMSNORM_TRITON:-0}"
 rmsnorm_triton="${VLLM_XPU_RMSNORM_TRITON:-0}"
 gdn_split_mixed="${VLLM_XPU_GDN_SPLIT_MIXED:-0}"
@@ -133,15 +144,6 @@ fi
 # comes through this script rather than run-w8a16-mtp1-server.sh, so forwarding it only there left
 # every mtp0 arm silently unserialised - a comparison of two identical configurations. Forwarded only
 # when set, so the published profiles are unchanged.
-# FP16 linear row chunk (R224 overlay images: lm_head, mtp.fc and every other unquantized linear run in
-# pieces of at most N rows; the patched code defaults to 32 when the variable is absent, and 0 disables
-# the split). The no-speculation path comes through this script and did not forward it, so an MTP0 arm
-# asking for a different chunk was silently the control. Forwarded only when set, including 0.
-fp16_rowchunk_env=()
-if [[ -n "${VLLM_XPU_FP16_LINEAR_ROWCHUNK:-}" ]]; then
-    [[ "${VLLM_XPU_FP16_LINEAR_ROWCHUNK}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_ROWCHUNK must be a non-negative integer\n' >&2; exit 1; }
-    fp16_rowchunk_env=(-e "VLLM_XPU_FP16_LINEAR_ROWCHUNK=${VLLM_XPU_FP16_LINEAR_ROWCHUNK}")
-fi
 # Class-consistent FP16 linears (R290 overlay images). Forwarded only when set.
 classpad_env=()
 if [[ -n "${VLLM_XPU_FP16_LINEAR_CLASSPAD:-}" ]]; then
@@ -181,7 +183,6 @@ exec docker run --rm --name "${container}" \
     "${lm_head_chunk_env[@]}" \
     "${rowwise_allreduce_env[@]}" \
     "${rmsnorm_serial_env[@]}" \
-    "${fp16_rowchunk_env[@]}" \
     "${classpad_env[@]}" \
     -e VLLM_BATCH_INVARIANT="${batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
@@ -190,6 +191,8 @@ exec docker run --rm --name "${container}" \
     -e VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
     -e VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
     -e VLLM_XPU_LM_HEAD_CHUNK_ROWS="${lm_head_chunk_rows}" \
+    -e VLLM_XPU_FP16_LINEAR_ROWCHUNK="${fp16_linear_rowchunk}" \
+    "${v2_runner_args[@]}" \
     -e VLLM_XPU_GEMMA_RMSNORM_TRITON="${gemma_rmsnorm_triton}" \
     -e VLLM_XPU_RMSNORM_TRITON="${rmsnorm_triton}" \
     -e VLLM_XPU_GDN_SPLIT_MIXED="${gdn_split_mixed}" \

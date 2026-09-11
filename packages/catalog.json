@@ -2760,6 +2760,60 @@
        "samples": 3
       }
      ]
+    },
+    {
+     "id": "http-w4a16-dynamic-draft-schedule-fullgraph-tp1-aggregate-vs-concurrent-users",
+     "label": "Qwen3.5-9B W4A16 one card, draft depth scheduled by batch size (3 to 8 users, 1 to 16, none above), full decode graphs per depth, draft-state catch-up, aggregate decode vs concurrent users (c1-c64; warm pass)",
+     "metric": "aggregate_decode",
+     "unit": "tok/s",
+     "x_metric": "concurrent_sequences",
+     "x_label": "Concurrent HTTP users",
+     "scope": "Campaign cudynm1 (2026-09-11, repeated as cudynm1r on the same boot): one B70, R276 image plus the three overlays in repro/qwen35-9b-w4a16-b70/docker, FULL_DECODE_ONLY capture sizes 1-64 with one full decode graph per scheduled draft depth, schedule [[1,8,3],[9,16,1],[17,64,0]], max-model-len 256, max-num-seqs 64, max-num-batched-tokens 512, 128 returned raw token IDs per response on the small-context suite, two passes on one server, warm pass shown. Identity by the two-run rule: exact against the sequential oracle at every rung through 32 users in both passes of both runs; at 64 users near-exact (63-64/64), the same band as the no-speculation server on this route, so that point is a measured rate, not an identity-qualified one. One user on the strict suite: 110.69/110.60 and 110.65/110.60 tok/s, G1/G2/G3 12/12 in both runs; the 2K-32K real-content ladder is 18/18 exact.",
+     "evidence": "experiments/qwen35-9b-b70/data/2026-09-10-qwen35-9b-w4a16-dynamic-schedule-ladders.json",
+     "points": [
+      {
+       "concurrent_sequences": 1,
+       "value": 114.0,
+       "samples": 1,
+       "per_user_value": 114.0
+      },
+      {
+       "concurrent_sequences": 2,
+       "value": 218.0,
+       "samples": 1,
+       "per_user_value": 109.0
+      },
+      {
+       "concurrent_sequences": 4,
+       "value": 358.0,
+       "samples": 1,
+       "per_user_value": 89.5
+      },
+      {
+       "concurrent_sequences": 8,
+       "value": 623.0,
+       "samples": 1,
+       "per_user_value": 77.9
+      },
+      {
+       "concurrent_sequences": 16,
+       "value": 851.0,
+       "samples": 1,
+       "per_user_value": 53.2
+      },
+      {
+       "concurrent_sequences": 32,
+       "value": 1113.0,
+       "samples": 1,
+       "per_user_value": 34.8
+      },
+      {
+       "concurrent_sequences": 64,
+       "value": 1184.0,
+       "samples": 1,
+       "per_user_value": 18.5
+      }
+     ]
     }
    ],
    "hardware": {
@@ -2794,9 +2848,15 @@
      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
-     "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch"
+     "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+     "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.patch",
+     "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.patch",
+     "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.Dockerfile",
+     "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.Dockerfile",
+     "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.Dockerfile",
+     "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.patch"
     ],
-    "note": "The image is the Qwen3.8 INT4 lane's R276 image; its overlays (determinism pad op inert here, FP16 row-chunk linears, grouped GDN speculative rows, draft-head fallback unused, sync-free GDN grouping) ship inside the container. No 9B-specific patch."
+    "note": "The image is the Qwen3.8 INT4 lane's R276 image; its overlays (determinism pad op inert here, FP16 row-chunk linears, grouped GDN speculative rows, draft-head fallback unused, sync-free GDN grouping) ship inside the container. No 9B-specific patch. The scheduled-draft configuration (2026-09-10) adds three pure-Python overlays on the same image, built locally from the two COPY-only Dockerfiles in repro/qwen35-9b-w4a16-b70/docker: dynamic-Mamba-allocation, full decode graphs per scheduled draft depth, and draft-state catch-up on zero-draft steps. They change nothing for the static profiles; the dynamic launcher pins them by file content."
    },
    "commands": {
     "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276",
@@ -2852,12 +2912,31 @@
     "tools/container-packet/smoke-test.sh",
     "tools/container-packet/verify.sh",
     "tools/render-container-compose.py",
-    "tools/render-container-packet.sh"
+    "tools/render-container-packet.sh",
+    "repro/qwen35-9b-w4a16-b70/scripts/run-qwen35-9b-w4a16-dynamic-server.sh",
+    "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.Dockerfile",
+    "repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.patch",
+    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.Dockerfile",
+    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.patch",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1-strict-result.json",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1r-strict-result.json",
+    "experiments/qwen35-9b-b70/data/2026-09-10-qwen35-9b-w4a16-dynamic-schedule-ladders.json",
+    "experiments/qwen35-9b-b70/notes/2026-09-10-one-server-for-every-batch-size.md",
+    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.Dockerfile",
+    "repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-catchup.patch",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1-strict-result.json",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1r-strict-result.json",
+    "experiments/qwen35-9b-b70/notes/2026-09-10-prereg-draft-state-catch-up-at-schedule-transitions.md"
    ],
    "evidence": [
     "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-c128-identity-ladder.json",
     "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-depth-sweep.json",
-    "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json"
+    "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json",
+    "experiments/qwen35-9b-b70/data/2026-09-10-qwen35-9b-w4a16-dynamic-schedule-ladders.json",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1-strict-result.json",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1r-strict-result.json",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1-strict-result.json",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1r-strict-result.json"
    ],
    "missing": [
     "clean-host replay"

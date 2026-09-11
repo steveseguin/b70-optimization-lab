@@ -1,0 +1,1223 @@
+{
+  "schema": "b70-lab.campaign-consolidated.v1",
+  "campaign": "qwen35-9b-w4a16-tp1-20260909",
+  "host": "steve-b70s (4x Intel Arc Pro B70 32 GiB, 125.7 GiB RAM)",
+  "model": "RedHatAI/Qwen3.5-9B-quantized.w4a16 @ a398088c4228b0ae0c8c78df88fd1e4bf445f068",
+  "runtime": "R276 sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad",
+  "note": "All arms TP1, serial on card 0. Non-zero cards cannot host a server on this stack (shared launcher sets ZE_AFFINITY_MASK and ONEAPI_DEVICE_SELECTOR from one value). Aggregate figures are scoped capacity evidence, never single-user headlines.",
+  "arm_count": {
+    "total": 25,
+    "completed": 9,
+    "blocked": 5,
+    "superseded": 11
+  },
+  "arms": [
+    {
+      "arm": "b1sn",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b1sn",
+      "depth": 1,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=b1sn TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                95.9,
+                95.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                98.9,
+                184.9
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                322.6,
+                322.7
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                399.8,
+                555.9
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                828.4,
+                898.5
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                991.9,
+                989.0
+              ],
+              "divergent": 2,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1036.6,
+                1033.5
+              ],
+              "divergent": 6,
+              "requests": 128
+            }
+          }
+        },
+        "ladder-mtp0": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                63.9,
+                63.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                122.9,
+                123.0
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                234.0,
+                234.4
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                432.3,
+                432.1
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                726.7,
+                724.4
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                1148.0,
+                1147.1
+              ],
+              "divergent": 0,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1207.0,
+                1207.0
+              ],
+              "divergent": 1,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "b2rs",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b2rs",
+      "depth": 1,
+      "aborted": true,
+      "abort_reason": "ladder-mtp0: EXTRA_ENV VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1 was requested but is not in the container environment",
+      "config": "LANE=qwen35-9b-w4a16 RUN=b2rs TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                95.7,
+                95.8
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                98.6,
+                185.0
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                322.8,
+                322.9
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                401.9,
+                554.5
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                833.5,
+                899.2
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                989.5,
+                989.0
+              ],
+              "divergent": 3,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1033.8,
+                1032.5
+              ],
+              "divergent": 10,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "collapse",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b2rs-invalid-ifs-tab-collapse",
+      "depth": 1,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=b2rs TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "shift",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b2rs-invalid-queue-fd-shift",
+      "depth": 1,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=b2rs TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "b3lm",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b3lm",
+      "depth": 1,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=b3lm TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                95.8,
+                96.0
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                99.8,
+                184.9
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                322.7,
+                322.8
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                403.4,
+                555.6
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                833.9,
+                898.3
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                992.4,
+                983.7
+              ],
+              "divergent": 1,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1032.1,
+                1035.5
+              ],
+              "divergent": 7,
+              "requests": 128
+            }
+          }
+        },
+        "ladder-mtp0": {
+          "identity_qualified": true,
+          "rungs": {
+            "1": {
+              "passes": [
+                63.8,
+                63.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                122.6,
+                122.7
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                234.3,
+                234.2
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                432.0,
+                432.2
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                723.0,
+                724.1
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                1150.4,
+                1145.6
+              ],
+              "divergent": 0,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1205.6,
+                1207.0
+              ],
+              "divergent": 0,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "b4rec",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b4rec",
+      "depth": 1,
+      "aborted": true,
+      "abort_reason": "ladder: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=b4rec TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "b5conv",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b5conv",
+      "depth": 1,
+      "aborted": true,
+      "abort_reason": "ladder: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=b5conv TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "b6delta",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b6delta",
+      "depth": 1,
+      "aborted": true,
+      "abort_reason": "ladder: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=b6delta TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "b7all",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-b7all",
+      "depth": 1,
+      "aborted": true,
+      "abort_reason": "ladder: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=b7all TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "c1cap",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-c1cap",
+      "depth": 1,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=c1cap TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                95.9,
+                96.0
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                99.8,
+                185.0
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                322.4,
+                322.9
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                401.0,
+                555.0
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                834.2,
+                898.1
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                992.3,
+                983.3
+              ],
+              "divergent": 4,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1044.6,
+                1039.9
+              ],
+              "divergent": 6,
+              "requests": 128
+            }
+          }
+        },
+        "ladder-mtp0": {
+          "identity_qualified": true,
+          "rungs": {
+            "1": {
+              "passes": [
+                63.8,
+                63.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                122.6,
+                123.0
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                234.3,
+                234.3
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                432.3,
+                432.1
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                722.5,
+                724.2
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                1151.1,
+                1147.9
+              ],
+              "divergent": 0,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1207.1,
+                1208.5
+              ],
+              "divergent": 0,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "d1",
+      "root": "qwen35-9b-w4a16-tp1-mtp1-graph1-dhint4-20260909-d1",
+      "depth": 1,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=d1 TP=1 DEPTH=1 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {
+        "G1": "12/12",
+        "G2": "12/12",
+        "G3": "12/12"
+      },
+      "strict_tok_s": {
+        "mtp0-a": 64.158439029775,
+        "mtp0-b": 64.154631897325,
+        "mtp1-a": 93.074861546529,
+        "mtp1-b": 93.110076006909
+      },
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                95.6,
+                95.6
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                99.1,
+                184.8
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                322.6,
+                322.7
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                395.5,
+                554.9
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                833.9,
+                905.0
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                987.0,
+                988.4
+              ],
+              "divergent": 3,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1036.3,
+                1034.5
+              ],
+              "divergent": 7,
+              "requests": 128
+            }
+          }
+        },
+        "ladder-mtp0": {
+          "identity_qualified": true,
+          "rungs": {
+            "1": {
+              "passes": [
+                63.9,
+                63.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                121.8,
+                123.1
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                233.9,
+                234.2
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                431.9,
+                431.5
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                727.3,
+                725.3
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                1149.8,
+                1147.6
+              ],
+              "divergent": 0,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1206.7,
+                1206.0
+              ],
+              "divergent": 0,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "d2",
+      "root": "qwen35-9b-w4a16-tp1-mtp2-graph1-dhint4-20260909-d2",
+      "depth": 2,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=d2 TP=1 DEPTH=2 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {
+        "G1": "12/12",
+        "G2": "12/12",
+        "G3": "12/12"
+      },
+      "strict_tok_s": {
+        "mtp0-a": 64.163679123118,
+        "mtp0-b": 64.158986837544,
+        "mtp2-a": 110.025701497671,
+        "mtp2-b": 110.149649327691
+      },
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                112.5,
+                112.6
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                104.5,
+                217.6
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                342.1,
+                342.2
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                595.1,
+                595.8
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                598.0,
+                667.1
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                782.1,
+                877.6
+              ],
+              "divergent": 1,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                908.5,
+                909.4
+              ],
+              "divergent": 4,
+              "requests": 128
+            }
+          }
+        },
+        "ladder-mtp0": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                63.9,
+                63.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                122.9,
+                122.7
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                234.2,
+                234.3
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                431.9,
+                431.2
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                726.1,
+                723.7
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                1148.9,
+                1147.0
+              ],
+              "divergent": 0,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1208.0,
+                1205.7
+              ],
+              "divergent": 1,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "init",
+      "root": "qwen35-9b-w4a16-tp1-mtp2-graph1-dhint4-20260909-d2-failed-no-xpu-devices-xpusmi-during-neighbour-init",
+      "depth": 2,
+      "aborted": true,
+      "abort_reason": "mtp0-a: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=d2 TP=1 DEPTH=2 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=1 arm_devices=1 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18132",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "unknown",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-a1g8-failed-unknown",
+      "depth": null,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "d3",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-d3",
+      "depth": 3,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=d3 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {
+        "G1": "12/12",
+        "G2": "12/12",
+        "G3": "12/12"
+      },
+      "strict_tok_s": {
+        "mtp0-a": 64.158458228071,
+        "mtp0-b": 64.153984981689,
+        "mtp3-a": 110.692453259412,
+        "mtp3-b": 110.691290697205
+      },
+      "ladders": {
+        "ladder": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                112.9,
+                113.9
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                104.1,
+                218.1
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                357.7,
+                357.7
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                623.2,
+                623.0
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                633.2,
+                704.4
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                695.7,
+                769.1
+              ],
+              "divergent": 2,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                747.6,
+                735.0
+              ],
+              "divergent": 6,
+              "requests": 128
+            }
+          }
+        },
+        "ladder-mtp0": {
+          "identity_qualified": false,
+          "rungs": {
+            "1": {
+              "passes": [
+                63.9,
+                63.8
+              ],
+              "divergent": 0,
+              "requests": 2
+            },
+            "2": {
+              "passes": [
+                122.9,
+                123.1
+              ],
+              "divergent": 0,
+              "requests": 4
+            },
+            "4": {
+              "passes": [
+                234.3,
+                233.9
+              ],
+              "divergent": 0,
+              "requests": 8
+            },
+            "8": {
+              "passes": [
+                432.0,
+                432.3
+              ],
+              "divergent": 0,
+              "requests": 16
+            },
+            "16": {
+              "passes": [
+                726.9,
+                724.9
+              ],
+              "divergent": 0,
+              "requests": 32
+            },
+            "32": {
+              "passes": [
+                1148.0,
+                1146.5
+              ],
+              "divergent": 0,
+              "requests": 64
+            },
+            "64": {
+              "passes": [
+                1206.5,
+                1205.5
+              ],
+              "divergent": 1,
+              "requests": 128
+            }
+          }
+        }
+      }
+    },
+    {
+      "arm": "init",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-d3-failed-no-xpu-devices-xpusmi-during-neighbour-init",
+      "depth": 3,
+      "aborted": true,
+      "abort_reason": "mtp0-a: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=d3 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=2 arm_devices=2 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18133",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "server",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-d3-failed-nonzero-card-server",
+      "depth": 3,
+      "aborted": true,
+      "abort_reason": "mtp0-a: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=d3 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=1 arm_devices=1 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18132",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "p0",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-p0",
+      "depth": 3,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=p0 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {
+        "G1": "12/12",
+        "G2": "12/12",
+        "G3": "12/12"
+      },
+      "strict_tok_s": {
+        "mtp0-a": 64.152264779992,
+        "mtp0-b": 64.158180822161,
+        "mtp3-a": 110.703733912669,
+        "mtp3-b": 110.628907142023
+      },
+      "ladders": {}
+    },
+    {
+      "arm": "midrun",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-p0-aborted-harness-edited-midrun",
+      "depth": 3,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=p0 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "copy",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-p0-failed-repo-path-in-frozen-copy",
+      "depth": 3,
+      "aborted": true,
+      "abort_reason": "preflight: compute/XCCL health failed",
+      "config": "LANE=qwen35-9b-w4a16 RUN=p0 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "assert",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-p0-failed-specgroup-assert",
+      "depth": 3,
+      "aborted": true,
+      "abort_reason": "mtp0-a: VLLM_XPU_GDN_SPEC_GROUP=16 was requested but is not in the container environment",
+      "config": "LANE=qwen35-9b-w4a16 RUN=p0 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "x32k",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-x32k",
+      "depth": 3,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=x32k TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {},
+      "context": {
+        "depth-mtp0": {
+          "status": "passed",
+          "points": [
+            {
+              "context": 2048,
+              "tok_s": 62.92,
+              "ttft_ms": 630,
+              "gates": true,
+              "exact_vs_oracle": null
+            },
+            {
+              "context": 4096,
+              "tok_s": 62.19,
+              "ttft_ms": 1226,
+              "gates": true,
+              "exact_vs_oracle": null
+            },
+            {
+              "context": 8192,
+              "tok_s": 61.149,
+              "ttft_ms": 2468,
+              "gates": true,
+              "exact_vs_oracle": null
+            },
+            {
+              "context": 16384,
+              "tok_s": 59.505,
+              "ttft_ms": 5052,
+              "gates": true,
+              "exact_vs_oracle": null
+            },
+            {
+              "context": 24576,
+              "tok_s": 57.861,
+              "ttft_ms": 7770,
+              "gates": true,
+              "exact_vs_oracle": null
+            },
+            {
+              "context": 32768,
+              "tok_s": 56.408,
+              "ttft_ms": 10619,
+              "gates": true,
+              "exact_vs_oracle": null
+            }
+          ]
+        },
+        "depth-mtp3": {
+          "status": "passed",
+          "points": [
+            {
+              "context": 2048,
+              "tok_s": 111.407,
+              "ttft_ms": 702,
+              "gates": true,
+              "exact_vs_oracle": true
+            },
+            {
+              "context": 4096,
+              "tok_s": 139.161,
+              "ttft_ms": 1360,
+              "gates": true,
+              "exact_vs_oracle": true
+            },
+            {
+              "context": 8192,
+              "tok_s": 113.894,
+              "ttft_ms": 2729,
+              "gates": true,
+              "exact_vs_oracle": true
+            },
+            {
+              "context": 16384,
+              "tok_s": 147.967,
+              "ttft_ms": 5578,
+              "gates": true,
+              "exact_vs_oracle": true
+            },
+            {
+              "context": 24576,
+              "tok_s": 129.332,
+              "ttft_ms": 8576,
+              "gates": true,
+              "exact_vs_oracle": true
+            },
+            {
+              "context": 32768,
+              "tok_s": 86.678,
+              "ttft_ms": 11731,
+              "gates": true,
+              "exact_vs_oracle": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "arm": "init",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-x32k-failed-no-xpu-devices-xpusmi-during-neighbour-init",
+      "depth": 3,
+      "aborted": true,
+      "abort_reason": "depth-mtp0: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=x32k TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=3 arm_devices=3 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18134",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "server",
+      "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-x32k-failed-nonzero-card-server",
+      "depth": 3,
+      "aborted": true,
+      "abort_reason": "depth-mtp0: server did not become healthy",
+      "config": "LANE=qwen35-9b-w4a16 RUN=x32k TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=1 arm_devices=1 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18132",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    },
+    {
+      "arm": "a4d4",
+      "root": "qwen35-9b-w4a16-tp1-mtp4-graph1-dhint4-20260909-a4d4",
+      "depth": 4,
+      "aborted": false,
+      "abort_reason": null,
+      "config": "LANE=qwen35-9b-w4a16 RUN=a4d4 TP=1 DEPTH=4 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad port=18131",
+      "gates": {},
+      "strict_tok_s": {},
+      "ladders": {}
+    }
+  ]
+}

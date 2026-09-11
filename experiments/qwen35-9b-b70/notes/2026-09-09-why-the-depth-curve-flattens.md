@@ -1,0 +1,196 @@
+# Why the depth curve flattens at 2, and what depth 4-6 should do (2026-09-09)
+
+Qwen3.5-9B W4A16, TP1, one B70 on `steve-b70s`. Mean acceptance length read from each arm's own
+server metrics (`SpecDecoding metrics: Mean acceptance length`), averaged over the last windows of
+the strict suite; step cost derived as `acceptance / rate`.
+
+| depth | accept len | of theoretical max | tok/s | step ms | d(accept) | d(step ms) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 1.000 | 100.0% | 64.157 | 15.59 | - | - |
+| 1 | 1.809 | 90.5% | 93.092 | 19.43 | +0.809 | +3.85 |
+| 2 | 2.377 | 79.2% | 110.088 | 21.59 | +0.568 | +2.16 |
+| 3 | 2.764 | 69.1% | 110.675 | 24.97 | +0.387 | +3.38 |
+
+The mechanism is a race between two nearly linear quantities, and it is already lost by depth 3:
+
+- **Accepted tokens per step grow sub-linearly** and are decaying at a steady ~0.70 ratio
+  (+0.809, +0.568, +0.387). Each extra draft token is accepted less often than the one before it,
+  because it is conditioned on all the previous drafts being right.
+- **Step cost grows roughly linearly**, about +3.1 ms per depth: one more draft pass and one more
+  verify row.
+
+Depth 2 to 3 is the crossing point: acceptance +16.3% against step cost +15.6%, net **+0.5%** -
+which is exactly the measured +0.53%. The curve is not flattening by coincidence; it is where the
+two slopes meet.
+
+## Prediction for the queued depth arms
+
+Extrapolating the measured decay and the measured step-cost slope:
+
+| depth | projected accept | projected step ms | projected tok/s |
+| ---: | ---: | ---: | ---: |
+| 4 | 3.035 | 28.07 | **108.1** |
+| 5 | 3.225 | 31.17 | **103.4** |
+| 6 | 3.357 | 34.27 | **98.0** |
+
+So depth 4 should be about **2.3% slower** than depth 3, and every deeper draft worse. `a4d4`,
+`a4d5` and `a4d6` are queued and will test this directly. If they land near these figures the model
+holds and the depth ladder is closed by understanding rather than by sweeping; if they do not, the
+step-cost slope or the acceptance decay is wrong and that is worth knowing on its own.
+
+This also predicts that **no depth knob will beat ~110 tok/s on this host**. Raising single-stream
+throughput further needs a cheaper step, not a longer draft - which points the remaining ladder at
+the draft-head and linear-path knobs (`FP16_LINEAR_ROWCHUNK`, `LM_HEAD_CHUNK_ROWS`,
+`DRAFT_LM_HEAD_INT4_*`) and at the inductor autotune that this lane currently disables.
+
+## Caveat
+
+Acceptance length is averaged over the metric windows the server happened to emit during the strict
+suite, not over exactly the measured tokens, so the step-cost figures carry that imprecision. The
+comparison across depths is like-for-like because every arm was measured the same way, but the
+absolute step-ms values should not be quoted as kernel timings.
+
+## Depth 4 measured: the model is right about acceptance and wrong about step cost
+
+`a4d4` measured **105.186 tok/s** against a predicted 108.1 - directionally correct (depth 4 is
+slower than depth 3, as the model required) but 2.7% low. Decomposing rather than accepting the
+product:
+
+| component | predicted | measured | error |
+| --- | ---: | ---: | ---: |
+| acceptance length | 3.035 | 3.018 | **-0.6%** |
+| step cost | 28.07 ms | 28.69 ms | **+2.2%** |
+| rate | 108.1 | 105.19 | -2.7% |
+
+**The acceptance decay is essentially exact.** The measured gain was +0.254 against a predicted
++0.271, an actual decay ratio of 0.656 rather than the assumed 0.70.
+
+**Step cost is where the model failed.** The increments are +2.16, +3.38, **+3.72** ms per depth -
+growing, not the constant +3.1 ms assumed. Each additional draft depth costs more than the one
+before it, so step cost is mildly super-linear. Both errors push the same way, which is why the
+product missed by more than either component did.
+
+That distinction matters for what to do next: a longer draft is losing on *two* fronts at once, not
+one, so the depth ladder closes harder than the original model implied.
+
+### Revised projection
+
+Using the measured 0.656 decay and a step increment growing about +0.34 ms per depth:
+
+| depth | acceptance | step ms | projected tok/s | original projection |
+| ---: | ---: | ---: | ---: | ---: |
+| 5 | 3.185 | 32.75 | **97.3** | 103.4 |
+| 6 | 3.294 | 37.15 | **88.7** | 98.0 |
+
+`a4d5` and `a4d6` test this. Note the revised figures are materially lower than the first pass, so
+they are a real test rather than a restatement.
+
+### Where this leaves the depth ladder
+
+Measured on this host: **64.16 / 93.09 / 110.09 / 110.68 / 105.19** for depths 0-4. Depth 3 is the
+peak by 0.53% over depth 2, and depth 4 is already 5.0% down. No depth setting beats ~110 tok/s
+here, and single-stream gains must come from a cheaper step rather than a longer draft.
+
+## Depth 5 measured: the revision was an overcorrection
+
+`a4d5` measured **101.800 tok/s**. The original model said 103.4 (-1.5% error); the revision made
+after depth 4 said 97.2 (+4.7% error). **The revision was worse than the model it replaced.**
+
+| | acceptance | step ms | rate |
+| --- | ---: | ---: | ---: |
+| measured | 3.160 | 31.04 | 101.80 |
+| original model | 3.225 | 31.17 | 103.4 |
+| revised model | 3.185 | 32.75 | 97.2 |
+
+With five increments in hand the shape is legible:
+
+```
+step increments  : +3.84  +2.16  +3.38  +3.72  +2.35     mean +3.09
+accept increments: +0.809 +0.568 +0.387 +0.254 +0.142
+accept ratios    :  0.702  0.681  0.656  0.559
+```
+
+**Step cost is not super-linear.** The increments oscillate around **+3.09 ms**, essentially the
++3.1 originally assumed. The "growing" increments that prompted the revision (+2.16, +3.38, +3.72)
+are within a series whose own scatter runs 2.16 to 3.84; refitting a linear parameter from the
+single highest one was overfitting a noisy observation, and it produced a worse model.
+
+**Acceptance is where the original model was genuinely optimistic.** The decay ratio is not constant
+at 0.70 - it is itself decaying (0.702, 0.681, 0.656, 0.559), so deep drafts fall off faster than a
+geometric series predicts. That is a real effect and it is what made the original 103.4 land 1.5%
+high.
+
+The revision compounded a real acceptance error with a fabricated step-cost error, both pushing the
+same way. **Do not refit a parameter on one residual that lies inside the series' existing scatter.**
+
+### Depth 6 projection, third pass
+
+Constant +3.09 ms per depth, acceptance ratio continuing to decay at about 0.56:
+**acceptance 3.240, step 34.13 ms -> 94.9 tok/s.** Original said 98.0, the overcorrection said 88.7.
+
+This projection should be treated as directional. It is fitted to five points of a noisy series, and
+its value is that it says "depth 6 is clearly worse than depth 3" - a claim all three versions of
+the model agree on - not that it pins a number.
+
+### The depth ladder, closed
+
+Measured on this host, all lossless (G1/G2/G3 12/12 at every depth tested):
+
+```
+depth   0       1       2       3        4        5
+tok/s   64.16   93.09   110.09  110.68   105.15   101.80
+```
+
+Depth 3 is the peak. Nothing beyond it recovers, and the mechanism is understood: acceptance gains
+decay faster than geometrically while step cost grows at a constant ~3.1 ms per depth. **No depth
+setting beats ~110 tok/s on this host**, and single-stream gains must come from a cheaper step.
+
+## Depth 6 closes the ladder - and the model won by error cancellation
+
+`a4d6` measured **97.160 tok/s**.
+
+| model | predicted | error |
+| --- | ---: | ---: |
+| original (constant +3.1 ms step, 0.70 acceptance decay) | 98.0 | **-0.9%** |
+| revision 2 (super-linear step) | 88.7 | +9.5% |
+| revision 3 (accelerating acceptance decay) | 94.9 | +2.4% |
+
+The original was the best predictor at both depth 5 and depth 6. That is worth less than it looks:
+it predicted acceptance **3.29** against an actual **3.188** (+3.2% high) *and* step **34.27 ms**
+against an actual **32.81** (+4.5% high). Both components drifted the same way and the quotient
+survived. A model that is right about the ratio while wrong about both terms has not earned
+confidence in its terms - only in the shape it implies.
+
+Full increment series, seven points:
+
+```
+accept increments: +0.809 +0.568 +0.387 +0.254 +0.142 +0.028
+accept ratios    :  0.702  0.681  0.656  0.559  0.197
+step increments  : +3.84  +2.16  +3.38  +3.72  +2.35  +1.77     mean +2.87
+```
+
+**Acceptance saturates.** Depth 5 to 6 buys **+0.028** accepted tokens; the draft head cannot see
+further ahead than about three tokens on this workload regardless of how many it is asked for.
+**Step-cost increments shrink at high depth** (+1.77 at the top), so the curve flattens toward an
+asymptote rather than falling away. Revision 3 correctly identified the accelerating acceptance
+decay but paired it with a step-cost error that had already been disproved, which is why it still
+missed.
+
+### Methodological note
+
+Three model versions, and the first was the best. Two successive "improvements", each fitted to one
+new data point, were both worse than the thing they replaced. The failure mode was the same twice:
+treating a residual inside the series' own scatter as signal. With seven points the scatter in the
+step increments alone runs 1.77 to 3.84 - wider than any of the corrections attempted.
+
+### The depth ladder, final
+
+All seven depths measured on `steve-b70s`, every one lossless (G1/G2/G3 12/12):
+
+| depth | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| tok/s | 64.16 | 93.09 | 110.09 | **110.68** | 105.15 | 101.81 | 97.16 |
+
+**Depth 3 is the peak.** The ladder is closed by measurement at every rung and by mechanism:
+acceptance saturates near three tokens while each extra depth costs about 2.9 ms. No depth setting
+beats ~110 tok/s here, and single-stream gains must come from a cheaper step.

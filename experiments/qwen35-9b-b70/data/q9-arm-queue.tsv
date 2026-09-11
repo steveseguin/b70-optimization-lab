@@ -1,0 +1,171 @@
+# Reordered 2026-09-09 after a13dh0 measured the draft lm_head at 9.64 ms of a 34.62 ms step.
+# All seven draft-head knobs run first: they tune the largest component this campaign has
+# found, and a 20% gain on a 10 ms term is ~8% end to end - more than anything else reachable.
+a5g32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=32
+a5g64	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=64
+a12dch	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=1024
+a18g256	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=256
+a17dch512	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=512
+a15sdf32	3	strict		VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=fp32
+# a16apply REMOVED 2026-09-09: VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS is forwarded by the launcher but read
+# nowhere in the R276 image (grep of /opt in the container: no hit), so the arm would be a clean null.
+# Reordered 2026-09-09 after the depth ladder closed. The ladder established that no depth
+# setting beats ~110 tok/s and that single-stream gains must come from a cheaper step, so the
+# draft-pass MEASUREMENT arms run first: they size the term the remaining knobs act on, and
+# decide whether those knobs can matter at all or whether ~110 is this configuration ceiling.
+# Ranking levers by measured size beats ranking them by plausibility.
+a13dh0	3	strict	DRAFT_HEAD=0	
+a14dh0d1	1	strict	DRAFT_HEAD=0	
+a8rc16	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=16
+a8rc64	3	strict		VLLM_XPU_FP16_LINEAR_ROWCHUNK=64
+# Qwen3.5-9B W4A16 TP1 lever queue, revised 2026-09-09 after the depth/concurrency map.
+# Columns: run <TAB> depth <TAB> stages <TAB> harness_env <TAB> extra_env
+# All arms run serially on card 0 (non-zero cards cannot host a server on this stack).
+#
+# Tier B first: the exactness mechanism is the campaign's open question and b1sn is the
+# discriminator. Depth 1 is the probe depth because it has the highest measured divergence rate
+# (7/128 at 64 users, 3/64 at 32), so it is the most sensitive detector of a fix. d1 is already the
+# matched baseline - same depth, same rungs, same capture - so no separate control arm is needed.
+b1sn	1	ladders	RMSNORM_SERIAL_ROWS=256	
+c1cap	1	ladders	CAPTURE_MAX=256 LADDER_MNS=64	
+b3lm	1	ladders	LM_HEAD_BATCH_INVARIANT=1	
+b2rs	1	ladders		VLLM_XPU_GDN_ROW_STABLE_RMSNORM=1
+# GDN speculative-path knobs, promoted: b7all decides whether the path matters at all.
+b7all	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1 VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
+b4rec	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1
+b5conv	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_CONV_SERIAL_EXACT=1
+b6delta	1	ladders		VLLM_XPU_GDN_NATIVE_SPEC_DELTA_SERIAL_EXACT=1
+#
+# Tier A speed levers. a4d4/5/6 are promoted: depth 3 buys only 0.53% over depth 2 here, so the
+# curve is already flat and deeper drafts are predicted to be pure loss. Closing that with a
+# measurement is worth more than another knob sweep.
+a4d4	4	strict		
+a4d5	5	strict		
+a4d6	6	strict		
+a1g8	3	strict	GDN_SPEC_GROUP=8	
+a1g32	3	strict	GDN_SPEC_GROUP=32	
+# a2scr REMOVED: VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH is already 1 in the live container, so the arm
+# would have compared a configuration against itself - inert, not neutral.
+a3tight	3	strict	CAPTURE_SIZES=1,2,3,4,5,6,8,12,16	
+#
+# d2's ladders ran with a leftover diagnostic container resident on card 0, which does not affect
+# identity counts but makes their aggregate figures soft. Repeat on a genuinely quiet card.
+d2r	2	ladders		
+#
+# Capture confound: were the 32/64-user speculative rungs running captured or eager? At depth 1,
+# 64 users is 128 rows against a capture ceiling of 64. If raising the ceiling changes the
+# divergence rate, capture fallback is part of the story rather than the norm.
+#
+# Knobs verified present in the live speculative container and currently at these values, so each of
+# these is a real change rather than a no-op. Read from mtp3-a's container-inspect, not from the
+# launcher's defaults, which the strict wrapper overrides.
+#   VLLM_XPU_FP16_LINEAR_ROWCHUNK=32   VLLM_XPU_LM_HEAD_CHUNK_ROWS=0
+#   VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0  VLLM_XPU_MTP_DRAFT_EAGER=0
+#   VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS=2048
+#   VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0  VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0
+# a11lmc REMOVED 2026-09-09: VLLM_XPU_LM_HEAD_CHUNK_ROWS is forwarded by both launchers but read nowhere
+# in the R276 image; the in-container check would pass and the result would be a clean null.
+# Autotune is off in the strict lane, presumably for determinism. Screening it is worth doing
+# precisely because the identity gates will say whether that caution is still required.
+x32kr	3	depth32k	DEPTH_MML=33024	
+#
+# REMOVED as unrunnable in this lane. run-w8a16-mtp1-strict-server.sh hard-pins these with no
+# ${VAR:-} escape, so passing them has no effect and the arm would abort on the in-container check:
+#   a9auto    VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0, ..._COORDINATE_DESCENT_TUNING=0
+#   a6de      VLLM_XPU_MTP_DRAFT_EAGER=0
+#   a10bonus  VLLM_XPU_MTP_SUPPRESS_BONUS_TOKEN=0
+# The strict lane pins determinism-relevant settings by design; autotune is one of them. Testing it
+# needs a separate non-strict identity, which is a different lane and a different oracle, not a knob.
+#
+# The three eliminated candidates all perturb something upstream and generic. These target the
+# GDN *speculative* path directly, which is where the divergence actually lives: it appears only
+# with speculation and at every depth. All three default to 0 and the strict wrapper passes them
+# through with a ${VAR:-0} escape, so they are reachable.
+#
+# Direct measurement of the draft pass's share of step cost. DRAFT_HEAD=1 (draft-only INT4 lm_head)
+# is the default here and was worth +27.6% on the FP8 route; turning it off measures what the draft
+# head costs on THIS route. That is the term the depth decomposition says is growing
+# super-linearly, so its size matters more than any remaining knob's.
+# Step-cost decomposition control: depth 1 with and without the INT4 draft head isolates the draft
+# pass at the depth where it is the largest fraction of the step.
+#
+# Promoted 2026-09-09 after a13dh0 measured the draft lm_head at 9.64 ms of a 34.62 ms step. These
+# tune a term that is ~28% of the step; nothing else reachable in this lane acts on anything that
+# large. Values shown are the live defaults read from the running container.
+#
+# Dynamic draft depth by batch size (2026-09-10). The operating map says speculation is worth ~72% at
+# one user and costs a third of aggregate throughput at 64; vLLM in this image carries
+# num_speculative_tokens_per_batch_size, so one server can hold both ends. dyn1 is the map's own
+# crossover (deep to 8 users, depth 1 to 16, off above); dyn2 tests whether depth 2 at the top is
+# cheaper than 3. Strict gates prove the one-user path is still the certified one; the ladders are the
+# measurement. SPEC_SCHEDULE is JSON with no spaces because the queue column is space-split.
+dyn1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]]	
+# dyn2 (pre-skipped: eager under the v1 runner)	2	strict ladders	SPEC_SCHEDULE=[[1,8,2],[9,16,1],[17,64,0]]	
+#
+# dyn1 measured 77.6 tok/s at ONE user: vLLM's v1 runner overrides FULL_DECODE_ONLY to PIECEWISE
+# under dynamic speculation, and this lane's empty splitting_ops turns PIECEWISE into NONE, so the
+# whole server ran eager. The override is skipped on the v2 model runner (XPUModelRunnerV2 exists in
+# R276 and captures decode graphs per K). dyn2 was pre-skipped as meaningless. First prove the v2
+# runner reproduces the static depth-3 certified number, then put the schedule on it.
+v2s3	3	strict		VLLM_USE_V2_MODEL_RUNNER=1
+v2dyn1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]]	VLLM_USE_V2_MODEL_RUNNER=1
+#
+# v2s3: the v2 runner boots, captures graphs and is lossless (12/12) but its speculative path is 26% slower
+# (82.2 vs 110.7 at one user; mtp0 64.33). Not the road. Zero-patch alternative: PIECEWISE graphs with the
+# DEFAULT splitting ops (attention + the GDN core ops stay eager per layer, everything else captured). vLLM
+# leaves an already-PIECEWISE mode alone under a dynamic schedule. pw3 prices that mode at static depth 3;
+# pwdyn1 is the schedule on it. If pw3 is within a few % of 110.7 this is the broad-speed server with no patch.
+pw3	3	strict	COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}	
+pwdyn1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}	
+#
+# pw3: PIECEWISE with default splitting ops costs 1.9% at one user (108.6 vs 110.7) and 1.2% at mtp0, 12/12.
+# pwdynm1 = pwdyn1 on the R276 + dynamic-Mamba-allocation overlay (docker/r276-dynamic-mamba-alloc.Dockerfile);
+# the patch is inert without a schedule, so mtp0 stages double as a control.
+pwdynm1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc IMAGE_ID=sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a	
+#
+# pwdynm1: overlay recovers the c64 rung to 1145/1146 (from 955/995; mtp0 1203), c32 32/32 both passes, one user 108.6.
+# Variable context on the same server: the 2K-32K identity ladder with the schedule active (depth32k stage).
+pwdynm1x	3	depth32k	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc IMAGE_ID=sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a	
+#
+# Residual -5% at K=0 rungs vs plain mtp0: pwdynz is the schedule with K=0 EVERYWHERE on the same overlay and graphs.
+# If its c64 matches mtp0 (~1200) the residual is the rung tail where the batch shrinks and K rises; if it matches
+# pwdynm1 (~1145) it is spec-decode bookkeeping running with zero drafts. pwdynm1r is a same-boot repeat of pwdynm1.
+pwdynz	3	ladders	SPEC_SCHEDULE=[[1,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc IMAGE_ID=sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a	
+pwdynm1r	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc IMAGE_ID=sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a	
+#
+# Full decode graphs per scheduled K on the v1 runner (docker/r276-dynsd-fullgraph.Dockerfile), FULL_DECODE_ONLY as
+# published, schedule on. This is the lossless candidate; the piecewise route failed identity at one 4K tie site.
+fgdynm1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph IMAGE_ID=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba	
+fgdynm1x	3	depth32k	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph IMAGE_ID=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba	
+#
+# pwdynm1x: 17/18 exact on the 2K-32K ladder; ONE 4096-context case diverged from its same-config mtp0 oracle
+# (x32k and x32kr, static full-graph, were 18/18 twice). Attribution, one factor per arm, all depth32k only:
+#   pw3x      static depth 3 + PIECEWISE, base R276      -> is it the piecewise graphs?
+#   pwdyn1x   schedule + PIECEWISE, base R276            -> is it the overlay?
+#   pwdynm1xr repeat of pwdynm1x                         -> is it intermittent?
+pw3x	3	depth32k	COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}	
+pwdyn1x	3	depth32k	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}	
+pwdynm1xr	3	depth32k	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] COMPILATION_CONFIG_OVERRIDE={"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64],"max_cudagraph_capture_size":64,"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc IMAGE_ID=sha256:679f176c5be8c634343190c30cdb3e9ccb64b0bb9e807009e78a5c5bd734bd6a	
+#
+# fgdynm1: 110.67/110.73 at one user (published 110.69 recovered), 33 decode graphs captured (3 query lengths x 11 sizes),
+# c8 623, c32 1092/1090, c64 1064/1150, all gates 12/12. Same-boot repeat for the promotion packet and the c64 first-pass wobble.
+fgdynm1r	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph IMAGE_ID=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba	
+#
+# Transition-rung measurement: the cold first pass of a rung where K has just dropped to 0 reads low (953-1064) against
+# 1090-1150 warm. Four passes at 16/32/64 on the lossless server separate the cold-pass dip from the steady figure.
+fgdynt	3	ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] LADDER_CONCURRENCY=16,32,64 LADDER_REPEATS=4 IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph IMAGE_ID=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba	
+#
+# Past 64 users on the scheduled server: the schedule carries K=0 forward above its last range, so c128 should track the
+# no-speculation c128 figure (README "Past 64 users"). Completes the concurrency map for the published configuration.
+fgdync128	3	ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] LADDER_CONCURRENCY=64,128 LADDER_MNS=128 CAPTURE_MAX=128 IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph IMAGE_ID=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba	
+#
+# Draft-state catch-up (prereg 2026-09-10). cudynm1: strict gates + c1-c64 ladders (the 5% at 32-64 should close);
+# cudynd: the same ladders WITHOUT ignore_eos so requests end at their natural lengths and the batch drains through
+# the schedule thresholds - the only rung shape that exercises catch-up; identity is still required per request.
+cudynm1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	
+cudynd	3	ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] LADDER_REQUEST_EXTRA_JSON={"temperature":0} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	
+#
+# cudynm1 v3: c64 1183/1184 (fgdynm1 1150; mtp0 1206), c32 917/1113 (1090; 1147), one user 110.69/110.60, all gates 12/12,
+# 64/64 + 63/64. The catch-up recovers ~3 of the 5 points. Remaining promotion gates: 2K-32K identity and a same-boot repeat.
+cudynm1x	3	depth32k	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	
+cudynm1r	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	

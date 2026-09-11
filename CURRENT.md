@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-09-09 03:22 UTC** (2026-09-08 23:22 EDT).
+Last reviewed: **2026-09-11 15:50 UTC** (2026-09-11 11:50 EDT); the four-B70 host section below was added then.
 
 ## Authority And Update Rule
 
@@ -117,6 +117,22 @@ Flash-Next history and accepted identities live in its
 [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md) and
 [result packet](results/qwen38-flash-next-fp8-b70/README.md).
 Historical reboot notices in the archive do not describe this boot.
+
+### Four-B70 host, 2026-09-11: Qwen3.5-9B W4A16 lane closed, Flash-Next next
+
+The Qwen3.5-9B W4A16 one-B70 lane on `steve-b70s` is closed and published: the
+static depth-3 headline (113.27 tok/s) stands, and a second operating
+configuration - one server for every batch size, draft depth scheduled by
+batch size on three pure-Python overlays over R276 - is promoted in the
+[guide](repro/qwen35-9b-w4a16-b70/README.md#one-server-for-every-batch-size-campaigns-cudynm1--cudynm1r-2026-09-11),
+[package](packages/qwen35-9b-w4a16-b70/package.json) and
+[performance index](results/scoreboard.md): 110.7 tok/s at one user, 1,184 at
+64 users, exact through 32 users, 18/18 exact 2K-32K. The env-knob ladder for
+single-user decode on this lane is exhausted (defaults optimal on every axis);
+what remains is kernel work (fused INT4 draft head) recorded in the
+[campaign note](experiments/qwen35-9b-b70/notes/2026-09-10-one-server-for-every-batch-size.md).
+No lane container is running. The next active lane on this host is Qwen3.8
+Flash-Next (its [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md)).
 
 ## Protected Work And Artifacts
 

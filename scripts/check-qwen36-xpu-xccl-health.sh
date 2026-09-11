@@ -64,6 +64,14 @@ PY
   fi
 done
 
+# A single-card arm runs no collective, and a one-rank all-reduce is not a weaker version of the
+# real check - it simply fails. Skipping it for such an arm matches the gate to what the arm
+# actually executes; it does not lower the bar. Default is unchanged for every existing caller.
+if [[ "${XPU_HEALTH_SKIP_XCCL:-0}" == 1 ]]; then
+  echo "[xpu-health] xccl skipped (XPU_HEALTH_SKIP_XCCL=1; single-device arm has no collective)"
+  exit "$overall_rc"
+fi
+
 echo "[xpu-health] xccl_devices=$XCCL_DEVICES nproc=$XCCL_NPROC"
 # Loopback is the stable local-only transport for this single-host probe. A
 # hard-coded physical NIC name made the health check fail after interface
