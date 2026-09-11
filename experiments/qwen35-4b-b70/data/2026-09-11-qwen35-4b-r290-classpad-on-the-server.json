@@ -361,5 +361,55 @@
    "reading": "Lossless by every gate; single user 8.6-9.4% under R224, 2.5% above R290."
   }
  },
- "chain_14_status": "trimmed to q1, q5, q3 (q2, q4, q6-q9 superseded by chain 15 on R293 before they ran)"
+ "chain_14_status": "trimmed to q1, q5, q3 (q2, q4, q6-q9 superseded by chain 15 on R293 before they ran)",
+ "chain_15_r293": {
+  "image": "qwen38-int4-fp16-linear-classpad-cheapest-r293 sha256:40d46730 (R291 + no pad zeroing + smallest-first eligible class for weights under 256 MiB)",
+  "r1_tp1_ladders": {
+   "mtp0": "exact at c1-c20 and c32; c24 95/96, c64 255/256 (R224 f1: 638/640)",
+   "depth3": "exact through c16; 1.25/4.17/6.25/13.28% at c20/c24/c32/c64",
+   "tok_s_depth3": {
+    "c1": 151.4,
+    "c2": 288.6,
+    "c4": 522.7,
+    "c8": 891.8,
+    "c12": 1126.1,
+    "c16": 1352.7,
+    "c20": 1355.3,
+    "c24": 1489.9,
+    "c32": 1607.9,
+    "c64": 1830.7
+   },
+   "tok_s_mtp0": {
+    "c1": 95.8,
+    "c2": 183.1,
+    "c4": 347.3,
+    "c8": 637.5,
+    "c12": 827.0,
+    "c16": 1052.3,
+    "c20": 1198.5,
+    "c24": 1354.9,
+    "c32": 1624.5,
+    "c64": 2163.6
+   },
+   "versus": {
+    "r224_c1": [
+     159.2,
+     101.9
+    ],
+    "r291_c1": [
+     145.6,
+     92.4
+    ],
+    "r293_c1": [
+     151.4,
+     95.8
+    ],
+    "gap_to_r224_pct": [
+     -4.9,
+     -6.0
+    ]
+   },
+   "reading": "Identity as R224 at every rung. Above c8 every rung beats R224 (depth 3 +1% at c8, +24% at c16, +39% at c32, +52% at c64; MTP0 +26% at c64). Below c8 the pad path costs 5-6%: one copy kernel plus a 33-row GEMM per unquantized projection, ~75 times a step, which is the floor of this design."
+  }
+ }
 }
