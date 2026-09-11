@@ -77,7 +77,8 @@
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s2",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s4",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s5",
-  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s6"
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s6",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s7"
  ],
  "s3_tp1_strict": {
   "G1": "12/12",
@@ -192,5 +193,11 @@
   "mtp0": "256/256, 384/384, 512/512 exact at c64/c96/c128; 1641.6, 1852.8, 1955.3 tok/s (R224 x1: 1272.7, 1308.5, 1323.7)",
   "depth3": "3.5/5.2/5.5% divergent; 1157.8, 1268.2, 1249.5 tok/s (R224 x1: 787.2, 808.8, 806.9)",
   "reading": "+29/+42/+48% without speculation at full exactness; +47/+57/+55% at depth 3. Under R224 the one-card ceiling was 1324 tok/s; under R293 it is 1955 and still rising at c128."
- }
+ },
+ "s7_tp2_high_rungs_f4_settings": {
+  "mtp0": "256/256, 383/384, 512/512 at c64/c96/c128; 2614.2, 2978.7, 3227.4 tok/s (R224 w3 stops at c64: 2092.9)",
+  "depth3": "3.1/4.7/6.1% divergent; 2183.1, 2206.8, 2277.3 tok/s (R224 w3 c64: 1464.6)",
+  "reading": "Two cards without speculation: +25% at c64 and a new lane ceiling of 3227 tok/s at c128, near-exact. No R224 measurement exists above c64 on two cards for this lane."
+ },
+ "status": "complete 12:52, seven arms, every knob verified in every container, no hardware aborts"
 }
