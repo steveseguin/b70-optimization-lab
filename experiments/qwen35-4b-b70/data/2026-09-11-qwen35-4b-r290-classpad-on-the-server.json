@@ -494,6 +494,24 @@
    },
    "reading": "Throughput as R290 above c8 (+17% at c16, +33% at c64 for depth 3; +19% at c64 for MTP0), single user -7 to -11%. Identity: one request in 8-64 diverges at c2-c16 on depth 3 where R224 and R290 were exact, and MTP0 has 1-2 per rung from c20 where R290 was exact to c32. Four passes; see the position analysis below for whether this is one prompt on a new tie.",
    "position_analysis": "Every depth-3 divergence at c2, c4, c12 and c16 is the same request, cache-c000, at token 39 of 128, 413 -> 411, in every pass it occurs (analyze-divergence-positions.py). One prompt on one exact tie that the TP2 R293 arithmetic places at that position, where R224 TP2 did not have one: suite-specific tie luck of the kind the campaign already documented (TP2 flips tie direction; divergence is prompt-specific). From c20 the usual sites join (rollback-c010 at 112, cache-c024 at 58, rollback-c002 at 14)."
+  },
+  "r4_tp2_strict": {
+   "G1": "12/12",
+   "G2": "12/12",
+   "G3": "12/12 both",
+   "mtp0_tok_s": [
+    127.99,
+    127.55
+   ],
+   "depth3_tok_s": [
+    226.21,
+    225.51
+   ],
+   "r224_measured": {
+    "mtp0": 138.1,
+    "depth3": 240.9
+   },
+   "reading": "Lossless by every gate on two cards; single user 6.1% (depth 3) and 7.4% (MTP0) under R224."
   }
  }
 }
