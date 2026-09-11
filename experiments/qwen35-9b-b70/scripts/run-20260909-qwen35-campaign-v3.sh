@@ -198,7 +198,11 @@ strict_attempt() {
   log "$1: $(grep -E 'class_balanced_median_tok_s|median_tok_s' "${server_dir}/strict.stdout" | head -2 | tr '\n' ' ')"
 }
 compare_pair() { python3 "${compare}" "$1" "$2" --output "$3" >/dev/null 2>&1 || true; python3 -c "import json,sys;c=json.load(open(sys.argv[1]))['comparison'];print(f\"{c['exact_prompts']}/{c['total_prompts']}\")" "$3" 2>/dev/null || echo "compare-failed"; }
-run_ladder() { python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-2}" --max-tokens 128 --seed 42 --timeout 900 --request-extra-json '{"ignore_eos":true,"temperature":0}' --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1; log "$1 ladder harness exit $?"; }
+# The default cannot live inside ${VAR:-...}: an unescaped } ends the expansion, so a caller's value
+# came out with a trailing } appended ("Extra data" from json.loads) on 2026-09-11.
+ladder_request_extra_json_default='{"ignore_eos":true,"temperature":0}'
+ladder_request_extra_json=${LADDER_REQUEST_EXTRA_JSON:-${ladder_request_extra_json_default}}
+run_ladder() { python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-2}" --max-tokens 128 --seed 42 --timeout 900 --request-extra-json "${ladder_request_extra_json}" --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1; log "$1 ladder harness exit $?"; }
 
 # ---------------- preflight ----------------
 # Resolve-and-check the dependencies first. A frozen copy of this script lives outside the repo, so

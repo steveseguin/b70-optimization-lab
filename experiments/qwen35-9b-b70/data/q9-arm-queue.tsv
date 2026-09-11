@@ -158,3 +158,14 @@ fgdynt	3	ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] LADDER_CONCURRENCY=1
 # Past 64 users on the scheduled server: the schedule carries K=0 forward above its last range, so c128 should track the
 # no-speculation c128 figure (README "Past 64 users"). Completes the concurrency map for the published configuration.
 fgdync128	3	ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] LADDER_CONCURRENCY=64,128 LADDER_MNS=128 CAPTURE_MAX=128 IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph IMAGE_ID=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba	
+#
+# Draft-state catch-up (prereg 2026-09-10). cudynm1: strict gates + c1-c64 ladders (the 5% at 32-64 should close);
+# cudynd: the same ladders WITHOUT ignore_eos so requests end at their natural lengths and the batch drains through
+# the schedule thresholds - the only rung shape that exercises catch-up; identity is still required per request.
+cudynm1	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	
+cudynd	3	ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] LADDER_REQUEST_EXTRA_JSON={"temperature":0} IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	
+#
+# cudynm1 v3: c64 1183/1184 (fgdynm1 1150; mtp0 1206), c32 917/1113 (1090; 1147), one user 110.69/110.60, all gates 12/12,
+# 64/64 + 63/64. The catch-up recovers ~3 of the 5 points. Remaining promotion gates: 2K-32K identity and a same-boot repeat.
+cudynm1x	3	depth32k	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	
+cudynm1r	3	strict ladders	SPEC_SCHEDULE=[[1,8,3],[9,16,1],[17,64,0]] IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup IMAGE_ID=sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b	

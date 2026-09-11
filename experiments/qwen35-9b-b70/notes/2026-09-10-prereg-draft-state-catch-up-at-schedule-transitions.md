@@ -55,3 +55,14 @@ missed positions when a request next needs drafts, without changing a single out
 
 Draft-head kernel changes, schedule sweeps, or a cheaper draft-layer forward: those are separate
 questions. This arm decides one thing: whether the zero-draft forward can be replaced by catch-up.
+
+## Result (2026-09-11)
+
+Gates 1, 2 and 5 pass (strict 12/12 twice; ladders exact through 32 users in both passes of both
+runs, 64 in the no-speculation band; 2K-32K 18/18). Gate 3 is not met: c32 1113 / 1109 and c64
+1184 / 1183 against the no-speculation server's 1147 / 1205 are 3% and 1.9% under, not 1.5%;
+before the overlay they were 5%. Gate 4 (drain test) ran as a natural-length ladder (`cudynd`, no
+`ignore_eos`), see the campaign note. Two implementation negatives on the way, both preserved as
+archived roots: the first catch-up batch exceeded the drafter's input buffers (chunking added),
+and per-step host->device tensor creation cost 10-20% aggregate (device-only path). Promoted as
+the guide's default scheduled-server image; the residual is documented, not hidden.

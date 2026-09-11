@@ -19,7 +19,7 @@
    0
   ]
  ],
- "note": "Aggregate wall tok/s and oracle-exact counts per rung from bench-openai-concurrency-oracle.py with --require-output-identity; passes listed in order (first = cold). Static references: d1/d2/d3 ladders in the 2026-09-09 campaign.",
+ "note": "Aggregate wall tok/s and oracle-exact counts per rung from bench-openai-concurrency-oracle.py with --require-output-identity; passes listed in order (first = cold). Static references: d1/d2/d3 ladders in the 2026-09-09 campaign. 2026-09-11: cudynm1/cudynm1r add the draft-state catch-up overlay (v3).",
  "arms": {
   "dyn1": {
    "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-dyn1",
@@ -1470,6 +1470,364 @@
        "aggregate_tok_s_wall": 1254.044,
        "oracle_exact": "127/128",
        "requests": 128
+      }
+     ]
+    }
+   }
+  },
+  "cudynm1": {
+   "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-cudynm1",
+   "description": "fullgraph + draft-state catch-up overlay v3 (the published configuration as of 2026-09-11)",
+   "image_id": "sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b",
+   "ladders": {
+    "scheduled": {
+     "1": [
+      {
+       "aggregate_tok_s_wall": 112.903,
+       "oracle_exact": "1/1",
+       "requests": 1
+      },
+      {
+       "aggregate_tok_s_wall": 113.796,
+       "oracle_exact": "1/1",
+       "requests": 1
+      }
+     ],
+     "2": [
+      {
+       "aggregate_tok_s_wall": 104.257,
+       "oracle_exact": "2/2",
+       "requests": 2
+      },
+      {
+       "aggregate_tok_s_wall": 217.57,
+       "oracle_exact": "2/2",
+       "requests": 2
+      }
+     ],
+     "4": [
+      {
+       "aggregate_tok_s_wall": 357.769,
+       "oracle_exact": "4/4",
+       "requests": 4
+      },
+      {
+       "aggregate_tok_s_wall": 358.337,
+       "oracle_exact": "4/4",
+       "requests": 4
+      }
+     ],
+     "8": [
+      {
+       "aggregate_tok_s_wall": 623.047,
+       "oracle_exact": "8/8",
+       "requests": 8
+      },
+      {
+       "aggregate_tok_s_wall": 623.242,
+       "oracle_exact": "8/8",
+       "requests": 8
+      }
+     ],
+     "16": [
+      {
+       "aggregate_tok_s_wall": 769.066,
+       "oracle_exact": "16/16",
+       "requests": 16
+      },
+      {
+       "aggregate_tok_s_wall": 850.866,
+       "oracle_exact": "16/16",
+       "requests": 16
+      }
+     ],
+     "32": [
+      {
+       "aggregate_tok_s_wall": 916.702,
+       "oracle_exact": "32/32",
+       "requests": 32
+      },
+      {
+       "aggregate_tok_s_wall": 1112.944,
+       "oracle_exact": "32/32",
+       "requests": 32
+      }
+     ],
+     "64": [
+      {
+       "aggregate_tok_s_wall": 1182.573,
+       "oracle_exact": "63/64",
+       "requests": 64
+      },
+      {
+       "aggregate_tok_s_wall": 1183.71,
+       "oracle_exact": "64/64",
+       "requests": 64
+      }
+     ]
+    },
+    "mtp0_oracle": {
+     "1": [
+      {
+       "aggregate_tok_s_wall": 63.783,
+       "oracle_exact": "1/1",
+       "requests": 1
+      },
+      {
+       "aggregate_tok_s_wall": 63.763,
+       "oracle_exact": "1/1",
+       "requests": 1
+      }
+     ],
+     "2": [
+      {
+       "aggregate_tok_s_wall": 122.88,
+       "oracle_exact": "2/2",
+       "requests": 2
+      },
+      {
+       "aggregate_tok_s_wall": 123.025,
+       "oracle_exact": "2/2",
+       "requests": 2
+      }
+     ],
+     "4": [
+      {
+       "aggregate_tok_s_wall": 234.288,
+       "oracle_exact": "4/4",
+       "requests": 4
+      },
+      {
+       "aggregate_tok_s_wall": 234.382,
+       "oracle_exact": "4/4",
+       "requests": 4
+      }
+     ],
+     "8": [
+      {
+       "aggregate_tok_s_wall": 431.842,
+       "oracle_exact": "8/8",
+       "requests": 8
+      },
+      {
+       "aggregate_tok_s_wall": 431.689,
+       "oracle_exact": "8/8",
+       "requests": 8
+      }
+     ],
+     "16": [
+      {
+       "aggregate_tok_s_wall": 725.368,
+       "oracle_exact": "16/16",
+       "requests": 16
+      },
+      {
+       "aggregate_tok_s_wall": 723.691,
+       "oracle_exact": "16/16",
+       "requests": 16
+      }
+     ],
+     "32": [
+      {
+       "aggregate_tok_s_wall": 1148.039,
+       "oracle_exact": "32/32",
+       "requests": 32
+      },
+      {
+       "aggregate_tok_s_wall": 1145.542,
+       "oracle_exact": "32/32",
+       "requests": 32
+      }
+     ],
+     "64": [
+      {
+       "aggregate_tok_s_wall": 1206.332,
+       "oracle_exact": "64/64",
+       "requests": 64
+      },
+      {
+       "aggregate_tok_s_wall": 1206.715,
+       "oracle_exact": "63/64",
+       "requests": 64
+      }
+     ]
+    }
+   }
+  },
+  "cudynm1r": {
+   "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-cudynm1r",
+   "description": "repeat of cudynm1 on the same boot",
+   "image_id": "sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b",
+   "ladders": {
+    "scheduled": {
+     "1": [
+      {
+       "aggregate_tok_s_wall": 112.821,
+       "oracle_exact": "1/1",
+       "requests": 1
+      },
+      {
+       "aggregate_tok_s_wall": 113.948,
+       "oracle_exact": "1/1",
+       "requests": 1
+      }
+     ],
+     "2": [
+      {
+       "aggregate_tok_s_wall": 104.227,
+       "oracle_exact": "2/2",
+       "requests": 2
+      },
+      {
+       "aggregate_tok_s_wall": 217.991,
+       "oracle_exact": "2/2",
+       "requests": 2
+      }
+     ],
+     "4": [
+      {
+       "aggregate_tok_s_wall": 357.498,
+       "oracle_exact": "4/4",
+       "requests": 4
+      },
+      {
+       "aggregate_tok_s_wall": 357.637,
+       "oracle_exact": "4/4",
+       "requests": 4
+      }
+     ],
+     "8": [
+      {
+       "aggregate_tok_s_wall": 622.265,
+       "oracle_exact": "8/8",
+       "requests": 8
+      },
+      {
+       "aggregate_tok_s_wall": 621.951,
+       "oracle_exact": "8/8",
+       "requests": 8
+      }
+     ],
+     "16": [
+      {
+       "aggregate_tok_s_wall": 775.131,
+       "oracle_exact": "16/16",
+       "requests": 16
+      },
+      {
+       "aggregate_tok_s_wall": 849.857,
+       "oracle_exact": "16/16",
+       "requests": 16
+      }
+     ],
+     "32": [
+      {
+       "aggregate_tok_s_wall": 916.424,
+       "oracle_exact": "32/32",
+       "requests": 32
+      },
+      {
+       "aggregate_tok_s_wall": 1108.745,
+       "oracle_exact": "32/32",
+       "requests": 32
+      }
+     ],
+     "64": [
+      {
+       "aggregate_tok_s_wall": 1182.178,
+       "oracle_exact": "64/64",
+       "requests": 64
+      },
+      {
+       "aggregate_tok_s_wall": 1182.959,
+       "oracle_exact": "64/64",
+       "requests": 64
+      }
+     ]
+    },
+    "mtp0_oracle": {
+     "1": [
+      {
+       "aggregate_tok_s_wall": 63.886,
+       "oracle_exact": "1/1",
+       "requests": 1
+      },
+      {
+       "aggregate_tok_s_wall": 63.796,
+       "oracle_exact": "1/1",
+       "requests": 1
+      }
+     ],
+     "2": [
+      {
+       "aggregate_tok_s_wall": 122.87,
+       "oracle_exact": "2/2",
+       "requests": 2
+      },
+      {
+       "aggregate_tok_s_wall": 123.067,
+       "oracle_exact": "2/2",
+       "requests": 2
+      }
+     ],
+     "4": [
+      {
+       "aggregate_tok_s_wall": 234.19,
+       "oracle_exact": "4/4",
+       "requests": 4
+      },
+      {
+       "aggregate_tok_s_wall": 234.169,
+       "oracle_exact": "4/4",
+       "requests": 4
+      }
+     ],
+     "8": [
+      {
+       "aggregate_tok_s_wall": 431.393,
+       "oracle_exact": "8/8",
+       "requests": 8
+      },
+      {
+       "aggregate_tok_s_wall": 431.981,
+       "oracle_exact": "8/8",
+       "requests": 8
+      }
+     ],
+     "16": [
+      {
+       "aggregate_tok_s_wall": 726.199,
+       "oracle_exact": "16/16",
+       "requests": 16
+      },
+      {
+       "aggregate_tok_s_wall": 724.277,
+       "oracle_exact": "16/16",
+       "requests": 16
+      }
+     ],
+     "32": [
+      {
+       "aggregate_tok_s_wall": 1148.694,
+       "oracle_exact": "32/32",
+       "requests": 32
+      },
+      {
+       "aggregate_tok_s_wall": 1146.711,
+       "oracle_exact": "32/32",
+       "requests": 32
+      }
+     ],
+     "64": [
+      {
+       "aggregate_tok_s_wall": 1204.072,
+       "oracle_exact": "64/64",
+       "requests": 64
+      },
+      {
+       "aggregate_tok_s_wall": 1205.343,
+       "oracle_exact": "64/64",
+       "requests": 64
       }
      ]
     }

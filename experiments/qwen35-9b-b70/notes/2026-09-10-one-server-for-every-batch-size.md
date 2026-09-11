@@ -58,6 +58,37 @@ the published 110.7 tok/s at one user, 623 at 8, better-than-any-static at 16, 1
 at 64 users - against mtp0's 1148 / 1208 - with the mtp0-level exactness at 32 and 64 that static
 speculation loses. No operator choice, no restart.
 
+
+## 2026-09-11: the draft-state catch-up recovers most of the residual
+
+The preregistered overlay (`docker/r276-dynsd-catchup`, on top of `dynsd-fullgraph`): a pure-decode
+step that schedules no drafts skips the draft layer's forward; the skipped positions' target hidden
+states and next tokens live in a 256-position per-request ring and are replayed through the draft
+layer as a prefill-shaped pass, in chunks of at most `max_num_batched_tokens`, the next time the
+request is asked for drafts. The MTP draft layer is a full-attention layer with its own KV cache,
+so the replay is exactly a prefill of that one layer over the gap.
+
+Three iterations, each a measurement:
+
+| arm | what changed | one user | c32 | c64 | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| cudynm1 v1 | first version | 110.71 / 110.64 | crash | crash | first real catch-up was 1638 tokens > the drafter's 512-token buffers; chunking added |
+| cudynm1 v2 | chunked | 110.66 / 110.58 | 854 / 1022 | 1118 / 1120 | **slower** than without: two host->device tensor creations per skipped step block on the whole GPU queue and cost the CPU/GPU overlap |
+| **cudynm1 v3** | device-only skip path | **110.69 / 110.60** | **917 / 1113** | **1183 / 1184** | +3% at 64 users, +2% at 32; gap to no-speculation 4.6% -> 1.9% |
+| cudynm1r | repeat of v3 | 110.65 / 110.60 | 916 / 1109 | 1182 / 1183 | reproduces |
+
+All strict gates 12/12 in every run; c32 exact 32/32 in all four passes of the two v3 runs (the
+identity claim by the two-run rule improves from 16 to **32 users**); c64 63/64 + 64/64 and 64/64 +
+64/64; the 2K-32K ladder on the v3 server is 18/18 exact with the same decode figures as the static
+run. The preregistered gate asked for 1.5% of the no-speculation server at 32-64; v3 lands at
+1.9-3%, so the residual is not closed, but the mechanism is proven and the configuration is
+strictly better than the one without it. What remains is the draft forward on the mixed prefill
+steps while a rung fills (kept so every prompt's draft KV is written) and one catch-up per request
+per threshold crossing.
+
+Promoted 2026-09-11 as the guide's scheduled-server configuration (launcher default image
+`qwen38-int4-r276-dynsd-catchup`, six overlaid files pinned by content).
+
 ## What is not, and what is next
 
 - The 5% under mtp0 at 32-64 users is the draft-layer forward on zero-draft steps (pwdynz). Only
