@@ -76,7 +76,8 @@
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s3",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s2",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s4",
-  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s5"
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s5",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s6"
  ],
  "s3_tp1_strict": {
   "G1": "12/12",
@@ -186,5 +187,10 @@
   "depth3": "1077/1280, 15.86% divergent, oracle-free minority 2.75%, 2063.2 tok/s",
   "r224_unstaggered_f0_f1": "MTP0 1257/1280 and 1256/1280 at 2095 tok/s; depth 3 33.9% and 35.6% divergent at 1406 / 1289",
   "reading": "The 4B lane's staggered-admission result holds on the 9B, never measured here before: byte-exact at c64 on two cards, at +22% throughput over the unstaggered R224 arms because of R293. The speculative lane halves its divergence under the same stagger."
+ },
+ "s6_tp1_high_rungs_f4_settings": {
+  "mtp0": "256/256, 384/384, 512/512 exact at c64/c96/c128; 1641.6, 1852.8, 1955.3 tok/s (R224 x1: 1272.7, 1308.5, 1323.7)",
+  "depth3": "3.5/5.2/5.5% divergent; 1157.8, 1268.2, 1249.5 tok/s (R224 x1: 787.2, 808.8, 806.9)",
+  "reading": "+29/+42/+48% without speculation at full exactness; +47/+57/+55% at depth 3. Under R224 the one-card ceiling was 1324 tok/s; under R293 it is 1955 and still rising at c128."
  }
 }
