@@ -75,7 +75,8 @@
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s1",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s3",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s2",
-  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s4"
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s4",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s5"
  ],
  "s3_tp1_strict": {
   "G1": "12/12",
@@ -178,5 +179,12 @@
    "depth3": 172.3
   },
   "reading": "Lossless by every gate on two cards; single user -4.4% (depth 3) and -4.1% (MTP0)."
+ },
+ "s5_tp2_stagger_recipe": {
+  "arm": "TP2, fragile tie-site suite v1 (12 prompts), c64, 20 passes, --launch-stagger-ms 5, R293",
+  "mtp0": "1280/1280 exact, harness classification output-identity-qualified, 2557.1 tok/s",
+  "depth3": "1077/1280, 15.86% divergent, oracle-free minority 2.75%, 2063.2 tok/s",
+  "r224_unstaggered_f0_f1": "MTP0 1257/1280 and 1256/1280 at 2095 tok/s; depth 3 33.9% and 35.6% divergent at 1406 / 1289",
+  "reading": "The 4B lane's staggered-admission result holds on the 9B, never measured here before: byte-exact at c64 on two cards, at +22% throughput over the unstaggered R224 arms because of R293. The speculative lane halves its divergence under the same stagger."
  }
 }
