@@ -1,0 +1,309 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 chain 13 (p1-p9): R290 class-consistent FP16 linear on the server (2026-09-11 05:12-06:46)",
+ "headline": "R290 removes the tax above c16 on both topologies and passes every strict gate 12/12, but on one card it loses MTP0 exactness from c20 up (14% divergent at c24-c64; the 5 ms stagger recipe 888/1280 against R224's 1280/1280) and costs 12-15% at single user. Two cards stay near-exact (MTP0 exact c1-c32, 3/256 at c64, 512/512 at c128 with f4 settings). Offline the op is bit-exact for every shape the server logged, so the fault is the census, not the arithmetic; R291 fixes the census and the pad overhead and is measured by chain 14.",
+ "image": "neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-r290 sha256:fe23db2f, VLLM_XPU_FP16_LINEAR_CLASSPAD=1 verified in every container, census map logged by every server",
+ "throughput_tok_s_r290_vs_r224": {
+  "tp1_depth3": {
+   "c1": [
+    139.4,
+    159.2
+   ],
+   "c2": [
+    268.3,
+    300.8
+   ],
+   "c4": [
+    491.6,
+    537.8
+   ],
+   "c8": [
+    843.0,
+    883.1
+   ],
+   "c12": [
+    1095.7,
+    917.8
+   ],
+   "c16": [
+    1331.9,
+    1088.9
+   ],
+   "c20": [
+    1346.6,
+    1024.3
+   ],
+   "c24": [
+    1451.9,
+    1120.6
+   ],
+   "c32": [
+    1596.0,
+    1153.6
+   ],
+   "c64": [
+    1819.1,
+    1201.0
+   ],
+   "c96_f4": [
+    1736.7,
+    1147.5
+   ],
+   "c128_f4": [
+    1805.6,
+    1166.6
+   ]
+  },
+  "tp1_mtp0": {
+   "c1": [
+    89.8,
+    101.9
+   ],
+   "c2": [
+    172.2,
+    193.5
+   ],
+   "c4": [
+    329.6,
+    362.3
+   ],
+   "c8": [
+    611.7,
+    654.5
+   ],
+   "c12": [
+    803.9,
+    839.6
+   ],
+   "c16": [
+    1023.0,
+    1058.8
+   ],
+   "c20": [
+    1166.8,
+    1196.6
+   ],
+   "c24": [
+    1318.1,
+    1345.9
+   ],
+   "c32": [
+    1574.2,
+    1591.7
+   ],
+   "c64": [
+    2164.4,
+    1723.0
+   ],
+   "c96_f4": [
+    2395.0,
+    1779.2
+   ],
+   "c128_f4": [
+    2525.8,
+    1810.9
+   ]
+  },
+  "tp2_depth3": {
+   "c1": [
+    192.3,
+    227.3
+   ],
+   "c2": [
+    370.4,
+    428.4
+   ],
+   "c4": [
+    671.1,
+    759.6
+   ],
+   "c8": [
+    1175.7,
+    1229.0
+   ],
+   "c12": [
+    1530.7,
+    1378.0
+   ],
+   "c16": [
+    1816.3,
+    1588.1
+   ],
+   "c20": [
+    1596.5,
+    1421.4
+   ],
+   "c24": [
+    1806.9,
+    1629.7
+   ],
+   "c32": [
+    2244.7,
+    1848.9
+   ],
+   "c64": [
+    2704.3,
+    2020.6
+   ],
+   "c96_f4": [
+    2800.5,
+    2113.7
+   ],
+   "c128_f4": [
+    2869.1,
+    2157.0
+   ]
+  },
+  "tp2_mtp0": {
+   "c1": [
+    112.5,
+    136.3
+   ],
+   "c2": [
+    216.4,
+    258.9
+   ],
+   "c4": [
+    415.9,
+    492.1
+   ],
+   "c8": [
+    787.5,
+    899.1
+   ],
+   "c12": [
+    1065.9,
+    1183.5
+   ],
+   "c16": [
+    1377.6,
+    1492.3
+   ],
+   "c20": [
+    1606.3,
+    1739.6
+   ],
+   "c24": [
+    1842.2,
+    1984.1
+   ],
+   "c32": [
+    2235.0,
+    2353.9
+   ],
+   "c64": [
+    3227.7,
+    2777.7
+   ],
+   "c96_f4": [
+    3721.1,
+    3013.1
+   ],
+   "c128_f4": [
+    4017.2,
+    3103.9
+   ]
+  },
+  "format": "[R290, R224-matrix]; c96/c128 rows use f4 settings (mns 128, mbt 1024, capture 128) in both columns",
+  "reading": "Above the point where R224 needs a second piece the gain is large and monotone: TP1 depth 3 +22% at c16, +38% at c32, +51% at c64, +55% at c128; TP2 depth 3 +34% at c64; TP1 MTP0 +26% at c64, +40% at c128; TP2 MTP0 +16% at c64, +29% at c128 (4017 tok/s, the highest aggregate measured on this lane). Below it every rung LOSES 8-15%: the pad path allocated a zero block and concatenated on every call, and with ~50-100 unquantized projections per step that is 2-3 ms per step at single user."
+ },
+ "strict_gates": {
+  "p3_tp1": {
+   "G1": "12/12",
+   "G2": "12/12",
+   "G3": "12/12 both",
+   "mtp0_tok_s": [
+    90.35,
+    90.48
+   ],
+   "depth3_tok_s": [
+    157.81,
+    158.01
+   ],
+   "r224_published": {
+    "mtp0": 102.6,
+    "depth3": 177.4
+   }
+  },
+  "p4_tp2": {
+   "G1": "12/12",
+   "G2": "12/12",
+   "G3": "12/12 both",
+   "mtp0_tok_s": [
+    113.65,
+    113.82
+   ],
+   "depth3_tok_s": [
+    203.27,
+    202.58
+   ],
+   "r224_measured": {
+    "mtp0": 138.1,
+    "depth3": 240.9
+   }
+  },
+  "reading": "Lossless under R290 by every gate, at 11-15% below the R224 headline."
+ },
+ "identity": {
+  "tp1_mtp0_div_pct": {
+   "c1-c16": 0.0,
+   "c20": 1.25,
+   "c24": 14.58,
+   "c32": 14.84,
+   "c64": 13.28,
+   "c96_f4": 0.52,
+   "c128_f4": 9.18
+  },
+  "tp1_depth3_div_pct": {
+   "c1-c8": 0.0,
+   "c12": 2.08,
+   "c16": 1.56,
+   "c20": 5.0,
+   "c24": 6.25,
+   "c32": 9.38,
+   "c64": 11.72
+  },
+  "tp2_mtp0_div_pct": {
+   "c1-c32": 0.0,
+   "c64": 1.56,
+   "c64_f4": 0.0,
+   "c96_f4": 0.26,
+   "c128_f4": 0.0
+  },
+  "tp2_depth3_div_pct": {
+   "c1-c16": 0.0,
+   "c20": 6.25,
+   "c24": 11.46,
+   "c32": 7.03,
+   "c64": 10.94
+  },
+  "p5_stagger_recipe": {
+   "mtp0": "888/1280, 30.62% divergent, oracle-free minority 4.76%, 2103.6 tok/s",
+   "depth3": "779/1280, 39.14%, minority 6.62%, 1751.0 tok/s",
+   "r224_r3": "1280/1280 at 1701.5"
+  },
+  "depth2_p8_and_depth4_p9": "depth 2: exact to c16, 3.91% at c32, 12.5% at c64, 2024 tok/s at c64; depth 4: exact to c16, 10.2% at c32, 10.6% at c64, 1653 at c64. Both MTP0 lanes show the same c32/c64 loss as p1.",
+  "reading": "R224 kept MTP0 near-exact to c128 and the depth-3 suite exact to c16. R290 keeps depth 3 exact to c8-c16 and MTP0 exact to c16 on one card, then loses it. Two cards are much less affected. The oracle-free minority rate of 5% at c24 says passes disagree with each other, not only with the oracle."
+ },
+ "diagnosis": {
+  "offline": "probes/validate-r290-classpad.py and a TP1-shape variant: the R290 op is bit-identical across M in {1..600}, to 64 single-row calls, with bias, with strided and 3-D inputs, for 12288x2560, 10240x2560, 2560x4096 and 248320x2560. The arithmetic is not the fault.",
+  "the_census": "The server's own census line for 2560x4096 read 'canonical=c1 largest=512 map=1-32:c0 33-192:c1 193-193:c2 ...' while offline the same shape maps as '33-96:c1 97-192:c2 ...' with largest=384. A class was a row-0 fingerprint on ONE random input, and two kernels that agree on that input merge. On the server that merged 33-96 with 97-192 and admitted members up to 512 - and offline, every class of the small-N shapes from 129 rows up is split-K: position-variant, pad-variant and run-to-run nondeterministic (probes/census-small-shapes.py). Prefill chunks of several prompts land there, so the state after prefill differed between passes: divergence from c20 up, oracle-free minority 5%, TP2 (different shapes, different maps) barely affected.",
+  "the_cost": "Per call, zero-block allocation + cat + slice adds 0.02-0.03 ms on the small shapes (0.093 -> 0.115 ms at 10240x2560); a persistent buffer adds 0.002 ms (0.095). Times ~75 calls per step that is the 12%."
+ },
+ "r291": {
+  "what": "experiments/qwen38-27b-b70/docker/r291-fp16-linear-classpad-verified.py on R290 -> image qwen38-int4-fp16-linear-classpad-verified-r291 sha256:4f97c239. Three-input fingerprints; a class is canonical-eligible only if deterministic, position-invariant and pad-invariant at its first, middle and last member; canonical = most populous eligible class other than the single-row class; no eligible class -> R224 32-row pieces for that shape; pad rows from a persistent zeroed buffer; verdict logged per shape.",
+  "offline": "bit-exact at every M for every logged shape; lm_head M=1 2.23 ms (plain 2.12), M=256 3.04, M=512 4.40; TP2 shard M=1 1.20 (1.08).",
+  "measured_by": "chain 14 (q1-q9, same arms as chain 13, wrapper qwen35-4b-classpad2-20260911)"
+ },
+ "campaign_roots": [
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p1",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p2",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p3",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p4",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p5",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p6",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p7",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p8",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p9"
+ ]
+}

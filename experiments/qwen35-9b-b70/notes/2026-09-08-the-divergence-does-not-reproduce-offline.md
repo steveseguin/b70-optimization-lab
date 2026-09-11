@@ -70,3 +70,14 @@ Until it reports, the headline of this note is **weaker than written**: the offl
 shown to reproduce the divergence, but it has not been given a fair chance to either. The serving-path
 conclusion in "What is left" stands on the 4B lane's staggered-admission result, which is independent of
 this probe, and not on the five nulls above.
+
+## Amendment 2026-09-11: the queued rerun did not report either
+
+The runner started at 20:43 on 2026-09-09. The lockstep control failed at engine start (a WorkerProc
+initialisation error; the root cause line is not in the retained tail). The drift arm then began loading
+with `Available RAM: 1.17 GiB` against a 10.65 GiB checkpoint, wrote nothing for thirty-two hours, and
+exited at 05:12 on 2026-09-11, holding the queue behind it for that whole time. The runner has no memory
+guard - the campaign engine's `LOAD_MEMORY_MIB` wait exists for exactly this - and its `| tee | tail`
+masks the exit code. This probe has now failed to complete four times for four different reasons; the
+headline of this note remains unproven and the offline route is not cheap. The 4B lane's serving-path
+findings (staggered admission; the R224/R290 FP16 linear work) stand on their own evidence.

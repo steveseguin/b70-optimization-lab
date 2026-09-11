@@ -1,0 +1,6 @@
+# R291: R290 + verified census (three-input fingerprints, per-class determinism/position/pad checks,
+# fallback to R224 pieces when no class qualifies) + persistent pad buffers. Same env switch.
+FROM neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-r290
+COPY r291-fp16-linear-classpad-verified.py /tmp/r291.py
+RUN python /tmp/r291.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py && rm /tmp/r291.py
+LABEL neural.download.build.lane="qwen38-int4-fp16-linear-classpad-verified-r291"
