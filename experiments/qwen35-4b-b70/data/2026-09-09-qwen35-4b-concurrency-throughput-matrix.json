@@ -190,8 +190,8 @@
     2113.7,
     2400.1,
     1757.1,
-    null,
-    null
+    3810.2,
+    2851.7
    ],
    [
     128,
@@ -201,8 +201,8 @@
     2157.0,
     2520.0,
     1802.0,
-    null,
-    null
+    4015.3,
+    2961.3
    ]
   ],
   "note_on_tp1_c36_to_c56": "c36, c40, c44, c48 and c56 in the TP1 columns are x2 (2026-09-09, ten passes, every rung in the capture set, max_num_seqs 64, max_num_batched_tokens 512). x2 also re-read c32 (1593.4 / 1153.1) and c64 (1726.9 / 1201.4), within 0.2% of the pooled values kept in those rows.",
@@ -214,7 +214,8 @@
   "peak_aggregate": "The highest aggregate measured anywhere in this campaign is 3103.9 tok/s, two cards without speculation at c128, and it is still rising. On one card the peak is 1810.9 at c128. Two cards without speculation at c128 is 1.71x one card at the same rung, against 1.36x at c32 and c64 - the second card helps more the more concurrency there is.",
   "speculation_stops_scaling": "Depth 3 on one card is flat from c16 to c128 - 1088.9 to 1166.6, a 7% gain over an eightfold increase in users - while no-speculation rises 1058.8 to 1810.9, a 71% gain.",
   "second_card": "TP2 over TP1 is 1.34x to 1.61x depending on rung and mode, with the largest gains at c32 and c64 where a single card is closer to saturation.",
-  "r293": "With the class-consistent FP16 linear the no-speculation column keeps rising and the depth-3 column no longer stalls: one card depth 3 reads 1353 at c16 (R224 1089) and 1831 at c64 (1201); two cards 1862 and 2694 (1588, 2021). The speculation crossover moves from c16-c20 to about c32 on one card (depth 3 1608 against MTP0 1625 at c32) and c24-c32 on two. Below c8 the pad path costs 5-11%."
+  "r293": "With the class-consistent FP16 linear the no-speculation column keeps rising and the depth-3 column no longer stalls: one card depth 3 reads 1353 at c16 (R224 1089) and 1831 at c64 (1201); two cards 1862 and 2694 (1588, 2021). The speculation crossover moves from c16-c20 to about c32 on one card (depth 3 1608 against MTP0 1625 at c32) and c24-c32 on two. Below c8 the pad path costs 5-11%.",
+  "peak_aggregate_r293": "4015.3 tok/s: two cards, no speculation, c128, R293, 512/512 exact in that arm."
  },
  "caveats": {
   "mixed_server_configs_at_high_rungs": "c96 and c128 come only from f4, which ran max_num_seqs 128 and max_num_batched_tokens 1024 against the 64/512 used elsewhere, and c64 pools f1, f4 and v1. Those settings materially change the divergence rate but barely change throughput - f1 and f4 read 1201.0 and 1217.2 at depth-3 c64, and 1723.0 and 1732.5 without speculation - so the throughput matrix tolerates the mix. An identity comparison would not.",
