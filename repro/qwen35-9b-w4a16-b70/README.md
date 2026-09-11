@@ -187,6 +187,85 @@ MTP0 arm as its oracle.
 All 18 depth-3 answers matched the oracle. The FP8 route of the same model runs 49.6 to 45.5 without speculation and
 105.9 to 86.8 with it, so INT4 leads at every depth and by the widest margin at short context.
 
+## One server for every batch size (campaigns fgdynm1 / fgdynm1r, 2026-09-10)
+
+Speculation on this route is a latency lever, not a throughput lever: depth 3 is
+worth +72% at one user and costs a third of aggregate throughput at 64, and it is
+the only setting that is *not* exact at 32 and 64 users. vLLM in R276 carries
+`num_speculative_tokens_per_batch_size`, a per-batch-size draft schedule, so one
+server can hold both ends - but running it needs two pure-Python overlays on
+R276, both in [`docker/`](docker/):
+
+- `r276-dynamic-mamba-alloc`: the scheduler reserves GDN/Mamba state for the
+  largest draft depth still possible for the batch instead of the static
+  maximum (the 27B lane's August patch, applied to R276 without fuzz). Without
+  it the no-draft rungs run 6-18% under the no-speculation server.
+- `r276-dynsd-fullgraph`: keeps `FULL_DECODE_ONLY` and captures one full decode
+  graph per query length the schedule can produce (the dispatcher keys differ
+  in request count, so a graph for 8x4 tokens is never replayed for 16x2). vLLM's
+  own fallback rewrites the mode to PIECEWISE, which on this lane means either
+  no graphs at all (`splitting_ops: []`, 77.6 tok/s at one user) or, with the
+  default splitting ops, a 4K-context near-tie site where the 1-row oracle and
+  the 4-row verify pick different tokens - 4 of 4 piecewise runs, 0 of 3
+  full-graph runs. Static configurations are unchanged by construction.
+
+Schedule `[[1,8,3],[9,16,1],[17,64,0]]`: depth 3 through 8 concurrent users,
+depth 1 through 16, no speculation above. Two runs on one boot, each its own
+strict pair, its own MTP0 oracle pair, and its own c1-c64 identity ladders:
+
+| users | scheduled server (fgdynm1 / fgdynm1r, warm pass) | exact | static depth 3 | no speculation |
+| ---: | ---: | --- | ---: | ---: |
+| 1 | **110.7 / 110.6** (strict pairs 110.67/110.73, 110.61/110.54) | 12/12 x 2 | 110.7 | 64.2 |
+| 8 | **623 / 624** | 8/8 | ~596 | 433 |
+| 16 | 852 / 883 | 16/16 | ~667 | 723 |
+| 32 | 1090 / 1091 | 32/32 + 31/32; 31/32 + 31/32 | ~878 | 1148 |
+| 64 | 1150 / 1149 | 64/64 + 64/64; 62/64 + 64/64 | ~909 | 1208 |
+| 128 | 1197 (fgdync128, max-num-seqs 128) | 127/128 | - | 1254 (127/128) |
+
+- **Identity claim, two-run rule:** the deepest rung exact in both passes of
+  both runs is **16 users**; aggregate rates are published through that rung.
+  At 32 and 64 the scheduled server is in the same near-exact band as the
+  no-speculation server itself (this route's RMSNorm qualification above), where
+  static depth-3 speculation loses 2-3 requests in 64.
+- **Past 64 users:** the schedule carries "no drafts" forward above its last range, so at 128
+  users the scheduled server tracks the no-speculation server (1197 vs 1254 warm, both 127/128
+  exact) with the same ~5% bookkeeping cost as at 32-64.
+- **Context:** the 2K-32K real-content ladder on the scheduled server is
+  **18/18 exact** against its own MTP0 oracle, with the same decode figures as
+  the static run in the section above (111.4 / 139.2 / 113.9 / 147.8 / 129.1 /
+  86.7 tok/s at 2K...32K).
+- **Two costs to know.** (1) At 32-64 users the scheduled server is ~5% under
+  plain no-speculation: on zero-draft steps vLLM still runs the draft layer's
+  forward so its state stays current for when the batch shrinks; a
+  no-speculation server has no draft layer to keep. (2) The very first pass a
+  fresh server runs reads low whatever the rung (459 at 16 users, 953-1064 at
+  32-64) and every later pass is steady (fgdynt, four passes: 884 / 884 / 892
+  at 16, 1092 / 1090 / 1091 at 32, 1151 / 1150 / 1151 at 64); quote warm passes.
+- Result files: `experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1-strict-result.json`
+  and `...-fgdynm1r-strict-result.json`; campaign note
+  `experiments/qwen35-9b-b70/notes/2026-09-10-one-server-for-every-batch-size.md`.
+
+Build the overlays once (COPY-only Dockerfiles, seconds each, base = the public
+R276 digest) and launch:
+
+```bash
+cd /path/to/b70-optimization-lab
+docker build -f repro/qwen35-9b-w4a16-b70/docker/r276-dynamic-mamba-alloc.Dockerfile \
+  -t neural-download/vllm-openai-xpu:qwen38-int4-r276-dynamic-mamba-alloc repro/qwen35-9b-w4a16-b70/docker
+docker build -f repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph.Dockerfile \
+  -t neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph repro/qwen35-9b-w4a16-b70/docker
+MODEL_DIR=/models/Qwen3.5-9B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-w4a16-dyn-cache \
+  repro/qwen35-9b-w4a16-b70/scripts/run-qwen35-9b-w4a16-dynamic-server.sh
+```
+
+A locally built overlay's image ID is not portable, so the launcher pins the
+overlay by content: it verifies the SHA-256 of all five overlaid files inside
+the image before starting, and the shared launcher's image contract still
+verifies the R276 kernels and pinned files underneath. `SPEC_SCHEDULE` and
+`MTP_DEPTH` (the schedule's largest depth) change the policy; `MAX_NUM_SEQS`
+defaults to 64 to cover it. Validate exactly as above, plus the identity ladder
+with `--require-output-identity` at every rung you intend to serve.
+
 ## Known limits
 
 - Depth 3 is confirmed on this route's own evidence (campaigns d4/d5/d6),
