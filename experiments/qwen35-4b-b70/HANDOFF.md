@@ -3,8 +3,8 @@
 Last updated **2026-09-11**. The identity campaign (chains 1-10, 2026-09-09) is
 complete. Chains 11-15 (2026-09-09 evening to 2026-09-11 10:49) found and removed
 the largest throughput lever on the lane, the R224 32-row FP16 linear chunk, with
-a class-consistent replacement (**R293**) that is lossless by every gate. Chain 16
-(`r10`, the two-card stagger recipe on R293) is the last arm; see
+a class-consistent replacement (**R293**) that is lossless by every gate. Chain 16 (`r10`, the two-card stagger recipe on
+R293) finished 10:58 and is exact at 3164 tok/s; see
 `notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md`.
 
 ## What this lane is
@@ -42,6 +42,7 @@ splits every call into one verified class per weight shape:
 | --- | ---: | ---: |
 | G1/G2/G3, TP1 and TP2 | 12/12 | **12/12** |
 | one card, no spec, 5 ms stagger, fragile c64 | 1280/1280 at 1702 | **1280/1280 at 2104** |
+| two cards, no spec, 5 ms stagger, fragile c64 | 1280/1280 at 2711 | **1280/1280 at 3164** |
 | one card, no spec, c128 | 1811 | **2520**, 512/512 exact |
 | two cards, no spec, c128 | 3104 | **4015**, 512/512 exact |
 | one card, depth 3, c64 | 1201 | **1831** |

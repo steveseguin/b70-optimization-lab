@@ -14,6 +14,7 @@ measured oneDNN M-class per weight shape instead of R224's 32-row pieces. Measur
 | --- | ---: | ---: | --- |
 | strict gates G1/G2/G3, TP1 and TP2 | 12/12 | **12/12** | lossless by every gate |
 | one card, MTP0, 5 ms stagger, fragile suite, c64 | 1280/1280 at 1702 tok/s | **1280/1280 at 2104** | harness-certified, +23.6% |
+| two cards, MTP0, 5 ms stagger, fragile suite, c64 | 1280/1280 at 2711 | **1280/1280 at 3164** | harness-certified, +16.7% |
 | one card, depth 3, c64 | 1201 | **1831** | +52% |
 | one card, depth 3, c16 | 1089 | **1353** | +24% |
 | two cards, depth 3, c64 | 2021 | **2694** | +33% |
@@ -25,7 +26,7 @@ measured oneDNN M-class per weight shape instead of R224's 32-row pieces. Measur
 Identity on one card is R224's at every rung: MTP0 near-exact to c64 (255/256), depth 3 exact through c16.
 On two cards one prompt, `cache-c000`, sits on a tie at token 39 under the R293 arithmetic and diverges
 once per pass from c2 up; every other rung and prompt behaves as under R224. The two-card stagger recipe
-is measured by chain 16.
+(chain 16, `r10`) is byte-exact at 3164 tok/s.
 
 The speculation crossover moves. Under R224 depth 3 stopped paying at c16 because every extra user added
 a full re-read of the 1.2 GB vocabulary projection per 32 rows; under R293 depth 3 leads MTP0 to about c32
@@ -60,7 +61,7 @@ Two modes on one image, both lossless by the gates:
 - `VLLM_XPU_FP16_LINEAR_CLASSPAD=0` (R224 behaviour): the published single-user headline, 177.4 tok/s.
 - `VLLM_XPU_FP16_LINEAR_CLASSPAD=1`: any server expected to see more than about eight users. Depth 3 to
   about c32, no speculation above; add the 5 ms admission stagger for byte-exact output. One card 2104
-  tok/s exact at c64; two cards measured by chain 16.
+  tok/s exact at c64; two cards 3164.
 
 The 9B and 27B lanes run the same R224 op and the same oneDNN GEMM; their ladders above 32 rows carry the
 same tax and the same fix applies, unmeasured there.
