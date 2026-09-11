@@ -73,7 +73,8 @@
  },
  "campaign_roots": [
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s1",
-  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s3"
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s3",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s2"
  ],
  "s3_tp1_strict": {
   "G1": "12/12",
@@ -92,5 +93,71 @@
    "depth3": 113.63
   },
   "reading": "Lossless by every gate; single user -1.0% at depth 3, -4.0% at MTP0."
+ },
+ "s2_tp2_ladders": {
+  "depth3_tok_s_r293_vs_r224_w3": {
+   "c1": [
+    170.1,
+    176.1
+   ],
+   "c16": [
+    1419.0,
+    1174.6
+   ],
+   "c32": [
+    1856.9,
+    1356.0
+   ],
+   "c64": [
+    2164.9,
+    1464.6
+   ]
+  },
+  "mtp0_tok_s_r293_vs_r224_w3": {
+   "c1": [
+    93.4,
+    97.5
+   ],
+   "c16": [
+    1137.0,
+    1151.9
+   ],
+   "c32": [
+    1855.6,
+    1844.8
+   ],
+   "c64": [
+    2614.1,
+    2092.9
+   ]
+  },
+  "all_rungs_r293": {
+   "depth3": {
+    "c1": 170.1,
+    "c2": 330.7,
+    "c4": 556.3,
+    "c8": 979.5,
+    "c12": 1137.7,
+    "c16": 1419.0,
+    "c20": 1464.2,
+    "c24": 1637.4,
+    "c32": 1856.9,
+    "c64": 2164.9
+   },
+   "mtp0": {
+    "c1": 93.4,
+    "c2": 179.2,
+    "c4": 343.7,
+    "c8": 643.3,
+    "c12": 881.1,
+    "c16": 1137.0,
+    "c20": 1327.2,
+    "c24": 1523.0,
+    "c32": 1855.6,
+    "c64": 2614.1
+   }
+  },
+  "identity": "MTP0 exact at every rung to c32, 255/256 at c64 (R224 w3: exact to c32, 126/128 at c64); depth 3 exact except c8 31/32, c20 76/80, c24 95/96, c32 124/128, c64 246/256 (R224 w3: exact to c16, 63/64 at c32, 121/128 at c64)",
+  "reading": "Two cards: depth 3 +21% at c16, +37% at c32, +48% at c64; no-speculation +25% at c64. Single user -3.4% (depth 3) and -4.2% (MTP0). Identity as R224 within the four-pass resolution."
  }
 }
