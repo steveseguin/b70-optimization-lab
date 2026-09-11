@@ -6,8 +6,16 @@
 # through 64 users where the FP8 route does not. No config relabel is needed (unlike AutoRound weights on the 27B lane).
 #   MODEL_DIR  the downloaded RedHatAI/Qwen3.5-9B-quantized.w4a16 directory (required; verified against the manifest)
 #   MTP_DEPTH / TENSOR_PARALLEL_SIZE / XPU_GRAPH / DRAFT_HEAD_INT4 / PORT and the rest: see the shared launcher.
+#   CLASSPAD   0 (default): the published single-user configuration (R276 code path). 1: the class-consistent FP16 linear
+#              (R293, 2026-09-11) - every unquantized linear, above all the 1.2 GB fp16 vocabulary projection, is padded or
+#              split into one verified oneDNN M-class per weight shape instead of 32-row pieces that each re-read the weight.
+#              Lossless by the same gates; 25-56% more throughput from about eight users up, 5-6% less at one user.
+#              Details: repro/qwen35-9b-w4a16-b70/README.md (R293 section).
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd); repo_root=$(cd -- "${script_dir}/../../.." && pwd)
+export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293}
+export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6}
+export VLLM_XPU_FP16_LINEAR_CLASSPAD=${CLASSPAD:-0}
 export MODEL_MANIFEST=${MODEL_MANIFEST:-${script_dir}/../manifests/model-direct-redhatai-qwen35-9b-w4a16-a398088c.json}
 export CONTAINER_NAME=${CONTAINER_NAME:-qwen35-9b-w4a16-mtp${MTP_DEPTH:-3}} SERVED_MODEL_NAME=${SERVED_MODEL_NAME:-qwen35-9b-w4a16-mtp${MTP_DEPTH:-3}}
 exec "${repo_root}/repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh"

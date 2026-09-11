@@ -5,7 +5,7 @@
  "name": "Qwen 4B",
  "display_name": "Qwen3.5 4B",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-07",
+ "updated_at": "2026-09-11",
  "summary": "Alibaba's smallest dense-hybrid Qwen3.5 with a shipped MTP head, served on one Arc Pro B70. Only the INT4 W4A16 build is packaged: the FP8 build of the same model is not repeat-exact on this stack, while the INT4 route passes every identity gate.",
  "architecture": {
   "class": "Qwen3_5ForConditionalGeneration",
@@ -23,10 +23,12 @@
    "FP8-dynamic"
   ],
   "runtime": [
-   "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)"
+   "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
+   "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)"
   ],
   "tp": [
-   1
+   1,
+   2
   ],
   "mtp": [
    0,
@@ -34,7 +36,8 @@
   ],
   "configured_max_context_tokens": [
    1024,
-   8192
+   8192,
+   32768
   ],
   "kv": [
    "f16"
@@ -161,10 +164,10 @@
  "packets": [
   {
    "id": "qwen35-4b-w4a16-b70",
-   "label": "Qwen3.5 4B W4A16 · one or two B70 · MTP depth 3 with the draft INT4 head",
+   "label": "Qwen3.5 4B W4A16 \u00b7 one or two B70 \u00b7 MTP depth 3 with the draft INT4 head",
    "revision": "qwen3.5-4b-w4a16-7a613872",
    "quantization": "W4A16",
-   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
+   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)",
    "topologies": [
     1,
     2
@@ -177,18 +180,23 @@
     "TP1",
     "TP2",
     "MTP0/3",
-    "cache-zero strict suite"
+    "cache-zero strict suite",
+    "stagger-exact concurrency",
+    "CLASSPAD many-user mode"
    ],
    "grades": {
     "evidence": {
      "grade": "B",
      "scope": "one- and two-card strict pairs with identity gates and ladders",
-     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; the second card adds 35% without speculation and 32% with it, while two-card concurrency identity holds to 32 users without speculation and 16 with it; no clean-host replay yet",
-     "reviewed_at": "2026-09-07",
+     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; the second card adds 35% without speculation and 32% with it, while two-card concurrency identity holds to 32 users without speculation and 16 with it; no clean-host replay yet. 2026-09-11 (R293, CLASSPAD=1): strict gates 12/12 on both card counts at 168/96 (one card) and 226/128 (two cards) tok/s; no-speculation ladders exact to c20 on one card and c16 on two at 25-40% higher aggregate throughput (2520 at c128 on one card, 4015 on two, both 512/512); with a 5 ms admission stagger 64 users are byte-identical to the sequential oracle over twenty passes on one card (2104 tok/s) and two (3164). TP2 is measured lossless at 32K context (18/18, 222 tok/s depth 3).",
+     "reviewed_at": "2026-09-11",
      "evidence": [
       "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-w4a16-matrix-result.json",
       "repro/qwen35-4b-w4a16-b70/README.md",
-      "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1-strict-result.json"
+      "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1-strict-result.json",
+      "experiments/qwen35-4b-b70/data/2026-09-11-qwen35-4b-r290-classpad-on-the-server.json",
+      "experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-tp2-long-context.json",
+      "experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-staggered-admission-is-exact.json"
      ]
     }
    },
@@ -207,7 +215,7 @@
   {
    "id": "qwen-4b-mtp-depth",
    "title": "Speculative depth on one B70",
-   "subtitle": "W4A16 · strict completions suite · graph capture on · the draft-only INT4 head at depth 3",
+   "subtitle": "W4A16 \u00b7 strict completions suite \u00b7 graph capture on \u00b7 the draft-only INT4 head at depth 3",
    "x_label": "MTP depth",
    "discrete": true,
    "metrics": [
@@ -229,7 +237,7 @@
  "coverage_views": [
   {
    "id": "qwen-4b-quant-by-mtp",
-   "label": "quantization × MTP",
+   "label": "quantization \u00d7 MTP",
    "fixed": "One B70, R276 vLLM XPU, graph capture on. The FP8 row is measured but rejected: it fails the repeat-exactness gate.",
    "row_axis": {
     "key": "variant",

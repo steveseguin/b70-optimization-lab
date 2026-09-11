@@ -13,6 +13,13 @@ capture. Same image, launcher and gates as the 9B INT4 package; only the weights
 > single request at every rung through 32 users in both passes (`1593.9 tok/s`); 64 users reaches `1725.1` but flipped
 > one answer in one pass, so it is withheld. With depth 3, exact through 16 users (`1089.9 tok/s`).
 
+> **Many users, faster (2026-09-11, R293):** the served image gained a switch, `CLASSPAD=1`, that keeps every
+> unquantized FP16 linear in one verified oneDNN rounding class instead of re-reading the 1.2 GB vocabulary projection
+> once per 32 rows. Lossless by the same gates; one card without speculation reaches `2520 tok/s` at 128 users
+> (512/512 exact), two cards `4015`; depth 3 on one card `1831` at 64 users against `1201`; and with a 5 ms admission
+> stagger 64 users are byte-identical to the sequential oracle over twenty passes at `2104` (one card) and `3164`
+> (two). Single user costs 5-6%, so the default stays `CLASSPAD=0`, the configuration above. Recipe README, R293 section.
+
 ## Why the FP8 build of this model is not packaged
 
 It cannot pass the base identity gate on this stack. Three independent pairs of fresh servers, one user each, nothing
@@ -25,9 +32,9 @@ rather than discarded, because it is half of the evidence that what separates th
 ## Commands
 
 ```bash
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad
-docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad \
-            neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6
+docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6 \
+            neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293
 
 MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-4b-cache MTP_DEPTH=3 \
   repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh

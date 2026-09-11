@@ -187,6 +187,43 @@ MTP0 arm as its oracle.
 All 18 depth-3 answers matched the oracle. The FP8 route of the same model runs 49.6 to 45.5 without speculation and
 105.9 to 86.8 with it, so INT4 leads at every depth and by the widest margin at short context.
 
+## Many users, faster, still exact: the class-consistent FP16 linear (R293, 2026-09-11)
+
+Every static-server table above ran the vocabulary projection (248320 x 4096, 2 GB in fp16) and the per-layer
+unquantized projections in `<=32`-row pieces, an R224-era device for keeping the oneDNN f16 GEMM in its single-row
+rounding class. Each piece re-reads the weight, which is why the depth-3 column was flat from 16 users (747, 827, 787
+tok/s at c16/c32/c64). **R293** keeps the same opaque op but, with `CLASSPAD=1`, measures the GEMM's row-count
+classes per weight shape on first use, verifies them, and pads or splits every call into one canonical class: one
+weight read per step, rows bit-identical between one user and sixty-four. Found and characterised on the 4B lane
+([`experiments/qwen35-4b-b70/notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md`](../../experiments/qwen35-4b-b70/notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md));
+measured here by campaigns `s1`-`s7`
+([`experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md`](../../experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md),
+data `experiments/qwen35-9b-b70/data/2026-09-11-qwen35-9b-r293-classpad.json`). The image is R276 plus four
+pure-Python overlays; with `CLASSPAD=0`, the default, it runs the R276 code path unchanged.
+
+| | `CLASSPAD=0` (R276 path, above) | `CLASSPAD=1` (R293) |
+| --- | ---: | ---: |
+| strict gates G1/G2/G3, one card and two | 12/12 | **12/12** |
+| one card, depth 3 / MTP0, one user (strict) | 113.6 / 64.3 | 112.4 / 61.7 |
+| two cards, depth 3 / MTP0, one user (strict) | 172.3 / 97.6 | 164.7 / 93.6 |
+| one card, no speculation, c32 / c64 / c128 | 1184 / 1268 / 1324 | 1209 / **1644 / 1955**, c64 and c128 exact |
+| one card, depth 3, c16 / c32 / c64 | 747 / 827 / 787 | **942 / 1228 / 1225** |
+| two cards, no speculation, c32 / c64 / c128 | 1845 / 2093 / - | 1856 / **2614 / 3227**, c128 512/512 |
+| two cards, depth 3, c16 / c32 / c64 | 1175 / 1356 / 1465 | **1419 / 1857 / 2165** |
+| two cards, no speculation, c64, 5 ms admission stagger, tie-site suite, twenty passes | 1257/1280 unstaggered | **1280/1280 at 2557**, harness-certified |
+
+Identity is R224's at every rung within the four-pass resolution: no speculation exact to 24 users and at 64 on one
+card (127/128 at 32), to 32 on two (255/256 at 64); depth 3 exact through 16 on one card. The staggered-admission
+recipe from the 4B lane (`bench-openai-concurrency-oracle.py --launch-stagger-ms 5`: request *i* released 5*i* ms after
+a barrier, so the batch composition every request sees is the same on every pass) had never been run on this model;
+it is byte-exact here too. Single user costs 1-4%, less than on the 4B, because this model's per-layer projections are
+a smaller share of its step.
+
+**Serving recommendation for the static servers.** `CLASSPAD=0` for the published single-user headline;
+`CLASSPAD=1` for more than about eight users, depth 3 to about 32 users on one card, no speculation above, the
+admission stagger where byte-exact output matters. The scheduled-draft server in the next section is a separate route
+built on the R276 digest and has not been combined with R293.
+
 ## One server for every batch size (campaigns cudynm1 / cudynm1r, 2026-09-11)
 
 Speculation on this route is a latency lever, not a throughput lever: depth 3 is
@@ -285,8 +322,8 @@ intend to serve.
   not inherited: throughput falls monotonically with depth and no depth above 3
   is faster. See the depth table below.
 - Graph-off and 2K-32K context rows exist for the FP8 route only.
-- Two-card concurrency identity is weaker than one-card: exact through 32
-  users, and about one request lost at 64. That last figure is intermittent -
+- Two-card concurrency identity without an admission stagger is weaker than one-card: exact through 32
+  users, and about one request lost at 64 (with the 5 ms stagger, 1280/1280 over twenty passes under R293). That last figure is intermittent -
   six control passes across three campaigns read four at 63/64 and two at
   64/64 - so treat it as a rate, not a fixed score, and do not compare
   interventions against it with two passes

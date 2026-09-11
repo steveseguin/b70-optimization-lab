@@ -10,7 +10,7 @@
 
 RedHatAI's W4A16 quantization of Alibaba's Qwen3.5-4B (compressed-tensors INT4
 weights, FP16 activations), served as published by vLLM XPU on one Intel Arc
-Pro B70 through the lab's R276 image, with the publisher's MTP head as a
+Pro B70 through the lab's R293 image (R276 plus the class-consistent FP16 linear, off by default), with the publisher's MTP head as a
 lossless speculative draft and full decode-only XPU graph capture. It is the
 same stack and launcher as the
 [9B W4A16 route](../qwen35-9b-w4a16-b70/README.md); only the weights differ.
@@ -108,7 +108,10 @@ MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-4b-cache
 
 Every variable of the [shared launcher](../qwen35-9b-fp8-b70/README.md#launch)
 applies unchanged: `MTP_DEPTH` (default 3), `TENSOR_PARALLEL_SIZE`, `XPU_GRAPH`,
-`DRAFT_HEAD_INT4`, `PORT` and the server-shape variables.
+`DRAFT_HEAD_INT4`, `PORT` and the server-shape variables. This wrapper adds
+`CLASSPAD` (default `0`; see the R293 section below) and pins the R293 image
+(`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730...`), which
+with `CLASSPAD=0` is the R276 code path the tables were measured on.
 
 ## Validate
 
@@ -151,9 +154,64 @@ before and after; the depth-3 arm ran against a same-configuration MTP0 arm as i
 All 18 depth-3 answers matched the oracle. This model holds its speed at length better than the 9B, which falls to
 89.5 tok/s at 32K against this one's 149.9.
 
+## Many users, faster, still exact: the class-consistent FP16 linear (R293, 2026-09-11)
+
+Every table above was measured with the vocabulary projection (248320 x 2560, 1.2 GB in fp16) and the per-layer
+unquantized projections running in `<=32`-row pieces, an R224-era device for keeping the oneDNN f16 GEMM in its
+single-row rounding class. Each piece re-reads the weight, so above 32 rows the server paid a tax that grew with the
+batch: 41-54% of depth-3 throughput from c32 up, 25-30% of no-speculation throughput above c32, and the reason
+"speculation stops paying at 16 users" looked like a property of the model. **R293** keeps the same opaque op but,
+with `CLASSPAD=1`, measures the GEMM's row-count classes for each weight shape on first use (rows 1-32, 33-128,
+129-320, 321-512 at these shapes, each position-invariant, pad-invariant and deterministic), verifies them, and pads or
+splits every call into one canonical class. One weight read per step; rows bit-identical between one user and
+sixty-four. Mechanism, census and the R290-R293 history:
+[`experiments/qwen35-4b-b70/notes/2026-09-09-the-fp16-linear-chunk-is-a-throughput-tax.md`](../../experiments/qwen35-4b-b70/notes/2026-09-09-the-fp16-linear-chunk-is-a-throughput-tax.md),
+[`2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md`](../../experiments/qwen35-4b-b70/notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md);
+data `experiments/qwen35-4b-b70/data/2026-09-11-qwen35-4b-r290-classpad-on-the-server.json` (chains 15-16, arms
+`r1`-`r10`). The image is R276 plus four pure-Python overlays (`experiments/qwen38-27b-b70/docker/r290..r293-*.py`);
+with `CLASSPAD=0`, the default, it runs the R276 code path unchanged and reproduces every number above.
+
+| | `CLASSPAD=0` (R276 path, above) | `CLASSPAD=1` (R293) |
+| --- | ---: | ---: |
+| strict gates G1/G2/G3, one card and two | 12/12 | **12/12** |
+| one card, depth 3 / MTP0, one user (strict) | 177.4 / 102.6 | 168.0 / 96.5 |
+| two cards, depth 3 / MTP0, one user (strict) | 240.9 / 138.1 | 225.9 / 127.8 |
+| one card, no speculation, c16 / c32 / c64 | 1059 / 1594 / 1725 | 1052 / 1625 / 2164 |
+| one card, no speculation, c96 / c128 (`max-num-seqs 128`) | 1779 / 1811 | **2400 / 2520**, both exact |
+| one card, depth 3, c16 / c32 / c64 | 1090 / 1147 / 1201 | **1353 / 1608 / 1831** |
+| two cards, no speculation, c64 / c128 | 2778 / 3104 | **3317 / 4015**, c128 512/512 |
+| two cards, depth 3, c64 | 2021 | **2694** |
+| one card, no speculation, c64, 5 ms admission stagger, tie-site suite, twenty passes | 1280/1280 at 1702 | **1280/1280 at 2104**, harness-certified |
+| two cards, same | 1280/1280 at 2711 | **1280/1280 at 3164**, harness-certified |
+
+Identity is the same at every rung as with the pieces: no speculation near-exact to 64 users (one card 255/256, two
+cards 255/256), depth 3 exact through 16 on one card. On two cards one prompt, `cache-c000`, sits on an exact tie at
+token 39 under the R293 arithmetic and diverges once per pass from 2 users up; every other prompt behaves as before.
+Depth 2 (`r8`) leads depth 3 above 16 users under R293 (1767 at c32, 2031 at c64) and depth 4 trails it.
+
+**The admission stagger.** `bench-openai-concurrency-oracle.py --launch-stagger-ms 5` releases request *i* 5*i* ms
+after a barrier. A batch of constant composition is deterministic on this stack; what flips a tie is the composition
+*changing* underneath a request, and a deterministic arrival order makes that change identical on every pass. Without
+speculation the result equals the sequential oracle byte for byte at 64 users, on one card and two, for 1% of
+throughput. Any client that admits requests in a fixed order gets the same property; it is a serving discipline, not
+a kernel change (`experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-staggered-admission-is-exact.json`).
+
+**Serving recommendation.** One image, two modes, both lossless by the gates: `CLASSPAD=0` for the published
+single-user headline; `CLASSPAD=1` for any server expected to see more than about eight users, with depth 3 to 16
+users, depth 2 to about 48, no speculation above, and the admission stagger where byte-exact output matters. The
+5-6% single-user cost of `CLASSPAD=1` is one copy kernel plus a 33-row GEMM per projection per step, the floor of the
+design.
+
+```bash
+CLASSPAD=1 TENSOR_PARALLEL_SIZE=2 MTP_DEPTH=0 MAX_NUM_SEQS=128 MAX_NUM_BATCHED_TOKENS=1024 \
+  MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-4b-cache \
+  repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh
+```
+
 ## Known limits
 
-- Depths other than 0 and 3 were not run.
-- Two-card concurrency identity is not qualified above 32 users without
-  speculation, or above 16 with it.
+- Depths 1-6 have since been run on one card (all lossless on the strict suite; 2 and 3 tied at the top, 4 level,
+  5 and 6 slower); under R293 depth 2 leads above 16 users.
+- Two-card concurrency identity without an admission stagger is not qualified above 32 users without
+  speculation, or above 16 with it; with the 5 ms stagger it is byte-exact at 64.
 - Not yet clean-host tested.

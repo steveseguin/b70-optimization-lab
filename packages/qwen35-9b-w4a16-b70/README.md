@@ -23,6 +23,13 @@ decode-only XPU graph capture. The container image and the strict launcher chain
 > **Long context:** not measured on this route yet; the FP8 route's 2K-32K ladder is in
 > `repro/qwen35-9b-fp8-b70/README.md`.
 
+> **Many users, faster (2026-09-11, R293):** the served image gained a switch, `CLASSPAD=1`, that keeps every
+> unquantized FP16 linear in one verified oneDNN rounding class instead of re-reading the 2 GB vocabulary projection
+> once per 32 rows. Lossless by the same gates; one card without speculation reaches `1955 tok/s` at 128 users
+> (512/512 exact) against `1324`, two cards `3227`; depth 3 on one card `1225` at 64 users against `787`; and with a
+> 5 ms admission stagger 64 users on two cards are byte-identical to the sequential oracle over twenty passes at `2557`.
+> Single user costs 1-4%, so the default stays `CLASSPAD=0`. Recipe README, R293 section.
+
 ## Why this route rather than FP8
 
 The same publisher's FP8-dynamic build of this model is packaged separately and is slower at every depth, but the real
@@ -38,9 +45,9 @@ below its 128-row threshold and costs 13% at 64 users above it, buying no identi
 
 ```bash
 # image (public, anonymous pull verified 2026-09-07 by tag and digest)
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad
-docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad \
-            neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6
+docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6 \
+            neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293
 
 # serve (MTP_DEPTH=0 for the no-speculation profile)
 MODEL_DIR=/models/Qwen3.5-9B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-w4a16-cache MTP_DEPTH=3 \

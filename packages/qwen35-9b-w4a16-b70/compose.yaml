@@ -4,7 +4,7 @@
 # CI check:        tools/check-container-packet.py
 
 x-b70-common: &b70-common
-  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad
+  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6
   ulimits:
     core: 0
   mem_limit: 12g
@@ -59,6 +59,8 @@ x-b70-common: &b70-common
     VLLM_XPU_ENABLE_XPU_GRAPH: "1"
     VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
     VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
+    VLLM_XPU_FP16_LINEAR_CLASSPAD: "0"
+    VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM: "512"
     VLLM_XPU_FP16_LINEAR_ROWCHUNK: "32"
     VLLM_XPU_FP8_BLOCK_W8A16: "1"
     VLLM_XPU_FP8_PACKED_SERIAL_EXACT: "0"
@@ -139,6 +141,8 @@ services:
       VLLM_XPU_ENABLE_XPU_GRAPH: "1"
       VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
       VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
+      VLLM_XPU_FP16_LINEAR_CLASSPAD: "0"
+      VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM: "512"
       VLLM_XPU_FP16_LINEAR_ROWCHUNK: "32"
       VLLM_XPU_FP8_BLOCK_W8A16: "1"
       VLLM_XPU_FP8_PACKED_SERIAL_EXACT: "0"
@@ -254,6 +258,8 @@ services:
       VLLM_XPU_ENABLE_XPU_GRAPH: "1"
       VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
       VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
+      VLLM_XPU_FP16_LINEAR_CLASSPAD: "0"
+      VLLM_XPU_FP16_LINEAR_CLASSPAD_MAXM: "512"
       VLLM_XPU_FP16_LINEAR_ROWCHUNK: "32"
       VLLM_XPU_FP8_BLOCK_W8A16: "1"
       VLLM_XPU_FP8_PACKED_SERIAL_EXACT: "0"

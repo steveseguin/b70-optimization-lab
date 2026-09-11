@@ -5,7 +5,7 @@
  "name": "Qwen 9B",
  "display_name": "Qwen3.5 9B",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-07",
+ "updated_at": "2026-09-11",
  "summary": "Alibaba's dense-hybrid Qwen3.5 9B (linear-attention layers with a full-attention layer every fourth, and a shipped MTP head), served on one Arc Pro B70 as RedHatAI's FP8-dynamic checkpoint through the lab's deterministic vLLM XPU stack with lossless speculative decoding. Two routes are measured: RedHatAI's FP8-dynamic and its W4A16 INT4, the latter faster and byte-exact at every concurrency through 64 users.",
  "architecture": {
   "class": "Qwen3_5ForConditionalGeneration",
@@ -27,7 +27,8 @@
    "W4A16"
   ],
   "runtime": [
-   "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)"
+   "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
+   "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)"
   ],
   "tp": [
    1,
@@ -475,7 +476,7 @@
  "packets": [
   {
    "id": "qwen35-9b-fp8-b70",
-   "label": "Qwen3.5 9B FP8-dynamic · one B70 · MTP depth 3 with the draft INT4 head",
+   "label": "Qwen3.5 9B FP8-dynamic \u00b7 one B70 \u00b7 MTP depth 3 with the draft INT4 head",
    "revision": "qwen3.5-9b-fp8-dynamic-790f0576",
    "quantization": "FP8-dynamic",
    "runtime": "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
@@ -519,10 +520,10 @@
   },
   {
    "id": "qwen35-9b-w4a16-b70",
-   "label": "Qwen3.5 9B W4A16 · one or two B70 · MTP depth 3 with the draft INT4 head",
+   "label": "Qwen3.5 9B W4A16 \u00b7 one or two B70 \u00b7 MTP depth 3 with the draft INT4 head",
    "revision": "qwen3.5-9b-w4a16-a398088c",
    "quantization": "W4A16",
-   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
+   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)",
    "topologies": [
     1,
     2
@@ -536,18 +537,22 @@
     "TP2",
     "MTP0/3",
     "identity ladders c1-c64 exact without speculation",
-    "cache-zero strict suite"
+    "cache-zero strict suite",
+    "stagger-exact concurrency",
+    "CLASSPAD many-user mode"
    ],
    "grades": {
     "evidence": {
      "grade": "B",
      "scope": "one- and two-card strict pairs with identity gates and full-range ladders",
-     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; every no-speculation ladder rung exact through 64 users in both passes on one card, while two cards hold 32 users exactly and drop to 63/64 at 64 users; no clean-host replay yet",
-     "reviewed_at": "2026-09-07",
+     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; every no-speculation ladder rung exact through 64 users in both passes on one card, while two cards hold 32 users exactly and drop to 63/64 at 64 users; no clean-host replay yet. 2026-09-11 (R293, CLASSPAD=1): strict gates 12/12 on both card counts at 112/62 (one card) and 165/94 (two cards) tok/s; no-speculation exact to c24 and at c64 on one card (1644 tok/s, 1955 at c128 with the larger admission budget, 512/512), to c32 on two (3227 at c128, 512/512); with a 5 ms admission stagger 64 users on two cards are byte-identical over twenty passes at 2557 tok/s.",
+     "reviewed_at": "2026-09-11",
      "evidence": [
       "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json",
       "repro/qwen35-9b-w4a16-b70/README.md",
-      "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp2-mtp3-graph1-dhint4-20260907-w3-strict-result.json"
+      "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp2-mtp3-graph1-dhint4-20260907-w3-strict-result.json",
+      "experiments/qwen35-9b-b70/data/2026-09-11-qwen35-9b-r293-classpad.json",
+      "experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md"
      ]
     }
    },
@@ -566,7 +571,7 @@
   {
    "id": "qwen-9b-mtp-depth",
    "title": "Speculative depth on one B70",
-   "subtitle": "FP8-dynamic · strict completions suite · graph capture on · MTP0 oracle vs depth 3 with the FP8 draft head vs the draft INT4 head · depth 4 with the INT4 head is withheld (8/12 vs the oracle)",
+   "subtitle": "FP8-dynamic \u00b7 strict completions suite \u00b7 graph capture on \u00b7 MTP0 oracle vs depth 3 with the FP8 draft head vs the draft INT4 head \u00b7 depth 4 with the INT4 head is withheld (8/12 vs the oracle)",
    "x_label": "MTP depth",
    "discrete": true,
    "metrics": [
@@ -598,7 +603,7 @@
   {
    "id": "qwen-9b-tp",
    "title": "One card vs two cards",
-   "subtitle": "FP8-dynamic · strict completions suite · graph capture on · MTP0 and depth 3 with the draft INT4 head",
+   "subtitle": "FP8-dynamic \u00b7 strict completions suite \u00b7 graph capture on \u00b7 MTP0 and depth 3 with the draft INT4 head",
    "x_label": "tensor parallel cards",
    "discrete": true,
    "metrics": [
@@ -657,7 +662,7 @@
  "coverage_views": [
   {
    "id": "qwen-9b-mtp-by-tp",
-   "label": "MTP × TP (FP8 route)",
+   "label": "MTP \u00d7 TP (FP8 route)",
    "fixed": "FP8-dynamic revision, R276 vLLM XPU, graph capture on, draft INT4 head where applicable; depth 4 rows are withheld (not lossless).",
    "row_axis": {
     "key": "mtp",
@@ -745,7 +750,7 @@
   },
   {
    "id": "qwen-9b-quant-by-mtp",
-   "label": "quantization × MTP",
+   "label": "quantization \u00d7 MTP",
    "fixed": "One B70, R276 vLLM XPU, graph capture on, draft INT4 head at depth 3.",
    "row_axis": {
     "key": "variant",
