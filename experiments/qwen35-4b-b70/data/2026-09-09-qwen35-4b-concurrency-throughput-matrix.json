@@ -188,8 +188,8 @@
     1147.5,
     3013.1,
     2113.7,
-    null,
-    null,
+    2400.1,
+    1757.1,
     null,
     null
    ],
@@ -199,14 +199,14 @@
     1166.6,
     3103.9,
     2157.0,
-    null,
-    null,
+    2520.0,
+    1802.0,
     null,
     null
    ]
   ],
   "note_on_tp1_c36_to_c56": "c36, c40, c44, c48 and c56 in the TP1 columns are x2 (2026-09-09, ten passes, every rung in the capture set, max_num_seqs 64, max_num_batched_tokens 512). x2 also re-read c32 (1593.4 / 1153.1) and c64 (1726.9 / 1201.4), within 0.2% of the pooled values kept in those rows.",
-  "r293_columns": "Columns 6-9 (2026-09-11): the same ladders on the R293 image with VLLM_XPU_FP16_LINEAR_CLASSPAD=1 (arms r1, r2; four passes, pass 1 discarded). c96/c128 pending r6/r7. The R224 columns 2-5 are the published lane; see 2026-09-11-qwen35-4b-r290-classpad-on-the-server.json."
+  "r293_columns": "Columns 6-9 (2026-09-11): the same ladders on the R293 image with VLLM_XPU_FP16_LINEAR_CLASSPAD=1 (arms r1, r2; four passes, pass 1 discarded). c96/c128 from r6 (TP1) and r7 (TP2) with f4 settings, as the R224 columns. The R224 columns 2-5 are the published lane; see 2026-09-11-qwen35-4b-r290-classpad-on-the-server.json."
  },
  "readings": {
   "crossover": "Both topologies cross between c16 and c20. On one card speculation leads by 2.8% at c16 and trails by 14.4% at c20; on two cards it leads by 5.9% at c16 and trails by 18.3% at c20. The ceiling is a property of the concurrency, not of the card count.",
