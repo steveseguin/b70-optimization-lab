@@ -1,0 +1,5 @@
+# R292: R291 without per-call zeroing of pad rows (VLLM_XPU_FP16_LINEAR_CLASSPAD_ZERO_PAD=1 restores it).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-verified-r291
+COPY r292-fp16-linear-classpad-nozero.py /tmp/r292.py
+RUN python /tmp/r292.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py && rm /tmp/r292.py
+LABEL neural.download.build.lane="qwen38-int4-fp16-linear-classpad-nozero-r292"

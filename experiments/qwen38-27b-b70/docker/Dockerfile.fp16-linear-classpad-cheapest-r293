@@ -1,0 +1,5 @@
+# R293: R292 + cost-aware canonical class (smallest first member for weights under 256 MiB, most populous above).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-nozero-r292
+COPY r293-fp16-linear-classpad-cheapest.py /tmp/r293.py
+RUN python /tmp/r293.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py && rm /tmp/r293.py
+LABEL neural.download.build.lane="qwen38-int4-fp16-linear-classpad-cheapest-r293"
