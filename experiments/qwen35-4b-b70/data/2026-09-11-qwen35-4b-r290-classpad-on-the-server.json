@@ -442,6 +442,58 @@
     ]
    },
    "reading": "Lossless by every gate; single user 5.2% (depth 3) and 6.0% (MTP0) under the R224 headline, against 8.6-9.4% on R291."
+  },
+  "r2_tp2_ladders": {
+   "mtp0": "exact c1-c16; c20 78/80, c24 94/96, c32 126/128, c64 255/256 (R224 t8/t7: exact c1-c32; R290 p2: exact c1-c32, c64 252/256)",
+   "depth3": "c1 exact, c2 7/8, c4 15/16, c8 exact, c12 46/48, c16 63/64, then 5.0/7.3/4.7/6.6% at c20/c24/c32/c64 (R224 t8: exact through c16; R290 p2: exact through c16)",
+   "tok_s_depth3": {
+    "c1": 202.8,
+    "c2": 385.6,
+    "c4": 709.9,
+    "c8": 1226.8,
+    "c12": 1589.9,
+    "c16": 1861.6,
+    "c20": 1600.5,
+    "c24": 1847.4,
+    "c32": 2166.9,
+    "c64": 2693.6
+   },
+   "tok_s_mtp0": {
+    "c1": 126.4,
+    "c2": 243.0,
+    "c4": 462.9,
+    "c8": 855.9,
+    "c12": 1138.3,
+    "c16": 1466.8,
+    "c20": 1695.8,
+    "c24": 1947.3,
+    "c32": 2350.1,
+    "c64": 3316.7
+   },
+   "versus_r224": {
+    "depth3_c1": [
+     202.8,
+     227.3
+    ],
+    "depth3_c16": [
+     1861.6,
+     1588.1
+    ],
+    "depth3_c64": [
+     2693.6,
+     2020.6
+    ],
+    "mtp0_c1": [
+     126.4,
+     136.3
+    ],
+    "mtp0_c64": [
+     3316.7,
+     2777.7
+    ]
+   },
+   "reading": "Throughput as R290 above c8 (+17% at c16, +33% at c64 for depth 3; +19% at c64 for MTP0), single user -7 to -11%. Identity: one request in 8-64 diverges at c2-c16 on depth 3 where R224 and R290 were exact, and MTP0 has 1-2 per rung from c20 where R290 was exact to c32. Four passes; see the position analysis below for whether this is one prompt on a new tie.",
+   "position_analysis": "Every depth-3 divergence at c2, c4, c12 and c16 is the same request, cache-c000, at token 39 of 128, 413 -> 411, in every pass it occurs (analyze-divergence-positions.py). One prompt on one exact tie that the TP2 R293 arithmetic places at that position, where R224 TP2 did not have one: suite-specific tie luck of the kind the campaign already documented (TP2 flips tie direction; divergence is prompt-specific). From c20 the usual sites join (rollback-c010 at 112, cache-c024 at 58, rollback-c002 at 14)."
   }
  }
 }
