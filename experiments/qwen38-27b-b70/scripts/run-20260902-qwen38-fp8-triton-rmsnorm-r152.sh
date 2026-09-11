@@ -161,7 +161,7 @@ if [[ "${PROBE_AND_LADDER_MTP1:-0}" == 1 ]]; then
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
     --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
-    --return-token-ids --require-output-identity \
+    --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} \
     --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
   log "G6 ladder harness exit $?"
   stop_server "${server_name}" "${server_pid}" "${server_dir}"
@@ -187,7 +187,7 @@ if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
     --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
-    --return-token-ids --require-output-identity \
+    --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} \
     --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
   log "G6 ladder harness exit $?"
   stop_server "${server_name}" "${server_pid}" "${server_dir}"
@@ -196,7 +196,7 @@ if [[ "${LADDERS_ONLY:-0}" == 1 ]]; then
   python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions \
     --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-1}" --max-tokens 128 \
     --seed 42 --timeout 600 --request-extra-json '{"ignore_eos":true,"temperature":0}' \
-    --return-token-ids --require-output-identity \
+    --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} \
     --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1
   log "G6(mtp0) ladder harness exit $?"
   stop_server "${server_name}" "${server_pid}" "${server_dir}"

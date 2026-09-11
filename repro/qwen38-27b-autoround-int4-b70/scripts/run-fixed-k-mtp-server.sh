@@ -2,7 +2,8 @@
 # Qwen3.8-27B AutoRound INT4, fixed-K batch-invariant profile (2026-09-05): launch one vLLM server through the FP8 lane's
 # contract-checked launcher with the INT4 identity. Depth via MTP_DEPTH (0 = no speculation; default 4).
 #   MODEL_DIR   the gptq-relabelled model directory (built by the relabel builder in this scripts directory); default below
-#   IMAGE / EXPECTED_IMAGE_ID  the R276 image (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277...; R256 f7696bca... and
+#   CLASSPAD    0 (default, the published single-user configuration) or 1 (class-consistent FP16 linears for many users; R293)
+#   IMAGE / EXPECTED_IMAGE_ID  the R293 image (R276 + classpad; ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730...; R276 521eb277..., R256 f7696bca... and
 #                             R228 aaf920b0... run the same code but cannot capture verify batches above 16 sequences: use XPU_GRAPH_SIZES=8 with them)
 #   PORT, VLLM_CACHE_DIR, CONTAINER_NAME, SERVED_MODEL_NAME, TENSOR_PARALLEL_SIZE (2), XPU_DEVICE_MASK (0,1)
 set -euo pipefail
@@ -21,8 +22,13 @@ elif [[ "${xpu_graph}" == 1 ]]; then
 else
   compilation='{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1],"max_cudagraph_capture_size":1,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
 fi
-export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276}
-export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad}
+# R293 (2026-09-11) = R276 + the class-consistent FP16 linear (docker/r290..r293-*.py). With CLASSPAD=0 (default) it runs
+# R276's code path unchanged: every unquantized FP16 linear in <=32-row pieces, the published single-user headline.
+# CLASSPAD=1 keeps each of those linears in one verified oneDNN M-class instead, so the 2.5 GB vocabulary projection is
+# read once per step rather than once per 32 rows: the multi-user configuration (see the README's R295-R298 rows).
+export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293}
+export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6}
+export VLLM_XPU_FP16_LINEAR_CLASSPAD=${CLASSPAD:-0}
 export EXPECTED_XPU_EXTENSION_SHA256=${EXPECTED_XPU_EXTENSION_SHA256:-271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f}
 export EXPECTED_XPU_OPS_SHA256=${EXPECTED_XPU_OPS_SHA256:-6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3}
 export EXPECTED_LAYERNORM_SHA256=${EXPECTED_LAYERNORM_SHA256:-50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8}
