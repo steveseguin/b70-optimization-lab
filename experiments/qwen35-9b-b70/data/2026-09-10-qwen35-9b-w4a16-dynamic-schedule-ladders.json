@@ -1832,6 +1832,213 @@
      ]
     }
    }
+  },
+  "cudynd": {
+   "root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-cudynd",
+   "description": "catch-up overlay v3, natural-length requests (no ignore_eos) so the batch drains through the schedule thresholds; the only rung shape that exercises the catch-up",
+   "image_id": "sha256:2546382461a4016ff7ea26ee264be922fc8825f580b9100ae1f53ad8988b5a8b",
+   "ladders": {
+    "scheduled": {
+     "1": [
+      {
+       "aggregate_tok_s_wall": 112.716,
+       "oracle_exact": "1/1",
+       "requests": 1,
+       "completion_tokens": 128
+      },
+      {
+       "aggregate_tok_s_wall": 113.75,
+       "oracle_exact": "1/1",
+       "requests": 1,
+       "completion_tokens": 128
+      }
+     ],
+     "2": [
+      {
+       "aggregate_tok_s_wall": 103.667,
+       "oracle_exact": "2/2",
+       "requests": 2,
+       "completion_tokens": 256
+      },
+      {
+       "aggregate_tok_s_wall": 218.15,
+       "oracle_exact": "2/2",
+       "requests": 2,
+       "completion_tokens": 256
+      }
+     ],
+     "4": [
+      {
+       "aggregate_tok_s_wall": 357.21,
+       "oracle_exact": "4/4",
+       "requests": 4,
+       "completion_tokens": 512
+      },
+      {
+       "aggregate_tok_s_wall": 357.379,
+       "oracle_exact": "4/4",
+       "requests": 4,
+       "completion_tokens": 512
+      }
+     ],
+     "8": [
+      {
+       "aggregate_tok_s_wall": 622.825,
+       "oracle_exact": "8/8",
+       "requests": 8,
+       "completion_tokens": 1024
+      },
+      {
+       "aggregate_tok_s_wall": 622.118,
+       "oracle_exact": "8/8",
+       "requests": 8,
+       "completion_tokens": 1024
+      }
+     ],
+     "16": [
+      {
+       "aggregate_tok_s_wall": 789.677,
+       "oracle_exact": "16/16",
+       "requests": 16,
+       "completion_tokens": 2022
+      },
+      {
+       "aggregate_tok_s_wall": 874.821,
+       "oracle_exact": "16/16",
+       "requests": 16,
+       "completion_tokens": 2022
+      }
+     ],
+     "32": [
+      {
+       "aggregate_tok_s_wall": 900.27,
+       "oracle_exact": "32/32",
+       "requests": 32,
+       "completion_tokens": 4018
+      },
+      {
+       "aggregate_tok_s_wall": 1089.288,
+       "oracle_exact": "32/32",
+       "requests": 32,
+       "completion_tokens": 4018
+      }
+     ],
+     "64": [
+      {
+       "aggregate_tok_s_wall": 1160.528,
+       "oracle_exact": "64/64",
+       "requests": 64,
+       "completion_tokens": 8010
+      },
+      {
+       "aggregate_tok_s_wall": 1163.466,
+       "oracle_exact": "64/64",
+       "requests": 64,
+       "completion_tokens": 8010
+      }
+     ]
+    },
+    "mtp0_oracle": {
+     "1": [
+      {
+       "aggregate_tok_s_wall": 63.848,
+       "oracle_exact": "1/1",
+       "requests": 1,
+       "completion_tokens": 128
+      },
+      {
+       "aggregate_tok_s_wall": 63.929,
+       "oracle_exact": "1/1",
+       "requests": 1,
+       "completion_tokens": 128
+      }
+     ],
+     "2": [
+      {
+       "aggregate_tok_s_wall": 122.77,
+       "oracle_exact": "2/2",
+       "requests": 2,
+       "completion_tokens": 256
+      },
+      {
+       "aggregate_tok_s_wall": 123.021,
+       "oracle_exact": "2/2",
+       "requests": 2,
+       "completion_tokens": 256
+      }
+     ],
+     "4": [
+      {
+       "aggregate_tok_s_wall": 234.303,
+       "oracle_exact": "4/4",
+       "requests": 4,
+       "completion_tokens": 512
+      },
+      {
+       "aggregate_tok_s_wall": 234.254,
+       "oracle_exact": "4/4",
+       "requests": 4,
+       "completion_tokens": 512
+      }
+     ],
+     "8": [
+      {
+       "aggregate_tok_s_wall": 432.111,
+       "oracle_exact": "8/8",
+       "requests": 8,
+       "completion_tokens": 1024
+      },
+      {
+       "aggregate_tok_s_wall": 432.059,
+       "oracle_exact": "8/8",
+       "requests": 8,
+       "completion_tokens": 1024
+      }
+     ],
+     "16": [
+      {
+       "aggregate_tok_s_wall": 720.021,
+       "oracle_exact": "16/16",
+       "requests": 16,
+       "completion_tokens": 2022
+      },
+      {
+       "aggregate_tok_s_wall": 717.308,
+       "oracle_exact": "16/16",
+       "requests": 16,
+       "completion_tokens": 2022
+      }
+     ],
+     "32": [
+      {
+       "aggregate_tok_s_wall": 1131.989,
+       "oracle_exact": "32/32",
+       "requests": 32,
+       "completion_tokens": 4018
+      },
+      {
+       "aggregate_tok_s_wall": 1130.262,
+       "oracle_exact": "32/32",
+       "requests": 32,
+       "completion_tokens": 4018
+      }
+     ],
+     "64": [
+      {
+       "aggregate_tok_s_wall": 1186.671,
+       "oracle_exact": "63/64",
+       "requests": 64,
+       "completion_tokens": 8010
+      },
+      {
+       "aggregate_tok_s_wall": 1189.338,
+       "oracle_exact": "64/64",
+       "requests": 64,
+       "completion_tokens": 8010
+      }
+     ]
+    }
+   }
   }
  }
 }

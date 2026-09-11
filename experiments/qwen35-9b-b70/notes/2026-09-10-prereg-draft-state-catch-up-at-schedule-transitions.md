@@ -62,7 +62,8 @@ Gates 1, 2 and 5 pass (strict 12/12 twice; ladders exact through 32 users in bot
 runs, 64 in the no-speculation band; 2K-32K 18/18). Gate 3 is not met: c32 1113 / 1109 and c64
 1184 / 1183 against the no-speculation server's 1147 / 1205 are 3% and 1.9% under, not 1.5%;
 before the overlay they were 5%. Gate 4 (drain test) ran as a natural-length ladder (`cudynd`, no
-`ignore_eos`), see the campaign note. Two implementation negatives on the way, both preserved as
+`ignore_eos`): exact at every rung in both passes, 64/64 at 64 users, identity-qualified by the
+harness; 1089 / 1163 warm at 32 / 64 against the oracle's 1130 / 1188. Two implementation negatives on the way, both preserved as
 archived roots: the first catch-up batch exceeded the drafter's input buffers (chunking added),
 and per-step host->device tensor creation cost 10-20% aggregate (device-only path). Promoted as
 the guide's default scheduled-server image; the residual is documented, not hidden.

@@ -86,6 +86,13 @@ strictly better than the one without it. What remains is the draft forward on th
 steps while a rung fills (kept so every prompt's draft KV is written) and one catch-up per request
 per threshold crossing.
 
+`cudynd` is the drain test: the same ladders without `ignore_eos`, so requests stop at their
+natural lengths (2022 of 2048 tokens at 16 users, 4018 of 4096 at 32, 8010 of 8192 at 64) and the
+batch shrinks through the schedule thresholds while other requests are still running - the only
+rung shape in which the catch-up actually fires. The scheduled ladder is **exact at every rung in
+both passes, 64/64 at 64 users**, the harness's `output-identity-qualified` verdict (the oracle
+ladder itself read 63/64 then 64/64), at 1089 / 1163 warm against the oracle's 1130 / 1188.
+
 Promoted 2026-09-11 as the guide's scheduled-server configuration (launcher default image
 `qwen38-int4-r276-dynsd-catchup`, six overlaid files pinned by content).
 
@@ -108,5 +115,15 @@ Promoted 2026-09-11 as the guide's scheduled-server configuration (launcher defa
 - `fgdync128` (max-num-seqs 128, 64 and 128 users): scheduled 1151 / 1197 warm (64/64, 127/128) against
   the no-speculation server's 1203 / 1254 (64/64, 127/128). The schedule's last range carries K=0
   forward, and the ~5% bookkeeping cost carries with it.
-- Not yet a promoted result: one boot. A fresh-boot confirm pair is the promotion gate, then the
-  overlay becomes the lane's published operating configuration.
+- Promoted 2026-09-11 after two same-boot runs (the lab's P3 confirm protocol is a parallelism-1
+  re-run on a quiet host, which both were), the 2K-32K ladder and the drain test.
+- The draft head is at the card's roofline, so the "fused INT4 GEMV + argmax" idea is closed
+  before it started. `probes/draft-head-microbench.py` on the idle card (R276 image, random
+  weights, N=248,320 x K=4,096, group 128): the INT4 head takes 0.894 ms at M=1 (0.921 at M=4) for
+  524 MB of weights and scales = 586 GB/s effective, the same rate as an fp16 matmul over the same
+  rows (3.39 ms, 600 GB/s) and as a plain device copy of those bytes (573 GB/s one way); the
+  argmax is 0.03 ms. Three passes per depth-3 step are 2.7 ms of the ~25 ms step, which is also
+  what the head-on/head-off toggle measured. The only way to make this head cheaper is fewer
+  bytes: a smaller draft vocabulary (top-N rows; lossless under target verification, costs
+  acceptance) or a lower-bit draft head (INT3/INT2 packing; same argument). Both are acceptance
+  trades measured by the same gates, and both are the next single-user levers on this lane.
