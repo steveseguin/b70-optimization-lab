@@ -5420,5 +5420,1036 @@
   ],
   "gates": "G2 12/12, G3 12/12 x2 (own MTP0 pair)",
   "gates_mtp0": "G1 12/12"
+ },
+ "R296_ladders_tp2_big_admission_r293_classpad": {
+  "date": "2026-09-11",
+  "boot": "01e0fb3e",
+  "image": "R293 (classpad on), as R295",
+  "config": "R290 configuration (max-num-seqs 256, max-num-batched-tokens 4096, max-model-len 512; rungs 32/64/128/192/256, two passes) at depth 4 and MTP0 with the class-consistent FP16 linear on",
+  "ladder": [
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 538.7,
+    "ttft_s_max": 1.4
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 637.1,
+    "ttft_s_max": 8.03
+   },
+   {
+    "concurrency": 128,
+    "repeat": 1,
+    "exact": "118/128",
+    "aggregate_tok_s_wall": 653.6,
+    "ttft_s_max": 22.26
+   },
+   {
+    "concurrency": 192,
+    "repeat": 1,
+    "exact": "174/192",
+    "aggregate_tok_s_wall": 651.8,
+    "ttft_s_max": 32.92
+   },
+   {
+    "concurrency": 256,
+    "repeat": 1,
+    "exact": "237/256",
+    "aggregate_tok_s_wall": 649.3,
+    "ttft_s_max": 46.21
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 674.9,
+    "ttft_s_max": 0.52
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 625.3,
+    "ttft_s_max": 8.16
+   },
+   {
+    "concurrency": 128,
+    "repeat": 2,
+    "exact": "118/128",
+    "aggregate_tok_s_wall": 647.7,
+    "ttft_s_max": 22.1
+   },
+   {
+    "concurrency": 192,
+    "repeat": 2,
+    "exact": "172/192",
+    "aggregate_tok_s_wall": 654.7,
+    "ttft_s_max": 32.26
+   },
+   {
+    "concurrency": 256,
+    "repeat": 2,
+    "exact": "232/256",
+    "aggregate_tok_s_wall": 649.3,
+    "ttft_s_max": 46.12
+   }
+  ],
+  "ladder_first_divergence_vs_oracle": {
+   "c64_r1": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "cache-c056",
+     87
+    ]
+   ],
+   "c128_r1": [
+    [
+     "evidence-c127",
+     10
+    ],
+    [
+     "testing-c085",
+     13
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "monitoring-c028",
+     32
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "index-c121",
+     54
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "rollback-c122",
+     71
+    ],
+    [
+     "evidence-c079",
+     87
+    ]
+   ],
+   "c192_r1": [
+    [
+     "evidence-c127",
+     10
+    ],
+    [
+     "evidence-c167",
+     10
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "monitoring-c028",
+     32
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "benchmark-c187",
+     52
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "rollback-c122",
+     71
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "cache-c128",
+     106
+    ],
+    [
+     "capacity-c182",
+     107
+    ],
+    [
+     "testing-c125",
+     112
+    ],
+    [
+     "benchmark-c131",
+     116
+    ],
+    [
+     "benchmark-c107",
+     121
+    ]
+   ],
+   "c256_r1": [
+    [
+     "capacity-c246",
+     1
+    ],
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "evidence-c231",
+     13
+    ],
+    [
+     "evidence-c199",
+     14
+    ],
+    [
+     "cache-c208",
+     16
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "monitoring-c196",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "monitoring-c100",
+     26
+    ],
+    [
+     "evidence-c215",
+     27
+    ],
+    [
+     "monitoring-c028",
+     32
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "evidence-c239",
+     81
+    ],
+    [
+     "evidence-c247",
+     81
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "testing-c085",
+     95
+    ],
+    [
+     "evidence-c167",
+     104
+    ]
+   ],
+   "c64_r2": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "evidence-c039",
+     13
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "monitoring-c028",
+     32
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c128_r2": [
+    [
+     "testing-c085",
+     13
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "index-c105",
+     23
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "index-c121",
+     54
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "rollback-c122",
+     71
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "index-c009",
+     79
+    ]
+   ],
+   "c192_r2": [
+    [
+     "evidence-c127",
+     10
+    ],
+    [
+     "testing-c085",
+     13
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "capacity-c086",
+     23
+    ],
+    [
+     "index-c105",
+     23
+    ],
+    [
+     "monitoring-c028",
+     32
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "benchmark-c187",
+     52
+    ],
+    [
+     "index-c169",
+     54
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "evidence-c167",
+     104
+    ],
+    [
+     "capacity-c182",
+     107
+    ],
+    [
+     "benchmark-c091",
+     110
+    ],
+    [
+     "index-c177",
+     110
+    ],
+    [
+     "testing-c125",
+     112
+    ],
+    [
+     "evidence-c151",
+     123
+    ]
+   ],
+   "c256_r2": [
+    [
+     "capacity-c246",
+     1
+    ],
+    [
+     "testing-c085",
+     13
+    ],
+    [
+     "evidence-c231",
+     13
+    ],
+    [
+     "cache-c208",
+     16
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "monitoring-c068",
+     21
+    ],
+    [
+     "index-c105",
+     23
+    ],
+    [
+     "benchmark-c115",
+     45
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "benchmark-c187",
+     52
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "capacity-c134",
+     77
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "rollback-c202",
+     80
+    ],
+    [
+     "evidence-c079",
+     87
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "cache-c192",
+     93
+    ],
+    [
+     "evidence-c167",
+     104
+    ],
+    [
+     "benchmark-c091",
+     110
+    ],
+    [
+     "index-c177",
+     110
+    ],
+    [
+     "rollback-c226",
+     113
+    ]
+   ]
+  },
+  "ladder-mtp0": [
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 808.8,
+    "ttft_s_max": 0.51
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 1065.3,
+    "ttft_s_max": 0.59
+   },
+   {
+    "concurrency": 128,
+    "repeat": 1,
+    "exact": "123/128",
+    "aggregate_tok_s_wall": 1013.0,
+    "ttft_s_max": 1.52
+   },
+   {
+    "concurrency": 192,
+    "repeat": 1,
+    "exact": "177/192",
+    "aggregate_tok_s_wall": 998.7,
+    "ttft_s_max": 21.3
+   },
+   {
+    "concurrency": 256,
+    "repeat": 1,
+    "exact": "234/256",
+    "aggregate_tok_s_wall": 1077.0,
+    "ttft_s_max": 21.81
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 813.1,
+    "ttft_s_max": 0.47
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 1067.4,
+    "ttft_s_max": 0.58
+   },
+   {
+    "concurrency": 128,
+    "repeat": 2,
+    "exact": "120/128",
+    "aggregate_tok_s_wall": 1010.7,
+    "ttft_s_max": 1.54
+   },
+   {
+    "concurrency": 192,
+    "repeat": 2,
+    "exact": "178/192",
+    "aggregate_tok_s_wall": 997.5,
+    "ttft_s_max": 21.32
+   },
+   {
+    "concurrency": 256,
+    "repeat": 2,
+    "exact": "234/256",
+    "aggregate_tok_s_wall": 1079.5,
+    "ttft_s_max": 21.77
+   }
+  ],
+  "ladder-mtp0_first_divergence_vs_oracle": {
+   "c64_r1": [
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "index-c041",
+     89
+    ]
+   ],
+   "c128_r1": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "index-c105",
+     23
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "index-c041",
+     89
+    ]
+   ],
+   "c192_r1": [
+    [
+     "rollback-c154",
+     1
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "rollback-c122",
+     71
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "capacity-c134",
+     77
+    ],
+    [
+     "evidence-c135",
+     87
+    ],
+    [
+     "evidence-c167",
+     104
+    ],
+    [
+     "cache-c128",
+     106
+    ],
+    [
+     "benchmark-c091",
+     110
+    ],
+    [
+     "index-c145",
+     110
+    ],
+    [
+     "index-c177",
+     110
+    ]
+   ],
+   "c256_r1": [
+    [
+     "testing-c085",
+     13
+    ],
+    [
+     "evidence-c231",
+     13
+    ],
+    [
+     "cache-c208",
+     16
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "monitoring-c196",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "benchmark-c187",
+     52
+    ],
+    [
+     "index-c121",
+     54
+    ],
+    [
+     "index-c185",
+     57
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "evidence-c247",
+     81
+    ],
+    [
+     "rollback-c170",
+     86
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "benchmark-c211",
+     96
+    ],
+    [
+     "evidence-c167",
+     104
+    ],
+    [
+     "index-c177",
+     110
+    ],
+    [
+     "benchmark-c107",
+     121
+    ]
+   ],
+   "c64_r2": [
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "index-c041",
+     89
+    ]
+   ],
+   "c128_r2": [
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "capacity-c086",
+     23
+    ],
+    [
+     "monitoring-c028",
+     32
+    ],
+    [
+     "cache-c080",
+     70
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "monitoring-c100",
+     88
+    ],
+    [
+     "index-c041",
+     89
+    ]
+   ],
+   "c192_r2": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "rollback-c178",
+     19
+    ],
+    [
+     "index-c105",
+     23
+    ],
+    [
+     "rollback-c122",
+     29
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "testing-c061",
+     49
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "capacity-c134",
+     77
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "cache-c128",
+     106
+    ]
+   ],
+   "c256_r2": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "testing-c069",
+     13
+    ],
+    [
+     "evidence-c231",
+     13
+    ],
+    [
+     "evidence-c199",
+     14
+    ],
+    [
+     "cache-c208",
+     16
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "monitoring-c196",
+     18
+    ],
+    [
+     "benchmark-c043",
+     19
+    ],
+    [
+     "monitoring-c100",
+     26
+    ],
+    [
+     "benchmark-c131",
+     45
+    ],
+    [
+     "benchmark-c187",
+     52
+    ],
+    [
+     "index-c121",
+     54
+    ],
+    [
+     "index-c193",
+     57
+    ],
+    [
+     "rollback-c018",
+     77
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "rollback-c202",
+     80
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "benchmark-c211",
+     96
+    ],
+    [
+     "evidence-c167",
+     104
+    ],
+    [
+     "benchmark-c099",
+     108
+    ],
+    [
+     "benchmark-c107",
+     121
+    ]
+   ]
+  },
+  "verdict": "warm pass depth 4: c32 674.9, c64 637.1, c128 653.6, c192 654.7, c256 649.3 (R284 depth 4 at mns 128: c64 591.4, c128 584.7: +8%/+12%); MTP0: c32 813.1, c64 1067.4, c128 1013.0, c192 998.7, c256 1079.5 (R290 MTP0: 1032.8 / 966.8 / 950.8 / 1021.3: +3-6%). Identity under the 4096-token admission budget is the same class as R284/R290: MTP0 exact at c32, 5-9% divergent from c64 (R290: 57/64, 120/128); the many-user ceiling on this lane is the INT4 GEMM, not the projection."
  }
 }
