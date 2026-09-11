@@ -522,6 +522,28 @@
    "mtp0": "255/256, 383/384, 512/512 at c64/c96/c128; 3323.9, 3810.2, 4015.3 tok/s (R224 t7: 2778/3013/3104)",
    "depth3": "9.0/10.7/8.8% divergent; 2771.3, 2851.7, 2961.3 tok/s (R224: 2021/2114/2157)",
    "reading": "+20/+26/+29% without speculation, near-exact; +37/+35/+37% at depth 3. 4015 tok/s at c128 is the highest aggregate measured on this lane."
+  },
+  "r8_depth2": {
+   "identity": "exact through c16; 5.5% at c32, 12.5% at c64",
+   "tok_s": {
+    "c1": 152.5,
+    "c4": 514.6,
+    "c8": 863.8,
+    "c16": 1283.7,
+    "c32": 1766.6,
+    "c64": 2030.6
+   },
+   "versus_r293_depth3_r1": {
+    "c1": 151.4,
+    "c16": 1352.7,
+    "c32": 1607.9,
+    "c64": 1830.7
+   },
+   "versus_r293_mtp0_r1": {
+    "c32": 1624.5,
+    "c64": 2163.6
+   },
+   "reading": "Depth 2 is level with depth 3 at single user, 5% behind at c16, then 10-11% ahead at c32 and c64. Without speculation still wins at c64 (2164 against 2031) but not at c32 (1625 against 1767). Operating points under R293 on one card: depth 3 to c16, depth 2 to about c48, no speculation above."
   }
  }
 }
