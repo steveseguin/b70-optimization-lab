@@ -410,6 +410,10 @@
     ]
    },
    "reading": "Identity as R224 at every rung. Above c8 every rung beats R224 (depth 3 +1% at c8, +24% at c16, +39% at c32, +52% at c64; MTP0 +26% at c64). Below c8 the pad path costs 5-6%: one copy kernel plus a 33-row GEMM per unquantized projection, ~75 times a step, which is the floor of this design."
+  },
+  "r5_stagger_recipe": {
+   "mtp0": "1280/1280 exact, output-identity-qualified, 2103.6 tok/s (R291 q5: 1280/1280 at 2099.8; R224 r3: 1280/1280 at 1701.5)",
+   "depth3": "849/1280, 33.67% divergent, minority 3.94%, 1782.5 tok/s (R224 r3: 49.53%, 1173.5)"
   }
  }
 }
