@@ -305,5 +305,32 @@
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p7",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p8",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260909-p9"
- ]
+ ],
+ "chain_14_r291": {
+  "q1_tp1_ladders": {
+   "mtp0": "exact at c1-c20, c32 (128/128) and c64 (256/256); c24 94/96",
+   "depth3": "exact through c16; 10.0/8.3/7.0/8.6% at c20/c24/c32/c64 (R224: 5-14%)",
+   "tok_s_depth3": {
+    "c1": 145.6,
+    "c8": 878.9,
+    "c16": 1330.5,
+    "c32": 1608.0,
+    "c64": 1819.5
+   },
+   "tok_s_mtp0": {
+    "c1": 92.4,
+    "c16": 1044.6,
+    "c32": 1611.0,
+    "c64": 2145.5
+   },
+   "reading": "The verified census restores one-card exactness at exactly the rungs R290 lost, and keeps the R290 throughput above c16. Single user reads 145.6 / 92.4 against R224 159.2 / 101.9, still 8-9% under; R292/R293 address the pad path."
+  },
+  "q5_stagger_recipe": {
+   "mtp0": "1280/1280 exact, harness classification output-identity-qualified, 2099.8 tok/s",
+   "r224_r3": "1280/1280, 1701.5 tok/s",
+   "r290_p5": "888/1280",
+   "depth3": "877/1280, 31.48% divergent, minority 6.92%, 1758.7 tok/s (r3: 646/1280, 49.53%, 1173.5)",
+   "reading": "The deployable recipe - one card, no speculation, 5 ms admission stagger - is byte-exact under R291 at 2100 tok/s, +23.4% over R224 at the same exactness. The speculative lane under the same stagger improves from 49.5% to 31.5% divergent at +50% throughput."
+  }
+ }
 }
