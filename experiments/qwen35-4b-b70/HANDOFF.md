@@ -1,11 +1,11 @@
 # Qwen3.5-4B W4A16 on B70 — lane handoff
 
-Last updated **2026-09-09 evening**. The overnight identity campaign is
-**complete**: nine chained runners, 31 arms, zero hardware aborts, finished 07:26.
-Chain 10 (the three open questions, `x1`-`x3`) finished 19:27. **Chain 11 is
-running** (`y1`-`y3`, the row-chunk hypothesis for the throughput dip, wrapper
-`/mnt/fast-ai/bench-results/qwen35-4b-rowchunk-20260909-wrapper.log`), with the
-corrected 9B offline drift probe queued behind it.
+Last updated **2026-09-11**. The identity campaign (chains 1-10, 2026-09-09) is
+complete. Chains 11-15 (2026-09-09 evening to 2026-09-11 10:49) found and removed
+the largest throughput lever on the lane, the R224 32-row FP16 linear chunk, with
+a class-consistent replacement (**R293**) that is lossless by every gate. Chain 16
+(`r10`, the two-card stagger recipe on R293) is the last arm; see
+`notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md`.
 
 ## What this lane is
 
@@ -26,7 +26,35 @@ Packaged as `packages/qwen35-4b-w4a16-b70`, family `qwen-4b`, one card, depth 3,
   tie-prone prompts, each showing exactly two variants.
 - TP1 long context 2K-32K, depth 3, oracle-exact throughout.
 
-## Settled by this campaign
+## Settled 2026-09-09 to 2026-09-11: the FP16 linear chunk was a throughput tax
+
+Every unquantized FP16 linear in this stack (the 1.2 GB vocabulary projection and
+the per-layer GDN projections) ran in 32-row pieces so that the oneDNN GEMM stayed
+in its single-row rounding class. Each piece re-reads the weight, so depth 3 lost
+41% at c32 and 54% at c64, and no-speculation 25-30% above c32 - which is why
+"speculation stops scaling at c16" and every published rung above c8 looked the
+way it did. Turning the chunk off recovers the throughput and destroys identity
+(the compiled path is nondeterministic). The census (`probes/fp16-linear-*`) found
+the GEMM has a few M-classes, each position- and pad-invariant, so **R293** pads or
+splits every call into one verified class per weight shape:
+
+| | R224 (published) | R293 |
+| --- | ---: | ---: |
+| G1/G2/G3, TP1 and TP2 | 12/12 | **12/12** |
+| one card, no spec, 5 ms stagger, fragile c64 | 1280/1280 at 1702 | **1280/1280 at 2104** |
+| one card, no spec, c128 | 1811 | **2520**, 512/512 exact |
+| two cards, no spec, c128 | 3104 | **4015**, 512/512 exact |
+| one card, depth 3, c64 | 1201 | **1831** |
+| single user, depth 3 / MTP0 (strict) | 177.4 / 102.6 | 168.0 / 96.5 |
+
+Two modes on one image, both lossless: `VLLM_XPU_FP16_LINEAR_CLASSPAD=0` keeps the
+published single-user headline; `=1` for any server with more than about eight
+users. Under R293 depth 3 leads to c16, depth 2 to about c48, no speculation above.
+The 5-6% single-user cost is one copy kernel plus a 33-row GEMM per projection per
+step, the floor of this design. The 9B and 27B lanes run the same op and carry the
+same tax, unmeasured there.
+
+## Settled by the identity campaign (2026-09-09)
 
 **Serving policy — the one operational result.** `c16` is the speculation
 ceiling. Below it depth 3 is worth 35% at c8 and the gates pass. From c20 up it
@@ -163,9 +191,13 @@ sites, and the oracle-free `min%`), `probe-tie-margin.py`.
 ## What the campaign ran
 
 Nine chained runners, 31 arms, 07:26 finish, no hardware aborts; then chain 10
-(`gen`, three arms, 18:46-19:27) and chain 11 (`rowchunk`, three arms, from 20:00).
-Scripts in `scripts/run-20260909-*`, wrappers at
-`/mnt/fast-ai/bench-results/qwen35-4b-{exhaustive,fragile,gdn,stagger,depth,margin,shallow,mbase,tp2stag,gen,rowchunk}-20260909-wrapper.log`.
+(`gen`, three arms), chain 11 (`rowchunk`, three arms), chain 13 (`classpad`, R290,
+nine arms), chain 14 (`classpad2`, R291, three arms), chain 15 (`classpad3`, R293,
+nine arms) and chain 16 (`classpad4`, R293 two-card stagger). Scripts in
+`scripts/run-2026091[01]-*`, wrappers at `/mnt/fast-ai/bench-results/qwen35-4b-*-2026090[9]-wrapper.log`
+and `qwen35-4b-classpad*-20260911-wrapper.log`. Overlay images R290-R293 in
+`experiments/qwen38-27b-b70/docker/`; chain 12 (chunk off) was written and killed
+unstarted once y1 showed the chunk is an identity lever.
 A chain sleeping in its wait loop can be stopped by pid, edited and relaunched;
 that is how arms were inserted mid-campaign without disturbing the cards.
 
@@ -186,19 +218,9 @@ depth 3 single-user and 14% better at c64. And a warning: a divergence rate is n
 a property of (model, depth, concurrency) — two servers differing only in
 `max_num_batched_tokens` differ 2.5x at the same rung.
 
-**The throughput dip is at c36, not c40, and is not padding.** `x2` mapped
-c32-c64 at every rung with every rung graph-captured: 1593 tok/s at c32, **1253 at
-c36**, then 1360, 1438, 1508, 1623, 1727 — a 21% cliff at 32→36 and a linear
-recovery to c64. Padding to a captured shape is eliminated by construction. The
-one thing in the server with that shape is the R224 overlay's 32-row FP16 linear
-chunk: above 32 sequences the tail piece holds 4, 8, 12, 16, 24 then 32 rows and
-throughput tracks it, and at depth 3 (four rows per sequence) the only rungs that
-dip, c36 and c44, are the only two leaving a 16-row tail. **Chain 11 tests it**:
-`y1` reruns x2 with the chunk disabled, `y2` predicts the next cliff at c68 with
-it on, `y3` checks the exact recipe survives the change. Until `y1` reports this is
-a hypothesis. If it holds it applies to every lane running R224, and every
-published exact-throughput rung (16, 32, 64, 96, 128) happens to sit where the
-cost is zero. Also still unexplained: the c16 identity step survives the
+**The throughput dip at c36 was the chunk** (see the R293 section above): `x2`
+located it, `y1` showed the whole ramp is the chunk, `y2` predicted and found the
+next cliff at c68. Still unexplained: the c16 identity step survives the
 elimination of both candidates that sat at 16 sequences.
 
 ## Scope
