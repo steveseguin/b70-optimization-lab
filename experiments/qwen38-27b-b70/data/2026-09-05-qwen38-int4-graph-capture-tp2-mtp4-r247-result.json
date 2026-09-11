@@ -6451,5 +6451,351 @@
    ]
   },
   "verdict": "warm pass depth 4: c32 674.9, c64 637.1, c128 653.6, c192 654.7, c256 649.3 (R284 depth 4 at mns 128: c64 591.4, c128 584.7: +8%/+12%); MTP0: c32 813.1, c64 1067.4, c128 1013.0, c192 998.7, c256 1079.5 (R290 MTP0: 1032.8 / 966.8 / 950.8 / 1021.3: +3-6%). Identity under the 4096-token admission budget is the same class as R284/R290: MTP0 exact at c32, 5-9% divergent from c64 (R290: 57/64, 120/128); the many-user ceiling on this lane is the INT4 GEMM, not the projection."
+ },
+ "R297_tp2_stagger_5ms_c64_r293_classpad": {
+  "date": "2026-09-11",
+  "boot": "01e0fb3e",
+  "image": "R293 (classpad on), as R295",
+  "config": "R295 configuration, LADDERS_ONLY, c64 only, ten passes, --launch-stagger-ms 5 (the harness delays request i by 5i ms after a barrier; the 4B lane's staggered-admission recipe, never before run on this lane)",
+  "ladder": [
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 568.4,
+    "ttft_s_max": 9.45
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 593.9,
+    "ttft_s_max": 8.9
+   },
+   {
+    "concurrency": 64,
+    "repeat": 3,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 618.6,
+    "ttft_s_max": 8.5
+   },
+   {
+    "concurrency": 64,
+    "repeat": 4,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 618.4,
+    "ttft_s_max": 8.5
+   },
+   {
+    "concurrency": 64,
+    "repeat": 5,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 618.3,
+    "ttft_s_max": 8.5
+   },
+   {
+    "concurrency": 64,
+    "repeat": 6,
+    "exact": "61/64",
+    "aggregate_tok_s_wall": 617.9,
+    "ttft_s_max": 8.5
+   },
+   {
+    "concurrency": 64,
+    "repeat": 7,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 617.9,
+    "ttft_s_max": 8.51
+   },
+   {
+    "concurrency": 64,
+    "repeat": 8,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 615.7,
+    "ttft_s_max": 8.56
+   },
+   {
+    "concurrency": 64,
+    "repeat": 9,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 617.1,
+    "ttft_s_max": 8.52
+   },
+   {
+    "concurrency": 64,
+    "repeat": 10,
+    "exact": "60/64",
+    "aggregate_tok_s_wall": 617.8,
+    "ttft_s_max": 8.51
+   }
+  ],
+  "ladder_first_divergence_vs_oracle": {
+   "c64_r1": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     77
+    ]
+   ],
+   "c64_r2": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r3": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r4": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r5": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r6": [
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r7": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r8": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "rollback-c010",
+     68
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r9": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r10": [
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ]
+  },
+  "ladder-mtp0": [
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1017.7,
+    "ttft_s_max": 0.8
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1015.0,
+    "ttft_s_max": 0.81
+   },
+   {
+    "concurrency": 64,
+    "repeat": 3,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1015.9,
+    "ttft_s_max": 0.82
+   },
+   {
+    "concurrency": 64,
+    "repeat": 4,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1013.9,
+    "ttft_s_max": 0.81
+   },
+   {
+    "concurrency": 64,
+    "repeat": 5,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1014.2,
+    "ttft_s_max": 0.82
+   },
+   {
+    "concurrency": 64,
+    "repeat": 6,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1014.4,
+    "ttft_s_max": 0.82
+   },
+   {
+    "concurrency": 64,
+    "repeat": 7,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1015.9,
+    "ttft_s_max": 0.82
+   },
+   {
+    "concurrency": 64,
+    "repeat": 8,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1012.9,
+    "ttft_s_max": 0.82
+   },
+   {
+    "concurrency": 64,
+    "repeat": 9,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1015.9,
+    "ttft_s_max": 0.82
+   },
+   {
+    "concurrency": 64,
+    "repeat": 10,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 1013.6,
+    "ttft_s_max": 0.82
+   }
+  ],
+  "ladder-mtp0_first_divergence_vs_oracle": {},
+  "verdict": "MTP0: 640/640 byte-identical to the sequential oracle across ten passes, harness classification output-identity-qualified, 1015.0 tok/s (R282 unstaggered two-pass: 64/64 at 989.8; R295: 128/128 at 1021.4). Depth 4: 597/640 (6.72% divergent, oracle-free minority 1.71%) at 617.9 tok/s, the same class as R295's 120/128. On this lane MTP0 was already exact at c64 without the stagger; the recipe turns a two-pass 64/64 into a ten-pass 640/640 at about 1% throughput cost."
  }
 }
