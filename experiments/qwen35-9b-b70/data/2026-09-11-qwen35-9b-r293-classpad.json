@@ -1,0 +1,77 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-9b-w4a16 R293 class-consistent FP16 linear (2026-09-11)",
+ "what": "The 4B lane's finding applied to the 9B: the R224 32-row FP16 linear chunk re-reads the 2 GB vocabulary projection (248320 x 4096) once per piece; R293 pads or splits every unquantized-linear call into one verified oneDNN M-class per weight shape. Image qwen38-int4-fp16-linear-classpad-cheapest-r293 sha256:40d46730, VLLM_XPU_FP16_LINEAR_CLASSPAD=1, verified in every container. Chain script scripts/run-20260911-qwen35-9b-classpad-chain.sh, wrapper qwen35-9b-classpad-20260911.",
+ "server_census": {
+  "248320x4096": "classes 1-32 / 33-128 / 129-320 / 321-512, canonical 129-320 (most populous eligible; large weight)",
+  "12288x4096": "canonical 33-128",
+  "4096x4096": "canonical 33-128"
+ },
+ "s1_tp1_ladders": {
+  "depth3_tok_s_r293_vs_r224_x1": {
+   "c1": [
+    113.7,
+    117.4
+   ],
+   "c2": [
+    218.8,
+    223.0
+   ],
+   "c4": [
+    365.3,
+    369.9
+   ],
+   "c8": [
+    651.7,
+    647.9
+   ],
+   "c16": [
+    941.6,
+    746.9
+   ],
+   "c32": [
+    1227.5,
+    826.9
+   ],
+   "c64": [
+    1224.9,
+    787.2
+   ]
+  },
+  "mtp0_tok_s_r293_vs_r224_x1": {
+   "c1": [
+    61.6,
+    63.9
+   ],
+   "c2": [
+    119.2,
+    123.4
+   ],
+   "c4": [
+    229.0,
+    235.4
+   ],
+   "c8": [
+    429.5,
+    436.5
+   ],
+   "c16": [
+    743.8,
+    744.6
+   ],
+   "c32": [
+    1208.7,
+    1183.4
+   ],
+   "c64": [
+    1643.6,
+    1272.7
+   ]
+  },
+  "identity": "MTP0 exact at every rung but c32 (127/128), 256/256 at c64; depth 3 exact through c16 except c12 (47/48), then 5-10% from c20 (R224 x1, two passes: MTP0 exact to c64, depth 3 exact to c16, 3-5% at c32/c64)",
+  "reading": "Same shape as the 4B. Depth 3 +26% at c16, +48% at c32, +56% at c64; no-speculation +29% at c64. Single user -3.2% (depth 3) and -3.6% (MTP0), smaller than the 4B's 5-6% because the 9B's per-layer projections are a smaller fraction of its step. Under R224 the depth-3 column was flat from c16 (747, 827, 787); under R293 it rises to 1228 and depth 3 leads no-speculation to about c32."
+ },
+ "campaign_roots": [
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s1"
+ ]
+}
