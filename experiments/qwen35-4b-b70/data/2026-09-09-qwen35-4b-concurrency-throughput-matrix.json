@@ -10,7 +10,11 @@
    "tp1_mtp0",
    "tp1_depth3",
    "tp2_mtp0",
-   "tp2_depth3"
+   "tp2_depth3",
+   "r293_tp1_mtp0",
+   "r293_tp1_depth3",
+   "r293_tp2_mtp0",
+   "r293_tp2_depth3"
   ],
   "rows": [
    [
@@ -18,68 +22,108 @@
     101.9,
     159.2,
     136.3,
-    227.3
+    227.3,
+    95.8,
+    151.4,
+    126.4,
+    202.8
    ],
    [
     2,
     193.5,
     300.8,
     258.9,
-    428.4
+    428.4,
+    183.1,
+    288.6,
+    243.0,
+    385.6
    ],
    [
     4,
     362.3,
     537.8,
     492.1,
-    759.6
+    759.6,
+    347.3,
+    522.7,
+    462.9,
+    709.9
    ],
    [
     8,
     654.5,
     883.1,
     899.1,
-    1229.0
+    1229.0,
+    637.5,
+    891.8,
+    855.9,
+    1226.8
    ],
    [
     12,
     839.6,
     917.8,
     1183.5,
-    1378.0
+    1378.0,
+    827.0,
+    1126.1,
+    1138.3,
+    1589.9
    ],
    [
     16,
     1058.8,
     1088.9,
     1492.3,
-    1588.1
+    1588.1,
+    1052.3,
+    1352.7,
+    1466.8,
+    1861.6
    ],
    [
     20,
     1196.6,
     1024.3,
     1739.6,
-    1421.4
+    1421.4,
+    1198.5,
+    1355.3,
+    1695.8,
+    1600.5
    ],
    [
     24,
     1345.9,
     1120.6,
     1984.1,
-    1629.7
+    1629.7,
+    1354.9,
+    1489.9,
+    1947.3,
+    1847.4
    ],
    [
     32,
     1591.7,
     1153.6,
     2353.9,
-    1848.9
+    1848.9,
+    1624.5,
+    1607.9,
+    2350.1,
+    2166.9
    ],
    [
     36,
     1252.9,
     1102.2,
+    null,
+    null,
+    null,
+    null,
     null,
     null
    ],
@@ -88,12 +132,20 @@
     1360.0,
     1156.4,
     null,
+    null,
+    null,
+    null,
+    null,
     null
    ],
    [
     44,
     1438.4,
     1143.5,
+    null,
+    null,
+    null,
+    null,
     null,
     null
    ],
@@ -102,12 +154,20 @@
     1508.2,
     1189.7,
     null,
+    null,
+    null,
+    null,
+    null,
     null
    ],
    [
     56,
     1622.5,
     1190.1,
+    null,
+    null,
+    null,
+    null,
     null,
     null
    ],
@@ -116,31 +176,45 @@
     1723.0,
     1201.0,
     2777.7,
-    2020.6
+    2020.6,
+    2163.6,
+    1830.7,
+    3316.7,
+    2693.6
    ],
    [
     96,
     1779.2,
     1147.5,
     3013.1,
-    2113.7
+    2113.7,
+    null,
+    null,
+    null,
+    null
    ],
    [
     128,
     1810.9,
     1166.6,
     3103.9,
-    2157.0
+    2157.0,
+    null,
+    null,
+    null,
+    null
    ]
   ],
-  "note_on_tp1_c36_to_c56": "c36, c40, c44, c48 and c56 in the TP1 columns are x2 (2026-09-09, ten passes, every rung in the capture set, max_num_seqs 64, max_num_batched_tokens 512). x2 also re-read c32 (1593.4 / 1153.1) and c64 (1726.9 / 1201.4), within 0.2% of the pooled values kept in those rows."
+  "note_on_tp1_c36_to_c56": "c36, c40, c44, c48 and c56 in the TP1 columns are x2 (2026-09-09, ten passes, every rung in the capture set, max_num_seqs 64, max_num_batched_tokens 512). x2 also re-read c32 (1593.4 / 1153.1) and c64 (1726.9 / 1201.4), within 0.2% of the pooled values kept in those rows.",
+  "r293_columns": "Columns 6-9 (2026-09-11): the same ladders on the R293 image with VLLM_XPU_FP16_LINEAR_CLASSPAD=1 (arms r1, r2; four passes, pass 1 discarded). c96/c128 pending r6/r7. The R224 columns 2-5 are the published lane; see 2026-09-11-qwen35-4b-r290-classpad-on-the-server.json."
  },
  "readings": {
   "crossover": "Both topologies cross between c16 and c20. On one card speculation leads by 2.8% at c16 and trails by 14.4% at c20; on two cards it leads by 5.9% at c16 and trails by 18.3% at c20. The ceiling is a property of the concurrency, not of the card count.",
   "single_user": "Depth 3 is worth 1.56x on one card (159.2 against 101.9) and 1.67x on two (227.3 against 136.3).",
   "peak_aggregate": "The highest aggregate measured anywhere in this campaign is 3103.9 tok/s, two cards without speculation at c128, and it is still rising. On one card the peak is 1810.9 at c128. Two cards without speculation at c128 is 1.71x one card at the same rung, against 1.36x at c32 and c64 - the second card helps more the more concurrency there is.",
   "speculation_stops_scaling": "Depth 3 on one card is flat from c16 to c128 - 1088.9 to 1166.6, a 7% gain over an eightfold increase in users - while no-speculation rises 1058.8 to 1810.9, a 71% gain.",
-  "second_card": "TP2 over TP1 is 1.34x to 1.61x depending on rung and mode, with the largest gains at c32 and c64 where a single card is closer to saturation."
+  "second_card": "TP2 over TP1 is 1.34x to 1.61x depending on rung and mode, with the largest gains at c32 and c64 where a single card is closer to saturation.",
+  "r293": "With the class-consistent FP16 linear the no-speculation column keeps rising and the depth-3 column no longer stalls: one card depth 3 reads 1353 at c16 (R224 1089) and 1831 at c64 (1201); two cards 1862 and 2694 (1588, 2021). The speculation crossover moves from c16-c20 to about c32 on one card (depth 3 1608 against MTP0 1625 at c32) and c24-c32 on two. Below c8 the pad path costs 5-11%."
  },
  "caveats": {
   "mixed_server_configs_at_high_rungs": "c96 and c128 come only from f4, which ran max_num_seqs 128 and max_num_batched_tokens 1024 against the 64/512 used elsewhere, and c64 pools f1, f4 and v1. Those settings materially change the divergence rate but barely change throughput - f1 and f4 read 1201.0 and 1217.2 at depth-3 c64, and 1723.0 and 1732.5 without speculation - so the throughput matrix tolerates the mix. An identity comparison would not.",
