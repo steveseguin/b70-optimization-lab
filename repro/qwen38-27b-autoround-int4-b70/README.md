@@ -32,8 +32,12 @@
 | R256 | 2 | 0 | on | n/a | - | MTP0 ladder | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 31/32, c64 64/64 | R259 |
 | R266 | 2 | 4 | on | INT4 draft-only (V2 runner, R266) | 112.70 / 112.96 | G2 12/12, G3 12/12 x2 | c1 1/1, c2 2/2, c4 3/4, c8 8/8, c16 16/16, c32 31/32, c64 62/64 (warm pass) | R269/R270 |
 | R276 (served since 2026-09-06 pm) | 2 | 4 | on (sizes to 320) | INT4 draft-only | 112.90 / 113.00 | G2 12/12, G3 12/12 x2 | c1 1/1, c2 2/2, c4 4/4, c8 7/8, c16 16/16, c32 30/32, c64 60/64 (warm pass) | R283/R282 |
+| R293 (classpad on) | 2 | 4 | on (sizes to 320) | INT4 draft-only | 111.69 / 111.33 | G2 12/12, G3 12/12 x2 (own MTP0 pair) | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 30/32, c64 59/64 (warm pass) | R295 |
+| R293 (classpad on) | 2 | 0 | on (sizes to 320) | n/a | 49.39 / 49.39 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 64/64 (warm pass) | R295 |
+| R293 (classpad on) | 1 | 4 | on (sizes to 320) | INT4 draft-only | 73.19 / 73.25 | G2 12/12, G3 12/12 x2 (own MTP0 pair) | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 15/16, c32 29/32, c64 59/64 (warm pass) | R298 |
+| R293 (classpad on) | 1 | 0 | on (sizes to 320) | n/a | 32.58 / 32.50 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 63/64 (warm pass) | R298 |
 
-**Settings common to every row:** vLLM 0.27.2rc1.dev77+gac7509e2b (XPU), `--dtype float16 --quantization gptq --kv-cache-dtype auto --block-size 64 --no-enable-prefix-caching --language-model-only`, `VLLM_BATCH_INVARIANT=0` (vLLM's own switch is off: the strict launchers pin it and vLLM refuses to boot the GDN backend with it on; batch invariance on this lane comes from the kernels and the switches below), `TORCHINDUCTOR_DETERMINISTIC=1`, `VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0`, `VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0`, `PYTHONHASHSEED=0`, `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`, `VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1`, `VLLM_XPU_GDN_NATIVE_FALLBACK=1`, `VLLM_XPU_FP8_BLOCK_W8A16=1` (inert on the gptq path), `VLLM_XPU_GDN_SPLIT_MIXED=1`, `VLLM_XPU_GDN_SPEC_GROUP=16`, `VLLM_XPU_FP16_LINEAR_ROWCHUNK=32`, `VLLM_XPU_W4A16_DETERMINISM_PAD=0` (correction 2026-09-06: the launchers did not forward this switch until R278k, so every runner-launched ladder rung above 128 verify rows, i.e. c32/c64, ran with the R213b pad on; c1-c16 and the single-user headline were never affected; the R281 ladder below is the corrected measurement), `VLLM_XPU_ALLREDUCE_HOST_WAIT=1`, `VLLM_XPU_RMSNORM_TRITON=0`, `VLLM_XPU_GEMMA_RMSNORM_TRITON=0`, whole-graph `torch.compile` (`splitting_ops: []`) with `inductor_compile_config {deterministic: true, split_reductions: false, triton.autotune_pointwise: false, combo_kernels: false, benchmark_combo_kernel: false, benchmark_epilogue_fusion: false}`, oneCCL `CCL_ATL_TRANSPORT=ofi FI_PROVIDER=tcp CCL_ZE_IPC_EXCHANGE=pidfd CCL_SEND=direct CCL_RECV=direct CCL_TOPO_P2P_ACCESS=1` with the three `CCL_SYCL_*_SIMPLE_THRESHOLD=4294967296`, greedy decoding (`temperature 0`), speculative config `{"method":"qwen3_next_mtp","num_speculative_tokens":<depth>}` (omitted for MTP0). Model: `devan-carlin/Qwen3.8-27B-int4-AutoRound` bce40cac relabelled to plain gptq (manifest `model-gptq-relabel-r212.json`).
+**Settings common to every row:** vLLM 0.27.2rc1.dev77+gac7509e2b (XPU), `--dtype float16 --quantization gptq --kv-cache-dtype auto --block-size 64 --no-enable-prefix-caching --language-model-only`, `VLLM_BATCH_INVARIANT=0` (vLLM's own switch is off: the strict launchers pin it and vLLM refuses to boot the GDN backend with it on; batch invariance on this lane comes from the kernels and the switches below), `TORCHINDUCTOR_DETERMINISTIC=1`, `VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0`, `VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0`, `PYTHONHASHSEED=0`, `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`, `VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1`, `VLLM_XPU_GDN_NATIVE_FALLBACK=1`, `VLLM_XPU_FP8_BLOCK_W8A16=1` (inert on the gptq path), `VLLM_XPU_GDN_SPLIT_MIXED=1`, `VLLM_XPU_GDN_SPEC_GROUP=16`, `VLLM_XPU_FP16_LINEAR_ROWCHUNK=32` (R293 rows: `VLLM_XPU_FP16_LINEAR_CLASSPAD=1`, which replaces the 32-row pieces with one verified oneDNN M-class per weight shape), `VLLM_XPU_W4A16_DETERMINISM_PAD=0` (correction 2026-09-06: the launchers did not forward this switch until R278k, so every runner-launched ladder rung above 128 verify rows, i.e. c32/c64, ran with the R213b pad on; c1-c16 and the single-user headline were never affected; the R281 ladder below is the corrected measurement), `VLLM_XPU_ALLREDUCE_HOST_WAIT=1`, `VLLM_XPU_RMSNORM_TRITON=0`, `VLLM_XPU_GEMMA_RMSNORM_TRITON=0`, whole-graph `torch.compile` (`splitting_ops: []`) with `inductor_compile_config {deterministic: true, split_reductions: false, triton.autotune_pointwise: false, combo_kernels: false, benchmark_combo_kernel: false, benchmark_epilogue_fusion: false}`, oneCCL `CCL_ATL_TRANSPORT=ofi FI_PROVIDER=tcp CCL_ZE_IPC_EXCHANGE=pidfd CCL_SEND=direct CCL_RECV=direct CCL_TOPO_P2P_ACCESS=1` with the three `CCL_SYCL_*_SIMPLE_THRESHOLD=4294967296`, greedy decoding (`temperature 0`), speculative config `{"method":"qwen3_next_mtp","num_speculative_tokens":<depth>}` (omitted for MTP0). Model: `devan-carlin/Qwen3.8-27B-int4-AutoRound` bce40cac relabelled to plain gptq (manifest `model-gptq-relabel-r212.json`).
 
 | setting | strict pairs (1 user) | identity ladders (c1-c64) |
 |---|---|---|
@@ -140,7 +144,7 @@ depth 4 exact at c1, c2 and c16, benchmark-c003 (the composition-sensitive near-
 c32 30/32, c64 58/64; depth 1 exact through c8 (358.5 tok/s), c16 12/16, c32 30/32, c64 61/64 (R253). Batches above
 8 tokens run eagerly, so this is the same composition residual as the eager ladders, at a different mix. On the
 headline configuration (graphs + draft-only INT4 head, R259): depth 4 exact through c8 (403 tok/s aggregate, 106.8 at
-c1), c16 14/16, c32 30/32, c64 59/64; MTP0 exact except c32 31/32 (benchmark-c003; c64 64/64, 998.7 tok/s).
+c1), c16 14/16, c32 30/32, c64 59/64; MTP0 exact except c32 31/32 (benchmark-c003; c64 64/64, 997.5 tok/s).
 
 **Matrix R239, TP2 (2026-09-05, final configuration: R228 image + `split_reductions=false` (`VLLM_BATCH_INVARIANT=0`, see the correction above),
 data `experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json`):**
@@ -320,12 +324,12 @@ carrying its census map (`R291 classpad census ... verdict=classpad`):
 | --- | ---: | ---: |
 | strict pair, depth 4 (G2 12/12, G3 12/12 x2 vs its own fresh MTP0 pair) | 112.90 / 113.00 | 111.69 / 111.33 |
 | strict pair, MTP0 (G1 12/12) | 49.83 / 49.89 (R253) | 49.39 / 49.39 |
-| depth 4 ladder, warm pass: c8 / c16 / c32 / c64 | 422.6 / 578.9 / 634.5 / 589.0 | 436.1 / 611.1 / 682.6 / 634.7 |
+| depth 4 ladder, warm pass: c8 / c16 / c32 / c64 | 422.6 / 578.9 / 634.5 / 589.0 | 436.1 / 611.1 / 682.6 / 627.8 |
 | depth 4 identity: c16 / c32 / c64 | 16/16, 30/32, 60/64 | 16/16, 30/32, 59/64 |
-| MTP0 ladder, warm pass: c32 / c64 | 815.8 / 989.8 | 816.1 / 1021.4 |
+| MTP0 ladder, warm pass: c32 / c64 | 815.8 / 989.8 | 815.4 / 1019.2 |
 | MTP0 identity c1-c64 | exact | exact (128/128 at c64) |
-| big admission (mns 256, mbt 4096), MTP0 c256 / depth 4 c128 | 1021.3 / 584.7 (R290 / R284) | 1079.5 / 653.6 |
-| two cards, MTP0, c64, 5 ms admission stagger, ten passes | not measured | **640/640**, `output-identity-qualified`, 1015.0 |
+| big admission (mns 256, mbt 4096), MTP0 c256 / depth 4 c128 | 1021.3 / 584.7 (R290 / R284) | 1079.5 / 647.7 |
+| two cards, MTP0, c64, 5 ms admission stagger, ten passes | not measured | **640/640**, `output-identity-qualified`, 1014.4 |
 
 Depth 4 gains 3-8% from c8 up and MTP0 3-6% from c64 up, at a 1% single-user cost; identity is unchanged at every rung.
 The strict gate is regenerated on the same image (G1 on a fresh MTP0 pair, G3 against it): under R293 the projection

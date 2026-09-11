@@ -670,6 +670,67 @@
      "per_user_value": 11.6219
     }
    ]
+  },
+  {
+   "id": "http-int4-r293-classpad-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+   "label": "INT4 fixed-K TP2 MTP0, R293 class-consistent FP16 linears (CLASSPAD=1): identity-qualified aggregate decode vs concurrent users (c1-c64, warm pass)",
+   "metric": "aggregate_decode",
+   "unit": "tok/s",
+   "x_metric": "concurrent_sequences",
+   "x_label": "Concurrent HTTP users",
+   "scope": "Measured vLLM HTTP completions on two B70s with the R293 image and VLLM_XPU_FP16_LINEAR_CLASSPAD=1 (R295, 2026-09-11): the served R276 configuration (capture sizes to 320, INT4 draft head, pad off) with every unquantized FP16 linear kept in one verified oneDNN M-class instead of 32-row pieces. No speculation, 128 returned raw token IDs per response on the 64-prompt small-context suite, second of two passes. Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (128/128 at 64 users). One server; not a promoted concurrency speed record. With the 5 ms admission stagger the same rung is 640/640 over ten passes at 1014.4 tok/s (R297).",
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+   "points": [
+    {
+     "concurrent_sequences": 1,
+     "value": 49.6,
+     "samples": 1,
+     "per_user_value": 49.6,
+     "exact": "1/1"
+    },
+    {
+     "concurrent_sequences": 2,
+     "value": 94.9,
+     "samples": 1,
+     "per_user_value": 47.45,
+     "exact": "2/2"
+    },
+    {
+     "concurrent_sequences": 4,
+     "value": 177.9,
+     "samples": 1,
+     "per_user_value": 44.475,
+     "exact": "4/4"
+    },
+    {
+     "concurrent_sequences": 8,
+     "value": 326.5,
+     "samples": 1,
+     "per_user_value": 40.8125,
+     "exact": "8/8"
+    },
+    {
+     "concurrent_sequences": 16,
+     "value": 536.3,
+     "samples": 1,
+     "per_user_value": 33.5187,
+     "exact": "16/16"
+    },
+    {
+     "concurrent_sequences": 32,
+     "value": 815.4,
+     "samples": 1,
+     "per_user_value": 25.4812,
+     "exact": "32/32"
+    },
+    {
+     "concurrent_sequences": 64,
+     "value": 1019.2,
+     "samples": 1,
+     "per_user_value": 15.925,
+     "exact": "64/64"
+    }
+   ]
   }
  ],
  "missing": [

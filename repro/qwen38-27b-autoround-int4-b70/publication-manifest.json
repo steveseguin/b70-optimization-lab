@@ -239,7 +239,17 @@
      "sha256": "bcff6095bd22aaae664769f4bb303b67d5a88a6315b72db1cb45409d3dbb2f7e"
     }
    ],
-   "measured_by": "experiments/qwen38-27b-b70/scripts/run-20260911-qwen38-int4-r295-r298-classpad-chain.sh (results pending as of this manifest edit; see the R295-R298 entries in experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json once complete)"
+   "measured_by": "experiments/qwen38-27b-b70/scripts/run-20260911-qwen38-int4-r295-r298-classpad-chain.sh: R295 (TP2 depth 4 full run: G1/G2/G3 12/12, 111.69/111.33 depth 4, 49.39/49.39 MTP0; ladders depth 4 c16 611.1 / c32 682.6 / c64 627.8, MTP0 exact c1-c64 at 1019.2), R296 (big admission: MTP0 1079.5 at c256), R297 (5 ms stagger: MTP0 640/640 over ten passes, output-identity-qualified, 1014.4), R298 (TP1 full run: 12/12 all, 73.19/73.25 depth 4, 32.58/32.50 MTP0). Entries R295_*..R298_* in the evidence file below.",
+   "evidence": [
+    {
+     "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+     "sha256": "6f6b456570c8e0603f551e29cc186a0d1d06bb9d30897c750c0c561fe2006ff4"
+    },
+    {
+     "path": "experiments/qwen38-27b-b70/notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-27b.md",
+     "sha256": "8f38aebcc379c33e024f01571cf8530b6f600fbf9d265f29ebb21db49f79b293"
+    }
+   ]
   }
  },
  "source_repositories": [
@@ -323,7 +333,7 @@
    },
    {
     "path": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-    "sha256": "52a9b67dc43064b0715486ab9f454c3cb78a1994c7227c9cf78a8c7a11becde5"
+    "sha256": "6f6b456570c8e0603f551e29cc186a0d1d06bb9d30897c750c0c561fe2006ff4"
    }
   ],
   "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16. R257 (R256 image, draft-only INT4 head + graphs): TP2 depth 4 112.362/112.325, 12/12 vs each other and vs the eager oracle.",
@@ -348,7 +358,8 @@
   "clean_source_build_evidence": {
    "path": "experiments/qwen38-27b-b70/data/replay-w4a16-r220-r221-clean-clone-20260906T192527Z/replay-summary.json",
    "sha256": "c543d30db423fddaa26d73753d9b4fc9bada3e2906c494416e3af25a51a82137"
-  }
+  },
+  "r293_classpad": "R295-R298 (2026-09-11): the class-consistent FP16 linear mode on the served configuration; lossless by G1/G2/G3 regenerated on the same image on both topologies; depth 4 +3-8% from c8, MTP0 +3-6% from c64, single user -1%; MTP0 c64 640/640 over ten passes with a 5 ms admission stagger."
  },
  "known_corrections": [
   "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",

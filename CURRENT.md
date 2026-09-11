@@ -16,6 +16,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-11 (EDT):** the Qwen3.5 4B/9B and Qwen3.8 27B INT4 lanes finished the
+class-consistent FP16 linear work (R290-R293 overlays, `VLLM_XPU_FP16_LINEAR_CLASSPAD`):
+the R224 32-row pieces re-read the vocabulary projection once per 32 rows, 25-56% of
+throughput on the 4B/9B and 3-8% on the 27B, removed losslessly. 27B package staged
+on R293 (`packages/qwen38-27b-int4-fixed-k-tp2-b70`, rows R295-R298); the R293
+image is built locally (`sha256:40d46730`) and awaits the GHCR push
+(`repro/qwen38-27b-autoround-int4-b70/scripts/publish-r293-image-ghcr.sh`). No
+containers running after 19:03 EDT; both cards passed postflight.
+
 Host: `steve-TURIND8-2L2T`, **two B70s**. At the verification time above,
 no Docker containers are running; all PR45 review servers were stopped.
 Both GPUs and XCCL passed final postflight. Recheck actual process and endpoint

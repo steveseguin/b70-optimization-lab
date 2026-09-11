@@ -5409,7 +5409,7 @@
    }
   ],
   "ladder-mtp0_first_divergence_vs_oracle": {},
-  "verdict": "lossless: G1 12/12 (49.39/49.39 tok/s), G2 12/12, G3 12/12 x2 (111.69/111.33 against R283's 112.90/113.00, -1.1%). Warm pass depth 4: c1 106.1, c2 188.1, c4 292.5, c8 436.1 (+3%), c16 611.1 (+5.6%), c32 682.6 (+7.6%), c64 634.7 (+7.8%) against R282; identity c16 31/32, c32 61/64, c64 120/128 as before. MTP0 exact c1-c64 (128/128), c64 1021.4 (+3%). The 2.5 GB projection is a small share of this 19 GB model's step, so the tax removed is 3-8% here against 25-56% on the 4B and 9B.",
+  "verdict": "lossless: G1 12/12 (49.39/49.39 tok/s), G2 12/12, G3 12/12 x2 (111.69/111.33 against R283's 112.90/113.00, -1.1%). Warm pass depth 4: c1 106.1, c2 188.1, c4 292.5, c8 436.1 (+3%), c16 611.1 (+5.6%), c32 682.6 (+7.6%), c64 627.8 (+7.8%) against R282; identity c16 31/32, c32 61/64, c64 120/128 as before. MTP0 exact c1-c64 (128/128), c64 1019.2 (+3%). The 2.5 GB projection is a small share of this 19 GB model's step, so the tax removed is 3-8% here against 25-56% on the 4B and 9B.",
   "rates": [
    111.691800805688,
    111.334073557337
@@ -6450,7 +6450,7 @@
     ]
    ]
   },
-  "verdict": "warm pass depth 4: c32 674.9, c64 637.1, c128 653.6, c192 654.7, c256 649.3 (R284 depth 4 at mns 128: c64 591.4, c128 584.7: +8%/+12%); MTP0: c32 813.1, c64 1067.4, c128 1013.0, c192 998.7, c256 1079.5 (R290 MTP0: 1032.8 / 966.8 / 950.8 / 1021.3: +3-6%). Identity under the 4096-token admission budget is the same class as R284/R290: MTP0 exact at c32, 5-9% divergent from c64 (R290: 57/64, 120/128); the many-user ceiling on this lane is the INT4 GEMM, not the projection."
+  "verdict": "warm pass depth 4: c32 674.9, c64 637.1, c128 647.7, c192 654.7, c256 649.3 (R284 depth 4 at mns 128: c64 591.4, c128 584.7: +8%/+12%); MTP0: c32 813.1, c64 1067.4, c128 1010.7, c192 997.5, c256 1079.5 (R290 MTP0: 1032.8 / 966.8 / 950.8 / 1021.3: +3-6%). Identity under the 4096-token admission budget is the same class as R284/R290: MTP0 exact at c32, 5-9% divergent from c64 (R290: 57/64, 120/128); the many-user ceiling on this lane is the INT4 GEMM, not the projection."
  },
  "R297_tp2_stagger_5ms_c64_r293_classpad": {
   "date": "2026-09-11",
@@ -6796,6 +6796,317 @@
    }
   ],
   "ladder-mtp0_first_divergence_vs_oracle": {},
-  "verdict": "MTP0: 640/640 byte-identical to the sequential oracle across ten passes, harness classification output-identity-qualified, 1015.0 tok/s (R282 unstaggered two-pass: 64/64 at 989.8; R295: 128/128 at 1021.4). Depth 4: 597/640 (6.72% divergent, oracle-free minority 1.71%) at 617.9 tok/s, the same class as R295's 120/128. On this lane MTP0 was already exact at c64 without the stagger; the recipe turns a two-pass 64/64 into a ten-pass 640/640 at about 1% throughput cost."
+  "verdict": "MTP0: 640/640 byte-identical to the sequential oracle across ten passes, harness classification output-identity-qualified, 1014.4 tok/s (median of passes 2-10) (R282 unstaggered two-pass: 64/64 at 989.8; R295: 128/128 at 1019.2). Depth 4: 597/640 (6.72% divergent, oracle-free minority 1.71%) at 617.9 tok/s (median of passes 2-10), the same class as R295's 120/128. On this lane MTP0 was already exact at c64 without the stagger; the recipe turns a two-pass 64/64 into a ten-pass 640/640 at about 1% throughput cost."
+ },
+ "R298_tp1_depth4_r293_classpad_full": {
+  "date": "2026-09-11",
+  "boot": "01e0fb3e",
+  "image": "R293 (classpad on), as R295; one card: lm_head 248320x5120 canonical class 129-301",
+  "config": "one B70 (TENSOR_PARALLEL_SIZE=1, XPU_DEVICE_MASK=0, GPU_MEMORY_UTILIZATION=0.96), depth 4, capture sizes to 320, INT4 draft head, pad off; FULL run with two-pass c1-c64 ladders",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 69.2,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 74.5,
+    "ttft_s_max": 1.3
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 192.3,
+    "ttft_s_max": 0.2
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 270.3,
+    "ttft_s_max": 0.29
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 250.4,
+    "ttft_s_max": 4.98
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 255.5,
+    "ttft_s_max": 13.45
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "58/64",
+    "aggregate_tok_s_wall": 255.9,
+    "ttft_s_max": 29.64
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 70.6,
+    "ttft_s_max": 0.07
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 123.1,
+    "ttft_s_max": 0.17
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 192.5,
+    "ttft_s_max": 0.2
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 270.8,
+    "ttft_s_max": 0.28
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "15/16",
+    "aggregate_tok_s_wall": 255.4,
+    "ttft_s_max": 4.69
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "29/32",
+    "aggregate_tok_s_wall": 254.1,
+    "ttft_s_max": 13.42
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 256.0,
+    "ttft_s_max": 29.13
+   }
+  ],
+  "ladder_first_divergence_vs_oracle": {
+   "c16_r1": [
+    [
+     "benchmark-c003",
+     60
+    ]
+   ],
+   "c32_r1": [
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "rollback-c018",
+     77
+    ]
+   ],
+   "c64_r1": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "index-c033",
+     23
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "rollback-c018",
+     77
+    ]
+   ],
+   "c16_r2": [
+    [
+     "capacity-c006",
+     11
+    ]
+   ],
+   "c32_r2": [
+    [
+     "index-c009",
+     23
+    ],
+    [
+     "rollback-c010",
+     68
+    ],
+    [
+     "rollback-c018",
+     77
+    ]
+   ],
+   "c64_r2": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "capacity-c014",
+     18
+    ],
+    [
+     "index-c033",
+     23
+    ],
+    [
+     "benchmark-c003",
+     60
+    ],
+    [
+     "index-c041",
+     89
+    ]
+   ]
+  },
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 32.4,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 62.0,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 117.5,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 212.3,
+    "ttft_s_max": 0.25
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 344.0,
+    "ttft_s_max": 0.42
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 509.5,
+    "ttft_s_max": 0.83
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 428.8,
+    "ttft_s_max": 12.99
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 32.5,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 62.1,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 117.5,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 212.9,
+    "ttft_s_max": 0.24
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 343.9,
+    "ttft_s_max": 0.42
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 509.2,
+    "ttft_s_max": 0.84
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "63/64",
+    "aggregate_tok_s_wall": 428.8,
+    "ttft_s_max": 13.0
+   }
+  ],
+  "ladder-mtp0_first_divergence_vs_oracle": {
+   "c64_r2": [
+    [
+     "index-c009",
+     23
+    ]
+   ]
+  },
+  "verdict": "lossless: G1 12/12 (32.58/32.50 tok/s), G2 12/12, G3 12/12 x2 (73.19/73.25). No matched one-card baseline with the INT4 draft head exists in the matrix (the R246b row, 56.91/56.90, used the FP16 head); one-card MTP0 was 32.96/32.95 eager (R239). Warm pass depth 4: c1 70.6, c2 123.1, c4 192.5, c8 270.8, c16 255.4, c32 255.5, c64 256.0 (R285 big admission: 237-246 from c16); identity c16 30/32, c32 59/64, c64 117/128. MTP0: c16 343.9, c32 509.2, c64 428.8 (R285: 345.9 / 514.0 / 418.5), exact to c32, 127/128 at c64. One card saturates at ~256 tok/s with speculation and ~510 without, as before; the switch costs nothing and changes nothing here.",
+  "rates": [
+   73.187524367641,
+   73.245033939778
+  ],
+  "rates_mtp0": [
+   32.584887059956,
+   32.496628616971
+  ],
+  "gates": "G2 12/12, G3 12/12 x2 (own MTP0 pair)",
+  "gates_mtp0": "G1 12/12"
  }
 }

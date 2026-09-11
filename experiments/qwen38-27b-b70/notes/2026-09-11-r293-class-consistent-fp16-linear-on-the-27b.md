@@ -17,12 +17,12 @@ now runs in the 129-320-row class on the TP2 shard) and is not the reference for
 | --- | ---: | ---: |
 | depth 4 strict pair | 112.90 / 113.00 (R283) | 111.69 / 111.33, G2 12/12, G3 12/12 x2 |
 | MTP0 strict pair | 49.83 / 49.89 (R253) | 49.39 / 49.39, G1 12/12 |
-| depth 4 warm pass c8 / c16 / c32 / c64 | 422.6 / 578.9 / 634.5 / 589.0 (R282) | 436.1 / 611.1 / 682.6 / 634.7 |
+| depth 4 warm pass c8 / c16 / c32 / c64 | 422.6 / 578.9 / 634.5 / 589.0 (R282) | 436.1 / 611.1 / 682.6 / 627.8 |
 | depth 4 identity c16 / c32 / c64 | 16/16, 30/32, 60/64 | 16/16, 30/32, 59/64 |
-| MTP0 warm pass c32 / c64 | 815.8 / 989.8 | 816.1 / 1021.4, exact c1-c64 |
-| big admission MTP0 c64 / c128 / c256 | 1032.8 / 966.8 / 1021.3 (R290) | 1067.4 / 1013.0 / 1079.5 |
-| big admission depth 4 c64 / c128 | 591.4 / 584.7 (R284) | 637.1 / 653.6 |
-| MTP0 c64, 5 ms stagger, ten passes | - | 640/640, output-identity-qualified, 1015.0 |
+| MTP0 warm pass c32 / c64 | 815.8 / 989.8 | 815.4 / 1019.2, exact c1-c64 |
+| big admission MTP0 c64 / c128 / c256 | 1032.8 / 966.8 / 1021.3 (R290) | 1067.4 / 1010.7 / 1079.5 |
+| big admission depth 4 c64 / c128 | 591.4 / 584.7 (R284) | 637.1 / 647.7 |
+| MTP0 c64, 5 ms stagger, ten passes | - | 640/640, output-identity-qualified, 1014.4 |
 
 ## Reading
 
