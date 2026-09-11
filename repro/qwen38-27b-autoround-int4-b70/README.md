@@ -297,6 +297,46 @@ wants depth 4 only up to about 8-16 users; two cards roughly double the
 many-user ceiling (992 tok/s exact at 64 users) rather than the single-user
 rate. Entry `R285_ladders_tp1_big_admission_mtp4_vs_mtp0` in the same JSON.
 
+### The FP16 linear pieces were a throughput tax: R293, the class-consistent FP16 linear (R295-R298, 2026-09-11)
+
+Every unquantized FP16 linear in this stack - the 2.5 GB `lm_head` (248320 x 5120 per card pair, a 1.27 GB shard per
+card at TP2) and the MTP `fc` - ran in `<=32`-row pieces (R224) so that the oneDNN f16 GEMM stayed in its single-row
+rounding class. Each piece re-reads the weight. The Qwen3.5 lanes found the size of that cost first (a 4B lost 41-54% of
+depth-3 throughput above 32 rows; a 9B similar), measured the GEMM's row-count classes offline (rows 1-32, 33-128,
+129-320, 321-512 at these shapes, each position-invariant, pad-invariant and deterministic), and built **R293**: the same
+opaque op, with `VLLM_XPU_FP16_LINEAR_CLASSPAD=1`, measures the class map for each weight shape on first use, verifies
+each class before trusting it, and pads or splits every call into one canonical class - one weight read per step, rows
+bit-identical between one user and sixty-four. Mechanism and census:
+[`experiments/qwen35-4b-b70/notes/2026-09-09-the-fp16-linear-chunk-is-a-throughput-tax.md`](../../experiments/qwen35-4b-b70/notes/2026-09-09-the-fp16-linear-chunk-is-a-throughput-tax.md)
+and [`2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md`](../../experiments/qwen35-4b-b70/notes/2026-09-11-r293-class-consistent-fp16-linear-on-the-server.md).
+Image: R276 + `docker/r290..r293-*.py` (`neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293`,
+id `sha256:40d46730...`); with the switch off it runs the R276 code path unchanged.
+
+On this lane the projection is a small share of a 19 GB model whose step is dominated by the INT4 GEMMs, so the gain is
+real but modest. Measured on the served configuration (TP2, depth 4, sizes to 320, INT4 draft head), every server's log
+carrying its census map (`R291 classpad census ... verdict=classpad`):
+
+| | R276 (R282/R283) | R293 (R295-R297) |
+| --- | ---: | ---: |
+| strict pair, depth 4 (G2 12/12, G3 12/12 x2 vs its own fresh MTP0 pair) | 112.90 / 113.00 | 111.69 / 111.33 |
+| strict pair, MTP0 (G1 12/12) | 49.83 / 49.89 (R253) | 49.39 / 49.39 |
+| depth 4 ladder, warm pass: c8 / c16 / c32 / c64 | 422.6 / 578.9 / 634.5 / 589.0 | 436.1 / 611.1 / 682.6 / 634.7 |
+| depth 4 identity: c16 / c32 / c64 | 16/16, 30/32, 60/64 | 16/16, 30/32, 59/64 |
+| MTP0 ladder, warm pass: c32 / c64 | 815.8 / 989.8 | 816.1 / 1021.4 |
+| MTP0 identity c1-c64 | exact | exact (128/128 at c64) |
+| big admission (mns 256, mbt 4096), MTP0 c256 / depth 4 c128 | 1021.3 / 584.7 (R290 / R284) | 1079.5 / 653.6 |
+| two cards, MTP0, c64, 5 ms admission stagger, ten passes | not measured | **640/640**, `output-identity-qualified`, 1015.0 |
+
+Depth 4 gains 3-8% from c8 up and MTP0 3-6% from c64 up, at a 1% single-user cost; identity is unchanged at every rung.
+The strict gate is regenerated on the same image (G1 on a fresh MTP0 pair, G3 against it): under R293 the projection
+runs in a different rounding class from the eager R239 oracle the R283 gate used, so that stored oracle is not the
+reference for this image. The staggered-admission recipe from the 4B lane (`--launch-stagger-ms 5`) was run here for the
+first time: ten passes of 64 concurrent requests byte-identical to the sequential oracle, where the published claim had
+been two passes.
+
+`CLASSPAD=1` on the package launcher enables it; the default stays `0` (the published single-user configuration). One
+card (R298) is in the replication matrix above.
+
 ### Kernel-library build reproducibility (clean-clone replay, 2026-09-06)
 
 The published R220 + R221 build scripts were re-run from fresh clones of the

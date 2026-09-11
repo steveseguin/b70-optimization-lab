@@ -74,11 +74,24 @@ Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04
 | kernel routing | `quant_method: auto-round` selects INC/ARK `woqgemm`: nondeterministic for 32-256 rows, never batch-invariant, 6-10x slower at two rows | relabel the identical tensors as plain `gptq` (`scripts/make-gptq-relabel.py`) -> oneDNN `int4_gemm_w4a16` |
 | W4A16 GEMM | oneDNN picks a different K partition per row-count class | rebuilt `_xpu_C` pins a two-tier fixed-K strategy (R221 patch); decode unchanged, prefill GEMMs ~2x |
 | FP16 linears (`lm_head`, `mtp.fc`) | oneDNN f16 GEMM changes class above 32 rows | `<=32`-row pieces in an opaque custom op (R224) |
+| FP16 linears, many users | each `<=32`-row piece re-reads the 2.5 GB `lm_head`: a throughput tax above 32 rows | R293: `CLASSPAD=1` pads or splits every call into one measured, verified oneDNN M-class per weight shape (one weight read per step, rows bit-identical across batch sizes); off by default, R276 code path unchanged |
 | attention decode | flash-decoding split count follows batch size | not pinned by vLLM's flag (`VLLM_BATCH_INVARIANT` stays 0: it refuses to boot the GDN backend); MTP0 identity holds through c64 without it (R222-R253 ladders) |
 | compiled reductions | Inductor splits reductions by row count | `"split_reductions": false` |
 
 The last known composition dependence is the GDN kernel (launch grouping does not restore single-request
 arithmetic); it accounts for the c32/c64 near-tie flips with speculation.
+
+## R293: class-consistent FP16 linears (2026-09-11)
+
+The served image is now R293 (R276 + `experiments/qwen38-27b-b70/docker/r290..r293-*.py`; with `CLASSPAD=0`, the
+default, it runs R276's code path unchanged and reproduces the headline above). `CLASSPAD=1` removes the 32-row
+re-read of the vocabulary projection: on this lane depth 4 gains 3-8% from eight users up (c16 611 / c32 683 / c64 635
+tok/s against 579 / 635 / 589), MTP0 3-6% from 64 users up (1021 at c64, 1080 at c256), at a 1% single-user cost
+(111.69 / 111.33 against 112.90 / 113.00), lossless by G1/G2/G3 regenerated on the same image, identity unchanged at
+every rung. Two cards without speculation with a 5 ms admission stagger are byte-identical to the sequential oracle
+over ten passes of 64 users (640/640, harness-certified) at 1015 tok/s. Rows R295-R298 in the matrix; detail in the
+recipe README's R293 section. The 4B and 9B Qwen3.5 lanes, where the projection is a larger share of the step, gain
+25-56% from the same switch.
 
 ## Commands
 
