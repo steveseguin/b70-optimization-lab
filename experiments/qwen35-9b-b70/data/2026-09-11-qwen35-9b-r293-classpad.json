@@ -72,6 +72,25 @@
   "reading": "Same shape as the 4B. Depth 3 +26% at c16, +48% at c32, +56% at c64; no-speculation +29% at c64. Single user -3.2% (depth 3) and -3.6% (MTP0), smaller than the 4B's 5-6% because the 9B's per-layer projections are a smaller fraction of its step. Under R224 the depth-3 column was flat from c16 (747, 827, 787); under R293 it rises to 1228 and depth 3 leads no-speculation to about c32."
  },
  "campaign_roots": [
-  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s1"
- ]
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s1",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s3"
+ ],
+ "s3_tp1_strict": {
+  "G1": "12/12",
+  "G2": "12/12",
+  "G3": "12/12 both",
+  "mtp0_tok_s": [
+   61.71,
+   61.83
+  ],
+  "depth3_tok_s": [
+   112.37,
+   112.52
+  ],
+  "r224_published": {
+   "mtp0": 64.33,
+   "depth3": 113.63
+  },
+  "reading": "Lossless by every gate; single user -1.0% at depth 3, -4.0% at MTP0."
+ }
 }
