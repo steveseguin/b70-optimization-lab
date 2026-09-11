@@ -1,0 +1,119 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-fgdynm1",
+ "status": "Qwen3.5-9B W4A16, one B70 (TP1), MTP depth scheduled by batch size (3 at 1-8 users, 1 at 9-16, none above) via qwen3_5_mtp, full decode-only XPU graphs captured per scheduled depth (R276 + lab overlay): strict pair 110.666683/110.726098 tok/s class-balanced median (tokens 1-100 after TTFT), G1/G2/G3 exact",
+ "image_id": "sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba",
+ "image_tag": "neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph",
+ "image_ghcr": "built locally from the public R276 digest ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad with the two COPY-only Dockerfiles in repro/qwen35-9b-w4a16-b70/docker (r276-dynamic-mamba-alloc, r276-dynsd-fullgraph); the launcher pins the five overlaid files by SHA-256, the local image ID is not portable",
+ "compilation_config": null,
+ "speculative_config": {
+  "method": "qwen3_5_mtp",
+  "num_speculative_tokens": 3,
+  "num_speculative_tokens_per_batch_size": [
+   [
+    1,
+    8,
+    3
+   ],
+   [
+    9,
+    16,
+    1
+   ],
+   [
+    17,
+    64,
+    0
+   ]
+  ]
+ },
+ "oracle_root": "qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-fgdynm1/mtp0-a (same-configuration MTP0, two fresh servers G1 12/12)",
+ "boot_id": "e1aa3120-5c58-449d-99b8-0a46ab29c190",
+ "repo_head_at_launch": "945cce5b49ee7c526278a078dfb3b3aeea4796ad",
+ "campaign_config": "LANE=qwen35-9b-w4a16 RUN=fgdynm1 TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 arm_devices=0 model=/home/steve/llm-models/qwen35-9b-w4a16 image=sha256:bd3fa3af93b1463633c55e22b5ac3087bc9f67e710c1286a8c596a82a019bdba port=18131",
+ "model": {
+  "hf_id": "RedHatAI/Qwen3.5-9B-quantized.w4a16",
+  "revision": "a398088c4228b0ae0c8c78df88fd1e4bf445f068",
+  "served_as": "compressed-tensors W4A16 INT4 weights, FP16 activations, publisher MTP head as draft, draft-only INT4 lm_head copy; draft depth scheduled by batch size [[1,8,3],[9,16,1],[17,64,0]]"
+ },
+ "runtime_env": {
+  "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+  "VLLM_XPU_DRAFT_LM_HEAD_INT4": "1",
+  "VLLM_XPU_GDN_SPEC_GROUP": "16",
+  "VLLM_XPU_GDN_SPLIT_MIXED": "1",
+  "VLLM_BATCH_INVARIANT": "0",
+  "TORCHINDUCTOR_DETERMINISTIC": "1",
+  "PYTHONHASHSEED": "0",
+  "QUANTIZATION": null,
+  "VLLM_XPU_FP8_BLOCK_W8A16": "1"
+ },
+ "gates_passed": {
+  "G1 mtp0-a vs mtp0-b": "12/12",
+  "G2 mtp3-a vs mtp3-b": "12/12",
+  "G3 mtp3-a vs mtp0-a": "12/12",
+  "G3 mtp3-b vs mtp0-a": "12/12"
+ },
+ "attempts": {
+  "mtp3-a": "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-fgdynm1/mtp3-a/strict",
+  "mtp3-b": "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-tp1-mtp3-graph1-dhint4-20260909-fgdynm1/mtp3-b/strict"
+ },
+ "centers": {
+  "mtp3_class_balanced_tok_s": 110.69639084509313,
+  "mtp0_class_balanced_tok_s": 64.15274861401795
+ },
+ "performance_evidence": {
+  "mtp3-a": {
+   "class_balanced_tok_s_1_100_intervals_after_ttft": 110.6667,
+   "tok_s_1_100_after_ttft": 111.7777,
+   "tok_s_after_ttft_full": 108.7002,
+   "tok_s_wall_full": 107.1814,
+   "ttft_ms": 70.8419
+  },
+  "mtp3-b": {
+   "class_balanced_tok_s_1_100_intervals_after_ttft": 110.7261,
+   "tok_s_1_100_after_ttft": 111.7269,
+   "tok_s_after_ttft_full": 108.683,
+   "tok_s_wall_full": 107.1588,
+   "ttft_ms": 70.6087
+  }
+ },
+ "output_sha256": {
+  "mtp3-a": [
+   "acfe79db2420e5bdcbf0930a87d04e0c62f9cc9b91ba5b773ba08de0b63688a9",
+   "b8af04d1c82c3d1551d7920a872f67e4cf45ded4c58573934204b6af4e6850d1",
+   "74964780b60ffb8fe8217640b6b96bba523a1dd37adbe5bc5ef5e53ea6de955c",
+   "5acc31f42e67361e7ea61a5de5440b50206ab38b8b75518bde9cdfca96a654f2",
+   "1706da892b84186783ea9754ea310e1ae905ed0fb986ab5ccb298730b7258bfe",
+   "b9cfa8f5cc158744c58f70f966b18368fadf1463545fe05eb0a442a857583e8c",
+   "0a7f3537e543656995214213f9890bd60ebc4130d99d8b42443b589663bed763",
+   "f77b3f0925bc261cac058d94ac3f47942f1735d0bf766d8fe14375a6a488ca7e",
+   "bf5e9508082861834f4b089f94447bd57a7d2b7f50f8bce9edaf3dc6f8797608",
+   "9cf3c08ab081e90c5c90bc7aab2667598c9034b2bea9a13b889f99497ee350f4",
+   "d26139adde83a2f76812a8139c237d268b1337dedd5572cd8d4d5adb3106a199",
+   "0c7dfe1ef2626912bc592326ae45be7e96cb32ca6b4654c0892dbe00ff9e2bdd"
+  ],
+  "mtp3-b": [
+   "acfe79db2420e5bdcbf0930a87d04e0c62f9cc9b91ba5b773ba08de0b63688a9",
+   "b8af04d1c82c3d1551d7920a872f67e4cf45ded4c58573934204b6af4e6850d1",
+   "74964780b60ffb8fe8217640b6b96bba523a1dd37adbe5bc5ef5e53ea6de955c",
+   "5acc31f42e67361e7ea61a5de5440b50206ab38b8b75518bde9cdfca96a654f2",
+   "1706da892b84186783ea9754ea310e1ae905ed0fb986ab5ccb298730b7258bfe",
+   "b9cfa8f5cc158744c58f70f966b18368fadf1463545fe05eb0a442a857583e8c",
+   "0a7f3537e543656995214213f9890bd60ebc4130d99d8b42443b589663bed763",
+   "f77b3f0925bc261cac058d94ac3f47942f1735d0bf766d8fe14375a6a488ca7e",
+   "bf5e9508082861834f4b089f94447bd57a7d2b7f50f8bce9edaf3dc6f8797608",
+   "9cf3c08ab081e90c5c90bc7aab2667598c9034b2bea9a13b889f99497ee350f4",
+   "d26139adde83a2f76812a8139c237d268b1337dedd5572cd8d4d5adb3106a199",
+   "0c7dfe1ef2626912bc592326ae45be7e96cb32ca6b4654c0892dbe00ff9e2bdd"
+  ]
+ },
+ "identity_claim": "two fresh depth-3 servers 12/12 vs each other and 12/12 vs the MTP0 oracle on the strict 12-prompt completions suite",
+ "notes": "Canaries passed on every server; cached_tokens 0 on every request; the chat API with visible thinking measures higher on the same prompts (workload note in the recipe). One server for every batch size: the strict pair is the one-user point of the scheduled server; its c1-c64 identity ladders and its 2K-32K real-content ladder are in the campaign root and in experiments/qwen35-9b-b70/notes/2026-09-10-one-server-for-every-batch-size.md.",
+ "overlay_files_sha256": {
+  "v1/core/sched/scheduler.py": "6d550a8e6a5c6abf200d66fbc4fc45c8ce371a312d454c39e057a45b364994c3",
+  "v1/core/single_type_kv_cache_manager.py": "b9a100331f98882dc01dc6f6efac53b1fc1fc949ba0b8915e932336a8a521c09",
+  "config/vllm.py": "e03067d4fbcf56ae51fd254fb70c02a3cdf25fd3db6bae70855b945cdc15bcb2",
+  "v1/cudagraph_dispatcher.py": "3d296446deea8726643d7942f49cf920b82d26bb2205480190ef4d0a731bbb98",
+  "v1/worker/gpu_model_runner.py": "0d9546794241873204cc80de0a5918c6d430bb70f885e8919a2a8e0da3e94c7e"
+ }
+}
