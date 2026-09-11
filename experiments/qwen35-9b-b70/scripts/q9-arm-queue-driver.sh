@@ -103,8 +103,11 @@ for line in "${QUEUE_LINES[@]}"; do
   harness_env=${harness_env:-}; extra_env=${extra_env:-}
   # Skip an arm whose root already exists: the harness refuses a reused root anyway, and this makes
   # the driver restartable after an interrupt.
+  # No 'dhint4' literal here: a DRAFT_HEAD=0 arm's root omits it, and the hardcoded literal made the
+  # driver re-dispatch a13dh0/a14dh0d1 on every restart (the harness refused the reused root, but
+  # the re-dispatch truncated their chain logs first).
   shopt -s nullglob
-  existing=("$OUT/${LANE}-tp1-mtp${depth}-graph1-dhint4"*"-20260909-${run}")
+  existing=("$OUT/${LANE}-tp1-mtp${depth}-graph1"*"-20260909-${run}")
   shopt -u nullglob
   if (( ${#existing[@]} > 0 )); then echo "$(date -u +%FT%TZ) SKIP arm=$run (root exists)"; continue; fi
   card=$(free_card)

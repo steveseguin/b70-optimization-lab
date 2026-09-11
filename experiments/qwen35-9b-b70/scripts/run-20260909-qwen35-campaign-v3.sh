@@ -127,7 +127,14 @@ launch() {
   mkdir -p "${dir}"; [[ ! -e "${cache}" ]] || abort "${label}: cache exists"; mkdir -p "${cache}"
   wait_for_memory "${label}"
   local name=${LANE}-${RUN}-${label} served=${LANE}-${label} launcher=run-w8a16-mtp0-strict-server.sh spec='{}'
-  if [[ "${kind}" != mtp0 ]]; then launcher=run-w8a16-mtp1-strict-server.sh; spec="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${DEPTH}}"; fi
+  if [[ "${kind}" != mtp0 ]]; then
+    launcher=run-w8a16-mtp1-strict-server.sh; spec="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${DEPTH}}"
+    # SPEC_SCHEDULE: vLLM's dynamic speculative decoding. A JSON list of [range_start,range_end,K]
+    # inclusive batch-size ranges; the scheduler picks K from the live batch size each step, capped
+    # at DEPTH. This is the mechanism for "deep drafts at one user, no drafts at a full batch" in a
+    # single server, which the operating map says is worth ~+30% aggregate at 64 users.
+    [[ -z "${SPEC_SCHEDULE:-}" ]] || spec="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${DEPTH},\"num_speculative_tokens_per_batch_size\":${SPEC_SCHEDULE}}"
+  fi
   date --iso-8601=seconds >"${dir}/started-at.txt"
   local specenv=(); [[ "${kind}" == mtp0 ]] || specenv=(SPECULATIVE_CONFIG="${spec}")
   # EXTRA_ENV: arbitrary "KEY=VALUE KEY=VALUE" passthrough for knobs this harness does not name.
@@ -166,7 +173,20 @@ launch() {
     grep -q "\"VLLM_XPU_GDN_SPEC_GROUP=${GDN_SPEC_GROUP}\"" "${dir}/container-inspect.json" 2>/dev/null \
       || abort "${label}: VLLM_XPU_GDN_SPEC_GROUP=${GDN_SPEC_GROUP} requested but not in the container environment"
   fi
+  if [[ "${kind}" != mtp0 && -n "${SPEC_SCHEDULE:-}" ]]; then
+    grep -q "num_speculative_tokens_per_batch_size" "${dir}/container-inspect.json" 2>/dev/null \
+      || abort "${label}: SPEC_SCHEDULE requested but no num_speculative_tokens_per_batch_size in the container args"
+    grep -q "Dynamic speculative decoding is not supported\|falling back to static num_speculative_tokens" "${dir}/server.log" 2>/dev/null \
+      && abort "${label}: vLLM disabled the dynamic speculative schedule (see server.log)"
+  fi
   for _kv in ${EXTRA_ENV:-}; do
+    # Draft-head knobs exist only in the speculative launcher: run-server.sh (mtp0) has no draft
+    # head to forward them to, and the no-speculation oracle is meant to run without one. Verifying
+    # them in the mtp0 stage aborted the whole draft-head block on 2026-09-09. They are still
+    # verified in every speculative stage, which is the only place they can act.
+    if [[ "${kind}" == mtp0 && "${_kv}" == VLLM_XPU_DRAFT_LM_HEAD_INT4_* ]]; then
+      log "${label}: EXTRA_ENV ${_kv} is a draft-head knob; not verified in the no-speculation oracle"; continue
+    fi
     grep -q "\"${_kv}\"" "${dir}/container-inspect.json" 2>/dev/null \
       || abort "${label}: EXTRA_ENV ${_kv} was requested but is not in the container environment"
   done

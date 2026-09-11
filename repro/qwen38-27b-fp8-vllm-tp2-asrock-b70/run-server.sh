@@ -38,6 +38,15 @@ gdn_serial_exact="${VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT:-0}"
 gdn_persistent_scratch="${VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH:-0}"
 gdn_native_fallback="${VLLM_XPU_GDN_NATIVE_FALLBACK:-1}"
 lm_head_chunk_rows="${VLLM_XPU_LM_HEAD_CHUNK_ROWS:-0}"
+# Same passthrough and default as run-w8a16-mtp1-server.sh: a no-speculation oracle for a rowchunk
+# arm has to run the same linear reduction as the speculative server it is compared with.
+fp16_linear_rowchunk="${VLLM_XPU_FP16_LINEAR_ROWCHUNK:-32}"
+# VLLM_USE_V2_MODEL_RUNNER: forwarded only when set (see run-w8a16-mtp1-server.sh).
+v2_runner_args=()
+if [[ -n "${VLLM_USE_V2_MODEL_RUNNER:-}" ]]; then
+  v2_runner_args=(-e "VLLM_USE_V2_MODEL_RUNNER=${VLLM_USE_V2_MODEL_RUNNER}")
+fi
+[[ "${fp16_linear_rowchunk}" =~ ^[1-9][0-9]*$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_ROWCHUNK must be a positive integer\n' >&2; exit 1; }
 gemma_rmsnorm_triton="${VLLM_XPU_GEMMA_RMSNORM_TRITON:-0}"
 rmsnorm_triton="${VLLM_XPU_RMSNORM_TRITON:-0}"
 gdn_split_mixed="${VLLM_XPU_GDN_SPLIT_MIXED:-0}"
@@ -172,6 +181,8 @@ exec docker run --rm --name "${container}" \
     -e VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH="${gdn_persistent_scratch}" \
     -e VLLM_XPU_GDN_NATIVE_FALLBACK="${gdn_native_fallback}" \
     -e VLLM_XPU_LM_HEAD_CHUNK_ROWS="${lm_head_chunk_rows}" \
+    -e VLLM_XPU_FP16_LINEAR_ROWCHUNK="${fp16_linear_rowchunk}" \
+    "${v2_runner_args[@]}" \
     -e VLLM_XPU_GEMMA_RMSNORM_TRITON="${gemma_rmsnorm_triton}" \
     -e VLLM_XPU_RMSNORM_TRITON="${rmsnorm_triton}" \
     -e VLLM_XPU_GDN_SPLIT_MIXED="${gdn_split_mixed}" \
