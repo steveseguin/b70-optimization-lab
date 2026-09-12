@@ -69,7 +69,7 @@ same tax and the same fix applies, unmeasured there.
 ## A row-invariant GEMM would remove the pad; a naive one is too slow (2026-09-11)
 
 The 5-6% single-user cost of R293 is one copy plus a 33-row GEMM per projection. The only way to remove it is a
-GEMM whose reduction order does not depend on M at all.  is a Triton fp16 GEMM
+GEMM whose reduction order does not depend on M at all. `probes/triton-fp16-gemm-probe.py` is a Triton fp16 GEMM
 with a fixed K block and no split-K, so that property holds by construction: bit-identical rows at every M from 1
 to 320, deterministic, and (at M=64) bit-identical to oneDNN's own output. It is not fast enough. On the 4B
 vocabulary shape the best of four tilings is 2.33 ms at M=1 against oneDNN's 2.12 (+10%, worse than the pad's
