@@ -53,13 +53,43 @@ def main():
     launcher = replace_n(launcher, "expected_derived=" + m.group(1), "expected_derived=" + "0" * 64, 1)
     launcher = successor(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    exports = "".join(f"export {kv}\n" for kv in extra_env)
+    # Plain entries become launcher exports (Q38_* survive into the engine). Entries prefixed
+    # DERIVED: are printed into the derived server script next to the other VLLM_XPU_* exports,
+    # because the derived launcher unsets every inherited VLLM_* variable.
+    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:"))]
+    derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
+    exports = "".join(f"export {kv}\n" for kv in plain)
     launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + exports, 1)
+    # STAGE:<dir> MANIFEST:<file name under data/> STAGE_BUILD_HEAD:<sha> swap the loaded kernel
+    # stage: the launcher's KERNEL_STAGE export, and gsub rules in the derived script for the
+    # manifest file name and the recorded stage build head.
+    opts = {k: v for k, v in (kv.split(":", 1) for kv in extra_env if kv.startswith(("STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:")))}
+    if "STAGE" in opts:
+        launcher = replace_n(launcher, "export KERNEL_STAGE=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70\n", f"export KERNEL_STAGE={opts['STAGE']}\n", 1)
+    rules = ""
+    if "MANIFEST" in opts:
+        rules += f'  gsub(/runtime-stage-padding-guard-loadable\\.sha256/, "{opts["MANIFEST"]}")\n'
+    if "STAGE_BUILD_HEAD" in opts:
+        # Exact-line rule (the served build head also appears in the padding receipt check).
+        line_rule = ('$0 == "  expected_stage_build_head=\\"2f829747503c77d4814834dffd0840fb1dd9f75a\\"" '
+                     '{ print "  expected_stage_build_head=\\"' + opts["STAGE_BUILD_HEAD"] + '\\""; next }\n')
+        anchor0 = '$0 == "export VLLM_XPU_GRAPH=0" { next }\n'
+        launcher = replace_n(launcher, anchor0, line_rule + anchor0, 1)
+    if rules:
+        anchor = '  gsub(/enforce_eager=True/, "enforce_eager=False")\n'
+        launcher = replace_n(launcher, anchor, anchor + rules, 1)
+    if derived_kvs:
+        anchor = '  print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1"\n'
+        launcher = replace_n(launcher, anchor, anchor + "".join(f'  print "export {kv}"\n' for kv in derived_kvs), 1)
     env = os.environ.copy(); env[f"Q38_A{attempt}_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
     Path(f"/tmp/q38-ple2k-a{attempt}-base.sh").unlink(missing_ok=True)
     assert f"q38-ple2k-a{attempt}" in derived
     assert f'expected_vllm_head="{NEW_HEAD}"' in derived and OLD_HEAD not in derived
+    if "MANIFEST" in opts:
+        assert opts["MANIFEST"] in derived and "runtime-stage-padding-guard-loadable.sha256" not in derived
+    if "STAGE_BUILD_HEAD" in opts:
+        assert f'expected_stage_build_head="{opts["STAGE_BUILD_HEAD"]}"' in derived
     launcher = launcher.replace("expected_derived=" + "0" * 64, "expected_derived=" + digest(derived))
     client = successor(source("run-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32-client.sh"))
     client = client.replace(OLD_HEAD, NEW_HEAD)
