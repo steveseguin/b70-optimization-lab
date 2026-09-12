@@ -1,0 +1,7 @@
+{
+  "url": "https://github.com/vllm-project/vllm/issues/51562#issuecomment-5647160337",
+  "api_url": "https://api.github.com/repos/vllm-project/vllm/issues/comments/5647160337",
+  "id": 5647160337,
+  "evidence_commit": "0b7d277bb65385cc9cc180d6ff12ca521e98dd68",
+  "body": "Further validation of #51565: the exact GDN-builder delta from PR head\n`53995de1e5781416206cabfc3ddf539611f82cc0` applies to pinned current main\n`d8f840071efd631f71b06d4b31cb6dba2275a356` without fuzz, offsets, conflicts,\nor manual changes. Using the same current-main helpers and fixtures:\n\n- Stock: 14 pass, 8 fail.\n- Stock plus PR delta: 22 pass.\n\nThis executes the actual full builder methods with real CPU tensors: all 17\nupstream cases plus five reused-buffer, padding and mixed-chunk cases.\nExplicit CPU dependency adapters replace configuration/import plumbing, so\nthis is not a full installed-vLLM integration test or GPU graph qualification.\nThe same-base comparison removes the old-PR-head/current-main confound and\nsupports continuing this proposal over our narrower local guard.\n\nExact applied patch, source hashes, adapters, runnable tests and both logs:\nhttps://github.com/steveseguin/b70-optimization-lab/tree/0b7d277bb65385cc9cc180d6ff12ca521e98dd68/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/same-base\n\nAI assistance was used for test adaptation, review and this report.\n"
+}

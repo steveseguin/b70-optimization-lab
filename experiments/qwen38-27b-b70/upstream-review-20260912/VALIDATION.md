@@ -78,3 +78,17 @@ presented as equivalent. The report remains held with its corrected explanation.
 The completed work supports upstream bug handling and the bounded candidate
 mechanism. Full-model/graph qualification is required before deployment; no
 production promotion or performance claim was made in this follow-up.
+
+## Upstream follow-up and repository checks
+
+Both submissions were posted and read back successfully, linking immutable
+evidence commit `0b7d277bb`:
+
+- [Prefill same-base CPU results](https://github.com/vllm-project/vllm/issues/51562#issuecomment-5647160337).
+- [Native B70 width results](https://github.com/vllm-project/vllm-xpu-kernels/issues/593#issuecomment-5647160483).
+
+Exact transmitted bodies and receipts are in each validation subdirectory.
+Claims validation passed for 11 claims; guide validation passed for 38 guides.
+Same-base source/test/patch hashes and device input hashes were verified. Diff
+whitespace warnings are confined to retained unified-patch context markers and
+verbatim pytest failure logs; these evidence files were preserved unchanged.
