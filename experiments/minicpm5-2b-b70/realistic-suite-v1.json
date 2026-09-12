@@ -1,0 +1,244 @@
+{
+  "suite_id": "minicpm5-2b-b70-realistic-v1",
+  "version": 1,
+  "status": "preregistered-unrun",
+  "description": "Fixed original prompts. Baseline performance and bounded quality qualification; not a claim of broad model superiority or universal losslessness.",
+  "generation": {
+    "max_new_tokens": 512,
+    "do_sample": false,
+    "num_beams": 1,
+    "ignore_eos": false,
+    "temperature": null,
+    "seed": 7429,
+    "chat_template": "official checkpoint template; pin exact rendered input IDs and template kwargs before first run",
+    "reasoning_mode": "enable_thinking=True via official chat template; native reasoning retained in raw output/timing and identity"
+  },
+  "performance_contract": {
+    "concurrency": 1,
+    "tp": 1,
+    "precision": "official BF16 weights; BF16 KV",
+    "draft": null,
+    "quantization": null,
+    "fresh_prompt_per_attempt": true,
+    "cross_request_kv_reuse": false,
+    "within_request_kv_cache": true,
+    "required_classes": [
+      "prose",
+      "code",
+      "analysis",
+      "operations",
+      "structured"
+    ],
+    "primary_formula": "99 / (timestamp_of_generated_token_100 - timestamp_of_generated_token_1)",
+    "aggregation": "median of within-class prompt medians; then median of the five class medians",
+    "short_response": "Keep natural EOS. A prompt with fewer than 100 generated tokens has no primary timing sample; do not force length, replace prompt, or silently omit the missing row. Full-suite primary headline unavailable if any row lacks 100 timestamps.",
+    "timing": "Record one completed token ID per timestamp. Device synchronize or otherwise prove event completion before timestamp; account for measurement overhead. Text streamer chunks are not token events.",
+    "report": [
+      "TTFT",
+      "all token timestamps",
+      "full natural completion tokens and duration",
+      "after-TTFT full completion rate",
+      "wall throughput",
+      "per-prompt rates",
+      "within-class medians",
+      "all-prompt median",
+      "p10",
+      "mean",
+      "output hashes",
+      "rendered-input hashes",
+      "stop reason"
+    ]
+  },
+  "prompts": [
+    {
+      "id": "prose-incident",
+      "class": "prose",
+      "prompt": "Write a 350-450 word internal incident retrospective using only these facts: an export API returned HTTP 503 from 09:10 to 09:28 UTC; 240 export attempts failed; existing exports were not lost; a configuration deployed at 09:08 set the worker queue limit to zero; rollback completed at 09:25; the queue drained by 09:28. Include impact, timeline, root cause, detection gap, immediate remediation, and three prevention actions with responsible roles. Distinguish known facts from proposed improvements. Do not invent customer names or claim data loss.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "Preserves all five times and 240 attempts accurately",
+          "States queue limit zero caused rejection and no existing exports lost",
+          "Proposes actionable prevention with role ownership",
+          "No invented incident facts"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "prose-customer",
+      "class": "prose",
+      "prompt": "Draft a 350-450 word customer update and an accompanying short support note. A promised CSV export feature will ship on October 16 instead of October 9. Validation found duplicate rows when a request was retried after a timeout. Existing source records remain intact. Engineers are adding an idempotency key and testing retry behavior. Customers with an urgent export need can ask support for a manually verified export. Explain the delay calmly, what is known, the workaround, and the next update on October 12. Avoid promises of zero future bugs and avoid claiming this feature is already fixed.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "October9→16 delay and October12 update retained",
+          "Duplicate export rows distinguished from corrupted source data",
+          "Manual verified export offered through support",
+          "No false already-fixed or zero-bugs promises"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "code-deduplicate",
+      "class": "code",
+      "prompt": "Write Python code and an explanation for a function dedupe_events(events) that accepts a list of dictionaries, each with an integer id and an arbitrary payload. Return a new list retaining the first event for each id in input order. Do not mutate the input list or dictionaries. Use only the Python standard library. Include tests for empty input, repeated identical ids with different payloads, negative ids, and all-unique input. Explain time and extra-space complexity and clarify whether returned dictionaries are copies or shared references. Aim for 350-450 words including code and explanation.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "First occurrence retained in order",
+          "Input not mutated",
+          "Handles negative ids and empty list",
+          "O(n) algorithm with set or dict and accurate aliasing explanation"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "code-retry-review",
+      "class": "code",
+      "prompt": "Review this Python worker design in 350-450 words: it removes a job from a queue, sends a database insert, retries the insert twice on any exception, then acknowledges the queue job whether insertion succeeded or not. There is no stable job id, unique constraint, or dead-letter queue. Explain data loss and duplicate risks, including a timeout after a successful commit. Propose a concrete revised transaction and acknowledgement policy, bounded retry handling, metrics, and at least four tests. Do not claim an arbitrary network retry protocol alone guarantees exactly-once effects.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "Unconditional ack on failure identified as loss",
+          "Timeout after commit identified as duplicate risk",
+          "Stable id plus uniqueness/idempotency proposed",
+          "Bounded retries and durable failure path plus four tests"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "analysis-benchmark",
+      "class": "analysis",
+      "prompt": "Analyze these measurements in 350-450 words. Model A on one GPU generated 100 tokens in 1.0 seconds after the first token for repeated prompts, and 100 tokens in 2.0 seconds for unique prompts. Model B generated 100 tokens in 1.5 seconds for unique prompts. No output-quality comparison was run, and the A runs did not record prompt-cache usage. Explain what conclusions are justified, what cannot yet be claimed, and design a fair follow-up covering fixed unique prompts, exact runtime/model identity, time to first token, conventional inter-token timing, natural completion, and quality. Explicitly distinguish a measured association from a proven explanation.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "A unique case slower than B unique case recognized",
+          "No proof caching causes difference without evidence",
+          "No quality superiority inferred from speed",
+          "Matched identities and fresh unique prompts plus quality gate proposed"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "analysis-capacity",
+      "class": "analysis",
+      "prompt": "Write a 350-450 word decision memo for a small inference service. Option A puts a model across two GPUs and fits a 24 GB target plus runtime state comfortably. Option B uses two independent one-GPU replicas; each GPU has 32 GB, and each replica needs 24 GB weights plus between 4 and 12 GB runtime state depending on request length. Traffic alternates between one interactive user and eight concurrent users. No latency or throughput benchmark exists yet. Compare memory feasibility, tail latency, aggregate throughput, inter-GPU communication, failure isolation, and routing. Give a conditional recommendation and a measurement plan without inventing performance numbers.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "24+12=36GB exceeds one32GB device recognized",
+          "24+4=28GB may fit but overhead/headroom acknowledged",
+          "No automatic claim TP or replicas faster",
+          "Conditional benchmark-backed recommendation"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "operations-release",
+      "class": "operations",
+      "prompt": "Create a 350-450 word rollout runbook for replacing a model-serving runtime while keeping the exact model weights, tokenizer, generation settings, and service API unchanged. The new build passed a short smoke test only. Include preflight evidence capture, an isolated correctness comparison, exact repeated-output checks, a fresh-process repeat, representative traffic, monitored staged rollout, rollback triggers, and preservation of failed results. No destructive commands are needed. Explain why a green health endpoint and high throughput do not prove output correctness.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "Smoke and health distinguished from correctness",
+          "Exact model/tokenizer/settings preserved",
+          "Repeated and fresh-process quality checks included",
+          "Concrete rollback triggers and artifact preservation"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "operations-backup",
+      "class": "operations",
+      "prompt": "Write a 350-450 word recovery plan for an application whose nightly database backup has reported success for 30 days but has never been restored. The production database must remain untouched during validation. Explain how to choose a backup, verify checksums, restore into an isolated environment, validate schema and sample application invariants, measure recovery time, restrict credentials, and record findings. Explain why checksum validity alone is insufficient. Include a stop condition for suspected corruption and ownership of remediation; do not propose testing restoration over the live database.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "Isolated restore and untouched production explicit",
+          "Checksums distinguished from semantic recoverability",
+          "Application invariants and measured recovery time included",
+          "Corruption stop condition and remediation owner"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "structured-risk",
+      "class": "structured",
+      "prompt": "Produce a Markdown risk register followed by a short decision note for a new public inference endpoint. Include exactly six table rows, one for each risk: incorrect outputs, request data leakage, overload, unavailable model files, runtime crash, and incomplete observability. Columns must be Risk, Trigger, Detection, Mitigation, and Rollback criterion. Make each row concrete. In the note explain the first three validation priorities and what evidence would allow a small staged release. Aim for 350-450 words overall. Do not claim that all risks are eliminated.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "Exactly six requested risk rows",
+          "Five requested columns",
+          "Detection and rollback concrete",
+          "Note prioritizes validation and bounded staged release"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    },
+    {
+      "id": "structured-handoff",
+      "class": "structured",
+      "prompt": "Write a structured engineering handoff of 350-450 words using exactly these top-level headings: Objective, Verified facts, Unknowns, Next steps, Acceptance criteria. Facts: model weights passed SHA256 verification; tokenizer loads; no GPU inference has been run; the intended target is one B70 GPU; no baseline speed or output correctness result exists yet. Objective is to establish a reproducible BF16 baseline before optimization. Include numbered next steps, separate quality from speed, preserve exact checkpoint identity, and explain what evidence is required before describing an optimization as lossless. Do not invent completed tests or measured speed.",
+      "quality_checks": {
+        "type": "human_or_independent_review",
+        "required_findings": [
+          "All five headings present",
+          "GPU execution/speed/correctness remain unknown",
+          "BF16 unchanged target and exact identity preserved",
+          "Lossless tied to declared oracle and finite tested scope"
+        ],
+        "forbidden": [
+          "invented measured results",
+          "nonsensical repetition",
+          "failure to answer task"
+        ]
+      }
+    }
+  ]
+}

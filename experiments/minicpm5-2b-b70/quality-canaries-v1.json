@@ -1,0 +1,85 @@
+{
+  "suite_id": "minicpm5-2b-b70-quality-canaries-v1",
+  "version": 1,
+  "status": "preregistered-unrun",
+  "scope": "Short correctness/determinism diagnostics excluded from performance headline. Check complete generated IDs for repeat identity.",
+  "generation": {
+    "max_new_tokens": 2048,
+    "do_sample": false,
+    "num_beams": 1,
+    "ignore_eos": false,
+    "temperature": null,
+    "seed": 7429,
+    "chat_template": "official checkpoint template; pin exact rendered input IDs and template kwargs before first run",
+    "reasoning_mode": "enable_thinking=True via official chat template; native reasoning retained in raw output/timing and identity"
+  },
+  "parsing": "Check final answer content only using the official declared reasoning parser if applicable, but retain and hash all raw tokens including reasoning. For JSON allow surrounding whitespace only, no prose/fences. Parsing failures fail the canary.",
+  "prompts": [
+    {
+      "id": "integer-arithmetic",
+      "prompt": "Return only a JSON object with keys product, quotient, remainder. Compute product = 137 * 29. Compute the integer quotient and remainder of 1000 divided by 37.",
+      "checks": {
+        "json_equal": {
+          "product": 3973,
+          "quotient": 27,
+          "remainder": 1
+        }
+      }
+    },
+    {
+      "id": "invoice-arithmetic",
+      "prompt": "Return only JSON with keys subtotal_cents, discount_cents, total_cents. An invoice has 3 items at 1250 cents each and 2 items at 875 cents each. Apply exactly a 10 percent discount to the subtotal. No tax.",
+      "checks": {
+        "json_equal": {
+          "subtotal_cents": 5500,
+          "discount_cents": 550,
+          "total_cents": 4950
+        }
+      }
+    },
+    {
+      "id": "inventory-state",
+      "prompt": "An inventory begins with 18 blue widgets and 7 red widgets. Ship 5 blue widgets, receive 9 red widgets, and then ship 4 red widgets. Return only JSON with keys blue, red, total.",
+      "checks": {
+        "json_equal": {
+          "blue": 13,
+          "red": 12,
+          "total": 25
+        }
+      }
+    },
+    {
+      "id": "ordered-dedup",
+      "prompt": "Remove duplicate integers retaining the first occurrence order from [4, -2, 4, 0, -2, 7, 0, 7, 9]. Return only the resulting JSON array.",
+      "checks": {
+        "json_equal": [
+          4,
+          -2,
+          0,
+          7,
+          9
+        ]
+      }
+    },
+    {
+      "id": "literal-copy",
+      "prompt": "Copy this string exactly, preserving case and punctuation, with no quotation marks, explanation, or additional content: B70_check-A7f3:queue=zero;model=BF16",
+      "checks": {
+        "exact_text_after_strip": "B70_check-A7f3:queue=zero;model=BF16"
+      }
+    },
+    {
+      "id": "extract-json",
+      "prompt": "Return only a JSON object describing this record. The label is nightly-7, retries is 0, enabled is false, and owner is null. Use exactly the keys label, retries, enabled, owner and preserve the JSON data types.",
+      "checks": {
+        "json_equal": {
+          "label": "nightly-7",
+          "retries": 0,
+          "enabled": false,
+          "owner": null
+        },
+        "strict_value_types": true
+      }
+    }
+  ]
+}
