@@ -51,6 +51,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--smoke-only', action='store_true')
+    parser.add_argument('--smoke-token-limit', type=int, default=256)
+    parser.add_argument('--publisher-sampling', action='store_true')
+    parser.add_argument('--system-prompt')
+    parser.add_argument('--quality-only', action='store_true')
     args = parser.parse_args()
     if args.out.exists():
         raise RuntimeError('Never overwrite an existing result')
@@ -78,6 +82,11 @@ def main():
     assert {p.dtype for p in model.parameters()} == {torch.bfloat16}
     assert {p.device.type for p in model.parameters()} == {'xpu'}
     assert model.config._attn_implementation == 'eager'
+    sampling = {'do_sample': args.publisher_sampling,
+                'temperature': 1.0 if args.publisher_sampling else None,
+                'top_p': 0.95 if args.publisher_sampling else None,
+                'top_k': 50 if args.publisher_sampling else None,
+                'min_p': 0.0 if args.publisher_sampling else None}
     report = {
         'status': 'running', 'model': 'openbmb/MiniCPM5-2B', 'revision': REVISION,
         'model_hashes': hashes, 'parameter_count': params,
@@ -91,8 +100,9 @@ def main():
         'load_seconds': time.perf_counter() - load_start,
         'threads': torch.get_num_threads(), 'rows': [],
         'generation_defaults': model.generation_config.to_dict(),
-        'generation_overrides': {'do_sample': False, 'num_beams': 1, 'temperature': None,
-                                 'top_p': None, 'top_k': None, 'repetition_penalty': 1.0,
+        'generation_mode': 'publisher-HF-sampling-seed7429' if args.publisher_sampling else 'greedy',
+        'system_prompt': args.system_prompt,
+        'generation_overrides': {**sampling, 'num_beams': 1, 'repetition_penalty': 1.0,
                                  'disable_compile': True, 'eos_token_id': [1, 130073],
                                  'pad_token_id': 1},
         'environment': {k: os.environ.get(k) for k in ['ZE_AFFINITY_MASK', 'ONEAPI_DEVICE_SELECTOR',
@@ -108,8 +118,10 @@ def main():
 
     def generate(prompt, identifier, suite, limit, use_cache=True, **metadata):
         torch.manual_seed(7429)
+        messages = ([{'role': 'system', 'content': args.system_prompt}] if args.system_prompt else [])
+        messages += [{'role': 'user', 'content': prompt}]
         inputs = tokenizer.apply_chat_template(
-            [{'role': 'user', 'content': prompt}], tokenize=True,
+            messages, tokenize=True,
             add_generation_prompt=True, enable_thinking=True,
             return_dict=True, return_tensors='pt',
         ).to('xpu:0')
@@ -119,9 +131,8 @@ def main():
         clock = TokenClock()
         with torch.inference_mode():
             output = model.generate(
-                **inputs, do_sample=False, num_beams=1,
+                **inputs, **sampling, num_beams=1,
                 max_new_tokens=limit, use_cache=use_cache,
-                temperature=None, top_p=None, top_k=None,
                 repetition_penalty=1.0, streamer=clock,
                 eos_token_id=[1, 130073], pad_token_id=1,
                 return_dict_in_generate=True, disable_compile=True,
@@ -156,7 +167,10 @@ def main():
 
     save()
     if args.smoke_only:
-        generate('Return only the number that equals 2 + 2.', 'smoke', 'smoke', 256)
+        generate('Return only the number that equals 2 + 2.', 'smoke', 'smoke', args.smoke_token_limit)
+    elif args.quality_only:
+        for item in json.loads((ROOT / 'quality-canaries-v1.json').read_text())['prompts']:
+            generate(item['prompt'], item['id'], 'quality', 2048)
     else:
         realistic = json.loads((ROOT / 'realistic-suite-v1.json').read_text())['prompts']
         quality = json.loads((ROOT / 'quality-canaries-v1.json').read_text())['prompts']

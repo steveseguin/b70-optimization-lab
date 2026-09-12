@@ -1,0 +1,17 @@
+BEGIN smoke
+Loading weights:   0%|          | 0/381 [00:00<?, ?it/s]Loading weights: 100%|██████████| 381/381 [00:00<00:00, 9131.76it/s]
+{"id": "smoke", "suite": "smoke", "tokens": 50, "seconds": 4.668046462000348, "eos": true, "final_preview": "4"}
+PASS smoke
+BEGIN pilot-quality
+Loading weights:   0%|          | 0/381 [00:00<?, ?it/s]Loading weights: 100%|██████████| 381/381 [00:00<00:00, 8965.51it/s]
+{"id": "integer-arithmetic", "suite": "quality", "tokens": 384, "seconds": 21.118707453999377, "eos": true, "final_preview": "{\n  \"product\": 3973,\n  \"quotient\": 27,\n  \"remainder\": 1\n}"}
+{"id": "invoice-arithmetic", "suite": "quality", "tokens": 290, "seconds": 14.38909945100022, "eos": true, "final_preview": "{\n  \"subtotal_cents\": 5500,\n  \"discount_cents\": 550,\n  \"total_cents\": 4950\n}"}
+{"id": "inventory-state", "suite": "quality", "tokens": 260, "seconds": 12.830491712000367, "eos": true, "final_preview": "{\n  \"blue\": 13,\n  \"red\": 12,\n  \"total\": 25\n}"}
+{"id": "ordered-dedup", "suite": "quality", "tokens": 283, "seconds": 13.928005476002, "eos": true, "final_preview": "To remove duplicate integers while preserving the order of the first occurrence, we can iterate through the list and keep track of seen values.\n\nThe resulting a"}
+{"id": "literal-copy", "suite": "quality", "tokens": 63, "seconds": 3.093047779999324, "eos": true, "final_preview": "B70_check-A7f3:queue=zero;model=BF16"}
+{"id": "extract-json", "suite": "quality", "tokens": 108, "seconds": 5.286675900002592, "eos": true, "final_preview": "```json\n{\n  \"label\": \"nightly-7\",\n  \"retries\": 0,\n  \"enabled\": false,\n  \"owner\": null\n}\n```"}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/minicpm5-2b-b70/campaign.py", line 44, in <module>
+    assert all(c['passed'] for c in checks), checks
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [{'id': 'integer-arithmetic', 'passed': True}, {'id': 'invoice-arithmetic', 'passed': True}, {'id': 'inventory-state', 'passed': True}, {'id': 'ordered-dedup', 'passed': False, 'reason': 'invalid JSON: Expecting value: line 1 column 1 (char 0)'}, {'id': 'literal-copy', 'passed': True}, {'id': 'extract-json', 'passed': False, 'reason': 'invalid JSON: Expecting value: line 1 column 1 (char 0)'}]

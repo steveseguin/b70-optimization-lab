@@ -1,0 +1,57 @@
+{
+  "status": "unqualified",
+  "baseline_qualified": false,
+  "optimization_started": false,
+  "model": "openbmb/MiniCPM5-2B",
+  "revision": "12a3808a956f869c767195e9266b59c4d21d92e2",
+  "weights": "original BF16",
+  "kv": "BF16",
+  "runtime": "torch 2.14.0+xpu; transformers 415e6d2f596ef2bd44fdee4261799200a7fc02bf; eager",
+  "run4_input_hashes_verified": true,
+  "pilot_checks": [
+    {
+      "id": "integer-arithmetic",
+      "passed": true
+    },
+    {
+      "id": "invoice-arithmetic",
+      "passed": true
+    },
+    {
+      "id": "inventory-state",
+      "passed": true
+    },
+    {
+      "id": "ordered-dedup",
+      "passed": false,
+      "reason": "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "literal-copy",
+      "passed": true
+    },
+    {
+      "id": "extract-json",
+      "passed": false,
+      "reason": "invalid JSON: Expecting value: line 1 column 1 (char 0)"
+    }
+  ],
+  "quality_failures": [
+    {
+      "id": "ordered-dedup",
+      "prompt": "Remove duplicate integers retaining the first occurrence order from [4, -2, 4, 0, -2, 7, 0, 7, 9]. Return only the resulting JSON array.",
+      "final_text": "To remove duplicate integers while preserving the order of the first occurrence, we can iterate through the list and keep track of seen values.\n\nThe resulting array would be: `[4, -2, 0, 7, 9]`\n\nHere's how to achieve this:\n\n1. Initialize an empty list to store the result.\n2. Initialize a set to track seen integers.\n3. Iterate through the original list.\n4. For each integer, if it hasn't been seen before, add it to both the result list and the seen set.\n5. Convert the result list to a JSON array format.\n\nSo the final JSON array is:  \n`[4, -2, 0, 7, 9]`"
+    },
+    {
+      "id": "extract-json",
+      "prompt": "Return only a JSON object describing this record. The label is nightly-7, retries is 0, enabled is false, and owner is null. Use exactly the keys label, retries, enabled, owner and preserve the JSON data types.",
+      "final_text": "```json\n{\n  \"label\": \"nightly-7\",\n  \"retries\": 0,\n  \"enabled\": false,\n  \"owner\": null\n}\n```"
+    }
+  ],
+  "full_fresh_process_repeat_gate": "not reached",
+  "cache_parity_gate": "not reached",
+  "practical_quality_gate": "not completed",
+  "performance_promotion": false,
+  "device_postflight": "all four passed",
+  "scope": "Observed failures in this native XPU runtime and declared presets; not proof of a checkpoint defect or universal model quality."
+}

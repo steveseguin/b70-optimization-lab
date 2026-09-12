@@ -1,0 +1,24 @@
+BEGIN smoke
+Loading weights:   0%|          | 0/381 [00:00<?, ?it/s]Loading weights: 100%|██████████| 381/381 [00:00<00:00, 8936.18it/s]
+{"id": "smoke", "suite": "smoke", "tokens": 151, "seconds": 9.710569260998454, "eos": true, "final_preview": "4"}
+PASS smoke
+BEGIN baseline-a
+Loading weights:   0%|          | 0/381 [00:00<?, ?it/s]Loading weights: 100%|██████████| 381/381 [00:00<00:00, 9384.94it/s]
+{"id": "prose-incident", "suite": "realistic", "tokens": 512, "seconds": 27.026762448000227, "eos": false, "final_preview": ""}
+{"id": "prose-customer", "suite": "realistic", "tokens": 512, "seconds": 24.613730117001978, "eos": false, "final_preview": ""}
+{"id": "code-deduplicate", "suite": "realistic", "tokens": 512, "seconds": 24.72840345900113, "eos": false, "final_preview": ""}
+{"id": "code-retry-review", "suite": "realistic", "tokens": 512, "seconds": 24.685502890999487, "eos": false, "final_preview": ""}
+{"id": "analysis-benchmark", "suite": "realistic", "tokens": 512, "seconds": 24.652388981001423, "eos": false, "final_preview": ""}
+{"id": "analysis-capacity", "suite": "realistic", "tokens": 512, "seconds": 24.725692141000764, "eos": false, "final_preview": ""}
+{"id": "operations-release", "suite": "realistic", "tokens": 512, "seconds": 24.70768676100124, "eos": false, "final_preview": ""}
+{"id": "operations-backup", "suite": "realistic", "tokens": 512, "seconds": 24.665423286998703, "eos": false, "final_preview": ""}
+{"id": "structured-risk", "suite": "realistic", "tokens": 512, "seconds": 24.69333664000078, "eos": false, "final_preview": ""}
+{"id": "structured-handoff", "suite": "realistic", "tokens": 512, "seconds": 24.776850102000026, "eos": false, "final_preview": ""}
+{"id": "integer-arithmetic", "suite": "quality", "tokens": 293, "seconds": 14.307717968000361, "eos": true, "final_preview": "{\n  \"product\": 3973,\n  \"quotient\": 27,\n  \"remainder\": 1\n}"}
+{"id": "invoice-arithmetic", "suite": "quality", "tokens": 249, "seconds": 12.329322690999106, "eos": true, "final_preview": "{\n  \"subtotal_cents\": 5500,\n  \"discount_cents\": 550,\n  \"total_cents\": 4950\n}"}
+{"id": "inventory-state", "suite": "quality", "tokens": 360, "seconds": 17.51527125299981, "eos": true, "final_preview": "{\n  \"blue\": 13,\n  \"red\": 12,\n  \"total\": 25\n}"}
+{"id": "ordered-dedup", "suite": "quality", "tokens": 819, "seconds": 39.80485125799896, "eos": true, "final_preview": "```python\n[4, -2, 0, 7, 9]\n```"}
+{"id": "literal-copy", "suite": "quality", "tokens": 50, "seconds": 2.432292891997349, "eos": true, "final_preview": "B70_check-A7f3:queue=zero;model=BF16"}
+{"id": "extract-json", "suite": "quality", "tokens": 109, "seconds": 5.319384866001201, "eos": true, "final_preview": "{\n  \"label\": \"nightly-7\",\n  \"retries\": 0,\n  \"enabled\": false,\n  \"owner\": null\n}"}
+{"id": "prose-incident-quality", "suite": "realistic_quality", "tokens": 1250, "seconds": 60.7305626089983, "eos": true, "final_preview": "**Internal Incident Retrospective – Export API Outage**\n\n**Impact**  \nThe export API experienced a 503 Service Unavailable outage from 09:10 to 09:28 UTC, resul"}
+{"id": "prose-customer-quality", "suite": "realistic_quality", "tokens": 978, "seconds": 47.429473963999044, "eos": true, "final_preview": "**Customer Update**\n\nDear valued customers,\n\nWe want to share some important updates regarding our CSV export feature. As we finalize our release schedule, we’v"}
