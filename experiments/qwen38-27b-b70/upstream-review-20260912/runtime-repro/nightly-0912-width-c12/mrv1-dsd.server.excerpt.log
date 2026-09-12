@@ -1,0 +1,67 @@
+3:(APIServer pid=1) INFO 09-12 19:41:54 [api_utils.py:347]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.1.1.dev50+geed1f3d0c
+7:(APIServer pid=1) INFO 09-12 19:41:54 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': ['dsd'], 'gpu_memory_utilization': 0.9, 'enable_prefix_cachi
+20:(APIServer pid=1) WARNING 09-12 19:42:16 [vllm.py:975] Dynamic speculative decoding changes the target verification length at runtime. Overriding cudagraph_mode from FULL_AND_PIECEWISE to PIECEWISE for reliability. Use VLLM_USE_V2_MODEL_RUNNER=1 if you want to use full CUDA graphs.
+24:(APIServer pid=1) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+32:(EngineCore pid=191) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+40:(EngineCore pid=191) INFO 09-12 19:42:38 [flash_attn.py:898] Using FlashAttention version 2
+111:(APIServer pid=1) INFO 09-12 19:44:28 [launcher.py:70] Route: /version, Methods: GET
+228:(EngineCore pid=191) ERROR 09-12 19:45:36 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[NewRequestData(req_id=cmpl-concurrency-oracle-c12-r1-007-0-b57f8adc,prompt_token_ids_len=28,prefill_token_ids_len=None,mm_features=[],sampling_params=Sam
+229:(EngineCore pid=191) ERROR 09-12 19:45:36 [dump_input.py:81] Dumping scheduler stats: SchedulerStats(num_running_reqs=12, num_waiting_reqs=0, num_skipped_waiting_reqs=0, step_counter=0, current_wave=0, kv_cache_usage=0.23318385650224216, iteration_details=None, prefix_cache_stats=PrefixCacheStat
+230:EngineCore encountered a fatal error.
+231:Traceback (most recent call last):
+232:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1352, in run_engine_core
+233:    engine_core.run_busy_loop()
+234:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/fault_tolerance/engine_core_sentinel.py", line 179, in run_with_fault_tolerance
+235:    busy_loop_func(self)
+236:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1411, in run_busy_loop
+237:    self._process_engine_step()
+238:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1464, in _process_engine_step
+239:    outputs, model_executed = self.step_fn()
+241:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 660, in step_with_batch_queue
+242:    exec_future = self.model_executor.execute_model(
+244:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 131, in execute_model
+245:    output.result()
+246:  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+247:    return self.__get_result()
+249:  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+250:    raise self._exception
+251:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 109, in collective_rpc
+252:    result = run_method(self.driver_worker, method, args, kwargs)
+254:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/serial_utils.py", line 510, in run_method
+255:    return func(*args, **kwargs)
+257:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/worker_base.py", line 375, in execute_model
+258:    return self.worker.execute_model(scheduler_output)
+260:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+261:    return func(*args, **kwargs)
+263:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_worker.py", line 1183, in execute_model
+264:    output = self.model_runner.execute_model(
+266:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+267:    return func(*args, **kwargs)
+269:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 4464, in execute_model
+270:    model_output = self._model_forward(
+272:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 3880, in _model_forward
+273:    return self.model(
+275:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+276:    return self._call_impl(*args, **kwargs)
+278:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+279:    return forward_call(*args, **kwargs)
+281:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py", line 591, in forward
+282:    hidden_states = self.language_model.model(
+284:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/decorators.py", line 522, in __call__
+285:    return self.aot_compiled_fn(self, *args, **kwargs)
+287:  File "/opt/venv/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 244, in __call__
+288:    return self.fn(*args, **kwargs)
+290:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py", line 688, in forward
+291:    def forward(
+292:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/caching.py", line 225, in __call__
+293:    return self.optimized_call(*args, **kwargs)
+295:  File "<string>", line 149, in execution_fn
+296:  File "<string>", line 5, in __vllm_inlined_submods__1
+297:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+298:    return self._op(*args, **kwargs)
+300:  File "/opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py", line 192, in _gdn_attention_core_xpu_impl
+301:    torch.ops._xpu_C.gdn_attention(
+302:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+303:    return self._op(*args, **kwargs)
+305:RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.  (Could this error message be improved?  If so, please report an enhancement request to PyTorch.)
+[excerpt truncated after the root RuntimeError]

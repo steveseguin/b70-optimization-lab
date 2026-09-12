@@ -28,7 +28,9 @@ schedule `[[1,8,3],[9,16,1],[17,64,0]]` (K=3 for 1–8 users, K=1 for 9–16, no
 | v0.29.0 | MRV1 | 69.2, exact | **dies immediately** (12 requests × 2 tokens = 24; kernel expects 48) | dies in the drain at 13 running requests (26 vs 52) |
 | v0.29.0-pr53542 | MRV1 | 69.1, exact | **242.9 tok/s, 12/12 exact, complete** | 1083 tok/s, complete, 61/64 exact, no engine error |
 | v0.29.0-pr53542 | MRV2 | 70.9, exact | 496.4 tok/s, 11/12 exact, complete (see below) | 896 tok/s, complete, 61/64 exact, no engine error |
-| nightly-0912 | MRV1 / MRV2 | pending (queue) | pending | pending |
+| nightly-0912 | MRV2 | 71.0, exact | see 12-user row below | dies in the drain, same assertion (11 running requests × 2 tokens vs 44 expected) |
+| nightly-0912 | MRV1 | 69.3, exact | see 12-user row below | dies in the drain, same assertion (13 × 2 vs 52) |
+| nightly-0912 (12-user rung) | MRV1 | 69.3, exact | **dies immediately**, same assertion | – |
 
 Non-exact rows on the patched image (`benchmark-c011` at token 12 on both runners at their 12- or 64-user rung; `rollback-c018`,
 `capacity-c022`, `rollback-c050` at tokens 3–5 on MRV2 c64; `testing-c037`, `rollback-c042` on MRV1 c64) were not
@@ -51,4 +53,4 @@ each server log (`scheduled_spec_decode_tokens` lists one draft per request; `to
 | Historical MTP2 "phantom first token" on the 09-03 stock image | held (see `../phantom/REVIEW.md`) | phantom arms on v0.29.0 and nightly-0912 queued (four servers each; results appended below when done) | file only if it reproduces on a current image. |
 
 ## Pending rows
-Appended by hand when `queue4.sh` finishes (nightly-0912 both runners and the 12-user rung, then the phantom arms).
+The phantom arms (four stock 27B FP8 TP2 servers per image, v0.29.0 then nightly-0912) are appended by hand when `queue4.sh` finishes.

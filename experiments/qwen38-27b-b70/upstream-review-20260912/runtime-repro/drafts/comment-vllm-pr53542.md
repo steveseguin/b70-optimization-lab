@@ -2,7 +2,7 @@ Independent end-to-end confirmation on Intel XPU (Arc Pro B70) that this PR fixe
 
 **Setup**: stock `vllm/vllm-openai-xpu:latest` (v0.29.0, image sha256:96db42e2, vllm-xpu-kernels 0.1.14.1), one B70, Qwen3.5-9B W4A16 (RedHatAI compressed-tensors), `--speculative-config '{"method":"qwen3_5_mtp","num_speculative_tokens":3,"num_speculative_tokens_per_batch_size":[[1,8,3],[9,16,1],[17,64,0]]}'`, `--max-model-len 256 --max-num-seqs 64`, greedy, 64-prompt suite compared against a sequential oracle.
 
-**Stock v0.29.0**: 1 user (K=3) is fine. 12 concurrent users (K=1 range) kill the engine immediately, and a 64-user batch dies while draining through 9–16 running requests, with both the V1 runner and `VLLM_USE_V2_MODEL_RUNNER=1`:
+**Stock v0.29.0** (and today's `nightly`, eed1f3d0, identically): 1 user (K=3) is fine. 12 concurrent users (K=1 range) kill the engine immediately, and a 64-user batch dies while draining through 9–16 running requests, with both the V1 runner and `VLLM_USE_V2_MODEL_RUNNER=1`:
 
 ```
 RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.
