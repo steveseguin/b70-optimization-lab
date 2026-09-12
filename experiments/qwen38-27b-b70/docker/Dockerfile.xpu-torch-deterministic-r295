@@ -1,0 +1,5 @@
+# R295: R294b + env-gated torch deterministic algorithms on the XPU worker (VLLM_XPU_TORCH_DETERMINISTIC=1; off by default).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b
+COPY r295-xpu-torch-deterministic.py /tmp/r295.py
+RUN python /tmp/r295.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/xpu_worker.py && rm /tmp/r295.py
+LABEL neural.download.build.lane="qwen38-int4-xpu-torch-deterministic-r295"

@@ -1,0 +1,31 @@
+[v0.29.0 15:11:02] mrv2-dsd launched (VLLM_USE_V2_MODEL_RUNNER=1)
+[v0.29.0 15:14:23] mrv2-dsd healthy
+[v0.29.0 15:15:20] mrv2-dsd harness exit 3
+7:(APIServer pid=1) INFO 09-12 19:11:17 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': 
+18:(APIServer pid=1) WARNING 09-12 19:11:40 [speculative.py:1318] Enabling num_speculative_tokens > 1 will run multiple times of forward on same MTP layer,which may result in lower acceptance rate
+23:(APIServer pid=1) WARNING 09-12 19:11:40 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate
+27:(EngineCore pid=189) INFO 09-12 19:11:52 [core.py:123] Initializing a V1 LLM engine (v0.29.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokenizer='/model', skip_to
+88:(EngineCore pid=189) WARNING 09-12 19:13:55 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommod
+273:(EngineCore pid=189) ERROR 09-12 19:15:19 [dump_input.py:72] Dumping input data for V1 LLM engine (v0.29.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokenizer='/
+274:(EngineCore pid=189) ERROR 09-12 19:15:19 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[], scheduled_cached_reqs=CachedRequestData(req_ids=['cmpl-concurrency-oracle-c64-r1-050-0-8f4
+277:(EngineCore pid=189) ERROR 09-12 19:15:19 [core.py:1376] Traceback (most recent call last):
+348:(EngineCore pid=189) ERROR 09-12 19:15:19 [core.py:1376] RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.  (Could this error message be improved?  If so, please report an en
+351:(APIServer pid=1) ERROR 09-12 19:15:19 [async_llm.py:819] Traceback (most recent call last):
+357:(APIServer pid=1) ERROR 09-12 19:15:19 [async_llm.py:819] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
+358:(APIServer pid=1) ERROR 09-12 19:15:19 [serving.py:498] Error in completion stream generator.
+[v0.29.0 15:15:28] mrv1-dsd launched (VLLM_USE_V2_MODEL_RUNNER=0)
+[v0.29.0 15:18:29] mrv1-dsd healthy
+[v0.29.0 15:19:28] mrv1-dsd harness exit 3
+7:(APIServer pid=1) INFO 09-12 19:15:43 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': 
+18:(APIServer pid=1) WARNING 09-12 19:16:06 [speculative.py:1318] Enabling num_speculative_tokens > 1 will run multiple times of forward on same MTP layer,which may result in lower acceptance rate
+23:(APIServer pid=1) WARNING 09-12 19:16:06 [vllm.py:936] Dynamic speculative decoding changes the target verification length at runtime. Overriding cudagraph_mode from FULL_AND_PIECEWISE to PIECEWISE for reliability. Use VLLM_USE_V2_MODEL_
+24:(APIServer pid=1) WARNING 09-12 19:16:06 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate
+28:(EngineCore pid=191) INFO 09-12 19:16:18 [core.py:123] Initializing a V1 LLM engine (v0.29.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokenizer='/model', skip_to
+52:(EngineCore pid=191) WARNING 09-12 19:16:34 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommod
+282:(EngineCore pid=191) ERROR 09-12 19:19:28 [dump_input.py:72] Dumping input data for V1 LLM engine (v0.29.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokenizer='/
+283:(EngineCore pid=191) ERROR 09-12 19:19:28 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[], scheduled_cached_reqs=CachedRequestData(req_ids=['cmpl-concurrency-oracle-c64-r1-010-0-ae9
+286:(EngineCore pid=191) ERROR 09-12 19:19:28 [core.py:1376] Traceback (most recent call last):
+360:(EngineCore pid=191) ERROR 09-12 19:19:28 [core.py:1376] RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.  (Could this error message be improved?  If so, please report an en
+363:(APIServer pid=1) ERROR 09-12 19:19:28 [async_llm.py:819] Traceback (most recent call last):
+369:(APIServer pid=1) ERROR 09-12 19:19:28 [async_llm.py:819] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
+[v0.29.0 15:19:36] === done ===

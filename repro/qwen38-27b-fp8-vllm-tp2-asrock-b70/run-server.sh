@@ -145,6 +145,11 @@ fi
 # every mtp0 arm silently unserialised - a comparison of two identical configurations. Forwarded only
 # when set, so the published profiles are unchanged.
 # Class-consistent FP16 linears (R290 overlay images). Forwarded only when set.
+# R295 (2026-09-12): torch deterministic algorithms on the XPU worker. Forwarded only when set.
+torch_det_env=()
+if [[ -n "${VLLM_XPU_TORCH_DETERMINISTIC:-}" ]]; then
+  torch_det_env=(-e "VLLM_XPU_TORCH_DETERMINISTIC=${VLLM_XPU_TORCH_DETERMINISTIC}")
+fi
 classpad_env=()
 if [[ -n "${VLLM_XPU_FP16_LINEAR_CLASSPAD:-}" ]]; then
     [[ "${VLLM_XPU_FP16_LINEAR_CLASSPAD}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_FP16_LINEAR_CLASSPAD must be a non-negative integer\n' >&2; exit 1; }
@@ -184,6 +189,7 @@ exec docker run --rm --name "${container}" \
     "${rowwise_allreduce_env[@]}" \
     "${rmsnorm_serial_env[@]}" \
     "${classpad_env[@]}" \
+    "${torch_det_env[@]}" \
     -e VLLM_BATCH_INVARIANT="${batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_BATCH_INVARIANT="${qwen_gemma_rmsnorm_batch_invariant}" \
     -e VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT="${qwen_gemma_rmsnorm_packed_serial_exact}" \

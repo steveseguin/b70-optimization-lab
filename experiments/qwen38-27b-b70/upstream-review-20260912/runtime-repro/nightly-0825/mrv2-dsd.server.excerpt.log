@@ -1,0 +1,71 @@
+3:(APIServer pid=1) INFO 09-12 19:09:00 [api_utils.py:347]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.26.1rc1.dev1177+ga9a17e709
+7:(APIServer pid=1) INFO 09-12 19:09:00 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': ['dsd'], 'gpu_memory
+25:(APIServer pid=1) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+40:(EngineCore pid=83) INFO 09-12 19:09:22 [flash_attn.py:831] Using FlashAttention version 2
+59:(EngineCore pid=83) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+79:EngineCore failed to start.
+80:Traceback (most recent call last):
+81:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1330, in run_engine_core
+82:    engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+84:  File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+85:    return func(*args, **kwargs)
+87:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1087, in __init__
+88:    super().__init__(
+89:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 145, in __init__
+90:    kv_cache_config = self._initialize_kv_caches(vllm_config)
+92:  File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+93:    return func(*args, **kwargs)
+95:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 345, in _initialize_kv_caches
+96:    self.model_executor.compile_or_warm_up_model()
+97:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/abstract.py", line 126, in compile_or_warm_up_model
+98:    compilation_times: list[CompilationTimes] = self.collective_rpc(
+100:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 103, in collective_rpc
+101:    result = run_method(self.driver_worker, method, args, kwargs)
+103:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/serial_utils.py", line 510, in run_method
+104:    return func(*args, **kwargs)
+106:  File "/opt/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+107:    return func(*args, **kwargs)
+109:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_worker.py", line 821, in compile_or_warm_up_model
+110:    warmup_kernels(self.model_runner, self.execute_model, self.sample_tokens)
+111:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+112:    return func(*args, **kwargs)
+114:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu/warmup.py", line 410, in warmup_kernels
+115:    _run_decode_step(step_indices, step_spec_flags)
+116:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu/warmup.py", line 379, in _run_decode_step
+117:    worker_execute_model(decode_output)
+118:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+119:    return func(*args, **kwargs)
+121:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_worker.py", line 1124, in execute_model
+122:    output = self.model_runner.execute_model(
+124:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+125:    return func(*args, **kwargs)
+127:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu/model_runner.py", line 1727, in execute_model
+128:    model_output = self.model(**model_inputs)
+130:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+131:    return self._call_impl(*args, **kwargs)
+133:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+134:    return forward_call(*args, **kwargs)
+136:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py", line 591, in forward
+137:    hidden_states = self.language_model.model(
+139:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/decorators.py", line 522, in __call__
+140:    return self.aot_compiled_fn(self, *args, **kwargs)
+142:  File "/opt/venv/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 244, in __call__
+143:    return self.fn(*args, **kwargs)
+145:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py", line 627, in forward
+146:    def forward(
+147:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/caching.py", line 225, in __call__
+148:    return self.optimized_call(*args, **kwargs)
+150:  File "<string>", line 149, in execution_fn
+151:  File "<string>", line 5, in __vllm_inlined_submods__1
+152:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+153:    return self._op(*args, **kwargs)
+155:  File "/opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py", line 171, in _gdn_attention_core_xpu_impl
+156:    torch.ops._xpu_C.gdn_attention(
+157:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+158:    return self._op(*args, **kwargs)
+160:RuntimeError: causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation; the spec path and the non-spec path are mutually exclusive
+161:(EngineCore pid=83) Traceback (most recent call last):
+247:(EngineCore pid=83) RuntimeError: causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation; the spec path and the non-spec path are mutually exclusive
+248:(APIServer pid=1) Traceback (most recent call last):
+308:(APIServer pid=1)     raise RuntimeError(
+309:(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

@@ -1,0 +1,18 @@
+[v0.29.0-pr53542 15:24:03] mrv1-dsd launched (VLLM_USE_V2_MODEL_RUNNER=0)
+[v0.29.0-pr53542 15:27:04] mrv1-dsd healthy
+[v0.29.0-pr53542 15:28:06] mrv1-dsd harness exit 3
+7:(APIServer pid=1) INFO 09-12 19:24:19 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': 
+18:(APIServer pid=1) WARNING 09-12 19:24:41 [speculative.py:1318] Enabling num_speculative_tokens > 1 will run multiple times of forward on same MTP layer,which may result in lower acceptance rate
+23:(APIServer pid=1) WARNING 09-12 19:24:41 [vllm.py:936] Dynamic speculative decoding changes the target verification length at runtime. Overriding cudagraph_mode from FULL_AND_PIECEWISE to PIECEWISE for reliability. Use VLLM_USE_V2_MODEL_
+24:(APIServer pid=1) WARNING 09-12 19:24:41 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate
+28:(EngineCore pid=189) INFO 09-12 19:24:53 [core.py:123] Initializing a V1 LLM engine (v0.29.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokenizer='/model', skip_to
+52:(EngineCore pid=189) WARNING 09-12 19:25:12 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommod
+[v0.29.0-pr53542 15:28:20] mrv2-dsd launched (VLLM_USE_V2_MODEL_RUNNER=1)
+[v0.29.0-pr53542 15:31:31] mrv2-dsd healthy
+[v0.29.0-pr53542 15:32:31] mrv2-dsd harness exit 3
+7:(APIServer pid=1) INFO 09-12 19:28:35 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': 
+18:(APIServer pid=1) WARNING 09-12 19:28:57 [speculative.py:1318] Enabling num_speculative_tokens > 1 will run multiple times of forward on same MTP layer,which may result in lower acceptance rate
+23:(APIServer pid=1) WARNING 09-12 19:28:57 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate
+27:(EngineCore pid=189) INFO 09-12 19:29:09 [core.py:123] Initializing a V1 LLM engine (v0.29.0) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokenizer='/model', skip_to
+88:(EngineCore pid=189) WARNING 09-12 19:31:09 [vllm.py:1924] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommod
+[v0.29.0-pr53542 15:32:43] === done ===

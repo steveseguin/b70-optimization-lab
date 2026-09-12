@@ -1,0 +1,65 @@
+3:(APIServer pid=1) INFO 09-12 19:11:17 [api_utils.py:347]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.29.0
+7:(APIServer pid=1) INFO 09-12 19:11:17 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': ['dsd'], 'gpu_memory_utilization': 0.9, 'enable_prefix_cachi
+26:(APIServer pid=1) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+40:(EngineCore pid=189) INFO 09-12 19:11:55 [flash_attn.py:897] Using FlashAttention version 2
+59:(EngineCore pid=189) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+101:(APIServer pid=1) INFO 09-12 19:14:11 [launcher.py:70] Route: /version, Methods: GET
+274:(EngineCore pid=189) ERROR 09-12 19:15:19 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[], scheduled_cached_reqs=CachedRequestData(req_ids=['cmpl-concurrency-oracle-c64-r1-050-0-8f49e629', 'cmpl-concurrency-oracle-c64-r1-031-0-905d39df', 'cm
+275:(EngineCore pid=189) ERROR 09-12 19:15:19 [dump_input.py:81] Dumping scheduler stats: SchedulerStats(num_running_reqs=11, num_waiting_reqs=0, num_skipped_waiting_reqs=0, step_counter=0, current_wave=0, kv_cache_usage=0.2063492063492064, iteration_details=None, prefix_cache_stats=PrefixCacheStats
+276:EngineCore encountered a fatal error.
+277:Traceback (most recent call last):
+278:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1360, in run_engine_core
+279:    engine_core.run_busy_loop()
+280:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/fault_tolerance/engine_core_sentinel.py", line 179, in run_with_fault_tolerance
+281:    busy_loop_func(self)
+282:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1419, in run_busy_loop
+283:    self._process_engine_step()
+284:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1472, in _process_engine_step
+285:    outputs, model_executed = self.step_fn()
+287:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 668, in step_with_batch_queue
+288:    exec_future = self.model_executor.execute_model(
+290:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 131, in execute_model
+291:    output.result()
+292:  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+293:    return self.__get_result()
+295:  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+296:    raise self._exception
+297:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 109, in collective_rpc
+298:    result = run_method(self.driver_worker, method, args, kwargs)
+300:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/serial_utils.py", line 510, in run_method
+301:    return func(*args, **kwargs)
+303:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/worker_base.py", line 375, in execute_model
+304:    return self.worker.execute_model(scheduler_output)
+306:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+307:    return func(*args, **kwargs)
+309:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_worker.py", line 1170, in execute_model
+310:    output = self.model_runner.execute_model(
+312:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+313:    return func(*args, **kwargs)
+315:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu/model_runner.py", line 1776, in execute_model
+316:    model_output = self.model(**model_inputs)
+318:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+319:    return self._call_impl(*args, **kwargs)
+321:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+322:    return forward_call(*args, **kwargs)
+324:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py", line 591, in forward
+325:    hidden_states = self.language_model.model(
+327:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/decorators.py", line 522, in __call__
+328:    return self.aot_compiled_fn(self, *args, **kwargs)
+330:  File "/opt/venv/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 244, in __call__
+331:    return self.fn(*args, **kwargs)
+333:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py", line 686, in forward
+334:    def forward(
+335:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/caching.py", line 225, in __call__
+336:    return self.optimized_call(*args, **kwargs)
+338:  File "<string>", line 149, in execution_fn
+339:  File "<string>", line 5, in __vllm_inlined_submods__1
+340:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+341:    return self._op(*args, **kwargs)
+343:  File "/opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py", line 171, in _gdn_attention_core_xpu_impl
+344:    torch.ops._xpu_C.gdn_attention(
+345:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+346:    return self._op(*args, **kwargs)
+348:RuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.  (Could this error message be improved?  If so, please report an enhancement request to PyTorch.)
+350:(APIServer pid=1) ERROR 09-12 19:15:19 [async_llm.py:819] AsyncLLM output_handler failed.
+[excerpt truncated after the root RuntimeError]

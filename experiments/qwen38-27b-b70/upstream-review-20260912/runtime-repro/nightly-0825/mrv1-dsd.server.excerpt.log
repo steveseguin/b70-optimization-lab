@@ -1,0 +1,69 @@
+3:(APIServer pid=1) INFO 09-12 19:04:23 [api_utils.py:347]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.26.1rc1.dev1177+ga9a17e709
+7:(APIServer pid=1) INFO 09-12 19:04:23 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': ['dsd'], 'gpu_memory
+22:(APIServer pid=1) WARNING 09-12 19:04:47 [vllm.py:979] Dynamic speculative decoding changes the target verification length at runtime. Overriding cudagraph_mode from FULL_AND_PIECEWISE to PIECEWISE for reliability. Use VLLM_USE_V2_MODEL_RUNNER=1 if you want
+26:(APIServer pid=1) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+33:(EngineCore pid=187) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+42:(EngineCore pid=187) INFO 09-12 19:05:08 [flash_attn.py:831] Using FlashAttention version 2
+108:(APIServer pid=1) INFO 09-12 19:07:10 [launcher.py:70] Route: /version, Methods: GET
+280:(EngineCore pid=187) ERROR 09-12 19:08:11 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[NewRequestData(req_id=cmpl-concurrency-oracle-c64-r1-012-0-8a7886b9,prompt_token_ids_len=27,prefill_token_ids_len
+281:(EngineCore pid=187) ERROR 09-12 19:08:11 [dump_input.py:81] Dumping scheduler stats: SchedulerStats(num_running_reqs=20, num_waiting_reqs=16, num_skipped_waiting_reqs=0, step_counter=0, current_wave=0, kv_cache_usage=0.3886397608370703, iteration_details=
+282:EngineCore encountered a fatal error.
+283:Traceback (most recent call last):
+284:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1354, in run_engine_core
+285:    engine_core.run_busy_loop()
+286:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/fault_tolerance/engine_core_sentinel.py", line 179, in run_with_fault_tolerance
+287:    busy_loop_func(self)
+288:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1413, in run_busy_loop
+289:    self._process_engine_step()
+290:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 1466, in _process_engine_step
+291:    outputs, model_executed = self.step_fn()
+293:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/engine/core.py", line 668, in step_with_batch_queue
+294:    exec_future = self.model_executor.execute_model(
+296:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 131, in execute_model
+297:    output.result()
+298:  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+299:    return self.__get_result()
+301:  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+302:    raise self._exception
+303:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/executor/uniproc_executor.py", line 109, in collective_rpc
+304:    result = run_method(self.driver_worker, method, args, kwargs)
+306:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/serial_utils.py", line 510, in run_method
+307:    return func(*args, **kwargs)
+309:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/worker_base.py", line 369, in execute_model
+310:    return self.worker.execute_model(scheduler_output)
+312:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+313:    return func(*args, **kwargs)
+315:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_worker.py", line 1124, in execute_model
+316:    output = self.model_runner.execute_model(
+318:  File "/opt/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+319:    return func(*args, **kwargs)
+321:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 4559, in execute_model
+322:    model_output = self._model_forward(
+324:  File "/opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py", line 3975, in _model_forward
+325:    return self.model(
+327:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+328:    return self._call_impl(*args, **kwargs)
+330:  File "/opt/venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+331:    return forward_call(*args, **kwargs)
+333:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_5.py", line 591, in forward
+334:    hidden_states = self.language_model.model(
+336:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/decorators.py", line 522, in __call__
+337:    return self.aot_compiled_fn(self, *args, **kwargs)
+339:  File "/opt/venv/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 244, in __call__
+340:    return self.fn(*args, **kwargs)
+342:  File "/opt/venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen3_next.py", line 627, in forward
+343:    def forward(
+344:  File "/opt/venv/lib/python3.12/site-packages/vllm/compilation/caching.py", line 225, in __call__
+345:    return self.optimized_call(*args, **kwargs)
+347:  File "<string>", line 149, in execution_fn
+348:  File "<string>", line 5, in __vllm_inlined_submods__1
+349:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+350:    return self._op(*args, **kwargs)
+352:  File "/opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py", line 171, in _gdn_attention_core_xpu_impl
+353:    torch.ops._xpu_C.gdn_attention(
+354:  File "/opt/venv/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+355:    return self._op(*args, **kwargs)
+357:RuntimeError: causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation; the spec path and the non-spec path are mutually exclusive
+359:(APIServer pid=1) ERROR 09-12 19:08:11 [async_llm.py:745] AsyncLLM output_handler failed.
+360:(APIServer pid=1) ERROR 09-12 19:08:11 [async_llm.py:745] Traceback (most recent call last):
+[excerpt truncated after the root RuntimeError; the remaining 17093 lines are per-request EngineDeadError repeats]

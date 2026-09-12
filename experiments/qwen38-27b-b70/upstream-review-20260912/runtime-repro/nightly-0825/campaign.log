@@ -1,0 +1,33 @@
+[nightly-0825 15:00:26] mrv2-dsd launched (VLLM_USE_V2_MODEL_RUNNER=1)
+[nightly-0825 15:03:58] mrv2-dsd did NOT become healthy (container )
+1:Error response from daemon: No such container: upstream-mrv2-dsd-nightly-0825-mrv2-dsd
+[nightly-0825 15:04:04] mrv1-dsd launched (VLLM_USE_V2_MODEL_RUNNER=0)
+[nightly-0825 15:07:16] mrv1-dsd healthy
+[nightly-0825 15:08:11] mrv1-dsd harness exit 3
+7:(APIServer pid=1) INFO 09-12 19:04:23 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': 
+18:(APIServer pid=1) WARNING 09-12 19:04:47 [speculative.py:1276] Enabling num_speculative_tokens > 1 will run multiple times of forward on same MTP layer,which may result in lower acceptance rate
+22:(APIServer pid=1) WARNING 09-12 19:04:47 [vllm.py:979] Dynamic speculative decoding changes the target verification length at runtime. Overriding cudagraph_mode from FULL_AND_PIECEWISE to PIECEWISE for reliability. Use VLLM_USE_V2_MODEL_
+23:(APIServer pid=1) WARNING 09-12 19:04:47 [vllm.py:1943] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate
+27:(EngineCore pid=187) INFO 09-12 19:05:00 [core.py:123] Initializing a V1 LLM engine (v0.26.1rc1.dev1177+ga9a17e709) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), token
+52:(EngineCore pid=187) WARNING 09-12 19:05:21 [vllm.py:1943] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommod
+279:(EngineCore pid=187) ERROR 09-12 19:08:11 [dump_input.py:72] Dumping input data for V1 LLM engine (v0.26.1rc1.dev1177+ga9a17e709) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_t
+280:(EngineCore pid=187) ERROR 09-12 19:08:11 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[NewRequestData(req_id=cmpl-concurrency-oracle-c64-r1-012-0-8a7886b9,prompt_token_ids_len=27,p
+283:(EngineCore pid=187) ERROR 09-12 19:08:11 [core.py:1370] Traceback (most recent call last):
+357:(EngineCore pid=187) ERROR 09-12 19:08:11 [core.py:1370] RuntimeError: causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation; the spec path and the non-spec path are mutually exclusive
+360:(APIServer pid=1) ERROR 09-12 19:08:11 [async_llm.py:745] Traceback (most recent call last):
+366:(APIServer pid=1) ERROR 09-12 19:08:11 [async_llm.py:745] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
+[nightly-0825 15:08:18] === done ===
+[nightly-0825 15:08:46] mrv2-dsd launched (VLLM_USE_V2_MODEL_RUNNER=1)
+[nightly-0825 15:10:46] mrv2-dsd did NOT become healthy (container upstream-mrv2-dsd-nightly-0825-mrv2-dsd Exited (1) 6 seconds)
+7:(APIServer pid=1) INFO 09-12 19:09:00 [api_utils.py:286] non-default args: {'model_tag': '/model', 'host': '0.0.0.0', 'model': '/model', 'dtype': 'float16', 'max_model_len': 256, 'quantization': 'compressed-tensors', 'served_model_name': 
+18:(APIServer pid=1) WARNING 09-12 19:09:07 [speculative.py:1276] Enabling num_speculative_tokens > 1 will run multiple times of forward on same MTP layer,which may result in lower acceptance rate
+22:(APIServer pid=1) WARNING 09-12 19:09:07 [vllm.py:1943] max_num_scheduled_tokens is set to 512 based on the speculative decoding settings. This may lead to suboptimal performance. Consider increasing max_num_batched_tokens to accommodate
+26:(EngineCore pid=83) INFO 09-12 19:09:20 [core.py:123] Initializing a V1 LLM engine (v0.26.1rc1.dev1177+ga9a17e709) with config: model='/model', speculative_config=SpeculativeConfig(method='mtp', model='/model', num_spec_tokens=3), tokeni
+80:(EngineCore pid=83) ERROR 09-12 19:10:26 [core.py:1368] Traceback (most recent call last):
+160:(EngineCore pid=83) ERROR 09-12 19:10:26 [core.py:1368] RuntimeError: causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation; the spec path and the non-spec path are mutually exclusive
+161:(EngineCore pid=83) Traceback (most recent call last):
+247:(EngineCore pid=83) RuntimeError: causal_conv1d does not support spec-decode and non-spec (prefill + decode) tokens in the same invocation; the spec path and the non-spec path are mutually exclusive
+248:(APIServer pid=1) Traceback (most recent call last):
+308:(APIServer pid=1)     raise RuntimeError(
+309:(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+[nightly-0825 15:10:52] === done ===
