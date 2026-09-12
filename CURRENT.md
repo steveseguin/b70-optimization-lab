@@ -5,8 +5,9 @@ Last reviewed: **2026-09-11 15:50 UTC** (2026-09-11 11:50 EDT); the four-B70 hos
 ## Authority And Update Rule
 
 **Four-B70 host `steve-b70s`, September12:** user selected a new-model native
-baseline campaign. The active task is isolated MiniCPM5-2B BF16 qualification,
-not Flash-Next optimization. See [lane packet](experiments/minicpm5-2b-b70/README.md).
+baseline campaign. MiniCPM5-2B setup completed, but BF16 qualification failed
+the strict output-format pilot (4/6); optimization has not started. The campaign
+has exited and all four cards passed postflight. No baseline is promoted. See [lane packet](experiments/minicpm5-2b-b70/README.md).
 It uses a dedicated environment and original external-drive weights, with
 exclusive locks and fresh processes; no permanent listener is planned. Preserve
 the older queued lanes and all protected artifacts below. Actual running state

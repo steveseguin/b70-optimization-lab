@@ -1,14 +1,16 @@
 # MiniCPM5-2B native BF16 baseline on one B70
 
-Status: preregistered, not yet qualified. User selected a new downloaded model
-for setup and a lossless baseline before optimization; this lane selects the
-official MiniCPM5-2B checkpoint, 2,516,756,480 BF16 parameters.
+Status: **setup complete; native BF16 baseline unqualified; optimization not started**.
+User requested a new-model baseline before optimization. The official checkpoint
+loads and runs in an isolated environment, but the tested presets fail the
+preregistered instruction-following gates. See the
+[decision and retained evidence](notes/2026-09-12-qualification-decision.md).
 
-Execution update: greedy native-thinking smoke failed at256 and2048 tokens.
-The next separately preregistered track uses the
-[publisher HF sampling defaults](notes/2026-09-12-publisher-sampling-prereg.md)
-with seed7429. It is not an optimization or qualification of the failed greedy
-track. Original prompt bytes and precision are preserved.
+Greedy thinking failed the arithmetic smoke at both256 and2048 tokens.
+Publisher sampling without a system message passed5/6 objective checks; a
+separate neutral-system preset passed4/6. Wrong-format answers remain failures.
+The gate stopped the final campaign before full A/B repeats and cache parity.
+All four GPUs passed postflight; all owned model processes have exited.
 
 ## Baseline identity and meaning of lossless
 
