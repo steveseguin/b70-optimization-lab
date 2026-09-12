@@ -154,6 +154,31 @@
     0.715
    ],
    "note": "every token either corpus uses (37% of the vocabulary); acceptance equal to the no-shortlist control"
+  },
+  "slu92k-ladders": {
+   "rows": 91754,
+   "config": "one card, depth 3, CLASSPAD=1, c1-c64 ladders, four passes, pass 2+ medians",
+   "depth3_tok_s": {
+    "c1": 161.9,
+    "c2": 307.7,
+    "c4": 554.6,
+    "c8": 937.4,
+    "c12": 1159.1,
+    "c16": 1400.4,
+    "c20": 1407.1,
+    "c24": 1523.3,
+    "c32": 1650.6,
+    "c64": 1887.8
+   },
+   "depth3_identity": "exact through c16; 76/80, 93/96, 121/128, 225/256 at c20-c64",
+   "versus_r293_r1_no_shortlist": {
+    "c1": 151.4,
+    "c8": 891.8,
+    "c16": 1352.7,
+    "c32": 1607.9,
+    "c64": 1830.7
+   },
+   "reading": "+7% at one user, +5% at c8, +3.5% at c16, +3% at c64: the head is a smaller share of the step as the batch grows, so the shortlist is mainly a single-user and low-concurrency lever. Identity as without the shortlist. The MTP0 lane (no draft head) is the unaffected control."
   }
  },
  "coverage_of_generated_text": "output_coverage_pct is the share of the 4B's own strict-suite output tokens (r3 mtp3-a, 12 x 512) that lie in the shortlist; the lab corpus is narrower than the model's output (top8192 covers 97% of the corpus but 79% of the output).",
