@@ -1,0 +1,86 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-9b-w4a16 R294: shortlisted draft lm_head (2026-09-12)",
+ "headline": "The draft-only INT4 lm_head, measured on this lane at 28% of the decode step, scores only a shortlist of vocabulary rows; the target verifies every draft with its full head, so no output can change. With the 67,248-row union list (27% of the vocabulary) the one-card depth-3 headline goes from 113.48 / 113.49 (same image, no shortlist) to 124.03 / 124.13 tok/s, +9.3%, every gate 12/12, acceptance unchanged (0.928 / 0.827 / 0.726 per position against 0.919 / 0.787 / 0.712).",
+ "method": "As the 4B campaign (experiments/qwen35-4b-b70/data/2026-09-12-qwen35-4b-draft-head-shortlist.json): image R294b, one card, depth 3, CLASSPAD=0, strict stage (fresh MTP0 pair, shortlisted depth-3 pair, G1/G2/G3). Chain scripts/run-20260912-qwen35-9b-draft-shortlist-chain.sh.",
+ "arms": {
+  "sl32k": {
+   "rows": 32776,
+   "tok_s": [
+    124.02,
+    124.13
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.34,
+    3.37
+   ],
+   "per_position": [
+    0.933,
+    0.738,
+    0.669
+   ],
+   "note": "lab-text top 32,768"
+  },
+  "slu67k": {
+   "rows": 67248,
+   "tok_s": [
+    124.03,
+    124.13
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.48,
+    3.43
+   ],
+   "per_position": [
+    0.928,
+    0.827,
+    0.726
+   ],
+   "note": "lab text united with the broad corpus top 65,536; 99.5% of this model's suite output"
+  },
+  "slu92k": {
+   "rows": 91754,
+   "tok_s": [
+    122.2,
+    122.22
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.48,
+    3.48
+   ],
+   "per_position": [
+    0.928,
+    0.824,
+    0.724
+   ]
+  },
+  "slbase": {
+   "rows": 248320,
+   "tok_s": [
+    113.48,
+    113.49
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.42,
+    3.47
+   ],
+   "per_position": [
+    0.919,
+    0.787,
+    0.712
+   ],
+   "note": "same image, no shortlist; equals the published 113.63 / 112.90"
+  }
+ },
+ "reading": "Same shape as the 4B: +9.3% at 32k and 67k rows, +7.7% at 92k. At 32k acceptance at the later positions drops (0.738 / 0.669) and the smaller head pays for it; at 67k acceptance is the control's and the gain is all head savings. 67k is the list to serve on both models.",
+ "campaign_roots": [
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260912-sl32k",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260912-slu67k",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260912-slu92k",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260912-slbase"
+ ]
+}

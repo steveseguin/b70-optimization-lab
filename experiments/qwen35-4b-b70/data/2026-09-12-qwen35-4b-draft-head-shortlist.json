@@ -169,5 +169,5 @@
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu67k",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu92k"
  ],
- "recommendation": "VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2all.txt (91,754 rows). Lossless by construction and by the gates; +7.7% at one user on the published path with acceptance unchanged. A deployment with its own text can rebuild the list with draft-shortlists/build-shortlist-v2.py; a list that misses tokens costs acceptance, never correctness."
+ "recommendation": "VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt (67,248 rows, 27% of the vocabulary): 191.87 / 191.58 on the 4B (+8.1%) and 124.03 / 124.13 on the 9B (+9.3%), acceptance within noise of the control on both. Lossless by construction and by the gates. A deployment with its own text can rebuild the list with draft-shortlists/build-shortlist-v2.py; a list that misses tokens costs acceptance, never correctness. The 92k list is the fallback for text unlike either corpus (+7.7% with the control's acceptance)."
 }
