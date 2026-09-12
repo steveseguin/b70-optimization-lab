@@ -78,7 +78,9 @@
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s4",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s5",
   "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s6",
-  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s7"
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-s7",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-dyn293",
+  "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260911-dyn276"
  ],
  "s3_tp1_strict": {
   "G1": "12/12",
@@ -199,5 +201,121 @@
   "depth3": "3.1/4.7/6.1% divergent; 2183.1, 2206.8, 2277.3 tok/s (R224 w3 c64: 1464.6)",
   "reading": "Two cards without speculation: +25% at c64 and a new lane ceiling of 3227 tok/s at c128, near-exact. No R224 measurement exists above c64 on two cards for this lane."
  },
- "status": "complete 12:52, seven arms, every knob verified in every container, no hardware aborts"
+ "status": "complete 12:52, seven arms, every knob verified in every container, no hardware aborts",
+ "scheduled_draft_server_on_r293": {
+  "what": "The scheduled-draft server (repro/qwen35-9b-w4a16-b70/docker overlays: dynamic Mamba allocation, full decode graphs per scheduled K, draft-state catch-up; schedule [[1,8,3],[9,16,1],[17,64,0]]) rebuilt on the R293 image (docker/r293-*.Dockerfile, same COPY-only overlays, content pins unchanged) and run with VLLM_XPU_FP16_LINEAR_CLASSPAD=1, against the same overlays on R276 with the switch off, both on this host (two B70s, TP1) the same evening. Chain scripts/run-20260911-qwen35-9b-dynsd-on-r293-chain.sh; each arm a full run (fresh MTP0 pair, scheduled pair, four-pass c1-c64 ladders); roots qwen35-9b-w4a16-20260911-dyn293 and -dyn276.",
+  "strict": {
+   "dyn293": {
+    "G1": "12/12",
+    "G2": "12/12",
+    "G3": "12/12 x2",
+    "scheduled_tok_s": [
+     112.4,
+     112.48
+    ],
+    "mtp0_tok_s": [
+     61.79,
+     61.72
+    ]
+   },
+   "dyn276": {
+    "G1": "12/12",
+    "G2": "12/12",
+    "G3": "12/12 x2",
+    "scheduled_tok_s": [
+     113.54,
+     113.16
+    ],
+    "mtp0_tok_s": [
+     64.33,
+     64.38
+    ]
+   }
+  },
+  "ladders_warm_pass": {
+   "scheduled_r293": {
+    "c1": [
+     113.9,
+     "4/4"
+    ],
+    "c2": [
+     218.8,
+     "8/8"
+    ],
+    "c4": [
+     366.3,
+     "16/16"
+    ],
+    "c8": [
+     652.1,
+     "32/32"
+    ],
+    "c16": [
+     960.1,
+     "64/64"
+    ],
+    "c32": [
+     1192.2,
+     "120/128"
+    ],
+    "c64": [
+     1630.6,
+     "255/256"
+    ]
+   },
+   "scheduled_r276": {
+    "c1": [
+     117.6,
+     "4/4"
+    ],
+    "c2": [
+     224.1,
+     "8/8"
+    ],
+    "c4": [
+     371.2,
+     "16/16"
+    ],
+    "c8": [
+     649.8,
+     "32/32"
+    ],
+    "c16": [
+     942.7,
+     "64/64"
+    ],
+    "c32": [
+     1153.1,
+     "115/128"
+    ],
+    "c64": [
+     1243.4,
+     "249/256"
+    ]
+   },
+   "no_speculation_r293_same_arm": {
+    "c32": [
+     1207.0,
+     "128/128"
+    ],
+    "c64": [
+     1641.1,
+     "254/256"
+    ]
+   },
+   "no_speculation_r276_same_arm": {
+    "c32": [
+     1184.4,
+     "128/128"
+    ],
+    "c64": [
+     1268.9,
+     "256/256"
+    ]
+   },
+   "format": "[aggregate tok/s, exact] over passes 2-4 of four"
+  },
+  "reading": "The two levers stack. With R293 the scheduled server keeps its single-user and low-concurrency profile (112.4 at one user, exact through 16 users at 960 tok/s) and its top end rises 31%, 1243 -> 1631 at 64 users, to within 0.6% of the no-speculation server on the same image (1641) - the handover the schedule exists for no longer costs anything. At 32 users +3% (1153 -> 1192). Single user -1%, the R293 cost. Identity at 32 and 64 users is the same or better on R293 (120/128 and 255/256 against 115/128 and 249/256).",
+  "not_reproduced": "The published scheduled-server claim of 32/32 exact at 32 users in all four passes (cudynm1/cudynm1r, measured on the four-card host) did not reproduce on this host with the same R276 overlays and schedule: 115/128 over three warm passes, against 128/128 for the no-speculation server in the same arm. On this host the two-run-rule rung for the scheduled server is 16 users on either image, and 32 users is a near-exact band (90-94%), not an exact one. Recorded as a host difference to be resolved, not as a correction of the other measurement."
+ }
 }
