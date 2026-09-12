@@ -1,0 +1,46 @@
+diff --git a/csrc/xpu/gdn_attn/causal_conv1d.hpp b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+--- a/csrc/xpu/gdn_attn/causal_conv1d.hpp
++++ b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+@@ -1036,7 +1036,11 @@
+   if (is_spec) {
+     TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
++    // Cache columns retain the configured capacity; token buffers are compact.
++    TORCH_CHECK(num_spec_decodes > 0);
++    TORCH_CHECK(num_virtual_tokens > 0 && num_virtual_tokens % num_spec_decodes == 0);
++    num_spec_tokens = num_virtual_tokens / num_spec_decodes;
++    TORCH_CHECK(num_spec_tokens <= cache_indices->size(1));
+     cache_indices_stride_0 = cache_indices->stride(0);
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+diff --git a/csrc/xpu/gdn_attn/gated_delta_rule.hpp b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+--- a/csrc/xpu/gdn_attn/gated_delta_rule.hpp
++++ b/csrc/xpu/gdn_attn/gated_delta_rule.hpp
+@@ -702,7 +702,11 @@
+   if (is_spec) {
+     TORCH_CHECK(cache_indices->dim() == 2);
+     TORCH_CHECK(cache_indices->size(0) == num_spec_decodes);
+-    num_spec_tokens = cache_indices->size(1);
++    // Cache columns retain the configured capacity; token buffers are compact.
++    TORCH_CHECK(num_spec_decodes > 0);
++    TORCH_CHECK(total_seqlen > 0 && total_seqlen % num_spec_decodes == 0);
++    num_spec_tokens = total_seqlen / num_spec_decodes;
++    TORCH_CHECK(num_spec_tokens <= cache_indices->size(1));
+     cache_indices_stride_0 = cache_indices->stride(0);
+     TORCH_CHECK(num_accepted_tokens->size(0) == num_spec_decodes);
+   }
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -116,7 +116,9 @@
+       num_accepted_tokens.size(0) == num_spec_decodes,
+       "num_accepted_tokens size must be num_spec_decodes");
+ 
+-  TORCH_CHECK(spec_token == num_spec_decodes * (num_speculative_tokens + 1));
++  // A dynamic schedule can use fewer verifier rows than the cache capacity.
++  TORCH_CHECK(spec_token % num_spec_decodes == 0);
++  TORCH_CHECK(spec_token / num_spec_decodes <= num_speculative_tokens + 1);
+   TORCH_CHECK(spec_token > 0, "spec_token must be > 0 for causal_conv1d_spec");
+ 
+   TORCH_CHECK(

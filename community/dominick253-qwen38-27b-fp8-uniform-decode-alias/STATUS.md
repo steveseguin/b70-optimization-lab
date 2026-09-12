@@ -143,6 +143,13 @@ The [matched-image target-oracle matrix](validation/target-oracle-20260909.md)
 subsequently passed all five 12/12 comparisons, with 96 additional passing
 probes and healthy teardown. The multi-hour soak remains pending.
 
+September 12 upstream review: the separate one-token phase defect is already
+tracked in vLLM #51562 with PR #51565. Current-source CPU tests confirm the
+fresh-request routing failure, but also expose trailing-padding mishandling in
+our narrower local guard. Prefer validating the upstream proposal before
+promotion; the earlier bounded B70 evidence and contributor incident status
+remain unchanged. See the [review packet](../../experiments/qwen38-27b-b70/upstream-review-20260912/README.md).
+
 Remains `community-reported` documentation. If the lab reproduces the alias
 trigger on its sealed lane and finds the classifier guard effective, this
 belongs in the R187/R50 chain's README as a known upstream defect with the
