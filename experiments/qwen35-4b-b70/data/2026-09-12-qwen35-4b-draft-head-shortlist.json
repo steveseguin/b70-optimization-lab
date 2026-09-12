@@ -98,16 +98,76 @@
     0.709
    ],
    "note": "same image, no shortlist: the in-image control, equal to the published 177.41 / 177.17"
+  },
+  "slu45k": {
+   "rows": 44945,
+   "output_coverage_pct": 98.94,
+   "tok_s": [
+    191.72,
+    191.39
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.0,
+    3.13
+   ],
+   "per_position": [
+    0.853,
+    0.642,
+    0.508
+   ],
+   "note": "lab-text list (all 38,662) united with the top 32,768 of the broad corpus"
+  },
+  "slu67k": {
+   "rows": 67248,
+   "output_coverage_pct": 99.51,
+   "tok_s": [
+    191.87,
+    191.58
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.24,
+    3.15
+   ],
+   "per_position": [
+    0.874,
+    0.734,
+    0.636
+   ]
+  },
+  "slu92k": {
+   "rows": 91754,
+   "output_coverage_pct": 99.79,
+   "tok_s": [
+    191.15,
+    191.1
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.45,
+    3.47
+   ],
+   "per_position": [
+    0.922,
+    0.815,
+    0.715
+   ],
+   "note": "every token either corpus uses (37% of the vocabulary); acceptance equal to the no-shortlist control"
   }
  },
  "coverage_of_generated_text": "output_coverage_pct is the share of the 4B's own strict-suite output tokens (r3 mtp3-a, 12 x 512) that lie in the shortlist; the lab corpus is narrower than the model's output (top8192 covers 97% of the corpus but 79% of the output).",
- "reading": "The gain rises from 8k (a loss) through 16k (+1%) to 32k (+9%) and is flat to 38.7k; the lab-text lists have no more rows to add. Acceptance under the 32k list is about 12% lower (per-position 0.88/0.64/0.52 against 0.92/0.81/0.71) and the step is cheaper by more than that. A list with better coverage of the model's output should keep more of the acceptance; the union lists (chain 2) test 45k, 67k and 92k rows at 98.9 / 99.5 / 99.8% coverage.",
+ "reading": "The gain rises from 8k (a loss) through 16k (+1%) to 32k (+9%) and is flat to 38.7k; the lab-text lists have no more rows to add. Acceptance under the 32k list is about 12% lower (per-position 0.88/0.64/0.52 against 0.92/0.81/0.71) and the step is cheaper by more than that. A list with better coverage of the model's output should keep more of the acceptance; the union lists (chain 2) test 45k, 67k and 92k rows at 98.9 / 99.5 / 99.8% coverage. Chain 2 (union lists, image R294b): 45k 191.7 / 191.4, 67k 191.9 / 191.6, 92k 191.2 / 191.1, all 12/12. The curve is flat from 32k to 92k rows at +8-9%; what changes along it is how the gain is composed. At 32k a 12% acceptance loss is outweighed by a head that reads 13% of the rows; at 92k acceptance is exactly the control's (0.922 / 0.815 / 0.715 against 0.915 / 0.806 / 0.709) and the whole +7.7% is the head reading 37% of the rows. The 92k list is therefore the one to serve: nothing is lost in drafting, so it is the least sensitive to text the corpora never saw.",
  "acceptance_metric_caveat": "'Mean acceptance length' is the server's last logged running value, not a whole-run statistic; tok/s is the measurement.",
  "campaign_roots": [
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl8k",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl16k",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl32k",
   "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl64k",
-  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slbase"
- ]
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slbase",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu45k",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu67k",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu92k"
+ ],
+ "recommendation": "VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2all.txt (91,754 rows). Lossless by construction and by the gates; +7.7% at one user on the published path with acceptance unchanged. A deployment with its own text can rebuild the list with draft-shortlists/build-shortlist-v2.py; a list that misses tokens costs acceptance, never correctness."
 }
