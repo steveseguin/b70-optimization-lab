@@ -9,7 +9,7 @@ capture. Same image, launcher and gates as the 9B INT4 package; only the weights
 > against `177.41 / 177.17` for the same image with the draft head scoring every row. Every gate exact: the two
 > speculative servers matched each other and the no-speculation oracle on all 12 complete token arrays. The draft only
 > proposes and the target verifies every token, so the shortlist cannot change an output; it costs the head 73% of its
-> rows. Recipe README, R294 section.
+> rows. LocalMaxxing `cmtyqbecv0aq9ps01ms6eum7z` at `191.728 tok/s` (approved 2026-09-12). Recipe README, R294 section.
 
 > **Single request (2026-09-07, campaign v1):** MTP depth 3 with the draft-only INT4 lm_head `177.41 / 177.17 tok/s`,
 > no speculation `102.63 / 102.38` (two fresh servers each, class-balanced median decode on the strict 12-prompt

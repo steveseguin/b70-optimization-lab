@@ -223,7 +223,7 @@ the control. Lists of 32k to 92k rows all land within 1% of it; 16k rows returns
 The launcher enables it by default (`DRAFT_SHORTLIST`, empty string to score every row); the served image is R294b
 (R293 plus the shortlisted head, lists under `/opt/draft-shortlists/`). A deployment with its own traffic can
 rebuild the list with `experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py`; a list that misses
-tokens costs acceptance, never correctness.
+tokens costs acceptance, never correctness. LocalMaxxing `cmtyqbecv0aq9ps01ms6eum7z` at `191.728 tok/s` (approved 2026-09-12).
 
 ## Known limits
 

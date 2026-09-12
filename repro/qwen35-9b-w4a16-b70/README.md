@@ -239,7 +239,7 @@ the control. The 32k list reads the same 124.0 / 124.1 with lower acceptance; th
 The launcher enables it by default (`DRAFT_SHORTLIST`, empty string to score every row); the served image is R294b
 (R293 plus the shortlisted head, lists under `/opt/draft-shortlists/`). A deployment with its own traffic can
 rebuild the list with `experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py`; a list that misses
-tokens costs acceptance, never correctness.
+tokens costs acceptance, never correctness. LocalMaxxing `cmtyqbel70aqcps01zrvj4kjp` at `124.084 tok/s` (approved 2026-09-12).
 
 ## One server for every batch size (campaigns cudynm1 / cudynm1r, 2026-09-11)
 

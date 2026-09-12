@@ -92,7 +92,7 @@ arithmetic); it accounts for the c32/c64 near-tie flips with speculation.
 The served image is now R294b (R293 plus a draft-only lm_head that scores a 67,248-row token shortlist; the target
 verifies every draft, so outputs cannot change). Single request, TP2, depth 4: **117.46 / 117.59 tok/s** against
 112.74 on the same image scoring every row and the 112.90 / 113.00 headline above, G1/G2/G3 12/12 (R299/R300).
-`DRAFT_SHORTLIST=` (empty) on the launcher restores the full head. Rows R299 in the matrix; recipe README, R294 section.
+`DRAFT_SHORTLIST=` (empty) on the launcher restores the full head. LocalMaxxing `cmtyqbeu40aqgps011wl4mljo` at `117.528 tok/s` (approved 2026-09-12; the prior approved headline `cmtq3mx7e03gen701xxpwu67z` at 112.344 stands as the full-head figure). Rows R299 in the matrix; recipe README, R294 section.
 
 ## R293: class-consistent FP16 linears (2026-09-11)
 

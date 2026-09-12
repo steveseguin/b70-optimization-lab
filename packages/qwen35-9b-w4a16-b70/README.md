@@ -9,7 +9,7 @@ decode-only XPU graph capture. The container image and the strict launcher chain
 > against `113.63 / 112.90` for the same image with the draft head scoring every row. Every gate exact: the two
 > speculative servers matched each other and the no-speculation oracle on all 12 complete token arrays. The draft only
 > proposes and the target verifies every token, so the shortlist cannot change an output; it costs the head 73% of its
-> rows. Recipe README, R294 section.
+> rows. LocalMaxxing `cmtyqbel70aqcps01zrvj4kjp` at `124.084 tok/s` (approved 2026-09-12). Recipe README, R294 section.
 
 > **Single request (2026-09-07, campaign w1):** MTP depth 3 with the draft-only INT4 lm_head `113.63 / 112.90 tok/s`,
 > no speculation `64.33 / 64.34` (two fresh servers each, class-balanced median decode on the strict 12-prompt suite).
