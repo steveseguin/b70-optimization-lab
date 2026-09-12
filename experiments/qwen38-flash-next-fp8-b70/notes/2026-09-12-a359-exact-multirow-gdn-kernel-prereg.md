@@ -66,3 +66,24 @@ contraction and summation pattern. Second treatment `bbae3c5`: the same unroll p
 kernel's fixed-count loops, nothing else. The probe is the gate before any server arm: PASS with the
 flag on, and the flag-off run must still differ on row 1 (sensitivity). The server arms move to a
 new stage built from `bbae3c5`; A360 on the first stage is superseded and not run.
+
+## Amendment 2 (2026-09-12 06:20 UTC): unrolling did not close row 0; the C++ exact serial mode does
+
+- Stage v2 (`runtime-gdn-roundstate-bbae3c5-b70`, `_xpu_C` from `bbae3c5` = round trip + unroll):
+  the probe still differs on row 0 by one ulp with the flag on or off. The multi-row spec kernel's
+  remaining difference from the decode kernel is not in the source text; it is left open (the
+  probe's zero-conv case isolates it to the `g * state` decay/store step).
+- The lane's own C++ exact mode (`VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1` with
+  `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`) runs the plain decode kernel per verifier row inside the
+  spec op with the state passing through the cache between rows. On the served stage it is
+  hard-gated to four rows (MTP3 era); on stage v2 (built from `e421889`, which carries `ad25aa9`
+  "Generalize exact GDN replay to MTP row count") it accepts two rows, and the probe is PASS on
+  every seed and case (outputs, z, both state columns bit-identical to the serial rows), with and
+  without `VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1`.
+- Server arms (queued for the reopened window, ports 19974-19976): A361 = stage v2, flag off,
+  promoted config (no-op proof for the v2 binary); A362 = stage v2, Python serial OFF, C++ exact
+  mode ON with the completion barrier; A363 = same without the barrier. Gates as before:
+  `afffd211…` on every 2K row; the step time is the result. A85 (2026-09-03, eager) measured this
+  mode at about -15% on short rows; the promoted line is full-graph, where small launches were
+  shown to be cheap (A355, A357), so the prediction is open: anywhere between A344's 42.7 and
+  A356's 33.9 ms.
