@@ -1,59 +1,96 @@
-# DRAFT for review (not filed). Target: github.com/vllm-project/vllm issues
+# DRAFT — held after evidence review on 2026-09-12 (not filed)
 
-## Title
-[XPU][Spec decode] Qwen3.8 MTP (num_speculative_tokens=2): about 1 request in 64 starts its answer with an extra token that the model never generated (the prompt's last token), on the unmodified upstream image
+## Disposition
 
-## Summary (plain language)
-We run Qwen3.8 27B (FP8) on two Intel Arc Pro B70 GPUs with vLLM and speculative decoding (two draft tokens).
-When we send 64 short prompts one after another, sometimes one answer starts with an extra token: the last
-token of the prompt (a `]`) shows up as the first token of the answer, and then the real answer follows.
+Retain the historical output anomaly and reproducer. Do not submit the former
+claim that an ungenerated token was inserted by bookkeeping: the R170 and R171
+traces contradict it. A fresh reproduction with the exact FP8 target, current
+upstream, and complete token/logit evidence is needed before deciding the
+remaining issue's scope. The recorded FP8 model path is absent on the current
+four-card host; no model download or GPU run was started for this review.
 
-We know the model did not produce that token: the rest of the answer is word-for-word the normal answer for
-the first 16 to 18 tokens, exactly as if the extra token were not there. Then, later, the answer drifts, because
-by then vLLM has appended the extra token to the conversation as if the model had chosen it.
+The original draft remains in Git history. See the
+[September 12 review](../experiments/qwen38-27b-b70/upstream-review-20260912/README.md).
 
-It happens on the unmodified upstream XPU image, with the default compile and also with `--enforce-eager`, with
-async scheduling on and off, on 3 of 6 servers we ran (both `--enforce-eager` servers hit the same request; one default-compile server hit a different one). On our own build of the
-same commit, which has deterministic kernels, it hits the same request every single time with the default
-piecewise compile plus async scheduling, and never with `--compilation-config '{"splitting_ops": []}'`,
-`--enforce-eager`, or `--no-async-scheduling`; we think that is the deterministic build picking one history,
-not a fix.
+## Candidate title, if reconfirmed
 
-## Environment
-- vLLM 0.27.2rc1.dev77+gac7509e2b (commit ac7509e2b), XPU; image `vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f` (unmodified)
-- torch 2.13.0+xpu, 2x Intel Arc Pro B70 (`--tensor-parallel-size 2`), Ubuntu 24.04
-- Model: Qwen/Qwen3.8-27B-FP8 (hybrid GDN + full attention)
-- `vllm serve /model --dtype float16 --quantization fp8 --kv-cache-dtype auto --block-size 64 --max-model-len 256 --max-num-seqs 64 --max-num-batched-tokens 512 --no-enable-prefix-caching --language-model-only --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":2}'`
+[XPU][Spec decode] Qwen3.8-27B FP8 MTP2: intermittent anomalous first-token
+prediction on sequential short requests (historical stock ac7509e2b)
 
-## Steps to reproduce
-1. Serve as above (default settings; also reproduces with `--enforce-eager`).
-2. Send 64 prompts sequentially (concurrency 1), greedy: `temperature 0`, `seed 42`, `max_tokens 128`,
-   `ignore_eos true`, completions API with `return_token_ids`. Our prompts: 64 short variants of one text
-   (`<suite file link>`), 26-31 tokens each.
-3. Repeat the whole pass a few times (the stock kernels are not bit-deterministic, so which pass shows it varies).
+## Confirmed historical observations
 
-Observed: one row starts `[60, 271, 3833, ...]` where every other pass gives `[271, 3833, ...]` for that prompt.
-Token 60 is `]`, the prompt's last token. Tokens 1..17 of the bad row equal tokens 0..16 of the good row; the
-rows diverge from about token 16-18 on.
+The September 3 stock-image summaries record one request beginning
+`[60, 271, 3833, ...]` rather than `[271, 3833, ...]` on three of six fresh
+servers. Token 60 decodes as `]`, which is also the last character in the
+expanded prompt. One compiled async-off server affected `cache-c032`; both
+eager async-on servers affected `cache-c040`. The other three stock servers
+had no such leading-token anomaly. The stock image was unmodified by the lab.
 
-Seen on: `cache-c032` (default compile, `--no-async-scheduling`), `cache-c040` (`--enforce-eager`, async on; twice out of two eager servers).
-Not seen on 3 other servers (default compile async on x2, `--no-async-scheduling` x1).
+These observations establish a historical configuration/history-sensitive
+output discrepancy. They do not alone identify an insertion, scheduling,
+compiler, kernel, or memory-race root cause, or prove it persists on current
+upstream. Mid-sequence differences on stock were also common and must not
+all be counted as the same anomaly.
 
-## What we ruled out on the deterministic build (each with a run)
-- Stale KV/Mamba state pages (zeroing GDN conv/ssm pages on allocation: no change; note that `KVBlockZeroer`
-  never zeroes Mamba pages because only `AttentionSpec` managers record new block ids).
-- GDN kernel inputs/outputs and attention metadata (seq_lens, query_start_loc, slot_mapping, block_table):
-  bit-identical between a failing and a clean run for all 64 requests.
-- Inductor `allow_buffer_reuse`, `max_fusion_size`, `pattern_matcher`, all vLLM pass_config passes: no change.
-- Device barrier before each step, blocking H2D copies: no change.
-- In-situ: for the affected request the last two rows of the final hidden state differ from the clean run
-  and the two TP ranks disagree on the last row (everything else identical).
+## Correction to the original explanation
 
-## Why we think it is bookkeeping around the first spec-decode step
-The inserted token is always the prompt's last token, and the answer continues as if the token were absent
-before drifting later. That looks like a stale value at the "previous sampled token" position being
-returned/appended for the request's first step, rather than a wrong model prediction.
+- [R170 handoff trace](../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-handoff-logging-r170-result.json):
+  on the instrumented lab build, the sampler returned `sampled_token_ids=[[60]]`;
+  the host copy and scheduler faithfully appended it. The sampler's input row,
+  not HTTP output insertion, was the observed source of the unexpected token.
+- [R171 logit trace](../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-fp8-r156-mtp2-phantom-logits-row-r171-result.json):
+  `logits_indices=[30]`, query starts `[0,31]`, and row 30's top logits were
+  token60/token26 at 14.82/13.95. The proposed row-index off-by-one was rejected.
+- [Later R186 trace](../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-fp8-mtp2-phantom-inductor-knobs-r184-result.md):
+  scalar absolute-sum signatures of the sampled final hidden row differed
+  between TP ranks on the affected request; these were not complete tensor
+  comparisons. That supports investigation of forward-state corruption, but the
+  exact faulting operation was not identified. A token220 variant also occurred,
+  so checking only for token60 is not a complete detector.
 
-## Extra data
-Full notes, prereg and result JSON (R176-R194):
-https://github.com/steveseguin/b70-optimization-lab/tree/main/experiments/qwen38-27b-b70/notes
+Those instrumented lab-build traces must not be represented as instrumented
+stock-upstream traces. The stock evidence is the separate R192/R194 campaign.
+
+## Historical environment and runnable inputs
+
+- vLLM `0.27.2rc1.dev77+gac7509e2b`, torch `2.13.0+xpu`, two Intel Arc Pro B70s,
+  Ubuntu 24.04.
+- Stock image:
+  `vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f`.
+- Model: `Qwen/Qwen3.8-27B-FP8`, native FP8 weights, FP16 activations/KV,
+  TP2, `qwen3_next_mtp` with `num_speculative_tokens=2`.
+- Maximum model length256, block size64, maximum sequences64, batched tokens512,
+  prefix caching disabled. Greedy completions, seed42, 128 output tokens,
+  `ignore_eos=true`, raw token IDs requested.
+- Exact base prompts:
+  [small-context suite](../experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json).
+  The [concurrency harness](../scripts/bench-openai-concurrency-oracle.py) expands
+  eight prompts into 64 in order by appending
+  `\n\n[Independent validation case {index:03d}; variant {index // 8:02d}]`.
+  The affected observations are from its initial sequential oracle pass, not
+  the later concurrent batch.
+- Complete historical launch identity:
+  [R192 runner](../experiments/qwen38-27b-b70/scripts/run-20260903-stock-vllm-f01e-mtp2-phantom-r192.sh),
+  [R194 runner](../experiments/qwen38-27b-b70/scripts/run-20260903-stock-vllm-f01e-mtp2-phantom-repeats-r194.sh).
+  These are archival host-specific runners, not safe generic launch commands.
+
+## Results and downstream handling
+
+- [R192 JSON](../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-stock-f01e-mtp2-phantom-r192-result.json)
+- [R194 JSON](../experiments/qwen38-27b-b70/data/2026-09-03-qwen38-stock-f01e-mtp2-phantom-repeats-r194-result.json)
+- [Stock campaign note](../experiments/qwen38-27b-b70/notes/2026-09-03-qwen38-stock-f01e-mtp2-phantom-r192-result.md)
+
+The lab's published R187 configuration uses `splitting_ops=[]`, which avoided
+the observed anomaly on that deterministic build. It is a scoped workaround,
+not a generally validated root-cause fix. The later one-token GDN phase bug and
+variable speculative-width kernel contract are separate findings; neither is
+established as this anomaly's cause.
+
+## Gate before filing
+
+Restore and verify the target and exact launch identity on an available host;
+reproduce stock control first, then current upstream on the same prompt order;
+retain complete outputs and sampled logits/indices around the affected first
+step. Compare related accepted-count ordering fixes only when their specific
+preconditions apply. Report the observed forward discrepancy without claiming
+an unproven mechanism. Do not treat a clean small pass as proof of absence.

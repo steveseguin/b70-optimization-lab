@@ -1,0 +1,11 @@
+{
+  "upstream_commit": "efc85bc8a0eb3076c861b2e6cb1e1731a93905d5",
+  "source_path": "tests/gdn_attn/test_gdn_attn.py",
+  "source_sha256": "8f9433eecdefac2d1585ea5246a55d5bdb1741ad55cb7968e5bea78d372d9bab",
+  "adaptations": [
+    "derive K from query offsets; per-sequence loop already asserts uniformity",
+    "effective conv length width-2+K matches current native convention",
+    "clone full conv line and write active prefix to preserve unused physical tail"
+  ],
+  "limitations": "Adapted reference for proposed uniform-active-width convention, not independent proof scheduler cache contract is correct."
+}

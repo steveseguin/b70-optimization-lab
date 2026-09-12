@@ -1,0 +1,298 @@
+BEGIN arm=stock dtype=float16
+[
+  {
+    "step": 0,
+    "active_width": 3,
+    "accepted": [
+      0,
+      1
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 2.429555654525757,
+        "relative_l2_error": 2.4030615290125618e-05,
+        "max_abs_error": 3.0517578125e-05,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 78.38272857666016,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 350.4870300292969,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 312.9290466308594,
+        "relative_l2_error": 6.674419917993725e-06,
+        "max_abs_error": 0.00048828125,
+        "exact": false
+      }
+    }
+  },
+  {
+    "step": 1,
+    "active_width": 2,
+    "expected_stock_rejection": "Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.  (Could this error message be improved?  If so, please report an enhancement request to PyTorch.)"
+  }
+]
+PASS arm=stock dtype=float16
+BEGIN arm=stock dtype=bfloat16
+[
+  {
+    "step": 0,
+    "active_width": 3,
+    "accepted": [
+      0,
+      1
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 2.4288411140441895,
+        "relative_l2_error": 0.0015199386882935003,
+        "max_abs_error": 0.00048828125,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 78.38435363769531,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 350.48388671875,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 312.8412780761719,
+        "relative_l2_error": 0.001458717408670053,
+        "max_abs_error": 0.0078125,
+        "exact": false
+      }
+    }
+  },
+  {
+    "step": 1,
+    "active_width": 2,
+    "expected_stock_rejection": "Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.  (Could this error message be improved?  If so, please report an enhancement request to PyTorch.)"
+  }
+]
+PASS arm=stock dtype=bfloat16
+BEGIN arm=candidate dtype=float16
+[
+  {
+    "step": 0,
+    "active_width": 3,
+    "accepted": [
+      0,
+      1
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 2.429555654525757,
+        "relative_l2_error": 2.4030615290125618e-05,
+        "max_abs_error": 3.0517578125e-05,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 78.38272857666016,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 350.4870300292969,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 312.9290466308594,
+        "relative_l2_error": 6.674419917993725e-06,
+        "max_abs_error": 0.00048828125,
+        "exact": false
+      }
+    }
+  },
+  {
+    "step": 1,
+    "active_width": 2,
+    "accepted": [
+      3,
+      2
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 0.8458835482597351,
+        "relative_l2_error": 2.2695651142504104e-05,
+        "max_abs_error": 1.52587890625e-05,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 63.93517303466797,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 350.2500915527344,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 102.75355529785156,
+        "relative_l2_error": 1.0605158371364674e-05,
+        "max_abs_error": 0.000244140625,
+        "exact": false
+      }
+    }
+  },
+  {
+    "step": 2,
+    "active_width": 3,
+    "accepted": [
+      2,
+      1
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 0.6593174338340759,
+        "relative_l2_error": 2.1671037212177092e-05,
+        "max_abs_error": 7.62939453125e-06,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 78.21001434326172,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 349.94610595703125,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 75.06598663330078,
+        "relative_l2_error": 1.2043964008978329e-05,
+        "max_abs_error": 0.000244140625,
+        "exact": false
+      }
+    }
+  }
+]
+PASS arm=candidate dtype=float16
+BEGIN arm=candidate dtype=bfloat16
+[
+  {
+    "step": 0,
+    "active_width": 3,
+    "accepted": [
+      0,
+      1
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 2.4288411140441895,
+        "relative_l2_error": 0.0015199386882935003,
+        "max_abs_error": 0.00048828125,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 78.38435363769531,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 350.48388671875,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 312.8412780761719,
+        "relative_l2_error": 0.001458717408670053,
+        "max_abs_error": 0.0078125,
+        "exact": false
+      }
+    }
+  },
+  {
+    "step": 1,
+    "active_width": 2,
+    "accepted": [
+      3,
+      2
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 0.8456522226333618,
+        "relative_l2_error": 0.0021699939293764524,
+        "max_abs_error": 0.000244140625,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 63.93386459350586,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 350.24774169921875,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 102.71250915527344,
+        "relative_l2_error": 0.001999126840850083,
+        "max_abs_error": 0.0078125,
+        "exact": false
+      }
+    }
+  },
+  {
+    "step": 2,
+    "active_width": 3,
+    "accepted": [
+      2,
+      1
+    ],
+    "checks": {
+      "output": {
+        "reference_l2": 0.6590149402618408,
+        "relative_l2_error": 0.002140976736592605,
+        "max_abs_error": 0.000244140625,
+        "exact": false
+      },
+      "z": {
+        "reference_l2": 78.2092056274414,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "conv": {
+        "reference_l2": 349.9431457519531,
+        "relative_l2_error": 0.0,
+        "max_abs_error": 0.0,
+        "exact": true
+      },
+      "ssm": {
+        "reference_l2": 75.03710174560547,
+        "relative_l2_error": 0.002095512047758662,
+        "max_abs_error": 0.005859375,
+        "exact": false
+      }
+    }
+  }
+]
+PASS arm=candidate dtype=bfloat16
