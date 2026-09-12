@@ -53,8 +53,16 @@ def main():
     launcher = replace_n(launcher, "expected_derived=" + m.group(1), "expected_derived=" + "0" * 64, 1)
     launcher = successor(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    exports = "".join(f"export {kv}\n" for kv in extra_env)
+    # Plain entries become launcher exports (Q38_* survive into the engine). Entries prefixed
+    # DERIVED: are printed into the derived server script next to the other VLLM_XPU_* exports,
+    # because the derived launcher unsets every inherited VLLM_* variable.
+    plain = [kv for kv in extra_env if not kv.startswith("DERIVED:")]
+    derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
+    exports = "".join(f"export {kv}\n" for kv in plain)
     launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + exports, 1)
+    if derived_kvs:
+        anchor = '  print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1"\n'
+        launcher = replace_n(launcher, anchor, anchor + "".join(f'  print "export {kv}"\n' for kv in derived_kvs), 1)
     env = os.environ.copy(); env[f"Q38_A{attempt}_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
     Path(f"/tmp/q38-ple2k-a{attempt}-base.sh").unlink(missing_ok=True)
