@@ -4,6 +4,13 @@ RedHatAI's W4A16 quantization of Qwen3.5-4B (compressed-tensors INT4 weights, FP
 single Intel Arc Pro B70, with the publisher's MTP head as a lossless speculative draft and full decode-only XPU graph
 capture. Same image, launcher and gates as the 9B INT4 package; only the weights differ.
 
+> **Headline (2026-09-12, R294, campaign slu67k):** MTP depth 3 with the draft-only INT4 lm_head scoring a 67,248-row
+> shortlist `191.87 / 191.58 tok/s` (two fresh servers, class-balanced median decode on the strict 12-prompt suite),
+> against `177.41 / 177.17` for the same image with the draft head scoring every row. Every gate exact: the two
+> speculative servers matched each other and the no-speculation oracle on all 12 complete token arrays. The draft only
+> proposes and the target verifies every token, so the shortlist cannot change an output; it costs the head 73% of its
+> rows. Recipe README, R294 section.
+
 > **Single request (2026-09-07, campaign v1):** MTP depth 3 with the draft-only INT4 lm_head `177.41 / 177.17 tok/s`,
 > no speculation `102.63 / 102.38` (two fresh servers each, class-balanced median decode on the strict 12-prompt
 > suite). Every gate exact: the two speculative servers matched each other and both matched the no-speculation oracle
@@ -32,9 +39,9 @@ rather than discarded, because it is half of the evidence that what separates th
 ## Commands
 
 ```bash
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6
-docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6 \
-            neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1
+docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 \
+            neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b
 
 MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-4b-cache MTP_DEPTH=3 \
   repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh

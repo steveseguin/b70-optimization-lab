@@ -3,7 +3,12 @@
 usage: build-localmaxxing-payload.py <campaign-root> <depth> <label> [--tp N] [--out-attestation P] [--out-queue P]"""
 import argparse, hashlib, json, os, statistics, subprocess
 ap = argparse.ArgumentParser(); ap.add_argument('root'); ap.add_argument('depth', type=int); ap.add_argument('label')
-ap.add_argument('--tp', type=int, default=1); ap.add_argument('--lane', default='fp8'); ap.add_argument('--hf'); ap.add_argument('--rev'); ap.add_argument('--quant', default='fp8'); ap.add_argument('--quant-detail'); ap.add_argument('--packet', default='qwen35-9b-fp8-b70'); ap.add_argument('--launcher', default='repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh'); ap.add_argument('--model-path', default='/path/to/Qwen3.5-9B-FP8-dynamic'); ap.add_argument('--model-name', default='Qwen3.5-9B FP8-dynamic', help='model and quantization as it should read in the status line'); ap.add_argument('--out-attestation'); ap.add_argument('--out-queue'); a = ap.parse_args()
+ap.add_argument('--tp', type=int, default=1); ap.add_argument('--lane', default='fp8'); ap.add_argument('--hf'); ap.add_argument('--rev'); ap.add_argument('--quant', default='fp8'); ap.add_argument('--quant-detail'); ap.add_argument('--packet', default='qwen35-9b-fp8-b70'); ap.add_argument('--launcher', default='repro/qwen35-9b-fp8-b70/scripts/run-qwen35-9b-fp8-server.sh'); ap.add_argument('--model-path', default='/path/to/Qwen3.5-9B-FP8-dynamic'); ap.add_argument('--model-name', default='Qwen3.5-9B FP8-dynamic', help='model and quantization as it should read in the status line'); ap.add_argument('--out-attestation'); ap.add_argument('--out-queue')
+# 2026-09-12: the served image is an argument (default the R276 identities this script was written for).
+ap.add_argument('--image-tag', default='neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276')
+ap.add_argument('--image-id', default='sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad')
+ap.add_argument('--image-desc', default='R276 image (grouped sync-free GDN spec rows)', help='how the image reads inside engineVersion')
+ap.add_argument('--overlays', default='r213b/r224/r228/r256/r276', help='overlay list as it reads in kernelBuild'); a = ap.parse_args()
 repo = '/home/steve/b70-optimization-lab'; d = a.depth; A, B = f'mtp{d}-a', f'mtp{d}-b'
 def load(p): return json.load(open(p))
 def perf(lbl): return load(f'{a.root}/{lbl}/strict/performance.json')
@@ -21,8 +26,8 @@ att = {
  # The model and card count come from the arguments, not a template. Hardcoding them here is what put
  # "Qwen3.5-9B FP8-dynamic, one B70 (TP2)" on 4B W4A16 two-card results in four published files.
  'status': f'{a.model_name}, {"one B70" if a.tp == 1 else f"{a.tp} B70s"} (TP{a.tp}), MTP depth {d} via qwen3_5_mtp with full decode-only XPU graph capture: strict pair {cb(sa):.6f}/{cb(sb):.6f} tok/s class-balanced median (tokens 1-100 after TTFT), G1/G2/G3 exact',
- 'image_id': 'sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad', 'image_tag': 'neural-download/vllm-openai-xpu:qwen38-int4-gdn-spec-group-sync-free-r276',
- 'image_ghcr': 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277c0733f8c2ce47aea1bb98ed576c6f1ad63bf5baf22d38fc07abf54ad (public; the identical image also sits in the private ghcr.io/steveseguin/vllm-openai-xpu-b70)',
+ 'image_id': a.image_id, 'image_tag': a.image_tag,
+ 'image_ghcr': 'ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@' + a.image_id + ' (public)',
  'compilation_config': json.loads(env.get('COMPILATION_CONFIG','{}')) if env.get('COMPILATION_CONFIG','').startswith('{') else env.get('COMPILATION_CONFIG'),
  'speculative_config': {'method': 'qwen3_5_mtp', 'num_speculative_tokens': d}, 'oracle_root': f'{os.path.basename(a.root)}/mtp0-a (same-configuration MTP0, two fresh servers G1 12/12)',
  'boot_id': boot, 'repo_head_at_launch': head, 'campaign_config': cfg,
@@ -42,7 +47,7 @@ json.dump(att, open(oa,'w'), indent=1, ensure_ascii=False); open(oa,'a').write('
 rel = os.path.relpath(oa, repo)
 payload = {'label': a.label, 'payload': {
  'hfId': a.hf or 'RedHatAI/Qwen3.5-9B-FP8-dynamic', 'modelRevision': a.rev or '790f0576d2d77dd5322aa0603a470bd9e3a3d1f6', 'engineName': 'vllm',
- 'engineVersion': 'vllm 0.27.2rc1.dev77+gac7509e2b (XPU); vllm-xpu-kernels 1e90ffa672 + lab GDN patches; _xpu_C 271db0d4 (R221 kernel library); R276 image (grouped sync-free GDN spec rows); XPU graph capture FULL_DECODE_ONLY sizes 1-64; qwen3_5_mtp depth %d' % d,
+ 'engineVersion': 'vllm 0.27.2rc1.dev77+gac7509e2b (XPU); vllm-xpu-kernels 1e90ffa672 + lab GDN patches; _xpu_C 271db0d4 (R221 kernel library); %s; XPU graph capture FULL_DECODE_ONLY sizes 1-64; qwen3_5_mtp depth %d' % (a.image_desc, d),
  'backend': 'xpu', 'quantization': a.quant,
  'hardware': {'hwClass': 'DISCRETE_GPU', 'gpuName': 'Intel Arc Pro B70', 'gpuCount': a.tp, 'vramGb': 32, 'cpu': 'AMD EPYC 9015 8-Core Processor', 'ramGb': 16, 'os': 'Ubuntu 24.04.4 LTS'},
  'contextLength': 1024, 'batchSize': 1, 'promptTokens': int(statistics.median(r['prompt_tokens'] for r in rows)), 'outputTokens': 512,
@@ -55,8 +60,8 @@ payload = {'label': a.label, 'payload': {
    'outputSha256': [r['sha256'] for r in rows], 'realisticPromptTokenCounts': [r['prompt_tokens'] for r in rows], 'realisticOutputTokenCounts': [r['completion_tokens'] for r in rows], 'realisticSuiteCachedTokens': [r.get('cached_tokens',0) for r in rows],
    'realisticSuiteCachedTokensAllZero': all((r.get('cached_tokens') or 0)==0 for r in rows), 'realisticSuiteGatePassed': True, 'realisticSuiteId': 'qwen36-27b-autoround-int4-b70-realistic-v1', 'realisticSuitePath': 'repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json', 'realisticSuiteVersion': 1,
    'temperature': 0, 'tokenTimingSource': 'openai_stream_token_ids_chunk_timestamp', 'primaryMetricName': 'median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft', 'primaryMetricAccounting': 'inter-token-intervals', 'primaryMetricAggregation': 'median-of-prompt-class-medians',
-   'commandSnippet': 'MODEL_DIR=%s VLLM_CACHE_DIR=/path/to/new-cache MTP_DEPTH=%d MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 %s  (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:521eb277…)' % (a.model_path, d, a.launcher),
-   'max_model_len': '1024', 'max_num_batched_tokens': '1024', 'max_num_seqs': '1', 'kernelBuild': 'GitHub release qwen38-int4-fixed-k-r221-20260906 (_xpu_C.abi3.so 271db0d4, clean-clone reproducible); overlays r213b/r224/r228/r256/r276 tracked in the repository'}}}
+   'commandSnippet': 'MODEL_DIR=%s VLLM_CACHE_DIR=/path/to/new-cache MTP_DEPTH=%d MAX_MODEL_LEN=1024 MAX_NUM_SEQS=1 %s  (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@%s)' % (a.model_path, d, a.launcher, a.image_id[:19] + '…'),
+   'max_model_len': '1024', 'max_num_batched_tokens': '1024', 'max_num_seqs': '1', 'kernelBuild': 'GitHub release qwen38-int4-fixed-k-r221-20260906 (_xpu_C.abi3.so 271db0d4, clean-clone reproducible); overlays ' + a.overlays + ' tracked in the repository'}}}
 oq = a.out_queue or f'{repo}/data/localmaxxing-{a.label}.queue.json'
 json.dump([payload], open(oq,'w'), indent=1, ensure_ascii=False); open(oq,'a').write('\n')
 print('attestation', rel, 'sha256', sha256(oa)); print('queue', os.path.relpath(oq, repo), 'tokSOut', round(center,3), 'ttft', round(payload['payload']['ttftMs'],2), 'promptTokens', payload['payload']['promptTokens'])

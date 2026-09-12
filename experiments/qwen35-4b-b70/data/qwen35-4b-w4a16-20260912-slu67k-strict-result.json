@@ -1,0 +1,95 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16-20260912-slu67k",
+ "status": "Qwen3.5-4B W4A16, one B70 (TP1), MTP depth 3 via qwen3_5_mtp with full decode-only XPU graph capture: strict pair 191.874279/191.580868 tok/s class-balanced median (tokens 1-100 after TTFT), G1/G2/G3 exact",
+ "image_id": "sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
+ "image_tag": "neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b",
+ "image_ghcr": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 (public)",
+ "compilation_config": null,
+ "speculative_config": {
+  "method": "qwen3_5_mtp",
+  "num_speculative_tokens": 3
+ },
+ "oracle_root": "qwen35-4b-w4a16-20260912-slu67k/mtp0-a (same-configuration MTP0, two fresh servers G1 12/12)",
+ "boot_id": "01e0fb3e-14c0-472e-8204-f63ccda6a7a6",
+ "repo_head_at_launch": "5cbb37a294488a74dfbe1844451ef8130c24d523",
+ "campaign_config": "LANE=qwen35-4b-w4a16 RUN=slu67k TP=1 DEPTH=3 GRAPH=1 DRAFT_HEAD=1 QUANT=compressed-tensors PAD=0 mask=0 model=/home/steve/llm-models/qwen35-4b-w4a16 image=sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
+ "model": {
+  "hf_id": "RedHatAI/Qwen3.5-4B-quantized.w4a16",
+  "revision": "7a613872f394578b0b52b683ff4ac47516b4bcaf",
+  "served_as": "compressed-tensors W4A16 INT4 weights, FP16 activations, publisher MTP head as draft, draft-only INT4 lm_head copy scoring a 67,248-row token shortlist (R294; the target verifies every draft with its full FP16 head)"
+ },
+ "runtime_env": {
+  "VLLM_XPU_ENABLE_XPU_GRAPH": "1",
+  "VLLM_XPU_DRAFT_LM_HEAD_INT4": "1",
+  "VLLM_XPU_GDN_SPEC_GROUP": "16",
+  "VLLM_XPU_GDN_SPLIT_MIXED": "1",
+  "VLLM_BATCH_INVARIANT": "0",
+  "TORCHINDUCTOR_DETERMINISTIC": "1",
+  "PYTHONHASHSEED": "0",
+  "QUANTIZATION": null,
+  "VLLM_XPU_FP8_BLOCK_W8A16": "1"
+ },
+ "gates_passed": {
+  "G1 mtp0-a vs mtp0-b": "12/12",
+  "G2 mtp3-a vs mtp3-b": "12/12",
+  "G3 mtp3-a vs mtp0-a": "12/12",
+  "G3 mtp3-b vs mtp0-a": "12/12"
+ },
+ "attempts": {
+  "mtp3-a": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu67k/mtp3-a/strict",
+  "mtp3-b": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slu67k/mtp3-b/strict"
+ },
+ "centers": {
+  "mtp3_class_balanced_tok_s": 191.72757360955967,
+  "mtp0_class_balanced_tok_s": 102.49713243115372
+ },
+ "performance_evidence": {
+  "mtp3-a": {
+   "class_balanced_tok_s_1_100_intervals_after_ttft": 191.8743,
+   "tok_s_1_100_after_ttft": 192.4861,
+   "tok_s_after_ttft_full": 183.9158,
+   "tok_s_wall_full": 175.1873,
+   "ttft_ms": 42.6346
+  },
+  "mtp3-b": {
+   "class_balanced_tok_s_1_100_intervals_after_ttft": 191.5809,
+   "tok_s_1_100_after_ttft": 192.2669,
+   "tok_s_after_ttft_full": 183.7226,
+   "tok_s_wall_full": 174.9487,
+   "ttft_ms": 42.737
+  }
+ },
+ "output_sha256": {
+  "mtp3-a": [
+   "976e0856681b4852cbc1556dfa477300370cc465898e4018b977197cb0d299e6",
+   "64aed8f41849a6b716b81e4367f12e69adea747260e4bd521513ed3c8c27952e",
+   "2d36612e62e0040058e8ff4b8c4fbb3698b0b6d72ffa14e133e98e77c8050df1",
+   "ba6c176f67ec46f74b13eafad1f40288ca3b2c8a933e7aef5f54f5e108ba4de9",
+   "be1a02464233131c4a23d3691f8173843fbca762eeed321cf977ce0dbd0b9696",
+   "c56e710f2fa147daf0f5013b8cc0488ec138059d5d98ca4f996d2a452f52f14b",
+   "a776be6d34fb7d42ba921810572a58ede8c1dd22b87bb40c1f7257d488f4e1bd",
+   "2559f4036e3edf268053185e90e22d9a2b657fe49cba6cfbae1477c369f760a1",
+   "3b7ca4db6f5564aa1242e4409458b773a73da6b11826a7af29bc731fb970d21d",
+   "8022681022f12b394c672103fb842b8cc69980810f83b43a790197740926da30",
+   "990b5b6d0e2a04aa0b13f173a8af3d334d3f34584dad0b9239448eee4e5eab3b",
+   "1b7bed443101e60a46d1236366579558de177191424ec5bef89356da94ced0e6"
+  ],
+  "mtp3-b": [
+   "976e0856681b4852cbc1556dfa477300370cc465898e4018b977197cb0d299e6",
+   "64aed8f41849a6b716b81e4367f12e69adea747260e4bd521513ed3c8c27952e",
+   "2d36612e62e0040058e8ff4b8c4fbb3698b0b6d72ffa14e133e98e77c8050df1",
+   "ba6c176f67ec46f74b13eafad1f40288ca3b2c8a933e7aef5f54f5e108ba4de9",
+   "be1a02464233131c4a23d3691f8173843fbca762eeed321cf977ce0dbd0b9696",
+   "c56e710f2fa147daf0f5013b8cc0488ec138059d5d98ca4f996d2a452f52f14b",
+   "a776be6d34fb7d42ba921810572a58ede8c1dd22b87bb40c1f7257d488f4e1bd",
+   "2559f4036e3edf268053185e90e22d9a2b657fe49cba6cfbae1477c369f760a1",
+   "3b7ca4db6f5564aa1242e4409458b773a73da6b11826a7af29bc731fb970d21d",
+   "8022681022f12b394c672103fb842b8cc69980810f83b43a790197740926da30",
+   "990b5b6d0e2a04aa0b13f173a8af3d334d3f34584dad0b9239448eee4e5eab3b",
+   "1b7bed443101e60a46d1236366579558de177191424ec5bef89356da94ced0e6"
+  ]
+ },
+ "identity_claim": "two fresh depth-3 servers 12/12 vs each other and 12/12 vs the MTP0 oracle on the strict 12-prompt completions suite",
+ "notes": "Canaries passed on every server; cached_tokens 0 on every request; the chat API with visible thinking measures higher on the same prompts (workload note in the recipe)."
+}

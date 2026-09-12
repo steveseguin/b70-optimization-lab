@@ -5,7 +5,7 @@
  "name": "Qwen 9B",
  "display_name": "Qwen3.5 9B",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-11",
+ "updated_at": "2026-09-12",
  "summary": "Alibaba's dense-hybrid Qwen3.5 9B (linear-attention layers with a full-attention layer every fourth, and a shipped MTP head), served on one Arc Pro B70 as RedHatAI's FP8-dynamic checkpoint through the lab's deterministic vLLM XPU stack with lossless speculative decoding. Two routes are measured: RedHatAI's FP8-dynamic and its W4A16 INT4, the latter faster and byte-exact at every concurrency through 64 users.",
  "architecture": {
   "class": "Qwen3_5ForConditionalGeneration",
@@ -28,7 +28,8 @@
   ],
   "runtime": [
    "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
-   "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)"
+   "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)",
+   "vLLM XPU 0.27.2rc1.dev77 (R294b image 78bd728d = R293 + shortlisted draft-only lm_head behind DRAFT_SHORTLIST)"
   ],
   "tp": [
    1,
@@ -469,6 +470,38 @@
     ]
    },
    "evidence": "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json"
+  },
+  {
+   "id": "q35-9b-w4a16-tp1-mtp3-graph-int4head-shortlist67k-slu67k",
+   "state": "lab-measured",
+   "revision": "qwen3.5-9b-w4a16-a398088c",
+   "variant": "W4A16",
+   "quantization": "W4A16",
+   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R294b image 78bd728d: R276 + class-consistent FP16 linear + shortlisted draft head)",
+   "config": {
+    "tp": 1,
+    "mtp": 3,
+    "graph": "on",
+    "kv": "f16",
+    "configured_max_context_tokens": 1024,
+    "draft_head": "draft INT4, 67,248-row shortlist (R294)"
+   },
+   "profile_id": "qwen35-9b-fp8-strict-completions-v1",
+   "measurement_class": "strict fresh-server pair",
+   "promotion_status": "measured headline (slu67k, 2026-09-12); LocalMaxxing submission pending",
+   "quality_scope": "G1/G2/G3 12/12",
+   "workload": "strict 12-prompt six-class suite over the completions API, 512-token cap, cache zero, class-balanced median tok/s over tokens 1-100 after TTFT, two fresh servers",
+   "metrics": {
+    "decode_tok_s": [
+     124.03,
+     124.13
+    ],
+    "ttft_ms": [
+     67.65,
+     67.61
+    ]
+   },
+   "evidence": "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json"
   }
  ],
  "series_measurements": [],
@@ -523,7 +556,7 @@
    "label": "Qwen3.5 9B W4A16 \u00b7 one or two B70 \u00b7 MTP depth 3 with the draft INT4 head",
    "revision": "qwen3.5-9b-w4a16-a398088c",
    "quantization": "W4A16",
-   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)",
+   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R294b image 78bd728d = R293 + shortlisted draft-only lm_head behind DRAFT_SHORTLIST)",
    "topologies": [
     1,
     2
@@ -545,14 +578,15 @@
     "evidence": {
      "grade": "B",
      "scope": "one- and two-card strict pairs with identity gates and full-range ladders",
-     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; every no-speculation ladder rung exact through 64 users in both passes on one card, while two cards hold 32 users exactly and drop to 63/64 at 64 users; no clean-host replay yet. 2026-09-11 (R293, CLASSPAD=1): strict gates 12/12 on both card counts at 112/62 (one card) and 165/94 (two cards) tok/s; no-speculation exact to c24 and at c64 on one card (1644 tok/s, 1955 at c128 with the larger admission budget, 512/512), to c32 on two (3227 at c128, 512/512); with a 5 ms admission stagger 64 users on two cards are byte-identical over twenty passes at 2557 tok/s.",
+     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; every no-speculation ladder rung exact through 64 users in both passes on one card, while two cards hold 32 users exactly and drop to 63/64 at 64 users; no clean-host replay yet. 2026-09-11 (R293, CLASSPAD=1): strict gates 12/12 on both card counts at 112/62 (one card) and 165/94 (two cards) tok/s; no-speculation exact to c24 and at c64 on one card (1644 tok/s, 1955 at c128 with the larger admission budget, 512/512), to c32 on two (3227 at c128, 512/512); with a 5 ms admission stagger 64 users on two cards are byte-identical over twenty passes at 2557 tok/s.. 2026-09-12 (R294): the draft head scoring a 67,248-row shortlist gives 124.03 / 124.13 tok/s at one user, +9%, every gate 12/12, acceptance unchanged; lossless by construction (the target verifies every draft).",
      "reviewed_at": "2026-09-11",
      "evidence": [
       "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json",
       "repro/qwen35-9b-w4a16-b70/README.md",
       "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp2-mtp3-graph1-dhint4-20260907-w3-strict-result.json",
       "experiments/qwen35-9b-b70/data/2026-09-11-qwen35-9b-r293-classpad.json",
-      "experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md"
+      "experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md",
+      "experiments/qwen35-9b-b70/data/2026-09-12-qwen35-9b-draft-head-shortlist.json"
      ]
     }
    },

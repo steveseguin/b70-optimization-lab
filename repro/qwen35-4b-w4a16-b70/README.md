@@ -110,7 +110,7 @@ Every variable of the [shared launcher](../qwen35-9b-fp8-b70/README.md#launch)
 applies unchanged: `MTP_DEPTH` (default 3), `TENSOR_PARALLEL_SIZE`, `XPU_GRAPH`,
 `DRAFT_HEAD_INT4`, `PORT` and the server-shape variables. This wrapper adds
 `CLASSPAD` (default `0`; see the R293 section below) and pins the R293 image
-(`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730...`), which
+(`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d...`), which
 with `CLASSPAD=0` is the R276 code path the tables were measured on.
 
 ## Validate
@@ -207,6 +207,23 @@ CLASSPAD=1 TENSOR_PARALLEL_SIZE=2 MTP_DEPTH=0 MAX_NUM_SEQS=128 MAX_NUM_BATCHED_T
   MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-4b-cache \
   repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh
 ```
+
+## The draft head only needs a shortlist (R294, 2026-09-12): 191.87 / 191.58
+
+The MTP head drafts three tokens per step, each an argmax over the full 248,320-row vocabulary projection; the 9B
+lane measured that projection at 28% of the step even as a draft-only INT4 copy. The draft only proposes. The target
+verifies every proposed token with its own full FP16 head, so a draft head that scores only a **shortlist** of rows
+cannot change any output: a true argmax outside the list is simply rejected. R294 builds the draft-only INT4 copy from
+the shortlisted rows. With the 67,248-row list (the lab's own text united with system documentation and the image's
+Python sources; 27% of the vocabulary, 99.5% of this model's suite output), the single-user headline is
+**191.87 / 191.58 tok/s** against 177.56 / 177.26 for the same image scoring every row, every gate 12/12, acceptance within noise of
+the control. Lists of 32k to 92k rows all land within 1% of it; 16k rows returns only +1% and 8k loses. Under many users with the 92k list (one card, `CLASSPAD=1`): 161.9 at one user, 1400 at 16 (exact), 1888 at 64, against 151.4 / 1353 / 1831 without the shortlist. Curve, lists and builders:
+[`experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md`](../../experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md).
+
+The launcher enables it by default (`DRAFT_SHORTLIST`, empty string to score every row); the served image is R294b
+(R293 plus the shortlisted head, lists under `/opt/draft-shortlists/`). A deployment with its own traffic can
+rebuild the list with `experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py`; a list that misses
+tokens costs acceptance, never correctness.
 
 ## Known limits
 

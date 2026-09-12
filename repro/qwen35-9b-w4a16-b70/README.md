@@ -224,6 +224,23 @@ a smaller share of its step.
 admission stagger where byte-exact output matters. The scheduled-draft server in the next section is a separate route
 built on the R276 digest and has not been combined with R293.
 
+## The draft head only needs a shortlist (R294, 2026-09-12): 124.03 / 124.13
+
+The MTP head drafts three tokens per step, each an argmax over the full 248,320-row vocabulary projection; the 9B
+lane measured that projection at 28% of the step even as a draft-only INT4 copy. The draft only proposes. The target
+verifies every proposed token with its own full FP16 head, so a draft head that scores only a **shortlist** of rows
+cannot change any output: a true argmax outside the list is simply rejected. R294 builds the draft-only INT4 copy from
+the shortlisted rows. With the 67,248-row list (the lab's own text united with system documentation and the image's
+Python sources; 27% of the vocabulary, 99.5% of this model's suite output), the single-user headline is
+**124.03 / 124.13 tok/s** against 113.48 / 113.49 for the same image scoring every row, every gate 12/12, acceptance within noise of
+the control. The 32k list reads the same 124.0 / 124.1 with lower acceptance; the 92k list 122.2 / 122.2 with the control's acceptance. Curve, lists and builders:
+[`experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md`](../../experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md).
+
+The launcher enables it by default (`DRAFT_SHORTLIST`, empty string to score every row); the served image is R294b
+(R293 plus the shortlisted head, lists under `/opt/draft-shortlists/`). A deployment with its own traffic can
+rebuild the list with `experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py`; a list that misses
+tokens costs acceptance, never correctness.
+
 ## One server for every batch size (campaigns cudynm1 / cudynm1r, 2026-09-11)
 
 Speculation on this route is a latency lever, not a throughput lever: depth 3 is

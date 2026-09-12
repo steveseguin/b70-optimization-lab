@@ -4,7 +4,7 @@
 # CI check:        tools/check-container-packet.py
 
 x-b70-common: &b70-common
-  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6
+  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1
   ulimits:
     core: 0
   mem_limit: 12g
@@ -56,6 +56,7 @@ x-b70-common: &b70-common
     VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS: "2048"
     VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE: "128"
     VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE: "bf16"
+    VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST: "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt"
     VLLM_XPU_ENABLE_XPU_GRAPH: "1"
     VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
     VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
@@ -138,6 +139,7 @@ services:
       VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS: "2048"
       VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE: "128"
       VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE: "bf16"
+      VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST: "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt"
       VLLM_XPU_ENABLE_XPU_GRAPH: "1"
       VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
       VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"
@@ -255,6 +257,7 @@ services:
       VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS: "2048"
       VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE: "128"
       VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE: "bf16"
+      VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST: "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt"
       VLLM_XPU_ENABLE_XPU_GRAPH: "1"
       VLLM_XPU_FA_SERIAL_SPEC_DECODE: "0"
       VLLM_XPU_FA_SERIAL_SPEC_NO_CAUSAL: "0"

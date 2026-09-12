@@ -5,7 +5,7 @@
  "name": "Qwen 4B",
  "display_name": "Qwen3.5 4B",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-11",
+ "updated_at": "2026-09-12",
  "summary": "Alibaba's smallest dense-hybrid Qwen3.5 with a shipped MTP head, served on one Arc Pro B70. Only the INT4 W4A16 build is packaged: the FP8 build of the same model is not repeat-exact on this stack, while the INT4 route passes every identity gate.",
  "architecture": {
   "class": "Qwen3_5ForConditionalGeneration",
@@ -24,7 +24,8 @@
   ],
   "runtime": [
    "vLLM XPU 0.27.2rc1.dev77 (R276 image 521eb277)",
-   "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)"
+   "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)",
+   "vLLM XPU 0.27.2rc1.dev77 (R294b image 78bd728d = R293 + shortlisted draft-only lm_head behind DRAFT_SHORTLIST)"
   ],
   "tp": [
    1,
@@ -157,6 +158,38 @@
     ]
    },
    "evidence": "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-w4a16-matrix-result.json"
+  },
+  {
+   "id": "q35-4b-w4a16-tp1-mtp3-graph-int4head-shortlist67k-slu67k",
+   "state": "lab-measured",
+   "revision": "qwen3.5-4b-w4a16-7a613872",
+   "variant": "W4A16",
+   "quantization": "W4A16",
+   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R294b image 78bd728d: R276 + class-consistent FP16 linear + shortlisted draft head)",
+   "config": {
+    "tp": 1,
+    "mtp": 3,
+    "graph": "on",
+    "kv": "f16",
+    "configured_max_context_tokens": 1024,
+    "draft_head": "draft INT4, 67,248-row shortlist (R294)"
+   },
+   "profile_id": "qwen35-fp8-strict-completions-v1",
+   "measurement_class": "strict fresh-server pair",
+   "promotion_status": "measured headline (slu67k, 2026-09-12); LocalMaxxing submission pending",
+   "quality_scope": "G1/G2/G3 12/12",
+   "workload": "strict 12-prompt six-class suite over the completions API, 512-token cap, cache zero, class-balanced median tok/s over tokens 1-100 after TTFT, two fresh servers",
+   "metrics": {
+    "decode_tok_s": [
+     191.874,
+     191.583
+    ],
+    "ttft_ms": [
+     44.91,
+     45.05
+    ]
+   },
+   "evidence": "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json"
   }
  ],
  "series_measurements": [],
@@ -167,7 +200,7 @@
    "label": "Qwen3.5 4B W4A16 \u00b7 one or two B70 \u00b7 MTP depth 3 with the draft INT4 head",
    "revision": "qwen3.5-4b-w4a16-7a613872",
    "quantization": "W4A16",
-   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R293 image 40d46730 = R276 521eb277 + class-consistent FP16 linears behind CLASSPAD)",
+   "runtime": "vLLM XPU 0.27.2rc1.dev77 (R294b image 78bd728d = R293 + shortlisted draft-only lm_head behind DRAFT_SHORTLIST)",
    "topologies": [
     1,
     2
@@ -188,7 +221,7 @@
     "evidence": {
      "grade": "B",
      "scope": "one- and two-card strict pairs with identity gates and ladders",
-     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; the second card adds 35% without speculation and 32% with it, while two-card concurrency identity holds to 32 users without speculation and 16 with it; no clean-host replay yet. 2026-09-11 (R293, CLASSPAD=1): strict gates 12/12 on both card counts at 168/96 (one card) and 226/128 (two cards) tok/s; no-speculation ladders exact to c20 on one card and c16 on two at 25-40% higher aggregate throughput (2520 at c128 on one card, 4015 on two, both 512/512); with a 5 ms admission stagger 64 users are byte-identical to the sequential oracle over twenty passes on one card (2104 tok/s) and two (3164). TP2 is measured lossless at 32K context (18/18, 222 tok/s depth 3).",
+     "basis": "two fresh-server pairs per card count, G1-G3 exact on both; the second card adds 35% without speculation and 32% with it, while two-card concurrency identity holds to 32 users without speculation and 16 with it; no clean-host replay yet. 2026-09-11 (R293, CLASSPAD=1): strict gates 12/12 on both card counts at 168/96 (one card) and 226/128 (two cards) tok/s; no-speculation ladders exact to c20 on one card and c16 on two at 25-40% higher aggregate throughput (2520 at c128 on one card, 4015 on two, both 512/512); with a 5 ms admission stagger 64 users are byte-identical to the sequential oracle over twenty passes on one card (2104 tok/s) and two (3164). TP2 is measured lossless at 32K context (18/18, 222 tok/s depth 3).. 2026-09-12 (R294): the draft head scoring a 67,248-row shortlist gives 191.87 / 191.58 tok/s at one user, +8%, every gate 12/12, acceptance unchanged; lossless by construction (the target verifies every draft).",
      "reviewed_at": "2026-09-11",
      "evidence": [
       "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-w4a16-matrix-result.json",
@@ -196,7 +229,8 @@
       "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1-strict-result.json",
       "experiments/qwen35-4b-b70/data/2026-09-11-qwen35-4b-r290-classpad-on-the-server.json",
       "experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-tp2-long-context.json",
-      "experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-staggered-admission-is-exact.json"
+      "experiments/qwen35-4b-b70/data/2026-09-09-qwen35-4b-staggered-admission-is-exact.json",
+      "experiments/qwen35-4b-b70/data/2026-09-12-qwen35-4b-draft-head-shortlist.json"
      ]
     }
    },
