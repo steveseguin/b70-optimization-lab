@@ -70,5 +70,19 @@ fix. No new candidate was deployed to users in this review.
   and limitations are recorded in the width packet. Search absence is bounded.
 
 Prepared report bodies: [phase comment](phase/upstream-comment.md),
-[width issue](width/upstream-issue.md). Submission receipts will record actual
-upstream URLs and the immutable evidence commit after publication.
+[width issue](width/upstream-issue.md). Published and read back successfully:
+
+- [Evidence comment on vLLM #51562](https://github.com/vllm-project/vllm/issues/51562#issuecomment-5647033118), supporting the existing open PR #51565.
+- [New kernels issue #593](https://github.com/vllm-project/vllm-xpu-kernels/issues/593), reporting the active-width contract failure.
+- Exact transmitted bodies and immutable evidence commit are in
+  `phase-comment-receipt.json` and `width-issue-receipt.json`.
+
+No code PR was submitted: phase has an existing upstream proposal; width needs
+current device/state validation before claiming a complete fix. The historical
+phantom report remains held. Review decisions and authorized upstream reporting
+are complete; outstanding GPU validation is explicitly outside this review's
+execution evidence.
+
+Diff whitespace checks report only blank context lines inside the two retained
+unified patch files. Those leading context markers are required patch syntax;
+source hashes and the width harness verify the preserved patches.
