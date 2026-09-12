@@ -527,6 +527,48 @@
      "per_user_value": 57.9875
     }
    ]
+  },
+  {
+   "id": "http-w4a16-r293-dynamic-draft-schedule-tp1-aggregate-vs-concurrent-users",
+   "label": "Qwen3.5-9B W4A16 one card, scheduled drafts (depth 3 to 8 users, 1 to 16, none above) on R293 with CLASSPAD=1: aggregate decode vs concurrent users (exact rungs)",
+   "metric": "aggregate_decode",
+   "unit": "tok/s",
+   "x_metric": "concurrent_sequences",
+   "x_label": "Concurrent HTTP users",
+   "scope": "dyn293 (2026-09-11): one B70, the scheduled-draft overlays rebuilt on the R293 image, VLLM_XPU_FP16_LINEAR_CLASSPAD=1, strict launcher env, full decode graphs per scheduled K, max-model-len 256, max-num-seqs 64, 128 returned raw token IDs per response on the small-context suite, four passes, pass 2 shown. Points are rungs output-identity-qualified in the shown pass (c1-c16). Measured but withheld: c32 1192.2 (120/128), c64 1630.6 (255/256; the no-speculation R293 server in the same arm reads 1641.1). Same-host R276 baseline (dyn276): c16 942.7, c32 1153.1 (115/128), c64 1243.4 (249/256).",
+   "evidence": "experiments/qwen35-9b-b70/data/2026-09-11-qwen35-9b-r293-classpad.json",
+   "points": [
+    {
+     "concurrent_sequences": 1,
+     "value": 113.9,
+     "samples": 1,
+     "per_user_value": 113.9
+    },
+    {
+     "concurrent_sequences": 2,
+     "value": 218.8,
+     "samples": 1,
+     "per_user_value": 109.4
+    },
+    {
+     "concurrent_sequences": 4,
+     "value": 366.3,
+     "samples": 1,
+     "per_user_value": 91.575
+    },
+    {
+     "concurrent_sequences": 8,
+     "value": 652.1,
+     "samples": 1,
+     "per_user_value": 81.5125
+    },
+    {
+     "concurrent_sequences": 16,
+     "value": 960.1,
+     "samples": 1,
+     "per_user_value": 60.0063
+    }
+   ]
   }
  ],
  "hardware": {
@@ -661,7 +703,11 @@
   "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r293-image-ghcr.sh",
   "experiments/qwen35-9b-b70/scripts/run-20260911-qwen35-9b-classpad-chain.sh",
   "experiments/qwen35-9b-b70/data/2026-09-11-qwen35-9b-r293-classpad.json",
-  "experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md"
+  "experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md",
+  "repro/qwen35-9b-w4a16-b70/docker/r293-dynamic-mamba-alloc.Dockerfile",
+  "repro/qwen35-9b-w4a16-b70/docker/r293-dynsd-fullgraph.Dockerfile",
+  "repro/qwen35-9b-w4a16-b70/docker/r293-dynsd-catchup.Dockerfile",
+  "experiments/qwen35-9b-b70/scripts/run-20260911-qwen35-9b-dynsd-on-r293-chain.sh"
  ],
  "evidence": [
   "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-c128-identity-ladder.json",

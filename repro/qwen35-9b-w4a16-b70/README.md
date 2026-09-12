@@ -306,6 +306,18 @@ MODEL_DIR=/models/Qwen3.5-9B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-w4a16-dy
   repro/qwen35-9b-w4a16-b70/scripts/run-qwen35-9b-w4a16-dynamic-server.sh
 ```
 
+**Combined with R293 (2026-09-11 evening, this host).** The same three overlays build unchanged on the R293 image
+(`docker/r293-*.Dockerfile`; nothing overlaps) and the launcher's content pins accept the result. Run against the
+R276 build on the same host the same evening, both as full runs with four-pass ladders: gates 12/12 on both; one user
+113.5 -> 112.4; 16 users 943 -> 960, exact on both; 32 users 1153 -> 1192; **64 users 1243 -> 1631**, within 0.6%
+of the no-speculation R293 server, so the schedule's handover to no drafts no longer costs anything. Identity at 32
+and 64 users is the same or better on R293 (120/128 and 255/256 against 115/128 and 249/256). Note that on this host
+the R276 scheduled server read 115/128 at 32 users where the four-card host recorded 32/32 in four passes, so the
+two-run-rule rung here is 16 users on either image; recorded as a host difference in
+`experiments/qwen35-9b-b70/notes/2026-09-11-r293-on-the-9b.md`. Launch the combination with
+`IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-r293-dynsd-catchup CLASSPAD=1` in front of the dynamic launcher
+after building the `r293-*` Dockerfiles.
+
 A locally built overlay's image ID is not portable, so the launcher pins the
 overlay by content: it verifies the SHA-256 of all six overlaid files inside
 the image before starting, and the shared launcher's image contract still
