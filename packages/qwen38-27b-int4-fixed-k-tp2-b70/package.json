@@ -70,12 +70,12 @@
  },
  "runtime": {
   "kind": "container",
-  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6",
-  "image_id_validated": "sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6",
-  "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293",
+  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
+  "image_id_validated": "sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
+  "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b",
   "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
   "xpu_ops_sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
-  "base": "R228 (fixed-K _xpu_C + FP16 row chunks + GDN spec grouping) + R256 draft-only INT4 lm_head fallback + R276 sync-free grouped GDN branch (graph capture to 320) + R293 class-consistent FP16 linear mode (VLLM_XPU_FP16_LINEAR_CLASSPAD; off = R276 code path)",
+  "base": "R228 (fixed-K _xpu_C + FP16 row chunks + GDN spec grouping) + R256 draft-only INT4 lm_head fallback + R276 sync-free grouped GDN branch (graph capture to 320) + R293 class-consistent FP16 linear mode (VLLM_XPU_FP16_LINEAR_CLASSPAD; off = R276 code path) + R294 shortlisted draft-only lm_head (DRAFT_SHORTLIST; default the 67,248-row list)",
   "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
   "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
   "onednn_head": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
@@ -95,12 +95,13 @@
    "experiments/qwen38-27b-b70/docker/r290-fp16-linear-classpad.py",
    "experiments/qwen38-27b-b70/docker/r291-fp16-linear-classpad-verified.py",
    "experiments/qwen38-27b-b70/docker/r292-fp16-linear-classpad-nozero.py",
-   "experiments/qwen38-27b-b70/docker/r293-fp16-linear-classpad-cheapest.py"
+   "experiments/qwen38-27b-b70/docker/r293-fp16-linear-classpad-cheapest.py",
+   "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py"
   ]
  },
  "commands": {
-  "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6 neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293 EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-  "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+  "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+  "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
   "health": "curl -fsS http://127.0.0.1:18134/health",
   "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
   "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
@@ -148,7 +149,16 @@
   "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r293-image-ghcr.sh",
   "experiments/qwen38-27b-b70/scripts/run-20260911-qwen38-int4-r295-r298-classpad-chain.sh",
   "experiments/qwen35-4b-b70/probes/validate-r292-stale-pad.py",
-  "experiments/qwen35-4b-b70/probes/fp16-linear-mclass-census-extended.py"
+  "experiments/qwen35-4b-b70/probes/fp16-linear-mclass-census-extended.py",
+  "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py",
+  "experiments/qwen38-27b-b70/docker/Dockerfile.draft-head-shortlist-r294",
+  "experiments/qwen38-27b-b70/docker/Dockerfile.draft-head-shortlist-r294b",
+  "experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist.py",
+  "experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py",
+  "experiments/qwen38-27b-b70/docker/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
+  "experiments/qwen38-27b-b70/scripts/run-20260912-qwen38-int4-r299-draft-shortlist-chain.sh",
+  "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r294b-image-ghcr.sh",
+  "experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md"
  ],
  "performance_profiles": [
   {

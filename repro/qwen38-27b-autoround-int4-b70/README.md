@@ -36,6 +36,8 @@
 | R293 (classpad on) | 2 | 0 | on (sizes to 320) | n/a | 49.39 / 49.39 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 64/64 (warm pass) | R295 |
 | R293 (classpad on) | 1 | 4 | on (sizes to 320) | INT4 draft-only | 73.19 / 73.25 | G2 12/12, G3 12/12 x2 (own MTP0 pair) | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 15/16, c32 29/32, c64 59/64 (warm pass) | R298 |
 | R293 (classpad on) | 1 | 0 | on (sizes to 320) | n/a | 32.58 / 32.50 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 63/64 (warm pass) | R298 |
+| R294b | 2 | 4 | on (sizes to 320) | INT4 draft-only, 67k shortlist (R294) | 117.46 / 117.59 | G2 12/12, G3 12/12 x2 (own MTP0 pair) | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 31/32, c64 62/64 (warm pass) | R299 |
+| R294b | 2 | 0 | on (sizes to 320) | n/a | 50.01 / 50.04 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 64/64 (warm pass) | R299 |
 
 **Settings common to every row:** vLLM 0.27.2rc1.dev77+gac7509e2b (XPU), `--dtype float16 --quantization gptq --kv-cache-dtype auto --block-size 64 --no-enable-prefix-caching --language-model-only`, `VLLM_BATCH_INVARIANT=0` (vLLM's own switch is off: the strict launchers pin it and vLLM refuses to boot the GDN backend with it on; batch invariance on this lane comes from the kernels and the switches below), `TORCHINDUCTOR_DETERMINISTIC=1`, `VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0`, `VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0`, `PYTHONHASHSEED=0`, `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`, `VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1`, `VLLM_XPU_GDN_NATIVE_FALLBACK=1`, `VLLM_XPU_FP8_BLOCK_W8A16=1` (inert on the gptq path), `VLLM_XPU_GDN_SPLIT_MIXED=1`, `VLLM_XPU_GDN_SPEC_GROUP=16`, `VLLM_XPU_FP16_LINEAR_ROWCHUNK=32` (R293 rows: `VLLM_XPU_FP16_LINEAR_CLASSPAD=1`, which replaces the 32-row pieces with one verified oneDNN M-class per weight shape), `VLLM_XPU_W4A16_DETERMINISM_PAD=0` (correction 2026-09-06: the launchers did not forward this switch until R278k, so every runner-launched ladder rung above 128 verify rows, i.e. c32/c64, ran with the R213b pad on; c1-c16 and the single-user headline were never affected; the R281 ladder below is the corrected measurement), `VLLM_XPU_ALLREDUCE_HOST_WAIT=1`, `VLLM_XPU_RMSNORM_TRITON=0`, `VLLM_XPU_GEMMA_RMSNORM_TRITON=0`, whole-graph `torch.compile` (`splitting_ops: []`) with `inductor_compile_config {deterministic: true, split_reductions: false, triton.autotune_pointwise: false, combo_kernels: false, benchmark_combo_kernel: false, benchmark_epilogue_fusion: false}`, oneCCL `CCL_ATL_TRANSPORT=ofi FI_PROVIDER=tcp CCL_ZE_IPC_EXCHANGE=pidfd CCL_SEND=direct CCL_RECV=direct CCL_TOPO_P2P_ACCESS=1` with the three `CCL_SYCL_*_SIMPLE_THRESHOLD=4294967296`, greedy decoding (`temperature 0`), speculative config `{"method":"qwen3_next_mtp","num_speculative_tokens":<depth>}` (omitted for MTP0). Model: `devan-carlin/Qwen3.8-27B-int4-AutoRound` bce40cac relabelled to plain gptq (manifest `model-gptq-relabel-r212.json`).
 
@@ -340,6 +342,23 @@ been two passes.
 
 `CLASSPAD=1` on the package launcher enables it; the default stays `0` (the published single-user configuration). One
 card (R298) is in the replication matrix above.
+
+### The draft head scores a shortlist: R294 (R299/R300, 2026-09-12)
+
+The four draft passes per step each pick one token from a 248,320-row projection. A draft only proposes; the target
+verifies every token with its full FP16 head, so a draft head that scores a **shortlist** of rows cannot change an
+output - a true argmax outside the list is simply rejected. R294 (`experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py`,
+image R294b = R293 + the shortlisted head) builds the draft-only INT4 copy from a 67,248-row token-frequency list
+(lab text plus system documentation and the image's Python sources; per TP shard 58,074 and 9,174 rows). Found on
+the Qwen3.5 lanes, where it is worth +8-9% at one user
+([`experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md`](../../experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md)).
+Here, on the served configuration: **117.46 / 117.59 tok/s** (R299, G1/G2/G3 12/12, a fresh MTP0 pair) against
+112.74 for the same image scoring every row (R300) and R283's 112.90 / 113.00: **+4.2%**, smaller than on the
+smaller models because the draft passes are a smaller share of a step dominated by the INT4 GEMMs. Ladders 1-5%
+above R282 with the same identity profile (c16 32/32, c32 61/64, c64 121/128); MTP0 exact c1-c64. The package
+launcher enables it by default (`DRAFT_SHORTLIST`; empty scores every row). R300's second control server never
+became healthy: a copy-engine reset on card `e3:00.0` at 12:46 (fault signature in the kernel journal), the class
+this lane has seen before; recorded, and the host wants a reboot before further servers.
 
 ### Kernel-library build reproducibility (clean-clone replay, 2026-09-06)
 

@@ -2,6 +2,7 @@
 # Qwen3.8-27B AutoRound INT4, fixed-K batch-invariant profile (2026-09-05): launch one vLLM server through the FP8 lane's
 # contract-checked launcher with the INT4 identity. Depth via MTP_DEPTH (0 = no speculation; default 4).
 #   MODEL_DIR   the gptq-relabelled model directory (built by the relabel builder in this scripts directory); default below
+#   DRAFT_SHORTLIST  container path of the draft head's token shortlist (default the 67k list; empty = all rows; R294)
 #   CLASSPAD    0 (default, the published single-user configuration) or 1 (class-consistent FP16 linears for many users; R293)
 #   IMAGE / EXPECTED_IMAGE_ID  the R293 image (R276 + classpad; ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:40d46730...; R276 521eb277..., R256 f7696bca... and
 #                             R228 aaf920b0... run the same code but cannot capture verify batches above 16 sequences: use XPU_GRAPH_SIZES=8 with them)
@@ -26,8 +27,12 @@ fi
 # R276's code path unchanged: every unquantized FP16 linear in <=32-row pieces, the published single-user headline.
 # CLASSPAD=1 keeps each of those linears in one verified oneDNN M-class instead, so the 2.5 GB vocabulary projection is
 # read once per step rather than once per 32 rows: the multi-user configuration (see the README's R295-R298 rows).
-export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293}
-export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:40d46730c9a24f9396cc67c0e5578dd80d11dfae7a4d23a55f97620140a0b3e6}
+# R294 (2026-09-12): the draft-only INT4 lm_head scores a token shortlist (67,248 rows) instead of all 248,320; the target
+# verifies every draft with its full FP16 head, so outputs cannot change (R299: 12/12 on every gate, 117.46/117.59 tok/s
+# against 112.90/113.00). DRAFT_SHORTLIST= (empty) scores every row. The image is R294b = R293 + the shortlisted head.
+export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b}
+export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1}
+export VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=${DRAFT_SHORTLIST-/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt}
 export VLLM_XPU_FP16_LINEAR_CLASSPAD=${CLASSPAD:-0}
 export EXPECTED_XPU_EXTENSION_SHA256=${EXPECTED_XPU_EXTENSION_SHA256:-271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f}
 export EXPECTED_XPU_OPS_SHA256=${EXPECTED_XPU_OPS_SHA256:-6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3}

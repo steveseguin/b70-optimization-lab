@@ -7108,5 +7108,283 @@
   ],
   "gates": "G2 12/12, G3 12/12 x2 (own MTP0 pair)",
   "gates_mtp0": "G1 12/12"
+ },
+ "R299_tp2_depth4_r294_draft_shortlist_full": {
+  "date": "2026-09-12",
+  "boot": "01e0fb3e",
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b sha256:78bd728d (R293 + the shortlisted draft-only lm_head, R294); VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt (67,248 rows; 58,074 + 9,174 across the two TP shards), CLASSPAD=0",
+  "config": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head, pad off) with the draft head scoring the 67k shortlist; FULL run: fresh MTP0 pair, depth-4 pair against its own MTP0, two-pass c1-c64 ladders",
+  "ladder": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 111.8,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 101.6,
+    "ttft_s_max": 1.0
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 262.8,
+    "ttft_s_max": 0.17
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 430.4,
+    "ttft_s_max": 0.22
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 574.1,
+    "ttft_s_max": 0.27
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "30/32",
+    "aggregate_tok_s_wall": 638.8,
+    "ttft_s_max": 0.76
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "59/64",
+    "aggregate_tok_s_wall": 593.9,
+    "ttft_s_max": 9.21
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 111.4,
+    "ttft_s_max": 0.06
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 191.3,
+    "ttft_s_max": 0.14
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 304.9,
+    "ttft_s_max": 0.15
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 429.8,
+    "ttft_s_max": 0.23
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 589.0,
+    "ttft_s_max": 0.24
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "31/32",
+    "aggregate_tok_s_wall": 650.4,
+    "ttft_s_max": 0.55
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "62/64",
+    "aggregate_tok_s_wall": 597.4,
+    "ttft_s_max": 9.12
+   }
+  ],
+  "ladder_first_divergence_vs_oracle": {
+   "c32_r1": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "cache-c016",
+     75
+    ]
+   ],
+   "c64_r1": [
+    [
+     "capacity-c006",
+     11
+    ],
+    [
+     "cache-c016",
+     75
+    ],
+    [
+     "index-c009",
+     79
+    ],
+    [
+     "index-c041",
+     89
+    ],
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c32_r2": [
+    [
+     "rollback-c018",
+     123
+    ]
+   ],
+   "c64_r2": [
+    [
+     "capacity-c046",
+     18
+    ],
+    [
+     "rollback-c018",
+     77
+    ]
+   ]
+  },
+  "ladder-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.1,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 1,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 94.7,
+    "ttft_s_max": 0.1
+   },
+   {
+    "concurrency": 4,
+    "repeat": 1,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 179.3,
+    "ttft_s_max": 0.13
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 328.6,
+    "ttft_s_max": 0.18
+   },
+   {
+    "concurrency": 16,
+    "repeat": 1,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 538.6,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 1,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 817.0,
+    "ttft_s_max": 0.49
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 988.2,
+    "ttft_s_max": 1.02
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "exact": "1/1",
+    "aggregate_tok_s_wall": 50.2,
+    "ttft_s_max": 0.04
+   },
+   {
+    "concurrency": 2,
+    "repeat": 2,
+    "exact": "2/2",
+    "aggregate_tok_s_wall": 96.0,
+    "ttft_s_max": 0.08
+   },
+   {
+    "concurrency": 4,
+    "repeat": 2,
+    "exact": "4/4",
+    "aggregate_tok_s_wall": 180.1,
+    "ttft_s_max": 0.12
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "exact": "8/8",
+    "aggregate_tok_s_wall": 330.1,
+    "ttft_s_max": 0.16
+   },
+   {
+    "concurrency": 16,
+    "repeat": 2,
+    "exact": "16/16",
+    "aggregate_tok_s_wall": 540.2,
+    "ttft_s_max": 0.26
+   },
+   {
+    "concurrency": 32,
+    "repeat": 2,
+    "exact": "32/32",
+    "aggregate_tok_s_wall": 815.0,
+    "ttft_s_max": 0.49
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "exact": "64/64",
+    "aggregate_tok_s_wall": 987.3,
+    "ttft_s_max": 1.02
+   }
+  ],
+  "ladder-mtp0_first_divergence_vs_oracle": {},
+  "verdict": "lossless: G1 12/12 (50.01/50.04), G2 12/12, G3 12/12 x2 at 117.46/117.59 tok/s against R283's 112.90/113.00 (+4.1%) and R300's same-image control (below). Warm pass depth 4: c1 111.8, c2 191.3, c4 304.9, c8 430.4, c16 589.0 (32/32), c32 650.4 (61/64), c64 597.4 (121/128) against R282's 107.4 / 191.0 / 294.7 / 422.6 / 578.9 / 634.5 / 589.0: +1-5%, identity unchanged. MTP0 exact c1-c64 at 988.2. Mean acceptance 3.12/3.11 (R283 class: ~3.1). The draft passes are a smaller share of this model's step than on the Qwen3.5 lanes, so the shortlist is worth 4% here against 8-9% there.",
+  "rates": [
+   117.46298497318,
+   117.593181857287
+  ],
+  "rates_mtp0": [
+   50.008313804021,
+   50.044247905369
+  ],
+  "gates": "G2 12/12, G3 12/12 x2 (own MTP0 pair)",
+  "gates_mtp0": "G1 12/12"
+ },
+ "R300_tp2_depth4_r294b_no_shortlist_control": {
+  "date": "2026-09-12",
+  "image": "R294b (as R299) with no shortlist: the in-image control",
+  "config": "STRICT_MTP1_ONLY against R299's fresh MTP0 oracle",
+  "rates": [
+   112.736150948859
+  ],
+  "gates": "mtp1-a 12/12 vs the R299 MTP0 oracle; mtp1-b did not start",
+  "verdict": "mtp1-a 112.74 tok/s, equal to R283's 112.90 / 113.00, so R299's 117.46 / 117.59 is +4.2% for the shortlist alone. mtp1-b never became healthy: at 12:46:13 the kernel logged an engine reset on card e3:00.0 (bcs, guc_id 17) with two \"Fault response: Unsuccessful -EINVAL\" lines, the copy-engine reset class this lane has met before; the server hung after model load. Both cards report normal afterwards. Lab rule: reboot before launching further servers on this boot."
  }
 }
