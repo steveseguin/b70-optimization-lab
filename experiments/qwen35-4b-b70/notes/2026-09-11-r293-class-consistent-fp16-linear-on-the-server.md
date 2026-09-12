@@ -65,3 +65,15 @@ Two modes on one image, both lossless by the gates:
 
 The 9B and 27B lanes run the same R224 op and the same oneDNN GEMM; their ladders above 32 rows carry the
 same tax and the same fix applies, unmeasured there.
+
+## A row-invariant GEMM would remove the pad; a naive one is too slow (2026-09-11)
+
+The 5-6% single-user cost of R293 is one copy plus a 33-row GEMM per projection. The only way to remove it is a
+GEMM whose reduction order does not depend on M at all.  is a Triton fp16 GEMM
+with a fixed K block and no split-K, so that property holds by construction: bit-identical rows at every M from 1
+to 320, deterministic, and (at M=64) bit-identical to oneDNN's own output. It is not fast enough. On the 4B
+vocabulary shape the best of four tilings is 2.33 ms at M=1 against oneDNN's 2.12 (+10%, worse than the pad's
++0.11 ms), 3.1 ms at M=32 (2.23), 3.6-6.2 at M=64 (2.46) and 12.7-34 at M=256 (2.87); on the per-layer shapes it
+is 1.3-2x slower at M=1 and up to 10x on the out-projection. Closing the gap is real kernel work (register tiling,
+prefetch, a 2D block layout for the weight), beyond this lane. Recorded so the next person does not repeat the
+easy version.

@@ -73,6 +73,9 @@ launch() {
   wait_for_memory "${label}"
   local name=${LANE}-${RUN}-${label} served=${LANE}-${label} launcher=run-w8a16-mtp0-strict-server.sh spec='{}'
   if [[ "${kind}" != mtp0 ]]; then launcher=run-w8a16-mtp1-strict-server.sh; spec="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${DEPTH}}"; fi
+  # SPEC_SCHEDULE (2026-09-11, as in campaign-v3): vLLM's per-batch-size draft schedule, a JSON list of
+  # [range_start,range_end,K] inclusive batch-size ranges capped at DEPTH. Optional; default unchanged.
+  if [[ "${kind}" != mtp0 && -n "${SPEC_SCHEDULE:-}" ]]; then spec="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${DEPTH},\"num_speculative_tokens_per_batch_size\":${SPEC_SCHEDULE}}"; fi
   date --iso-8601=seconds >"${dir}/started-at.txt"
   local specenv=(); [[ "${kind}" == mtp0 ]] || specenv=(SPECULATIVE_CONFIG="${spec}")
   # The strict launchers verify the image contract; these are the R276 identities the INT4 public launcher exports, plus the
@@ -107,6 +110,12 @@ launch() {
     grep -q "\"${name_}=${want}\"" "${dir}/container-inspect.json" 2>/dev/null \
       || abort "${label}: ${name_}=${want} was requested but is not in the container environment"
   done
+  if [[ "${kind}" != mtp0 && -n "${SPEC_SCHEDULE:-}" ]]; then
+    grep -q "num_speculative_tokens_per_batch_size" "${dir}/container-inspect.json" 2>/dev/null \
+      || abort "${label}: SPEC_SCHEDULE requested but no num_speculative_tokens_per_batch_size in the container args"
+    grep -q "Dynamic speculative decoding is not supported\|falling back to static num_speculative_tokens" "${dir}/server.log" 2>/dev/null \
+      && abort "${label}: vLLM disabled the dynamic speculative schedule (see server.log)"
+  fi
   log "${label}: healthy"; server_name=${name}; server_dir=${dir}; served_model=${served}
 }
 strict_attempt() {
