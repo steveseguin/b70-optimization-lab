@@ -51,6 +51,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--smoke-only', action='store_true')
+    parser.add_argument('--smoke-token-limit', type=int, default=256)
     args = parser.parse_args()
     if args.out.exists():
         raise RuntimeError('Never overwrite an existing result')
@@ -156,7 +157,7 @@ def main():
 
     save()
     if args.smoke_only:
-        generate('Return only the number that equals 2 + 2.', 'smoke', 'smoke', 256)
+        generate('Return only the number that equals 2 + 2.', 'smoke', 'smoke', args.smoke_token_limit)
     else:
         realistic = json.loads((ROOT / 'realistic-suite-v1.json').read_text())['prompts']
         quality = json.loads((ROOT / 'quality-canaries-v1.json').read_text())['prompts']
