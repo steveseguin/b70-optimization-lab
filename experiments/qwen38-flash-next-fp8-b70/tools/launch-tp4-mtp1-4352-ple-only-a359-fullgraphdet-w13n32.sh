@@ -281,9 +281,6 @@ export MTP=1 MTP_EXACT=0 MAX_MODEL_LEN=4352 ATTEMPT=359 PORT=19972
 export KV_CACHE_MEMORY_BYTES=376569856
 export Q38_STEP_TIMING_LOG=10
 export Q38_MEM_NOTE=1
-export STAGE:/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-3279856-b70
-export MANIFEST:runtime-stage-gdn-roundstate-loadable.sha256
-export STAGE_BUILD_HEAD:32798565c66458d5f2718233b03e5429ec6fe2f1
 export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json
 export REASONING_PARSER=
 unset PYTHONOPTIMIZE
