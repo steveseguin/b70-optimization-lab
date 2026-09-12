@@ -1,0 +1,7 @@
+# R294: R293 + a shortlisted draft-only INT4 lm_head (VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/<file>;
+# off unless set). Lossless by construction: the draft only proposes, the target verifies with its full FP16 head.
+FROM neural-download/vllm-openai-xpu:qwen38-int4-fp16-linear-classpad-cheapest-r293
+COPY draft-shortlists/shortlist-top8192.txt draft-shortlists/shortlist-top16384.txt draft-shortlists/shortlist-top32768.txt draft-shortlists/shortlist-top65536.txt /opt/draft-shortlists/
+COPY r294-draft-head-shortlist.py /tmp/r294.py
+RUN python /tmp/r294.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py && rm /tmp/r294.py
+LABEL neural.download.build.lane="qwen38-int4-draft-head-shortlist-r294"

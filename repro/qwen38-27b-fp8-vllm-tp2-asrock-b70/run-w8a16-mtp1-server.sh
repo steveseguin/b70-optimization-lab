@@ -74,6 +74,11 @@ draft_lm_head_int4_group_size=${VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE:-128}
 draft_lm_head_int4_scale_dtype=${VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE:-bf16}
 draft_lm_head_int4_chunk_rows=${VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS:-2048}
 draft_lm_head_int4_apply_rows=${VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS:-0}
+# R294 (2026-09-12): shortlisted draft-only INT4 lm_head; a container path to a token-id file. Forwarded only when set.
+draft_shortlist_env=()
+if [[ -n "${VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST:-}" ]]; then
+  draft_shortlist_env=(--env "VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=${VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST}")
+fi
 [[ "${draft_lm_head_int4_apply_rows}" =~ ^[0-9]+$ ]] || { printf 'VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS must be a non-negative integer\n' >&2; exit 1; }
 lm_head_batch_invariant=${VLLM_XPU_LM_HEAD_BATCH_INVARIANT:-0}
 lm_head_batch_repair_rows=${VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS:-0}
@@ -382,6 +387,7 @@ exec docker run --rm --name "${container}" \
   --env VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE="${draft_lm_head_int4_scale_dtype}" \
   --env VLLM_XPU_DRAFT_LM_HEAD_INT4_CHUNK_ROWS="${draft_lm_head_int4_chunk_rows}" \
   --env VLLM_XPU_DRAFT_LM_HEAD_INT4_APPLY_ROWS="${draft_lm_head_int4_apply_rows}" \
+  "${draft_shortlist_env[@]}" \
   --env VLLM_XPU_LM_HEAD_BATCH_INVARIANT="${lm_head_batch_invariant}" \
   --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_ROWS="${lm_head_batch_repair_rows}" \
   --env VLLM_XPU_LM_HEAD_BATCH_REPAIR_MARGIN="${lm_head_batch_repair_margin}" \
