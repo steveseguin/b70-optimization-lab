@@ -5,6 +5,12 @@ the initial report. The upstream prefill delta passes 22/22 same-base CPU cases;
 the width candidate passes isolated FP16/BF16 native operator tests. Production
 and full-model/graph qualification remain separate.
 
+Afternoon follow-up: [runtime reproductions on stock images](runtime-repro/README.md). The width defect (#593)
+reproduces end-to-end on stock v0.29.0 and today's nightly (any dynamic schedule reaching K=1 kills the server);
+vLLM PR #53542's `gdn_attn.py` hunks alone fix it on unchanged kernels, so no kernels PR. The 08-25 mixed-batch
+crash (#53928) is gone on v0.29.0. Phantom not reproduced on v0.29.0 compiled arms. Draft comments held in
+`runtime-repro/drafts/`.
+
 Initial review scope: historical evidence audit, current upstream source comparison, CPU
 regressions, and public release availability. That initial review performed no GPU execution, model downloads,
 runtime edits, service changes, or production promotion. The historical FP8
