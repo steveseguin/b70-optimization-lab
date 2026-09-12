@@ -1,0 +1,120 @@
+........F..FFF...FFFF.                                                   [100%]
+=================================== FAILURES ===================================
+____________________ test_one_token_first_chunk_is_prefill _____________________
+
+>   ???
+E   AssertionError
+
+upstream-pr-tests.py:212: AssertionError
+__ test_one_token_prefill_batch_stages_cudagraph_metadata[mixed-with-decodes] __
+
+seq_lens = [100, 50, 1], is_prefilling = [False, False, True]
+expected_num_prefills = 1
+
+>   ???
+E   AssertionError
+
+upstream-pr-tests.py:267: AssertionError
+____ test_one_token_prefill_batch_stages_cudagraph_metadata[all-stateless] _____
+
+seq_lens = [1, 1, 1], is_prefilling = [True, True, True]
+expected_num_prefills = 3
+
+>   ???
+E   AssertionError
+
+upstream-pr-tests.py:267: AssertionError
+______________ test_one_token_prefill_excludes_cudagraph_padding _______________
+
+>   ???
+E   AssertionError
+
+upstream-pr-tests.py:291: AssertionError
+___________________ test_extra_reused_staging_buffers[False] ___________________
+
+full = False
+
+    @pytest.mark.parametrize("full", [False, True])
+    def test_extra_reused_staging_buffers(full):
+        builder = _create_gdn_builder(full_cuda_graph=full)
+        old = create_common_attn_metadata(BatchSpec([100, 50], [1, 1]), 16, DEVICE)
+        builder.build(0, old)
+        fresh = create_common_attn_metadata(BatchSpec([101, 1], [1, 1]), 16, DEVICE)
+        fresh = fresh.replace(
+            is_prefilling=torch.tensor([False, True]),
+            block_table_tensor=fresh.block_table_tensor + 100,
+        )
+        meta = builder.build(0, fresh)
+>       assert meta.num_prefills == 1
+E       assert 0 == 1
+E        +  where 0 = GDNAttentionMetadata(num_prefills=0, num_prefill_tokens=0, num_decodes=2, num_decode_tokens=2, num_spec_decodes=0, num...refill_state_indices=None, prefill_has_initial_state=None, nums_dict=None, batch_ptr=None, token_chunk_offset_ptr=None).num_prefills
+
+llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py:180: AssertionError
+___________________ test_extra_reused_staging_buffers[True] ____________________
+
+full = True
+
+    @pytest.mark.parametrize("full", [False, True])
+    def test_extra_reused_staging_buffers(full):
+        builder = _create_gdn_builder(full_cuda_graph=full)
+        old = create_common_attn_metadata(BatchSpec([100, 50], [1, 1]), 16, DEVICE)
+        builder.build(0, old)
+        fresh = create_common_attn_metadata(BatchSpec([101, 1], [1, 1]), 16, DEVICE)
+        fresh = fresh.replace(
+            is_prefilling=torch.tensor([False, True]),
+            block_table_tensor=fresh.block_table_tensor + 100,
+        )
+        meta = builder.build(0, fresh)
+>       assert meta.num_prefills == 1
+E       assert 0 == 1
+E        +  where 0 = GDNAttentionMetadata(num_prefills=0, num_prefill_tokens=0, num_decodes=2, num_decode_tokens=2, num_spec_decodes=0, num...refill_state_indices=None, prefill_has_initial_state=None, nums_dict=None, batch_ptr=None, token_chunk_offset_ptr=None).num_prefills
+
+llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py:180: AssertionError
+________________ test_extra_stale_phase_on_zero_padding[False] _________________
+
+full = False
+
+    @pytest.mark.parametrize("full", [False, True])
+    def test_extra_stale_phase_on_zero_padding(full):
+        builder = _create_gdn_builder(full_cuda_graph=full)
+        batch = BatchSpec([100, 1, 0], [1, 1, 0])
+        m = create_common_attn_metadata(batch, 16, DEVICE).replace(
+            is_prefilling=torch.tensor([False, True, True]), num_actual_tokens=3
+        )
+        meta = builder.build(0, m)
+>       assert (meta.num_decodes, meta.num_prefills, meta.num_prefill_tokens) == (1, 1, 1)
+E       assert (3, 0, 0) == (1, 1, 1)
+E         
+E         At index 0 diff: 3 != 1
+E         Use -v to get more diff
+
+llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py:194: AssertionError
+_________________ test_extra_stale_phase_on_zero_padding[True] _________________
+
+full = True
+
+    @pytest.mark.parametrize("full", [False, True])
+    def test_extra_stale_phase_on_zero_padding(full):
+        builder = _create_gdn_builder(full_cuda_graph=full)
+        batch = BatchSpec([100, 1, 0], [1, 1, 0])
+        m = create_common_attn_metadata(batch, 16, DEVICE).replace(
+            is_prefilling=torch.tensor([False, True, True]), num_actual_tokens=3
+        )
+        meta = builder.build(0, m)
+>       assert (meta.num_decodes, meta.num_prefills, meta.num_prefill_tokens) == (1, 1, 1)
+E       assert (3, 0, 0) == (1, 1, 1)
+E         
+E         At index 0 diff: 3 != 1
+E         Use -v to get more diff
+
+llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py:194: AssertionError
+=========================== short test summary info ============================
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_one_token_first_chunk_is_prefill
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_one_token_prefill_batch_stages_cudagraph_metadata[mixed-with-decodes]
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_one_token_prefill_batch_stages_cudagraph_metadata[all-stateless]
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_one_token_prefill_excludes_cudagraph_padding
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_extra_reused_staging_buffers[False]
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_extra_reused_staging_buffers[True]
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_extra_stale_phase_on_zero_padding[False]
+FAILED llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/phase-validation-20260912/test_full_builder.py::test_extra_stale_phase_on_zero_padding[True]
+8 failed, 14 passed in 1.04s

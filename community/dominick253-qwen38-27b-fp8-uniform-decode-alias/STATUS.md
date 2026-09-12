@@ -150,6 +150,13 @@ our narrower local guard. Prefer validating the upstream proposal before
 promotion; the earlier bounded B70 evidence and contributor incident status
 remain unchanged. See the [review packet](../../experiments/qwen38-27b-b70/upstream-review-20260912/README.md).
 
+Further September 12 validation applied the exact upstream PR #51565 delta
+onto pinned current main without conflicts: actual builder methods with CPU
+dependency adapters passed 22/22, versus 14 pass/8 fail for the same-base stock
+control. This supports the separate phase correction; it is not GPU graph or
+full-model qualification and does not resolve the contributor's multi-hour
+incident. [Evidence](../../experiments/qwen38-27b-b70/upstream-review-20260912/VALIDATION.md).
+
 Remains `community-reported` documentation. If the lab reproduces the alias
 trigger on its sealed lane and finds the classifier guard effective, this
 belongs in the R187/R50 chain's README as a known upstream defect with the

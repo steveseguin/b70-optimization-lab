@@ -1,0 +1,25 @@
+BEGIN arm=stock dtype=float16
+Traceback (most recent call last):
+  File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libsycl.so.9: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/width-validation-20260912/probe_width.py", line 220, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/width-validation-20260912/probe_width.py", line 45, in main
+    torch.ops.load_library(str(args.library))
+  File "/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /home/steve/q27-validation-20260912/width-stock-build/width_review.so
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/width-validation-20260912/run_matrix.py", line 11, in <module>
+    subprocess.run([
+  File "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/steve/.venvs/vllm-xpu/bin/python', '/home/steve/llm-optimizations/experiments/qwen38-27b-b70/upstream-review-20260912/width-validation-20260912/probe_width.py', '--arm', 'stock', '--dtype', 'float16', '--library', '/home/steve/q27-validation-20260912/width-stock-build/width_review.so']' returned non-zero exit status 1.

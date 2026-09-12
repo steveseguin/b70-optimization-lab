@@ -1,7 +1,12 @@
 # Qwen 27B upstream correctness review — 2026-09-12
 
-Scope: historical evidence audit, current upstream source comparison, CPU
-regressions, and public release availability. No GPU execution, model downloads,
+Follow-up: [deeper CPU and native B70 validation](VALIDATION.md) completed after
+the initial report. The upstream prefill delta passes 22/22 same-base CPU cases;
+the width candidate passes isolated FP16/BF16 native operator tests. Production
+and full-model/graph qualification remain separate.
+
+Initial review scope: historical evidence audit, current upstream source comparison, CPU
+regressions, and public release availability. That initial review performed no GPU execution, model downloads,
 runtime edits, service changes, or production promotion. The historical FP8
 model path is absent on this four-card host. User authorized review and deciding
 whether to publish upstream findings.
