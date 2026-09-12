@@ -4,6 +4,12 @@ Status: preregistered, not yet qualified. User selected a new downloaded model
 for setup and a lossless baseline before optimization; this lane selects the
 official MiniCPM5-2B checkpoint, 2,516,756,480 BF16 parameters.
 
+Execution update: greedy native-thinking smoke failed at256 and2048 tokens.
+The next separately preregistered track uses the
+[publisher HF sampling defaults](notes/2026-09-12-publisher-sampling-prereg.md)
+with seed7429. It is not an optimization or qualification of the failed greedy
+track. Original prompt bytes and precision are preserved.
+
 ## Baseline identity and meaning of lossless
 
 - Model: `openbmb/MiniCPM5-2B`, revision `12a3808a956f869c767195e9266b59c4d21d92e2`.

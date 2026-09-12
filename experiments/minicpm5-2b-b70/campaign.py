@@ -10,11 +10,14 @@ ROOT = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser()
 parser.add_argument('--out', type=Path, required=True)
 parser.add_argument('--smoke-token-limit', type=int, default=256)
+parser.add_argument('--publisher-sampling', action='store_true')
 args = parser.parse_args()
 args.out.mkdir(parents=True, exist_ok=False)
 for name in ['smoke', 'baseline-a', 'baseline-b']:
     output = args.out / (name + '.json')
     command = [sys.executable, str(ROOT / 'run-baseline.py'), '--out', str(output)]
+    if args.publisher_sampling:
+        command += ['--publisher-sampling']
     if name == 'smoke':
         command += ['--smoke-only', '--smoke-token-limit', str(args.smoke_token_limit)]
     print('BEGIN ' + name, flush=True)
