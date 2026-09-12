@@ -70,7 +70,11 @@ def main():
     if "MANIFEST" in opts:
         rules += f'  gsub(/runtime-stage-padding-guard-loadable\\.sha256/, "{opts["MANIFEST"]}")\n'
     if "STAGE_BUILD_HEAD" in opts:
-        rules += f'  gsub(/2f829747503c77d4814834dffd0840fb1dd9f75a/, "{opts["STAGE_BUILD_HEAD"]}")\n'
+        # Exact-line rule (the served build head also appears in the padding receipt check).
+        line_rule = ('$0 == "  expected_stage_build_head=\\"2f829747503c77d4814834dffd0840fb1dd9f75a\\"" '
+                     '{ print "  expected_stage_build_head=\\"' + opts["STAGE_BUILD_HEAD"] + '\\""; next }\n')
+        anchor0 = '$0 == "export VLLM_XPU_GRAPH=0" { next }\n'
+        launcher = replace_n(launcher, anchor0, line_rule + anchor0, 1)
     if rules:
         anchor = '  gsub(/enforce_eager=True/, "enforce_eager=False")\n'
         launcher = replace_n(launcher, anchor, anchor + rules, 1)

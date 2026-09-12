@@ -5,7 +5,7 @@ script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/t
 base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a359-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
-expected_derived=0dd57e7f1a6fdcfae2529ebe95e8db0fc3a65ff79aecca468acbffd49bb08093
+expected_derived=56b702da85a8c4d7c086a877957c8be35c5d94f539b06a8a1665af262e6d6d9c
 campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
@@ -87,6 +87,7 @@ $0 == "export XPU_GRAPH=0" {
   print "export VLLM_XPU_ENABLE_XPU_GRAPH=1"
   next
 }
+$0 == "  expected_stage_build_head=\"2f829747503c77d4814834dffd0840fb1dd9f75a\"" { print "  expected_stage_build_head=\"32798565c66458d5f2718233b03e5429ec6fe2f1\""; next }
 $0 == "export VLLM_XPU_GRAPH=0" { next }
 $0 == "export VLLM_XPU_ENABLE_XPU_GRAPH=0" { next }
 $0 == "export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0" { next }
@@ -166,7 +167,6 @@ $0 == "setsid \"${vllm_bin}\" serve \"${args[@]}\" >\"${server_log}\" 2>&1 &" {
   gsub(/diagnostics=none/, "diagnostics=full-decode-graph-public-oneccl-torch-trace")
   gsub(/enforce_eager=True/, "enforce_eager=False")
   gsub(/runtime-stage-padding-guard-loadable\.sha256/, "runtime-stage-gdn-roundstate-loadable.sha256")
-  gsub(/2f829747503c77d4814834dffd0840fb1dd9f75a/, "32798565c66458d5f2718233b03e5429ec6fe2f1")
   gsub(/moe_backend=triton eager=1/, "moe_backend=triton eager=0 graph=FULL_DECODE_ONLY")
   gsub(/qwen38-flash-next-fp8-tp4-ep4-eager-mtp/, "qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp")
   gsub(/tp4_ep4_triton_eager_mtp/, "tp4_ep4_triton_fullgraphdet_mtp")
