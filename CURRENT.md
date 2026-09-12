@@ -4,6 +4,14 @@ Last reviewed: **2026-09-11 15:50 UTC** (2026-09-11 11:50 EDT); the four-B70 hos
 
 ## Authority And Update Rule
 
+**Four-B70 host `steve-b70s`, September12:** user selected a new-model native
+baseline campaign. The active task is isolated MiniCPM5-2B BF16 qualification,
+not Flash-Next optimization. See [lane packet](experiments/minicpm5-2b-b70/README.md).
+It uses a dedicated environment and original external-drive weights, with
+exclusive locks and fresh processes; no permanent listener is planned. Preserve
+the older queued lanes and all protected artifacts below. Actual running state
+must still be checked before another launch.
+
 This is the sole cross-repository authority for loaded service, active lane,
 protected work, and immediate next actions. Verify Git status, relevant
 processes, listeners, and the actual endpoint before operational changes.
