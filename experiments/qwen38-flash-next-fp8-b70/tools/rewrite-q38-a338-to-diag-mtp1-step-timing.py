@@ -60,6 +60,20 @@ def main():
     derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
     exports = "".join(f"export {kv}\n" for kv in plain)
     launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + exports, 1)
+    # STAGE:<dir> MANIFEST:<file name under data/> STAGE_BUILD_HEAD:<sha> swap the loaded kernel
+    # stage: the launcher's KERNEL_STAGE export, and gsub rules in the derived script for the
+    # manifest file name and the recorded stage build head.
+    opts = {k: v for k, v in (kv.split(":", 1) for kv in extra_env if kv.startswith(("STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:")))}
+    if "STAGE" in opts:
+        launcher = replace_n(launcher, "export KERNEL_STAGE=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70\n", f"export KERNEL_STAGE={opts['STAGE']}\n", 1)
+    rules = ""
+    if "MANIFEST" in opts:
+        rules += f'  gsub(/runtime-stage-padding-guard-loadable\\.sha256/, "{opts["MANIFEST"]}")\n'
+    if "STAGE_BUILD_HEAD" in opts:
+        rules += f'  gsub(/2f829747503c77d4814834dffd0840fb1dd9f75a/, "{opts["STAGE_BUILD_HEAD"]}")\n'
+    if rules:
+        anchor = '  gsub(/enforce_eager=True/, "enforce_eager=False")\n'
+        launcher = replace_n(launcher, anchor, anchor + rules, 1)
     if derived_kvs:
         anchor = '  print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1"\n'
         launcher = replace_n(launcher, anchor, anchor + "".join(f'  print "export {kv}"\n' for kv in derived_kvs), 1)
@@ -68,6 +82,10 @@ def main():
     Path(f"/tmp/q38-ple2k-a{attempt}-base.sh").unlink(missing_ok=True)
     assert f"q38-ple2k-a{attempt}" in derived
     assert f'expected_vllm_head="{NEW_HEAD}"' in derived and OLD_HEAD not in derived
+    if "MANIFEST" in opts:
+        assert opts["MANIFEST"] in derived and "runtime-stage-padding-guard-loadable.sha256" not in derived
+    if "STAGE_BUILD_HEAD" in opts:
+        assert f'expected_stage_build_head="{opts["STAGE_BUILD_HEAD"]}"' in derived
     launcher = launcher.replace("expected_derived=" + "0" * 64, "expected_derived=" + digest(derived))
     client = successor(source("run-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32-client.sh"))
     client = client.replace(OLD_HEAD, NEW_HEAD)
