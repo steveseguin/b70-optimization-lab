@@ -52,3 +52,17 @@ oneDNN relink from the main tree is not a surprise.
 
 Build fails; the server fails health; G1 hash differs from G0's (the rounding point is not the whole
 story: next candidate is the conv state publication order).
+
+## Amendment (2026-09-12, before A360 ran): the kernel-level probe found a second difference
+
+`probes/gdn-spec-round-state-equivalence.py` runs the serial rows (decode op, state copies between
+columns) and the multi-row spec op on random data with the model's per-rank dims and compares bit
+for bit. With the first treatment (`32798565`, round trip only) row 0 already differed by one
+BF16 ulp whenever both the initial state and q/k were non-zero (identity conv: still differs; zero
+conv: outputs equal but the stored state differs; zero initial state: row 0 equal, row 1 not). The
+two kernel cores are textually identical; the decode kernel carries `#pragma unroll` on every
+fixed-count loop and the lane's spec kernel carries none, which changes the compiler's FMA
+contraction and summation pattern. Second treatment `bbae3c5`: the same unroll pragmas on the spec
+kernel's fixed-count loops, nothing else. The probe is the gate before any server arm: PASS with the
+flag on, and the flag-off run must still differ on row 1 (sensitivity). The server arms move to a
+new stage built from `bbae3c5`; A360 on the first stage is superseded and not run.
