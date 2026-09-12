@@ -58,9 +58,11 @@ each server log (`scheduled_spec_decode_tokens` lists one draft per request; `to
 | --- | --- | --- | --- |
 | v0.29.0 | default compile, async on | none | `cache-c032` head `[271, 3833, 14542]` (normal); 5/64 exact at 64 users (stock W8A16 run-to-run nondeterminism, as on 09-03) |
 | v0.29.0 | default compile, `--no-async-scheduling` (the 09-03 phantom arm) | none | same head; 3/64 exact |
-| v0.29.0 | `--enforce-eager` (1) | **not run**: server hung after model load; kernel logged `Engine reset: engine_class=bcs` + `Timedout job` on card e3:00.0 at 16:02:44 | second copy-engine fault on this card this boot (first: 12:46, R300 mtp1-b, also at load). Queue stopped; `resume-after-reboot.sh` runs the two eager arms and the nightly-0912 arms after the reboot |
+| v0.29.0 | `--enforce-eager` (1), first attempt 16:01 | **hung after model load**; kernel logged `Engine reset: engine_class=bcs` + `Timedout job` on card e3:00.0 at 16:02:44 | second copy-engine fault on this card this boot (first: 12:46, R300 mtp1-b, also at load). Queue stopped; the user chose to continue on this boot |
+| v0.29.0 | `--enforce-eager` (1), rerun 19:37 | none | healthy in 2 min, ran clean |
+| v0.29.0 | `--enforce-eager` (2) | none | ran clean |
 | nightly-0912 | all four | pending (after reboot) | |
 
-Phantom verdict so far: not reproduced on v0.29.0 in the two compiled arms, including the arm and prompt that showed it on
-09-03. Stays held. The copy-engine fault is a host/driver event during weight load, seen now with a lab image and with a
+Phantom verdict: not reproduced on v0.29.0 in any of the four arms (R192/R194 shape), including the arm and prompt that
+showed it on 09-03. Stays held; nightly-0912 arms below. The copy-engine fault is a host/driver event during weight load, seen now with a lab image and with a
 stock image; it is not tied to speculation depth (compare #55425) and is recorded in `kernel-engine-resets-today.txt`.
