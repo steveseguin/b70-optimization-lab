@@ -1,0 +1,113 @@
+{
+ "schema": "b70-lab.result.v1",
+ "campaign_id": "qwen35-4b-w4a16 R294: shortlisted draft lm_head (2026-09-12)",
+ "headline": "The MTP draft passes score all 248,320 vocabulary rows to choose one token per drafted position; a draft that scores only a shortlist of rows cannot change any output, because the target verifies every draft with its full FP16 head. A 32,776-row shortlist (the 32,768 most frequent tokens of the lab's own 26M-token text corpus plus the tokenizer's special ids, 13% of the vocabulary) gives 193.03 / 193.30 tok/s at one user against 177.56 / 177.26 for the same image without a shortlist, +8.9%, with every gate 12/12. Acceptance drops (about 3.0 tokens per step against 3.43) and the head savings outweigh it.",
+ "method": "R294 = R293 + docker/r294-draft-head-shortlist.py: VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=<file> makes make_xpu_int4_draft_copy build the draft-only INT4 head from the listed rows (per TP shard) and apply() scatter the logits into a full-width -inf row. Shortlists from draft-shortlists/build-shortlist.py (lab text) and build-shortlist-v2.py (system docs, Python and image sources). One card, depth 3, INT4 draft head, CLASSPAD=0 (the published single-user path), strict stage: fresh MTP0 pair (G1), shortlisted depth-3 pair (G2), each against the MTP0 oracle (G3). Chain scripts/run-20260912-qwen35-4b-draft-shortlist-chain.sh.",
+ "arms": {
+  "sl8k": {
+   "rows": 8201,
+   "corpus_coverage_pct": 97.14,
+   "output_coverage_pct": 79.3,
+   "tok_s": [
+    161.41,
+    161.35
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    2.83,
+    2.87
+   ],
+   "per_position": [
+    0.847,
+    0.551,
+    0.433
+   ]
+  },
+  "sl16k": {
+   "rows": 16393,
+   "corpus_coverage_pct": 99.34,
+   "output_coverage_pct": 89.91,
+   "tok_s": [
+    179.46,
+    179.42
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.22,
+    3.14
+   ],
+   "per_position": [
+    0.886,
+    0.72,
+    0.612
+   ]
+  },
+  "sl32k": {
+   "rows": 32776,
+   "corpus_coverage_pct": 99.97,
+   "output_coverage_pct": 97.74,
+   "tok_s": [
+    193.03,
+    193.3
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.04,
+    2.93
+   ],
+   "per_position": [
+    0.88,
+    0.642,
+    0.518
+   ]
+  },
+  "sl64k": {
+   "rows": 38662,
+   "corpus_coverage_pct": 100.0,
+   "output_coverage_pct": 98.67,
+   "tok_s": [
+    192.43,
+    192.51
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    2.99,
+    3.06
+   ],
+   "per_position": [
+    0.851,
+    0.639,
+    0.504
+   ],
+   "note": "every token the lab corpus uses; the top-65536 request saturates at 38,662"
+  },
+  "slbase": {
+   "rows": 248320,
+   "tok_s": [
+    177.56,
+    177.26
+   ],
+   "gates": "12/12 all",
+   "acceptance_snapshot": [
+    3.43,
+    3.43
+   ],
+   "per_position": [
+    0.915,
+    0.806,
+    0.709
+   ],
+   "note": "same image, no shortlist: the in-image control, equal to the published 177.41 / 177.17"
+  }
+ },
+ "coverage_of_generated_text": "output_coverage_pct is the share of the 4B's own strict-suite output tokens (r3 mtp3-a, 12 x 512) that lie in the shortlist; the lab corpus is narrower than the model's output (top8192 covers 97% of the corpus but 79% of the output).",
+ "reading": "The gain rises from 8k (a loss) through 16k (+1%) to 32k (+9%) and is flat to 38.7k; the lab-text lists have no more rows to add. Acceptance under the 32k list is about 12% lower (per-position 0.88/0.64/0.52 against 0.92/0.81/0.71) and the step is cheaper by more than that. A list with better coverage of the model's output should keep more of the acceptance; the union lists (chain 2) test 45k, 67k and 92k rows at 98.9 / 99.5 / 99.8% coverage.",
+ "acceptance_metric_caveat": "'Mean acceptance length' is the server's last logged running value, not a whole-run statistic; tok/s is the measurement.",
+ "campaign_roots": [
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl8k",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl16k",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl32k",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-sl64k",
+  "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-slbase"
+ ]
+}
