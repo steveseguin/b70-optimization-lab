@@ -56,7 +56,7 @@ def main():
     # Plain entries become launcher exports (Q38_* survive into the engine). Entries prefixed
     # DERIVED: are printed into the derived server script next to the other VLLM_XPU_* exports,
     # because the derived launcher unsets every inherited VLLM_* variable.
-    plain = [kv for kv in extra_env if not kv.startswith("DERIVED:")]
+    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:"))]
     derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
     exports = "".join(f"export {kv}\n" for kv in plain)
     launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + exports, 1)
