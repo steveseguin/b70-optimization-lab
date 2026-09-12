@@ -9,7 +9,7 @@ img=${IMG:?}; tag=${TAG:?}; out=/mnt/fast-ai/bench-results/upstream-repro-202609
 model=/mnt/fast-ai/llm-models/qwen3.8-27b-fp8; suite=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-08-25-qwen38-q4km-tp2-http-smallctx-suite.json; port=18141
 log() { echo "[$tag $(date +%T)] $*" | tee -a "$out/campaign.log"; }
 docker image inspect "$img" --format '{{.Id}}' >"$out/image-id.txt"; cat /proc/sys/kernel/random/boot_id >"$out/boot-id.txt"
-for arm in compiled-async-on compiled-async-off eager-async-on-1 eager-async-on-2; do
+for arm in ${ARMS:-compiled-async-on compiled-async-off eager-async-on-1 eager-async-on-2}; do
   extra=""; [[ $arm == compiled-async-off ]] && extra="--no-async-scheduling"; [[ $arm == eager-* ]] && extra="--enforce-eager"
   name=upstream-phantom-$tag-$arm; mkdir -p "$out/$arm" "$out/$arm-cache"
   docker run -d --name "$name" --ulimit core=0 --memory 12g --memory-swap 16g --device /dev/dri:/dev/dri --group-add render --cap-add SYS_PTRACE --security-opt label=disable --ipc=host --shm-size=8g \
