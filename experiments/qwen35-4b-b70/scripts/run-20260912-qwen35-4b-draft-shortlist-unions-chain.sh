@@ -8,14 +8,14 @@ set -uo pipefail
 repo=/home/steve/b70-optimization-lab
 engine=${repo}/experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-campaign.sh
 out=/mnt/fast-ai/bench-results
-wrap=${out}/qwen35-4b-shortlist-20260912-wrapper.log
+wrap=${out}/qwen35-4b-shortlist2-20260912-wrapper.log
 model=/home/steve/llm-models/qwen35-4b-w4a16
 manifest=${repo}/experiments/qwen35-4b-b70/manifests/model-direct-redhatai-qwen35-4b-w4a16-7a613872.json
-image=neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294
+image=neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b
 image_id=$(docker image inspect "${image}" --format '{{.Id}}')
 export LOAD_MEMORY_MIB=7000
-echo $$ >"${out}/qwen35-4b-shortlist-20260912.pid"
-log() { printf '[shortlist %s] %s\n' "$(date '+%m-%d %H:%M:%S')" "$*" | tee -a "${wrap}"; }
+echo $$ >"${out}/qwen35-4b-shortlist2-20260912.pid"
+log() { printf '[shortlist2 %s] %s\n' "$(date '+%m-%d %H:%M:%S')" "$*" | tee -a "${wrap}"; }
 wait_free() { while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]'; do sleep 30; done; sleep 10; }
 arm() {
   local label=$1 sl=$2
@@ -35,14 +35,13 @@ arm() {
       grep -q 'R294 draft shortlist' "${d}server.log" 2>/dev/null || { log "$(basename "$d"): no R294 shortlist line in server.log"; ok=0; }
     done
     [[ ${ok} == 1 ]] && log "${label}: shortlist verified: $(grep -ho 'R294 draft shortlist: [^,]*, [0-9]* in this shard' "${root}"/mtp3-a/server.log | head -1)"
-    [[ ${ok} == 1 ]] || { echo "knob not applied in ${label}" >"${out}/qwen35-4b-shortlist-20260912-STOPPED"; return 1; }
+    [[ ${ok} == 1 ]] || { echo "knob not applied in ${label}" >"${out}/qwen35-4b-shortlist2-20260912-STOPPED"; return 1; }
   fi
-  grep -qiE 'not in normal state|fault signature|did not become healthy' "${root}/ABORTED" 2>/dev/null && { log "${label}: HARDWARE abort"; echo "stopped after ${label}" >"${out}/qwen35-4b-shortlist-20260912-STOPPED"; return 1; }
+  grep -qiE 'not in normal state|fault signature|did not become healthy' "${root}/ABORTED" 2>/dev/null && { log "${label}: HARDWARE abort"; echo "stopped after ${label}" >"${out}/qwen35-4b-shortlist2-20260912-STOPPED"; return 1; }
   return 0
 }
-arm sl32k /opt/draft-shortlists/shortlist-top32768.txt || exit 1
-arm sl16k /opt/draft-shortlists/shortlist-top16384.txt || exit 1
-arm sl8k  /opt/draft-shortlists/shortlist-top8192.txt  || exit 1
-arm sl64k /opt/draft-shortlists/shortlist-top65536.txt || exit 1
-arm slbase "" || exit 1
-log "=== shortlist chain complete ==="; echo done >"${out}/qwen35-4b-shortlist-20260912-DONE"
+until [[ -e ${out}/qwen35-4b-shortlist-20260912-DONE || -e ${out}/qwen35-4b-shortlist-20260912-STOPPED ]]; do sleep 30; done
+arm slu45k /opt/draft-shortlists/shortlist-u-v1all-v2top32k.txt || exit 1
+arm slu67k /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt || exit 1
+arm slu92k /opt/draft-shortlists/shortlist-u-v1all-v2all.txt || exit 1
+log "=== shortlist union chain complete ==="; echo done >"${out}/qwen35-4b-shortlist2-20260912-DONE"

@@ -1,0 +1,4 @@
+# R294b: R294 + the broader shortlists (v2: system docs, Python and image sources; u-*: unions with the lab-text list).
+FROM neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294
+COPY draft-shortlists/shortlist-v2-top32768.txt draft-shortlists/shortlist-v2-top49152.txt draft-shortlists/shortlist-v2-top65536.txt draft-shortlists/shortlist-v2-top98304.txt draft-shortlists/shortlist-u-v1all-v2top32k.txt draft-shortlists/shortlist-u-v1all-v2top49k.txt draft-shortlists/shortlist-u-v1all-v2top65k.txt draft-shortlists/shortlist-u-v1all-v2all.txt /opt/draft-shortlists/
+LABEL neural.download.build.lane="qwen38-int4-draft-head-shortlist-r294b"
