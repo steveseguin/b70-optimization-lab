@@ -1575,7 +1575,7 @@
         "model_family": "Qwen3.5",
         "publisher": "RedHatAI (W4A16 of Alibaba / Qwen)",
         "variant": "4B W4A16 (compressed-tensors INT4 weights, FP16 activations) with the publisher MTP head",
-        "summary": "Qwen3.5-4B W4A16 on one B70 with target-verified MTP3 and a 67,248-row draft shortlist. Best qualified strict record 191.73 tok/s; the current R304 recipe fixes the older runtime’s tiny-prompt failures and revalidates at 191.39 tok/s. Multi-user and context curves describe separately named operating profiles; clean-host replay is pending.",
+        "summary": "Qwen3.5-4B W4A16 on one B70 with target-verified MTP3 and a 67,248-row draft shortlist. Best qualified strict record 191.73 tok/s; the current R304 recipe fixes the older runtime’s tiny-prompt failures and revalidates at 191.39 tok/s. Multi-user and context curves describe separately named operating profiles; clean-host replay is pending. An optional R308 profile adds the qualified single-request boundary repair; see the full guide.",
         "quantization": "W4A16 (compressed-tensors INT4 weights, FP16 activations)",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -1688,7 +1688,7 @@
           "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
           "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch"
         ],
-        "note": "The image is the Qwen3.8 INT4 lane's R304 image (experiments/qwen38-27b-b70/docker/rebase-v0290/): the lineage's overlays ported onto stock v0.29.0 as net diffs, the kernel library rebuilt from public sources, three open upstream vLLM PRs applied verbatim. No lane-specific patch."
+        "note": "The image is the Qwen3.8 INT4 lane's R304 image (experiments/qwen38-27b-b70/docker/rebase-v0290/): the lineage's overlays ported onto stock v0.29.0 as net diffs, the kernel library rebuilt from public sources, three open upstream vLLM PRs applied verbatim. No lane-specific patch. Optional R308 single-request TP1/depth-3 boundary repair is documented separately; the default remains R304."
       },
       "commands": {
         "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304",
@@ -1812,13 +1812,39 @@
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-gdn-first-chunk-classification-pr51565.diff",
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256",
-        "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json"
+        "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r307-gdn-state-handoff",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-gdn-active-width-contiguous-staging.py",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r307-gdn-state-handoff.py",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r308-gdn-state-resume",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-gdn-state-resume.py",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/rebuild-r308-overlay.sh",
+        "experiments/qwen35-4b-b70/tests/test-r308-state-resume.py",
+        "experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py",
+        "experiments/qwen35-4b-b70/scripts/run-20260913-r307-qualification.py",
+        "experiments/qwen35-4b-b70/scripts/run-20260913-r308-4b-strict.sh",
+        "experiments/qwen35-4b-b70/scripts/summarize-r307-qualification.py",
+        "experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md",
+        "repro/qwen35-9b-w4a16-b70/scripts/publish-r308-fixed-depth-image-ghcr.sh",
+        "scripts/check-qwen36-xpu-xccl-health.sh",
+        "repro/qwen38-27b-autoround-int4-b70/publication-manifest.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/source-manifest.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log"
       ],
       "evidence": [
         "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-fp8-repeat-exactness.json",
         "experiments/qwen35-4b-b70/data/2026-09-07-qwen35-4b-w4a16-matrix-result.json",
         "experiments/qwen35-4b-b70/data/2026-09-08-qwen35-4b-w4a16-depth-sweep.json",
-        "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1-strict-result.json"
+        "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-tp2-mtp3-graph1-dhint4-20260907-t1-strict-result.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/source-manifest.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
+        "experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/summary.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-repair-cross-check/summary.json"
       ],
       "missing": [
         "clean-host replay"
@@ -2693,7 +2719,7 @@
         "model_family": "Qwen3.5",
         "publisher": "RedHatAI (W4A16 of Alibaba / Qwen)",
         "variant": "9B W4A16 (compressed-tensors INT4 weights, FP16 activations) with the publisher MTP head",
-        "summary": "Qwen3.5-9B W4A16 on one B70 with target-verified MTP3 and a 67,248-row draft shortlist. Best qualified strict record 124.08 tok/s; the current R304 recipe fixes the older runtime’s tiny-prompt failures and revalidates at 123.54 tok/s. Multi-user and context curves describe separately named operating profiles; clean-host replay is pending.",
+        "summary": "Qwen3.5-9B W4A16 on one B70 with target-verified MTP3 and a 67,248-row draft shortlist. Best qualified strict record 124.08 tok/s; the current R304 recipe fixes the older runtime’s tiny-prompt failures and revalidates at 123.54 tok/s. Multi-user and context curves describe separately named operating profiles; clean-host replay is pending. An optional R308 profile adds the qualified single-request boundary repair; see the full guide.",
         "quantization": "W4A16 (compressed-tensors INT4 weights, FP16 activations)",
         "runtime_label": "vLLM XPU",
         "operating_systems": [
@@ -3376,7 +3402,7 @@
           "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
           "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch"
         ],
-        "note": "The image is the Qwen3.8 INT4 lane's R304 image (experiments/qwen38-27b-b70/docker/rebase-v0290/): the lineage's overlays ported onto stock v0.29.0 as net diffs, the kernel library rebuilt from public sources, three open upstream vLLM PRs applied verbatim. No lane-specific patch."
+        "note": "The image is the Qwen3.8 INT4 lane's R304 image (experiments/qwen38-27b-b70/docker/rebase-v0290/): the lineage's overlays ported onto stock v0.29.0 as net diffs, the kernel library rebuilt from public sources, three open upstream vLLM PRs applied verbatim. No lane-specific patch. Optional R308 single-request TP1/depth-3 boundary repair is documented separately; the default remains R304."
       },
       "commands": {
         "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304",
@@ -3506,7 +3532,27 @@
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
         "experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json",
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256",
-        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json"
+        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r307-gdn-state-handoff",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-gdn-active-width-contiguous-staging.py",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r307-gdn-state-handoff.py",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r308-gdn-state-resume",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-gdn-state-resume.py",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256",
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/rebuild-r308-overlay.sh",
+        "experiments/qwen35-4b-b70/tests/test-r308-state-resume.py",
+        "experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py",
+        "experiments/qwen35-4b-b70/scripts/run-20260913-r307-qualification.py",
+        "experiments/qwen35-4b-b70/scripts/run-20260913-r308-4b-strict.sh",
+        "experiments/qwen35-4b-b70/scripts/summarize-r307-qualification.py",
+        "experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md",
+        "repro/qwen35-9b-w4a16-b70/scripts/publish-r308-fixed-depth-image-ghcr.sh",
+        "scripts/check-qwen36-xpu-xccl-health.sh",
+        "repro/qwen38-27b-autoround-int4-b70/publication-manifest.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/source-manifest.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log"
       ],
       "evidence": [
         "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-c128-identity-ladder.json",
@@ -3516,7 +3562,13 @@
         "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1-strict-result.json",
         "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-fullgraph-20260910-fgdynm1r-strict-result.json",
         "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1-strict-result.json",
-        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1r-strict-result.json"
+        "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-tp1-mtp3-dynamic-catchup-20260911-cudynm1r-strict-result.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/source-manifest.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
+        "experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/summary.json",
+        "experiments/qwen35-4b-b70/data/2026-09-13-r308-repair-cross-check/summary.json"
       ],
       "missing": [
         "clean-host replay"

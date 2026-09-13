@@ -83,10 +83,12 @@ All 17 rebuilt runtime digests match the
 (hash `a45dddb714460c1131e22f5da0e9cafe5954ecb54ba823a4bfbed0446f698446`).
 The [seven lifecycle tests](../tests/test-r308-state-resume.py) pass.
 
-At this note's capture, public image publication and remote verification remain
-pending. Local qualification and source reconstruction are not public download
-verification or clean-host certification. This note grants no publication or
-performance promotion by itself.
+The image is published at
+`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba`.
+[Anonymous pull and public verification](../data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json)
+and the [public 17-file image contract](../data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log)
+passed. This verifies public availability and runtime identity; clean-host
+certification remains pending. No new performance headline is promoted.
 
 ## Replay the registered qualification
 

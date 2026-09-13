@@ -254,3 +254,102 @@ no speculation at 128 users with CLASSPAD=1: 2522 tok/s exact on one card, 3990 
 - Two-card concurrency identity without an admission stagger is not qualified above 32 users without
   speculation, or above 16 with it; with the 5 ms stagger it is byte-exact at 64.
 - Not yet clean-host tested.
+
+## Optional R308 boundary repair: one request, one B70, MTP depth 3
+
+**Qualified and publicly verified; clean-host certification remains pending.**
+This optional image adds request-pause acceptance preservation to the R307 GDN
+state handoff. The default remains R304, and historical metrics retain their
+original image identities. This is a correctness profile, not a new speed record.
+
+Scope: one active request, TP1, fixed MTP depth 3, `MAX_NUM_SEQS=1`, W4A16
+weights/FP16 activations, V1 runner, class padding off, prompt caching off.
+Both models passed 60/60 same-image MTP0 boundary checks and 52/52 checks on each
+of two fresh MTP3 servers. All four strict comparisons per model passed 12/12
+with complete numeric output IDs and zero cached tokens. Boundary coverage uses
+context capacity 256; the strict suite uses 1024 and the command below exposes
+1024. These results do not qualify 32K, concurrent speculative serving, TP2,
+dynamic depth, alternative cache modes, or forced-preemption behavior.
+
+See the [qualification note](../../experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md),
+[full gate summary](../../experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json), and
+[anonymous public verification](../../experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json).
+R307 alone failed 10/52 9B single-request checks and an earlier expanded 4B c4
+check failed 7/40 full requests. The
+[retained negative evidence](../../experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/summary.json)
+and [repair cross-check](../../experiments/qwen35-4b-b70/data/2026-09-13-r308-repair-cross-check/summary.json)
+show that R308 repairs all ten 9B failures against unchanged numeric-ID oracles.
+Concurrent speculation remains outside this profile.
+
+From the repository root, first pull and check the optional image on an idle
+host. Only card 0 is required; the qualification host's two-card XCCL postflights
+are additional host-health evidence. If needed, set `PYTHON` to the XPU Python
+interpreter from the existing host setup guide.
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba
+xpu-smi discovery
+PHYSICAL_DEVICES=0 XPU_HEALTH_SKIP_XCCL=1 bash scripts/check-qwen36-xpu-xccl-health.sh
+SKIP_IMAGE_CONTRACT=0 EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh \
+  mtp1-serial-fa-split-gdn ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba
+```
+
+Launch the downloaded, manifest-pinned model from the earlier setup instructions.
+Run only one model at a time. This clears inherited compilation/speculation
+overrides so the source-checked wrapper supplies the qualified graph settings.
+
+```bash
+env -u COMPILATION_CONFIG -u SPECULATIVE_CONFIG \
+IMAGE=ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba \
+EXPECTED_IMAGE_ID=sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba \
+EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad SKIP_IMAGE_CONTRACT=0 \
+MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 \
+CONTAINER_NAME=qwen35-4b-r308-single SERVED_MODEL_NAME=qwen35-4b-r308-single PORT=18131 \
+VLLM_CACHE_DIR=/tmp/qwen35-4b-r308-single-cache \
+TENSOR_PARALLEL_SIZE=1 XPU_DEVICE_MASK=0 MTP_DEPTH=3 \
+MAX_NUM_SEQS=1 MAX_MODEL_LEN=1024 MAX_NUM_BATCHED_TOKENS=1024 \
+GPU_MEMORY_UTILIZATION=0.95 CONTAINER_MEMORY=12g CONTAINER_MEMORY_SWAP=20g \
+CLASSPAD=0 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 VLLM_USE_V2_MODEL_RUNNER=0 \
+DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt \
+  repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh
+```
+
+In a second terminal, check health and run the full fixed suite once:
+
+```bash
+curl --fail http://127.0.0.1:18131/health
+r308_bench_dir=$(mktemp -d /tmp/qwen35-4b-r308-bench.XXXXXX)
+OUT_DIR="${r308_bench_dir}/strict" \
+BASE_URL=http://127.0.0.1:18131 MODEL_NAME=qwen35-4b-r308-single \
+PROFILE_LABEL=qwen35-4b-r308-single ATTEMPT_LABEL=fresh-optional-profile \
+  repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh
+docker stop -t 60 qwen35-4b-r308-single
+```
+
+The harness checks all 12 prompts, numeric token IDs, cache-zero receipts,
+canaries, and a 512-token natural-completion cap with conventional 99-interval
+timing. A natural stop before the cap is valid. A single replay checks workload
+quality only; repeat/target parity requires the
+[complete qualification commands](../../experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md#replay-the-registered-qualification).
+
+To reconstruct the source overlay separately, use its immutable public R304
+parent and a new build-evidence directory:
+
+```bash
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+OUT_DIR="$(mktemp -d /tmp/qwen35-r308-build.XXXXXX)" REBUILD_TAG=local/qwen35-r308-rebuilt \
+  experiments/qwen38-27b-b70/docker/rebase-v0290/rebuild-r308-overlay.sh
+```
+
+The [build helper](../../experiments/qwen38-27b-b70/docker/rebase-v0290/rebuild-r308-overlay.sh) verifies all 17 files in
+[the R308 inventory](../../experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256). Its closed source
+chain is the [R307 Dockerfile](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r307-gdn-state-handoff),
+[R306 staging overlay](../../experiments/qwen38-27b-b70/docker/rebase-v0290/r306-gdn-active-width-contiguous-staging.py),
+[R307 handoff overlay](../../experiments/qwen38-27b-b70/docker/rebase-v0290/r307-gdn-state-handoff.py),
+[R308 Dockerfile](../../experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r308-gdn-state-resume), and
+[R308 resume overlay](../../experiments/qwen38-27b-b70/docker/rebase-v0290/r308-gdn-state-resume.py).
+Rebuild metadata can produce a different image ID; the launch command above
+pins the publicly verified measured image. Source reconstruction is separate
+from clean-host certification. The [publication chain](../qwen38-27b-autoround-int4-b70/publication-manifest.json)
+binds the optional image and evidence.

@@ -87,3 +87,10 @@ MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 ./scripts/render-compose.sh
 ```
 
 Source of truth: [`repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh`](../../repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh).
+
+## Optional R308 single-request profile
+
+The [qualified and publicly verified R308 boundary repair](../../repro/qwen35-4b-w4a16-b70/README.md#optional-r308-boundary-repair-one-request-one-b70-mtp-depth-3)
+is limited to one active request, one B70, fixed MTP depth 3, and the documented
+256-boundary/1024-strict coverage. R304 defaults and historical measurements
+remain unchanged; concurrent serving and a new 32K profile are not qualified.
