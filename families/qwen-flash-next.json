@@ -2159,6 +2159,150 @@
         }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context8k-a382",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 6d872457 (fused-QSA overlay) + kernel stage v2 (_xpu_C rebuilt from bbae3c5 over e421889; other files the served 2f829747 stage)",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 8192,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx8192-cap33280-v1",
+      "measurement_class": "lab-measured exact p8192/o128 depth-ladder rows with one speculative token (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement; GDN verifier rows in the extension's exact serial mode",
+      "promotion_status": "lab-measured 2026-09-13 (A382 depth ladder: both rows one output hash at every depth and equal to the MTP0 line's A381 hash at 2K/8K/16K/32K, the lineage's lossless definition; 2K equals the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified exact-GDN MTP1 head 6d872457 + stage v2 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes and the wider bit-exact expert host placement",
+      "quality_scope": "output ids equal across the two rows and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p8192/o128 requests on one server, cache zero; TTFT 47.7/47.7 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of experts in pinned host memory (host MemAvailable trough 8.08 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          42.72
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          42.713,
+          42.717
+        ],
+        "aggregation": "median of two rows on one server (A382 r1/r2)",
+        "output_sha256": "0126d542095bcbc81a465383f296cffa806f96b47345a1f3b7344142ed196954"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 42.72,
+          "label": "exact-mode MTP1 line at 8K input on the 33,280-token capacity server (A382): 1.33x the MTP0 line, same output ids"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context16k-a382",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 6d872457 (fused-QSA overlay) + kernel stage v2 (_xpu_C rebuilt from bbae3c5 over e421889; other files the served 2f829747 stage)",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 16384,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx16384-cap33280-v1",
+      "measurement_class": "lab-measured exact p16384/o128 depth-ladder rows with one speculative token (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement; GDN verifier rows in the extension's exact serial mode",
+      "promotion_status": "lab-measured 2026-09-13 (A382 depth ladder: both rows one output hash at every depth and equal to the MTP0 line's A381 hash at 2K/8K/16K/32K, the lineage's lossless definition; 2K equals the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified exact-GDN MTP1 head 6d872457 + stage v2 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes and the wider bit-exact expert host placement",
+      "quality_scope": "output ids equal across the two rows and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p16384/o128 requests on one server, cache zero; TTFT 99.5/99.5 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of experts in pinned host memory (host MemAvailable trough 8.08 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          45.57
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          45.587,
+          45.562
+        ],
+        "aggregation": "median of two rows on one server (A382 r1/r2)",
+        "output_sha256": "789cbcb82ff8ed8b5e85d70d408dc8be33c7ba97ff0a4f27fb98c9561bfa5771"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 45.57,
+          "label": "exact-mode MTP1 line at 16K input on the 33,280-token capacity server (A382): 1.45x the MTP0 line, same output ids"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context32k-a382",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 6d872457 (fused-QSA overlay) + kernel stage v2 (_xpu_C rebuilt from bbae3c5 over e421889; other files the served 2f829747 stage)",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 32768,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx32768-cap33280-v1",
+      "measurement_class": "lab-measured exact p32768/o128 depth-ladder rows with one speculative token (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement; GDN verifier rows in the extension's exact serial mode",
+      "promotion_status": "lab-measured 2026-09-13 (A382 depth ladder: both rows one output hash at every depth and equal to the MTP0 line's A381 hash at 2K/8K/16K/32K, the lineage's lossless definition; 2K equals the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified exact-GDN MTP1 head 6d872457 + stage v2 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes and the wider bit-exact expert host placement",
+      "quality_scope": "output ids equal across the two rows and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p32768/o128 requests on one server, cache zero; TTFT 206.2/206.2 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of experts in pinned host memory (host MemAvailable trough 8.08 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          44.08
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          44.064,
+          44.089
+        ],
+        "aggregation": "median of two rows on one server (A382 r1/r2)",
+        "output_sha256": "1cc1699ed8150fe5da9384b3df58dcf05156d772ff4dca8731e245beea281ca7"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 44.08,
+          "label": "exact-mode MTP1 line at 32K input on the 33,280-token capacity server (A382): 1.35x the MTP0 line, same output ids"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json"
     }
   ],
   "series_measurements": [
