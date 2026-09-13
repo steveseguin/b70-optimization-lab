@@ -41,3 +41,12 @@ digest it pins is `verify-q38-a139-fullgraph-runtime.py`'s. The generator now ma
 to the a139 file; the arm is regenerated as A374 (port 19987) and queued behind the A369-A373
 decomposition chain with the five-minute gap. The server health itself answers the first gate:
 the extension's exact mode accepts three verifier rows.
+
+## Amendment 2 (07:10 UTC): A374 stopped at the next latent pin, re-run as A380
+
+A374's server was healthy at 07:06 UTC (three verifier rows in the exact mode capture and serve
+again) and the client passed the verifier-file pin, then stopped at "W13-N32 selection verifier
+drifted": the A309 client pins the selection verifier at its 2026-09-07 bytes (`20546ff1…`), and
+the verifier was repointed at the corrected fused head afterwards (`260ad72c`); the A305/A364
+clients pin the current file (`c874852b…`), which passes. The generator now repins it; the arm is
+regenerated as A380 (port 19993), queued after A379.

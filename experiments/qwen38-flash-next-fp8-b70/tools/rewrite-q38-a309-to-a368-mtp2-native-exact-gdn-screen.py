@@ -128,6 +128,9 @@ def main():
     # the A309 client names its runtime verifier after its own attempt (a latent rename in the a139->a309
     # generator); the file that carries the pinned digest is verify-q38-a139-fullgraph-runtime.py
     client = replace_n(client, f"verify-q38-a{ATTEMPT}-fullgraph-runtime.py", "verify-q38-a139-fullgraph-runtime.py", 1)
+    # the A309 client also pins the selection verifier at its 2026-09-07 bytes; the verifier was repointed
+    # at the corrected fused head afterwards (260ad72c) and the A305/A364 clients pin the current file
+    client = replace_n(client, "20546ff1b349ce5d969d29855ed9a95b38c5be2d22084b6cb4326bac4a7e8849", "c874852bbae20f4d738e1f3a37f1b16d553e50dc9e8c56c2b0caabc22675dc0e", 1)
     supervisor = successor(source("supervise-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32.sh"))
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
