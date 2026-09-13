@@ -1,0 +1,9 @@
+# R302 (2026-09-12): R301 + the exact vllm/v1/worker/gpu_model_runner.py hunks of open upstream vLLM PR #53059
+# ("Reject shape-aliased prefills in uniform-decode classification", issue #53051; adopted downstream by dominick253 PR #45
+# and bosd PR #47 on this repo). A fresh prefill scheduling exactly 1+K tokens per request aliases the uniform-decode shape,
+# is dispatched into the decode graph and replays stale GDN state indices -> zeroed recurrent state -> degenerate walls.
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r301
+FROM ${BASE}
+COPY r302-uniform-decode-alias-guard-pr53059.diff /tmp/r302.diff
+RUN cd /opt/venv/lib/python3.12/site-packages && patch -p1 --forward < /tmp/r302.diff && python -m py_compile vllm/v1/worker/gpu_model_runner.py && rm /tmp/r302.diff
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r302-alias-guard"

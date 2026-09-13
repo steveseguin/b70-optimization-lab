@@ -15,8 +15,58 @@ fail() {
 command -v docker >/dev/null || fail 'docker is required'
 docker image inspect "${image}" >/dev/null 2>&1 || fail "image is not local: ${image}"
 
-expected_kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 actual_kernel_head=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')
+if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; then
+  # R302 (2026-09-12): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head) with the lab's
+  # ten ported Python files, rebuilt _xpu_C/GDN libraries and the #53059 alias guard. One closed digest set covers every
+  # profile: the sixteen files below are the complete surface the lineage's overlays touch, so a candidate that changes
+  # any of them is a different image. Digests: experiments/qwen38-27b-b70/docker/rebase-v0290/r302-contract-digests.sha256.
+  v0290_paths=(
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+    /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+    /opt/venv/lib/python3.12/site-packages/vllm/config/compilation.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py
+    /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so
+    /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so
+    /opt/venv/lib/python3.12/site-packages/vllm/ir/ops/layernorm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/logits_processor.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/spec_decode/llm_base_proposer.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+  )
+  v0290_expected=(
+    7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208
+    6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3
+    3a79ea08d48d44879ac8cbfee1c7d88f9bd72927d9bd12eee31743e8da8a4d7e
+    7ef91a9e03424571155e7a09d8a506bafdd7ea4e08c292b049ab7317b42996e0
+    5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d
+    bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932
+    6f0fec189b04bd6a94b1b3ca0983623be7e7f2a4734b58e086fab3b0341213f3
+    65d33dcb96404ddde273acf84ef901151a8155a2cffc144bdd0c49fe1d576a22
+    6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f
+    3f949e537ccc52744d7eba52ed2034b20ee3fbaeaabbfab4e672f1dc9767602c
+    e0ae4ae14ffdc0c7db1c480978f94b56f74778665a9c454bab32a89371e342e7
+    26c69c2e1d41a5708020b2fc4047b40237eaa13f4828431bd7a10e529ea13776
+    34ef265d5a05425bd217b718229428e7b124788fb4586d367bd8053d50a80168
+    1e72ed72ed7f495f9b4b5d28f7a0c97b5397e853dabc83acf2ab5ab112e9ffd9
+    2d9007211cc62bff8dfde27e58714d95c5225be37905991ba34859390b6c8e96
+    7cc7ca2fef07a0747a0892a2e774eebd03c5796948499272309d6260321cb751
+  )
+  mapfile -t v0290_observed < <(docker run --rm --entrypoint sha256sum "${image}" "${v0290_paths[@]}" | awk '{print $1}')
+  [[ "${#v0290_observed[@]}" == "${#v0290_expected[@]}" ]] || fail 'image hash inventory is incomplete (v0290 set)'
+  for index in "${!v0290_expected[@]}"; do
+    [[ "${v0290_observed[index]}" == "${v0290_expected[index]}" ]] || \
+      fail "content mismatch for ${v0290_paths[index]}: expected ${v0290_expected[index]}, found ${v0290_observed[index]}"
+  done
+  printf 'IMAGE CONTRACT PASS: profile=%s(v0290) image=%s files=%s kernel=%s\n' "${profile}" "${image}" "${#v0290_expected[@]}" "${actual_kernel_head}"
+  exit 0
+fi
+expected_kernel_head=1e90ffa672ba02f17a909da11838a4c55b199783
 [[ "${actual_kernel_head}" == "${expected_kernel_head}" ]] || \
   fail "kernel head mismatch: expected ${expected_kernel_head}, found ${actual_kernel_head:-unset}"
 

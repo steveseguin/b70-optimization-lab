@@ -47,6 +47,9 @@ export QUANTIZATION=gptq VLLM_XPU_FP8_BLOCK_W8A16=0 VLLM_XPU_DRAFT_LM_HEAD_INT4=
 # fixed-K W4A16 kernel, the 32-row FP16 linears, GDN spec grouping and Inductor split_reductions=false instead.
 export VLLM_BATCH_INVARIANT=0 VLLM_XPU_GDN_SPLIT_MIXED=1 VLLM_XPU_GDN_SPEC_GROUP=${VLLM_XPU_GDN_SPEC_GROUP:-16}
 export VLLM_XPU_GEMMA_RMSNORM_TRITON=0 VLLM_XPU_RMSNORM_TRITON=0 VLLM_XPU_ENABLE_XPU_GRAPH=${xpu_graph}
+# V1 model runner pinned (2026-09-12): vLLM v0.29.0 defaults XPU to the V2 runner, whose speculator has no draft INT4 head
+# (single user 128 instead of 172 tok/s on the 4B). A no-op on the 0.27.2 lineage, which defaults to V1.
+export VLLM_USE_V2_MODEL_RUNNER=${VLLM_USE_V2_MODEL_RUNNER:-0}
 export COMPILATION_CONFIG=${COMPILATION_CONFIG:-${compilation}}
 export SPECULATIVE_CONFIG=${SPECULATIVE_CONFIG:-${spec}}
 export CONTAINER_NAME=${CONTAINER_NAME:-qwen38-int4-fixed-k-mtp${depth}} SERVED_MODEL_NAME=${SERVED_MODEL_NAME:-qwen38-int4-fixed-k-mtp${depth}}
