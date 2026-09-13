@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import shlex
 
 IMAGE = 'sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3'
 FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
@@ -136,6 +137,41 @@ def check_inventory(observed, expected):
             'committed_inventory_sha256':sha(expected)}
 
 
+def inspect_identity(inspection, image, served, depth, max_model_len, max_num_seqs=1):
+    require(inspection['Image']==image, 'container image mismatch')
+    env=dict(x.split('=',1) for x in inspection['Config'].get('Env',[]))
+    args=list(inspection['Args'])
+    if args and args[0] in ('-lc','-c'):
+        require(len(args)==2, 'unexpected shell launch shape')
+        args=shlex.split(args[1])
+        require(args[:3]==['exec','vllm','serve'], 'unexpected shell launch command')
+        resolved=[]
+        for arg in args:
+            match=re.fullmatch(r'\$\{([A-Z0-9_]+)\}',arg)
+            if match:
+                require(match[1] in env, 'unresolved launcher environment')
+                arg=env[match[1]]
+            require('$' not in arg and arg not in (';','&&','||','|'), 'unsupported shell expression')
+            if arg: resolved.append(arg)
+        args=resolved
+    options={}
+    for i,arg in enumerate(args):
+        if arg.startswith('--'):
+            key,sep,value=arg.partition('=')
+            require(key not in options, 'duplicate launch option: '+key)
+            options[key]=value if sep else (args[i+1] if i+1<len(args) and not args[i+1].startswith('--') else True)
+    required={'--served-model-name':served,'--tensor-parallel-size':'1','--max-num-seqs':str(max_num_seqs),'--max-model-len':str(max_model_len),'--max-num-batched-tokens':'1024','--quantization':'compressed-tensors'}
+    require(all(options.get(k)==v for k,v in required.items()), 'actual container launch settings mismatch')
+    require('--no-enable-prefix-caching' in options and '--enable-prefix-caching' not in options, 'actual prefix cache policy mismatch')
+    spec=options.get('--speculative-config')
+    if depth:
+        spec=json.loads(spec) if isinstance(spec,str) else None
+        require(isinstance(spec,dict) and spec.get('method')=='qwen3_5_mtp' and spec.get('num_speculative_tokens')==depth, 'actual speculative depth mismatch')
+    else:
+        require(spec is None, 'oracle unexpectedly speculative')
+    return {'image':inspection['Image'],'args':inspection['Args'],'repro_env':{k:v for k,v in env.items() if k.startswith('REPRO_')},'validated_launch':required,'mtp_depth':depth}
+
+
 def strict_campaign(cap, strict, source_root, label, image, model, summary):
     pairs = {}
     require((strict/'campaign-end.txt').exists() and not (strict/'ABORTED').exists(), 'strict campaign incomplete/aborted')
@@ -148,9 +184,7 @@ def strict_campaign(cap, strict, source_root, label, image, model, summary):
         cap.file(folder/'container-inspect.json',label,source_root)
         inspection = read(folder/'container-inspect.json')
         inspection = inspection[0] if isinstance(inspection,list) else inspection
-        env = dict(x.split('=',1) for x in inspection['Config']['Env'])
-        require(inspection['Image'] == image and env['REPRO_MAX_NUM_SEQS'] == '1' and env['REPRO_TP'] == '1', f'strict runtime identity mismatch: {arm}')
-        require(env['REPRO_MAX_MODEL_LEN']=='1024' and env['REPRO_MAX_BATCHED_TOKENS']=='1024' and env['REPRO_SERVED_MODEL_NAME']==f'qwen35-{model}-w4a16-{arm}', f'strict context/model mismatch: {arm}')
+        runtime=inspect_identity(inspection,image,f'qwen35-{model}-w4a16-{arm}',0 if arm.startswith('mtp0') else 3,1024)
         data = read(folder/'strict/performance.json')
         rows = data['rows']
         require(len(rows) == 12 and len({r['prompt_id'] for r in rows}) == 12, 'strict needs full unique12')
@@ -162,7 +196,7 @@ def strict_campaign(cap, strict, source_root, label, image, model, summary):
         for name in ('performance.json','canaries.json','campaign-identity.json','models.json'):
             cap.file(folder/'strict'/name,label,source_root)
         summary['contracts'][f'{model}-strict-{arm}'] = cap.contract(folder,source_root,label)
-        summary['contracts'][f'{model}-strict-{arm}']['runtime'] = {'image':inspection['Image'], 'args':inspection['Args'], 'repro_env':{k:v for k,v in env.items() if k.startswith('REPRO_')}}
+        summary['contracts'][f'{model}-strict-{arm}']['runtime'] = runtime
         summary['health'][f'{model}-strict-{arm}'] = cap.health(strict,f'{arm}-post',label+'-strict','strict')
     for left,right in [('mtp0-a','mtp0-b'),('mtp3-a','mtp3-b'),('mtp3-a','mtp0-a'),('mtp3-b','mtp0-a')]:
         a,b = all_rows[left],all_rows[right]
@@ -246,9 +280,8 @@ def analyze(single, failed, out, image=IMAGE, candidate='r307', inventory=None, 
                 cap.file(inspect_path,'single',single)
                 inspection = read(inspect_path)
                 inspection = inspection[0] if isinstance(inspection,list) else inspection
-                actual_env = dict(x.split('=',1) for x in inspection['Config']['Env'])
-                require(inspection['Image'] == image and actual_env['REPRO_MAX_NUM_SEQS'] == '1' and actual_env['REPRO_TP'] == '1', f'actual boundary runtime mismatch: {stage}')
-                summary['contracts'][stage]['runtime'] = {'source_sha256':sha(inspect_path),'image':inspection['Image'], 'args':inspection['Args'], 'repro_env':{k:v for k,v in actual_env.items() if k.startswith('REPRO_')}}
+                runtime=inspect_identity(inspection,image,'m',0 if arm=='oracle' else 3,256)
+                summary['contracts'][stage]['runtime'] = {'source_sha256':sha(inspect_path),**runtime}
                 for kind in ('preflight','postflight'):
                     summary['health'][f'{stage}-{kind}'] = cap.health(single,f'{stage}-{kind}','single')
         summary['strict9b'] = strict_campaign(cap, single/'9b-strict', single, 'single', image, '9b', summary)

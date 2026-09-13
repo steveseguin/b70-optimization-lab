@@ -1,4 +1,5 @@
 import copy
+import json
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -97,6 +98,20 @@ class Tests(unittest.TestCase):
                     (strict/'ABORTED').write_text('failed')
                 with self.assertRaises(ValueError):
                     m.strict_campaign(cap,strict,strict,'strict4b',m.IMAGE,'4b',{'contracts':{},'health':{}})
+
+    def test_container_launch_shell_and_direct_forms(self):
+        common=['--served-model-name','model-test','--tensor-parallel-size','1','--max-num-seqs','1','--max-model-len','1024','--max-num-batched-tokens','1024','--quantization','compressed-tensors','--no-enable-prefix-caching']
+        direct={'Image':m.IMAGE,'Config':{'Env':[]},'Args':['serve','--model','/model',*common,'--speculative-config',json.dumps({'method':'qwen3_5_mtp','num_speculative_tokens':3})]}
+        shell={'Image':m.IMAGE,'Config':{'Env':['NAME=model-test','TP=1']},'Args':['-lc','exec vllm serve /model --served-model-name "${NAME}" --tensor-parallel-size "${TP}" --max-num-seqs 1 --max-model-len 1024 --max-num-batched-tokens 1024 --quantization compressed-tensors --no-enable-prefix-caching']}
+        self.assertEqual(m.inspect_identity(direct,m.IMAGE,'model-test',3,1024)['mtp_depth'],3)
+        self.assertEqual(m.inspect_identity(shell,m.IMAGE,'model-test',0,1024)['mtp_depth'],0)
+        for fixture,depth in [(direct,3),(shell,0)]:
+            with self.assertRaises(ValueError):m.inspect_identity(fixture,m.IMAGE,'wrong-model',depth,1024)
+            with self.assertRaises(ValueError):m.inspect_identity(fixture,m.IMAGE,'model-test',depth,256)
+        bad=copy.deepcopy(direct);bad['Args']+=['--max-num-seqs','2']
+        with self.assertRaises(ValueError):m.inspect_identity(bad,m.IMAGE,'model-test',3,1024)
+        with self.assertRaises(ValueError):m.inspect_identity(direct,m.IMAGE,'model-test',0,1024)
+        with self.assertRaises(ValueError):m.inspect_identity(shell,m.IMAGE,'model-test',3,1024)
 
     def test_incomplete_campaign_cannot_pass(self):
         with tempfile.TemporaryDirectory() as d:
