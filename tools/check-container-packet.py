@@ -76,9 +76,24 @@ def check(packet: Path) -> list[str]:
     doc = yaml.safe_load(compose.read_text())
     services = doc.get("services") or {}
 
-    for name in ("one-gpu", "two-gpu"):
+    # A packet may ship the two-card profile alone when its result exists only on two cards (package.json
+    # container_packet.profiles lists only "two-gpu"); everything else must ship both.
+    expected_profiles = ("one-gpu", "two-gpu")
+    pkg_json = packet / "package.json"
+    if pkg_json.exists():
+        try:
+            import json
+            declared = (json.loads(pkg_json.read_text()).get("container_packet") or {}).get("profiles") or {}
+            if set(declared) == {"two-gpu"}:
+                expected_profiles = ("two-gpu",)
+        except Exception:
+            pass
+    for name in expected_profiles:
         if name not in services:
             errs.append(f"{packet.name}: compose.yaml has no {name} service")
+    for name in services:
+        if name not in expected_profiles:
+            errs.append(f"{packet.name}: compose.yaml has an undeclared {name} service")
     if errs:
         return errs
 
@@ -105,20 +120,20 @@ def check(packet: Path) -> list[str]:
                 f"environment variable(s), regenerate the packet: {missing[:6]}"
             )
 
-    differing = {k for k in set(envs["one-gpu"]) | set(envs["two-gpu"])
-                 if envs["one-gpu"].get(k) != envs["two-gpu"].get(k)}
-    if differing != {"ZE_AFFINITY_MASK", "ONEAPI_DEVICE_SELECTOR"}:
-        errs.append(
-            f"{packet.name}: the two profiles should differ only in device selection, "
-            f"but differ in {sorted(differing)}"
-        )
-
     def arg(cmd: list[str], flag: str) -> str | None:
         return cmd[cmd.index(flag) + 1] if flag in cmd and cmd.index(flag) + 1 < len(cmd) else None
 
-    if arg(cmds["one-gpu"], "--tensor-parallel-size") != "1":
+    if "one-gpu" in envs and "two-gpu" in envs:
+        differing = {k for k in set(envs["one-gpu"]) | set(envs["two-gpu"])
+                     if envs["one-gpu"].get(k) != envs["two-gpu"].get(k)}
+        if differing != {"ZE_AFFINITY_MASK", "ONEAPI_DEVICE_SELECTOR"}:
+            errs.append(
+                f"{packet.name}: the two profiles should differ only in device selection, "
+                f"but differ in {sorted(differing)}"
+            )
+    if "one-gpu" in cmds and arg(cmds["one-gpu"], "--tensor-parallel-size") != "1":
         errs.append(f"{packet.name}/one-gpu: tensor parallel size is not 1")
-    if arg(cmds["two-gpu"], "--tensor-parallel-size") != "2":
+    if "two-gpu" in cmds and arg(cmds["two-gpu"], "--tensor-parallel-size") != "2":
         errs.append(f"{packet.name}/two-gpu: tensor parallel size is not 2")
     normalized = {}
     for name, cmd in cmds.items():
@@ -129,7 +144,7 @@ def check(packet: Path) -> list[str]:
             normalized[name][cmd.index("--tensor-parallel-size") + 1] = "<tensor-parallel-size>"
         if "--no-enable-prefix-caching" not in cmd:
             errs.append(f"{packet.name}/{name}: prefix caching is not disabled; results would not be cache-zero")
-    if normalized["one-gpu"] != normalized["two-gpu"]:
+    if "one-gpu" in normalized and "two-gpu" in normalized and normalized["one-gpu"] != normalized["two-gpu"]:
         errs.append(f"{packet.name}: serving arguments differ beyond tensor parallel size")
     return errs
 

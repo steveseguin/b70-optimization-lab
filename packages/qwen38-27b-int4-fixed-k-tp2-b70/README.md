@@ -86,6 +86,38 @@ Images: R228 = `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:aaf920b04
 The last known composition dependence is the GDN kernel (launch grouping does not restore single-request
 arithmetic); it accounts for the c32/c64 near-tie flips with speculation.
 
+## Container packet
+
+A level-2 packet: a digest-pinned image (R304, the runtime rebased onto stock vLLM XPU v0.29.0), explicit GPU device
+mapping, read-only model and persistent cache volumes, and one- and two-card profiles (depth 4 with the INT4 draft head
+scoring the 67k shortlist: 117 tok/s on two cards, 81 on one).
+
+```bash
+cd packages/qwen38-27b-int4-fixed-k-tp2-b70
+# the model is the R212 plain-GPTQ relabel of devan-carlin/Qwen3.8-27B-int4-AutoRound; download builds it:
+./scripts/download-model.sh /models/Qwen3.8-27B-int4-AutoRound /models/qwen3.8-27b-int4-autoround-gptq-relabel
+export MODEL_DIR=/models/qwen3.8-27b-int4-autoround-gptq-relabel
+
+PROFILE=two-gpu ./scripts/preflight.sh     # GPUs, driver, RAM, storage, image
+./scripts/verify.sh                        # revision, sizes, every SHA-256 (relabelled config included)
+PROFILE=two-gpu ./scripts/smoke-test.sh    # start, health, and a repeat-identity gate
+```
+
+`compose.yaml` is **generated, not hand-written**: `scripts/render-compose.sh` runs the real recipe launcher behind a
+docker shim that captures the `docker run` argv, so the packet carries the measured container's environment and serve
+command verbatim. The operator scripts are thin wrappers over `tools/container-packet/`, shared with the other packets.
+`tools/check-container-packet.py` runs in CI and fails the build if the committed file stops matching the launcher, if
+the image is not pinned by digest, if the model mount is not read-only, or if a port leaves loopback. Both profiles
+passed the packet smoke test on 2026-09-13 (health plus repeat-identity gate) on this host.
+
+Regenerate after any launcher change:
+
+```bash
+MODEL_DIR=/models/qwen3.8-27b-int4-autoround-gptq-relabel ./scripts/render-compose.sh
+```
+
+Source of truth: [`repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh`](../../repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh).
+
 ## R294: the draft head scores a shortlist (2026-09-12)
 
 The served image is now R294b (R293 plus a draft-only lm_head that scores a 67,248-row token shortlist; the target

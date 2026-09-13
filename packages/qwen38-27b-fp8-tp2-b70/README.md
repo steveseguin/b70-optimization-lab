@@ -157,6 +157,39 @@ share a scheduler step. The old kernel aborts this workload; the integrated
 fix reaches `1,091.64 tok/s` at c64. See the
 [MTP1 result](../../experiments/qwen38-27b-b70/notes/2026-08-26-qwen38-fp8-block-w8a16-mtp1-tp2-result.md).
 
+## Container packet
+
+A level-2 packet: a digest-pinned image (R304, the runtime rebased onto stock vLLM XPU v0.29.0, on which this lane's
+R187 profile measures 54.8 tok/s at depth 1), explicit GPU device mapping, read-only model and persistent cache volumes.
+**Two cards only:** Qwen3.8-27B FP8 does not fit one B70 with a usable KV budget, so the packet ships the `two-gpu`
+profile alone (declared in `package.json`; the CI checker accepts a two-card-only packet).
+
+```bash
+cd packages/qwen38-27b-fp8-tp2-b70
+export MODEL_DIR=/models/Qwen3.8-27B-FP8
+
+PROFILE=two-gpu ./scripts/preflight.sh     # GPUs, driver, RAM, storage, image
+./scripts/download-model.sh                # exact bytes, from the publisher at the pinned revision
+./scripts/verify.sh                        # revision, sizes, every SHA-256
+PROFILE=two-gpu ./scripts/smoke-test.sh    # start, health, and a repeat-identity gate
+```
+
+`compose.yaml` is **generated, not hand-written**: `scripts/render-compose.sh` runs the real R187 launcher chain behind
+a docker shim that captures the `docker run` argv, so the packet carries the measured container's environment and
+serve command verbatim (whole-graph piecewise compile, block W8A16, GDN split-mixed, MTP depth 1, draft INT4 head, V1
+model runner). The operator scripts are thin wrappers over `tools/container-packet/`, shared with the other packets.
+`tools/check-container-packet.py` runs in CI. The packet passed its smoke test on 2026-09-13 (health plus
+repeat-identity gate) on this host.
+
+Regenerate after any launcher change (the R187 chain needs the image identities in the environment):
+
+```bash
+MODEL_DIR=/models/Qwen3.8-27B-FP8 EXPECTED_IMAGE_ID=sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 \
+EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad ./scripts/render-compose.sh
+```
+
+Source of truth: [`experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh`](../../experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh).
+
 ## What you need
 
 - x86-64 Ubuntu 24.04;

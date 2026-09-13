@@ -190,7 +190,15 @@
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r302-uniform-decode-alias-guard-pr53059.diff",
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-gdn-first-chunk-classification-pr51565.diff",
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
-    "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256"
+    "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/compose.yaml",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/render-compose.sh",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/env/one-gpu.env",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/env/two-gpu.env",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/preflight.sh",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/download-model.sh",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/verify.sh",
+    "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/smoke-test.sh"
   ],
   "performance_profiles": [
     {
@@ -1041,5 +1049,35 @@
   ],
   "missing": [
     "clean-host replay"
-  ]
+  ],
+  "container_packet": {
+    "level": 2,
+    "compose": "packages/qwen38-27b-int4-fixed-k-tp2-b70/compose.yaml",
+    "generated": true,
+    "generator": "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/render-compose.sh",
+    "generated_from": "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "ci_check": "tools/check-container-packet.py",
+    "profiles": {
+      "one-gpu": {
+        "cards": 1,
+        "tensor_parallel_size": 1
+      },
+      "two-gpu": {
+        "cards": 2,
+        "tensor_parallel_size": 2
+      }
+    },
+    "env_files": [
+      "packages/qwen38-27b-int4-fixed-k-tp2-b70/env/one-gpu.env",
+      "packages/qwen38-27b-int4-fixed-k-tp2-b70/env/two-gpu.env"
+    ],
+    "scripts": {
+      "preflight": "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/preflight.sh",
+      "download": "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/download-model.sh",
+      "verify": "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/verify.sh",
+      "smoke_test": "packages/qwen38-27b-int4-fixed-k-tp2-b70/scripts/smoke-test.sh"
+    },
+    "shared_implementation": "tools/container-packet",
+    "note": "compose.yaml is rendered from the argv the recipe launcher repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh hands to docker run (R304 image, MTP depth 4, INT4 draft head with the 67k shortlist, CLASSPAD=0, V1 model runner), so it carries the measured container's environment and serve command verbatim. The model is the R212 gptq relabel of devan-carlin/Qwen3.8-27B-int4-AutoRound: scripts/download-model.sh downloads the pinned revision and builds the relabel directory, which MODEL_DIR points at. The two-card profile is the 117 tok/s depth-4 result; the one-card profile is the 81 tok/s depth-4 result (R304 TP1). Operator knobs (MAX_MODEL_LEN 8192, 16 sequences) are the packet defaults, not the strict-suite values."
+  }
 }

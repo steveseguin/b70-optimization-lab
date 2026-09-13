@@ -512,7 +512,14 @@
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-gdn-first-chunk-classification-pr51565.diff",
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
     "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
-    "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256"
+    "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256",
+    "packages/qwen38-27b-fp8-tp2-b70/compose.yaml",
+    "packages/qwen38-27b-fp8-tp2-b70/scripts/render-compose.sh",
+    "packages/qwen38-27b-fp8-tp2-b70/env/two-gpu.env",
+    "packages/qwen38-27b-fp8-tp2-b70/scripts/preflight.sh",
+    "packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh",
+    "packages/qwen38-27b-fp8-tp2-b70/scripts/verify.sh",
+    "packages/qwen38-27b-fp8-tp2-b70/scripts/smoke-test.sh"
   ],
   "performance_profiles": [
     {
@@ -1195,5 +1202,30 @@
     "independent host-driver/Docker installation and strict endpoint replay",
     "beginner recovery flow",
     "MTP1 output identity above 16 concurrent users (MTP0 is exact through 64; the MTP1 residual is not in any censused kernel)"
-  ]
+  ],
+  "container_packet": {
+    "level": 2,
+    "compose": "packages/qwen38-27b-fp8-tp2-b70/compose.yaml",
+    "generated": true,
+    "generator": "packages/qwen38-27b-fp8-tp2-b70/scripts/render-compose.sh",
+    "generated_from": "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp1-whole-graph-r187-server.sh",
+    "ci_check": "tools/check-container-packet.py",
+    "profiles": {
+      "two-gpu": {
+        "cards": 2,
+        "tensor_parallel_size": 2
+      }
+    },
+    "env_files": [
+      "packages/qwen38-27b-fp8-tp2-b70/env/two-gpu.env"
+    ],
+    "scripts": {
+      "preflight": "packages/qwen38-27b-fp8-tp2-b70/scripts/preflight.sh",
+      "download": "packages/qwen38-27b-fp8-tp2-b70/scripts/download-model.sh",
+      "verify": "packages/qwen38-27b-fp8-tp2-b70/scripts/verify.sh",
+      "smoke_test": "packages/qwen38-27b-fp8-tp2-b70/scripts/smoke-test.sh"
+    },
+    "shared_implementation": "tools/container-packet",
+    "note": "compose.yaml is rendered from the argv the R187 profile launcher chain hands to docker run (R304 image, whole-graph piecewise compile, block W8A16, GDN split-mixed, MTP depth 1, draft INT4 head, V1 model runner). Two cards only: Qwen3.8-27B FP8 does not fit one B70 with a usable KV budget, so this packet ships the two-gpu profile alone (the checker accepts a two-card-only packet when package.json declares only that profile). Operator knobs (MAX_MODEL_LEN 8192, 16 sequences) are the packet defaults, not the strict-suite values."
+  }
 }

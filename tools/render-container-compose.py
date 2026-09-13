@@ -50,8 +50,10 @@ def yaml_scalar(v: str) -> str:
 
 
 def main() -> int:
-    one_argv = read_argv(Path(sys.argv[1]))
-    two_argv = read_argv(Path(sys.argv[2]))
+    # "-" marks a profile that this packet does not ship (a two-card-only result renders "two" alone).
+    one_argv = read_argv(Path(sys.argv[1])) if sys.argv[1] != "-" else None
+    two_argv = read_argv(Path(sys.argv[2])) if sys.argv[2] != "-" else None
+    assert one_argv or two_argv, "at least one profile is required"
     out = Path(sys.argv[3])
     image = sys.argv[4]
     model_desc = sys.argv[5] if len(sys.argv) > 5 else "the verified model"
@@ -60,12 +62,17 @@ def main() -> int:
     # Container names are operator-facing defaults, not part of the measured identity; keying them to
     # the served model name keeps already-published packets byte-identical when this is regenerated.
     served_prefix = sys.argv[8] if len(sys.argv) > 8 else out.parent.name
+    depth = sys.argv[9] if len(sys.argv) > 9 else "3"
 
-    one_env, one_serve = split(one_argv)
-    two_env, two_serve = split(two_argv)
-
-    shared = {k: v for k, v in one_env.items() if two_env.get(k) == v}
-    per_profile = sorted((set(one_env) | set(two_env)) - set(shared))
+    profiles = []
+    if one_argv:
+        one_env, one_serve = split(one_argv); profiles.append(("one-gpu", one_env, one_serve, "one B70"))
+    if two_argv:
+        two_env, two_serve = split(two_argv); profiles.append(("two-gpu", two_env, two_serve, "two B70s"))
+    envs = [e for _, e, _, _ in profiles]
+    shared = {k: v for k, v in envs[0].items() if all(e.get(k) == v for e in envs)}
+    per_profile = sorted(set().union(*(set(e) for e in envs)) - set(shared))
+    one_env = envs[0]
 
     def serve_block(args: list[str], indent: str) -> str:
         return "\n".join(f"{indent}- {yaml_scalar(a)}" for a in args)
@@ -108,13 +115,10 @@ def main() -> int:
     lines.append(env_block(one_env, sorted(shared), "    "))
     lines.append("")
     lines.append("services:")
-    for name, env, serve, cards in (
-        ("one-gpu", one_env, one_serve, "one B70"),
-        ("two-gpu", two_env, two_serve, "two B70s"),
-    ):
+    for name, env, serve, cards in profiles:
         lines.append(f"  {name}:")
         lines.append("    <<: *b70-common")
-        lines.append(f"    # {cards}; measured profile, MTP depth 3 with the draft INT4 head and full decode-only graph capture.")
+        lines.append(f"    # {cards}; measured profile, MTP depth {depth} with the draft INT4 head and full decode-only graph capture.")
         lines.append(f"    container_name: ${{CONTAINER_NAME:-{served_prefix}-{name}}}")
         lines.append("    ports:")
         lines.append(f'      - "127.0.0.1:${{PORT:-18131}}:8000"')

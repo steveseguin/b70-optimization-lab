@@ -104,6 +104,40 @@ class ContainerPacketCheckerTest(unittest.TestCase):
         errs = self._mutated(change_one_profile)
         self.assertTrue(any("serving arguments differ" in e for e in errs), errs)
 
+    def test_two_card_only_packet_is_accepted_and_undeclared_profile_fails(self):
+        """The 27B FP8 packet ships only two-gpu (declared in package.json). A packet declared two-card-only
+        must not carry a one-gpu service, and a two-profile packet must not drop one silently."""
+        import json, shutil
+        fp8 = ROOT / "packages/qwen38-27b-fp8-tp2-b70"
+        self.assertEqual(self.m.check(fp8), [], "the two-card-only FP8 packet should pass")
+        with tempfile.TemporaryDirectory() as tmp:
+            packet = Path(tmp) / "qwen38-27b-fp8-tp2-b70"
+            packet.mkdir()
+            shutil.copy(fp8 / "compose.yaml", packet / "compose.yaml")
+            meta = json.loads((fp8 / "package.json").read_text())
+            meta["container_packet"]["profiles"] = {"one-gpu": {"cards": 1, "tensor_parallel_size": 1},
+                                                    "two-gpu": {"cards": 2, "tensor_parallel_size": 2}}
+            (packet / "package.json").write_text(json.dumps(meta))
+            errs = self.m.check(packet)
+            self.assertTrue(any("has no one-gpu service" in e for e in errs), errs)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_two_card_only_packet_is_accepted_and_undeclared_profile_fails(self):
+        """The 27B FP8 packet ships only two-gpu (declared in package.json). A packet declared two-card-only
+        must not carry a one-gpu service, and a two-profile packet must not drop one silently."""
+        import json, shutil
+        fp8 = ROOT / "packages/qwen38-27b-fp8-tp2-b70"
+        self.assertEqual(self.m.check(fp8), [], "the two-card-only FP8 packet should pass")
+        with tempfile.TemporaryDirectory() as tmp:
+            packet = Path(tmp) / "qwen38-27b-fp8-tp2-b70"
+            packet.mkdir()
+            shutil.copy(fp8 / "compose.yaml", packet / "compose.yaml")
+            meta = json.loads((fp8 / "package.json").read_text())
+            meta["container_packet"]["profiles"] = {"one-gpu": {"cards": 1, "tensor_parallel_size": 1},
+                                                    "two-gpu": {"cards": 2, "tensor_parallel_size": 2}}
+            (packet / "package.json").write_text(json.dumps(meta))
+            errs = self.m.check(packet)
+            self.assertTrue(any("has no one-gpu service" in e for e in errs), errs)

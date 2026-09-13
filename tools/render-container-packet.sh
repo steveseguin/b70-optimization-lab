@@ -46,7 +46,8 @@ chmod +x "${work}/shim/docker"
 # Intercepted before docker sees it; the value is replaced by ${PORT} in the rendered file. Chosen
 # not to collide with a running lane in case the shim is ever bypassed.
 render_port=18199
-for prof in one two; do
+# PROFILES (default "one two"): a packet whose result exists only on two cards (the 27B FP8 lane) renders "two" alone.
+for prof in ${PROFILES:-one two}; do
   if [[ "${prof}" == one ]]; then tp=1; mask=0; else tp=2; mask=0,1; fi
   name=$(basename "${pkg_dir}")-render-${prof}
   PATH="${work}/shim:${PATH}" DOCKER_ARGV_CAPTURE="${work}/argv-${prof}.nul" CAPTURE_CONTAINER_NAME="${name}" \
@@ -60,6 +61,9 @@ for prof in one two; do
   [[ -s "${work}/argv-${prof}.nul" ]] || { echo "capture failed for ${prof}:" >&2; tail -5 "${work}/render-${prof}.log" >&2; exit 1; }
 done
 
+one_argv="${work}/argv-one.nul"; two_argv="${work}/argv-two.nul"
+[[ -s "${one_argv}" ]] || one_argv=-
+[[ -s "${two_argv}" ]] || two_argv=-
 python3 "${repo}/tools/render-container-compose.py" \
-  "${work}/argv-one.nul" "${work}/argv-two.nul" "${repo}/${pkg_dir}/compose.yaml" \
-  "${digest_ref}" "${model_desc}" "${launcher}" "${pkg_dir}/scripts/render-compose.sh" "${served}"
+  "${one_argv}" "${two_argv}" "${repo}/${pkg_dir}/compose.yaml" \
+  "${digest_ref}" "${model_desc}" "${launcher}" "${pkg_dir}/scripts/render-compose.sh" "${served}" "${depth}"
