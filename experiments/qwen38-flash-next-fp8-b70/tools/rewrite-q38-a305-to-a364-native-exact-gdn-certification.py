@@ -23,8 +23,10 @@ from __future__ import annotations
 import hashlib, os, re, subprocess, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
-VALIDATE_ONLY = os.environ.get("Q38_A364_REWRITE_VALIDATE_ONLY") == "1"
-BARRIER = os.environ.get("Q38_A364_BARRIER", "1") == "1"
+ATTEMPT = sys.argv[1] if len(sys.argv) > 1 else "364"
+PORT = sys.argv[2] if len(sys.argv) > 2 else "19977"
+VALIDATE_ONLY = os.environ.get(f"Q38_A{ATTEMPT}_REWRITE_VALIDATE_ONLY") == "1"
+BARRIER = os.environ.get(f"Q38_A{ATTEMPT}_BARRIER", "1") == "1"
 SOURCES = {
     'launch-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh': '40abf013e0bed5c8f240bddb4e49df09cef53459fa901ecfddf25846a1d670c3',
     'run-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32-client.sh': '28c5b11cbc75ae39092282e7c6535208391ea68b521f2c02ebe4e0fd72f54ed2',
@@ -54,9 +56,9 @@ def source(name):
 
 def successor(text):
     def rename(seg):
-        seg = seg.replace("tp4-mtp1-4352-ple-only-a305", "tp4-mtp1-4352-ple-only-a364")
-        seg = seg.replace("attempt305", "attempt364").replace("19974", "19977")
-        seg = seg.replace("ATTEMPT=305", "ATTEMPT=364").replace("a305", "a364").replace("A305", "A364")
+        seg = seg.replace("tp4-mtp1-4352-ple-only-a305", f"tp4-mtp1-4352-ple-only-a{ATTEMPT}")
+        seg = seg.replace("attempt305", f"attempt{ATTEMPT}").replace("19974", PORT)
+        seg = seg.replace("ATTEMPT=305", f"ATTEMPT={ATTEMPT}").replace("a305", f"a{ATTEMPT}").replace("A305", f"A{ATTEMPT}")
         return seg
     parts, last = [], 0
     for m in HASH_TOKEN.finditer(text):
@@ -98,10 +100,10 @@ def main():
     anchor2 = f'  print "export {OLD_SELECTOR}"\n'
     launcher = replace_n(launcher, anchor2, anchor2 + "".join(f'  print "export {kv}"\n' for kv in NEW_SELECTORS), 1)
     env = os.environ.copy()
-    env["Q38_A364_DERIVED_SOURCE_ONLY"] = "1"
+    env[f"Q38_A{ATTEMPT}_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
-    Path("/tmp/q38-ple2k-a364-base.sh").unlink(missing_ok=True)
-    assert "q38-ple2k-a364" in derived
+    Path(f"/tmp/q38-ple2k-a{ATTEMPT}-base.sh").unlink(missing_ok=True)
+    assert f"q38-ple2k-a{ATTEMPT}" in derived
     assert f'expected_stage_build_head="{NEW_STAGE_HEAD}"' in derived
     # the served build head legitimately remains in the padding-receipt check (that receipt was
     # produced on the served stage); the stage identity line is the one that must move
@@ -129,10 +131,10 @@ def main():
     host = successor(source("run-q38-a305-host-controlled.sh"))
     host = replace_n(host, "expected_supervisor=" + SOURCES["supervise-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh"], "expected_supervisor=" + digest(supervisor), 1)
     out_names = (
-        "launch-tp4-mtp1-4352-ple-only-a364-fullgraphdet-w13n32.sh",
-        "run-tp4-mtp1-4352-ple-only-a364-fullgraphdet-w13n32-client.sh",
-        "supervise-tp4-mtp1-4352-ple-only-a364-fullgraphdet-w13n32.sh",
-        "run-q38-a364-host-controlled.sh",
+        f"launch-tp4-mtp1-4352-ple-only-a{ATTEMPT}-fullgraphdet-w13n32.sh",
+        f"run-tp4-mtp1-4352-ple-only-a{ATTEMPT}-fullgraphdet-w13n32-client.sh",
+        f"supervise-tp4-mtp1-4352-ple-only-a{ATTEMPT}-fullgraphdet-w13n32.sh",
+        f"run-q38-a{ATTEMPT}-host-controlled.sh",
     )
     for name, text in zip(out_names, (launcher, client, supervisor, host)):
         emit(name, text)
