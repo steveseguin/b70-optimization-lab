@@ -167,3 +167,9 @@ c64 1631 (62-64/64), no-spec c64 1641: the same concurrency profile, a faster si
 R156/R187 image: one-token prompt 30/30 degenerate, two-token (1+K) 0/30 (this profile captures only size 1,
 piecewise), longer 0/30. R304: 0/30 on every length. The one-token failure (#51562) is therefore live on the published
 FP8 recipe too, and fixed by the same image.
+
+## 27B one card on R304 (TP1, depth 4)
+
+G1/G2/G3 12/12, **81.17 / 81.16 tok/s** (R298 on R293 without the shortlist: 73.19 / 73.25, +10.9%: the draft head
+shortlist is worth more on one card, where the draft passes are a larger share of the step), MTP0 33.10 / 33.08
+(32.58 / 32.50). Two-pass ladders in the matrix row.
