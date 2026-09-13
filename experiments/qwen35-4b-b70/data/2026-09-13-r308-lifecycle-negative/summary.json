@@ -1,0 +1,846 @@
+{
+  "schema": "r308-lifecycle-negative-v1",
+  "qualification_passed": false,
+  "promotion_allowed": false,
+  "functional_fix_tested": false,
+  "requests": 6,
+  "exact_outputs": 0,
+  "verified_acceptance_reset_chains": 6,
+  "association": "Requests are serial (concurrency1); receipt rows paired with chronological trace chains and verified against traced final sampled IDs. Probe rows do not retain server request IDs.",
+  "mechanism": "Accepted count2 is present at non-resumed removal, resets to1 at re-add, and reaches final one-token runner as1 in every failed request.",
+  "chains": [
+    {
+      "request_id": "cmpl-ad42b3e7b3b39aed-0-923b8720",
+      "events": [
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 230,
+          "data": {
+            "req_ids": [
+              "cmpl-ad42b3e7b3b39aed-0-923b8720"
+            ],
+            "computed": [
+              252
+            ],
+            "sampled_ids": [
+              [
+                69,
+                64445,
+                -1
+              ]
+            ],
+            "accepted_gpu": [
+              2
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        },
+        {
+          "event": "REMOVE",
+          "line": 231,
+          "data": {
+            "req_id": "cmpl-ad42b3e7b3b39aed-0-923b8720",
+            "index": 0,
+            "accepted_cpu": 2,
+            "accepted_gpu": 2,
+            "prev_mapping": {
+              "cmpl-ad42b3e7b3b39aed-0-923b8720": 0
+            },
+            "valid_counts": [
+              2
+            ],
+            "computed": 252,
+            "prev_draft_len": 2,
+            "resumed": false,
+            "scheduled": {}
+          }
+        },
+        {
+          "event": "READD",
+          "line": 232,
+          "data": {
+            "req_id": "cmpl-ad42b3e7b3b39aed-0-923b8720",
+            "index": 0,
+            "computed": 254,
+            "accepted_cpu": 1,
+            "prev_draft_len": 0,
+            "resumed": false
+          }
+        },
+        {
+          "event": "RUNNER",
+          "line": 233,
+          "data": {
+            "req_ids": [
+              "cmpl-ad42b3e7b3b39aed-0-923b8720"
+            ],
+            "async_scheduling": true,
+            "async_spec_decode": true,
+            "mamba_cache_mode": "none",
+            "accepted_event_exists": true,
+            "input_batch_accepted_cpu": [
+              1
+            ],
+            "accepted_cpu_valid": [
+              1
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "prev_drafts_cpu": [
+              0
+            ],
+            "prev_drafts_gpu": [
+              3
+            ],
+            "scheduled": [
+              1
+            ],
+            "computed_cpu": [
+              254
+            ],
+            "computed_gpu": [
+              254
+            ],
+            "draft_counts": [
+              -1
+            ],
+            "one_token_decode": [
+              true
+            ],
+            "prev_mapping": {},
+            "prev_positions": [
+              -1
+            ]
+          }
+        },
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 234,
+          "data": {
+            "req_ids": [
+              "cmpl-ad42b3e7b3b39aed-0-923b8720"
+            ],
+            "computed": [
+              254
+            ],
+            "sampled_ids": [
+              [
+                89
+              ]
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        }
+      ],
+      "final_sampled_token": 89,
+      "case": "L14",
+      "repeat": 0,
+      "got_last": 89,
+      "expected_last": 63,
+      "first_diff": 241,
+      "absolute_position": 255
+    },
+    {
+      "request_id": "cmpl-bb0da1db190922ac-0-b47b1688",
+      "events": [
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 241,
+          "data": {
+            "req_ids": [
+              "cmpl-bb0da1db190922ac-0-b47b1688"
+            ],
+            "computed": [
+              252
+            ],
+            "sampled_ids": [
+              [
+                78,
+                4282,
+                -1
+              ]
+            ],
+            "accepted_gpu": [
+              2
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        },
+        {
+          "event": "REMOVE",
+          "line": 242,
+          "data": {
+            "req_id": "cmpl-bb0da1db190922ac-0-b47b1688",
+            "index": 0,
+            "accepted_cpu": 2,
+            "accepted_gpu": 2,
+            "prev_mapping": {
+              "cmpl-bb0da1db190922ac-0-b47b1688": 0
+            },
+            "valid_counts": [
+              2
+            ],
+            "computed": 252,
+            "prev_draft_len": 2,
+            "resumed": false,
+            "scheduled": {}
+          }
+        },
+        {
+          "event": "READD",
+          "line": 243,
+          "data": {
+            "req_id": "cmpl-bb0da1db190922ac-0-b47b1688",
+            "index": 0,
+            "computed": 254,
+            "accepted_cpu": 1,
+            "prev_draft_len": 0,
+            "resumed": false
+          }
+        },
+        {
+          "event": "RUNNER",
+          "line": 244,
+          "data": {
+            "req_ids": [
+              "cmpl-bb0da1db190922ac-0-b47b1688"
+            ],
+            "async_scheduling": true,
+            "async_spec_decode": true,
+            "mamba_cache_mode": "none",
+            "accepted_event_exists": true,
+            "input_batch_accepted_cpu": [
+              1
+            ],
+            "accepted_cpu_valid": [
+              1
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "prev_drafts_cpu": [
+              0
+            ],
+            "prev_drafts_gpu": [
+              3
+            ],
+            "scheduled": [
+              1
+            ],
+            "computed_cpu": [
+              254
+            ],
+            "computed_gpu": [
+              254
+            ],
+            "draft_counts": [
+              -1
+            ],
+            "one_token_decode": [
+              true
+            ],
+            "prev_mapping": {},
+            "prev_positions": [
+              -1
+            ]
+          }
+        },
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 245,
+          "data": {
+            "req_ids": [
+              "cmpl-bb0da1db190922ac-0-b47b1688"
+            ],
+            "computed": [
+              254
+            ],
+            "sampled_ids": [
+              [
+                13428
+              ]
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        }
+      ],
+      "final_sampled_token": 13428,
+      "case": "L16",
+      "repeat": 0,
+      "got_last": 13428,
+      "expected_last": 8,
+      "first_diff": 239,
+      "absolute_position": 255
+    },
+    {
+      "request_id": "cmpl-abacfda0b9b4df43-0-af2b0a93",
+      "events": [
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 252,
+          "data": {
+            "req_ids": [
+              "cmpl-abacfda0b9b4df43-0-af2b0a93"
+            ],
+            "computed": [
+              252
+            ],
+            "sampled_ids": [
+              [
+                69,
+                64445,
+                -1
+              ]
+            ],
+            "accepted_gpu": [
+              2
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        },
+        {
+          "event": "REMOVE",
+          "line": 253,
+          "data": {
+            "req_id": "cmpl-abacfda0b9b4df43-0-af2b0a93",
+            "index": 0,
+            "accepted_cpu": 2,
+            "accepted_gpu": 2,
+            "prev_mapping": {
+              "cmpl-abacfda0b9b4df43-0-af2b0a93": 0
+            },
+            "valid_counts": [
+              2
+            ],
+            "computed": 252,
+            "prev_draft_len": 2,
+            "resumed": false,
+            "scheduled": {}
+          }
+        },
+        {
+          "event": "READD",
+          "line": 254,
+          "data": {
+            "req_id": "cmpl-abacfda0b9b4df43-0-af2b0a93",
+            "index": 0,
+            "computed": 254,
+            "accepted_cpu": 1,
+            "prev_draft_len": 0,
+            "resumed": false
+          }
+        },
+        {
+          "event": "RUNNER",
+          "line": 255,
+          "data": {
+            "req_ids": [
+              "cmpl-abacfda0b9b4df43-0-af2b0a93"
+            ],
+            "async_scheduling": true,
+            "async_spec_decode": true,
+            "mamba_cache_mode": "none",
+            "accepted_event_exists": true,
+            "input_batch_accepted_cpu": [
+              1
+            ],
+            "accepted_cpu_valid": [
+              1
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "prev_drafts_cpu": [
+              0
+            ],
+            "prev_drafts_gpu": [
+              0
+            ],
+            "scheduled": [
+              1
+            ],
+            "computed_cpu": [
+              254
+            ],
+            "computed_gpu": [
+              254
+            ],
+            "draft_counts": [
+              -1
+            ],
+            "one_token_decode": [
+              true
+            ],
+            "prev_mapping": {},
+            "prev_positions": [
+              -1
+            ]
+          }
+        },
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 256,
+          "data": {
+            "req_ids": [
+              "cmpl-abacfda0b9b4df43-0-af2b0a93"
+            ],
+            "computed": [
+              254
+            ],
+            "sampled_ids": [
+              [
+                89
+              ]
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        }
+      ],
+      "final_sampled_token": 89,
+      "case": "L14-tail238",
+      "repeat": 0,
+      "got_last": 89,
+      "expected_last": 63,
+      "first_diff": 3,
+      "absolute_position": 255
+    },
+    {
+      "request_id": "cmpl-bdb8d2753913a52e-0-a70eb6ab",
+      "events": [
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 263,
+          "data": {
+            "req_ids": [
+              "cmpl-bdb8d2753913a52e-0-a70eb6ab"
+            ],
+            "computed": [
+              252
+            ],
+            "sampled_ids": [
+              [
+                69,
+                64445,
+                -1
+              ]
+            ],
+            "accepted_gpu": [
+              2
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        },
+        {
+          "event": "REMOVE",
+          "line": 264,
+          "data": {
+            "req_id": "cmpl-bdb8d2753913a52e-0-a70eb6ab",
+            "index": 0,
+            "accepted_cpu": 2,
+            "accepted_gpu": 2,
+            "prev_mapping": {
+              "cmpl-bdb8d2753913a52e-0-a70eb6ab": 0
+            },
+            "valid_counts": [
+              2
+            ],
+            "computed": 252,
+            "prev_draft_len": 2,
+            "resumed": false,
+            "scheduled": {}
+          }
+        },
+        {
+          "event": "READD",
+          "line": 265,
+          "data": {
+            "req_id": "cmpl-bdb8d2753913a52e-0-a70eb6ab",
+            "index": 0,
+            "computed": 254,
+            "accepted_cpu": 1,
+            "prev_draft_len": 0,
+            "resumed": false
+          }
+        },
+        {
+          "event": "RUNNER",
+          "line": 266,
+          "data": {
+            "req_ids": [
+              "cmpl-bdb8d2753913a52e-0-a70eb6ab"
+            ],
+            "async_scheduling": true,
+            "async_spec_decode": true,
+            "mamba_cache_mode": "none",
+            "accepted_event_exists": true,
+            "input_batch_accepted_cpu": [
+              1
+            ],
+            "accepted_cpu_valid": [
+              1
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "prev_drafts_cpu": [
+              0
+            ],
+            "prev_drafts_gpu": [
+              3
+            ],
+            "scheduled": [
+              1
+            ],
+            "computed_cpu": [
+              254
+            ],
+            "computed_gpu": [
+              254
+            ],
+            "draft_counts": [
+              -1
+            ],
+            "one_token_decode": [
+              true
+            ],
+            "prev_mapping": {},
+            "prev_positions": [
+              -1
+            ]
+          }
+        },
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 267,
+          "data": {
+            "req_ids": [
+              "cmpl-bdb8d2753913a52e-0-a70eb6ab"
+            ],
+            "computed": [
+              254
+            ],
+            "sampled_ids": [
+              [
+                89
+              ]
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        }
+      ],
+      "final_sampled_token": 89,
+      "case": "L14",
+      "repeat": 1,
+      "got_last": 89,
+      "expected_last": 63,
+      "first_diff": 241,
+      "absolute_position": 255
+    },
+    {
+      "request_id": "cmpl-b9de0847675cfc93-0-88497105",
+      "events": [
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 274,
+          "data": {
+            "req_ids": [
+              "cmpl-b9de0847675cfc93-0-88497105"
+            ],
+            "computed": [
+              252
+            ],
+            "sampled_ids": [
+              [
+                78,
+                4282,
+                -1
+              ]
+            ],
+            "accepted_gpu": [
+              2
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        },
+        {
+          "event": "REMOVE",
+          "line": 275,
+          "data": {
+            "req_id": "cmpl-b9de0847675cfc93-0-88497105",
+            "index": 0,
+            "accepted_cpu": 2,
+            "accepted_gpu": 2,
+            "prev_mapping": {
+              "cmpl-b9de0847675cfc93-0-88497105": 0
+            },
+            "valid_counts": [
+              2
+            ],
+            "computed": 252,
+            "prev_draft_len": 2,
+            "resumed": false,
+            "scheduled": {}
+          }
+        },
+        {
+          "event": "READD",
+          "line": 276,
+          "data": {
+            "req_id": "cmpl-b9de0847675cfc93-0-88497105",
+            "index": 0,
+            "computed": 254,
+            "accepted_cpu": 1,
+            "prev_draft_len": 0,
+            "resumed": false
+          }
+        },
+        {
+          "event": "RUNNER",
+          "line": 277,
+          "data": {
+            "req_ids": [
+              "cmpl-b9de0847675cfc93-0-88497105"
+            ],
+            "async_scheduling": true,
+            "async_spec_decode": true,
+            "mamba_cache_mode": "none",
+            "accepted_event_exists": true,
+            "input_batch_accepted_cpu": [
+              1
+            ],
+            "accepted_cpu_valid": [
+              1
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "prev_drafts_cpu": [
+              0
+            ],
+            "prev_drafts_gpu": [
+              3
+            ],
+            "scheduled": [
+              1
+            ],
+            "computed_cpu": [
+              254
+            ],
+            "computed_gpu": [
+              254
+            ],
+            "draft_counts": [
+              -1
+            ],
+            "one_token_decode": [
+              true
+            ],
+            "prev_mapping": {},
+            "prev_positions": [
+              -1
+            ]
+          }
+        },
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 278,
+          "data": {
+            "req_ids": [
+              "cmpl-b9de0847675cfc93-0-88497105"
+            ],
+            "computed": [
+              254
+            ],
+            "sampled_ids": [
+              [
+                13428
+              ]
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        }
+      ],
+      "final_sampled_token": 13428,
+      "case": "L16",
+      "repeat": 1,
+      "got_last": 13428,
+      "expected_last": 8,
+      "first_diff": 239,
+      "absolute_position": 255
+    },
+    {
+      "request_id": "cmpl-bb60ad3827fe86fd-0-9490d763",
+      "events": [
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 285,
+          "data": {
+            "req_ids": [
+              "cmpl-bb60ad3827fe86fd-0-9490d763"
+            ],
+            "computed": [
+              252
+            ],
+            "sampled_ids": [
+              [
+                69,
+                64445,
+                -1
+              ]
+            ],
+            "accepted_gpu": [
+              2
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        },
+        {
+          "event": "REMOVE",
+          "line": 286,
+          "data": {
+            "req_id": "cmpl-bb60ad3827fe86fd-0-9490d763",
+            "index": 0,
+            "accepted_cpu": 2,
+            "accepted_gpu": 2,
+            "prev_mapping": {
+              "cmpl-bb60ad3827fe86fd-0-9490d763": 0
+            },
+            "valid_counts": [
+              2
+            ],
+            "computed": 252,
+            "prev_draft_len": 2,
+            "resumed": false,
+            "scheduled": {}
+          }
+        },
+        {
+          "event": "READD",
+          "line": 287,
+          "data": {
+            "req_id": "cmpl-bb60ad3827fe86fd-0-9490d763",
+            "index": 0,
+            "computed": 254,
+            "accepted_cpu": 1,
+            "prev_draft_len": 0,
+            "resumed": false
+          }
+        },
+        {
+          "event": "RUNNER",
+          "line": 288,
+          "data": {
+            "req_ids": [
+              "cmpl-bb60ad3827fe86fd-0-9490d763"
+            ],
+            "async_scheduling": true,
+            "async_spec_decode": true,
+            "mamba_cache_mode": "none",
+            "accepted_event_exists": true,
+            "input_batch_accepted_cpu": [
+              1
+            ],
+            "accepted_cpu_valid": [
+              1
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "prev_drafts_cpu": [
+              0
+            ],
+            "prev_drafts_gpu": [
+              0
+            ],
+            "scheduled": [
+              1
+            ],
+            "computed_cpu": [
+              254
+            ],
+            "computed_gpu": [
+              254
+            ],
+            "draft_counts": [
+              -1
+            ],
+            "one_token_decode": [
+              true
+            ],
+            "prev_mapping": {},
+            "prev_positions": [
+              -1
+            ]
+          }
+        },
+        {
+          "event": "ACCEPTED_AFTER",
+          "line": 289,
+          "data": {
+            "req_ids": [
+              "cmpl-bb60ad3827fe86fd-0-9490d763"
+            ],
+            "computed": [
+              254
+            ],
+            "sampled_ids": [
+              [
+                89
+              ]
+            ],
+            "accepted_gpu": [
+              1
+            ],
+            "async_scheduling": true,
+            "mamba_cache_mode": "none"
+          }
+        }
+      ],
+      "final_sampled_token": 89,
+      "case": "L14-tail238",
+      "repeat": 1,
+      "got_last": 89,
+      "expected_last": 63,
+      "first_diff": 3,
+      "absolute_position": 255
+    }
+  ],
+  "postflight": {
+    "fault_lines": [],
+    "normal_devices": 2,
+    "compute_smokes": 2,
+    "rank0_allreduce_ok": true,
+    "rank1_allreduce_ok": true
+  },
+  "limitations": [
+    "Instrumented execution; functional repair and unchanged-runtime qualification remain separate required evidence.",
+    "DONE denotes completed diagnostic, not quality pass."
+  ]
+}
