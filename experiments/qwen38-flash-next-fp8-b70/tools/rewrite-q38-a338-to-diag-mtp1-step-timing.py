@@ -56,7 +56,7 @@ def main():
     # Plain entries become launcher exports (Q38_* survive into the engine). Entries prefixed
     # DERIVED: are printed into the derived server script next to the other VLLM_XPU_* exports,
     # because the derived launcher unsets every inherited VLLM_* variable.
-    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:", "MAXLEN:", "KVBYTES:", "PLACEMENT:"))]
+    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:", "MAXLEN:", "KVBYTES:", "PLACEMENT:", "HOSTFLOOR:"))]
     derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
     exports = "".join(f"export {kv}\n" for kv in plain)
     # PLACEMENT:<path> swaps the expert host-placement file (bit-exact by construction; only VRAM moves).
@@ -64,12 +64,15 @@ def main():
     if pl:
         launcher = replace_n(launcher, "export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n", f"export Q38_EXPERT_HOST_PLACEMENT={pl[0]}\n", 1)
     # MAXLEN:<n> and KVBYTES:<n> override the served context and KV budget (long-context arms).
-    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:", "PLACEMENT:")))}
+    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:", "PLACEMENT:", "HOSTFLOOR:")))}
     if "MAXLEN" in lc:
         launcher = replace_n(launcher, " MAX_MODEL_LEN=4352 ", f" MAX_MODEL_LEN={lc['MAXLEN']} ", 1)
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
         launcher = replace_n(launcher, 'print "[[ \\"${max_model_len}\\" == \\"4352\\" ]] || {"', 'print "[[ \\"${max_model_len}\\" == \\"' + lc["MAXLEN"] + '\\" ]] || {"', 1)
         launcher = replace_n(launcher, "frozen to MAX_MODEL_LEN=4352", "frozen to MAX_MODEL_LEN=" + lc["MAXLEN"], 1)
+        # the launcher's silent (set -e) derived-source assertion on the context check; A376 exited rc=1
+        # with no message because this line still said 4352 while the derived script said 33280.
+        launcher = replace_n(launcher, "grep -Fxq '[[ \"${max_model_len}\" == \"4352\" ]] || {' \"$derived\"", "grep -Fxq '[[ \"${max_model_len}\" == \"" + lc["MAXLEN"] + "\" ]] || {' \"$derived\"", 1)
         # the launcher's campaign literal (used for the derived script's --ack and the run/cache dirs) follows the served context
         launcher = replace_n(launcher, 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1\n', 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-' + lc["MAXLEN"] + '-ple-only-r1\n', 1)
     if "KVBYTES" in lc:
@@ -119,6 +122,10 @@ def main():
         supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
         # the supervisor server-identity literal (owned_server_pid requires --max-model-len <served>)
         supervisor = replace_n(supervisor, '"--max-model-len 4352"', '"--max-model-len ' + lc["MAXLEN"] + '"', 1)
+    # HOSTFLOOR:<kib> moves the supervisor's MemAvailable floor (this lineage guards at 12 GB; the wide
+    # census placements pin ~4.8 GB more host memory and trough near 11 GB).
+    if "HOSTFLOOR" in lc:
+        supervisor = replace_n(supervisor, "(( mem_available_kib >= 12000000 )) || return 1", "(( mem_available_kib >= " + lc["HOSTFLOOR"] + " )) || return 1", 1)
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a338-host-controlled.sh"))

@@ -53,7 +53,7 @@ def main():
     launcher = replace_n(launcher, "expected_derived=" + m.group(1), "expected_derived=" + "0" * 64, 1)
     launcher = successor(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    OPTS = ("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:")
+    OPTS = ("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:", "HOSTFLOOR:")
     exports = "".join(f"export {kv}\n" for kv in extra_env if not kv.startswith(OPTS))
     # USERS:<n> serves n sequences: max_num_seqs, decode graph capture sizes [1,2,4,...,n], and the
     # row-wise all-reduce / HC-norm selectors at n rows (batch invariance for the multi-user identity gate).
@@ -82,7 +82,7 @@ def main():
     if pl:
         launcher = replace_n(launcher, "export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n", f"export Q38_EXPERT_HOST_PLACEMENT={pl[0]}\n", 1)
     # MAXLEN:<n> and KVBYTES:<n> override the served context and KV budget (long-context arms).
-    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:")))}
+    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(OPTS))}
     if "MAXLEN" in lc:
         launcher = replace_n(launcher, " MAX_MODEL_LEN=4352 ", f" MAX_MODEL_LEN={lc['MAXLEN']} ", 1)
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
@@ -113,6 +113,10 @@ def main():
         supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
         # the supervisor server-identity literal (owned_server_pid requires --max-model-len <served>)
         supervisor = replace_n(supervisor, '"--max-model-len 4352"', '"--max-model-len ' + lc["MAXLEN"] + '"', 1)
+    # HOSTFLOOR:<kib> moves the supervisor's MemAvailable floor (the A336 lineage guards at 16 GB; the
+    # MTP1 lineage's supervisor guards at 12 GB; wider host placements sit between the two).
+    if "HOSTFLOOR" in lc:
+        supervisor = replace_n(supervisor, "(( mem_available_kib >= 16000000 )) || return 1", "(( mem_available_kib >= " + lc["HOSTFLOOR"] + " )) || return 1", 1)
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a336-host-controlled.sh"))

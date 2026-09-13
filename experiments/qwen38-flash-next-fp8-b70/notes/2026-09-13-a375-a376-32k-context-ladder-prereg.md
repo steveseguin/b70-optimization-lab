@@ -63,3 +63,19 @@ per rank against the promoted placement and adds ~4.8 GB of pinned host memory; 
 is estimated at ~3 GB and the VRAM margin on rank 1 at ~0.2 GiB. If rank 1 cannot fit the 114-block
 KV the server fails at KV allocation and the next step is a 112-block KV with a 32,640-token
 capacity (a 32K prompt with a 128-token output no longer fits; the ladder would stop at 24K).
+
+## Amendment 2 (07:55 UTC): the fifth A375 launch and the first A376 launch, re-run as A381/A382
+
+The fifth A375 launch (07:25 UTC, max-count-2 placement) loaded the model and was stopped at 07:36:36
+by the supervisor, not by memory pressure as such: the MTP0 lineage's supervisor (A336) floors
+MemAvailable at 16,000,000 KiB while the MTP1 lineage's (A338, the certified exact-mode runs) floors it
+at 12,000,000; the last sample before the stop read 15,947,688 KiB (the 5 GiB-per-rank placement pins
+~4.8 GB more host memory than the promoted one). The MTP0 generator gains a `HOSTFLOOR:` option; the
+32K MTP0 arm and the eight-user arm (A377, regenerated before its 07:46 launch) carry the 12 GB floor
+that every certified MTP1 run already ran under. Nothing about the server changed.
+
+A376 (07:41 UTC) exited within a second with an empty host log: the MTP1 generator's `MAXLEN:` option
+had moved the derived script's context check to 33280 but not the launcher's own silent `grep -Fxq`
+assertion on that line (still 4352), so `set -e` ended the launcher with rc 1 and no message. The
+generator now rewrites that assertion too. The arms are regenerated as A381 (MTP0, port 19994) and A382
+(MTP1 exact mode, port 19995), queued behind A380 with the five-minute gaps (chain-a381-a382).
