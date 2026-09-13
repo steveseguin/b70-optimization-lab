@@ -31,3 +31,12 @@ the same identity-gated concurrency oracle, two repeats. Queued after A387.
 ## Stop rules
 
 Server fails health; c=1 rows differ from A383's c=1; oracle identity failure is recorded as before.
+
+## Amendment (15:25 UTC): stopped by the 8 GB host floor on the first request; re-run as A390
+
+A388's server was healthy at 15:19:34 UTC on head `dc11a3a0a`; the oracle's first request triggered a
+Triton JIT compile and the first prefill, host MemAvailable fell 9.39 -> 8.85 -> 8.33 -> 7.999 GB over
+four seconds and the supervisor stopped the server at the 8 GB floor (A383 on `2a372e86` had bottomed at
+8.10 GB on the same request). No identity data was produced. The arm is regenerated as A390 (port 20007)
+with `HOSTFLOOR:6000000` (swap off; the floor now leaves ~6 GB for the OS against a first-request dip of
+~1.4 GB); everything else identical, queued after A389.
