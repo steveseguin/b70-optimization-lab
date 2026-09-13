@@ -195,3 +195,45 @@ own (1+K) alias length.
 ## 4B two cards, 2K-32K (R304, TP2, depth 3)
 
 18/18 on both arms under the real contract, matching the one-card ladder.
+
+## Cookbook-derived correctness probes on R304 (2026-09-13)
+
+Two correctness questions raised by the SergiioB cookbook's patches, tested on R304 (4B, one card) with new probes in
+`experiments/qwen35-4b-b70/probes/`.
+
+**Max-model-len boundary (a real defect).** `max-len-boundary-probe.py`: prompts of exactly L tokens, L = 8..27,
+`max_tokens = 256 - L`, `ignore_eos`, greedy, two repeats, `--max-model-len 256`, no-spec server first as the oracle,
+then depth 3. Result: no HTTP errors and no degenerate tails on either arm, 38/38 rows each; the depth-3 arm matches
+the oracle on every length except **L = 14 (both repeats, deterministically)**. `max-len-divergence-probe.py` (token
+dump, four arms) pins it: depth 0 / depth 3 at max-model-len 512 and depth 0 at 256 are byte-identical for the same 242
+tokens; depth 3 at 256 differs at **index 241 of 242 only** (` scenario` -0.014 becomes ` the` -0.39). Root `boundary/`
+and `boundary2/` under `rebase-v0290-20260912/`.
+
+Cause (from the R304 code and the XPU kernel sources): at the boundary the scheduler clamps the last step to one token
+(`max_model_len - computed - 1`), so a request that has been running speculative steps takes one plain decode step. The
+GDN spec kernels leave the live state at slot / conv row `num_accepted - 1` (the next spec step reads its initial
+state from there); the non-spec kernels read SSM slot 0 and conv rows `[0, width - 1)`. Both are right only when the
+previous step accepted exactly one token, which is why only one of the twenty lengths flipped. Upstream main has the
+same spec-to-non-spec transition (the builder collapses zero-draft batches to the non-spec path), so this is not
+XPU-specific in principle. The cookbook's `patch_mtp_boundary.py` targets a different symptom (the stock kernel
+rejecting a partial final group, which R304's active-width hunks already handle) and routes the partial group through
+the prefill path from slot 0, which has the same slot problem.
+
+Fix candidate **R307** (`docker/rebase-v0290/r307-gdn-state-handoff.py`, image `...-rebase-r307`, on R304): the
+runner flags a one-token decode step of a running request whose previous step accepted more than one token (draft
+count 0 instead of -1; under async spec decode it reads the previous step's valid-sampled counts for that), the GDN
+builder turns the row into a plain decode and carries its block-table row and accepted count, and the GDN layer copies
+SSM slot `accepted - 1` to slot 0 and shifts the conv window down to row 0 before its kernels run. No kernel path
+changes; nothing happens on steps where every request has drafts.
+
+**Prefix caching plus MTP (no defect found).** `apc-mtp-probe.py` on the exact-depth fixture (three content classes,
+2K/4K/8K/16K/32K real-content token prompts, plus a partial-prefix variant per case), phases cold, repeat, partial
+prefix and 8-way concurrent x2, 105 requests per arm, 128 greedy tokens, `PREFIX_CACHING=1` (a new launcher knob;
+published runs stay cache-off and the packet checker rejects it). Arms: no-spec cache-off (oracle), no-spec cache-on,
+depth-3 cache-on, depth-3 cache-off. Cache hits confirmed (block size 576 for this hybrid model: 1152, 3456, 7488,
+15552, 31680 cached tokens). No errors, no degenerate outputs. Depth-3 cache-on equals no-spec cache-on at 102/105
+positions; the three differences are single concurrent-phase tie flips on two prompts (one of them varies within the
+no-spec cache-off oracle itself, `technical-prose-depth-8192`). Cache-on outputs can differ from cache-off outputs on
+tie-sensitive prompts (the prefix is resumed from a block-boundary state instead of prefilled in one pass), which is a
+numerics change, not corruption; publishing keeps prefix caching off. The cookbook's three prefix-caching ports
+(vLLM #53919, #53505, #48375) are not needed for correctness on these lanes. Root `apc/`.

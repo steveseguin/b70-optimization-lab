@@ -244,5 +244,68 @@
    "no_spec_oracle": "18/18 passed",
    "depth3": "18/18 passed"
   }
+ },
+ "boundary_probe_r304": {
+  "probe": "experiments/qwen35-4b-b70/probes/max-len-boundary-probe.py",
+  "root": "/mnt/fast-ai/bench-results/rebase-v0290-20260912/boundary",
+  "setup": "4B one card, max-model-len 256, prompt lengths 8..27 (13 and 16 unreachable), max_tokens=256-L, ignore_eos, greedy, 2 repeats",
+  "mtp0": {
+   "rows": 38,
+   "http_errors": 0,
+   "degenerate": 0
+  },
+  "mtp3": {
+   "rows": 38,
+   "http_errors": 0,
+   "degenerate": 0,
+   "oracle_mismatch_rows": 2,
+   "mismatch_lengths": [
+    14
+   ]
+  },
+  "divergence": {
+   "probe": "experiments/qwen35-4b-b70/probes/max-len-divergence-probe.py",
+   "root": "/mnt/fast-ai/bench-results/rebase-v0290-20260912/boundary2",
+   "L": 14,
+   "tokens": 242,
+   "d0-256": "66582f7ecebcc0e5",
+   "d3-256": "68af63fd689bf37e",
+   "d0-512": "66582f7ecebcc0e5",
+   "d3-512": "66582f7ecebcc0e5",
+   "first_divergent_index": 241,
+   "oracle_token": " scenario (-0.014)",
+   "depth3_token": " the (-0.39)"
+  },
+  "cause": "one-token step after a spec step that accepted >1 tokens: non-spec kernels read GDN state from slot/row 0, live state is at slot/row accepted-1",
+  "fix_candidate": "R307 docker/rebase-v0290/r307-gdn-state-handoff.py (image ...-rebase-r307 sha256:f084511f37abac6fd33e669ccc549bdb37cd6fc524b1a790d95a97c8caae3061)"
+ },
+ "apc_probe_r304": {
+  "probe": "experiments/qwen35-4b-b70/probes/apc-mtp-probe.py",
+  "root": "/mnt/fast-ai/bench-results/rebase-v0290-20260912/apc",
+  "setup": "4B one card, max-model-len 33024, max-num-seqs 8, exact-depth fixture 2K/4K/8K/16K/32K x 3 classes + tail variants, phases cold/repeat/tail/conc8 x2, 105 requests per arm, 128 greedy tokens",
+  "arms": {
+   "ref": "no-spec, PREFIX_CACHING=0 (oracle)",
+   "d0apc": "no-spec, PREFIX_CACHING=1",
+   "d3apc": "depth 3, PREFIX_CACHING=1",
+   "d3ctl": "depth 3, PREFIX_CACHING=0"
+  },
+  "cached_tokens_seen": [
+   1152,
+   3456,
+   7488,
+   15552,
+   31680
+  ],
+  "block_size": 576,
+  "d0apc": {
+   "errors": 0,
+   "oracle_exact": "99/105 (mismatch keys: technical-prose-depth-8192 x4 [oracle itself varies on this prompt], structured-docs-depth-4096-tail x1 at c8)"
+  },
+  "d3apc": {
+   "errors": 0,
+   "oracle_exact": "99/105 (technical-prose-depth-8192 x4, technical-prose-depth-4096-tail x2 at c8)",
+   "same_as_d0apc_positions": "102/105"
+  },
+  "reading": "no APC+MTP corruption; differences are concurrent-phase tie flips of the known FP16 class; cache-on can differ from cache-off on tie-sensitive prompts (block-boundary state resume), so publishing stays cache-off"
  }
 }
