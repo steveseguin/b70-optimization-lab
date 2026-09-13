@@ -66,7 +66,7 @@ sample_pressure() {
      nvme_aer_cor - expected_nvme_aer_cor <= max_nvme_aer_delta && \
      nvme_sectors_read >= expected_nvme_sectors_read && \
      nvme_sectors_read - expected_nvme_sectors_read <= max_nvme_sectors_read_delta )) || return 1
-  (( mem_available_kib >= 12000000 )) || return 1
+  (( mem_available_kib >= 8000000 )) || return 1
   awk -v field="$mem_psi_full" 'BEGIN { split(field, values, "="); exit !(values[2] <= 10.0) }' || return 1
   ! grep -Eqi 'event severity: (fatal|recoverable)|uncorrected|DPC:|link down|controller is down' \
     "${evidence_dir}/kernel-follow.log" || return 1

@@ -48,3 +48,14 @@ pinned ~20 GB of host memory and tripped the supervisor's floor on A375) and wit
 MemAvailable floor moved from 16 GB to the 12 GB the certified MTP1 supervisor uses (`HOSTFLOOR:`
 generator option; see the A375/A376 note, amendment 2). The packet was regenerated at 07:44 UTC and
 launched at 07:46 UTC; nothing about the server identity changed.
+
+## Amendment 2 (08:05 UTC): the host trough with the wide placement is ~11 GB; re-run as A383
+
+A377 loaded all 131 shards and was stopped at 07:58:30 UTC by the 12 GB floor while MemAvailable was
+still falling (12.5 -> 12.05 -> 11.67 GB over three seconds, after the KV layout print). The promoted
+placement's runs trough at 15.4-16.4 GB (A364/A367/A369/A373 supervisor samples) and the max-count-2
+placement pins ~4.8 GB more, so the wide-placement trough is ~11 GB; A375 was killed earlier in the same
+descent (15.9 GB against 16 GB). The three wide-placement arms (A381, A382, A383) now carry
+`HOSTFLOOR:8000000`: swap stays off, so the remaining failure mode below the floor is an OOM kill of the
+server, not a host freeze; the floor keeps a ~3 GB margin under the expected trough. A383 = A377's packet
+with that floor (port 19996), queued after A382. Nothing about the served identity changed.
