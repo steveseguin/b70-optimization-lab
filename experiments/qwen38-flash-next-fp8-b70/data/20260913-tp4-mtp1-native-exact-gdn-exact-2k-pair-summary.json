@@ -1,0 +1,60 @@
+{
+ "reference": "certified MTP1 line A305 (overlay 6d872457, served stage 2f829747): the lineage exact-2K pin",
+ "reference_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+ "servers": {
+  "A305": "served stage, Python serial GDN path",
+  "A364": "stage v2 bbae3c5, VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1 (certification battery)",
+  "A365": "stage v2 bbae3c5, same packet, fresh server"
+ },
+ "rows": [
+  {
+   "run": "a305-exact-depth-2k-r1",
+   "overlay_head": "6d872457",
+   "server": "6d872457 (certified MTP1 line, served stage 2f829747)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 38.981
+  },
+  {
+   "run": "a305-exact-depth-2k-r2",
+   "overlay_head": "6d872457",
+   "server": "6d872457 (certified MTP1 line, served stage 2f829747)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 38.972
+  },
+  {
+   "run": "a364-exact-depth-2k-r1",
+   "overlay_head": "6d872457",
+   "server": "6d872457 (stage v2 bbae3c5, extension exact serial GDN mode)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 48.164
+  },
+  {
+   "run": "a364-exact-depth-2k-r2",
+   "overlay_head": "6d872457",
+   "server": "6d872457 (stage v2 bbae3c5, extension exact serial GDN mode)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 48.209
+  },
+  {
+   "run": "a365-exact-depth-2k-r1",
+   "overlay_head": "6d872457",
+   "server": "6d872457 (stage v2 bbae3c5, fresh-server repeat)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 47.905
+  },
+  {
+   "run": "a365-exact-depth-2k-r2",
+   "overlay_head": "6d872457",
+   "server": "6d872457 (stage v2 bbae3c5, fresh-server repeat)",
+   "output_sha12": "afffd2110812",
+   "ids_equal_to_reference": true,
+   "tok_s": 48.222
+  }
+ ],
+ "all_identical": true
+}

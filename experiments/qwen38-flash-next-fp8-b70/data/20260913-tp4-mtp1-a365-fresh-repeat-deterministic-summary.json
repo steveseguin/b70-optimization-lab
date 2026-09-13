@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "vllm_head": "6d8724577dabbee5fa0bbc70c4d927c6174c8d8a",
+    "kernel_head": "e421889999bc1e5a5f11044d14548b9afdba644d",
+    "stage_build_head": "bbae3c59e226c1b0c2a2dca6c51b4465cf36fd26",
+    "tp": 4,
+    "ep": 4,
+    "mtp": 1,
+    "graph": "FULL_DECODE_ONLY",
+    "compilation_mode": "NONE",
+    "cudagraph_capture_sizes": [
+      1,
+      2
+    ],
+    "exact_verify_selectors": [
+      "VLLM_XPU_GDN_SERIAL_SPEC_DECODE=0",
+      "VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1",
+      "VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1",
+      "VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1",
+      "VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2",
+      "VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2"
+    ],
+    "max_model_len": 4352,
+    "placement": "ple_embed_budget12p25_uva_cold_expert_host_placement_hctriton_qsafused",
+    "ple_host_bytes_per_rank": 12800061440,
+    "host_offload_bytes_per_rank": 13117911040,
+    "host_offload_params": "ple_embedding.ngram_embedding.weight,embed_tokens.weight",
+    "expert_host_placement": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",
+    "async_uva_ple_prefetch": false,
+    "libccl_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "ccl_kernel_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "ccl_sycl_allreduce_ll": "twoshots",
+    "tuned_config_folder": "moe-m1-w13-n32",
+    "tuned_config_map_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be",
+    "diagnostics": "full-decode-graph-public-oneccl-torch-trace",
+    "torch_trace_policy": "dynamo-exact-target-allowlist-v1",
+    "input_embedding": "device",
+    "kv_cache_memory_bytes": 376569856
+  },
+  "recovery_canary": "passed",
+  "quality": {
+    "semantic": "6/7; sole known miss code_execution=30",
+    "repeat": "16/16 one hash",
+    "long_context": "2048 prompt tokens, exact needle, cache zero"
+  },
+  "short": {
+    "protocol": "row 1 follows one conditioning request in its invocation; rows 2-3 have no warmup; all three use the established identical p146/o256/c1 prompt",
+    "rates_tok_s_after_ttft": [
+      53.426535155914046,
+      53.428455775377756,
+      53.421150336864606
+    ],
+    "median_tok_s_after_ttft": 53.426535155914046,
+    "output_sha256": "5f40744644b98ddd58a0c202fe855af324c0b1c33e1a6275afd74c12488f89f0",
+    "cache_finish_boundary": "The established harness does not retain cache-detail or finish-reason fields; do not claim those per-row receipts."
+  },
+  "exact_2k": {
+    "repeats": 2,
+    "rates_tok_s_conventional_99_interval": [
+      47.904891359143114,
+      48.221592890419615
+    ],
+    "median_tok_s_conventional_99_interval": 48.06324212478137,
+    "ttft_s": [
+      11.148429082997609,
+      11.132496571000956
+    ],
+    "output_token_ids_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+    "same_boot_output_repeat": true,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "exact_4k": {
+    "repeats": 2,
+    "protocol": "p4096/o128; conventional 99 inter-token intervals; served capacity 4352",
+    "rates_tok_s_conventional_99_interval": [
+      48.519070233998825,
+      48.543755944901214
+    ],
+    "median_tok_s_conventional_99_interval": 48.53141308945002,
+    "ttft_s": [
+      22.30761186000018,
+      22.308487182002864
+    ],
+    "output_token_ids_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc",
+    "same_boot_output_repeat": true,
+    "cached_tokens": [
+      0,
+      0
+    ]
+  },
+  "protected_results_changed": false,
+  "interpretation": "Additive PLE-only TP4 compilation-free FULL_DECODE_ONLY deterministic-line quality, short, exact-2K and exact-4K screen at 4352 served tokens; both depth hashes are the deterministic line's own two-server authorities; it does not replace or lower any prior row or native-line record.",
+  "sha256": {
+    "recovery-canary.json": "0f6dcc2d600eafc8ad9a4a15ee6c77d794f3722eefe86fc43ef9fdaa29df8ba9",
+    "quality-current.json": "b51549636dde820f96232c8f5584b10dd9921de569eb92d95ca0c0de3244c5ac",
+    "bench-short-r1.json": "6d39afcd65650931946b1038a501416e5dc72bc66b2c1d2094d6c778df6c177d",
+    "bench-short-r2.json": "acdbc5a42592257c0c87233e0bb9036358f51f9546ff4f551028ada8315c663b",
+    "bench-short-r3.json": "159dbce9f18c6ad04dcadf451b6a152093d2f7f6c03056d3c58d92bc9c8b88a8",
+    "exact-depth-2k-r1.json": "49290d314c6d6d02abda3a3d8f8393a082e0ae04410c39abd52b70ca1640976e",
+    "exact-depth-2k-r2.json": "53697aecedd72acab2a73b774d1b8e760538e1aa13c6e939848566b438a348fd",
+    "exact-depth-4k-r1.json": "9e4f7ef29d0e4f8aa9c75111bcba8f226982e74f2592166bac05583599a7da59",
+    "exact-depth-4k-r2.json": "22c6d280fd9449d42fd1ecf8f52a5175657a55677e8c570e6fedc816dac15d84"
+  }
+}

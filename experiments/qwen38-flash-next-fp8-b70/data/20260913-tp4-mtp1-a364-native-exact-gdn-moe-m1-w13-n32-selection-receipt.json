@@ -1,0 +1,50 @@
+{
+  "candidate_scope": "xpu_block_fp8_modular_m1_w13_only",
+  "classification": "qwen38_m1_w13_n32_static_integration_receipt",
+  "config": {
+    "base_path": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-warps8-m1/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json",
+    "base_sha256": "91e5d8b692da3febbba7cb07ee4fdab319909da0c82c1fda95b92dc42d680464",
+    "candidate_path": "/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json",
+    "candidate_sha256": "a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be"
+  },
+  "m1": {
+    "w13": {
+      "BLOCK_SIZE_K": 128,
+      "BLOCK_SIZE_M": 16,
+      "BLOCK_SIZE_N": 32,
+      "GROUP_SIZE_M": 1,
+      "SPLIT_K": 1,
+      "num_stages": 4,
+      "num_warps": 8
+    },
+    "w2": {
+      "BLOCK_SIZE_K": 128,
+      "BLOCK_SIZE_M": 16,
+      "BLOCK_SIZE_N": 64,
+      "GROUP_SIZE_M": 1,
+      "SPLIT_K": 1,
+      "num_stages": 4,
+      "num_warps": 8
+    }
+  },
+  "not_inference_evidence": true,
+  "prerequisite": {
+    "phase_config_patch": "/home/steve/llm-optimizations/patches/qwen38-flash-next-fp8-b70/vllm/0021-Add-opt-in-per-phase-Triton-MoE-configs.patch",
+    "phase_config_patch_sha256": "ad820bad443bba32f15b114ea76b4deb4dade754fe1bc362faddfef07eb6c519",
+    "vllm_head": "6d8724577dabbee5fa0bbc70c4d927c6174c8d8a"
+  },
+  "preservation": {
+    "all_integer_m_2_through_512_match_retained_map": true,
+    "legacy_m1_matches_retained_map": true,
+    "non_m1_map_entries_semantically_equal": true,
+    "w2_matches_retained_m1": true
+  },
+  "schema_version": 1,
+  "selected_batch_key": 1,
+  "source_sha256": {
+    "fused_moe": "c6903b8aa621e7cfd26f2572e384e1f65caa7d47d633b58d2c0cbf8713aee654",
+    "modular_kernel": "1e60aca6ed0dd4fcb46d577897ff1651f27a6130b3449d22265c0c791beec5d5",
+    "triton_moe": "c0ef7d8b64cb18621a43a78c99e9726a244d2b6dc1db6d9d4c9fb4eb0440cfa6"
+  },
+  "status": "pass"
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Create the A364 certification packet from frozen A305 - the certified MTP1 frozen-client
-record packet - with the GDN verifier rows run by the kernel extension's own exact serial mode
+"""Create the A366 realistic-suite record packet from frozen A306 - the certified MTP1 suite
+packet (the run behind the 37.825654 tok/s record) - with the GDN verifier rows run by the kernel extension's own exact serial mode
 instead of vLLM's Python serial path.
 
 A362 (diag driver, stage v2) held the lineage's exact-2K hash on every row with the two-row
@@ -9,7 +9,7 @@ verify step at 33.7 ms instead of 42.7, and the kernel-level probe
 server through the full frozen client: bench-short, the quality screen, the exact-2K and
 exact-4K repeats, the recovery canary, and the official selection receipt.
 
-What moves against A305, and nothing else:
+What moves against A306, and nothing else:
 - the loaded kernel stage: `runtime-gdn-roundstate-bbae3c5-b70` (served stage with `_xpu_C`
   rebuilt from kernel commit bbae3c5 on e421889, which carries ad25aa9's generalisation of the
   exact replay to the MTP row count; the served build hard-gates it to four rows), with its own
@@ -23,15 +23,15 @@ from __future__ import annotations
 import hashlib, os, re, subprocess, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
-ATTEMPT = sys.argv[1] if len(sys.argv) > 1 else "364"
-PORT = sys.argv[2] if len(sys.argv) > 2 else "19977"
+ATTEMPT = sys.argv[1] if len(sys.argv) > 1 else "366"
+PORT = sys.argv[2] if len(sys.argv) > 2 else "19979"
 VALIDATE_ONLY = os.environ.get(f"Q38_A{ATTEMPT}_REWRITE_VALIDATE_ONLY") == "1"
 BARRIER = os.environ.get(f"Q38_A{ATTEMPT}_BARRIER", "1") == "1"
 SOURCES = {
-    'launch-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh': '40abf013e0bed5c8f240bddb4e49df09cef53459fa901ecfddf25846a1d670c3',
-    'run-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32-client.sh': '28c5b11cbc75ae39092282e7c6535208391ea68b521f2c02ebe4e0fd72f54ed2',
-    'supervise-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh': '0f25f30c1eb401af60630bc48057d00dfd3ff5c40fce00d5f085e339bc677e7b',
-    'run-q38-a305-host-controlled.sh': '3406b140c26a0929a4f23242462e85cf9e1539043c5c830d723e3d627e3b0373',
+    'launch-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh': '147448971cddd7147e77e5b1d35b8bb077f717890dc5d6a93525e66db81ce3d3',
+    'run-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32-client.sh': '8c568d14dfba07cb1829d0e3c385a4a189bcaef3b4bfa6073bc1d4d5d1725bf1',
+    'supervise-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh': '905d8a8f09e6ca93712f07dbb35345b6732865c0d848e36e2fb4315efaa87977',
+    'run-q38-a306-host-controlled.sh': 'ba38941bc835e68a8cbd89a21ed562d9dcdf6a0e2b055fb7dc92fbe23d2139d4',
 }
 HASH_TOKEN = re.compile(r"[0-9a-f]{64}|[0-9a-f]{40}")
 OLD_STAGE = "/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70"
@@ -56,9 +56,9 @@ def source(name):
 
 def successor(text):
     def rename(seg):
-        seg = seg.replace("tp4-mtp1-4352-ple-only-a305", f"tp4-mtp1-4352-ple-only-a{ATTEMPT}")
-        seg = seg.replace("attempt305", f"attempt{ATTEMPT}").replace("19974", PORT)
-        seg = seg.replace("ATTEMPT=305", f"ATTEMPT={ATTEMPT}").replace("a305", f"a{ATTEMPT}").replace("A305", f"A{ATTEMPT}")
+        seg = seg.replace("tp4-mtp1-4352-ple-only-a306", f"tp4-mtp1-4352-ple-only-a{ATTEMPT}")
+        seg = seg.replace("attempt306", f"attempt{ATTEMPT}").replace("19975", PORT)
+        seg = seg.replace("ATTEMPT=306", f"ATTEMPT={ATTEMPT}").replace("a306", f"a{ATTEMPT}").replace("A306", f"A{ATTEMPT}")
         return seg
     parts, last = [], 0
     for m in HASH_TOKEN.finditer(text):
@@ -68,7 +68,7 @@ def successor(text):
     parts.append(rename(text[last:]))
     out = "".join(parts)
     assert sorted(HASH_TOKEN.findall(out)) == sorted(HASH_TOKEN.findall(text))
-    assert "19974" not in out and "attempt305" not in out and "a305" not in out
+    assert "19975" not in out and "attempt306" not in out and "a306" not in out
     return out
 
 def replace_n(t, a, b, n):
@@ -85,7 +85,7 @@ def emit(name, text):
     p.chmod(0o755)
 
 def main():
-    launcher = source("launch-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh")
+    launcher = source("launch-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh")
     m = re.search(r"^expected_derived=([0-9a-f]{64})$", launcher, re.M)
     assert m
     launcher = replace_n(launcher, "expected_derived=" + m.group(1), "expected_derived=" + "0" * 64, 1)
@@ -112,7 +112,7 @@ def main():
     for kv in NEW_SELECTORS:
         assert f"export {kv}\n" in derived, kv
     launcher = launcher.replace("expected_derived=" + "0" * 64, "expected_derived=" + digest(derived))
-    client = successor(source("run-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32-client.sh"))
+    client = successor(source("run-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32-client.sh"))
     client = client.replace(OLD_STAGE_HEAD, NEW_STAGE_HEAD)
     # the client's official-resolver env and its live-server PYTHONPATH identity check carry the stage path
     client = client.replace(OLD_STAGE, NEW_STAGE)
@@ -125,11 +125,11 @@ def main():
     client = replace_n(client, f'"exact_verify_selectors": ["{OLD_SELECTOR}", ',
                        '"exact_verify_selectors": [' + "".join(f'"{kv}", ' for kv in NEW_SELECTORS), 1)
     assert OLD_SELECTOR not in client
-    supervisor = successor(source("supervise-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh"))
-    supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
-    supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
-    host = successor(source("run-q38-a305-host-controlled.sh"))
-    host = replace_n(host, "expected_supervisor=" + SOURCES["supervise-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32.sh"], "expected_supervisor=" + digest(supervisor), 1)
+    supervisor = successor(source("supervise-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh"))
+    supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
+    supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
+    host = successor(source("run-q38-a306-host-controlled.sh"))
+    host = replace_n(host, "expected_supervisor=" + SOURCES["supervise-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh"], "expected_supervisor=" + digest(supervisor), 1)
     out_names = (
         f"launch-tp4-mtp1-4352-ple-only-a{ATTEMPT}-fullgraphdet-w13n32.sh",
         f"run-tp4-mtp1-4352-ple-only-a{ATTEMPT}-fullgraphdet-w13n32-client.sh",
