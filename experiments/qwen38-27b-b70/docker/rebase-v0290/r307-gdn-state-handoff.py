@@ -16,8 +16,10 @@ Defect 2 (same probe with --concurrency 4): several requests reaching the bounda
 different widths in one batch, and the XPU kernel requires one width per call ("Expected spec_token ==
 num_spec_decodes * (num_speculative_tokens + 1)"): the engine dies.
 
-Defect 3 (analysis; the one-token case): when the last step is a single token, the request drops to the non-spec
-kernels, which read SSM slot 0 and conv rows [0, width - 1) while the live state sits at slot/row (accepted - 1).
+Defect 3 (boundary-tail-probe.py, n=236: a full, fully accepted group then a one-token step): the last token is wrong.
+When no request in the step has drafts the runner skips the draft bookkeeping and gives the GDN builder no draft
+counts, so the request drops to the non-spec kernels, which read SSM slot 0 and conv rows [0, width - 1) while the
+live state sits at slot/row (accepted - 1). Partial groups right after a prefill are exact (n=238..241).
 
 Fix: (a) the GDN metadata builder hands the live state of every spec row that is narrower than num_spec + 1 back
 to slot/row 0 (block-table row + accepted count carried in the metadata; num_accepted reset to 1), and records the
@@ -52,25 +54,53 @@ edit(runner,
 ''',
 '''            # R307 GDN state hand-off (2026-09-13): flag one-token decode steps
             # that follow a speculative step which accepted more than one token.
-            # Their live GDN state sits at slot/row (accepted - 1); the GDN
-            # backend hands it back to slot/row 0 before the non-spec kernels
-            # run (GDNAttentionMetadataBuilder.build). Happens at the
-            # max_model_len boundary and whenever the drafter is skipped.
-            if self._gdn_state_handoff_enabled():
-                one_token_decode = (
-                    (num_decode_draft_tokens < 0)
-                    & (num_scheduled_tokens[:num_reqs] == 1)
-                    & (
-                        self.input_batch.num_computed_tokens_cpu[:num_reqs]
-                        >= self.input_batch.num_prompt_tokens[:num_reqs]
-                    )
-                )
-                if one_token_decode.any():
-                    accepted = self._gdn_prev_step_accepted_counts(num_reqs)
-                    num_decode_draft_tokens[one_token_decode & (accepted > 1)] = 0
+            self._r307_flag_one_token_steps(
+                num_scheduled_tokens, num_reqs, num_decode_draft_tokens
+            )
+            self._r307_handoff_step = False
             spec_decode_metadata = self._calc_spec_decode_metadata(
                 num_draft_tokens, cu_num_tokens
             )
+''')
+edit(runner,
+'''            logits_indices = query_start_loc[1:] - 1
+            spec_decode_metadata = None
+            num_sampled_tokens = np.ones(num_reqs, dtype=np.int32)
+        else:
+''',
+'''            logits_indices = query_start_loc[1:] - 1
+            spec_decode_metadata = None
+            num_sampled_tokens = np.ones(num_reqs, dtype=np.int32)
+            # R307 GDN state hand-off (2026-09-13): a step with no drafts at
+            # all (the last step at max_model_len, or the drafter skipped)
+            # still holds requests whose previous step accepted more than one
+            # token; their live GDN state sits at slot/row (accepted - 1)
+            # while the non-spec kernels read slot/row 0. Flag them (draft
+            # count 0) and pass the draft counts to the GDN builder as if
+            # this were a speculative step.
+            self._r307_handoff_step = False
+            if self._gdn_state_handoff_enabled():
+                num_decode_draft_tokens = np.full(num_reqs, -1, dtype=np.int32)
+                self._r307_flag_one_token_steps(
+                    num_scheduled_tokens, num_reqs, num_decode_draft_tokens
+                )
+                if bool((num_decode_draft_tokens == 0).any()):
+                    self._r307_handoff_step = True
+                    self.num_decode_draft_tokens.np[:num_reqs] = num_decode_draft_tokens
+                    self.num_decode_draft_tokens.np[num_reqs:].fill(-1)
+                    self.num_decode_draft_tokens.copy_to_gpu()
+        else:
+''')
+edit(runner,
+'''            extra_attn_metadata_args = {}
+            if use_spec_decode and isinstance(
+                builder,
+''',
+'''            extra_attn_metadata_args = {}
+            if (
+                use_spec_decode or getattr(self, "_r307_handoff_step", False)
+            ) and isinstance(
+                builder,
 ''')
 edit(runner,
 '''    def _calc_spec_decode_metadata(
@@ -90,6 +120,28 @@ edit(runner,
             )
             self.__dict__["_r307_gdn_handoff"] = cached
         return cached
+
+    def _r307_flag_one_token_steps(
+        self, num_scheduled_tokens: np.ndarray, num_reqs: int, num_decode_draft_tokens: np.ndarray
+    ) -> None:
+        """R307: give draft count 0 to one-token decode steps of running requests
+        whose previous step accepted more than one token. The GDN builder hands
+        their live state (slot/row accepted - 1) back to slot/row 0 before the
+        non-spec kernels run. Happens at the max_model_len boundary and
+        whenever the drafter is skipped."""
+        if not self._gdn_state_handoff_enabled():
+            return
+        one_token_decode = (
+            (num_decode_draft_tokens < 0)
+            & (num_scheduled_tokens[:num_reqs] == 1)
+            & (
+                self.input_batch.num_computed_tokens_cpu[:num_reqs]
+                >= self.input_batch.num_prompt_tokens[:num_reqs]
+            )
+        )
+        if one_token_decode.any():
+            accepted = self._gdn_prev_step_accepted_counts(num_reqs)
+            num_decode_draft_tokens[one_token_decode & (accepted > 1)] = 0
 
     def _gdn_prev_step_accepted_counts(self, num_reqs: int) -> np.ndarray:
         """R307: per-request (accepted drafts + 1) of the previous step, on the CPU.
