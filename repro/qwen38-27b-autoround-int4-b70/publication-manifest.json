@@ -302,18 +302,20 @@
       ],
       "measured_by": "experiments/qwen38-27b-b70/scripts/run-20260912-qwen38-int4-r299-draft-shortlist-chain.sh (R299 full run; R300 control, second server lost to a copy-engine reset on card e3:00.0)"
     },
-    "r303": {
-      "description": "The whole INT4 runtime rebased onto stock vLLM XPU v0.29.0. R301 = public vllm/vllm-openai-xpu@sha256:96db42e2 (v0.29.0, vllm-xpu-kernels 0.1.14.1 with upstream GDN fix #544) + the lineage's ten Python overlays ported as net diffs (draft INT4 head + R256 + R294 shortlist, R213b pad op, R224/R290-R293 class-pad, R156/R228/R276 GDN grouping, packed-serial-exact Gemma RMSNorm, FA/communicator/scaled_mm switches) + _xpu_C/GDN libraries rebuilt from kernels 6d92b1bf with oneDNN 0e2a5bfe + r137a + r137b + r221 (r35/r50 dropped: every serial-exact gate is 0 in the served configuration). R302 adds the vLLM PR #53059 uniform-decode alias guard; R303 adds the PR #51565 GDN first-chunk fix. Both fix failures that are LIVE on R294b: every one-token prompt and every (1+K)-token prompt at depth K degenerate into single-character walls (30/30). Serve with VLLM_USE_V2_MODEL_RUNNER=0 (launchers pin it): v0.29.0 defaults XPU to the V2 runner, which bypasses the draft INT4 head.",
+    "r304": {
+      "description": "The whole INT4 runtime rebased onto stock vLLM XPU v0.29.0. R301 = public vllm/vllm-openai-xpu@sha256:96db42e2 (v0.29.0, vllm-xpu-kernels 0.1.14.1 with upstream GDN fix #544) + the lineage's ten Python overlays ported as net diffs (draft INT4 head + R256 + R294 shortlist, R213b pad op, R224/R290-R293 class-pad, R156/R228/R276 GDN grouping, packed-serial-exact Gemma RMSNorm, FA/communicator/scaled_mm switches) + _xpu_C/GDN libraries rebuilt from kernels 6d92b1bf with oneDNN 0e2a5bfe + r137a + r137b + r221 (r35/r50 dropped: every serial-exact gate is 0 in the served configuration). R302 adds the vLLM PR #53059 uniform-decode alias guard; R303 adds the PR #51565 GDN first-chunk fix; R304 adds the PR #53542 active runtime-K width fix (dynamic draft schedules). Both fix failures that are LIVE on R294b: every one-token prompt and every (1+K)-token prompt at depth K degenerate into single-character walls (30/30). Serve with VLLM_USE_V2_MODEL_RUNNER=0 (launchers pin it): v0.29.0 defaults XPU to the V2 runner, which bypasses the draft INT4 head.",
       "image": {
-        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r303",
-        "id": "sha256:8e7d4911498977bb50907725e716fe5cf904b9c2673969698514331dc47f0697",
-        "ghcr": "PENDING push (repro/qwen38-27b-autoround-int4-b70/scripts/publish-r303-image-ghcr.sh)",
-        "base": "vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901 (v0.29.0) via r301 (sha256:5640a86b) and r302 (sha256:db6f0004)",
+        "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304",
+        "id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "ghcr": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "base": "vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901 (v0.29.0) via r301 (sha256:5640a86b), r302 (sha256:db6f0004), r303 (sha256:8e7d4911)",
         "kernel_head": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
         "xpu_extension_sha256": "bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932",
         "gdn_library_sha256": "6f0fec189b04bd6a94b1b3ca0983623be7e7f2a4734b58e086fab3b0341213f3",
         "xpu_ops_sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
-        "contract": "verify-image-contract.sh v0290 digest set (17 files, keyed on the kernel-head label)"
+        "contract": "verify-image-contract.sh v0290 digest set (17 files, keyed on the kernel-head label; experiments/qwen38-27b-b70/docker/rebase-v0290/r304-contract-digests.sha256)",
+        "ghcr_tag": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r304-v0290-rebase-20260913",
+        "push_note": "pushed 2026-09-13 02:4x from the lab host; registry digest equals the local image id; anonymous manifest fetch verified"
       },
       "build_scripts": [
         {
@@ -343,10 +345,6 @@
         {
           "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/kernel-artifacts.sha256",
           "sha256": "4ec6518444f8968e7f6c3c41fd3febc5c699b13af27861e86620859db154acd0"
-        },
-        {
-          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-contract-digests.sha256",
-          "sha256": "f94c19a3c97bdd6e05347bec01aa5a1cc143499d1dde1d4852ade9ee1b37064d"
         },
         {
           "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/onednn-0e2a5bfe-r137a-r137b-r221.applied.diff",
@@ -391,6 +389,18 @@
         {
           "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/ported-files/v1/spec_decode/llm_base_proposer.py",
           "sha256": "2d9007211cc62bff8dfde27e58714d95c5225be37905991ba34859390b6c8e96"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r304-gdn-active-width",
+          "sha256": "512f7cd12849cf3596ac9e71478246aca6eb3152b5742ebab4e5ebbab87875af"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
+          "sha256": "059f9a750447c38465e82ae93e2722a5d564f2c1251d6a6b26ca504a06ecdfdf"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-contract-digests.sha256",
+          "sha256": "b7a199bb641ccdc8b1fe319a9c7567df88d93fd9124992d9b1cd1cb5f6b4cfac"
         }
       ],
       "kernel_build": {
@@ -404,15 +414,23 @@
       "evidence": [
         {
           "path": "experiments/qwen38-27b-b70/data/2026-09-12-rebase-v0290-r301-results.json",
-          "sha256": "e491bc6137cb0973289f01dcb6cb3b73473285fd454d02b473d065c52384c650"
+          "sha256": "02f0d2b12beb760151fb8996ea81622d99ef55841bf7d8f582541308e6049b79"
         },
         {
           "path": "experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md",
-          "sha256": "bccab29b7a573575ed0ca10d3afedf862435687e092ce924ede045107ff80010"
+          "sha256": "c1e5cd12dd0e1db6984cadbae2a3a884c63c4ba1b7d8eb8137c91f8c8dd1ddca"
         },
         {
           "path": "experiments/qwen35-4b-b70/data/2026-09-12-stock-v0290-single-card-baselines.json",
           "sha256": "ef8f00f5ac64c8f5259417bfd357376876d4ad2313c69b40ac7e5db9df22a6fa"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-r304-strict-result.json",
+          "sha256": "c788a65fb7d962235b089fff9bddf5673f31c09e2a1cb2299bf7f3d3e0fe2363"
+        },
+        {
+          "path": "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-r304-strict-result.json",
+          "sha256": "630934ad2dd8a56bb079730eab46e1675b0d57161ac17028f053d41322385aea"
         }
       ],
       "results_r301_stage": {
@@ -422,8 +440,15 @@
         "4b_32k": "18/18 both arms",
         "4b_identity": "no-spec c64 5 ms stagger 64/64 x7 at 2086-2113 (served 1280/1280 at 2104)"
       },
-      "results_r303": "strict gates under the real contract: in progress 2026-09-13 00:2x (4B G1 12/12, MTP0 102.65/102.60 so far)",
-      "status": "candidate; gates in progress; not published"
+      "status": "candidate; 4B, 9B, FP8-27B qualified under the real contract; INT4-27B gates running; not yet pushed",
+      "results_r304_real_contract": {
+        "4b": "G1/G2/G3 12/12; depth 3 191.37/191.41; MTP0 102.41/102.48",
+        "9b": "12/12; 123.22/123.86; 64.34/64.30",
+        "27b_fp8_tp2_depth1_r187_profile": "12/12; MTP1 54.82/54.83; MTP0 33.08/33.08 (published 54.935/33.097)",
+        "27b_int4_tp2_depth4": "pending (r304b running)",
+        "short_prompts_4b": "0/30 degenerate on k=1..6 and long (R294b: 30/30 on k=1 and k=1+K)",
+        "dynamic_schedule_9b": "c12 (K=1 range) runs, c64 completes; no width assertion"
+      }
     }
   },
   "source_repositories": [
