@@ -187,6 +187,25 @@
    "strict": "G1/G2/G3 12/12; depth 3 177.24/177.32; MTP0 97.53/97.53 (root qwen35-9b-w4a16-20260913-rt2); R293 TP2 published 164.7/93.6 (no shortlist then)",
    "c128_nospec_classpad1": "2623 (128/128), 2637 (128/128) with the engine ladder defaults (published R293 3227 used mns 128 / mbt 1024; rerun queued)",
    "c128_depth3_classpad1": "1732 (122/128), 2193 (122/128)"
+  },
+  "high_concurrency_published_settings": {
+   "settings": "CLASSPAD=1, depth 3 server + no-spec server, c64/96/128, LADDER_MNS=128 LADDER_MBT=1024, capture sizes to 128, two passes (warm second pass quoted)",
+   "4b_tp1": {
+    "nospec": "c64 2166 (64/64), c96 2407 (96/96), c128 2522 (128/128); R293: c128 2520 (512/512)",
+    "depth3": "c64 1927 (59/64), c96 1801 (89/96), c128 1867 (117/128); R293 depth 3 c64 1831"
+   },
+   "4b_tp2": {
+    "nospec": "c64 3325 (64/64), c96 3812 (96/96), c128 3990 (128/128); R293: c128 4015 (512/512)",
+    "depth3": "c64 2808 (61/64), c96 2720 (87/96), c128 2966 (116/128)"
+   },
+   "9b_tp1": {
+    "nospec": "c64 1640 (64/64), c96 1852 (95/96), c128 1960 (128/128); R293: c128 1955",
+    "depth3": "c64 1297 (62/64), c96 1330 (93/96), c128 1346 (121/128); R293 depth 3 c64 1225"
+   },
+   "9b_tp2": {
+    "nospec": "c64 2609 (64/64), c96 2974 (96/96), c128 3227 (128/128); R293: c128 3227",
+    "depth3": "c64 2232 (62/64), c96 2228 (89/96), c128 2338 (121/128)"
+   }
   }
  }
 }

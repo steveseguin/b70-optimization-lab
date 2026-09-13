@@ -239,7 +239,8 @@ on every prompt length tested (1 to 6 tokens and long), with and without specula
 Strict pair on R304 under the recipe contract: G1/G2/G3 12/12, depth 3 **191.37 / 191.41 tok/s**, no speculation 102.4
 (the previous image measured 191.87 / 191.58). The 2K-32K exact-depth ladder is 18/18 on both arms; the no-speculation
 64-user recipe with the 5 ms admission stagger is 64/64 on seven passes at about 2100 tok/s; a dynamic draft schedule
-with a K=1 range runs without the kernel width assertion that killed stock v0.29.0. The launcher pins
+with a K=1 range runs without the kernel width assertion that killed stock v0.29.0. High concurrency, published ladder settings:
+no speculation at 128 users with CLASSPAD=1: 2522 tok/s exact on one card, 3990 exact on two (R293: 2520 / 4015). The launcher pins
 `VLLM_USE_V2_MODEL_RUNNER=0`: v0.29.0 defaults XPU to the V2 model runner, whose speculator has no draft INT4 head
 (128 instead of 172 tok/s in the single-user harness). Build and provenance:
 `experiments/qwen38-27b-b70/docker/rebase-v0290/` and `experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.

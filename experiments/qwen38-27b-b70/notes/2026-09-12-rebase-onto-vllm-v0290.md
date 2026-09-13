@@ -137,9 +137,17 @@ Strict pair R304c: 117.24 / 116.95 depth 4, 50.07 / 50.06 no spec; all gates 12/
 | 4B W4A16 | 12/12 | 247.45 / 244.21 | 138.30 / 138.06 | 240.9 (R276-class, no shortlist) |
 | 9B W4A16 | 12/12 | 177.24 / 177.32 | 97.53 / 97.53 | 164.7 / 93.6 (R293, no shortlist) |
 
-The c128 rungs in that chain ran with the engine's ladder defaults (max 64 sequences, 512 batched tokens), so they
-are not the published c128 configuration (128 sequences, 1024 tokens, capture sizes to 128); a rerun with the
-published settings is queued and will replace them here.
+The c128 rungs in that chain ran with the engine's ladder defaults and were discarded; the rerun below uses the
+published ladder settings (128 sequences, 1024 batched tokens, capture sizes to 128, CLASSPAD=1, warm pass of two):
+
+| lane, cards | no spec c64 / c96 / c128 (exact) | R293 c128 | depth 3 c64 / c96 / c128 (exact) |
+| --- | --- | ---: | --- |
+| 4B, one | 2166 (64/64) / 2407 (96/96) / **2522 (128/128)** | 2520 | 1927 (59/64) / 1801 (89/96) / 1867 (117/128) |
+| 4B, two | 3325 (64/64) / 3812 (96/96) / **3990 (128/128)** | 4015 | 2808 (61/64) / 2720 (87/96) / 2966 (116/128) |
+| 9B, one | 1640 (64/64) / 1852 (95/96) / **1960 (128/128)** | 1955 | 1297 (62/64) / 1330 (93/96) / 1346 (121/128) |
+| 9B, two | 2609 (64/64) / 2974 (96/96) / **3227 (128/128)** | 3227 | 2232 (62/64) / 2228 (89/96) / 2338 (121/128) |
+
+Every published no-speculation high-concurrency number reproduces on R304 within 1%, exact at 128 users.
 
 ## R305/R306: the 9B scheduled-draft profile on the rebase
 
