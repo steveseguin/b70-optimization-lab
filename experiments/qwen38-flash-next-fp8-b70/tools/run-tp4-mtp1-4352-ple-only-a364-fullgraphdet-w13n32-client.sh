@@ -93,8 +93,8 @@ grep -zFxq 'VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/q
 }
 # The official resolver needs the server's XPU runtime identity to resolve
 # the platform and device name; mirror the frozen server exports exactly.
-env PYTHONPATH=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70:/home/steve/src/vllm-current-main \
-  LD_LIBRARY_PATH=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib \
+env PYTHONPATH=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70:/home/steve/src/vllm-current-main \
+  LD_LIBRARY_PATH=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib \
   ZE_AFFINITY_MASK=0 VLLM_TARGET_DEVICE=xpu \
   VLLM_TUNED_CONFIG_FOLDER=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32 \
   "$python" "${repo}/experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py" \
@@ -145,7 +145,7 @@ grep -zFxq 'VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2' "/proc/${server_pid}/environ" |
 ' >&2
   exit 1
 }
-grep -zFxq 'PYTHONPATH=/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70:/home/steve/src/vllm-current-main' "/proc/${server_pid}/environ" || {
+grep -zFxq 'PYTHONPATH=/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70:/home/steve/src/vllm-current-main' "/proc/${server_pid}/environ" || {
   printf 'FAIL: live server PYTHONPATH identity mismatch\n' >&2
   exit 1
 }
