@@ -1,0 +1,7 @@
+# R306 (2026-09-13): R305-dynsd + contiguous per-width staging buffers for the active-width GDN metadata (see
+# r306-gdn-active-width-contiguous-staging.py). Candidate for the 9B scheduled-draft profile.
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r305-dynsd
+FROM ${BASE}
+COPY r306-gdn-active-width-contiguous-staging.py /tmp/r306.py
+RUN python /tmp/r306.py && python -m py_compile /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_attn.py && rm /tmp/r306.py
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r306-dynsd"

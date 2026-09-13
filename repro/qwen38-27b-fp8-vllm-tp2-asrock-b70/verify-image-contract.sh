@@ -17,10 +17,10 @@ docker image inspect "${image}" >/dev/null 2>&1 || fail "image is not local: ${i
 
 actual_kernel_head=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')
 actual_build_lane=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.build.lane" }}')
-if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${actual_build_lane}" == *r305-dynsd* ]]; then
-  # R305 (2026-09-13): R304 + the 9B scheduled-draft overlays (dynamic Mamba allocation, full decode graphs per scheduled
+if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${actual_build_lane}" == *r306-dynsd* ]]; then
+  # R306 (2026-09-13): R304 + the 9B scheduled-draft overlays + contiguous per-width staging (R306) (dynamic Mamba allocation, full decode graphs per scheduled
   # K, draft-state catch-up). Same kernel library; the R304 set plus the four extra overlaid files, all pinned from the
-  # built image (experiments/qwen38-27b-b70/docker/rebase-v0290/r305-dynsd-contract-digests.sha256).
+  # built image (experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256).
   v0290d_paths=(
     /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
     /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
@@ -61,7 +61,7 @@ if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${
     1e72ed72ed7f495f9b4b5d28f7a0c97b5397e853dabc83acf2ab5ab112e9ffd9
     4f5638a47e5f57d697e97cbfb6a0c41f563b6d2f58c132fa7ecb5e132797ab64
     7cc7ca2fef07a0747a0892a2e774eebd03c5796948499272309d6260321cb751
-    94498e7dc8dd4190d22cbda6fdadcfa92df174a86cae897bc5c173a9afc103a4
+    80501ebfe2172a6d8f8fd61293a2556ca739e5210a80cd0084701c34bc449f49
     09b8ed02301ad1d549619dc84a0b595639cac953a4c6ba8a3d5dca8f2b50c18a
     cd5442a9fb9dd14849a3b9de9c88c52b5533a18c0028ce859b8cbdf300de3cc8
     13d9ec1d9ca903064007bbd488954e0639a6fd1293f5fb55b06e380bff335b5d
