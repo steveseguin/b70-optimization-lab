@@ -25,19 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**2026-09-13 19:19 EDT, two-B70 host:** R308 GPU qualification completed.
-Both models passed 60/60 oracle checks and 52/52 boundary checks on each of
-two fresh speculative servers. Both four-server strict campaigns passed
-G1/G2/G3a/G3b 12/12. The final collector independently recomputed numeric IDs,
-validated runtime identities, cache/canary gates, and healthy postflights:
-[data packet](experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json).
-All owned test servers are stopped. R308 image `sha256:b9bbb5190f6d` preserves
-accepted-state selection across a temporary batch pause. Reconstruction from
-public R304 matched all 17 runtime hashes. Publication and live-guide verification
-are in progress; no concurrent or new long-context qualification is claimed.
-Preserve the failed R307 roots and both diagnostic roots listed in the
-[registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
-No power, swap, driver, or reboot changes were made in this two-card campaign.
+**2026-09-13 19:32 EDT, two-B70 host: R308 work complete.** The optional
+single-request repair for Qwen3.5 4B and 9B is published, anonymously pullable,
+and verified on the live site. Both models passed 60/60 oracle checks,
+52/52 boundary checks on each of two fresh speculative servers, and all four
+strict comparisons 12/12. Public-parent reconstruction matched all 17 runtime
+hashes. Source/evidence integrity, guide tests, recipe CI and Pages deployment
+passed. See the [qualification note](experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md)
+and [completion receipt](experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/completion.json).
+All owned model and preview servers are stopped; both GPUs and XCCL passed
+final health checks. No power, swap, driver, or reboot changes were made.
+Scope is TP1, fixed depth 3, one active request: boundary capacity 256 and strict
+capacity 1024. Clean-host certification, concurrent speculation and a new 32K
+profile remain outside this qualification. R307 failures and diagnostic roots
+remain preserved in the linked evidence; existing defaults retain their
+original identities.
 
 **Four-B70 user operating policy, 2026-09-13:** stability takes priority. No
 repeated server restarts and no AI changes to power settings; leave swap/cache
