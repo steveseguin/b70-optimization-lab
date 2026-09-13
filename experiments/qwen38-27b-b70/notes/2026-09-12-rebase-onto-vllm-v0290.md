@@ -174,3 +174,7 @@ FP8 recipe too, and fixed by the same image.
 G1/G2/G3 12/12, **81.17 / 81.16 tok/s** (R298 on R293 without the shortlist: 73.19 / 73.25, +10.9%: the draft head
 shortlist is worth more on one card, where the draft passes are a larger share of the step), MTP0 33.10 / 33.08
 (32.58 / 32.50). Two-pass ladders in the matrix row.
+
+## INT4-27B 2K-32K real-content ladder on R304 (TP2, depth 4)
+
+18/18 on the no-speculation oracle arm and 18/18 on the depth-4 arm (R260b on the old image: 18/18).
