@@ -17,7 +17,7 @@ wait_free() { while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]|rebase
 root=$out/qwen38-int4-rebase-v0290-${RB:-rb2}-20260912
 [[ -e "$root/campaign.log" ]] && { log "${RB:-rb2}: root already used"; exit 0; }
 wait_free; log "${RB:-rb2}: starting -> $root"
-env XPU_EXTENSION_SHA256_OVERRIDE=bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932 VLLM_XPU_FA_SERIAL_SPEC_DECODE=1 VLLM_BATCH_INVARIANT=1 VLLM_XPU_DRAFT_LM_HEAD_INT4=1 \
+env LADDER_REPEATS=${LADDER_REPEATS:-2} XPU_EXTENSION_SHA256_OVERRIDE=bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932 VLLM_XPU_FA_SERIAL_SPEC_DECODE=1 VLLM_BATCH_INVARIANT=1 VLLM_XPU_DRAFT_LM_HEAD_INT4=1 \
   VLLM_XPU_W4A16_DETERMINISM_PAD=0 VLLM_XPU_W4A16_DETERMINISM_PAD_HIGH=0 VLLM_XPU_FP16_LINEAR_CLASSPAD=0 VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt \
   MODEL_DIR=/mnt/fast-ai/llm-models/qwen3.8-27b-int4-autoround-gptq-relabel MODEL_MANIFEST=$R/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json \
   QUANTIZATION=gptq VLLM_XPU_FP8_BLOCK_W8A16=0 XPU_OPS_SHA256_OVERRIDE=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 VLLM_XPU_GDN_SPEC_GROUP=16 VLLM_XPU_GDN_PREFILL_GROUP=1 \

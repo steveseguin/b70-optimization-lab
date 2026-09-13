@@ -1,0 +1,280 @@
+--- /tmp/claude-1000/-home-steve/scratch-q9/vllm-src/v1/spec_decode/llm_base_proposer.py	2026-09-06 00:07:26.000000000 -0400
++++ v1/spec_decode/llm_base_proposer.py	2026-09-11 09:33:31.016505002 -0400
+@@ -508,6 +508,43 @@
+     def take_last_draft_probs(self) -> torch.Tensor | None:
+         return self._last_draft_probs
+ 
++    def catch_up_draft_state(
++        self,
++        input_ids: torch.Tensor,
++        positions: torch.Tensor,
++        target_hidden_states: torch.Tensor,
++        common_attn_metadata: CommonAttentionMetadata,
++    ) -> None:
++        """Lab overlay (dynsd-catchup): run the draft layer over positions whose
++        draft KV was never written, so its state is current before drafting.
++
++        The inputs are laid out exactly as the first pass of `propose` lays them
++        out: `input_ids[i]` is the token that follows position `positions[i]`,
++        `target_hidden_states[i]` is the target's hidden state at that position.
++        Nothing is sampled; the only effect is the KV written for those positions.
++        Runs eagerly (no cudagraph) - it is a rare, prefill-shaped pass.
++        """
++        num_tokens = int(input_ids.shape[0])
++        if num_tokens == 0:
++            return
++        self.input_ids[:num_tokens] = input_ids
++        self._set_positions(num_tokens, positions)
++        self.hidden_states[:num_tokens] = target_hidden_states
++        _, per_layer_attn_metadata = self.build_per_group_and_layer_attn_metadata(
++            common_attn_metadata
++        )
++        model_kwargs, _ = self.build_model_inputs_first_pass(num_tokens, num_tokens, None)
++        with set_forward_context(
++            per_layer_attn_metadata,
++            self.vllm_config,
++            num_tokens=num_tokens,
++            cudagraph_runtime_mode=CUDAGraphMode.NONE,
++            slot_mapping=self._get_slot_mapping(
++                num_tokens, common_attn_metadata.slot_mapping
++            ),
++        ):
++            self.model(**model_kwargs)
++
+     def propose(
+         self,
+         num_speculative_tokens,
+--- /home/steve/llm-optimizations/repro/qwen35-9b-w4a16-b70/docker/r276-dynsd-fullgraph-gpu_model_runner.py	2026-09-10 07:03:44.783738684 -0400
++++ v1/worker/gpu_model_runner.py	2026-09-11 10:30:36.151202552 -0400
+@@ -15,6 +15,7 @@
+ from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias, cast
+ 
+ import numpy as np
++import os
+ import torch
+ import torch.distributed
+ import torch.nn as nn
+@@ -904,6 +905,31 @@
+ 
+         self.uniform_decode_query_len = 1 + self.num_spec_tokens
+ 
++        # Lab overlay (dynsd-catchup): under a dynamic draft schedule, a pure-decode step
++        # that schedules no drafts skips the draft layer's forward. The target hidden
++        # state and the next token of every skipped position are kept in a per-request
++        # ring and replayed through the draft layer (a prefill-shaped catch-up) the next
++        # time that request is asked for drafts. Steps that contain prefill tokens are
++        # never skipped, so a prompt's draft KV is always written by the step that
++        # prefilled it. Positions older than the ring window are not replayed; drafts
++        # after such a gap are weaker until the state refreshes, never wrong - the
++        # target verifies every token.
++        self._dsc_enabled = bool(
++            self.speculative_config is not None
++            and self.speculative_config.uses_dynamic_speculative_decoding()
++            and self.speculative_config.use_eagle()
++            and os.environ.get("VLLM_XPU_DYNSD_CATCHUP", "1") == "1"
++        )
++        self._dsc_window = int(os.environ.get("VLLM_XPU_DYNSD_CATCHUP_WINDOW", "256"))
++        self._dsc_hs: torch.Tensor | None = None
++        self._dsc_tok: torch.Tensor | None = None
++        self._dsc_slot: dict[str, int] = {}
++        self._dsc_free: list[int] = list(range(self.max_num_reqs))
++        self._dsc_valid: dict[str, int] = {}
++        self._dsc_batch_key: tuple[str, ...] | None = None
++        self._dsc_slot_t: torch.Tensor | None = None
++        self._dsc_stats = {"skipped_steps": 0, "catch_up_tokens": 0, "catch_up_reqs": 0}
++
+         # Cudagraph dispatcher for runtime cudagraph dispatching.
+         self.cudagraph_dispatcher = CudagraphDispatcher(self.vllm_config)
+ 
+@@ -1224,7 +1250,12 @@
+         req_state: CachedRequestState | None,
+     ) -> None:
+         """Hook for platform runners to clean request-scoped side caches."""
+-        del req_id, req_state
++        del req_state
++        slot = self._dsc_slot.pop(req_id, None)
++        if slot is not None:
++            self._dsc_free.append(slot)
++            self._dsc_batch_key = None
++        self._dsc_valid.pop(req_id, None)
+ 
+     def _process_encoder_cache_scheduler_output(
+         self,
+@@ -5111,6 +5142,159 @@
+             return None
+         return torch.cat(draft_probs_rows, dim=0).contiguous()
+ 
++    def _dsc_ring_slot(self, req_id: str) -> int:
++        slot = self._dsc_slot.get(req_id)
++        if slot is None:
++            slot = self._dsc_free.pop()
++            self._dsc_slot[req_id] = slot
++        return slot
++
++    def _dsc_before_propose(
++        self,
++        scheduler_output: "SchedulerOutput",
++        sampled_token_ids: torch.Tensor | list[list[int]],
++        hidden_states: torch.Tensor,
++        spec_decode_metadata: SpecDecodeMetadata | None,
++        common_attn_metadata: CommonAttentionMetadata,
++        num_spec_tokens_to_schedule: int,
++    ) -> torch.Tensor | None:
++        """Lab overlay (dynsd-catchup). Returns the (empty) draft tensor when this
++        step's draft forward is skipped, else None after any catch-up has run."""
++        num_reqs = self.input_batch.num_reqs
++        req_ids = self.input_batch.req_ids[:num_reqs]
++        if num_reqs == 0 or any(r not in self.requests for r in req_ids):
++            return None  # dummy / capture runs
++        sched = scheduler_output.num_scheduled_tokens
++        starts = self.input_batch.num_computed_tokens_cpu[:num_reqs]
++        pure_decode = (
++            spec_decode_metadata is None
++            and all(sched.get(r, 0) == 1 for r in req_ids)
++            and scheduler_output.total_num_scheduled_tokens == num_reqs
++        )
++        if num_spec_tokens_to_schedule == 0 and pure_decode:
++            if self._dsc_hs is None:
++                hidden = hidden_states.shape[-1]
++                self._dsc_hs = torch.zeros(
++                    (self.max_num_reqs, self._dsc_window, hidden),
++                    dtype=hidden_states.dtype,
++                    device=self.device,
++                )
++                self._dsc_tok = torch.zeros(
++                    (self.max_num_reqs, self._dsc_window),
++                    dtype=torch.int64,
++                    device=self.device,
++                )
++            assert isinstance(sampled_token_ids, torch.Tensor)
++            # No host->device copies on the per-step path: a blocking copy waits
++            # for every queued kernel and costs the CPU/GPU overlap (measured as
++            # -10..20% aggregate at 32-64 users). The slot tensor is rebuilt only
++            # when the batch composition changes; positions come from the device.
++            key = tuple(req_ids)
++            if self._dsc_batch_key != key:
++                self._dsc_batch_key = key
++                slots = [self._dsc_ring_slot(r) for r in req_ids]
++                self._dsc_slot_t = torch.tensor(
++                    slots, dtype=torch.int64, device=self.device
++                )
++                for r, start in zip(req_ids, starts):
++                    self._dsc_valid.setdefault(r, int(start) - 1)
++            slot_t = self._dsc_slot_t
++            pos = self._get_positions(num_reqs)
++            if pos.dim() == 2:
++                pos = pos[0]
++            pos_t = pos.to(torch.int64) % self._dsc_window
++            self._dsc_hs[slot_t, pos_t] = hidden_states[:num_reqs]
++            self._dsc_tok[slot_t, pos_t] = sampled_token_ids[:num_reqs, 0].to(torch.int64)
++            self._dsc_stats["skipped_steps"] += 1
++            return torch.empty(num_reqs, 0, dtype=torch.int64, device=self.device)
++
++        # A step that drafts (or prefills): replay skipped positions first.
++        if self._dsc_hs is not None:
++            lag_reqs: list[tuple[int, str, int, int]] = []
++            for i, (r, start) in enumerate(zip(req_ids, starts)):
++                valid = self._dsc_valid.get(r)
++                start = int(start)
++                if valid is None or valid >= start - 1:
++                    continue
++                first = max(valid + 1, start - self._dsc_window)
++                if first <= start - 1:
++                    lag_reqs.append((i, r, first, start - 1))
++            if lag_reqs:
++                self._dsc_catch_up(lag_reqs)
++        for r, start, in zip(req_ids, starts):
++            self._dsc_valid[r] = int(start) + sched.get(r, 1) - 1
++        return None
++
++    def _dsc_catch_up(self, lag_reqs: list[tuple[int, str, int, int]]) -> None:
++        """Replay skipped positions through the draft layer, in chunks no larger
++        than the drafter's input buffers. A request's span may be split across
++        consecutive chunks: each chunk is a causal prefill over positions whose
++        predecessors' KV was written by an earlier chunk or an earlier step."""
++        assert self._dsc_hs is not None and self._dsc_tok is not None
++        blk_table = self.input_batch.block_table[0]
++        if getattr(blk_table, "blocks_per_kv_block", 1) != 1 or self.dcp_world_size > 1:
++            return
++        block_size = blk_table.block_size
++        limit = max(1, min(self.drafter.max_num_tokens, self.max_num_tokens))
++        table_all = blk_table.get_device_tensor(self.input_batch.num_reqs)
++        dev = self.device
++        # Flatten the work into (row, slot, position) and cut it into chunks.
++        work: list[tuple[int, int, int]] = []
++        for i, r, first, last in lag_reqs:
++            slot = self._dsc_slot[r]
++            work.extend((i, slot, q) for q in range(first, last + 1))
++        for c0 in range(0, len(work), limit):
++            chunk = work[c0 : c0 + limit]
++            rows: list[int] = []
++            qsl = [0]
++            seq_lens: list[int] = []
++            for i, _slot, q in chunk:
++                if not rows or rows[-1] != i:
++                    rows.append(i)
++                    qsl.append(qsl[-1])
++                    seq_lens.append(q + 1)
++                qsl[-1] += 1
++                seq_lens[-1] = q + 1
++            n = len(chunk)
++            slot_t = torch.tensor([w[1] for w in chunk], dtype=torch.int64, device=dev)
++            ring_t = torch.tensor(
++                [w[2] % self._dsc_window for w in chunk], dtype=torch.int64, device=dev
++            )
++            pos_t = torch.tensor([w[2] for w in chunk], dtype=torch.int64, device=dev)
++            hs = self._dsc_hs[slot_t, ring_t]
++            toks = self._dsc_tok[slot_t, ring_t].to(torch.int32)
++            qsl_cpu = torch.tensor(qsl, dtype=torch.int32)
++            qsl_gpu = qsl_cpu.to(dev)
++            seq_cpu = torch.tensor(seq_lens, dtype=torch.int32)
++            seq_gpu = seq_cpu.to(dev)
++            table = table_all[torch.tensor(rows, dtype=torch.int64, device=dev)]
++            counts = torch.tensor(
++                [b - a for a, b in zip(qsl[:-1], qsl[1:])], dtype=torch.int64, device=dev
++            )
++            req_of_tok = torch.repeat_interleave(
++                torch.arange(len(rows), device=dev), counts
++            )
++            block_ids = table[req_of_tok, pos_t // block_size].to(torch.int64)
++            slot_mapping = block_ids * block_size + (pos_t % block_size)
++            cad = CommonAttentionMetadata(
++                query_start_loc=qsl_gpu,
++                query_start_loc_cpu=qsl_cpu,
++                seq_lens=seq_gpu,
++                _seq_lens_cpu=seq_cpu,
++                _num_computed_tokens_cpu=seq_cpu - (qsl_cpu[1:] - qsl_cpu[:-1]),
++                num_reqs=len(rows),
++                num_actual_tokens=n,
++                max_query_len=int(max(b - a for a, b in zip(qsl[:-1], qsl[1:]))),
++                max_seq_len=int(max(seq_lens)),
++                block_table_tensor=table,
++                slot_mapping=slot_mapping,
++                causal=True,
++                positions=pos_t,
++            )
++            self.drafter.catch_up_draft_state(toks, pos_t, hs, cad)
++            self._dsc_stats["catch_up_tokens"] += n
++        self._dsc_stats["catch_up_reqs"] += len(lag_reqs)
++
+     def propose_draft_token_ids(
+         self,
+         scheduler_output: "SchedulerOutput",
+@@ -5308,6 +5492,17 @@
+             )()
+             if alt is not None:
+                 hidden_states = alt
++            if self._dsc_enabled and not self.use_aux_hidden_state_outputs:
++                skipped = self._dsc_before_propose(
++                    scheduler_output,
++                    sampled_token_ids,
++                    hidden_states,
++                    spec_decode_metadata,
++                    common_attn_metadata,
++                    num_spec_tokens_to_schedule,
++                )
++                if skipped is not None:
++                    return skipped
+ 
+             num_rejected_tokens_gpu = None
+             if spec_decode_metadata is None:

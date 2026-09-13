@@ -1,0 +1,16 @@
+# R305 (2026-09-13): R304 + the 9B lane's scheduled-draft ("dynsd") overlays, applied as the three unified diffs the lane
+# recorded against the 0.27.2 lineage (repro/qwen35-9b-w4a16-b70/docker/r276-*.patch), which apply to v0.29.0 with offsets:
+#   dynamic-mamba-alloc  scheduler.py + single_type_kv_cache_manager.py (Mamba/GDN state slots allocated for the active
+#                        draft width, the 27B lane's August patch; c64 955 -> 1145 tok/s on the 9B)
+#   dynsd-fullgraph      config/vllm.py + cudagraph_dispatcher.py + gpu_model_runner.py (one full decode graph per
+#                        scheduled K instead of vLLM's PIECEWISE override under a schedule)
+#   dynsd-catchup        llm_base_proposer.py + gpu_model_runner.py (draft-state catch-up at schedule transitions)
+# Candidate for the published 9B "scheduled draft" profile (dyn293: 1631 tok/s at c64, 112.4 one user).
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+FROM ${BASE}
+COPY dynsd/r276-dynamic-mamba-alloc.patch dynsd/r276-dynsd-fullgraph.patch dynsd/r276-dynsd-catchup.patch /tmp/dynsd/
+RUN cd /opt/venv/lib/python3.12/site-packages && patch -p1 --forward < /tmp/dynsd/r276-dynamic-mamba-alloc.patch \
+    && cd vllm && patch -p1 --forward < /tmp/dynsd/r276-dynsd-fullgraph.patch && patch -p0 --forward < /tmp/dynsd/r276-dynsd-catchup.patch \
+    && python -m py_compile v1/core/sched/scheduler.py v1/core/single_type_kv_cache_manager.py config/vllm.py v1/cudagraph_dispatcher.py v1/worker/gpu_model_runner.py v1/spec_decode/llm_base_proposer.py \
+    && find . -name '*.rej' | grep . && exit 1 || rm -rf /tmp/dynsd
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r305-dynsd"
