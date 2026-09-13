@@ -88,6 +88,8 @@ def main():
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
         launcher = replace_n(launcher, 'print "[[ \\"${max_model_len}\\" == \\"4352\\" ]] || {"', 'print "[[ \\"${max_model_len}\\" == \\"' + lc["MAXLEN"] + '\\" ]] || {"', 1)
         launcher = replace_n(launcher, "frozen to MAX_MODEL_LEN=4352", "frozen to MAX_MODEL_LEN=" + lc["MAXLEN"], 1)
+        # the launcher's campaign literal (used for the derived script's --ack and the run/cache dirs) follows the served context
+        launcher = replace_n(launcher, 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1\n', 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-' + lc["MAXLEN"] + '-ple-only-r1\n', 1)
         # the launcher's own derived-source assertion of the frozen-context check line
         launcher = replace_n(launcher, "grep -Fxq '[[ \"${max_model_len}\" == \"4352\" ]] || {' \"$derived\"", "grep -Fxq '[[ \"${max_model_len}\" == \"" + lc["MAXLEN"] + "\" ]] || {' \"$derived\"", 1)
     if "KVBYTES" in lc:

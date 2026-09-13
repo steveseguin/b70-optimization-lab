@@ -6,7 +6,7 @@ base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a375-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
 expected_derived=5abef5efd29af1dd50591a934ebbfa3eca6d537a2d112b7639956d947f2a526e
-campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1
+campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-33280-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n64
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n64/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
 [[ "$(sha256sum "$tuned_config_map" | cut -d' ' -f1)" == 4fcb5d13ef0c859d12a4fe6b5aac09b04fccf4db24e47a6f004d3f9878e4e38f ]] || { printf 'FAIL: A375 tuned M1 map drifted\n' >&2; exit 1; }

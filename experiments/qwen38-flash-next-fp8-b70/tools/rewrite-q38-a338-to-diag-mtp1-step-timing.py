@@ -70,6 +70,8 @@ def main():
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
         launcher = replace_n(launcher, 'print "[[ \\"${max_model_len}\\" == \\"4352\\" ]] || {"', 'print "[[ \\"${max_model_len}\\" == \\"' + lc["MAXLEN"] + '\\" ]] || {"', 1)
         launcher = replace_n(launcher, "frozen to MAX_MODEL_LEN=4352", "frozen to MAX_MODEL_LEN=" + lc["MAXLEN"], 1)
+        # the launcher's campaign literal (used for the derived script's --ack and the run/cache dirs) follows the served context
+        launcher = replace_n(launcher, 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1\n', 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-' + lc["MAXLEN"] + '-ple-only-r1\n', 1)
     if "KVBYTES" in lc:
         launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", f"export KV_CACHE_MEMORY_BYTES={lc['KVBYTES']}\n", 1)
         kv_anchor_value = lc["KVBYTES"]
