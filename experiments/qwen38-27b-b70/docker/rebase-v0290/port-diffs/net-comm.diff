@@ -1,0 +1,12 @@
+--- r294b-base/distributed/device_communicators/xpu_communicator.py	2026-08-14 01:03:26.000000000 -0400
++++ r294b-site/distributed/device_communicators/xpu_communicator.py	2026-08-28 04:26:25.000000000 -0400
+@@ -47,7 +47,8 @@
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
+         output = input_.clone()
+-        dist.all_reduce(output, group=self.device_group)
++        work = dist.all_reduce(output, group=self.device_group, async_op=True)
++        work.wait()
+         return output
+ 
+     def reduce_scatter(self, input_: torch.Tensor, dim: int = -1):

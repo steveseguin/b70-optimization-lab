@@ -1,0 +1,19 @@
+--- r294b-base/v1/spec_decode/llm_base_proposer.py	2026-09-01 10:46:09.000000000 -0400
++++ r294b-site/v1/spec_decode/llm_base_proposer.py	2026-09-06 00:07:26.000000000 -0400
+@@ -1574,6 +1574,16 @@
+                 quant_method = getattr(lm_head_to_share, "quant_method", None)
+                 prepare = getattr(quant_method, "make_xpu_int4_draft_copy", None)
+                 if not callable(prepare):
++                    # R256: unquantized FP16 head under a non-embedding quant method (gptq relabel)
++                    from vllm.model_executor.layers.vocab_parallel_embedding import (
++                        UnquantizedEmbeddingMethod as _R256Emb,
++                    )
++                    _weight = getattr(lm_head_to_share, "weight", None)
++                    if _weight is not None and _weight.dtype in (torch.float16, torch.bfloat16):
++                        _emb = _R256Emb()
++                        prepare = getattr(_emb, "make_xpu_int4_draft_copy", None)
++                        logger.info("R256: draft-only INT4 head via UnquantizedEmbeddingMethod fallback")
++                if not callable(prepare):
+                     raise RuntimeError(
+                         "draft INT4 requested but the target lm_head quantization "
+                         "method cannot prepare a draft-only copy"

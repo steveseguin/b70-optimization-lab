@@ -1,0 +1,128 @@
+--- r294b-base/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py	2026-08-14 01:03:26.000000000 -0400
++++ r294b-site/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py	2026-08-28 02:47:53.000000000 -0400
+@@ -76,6 +76,54 @@
+     or rocm_aiter_ops.is_rdna_gdn_triton_kernels_available()
+ )
+ 
++_XPU_DETERMINISTIC_BA_MIN_TOKENS = 17
++_XPU_DETERMINISTIC_BA_PAD_TOKENS = 256
++
++
++def _deterministic_xpu_ba_prefill(
++    hidden_states: torch.Tensor,
++    weight: torch.Tensor,
++) -> torch.Tensor:
++    """Compute the small GDN B/A projection in a fixed reduction order.
++
++    Intel XPU's ordinary GEMM is not bit-stable for several prefill shapes of
++    this projection (for example M=75, K=5120, N=96). The same projection is
++    stable at M=256, so execute fixed 256-row blocks and discard padded rows.
++    Padding only adds zero input rows and does not alter any real row's dot
++    product or accumulation precision.
++    """
++    pieces = []
++    for start in range(0, hidden_states.shape[0], _XPU_DETERMINISTIC_BA_PAD_TOKENS):
++        count = min(_XPU_DETERMINISTIC_BA_PAD_TOKENS, hidden_states.shape[0] - start)
++        block = hidden_states[start : start + count]
++        if count != _XPU_DETERMINISTIC_BA_PAD_TOKENS:
++            padded = torch.zeros(
++                (_XPU_DETERMINISTIC_BA_PAD_TOKENS, hidden_states.shape[-1]),
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
++            padded[:count].copy_(block)
++            block = padded
++        pieces.append(torch.nn.functional.linear(block, weight)[:count])
++    return torch.cat(pieces, dim=0) if len(pieces) > 1 else pieces[0]
++
++
++def _deterministic_xpu_ba_prefill_fake(
++    hidden_states: torch.Tensor,
++    weight: torch.Tensor,
++) -> torch.Tensor:
++    """Shape-only implementation used while tracing dynamic compile graphs."""
++    return hidden_states.new_empty((hidden_states.shape[0], weight.shape[0]))
++
++
++direct_register_custom_op(
++    op_name="qwen_gdn_ba_prefill_xpu",
++    op_func=_deterministic_xpu_ba_prefill,
++    mutates_args=[],
++    fake_impl=_deterministic_xpu_ba_prefill_fake,
++)
++
++
+ if GDN_AITER_TRITON_AVAILABLE:
+     from aiter.ops.triton.causal_conv1d_update_single_token import (
+         fused_reshape_causal_conv1d_update_single_token as gdn_aiter_fused_reshape_causal_conv1d_update_single_token,  # noqa: E501
+@@ -490,6 +538,25 @@
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
+         self.gdn_decode_kernel = envs.VLLM_GDN_DECODE_KERNEL.strip().lower()
++        conv_state_dtype, ssm_state_dtype = self.get_state_dtype()
++        self.register_buffer(
++            "_xpu_conv_state",
++            torch.empty(
++                0,
++                dtype=conv_state_dtype,
++                device=current_platform.current_device(),
++            ),
++            persistent=False,
++        )
++        self.register_buffer(
++            "_xpu_ssm_state",
++            torch.empty(
++                0,
++                dtype=ssm_state_dtype,
++                device=current_platform.current_device(),
++            ),
++            persistent=False,
++        )
+         if self.gdn_decode_kernel == "cuda":
+             reason = self._fused_gdn_decode_unsupported_reason(vllm_config)
+             if reason is not None:
+@@ -509,6 +576,12 @@
+             raise ValueError(f"Duplicate layer name: {prefix}")
+         compilation_config.static_forward_context[prefix] = self
+ 
++    def bind_kv_cache(self, kv_cache: torch.Tensor) -> None:
++        """Bind compiler-visible XPU views to the allocated recurrent cache."""
++        super().bind_kv_cache(kv_cache)
++        self._xpu_conv_state.set_(self.kv_cache[0])
++        self._xpu_ssm_state.set_(self.kv_cache[1])
++
+     def _fused_gdn_decode_unsupported_reason(
+         self, vllm_config: VllmConfig
+     ) -> str | None:
+@@ -966,7 +1039,15 @@
+         # Part 1: Input Projection
+         # ============================================================
+         projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if (
++            num_tokens >= _XPU_DETERMINISTIC_BA_MIN_TOKENS
++            and self.in_proj_ba.weight.dtype in (torch.float16, torch.bfloat16)
++        ):
++            projected_states_ba = torch.ops.vllm.qwen_gdn_ba_prefill_xpu(
++                hidden_states, self.in_proj_ba.weight
++            )
++        else:
++            projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -977,12 +1058,13 @@
+             device=hidden_states.device,
+         )
+         z = torch.empty_like(core_attn_out)
+-
+         torch.ops.vllm.gdn_attention_core_xpu(
+             core_attn_out,
+             z,
+             projected_states_qkvz,
+             projected_states_ba,
++            self._xpu_conv_state,
++            self._xpu_ssm_state,
+             self.prefix,
+         )
+ 

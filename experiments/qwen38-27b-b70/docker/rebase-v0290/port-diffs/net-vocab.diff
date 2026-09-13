@@ -1,0 +1,52 @@
+--- r294b-base/model_executor/layers/vocab_parallel_embedding.py	2026-09-01 10:46:09.000000000 -0400
++++ r294b-site/model_executor/layers/vocab_parallel_embedding.py	2026-09-12 09:04:40.000000000 -0400
+@@ -122,6 +122,24 @@
+                 "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE must be divisible by 8"
+             )
+ 
++        # R294: optional shortlist of vocabulary rows for the draft-only copy.
++        _r294_path = os.environ.get("VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST", "").strip()
++        _r294_local = None
++        _r294_full_rows = weight.shape[0]
++        if _r294_path:
++            import logging as _r294_logging
++            _ids = sorted({int(t) for t in open(_r294_path).read().split() if t.strip()})
++            _si = getattr(layer, "shard_indices", None)
++            _start = getattr(_si, "org_vocab_start_index", 0) if _si is not None else 0
++            _end = getattr(_si, "org_vocab_end_index", weight.shape[0]) if _si is not None else weight.shape[0]
++            _local = [t - _start for t in _ids if _start <= t < _end]
++            if not _local:
++                _local = [0]  # a shard with no shortlist rows still needs one row so the GEMM has a shape
++            _r294_local = torch.tensor(_local, dtype=torch.long, device=weight.device)
++            _r294_logging.getLogger("vllm").info(
++                "R294 draft shortlist: %d ids from %s, %d in this shard [%d, %d) of %d rows",
++                len(_ids), _r294_path, len(_local), _start, _end, weight.shape[0])
++            weight = weight.index_select(0, _r294_local)
+         num_tokens, hidden = weight.shape
+         packed_k = hidden // 8
+         num_groups = hidden // group_size
+@@ -194,6 +212,9 @@
+         draft_layer.register_buffer("_xpu_draft_int4_qzeros", qzeros, persistent=False)
+         draft_layer._xpu_draft_int4_group_size = group_size
+         draft_layer._xpu_draft_int4_enabled = True
++        if _r294_local is not None:
++            draft_layer.register_buffer("_xpu_draft_shortlist_local", _r294_local, persistent=False)
++            draft_layer._xpu_draft_shortlist_full_rows = _r294_full_rows
+         return draft_layer
+ 
+     def apply(
+@@ -218,6 +239,14 @@
+                 layer._xpu_draft_int4_group_size,
+                 None,
+             )
++            _sl = getattr(layer, "_xpu_draft_shortlist_local", None)
++            if _sl is not None:
++                # R294: scatter the shortlist logits into a full-width row of -inf.
++                full = torch.full(
++                    (logits.shape[0], layer._xpu_draft_shortlist_full_rows),
++                    float("-inf"), dtype=logits.dtype, device=logits.device)
++                full.index_copy_(1, _sl, logits)
++                return full.reshape(x_contiguous.shape[:-1] + (layer._xpu_draft_shortlist_full_rows,))
+             return logits.reshape(
+                 x_contiguous.shape[:-1] + (layer._xpu_draft_int4_weight_t.shape[1],)
+             )

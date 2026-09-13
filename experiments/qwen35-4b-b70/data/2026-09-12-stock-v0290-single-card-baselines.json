@@ -1,0 +1,167 @@
+{
+ "kind": "stock-v0.29.0-single-card-baselines-for-rebase",
+ "date": "2026-09-12",
+ "image": "vllm/vllm-openai-xpu:latest (v0.29.0, sha256:96db42e2, vllm-xpu-kernels 0.1.14.1)",
+ "image_id": "sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901",
+ "shape": "one B70 (index 0), TP1, --max-model-len 4096 --max-num-seqs 64, no lab overlays or env; 64-prompt small-context suite, 128 new tokens, greedy, ignore_eos; concurrency 1/8/64 x 2 repeats; oracle = sequential pass on the same server. NOT the lab strict-pair shape (different suite/length): compare single-user figures only loosely.",
+ "runner": "/mnt/fast-ai/bench-results/rebase-v0290-20260912/run-stock-baseline.sh",
+ "lanes": {
+  "4b-mtp3": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "tok_s": 111.8,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "tok_s": 667.7,
+    "exact": "7/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "tok_s": 2108.1,
+    "exact": "60/64"
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "tok_s": 113.7,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "tok_s": 741.5,
+    "exact": "7/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "tok_s": 2161.1,
+    "exact": "53/64"
+   }
+  ],
+  "4b-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "tok_s": 94.3,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "tok_s": 604.0,
+    "exact": "7/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "tok_s": 2221.0,
+    "exact": "52/64"
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "tok_s": 95.8,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "tok_s": 679.0,
+    "exact": "7/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "tok_s": 2303.5,
+    "exact": "55/64"
+   }
+  ],
+  "9b-mtp3": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "tok_s": 84.1,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "tok_s": 492.4,
+    "exact": "8/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "tok_s": 1277.3,
+    "exact": "59/64"
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "tok_s": 84.0,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "tok_s": 512.9,
+    "exact": "8/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "tok_s": 1296.4,
+    "exact": "58/64"
+   }
+  ],
+  "9b-mtp0": [
+   {
+    "concurrency": 1,
+    "repeat": 1,
+    "tok_s": 64.7,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 1,
+    "tok_s": 353.3,
+    "exact": "8/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 1,
+    "tok_s": 1809.3,
+    "exact": "55/64"
+   },
+   {
+    "concurrency": 1,
+    "repeat": 2,
+    "tok_s": 64.9,
+    "exact": "1/1"
+   },
+   {
+    "concurrency": 8,
+    "repeat": 2,
+    "tok_s": 451.6,
+    "exact": "8/8"
+   },
+   {
+    "concurrency": 64,
+    "repeat": 2,
+    "tok_s": 1827.8,
+    "exact": "57/64"
+   }
+  ]
+ },
+ "served_reference": {
+  "4b": "R294b one card depth 3: 191.9 tok/s single user (strict suite); R293 no-spec c64 stagger 2104, c128 2520",
+  "9b": "R294b depth 3: 124.1 single user; R293 no-spec c128 1955",
+  "note": "stock v0.29.0 depth-3 single user: 4B 112-114, 9B 84; no-spec: 4B 94-96, 9B 65"
+ }
+}

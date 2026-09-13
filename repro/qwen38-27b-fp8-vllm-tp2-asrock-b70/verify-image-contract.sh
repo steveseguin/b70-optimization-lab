@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Experiments on images that are not yet under contract (e.g. the 2026-09-12 v0.29.0 rebase candidates) may set
+# SKIP_IMAGE_CONTRACT=1. The launcher then runs with NO file/kernel identity guarantee; never for published results.
+if [[ "${SKIP_IMAGE_CONTRACT:-0}" == 1 ]]; then printf 'IMAGE CONTRACT SKIPPED (SKIP_IMAGE_CONTRACT=1): %s is NOT a qualified image\n' "${2:-?}" >&2; exit 0; fi
 profile=${1:?usage: verify-image-contract.sh mtp0|mtp1|mtp1-serial-gdn|mtp1-serial-fp8|mtp1-serial-fa|mtp1-serial-fa-split-gdn IMAGE}
 image=${2:?usage: verify-image-contract.sh mtp0|mtp1|mtp1-serial-gdn|mtp1-serial-fp8|mtp1-serial-fa|mtp1-serial-fa-split-gdn IMAGE}
 

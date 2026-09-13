@@ -1,0 +1,169 @@
+--- r294b-base/_xpu_ops.py	2026-08-14 01:03:26.000000000 -0400
++++ r294b-site/_xpu_ops.py	2026-09-06 04:21:41.000000000 -0400
+@@ -4,6 +4,8 @@
+ from collections.abc import Callable
+ from typing import TYPE_CHECKING
+ 
++import os
++
+ import torch
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+ 
+@@ -118,6 +120,8 @@
+     z: torch.Tensor,
+     projected_states_qkvz: torch.Tensor,
+     projected_states_ba: torch.Tensor,
++    conv_state: torch.Tensor,
++    ssm_state: torch.Tensor,
+     layer_name: str,
+ ) -> None:
+     """Custom op wrapping the XPU SYCL GDN kernel for torch.compile."""
+@@ -168,6 +172,119 @@
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
++    def _kernel(out, zz, qkvz, ba, n_prefills, n_decodes, n_spec, his, ns_qs,
++                ns_tok, ns_state, sp_qs, sp_tok, sp_state, n_acc, n_tokens):
++        torch.ops._xpu_C.gdn_attention(
++            out, zz, qkvz, ba, self.num_k_heads, self.num_v_heads,
++            self.head_k_dim, self.head_v_dim,
++            conv_state=conv_state, ssm_state=ssm_state, conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias, activation=self.activation,
++            A_log=self.A_log, dt_bias=self.dt_bias,
++            num_prefills=n_prefills, num_decodes=n_decodes,
++            num_spec_decodes=n_spec, has_initial_state=his,
++            non_spec_query_start_loc=ns_qs, non_spec_token_indx=ns_tok,
++            non_spec_state_indices_tensor=ns_state,
++            spec_query_start_loc=sp_qs, spec_token_indx=sp_tok,
++            spec_state_indices_tensor=sp_state, num_accepted_tokens=n_acc,
++            num_actual_tokens=n_tokens, tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++
++    _spec_group = int(os.environ.get("VLLM_XPU_GDN_SPEC_GROUP", "16"))
++    _group_spec = (
++        _spec_group > 0 and num_spec_decodes > _spec_group
++        and spec_sequence_masks is not None and spec_token_indx is not None
++    )
++    if _group_spec or (os.environ.get("VLLM_XPU_GDN_SPLIT_MIXED", "0") == "1" and (
++        (num_prefills > 0 and num_decodes > 0)
++        or (num_spec_decodes > 0 and (num_prefills > 0 or num_decodes > 0))
++    )):
++        # R156: the XPU GDN kernel computes decode rows on a different
++        # arithmetic path when prefill rows share the call (one float16 ULP
++        # in the SSM state and output), and vLLM folds non-spec decodes into
++        # prefills whenever spec rows are present. Split every mixed step into
++        # pure calls so each row sees the same arithmetic it sees at c1.
++        logger.warning_once("R156 GDN split-mixed step executed")
++        dev = core_attn_out.device
++        if spec_sequence_masks is None:
++            # decode-first contiguous layout, no token index maps
++            d = num_decodes
++            n = num_actual_tokens
++            _kernel(core_attn_out[:d], z[:d],
++                    projected_states_qkvz[:d], projected_states_ba[:d],
++                    0, d, 0, has_initial_state[:d],
++                    torch.arange(d + 1, dtype=torch.int32, device=dev), None,
++                    non_spec_state_indices_tensor[:d], None, None, None, None, d)
++            _kernel(core_attn_out[d:n], z[d:n],
++                    projected_states_qkvz[d:n], projected_states_ba[d:n],
++                    num_prefills, 0, 0, has_initial_state[d:],
++                    (non_spec_query_start_loc[d:] - d).to(torch.int32).contiguous(),
++                    None, non_spec_state_indices_tensor[d:].contiguous(),
++                    None, None, None, None, n - d)
++            return
++        # spec rows present: gather each class into a contiguous buffer,
++        # run it pure, scatter the rows back
++        if spec_token_indx is not None and spec_token_indx.numel() > 0:
++            st = spec_token_indx.long()
++            n_sp = st.numel()
++            _n_spec_tok = int(getattr(attn_metadata, "num_spec_decode_tokens", 0) or 0)
++            _q = _n_spec_tok // num_spec_decodes if num_spec_decodes else 0
++            if _q > 0 and _q * num_spec_decodes == _n_spec_tok and n_sp == _n_spec_tok:
++                # R276: uniform spec rows (k+1 tokens each): arithmetic boundaries, no device sync, graph-capturable
++                sp_qs_cpu = [i * _q for i in range(num_spec_decodes + 1)]
++            else:
++                sp_qs_cpu = spec_query_start_loc[: num_spec_decodes + 1].to("cpu", non_blocking=False).tolist()
++            group = _spec_group if _spec_group > 0 else num_spec_decodes
++            if group != _spec_group:
++                logger.warning_once("R228 GDN spec grouping inactive (group %d)", group)
++            else:
++                logger.warning_once("R228 GDN spec rows grouped by %d sequences", group)
++            for s0 in range(0, num_spec_decodes, group):
++                s1 = min(s0 + group, num_spec_decodes)
++                t0, t1 = int(sp_qs_cpu[s0]), int(sp_qs_cpu[s1])
++                rows = st[t0:t1]
++                n_g = t1 - t0
++                out_s = torch.zeros((n_g,) + tuple(core_attn_out.shape[1:]), dtype=core_attn_out.dtype, device=dev)
++                z_s = torch.empty_like(out_s)
++                qs_g = (spec_query_start_loc[s0:s1 + 1] - t0).to(torch.int32).contiguous()
++                acc_g = num_accepted_tokens[s0:s1].contiguous() if num_accepted_tokens is not None else None
++                _kernel(out_s, z_s, projected_states_qkvz[rows].contiguous(),
++                        projected_states_ba[rows].contiguous(), 0, 0, s1 - s0, None,
++                        None, torch.empty(0, dtype=torch.int32, device=dev), None,
++                        qs_g, torch.arange(n_g, dtype=torch.int32, device=dev),
++                        spec_state_indices_tensor[s0:s1].contiguous(), acc_g, n_g)
++                core_attn_out[rows] = out_s
++                z[rows] = z_s
++        if non_spec_token_indx is not None and non_spec_token_indx.numel() > 0:
++            nt = non_spec_token_indx.long()
++            qs = non_spec_query_start_loc
++            lens = (qs[1:] - qs[:-1])
++            n_seq = lens.numel()
++            his = has_initial_state if has_initial_state is not None else torch.zeros(n_seq, dtype=torch.bool, device=dev)
++            dec_mask = (lens == 1) & his
++            seq_ids = torch.arange(n_seq, device=dev)
++            for is_dec in (True, False):
++                sel = seq_ids[dec_mask] if is_dec else seq_ids[~dec_mask]
++                if sel.numel() == 0:
++                    continue
++                starts = qs[:-1][sel]; ends = qs[1:][sel]
++                rows = torch.cat([torch.arange(int(a), int(b), device=dev) for a, b in zip(starts.tolist(), ends.tolist())])
++                tok = nt[rows]
++                n_t = tok.numel()
++                out_p = torch.zeros((n_t,) + tuple(core_attn_out.shape[1:]), dtype=core_attn_out.dtype, device=dev)
++                z_p = torch.empty_like(out_p)
++                sub_qs = torch.zeros(sel.numel() + 1, dtype=torch.int32, device=dev)
++                torch.cumsum(lens[sel].to(torch.int32), dim=0, out=sub_qs[1:])
++                _kernel(out_p, z_p, projected_states_qkvz[tok].contiguous(),
++                        projected_states_ba[tok].contiguous(),
++                        0 if is_dec else sel.numel(), sel.numel() if is_dec else 0, 0,
++                        his[sel].contiguous(), sub_qs, None,
++                        non_spec_state_indices_tensor[sel].contiguous(),
++                        None, None, None, None, n_t)
++                core_attn_out[tok] = out_p
++                z[tok] = z_p
++        return
++
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,
+@@ -177,8 +294,8 @@
+         self.num_v_heads,
+         self.head_k_dim,
+         self.head_v_dim,
+-        conv_state=self.kv_cache[0],
+-        ssm_state=self.kv_cache[1],
++        conv_state=conv_state,
++        ssm_state=ssm_state,
+         conv_weights=conv_weights,
+         conv_bias=self.conv1d.bias,
+         activation=self.activation,
+@@ -206,6 +323,8 @@
+     z: torch.Tensor,
+     projected_states_qkvz: torch.Tensor,
+     projected_states_ba: torch.Tensor,
++    conv_state: torch.Tensor,
++    ssm_state: torch.Tensor,
+     layer_name: str,
+ ) -> None:
+     return
+@@ -1259,7 +1378,7 @@
+             direct_register_custom_op(
+                 op_name="gdn_attention_core_xpu",
+                 op_func=eager_break_during_capture(_gdn_attention_core_xpu_impl),
+-                mutates_args=["core_attn_out", "z"],
++                mutates_args=["core_attn_out", "z", "conv_state", "ssm_state"],
+                 fake_impl=_gdn_attention_core_xpu_fake,
+             )
+ 

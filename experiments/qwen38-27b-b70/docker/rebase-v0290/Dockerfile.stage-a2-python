@@ -1,0 +1,8 @@
+# Rebase stage A (2026-09-12): stock vLLM XPU v0.29.0 + the lab's Python overlays ported as net diffs
+# (base workspace diff: layernorm, vocab draft INT4 head, flash_attn, proposer; site overlays: R213b pad op,
+# R224+R290..R293 class-pad, R228+R276 GDN spec group, R256 fallback, R294 shortlist). Kernels: stock 0.1.14.1.
+FROM vllm/vllm-openai-xpu:latest
+COPY vllm/ /opt/venv/lib/python3.12/site-packages/vllm/
+COPY draft-shortlists/shortlist-*.txt /opt/draft-shortlists/
+RUN cd /opt/venv/lib/python3.12/site-packages/vllm && python -m py_compile _xpu_ops.py model_executor/layers/utils.py model_executor/layers/vocab_parallel_embedding.py v1/spec_decode/llm_base_proposer.py model_executor/kernels/linear/mixed_precision/xpu.py model_executor/layers/layernorm.py v1/attention/backends/flash_attn.py distributed/device_communicators/xpu_communicator.py model_executor/kernels/linear/scaled_mm/xpu.py model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py && ls /opt/draft-shortlists | wc -l
+LABEL neural.download.build.lane="rebase-v0290-python-a1" neural.download.kernel.head="6d92b1bfbf32767ecda8e819613eb151e70030ad"

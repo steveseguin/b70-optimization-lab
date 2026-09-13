@@ -1,0 +1,7 @@
+# Rebase stage B (2026-09-12): stage A2 (v0.29.0 + ported Python overlays) + rebuilt kernels: vllm-xpu-kernels 0.1.14.1
+# (6d92b1bf, includes #544) with oneDNN 0e2a5bfe + lab GEMM patches r137a + r137b + r221 (no r35/r50), built by
+# scripts/build-vllm-xpu-kernels-xpu-c-only.sh inside the stock v0.29.0 venv with host oneAPI 2026.1.
+FROM rebase/vllm-xpu:v0290-python-a2
+COPY _xpu_C.abi3.so libgdn_attn_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/
+RUN python -c "import torch, vllm_xpu_kernels._xpu_C; print('kernels import ok', torch.__version__)"
+LABEL neural.download.build.lane="rebase-v0290-stage-b1" neural.download.kernel.head="6d92b1bfbf32767ecda8e819613eb151e70030ad" neural.download.kernel.patch="onednn r137a+r137b+r221 on 0e2a5bfe"
