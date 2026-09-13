@@ -465,6 +465,184 @@
         "seconds": 1046,
         "log": "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-clean-clone-20260913.log"
       }
+    },
+    "r308": {
+      "description": "Optional Qwen3.5 4B/9B W4A16 boundary repair: R304 plus R306 contiguous staging, R307 partial-width/one-token GDN state handoff, and R308 preservation of accepted state selection across an unscheduled remove/re-add. Existing default recipes, 27B profiles and dynamic R306 remain unchanged.",
+      "status": "qualified optional single-request profile; public immutable image anonymously pulled and contract verified; clean-host starter replay pending",
+      "scope": {
+        "models": [
+          "Qwen3.5-4B-quantized.w4a16",
+          "Qwen3.5-9B-quantized.w4a16"
+        ],
+        "tensor_parallel_size": 1,
+        "mtp_depth": 3,
+        "max_num_seqs": 1,
+        "active_requests": 1,
+        "boundary_max_model_len": 256,
+        "strict_max_model_len": 1024,
+        "max_num_batched_tokens": 1024,
+        "classpad": 0,
+        "draft_shortlist": "/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
+        "excluded": [
+          "27B",
+          "TP2",
+          "dynamic schedules",
+          "concurrent speculative serving",
+          "new32K claim",
+          "new performance headline"
+        ]
+      },
+      "image": {
+        "local_tag": "rebase/r308-state-resume",
+        "id": "sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba",
+        "ghcr": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba",
+        "ghcr_tag": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4:r308-v0290-fixed-depth-state-resume-20260913",
+        "base": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+        "parent_chain": "r304",
+        "kernel_head": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
+        "build_lane": "qwen38-int4-v0290-rebase-r308-gdn-state-resume",
+        "contract": "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256",
+        "anonymous_verified_at": "2026-09-13T19:20:41.205195-04:00",
+        "public_source_commit": "24a74588691ca43d5a5bee0e65a822c7754e62a6"
+      },
+      "build_scripts": [
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/rebuild-r308-overlay.sh",
+          "sha256": "3896151092eb12778a5218a619a8e63667acb56c04cad6760b81eb75caf79035"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r307-gdn-state-handoff",
+          "sha256": "4f45c89dbb01af3e14f0276e1e1d9d443ae530ca199d24d304b58d7df13874d1"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-gdn-active-width-contiguous-staging.py",
+          "sha256": "b0f3a1478b398d219f946dbb0928484fbd5115967feb829453af0cb7403204bd"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r307-gdn-state-handoff.py",
+          "sha256": "9d0886c60c9050aa28e30c60324d44439be6a701014a2ff19ddda1eb4b29c6d3"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r308-gdn-state-resume",
+          "sha256": "36d03865a9ba888e7a428cd4dae1ae7acaaa4974cba33c17e7cd024cc317cbd0"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-gdn-state-resume.py",
+          "sha256": "7e6494f12c3e180cbfbf034fedc754a61f415b036c5726373ef5fd994ce0ca98"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256",
+          "sha256": "a45dddb714460c1131e22f5da0e9cafe5954ecb54ba823a4bfbed0446f698446"
+        },
+        {
+          "path": "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
+          "sha256": "68fbf48bcb16b600cb71ab347e35eb66cf5e8dab1727a751af83e8e1c0ca58bd"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/scripts/run-20260913-r307-qualification.py",
+          "sha256": "1c20104e0555e0bbe1dfbb6b23a423ff9a803806538895cc5d2bde634ab5e029"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/scripts/summarize-r307-qualification.py",
+          "sha256": "ef32cd011a8bdb2096d959e22b00140d57dd2fff72ebfdbfa827b3dc84974189"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py",
+          "sha256": "694781cdb06ca39e0fc2bc25d757416f32ac76833f7ac1e9648250d2f489fdf3"
+        },
+        {
+          "path": "repro/qwen35-9b-w4a16-b70/scripts/publish-r308-fixed-depth-image-ghcr.sh",
+          "sha256": "83cd2a45792e9ec7f200f362a9fb48fa475834156fc108d473fe043ddab48dce"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/scripts/run-20260913-r308-4b-strict.sh",
+          "sha256": "5dad51c2603700e002332d073f11265a6f6795d4ad2ea7f687fbe9b59de868f6"
+        },
+        {
+          "path": "experiments/qwen35-9b-b70/scripts/run-20260907-qwen35-campaign.sh",
+          "sha256": "727c62faa3e4ce2fe2d0fd94d2df464a0f7924babfb34d81a7d3047f74e6a9e7"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/summary.json",
+          "sha256": "6daedf5ecfb16f62a9f1f82234a8fd88b6c9bb8edd5979e14c827efe2e8672bb"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/source-manifest.json",
+          "sha256": "1f96aa6342146e407af46ddd508aee463de98a91469c128812edfefeebc3b874"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/anonymous-pull.log",
+          "sha256": "5f0f64055f5f2994e98df671099223bab1a1b7d0a4717e8aeee45e86ab64d7b6"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-contract.log",
+          "sha256": "0b944909176baebd61475876f0949f29fc26e563c0f3640ca92c7e1db058f762"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-image-inspect.json",
+          "sha256": "aee6f2e70e403a9213a195ba967202bdff59c12903f08c656baf002054f566d2"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/public-verification.json",
+          "sha256": "8c6786d607081a480c117af90b23ea14f124873d5b65660b92421c367ab2d5fd"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/publication/push.log",
+          "sha256": "a880a14ac0cdcc9dfbd8f23b5af9afe64810fa8b8f3238491ac715a03014879c"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/rebuild/build.log",
+          "sha256": "218aec38b93e48b472b77a48efff9c635d37ff4298ce426a7da66fe8867fc391"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/rebuild/build-inputs.sha256",
+          "sha256": "1548ca464e0683d09a79c3f8b1b23544a3f6f62048c34dba74cd46baa4e19a2e"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/rebuild/parent.txt",
+          "sha256": "adb5803920e61e045bd013b0c2d032c80d0b02b7586dfd1e6a4af1ffc01db8ed"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/rebuild/image.txt",
+          "sha256": "e323171cfcbed29ac021d454659350554757185a5db37e56513d91bf0156deae"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/rebuild/observed.sha256",
+          "sha256": "a45dddb714460c1131e22f5da0e9cafe5954ecb54ba823a4bfbed0446f698446"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-single-request-qualification/evidence/rebuild/publication-baseline-remote.log",
+          "sha256": "47b440d15b5d240c29c7bac6b59142f525db3a25b187349f5cdd6af348381c04"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/summary.json",
+          "sha256": "8fbf481100dd642902e8963cfb437d0a8693d05d6479918f946a79a7f3c1129b"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-lifecycle-negative/summary.json",
+          "sha256": "792ad081c63ea8a36e1cb01163a64e0703d64c6715c844cb97d4507a33eb251a"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/data/2026-09-13-r308-repair-cross-check/summary.json",
+          "sha256": "a6226dc4ea9bc0c0ad4afba671dde573dd1268f96c96a93297ae7eabe95b9910"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/notes/2026-09-13-r308-lifecycle-acceptance-reset.md",
+          "sha256": "49df2ae283b3d511cd324d4d24be78cbbfa521722c7bf1163cee0dad7db0c7ed"
+        },
+        {
+          "path": "experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md",
+          "sha256": "966203b1cb54981ec300f0d546fe369bb38619ec44e3024999145b2003e07e10"
+        }
+      ],
+      "qualification": {
+        "boundary": "Each model: oracle60/60 rows; two fresh MTP3 servers52/52 rows each (20 full prompts plus6 token-ID-prefix tails, repeated twice).",
+        "strict": "Both models: four fresh1024-context servers, full12-prompt realistic suite, numeric IDs/cache/canaries and four G1/G2/G3 comparisons pass; natural EOS retained.",
+        "rebuild": "No-cache publicR304 -> R307 -> R308 reconstruction; all17 runtime hashes match served candidate. Binary assets unchanged, inherited from r304 public source/binary chain.",
+        "negative_evidence": "R3079B boundary and c4 speculative failures retained; R308 has no concurrent-serving qualification."
+      }
     }
   },
   "source_repositories": [
@@ -553,7 +731,7 @@
     ],
     "graph_capture": "R246b/R247/R250/R253: TP1 depth 4 56.911/56.898; TP2 MTP0 49.833/49.887 (G1 12/12, 12/12 vs the eager oracle), depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982; every pair 12/12 vs each other and vs the eager MTP0 oracle. R251 ladders under graphs: MTP0 exact c1-c64; depth 4 exact c1/c2/c16. R257 (R256 image, draft-only INT4 head + graphs): TP2 depth 4 112.362/112.325, 12/12 vs each other and vs the eager oracle.",
     "clean_source_build": true,
-    "clean_source_build_note": "2026-09-06 clean-clone replay (replay-w4a16-r220-r221-clean-clone-20260906T192527Z): the published R220 and R221 scripts, run from fresh blobless clones of the pinned commits (local bare mirrors via git url.insteadOf; checkout --detach <sha> enforced) with the host oneAPI 2026.1 compiler mounted into the R213b base, rebuilt _xpu_C bit-for-bit: R220 64c4422a\u2026 and image id 36360702\u2026, R221 271db0d4\u2026 and image id 699e2699\u2026, both identical to the shipped artifacts; the replayed R221 image imports _xpu_C (torch 2.13.0+xpu). R220 took 930 s at JOBS=4, the R221 incremental stage about a minute.",
+    "clean_source_build_note": "2026-09-06 clean-clone replay (replay-w4a16-r220-r221-clean-clone-20260906T192527Z): the published R220 and R221 scripts, run from fresh blobless clones of the pinned commits (local bare mirrors via git url.insteadOf; checkout --detach <sha> enforced) with the host oneAPI 2026.1 compiler mounted into the R213b base, rebuilt _xpu_C bit-for-bit: R220 64c4422a… and image id 36360702…, R221 271db0d4… and image id 699e2699…, both identical to the shipped artifacts; the replayed R221 image imports _xpu_C (torch 2.13.0+xpu). R220 took 930 s at JOBS=4, the R221 incremental stage about a minute.",
     "runtime_smoke": true,
     "build_log_asset": "r221-incremental-rebuild.log",
     "quality_evidence": [
@@ -581,9 +759,9 @@
     "R222 chain's 'depth-1 full' roots ran at depth 4 (DEPTH expansion); superseded by R239.",
     "R239 TP2 depth-4 candidate b failed at engine start; R240 re-ran the pair (68.552/67.789, 12/12).",
     "2026-09-06: the profile was documented as running with VLLM_BATCH_INVARIANT=1; the recorded container environments of every campaign (R222-R259) show VLLM_BATCH_INVARIANT=0, pinned by the strict launchers, and vLLM 0.27.2rc1 refuses to boot the GDN attention backend with it set (R260). All measurements stand as taken; the setting text was corrected and the public launcher now pins 0 and routes through the strict launchers (TORCHINDUCTOR_DETERMINISTIC=1, Inductor autotune off, PYTHONHASHSEED=0).",
-    "2026-09-06: container records show the R257 headline pair (112.36/112.33 tok/s) ran the R228 image (aaf920b0\u2026), not R256; R258, R259, R260b and R265b ran R256. The R256 overlay's fallback branch is never taken on this model (the relabelled lm_head is unquantized and already provides make_xpu_int4_draft_copy), so both images execute the same code on this lane and both are public on GHCR; the recipe text and matrix were corrected.",
+    "2026-09-06: container records show the R257 headline pair (112.36/112.33 tok/s) ran the R228 image (aaf920b0…), not R256; R258, R259, R260b and R265b ran R256. The R256 overlay's fallback branch is never taken on this model (the relabelled lm_head is unquantized and already provides make_xpu_int4_draft_copy), so both images execute the same code on this lane and both are public on GHCR; the recipe text and matrix were corrected.",
     "2026-09-06 (R278k): every runner-launched server ran with the R213b W4A16 determinism pad active above 128 rows (VLLM_XPU_W4A16_DETERMINISM_PAD absent from the container; the overlay defaults to on), because the launcher chain did not forward the variable. The single-user headline (5 verify rows), the strict gates, the identity ladders, and every rung through c16 (80 rows) are unaffected; the c32/c64 rungs of the published ladders (~360/~445 tok/s) were measured with 160/320 rows padded to 512 and are ~2x pessimistic. Both launchers now forward the switch with 0 as the default; R281/R282 re-measure the ladders.",
-    "2026-09-06: build-w4a16-strategy-r220-image.sh pinned scripts/build-vllm-xpu-kernels-xpu-c-only.sh at 5cbdadc2\u2026, but that helper's hash became 7646d9e8\u2026 the same day when its /home/steve KERNELS_DIR/VENV_DIR defaults were replaced by required variables for public closure (the R220 script sets both explicitly, so the build is unchanged); the pin was updated after it refused to run. rebuild-w4a16-incremental-r221.sh's `strings | grep -Fq` check aborted under `set -o pipefail` (SIGPIPE on strings) during the replay; it now uses grep -c. Both scripts' digests in repository.build_scripts were refreshed; the clean-clone replay results are recorded in the chain's clean_source_build fields."
+    "2026-09-06: build-w4a16-strategy-r220-image.sh pinned scripts/build-vllm-xpu-kernels-xpu-c-only.sh at 5cbdadc2…, but that helper's hash became 7646d9e8… the same day when its /home/steve KERNELS_DIR/VENV_DIR defaults were replaced by required variables for public closure (the R220 script sets both explicitly, so the build is unchanged); the pin was updated after it refused to run. rebuild-w4a16-incremental-r221.sh's `strings | grep -Fq` check aborted under `set -o pipefail` (SIGPIPE on strings) during the replay; it now uses grep -c. Both scripts' digests in repository.build_scripts were refreshed; the clean-clone replay results are recorded in the chain's clean_source_build fields."
   ],
   "release": {
     "tag": "qwen38-int4-fixed-k-r221-20260906",
@@ -670,7 +848,7 @@
     }
   },
   "research_overlays_2026_09_06": {
-    "r266": "docker/r266-v2-draft-int4-head.py + Dockerfile.v2-draft-int4-head-r266: draft-only INT4 head for vLLM's V2 model runner (VLLM_USE_V2_MODEL_RUNNER=1); lossless and speed-equal to V1 (R269 112.70/112.96, 12/12). Local image sha256:1d12b64e46f9\u2026; not part of the published closure.",
-    "r276": "ADOPTED 2026-09-06 pm (see chains.r276): docker/r276-gdn-spec-group-sync-free.py + Dockerfile.gdn-spec-group-sync-free-r276; GHCR @sha256:521eb277\u2026; R283 strict pair 112.90/113.00 12/12; R282 ladders."
+    "r266": "docker/r266-v2-draft-int4-head.py + Dockerfile.v2-draft-int4-head-r266: draft-only INT4 head for vLLM's V2 model runner (VLLM_USE_V2_MODEL_RUNNER=1); lossless and speed-equal to V1 (R269 112.70/112.96, 12/12). Local image sha256:1d12b64e46f9…; not part of the published closure.",
+    "r276": "ADOPTED 2026-09-06 pm (see chains.r276): docker/r276-gdn-spec-group-sync-free.py + Dockerfile.gdn-spec-group-sync-free-r276; GHCR @sha256:521eb277…; R283 strict pair 112.90/113.00 12/12; R282 ladders."
   }
 }
