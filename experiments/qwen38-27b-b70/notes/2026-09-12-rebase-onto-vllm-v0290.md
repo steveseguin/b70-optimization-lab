@@ -185,3 +185,9 @@ The FP8 lane's real-content 2K-32K ladder on R304 (R187 profile, depth 1): 18/18
 rebuilt on 2026-09-13 from fresh GitHub clones by `build-kernels-0.1.14.1-clean-clone.sh` (1046 s) is **bit-identical**
 to the served R304 libraries (`_xpu_C.abi3.so` bbce7295..., `libgdn_attn_kernels_xe_2.so` 6f0fec18...), so the image is
 reproducible from public inputs end to end.
+
+## Short prompts on every lane (R304)
+
+bosd's harness, 30 greedy repeats per prompt length, on R304: 4B depth 3, 9B depth 3, 27B INT4 TP2 depth 4 and 27B FP8
+TP2 depth 1 all return 0/30 degenerate on every lane, every prompt length from one token up, including each lane's
+own (1+K) alias length.
