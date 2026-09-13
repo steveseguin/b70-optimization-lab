@@ -49,6 +49,35 @@ class Tests(unittest.TestCase):
                 with self.assertRaises(ValueError):m.validate_output(root/'single',root/'failed',out)
             m.validate_output(root/'single',root/'failed',root/'out')
 
+    def test_candidate_metadata_is_hash_bound(self):
+        with tempfile.TemporaryDirectory() as d:
+            inventory=Path(d)/'contract'; inventory.write_text('candidate runtime hashes')
+            image='sha256:'+'a'*64
+            start={'image':image,'candidate':'r308','inventory_sha256':m.sha(inventory)}
+            m.campaign_identity(start,image,'r308',inventory)
+            for key,value in [('image',m.IMAGE),('candidate','r307'),('inventory_sha256','0'*64)]:
+                bad=dict(start);bad[key]=value
+                with self.assertRaises(ValueError):m.campaign_identity(bad,image,'r308',inventory)
+            with self.assertRaises(ValueError):m.candidate_identity('latest','r308')
+            with self.assertRaises(ValueError):m.candidate_identity(image,'../r308')
+
+    def test_contract_receipt_must_name_same_candidate_image(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);folder=root/'stage';folder.mkdir()
+            image='sha256:'+'a'*64
+            cap=m.Capture(root/'out',image)
+            for line in ['IMAGE CONTRACT PASS: '+m.IMAGE,'IMAGE CONTRACT SKIPPED: '+image]:
+                (folder/'server.log').write_text(line)
+                with self.assertRaises(ValueError):cap.contract(folder,root,'single')
+            (folder/'server.log').write_text('IMAGE CONTRACT PASS: '+image)
+            self.assertIn(image,cap.contract(folder,root,'single')['lines'][0])
+
+    def test_explicit_rebuild_root_cannot_be_overwritten(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            with self.assertRaises(ValueError):
+                m.analyze(root/'single',root/'failed',root/'rebuild/out',rebuild_root=root/'rebuild')
+
     def test_incomplete_campaign_cannot_pass(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)

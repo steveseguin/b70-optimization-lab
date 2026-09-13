@@ -76,8 +76,9 @@ def boundary(data, oracle=None):
 
 
 class Capture:
-    def __init__(self, out):
+    def __init__(self, out, image=IMAGE):
         self.out = out
+        self.image = image
         self.manifest = []
 
     def file(self, path, label, root):
@@ -91,7 +92,7 @@ class Capture:
     def contract(self, folder, root, label):
         log = folder / 'server.log'
         lines = [x for x in log.read_text(errors='replace').splitlines() if 'IMAGE CONTRACT' in x]
-        require(lines and all('IMAGE CONTRACT PASS:' in x and IMAGE in x for x in lines), f'contract absent/bypassed: {folder}')
+        require(lines and all('IMAGE CONTRACT PASS:' in x and self.image in x for x in lines), f'contract absent/bypassed: {folder}')
         target = self.out/'evidence'/label/folder.relative_to(root)/'image-contract-lines.txt'
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text('\n'.join(lines)+'\n')
@@ -130,23 +131,50 @@ def check_inventory(observed, expected):
             entries[name] = digest
         require(len(entries) == 17, 'rebuild contract must contain exactly17 files')
         return entries
-    require(inventory(observed) == inventory(expected), 'rebuilt file inventory differs from committed R307 contract')
+    require(inventory(observed) == inventory(expected), 'rebuilt file inventory differs from candidate contract')
     return {'files':17, 'inventory_equal':True, 'observed_inventory_sha256':sha(observed),
             'committed_inventory_sha256':sha(expected)}
 
 
-def analyze(single, failed, out):
+def candidate_identity(image, candidate):
+    require(re.fullmatch(r'sha256:[0-9a-f]{64}', image), 'image must be immutable sha256 ID')
+    require(re.fullmatch(r'[a-z0-9][a-z0-9-]{0,39}', candidate), 'invalid candidate label')
+
+
+def campaign_identity(start, image, candidate, inventory):
+    require(start['image'] == image and start.get('candidate', 'r307') == candidate, 'campaign candidate/image mismatch')
+    if 'inventory_sha256' in start or image != IMAGE or candidate != 'r307':
+        require(start.get('inventory_sha256') == sha(inventory), 'campaign inventory hash mismatch')
+
+
+def analyze(single, failed, out, image=IMAGE, candidate='r307', inventory=None, rebuild_root=None):
     validate_output(single, failed, out)
-    cap = Capture(out)
+    rebuild = rebuild_root or failed/'rebuild'
+    require(not out.resolve().is_relative_to(rebuild.resolve()), 'output cannot be inside rebuild root')
+    cap = Capture(out, image)
+    contract_path = inventory or Path(__file__).resolve().parents[3]/'experiments/qwen38-27b-b70/docker/rebase-v0290/r307-contract-digests.sha256'
     summary = {'schema': 'r307-final-single-request-qualification-v1', 'passed': False,
+        'candidate': candidate, 'image': image, 'inventory_path': str(contract_path), 'rebuild_root': str(rebuild),
         'scope': {'models': ['4B','9B'], 'tensor_parallel_size': 1, 'mtp_depth': 3, 'active_requests': 1, 'max_num_seqs': 1,
                   'c4_qualified': False, 'public_performance_promotion': False}, 'boundary': {}, 'strict9b': {}, 'health': {}, 'contracts': {}}
     try:
+        candidate_identity(image, candidate)
+        require(inventory is not None or (image == IMAGE and candidate == 'r307'), 'explicit inventory required for another candidate')
         require((single/'DONE').exists() and not (single/'FAILED').exists(), 'single-request campaign still active, missing DONE, or failed')
         start = read(single/'campaign-start.json')
-        require(start['image'] == IMAGE and 'concurrency=1;' in start['scope'] and 'max_num_seqs=1;' in start['scope'], 'single-request campaign identity mismatch')
+        campaign_identity(start, image, candidate, contract_path)
+        require('concurrency=1;' in start['scope'] and 'max_num_seqs=1;' in start['scope'], 'single-request campaign identity mismatch')
         for name in ('DONE', 'campaign-start.json', 'campaign.log', 'image-inspect.json'):
             cap.file(single/name,'single',single)
+        inspected=read(single/'image-inspect.json')
+        require(len(inspected)==1 and inspected[0]['Id']==image, 'campaign image inspect mismatch')
+        if 'inventory_sha256' in start:
+            check_inventory(single/'candidate-contract.sha256',contract_path)
+            check_inventory(single/'candidate-observed.sha256',contract_path)
+            for receipt in ('candidate-contract.sha256','candidate-observed.sha256','candidate-image-contract.log'):
+                cap.file(single/receipt,'single',single)
+            lines=(single/'candidate-image-contract.log').read_text().splitlines()
+            require(any('IMAGE CONTRACT PASS:' in line and image in line for line in lines) and not any('SKIPPED' in line or 'FAIL' in line for line in lines), 'candidate preflight contract failed')
         for model in ('4b','9b'):
             oracle_path = single/f'{model}-oracle/result.json'
             oracle = read(oracle_path)
@@ -155,19 +183,20 @@ def analyze(single, failed, out):
                 folder = single/stage
                 data = read(folder/'result.json')
                 env = read(folder/'launch-env.json')
-                require(env['MAX_NUM_SEQS'] == '1' and env['SKIP_IMAGE_CONTRACT'] == '0' and env['IMAGE'] == IMAGE and env['MTP_DEPTH'] == ('0' if arm == 'oracle' else '3'), f'launch mismatch: {stage}')
-                require(f'model={model};' in data['identity'] and IMAGE in data['identity'], f'probe identity mismatch: {stage}')
+                require(env['MAX_NUM_SEQS'] == '1' and env['SKIP_IMAGE_CONTRACT'] == '0' and env['IMAGE'] == image and env['EXPECTED_IMAGE_ID'] == image and env['MTP_DEPTH'] == ('0' if arm == 'oracle' else '3'), f'launch mismatch: {stage}')
+                require(f'model={model};' in data['identity'] and image in data['identity'], f'probe identity mismatch: {stage}')
                 if arm != 'oracle':
                     require(data['oracle_sha256'] == sha(oracle_path), 'oracle hash mismatch')
                 summary['boundary'][stage] = boundary(data, None if arm == 'oracle' else oracle)
                 for name in ('result.json','launch-env.json'):
                     cap.file(folder/name,'single',single)
                 summary['contracts'][stage] = cap.contract(folder,single,'single')
-                inspect_path = single/f'r307-qual-{stage}-inspect.json'
+                inspect_path = single/f'{candidate}-qual-{stage}-inspect.json'
+                cap.file(inspect_path,'single',single)
                 inspection = read(inspect_path)
                 inspection = inspection[0] if isinstance(inspection,list) else inspection
                 actual_env = dict(x.split('=',1) for x in inspection['Config']['Env'])
-                require(inspection['Image'] == IMAGE and actual_env['REPRO_MAX_NUM_SEQS'] == '1' and actual_env['REPRO_TP'] == '1', f'actual boundary runtime mismatch: {stage}')
+                require(inspection['Image'] == image and actual_env['REPRO_MAX_NUM_SEQS'] == '1' and actual_env['REPRO_TP'] == '1', f'actual boundary runtime mismatch: {stage}')
                 summary['contracts'][stage]['runtime'] = {'source_sha256':sha(inspect_path),'image':inspection['Image'], 'args':inspection['Args'], 'repro_env':{k:v for k,v in actual_env.items() if k.startswith('REPRO_')}}
                 for kind in ('preflight','postflight'):
                     summary['health'][f'{stage}-{kind}'] = cap.health(single,f'{stage}-{kind}','single')
@@ -176,10 +205,11 @@ def analyze(single, failed, out):
         all_rows = {}
         for arm in ('mtp0-a','mtp0-b','mtp3-a','mtp3-b'):
             folder = strict/arm
+            cap.file(folder/'container-inspect.json','single',single)
             inspection = read(folder/'container-inspect.json')
             inspection = inspection[0] if isinstance(inspection,list) else inspection
             env = dict(x.split('=',1) for x in inspection['Config']['Env'])
-            require(inspection['Image'] == IMAGE and env['REPRO_MAX_NUM_SEQS'] == '1' and env['REPRO_TP'] == '1', f'strict runtime identity mismatch: {arm}')
+            require(inspection['Image'] == image and env['REPRO_MAX_NUM_SEQS'] == '1' and env['REPRO_TP'] == '1', f'strict runtime identity mismatch: {arm}')
             data = read(folder/'strict/performance.json')
             rows = data['rows']
             require(len(rows) == 12 and len({r['prompt_id'] for r in rows}) == 12, 'strict needs full unique12')
@@ -226,14 +256,12 @@ def analyze(single, failed, out):
                     'got':got,'want':want,'error':row.get('error'), 'passed':False})
         require(differences and any(r['concurrency']==4 for r in differences), 'no independently verified c4 failures')
         summary['failed_c4'] = {'passed':False,'promotable':False,'different_rows':len(differences),'differences':differences}
-        rebuild = failed/'rebuild'
         for name in ('observed.sha256','parent.txt','build-inputs.sha256','build.log','publication-baseline-remote.log','image.txt'):
-            cap.file(rebuild/name,'failed',failed)
+            cap.file(rebuild/name,'rebuild',rebuild)
         require('Successfully built' in (rebuild/'build.log').read_text(), 'rebuild missing successful build receipt')
-        contract_path = Path(__file__).resolve().parents[3]/'experiments/qwen38-27b-b70/docker/rebase-v0290/r307-contract-digests.sha256'
         inventory = check_inventory(rebuild/'observed.sha256', contract_path)
-        cap.file(contract_path,'repo',Path(__file__).resolve().parents[3])
-        summary['rebuild'] = {'recorded':True,'image_identity_may_differ':True,'source_file_hashes_receipt':'evidence/failed/rebuild/observed.sha256', **inventory}
+        cap.file(contract_path,'inventory',contract_path.parent)
+        summary['rebuild'] = {'recorded':True,'image_identity_may_differ':True,'source_file_hashes_receipt':'evidence/rebuild/observed.sha256', **inventory}
         summary['passed'] = True
     except Exception as exc:
         summary['error'] = f'{type(exc).__name__}: {exc}'
@@ -249,9 +277,13 @@ def main():
     p.add_argument('--single-root',type=Path,required=True)
     p.add_argument('--failed-root',type=Path,required=True)
     p.add_argument('--out',type=Path,required=True)
+    p.add_argument('--image',default=IMAGE)
+    p.add_argument('--candidate',default='r307')
+    p.add_argument('--inventory',type=Path)
+    p.add_argument('--rebuild-root',type=Path)
     a=p.parse_args()
     validate_output(a.single_root,a.failed_root,a.out)
-    result=analyze(a.single_root,a.failed_root,a.out)
+    result=analyze(a.single_root,a.failed_root,a.out,a.image,a.candidate,a.inventory,a.rebuild_root)
     print(json.dumps({'passed':result['passed'],'error':result.get('error'),'out':str(a.out)}))
     return 0 if result['passed'] else 1
 
