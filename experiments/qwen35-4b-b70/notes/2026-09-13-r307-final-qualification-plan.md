@@ -127,3 +127,10 @@ its17-file inventory. Any boundary failure stops qualification; strict gates
 remain separately reportable as registered above. Public reconstruction from
 R304 plus committedR307/R308 overlays must match all17 file hashes. No concurrent
 exactness, long-context9B extension, or new performance headline is claimed.
+
+For an optional R308 profile on both models, add a separate same-image4B strict
+campaign after the active chain: fourfresh servers, full12prompt suites,
+max_model_len1024, TP1/max_num_seqs1 and MTP0/MTP3 pairs, identical G1/G2/G3,
+cache/canary and health gates. R3074B strict evidence is historical and cannot
+be relabeled as a measured R308 strict result. Separate root:
+`/mnt/fast-ai/bench-results/r308-4b-independent-strict-20260913/`.
