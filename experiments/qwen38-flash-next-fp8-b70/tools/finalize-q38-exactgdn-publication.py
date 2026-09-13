@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 E = ROOT / "experiments/qwen38-flash-next-fp8-b70"
 D = E / "data"
-GID = "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-48tps-20260913"
+GID = "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913"
 BASE_GID = "qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907"
 G = ROOT / "repro" / GID
 PK = ROOT / "packages" / GID
@@ -68,7 +68,7 @@ def main() -> int:
         assert s["status"] == "passed" and s["identity"]["vllm_head"] == HEAD and s["identity"]["stage_build_head"] == STAGE_HEAD
         assert s["exact_2k"]["output_token_ids_sha256"] == H2K and s["exact_4k"]["output_token_ids_sha256"] == H4K
     assert pair["all_identical"]
-    assert round(med) == 48, f"suite median {med} does not round to the 48 in {GID}; rename the guide/package first"
+    assert round(med) == 47, f"suite median {med} does not round to the 47 in {GID}; rename the guide/package first"
     r2k = {n: [rate(D / f"20260913-tp4-mtp1-a{n}-native-exact-gdn-exact-depth-2k-r{r}.json") for r in (1, 2)] for n in (364, 365)}
     r4k = {n: [rate(D / f"20260913-tp4-mtp1-a{n}-native-exact-gdn-exact-depth-4k-r{r}.json") for r in (1, 2)] for n in (364, 365)}
     med4k_365 = sorted(r4k[365])[0] + (sorted(r4k[365])[1] - sorted(r4k[365])[0]) / 2

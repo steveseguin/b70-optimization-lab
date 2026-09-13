@@ -156,6 +156,41 @@ Data: [A226 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4
 [A190/A225 pair](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a190-a225-exact-2k-pair-summary.json),
 [attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-promotion-attestation.json).
 
+## 2026-09-13: the exact serial GDN verifier rows move into the kernel extension, +23% with the same outputs
+
+The lossless-MTP1 line verified its one speculative token exactly by running the GDN
+verifier rows through vLLM's Python serial path. A step-timing decomposition of the two-row
+verify step (A340-A358: per-block zeroing under `Q38_DIAG_SKIP`, then the serial path's own
+kernels and glue) put that path at 8.7 ms of 42.7, and not in its kernels or its copies: the
+cost is what the runner does around it. The kernel extension already carried an exact per-row
+mode inside its speculative op (`VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1`), gated to
+four verifier rows by the served build; the lane's kernel head `e421889` generalises it to the
+MTP row count. `_xpu_C.abi3.so` rebuilt from that head (kernel series
+[`bbae3c5`](../../patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md), two inert disclosed commits on top) and the mode
+selected: the verify step drops to 33.7 ms, every output pin holds (kernel-level probe
+bit-identical; exact-2K `afffd211…` and exact-4K `1d833e5f…` on four servers), and every row
+class gains 23-24%.
+
+| screen | fused-QSA line (2026-09-07) | exact serial GDN rows (2026-09-13) | outputs |
+|---|---|---|---|
+| short p146/o256 rows, MTP1 | 43.03 (A305) | **53.41** (A364), 53.43 (A365), 53.46 (A366) | `5f407446…` on every run |
+| exact-2K conventional 99-interval, MTP1 | 38.98 / 38.97 (A305) | **48.16 / 48.21** (A364), 47.90 / 48.22 (A365) | `afffd211…` |
+| exact-4K conventional 99-interval, MTP1 | 39.30 / 39.30 (A305) | **48.52 / 48.49** (A364), 48.52 / 48.54 (A365) | `1d833e5f…` |
+| fixed cold realistic suite, MTP1 | 37.825654 (A306) | **46.854250 tok/s** (A367), LocalMaxxing run `cmtzask41000nlq011f16bpbc` | twelve fresh rows, cached_tokens 0 |
+
+Certification: the certified A305 frozen-client battery on three servers (A364, A365, A366:
+6/7 quality with the inherited miss, 16/16 repeat, exact needle, both depth pins, recovery
+canary, selection receipt), the record suite on a fourth (A367),
+[attestation](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-promotion-attestation.json).
+Data: [A367 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json),
+[A364 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a364-native-exact-gdn-ple-only-qsa-stable-summary.json),
+[A365 summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a365-fresh-repeat-deterministic-summary.json),
+[pair summary](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-native-exact-gdn-exact-2k-pair-summary.json),
+[kernel series](../../patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md), notes
+`2026-09-12-a344-a354-the-second-verify-row-is-gdn-glue.md`, `2026-09-12-a361-a363-the-extension-exact-serial-mode-removes-the-tax.md`,
+`2026-09-13-a364-native-exact-gdn-certification-result.md`.
+Replay guide: [`repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/`](../../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md) (`lab-replay`, candidate package).
+
 ## 2026-09-07: the Triton hyper-connection glue on XPU, +19% at a new output authority
 
 The XPU port routed the model's hyper-connection glue (the per-layer mix, combine,

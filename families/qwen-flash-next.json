@@ -2,15 +2,23 @@
   "format": "neural-download-model-family-v1",
   "id": "qwen-flash-next",
   "collapse_coverage_contracts": true,
-  "primary_packet_id": "qwen38-flash-next-fp8-tp4-research",
+  "primary_packet_id": "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913",
   "name": "Qwen Flash-Next",
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
-  "updated_at": "2026-09-07",
+  "updated_at": "2026-09-13",
   "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. The retained current runtime now independently qualifies TP4 eager MTP0 at short context and exact active 4K: 5.224 tok/s on the established short screen and 4.758 tok/s conventional at exact 4K, with 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K needle, and card-clean teardown. At 16K, current-source MTP0 completed one exact generic-depth request, then the semantic program produced one correct fresh response, a corrupted same-server repeat, and a separate fresh-server worker timeout at 1,600 computed prompt tokens. This is Grade-D quarantined capability and nondeterministic runtime-stability evidence; it does not authorize 24K/32K. MTP2's bounded 16K treatment tranche is exhausted. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. The target-only official-thinking MTP0 profile passed 25/25, and graph, vision, other topologies, clean-host replay, and deployment qualification remain open.",
   "featured_results": [
     {
       "role": "hero",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4 lossless MTP1, exact-4K, never-routed experts host-placed, reference kernels, exact serial GDN rows in the extension",
+      "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context4k-a365",
+      "metric": "decode_tok_s",
+      "sample_index": 0,
+      "quality_label": "Same deterministic authority as the fused-QSA line on four servers; quality profile equal to the certified rows; lossless MTP1; LocalMaxxing cmtzask41000nlq011f16bpbc approved 2026-09-13 on the fixed realistic suite (46.854250 tok/s class-balanced)"
+    },
+    {
+      "role": "support",
       "label": "Qwen3.8 Flash-Next FP8 · TP4 lossless MTP1, exact-4K, never-routed experts host-placed, both reference Triton kernels restored",
       "measurement_id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-context4k-a305",
       "metric": "decode_tok_s",
@@ -1865,6 +1873,54 @@
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp1-a305-fresh-repeat-deterministic-summary.json"
     },
     {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context4k-a365",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 6d872457 (fused-QSA overlay) + kernel stage v2 (_xpu_C rebuilt from bbae3c5 over e421889; other files the served 2f829747 stage)",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 1,
+        "active_context_tokens": 4096,
+        "configured_max_context_tokens": 4352,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx4096-v1",
+      "measurement_class": "certified (same authority as the fused-QSA line) frozen-client exact-4K p4096/o128 rows with one speculative token, GDN verifier rows in the extension's exact serial mode",
+      "promotion_status": "certified 2026-09-13 (A364 battery, A365 fresh server, A366 third server: all gates passed; exact-2K afffd211 and exact-4K 1d833e5f equal to the fused-QSA line); LocalMaxxing cmtzask41000nlq011f16bpbc approved 2026-09-13 on the fixed realistic suite (46.854250 tok/s class-balanced), the fastest Flash-Next row",
+      "quality_scope": "6/7 semantic (sole miss code_execution), all seven exact-case outputs byte-identical to the certified battery, 16/16 repeat one hash, exact needle; exact-2K afffd211 and exact-4K 1d833e5f reproduced with MTP1 on three servers",
+      "workload": "two exact p4096/o128 requests per server on two servers, cache zero; 99-interval rate; PLE and embeddings host-offloaded over UVA (12.22 GiB/rank), every hot routed expert resident, 3.5 GiB/rank of never-routed experts in pinned host memory behind a per-expert offset table; the Triton hyper-connection glue kernels run on XPU (VLLM_XPU_HC_TRITON=1); the hyper-connection glue and the QSA pre-indexer both run the model's reference Triton kernels; the GDN verifier rows run in the kernel extension's exact serial mode (VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1) on a _xpu_C rebuilt from kernel head bbae3c5",
+      "metrics": {
+        "decode_tok_s": [
+          48.531413
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          48.51907,
+          48.543756
+        ],
+        "aggregation": "median of two rows on one server (A365 r1/r2, fresh-server repeat of A364)",
+        "output_sha256": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 48.531413,
+          "label": "exact serial GDN rows in the kernel extension: 1.23x the fused-QSA row at exact 4K, same output pins"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a365-fresh-repeat-deterministic-summary.json"
+    },
+    {
       "id": "qwen38-flash-next-fp8-tp4-mtp0-placement-hctriton-qsafused-w13n64-context4k-a326",
       "state": "lab-measured",
       "revision": "qwen38-flash-next",
@@ -2154,6 +2210,47 @@
           "evidence": [
             "results/qwen38-flash-next-fp8-b70/README.md",
             "experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp1-a306-promotion-attestation.json"
+          ]
+        },
+        "evidence": {
+          "grade": "B",
+          "scope": "exact TP4/EP4 graph lossless-MTP1 placement record at 31.929 tok/s class-balanced (A226) with the A225 battery on a separate server",
+          "basis": "Model, placement overlay commit, hosted kernel stage, hosted oneCCL build, tuned map, placement file and frozen packet are pinned by hash; the record run retained every prompt and output SHA-256 (equal to the approved MTP0 and MTP1 rows), cache-zero fresh-response gates and the tuned-map selection receipt; a separate server reproduced both exact-depth authorities bit-for-bit. Only the originating host has replayed it.",
+          "reviewed_at": "2026-09-06",
+          "evidence": [
+            "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a226-realistic-suite-v1-result.json",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260906-tp4-mtp1-a225-fresh-repeat-deterministic-summary.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913",
+      "label": "Qwen3.8 Flash-Next FP8 · TP4+EP4 graph + lossless MTP1 + never-routed experts host-placed + reference kernels + exact serial GDN rows in the kernel extension",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a (fused-QSA overlay) + kernel stage v2 (bbae3c5 over e421889 on the served 2f829747 stage) + public oneCCL 4ceafd1",
+      "cards": 4,
+      "status": "candidate",
+      "evidence_level": "B70-verified originating-host replay",
+      "coverage": [
+        "decode",
+        "exactness",
+        "quality",
+        "runtime provenance",
+        "recipe"
+      ],
+      "manifest": "packages/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/package.json",
+      "grades": {
+        "capability": {
+          "grade": "B",
+          "scope": "user-facing TP4/EP4 deterministic full-decode-graph text serving with lossless MTP1 at configured max 4,352, one sequence, on the fixed cold realistic suite",
+          "basis": "The certified line answers the 12-prompt realistic suite deterministically with the quality profile of the certified rows preserved byte for byte (seven of seven exact-case outputs identical, one repeat hash, exact needle), reproduced its pins across servers at both depths, and keeps MTP1 lossless within the lineage; its outputs are a new authority whose difference is at depth (exact-2K coincides with the certified stream, exact-4K does not), so a consumer pinning 4K outputs must re-pin; a workload that routes to a host-placed expert pays a PCIe read for that row; long-context, concurrency, and clean-host installation are not covered.",
+          "reviewed_at": "2026-09-13",
+          "evidence": [
+            "results/qwen38-flash-next-fp8-b70/README.md",
+            "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-promotion-attestation.json"
           ]
         },
         "evidence": {

@@ -143,6 +143,26 @@ what remains is kernel work (fused INT4 draft head) recorded in the
 No lane container is running. The next active lane on this host is Qwen3.8
 Flash-Next (its [handoff](results/qwen38-flash-next-fp8-b70/HANDOFF.md)).
 
+### Four-B70 host, 2026-09-13: Flash-Next lossless MTP1 at 46.85 tok/s (record approved)
+
+The Flash-Next lane's step-timing decomposition (A340-A358) put 8.7 ms of the 42.7 ms
+two-row verify step in vLLM's Python serial GDN path and showed the cost is in neither its
+kernels nor its glue. The kernel extension's own exact serial mode, gated to four verifier rows
+by the served build, accepts two when `_xpu_C.abi3.so` is rebuilt from the lane's kernel head
+(`bbae3c5` over `e421889`, [series](patches/qwen38-flash-next-fp8-b70/xpu-kernels-gdn-exact-serial-bbae3c5/README.md)).
+With that mode selected the verify step is 33.7 ms and every output pin holds (kernel probe
+bit-identical; exact-2K `afffd211…`, exact-4K `1d833e5f…` on four servers; 12/12 suite outputs
+equal to the 37.83 record). Certified on three servers (A364, A365, A366: short 53.4, exact-2K
+48.2, exact-4K 48.5 tok/s) and recorded on a fourth (A367: **46.854250 tok/s** class-balanced,
+LocalMaxxing [`cmtzask41000nlq011f16bpbc`](https://www.localmaxxing.com/runs/cmtzask41000nlq011f16bpbc)
+approved). Guide [`repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/`](repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md),
+package `packages/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/`, narrative in the
+[result packet](results/qwen38-flash-next-fp8-b70/README.md). Host notes: two silent freezes hit
+launches started 60-90 s after the previous server's teardown (swap toggle); leave five minutes
+between a stop and the next launch. Unused models (laguna-s-2.1, muse-glimmer, the 9B pair) were
+moved to `/mnt/raid-models` with symlinks left in place; root NVMe at 301 GB free. No lane
+server is running.
+
 ## Protected Work And Artifacts
 
 Preserve these paths and inspect their status before any build, cleanup, or
