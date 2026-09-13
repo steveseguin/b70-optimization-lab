@@ -25,18 +25,17 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**2026-09-13 17:28 EDT, two-B70 host:** the earlier R307 regression and
-stock campaigns have stopped. The new isolated campaign is running on card 0
-(localhost 18186), explicitly authorized in the two-B70 session. The 9B abort was
-an old coredump deletion notice incorrectly matched as a new fault; both GPUs
-and XCCL passed fresh bounded health checks. Final isolated R307 qualification
-is now authorized: runner failure propagation, token-ID boundary oracles and
-two fresh MTP3 servers per 4B/9B model, then isolated 9B strict pairs. Preserve
-`/mnt/fast-ai/bench-results/r307-qualification-20260913/` (failed c4 gate) and
-`/mnt/fast-ai/bench-results/r307-single-request-qualification-20260913/`
-(active single-request follow-up); follow the
+**2026-09-13 18:09 EDT, two-B70 host:** R307 is not promoted. The expanded
+c4 gate failed; the single-request follow-up passed both fresh4B servers but
+found repeated final-token9B differences. Both failed roots are preserved:
+`/mnt/fast-ai/bench-results/r307-qualification-20260913/` and
+`/mnt/fast-ai/bench-results/r307-single-request-qualification-20260913/`.
+The explicitly authorized local diagnostic is now running on card0, localhost
+18186, root `/mnt/fast-ai/bench-results/r308-acceptance-diagnostic-20260913/`:
+matched MTP0 tail control passed6/6; an instrumented server will compare the
+CPU and GPU acceptance counts at the final state handoff. See the
 [registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
-R307 remains unpromoted until the mandatory gates and recipe contract pass.
+No power, swap, driver, or reboot changes are part of this two-card campaign.
 
 **Four-B70 user operating policy, 2026-09-13:** stability takes priority. No
 repeated server restarts and no AI changes to power settings; leave swap/cache

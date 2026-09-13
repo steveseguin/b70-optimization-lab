@@ -1,0 +1,6 @@
+# CPU-only build; diagnostic synchronization/logging on the immutable R307 runtime.
+ARG BASE=sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3
+FROM ${BASE}
+COPY r308-acceptance-trace.py /tmp/r308-acceptance-trace.py
+RUN cd / && python3 /tmp/r308-acceptance-trace.py && rm /tmp/r308-acceptance-trace.py
+LABEL neural.download.build.lane="r308-acceptance-trace-diagnostic-only"

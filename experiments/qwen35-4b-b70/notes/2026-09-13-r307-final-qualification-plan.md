@@ -69,3 +69,20 @@ two fresh MTP3 servers, then the unchanged isolated 9B strict pairs. No failing
 case is removed from the c1 fixture. Only a **single-request profile** may be
 promoted if these gates pass; multi-request serving remains outside that
 qualification. The original c1/c4 gate remains failed permanently.
+
+## 9B single-request blocker and acceptance diagnostic, 18:02 EDT
+
+The single-request follow-up also **failed**: 4B60/60 oracle and52/52 on both
+fresh MTP3 servers pass. 9B oracle60/60 passes; first9B MTP3 has repeated final
+output-token differences at L13/14/16/17 and L14-tail238. No9B strict pair was
+started after this failure, and no R307 profile has been promoted.
+
+The next bounded diagnostic compares the exact same L14/L16 and tail238
+integer prefixes on target-only R307, then an instrumented R307 depth3 image.
+The target-only tail control distinguishes changed prefill arithmetic from a
+speculative transition defect. Instrumentation records CPU valid sampled
+counts and the GPU acceptance counts actually used for the GDN handoff.
+Source shows these travel through different paths: GPU counts default1 and
+are corrected only when previous draft bookkeeping is present. Any mismatch
+must be observed before calling that the cause. Diagnostic prints can alter
+synchronization; final qualification must use a non-debug image.
