@@ -101,22 +101,26 @@
   },
   "commands": {
     "preflight": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/verify-identity.sh",
-    "launch": "REPRO_ATTEMPT=<unused number above 367> repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/run-record-gate.sh",
+    "launch": "Historical run-record-gate.sh retained as evidence only: host-controlled launch is prohibited on the current host; no validated compliant replay is available.",
     "health": "curl -fsS http://127.0.0.1:19900/health",
-    "benchmark": "The record gate sends the fixed cold 12-prompt realistic suite exactly once through the frozen client and compares every output SHA-256 and gate with the record (check-replay-result.py).",
-    "stop": "The packet supervisor tears the server down after the client run and writes /tmp/q38-mtp1-ple-only-a<N>.rc; verify no Worker_TP process or listener on the packet port remains."
+    "benchmark": "Historical A367 frozen client sends the realistic suite once; A382/A394 exact-depth diagnostics are a separate 33,280-capacity profile. No new benchmark is required for this closeout.",
+    "stop": "Historical supervisor teardown is not a clean-shutdown guarantee. Do not restart on failure; preserve fault evidence and halt requests. Any needed graceful shutdown is a single incident action."
   },
   "dependencies": [
     "data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-realistic-20260913.json",
+    "data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json",
     "experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32",
     "experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp1-a307-record-gate-replay-realistic-suite-v1-result.json",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a364-native-exact-gdn-ple-only-qsa-stable-summary.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a365-fresh-repeat-deterministic-summary.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a366-native-exact-gdn-ple-only-qsa-stable-summary.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-identity.txt",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-promotion-attestation.json",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json",
     "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-native-exact-gdn-exact-2k-pair-summary.json",
     "experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-gdn-roundstate-v2-loadable.sha256",
     "experiments/qwen38-flash-next-fp8-b70/probes/gdn-spec-round-state-equivalence.py",
@@ -129,6 +133,8 @@
     "experiments/qwen38-flash-next-fp8-b70/tools/run-tp4-mtp1-4352-ple-only-a367-fullgraphdet-w13n32-client.sh",
     "experiments/qwen38-flash-next-fp8-b70/tools/supervise-tp4-mtp1-4352-ple-only-a367-fullgraphdet-w13n32.sh",
     "experiments/qwen38-flash-next-fp8-b70/tools/verify-moe-m1-w13-n32-selection.py",
+    "notes/2026-09-13-a394-freeze-recovery.md",
+    "notes/2026-09-13-a394-teardown-audit.md",
     "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/README.md",
     "patches/qwen38-flash-next-fp8-b70/oneccl-4ceafd1-b70-public/lib.sha256",
     "patches/qwen38-flash-next-fp8-b70/vllm-hctriton-mtp1-62219122/README.md",
@@ -162,6 +168,7 @@
     "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/container-serve.sh",
     "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a364-run.sha256",
     "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a367-run.sha256",
+    "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a382-a394-context-profile.json",
     "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/frozen-a367-packet.sha256",
     "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/identity.json",
     "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/make-replay-attempt.py",
@@ -176,7 +183,9 @@
     "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/runtime-stage.sha256",
     "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/verify-model.py",
     "repro/rapid-model-snapshots-b70/realistic-suite-v1.json",
+    "results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md",
     "results/qwen38-flash-next-fp8-b70/README.md",
+    "results/qwen38-flash-next-fp8-b70/campaign-closeout-20260913.json",
     "scripts/bench-openai-concurrency.py",
     "scripts/bench-openai-realistic-suite.py",
     "scripts/bench-openai-token-depth-suite.py"
@@ -188,7 +197,63 @@
     "non-originating-host replay",
     "built and replayed container image",
     "beginner recovery flow",
-    "decode, prefill, and TTFT context sweep",
-    "portable rebuild of _xpu_C.abi3.so from the kernel series (build script recorded; gated within-binary, not by byte identity)"
+    "portable rebuild of _xpu_C.abi3.so from the kernel series (build script recorded; gated within-binary, not by byte identity)",
+    "prefill context sweep (no prefill throughput inferred from TTFT)",
+    "frozen long-context quality battery at 33,280 capacity",
+    "validated shutdown and replay respecting current host constraints; historical host-controlled wrappers are not current operating instructions"
+  ],
+  "performance_profiles": [
+    {
+      "id": "exact-depth-32k-mtp1-decode",
+      "label": "32K-capacity MTP1 exact-depth decode (A382/A394)",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Actual prompt tokens",
+      "scope": "Separate 33,280-capacity exact-depth diagnostic profile, not the A367 4,352-capacity realistic headline or a certified long-context quality battery. Two historical servers, two rows per exact prompt depth. No new run. Median of four rows per depth; 2K first-use/repeat split excluded. Shutdown and long-context certification remain unresolved.",
+      "evidence": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a382-a394-context-profile.json",
+      "points": [
+        {
+          "context_tokens": 8192,
+          "value": 42.703500000000005,
+          "samples": 4
+        },
+        {
+          "context_tokens": 16384,
+          "value": 45.564499999999995,
+          "samples": 4
+        },
+        {
+          "context_tokens": 32768,
+          "value": 44.052,
+          "samples": 4
+        }
+      ]
+    },
+    {
+      "id": "exact-depth-32k-mtp1-ttft",
+      "label": "32K-capacity MTP1 exact-depth ttft (A382/A394)",
+      "metric": "ttft",
+      "unit": "ms",
+      "x_label": "Actual prompt tokens",
+      "scope": "Separate 33,280-capacity exact-depth diagnostic profile, not the A367 4,352-capacity realistic headline or a certified long-context quality battery. Two historical servers, two rows per exact prompt depth. No new run. Median of four rows per depth; 2K first-use/repeat split excluded. Shutdown and long-context certification remain unresolved.",
+      "evidence": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a382-a394-context-profile.json",
+      "points": [
+        {
+          "context_tokens": 8192,
+          "value": 47677.81579900111,
+          "samples": 4
+        },
+        {
+          "context_tokens": 16384,
+          "value": 99443.68323150047,
+          "samples": 4
+        },
+        {
+          "context_tokens": 32768,
+          "value": 206175.3939195005,
+          "samples": 4
+        }
+      ]
+    }
   ]
 }

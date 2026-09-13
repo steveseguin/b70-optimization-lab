@@ -1,5 +1,22 @@
 # Qwen3.8 Flash-Next FP8 B70 handoff
 
+## Current handoff: campaign closed, 2026-09-13
+
+Fable's A340-A394 effort is closed and documented in the
+[final result packet](CLOSEOUT-20260913.md). Banked wins: 46.854250 tok/s
+class-balanced record (+23.87% vs the prior line), approved LocalMaxxing
+cmtzask41000nlq011f16bpbc, and repeated 32K output parity at a four-row median
+44.052 tok/s (A382/A394). No additional promotion-qualified win was found.
+MTP2, larger-prefill and many-user experiments stay nonpromoted. The
+long-context certification battery and clean deployment remain uncompleted.
+
+No server is running and no benchmark chain is queued on the four-card host.
+Do not act on launch/restart/power-setting instructions in the chronology below.
+The disabled serving draft is set aside, not the active optimization objective.
+
+## Historical handoff entries
+
+
 The current result is a bounded research screen, not a promoted deployment.
 Attempt 19 is the first diagnostic-free healthy TP4/EP4 server and must remain
 intact while later matrix cells are added.

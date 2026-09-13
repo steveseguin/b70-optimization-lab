@@ -1,0 +1,133 @@
+{
+  "schema": "flash-next.campaign-closeout.v1",
+  "status": "campaign closed; saved evidence published; no new device runs",
+  "headline": {
+    "attempt": "A367",
+    "value_tok_s": 46.85424994838007,
+    "previous_tok_s": 37.825654,
+    "improvement_percent": 23.868975136239733,
+    "metric": "class-balanced median, 99 intervals, fixed cold 12-prompt realistic suite",
+    "record_id": "cmtzask41000nlq011f16bpbc",
+    "stored_record_status": "APPROVED",
+    "duplicate_submission_needed": false
+  },
+  "depth_extension": {
+    "max_model_len": 33280,
+    "kv_cache_memory_bytes": 1341530112,
+    "classification": "lab-measured, repeated output parity; not a certified long-context battery",
+    "rows": [
+      {
+        "depth_tokens": 2048,
+        "samples": 4,
+        "servers": [
+          "A382",
+          "A394"
+        ],
+        "decode_tok_s": [
+          29.294,
+          47.246,
+          29.328,
+          47.248
+        ],
+        "decode_median_tok_s": 38.287,
+        "ttft_s": [
+          31.85904182199738,
+          11.27713721300097,
+          31.456075035999675,
+          11.265456597000593
+        ],
+        "ttft_median_s": 21.366606124500322,
+        "output_token_ids_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+        "equals_mtp0_A381": true,
+        "scope": "2K first-use and second-request rates must remain separately labeled"
+      },
+      {
+        "depth_tokens": 8192,
+        "samples": 4,
+        "servers": [
+          "A382",
+          "A394"
+        ],
+        "decode_tok_s": [
+          42.713,
+          42.717,
+          42.694,
+          42.693
+        ],
+        "decode_median_tok_s": 42.703500000000005,
+        "ttft_s": [
+          47.67472212100256,
+          47.68861778700011,
+          47.66433289199995,
+          47.68090947699966
+        ],
+        "ttft_median_s": 47.67781579900111,
+        "output_token_ids_sha256": "0126d542095bcbc81a465383f296cffa806f96b47345a1f3b7344142ed196954",
+        "equals_mtp0_A381": true,
+        "scope": "four-row median across two servers"
+      },
+      {
+        "depth_tokens": 16384,
+        "samples": 4,
+        "servers": [
+          "A382",
+          "A394"
+        ],
+        "decode_tok_s": [
+          45.587,
+          45.562,
+          45.521,
+          45.567
+        ],
+        "decode_median_tok_s": 45.564499999999995,
+        "ttft_s": [
+          99.47352757300177,
+          99.45977776600193,
+          99.41326489200219,
+          99.42758869699901
+        ],
+        "ttft_median_s": 99.44368323150047,
+        "output_token_ids_sha256": "789cbcb82ff8ed8b5e85d70d408dc8be33c7ba97ff0a4f27fb98c9561bfa5771",
+        "equals_mtp0_A381": true,
+        "scope": "four-row median across two servers"
+      },
+      {
+        "depth_tokens": 32768,
+        "samples": 4,
+        "servers": [
+          "A382",
+          "A394"
+        ],
+        "decode_tok_s": [
+          44.064,
+          44.089,
+          44.037,
+          44.04
+        ],
+        "decode_median_tok_s": 44.052,
+        "ttft_s": [
+          206.24081502899935,
+          206.2199934679993,
+          206.10810647200196,
+          206.13079437100168
+        ],
+        "ttft_median_s": 206.1753939195005,
+        "output_token_ids_sha256": "1cc1699ed8150fe5da9384b3df58dcf05156d772ff4dca8731e245beea281ca7",
+        "equals_mtp0_A381": true,
+        "scope": "four-row median across two servers"
+      }
+    ],
+    "A394_supervisor_exit": 143,
+    "clean_shutdown_verified": false
+  },
+  "closed_nonpromoted": [
+    "MTP2 slower at exact 2K/4K",
+    "512-token prefill changes output authority",
+    "multi-user output identity fails"
+  ],
+  "evidence_sha256": {
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json": "6a21770f712911b7f299f64cded863a58e6ece16f97338070928e59c23e8240a",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json": "4796d2273ce6f7ee66efeb63119b34954cb20123647da859c4f0dca97a4d05ec",
+    "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json": "1fa6de4aa29d628b9d18244ec2144cd508a7a09779c0621ba60ec1438c7de8f6"
+  }
+}

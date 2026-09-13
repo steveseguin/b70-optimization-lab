@@ -62,6 +62,38 @@ The narrative is in the [result packet](../../results/qwen38-flash-next-fp8-b70/
 (`2026-09-12-a344-a354-the-second-verify-row-is-gdn-glue.md`, `2026-09-12-a361-a363-the-extension-exact-serial-mode-removes-the-tax.md`,
 `2026-09-13-a364-native-exact-gdn-certification-result.md`).
 
+## Measured long-context extension (separate diagnostic profile)
+
+A382 and A394 extend the exact-GDN MTP1 line to **33,280 served capacity**, with
+KV budget **1,341,530,112 bytes** and the never-hit + max-count-2 host placement.
+These are different capacity/placement settings from the A367 realistic headline;
+they do not replace its 46.854250 tok/s score. Both historical servers completed
+two exact-depth rows at each of 2,048, 8,192, 16,384 and 32,768 input tokens.
+Every depth has one output-token hash across all four rows, equal to its A381
+control. This is repeat evidence, not a completed long-context quality battery.
+
+| Actual input tokens | Decode median tok/s | TTFT median seconds | Rows / servers |
+| --- | --- | --- | --- |
+| 8,192 | 42.7035 | 47.6778 | 4 / 2 |
+| 16,384 | 45.5645 | 99.4437 | 4 / 2 |
+| 32,768 | 44.0520 | 206.1754 | 4 / 2 |
+
+The table takes the conventional median of all four retained rows at each depth;
+decode uses the 99-interval rates rounded to 0.001 tok/s in the original summaries.
+At 2,048 tokens, first-use rows were 29.294 / 29.328 tok/s and subsequent rows
+47.246 / 47.248 tok/s (A382 / A394). They remain separate and are omitted from the
+curves because pooling startup with subsequent execution would obscure that split.
+TTFT is measured directly; no prefill throughput is inferred. Curves connect only
+these measured points and make no claim at unmeasured lengths.
+
+[Aggregate with every source row and source hash](evidence/a382-a394-context-profile.json),
+[A382 rows](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json),
+[A394 repeat rows](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json),
+[exact prompt fixture](../../data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json),
+[placement](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json).
+A frozen long-context client and quality battery at the served capacity remain
+uncompleted. Historical row success also does not prove safe teardown.
+
 ## Dependency closure
 
 | Component | Identity and link |
@@ -75,7 +107,7 @@ The narrative is in the [result packet](../../results/qwen38-flash-next-fp8-b70/
 | Configuration | the frozen A367 packet (four scripts pinned by [`frozen-a367-packet.sha256`](frozen-a367-packet.sha256)), derived from the certified A306 packet by `experiments/qwen38-flash-next-fp8-b70/tools/rewrite-q38-a306-to-a366-native-exact-gdn-realistic-suite.py`; the certification packets A364/A365/A366 by `rewrite-q38-a305-to-a364-native-exact-gdn-certification.py` |
 | Execution | `verify-identity.sh`, `run-record-gate.sh` (below); container route not adapted |
 | Verifier pin | the frozen packet pins the exactness verifier by bytes; [`verifier-pin.txt`](verifier-pin.txt) records its SHA-256, git blob and the last lab commit that carries it |
-| Last replay | none yet beyond the record run itself (A367, 2026-09-13); `run-record-gate.sh` below is the replay path |
+| Last realistic-suite replay | none beyond A367; A382/A394 are separate long-context diagnostics, not record-suite replays; historical replay is not authorized on the current host |
 | Validation | frozen client: fixed cold realistic suite once, exactness verifier `verify-moe-m1-w13-n32-selection.py` (`c874852b…`), fresh-response gates; `check-replay-result.py` compares output pins and gates with the record |
 
 ## Restore source
@@ -96,34 +128,27 @@ the build of kernel head `bbae3c5` (the build script above records every CMake o
 resulting file is pinned by the v2 manifest, and a rebuild is gated within-binary by the
 certification battery, not by byte identity with the lab's build).
 
-## Run
+## Historical replay and current operating limits
 
-```bash
-cd /path/to/b70-optimization-lab
-repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/verify-identity.sh
-REPRO_ATTEMPT=<unused number above 367> repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/run-record-gate.sh
-```
+The frozen A367 scripts and identity pins remain historical reproduction evidence.
+`run-record-gate.sh` invokes a host-controlled wrapper that changes swap, ASPM and
+page-cache state and starts/stops a server. **Do not run that path on the current
+host.** The user's current constraints prohibit those changes, repeated server
+restarts, automatic retries, reboots and driver resets. Waiting between launches
+does not make that historical path authorized or establish safety.
 
-`verify-identity.sh` checks, without touching the GPUs: the four overlay bundles and the
-kernel series (bundles, tags, trees, patch series); the checked-out overlay head and a clean
-tree; the 18 stage-v2 files; both oneCCL hashes; the model config, safetensors index and
-shard count; the tuned map, the exactness verifier, the frozen packet and the placement file;
-and the Python runtime versions. Defaults are the originating host's paths; each of
-`REPRO_VLLM_TREE`, `REPRO_KERNEL_TREE`, `REPRO_KERNEL_STAGE`, `REPRO_ONECCL_ROOT`,
-`REPRO_MODEL_ROOT`, `REPRO_VENV_ROOT` may point at the same verified artifacts elsewhere.
+No compliant launch/replay is certified by this packet. A future client may reuse
+an already running, identity-verified endpoint; a failed request must halt new
+requests and preserve evidence, without cycling the server. Any needed graceful
+shutdown is a single incident action. The historical A394 completion did not
+establish clean shutdown: teardown returned 143 and cached GPU receipts do not
+prove current device health. See the [recovery](../../notes/2026-09-13-a394-freeze-recovery.md)
+and [teardown audit](../../notes/2026-09-13-a394-teardown-audit.md).
 
-`run-record-gate.sh` derives a fresh attempt from the frozen A367 packet
-(`make-replay-attempt.py`: byte-identical apart from attempt number, port and state names,
-internal hashes recomputed), runs the packet's own static validation, launches it through the
-lab's host-controlled launcher (root: swap and ASPM reset, page-cache drop, fail-closed
-preflight on processes, ports, mounts, free space and recent GPU events), waits for
-`/health`, sends the fixed cold realistic suite once with the record's flags, stops the server
-through the packet's stop file, and compares `realistic-suite-v1-result.json` with the record:
-all 12 prompt and output SHA-256s must match and every gate must equal the record's. The
-replay's class-balanced median is printed beside 46.854250 tok/s; speed is reported, not
-gated. A full pass takes about 25 minutes. Leave at least five minutes between a previous
-server's stop and the launch: on this host two launches started 60-90 s after a teardown froze
-the machine at the wrapper's swap toggle (2026-09-12/13).
+`verify-identity.sh` checks the source, binary, model and packet identities without
+GPU work. Its defaults refer to the originating host; verification alone does not
+authorize the historical wrapper. The frozen scripts and recorded hashes have not
+been rewritten to disguise their historical operating policy.
 
 ## What is not certified
 

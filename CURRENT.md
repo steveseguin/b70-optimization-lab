@@ -41,14 +41,14 @@ profile remain outside this qualification. R307 failures and diagnostic roots
 remain preserved in the linked evidence; existing defaults retain their
 original identities.
 
-**Four-B70 user operating policy, 2026-09-13:** stability takes priority. No
-repeated server restarts and no AI changes to power settings; leave swap/cache
-settings alone too. Historical host-controlled benchmark chains are not the
-current operating path. A [single-session candidate](experiments/qwen38-flash-next-fp8-b70/stability/README.md)
-is prepared for one continuously running server, without auto-restart or a
-benchmark-triggered stop. It has not been launched or device-qualified. No server
-is currently running on this host. Preserve the existing launch hold until the
-candidate's source and fresh bounded health gates have been checked.
+**Four-B70 Flash-Next closeout, 2026-09-13:** user requested finishing Fable's
+optimization campaign and publishing existing results. A340-A394 is closed:
+46.854250 tok/s approved realistic-suite record, +23.87% vs previous line;
+A382/A394 repeated 32K depth median 44.052 tok/s with equal output hashes.
+[Closeout](results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md) owns the wins,
+nonpromoted trials and remaining certification limits. No server or optimization
+chain is running. The separate disabled single-session draft is set aside.
+User constraints remain: no AI power-setting changes and no repeated restarts.
 
 **Four-B70 host, 2026-09-13 20:10 UTC recovery:** A394 depth repeats pass, but
 teardown rc is 143 and another host interruption followed. No workload running;

@@ -7,7 +7,7 @@
   "display_name": "Qwen3.8 Flash-Next · 125B-A6B",
   "publisher": "Qwen",
   "updated_at": "2026-09-13",
-  "summary": "Qwen's experimental 125B-A6B hybrid-attention MoE. The official FP8 export serves on four B70s with selective host placement, and all 25 practical TP4 eager-text MTP/context cells through 8K are classified. The retained current runtime now independently qualifies TP4 eager MTP0 at short context and exact active 4K: 5.224 tok/s on the established short screen and 4.758 tok/s conventional at exact 4K, with 6/7 semantic quality, 16/16 repeats, an exact cache-zero 4K needle, and card-clean teardown. At 16K, current-source MTP0 completed one exact generic-depth request, then the semantic program produced one correct fresh response, a corrupted same-server repeat, and a separate fresh-server worker timeout at 1,600 computed prompt tokens. This is Grade-D quarantined capability and nondeterministic runtime-stability evidence; it does not authorize 24K/32K. MTP2's bounded 16K treatment tranche is exhausted. MTP3 remains the preferred exact-4K recipe at 15.502 tok/s decode. The target-only official-thinking MTP0 profile passed 25/25, and graph, vision, other topologies, clean-host replay, and deployment qualification remain open.",
+  "summary": "Qwen's 125B-A6B official-FP8 hybrid-attention MoE on four B70s. The A340-A394 campaign is closed: exact serial GDN MTP1 delivers the approved 46.854250 tok/s class-balanced cold-suite record, +23.87% over the preceding 37.825654 line with all 12 output pins unchanged. A separate 33,280-capacity profile reproduces output hashes at 2K/8K/16K/32K across A382/A394, equal to MTP0 A381; the 32K four-row decode median is 44.052 tok/s. These are lab depth measurements, not a new realistic-suite record or completed long-context quality battery. MTP2, larger-prefill and multi-user trials were not promoted. Clean-host, sustained-stability and clean-shutdown qualification remain open. The older eager screens below are historical, not the current performance frontier.",
   "featured_results": [
     {
       "role": "hero",
@@ -2183,34 +2183,41 @@
       "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx8192-cap33280-v1",
       "measurement_class": "lab-measured exact p8192/o128 depth-ladder rows with one speculative token (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement; GDN verifier rows in the extension's exact serial mode",
       "promotion_status": "lab-measured 2026-09-13 (A382 depth ladder, reproduced on a second server A394 hash for hash at every depth: both rows one output hash at every depth and equal to the MTP0 line's A381 hash at 2K/8K/16K/32K, the lineage's lossless definition; 2K equals the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified exact-GDN MTP1 head 6d872457 + stage v2 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes and the wider bit-exact expert host placement",
-      "quality_scope": "output ids equal across the two rows and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
-      "workload": "two exact p8192/o128 requests on one server, cache zero; TTFT 47.7/47.7 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of experts in pinned host memory (host MemAvailable trough 8.08 GB, supervisor floor 8 GB)",
+      "quality_scope": "output ids equal across four rows on two servers and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e; four rows across two servers agree; A394 teardown rc143, device health not independently measured at shutdown",
+      "workload": "four exact p8192/o128 requests across A382/A394, two rows per server, cache zero; TTFT median 47.6778 s; 64-token prefill batches; PLE/embeddings 12.22 GiB per rank and 3.57-3.97 GiB experts per rank host-offloaded over UVA; supervisor MemAvailable floors A382 8,000,000 KiB, A394 6,000,000 KiB",
       "metrics": {
         "decode_tok_s": [
-          42.72
+          42.7
+        ],
+        "ttft_ms": [
+          47677.81579900111
         ]
       },
       "raw_observations": {
         "decode_tok_s": [
           42.713,
-          42.717
-        ],
-        "aggregation": "median of two rows on one server (A382 r1/r2); a second server (A394 r1/r2) reproduced the output hash and the rates within 0.1 tok/s",
-        "output_sha256": "0126d542095bcbc81a465383f296cffa806f96b47345a1f3b7344142ed196954",
-        "decode_tok_s_second_server": [
+          42.717,
           42.694,
           42.693
+        ],
+        "aggregation": "median of four rows across A382 and A394 (two rows per server); no extrapolation",
+        "output_sha256": "0126d542095bcbc81a465383f296cffa806f96b47345a1f3b7344142ed196954",
+        "ttft_ms": [
+          47674.72212100256,
+          47688.61778700011,
+          47664.33289199995,
+          47680.90947699966
         ]
       },
       "sample_annotations": [
         {
           "metric": "decode_tok_s",
           "index": 0,
-          "value": 42.72,
-          "label": "exact-mode MTP1 line at 8K input on the 33,280-token capacity server (A382): 1.33x the MTP0 line, same output ids"
+          "value": 42.7,
+          "label": "Exact-mode MTP1 at 8192 input tokens: four-row median across A382/A394; output ids equal A381"
         }
       ],
-      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json",
+      "evidence": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a382-a394-context-profile.json",
       "evidence_second_server": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json"
     },
     {
@@ -2236,34 +2243,41 @@
       "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx16384-cap33280-v1",
       "measurement_class": "lab-measured exact p16384/o128 depth-ladder rows with one speculative token (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement; GDN verifier rows in the extension's exact serial mode",
       "promotion_status": "lab-measured 2026-09-13 (A382 depth ladder, reproduced on a second server A394 hash for hash at every depth: both rows one output hash at every depth and equal to the MTP0 line's A381 hash at 2K/8K/16K/32K, the lineage's lossless definition; 2K equals the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified exact-GDN MTP1 head 6d872457 + stage v2 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes and the wider bit-exact expert host placement",
-      "quality_scope": "output ids equal across the two rows and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
-      "workload": "two exact p16384/o128 requests on one server, cache zero; TTFT 99.5/99.5 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of experts in pinned host memory (host MemAvailable trough 8.08 GB, supervisor floor 8 GB)",
+      "quality_scope": "output ids equal across four rows on two servers and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e; four rows across two servers agree; A394 teardown rc143, device health not independently measured at shutdown",
+      "workload": "four exact p16384/o128 requests across A382/A394, two rows per server, cache zero; TTFT median 99.4437 s; 64-token prefill batches; PLE/embeddings 12.22 GiB per rank and 3.57-3.97 GiB experts per rank host-offloaded over UVA; supervisor MemAvailable floors A382 8,000,000 KiB, A394 6,000,000 KiB",
       "metrics": {
         "decode_tok_s": [
-          45.57
+          45.56
+        ],
+        "ttft_ms": [
+          99443.68323150047
         ]
       },
       "raw_observations": {
         "decode_tok_s": [
           45.587,
-          45.562
-        ],
-        "aggregation": "median of two rows on one server (A382 r1/r2); a second server (A394 r1/r2) reproduced the output hash and the rates within 0.1 tok/s",
-        "output_sha256": "789cbcb82ff8ed8b5e85d70d408dc8be33c7ba97ff0a4f27fb98c9561bfa5771",
-        "decode_tok_s_second_server": [
+          45.562,
           45.521,
           45.567
+        ],
+        "aggregation": "median of four rows across A382 and A394 (two rows per server); no extrapolation",
+        "output_sha256": "789cbcb82ff8ed8b5e85d70d408dc8be33c7ba97ff0a4f27fb98c9561bfa5771",
+        "ttft_ms": [
+          99473.52757300177,
+          99459.77776600193,
+          99413.26489200219,
+          99427.58869699901
         ]
       },
       "sample_annotations": [
         {
           "metric": "decode_tok_s",
           "index": 0,
-          "value": 45.57,
-          "label": "exact-mode MTP1 line at 16K input on the 33,280-token capacity server (A382): 1.45x the MTP0 line, same output ids"
+          "value": 45.56,
+          "label": "Exact-mode MTP1 at 16384 input tokens: four-row median across A382/A394; output ids equal A381"
         }
       ],
-      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json",
+      "evidence": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a382-a394-context-profile.json",
       "evidence_second_server": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json"
     },
     {
@@ -2289,34 +2303,41 @@
       "profile_id": "flash-next-tp4-mtp1-placement-hctriton-qsafused-exactgdn-ctx32768-cap33280-v1",
       "measurement_class": "lab-measured exact p32768/o128 depth-ladder rows with one speculative token (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement; GDN verifier rows in the extension's exact serial mode",
       "promotion_status": "lab-measured 2026-09-13 (A382 depth ladder, reproduced on a second server A394 hash for hash at every depth: both rows one output hash at every depth and equal to the MTP0 line's A381 hash at 2K/8K/16K/32K, the lineage's lossless definition; 2K equals the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified exact-GDN MTP1 head 6d872457 + stage v2 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes and the wider bit-exact expert host placement",
-      "quality_scope": "output ids equal across the two rows and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
-      "workload": "two exact p32768/o128 requests on one server, cache zero; TTFT 206.2/206.2 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of experts in pinned host memory (host MemAvailable trough 8.08 GB, supervisor floor 8 GB)",
+      "quality_scope": "output ids equal across four rows on two servers and equal to the MTP0 line (A381) at every depth: 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e; four rows across two servers agree; A394 teardown rc143, device health not independently measured at shutdown",
+      "workload": "four exact p32768/o128 requests across A382/A394, two rows per server, cache zero; TTFT median 206.1754 s; 64-token prefill batches; PLE/embeddings 12.22 GiB per rank and 3.57-3.97 GiB experts per rank host-offloaded over UVA; supervisor MemAvailable floors A382 8,000,000 KiB, A394 6,000,000 KiB",
       "metrics": {
         "decode_tok_s": [
-          44.08
+          44.05
+        ],
+        "ttft_ms": [
+          206175.3939195005
         ]
       },
       "raw_observations": {
         "decode_tok_s": [
           44.064,
-          44.089
-        ],
-        "aggregation": "median of two rows on one server (A382 r1/r2); a second server (A394 r1/r2) reproduced the output hash and the rates within 0.1 tok/s",
-        "output_sha256": "1cc1699ed8150fe5da9384b3df58dcf05156d772ff4dca8731e245beea281ca7",
-        "decode_tok_s_second_server": [
+          44.089,
           44.037,
           44.04
+        ],
+        "aggregation": "median of four rows across A382 and A394 (two rows per server); no extrapolation",
+        "output_sha256": "1cc1699ed8150fe5da9384b3df58dcf05156d772ff4dca8731e245beea281ca7",
+        "ttft_ms": [
+          206240.81502899935,
+          206219.9934679993,
+          206108.10647200196,
+          206130.79437100168
         ]
       },
       "sample_annotations": [
         {
           "metric": "decode_tok_s",
           "index": 0,
-          "value": 44.08,
-          "label": "exact-mode MTP1 line at 32K input on the 33,280-token capacity server (A382): 1.35x the MTP0 line, same output ids"
+          "value": 44.05,
+          "label": "Exact-mode MTP1 at 32768 input tokens: four-row median across A382/A394; output ids equal A381"
         }
       ],
-      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json",
+      "evidence": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/evidence/a382-a394-context-profile.json",
       "evidence_second_server": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json"
     }
   ],
@@ -3044,6 +3065,28 @@
     }
   ],
   "views": [
+    {
+      "id": "qwen-flash-next-exactgdn-repeated-depth",
+      "title": "Exact-GDN MTP1: repeated 8K–32K depth measurements",
+      "subtitle": "Four-row medians across A382/A394, two rows per server, exact pN/o128, cache zero, 99-interval decode. 33,280 served capacity and wider host placement differ from the 46.854250 realistic-suite recipe. All output hashes equal A381. The first-use 2K split is retained in the linked evidence, omitted from this curve. Lab measurements only; long-context battery and clean shutdown remain unverified.",
+      "x_label": "input tokens",
+      "metrics": [
+        "decode_tok_s",
+        "ttft_ms"
+      ],
+      "series": [
+        {
+          "label": "TP4 exact-GDN MTP1 · A382/A394 · four-row medians",
+          "measurement_ids": [
+            "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context8k-a382",
+            "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context16k-a382",
+            "qwen38-flash-next-fp8-tp4-mtp1-placement-hctriton-qsafused-exactgdn-context32k-a382"
+          ],
+          "x_from": "config.active_context_tokens"
+        }
+      ],
+      "discrete": true
+    },
     {
       "id": "qwen-flash-next-tp-screen",
       "title": "Research speed screen by TP",

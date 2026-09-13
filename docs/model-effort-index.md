@@ -39,6 +39,16 @@ path.
 
 ## Active / Recent Efforts
 
+### Qwen3.8 Flash-Next FP8, four B70s — campaign closed September 13
+
+Fable's A340-A394 campaign is complete: **46.854250 tok/s** approved
+class-balanced record (+23.87%), exact-GDN MTP1, and **44.052 tok/s** four-row
+32K depth median with cross-server output parity. Larger-prefill, MTP2 and
+many-user trials were not promoted. No further runs queued. See the
+[closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md) and
+[recipe](../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md).
+
+
 ### Qwen3.5 4B And 9B On One Or Two B70s
 
 Main entries:

@@ -1,11 +1,63 @@
 # Qwen3.8 Flash-Next FP8 on four Arc Pro B70s
 
+## September 13 campaign closeout (A340-A394)
+
+**Current qualified headline: 46.854250 tok/s**, fixed cold 12-prompt realistic
+suite, class-balanced median over 99 inter-token intervals (A367). This is
+**23.87% above 37.825654 tok/s** on the preceding fused-QSA line, with all twelve
+output pins unchanged. The kernel extension's exact serial GDN verifier mode
+reduces the two-row verify step from about 42.7 to 33.7 ms. LocalMaxxing run
+[cmtzask41000nlq011f16bpbc](https://www.localmaxxing.com/runs/cmtzask41000nlq011f16bpbc)
+is already approved; no duplicate submission is needed.
+
+The separate 33,280-capacity configuration also reproduced exact outputs through
+32K input on A382 and A394, matching MTP0 control A381 at every depth. Four-row
+medians (two rows per server), with original rows retained:
+
+| Input tokens | Decode tok/s | Output agreement | Scope |
+| ---: | ---: | --- | --- |
+| 8,192 | **42.7035** | 4/4, equal to A381 | Lab depth measurement |
+| 16,384 | **45.5645** | 4/4, equal to A381 | Lab depth measurement |
+| 32,768 | **44.052** | 4/4, equal to A381 | Lab depth measurement |
+
+The display score **44.05** is the four-row 32K median. The previous **44.06**
+was A382's first row rounded, retained below as historical evidence. At 2K,
+first-use rows are 29.294/29.328 and subsequent rows 47.246/47.248 tok/s; do not
+collapse that initialization difference into a steady-state speed claim.
+
+[MTP2](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a387-mtp2-exact-mode-screen-result.md)
+was slower at exact 2K/4K; a
+[larger prefill batch](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a389-32k-prefill-batch-512-result.md)
+reduced TTFT but changed outputs;
+[multi-user trials](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a393-row-wise-selector-shape-log-result.md)
+failed the current exact-output authority. Those
+attempts are closed without promotion. The 8K-32K points are neither another
+class-balanced record nor a completed frozen long-context certification battery.
+A394's rc143 teardown and later host interruption do not establish clean shutdown
+or sustained serving stability. Clean-host/container qualification remains open.
+
+Campaign complete from the existing evidence; no new optimization or restart
+chain is queued. The separate disabled single-session draft is not a campaign
+win or a promoted recipe. The user's no-power-change/no-repeated-restart policy
+supersedes historical local launch guidance.
+
+- [Structured closeout and source hashes](campaign-closeout-20260913.json)
+- [Exact-GDN recipe and reproduction boundary](../../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md)
+- [A394 repeat result](../../experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a394-32k-mtp1-fresh-server-repeat-result.md)
+- [Teardown audit](../../notes/2026-09-13-a394-teardown-audit.md)
+
+## Historical measurement chronology
+
+The sections below preserve earlier states, scores and hypotheses. Their
+prospective next-step instructions are superseded by the closeout above.
+
+
 Status: **research screen; not deployment-qualified.** The deterministic
 full-decode-graph MTP0 line (below) is the lab's promoted TP4 record as of
 2026-09-03, and on 2026-09-05 it doubled with no output change by ending the
 driver's VRAM paging (see the headroom section); it is still not a portable recipe.
 
-Last updated: 2026-09-05
+Historical section last updated: 2026-09-05
 
 This packet covers the first instrumentation-free TP4/EP4 server results for the official
 Qwen3.8 Flash-Next FP8 export on four 32-GiB Intel Arc Pro B70 cards. It proves

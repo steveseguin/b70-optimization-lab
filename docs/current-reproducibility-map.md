@@ -40,20 +40,21 @@ mirrored into the repro, so review does not depend on `/mnt` paths.
 
 ## Research-Status Reproduction Foundations
 
-### Qwen3.8 Flash-Next FP8 TP4/MTP3
+### Qwen3.8 Flash-Next FP8 TP4, exact-GDN MTP1 (campaign closed)
 
-- [dated experimental snapshot](../repro/qwen38-flash-next-fp8-tp4-mtp3-b70/EXPERIMENTAL-SNAPSHOT-20260831.md)
-- [fail-closed reproduction foundation](../repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md)
-- [full result packet](../results/qwen38-flash-next-fp8-b70/README.md)
-- [public family page](../models/qwen-flash-next.html)
+- [Current result and campaign closeout](../results/qwen38-flash-next-fp8-b70/CLOSEOUT-20260913.md)
+- [Exact-GDN record recipe](../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md)
+- [Public family page](../models/qwen-flash-next.html)
+- [Historical MTP3 foundation](../repro/qwen38-flash-next-fp8-tp4-mtp3-b70/README.md)
 
-Identity: official 125B-A6B FP8 artifact on four B70s, TP4/EP4, eager and
-graph off, with selective host placement. The fastest retained short Grade-C
-screen is MTP4 at `20.727176 tok/s` after first text; the preferred exact-4K
-MTP3 screen is `15.501565 tok/s`, with `187.899 s` TTFT and `1.246260` wall
-tok/s. This entry is not a promoted or runnable recipe: the hash-addressed
-dependency wheelhouse, portable four-card preflight, and clean artifact-only
-replay remain open, and LocalMaxxing submission is withheld.
+Official 125B-A6B FP8 on four B70s, TP4/EP4, deterministic full-decode graphs,
+exact-GDN MTP1: approved A367 record **46.854250 tok/s**, +23.87% vs the previous
+line with output pins unchanged. Separate A382/A394 8K/16K/32K depth medians are
+42.7035/45.5645/44.052 tok/s with matched output hashes across both servers.
+These depth rows are lab measurements, not the fixed realistic suite or a
+certified long-context battery. Package remains an expert lab-replay candidate;
+clean-host, container and sustained stability qualification are open. Historical
+power-setting/restart recipes are not current local operating instructions.
 
 ## Qwen3.6 Family Recipes
 
