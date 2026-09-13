@@ -24,6 +24,9 @@ xpu_graph="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
 quantization="${QUANTIZATION:-fp8}"
 tensor_parallel_size="${TENSOR_PARALLEL_SIZE:-2}"
 xpu_device_mask="${XPU_DEVICE_MASK:-0,1}"
+# ZE_AFFINITY_MASK renumbers the visible cards from 0, so the SYCL selector must list 0..n-1, not the mask values
+# (2026-09-13: XPU_DEVICE_MASK=1 alone gave "No XPU devices are available" with level_zero:1).
+xpu_device_selector=$(seq -s, 0 $(( $(tr ',' '\n' <<<"${xpu_device_mask}" | grep -c .) - 1 )))
 inductor_deterministic="${TORCHINDUCTOR_DETERMINISTIC:-0}"
 inductor_max_autotune="${VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE:-1}"
 inductor_coordinate_descent="${VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING:-1}"
@@ -176,7 +179,7 @@ exec docker run --rm --name "${container}" \
     -v "${model_dir}:/model:ro" \
     -v "${cache_dir}:/root/.cache/vllm" \
     -e ZE_AFFINITY_MASK="${xpu_device_mask}" \
-    -e ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_mask}" \
+    -e ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_selector}" \
     -e REPRO_TP="${tensor_parallel_size}" \
     -e REPRO_QUANTIZATION="${quantization}" \
     -e VLLM_TARGET_DEVICE=xpu \

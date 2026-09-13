@@ -5,7 +5,9 @@
 # scheduled-draft profile with the dynsd-fullgraph overlay) dies at capture. Fix: one persistent, contiguous staging
 # buffer per active width, allocated at init (graph capture must not allocate), used by the staging path.
 import pathlib
-p = pathlib.Path("/opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_attn.py")
+import sys
+root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/opt/venv/lib/python3.12/site-packages")
+p = root / "vllm/v1/attention/backends/gdn_attn.py"
 s = p.read_text()
 old_alloc = '''        self.spec_state_indices_tensor: torch.Tensor = torch.empty(
             (self.decode_cudagraph_max_bs, self.num_spec + 1),

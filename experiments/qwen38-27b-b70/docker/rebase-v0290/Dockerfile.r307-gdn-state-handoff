@@ -1,9 +1,13 @@
-# R307 (2026-09-13): R304 + the GDN state hand-off for one-token steps that follow a speculative step which accepted
+# R307 (2026-09-13): R304 + the R306 contiguous staging fix + the GDN state hand-off for one-token steps that follow a speculative step which accepted
 # more than one token (max_model_len boundary, drafter skipped). Found by max-len-boundary-probe.py: R304 flips the
 # final token of a request that generates exactly to max_model_len (4B, depth 3, max-model-len 256, prompt length 14);
 # the same request at max-model-len 512 is byte-exact. See r307-gdn-state-handoff.py for the cause and the fix.
 ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
 FROM ${BASE}
+# Also carries the R306 contiguous per-width staging fix: on R304 a partial final speculative group under concurrency
+# (several requests reaching max_model_len while others decode) dies with "spec_state_indices_tensor must be contiguous"
+# in the full-graph staging path (boundary-conc/, 2026-09-13), the same defect R306 fixed for the scheduled-draft lane.
+COPY r306-gdn-active-width-contiguous-staging.py /tmp/r306.py
 COPY r307-gdn-state-handoff.py /tmp/r307.py
-RUN cd /opt/venv/lib/python3.12/site-packages && python3 /tmp/r307.py /opt/venv/lib/python3.12/site-packages && rm /tmp/r307.py
+RUN cd /opt/venv/lib/python3.12/site-packages && python3 /tmp/r306.py /opt/venv/lib/python3.12/site-packages && python3 /tmp/r307.py /opt/venv/lib/python3.12/site-packages && rm /tmp/r306.py /tmp/r307.py
 LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r307-gdn-state-handoff"

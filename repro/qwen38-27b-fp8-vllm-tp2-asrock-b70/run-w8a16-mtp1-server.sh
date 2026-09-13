@@ -26,6 +26,9 @@ tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
 # turns vLLM's automatic prefix caching on for experiments only; the container packet checker rejects a packet rendered with it.
 prefix_caching_arg=--no-enable-prefix-caching; [[ "${PREFIX_CACHING:-0}" == 1 ]] && prefix_caching_arg=--enable-prefix-caching
 xpu_device_mask=${XPU_DEVICE_MASK:-0,1}
+# ZE_AFFINITY_MASK renumbers the visible cards from 0, so the SYCL selector must list 0..n-1, not the mask values
+# (2026-09-13: XPU_DEVICE_MASK=1 alone gave "No XPU devices are available" with level_zero:1).
+xpu_device_selector=$(seq -s, 0 $(( $(tr ',' '\n' <<<"${xpu_device_mask}" | grep -c .) - 1 )))
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
 w8a16_decode_pad_rows=${VLLM_XPU_W8A16_DECODE_PAD_ROWS:-0}
@@ -339,7 +342,7 @@ exec docker run --rm --name "${container}" \
   --volume "${cache_dir}:/root/.cache/vllm" \
   "${profiler_mount_args[@]}" \
   --env ZE_AFFINITY_MASK="${xpu_device_mask}" \
-  --env ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_mask}" \
+  --env ONEAPI_DEVICE_SELECTOR="level_zero:${xpu_device_selector}" \
   --env VLLM_TARGET_DEVICE=xpu \
   --env VLLM_WORKER_MULTIPROC_METHOD=spawn \
   --env VLLM_XPU_ENABLE_XPU_GRAPH="${xpu_graph}" \
