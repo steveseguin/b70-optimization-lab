@@ -48,7 +48,7 @@ hashes = []
 for row in range(1, 8):
     try:
         j = json.load(open(f"{rd}/exact-depth-2k-r{row}.json")); s = json.dumps(j)
-        h = re.findall(r'"(?:output_sha256|output_hash|sha256)":\s*"([0-9a-f]{8,64})"', s)
+        h = re.findall(r'"(?:output_token_ids_sha256|output_sha256)":\s*"([0-9a-f]{8,64})"', s)
         hashes.append((row, h[:1]))
     except FileNotFoundError: break
 out["exact_2k_row_hashes"] = hashes
