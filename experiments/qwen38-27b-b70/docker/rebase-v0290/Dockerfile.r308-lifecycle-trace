@@ -1,0 +1,6 @@
+# Diagnostic-only lifecycle tracing; CPU build, device synchronization during tracing.
+ARG BASE=sha256:31586d630d54bb9208c7e6720ea4020766df5d5a8b7bbfd2870e75d58fa77d0d
+FROM ${BASE}
+COPY r308-lifecycle-trace.py /tmp/r308-lifecycle-trace.py
+RUN cd / && python3 /tmp/r308-lifecycle-trace.py && rm /tmp/r308-lifecycle-trace.py
+LABEL neural.download.build.lane="r308-lifecycle-trace-diagnostic-only"
