@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
 wrapper="${script_dir}/launch-tp4-mtp0-4352-ple-only-a375-fullgraphdet-w13n64.sh"
-expected_wrapper=252d6852e225bcad9051089ae9375dd2c710f3639410b53a807c67d2188b9c0f
+expected_wrapper=0954d847816c0f284dacfdf602380774ef9e4a700beab5850436429cfc631de0
 client="${script_dir}/run-tp4-mtp0-4352-ple-only-a375-fullgraphdet-w13n64-client.sh"
 expected_client=04526903c991f44a524e675190cc8a0f2f48b8c2c85e7bc9744e4d02fc3d0aa4
 state=/tmp/q38-mtp0-ple-only-a375
@@ -78,7 +78,7 @@ owned_server_pid() {
   [[ "$pid" =~ ^[1-9][0-9]*$ && -e "/proc/${pid}" ]] || return 1
   command=$(tr '\0' ' ' <"/proc/${pid}/cmdline" 2>/dev/null || true)
   [[ "$command" == *"vllm serve /mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8"* && \
-     "$command" == *"--port ${port}"* && "$command" == *"--max-model-len 4352"* ]] || return 1
+     "$command" == *"--port ${port}"* && "$command" == *"--max-model-len 33280"* ]] || return 1
   printf '%s\n' "$pid"
 }
 

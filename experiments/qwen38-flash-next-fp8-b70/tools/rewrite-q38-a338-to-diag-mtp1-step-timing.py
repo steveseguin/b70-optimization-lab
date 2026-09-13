@@ -70,6 +70,8 @@ def main():
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
         launcher = replace_n(launcher, 'print "[[ \\"${max_model_len}\\" == \\"4352\\" ]] || {"', 'print "[[ \\"${max_model_len}\\" == \\"' + lc["MAXLEN"] + '\\" ]] || {"', 1)
         launcher = replace_n(launcher, "frozen to MAX_MODEL_LEN=4352", "frozen to MAX_MODEL_LEN=" + lc["MAXLEN"], 1)
+        # the launcher's campaign literal (used for the derived script's --ack and the run/cache dirs) follows the served context
+        launcher = replace_n(launcher, 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1\n', 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-' + lc["MAXLEN"] + '-ple-only-r1\n', 1)
     if "KVBYTES" in lc:
         launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", f"export KV_CACHE_MEMORY_BYTES={lc['KVBYTES']}\n", 1)
         kv_anchor_value = lc["KVBYTES"]
@@ -115,6 +117,8 @@ def main():
     supervisor = successor(source("supervise-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"))
     if "MAXLEN" in lc:
         supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
+        # the supervisor server-identity literal (owned_server_pid requires --max-model-len <served>)
+        supervisor = replace_n(supervisor, '"--max-model-len 4352"', '"--max-model-len ' + lc["MAXLEN"] + '"', 1)
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a338-host-controlled.sh"))

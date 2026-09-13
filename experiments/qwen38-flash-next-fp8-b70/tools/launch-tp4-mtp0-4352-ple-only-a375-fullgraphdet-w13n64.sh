@@ -6,7 +6,7 @@ base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a375-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
 expected_derived=5abef5efd29af1dd50591a934ebbfa3eca6d537a2d112b7639956d947f2a526e
-campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1
+campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-33280-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n64
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n64/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
 [[ "$(sha256sum "$tuned_config_map" | cut -d' ' -f1)" == 4fcb5d13ef0c859d12a4fe6b5aac09b04fccf4db24e47a6f004d3f9878e4e38f ]] || { printf 'FAIL: A375 tuned M1 map drifted\n' >&2; exit 1; }
@@ -198,7 +198,7 @@ grep -Fxq 'expected_vllm_head="2a372e860e273273357cb7437ac7de1694304f9f"' "$deri
 grep -Fxq "  printf 'diagnostics=full-decode-graph-public-oneccl-torch-trace\n'" "$derived"
 ! grep -Fq "diagnostics=none" "$derived"
 grep -Fxq 'rpc_dir=/tmp/q38-ple2k-a375-rpc' "$derived"
-grep -Fxq '[[ "${max_model_len}" == "4352" ]] || {' "$derived"
+grep -Fxq '[[ "${max_model_len}" == "33280" ]] || {' "$derived"
 grep -Fq "'embed_tokens.weight'" "$derived"
 grep -Fq -- '--cpu-offload-gb 12.25' "$derived"
 grep -Fq 'exact_12.22' "$derived"
@@ -276,10 +276,7 @@ unset VLLM_XPU_PLE_UVA_PREFETCH
 export CACHE_PARENT=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70
 export MTP=0 MTP_EXACT=0 MAX_MODEL_LEN=33280 ATTEMPT=375 PORT=19988
 export KV_CACHE_MEMORY_BYTES=1341530112
-export MAXLEN:33280
-export KVBYTES:1341530112
-export PLACEMENT:/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc8-per-rank.json
-export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc8-per-rank.json
+export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json
 export REASONING_PARSER=
 unset PYTHONOPTIMIZE
 "$derived" --execute --ack "RUN ${campaign}"

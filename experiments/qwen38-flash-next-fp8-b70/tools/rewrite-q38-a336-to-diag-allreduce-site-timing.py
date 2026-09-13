@@ -53,7 +53,8 @@ def main():
     launcher = replace_n(launcher, "expected_derived=" + m.group(1), "expected_derived=" + "0" * 64, 1)
     launcher = successor(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    exports = "".join(f"export {kv}\n" for kv in extra_env)
+    OPTS = ("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:")
+    exports = "".join(f"export {kv}\n" for kv in extra_env if not kv.startswith(OPTS))
     # USERS:<n> serves n sequences: max_num_seqs, decode graph capture sizes [1,2,4,...,n], and the
     # row-wise all-reduce / HC-norm selectors at n rows (batch invariance for the multi-user identity gate).
     us = [kv2.split(":", 1)[1] for kv2 in extra_env if kv2.startswith("USERS:")]
@@ -67,6 +68,8 @@ def main():
         rules = (f'$0 == "    max_num_seqs=1, max_num_batched_tokens=64," {{ print "    max_num_seqs={n}, max_num_batched_tokens=64,"; next }}\n'
                  f'$0 == "  --max-num-seqs 1" {{ print "  --max-num-seqs {n}"; next }}\n')
         launcher = replace_n(launcher, anchor0, rules + anchor0, 1)
+        if "grep -Fxq '  --max-num-seqs 1' \"$derived\"" in launcher:
+            launcher = launcher.replace("grep -Fxq '  --max-num-seqs 1' \"$derived\"", f"grep -Fxq '  --max-num-seqs {n}' \"$derived\"")
         launcher = replace_n(launcher, "'\\''cudagraph_capture_sizes'\\'': [1],", f"'\\''cudagraph_capture_sizes'\\'': [{py_list}],", 1)
         launcher = replace_n(launcher, "'\\''max_cudagraph_capture_size'\\'': 1, ", f"'\\''max_cudagraph_capture_size'\\'': {n}, ", 1)
         launcher = replace_n(launcher, "assert config.compilation_config.cudagraph_capture_sizes == [1]", f"assert config.compilation_config.cudagraph_capture_sizes == [{py_list}]", 1)
@@ -85,6 +88,10 @@ def main():
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
         launcher = replace_n(launcher, 'print "[[ \\"${max_model_len}\\" == \\"4352\\" ]] || {"', 'print "[[ \\"${max_model_len}\\" == \\"' + lc["MAXLEN"] + '\\" ]] || {"', 1)
         launcher = replace_n(launcher, "frozen to MAX_MODEL_LEN=4352", "frozen to MAX_MODEL_LEN=" + lc["MAXLEN"], 1)
+        # the launcher's campaign literal (used for the derived script's --ack and the run/cache dirs) follows the served context
+        launcher = replace_n(launcher, 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-4352-ple-only-r1\n', 'campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp0-' + lc["MAXLEN"] + '-ple-only-r1\n', 1)
+        # the launcher's own derived-source assertion of the frozen-context check line
+        launcher = replace_n(launcher, "grep -Fxq '[[ \"${max_model_len}\" == \"4352\" ]] || {' \"$derived\"", "grep -Fxq '[[ \"${max_model_len}\" == \"" + lc["MAXLEN"] + "\" ]] || {' \"$derived\"", 1)
     if "KVBYTES" in lc:
         launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=134217728\n", f"export KV_CACHE_MEMORY_BYTES={lc['KVBYTES']}\n", 1)
         kv_anchor_value = lc["KVBYTES"]
@@ -104,6 +111,8 @@ def main():
     supervisor = successor(source("supervise-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64.sh"))
     if "MAXLEN" in lc:
         supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
+        # the supervisor server-identity literal (owned_server_pid requires --max-model-len <served>)
+        supervisor = replace_n(supervisor, '"--max-model-len 4352"', '"--max-model-len ' + lc["MAXLEN"] + '"', 1)
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a336-host-controlled.sh"))

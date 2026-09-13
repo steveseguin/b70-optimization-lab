@@ -5,8 +5,8 @@ script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/t
 base="${script_dir}/launch-tp4-ep4-eager-mtp0-long-context-base.sh"
 derived=/tmp/q38-ple2k-a376-base.sh
 expected_base=d5ccc4d52220f7ef46f19202436edf56e0c40f125b1b807c84125df18093b5c1
-expected_derived=45a8d615ed2782fedaa8ade55d894aff0fdb7b02045a113a0567cdbaaa783e82
-campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-4352-ple-only-r1
+expected_derived=6960eaa0719c41407eba01bd27c93e91932e800a45a2d5f08c8d955e8ee8d9b8
+campaign=qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp1-33280-ple-only-r1
 tuned_config_folder=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32
 tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
 [[ "$(sha256sum "$tuned_config_map" | cut -d' ' -f1)" == a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be ]] || { printf 'FAIL: A376 tuned M1 map drifted\n' >&2; exit 1; }
@@ -103,12 +103,12 @@ $0 == "export CCL_TOPO_P2P_ACCESS=1" {
   print "export VLLM_XPU_HC_TRITON=1"
   print "export VLLM_XPU_QSA_FUSED_INDEXER=1"
   print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1"
+  print "export VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2"
+  print "export VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2"
   print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=0"
   print "export VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1"
   print "export VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1"
   print "export VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1"
-  print "export VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS=2"
-  print "export VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2"
   next
 }
 $0 == "    generation_config='\''vllm'\'', load_format='\''safetensors'\'', async_scheduling=False," {
@@ -283,7 +283,7 @@ unset VLLM_XPU_PLE_UVA_PREFETCH
 export CACHE_PARENT=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70
 export MTP=1 MTP_EXACT=0 MAX_MODEL_LEN=33280 ATTEMPT=376 PORT=19989
 export KV_CACHE_MEMORY_BYTES=1341530112
-export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc8-per-rank.json
+export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json
 export REASONING_PARSER=
 unset PYTHONOPTIMIZE
 "$derived" --execute --ack "RUN ${campaign}"
