@@ -7,7 +7,7 @@
 # W4A16_PAD (default 0): pad decode row counts to fixed tiers on the INT4 W4A16 kernel, removing the row-count dependence
 #   that flips near-tie tokens at high concurrency. Costs throughput above 128 rows on the 27B lane; measured here.
 # STAGES (space list of: strict ladders depth32k)  [v2 adds depth32k: real-content 2K-32K exact-depth ladder, MTP0 arm as oracle then MTPn arm], LADDER_CONCURRENCY, LADDER_REPEATS, LADDER_MML/MNS/MBT, XPU_DEVICE_MASK.
-set -uo pipefail
+set -Eeuo pipefail
 repo=/home/steve/b70-optimization-lab; out=/mnt/fast-ai/bench-results
 LANE=${LANE:-qwen35-9b-fp8}; QUANT=${QUANT:-compressed-tensors}; W4A16_PAD=${W4A16_PAD:-0}
 RUN=${RUN:?set RUN}; TP=${TP:-1}; DEPTH=${DEPTH:-3}; GRAPH=${GRAPH:-1}; DRAFT_HEAD=${DRAFT_HEAD:-1}; STAGES=${STAGES:-strict ladders}; port=${PORT:-18131}
@@ -46,11 +46,30 @@ date --iso-8601=seconds >"${root}/campaign-start.txt"; campaign_start=$(date '+%
 cat /proc/sys/kernel/random/boot_id >"${root}/boot-id.txt"; git -C "${repo}" rev-parse HEAD >"${root}/repo-head.txt"
 printf 'LANE=%s RUN=%s TP=%s DEPTH=%s GRAPH=%s DRAFT_HEAD=%s QUANT=%s PAD=%s mask=%s model=%s image=%s\n' "$LANE" "$RUN" "$TP" "$DEPTH" "$GRAPH" "$DRAFT_HEAD" "$QUANT" "$W4A16_PAD" "$mask" "$model_dir" "$image_id" >"${root}/config.txt"
 devices_normal() { xpu-smi discovery >"${root}/$1-xpu-smi-discovery.txt" 2>&1 || true; [[ "$(grep -c 'Device State: normal' "${root}/$1-xpu-smi-discovery.txt")" == 2 ]]; }
-journal_check() { journalctl -k -b 0 --no-pager --since "${campaign_start}" >"${root}/$1-kernel-journal.txt" 2>&1 || true; ! grep -qiE "${fault_re}" "${root}/$1-kernel-journal.txt"; }
+# A deleted dump is expiry of an older report, not a new GPU fault.
+fault_lines() { grep -iE "${fault_re}" "$1" | grep -vF 'Xe device coredump has been deleted.' || true; }
+cleanup() {
+  local rc=$?
+  trap - EXIT
+  if [[ -n "${server_pid:-}" ]]; then
+    docker stop -t 60 "${server_name}" >/dev/null 2>&1 || true
+    wait "${server_pid}" 2>/dev/null || true
+    docker rm -f "${server_name}" >/dev/null 2>&1 || true
+  fi
+  if (( rc != 0 )); then
+    [[ -e "${root}/ABORTED" ]] || printf 'campaign exited %s\n' "$rc" >"${root}/ABORTED"
+    rm -f "${root}/campaign-end.txt"
+  fi
+  exit "$rc"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+journal_check() { journalctl -k -b 0 --no-pager --since "${campaign_start}" >"${root}/$1-kernel-journal.txt" 2>&1 || true; fault_lines "${root}/$1-kernel-journal.txt" >"${root}/$1-kernel-fault-lines.txt"; [[ ! -s "${root}/$1-kernel-fault-lines.txt" ]]; }
 lane_containers() { docker ps --format '{{.Names}}' | grep -cE 'qwen3[58]' || true; }
 postflight() { devices_normal "$1" || abort "$1: a B70 is not in normal state"; journal_check "$1" || abort "$1: fault signature in the kernel journal"; ROOT="${repo}" "${health}" >"${root}/$1-compute-xccl.txt" 2>&1 || abort "$1: compute/XCCL health failed"; [[ "$(lane_containers)" == 0 ]] || abort "$1: a lane container is still running"; log "$1: postflight clean"; }
-wait_health() { local pid=$1 deadline=$(( $(date +%s) + health_timeout )); while (( $(date +%s) < deadline )); do curl -fsS "http://127.0.0.1:${port}/health" >/dev/null 2>&1 && return 0; kill -0 "${pid}" 2>/dev/null || return 1; sleep 15; done; return 1; }
-stop_server() { docker inspect "$1" >"$3/container-inspect.json" 2>/dev/null || true; docker stop -t 180 "$1" >/dev/null 2>&1 || true; wait "$2" 2>/dev/null || true; for _ in $(seq 1 24); do docker ps -a --format '{{.Names}}' | grep -q "^$1$" || break; sleep 5; done; grep -iE "${fault_re}" "$3/server.log" >"$3/server-fault-lines.txt" || true; [[ ! -s "$3/server-fault-lines.txt" ]] || abort "$(basename "$3"): fault signature in server.log"; }
+wait_health() { local pid=$1 deadline=$(( $(date +%s) + health_timeout )); while (( $(date +%s) < deadline )); do journal_check startup || abort "startup: fault signature in the kernel journal"; curl -fsS "http://127.0.0.1:${port}/health" >/dev/null 2>&1 && return 0; kill -0 "${pid}" 2>/dev/null || return 1; sleep 15; done; return 1; }
+stop_server() { docker inspect "$1" >"$3/container-inspect.json" 2>/dev/null || true; docker stop -t 180 "$1" >/dev/null 2>&1 || true; wait "$2" 2>/dev/null || true; for _ in $(seq 1 24); do docker ps -a --format '{{.Names}}' | grep -q "^$1$" || break; sleep 5; done; fault_lines "$3/server.log" >"$3/server-fault-lines.txt"; server_pid=; [[ ! -s "$3/server-fault-lines.txt" ]] || abort "$(basename "$3"): fault signature in server.log"; }
 # Weight loading needs about 10.7 GiB for the 9B on a 15.5 GiB host, and the previous server's page
 # cache is not always released by the time the next one starts. When it is not, the container hits its
 # memory cap and the worker dies with no Python traceback, which the harness can only report as "server
@@ -93,7 +112,7 @@ launch() {
     MAX_MODEL_LEN="${mml}" MAX_NUM_SEQS="${mns}" MAX_NUM_BATCHED_TOKENS="${mbt}" ENFORCE_EAGER="${eager}" VLLM_XPU_ENABLE_XPU_GRAPH="${xgraph}" \
     CONTAINER_MEMORY=12g CONTAINER_MEMORY_SWAP=20g \
     "${repro}/${launcher}" >"${dir}/server.log" 2>&1 &
-  server_pid=$!; log "${label}: launched ${kind} (${launcher}) pid ${server_pid}"
+  server_pid=$!; server_name=${name}; log "${label}: launched ${kind} (${launcher}) pid ${server_pid}"
   wait_health "${server_pid}" || { docker stop -t 60 "${name}" >/dev/null 2>&1 || true; abort "${label}: server did not become healthy"; }
   # Fail closed if a knob the campaign asked for never reached the container. Two experiments were
   # run and written up before this existed, both comparing arms that were in fact identical: the
@@ -124,14 +143,14 @@ strict_attempt() {
   log "$1: $(grep -E 'class_balanced_median_tok_s|median_tok_s' "${server_dir}/strict.stdout" | head -2 | tr '\n' ' ')"
 }
 compare_pair() { python3 "${compare}" "$1" "$2" --output "$3" >/dev/null 2>&1 || true; python3 -c "import json,sys;c=json.load(open(sys.argv[1]))['comparison'];print(f\"{c['exact_prompts']}/{c['total_prompts']}\")" "$3" 2>/dev/null || echo "compare-failed"; }
-run_ladder() { python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-2}" --max-tokens 128 --seed 42 --timeout 900 --request-extra-json '{"ignore_eos":true,"temperature":0}' --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1; log "$1 ladder harness exit $?"; }
+run_ladder() { python3 "${ladder}" --base-url "http://127.0.0.1:${port}" --model "${served_model}" --api-mode completions --suite "${ladder_suite}" --concurrency "${LADDER_CONCURRENCY:-1,2,4,8,16,32,64}" --repeats "${LADDER_REPEATS:-2}" --max-tokens 128 --seed 42 --timeout 900 --request-extra-json '{"ignore_eos":true,"temperature":0}' --return-token-ids --require-output-identity ${LADDER_EXTRA_ARGS:-} --out "${server_dir}/ladder.json" >"${server_dir}/ladder.stdout" 2>&1 || abort "$1: ladder harness failed"; log "$1 ladder harness exit 0"; }
 # ---------------- preflight ----------------
 [[ "$(lane_containers)" == 0 ]] || abort "preflight: lane container running"
 [[ "$(docker image inspect "${image}" --format '{{.Id}}')" == "${image_id}" ]] || abort "preflight: image id mismatch"
 devices_normal preflight || abort "preflight: a B70 is not normal"
 ROOT="${repo}" "${health}" >"${root}/preflight-compute-xccl.txt" 2>&1 || abort "preflight: compute/XCCL health failed"
 journalctl -k -b 0 --no-pager >"${root}/preflight-kernel-journal-full.txt" 2>&1 || true
-grep -iE "${fault_re}" "${root}/preflight-kernel-journal-full.txt" >"${root}/preflight-kernel-fault-lines.txt" || true
+fault_lines "${root}/preflight-kernel-journal-full.txt" >"${root}/preflight-kernel-fault-lines.txt"
 [[ ! -s "${root}/preflight-kernel-fault-lines.txt" ]] || log "WARNING: boot carries prior fault signatures"
 log "preflight clean; boot $(cat "${root}/boot-id.txt"); TP=${TP} DEPTH=${DEPTH} GRAPH=${GRAPH}"
 if [[ " ${STAGES} " == *" strict "* ]]; then
@@ -139,9 +158,12 @@ if [[ " ${STAGES} " == *" strict "* ]]; then
   g1=$(compare_pair "${root}/mtp0-a/strict" "${root}/mtp0-b/strict" "${root}/compare-mtp0-a-vs-mtp0-b.json"); log "G1 mtp0-a vs mtp0-b: ${g1}"
   [[ "${g1}" == "12/12" ]] || abort "G1 failed (${g1}): MTP0 is not repeat-exact"
   for label in mtp${DEPTH}-a mtp${DEPTH}-b; do launch "${label}" mtpn 1024 1 1024; strict_attempt "${label}"; stop_server "${server_name}" "${server_pid}" "${server_dir}"; postflight "${label}-post"; done
-  log "G2 mtp${DEPTH}-a vs mtp${DEPTH}-b: $(compare_pair "${root}/mtp${DEPTH}-a/strict" "${root}/mtp${DEPTH}-b/strict" "${root}/compare-mtp${DEPTH}-a-vs-b.json")"
-  log "G3 mtp${DEPTH}-a vs mtp0-a: $(compare_pair "${root}/mtp${DEPTH}-a/strict" "${root}/mtp0-a/strict" "${root}/compare-mtp${DEPTH}-a-vs-mtp0-a.json")"
-  log "G3 mtp${DEPTH}-b vs mtp0-a: $(compare_pair "${root}/mtp${DEPTH}-b/strict" "${root}/mtp0-a/strict" "${root}/compare-mtp${DEPTH}-b-vs-mtp0-a.json")"
+  verdict=$(compare_pair "${root}/mtp${DEPTH}-a/strict" "${root}/mtp${DEPTH}-b/strict" "${root}/compare-mtp${DEPTH}-a-vs-b.json"); log "G2: ${verdict}"
+  [[ "${verdict}" == "12/12" ]] || abort "G2 failed (${verdict})"
+  verdict=$(compare_pair "${root}/mtp${DEPTH}-a/strict" "${root}/mtp0-a/strict" "${root}/compare-mtp${DEPTH}-a-vs-mtp0-a.json"); log "G3a: ${verdict}"
+  [[ "${verdict}" == "12/12" ]] || abort "G3a failed (${verdict})"
+  verdict=$(compare_pair "${root}/mtp${DEPTH}-b/strict" "${root}/mtp0-a/strict" "${root}/compare-mtp${DEPTH}-b-vs-mtp0-a.json"); log "G3b: ${verdict}"
+  [[ "${verdict}" == "12/12" ]] || abort "G3b failed (${verdict})"
 fi
 if [[ " ${STAGES} " == *" ladders "* ]]; then
   launch ladder mtpn "${LADDER_MML:-256}" "${LADDER_MNS:-64}" "${LADDER_MBT:-512}"; run_ladder "G6(mtp${DEPTH})"; stop_server "${server_name}" "${server_pid}" "${server_dir}"; postflight ladder-post
@@ -151,7 +173,7 @@ if [[ " ${STAGES} " == *" depth32k "* ]]; then
   depth_stage() { local label=$1 kind=$2 oracle=$3
     launch "${label}" "${kind}" 33024 1 4096
     OUT_DIR="${server_dir}/depth" ARM="$([[ "${kind}" == mtp0 ]] && echo mtp0 || echo mtp1)" BASE_URL="http://127.0.0.1:${port}" SERVED_MODEL_NAME="${served_model}" ORACLE_DIR="${oracle}" \
-      "${repro}/bench-w8a16-real-content-depth.sh" >"${server_dir}/depth.stdout" 2>&1 || log "${label}: depth bench exited nonzero"
+      "${repro}/bench-w8a16-real-content-depth.sh" >"${server_dir}/depth.stdout" 2>&1 || abort "${label}: depth bench exited nonzero"
     log "${label}: $(tail -n 2 "${server_dir}/depth.stdout" | tr '\n' ' ' | cut -c1-200)"
     stop_server "${server_name}" "${server_pid}" "${server_dir}"; postflight "${label}-post"; }
   depth_stage depth-mtp0 mtp0 ""
