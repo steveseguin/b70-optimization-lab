@@ -1,8 +1,6 @@
 --- a394-derived-source.sh
 +++ serve-single-session.sh
-@@ -1,5 +1,20 @@
- #!/usr/bin/env bash
- set -Eeuo pipefail
+@@ -2,0 +3,15 @@
 +
 +# Local stability candidate derived from A394. Not yet device-qualified.
 +# One server lifetime. No host-control wrapper, benchmark client, or restart loop.
@@ -18,27 +16,14 @@
 +unset PYTHONOPTIMIZE TORCH_TRACE
 +export PYTHONDONTWRITEBYTECODE=1
 +
- 
- max_model_len="${MAX_MODEL_LEN:-16512}"
- mtp="${MTP:-0}"
-@@ -33,7 +48,7 @@
-   exact_suffix="-exact-recurrent"
-   served_model_name="qwen38-flash-next-fp8-tp4-mtp1-exact-recurrent"
- fi
+@@ -36 +51 @@
 -campaign="qwen38-flash-next-fp8-tp4-ep4-fullgraphdet-mtp${mtp}${exact_suffix}-${max_model_len}-ple-only-r1"
 +campaign="qwen38-flash-next-stability-mtp${mtp}-${max_model_len}-single-session-v1"
- ack="RUN ${campaign}"
- script_dir=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/tools
- repo_root=/home/steve/llm-optimizations
-@@ -49,21 +64,24 @@
-   exit 2
- fi
- 
+@@ -51,0 +67,3 @@
 +# Intentionally non-overridable until the remaining source review is resolved.
 +fail "candidate disabled: fresh health strategy and surviving-worker lock ownership need review; no GPU work started"
 +
- model="${MODEL_PATH:-/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8}"
- stage="${KERNEL_STAGE:-/mnt/usb-models/qwen38-build/runtime-core-moe-negidguard-b70}"
+@@ -54,6 +72,6 @@
 -vllm_src="${VLLM_SRC:-/home/steve/src/vllm-current-main}"
 -kernels_src="${KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
 -python="${VLLM_PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}"
@@ -51,44 +36,21 @@
 +vllm_bin=/home/steve/.venvs/vllm-xpu/bin/vllm
 +attempt="${ATTEMPT:?set a fresh numeric session ID}"
 +port="${PORT:-20020}"
- run_parent="${RUN_PARENT:-/mnt/usb-models/bench-results/qwen38-flash-next-fp8-b70}"
- cache_parent="${CACHE_PARENT:-/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70}"
- run_dir="${run_parent}/${campaign}-attempt${attempt}"
- cache_dir="${cache_parent}/${campaign}-attempt${attempt}"
- compile_cache_dir="/tmp/${campaign}-attempt${attempt}-compile"
- server_log="${run_dir}/server.log"
+@@ -66 +84 @@
 -rpc_dir=/tmp/q38-ple2k-a394-rpc
 +rpc_dir="/tmp/q38-stability-${attempt}-rpc"
- if [[ "${mtp_exact}" == "1" ]]; then
-   rpc_dir="/tmp/q38-mtp1-exact-a${attempt}-rpc"
- fi
-@@ -90,6 +108,9 @@
- [[ "${port}" =~ ^[1-9][0-9]*$ ]] || fail "PORT must be a positive integer"
- [[ "${kv_cache_memory_bytes}" =~ ^[1-9][0-9]*$ ]] || \
-   fail "KV_CACHE_MEMORY_BYTES must be a positive integer"
+@@ -92,0 +111,3 @@
 +tuned_config_map='/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/configs/moe-m1-w13-n32/E=128,N=640,device_name=Intel(R)_Arc(TM)_Pro_B70_Graphics,dtype=fp8_w8a8,block_shape=[128,128].json'
 +printf '%s  %s\n' a8f1f8982e3e1af80ff31b9e0a00afaacf1af1b3c401585109b4d60d3c8267be "$tuned_config_map" | sha256sum -c -
 +printf '%s  %s\n' e4ffbad68b1460bbd4e0bd46a8119acb7e4bb5ea8d7b0aacd16576d266431f3f "$Q38_EXPERT_HOST_PLACEMENT" | sha256sum -c -
- [[ -x "${python}" && -x "${vllm_bin}" ]] || fail "pinned vLLM virtual environment is missing"
- [[ "$(head -1 "${vllm_bin}")" == "#!${python}" ]] || fail "vLLM wrapper does not use the pinned interpreter"
- [[ -d "${model}" && -d "${stage}/vllm_xpu_kernels" ]] || fail "model or staged runtime is missing"
-@@ -135,7 +156,8 @@
- (( mem_available_kib >= 100 * 1024 * 1024 )) || fail "less than 100 GiB host memory is available"
- (( $(df --output=avail -B1 / | tail -1) >= 12 * 1024 * 1024 * 1024 )) || fail "less than 12 GiB root/tmp space is available"
- (( $(df --output=avail -B1 /dev/shm | tail -1) >= 32 * 1024 * 1024 * 1024 )) || fail "less than 32 GiB shared memory is available"
+@@ -138 +159,2 @@
 -(( $(df --output=avail -B1 /mnt/usb-models | tail -1) >= 300 * 1024 * 1024 * 1024 )) || fail "less than 300 GiB external space is available"
 +(( $(df --output=avail -B1 /mnt/fast-ai | tail -1) >= 100 * 1024 * 1024 * 1024 )) || fail "less than 100 GiB internal space is available"
 +[[ "$(findmnt -no FSTYPE --target /mnt/fast-ai)" == ext4 ]] || fail "internal evidence/cache storage must be ext4"
- [[ "$(findmnt -no FSTYPE --target /tmp)" =~ ^(ext4|tmpfs)$ ]] || fail "/tmp must be ext4 or tmpfs for vLLM IPC"
- 
- mkdir -p "${run_dir}" "${cache_dir}/vllm" "${cache_dir}/xdg" \
-@@ -145,22 +167,41 @@
- 
- server_pid=""
- cleanup() {
+@@ -147,0 +170,2 @@
 +  local rc=$?
 +  trap - EXIT INT TERM HUP
-   set +e
+@@ -149,4 +173,6 @@
 -  if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
 -    kill -TERM -- "-${server_pid}" 2>/dev/null || true
 -    for _ in $(seq 1 20); do
@@ -99,23 +61,21 @@
 +    kill -TERM -- "-${server_pid}" 2>/dev/null
 +    for _ in $(seq 1 60); do
 +      pgrep -g "$server_pid" >/dev/null || break
-       sleep 1
-     done
+@@ -155,2 +181,4 @@
 -    kill -KILL -- "-${server_pid}" 2>/dev/null || true
 -    wait "${server_pid}" 2>/dev/null || true
 +    if pgrep -g "$server_pid" >/dev/null; then
 +      printf '%s cleanup incomplete: group remains; no forced kill or restart\n' "$(date --iso-8601=seconds)" >>"${run_dir}/lifecycle.log"
 +      rc=70
 +    fi
-   fi
+@@ -158,4 +186,2 @@
 -  find "${rpc_dir}" -mindepth 1 -delete 2>/dev/null || true
 -  rmdir "${rpc_dir}" 2>/dev/null || true
 -  find "${compile_cache_dir}" -mindepth 1 -delete 2>/dev/null || true
 -  rmdir "${compile_cache_dir}" 2>/dev/null || true
 +  printf '%s exit=%s; device health not measured at shutdown\n' "$(date --iso-8601=seconds)" "$rc" >>"${run_dir}/lifecycle.log"
 +  exit "$rc"
- }
- trap cleanup EXIT
+@@ -163,0 +190,15 @@
 +trap 'exit 130' INT TERM HUP
 +# Persist stage boundaries without a global sync or host-setting changes.
 +record_stage() {
@@ -131,48 +91,18 @@
 +cat /proc/sys/kernel/random/boot_id >"${run_dir}/boot-id.txt"
 +cat /proc/swaps >"${run_dir}/swap-observed.txt"
 +cat /sys/module/pcie_aspm/parameters/policy >"${run_dir}/aspm-observed.txt"
- 
- for inherited in $(compgen -A variable); do
-   case "${inherited}" in
-@@ -560,6 +601,7 @@
- [[ -z "$(git -C "${vllm_src}" status --porcelain)" ]] || fail "vLLM overlay became dirty immediately before launch"
- echo 43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700  /mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0 | sha256sum -c -
- echo 0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9  /home/steve/.venvs/vllm-xpu/lib/ccl/kernels/kernels.spv | sha256sum -c -
+@@ -562,0 +604 @@
 +record_stage "launching the only server process; no automatic restart"
- setsid "${vllm_bin}" serve "${args[@]}" >"${server_log}" 2>&1 &
- server_pid=$!
- printf '%s\n' "${server_pid}" >"${run_dir}/server.pid"
-@@ -628,7 +670,7 @@
- assert isinstance(completion_tokens, int) and 1 <= completion_tokens <= 8, usage
- assert usage.get("total_tokens") == usage.get("prompt_tokens") + completion_tokens, usage
- PY
+@@ -631 +673 @@
 -  curl -fsS "http://127.0.0.1:${port}/health" \
 +  curl -fsS --max-time 5 "http://127.0.0.1:${port}/health" \
-     >"${run_dir}/health-after-exact-canary.json"
- }
- 
-@@ -641,7 +683,7 @@
- 
- healthy=0
- for _ in $(seq 1 720); do
+@@ -644 +686 @@
 -  if curl -fsS "http://127.0.0.1:${port}/health" >"${run_dir}/health.json" 2>/dev/null; then
 +  if curl -fsS --max-time 5 "http://127.0.0.1:${port}/health" >"${run_dir}/health.json" 2>/dev/null; then
-     healthy=1
-     break
-   fi
-@@ -658,13 +700,13 @@
-   fail "server did not become healthy within the bounded startup window"
- fi
- verify_offload_receipt || fail "workers did not each report exact 12.22-GiB selective offload"
+@@ -661 +703 @@
 -curl -fsS "http://127.0.0.1:${port}/v1/models" >"${run_dir}/models.json"
 +curl -fsS --max-time 5 "http://127.0.0.1:${port}/v1/models" >"${run_dir}/models.json"
- run_mtp_exact_canary || fail "exact recurrent MTP canary did not complete"
- verify_mtp_exact_receipt || fail "workers did not each enter exact recurrent MTP mode"
+@@ -663,0 +706 @@
 +record_stage "server healthy; awaiting requests on the same process"
- printf 'HEALTHY: %s pid=%s\n' "${campaign}" "${server_pid}"
- set +e
- wait "${server_pid}"
- server_rc=$?
- set -e
+@@ -669 +711,0 @@
 -server_pid=""
- exit "${server_rc}"
