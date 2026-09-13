@@ -25,6 +25,8 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-13 19:51 EDT, two-B70 host:** user-authorized short-context prefill measurement and optimization screen for 4B/9B W4A16 and 27B FP8/INT4. One model/endpoint at a time, c1, 128/256/512 input tokens, unchanged precision and decode path. Preflight passed both GPUs and XCCL. See [preregistration](experiments/qwen38-27b-b70/notes/2026-09-13-short-prefill-prereg.md). No model server started yet.
+
 **2026-09-13 19:32 EDT, two-B70 host: R308 work complete.** The optional
 single-request repair for Qwen3.5 4B and 9B is published, anonymously pullable,
 and verified on the live site. Both models passed 60/60 oracle checks,
