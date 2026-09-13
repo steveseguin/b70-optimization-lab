@@ -49,7 +49,7 @@ each server log (`scheduled_spec_decode_tokens` lists one draft per request; `to
 | K=0 steps still pay the draft forward | vLLM #53420, PR #53426 (opt-in skip) open | not measured here | no PR. |
 | oneDNN fp16 GEMM run-to-run nondeterminism at 129+ rows for small-N shapes; `torch.use_deterministic_algorithms(True)` removes it | not a vLLM defect (oneDNN split-K kernel selection); vLLM never enables deterministic mode | lab census 2026-09-12 (4B probes) | lab lever only: R295 overlay (`VLLM_XPU_TORCH_DETERMINISTIC=1`), 4B det1/det0 chain queued behind this queue. |
 | `xpu-smi health` fails on this driver (v3 engine) | tooling, not vLLM | – | none. |
-| Copy-engine reset (`engine_class=bcs`, `Fault response: -EINVAL`) on card e3:00.0 during R300 mtp1-b model load | vLLM #55425 (open, another B70 user: Qwen3.8-27B INT4, MTP2 at 160K context, bcs reset with a page fault; MTP1 stable) | two occurrences this boot (12:46 lab image at load; 16:02 stock v0.29.0 eager arm at load), both card e3:00.0, both `bcs` with page-fault lines | none now: our faults are at weight load, not at long-context MTP2 like #55425. Reboot, then see whether it recurs on a fresh boot. |
+| Copy-engine reset (`engine_class=bcs`, `Fault response: -EINVAL`) on card e3:00.0 during R300 mtp1-b model load | vLLM #55425 (open, another B70 user: Qwen3.8-27B INT4, MTP2 at 160K context, bcs reset with a page fault; MTP1 stable) | three occurrences this boot (12:46 lab image; 16:02 stock v0.29.0 eager arm; 20:00 stock nightly async-off arm), all right after weight load, all card e3:00.0 = Level Zero index 1, all `bcs` with page-fault lines; index 0 ran every single-card job today without incident | none now: our faults are at weight load, not at long-context MTP2 like #55425. Reboot, then see whether it recurs on a fresh boot. |
 | Historical MTP2 "phantom first token" on the 09-03 stock image | held (see `../phantom/REVIEW.md`) | phantom arms on v0.29.0 and nightly-0912 queued (four servers each; results appended below when done) | file only if it reproduces on a current image. |
 
 ## Phantom arms (stock Qwen3.8-27B FP8, TP2, MTP depth 2, R192/R194 shape: sequential oracle then 64 prompts at once)
@@ -61,8 +61,11 @@ each server log (`scheduled_spec_decode_tokens` lists one draft per request; `to
 | v0.29.0 | `--enforce-eager` (1), first attempt 16:01 | **hung after model load**; kernel logged `Engine reset: engine_class=bcs` + `Timedout job` on card e3:00.0 at 16:02:44 | second copy-engine fault on this card this boot (first: 12:46, R300 mtp1-b, also at load). Queue stopped; the user chose to continue on this boot |
 | v0.29.0 | `--enforce-eager` (1), rerun 19:37 | none | healthy in 2 min, ran clean |
 | v0.29.0 | `--enforce-eager` (2) | none | ran clean |
-| nightly-0912 | all four | pending (after reboot) | |
+| nightly-0912 | default compile, async on | none | `cache-c032` head normal; 7/64 exact |
+| nightly-0912 | default compile, `--no-async-scheduling` | **hung after model load**, third `bcs` engine reset on e3:00.0 at 20:00:24 | queue stopped for good on this boot |
+| nightly-0912 | `--no-async-scheduling`, eager (1), eager (2) | pending: `resume-after-reboot.sh` after the reboot | |
 
 Phantom verdict: not reproduced on v0.29.0 in any of the four arms (R192/R194 shape), including the arm and prompt that
-showed it on 09-03. Stays held; nightly-0912 arms below. The copy-engine fault is a host/driver event during weight load, seen now with a lab image and with a
-stock image; it is not tied to speculation depth (compare #55425) and is recorded in `kernel-engine-resets-today.txt`.
+showed it on 09-03. Stays held; nightly-0912 arms below. The copy-engine fault is a host/driver event during weight load on one card (e3:00.0, Level Zero index 1), seen three
+times this boot with a lab image and two stock images; it is not tied to speculation depth (compare #55425) and is recorded in
+`phantom-v0.29.0/kernel-engine-resets-today.txt`. Single-card work on index 0 continued without incident.
