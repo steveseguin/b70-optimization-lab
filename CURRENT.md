@@ -25,6 +25,17 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-13 16:06 EDT, two-B70 host:** R307 boundary-correctness work is
+active. The existing regression chain is running the fresh 4B/9B strict pairs
+on card 0 (currently `qwen35-4b-w4a16-r307-mtp0-b`, localhost 18131), then
+long-context, c64, and short-prompt checks. A stock v0.29.0 boundary comparison
+is running on card 1 (`stock-boundary-mtp3`, localhost 18185). Preserve both
+runners; verify actual state before any new launch. The final debug candidate
+passed 12/12 tail, 36/36 sequential boundary, and 72/72 c4 boundary requests;
+production-candidate regression gates remain pending. See the
+[continuation record](experiments/qwen35-4b-b70/notes/2026-09-13-r307-resume-and-boundary-audit.md).
+The older idle-host observations below do not describe this snapshot.
+
 **2026-09-13 (EDT):** the whole INT4/W4A16 runtime is rebased onto stock vLLM XPU
 v0.29.0 as **R304** (`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16`,
 pushed and anonymously pullable): the R294b overlays ported as net diffs, the kernel

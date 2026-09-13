@@ -1,5 +1,10 @@
 # Qwen3.5-4B W4A16 on B70 — lane handoff
 
+**2026-09-13 continuation:** final R307 debug boundary tests pass (12/12 tail,
+36/36 sequential, 72/72 c4); non-debug regression and stock attribution
+campaigns are running. See the [resume record](notes/2026-09-13-r307-resume-and-boundary-audit.md)
+for evidence, probe corrections, remaining gates, and runner paths.
+
 Last updated **2026-09-11**. The identity campaign (chains 1-10, 2026-09-09) is
 complete. Chains 11-15 (2026-09-09 evening to 2026-09-11 10:49) found and removed
 the largest throughput lever on the lane, the R224 32-row FP16 linear chunk, with
