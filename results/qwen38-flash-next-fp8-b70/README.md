@@ -229,6 +229,18 @@ definition) at 1.33-1.45x its rate; the front page's "32K input" cell for that r
 lab-measured caveat. Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json`;
 note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a382-32k-context-ladder-mtp1-exactgdn-result.md`.
 
+## 2026-09-13: eight users on the promoted MTP0 line, 82 tok/s aggregate, withheld (not output-identical)
+
+A383 served the certified MTP0 head with `max_num_seqs=8` (KV 1,412,136,960 bytes, decode graph capture
+sizes [1, 2, 4, 8], the row-wise all-reduce and HC-norm selectors at 8 rows, the wider expert placement)
+and ran the identity-gated concurrency oracle (fixed 12-prompt realistic suite, completions, 128 tokens,
+temperature 0, two repeats): aggregate 30 / 47 / 59 / 82 tok/s at 1 / 2 / 4 / 8 users, but only 2 of 28
+concurrent completions at 2-8 users reproduced their single-user token ids (first divergences from token
+1 to 122, prompt-dependent). Concurrency 1 is exact. The "Many users" cell stays withheld; the next arm
+serves M=2..8 with the M=1 MoE tile configuration to make the grouped GEMM batch-invariant. Evidence:
+`experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a383-eight-users-concurrency-oracle.json`;
+note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a383-eight-users-identity-ladder-result.md`.
+
 ## 2026-09-07: the Triton hyper-connection glue on XPU, +19% at a new output authority
 
 The XPU port routed the model's hyper-connection glue (the per-layer mix, combine,
