@@ -1,0 +1,360 @@
+{
+ "kind": "qwen35-9b-scheduled-draft-server-on-r306",
+ "date": "2026-09-13",
+ "image": {
+  "tag": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r306-dynsd",
+  "id": "sha256:f124c6fbe3fd06010f4b5f719e3a803c764e7b37d8f7d1ed0eb8a03dca62e1f1",
+  "what": "R304 (v0.29.0 rebase) + the three dynsd overlays (dynamic Mamba allocation, full decode graphs per scheduled K, draft-state catch-up) + R306 contiguous per-width staging for the #53542 active-width metadata"
+ },
+ "config": "one B70, TP1, schedule [[1,8,3],[9,16,1],[17,64,0]], CLASSPAD=1, 67k draft shortlist, V1 model runner, real image contract (v0290-dynsd set), strict pairs + four-pass c1-c64 ladders (small-context suite, 128 tokens)",
+ "strict": {
+  "mtp0-a": 61.664125592915,
+  "mtp0-b": 61.705624602258,
+  "mtp3-a": 120.981523335148,
+  "mtp3-b": 121.139880937143,
+  "gates": "G1/G2/G3 12/12"
+ },
+ "ladder_scheduled": [
+  {
+   "concurrency": 1,
+   "repeat": 1,
+   "tok_s": 122.4,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 1,
+   "tok_s": 121.1,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 1,
+   "tok_s": 395.9,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 1,
+   "tok_s": 696.2,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 1,
+   "tok_s": 894.8,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 1,
+   "tok_s": 992.0,
+   "exact": "32/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 1,
+   "tok_s": 1631.6,
+   "exact": "63/64"
+  },
+  {
+   "concurrency": 1,
+   "repeat": 2,
+   "tok_s": 123.9,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 2,
+   "tok_s": 237.9,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 2,
+   "tok_s": 396.9,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 2,
+   "tok_s": 700.8,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 2,
+   "tok_s": 991.5,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 2,
+   "tok_s": 1190.4,
+   "exact": "30/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 2,
+   "tok_s": 1632.5,
+   "exact": "64/64"
+  },
+  {
+   "concurrency": 1,
+   "repeat": 3,
+   "tok_s": 123.9,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 3,
+   "tok_s": 237.6,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 3,
+   "tok_s": 396.5,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 3,
+   "tok_s": 700.0,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 3,
+   "tok_s": 990.7,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 3,
+   "tok_s": 1192.0,
+   "exact": "28/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 3,
+   "tok_s": 1631.3,
+   "exact": "62/64"
+  },
+  {
+   "concurrency": 1,
+   "repeat": 4,
+   "tok_s": 124.0,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 4,
+   "tok_s": 237.5,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 4,
+   "tok_s": 396.3,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 4,
+   "tok_s": 699.5,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 4,
+   "tok_s": 990.5,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 4,
+   "tok_s": 1190.1,
+   "exact": "31/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 4,
+   "tok_s": 1628.9,
+   "exact": "64/64"
+  }
+ ],
+ "ladder_nospec": [
+  {
+   "concurrency": 1,
+   "repeat": 1,
+   "tok_s": 61.4,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 1,
+   "tok_s": 117.4,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 1,
+   "tok_s": 228.7,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 1,
+   "tok_s": 429.1,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 1,
+   "tok_s": 742.4,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 1,
+   "tok_s": 1205.0,
+   "exact": "32/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 1,
+   "tok_s": 1641.0,
+   "exact": "63/64"
+  },
+  {
+   "concurrency": 1,
+   "repeat": 2,
+   "tok_s": 61.6,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 2,
+   "tok_s": 119.0,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 2,
+   "tok_s": 228.6,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 2,
+   "tok_s": 428.9,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 2,
+   "tok_s": 742.2,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 2,
+   "tok_s": 1207.2,
+   "exact": "32/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 2,
+   "tok_s": 1641.8,
+   "exact": "64/64"
+  },
+  {
+   "concurrency": 1,
+   "repeat": 3,
+   "tok_s": 61.6,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 3,
+   "tok_s": 119.0,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 3,
+   "tok_s": 228.6,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 3,
+   "tok_s": 429.0,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 3,
+   "tok_s": 743.2,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 3,
+   "tok_s": 1208.0,
+   "exact": "32/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 3,
+   "tok_s": 1641.0,
+   "exact": "64/64"
+  },
+  {
+   "concurrency": 1,
+   "repeat": 4,
+   "tok_s": 61.5,
+   "exact": "1/1"
+  },
+  {
+   "concurrency": 2,
+   "repeat": 4,
+   "tok_s": 118.9,
+   "exact": "2/2"
+  },
+  {
+   "concurrency": 4,
+   "repeat": 4,
+   "tok_s": 228.7,
+   "exact": "4/4"
+  },
+  {
+   "concurrency": 8,
+   "repeat": 4,
+   "tok_s": 428.7,
+   "exact": "8/8"
+  },
+  {
+   "concurrency": 16,
+   "repeat": 4,
+   "tok_s": 743.7,
+   "exact": "16/16"
+  },
+  {
+   "concurrency": 32,
+   "repeat": 4,
+   "tok_s": 1207.0,
+   "exact": "32/32"
+  },
+  {
+   "concurrency": 64,
+   "repeat": 4,
+   "tok_s": 1641.3,
+   "exact": "64/64"
+  }
+ ],
+ "reference_dyn293": "2026-09-11 on R293: one user 112.4, c16 960 exact, c32 1192 (120/128), c64 1631 (255/256); no-spec 1641",
+ "r305_attempt": "strict pairs 12/12 at 120.9/121.1; the c64 ladder server died at capture with \"spec_state_indices_tensor must be contiguous\" (PR #53542 column-sliced staging view on the full-graph path) -> R306",
+ "root": "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260913-dyn306"
+}

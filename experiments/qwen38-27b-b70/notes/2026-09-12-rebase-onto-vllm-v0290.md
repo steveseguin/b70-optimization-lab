@@ -140,3 +140,16 @@ Strict pair R304c: 117.24 / 116.95 depth 4, 50.07 / 50.06 no spec; all gates 12/
 The c128 rungs in that chain ran with the engine's ladder defaults (max 64 sequences, 512 batched tokens), so they
 are not the published c128 configuration (128 sequences, 1024 tokens, capture sizes to 128); a rerun with the
 published settings is queued and will replace them here.
+
+## R305/R306: the 9B scheduled-draft profile on the rebase
+
+The 9B "scheduled draft" profile stacks three more overlays (dynamic Mamba allocation, one full decode graph per
+scheduled K, draft-state catch-up). Their recorded diffs apply to v0.29.0 with offsets (R305). Strict pairs passed
+(12/12, 120.9/121.1 one user), then the c64 ladder server died at graph capture: `spec_state_indices_tensor must be
+contiguous`. PR #53542 stages the state indices as a column slice of the `[max_bs, num_spec+1]` buffer, which is not
+contiguous when the active width is below the maximum, and the XPU kernel rejects it; the non-graph path never sees
+it. R306 gives the builder one contiguous staging buffer per active width, allocated at init. Under the real contract
+(a 21-file digest set keyed on the build-lane label): gates 12/12, one user **120.98 / 121.14** (dyn293 on the old
+image: 112.4; the shortlist is now active in this profile), c16 992 exact on all four passes (960), c32 1190 (28-31/32),
+c64 1631 (62-64/64), no-spec c64 1641: the same concurrency profile, a faster single user. Data:
+`experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json`.
