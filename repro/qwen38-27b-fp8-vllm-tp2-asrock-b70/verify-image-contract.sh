@@ -16,6 +16,66 @@ command -v docker >/dev/null || fail 'docker is required'
 docker image inspect "${image}" >/dev/null 2>&1 || fail "image is not local: ${image}"
 
 actual_kernel_head=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')
+actual_build_lane=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.build.lane" }}')
+if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${actual_build_lane}" == *r305-dynsd* ]]; then
+  # R305 (2026-09-13): R304 + the 9B scheduled-draft overlays (dynamic Mamba allocation, full decode graphs per scheduled
+  # K, draft-state catch-up). Same kernel library; the R304 set plus the four extra overlaid files, all pinned from the
+  # built image (experiments/qwen38-27b-b70/docker/rebase-v0290/r305-dynsd-contract-digests.sha256).
+  v0290d_paths=(
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+    /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+    /opt/venv/lib/python3.12/site-packages/vllm/config/compilation.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py
+    /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so
+    /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so
+    /opt/venv/lib/python3.12/site-packages/vllm/ir/ops/layernorm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/logits_processor.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/spec_decode/llm_base_proposer.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/core/sched/scheduler.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/core/single_type_kv_cache_manager.py
+    /opt/venv/lib/python3.12/site-packages/vllm/config/vllm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/cudagraph_dispatcher.py
+  )
+  v0290d_expected=(
+    7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208
+    6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3
+    3a79ea08d48d44879ac8cbfee1c7d88f9bd72927d9bd12eee31743e8da8a4d7e
+    7ef91a9e03424571155e7a09d8a506bafdd7ea4e08c292b049ab7317b42996e0
+    5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d
+    bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932
+    6f0fec189b04bd6a94b1b3ca0983623be7e7f2a4734b58e086fab3b0341213f3
+    65d33dcb96404ddde273acf84ef901151a8155a2cffc144bdd0c49fe1d576a22
+    6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f
+    3f949e537ccc52744d7eba52ed2034b20ee3fbaeaabbfab4e672f1dc9767602c
+    e0ae4ae14ffdc0c7db1c480978f94b56f74778665a9c454bab32a89371e342e7
+    b7b491bc9686b7582cb38cdecb0356be133bc8f6c6e90fd813e02794cd88861f
+    34ef265d5a05425bd217b718229428e7b124788fb4586d367bd8053d50a80168
+    1e72ed72ed7f495f9b4b5d28f7a0c97b5397e853dabc83acf2ab5ab112e9ffd9
+    4f5638a47e5f57d697e97cbfb6a0c41f563b6d2f58c132fa7ecb5e132797ab64
+    7cc7ca2fef07a0747a0892a2e774eebd03c5796948499272309d6260321cb751
+    94498e7dc8dd4190d22cbda6fdadcfa92df174a86cae897bc5c173a9afc103a4
+    09b8ed02301ad1d549619dc84a0b595639cac953a4c6ba8a3d5dca8f2b50c18a
+    cd5442a9fb9dd14849a3b9de9c88c52b5533a18c0028ce859b8cbdf300de3cc8
+    13d9ec1d9ca903064007bbd488954e0639a6fd1293f5fb55b06e380bff335b5d
+    3d296446deea8726643d7942f49cf920b82d26bb2205480190ef4d0a731bbb98
+  )
+  mapfile -t v0290d_observed < <(docker run --rm --entrypoint sha256sum "${image}" "${v0290d_paths[@]}" | awk '{print $1}')
+  [[ "${#v0290d_observed[@]}" == "${#v0290d_expected[@]}" ]] || fail 'image hash inventory is incomplete (v0290-dynsd set)'
+  for index in "${!v0290d_expected[@]}"; do
+    [[ "${v0290d_observed[index]}" == "${v0290d_expected[index]}" ]] || \
+      fail "content mismatch for ${v0290d_paths[index]}: expected ${v0290d_expected[index]}, found ${v0290d_observed[index]}"
+  done
+  printf 'IMAGE CONTRACT PASS: profile=%s(v0290-dynsd) image=%s files=%s kernel=%s\n' "${profile}" "${image}" "${#v0290d_expected[@]}" "${actual_kernel_head}"
+  exit 0
+fi
 if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; then
   # R304 (2026-09-13): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head) with the lab's
   # ten ported Python files, rebuilt _xpu_C/GDN libraries, the #53059 alias guard, the #51565 GDN first-chunk fix and the #53542 active-width fix.
