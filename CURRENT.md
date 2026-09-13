@@ -26,7 +26,8 @@ actions are historical, span multiple hosts, and are not current instructions.
 ## Local Host And Active Review
 
 **2026-09-13 17:28 EDT, two-B70 host:** the earlier R307 regression and
-stock campaigns have stopped. No serving containers remain. The 9B abort was
+stock campaigns have stopped. The new isolated campaign is running on card 0
+(localhost 18186), explicitly authorized in the two-B70 session. The 9B abort was
 an old coredump deletion notice incorrectly matched as a new fault; both GPUs
 and XCCL passed fresh bounded health checks. Final isolated R307 qualification
 is now authorized: runner failure propagation, token-ID boundary oracles and
@@ -34,6 +35,24 @@ two fresh MTP3 servers per 4B/9B model, then isolated 9B strict pairs. Preserve
 `/mnt/fast-ai/bench-results/r307-qualification-20260913/` and follow the
 [registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
 R307 remains unpromoted until the mandatory gates and recipe contract pass.
+
+**Four-B70 user operating policy, 2026-09-13:** stability takes priority. No
+repeated server restarts and no AI changes to power settings; leave swap/cache
+settings alone too. Historical host-controlled benchmark chains are not the
+current operating path. A [single-session candidate](experiments/qwen38-flash-next-fp8-b70/stability/README.md)
+is prepared for one continuously running server, without auto-restart or a
+benchmark-triggered stop. It has not been launched or device-qualified. No server
+is currently running on this host. Preserve the existing launch hold until the
+candidate's source and fresh bounded health gates have been checked.
+
+**Four-B70 host, 2026-09-13 20:10 UTC recovery:** A394 depth repeats pass, but
+teardown rc is 143 and another host interruption followed. No workload running;
+hold Flash-Next launches pending teardown/host-restoration review. Git damage
+restored from the already-pushed A394 commit; evidence USB mounted read-only,
+RAID unmounted. See [recovery evidence](notes/2026-09-13-a394-freeze-recovery.md).
+Follow-up: full Git fsck passes, NVMe reports zero media/errors; offline audit
+found stop-protocol mismatch, stale health receipts and a nested-cleanup race.
+See [teardown audit and next gates](notes/2026-09-13-a394-teardown-audit.md).
 
 **2026-09-13 (EDT):** the whole INT4/W4A16 runtime is rebased onto stock vLLM XPU
 v0.29.0 as **R304** (`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16`,
