@@ -1,0 +1,9 @@
+# R303 (2026-09-13): R302 + the vllm/v1/attention/backends/gdn_attn.py hunks of open upstream vLLM PR #51565
+# ("[Bugfix][GDN] Fix stateless first-chunk classification", issue #51562): a fresh one-token GDN prefill is classified as
+# a decode step and reads/writes recurrent state it never initialised. Observed here: the one-token prompt "Hi" degenerates
+# into "!!!!" walls on 29/30 greedy runs on R294b (served), R301 and R302 alike (bosd harness, 4B depth 3).
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r302
+FROM ${BASE}
+COPY r303-gdn-first-chunk-classification-pr51565.diff /tmp/r303.diff
+RUN cd /opt/venv/lib/python3.12/site-packages && patch -p1 --forward < /tmp/r303.diff && python -m py_compile vllm/v1/attention/backends/gdn_attn.py && rm /tmp/r303.diff
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r303-gdn-phase-fix"
