@@ -159,7 +159,8 @@ contiguous when the active width is below the maximum, and the XPU kernel reject
 it. R306 gives the builder one contiguous staging buffer per active width, allocated at init. Under the real contract
 (a 21-file digest set keyed on the build-lane label): gates 12/12, one user **120.98 / 121.14** (dyn293 on the old
 image: 112.4; the shortlist is now active in this profile), c16 992 exact on all four passes (960), c32 1190 (28-31/32),
-c64 1631 (62-64/64), no-spec c64 1641: the same concurrency profile, a faster single user. Data:
+c64 1631 (62-64/64), no-spec c64 1641: the same concurrency profile, a faster single user. The 2K-32K real-content ladder on the
+scheduled server: 18/18 passed against its no-speculation oracle (18/18 passed), root `dyn306-32k`. Data:
 `experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json`.
 
 ## FP8 lane, short prompts (TP2, depth 1)
