@@ -178,3 +178,10 @@ shortlist is worth more on one card, where the draft passes are a larger share o
 ## INT4-27B 2K-32K real-content ladder on R304 (TP2, depth 4)
 
 18/18 on the no-speculation oracle arm and 18/18 on the depth-4 arm (R260b on the old image: 18/18).
+
+## FP8-27B 2K-32K ladder and the clean-clone rebuild
+
+The FP8 lane's real-content 2K-32K ladder on R304 (R187 profile, depth 1): 18/18 on both arms. The kernel library
+rebuilt on 2026-09-13 from fresh GitHub clones by `build-kernels-0.1.14.1-clean-clone.sh` (1046 s) is **bit-identical**
+to the served R304 libraries (`_xpu_C.abi3.so` bbce7295..., `libgdn_attn_kernels_xe_2.so` 6f0fec18...), so the image is
+reproducible from public inputs end to end.

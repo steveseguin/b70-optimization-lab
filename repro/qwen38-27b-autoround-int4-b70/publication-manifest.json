@@ -431,6 +431,10 @@
         {
           "path": "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-r304-strict-result.json",
           "sha256": "630934ad2dd8a56bb079730eab46e1675b0d57161ac17028f053d41322385aea"
+        },
+        {
+          "path": "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-clean-clone-20260913.log",
+          "sha256": "3901b71971ad4c67b8f0bba2ad4f3999942e4fbf4d0c809424a883d46a82e35f"
         }
       ],
       "results_r301_stage": {
@@ -440,14 +444,26 @@
         "4b_32k": "18/18 both arms",
         "4b_identity": "no-spec c64 5 ms stagger 64/64 x7 at 2086-2113 (served 1280/1280 at 2104)"
       },
-      "status": "qualified on all four lanes (4B, 9B, INT4-27B TP2, FP8-27B TP2) under the real contract; pushed to GHCR 2026-09-13",
+      "status": "qualified on all four lanes plus TP1/TP2 profiles, long context and high concurrency; kernel library reproduced bit-identically from a clean clone; pushed to GHCR 2026-09-13",
       "results_r304_real_contract": {
         "4b": "G1/G2/G3 12/12; depth 3 191.37/191.41; MTP0 102.41/102.48",
         "9b": "12/12; 123.22/123.86; 64.34/64.30",
         "27b_fp8_tp2_depth1_r187_profile": "12/12; MTP1 54.82/54.83; MTP0 33.08/33.08 (published 54.935/33.097)",
         "27b_int4_tp2_depth4": "12/12; 117.04/117.09; MTP0 50.11/50.03 (published R299 117.46/117.59; 49.39)",
         "short_prompts_4b": "0/30 degenerate on k=1..6 and long (R294b: 30/30 on k=1 and k=1+K)",
-        "dynamic_schedule_9b": "c12 (K=1 range) runs, c64 completes; no width assertion"
+        "dynamic_schedule_9b": "c12 (K=1 range) runs, c64 completes; no width assertion",
+        "27b_int4_2k_32k": "18/18 both arms",
+        "27b_fp8_2k_32k": "18/18 both arms",
+        "27b_int4_tp1_depth4": "12/12; 81.17/81.16; MTP0 33.10/33.08",
+        "9b_scheduled_draft_r306": "12/12; 120.98/121.14; c16 992 exact x4; 2K-32K 18/18",
+        "high_concurrency": "every published no-spec c128 number reproduced exactly (4B 2522/3990, 9B 1960/3227)"
+      },
+      "clean_clone_build": {
+        "date": "2026-09-13",
+        "method": "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-clean-clone.sh, fresh clones of vllm-xpu-kernels (6d92b1bf), oneDNN (0e2a5bfe + r137a/r137b/r221) and sycl-tla (cd763790) from GitHub, built inside the public v0.29.0 image with host oneAPI 2026.1",
+        "result": "both libraries bit-identical to the served R304 image: _xpu_C.abi3.so bbce7295..., libgdn_attn_kernels_xe_2.so 6f0fec18...",
+        "seconds": 1046,
+        "log": "experiments/qwen38-27b-b70/docker/rebase-v0290/build-kernels-0.1.14.1-clean-clone-20260913.log"
       }
     }
   },
