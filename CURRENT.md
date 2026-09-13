@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 user operating policy, 2026-09-13:** stability takes priority. No
+repeated server restarts and no AI changes to power settings; leave swap/cache
+settings alone too. Historical host-controlled benchmark chains are not the
+current operating path. A [single-session candidate](experiments/qwen38-flash-next-fp8-b70/stability/README.md)
+is prepared for one continuously running server, without auto-restart or a
+benchmark-triggered stop. It has not been launched or device-qualified. No server
+is currently running on this host. Preserve the existing launch hold until the
+candidate's source and fresh bounded health gates have been checked.
+
 **Four-B70 host, 2026-09-13 20:10 UTC recovery:** A394 depth repeats pass, but
 teardown rc is 143 and another host interruption followed. No workload running;
 hold Flash-Next launches pending teardown/host-restoration review. Git damage

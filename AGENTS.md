@@ -1,5 +1,20 @@
 # Agent Notes
 
+## User stability constraints (2026-09-13)
+
+The user explicitly prohibits repeated server restarts and AI changes to power
+settings. This overrides older benchmark and recovery recipes on this host.
+Do not change ASPM, PCIe power management, CPU governors, GPU clocks/power limits,
+or other power settings, including changing them back as an automated cleanup.
+Leave swap and page-cache settings alone as well for the stability effort.
+Do not run fresh-server chains, automatic restart/retry policies, swap toggles,
+cache drops or host-controlled benchmark wrappers. Preserve historical recipes
+as evidence, not current operating instructions. Prefer one continuously running
+server and reuse its endpoint; failed client requests must not cycle the server.
+No automatic reboot or driver reset. Record faults and halt new requests; any
+needed graceful shutdown is a single incident action, never a restart loop.
+
+
 This repository is a reproducible lab notebook and deployment guide for Intel
 XPU local AI work across multiple B70 model efforts: MiniMax, Qwen, Gemma, and
 future lanes.
