@@ -52,6 +52,17 @@ each server log (`scheduled_spec_decode_tokens` lists one draft per request; `to
 | Copy-engine reset (`engine_class=bcs`, `Fault response: -EINVAL`) on card e3:00.0 during R300 mtp1-b model load | vLLM #55425 (open, another B70 user: Qwen3.8-27B INT4, MTP2 at 160K context, bcs reset with a page fault; MTP1 stable) | three occurrences this boot (12:46 lab image; 16:02 stock v0.29.0 eager arm; 20:00 stock nightly async-off arm), all right after weight load, all card e3:00.0 = Level Zero index 1, all `bcs` with page-fault lines; index 0 ran every single-card job today without incident | none now: our faults are at weight load, not at long-context MTP2 like #55425. Reboot, then see whether it recurs on a fresh boot. |
 | Historical MTP2 "phantom first token" on the 09-03 stock image | held (see `../phantom/REVIEW.md`) | phantom arms on v0.29.0 and nightly-0912 queued (four servers each; results appended below when done) | file only if it reproduces on a current image. |
 
+## Posting the evidence (not done from the session)
+
+The Claude Code session could not post to GitHub (its auto-mode classifier blocks external writes), so the two drafts
+in `drafts/` are unposted. To post them as written:
+
+```
+cd experiments/qwen38-27b-b70/upstream-review-20260912/runtime-repro
+gh pr comment 53542 -R vllm-project/vllm --body-file drafts/comment-vllm-pr53542.md
+gh issue comment 593 -R vllm-project/vllm-xpu-kernels --body-file drafts/comment-kernels-593.md
+```
+
 ## Phantom arms (stock Qwen3.8-27B FP8, TP2, MTP depth 2, R192/R194 shape: sequential oracle then 64 prompts at once)
 
 | image | arm | first-token outliers (64 rows) | note |
