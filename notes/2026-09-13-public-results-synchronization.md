@@ -61,3 +61,9 @@ Screenshots: `/tmp/neural-home-{1440,390}.png` and
 
 Remote asset validation also passed for the affected INT4 publication manifest;
 no published binary or source-build input was changed.
+
+CI follow-up: the pre-existing FP8 9B Compose packet omitted the shared
+launcher’s unconditional CLASSPAD=0 and CLASSPAD_MAXM=512 defaults. Synced
+the anchor and both card-count services to those exact values; the classpad
+feature stays off and the pinned R276 image/benchmark identity is unchanged.
+Container packet checks and their regression suite now pass.
