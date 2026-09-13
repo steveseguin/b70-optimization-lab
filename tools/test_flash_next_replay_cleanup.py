@@ -12,7 +12,7 @@ SCRIPTS = sorted(ROOT.glob("repro/qwen38-flash-next-fp8-tp4-mtp1-*/wait-and-run-
 
 class ReplayCleanupTest(unittest.TestCase):
     def test_failed_and_successful_suite_both_request_stop_and_preserve_status(self):
-        self.assertEqual(len(SCRIPTS), 4)
+        self.assertEqual(len(SCRIPTS), 5)
         for source in SCRIPTS:
             for rc in (0, 7):
                 with self.subTest(recipe=source.parent.name, rc=rc), tempfile.TemporaryDirectory() as tmp:
