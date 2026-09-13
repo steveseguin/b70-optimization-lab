@@ -12,5 +12,19 @@
   "created_at": "2026-09-13T01:15:15Z",
   "author": "steveseguin",
   "body": "End-to-end follow-up (same B70, no lab patches): on stock `vllm/vllm-openai-xpu:latest` (v0.29.0, kernels 0.1.14.1) a dynamic schedule `[[1,8,3],[9,16,1],[17,64,0]]` with Qwen3.5-9B W4A16 reaches this assertion in ordinary serving \u2014 12 concurrent users (K=1, 24 tokens with a 4-column state-index tensor) kill the engine at once, and a 64-user batch dies while draining through 9\u201316 running requests, with both model runners:\n\n```\nRuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.\n```\n\nApplying only the `gdn_attn.py` hunks of vllm-project/vllm#53542 (which narrows `spec_state_indices_tensor` to the active width on the vLLM side) on top of v0.29.0, kernels unchanged, removes the crash: 12 users run 12/12 exact against a sequential oracle and the 64-user ladder completes. So the contract can be satisfied from the vLLM side; the kernel-side change discussed above is not required for correctness once #53542 lands. Details posted on that PR.\n"
+ },
+ "pr51565": {
+  "url": "https://github.com/vllm-project/vllm/pull/51565#issuecomment-5651138475",
+  "id": 5651138475,
+  "created_at": "2026-09-13T04:27:49Z",
+  "author": "steveseguin",
+  "body": "End-to-end confirmation on Intel Arc Pro B70 (XPU) that this PR fixes a user-visible failure, with and without speculative decoding.\n\n**Model**: Qwen3.5-4B W4A16 (RedHatAI, GDN hybrid), one B70, `--dtype float16 --quantization compressed-tensors`, greedy. **Harness**: 30 repeats of a completion per prompt length, \"degenerate\" = a single-character wall in the output (from bosd's harness in steveseguin/b70-optimization-lab PR #47).\n\n| runtime | one-token prompt `Hi` | 2, 3, 5, 6, 11-token prompts |\n| --- | --- | --- |\n| our served build on 0.27.2rc1.dev77, MTP depth 3 | **30/30 degenerate** (`!!!!!!!!!!!!!!!!!!!!!!!!`) | 0/30 |\n| stock v0.29.0 + our overlays, MTP depth 3 | 29-30/30 | 0/30 |\n| same, no speculation | 29/30 | 0/30 |\n| same **+ only this PR's `gdn_attn.py` hunks** (head 53995de), MTP depth 3 | **0/30** | 0/30 |\n| same + this PR, no speculation | **0/30** | 0/30 |\n\nSo a fresh one-token prefill on a GDN model produces garbage on XPU today, and this PR's first-chunk classification fix removes it. Our lossless gates (three strict pairs on the 4B, 9B and 27B lanes) are being re-run on the patched build now; nothing else changed in the outputs of longer prompts. The earlier same-base CPU regression results in this thread came from our source-level review; this is the runtime confirmation.\n"
+ },
+ "pr53059": {
+  "url": "https://github.com/vllm-project/vllm/pull/53059#issuecomment-5651138542",
+  "id": 5651138542,
+  "created_at": "2026-09-13T04:27:50Z",
+  "author": "steveseguin",
+  "body": "End-to-end confirmation on Intel Arc Pro B70 (XPU), on a different GDN model than the reports above.\n\n**Model**: Qwen3.5-4B W4A16 (RedHatAI), one B70, `--speculative-config '{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3}'` so `uniform_decode_query_len = 4`, greedy, 30 repeats per prompt length (bosd's harness from steveseguin/b70-optimization-lab PR #47, larger prompt pool).\n\n| runtime | 4-token prompt `Hello, world!` (= 1 + K) | 2, 3, 5, 6, 11-token prompts |\n| --- | --- | --- |\n| our served build on vLLM 0.27.2rc1.dev77, unpatched `_is_uniform_decode` | **30/30 degenerate** (`!!!!` wall) | 0/30 |\n| stock v0.29.0 + our overlays **+ only this PR's `gpu_model_runner.py` hunks** (head 3462586) | **0/30** | 0/30 |\n\nThe fresh prefill of exactly 1+K tokens is classified as uniform decode, dispatched into the decode graph and the GDN state comes back zeroed, exactly as described in #53051. (One-token prompts fail separately for the reason in #51562 / #51565; that is fixed independently and is not affected by this change.)\n"
  }
 }
