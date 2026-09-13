@@ -22,6 +22,9 @@ xpu_graph=${VLLM_XPU_ENABLE_XPU_GRAPH:-1}
 quantization=${QUANTIZATION:-fp8}
 allreduce_host_wait=${VLLM_XPU_ALLREDUCE_HOST_WAIT:-1}
 tensor_parallel_size=${TENSOR_PARALLEL_SIZE:-2}
+# PREFIX_CACHING (2026-09-13): every published measurement runs with prefix caching OFF (cache-zero results). PREFIX_CACHING=1
+# turns vLLM's automatic prefix caching on for experiments only; the container packet checker rejects a packet rendered with it.
+prefix_caching_arg=--no-enable-prefix-caching; [[ "${PREFIX_CACHING:-0}" == 1 ]] && prefix_caching_arg=--enable-prefix-caching
 xpu_device_mask=${XPU_DEVICE_MASK:-0,1}
 enforce_eager=${ENFORCE_EAGER:-0}
 fp8_block_w8a16=${VLLM_XPU_FP8_BLOCK_W8A16:-1}
@@ -421,7 +424,7 @@ exec docker run --rm --name "${container}" \
   --gpu-memory-utilization "${gpu_memory_utilization}" \
   --max-model-len "${max_model_len}" --block-size 64 \
   --max-num-seqs "${max_num_seqs}" --max-num-batched-tokens "${max_num_batched_tokens}" \
-  --no-enable-prefix-caching --enable-prompt-tokens-details \
+  "${prefix_caching_arg}" --enable-prompt-tokens-details \
   --language-model-only \
   "${eager_args[@]}" \
   --speculative-config "${speculative_config}" \

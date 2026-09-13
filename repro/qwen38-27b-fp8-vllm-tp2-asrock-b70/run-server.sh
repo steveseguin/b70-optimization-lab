@@ -161,6 +161,9 @@ if [[ -n "${VLLM_XPU_RMSNORM_SERIAL_ROWS:-}" && "${VLLM_XPU_RMSNORM_SERIAL_ROWS}
     rmsnorm_serial_env=(-e "VLLM_XPU_RMSNORM_SERIAL_ROWS=${VLLM_XPU_RMSNORM_SERIAL_ROWS}")
 fi
 
+# PREFIX_CACHING (2026-09-13): every published measurement runs with prefix caching OFF (cache-zero results). PREFIX_CACHING=1
+# turns vLLM's automatic prefix caching on for experiments only; the container packet checker rejects a packet rendered with it.
+prefix_caching_arg=--no-enable-prefix-caching; [[ "${PREFIX_CACHING:-0}" == 1 ]] && prefix_caching_arg=--enable-prefix-caching
 exec docker run --rm --name "${container}" \
     --ulimit core=0 \
     --memory "${container_memory}" --memory-swap "${container_memory_swap}" \
@@ -219,7 +222,8 @@ exec docker run --rm --name "${container}" \
     -e REPRO_MAX_BATCHED_TOKENS="${max_num_batched_tokens}" \
     -e REPRO_GPU_MEMORY_UTILIZATION="${gpu_memory_utilization}" \
     -e REPRO_SERVED_MODEL_NAME="${served_model}" \
+    -e REPRO_PREFIX_CACHING_ARG="${prefix_caching_arg}" \
     -e REPRO_COMPILATION_CONFIG="${compilation_config}" \
     --entrypoint bash \
     "${image}" -lc \
-    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size "${REPRO_TP}" --dtype float16 --quantization "${REPRO_QUANTIZATION}" --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" --no-enable-prefix-caching --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'
+    'exec vllm serve /model --served-model-name "${REPRO_SERVED_MODEL_NAME}" --host 0.0.0.0 --port 8000 --tensor-parallel-size "${REPRO_TP}" --dtype float16 --quantization "${REPRO_QUANTIZATION}" --kv-cache-dtype auto --gpu-memory-utilization "${REPRO_GPU_MEMORY_UTILIZATION}" --max-model-len "${REPRO_MAX_MODEL_LEN}" --block-size 64 --max-num-seqs "${REPRO_MAX_NUM_SEQS}" --max-num-batched-tokens "${REPRO_MAX_BATCHED_TOKENS}" ${REPRO_PREFIX_CACHING_ARG} --enable-prompt-tokens-details --language-model-only --compilation-config "${REPRO_COMPILATION_CONFIG}"'
