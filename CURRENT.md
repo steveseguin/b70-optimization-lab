@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-13 (EDT):** the whole INT4/W4A16 runtime is rebased onto stock vLLM XPU
+v0.29.0 as **R304** (`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16`,
+pushed and anonymously pullable): the R294b overlays ported as net diffs, the kernel
+library rebuilt from public sources (vllm-xpu-kernels 0.1.14.1, which carries upstream
+GDN fix #544, plus the lab's oneDNN r137a/r137b/r221), and three open upstream vLLM
+fixes applied verbatim (#53059 alias guard, #51565 GDN first-chunk, #53542 active width).
+It fixes two failures that were live on R294b: every one-token prompt and every
+(1+K)-token prompt at depth K degenerated into single-character walls (30/30). Strict
+gates 12/12 at published speed on the 4B, 9B and FP8-27B lanes under the recipe contract
+(`verify-image-contract.sh` v0290 digest set); the INT4-27B pair is running. The 4B and
+9B recipes, packages and compose packets now point at R304; the 27B packages follow when
+its gates finish. Serve with `VLLM_USE_V2_MODEL_RUNNER=0` (the launchers pin it; v0.29.0
+defaults XPU to the V2 runner, which has no draft INT4 head). Details:
+`experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.
+
 **2026-09-11 (EDT):** the Qwen3.5 4B/9B and Qwen3.8 27B INT4 lanes finished the
 class-consistent FP16 linear work (R290-R293 overlays, `VLLM_XPU_FP16_LINEAR_CLASSPAD`):
 the R224 32-row pieces re-read the vocabulary projection once per 32 rows, 25-56% of
