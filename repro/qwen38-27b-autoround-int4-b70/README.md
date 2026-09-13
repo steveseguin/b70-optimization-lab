@@ -1,5 +1,7 @@
 # Qwen3.8 27B AutoRound INT4 on 2x Intel Arc Pro B70 — lane setup
 
+> **Current results (September 13):** best qualified TP2 shortlist record **117.528 tok/s** on R294b; current R304 strict pair **117.24/116.95**, TP1 **81.17/81.16**, G1/G2/G3 12/12. The matrix and per-runtime concurrency profiles below retain their separate identities.
+
 > **Certification: `research-status`.** Active or unresolved work, not a
 > promoted reproduction; see its entry in
 > [`repro/guide-catalog.json`](../guide-catalog.json).

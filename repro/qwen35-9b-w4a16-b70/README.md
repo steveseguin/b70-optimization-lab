@@ -1,5 +1,7 @@
 # Reproduce Qwen3.5 9B W4A16 with its own MTP head on one B70
 
+> **Current results, September 13:** best qualified one-card MTP3 shortlist record **124.084 tok/s** (R294b, two fresh strict suites, all gates 12/12). The current **R304 / vLLM v0.29.0** replay and separately scoped context/concurrency results are documented below. Historical sections retain their original configuration identities.
+
 > **Certification: `candidate-portable-repro`, not a starter guide.** Model
 > revision, container image, launch chain and validation identities are pinned
 > and were verified on the lab host on 2026-09-07. The remaining gates are a
@@ -16,7 +18,7 @@ same stack, launcher and workload as the
 [FP8 route](../qwen35-9b-fp8-b70/README.md) for the same model, so the two are
 directly comparable.
 
-## Headline (campaign w1, 2026-09-07, one B70)
+## Historical headline (campaign w1, 2026-09-07, one B70)
 
 - **MTP depth 3 with the draft-only INT4 lm_head: `113.627 / 112.904 tok/s`**
   class-balanced median decode over tokens 1-100 after TTFT on the strict

@@ -5,7 +5,7 @@
  "name": "Qwen 9B",
  "display_name": "Qwen3.5 9B",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-12",
+ "updated_at": "2026-09-13",
  "summary": "Alibaba's dense-hybrid Qwen3.5 9B (linear-attention layers with a full-attention layer every fourth, and a shipped MTP head), served on one Arc Pro B70 as RedHatAI's FP8-dynamic checkpoint through the lab's deterministic vLLM XPU stack with lossless speculative decoding. Two routes are measured: RedHatAI's FP8-dynamic and its W4A16 INT4, the latter faster and byte-exact at every concurrency through 64 users.",
  "architecture": {
   "class": "Qwen3_5ForConditionalGeneration",
@@ -493,12 +493,12 @@
    "workload": "strict 12-prompt six-class suite over the completions API, 512-token cap, cache zero, class-balanced median tok/s over tokens 1-100 after TTFT, two fresh servers",
    "metrics": {
     "decode_tok_s": [
-     124.03,
-     124.13
+     124.038,
+     124.1305
     ],
     "ttft_ms": [
-     67.65,
-     67.61
+     63.6055,
+     64.0851
     ]
    },
    "evidence": "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json"
@@ -824,17 +824,25 @@
     "W4A16:0": {
      "state": "lab-measured",
      "label": "D64.33",
-     "evidence_id": "q35-9b-w4a16-tp1-mtp0-graph-w1",
-     "packet_id": "qwen35-9b-w4a16-b70"
+     "evidence_id": "q35-9b-w4a16-tp1-mtp0-graph-w1"
     },
     "W4A16:3": {
      "state": "lab-measured",
      "label": "D113.63",
-     "evidence_id": "q35-9b-w4a16-tp1-mtp3-graph-int4head-w1",
-     "packet_id": "qwen35-9b-w4a16-b70"
+     "evidence_id": "q35-9b-w4a16-tp1-mtp3-graph-int4head-w1"
     }
    }
   }
  ],
- "family_closures": []
+ "family_closures": [],
+ "featured_results": [
+  {
+   "role": "hero",
+   "label": "W4A16 \u00b7 one B70 \u00b7 MTP3 with 67k draft shortlist (first of two strict repeats)",
+   "measurement_id": "q35-9b-w4a16-tp1-mtp3-graph-int4head-shortlist67k-slu67k",
+   "metric": "decode_tok_s",
+   "sample_index": 0,
+   "quality_label": "Two fresh servers, G1/G2/G3 12/12; pair center 124.08 tok/s; R294b record, current R304 replay scoped separately"
+  }
+ ]
 }

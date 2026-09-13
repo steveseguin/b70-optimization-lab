@@ -5,40 +5,24 @@
  "name": "Qwen 27B",
  "display_name": "Qwen 27B \u00b7 3.6 \u2192 3.8",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-06",
+ "updated_at": "2026-09-13",
  "summary": "Alibaba's dense 27B Qwen line (3.6 and the newer 3.8), the lab's most-tested general assistant: it reads images, handles long context, and has been measured on one, two, and four Arc Pro B70 cards with both llama.cpp and vLLM.",
  "featured_results": [
   {
    "role": "hero",
-   "label": "Qwen3.8 AutoRound INT4 \u00b7 TP4 graph overlay",
-   "measurement_id": "q38-a3561ef8-tp4-winner-overlay-graph-strict",
+   "label": "INT4 \u00b7 two B70s \u00b7 MTP4 shortlist \u00b7 first of two strict repeats",
+   "measurement_id": "q38-int4-r299-tp2-shortlist-strict",
    "metric": "decode_tok_s",
-   "sample_index": 1,
-   "quality_label": "Accepted strict natural-EOS overlay; replay A passed the full battery and replay B was not repeated"
+   "sample_index": 0,
+   "quality_label": "G1/G2/G3 12/12; pair 117.46 / 117.59 tok/s; separate concurrency gates"
   },
   {
    "role": "support",
-   "label": "Qwen3.8 AutoRound INT4 \u00b7 TP1 graph diagnostic",
-   "measurement_id": "q38-a3561ef8-stock-tp1-graph-diagnostic",
+   "label": "INT4 \u00b7 one B70 \u00b7 MTP4 shortlist \u00b7 first of two strict repeats",
+   "measurement_id": "q38-int4-r304-tp1-shortlist-strict",
    "metric": "decode_tok_s",
    "sample_index": 0,
-   "quality_label": "Fixed-output diagnostic high; strict quality belongs to the separate natural-EOS replay"
-  },
-  {
-   "role": "support",
-   "label": "Qwen3.8 AutoRound INT4 \u00b7 TP2 graph diagnostic",
-   "measurement_id": "q38-a3561ef8-tp2-winner-overlay-graph-diagnostic",
-   "metric": "decode_tok_s",
-   "sample_index": 0,
-   "quality_label": "Fixed-output diagnostic high only; exact canary and cache-zero checks passed"
-  },
-  {
-   "role": "support",
-   "label": "Qwen3.8 AutoRound INT4 \u00b7 TP4 captured strict high",
-   "measurement_id": "q38-a3561ef8-stock-tp4-graph-strict",
-   "metric": "decode_tok_s",
-   "sample_index": 0,
-   "quality_label": "Quality battery passed; this single capture did not replicate and is not a promotion"
+   "quality_label": "G1/G2/G3 12/12; pair 81.17 / 81.16 tok/s; separate concurrency gates"
   }
  ],
  "architecture": {
@@ -5858,6 +5842,62 @@
    "quality": "Both strict arms passed all non-speed gates; strict A passed 7/7 exact cases, 8/8 one-hash repeat, the 8K needle, 24/24 baseline comparisons, and 16/16 zero cache counts. The exact compile cache stayed immutable through replay B.",
    "caveat": "All model arms passed. The outer wrapper hit a mawk reserved-name error only during deterministic aggregation; the original failure marker is preserved and the offline recovery is hash-sealed. The same packet's ignore-EOS diagnostic was 72.07605937552125 tok/s. No historical high was lowered or replaced.",
    "evidence": "experiments/qwen38-27b-b70/data/2026-08-25-qwen38-b2dd9ce73d-tp4-zero-overlay-r1-recovery.json"
+  },
+  {
+   "revision": "qwen3.8-27b",
+   "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+   "quantization": "AutoRound INT4",
+   "id": "q38-int4-r299-tp2-shortlist-strict",
+   "state": "lab-measured",
+   "variant": "AutoRound INT4",
+   "runtime": "neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b sha256:78bd728d (R293 + the shortlisted draft-only lm_head, R294); VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt (67,248 rows; 58,074 + 9,174 across the two TP shards), CLASSPAD=0",
+   "config": {
+    "tp": 2,
+    "mtp": 4,
+    "graph": "on",
+    "kv": "f16",
+    "configured_max_context_tokens": 1024
+   },
+   "profile_id": "strict-completions-512",
+   "measurement_class": "strict fresh-server pair",
+   "promotion_status": "qualified single-user pair; portable recipe research-status",
+   "quality_scope": "G1/G2/G3 12/12; concurrency is separately scoped",
+   "workload": "Fixed 12-prompt six-class completions suite, 512-token cap, cache zero; class-balanced conventional 99-interval decode rate",
+   "metrics": {
+    "decode_tok_s": [
+     117.46298497318,
+     117.593181857287
+    ]
+   },
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json"
+  },
+  {
+   "revision": "qwen3.8-27b",
+   "artifact_id": "qwen38-27b-autoround-w4a16-bce40ca",
+   "quantization": "AutoRound INT4",
+   "id": "q38-int4-r304-tp1-shortlist-strict",
+   "state": "lab-measured",
+   "variant": "AutoRound INT4",
+   "runtime": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 sha256:7cd7bb16 (the R294b stack rebased onto stock vLLM XPU v0.29.0 + kernels 0.1.14.1 + upstream fixes #53059/#51565/#53542)",
+   "config": {
+    "tp": 1,
+    "mtp": 4,
+    "graph": "on",
+    "kv": "f16",
+    "configured_max_context_tokens": 1024
+   },
+   "profile_id": "strict-completions-512",
+   "measurement_class": "strict fresh-server pair",
+   "promotion_status": "qualified single-user pair; portable recipe research-status",
+   "quality_scope": "G1/G2/G3 12/12; concurrency is separately scoped",
+   "workload": "Fixed 12-prompt six-class completions suite, 512-token cap, cache zero; class-balanced conventional 99-interval decode rate",
+   "metrics": {
+    "decode_tok_s": [
+     81.16573518803,
+     81.160391328031
+    ]
+   },
+   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json"
   }
  ],
  "series_measurements": [
