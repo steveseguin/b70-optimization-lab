@@ -191,3 +191,7 @@ reproducible from public inputs end to end.
 bosd's harness, 30 greedy repeats per prompt length, on R304: 4B depth 3, 9B depth 3, 27B INT4 TP2 depth 4 and 27B FP8
 TP2 depth 1 all return 0/30 degenerate on every lane, every prompt length from one token up, including each lane's
 own (1+K) alias length.
+
+## 4B two cards, 2K-32K (R304, TP2, depth 3)
+
+18/18 on both arms under the real contract, matching the one-card ladder.
