@@ -79,3 +79,12 @@ including the arm and prompt that showed it on 09-03. Every output completed; th
 resets. The historical report stays held; there is nothing to file. The copy-engine fault is a host/driver event during weight load on one card (e3:00.0, Level Zero index 1), seen three
 times this boot with a lab image and two stock images; it is not tied to speculation depth (compare #55425) and is recorded in
 `phantom-v0.29.0/kernel-engine-resets-today.txt`. Single-card work on index 0 continued without incident.
+
+## Adoption (2026-09-13)
+
+All three open upstream fixes are applied verbatim in the lab's runtime rebased onto stock vLLM XPU v0.29.0
+(R302 = #53059 alias guard, R303 = #51565 GDN first-chunk classification, R304 = #53542 active runtime-K width; see
+`experiments/qwen38-27b-b70/docker/rebase-v0290/` and the rebase note). bosd's harness (PR #47 on this repo) showed
+the first two were live failures on the published R294b recipe: every one-token prompt and every (1+K)-token prompt at
+depth K degenerated into single-character walls, 30/30; R303 returns 0/30 on every length, with and without
+speculation. Evidence comments were posted on PR #51565 and PR #53059 (`comment-receipts.json`).

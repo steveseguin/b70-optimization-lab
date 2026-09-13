@@ -55,6 +55,17 @@ The 5-6% single-user cost is one copy kernel plus a 33-row GEMM per projection p
 step, the floor of this design. The 9B and 27B lanes run the same op and carry the
 same tax, unmeasured there.
 
+## Settled 2026-09-13: the lane runs on stock vLLM XPU v0.29.0 (R304)
+
+The whole stack was rebased onto the public v0.29.0 image (kernel library rebuilt from public sources, ten
+Python overlays ported as net diffs) with three open upstream vLLM fixes applied. Two of them fix failures that
+were live on R294b and invisible to the strict suites: every one-token prompt and every 4-token prompt at
+depth 3 degenerated into `!!!!` walls (30/30). Strict gates 12/12 at 191.4 tok/s on R304 under the recipe
+contract; 32K ladder 18/18; the c64 stagger recipe 64/64 on seven passes. Pin `VLLM_USE_V2_MODEL_RUNNER=0`
+(v0.29.0 defaults XPU to the V2 runner, which has no draft INT4 head). Short-prompt harness:
+`probes/alias-harness-lab.py` (from bosd, PR #47). Note:
+`experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.
+
 ## Settled 2026-09-12: torch deterministic mode is not a lever (R295)
 
 The census's split-K nondeterminism can be switched off with `torch.use_deterministic_algorithms(True)`
