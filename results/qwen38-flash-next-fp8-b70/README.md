@@ -238,8 +238,13 @@ temperature 0, two repeats): aggregate 30 / 47 / 59 / 82 tok/s at 1 / 2 / 4 / 8 
 concurrent completions at 2-8 users reproduced their single-user token ids (first divergences from token
 1 to 122, prompt-dependent). Concurrency 1 is exact. The "Many users" cell stays withheld. A code search
 afterwards found the row-wise all-reduce/HC-norm selectors do not exist on the MTP0 head (they were added
-in the MTP1 lineage), so the all-reduce ran batched, a known non-bit-equal path; the next arm re-runs the
-ladder on the MTP0 head plus those two commits. Evidence:
+in the MTP1 lineage), so the all-reduce ran batched. A390-A393 then showed (a) the eight-sequence server
+reproduces the certified single-user pin and its own outputs across servers, (b) the selectors keyed on the
+leading dimension also catch 2-8-token prefill tail chunks and change single-user outputs above 2 rows, and
+(c) a multi-user scheduler mixes prefill chunks and decode rows of different requests in one step, so its
+collective shapes differ from the single-user run for the same prompt. Bit-identity to the certified
+single-user stream is therefore not reachable by decode-side selectors; a qualified many-users cell would be
+a new, separately certified batch-invariant authority (aggregate 47 / 58 / 82 tok/s measured at 2 / 4 / 8 users). Evidence:
 `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a383-eight-users-concurrency-oracle.json`;
 note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a383-eight-users-identity-ladder-result.md`.
 

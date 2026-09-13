@@ -598,3 +598,12 @@ good short/4K identity checked before deeper context. Receipt:
   44.06, results README). TTFT ~6 s per 1K tokens (64-token prefill batches) is the remaining
   long-context lever. Eight users (A383), the M=2 remainder decomposition (A384-A386) and the MTP2
   retry (A387) are chained next in `/tmp/q38-attempt-logs`.
+- 2026-09-13 18:00 UTC: "Many users" stays withheld under the lossless rule (A383-A393): the eight-sequence
+  server is single-user reproducible and holds afffd211, but multi-user steps mix prefill chunks and decode
+  rows across requests, so no decode-side selector can reproduce the single-user collectives; a qualified
+  cell needs a new certified batch-invariant authority (user decision). Row-wise selectors must never be
+  set above 2 on this code (they catch 2-8-token prefill tails). MTP2 is closed on the exact-mode line
+  (43.9/44.5 vs 48.2/48.5). A 512-token prefill batch cuts TTFT 1.7x but changes outputs (re-authority
+  candidate). The two-row step is accounted (MoE GEMMs 14.2, MoE glue 4.7, QSA 4.7, GDN 2.1, 8 ms launch
+  glue). All three host freezes followed MTP1-lineage teardowns with post-stop xpu-smi; the MTP1/MTP2
+  generators now emit the cached-receipt bypass.
