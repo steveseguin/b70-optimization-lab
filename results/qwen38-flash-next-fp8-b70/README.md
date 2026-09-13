@@ -214,6 +214,21 @@ MTP0 row carries 32.67 with that caveat. The exact-mode MTP1 line's ladder (A382
 these hashes. Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json`;
 note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a381-32k-context-ladder-mtp0-result.md`.
 
+A382 then served the certified exact-GDN MTP1 head (`6d872457`, stage v2, the exact-mode exports) at the
+same capacity, KV and placement:
+
+| input depth | MTP1 exact-mode tok/s (r1 / r2) | TTFT s | output ids vs A381 |
+|---|---|---|---|
+| 2K | 29.29 (cold first request) / 47.25 | 31.9 / 11.3 | equal (`afffd211…`, the certified pin) |
+| 8K | 42.71 / 42.72 | 47.7 | equal (`0126d542…`) |
+| 16K | 45.59 / 45.56 | 99.5 | equal (`789cbcb8…`) |
+| 32K | 44.06 / 44.09 | 206.2 | equal (`1cc1699e…`) |
+
+The MTP1 exact-mode line reproduces the MTP0 line's output ids at every depth (the lineage's lossless
+definition) at 1.33-1.45x its rate; the front page's "32K input" cell for that row carries 44.06 with the
+lab-measured caveat. Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json`;
+note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a382-32k-context-ladder-mtp1-exactgdn-result.md`.
+
 ## 2026-09-07: the Triton hyper-connection glue on XPU, +19% at a new output authority
 
 The XPU port routed the model's hyper-connection glue (the per-layer mix, combine,

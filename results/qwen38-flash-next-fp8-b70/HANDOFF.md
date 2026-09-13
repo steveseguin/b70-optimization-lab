@@ -590,3 +590,11 @@ good short/4K identity checked before deeper context. Receipt:
   2026-09-13 02:08 UTC); wait five minutes between a stop and the next launch; remount
   `/dev/sda2` and `/dev/sdb2` after a reset.
 
+- 2026-09-13 10:20 UTC: both promoted lines served at a 33,280-token capacity (A381 MTP0, A382 MTP1
+  exact mode; KV 1,341,530,112 bytes, never-hit + max-count-2 census placement, supervisor host floor
+  8 GB; host troughs 9.16 / 8.08 GB) are lossless within the line at 2K/8K/16K/32K and the MTP1 line
+  equals the MTP0 line's ids at every depth: MTP0 31.3-33.4 tok/s, MTP1 exact mode 42.7/45.6/44.1 at
+  8K/16K/32K. Published lab-measured (family run_measurements, front-page "32K input" cells 32.67 and
+  44.06, results README). TTFT ~6 s per 1K tokens (64-token prefill batches) is the remaining
+  long-context lever. Eight users (A383), the M=2 remainder decomposition (A384-A386) and the MTP2
+  retry (A387) are chained next in `/tmp/q38-attempt-logs`.
