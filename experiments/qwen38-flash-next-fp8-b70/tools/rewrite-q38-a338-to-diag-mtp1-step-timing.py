@@ -9,6 +9,7 @@ usage: rewrite-q38-a338-to-diag-allreduce-site-timing.py <attempt> <port> <new_h
 from __future__ import annotations
 import hashlib, os, re, subprocess, sys
 from pathlib import Path
+from q38_xpusmi_bypass import port as port_xpusmi
 ROOT = Path(__file__).resolve().parent
 attempt, port, NEW_HEAD, *extra_env = sys.argv[1:]
 assert re.fullmatch(r"[0-9a-f]{40}", NEW_HEAD)
@@ -118,6 +119,7 @@ def main():
         client = client.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
     client = client.replace(OLD_HEAD, NEW_HEAD)
     supervisor = successor(source("supervise-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"))
+    supervisor = port_xpusmi(supervisor)  # 2026-09-13: post-stop xpu-smi replaced by cached receipts (freeze mitigation)
     if "MAXLEN" in lc:
         supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
         # the supervisor server-identity literal (owned_server_pid requires --max-model-len <served>)

@@ -22,6 +22,7 @@ The vLLM overlay head 6d872457, the tuned map, the verifier and every other pin 
 from __future__ import annotations
 import hashlib, os, re, subprocess, sys
 from pathlib import Path
+from q38_xpusmi_bypass import port as port_xpusmi
 ROOT = Path(__file__).resolve().parent
 ATTEMPT = sys.argv[1] if len(sys.argv) > 1 else "366"
 PORT = sys.argv[2] if len(sys.argv) > 2 else "19979"
@@ -126,6 +127,7 @@ def main():
                        '"exact_verify_selectors": [' + "".join(f'"{kv}", ' for kv in NEW_SELECTORS), 1)
     assert OLD_SELECTOR not in client
     supervisor = successor(source("supervise-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh"))
+    supervisor = port_xpusmi(supervisor)  # 2026-09-13: post-stop xpu-smi replaced by cached receipts (freeze mitigation)
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp1-4352-ple-only-a306-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a306-host-controlled.sh"))
