@@ -364,6 +364,18 @@ with a K=1 range runs without the kernel width assertion that killed stock v0.29
 (128 instead of 172 tok/s in the single-user harness). Build and provenance:
 `experiments/qwen38-27b-b70/docker/rebase-v0290/` and `experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.
 
+## The scheduled-draft server on the rebase (R306, 2026-09-13): 120.98 / 121.14 one user, c16 992 exact
+
+The three scheduled-draft overlays apply to the v0.29.0 rebase (R305) with one fix on top: upstream PR #53542 stages
+the GDN state indices as a column slice of its maximum-width buffer, which is not contiguous for a scheduled K below
+the maximum, and the XPU kernel rejects it at graph capture; R306 keeps one contiguous staging buffer per active
+width. Image `neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r306-dynsd`
+(`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f124c6fb`), now the dynamic launcher's default; launch with
+`CLASSPAD=1` as measured. Under the recipe contract: G1/G2/G3 12/12, one user **120.98 / 121.14 tok/s** (dyn293:
+112.4, the shortlist is now active in this profile), 16 users 992 tok/s exact on all four passes (960), 32 users 1190
+(28-31/32), 64 users 1631 (62-64/64; no speculation 1641). Data:
+`experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json`.
+
 ## Known limits
 
 - Depth 3 is confirmed on this route's own evidence (campaigns d4/d5/d6),

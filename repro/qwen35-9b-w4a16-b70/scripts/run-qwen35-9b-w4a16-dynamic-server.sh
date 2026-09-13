@@ -21,23 +21,42 @@
 #   MODEL_DIR       the downloaded RedHatAI/Qwen3.5-9B-quantized.w4a16 directory (required)
 #   SPEC_SCHEDULE   JSON list of [first_batch_size,last_batch_size,draft_tokens]; default [[1,8,3],[9,16,1],[17,64,0]]
 #   MTP_DEPTH       the largest draft depth in the schedule (default 3); MAX_NUM_SEQS default 64 to cover the schedule
-#   IMAGE           default neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-fullgraph
+#   IMAGE           default the R306 image (v0.29.0 rebase + overlays); CLASSPAD=1 is the measured configuration (dyn293/dyn306)
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-r276-dynsd-catchup}
+# R306 (2026-09-13): the served image for this profile is the v0.29.0 rebase plus the same three overlays and a
+# contiguous per-width staging fix (experiments/qwen38-27b-b70/docker/rebase-v0290/Dockerfile.r305-dynsd, .r306-dynsd;
+# ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:f124c6fb). The 0.27.2-lineage overlay images built from
+# ../docker still launch: their content pins and kernel head are selected below from the image's build-lane label.
+image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r306-dynsd}
 depth=${MTP_DEPTH:-3}
 schedule=${SPEC_SCHEDULE:-[[1,8,3],[9,16,1],[17,64,0]]}
 [[ "${depth}" =~ ^[1-9]$ ]] || { echo "MTP_DEPTH must be 1-9 for the schedule (got ${depth})" >&2; exit 1; }
 [[ "${schedule}" =~ ^\[\[[0-9,\]\[]+\]\]$ ]] || { echo "SPEC_SCHEDULE must be a JSON list of [start,end,K] with no spaces" >&2; exit 1; }
 # Pin the overlay by content. Digests are those of the files in ../docker (sha256sum r276-*.py).
-declare -A want=(
-  [v1/core/sched/scheduler.py]=6d550a8e6a5c6abf200d66fbc4fc45c8ce371a312d454c39e057a45b364994c3
-  [v1/core/single_type_kv_cache_manager.py]=b9a100331f98882dc01dc6f6efac53b1fc1fc949ba0b8915e932336a8a521c09
-  [config/vllm.py]=e03067d4fbcf56ae51fd254fb70c02a3cdf25fd3db6bae70855b945cdc15bcb2
-  [v1/cudagraph_dispatcher.py]=3d296446deea8726643d7942f49cf920b82d26bb2205480190ef4d0a731bbb98
-  [v1/worker/gpu_model_runner.py]=977887edddf87d38aec35905d9668634da461ff6dc39a5b2301889a2228f4ecb
-  [v1/spec_decode/llm_base_proposer.py]=2e0f1661bb02a05297edcc5de586eacc20700a997074197988e1923d69ffd03d
-)
+if [[ "$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.build.lane" }}')" == *r306-dynsd* ]]; then
+  # R306 content pins (experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256)
+  declare -A want=(
+    [v1/core/sched/scheduler.py]=09b8ed02301ad1d549619dc84a0b595639cac953a4c6ba8a3d5dca8f2b50c18a
+    [v1/core/single_type_kv_cache_manager.py]=cd5442a9fb9dd14849a3b9de9c88c52b5533a18c0028ce859b8cbdf300de3cc8
+    [config/vllm.py]=13d9ec1d9ca903064007bbd488954e0639a6fd1293f5fb55b06e380bff335b5d
+    [v1/cudagraph_dispatcher.py]=3d296446deea8726643d7942f49cf920b82d26bb2205480190ef4d0a731bbb98
+    [v1/worker/gpu_model_runner.py]=b7b491bc9686b7582cb38cdecb0356be133bc8f6c6e90fd813e02794cd88861f
+    [v1/spec_decode/llm_base_proposer.py]=4f5638a47e5f57d697e97cbfb6a0c41f563b6d2f58c132fa7ecb5e132797ab64
+  )
+  export EXPECTED_KERNEL_HEAD=${EXPECTED_KERNEL_HEAD:-6d92b1bfbf32767ecda8e819613eb151e70030ad}
+else
+  # 0.27.2-lineage overlay images (r276-dynsd-*, r293-dynsd-*): digests of the files in ../docker (sha256sum r276-*.py)
+  declare -A want=(
+    [v1/core/sched/scheduler.py]=6d550a8e6a5c6abf200d66fbc4fc45c8ce371a312d454c39e057a45b364994c3
+    [v1/core/single_type_kv_cache_manager.py]=b9a100331f98882dc01dc6f6efac53b1fc1fc949ba0b8915e932336a8a521c09
+    [config/vllm.py]=e03067d4fbcf56ae51fd254fb70c02a3cdf25fd3db6bae70855b945cdc15bcb2
+    [v1/cudagraph_dispatcher.py]=3d296446deea8726643d7942f49cf920b82d26bb2205480190ef4d0a731bbb98
+    [v1/worker/gpu_model_runner.py]=977887edddf87d38aec35905d9668634da461ff6dc39a5b2301889a2228f4ecb
+    [v1/spec_decode/llm_base_proposer.py]=2e0f1661bb02a05297edcc5de586eacc20700a997074197988e1923d69ffd03d
+  )
+  export EXPECTED_KERNEL_HEAD=${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}
+fi
 probe=qwen35-overlay-probe-$$
 docker create --name "${probe}" "${image}" >/dev/null
 trap 'docker rm "${probe}" >/dev/null 2>&1 || true' EXIT

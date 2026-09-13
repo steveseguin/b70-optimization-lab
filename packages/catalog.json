@@ -3220,6 +3220,48 @@
               "per_user_value": 60.0063
             }
           ]
+        },
+        {
+          "id": "http-w4a16-r306-dynamic-draft-schedule-tp1-aggregate-vs-concurrent-users",
+          "label": "Qwen3.5-9B W4A16 one card, scheduled drafts (depth 3 to 8 users, 1 to 16, none above) on R306 (the v0.29.0 rebase) with CLASSPAD=1 and the 67k draft shortlist: aggregate decode vs concurrent users (exact rungs)",
+          "metric": "aggregate_decode",
+          "unit": "tok/s",
+          "x_metric": "concurrent_sequences",
+          "x_label": "Concurrent HTTP users",
+          "scope": "dyn306 (2026-09-13): one B70, image R306 = R304 (stock vLLM XPU v0.29.0 + the lab overlays + upstream fixes #53059/#51565/#53542) + the three scheduled-draft overlays + contiguous per-width staging, VLLM_XPU_FP16_LINEAR_CLASSPAD=1, strict launcher env, full decode graphs per scheduled K, max-model-len 256, max-num-seqs 64, 128 returned raw token IDs per response on the small-context suite, four passes, pass 2 shown. Points are rungs output-identity-qualified in the shown pass (c1-c16; 16 users exact on all four passes). Measured but withheld: c32 1190 (28-31/32), c64 1631 (62-64/64; the no-speculation server in the same arm reads 1641). Strict pair one user 120.98/121.14 tok/s, G1/G2/G3 12/12 (dyn293 on the previous image: 112.4).",
+          "evidence": "experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json",
+          "points": [
+            {
+              "concurrent_sequences": 1,
+              "value": 123.9,
+              "samples": 1,
+              "per_user_value": 123.9
+            },
+            {
+              "concurrent_sequences": 2,
+              "value": 237.9,
+              "samples": 1,
+              "per_user_value": 119.0
+            },
+            {
+              "concurrent_sequences": 4,
+              "value": 396.9,
+              "samples": 1,
+              "per_user_value": 99.2
+            },
+            {
+              "concurrent_sequences": 8,
+              "value": 700.8,
+              "samples": 1,
+              "per_user_value": 87.6
+            },
+            {
+              "concurrent_sequences": 16,
+              "value": 991.5,
+              "samples": 1,
+              "per_user_value": 62.0
+            }
+          ]
         }
       ],
       "hardware": {
@@ -3399,7 +3441,8 @@
         "experiments/qwen38-27b-b70/docker/rebase-v0290/port-diffs/net-scaledmm.diff",
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r302-uniform-decode-alias-guard-pr53059.diff",
         "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-gdn-first-chunk-classification-pr51565.diff",
-        "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff"
+        "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
+        "experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json"
       ],
       "evidence": [
         "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-c128-identity-ladder.json",
