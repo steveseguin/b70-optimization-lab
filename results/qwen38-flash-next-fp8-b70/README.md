@@ -225,7 +225,8 @@ same capacity, KV and placement:
 | 32K | 44.06 / 44.09 | 206.2 | equal (`1cc1699e…`) |
 
 The MTP1 exact-mode line reproduces the MTP0 line's output ids at every depth (the lineage's lossless
-definition) at 1.33-1.45x its rate; the front page's "32K input" cell for that row carries 44.06 with the
+definition) at 1.33-1.45x its rate, and a second server (A394) reproduced all four hashes with rates within
+0.1 tok/s; the front page's "32K input" cell for that row carries 44.06 with the
 lab-measured caveat. Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a382-32k-context-depth-ladder.json`;
 note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a382-32k-context-ladder-mtp1-exactgdn-result.md`.
 
