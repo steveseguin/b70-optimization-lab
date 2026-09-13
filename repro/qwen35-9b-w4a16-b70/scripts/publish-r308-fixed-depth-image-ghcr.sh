@@ -4,7 +4,7 @@
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "${script_dir}/../../.." && pwd)
-local_ref=${LOCAL_IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r308}
+local_ref=${LOCAL_IMAGE:-rebase/r308-state-resume}
 expected_id=${EXPECTED_IMAGE_ID:?set EXPECTED_IMAGE_ID to the qualified immutable R308 image ID}
 [[ "${expected_id}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "invalid immutable image ID" >&2; exit 1; }
 owner=${GHCR_OWNER:-steveseguin}
