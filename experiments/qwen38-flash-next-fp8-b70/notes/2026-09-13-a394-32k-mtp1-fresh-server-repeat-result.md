@@ -14,7 +14,7 @@ MAX_MODEL_LEN 33280, KV 1,341,530,112, never-hit + max-count-2 placement, port 2
 
 ## Reading
 
-Two servers, eight rows per depth pair, one hash per depth, rates within 0.1 tok/s: the 32K cell of the
+Two servers, four rows per depth (16 rows total), one hash per depth, rates within 0.1 tok/s: the 32K cell of the
 exact-mode MTP1 line is reproducible in the same sense as the certified 4K line (A365/A366). The family
 entries for 8K/16K/32K now cite both servers; the front-page cell (44.06) is unchanged. The step left
 before a certified long-context claim is a frozen client that pins these four hashes and runs the
@@ -22,3 +22,7 @@ quality battery at the served 33,280 capacity, generated from the A305/A364 line
 options; that is the next publication packet on this line.
 
 Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a394-32k-context-depth-ladder-fresh-server.json`.
+
+Post-interruption audit: row evidence verified directly; teardown rc 143 and cached
+GPU receipts do not establish a clean shutdown. See
+[recovery note](../../../../notes/2026-09-13-a394-freeze-recovery.md).

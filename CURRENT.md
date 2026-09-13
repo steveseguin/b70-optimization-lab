@@ -25,6 +25,12 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, 2026-09-13 20:10 UTC recovery:** A394 depth repeats pass, but
+teardown rc is 143 and another host interruption followed. No workload running;
+hold Flash-Next launches pending teardown/host-restoration review. Git damage
+restored from the already-pushed A394 commit; evidence USB mounted read-only,
+RAID unmounted. See [recovery evidence](notes/2026-09-13-a394-freeze-recovery.md).
+
 **2026-09-13 (EDT):** the whole INT4/W4A16 runtime is rebased onto stock vLLM XPU
 v0.29.0 as **R304** (`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16`,
 pushed and anonymously pullable): the R294b overlays ported as net diffs, the kernel
