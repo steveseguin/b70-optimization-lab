@@ -161,3 +161,9 @@ it. R306 gives the builder one contiguous staging buffer per active width, alloc
 image: 112.4; the shortlist is now active in this profile), c16 992 exact on all four passes (960), c32 1190 (28-31/32),
 c64 1631 (62-64/64), no-spec c64 1641: the same concurrency profile, a faster single user. Data:
 `experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json`.
+
+## FP8 lane, short prompts (TP2, depth 1)
+
+R156/R187 image: one-token prompt 30/30 degenerate, two-token (1+K) 0/30 (this profile captures only size 1,
+piecewise), longer 0/30. R304: 0/30 on every length. The one-token failure (#51562) is therefore live on the published
+FP8 recipe too, and fixed by the same image.

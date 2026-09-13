@@ -27,10 +27,10 @@ The lab's INT4 runtime was rebased onto stock vLLM XPU v0.29.0 as R304 (see the 
 r137a + r137b patches, which the rebuilt library carries, and its Python overlays (R156 split-mixed GDN, block W8A16
 switches, draft-only INT4 head, packed-serial-exact RMSNorm) are part of the ported set, so the R187 profile runs on
 the same image: strict pair under the recipe contract, TP2 depth 1: G1/G2/G3 12/12, **54.82 / 54.83 tok/s**, MTP0
-33.08 / 33.08 (R187: 54.935 / 33.097). R304 also carries three open upstream vLLM fixes (#53059, #51565, #53542). The failures they fix were measured on
-the Qwen3.5-4B lane (every one-token prompt and every (1+K)-token prompt degenerated into a single-character wall on
-the old image); the same mechanism applies to this GDN model at depth 1 (one- and two-token prompts) and a direct
-measurement on this lane is queued. Launch as in "Run R187" with `IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+33.08 / 33.08 (R187: 54.935 / 33.097). R304 also carries three open upstream vLLM fixes (#53059, #51565, #53542). Measured on this lane (TP2, depth 1, 30
+greedy runs per prompt length): on the R156 image every **one-token prompt** came back as a `!!!!` wall (30/30); on
+R304 0/30 on every length. The two-token (1+K) alias shape did not degenerate on this profile, which captures only
+batch size 1 piecewise; the guard is carried regardless. Launch as in "Run R187" with `IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
 EXPECTED_IMAGE_ID=sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
 EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad VLLM_USE_V2_MODEL_RUNNER=0` (pull:
 `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16...`). The R139/R156/R187 sections below remain the
