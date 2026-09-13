@@ -125,6 +125,9 @@ def main():
     client = replace_n(client, f'"exact_verify_selectors": ["{OLD_SELECTOR}", ',
                        '"exact_verify_selectors": [' + "".join(f'"{kv}", ' for kv in NEW_SELECTORS), 1)
     assert OLD_SELECTOR not in client
+    # the A309 client names its runtime verifier after its own attempt (a latent rename in the a139->a309
+    # generator); the file that carries the pinned digest is verify-q38-a139-fullgraph-runtime.py
+    client = replace_n(client, f"verify-q38-a{ATTEMPT}-fullgraph-runtime.py", "verify-q38-a139-fullgraph-runtime.py", 1)
     supervisor = successor(source("supervise-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32.sh"))
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)

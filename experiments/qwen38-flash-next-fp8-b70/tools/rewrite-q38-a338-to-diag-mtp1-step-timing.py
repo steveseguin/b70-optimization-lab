@@ -56,10 +56,22 @@ def main():
     # Plain entries become launcher exports (Q38_* survive into the engine). Entries prefixed
     # DERIVED: are printed into the derived server script next to the other VLLM_XPU_* exports,
     # because the derived launcher unsets every inherited VLLM_* variable.
-    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:"))]
+    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:", "MAXLEN:", "KVBYTES:"))]
     derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
     exports = "".join(f"export {kv}\n" for kv in plain)
-    launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", "export KV_CACHE_MEMORY_BYTES=376569856\n" + exports, 1)
+    # MAXLEN:<n> and KVBYTES:<n> override the served context and KV budget (long-context arms).
+    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:")))}
+    if "MAXLEN" in lc:
+        launcher = replace_n(launcher, " MAX_MODEL_LEN=4352 ", f" MAX_MODEL_LEN={lc['MAXLEN']} ", 1)
+        # the derived script's frozen-context check and message, printed by the launcher's awk rules
+        launcher = replace_n(launcher, 'print "[[ \\"${max_model_len}\\" == \\"4352\\" ]] || {"', 'print "[[ \\"${max_model_len}\\" == \\"' + lc["MAXLEN"] + '\\" ]] || {"', 1)
+        launcher = replace_n(launcher, "frozen to MAX_MODEL_LEN=4352", "frozen to MAX_MODEL_LEN=" + lc["MAXLEN"], 1)
+    if "KVBYTES" in lc:
+        launcher = replace_n(launcher, "export KV_CACHE_MEMORY_BYTES=376569856\n", f"export KV_CACHE_MEMORY_BYTES={lc['KVBYTES']}\n", 1)
+        kv_anchor_value = lc["KVBYTES"]
+    else:
+        kv_anchor_value = "376569856"
+    launcher = replace_n(launcher, f"export KV_CACHE_MEMORY_BYTES={kv_anchor_value}\n", f"export KV_CACHE_MEMORY_BYTES={kv_anchor_value}\n" + exports, 1)
     # STAGE:<dir> MANIFEST:<file name under data/> STAGE_BUILD_HEAD:<sha> swap the loaded kernel
     # stage: the launcher's KERNEL_STAGE export, and gsub rules in the derived script for the
     # manifest file name and the recorded stage build head.
@@ -85,18 +97,24 @@ def main():
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
     Path(f"/tmp/q38-ple2k-a{attempt}-base.sh").unlink(missing_ok=True)
     assert f"q38-ple2k-a{attempt}" in derived
-    assert f'expected_vllm_head="{NEW_HEAD}"' in derived and OLD_HEAD not in derived
+    assert f'expected_vllm_head="{NEW_HEAD}"' in derived and (NEW_HEAD == OLD_HEAD or OLD_HEAD not in derived)
     if "MANIFEST" in opts:
         assert opts["MANIFEST"] in derived and "runtime-stage-padding-guard-loadable.sha256" not in derived
     if "STAGE_BUILD_HEAD" in opts:
         assert f'expected_stage_build_head="{opts["STAGE_BUILD_HEAD"]}"' in derived
     launcher = launcher.replace("expected_derived=" + "0" * 64, "expected_derived=" + digest(derived))
     client = successor(source("run-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32-client.sh"))
+    if "MAXLEN" in lc:
+        client = client.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
     client = client.replace(OLD_HEAD, NEW_HEAD)
     supervisor = successor(source("supervise-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"))
+    if "MAXLEN" in lc:
+        supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a338-host-controlled.sh"))
+    if "MAXLEN" in lc:
+        host = host.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
     host = replace_n(host, "expected_supervisor=" + SOURCES["supervise-tp4-mtp1-4352-ple-only-a338-fullgraphdet-w13n32.sh"], "expected_supervisor=" + digest(supervisor), 1)
     out_names = (
         f"launch-tp4-mtp1-4352-ple-only-a{attempt}-fullgraphdet-w13n32.sh",
