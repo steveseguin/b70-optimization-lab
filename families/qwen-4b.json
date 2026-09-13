@@ -5,7 +5,7 @@
  "name": "Qwen 4B",
  "display_name": "Qwen3.5 4B",
  "publisher": "Qwen / Alibaba",
- "updated_at": "2026-09-12",
+ "updated_at": "2026-09-13",
  "summary": "Alibaba's smallest dense-hybrid Qwen3.5 with a shipped MTP head, served on one Arc Pro B70. Only the INT4 W4A16 build is packaged: the FP8 build of the same model is not repeat-exact on this stack, while the INT4 route passes every identity gate.",
  "architecture": {
   "class": "Qwen3_5ForConditionalGeneration",
@@ -181,12 +181,12 @@
    "workload": "strict 12-prompt six-class suite over the completions API, 512-token cap, cache zero, class-balanced median tok/s over tokens 1-100 after TTFT, two fresh servers",
    "metrics": {
     "decode_tok_s": [
-     191.874,
-     191.583
+     191.8743,
+     191.5809
     ],
     "ttft_ms": [
-     44.91,
-     45.05
+     42.6346,
+     42.737
     ]
    },
    "evidence": "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-slu67k-strict-result.json"
@@ -299,14 +299,12 @@
     "W4A16:0": {
      "state": "lab-measured",
      "label": "D102.62",
-     "evidence_id": "q35-4b-w4a16-tp1-mtp0-graph-v1",
-     "packet_id": "qwen35-4b-w4a16-b70"
+     "evidence_id": "q35-4b-w4a16-tp1-mtp0-graph-v1"
     },
     "W4A16:3": {
      "state": "lab-measured",
      "label": "D177.41",
-     "evidence_id": "q35-4b-w4a16-tp1-mtp3-graph-int4head-v1",
-     "packet_id": "qwen35-4b-w4a16-b70"
+     "evidence_id": "q35-4b-w4a16-tp1-mtp3-graph-int4head-v1"
     },
     "FP8-dynamic:0": {
      "state": "missing",
@@ -319,5 +317,15 @@
    }
   }
  ],
- "family_closures": []
+ "family_closures": [],
+ "featured_results": [
+  {
+   "role": "hero",
+   "label": "W4A16 \u00b7 one B70 \u00b7 MTP3 with 67k draft shortlist (first of two strict repeats)",
+   "measurement_id": "q35-4b-w4a16-tp1-mtp3-graph-int4head-shortlist67k-slu67k",
+   "metric": "decode_tok_s",
+   "sample_index": 0,
+   "quality_label": "Two fresh servers, G1/G2/G3 12/12; pair center 191.73 tok/s; R294b record, current R304 replay scoped separately"
+  }
+ ]
 }

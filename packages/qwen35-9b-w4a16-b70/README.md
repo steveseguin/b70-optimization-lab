@@ -48,13 +48,15 @@ requests share the step. The FP8 path has no such guarantee and flips a handful 
 The determinism pad (`VLLM_XPU_W4A16_DETERMINISM_PAD`) is off and should stay off: measured on this model it is inert
 below its 128-row threshold and costs 13% at 64 users above it, buying no identity.
 
+Current runtime: **R304 / vLLM v0.29.0**, strict pair center **123.54 tok/s**, all gates 12/12. The headline above retains the distinct R294b record identity. Context and concurrency results keep their own runtime and workload labels.
+
 ## Commands
 
 ```bash
 # image (public, anonymous pull verified 2026-09-07 by tag and digest)
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1
-docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 \
-            neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 \
+            neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
 
 # serve (MTP_DEPTH=0 for the no-speculation profile)
 MODEL_DIR=/models/Qwen3.5-9B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-w4a16-cache MTP_DEPTH=3 \

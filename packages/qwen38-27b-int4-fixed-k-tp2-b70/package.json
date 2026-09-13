@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "devan-carlin (AutoRound INT4 of Alibaba / Qwen)",
     "variant": "27B AutoRound INT4 W4A16",
-    "summary": "devan-carlin's AutoRound INT4 tensors served through vLLM's plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane's whole-graph deterministic stack. Single-request output is repeat-exact and speculative decoding is lossless against the MTP0 oracle at every depth measured; MTP0 output is byte-identical to a single request through 64 concurrent users (a near-tie prompt can differ in some runs), speculative depths through 16.",
+    "summary": "Qwen3.8-27B AutoRound INT4 on one or two B70s with fixed-K W4A16 kernels and target-verified speculative decoding. The two-card MTP4 shortlist record is 117.53 tok/s; the current R304 image revalidates at 117.24/116.95, and one card at 81.17/81.16. Multi-user output equality is qualified separately per profile.",
     "quantization": "AutoRound INT4 W4A16 (group 128, symmetric)",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -41,7 +41,14 @@
       "fixed-k"
     ],
     "published_at": "2026-09-05",
-    "benchmark_status": "Research-status (2026-09-06). Headline: TP2 depth 4 with XPU graph capture and the draft-only INT4 lm_head (R257, R256 image) 112.362/112.325 tok/s, G2 12/12 and G3 12/12 vs the eager MTP0 oracle, acceptance 3.51; depth 5 109.971/110.069, depth 6 108.340/108.373 (R258). Graphs without the draft head (R247/R250/R253): MTP0 49.833/49.887, depth 1 76.723/76.629, depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982. Eager R239 matrix: TP2 MTP0 34.210/35.640, d1 51.098/50.088, d2 61.140/61.541, d3 67.613/67.831, d4 68.552/67.789; TP1 MTP0 32.960/32.945, d1 49.640/49.468, d2 56.505/56.449, d3 58.471/58.474, d4 56.292/56.251; every pair 12/12 vs each other and vs the MTP0 oracle. Identity ladders: MTP0 exact c1-c64 (eager and under graphs); speculative depths exact through c16 (eager TP2) / c8 (TP1, graphs), c32 >= 29/32, c64 >= 58/64. R258/R259 (depths 5-6 and ladders on the headline configuration) pending. No promotion or LocalMaxxing submission yet."
+    "benchmark_status": "Qualified single-user record R299, approved LocalMaxxing cmtyqbeu40aqgps011wl4mljo at 117.528 tok/s. Current recipe R304 (vLLM v0.29.0), TP2 117.24/116.95 and TP1 81.17/81.16, G1/G2/G3 12/12. Research-status portable recipe; clean-host replay pending. R304 TP2 MTP0 exact through c32 in both ladder passes; MTP4 exact at c1,c2,c8, with a c4 mismatch in the warm pass. TP1 MTP0 exact through c64; MTP4 exact through c8 in both passes. Historical R299 MTP4 exact through c16. No strict single-user gate guarantees arbitrary concurrent output equality.",
+    "featured_metric": {
+      "value": 117.5280834152335,
+      "unit": "tok/s",
+      "label": "Best qualified TP2 record: MTP4 with the 67k draft shortlist (R299 / R294b)",
+      "scope": "Two B70s, AutoRound INT4 relabelled as GPTQ W4A16, CLASSPAD=0, full decode-only XPU graphs, unchanged FP16 target verifier and draft-only INT4 head. Center of two fresh-server class-balanced medians 117.46 / 117.59 on the fixed 12-prompt/six-class 512-cap cache-zero suite. G1/G2/G3 12/12. Current R304 TP2 replay 117.24 / 116.95; TP1 81.17 / 81.16. These are distinct runtime/topology profiles; concurrency equality has narrower limits.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json"
+    }
   },
   "contributors": [
     {
@@ -106,7 +113,7 @@
     ]
   },
   "commands": {
-    "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 EXPECTED_XPU_EXTENSION_SHA256=bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932 EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
     "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
     "health": "curl -fsS http://127.0.0.1:18134/health",
     "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
@@ -764,6 +771,270 @@
           "samples": 1,
           "per_user_value": 15.925,
           "exact": "64/64"
+        }
+      ]
+    },
+    {
+      "id": "r299-tp2-depth4-r294-draft-shortlist-full-mtp4-exact-aggregate",
+      "label": "R294b TP2, MTP depth 4: exact HTTP aggregate throughput",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head, pad off) with the draft head scoring the 67k shortlist; FULL run: fresh MTP0 pair, depth-4 pair against its own MTP0, two-pass c1-c64 ladders; 128 output tokens, small-context suite, cache zero; points require exact sequential-oracle output in BOTH passes. Warm second-pass rate shown; samples counts the two identity-tested passes. Missing rungs failed at least one pass; not a continuous guarantee.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 111.4,
+          "per_user_value": 111.4,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 191.3,
+          "per_user_value": 95.65,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 304.9,
+          "per_user_value": 76.225,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 429.8,
+          "per_user_value": 53.725,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 589.0,
+          "per_user_value": 36.8125,
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "id": "r299-tp2-depth4-r294-draft-shortlist-full-mtp0-exact-aggregate",
+      "label": "R294b TP2, MTP depth 0: exact HTTP aggregate throughput",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head, pad off) with the draft head scoring the 67k shortlist; FULL run: fresh MTP0 pair, depth-4 pair against its own MTP0, two-pass c1-c64 ladders; 128 output tokens, small-context suite, cache zero; points require exact sequential-oracle output in BOTH passes. Warm second-pass rate shown; samples counts the two identity-tested passes. Missing rungs failed at least one pass; not a continuous guarantee.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 50.2,
+          "per_user_value": 50.2,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 96.0,
+          "per_user_value": 48.0,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 180.1,
+          "per_user_value": 45.025,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 330.1,
+          "per_user_value": 41.2625,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 540.2,
+          "per_user_value": 33.7625,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 815.0,
+          "per_user_value": 25.46875,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 987.3,
+          "per_user_value": 15.4265625,
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "id": "r304-tp2-depth4-v0290-rebase-full-mtp4-exact-aggregate",
+      "label": "R304 TP2, MTP depth 4: exact HTTP aggregate throughput",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head scoring the 67k shortlist, CLASSPAD=0, pad off), V1 model runner pinned, real image contract (v0290 digest set); two-pass ladders (R304c, the warm second pass is quoted, as for R299); the first R304b run (single cold pass, strict 117.04/117.09) is superseded; 128 output tokens, small-context suite, cache zero; points require exact sequential-oracle output in BOTH passes. Warm second-pass rate shown; samples counts the two identity-tested passes. Missing rungs failed at least one pass; not a continuous guarantee.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 113.7,
+          "per_user_value": 113.7,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 192.1,
+          "per_user_value": 96.05,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 435.9,
+          "per_user_value": 54.4875,
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "id": "r304-tp2-depth4-v0290-rebase-full-mtp0-exact-aggregate",
+      "label": "R304 TP2, MTP depth 0: exact HTTP aggregate throughput",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head scoring the 67k shortlist, CLASSPAD=0, pad off), V1 model runner pinned, real image contract (v0290 digest set); two-pass ladders (R304c, the warm second pass is quoted, as for R299); the first R304b run (single cold pass, strict 117.04/117.09) is superseded; 128 output tokens, small-context suite, cache zero; points require exact sequential-oracle output in BOTH passes. Warm second-pass rate shown; samples counts the two identity-tested passes. Missing rungs failed at least one pass; not a continuous guarantee.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 50.2,
+          "per_user_value": 50.2,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 95.4,
+          "per_user_value": 47.7,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 180.1,
+          "per_user_value": 45.025,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 329.8,
+          "per_user_value": 41.225,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 539.7,
+          "per_user_value": 33.73125,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 816.3,
+          "per_user_value": 25.509375,
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "id": "r304-tp1-depth4-v0290-rebase-full-mtp4-exact-aggregate",
+      "label": "R304 TP1, MTP depth 4: exact HTTP aggregate throughput",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "one card (TP1), depth 4, sizes to 320, INT4 draft head scoring the 67k shortlist, CLASSPAD=0, pad off, V1 model runner, real image contract; two-pass ladders (warm pass quoted); 128 output tokens, small-context suite, cache zero; points require exact sequential-oracle output in BOTH passes. Warm second-pass rate shown; samples counts the two identity-tested passes. Missing rungs failed at least one pass; not a continuous guarantee.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 76.6,
+          "per_user_value": 76.6,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 134.6,
+          "per_user_value": 67.3,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 208.2,
+          "per_user_value": 52.05,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 272.7,
+          "per_user_value": 34.0875,
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "id": "r304-tp1-depth4-v0290-rebase-full-mtp0-exact-aggregate",
+      "label": "R304 TP1, MTP depth 0: exact HTTP aggregate throughput",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "one card (TP1), depth 4, sizes to 320, INT4 draft head scoring the 67k shortlist, CLASSPAD=0, pad off, V1 model runner, real image contract; two-pass ladders (warm pass quoted); 128 output tokens, small-context suite, cache zero; points require exact sequential-oracle output in BOTH passes. Warm second-pass rate shown; samples counts the two identity-tested passes. Missing rungs failed at least one pass; not a continuous guarantee.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 33.1,
+          "per_user_value": 33.1,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 63.1,
+          "per_user_value": 31.55,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 119.3,
+          "per_user_value": 29.825,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 215.7,
+          "per_user_value": 26.9625,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 347.4,
+          "per_user_value": 21.7125,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 513.2,
+          "per_user_value": 16.0375,
+          "samples": 2
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 418.8,
+          "per_user_value": 6.54375,
+          "samples": 2
         }
       ]
     }

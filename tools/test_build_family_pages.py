@@ -225,7 +225,7 @@ class FamilyCoverageTest(unittest.TestCase):
             )
         ]
         self.assertTrue(ratebars)
-        self.assertIn((125.46, 100.0), ratebars)
+        self.assertIn((191.73, 100.0), ratebars)
         max_rate = max(rate for rate, _ in ratebars)
         for rate, width in ratebars:
             with self.subTest(rate=rate):
@@ -1709,10 +1709,8 @@ class FamilyCoverageTest(unittest.TestCase):
         self.assertEqual(
             [entry["value"] for entry in entries],
             [
-                71.45427094575045,
-                30.329809361830037,
-                49.05894025767351,
-                71.9001988117144,
+                117.46298497318,
+                81.16573518803,
             ],
         )
         rendered = MODULE.family_page(family)
@@ -1721,11 +1719,11 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(strip)
         strip_html = strip.group(0)
-        # The curated hero (71.45) is the page headline; the other curated
+        # The curated hero (117.46) is the page headline; the other curated
         # results stay in the strip, in curated order, never eager captures.
         self.assertIn("hero-headline", rendered)
-        self.assertIn('<span class="big">71.45</span>', rendered)
-        for protected in ("30.33", "49.06", "71.9"):
+        self.assertIn('<span class="big">117.46</span>', rendered)
+        for protected in ("81.17",):
             self.assertIn(protected, strip_html)
         for eager in ("24.25", "16.77", "17.38", "71.72"):
             self.assertNotIn(eager, strip_html)
@@ -5344,6 +5342,7 @@ class FamilyCoverageTest(unittest.TestCase):
                 "qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906": "B",
                 "qwen38-flash-next-fp8-tp4-mtp1-hctriton-b70-37tps-20260907": "B",
                 "qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907": "B",
+                "qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913": "B",
                 "qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908": "B",
                 "qwen38-flash-next-fp8-tp4-mtp1-lossless-b70-27tps-20260905": "B",
                 "qwen38-flash-next-fp8-tp4-research": "C",

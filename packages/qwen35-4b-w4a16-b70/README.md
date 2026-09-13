@@ -36,12 +36,14 @@ per-process state. On the INT4 kernel the same gate passes 12/12. The evidence i
 [`experiments/qwen35-4b-b70/notes/2026-09-07-qwen35-4b-fp8-not-repeat-exact.md`](../../experiments/qwen35-4b-b70/notes/2026-09-07-qwen35-4b-fp8-not-repeat-exact.md)
 rather than discarded, because it is half of the evidence that what separates the two routes is the matmul. The kernel is not the whole story though: the RMSNorm on the same path is also row-count dependent (measured 2026-09-08), so this route is exact in the regimes measured rather than exact by construction.
 
+Current runtime: **R304 / vLLM v0.29.0**, strict pair center **191.39 tok/s**, all gates 12/12. The headline above retains the distinct R294b record identity. Context and concurrency results keep their own runtime and workload labels.
+
 ## Commands
 
 ```bash
-docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1
-docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 \
-            neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b
+docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+docker tag  ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 \
+            neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
 
 MODEL_DIR=/models/Qwen3.5-4B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-4b-cache MTP_DEPTH=3 \
   repro/qwen35-4b-w4a16-b70/scripts/run-qwen35-4b-w4a16-server.sh
@@ -52,7 +54,7 @@ Full procedure and validation: [`repro/qwen35-4b-w4a16-b70/README.md`](../../rep
 ## Still missing
 
 - clean-host replay
-- 2K-32K context rows
+- clean-host context replay (lab 2K–32K measurements are available in the recipe)
 
 ## Container packet
 

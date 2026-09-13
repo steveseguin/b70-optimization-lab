@@ -10,7 +10,7 @@
     "model_family": "Qwen3.5",
     "publisher": "RedHatAI (W4A16 of Alibaba / Qwen)",
     "variant": "9B W4A16 (compressed-tensors INT4 weights, FP16 activations) with the publisher MTP head",
-    "summary": "RedHatAI's W4A16 Qwen3.5-9B served by vLLM XPU on one B70 through the lab's R276 image, with the publisher's MTP head as a lossless speculative draft. vLLM's compressed-tensors path selects the lab's wNa16 INT4 kernel, whose fixed-K two-tier strategy is row-count invariant: without speculation this route is byte-exact against a single request at every concurrency through 64 users, where the FP8 route on the same model flips a near-tie token from 16 users up. It is also 28% faster without speculation and 15% faster with it. The kernel is not the only reduction on that path: the RMSNorm this route runs is itself row-count dependent (measured 2026-09-08), so the route is exact in the regimes measured rather than exact by construction.",
+    "summary": "Qwen3.5-9B W4A16 on one B70 with target-verified MTP3 and a 67,248-row draft shortlist. Best qualified strict record 124.08 tok/s; the current R304 recipe fixes the older runtime’s tiny-prompt failures and revalidates at 123.54 tok/s. Multi-user and context curves describe separately named operating profiles; clean-host replay is pending.",
     "quantization": "W4A16 (compressed-tensors INT4 weights, FP16 activations)",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -43,13 +43,13 @@
     ],
     "published_at": "2026-09-07",
     "featured_metric": {
-      "value": 113.265,
+      "value": 124.0842546855242,
       "unit": "tok/s",
-      "label": "MTP depth 3 with the draft-only INT4 lm_head, one card, strict completions suite (center of two fresh servers, 113.627 / 112.904)",
-      "scope": "Center of two fresh-server class-balanced medians over the strict fixed 12-prompt six-class suite through the completions API, 512-token cap, separate empty compile caches, 12/12 complete token arrays exact versus a same-configuration MTP0 oracle (64.332 / 64.338), canaries on every server, cache zero; one B70, R276 image, qwen3_5_mtp depth 3, draft-only INT4 lm_head, full decode-only XPU graph capture.",
-      "evidence": "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-matrix-result.json"
+      "label": "Best qualified single-user record: MTP3, 67,248-row draft shortlist; fresh servers 124.04 / 124.13",
+      "scope": "R294b (2026-09-12), one B70, CLASSPAD=0, draft-only INT4 head with the 67,248-row shortlist, full decode-only XPU graphs. Center of two fresh-server class-balanced medians on the fixed 12-prompt/six-class completions suite, 512-token cap, cache zero; G1/G2/G3 12/12 against the unchanged MTP0 target. The current R304 recipe is a separate runtime revalidation, not the record image.",
+      "evidence": "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json"
     },
-    "benchmark_status": "Candidate (2026-09-07, campaign w1, one B70, R276 image): two fresh depth-3 servers 113.627 / 112.904 tok/s class-balanced median over tokens 1-100 on the strict 12-prompt completions suite, 12/12 vs each other and 12/12 vs the MTP0 oracle; two MTP0 servers 64.332 / 64.338 matched 12/12; canaries on every server; cache zero. Identity ladders (128 tokens, two passes): without speculation exact at every rung in both passes through 64 users (c16 746.7, c32 1184.0, c64 1268.4, all 64/64); with depth 3 exact through c16 (750.8), c32 32/32 warm (827.3), c64 61/64 (789.2). LocalMaxxing cmtrhoyl1000cps01o43bhl72 at 113.265. Two cards (w3): MTP0 97.586/97.535 and depth 3 172.271/172.321 tok/s, all gates 12/12, LocalMaxxing cmtrn9hoy001ops01qzd4axry at 172.296; ladders exact through 32 users without speculation (1836.9 tok/s) and 16 with it (1174.6), one flip at 64 users on two cards where one card held 64/64."
+    "benchmark_status": "Best qualified record 124.084 tok/s on R294b with the draft shortlist; current R304 (vLLM v0.29.0) revalidation 123.536 tok/s, all strict gates 12/12. Clean-host replay remains pending. Historical profiles below retain their original runtime, draft policy and workload. Historical baseline (2026-09-07, campaign w1, one B70, R276 image): two fresh depth-3 servers 113.627 / 112.904 tok/s class-balanced median over tokens 1-100 on the strict 12-prompt completions suite, 12/12 vs each other and 12/12 vs the MTP0 oracle; two MTP0 servers 64.332 / 64.338 matched 12/12; canaries on every server; cache zero. Identity ladders (128 tokens, two passes): without speculation exact at every rung in both passes through 64 users (c16 746.7, c32 1184.0, c64 1268.4, all 64/64); with depth 3 exact through c16 (750.8), c32 32/32 warm (827.3), c64 61/64 (789.2). LocalMaxxing cmtrhoyl1000cps01o43bhl72 at 113.265. Two cards (w3): MTP0 97.586/97.535 and depth 3 172.271/172.321 tok/s, all gates 12/12, LocalMaxxing cmtrn9hoy001ops01qzd4axry at 172.296; ladders exact through 32 users without speculation (1836.9 tok/s) and 16 with it (1174.6), one flip at 64 users on two cards where one card held 64/64."
   },
   "contributors": [
     {
@@ -611,6 +611,36 @@
           "per_user_value": 62.0
         }
       ]
+    },
+    {
+      "id": "http-r293-9b-tp1-mtp0-classpad-c64-c128",
+      "label": "Qwen3.5-9B, one B70, R293, no speculation, CLASSPAD=1: exact high-capacity profile",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent users",
+      "scope": "R293, CLASSPAD=1, MTP0, max-num-seqs 128, max-num-batched-tokens 1024, capture sizes to 128. Small-context HTTP ladder, 128 output tokens per request. Four passes: 256/256, 384/384, 512/512 outputs exact against sequential oracle at c64/c96/c128. Published four-pass aggregate summary; separate from the CLASSPAD=0 MTP3 strict headline. R304 warm-only summary is retained in the recipe and does not replace this repeat-qualified curve.",
+      "evidence": "experiments/qwen35-9b-b70/data/2026-09-11-qwen35-9b-r293-classpad.json",
+      "points": [
+        {
+          "concurrent_sequences": 64,
+          "value": 1641.6,
+          "per_user_value": 25.65,
+          "samples": 4
+        },
+        {
+          "concurrent_sequences": 96,
+          "value": 1852.8,
+          "per_user_value": 19.3,
+          "samples": 4
+        },
+        {
+          "concurrent_sequences": 128,
+          "value": 1955.3,
+          "per_user_value": 15.27578125,
+          "samples": 4
+        }
+      ]
     }
   ],
   "hardware": {
@@ -666,7 +696,7 @@
     "note": "The image is the Qwen3.8 INT4 lane's R304 image (experiments/qwen38-27b-b70/docker/rebase-v0290/): the lineage's overlays ported onto stock v0.29.0 as net diffs, the kernel library rebuilt from public sources, three open upstream vLLM PRs applied verbatim. No lane-specific patch."
   },
   "commands": {
-    "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b",
+    "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2 neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304",
     "launch": "MODEL_DIR=/models/Qwen3.5-9B-quantized.w4a16 VLLM_CACHE_DIR=/tmp/qwen35-w4a16-cache MTP_DEPTH=3 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt repro/qwen35-9b-w4a16-b70/scripts/run-qwen35-9b-w4a16-server.sh",
     "health": "curl -fsS http://127.0.0.1:18131/health",
     "benchmark": "OUT_DIR=<new dir> BASE_URL=http://127.0.0.1:18131 MODEL_NAME=qwen35-9b-w4a16-mtp3 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
@@ -792,7 +822,8 @@
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r303-gdn-first-chunk-classification-pr51565.diff",
     "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-gdn-active-width-pr53542.diff",
     "experiments/qwen35-9b-b70/data/2026-09-13-qwen35-9b-dynsd-r306.json",
-    "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256"
+    "experiments/qwen38-27b-b70/docker/rebase-v0290/r306-dynsd-contract-digests.sha256",
+    "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-slu67k-strict-result.json"
   ],
   "evidence": [
     "experiments/qwen35-9b-b70/data/2026-09-07-qwen35-9b-w4a16-c128-identity-ladder.json",
