@@ -276,7 +276,7 @@ unset VLLM_XPU_PLE_UVA_PREFETCH
 export CACHE_PARENT=/mnt/usb-models/llm-runtime/qwen38-flash-next-fp8-b70
 export MTP=0 MTP_EXACT=0 MAX_MODEL_LEN=33280 ATTEMPT=375 PORT=19988
 export KV_CACHE_MEMORY_BYTES=1341530112
-export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc8-per-rank.json
+export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json
 export REASONING_PARSER=
 unset PYTHONOPTIMIZE
 "$derived" --execute --ack "RUN ${campaign}"
