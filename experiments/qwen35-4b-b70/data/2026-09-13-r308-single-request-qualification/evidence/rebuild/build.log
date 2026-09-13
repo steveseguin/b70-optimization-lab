@@ -1,0 +1,44 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  32.77kB
+Step 1/6 : ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+Step 2/6 : FROM ${BASE}
+ ---> 7cd7bb16b1fd
+Step 3/6 : COPY r306-gdn-active-width-contiguous-staging.py /tmp/r306.py
+ ---> 88d80cfc4407
+Step 4/6 : COPY r307-gdn-state-handoff.py /tmp/r307.py
+ ---> 8b35d88db9fa
+Step 5/6 : RUN cd /opt/venv/lib/python3.12/site-packages && python3 /tmp/r306.py /opt/venv/lib/python3.12/site-packages && python3 /tmp/r307.py /opt/venv/lib/python3.12/site-packages && rm /tmp/r306.py /tmp/r307.py
+ ---> Running in dee4d61713aa
+R306 applied
+R307 patched: /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_attn.py /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+ ---> Removed intermediate container dee4d61713aa
+ ---> 2be4073966c6
+Step 6/6 : LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r307-gdn-state-handoff"
+ ---> Running in bead133725ac
+ ---> Removed intermediate container bead133725ac
+ ---> 5d31d078e545
+Successfully built 5d31d078e545
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  32.77kB
+Step 1/5 : ARG BASE=sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3
+Step 2/5 : FROM ${BASE}
+ ---> 5d31d078e545
+Step 3/5 : COPY r308-gdn-state-resume.py /tmp/r308-gdn-state-resume.py
+ ---> 56cd9168b5bf
+Step 4/5 : RUN cd / && python3 /tmp/r308-gdn-state-resume.py && rm /tmp/r308-gdn-state-resume.py
+ ---> Running in d04cc84031ef
+R308 GDN state resume installed: /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py
+ ---> Removed intermediate container d04cc84031ef
+ ---> 958d05d4b420
+Step 5/5 : LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r308-gdn-state-resume"
+ ---> Running in f85ed8b4c276
+ ---> Removed intermediate container f85ed8b4c276
+ ---> ed47f8374ff7
+Successfully built ed47f8374ff7
+Successfully tagged rebase/r308-repro-20260913:latest

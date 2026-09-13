@@ -1,0 +1,95 @@
+[
+    {
+        "Architecture": "amd64",
+        "Config": {
+            "ArgsEscaped": true,
+            "Entrypoint": [
+                "vllm",
+                "serve"
+            ],
+            "Env": [
+                "PATH=/opt/venv/bin:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "DEBIAN_FRONTEND=noninteractive",
+                "VIRTUAL_ENV=/opt/venv",
+                "UV_PYTHON_INSTALL_DIR=/opt/uv/python",
+                "UV_HTTP_TIMEOUT=500",
+                "PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/xpu",
+                "UV_INDEX_STRATEGY=unsafe-best-match",
+                "UV_LINK_MODE=copy",
+                "LD_LIBRARY_PATH=/opt/ucx/lib:/opt/venv/lib:/usr/local/lib",
+                "VLLM_TARGET_DEVICE=xpu",
+                "VLLM_WORKER_MULTIPROC_METHOD=spawn"
+            ],
+            "Labels": {
+                "neural.download.base": "vllm/vllm-openai-xpu@sha256:96db42e2 v0.29.0",
+                "neural.download.build.lane": "qwen38-int4-v0290-rebase-r308-gdn-state-resume",
+                "neural.download.kernel.head": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
+                "neural.download.kernel.patch": "onednn 0e2a5bfe r137a+r137b+r221",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "Shell": [
+                "bash",
+                "-c"
+            ],
+            "WorkingDir": "/workspace/vllm"
+        },
+        "Created": "2026-09-13T18:22:09.962318169-04:00",
+        "Descriptor": {
+            "digest": "sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba",
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "size": 7632
+        },
+        "Id": "sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba",
+        "Metadata": {
+            "LastTagTime": "2026-09-13T22:22:10.11687483Z"
+        },
+        "Os": "linux",
+        "Parent": "sha256:470a6626d403957f4749f6783bc033e20ad6e5f57cadaf350ccb4312eac46841",
+        "RepoDigests": [
+            "rebase/r308-state-resume@sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba"
+        ],
+        "RepoTags": [
+            "rebase/r308-state-resume:latest"
+        ],
+        "RootFS": {
+            "Layers": [
+                "sha256:b9a65b3c65ab22d490085bd0bf5490e2409da8748b406870f2463bdc41cd6795",
+                "sha256:2fe6026d944f9aeed4c6756ed9064443ce231a825f82c6b3ae2befa474995f8b",
+                "sha256:012bb9b7989d01888d095411dfa298bfda6dcb73e423bc01e4c342dedff4cb61",
+                "sha256:43b80d6c7047728275adbe2ef7fd62dcd97716fc35156f891035077d3f8109a8",
+                "sha256:a13083884310730bc70c7b5ff2c2371dd1cfd44fdd73b603ed1b39148f0aae58",
+                "sha256:6b0a07aa133a8acc6bf9ed9ba2d0bc72c2d76a6340cf2e778fe883c4fa966626",
+                "sha256:5c7a7a6b3384bfa0975dbd7cf1c31404ed076c99d4bbe52be030bbbc60c10234",
+                "sha256:ce3ddf73fd9045365770205f09c8b4b3baebcfe92855127b5766c73a16d6b02b",
+                "sha256:87867f152c29a7cc1e5bc0275aaa509c83ab6333767ccc6683104d0782a32219",
+                "sha256:d1b24ece6ee20dcb0e058f6b4963af32ffa83641e8aad4a021ef3438f8511e3d",
+                "sha256:9972b17be373b29a4b6517942e2b79e243506797b79b2a7517582b3cf0dc1138",
+                "sha256:cd02e2c52a4735da424366f16171c4a0b08c6a46900dfb04bebd7984d6f5c6ef",
+                "sha256:5941a72afe0c45066c9d49af0c9c6b312e0bfc672bee6d40a67b2dbc90fe1968",
+                "sha256:d037353013bd5d1dd8e475448298526ae1ae851cdd0f41ebbe70e7584397b189",
+                "sha256:c8332d5022b738ce9a039c8b1685b572989ab41ff5f1408e2747653d36716a85",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+                "sha256:d98e78216beec20b83f3df9f0f15f8f256703b1c3e5619ce718311504d1c387d",
+                "sha256:ac7e139525b6d7d70c4a01ce0c2526ed26bf779808e1e5bab4c262bbafc310d7",
+                "sha256:4742ded8acbf40ad83d69315189e7e2e54f3b9dbf436da0ac9e278aa14b47fe2",
+                "sha256:6260424b75f2354a5a9c9e8ac50c0102508bb414e3f1647aff755bfcbf12d93c",
+                "sha256:bcfb28fceed09ffafb1b54f7569603decfe4f0170021ba47c322a538b9eb3d50",
+                "sha256:f8f9b3f789768b5af34afd5adc74eecf4da56f907c06c0610035d3d19c16d044",
+                "sha256:57932b5326bf6cc7226615d27514588541482e375bf8375bb56c96863f59e2ff",
+                "sha256:6266dd72b66493dee76780998038d6df2bc0464f7fcb947962486b6dd08e2012",
+                "sha256:d3fcdee5e577a6ebd285d8ad23d228c6f397caed68a6918ea7b32379d2cf477c",
+                "sha256:03a45c0eebe997ad0b3c537724b233888fb4ec06c169bb966e255aeb4c51c5ab",
+                "sha256:c490ad791a7caa126eab5e7b78f23d410d81345b4ca6e867e1c9402a3f1cc64a",
+                "sha256:48facff228be118421a2fa677812d92b3763fc314556c4ba7d5c395c8fe01fff",
+                "sha256:b9f6b020412bffa165150924262ff61e3dc6ec315c95aa40e5040c98ec8df2a0",
+                "sha256:cf94f0dce37e00221bbd3359ad603f56d2dcf9f8515b7f4cd82efb4b43d2fb65",
+                "sha256:b7d91f580b841fde723a14fcb2dabb0964d6f401b3a7c16000e183c3a4f6273c",
+                "sha256:92179cedc037ee2e6bc85c9a1a134d31de40f96dc057e9f5ab2d8975d3609868",
+                "sha256:2adaf254bea206b939efc0bec391bf10551430d329932562196e5e65cf1bc161"
+            ],
+            "Type": "layers"
+        },
+        "Size": 4186768672
+    }
+]
