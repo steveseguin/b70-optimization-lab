@@ -114,6 +114,9 @@ def main():
         assert f"export {kv}\n" in derived, kv
     launcher = launcher.replace("expected_derived=" + "0" * 64, "expected_derived=" + digest(derived))
     client = successor(source("run-tp4-mtp2-4352-ple-only-a309-fullgraphdet-w13n32-client.sh"))
+    # 2026-09-13 (A387): the A309 client pins exact-4K at its 2026-09-07 hash (c6193cc6...); the current output
+    # authority (reference restoration, certified A305/A364) is 1d833e5f..., which the MTP2 exact-mode server produced.
+    client = replace_n(client, "assert depth4k_hashes == ['c6193cc6c9a1553f56d7ce78faea9c8bfa628a67fcea229b1c99279a149f6639'] * 2", "assert depth4k_hashes == ['1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc'] * 2", 1)
     client = client.replace(OLD_STAGE_HEAD, NEW_STAGE_HEAD)
     # the client's official-resolver env and its live-server PYTHONPATH identity check carry the stage path
     client = client.replace(OLD_STAGE, NEW_STAGE)

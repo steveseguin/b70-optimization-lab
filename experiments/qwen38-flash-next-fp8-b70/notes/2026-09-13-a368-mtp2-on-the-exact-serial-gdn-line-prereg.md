@@ -60,3 +60,11 @@ vocabulary at column 10079686" from the tokenizers deserialiser). The same code 
 the USB drive and the NVMe copy hash the same (`0997f410…`); no other server log in the lane carries
 the message. Treated as a transient; the packet is re-run unchanged as A387 (port 20004), queued after
 the A384-A386 decomposition. The chain treated the exit as a finished arm, so A381 launches on schedule.
+
+## Amendment 4 (15:05 UTC): A387 answered the question; MTP2 closed on this line
+
+A387 held both certified pins with three exact-mode verifier rows and measured exact-2K 43.9 / exact-4K
+44.5 tok/s against MTP1's 48.2 / 48.5 (short rows 56.7 vs 53.4). Below the bar: closed as a fixed setting.
+The client stopped at a stale exact-4K pin (`c6193cc6…` from the 2026-09-07 screen; the server produced
+the certified `1d833e5f…`); the generator repins it. Result note
+`2026-09-13-a387-mtp2-exact-mode-screen-result.md`.
