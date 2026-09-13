@@ -57,8 +57,10 @@ Strict pairs on the candidate (the lab's lossless gates; G1 MTP0 a/b, G2 depth-3
 | 9B W4A16 | 12/12 | 12/12 | 12/12 + 12/12 | 124.13 / 124.14 | 64.33 / 64.28 | 124.03 / 124.13; 64.3 |
 | 27B INT4 TP2 depth 4 | pending | | | | | 117.46 / 117.59; 49.4 |
 
-Pending on the same image, queued: the 27B strict pair (both cards), the 4B 2K-32K exact-depth ladder (the stage
-that would show a #544 effect), and the concurrency-identity recipe (no-spec c64 with the 5 ms stagger on CLASSPAD=1;
+4B 2K-32K exact-depth ladder on the candidate: **18/18 on both arms** (no-spec oracle, then depth 3 vs it), the same
+as the served recipe, so #544 changes nothing this model can see at 32K with 64 accepted-token blocks.
+
+Pending on the same image, queued: the 27B strict pair (both cards) and the concurrency-identity recipe (no-spec c64 with the 5 ms stagger on CLASSPAD=1;
 served: 1280/1280 at 2104 tok/s).
 
 ## Status

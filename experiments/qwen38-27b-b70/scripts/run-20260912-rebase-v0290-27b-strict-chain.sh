@@ -7,7 +7,7 @@ set -uo pipefail
 out=/mnt/fast-ai/bench-results; S=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts; R=/home/steve/b70-optimization-lab/repro
 wrap=$out/qwen38-int4-rebase-v0290-20260912-wrapper.log
 log() { printf '[27b-rebase %s] %s\n' "$(date '+%m-%d %H:%M:%S')" "$*" | tee -a "$wrap"; }
-until [[ -e $out/rebase-v0290-identity-20260912-DONE ]]; do sleep 30; done
+until [[ -e $out/rebase-v0290-identity2-20260912-DONE ]]; do sleep 30; done
 source $out/final-int4-config.env
 IMAGE=rebase/vllm-xpu:v0290-stage-b1; IMAGE_ID=$(docker image inspect "$IMAGE" --format '{{.Id}}')
 export SKIP_IMAGE_CONTRACT=1 EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad VLLM_USE_V2_MODEL_RUNNER=0
