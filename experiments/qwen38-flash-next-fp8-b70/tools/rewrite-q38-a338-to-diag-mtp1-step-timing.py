@@ -95,7 +95,8 @@ def main():
         anchor = '  gsub(/enforce_eager=True/, "enforce_eager=False")\n'
         launcher = replace_n(launcher, anchor, anchor + rules, 1)
     if derived_kvs:
-        anchor = '  print "export VLLM_XPU_GDN_SERIAL_SPEC_DECODE=1"\n'
+        # after the last export of the block, so a DERIVED override of a printed selector wins
+        anchor = '  print "export VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS=2"\n'
         launcher = replace_n(launcher, anchor, anchor + "".join(f'  print "export {kv}"\n' for kv in derived_kvs), 1)
     env = os.environ.copy(); env[f"Q38_A{attempt}_DERIVED_SOURCE_ONLY"] = "1"
     derived = subprocess.run(["bash"], input=launcher, text=True, capture_output=True, check=True, env=env).stdout
