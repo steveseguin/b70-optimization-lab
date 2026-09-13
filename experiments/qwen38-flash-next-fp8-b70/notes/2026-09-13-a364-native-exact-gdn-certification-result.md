@@ -42,3 +42,15 @@ kernel stage and the verifier-row selector. Evidence filed under
 
 A365: the same packet on a fresh server (the fresh-server-repeat gate), then the promotion
 attestation and the record submission.
+
+## Addendum (02:15 UTC): three servers, one identity
+
+A365 (fresh server, same packet) and A366 (a third server; its packet was meant for the record
+suite but carried the battery client) both returned the same verdict and pins: short medians
+53.43 / 53.46, exact-2K 47.90-48.26, exact-4K 48.49-48.54 tok/s, `afffd211…` and `1d833e5f…` on
+every row, quality 6/7 with the inherited miss, 16/16 repeat, canary passed. Evidence:
+`data/20260913-tp4-mtp1-a365-*`, `data/20260913-tp4-mtp1-a366-*`, pair summary
+`data/20260913-tp4-mtp1-native-exact-gdn-exact-2k-pair-summary.json`. The record number comes
+from A367: the same packet's server under the record gate's suite driver
+(`repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/wait-and-run-client.sh`), the
+fixed cold 12-prompt realistic suite sent once.
