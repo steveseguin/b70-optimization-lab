@@ -13,6 +13,8 @@ SKIP_IMAGE_CONTRACT=0 bash "${repo_root}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b7
 gh auth token | docker login ghcr.io -u "${owner}" --password-stdin
 docker tag "${local_ref}" "${remote}"
 docker push "${remote}"
-digest=$(docker image inspect "${remote}" --format '{{index .RepoDigests 0}}')
+remote_repo=${remote%:*}
+digest=$(docker image inspect "${remote}" --format '{{range .RepoDigests}}{{println .}}{{end}}' | awk -v prefix="${remote_repo}@sha256:" 'index($0, prefix) == 1 {print; exit}')
+[[ -n "${digest}" ]] || { echo "pushed image lacks a digest for ${remote_repo}" >&2; exit 1; }
 echo "pushed: ${digest}"
 echo "Verify anonymous registry access and pull by this digest before recording publication."
