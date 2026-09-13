@@ -55,6 +55,16 @@ The 5-6% single-user cost is one copy kernel plus a 33-row GEMM per projection p
 step, the floor of this design. The 9B and 27B lanes run the same op and carry the
 same tax, unmeasured there.
 
+## Settled 2026-09-12: torch deterministic mode is not a lever (R295)
+
+The census's split-K nondeterminism can be switched off with `torch.use_deterministic_algorithms(True)`
+(R295 overlay, `VLLM_XPU_TORCH_DETERMINISTIC=1`, off by default), but in the server it costs 29% at 64
+users under depth-3 speculation, lifts the fragile-suite exact count only from ~42 to ~46 of 64, and makes
+passes less repeatable. The residual 64-user nondeterminism under speculation is admission/acceptance
+dynamics, not the kernel selection. Closed; see
+`notes/2026-09-12-torch-deterministic-mode-is-not-a-lever.md` and
+`data/2026-09-12-qwen35-4b-r295-torch-deterministic.json`.
+
 ## Settled by the identity campaign (2026-09-09)
 
 **Serving policy — the one operational result.** `c16` is the speculation
