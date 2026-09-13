@@ -54,8 +54,32 @@ def main():
     launcher = successor(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
     exports = "".join(f"export {kv}\n" for kv in extra_env)
+    # USERS:<n> serves n sequences: max_num_seqs, decode graph capture sizes [1,2,4,...,n], and the
+    # row-wise all-reduce / HC-norm selectors at n rows (batch invariance for the multi-user identity gate).
+    us = [kv2.split(":", 1)[1] for kv2 in extra_env if kv2.startswith("USERS:")]
+    if us:
+        n = int(us[0]); sizes = [1]
+        while sizes[-1] < n: sizes.append(sizes[-1] * 2)
+        assert sizes[-1] == n, "USERS must be a power of two"
+        py_list = ", ".join(str(x) for x in sizes); js_list = ",".join(str(x) for x in sizes)
+        # these two literals live in the frozen base: rewrite them with exact-line awk rules
+        anchor0 = '$0 == "export VLLM_XPU_GRAPH=0" { next }\n'
+        rules = (f'$0 == "    max_num_seqs=1, max_num_batched_tokens=64," {{ print "    max_num_seqs={n}, max_num_batched_tokens=64,"; next }}\n'
+                 f'$0 == "  --max-num-seqs 1" {{ print "  --max-num-seqs {n}"; next }}\n')
+        launcher = replace_n(launcher, anchor0, rules + anchor0, 1)
+        launcher = replace_n(launcher, "'\\''cudagraph_capture_sizes'\\'': [1],", f"'\\''cudagraph_capture_sizes'\\'': [{py_list}],", 1)
+        launcher = replace_n(launcher, "'\\''max_cudagraph_capture_size'\\'': 1, ", f"'\\''max_cudagraph_capture_size'\\'': {n}, ", 1)
+        launcher = replace_n(launcher, "assert config.compilation_config.cudagraph_capture_sizes == [1]", f"assert config.compilation_config.cudagraph_capture_sizes == [{py_list}]", 1)
+        launcher = replace_n(launcher, "assert config.compilation_config.max_cudagraph_capture_size == 1", f"assert config.compilation_config.max_cudagraph_capture_size == {n}", 1)
+        launcher = replace_n(launcher, '\\"cudagraph_capture_sizes\\":[1],\\"max_cudagraph_capture_size\\":1', f'\\"cudagraph_capture_sizes\\":[{js_list}],\\"max_cudagraph_capture_size\\":{n}', 2)
+        anchor_q = '  print "export VLLM_XPU_QSA_FUSED_INDEXER=1"\n'
+        launcher = replace_n(launcher, anchor_q, anchor_q + f'  print "export VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS={n}"\n  print "export VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS={n}"\n', 1)
+    # PLACEMENT:<path> swaps the expert host-placement file (bit-exact by construction; only VRAM moves).
+    pl = [kv2.split(":", 1)[1] for kv2 in extra_env if kv2.startswith("PLACEMENT:")]
+    if pl:
+        launcher = replace_n(launcher, "export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n", f"export Q38_EXPERT_HOST_PLACEMENT={pl[0]}\n", 1)
     # MAXLEN:<n> and KVBYTES:<n> override the served context and KV budget (long-context arms).
-    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:")))}
+    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:")))}
     if "MAXLEN" in lc:
         launcher = replace_n(launcher, " MAX_MODEL_LEN=4352 ", f" MAX_MODEL_LEN={lc['MAXLEN']} ", 1)
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
