@@ -103,3 +103,13 @@ Candidate `neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r301` (sha25
 the recipe contract yet (`verify-image-contract.sh` gained `SKIP_IMAGE_CONTRACT=1`, loud, for candidates); the contract
 profile needs the new file digests and kernel head `6d92b1bf`. Serving recipes need the V2-runner pin. The 62 MB kernel
 libraries are outside git (sha256 in `kernel-artifacts.sha256`; `build-kernels-0.1.14.1-clean-clone.sh` rebuilds them).
+
+## R304 and the fourth lane
+
+R304 = R303 + the `gdn_attn.py` hunks of PR #53542 (active runtime-K width), so a dynamic draft schedule with a K
+below the maximum no longer hits the kernel width assertion (9B, schedule 3/1/0: 12 users run, 64 users complete).
+Strict pairs under the real contract on R304: 4B 12/12 at 191.37/191.41 (MTP0 102.4), 9B 12/12 at 123.22/123.86
+(MTP0 64.3); short prompts 0/30 on every length. The **FP8 27B lane** (R187 profile: whole-graph piecewise compile,
+block W8A16, GDN split-mixed, depth 1) needs only oneDNN r137a/r137b from the kernel library, which R304 carries, so it
+runs on the same image: G1/G2/G3 12/12, MTP1 54.82/54.83 tok/s, MTP0 33.08/33.08 (published 54.935 / 33.097).
+One image now serves all four published lanes.

@@ -10,7 +10,7 @@
     "model_family": "Qwen3.8",
     "publisher": "Alibaba / Qwen",
     "variant": "27B official FP8",
-    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, 79.183 tok/s MTP depth 3, 82.396 tok/s MTP depth 4, 86.182 tok/s MTP depth 5, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1 and depths 3-5 through 16, depth 2 through 4. On the piecewise compile MTP depth 2 emitted a phantom first token on one request in 64; on the whole-graph compile no pass has shown it (R182-R193, 2026-09-03). The cause is an unfixed upstream vLLM defect that also occurs on the unmodified image (R192/R194), so this is a configuration that avoids it on our deterministic build, not a fix; no patch, no image rebuild. A prebuilt copy of the exact image is on GitHub Container Registry (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8, digest sha256:173660ec…, equal to the image id the launchers verify); the source build in the guide remains the authoritative route.",
+    "summary": "Alibaba's Qwen3.8 27B official block-FP8 weights on two Arc Pro B70 cards. The R187 profile (the R156 row-invariant W8A16 kernel and mixed-step GDN split, served with one whole-graph torch.compile instead of vLLM's piecewise split) is clean-boot-qualified at 54.935 tok/s MTP1 (FP16 target verifier, draft-only INT4 head), 70.142 tok/s MTP depth 2, 79.183 tok/s MTP depth 3, 82.396 tok/s MTP depth 4, 86.182 tok/s MTP depth 5, and 33.097 tok/s MTP0; every pair 12/12 against a same-configuration MTP0 oracle, repeat-exact at 224-300-token prompts, MTP0 output-identical to a single request through 64 concurrent users, MTP1 and depths 3-5 through 16, depth 2 through 4. On the piecewise compile MTP depth 2 emitted a phantom first token on one request in 64; on the whole-graph compile no pass has shown it (R182-R193, 2026-09-03). The cause is an unfixed upstream vLLM defect that also occurs on the unmodified image (R192/R194), so this is a configuration that avoids it on our deterministic build, not a fix; no patch, no image rebuild. A prebuilt copy of the exact image is on GitHub Container Registry (ghcr.io/steveseguin/vllm-openai-xpu-qwen38-fp8, digest sha256:173660ec\u2026, equal to the image id the launchers verify); the source build in the guide remains the authoritative route.",
     "quantization": "FP8",
     "runtime_label": "vLLM XPU",
     "operating_systems": [
@@ -477,7 +477,8 @@
     "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r200-whole-graph-depth5-strict-result.json",
     "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-mtp-depth-turnover-r200-r203.md",
     "experiments/qwen38-27b-b70/scripts/run-20260903-qwen38-fp8-mtp5-whole-graph-r187-server.sh",
-    "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r202-r203-depth6-depth7-result.json"
+    "experiments/qwen38-27b-b70/data/2026-09-04-qwen38-fp8-r202-r203-depth6-depth7-result.json",
+    "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-contract-digests.sha256"
   ],
   "performance_profiles": [
     {

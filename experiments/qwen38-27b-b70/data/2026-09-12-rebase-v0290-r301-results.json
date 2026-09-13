@@ -161,5 +161,22 @@
    "image": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r303",
    "id": "sha256:8e7d4911498977bb50907725e716fe5cf904b9c2673969698514331dc47f0697"
   }
+ },
+ "r304": {
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304",
+  "id": "sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2",
+  "adds": "vLLM PR #53542 gdn_attn.py hunks (active runtime-K width) on R303",
+  "strict_real_contract": {
+   "4b": "G1/G2/G3 12/12; depth 3 191.37/191.41; MTP0 102.41/102.48 (root qwen35-4b-w4a16-20260912-r304)",
+   "9b": "12/12; 123.22/123.86; 64.34/64.30 (root qwen35-9b-w4a16-20260912-r304)",
+   "27b": "pending rerun r304b (first attempt verified the wrong image: sourced config reset IMAGE)",
+   "27b_fp8_tp2_depth1_r187_profile": "G1/G2/G3 12/12; MTP1 54.82/54.83; MTP0 33.08/33.08 (published R187 54.935 / 33.097); root /mnt/fast-ai/bench-results/qwen38-fp8-rebase-v0290-rb1-20260913"
+  },
+  "short_prompt_harness": "k=1..6 and long: 0/30 degenerate on every shape (alias-r304)",
+  "dynamic_schedule_9b": "schedule [[1,8,3],[9,16,1],[17,64,0]], V1 runner: c1 exact 68.7 tok/s; c12 (K=1 range) 10/12 exact 254.7 tok/s, no assertion; c64 64/64 complete 864.5 tok/s (upstream-repro-20260912/width-r304)",
+  "attestations": [
+   "experiments/qwen35-4b-b70/data/qwen35-4b-w4a16-20260912-r304-strict-result.json",
+   "experiments/qwen35-9b-b70/data/qwen35-9b-w4a16-20260912-r304-strict-result.json"
+  ]
  }
 }

@@ -345,6 +345,25 @@ runs the configuration without the catch-up overlay. Validate exactly as above,
 plus the identity ladder with `--require-output-identity` at every rung you
 intend to serve.
 
+## Rebased onto stock vLLM XPU v0.29.0, with three upstream fixes (R304, 2026-09-13): 123.22 / 123.86
+
+The served image is now `neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304` (sha256:7cd7bb16): the same
+overlay stack on the public v0.29.0 image (vllm-xpu-kernels 0.1.14.1, which also carries upstream GDN fix #544) with
+the kernel library rebuilt from public sources, plus three open upstream vLLM fixes applied verbatim: PR #53059
+(uniform-decode alias guard), PR #51565 (GDN first-chunk classification) and PR #53542 (active runtime-K width).
+
+Why it matters beyond the version bump: on the previous image every **one-token prompt** and, at depth K, every
+**(1+K)-token prompt** came back as a single-character wall (`!!!!...`) on 30 of 30 greedy runs. R304 returns 0 of 30
+on every prompt length tested (1 to 6 tokens and long), with and without speculation.
+
+Strict pair on R304 under the recipe contract: G1/G2/G3 12/12, depth 3 **123.22 / 123.86 tok/s**, no speculation 64.3
+(the previous image measured 124.03 / 124.13). The 2K-32K exact-depth ladder is 18/18 on both arms; the no-speculation
+64-user recipe with the 5 ms admission stagger is 64/64 on seven passes at about 2100 tok/s; a dynamic draft schedule
+with a K=1 range runs without the kernel width assertion that killed stock v0.29.0. The launcher pins
+`VLLM_USE_V2_MODEL_RUNNER=0`: v0.29.0 defaults XPU to the V2 model runner, whose speculator has no draft INT4 head
+(128 instead of 172 tok/s in the single-user harness). Build and provenance:
+`experiments/qwen38-27b-b70/docker/rebase-v0290/` and `experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.
+
 ## Known limits
 
 - Depth 3 is confirmed on this route's own evidence (campaigns d4/d5/d6),

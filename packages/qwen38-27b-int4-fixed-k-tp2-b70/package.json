@@ -1,749 +1,750 @@
 {
- "format": "b70-model-package-v1",
- "id": "qwen38-27b-autoround-int4-b70",
- "name": "Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards",
- "status": "candidate",
- "audience": "researcher",
- "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
- "clean_host_tested": false,
- "library": {
-  "model_family": "Qwen3.8",
-  "publisher": "devan-carlin (AutoRound INT4 of Alibaba / Qwen)",
-  "variant": "27B AutoRound INT4 W4A16",
-  "summary": "devan-carlin's AutoRound INT4 tensors served through vLLM's plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane's whole-graph deterministic stack. Single-request output is repeat-exact and speculative decoding is lossless against the MTP0 oracle at every depth measured; MTP0 output is byte-identical to a single request through 64 concurrent users (a near-tie prompt can differ in some runs), speculative depths through 16.",
-  "quantization": "AutoRound INT4 W4A16 (group 128, symmetric)",
-  "runtime_label": "vLLM XPU",
-  "operating_systems": [
-   "Linux"
+  "format": "b70-model-package-v1",
+  "id": "qwen38-27b-autoround-int4-b70",
+  "name": "Qwen3.8 27B AutoRound INT4, fixed-K batch-invariant profile, on two Intel Arc Pro B70 cards",
+  "status": "candidate",
+  "audience": "researcher",
+  "guide": "repro/qwen38-27b-autoround-int4-b70/README.md",
+  "clean_host_tested": false,
+  "library": {
+    "model_family": "Qwen3.8",
+    "publisher": "devan-carlin (AutoRound INT4 of Alibaba / Qwen)",
+    "variant": "27B AutoRound INT4 W4A16",
+    "summary": "devan-carlin's AutoRound INT4 tensors served through vLLM's plain-GPTQ oneDNN W4A16 path with a rebuilt kernel library that pins a two-tier fixed-K GEMM strategy, FP16 linears in 32-row pieces, single-split attention and size-independent Inductor reductions, on the FP8 lane's whole-graph deterministic stack. Single-request output is repeat-exact and speculative decoding is lossless against the MTP0 oracle at every depth measured; MTP0 output is byte-identical to a single request through 64 concurrent users (a near-tie prompt can differ in some runs), speculative depths through 16.",
+    "quantization": "AutoRound INT4 W4A16 (group 128, symmetric)",
+    "runtime_label": "vLLM XPU",
+    "operating_systems": [
+      "Linux"
+    ],
+    "delivery": [
+      "container"
+    ],
+    "modalities": [
+      "text"
+    ],
+    "use_cases": [
+      "general",
+      "coding",
+      "long context"
+    ],
+    "tags": [
+      "qwen3.8",
+      "int4",
+      "autoround",
+      "gptq",
+      "vllm",
+      "xpu",
+      "b70",
+      "tp2",
+      "mtp",
+      "batch-invariant",
+      "fixed-k"
+    ],
+    "published_at": "2026-09-05",
+    "benchmark_status": "Research-status (2026-09-06). Headline: TP2 depth 4 with XPU graph capture and the draft-only INT4 lm_head (R257, R256 image) 112.362/112.325 tok/s, G2 12/12 and G3 12/12 vs the eager MTP0 oracle, acceptance 3.51; depth 5 109.971/110.069, depth 6 108.340/108.373 (R258). Graphs without the draft head (R247/R250/R253): MTP0 49.833/49.887, depth 1 76.723/76.629, depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982. Eager R239 matrix: TP2 MTP0 34.210/35.640, d1 51.098/50.088, d2 61.140/61.541, d3 67.613/67.831, d4 68.552/67.789; TP1 MTP0 32.960/32.945, d1 49.640/49.468, d2 56.505/56.449, d3 58.471/58.474, d4 56.292/56.251; every pair 12/12 vs each other and vs the MTP0 oracle. Identity ladders: MTP0 exact c1-c64 (eager and under graphs); speculative depths exact through c16 (eager TP2) / c8 (TP1, graphs), c32 >= 29/32, c64 >= 58/64. R258/R259 (depths 5-6 and ladders on the headline configuration) pending. No promotion or LocalMaxxing submission yet."
+  },
+  "contributors": [
+    {
+      "id": "b70-optimization-lab",
+      "name": "neural.download lab",
+      "kind": "lab",
+      "profile": "https://github.com/steveseguin/b70-optimization-lab",
+      "contribution": "INT4 kernel routing diagnosis and gptq relabel, two-tier fixed-K oneDNN W4A16 strategy (rebuilt kernel library), FP16 row-chunk linears, batch-invariant attention and Inductor reductions, strict determinism/lossless/concurrency qualification on the R187 stack",
+      "status": "integrated",
+      "validated_effect": "The deterministic compiled TP2 work historically raised MTP0 from 18.910242 to 34.031596 tok/s, and block W8A16 separately raised matched target-only single/c128 shapes by 60.07%/29.30%. Clean-boot R119 qualified the draft-only INT4 R62 MTP1 profile at 54.424603 tok/s, 5.0504% above the prior qualified MTP1 profile, with both candidate and MTP0-oracle comparisons exact on 12/12 complete arrays in scope.",
+      "evidence": "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md"
+    }
   ],
-  "delivery": [
-   "container"
+  "hardware": {
+    "accelerator": "Intel Arc Pro B70 32 GiB",
+    "cards": 2,
+    "host_ram_min_bytes": 16106127360,
+    "host_ram_plus_swap_min_bytes": 21474836480,
+    "model_weight_bytes": 19016930167
+  },
+  "model": {
+    "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
+    "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
+    "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "note": "Identical tensors to the published revision, hard-linked into a directory whose config.json/quantization_config.json are relabelled from auto-round to plain gptq by repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py; the manifest verifies that directory."
+  },
+  "runtime": {
+    "kind": "container",
+    "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
+    "image_id_validated": "sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
+    "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b",
+    "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
+    "xpu_ops_sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
+    "base": "R228 (fixed-K _xpu_C + FP16 row chunks + GDN spec grouping) + R256 draft-only INT4 lm_head fallback + R276 sync-free grouped GDN branch (graph capture to 320) + R293 class-consistent FP16 linear mode (VLLM_XPU_FP16_LINEAR_CLASSPAD; off = R276 code path) + R294 shortlisted draft-only lm_head (DRAFT_SHORTLIST; default the 67,248-row list)",
+    "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
+    "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
+    "onednn_head": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
+  },
+  "project_patches": {
+    "required": true,
+    "items": [
+      "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
+      "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
+      "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+      "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+      "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+      "experiments/qwen38-27b-b70/docker/r276-gdn-spec-group-sync-free.py",
+      "experiments/qwen38-27b-b70/docker/r290-fp16-linear-classpad.py",
+      "experiments/qwen38-27b-b70/docker/r291-fp16-linear-classpad-verified.py",
+      "experiments/qwen38-27b-b70/docker/r292-fp16-linear-classpad-nozero.py",
+      "experiments/qwen38-27b-b70/docker/r293-fp16-linear-classpad-cheapest.py",
+      "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py"
+    ]
+  },
+  "commands": {
+    "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "health": "curl -fsS http://127.0.0.1:18134/health",
+    "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
+  },
+  "dependencies": [
+    "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
+    "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
+    "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
+    "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
+    "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
+    "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
+    "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
+    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
+    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
+    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
+    "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
+    "repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json",
+    "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "repro/qwen38-27b-autoround-int4-b70/README.md",
+    "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r256-image-ghcr.sh",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
+    "scripts/bench-openai-realistic-suite.py",
+    "scripts/neural-download-canaries.py",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.gdn-spec-group-sync-free-r276",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-r290",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-verified-r291",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-nozero-r292",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-cheapest-r293",
+    "experiments/qwen38-27b-b70/docker/r276-gdn-spec-group-sync-free.py",
+    "experiments/qwen38-27b-b70/docker/r290-fp16-linear-classpad.py",
+    "experiments/qwen38-27b-b70/docker/r291-fp16-linear-classpad-verified.py",
+    "experiments/qwen38-27b-b70/docker/r292-fp16-linear-classpad-nozero.py",
+    "experiments/qwen38-27b-b70/docker/r293-fp16-linear-classpad-cheapest.py",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r293-image-ghcr.sh",
+    "experiments/qwen38-27b-b70/scripts/run-20260911-qwen38-int4-r295-r298-classpad-chain.sh",
+    "experiments/qwen35-4b-b70/probes/validate-r292-stale-pad.py",
+    "experiments/qwen35-4b-b70/probes/fp16-linear-mclass-census-extended.py",
+    "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.draft-head-shortlist-r294",
+    "experiments/qwen38-27b-b70/docker/Dockerfile.draft-head-shortlist-r294b",
+    "experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist.py",
+    "experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py",
+    "experiments/qwen38-27b-b70/docker/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
+    "experiments/qwen38-27b-b70/scripts/run-20260912-qwen38-int4-r299-draft-shortlist-chain.sh",
+    "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r294b-image-ghcr.sh",
+    "experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md",
+    "experiments/qwen38-27b-b70/docker/rebase-v0290/r304-contract-digests.sha256"
   ],
-  "modalities": [
-   "text"
+  "performance_profiles": [
+    {
+      "id": "http-int4-fixed-k-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R224 image (fixed-K W4A16, FP16 row-chunk linears) and VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), no speculation, FP16 activations/KV, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R226). Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte. One server, one pass per point; not a promoted concurrency speed record.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 34.3,
+          "samples": 1,
+          "per_user_value": 34.3
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 67.6,
+          "samples": 1,
+          "per_user_value": 33.8
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 136.0,
+          "samples": 1,
+          "per_user_value": 34.0
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 261.9,
+          "samples": 1,
+          "per_user_value": 32.7375
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 504.8,
+          "samples": 1,
+          "per_user_value": 31.55
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 841.3,
+          "samples": 1,
+          "per_user_value": 26.2906
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 998.3,
+          "samples": 1,
+          "per_user_value": 15.5984
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-mtp4-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP depth-4 identity-qualified aggregate decode vs concurrent users (c1-c16)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "As above with MTP depth 4 on the R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set) and Inductor split_reductions=false (R232). Points through c16 are output-identity-qualified; c32 (31/32) and c64 (63/64) were measured but are withheld because near-tie prompts took a different valid branch.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 64.4,
+          "samples": 1,
+          "per_user_value": 64.4
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 73.0,
+          "samples": 1,
+          "per_user_value": 36.5
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 219.4,
+          "samples": 1,
+          "per_user_value": 54.85
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 356.0,
+          "samples": 1,
+          "per_user_value": 44.5
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 516.8,
+          "samples": 1,
+          "per_user_value": 32.3
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-tp1-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP1 (one card) MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "One B70 (TENSOR_PARALLEL_SIZE=1), R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), Inductor split_reductions=false, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R239 TP1 depth-1 campaign MTP0 ladder). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 32.8,
+          "samples": 1,
+          "per_user_value": 32.8
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 62.7,
+          "samples": 1,
+          "per_user_value": 31.35
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 118.6,
+          "samples": 1,
+          "per_user_value": 29.65
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 206.5,
+          "samples": 1,
+          "per_user_value": 25.8125
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 342.9,
+          "samples": 1,
+          "per_user_value": 21.4312
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 506.0,
+          "samples": 1,
+          "per_user_value": 15.8125
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 447.6,
+          "samples": 1,
+          "per_user_value": 6.9938
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-tp2-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP0 with XPU graph capture, identity-qualified aggregate decode vs concurrent users (c1-c64)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Two B70s, R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 with FULL_DECODE_ONLY capture sizes 1-8, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R251). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 50.0,
+          "samples": 1,
+          "per_user_value": 50.0
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 94.4,
+          "samples": 1,
+          "per_user_value": 47.2
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 178.7,
+          "samples": 1,
+          "per_user_value": 44.675
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 317.7,
+          "samples": 1,
+          "per_user_value": 39.7125
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 501.2,
+          "samples": 1,
+          "per_user_value": 31.325
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 842.1,
+          "samples": 1,
+          "per_user_value": 26.3156
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 999.4,
+          "samples": 1,
+          "per_user_value": 15.6156
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-drafthead-tp2-mtp4-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP depth 4 with graph capture and the draft-only INT4 head, identity-qualified aggregate decode vs concurrent users (c1-c16, warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Two B70s, R256 image, split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 (FULL_DECODE_ONLY, sizes 1-8), VLLM_XPU_DRAFT_LM_HEAD_INT4=1, MTP depth 4, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite; every rung run twice on one server and the second (warm) pass shown (R265b, 2026-09-06): the first pass of a fresh server carries a one-time Dynamo recompilation on the first multi-user batch. Every point through c16 is output-identity-qualified (16/16 at every rung). Above 16 users the corrected re-measurement with the W4A16 pad switch forwarded (R281) gives c32 632.6 (30/32) and c64 603.7 (62/64, admission-limited at max-model-len 256), withheld because near-tie prompts take a different valid branch; the R276 image with capture sizes to 320 (R282) adds +22%/+10% at two/four users (191.0/294.7).",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 107.3,
+          "samples": 1,
+          "per_user_value": 107.3
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 147.6,
+          "samples": 1,
+          "per_user_value": 73.8
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 252.9,
+          "samples": 1,
+          "per_user_value": 63.225
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 405.4,
+          "samples": 1,
+          "per_user_value": 50.675
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 580.4,
+          "samples": 1,
+          "per_user_value": 36.275
+        }
+      ]
+    },
+    {
+      "id": "http-int4-mtp0-decode-vs-active-context",
+      "label": "INT4 fixed-K TP2 MTP0 (graphs) HTTP decode over exact active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Exact active prompt tokens",
+      "scope": "Measured 2026-09-06 (R260b, clean boot) on the headline configuration (R256 image, two B70s, XPU graph capture FULL_DECODE_ONLY sizes 1-8, strict launcher env): one-slot vLLM HTTP completions at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, max-model-len 33024, max-num-batched-tokens 4096, cache zero, canaries before and after. MTP0 (target only). No value is interpolated.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
+      "points": [
+        {
+          "context_tokens": 2048,
+          "value": 50.023492143506274,
+          "samples": 3
+        },
+        {
+          "context_tokens": 4096,
+          "value": 48.78019783970367,
+          "samples": 3
+        },
+        {
+          "context_tokens": 8192,
+          "value": 47.46198372409749,
+          "samples": 3
+        },
+        {
+          "context_tokens": 16384,
+          "value": 45.92111530825193,
+          "samples": 3
+        },
+        {
+          "context_tokens": 24576,
+          "value": 44.174870800726,
+          "samples": 3
+        },
+        {
+          "context_tokens": 32768,
+          "value": 42.832649479370204,
+          "samples": 3
+        }
+      ]
+    },
+    {
+      "id": "http-int4-mtp4-decode-vs-active-context",
+      "label": "INT4 fixed-K TP2 MTP depth 4 (graphs, draft-only INT4 head) HTTP decode over exact active context",
+      "metric": "decode",
+      "unit": "tok/s",
+      "x_label": "Exact active prompt tokens",
+      "scope": "Measured 2026-09-06 (R260b, clean boot) on the headline configuration (R256 image, two B70s, XPU graph capture FULL_DECODE_ONLY sizes 1-8, strict launcher env): one-slot vLLM HTTP completions at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, max-model-len 33024, max-num-batched-tokens 4096, cache zero, canaries before and after. MTP depth 4 with the FP16 target verifier and draft-only INT4 head; every output matched the same-configuration MTP0 oracle (18/18 complete arrays). Class spread is wide at every depth (Python code accepts more draft tokens); the median of the three classes is shown.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
+      "points": [
+        {
+          "context_tokens": 2048,
+          "value": 120.55879982780635,
+          "samples": 3
+        },
+        {
+          "context_tokens": 4096,
+          "value": 125.72167735144107,
+          "samples": 3
+        },
+        {
+          "context_tokens": 8192,
+          "value": 124.3502018967137,
+          "samples": 3
+        },
+        {
+          "context_tokens": 16384,
+          "value": 90.18189154611792,
+          "samples": 3
+        },
+        {
+          "context_tokens": 24576,
+          "value": 84.62792054167177,
+          "samples": 3
+        },
+        {
+          "context_tokens": 32768,
+          "value": 100.271460163712,
+          "samples": 3
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-r276-big-admission-tp2-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP0, R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c64; warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "R284 (2026-09-06): two B70s, R276 image, XPU graph capture FULL_DECODE_ONLY sizes to 320, strict launcher env with the W4A16 pad switch forwarded off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, no speculation, cache disabled, 128 returned raw token IDs per response on the small-context suite; every rung run twice on one server, warm pass shown. c16/c32/c64 are output-identity-qualified in both passes (16/16, 32/32, 64/64). Measured but withheld: c96 915.4 (95/96 warm, 96/96 first pass) and c128 1085.3 (128/128 warm, 127/128 first pass), one near-tie prompt each.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 16,
+          "value": 533.8,
+          "samples": 1,
+          "per_user_value": 33.3625
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 815.0,
+          "samples": 1,
+          "per_user_value": 25.4688
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 991.4,
+          "samples": 1,
+          "per_user_value": 15.4906
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp2-mtp4-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP depth 4 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c32; warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "R284 (2026-09-06): as the MTP0 profile above with qwen3_next_mtp depth 4, FP16 target verifier and the draft-only INT4 lm_head. c16 and c32 are output-identity-qualified in both passes (16/16, 32/32). Measured but withheld: c64 591.4 (58/64), c96 590.6 (89/96), c128 584.7 (117/128); the same prompts diverge at the same token positions in every rung of 64 and above (near-tie flips in the >32-row W4A16 GEMM tier), and the depth-4 aggregate plateaus at 585-641 tok/s from c32 while MTP0 keeps scaling to 991 (c64) and 1085 (c128). Serve more than about 32 users without speculation.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 16,
+          "value": 574.3,
+          "samples": 1,
+          "per_user_value": 35.8937
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 641.3,
+          "samples": 1,
+          "per_user_value": 20.0406
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-r276-big-admission-tp1-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP1 (one card) MTP0, R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c128; warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "R285 (2026-09-06): one B70 (TENSOR_PARALLEL_SIZE=1, GPU_MEMORY_UTILIZATION=0.96), R276 image, XPU graph capture FULL_DECODE_ONLY sizes to 320, strict launcher env with the W4A16 pad switch forwarded off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, no speculation, cache disabled, 128 returned raw token IDs per response on the small-context suite; every rung run twice on one server, warm pass shown. Every rung is output-identity-qualified in both passes (16/16 through 128/128). Peak 514.0 tok/s at 32 users; from 64 users the batch budget queues prefill (ttft_max 13-27 s).",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 16,
+          "value": 345.9,
+          "samples": 1,
+          "per_user_value": 21.6187
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 514.0,
+          "samples": 1,
+          "per_user_value": 16.0625
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 418.5,
+          "samples": 1,
+          "per_user_value": 6.5391
+        },
+        {
+          "concurrent_sequences": 96,
+          "value": 403.7,
+          "samples": 1,
+          "per_user_value": 4.2052
+        },
+        {
+          "concurrent_sequences": 128,
+          "value": 443.8,
+          "samples": 1,
+          "per_user_value": 3.4672
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp1-mtp4-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP1 (one card) MTP depth 4 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c32; warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "R285 (2026-09-06): as the one-card MTP0 profile above with qwen3_next_mtp depth 4, FP16 target verifier and the draft-only INT4 lm_head. c16 and c32 are output-identity-qualified in both passes (16/16, 32/32). Measured but withheld: c64 246.2 (62/64), c96 243.4 (90/96), c128 243.9 (123/128), near-tie divergences as on TP2. One card saturates at ~245 tok/s with depth 4 from 16 users; MTP0 on the same card reaches 514 at 32 users, so serve more than about 8-16 one-card users without speculation.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 16,
+          "value": 237.3,
+          "samples": 1,
+          "per_user_value": 14.8313
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 243.7,
+          "samples": 1,
+          "per_user_value": 7.6156
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp2-mtp1-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP depth 1 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c2-c32; warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "R287 (2026-09-06): as the R284 profiles (two B70s, R276 image, capture sizes to 320, pad off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, two passes, warm pass shown) with qwen3_next_mtp depth 1. c2, c4 and c32 are output-identity-qualified in both passes (R288/R287); c16 in the warm pass (16/16; the first pass of the fresh server had one near-tie flip, 15/16). Measured but withheld: c64 842.0 (61/64), c96 906.3 (92/96), c128 894.8 (121/128). Depth 1 is the fastest setting through 32 users (depth 2: 723.4, depth 4: 641.3, no speculation: 815.0 at c32); from 64 users no speculation is faster and exact (992 at c64). R288 adds c2 147.3, c4 268.6 and c8 456.0 (7/8 in both passes, one near-tie prompt, withheld); depth 4 (R282) is faster at 1-4 users (191.0/294.7), depth 1 from 8 users.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 2,
+          "value": 147.3,
+          "samples": 1,
+          "per_user_value": 73.65
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 268.6,
+          "samples": 1,
+          "per_user_value": 67.15
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 711.0,
+          "samples": 1,
+          "per_user_value": 44.4375
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 854.4,
+          "samples": 1,
+          "per_user_value": 26.7
+        }
+      ]
+    },
+    {
+      "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp1-mtp1-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP1 (one card) MTP depth 1 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c4-c32; warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "R289 (2026-09-06): as the one-card R285 profiles (TENSOR_PARALLEL_SIZE=1, R276 image, capture sizes to 320, pad off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, two passes, warm pass shown) with qwen3_next_mtp depth 1. c4, c8 and c16 are output-identity-qualified in both passes; c32 in the warm pass (32/32; first pass 30/32) and already behind no speculation there (371.9 vs 513.8, prefill queueing with ttft_max 7.5 s). One card: depth 1 from 4 to 16 users (464.7 at 16 vs 345.7 without speculation), no speculation from 32 users.",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 4,
+          "value": 181.4,
+          "samples": 1,
+          "per_user_value": 45.35
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 302.8,
+          "samples": 1,
+          "per_user_value": 37.85
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 464.7,
+          "samples": 1,
+          "per_user_value": 29.0437
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 371.9,
+          "samples": 1,
+          "per_user_value": 11.6219
+        }
+      ]
+    },
+    {
+      "id": "http-int4-r293-classpad-mtp0-identity-qualified-aggregate-vs-concurrent-users",
+      "label": "INT4 fixed-K TP2 MTP0, R293 class-consistent FP16 linears (CLASSPAD=1): identity-qualified aggregate decode vs concurrent users (c1-c64, warm pass)",
+      "metric": "aggregate_decode",
+      "unit": "tok/s",
+      "x_metric": "concurrent_sequences",
+      "x_label": "Concurrent HTTP users",
+      "scope": "Measured vLLM HTTP completions on two B70s with the R293 image and VLLM_XPU_FP16_LINEAR_CLASSPAD=1 (R295, 2026-09-11): the served R276 configuration (capture sizes to 320, INT4 draft head, pad off) with every unquantized FP16 linear kept in one verified oneDNN M-class instead of 32-row pieces. No speculation, 128 returned raw token IDs per response on the 64-prompt small-context suite, second of two passes. Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (128/128 at 64 users). One server; not a promoted concurrency speed record. With the 5 ms admission stagger the same rung is 640/640 over ten passes at 1014.4 tok/s (R297).",
+      "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
+      "points": [
+        {
+          "concurrent_sequences": 1,
+          "value": 49.6,
+          "samples": 1,
+          "per_user_value": 49.6,
+          "exact": "1/1"
+        },
+        {
+          "concurrent_sequences": 2,
+          "value": 94.9,
+          "samples": 1,
+          "per_user_value": 47.45,
+          "exact": "2/2"
+        },
+        {
+          "concurrent_sequences": 4,
+          "value": 177.9,
+          "samples": 1,
+          "per_user_value": 44.475,
+          "exact": "4/4"
+        },
+        {
+          "concurrent_sequences": 8,
+          "value": 326.5,
+          "samples": 1,
+          "per_user_value": 40.8125,
+          "exact": "8/8"
+        },
+        {
+          "concurrent_sequences": 16,
+          "value": 536.3,
+          "samples": 1,
+          "per_user_value": 33.5187,
+          "exact": "16/16"
+        },
+        {
+          "concurrent_sequences": 32,
+          "value": 815.4,
+          "samples": 1,
+          "per_user_value": 25.4812,
+          "exact": "32/32"
+        },
+        {
+          "concurrent_sequences": 64,
+          "value": 1019.2,
+          "samples": 1,
+          "per_user_value": 15.925,
+          "exact": "64/64"
+        }
+      ]
+    }
   ],
-  "use_cases": [
-   "general",
-   "coding",
-   "long context"
-  ],
-  "tags": [
-   "qwen3.8",
-   "int4",
-   "autoround",
-   "gptq",
-   "vllm",
-   "xpu",
-   "b70",
-   "tp2",
-   "mtp",
-   "batch-invariant",
-   "fixed-k"
-  ],
-  "published_at": "2026-09-05",
-  "benchmark_status": "Research-status (2026-09-06). Headline: TP2 depth 4 with XPU graph capture and the draft-only INT4 lm_head (R257, R256 image) 112.362/112.325 tok/s, G2 12/12 and G3 12/12 vs the eager MTP0 oracle, acceptance 3.51; depth 5 109.971/110.069, depth 6 108.340/108.373 (R258). Graphs without the draft head (R247/R250/R253): MTP0 49.833/49.887, depth 1 76.723/76.629, depth 4 91.004/91.012, depth 5 88.844/89.117, depth 6 84.060/83.982. Eager R239 matrix: TP2 MTP0 34.210/35.640, d1 51.098/50.088, d2 61.140/61.541, d3 67.613/67.831, d4 68.552/67.789; TP1 MTP0 32.960/32.945, d1 49.640/49.468, d2 56.505/56.449, d3 58.471/58.474, d4 56.292/56.251; every pair 12/12 vs each other and vs the MTP0 oracle. Identity ladders: MTP0 exact c1-c64 (eager and under graphs); speculative depths exact through c16 (eager TP2) / c8 (TP1, graphs), c32 >= 29/32, c64 >= 58/64. R258/R259 (depths 5-6 and ladders on the headline configuration) pending. No promotion or LocalMaxxing submission yet."
- },
- "contributors": [
-  {
-   "id": "b70-optimization-lab",
-   "name": "neural.download lab",
-   "kind": "lab",
-   "profile": "https://github.com/steveseguin/b70-optimization-lab",
-   "contribution": "INT4 kernel routing diagnosis and gptq relabel, two-tier fixed-K oneDNN W4A16 strategy (rebuilt kernel library), FP16 row-chunk linears, batch-invariant attention and Inductor reductions, strict determinism/lossless/concurrency qualification on the R187 stack",
-   "status": "integrated",
-   "validated_effect": "The deterministic compiled TP2 work historically raised MTP0 from 18.910242 to 34.031596 tok/s, and block W8A16 separately raised matched target-only single/c128 shapes by 60.07%/29.30%. Clean-boot R119 qualified the draft-only INT4 R62 MTP1 profile at 54.424603 tok/s, 5.0504% above the prior qualified MTP1 profile, with both candidate and MTP0-oracle comparisons exact on 12/12 complete arrays in scope.",
-   "evidence": "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md"
-  }
- ],
- "hardware": {
-  "accelerator": "Intel Arc Pro B70 32 GiB",
-  "cards": 2,
-  "host_ram_min_bytes": 16106127360,
-  "host_ram_plus_swap_min_bytes": 21474836480,
-  "model_weight_bytes": 19016930167
- },
- "model": {
-  "repository": "devan-carlin/Qwen3.8-27B-int4-AutoRound",
-  "revision": "bce40cacab0a4535b92fb3d57615c2bea9adf3d1",
-  "manifest": "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-  "note": "Identical tensors to the published revision, hard-linked into a directory whose config.json/quantization_config.json are relabelled from auto-round to plain gptq by repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py; the manifest verifies that directory."
- },
- "runtime": {
-  "kind": "container",
-  "image": "ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
-  "image_id_validated": "sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1",
-  "local_tag": "neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b",
-  "xpu_extension_sha256": "271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f",
-  "xpu_ops_sha256": "6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3",
-  "base": "R228 (fixed-K _xpu_C + FP16 row chunks + GDN spec grouping) + R256 draft-only INT4 lm_head fallback + R276 sync-free grouped GDN branch (graph capture to 320) + R293 class-consistent FP16 linear mode (VLLM_XPU_FP16_LINEAR_CLASSPAD; off = R276 code path) + R294 shortlisted draft-only lm_head (DRAFT_SHORTLIST; default the 67,248-row list)",
-  "vllm": "0.27.2rc1.dev77+gac7509e2b.xpu",
-  "kernel_head": "1e90ffa672ba02f17a909da11838a4c55b199783",
-  "onednn_head": "0e2a5bfeef1bfbffc3137464606540233086ce9b"
- },
- "project_patches": {
-  "required": true,
-  "items": [
-   "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
-   "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
-   "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
-   "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
-   "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
-   "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
-   "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
-   "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
-   "experiments/qwen38-27b-b70/docker/r276-gdn-spec-group-sync-free.py",
-   "experiments/qwen38-27b-b70/docker/r290-fp16-linear-classpad.py",
-   "experiments/qwen38-27b-b70/docker/r291-fp16-linear-classpad-verified.py",
-   "experiments/qwen38-27b-b70/docker/r292-fp16-linear-classpad-nozero.py",
-   "experiments/qwen38-27b-b70/docker/r293-fp16-linear-classpad-cheapest.py",
-   "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py"
+  "missing": [
+    "clean-host replay"
   ]
- },
- "commands": {
-  "preflight": "docker pull ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 && docker tag ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1 neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b EXPECTED_XPU_EXTENSION_SHA256=271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f EXPECTED_XPU_OPS_SHA256=6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3 EXPECTED_LAYERNORM_SHA256=50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh mtp1-serial-fa-split-gdn neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b && python3 repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py /path/to/qwen3.8-27b-int4-autoround /path/to/qwen3.8-27b-int4-autoround-gptq-relabel --manifest repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-  "launch": "PORT=18134 MTP_DEPTH=4 XPU_GRAPH=1 DRAFT_HEAD_INT4=1 CLASSPAD=0 DRAFT_SHORTLIST=/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt MODEL_DIR=/path/to/qwen3.8-27b-int4-autoround-gptq-relabel VLLM_CACHE_DIR=/path/to/new-runtime-cache repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
-  "health": "curl -fsS http://127.0.0.1:18134/health",
-  "benchmark": "OUT_DIR=/path/to/new-strict-attempt PORT=18134 MODEL_NAME=qwen38-int4-fixed-k-mtp4 PROFILE_LABEL=int4-fixed-k-mtp4 repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-  "stop": "docker stop -t 30 qwen38-int4-fixed-k-mtp4"
- },
- "dependencies": [
-  "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
-  "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-  "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
-  "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
-  "experiments/qwen38-27b-b70/docker/r213b-w4a16-determinism-pad-op.py",
-  "experiments/qwen38-27b-b70/docker/r224-fp16-linear-rowchunk.py",
-  "experiments/qwen38-27b-b70/docker/r228-gdn-spec-group.py",
-  "experiments/qwen38-27b-b70/docker/r256-draft-int4-head-fallback.py",
-  "experiments/qwen38-27b-b70/notes/2026-09-05-qwen38-int4-concurrency-identity-r222-r226.md",
-  "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-fixed-k-two-tier-r221-20260905.patch",
-  "experiments/qwen38-27b-b70/patches/onednn-qwen38-w4a16-strategy-override-dump-r220-20260905.patch",
-  "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-c-default-align-r137b-20260902.patch",
-  "experiments/qwen38-27b-b70/patches/onednn-qwen38-w8a16-fixed-k-align16-r137a-20260902.patch",
-  "repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json",
-  "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
-  "repro/qwen38-27b-autoround-int4-b70/README.md",
-  "repro/qwen38-27b-autoround-int4-b70/manifests/model-gptq-relabel-r212.json",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/make-gptq-relabel.py",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r228-image-ghcr.sh",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r256-image-ghcr.sh",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/run-fixed-k-mtp-server.sh",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/verify-model-direct.py",
-  "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/bench-w8a16-mtp1-strict.sh",
-  "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp0-strict-server.sh",
-  "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh",
-  "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-image-contract.sh",
-  "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/verify-model-direct.sh",
-  "scripts/bench-openai-realistic-suite.py",
-  "scripts/neural-download-canaries.py",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.gdn-spec-group-sync-free-r276",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-r290",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-verified-r291",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-nozero-r292",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.fp16-linear-classpad-cheapest-r293",
-  "experiments/qwen38-27b-b70/docker/r276-gdn-spec-group-sync-free.py",
-  "experiments/qwen38-27b-b70/docker/r290-fp16-linear-classpad.py",
-  "experiments/qwen38-27b-b70/docker/r291-fp16-linear-classpad-verified.py",
-  "experiments/qwen38-27b-b70/docker/r292-fp16-linear-classpad-nozero.py",
-  "experiments/qwen38-27b-b70/docker/r293-fp16-linear-classpad-cheapest.py",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r293-image-ghcr.sh",
-  "experiments/qwen38-27b-b70/scripts/run-20260911-qwen38-int4-r295-r298-classpad-chain.sh",
-  "experiments/qwen35-4b-b70/probes/validate-r292-stale-pad.py",
-  "experiments/qwen35-4b-b70/probes/fp16-linear-mclass-census-extended.py",
-  "experiments/qwen38-27b-b70/docker/r294-draft-head-shortlist.py",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.draft-head-shortlist-r294",
-  "experiments/qwen38-27b-b70/docker/Dockerfile.draft-head-shortlist-r294b",
-  "experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist.py",
-  "experiments/qwen38-27b-b70/docker/draft-shortlists/build-shortlist-v2.py",
-  "experiments/qwen38-27b-b70/docker/draft-shortlists/shortlist-u-v1all-v2top65k.txt",
-  "experiments/qwen38-27b-b70/scripts/run-20260912-qwen38-int4-r299-draft-shortlist-chain.sh",
-  "repro/qwen38-27b-autoround-int4-b70/scripts/publish-r294b-image-ghcr.sh",
-  "experiments/qwen35-4b-b70/notes/2026-09-12-the-draft-head-only-needs-a-shortlist.md"
- ],
- "performance_profiles": [
-  {
-   "id": "http-int4-fixed-k-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "Measured vLLM HTTP completions on two B70s with the R224 image (fixed-K W4A16, FP16 row-chunk linears) and VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), no speculation, FP16 activations/KV, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R226). Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte. One server, one pass per point; not a promoted concurrency speed record.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 1,
-     "value": 34.3,
-     "samples": 1,
-     "per_user_value": 34.3
-    },
-    {
-     "concurrent_sequences": 2,
-     "value": 67.6,
-     "samples": 1,
-     "per_user_value": 33.8
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 136.0,
-     "samples": 1,
-     "per_user_value": 34.0
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 261.9,
-     "samples": 1,
-     "per_user_value": 32.7375
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 504.8,
-     "samples": 1,
-     "per_user_value": 31.55
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 841.3,
-     "samples": 1,
-     "per_user_value": 26.2906
-    },
-    {
-     "concurrent_sequences": 64,
-     "value": 998.3,
-     "samples": 1,
-     "per_user_value": 15.5984
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-mtp4-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP depth-4 identity-qualified aggregate decode vs concurrent users (c1-c16)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "As above with MTP depth 4 on the R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set) and Inductor split_reductions=false (R232). Points through c16 are output-identity-qualified; c32 (31/32) and c64 (63/64) were measured but are withheld because near-tie prompts took a different valid branch.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-concurrency-ladders-r222-r225-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 1,
-     "value": 64.4,
-     "samples": 1,
-     "per_user_value": 64.4
-    },
-    {
-     "concurrent_sequences": 2,
-     "value": 73.0,
-     "samples": 1,
-     "per_user_value": 36.5
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 219.4,
-     "samples": 1,
-     "per_user_value": 54.85
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 356.0,
-     "samples": 1,
-     "per_user_value": 44.5
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 516.8,
-     "samples": 1,
-     "per_user_value": 32.3
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-tp1-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP1 (one card) MTP0 identity-qualified aggregate decode vs concurrent users (c1-c64)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "One B70 (TENSOR_PARALLEL_SIZE=1), R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), Inductor split_reductions=false, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R239 TP1 depth-1 campaign MTP0 ladder). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-r239-matrix-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 1,
-     "value": 32.8,
-     "samples": 1,
-     "per_user_value": 32.8
-    },
-    {
-     "concurrent_sequences": 2,
-     "value": 62.7,
-     "samples": 1,
-     "per_user_value": 31.35
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 118.6,
-     "samples": 1,
-     "per_user_value": 29.65
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 206.5,
-     "samples": 1,
-     "per_user_value": 25.8125
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 342.9,
-     "samples": 1,
-     "per_user_value": 21.4312
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 506.0,
-     "samples": 1,
-     "per_user_value": 15.8125
-    },
-    {
-     "concurrent_sequences": 64,
-     "value": 447.6,
-     "samples": 1,
-     "per_user_value": 6.9938
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-tp2-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP0 with XPU graph capture, identity-qualified aggregate decode vs concurrent users (c1-c64)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "Two B70s, R228 image, VLLM_BATCH_INVARIANT=0 (corrected 2026-09-06: vLLM's own batch-invariant switch was never in effect on this lane; the strict launchers pin it to 0 and vLLM refuses to boot the GDN backend with it set), split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 with FULL_DECODE_ONLY capture sizes 1-8, no speculation, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite (R251). Every point is output-identity-qualified against its sequential oracle. One server, one pass per point.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 1,
-     "value": 50.0,
-     "samples": 1,
-     "per_user_value": 50.0
-    },
-    {
-     "concurrent_sequences": 2,
-     "value": 94.4,
-     "samples": 1,
-     "per_user_value": 47.2
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 178.7,
-     "samples": 1,
-     "per_user_value": 44.675
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 317.7,
-     "samples": 1,
-     "per_user_value": 39.7125
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 501.2,
-     "samples": 1,
-     "per_user_value": 31.325
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 842.1,
-     "samples": 1,
-     "per_user_value": 26.3156
-    },
-    {
-     "concurrent_sequences": 64,
-     "value": 999.4,
-     "samples": 1,
-     "per_user_value": 15.6156
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-drafthead-tp2-mtp4-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP depth 4 with graph capture and the draft-only INT4 head, identity-qualified aggregate decode vs concurrent users (c1-c16, warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "Two B70s, R256 image, split_reductions=false, VLLM_XPU_ENABLE_XPU_GRAPH=1 (FULL_DECODE_ONLY, sizes 1-8), VLLM_XPU_DRAFT_LM_HEAD_INT4=1, MTP depth 4, cache disabled, 128 returned raw token IDs per response on the 64-prompt small-context suite; every rung run twice on one server and the second (warm) pass shown (R265b, 2026-09-06): the first pass of a fresh server carries a one-time Dynamo recompilation on the first multi-user batch. Every point through c16 is output-identity-qualified (16/16 at every rung). Above 16 users the corrected re-measurement with the W4A16 pad switch forwarded (R281) gives c32 632.6 (30/32) and c64 603.7 (62/64, admission-limited at max-model-len 256), withheld because near-tie prompts take a different valid branch; the R276 image with capture sizes to 320 (R282) adds +22%/+10% at two/four users (191.0/294.7).",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 1,
-     "value": 107.3,
-     "samples": 1,
-     "per_user_value": 107.3
-    },
-    {
-     "concurrent_sequences": 2,
-     "value": 147.6,
-     "samples": 1,
-     "per_user_value": 73.8
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 252.9,
-     "samples": 1,
-     "per_user_value": 63.225
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 405.4,
-     "samples": 1,
-     "per_user_value": 50.675
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 580.4,
-     "samples": 1,
-     "per_user_value": 36.275
-    }
-   ]
-  },
-  {
-   "id": "http-int4-mtp0-decode-vs-active-context",
-   "label": "INT4 fixed-K TP2 MTP0 (graphs) HTTP decode over exact active context",
-   "metric": "decode",
-   "unit": "tok/s",
-   "x_label": "Exact active prompt tokens",
-   "scope": "Measured 2026-09-06 (R260b, clean boot) on the headline configuration (R256 image, two B70s, XPU graph capture FULL_DECODE_ONLY sizes 1-8, strict launcher env): one-slot vLLM HTTP completions at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, max-model-len 33024, max-num-batched-tokens 4096, cache zero, canaries before and after. MTP0 (target only). No value is interpolated.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
-   "points": [
-    {
-     "context_tokens": 2048,
-     "value": 50.023492143506274,
-     "samples": 3
-    },
-    {
-     "context_tokens": 4096,
-     "value": 48.78019783970367,
-     "samples": 3
-    },
-    {
-     "context_tokens": 8192,
-     "value": 47.46198372409749,
-     "samples": 3
-    },
-    {
-     "context_tokens": 16384,
-     "value": 45.92111530825193,
-     "samples": 3
-    },
-    {
-     "context_tokens": 24576,
-     "value": 44.174870800726,
-     "samples": 3
-    },
-    {
-     "context_tokens": 32768,
-     "value": 42.832649479370204,
-     "samples": 3
-    }
-   ]
-  },
-  {
-   "id": "http-int4-mtp4-decode-vs-active-context",
-   "label": "INT4 fixed-K TP2 MTP depth 4 (graphs, draft-only INT4 head) HTTP decode over exact active context",
-   "metric": "decode",
-   "unit": "tok/s",
-   "x_label": "Exact active prompt tokens",
-   "scope": "Measured 2026-09-06 (R260b, clean boot) on the headline configuration (R256 image, two B70s, XPU graph capture FULL_DECODE_ONLY sizes 1-8, strict launcher env): one-slot vLLM HTTP completions at exactly 2K, 4K, 8K, 16K, 24K, and 32K active context, unrepeated technical prose, Python, and structured documents (three requests per depth, median shown), 128 output tokens, max-model-len 33024, max-num-batched-tokens 4096, cache zero, canaries before and after. MTP depth 4 with the FP16 target verifier and draft-only INT4 head; every output matched the same-configuration MTP0 oracle (18/18 complete arrays). Class spread is wide at every depth (Python code accepts more draft tokens); the median of the three classes is shown.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-06-qwen38-int4-r256-real-content-depth-r260b-result.json",
-   "points": [
-    {
-     "context_tokens": 2048,
-     "value": 120.55879982780635,
-     "samples": 3
-    },
-    {
-     "context_tokens": 4096,
-     "value": 125.72167735144107,
-     "samples": 3
-    },
-    {
-     "context_tokens": 8192,
-     "value": 124.3502018967137,
-     "samples": 3
-    },
-    {
-     "context_tokens": 16384,
-     "value": 90.18189154611792,
-     "samples": 3
-    },
-    {
-     "context_tokens": 24576,
-     "value": 84.62792054167177,
-     "samples": 3
-    },
-    {
-     "context_tokens": 32768,
-     "value": 100.271460163712,
-     "samples": 3
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-r276-big-admission-tp2-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP0, R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c64; warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "R284 (2026-09-06): two B70s, R276 image, XPU graph capture FULL_DECODE_ONLY sizes to 320, strict launcher env with the W4A16 pad switch forwarded off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, no speculation, cache disabled, 128 returned raw token IDs per response on the small-context suite; every rung run twice on one server, warm pass shown. c16/c32/c64 are output-identity-qualified in both passes (16/16, 32/32, 64/64). Measured but withheld: c96 915.4 (95/96 warm, 96/96 first pass) and c128 1085.3 (128/128 warm, 127/128 first pass), one near-tie prompt each.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 16,
-     "value": 533.8,
-     "samples": 1,
-     "per_user_value": 33.3625
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 815.0,
-     "samples": 1,
-     "per_user_value": 25.4688
-    },
-    {
-     "concurrent_sequences": 64,
-     "value": 991.4,
-     "samples": 1,
-     "per_user_value": 15.4906
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp2-mtp4-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP depth 4 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c32; warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "R284 (2026-09-06): as the MTP0 profile above with qwen3_next_mtp depth 4, FP16 target verifier and the draft-only INT4 lm_head. c16 and c32 are output-identity-qualified in both passes (16/16, 32/32). Measured but withheld: c64 591.4 (58/64), c96 590.6 (89/96), c128 584.7 (117/128); the same prompts diverge at the same token positions in every rung of 64 and above (near-tie flips in the >32-row W4A16 GEMM tier), and the depth-4 aggregate plateaus at 585-641 tok/s from c32 while MTP0 keeps scaling to 991 (c64) and 1085 (c128). Serve more than about 32 users without speculation.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 16,
-     "value": 574.3,
-     "samples": 1,
-     "per_user_value": 35.8937
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 641.3,
-     "samples": 1,
-     "per_user_value": 20.0406
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-r276-big-admission-tp1-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP1 (one card) MTP0, R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c128; warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "R285 (2026-09-06): one B70 (TENSOR_PARALLEL_SIZE=1, GPU_MEMORY_UTILIZATION=0.96), R276 image, XPU graph capture FULL_DECODE_ONLY sizes to 320, strict launcher env with the W4A16 pad switch forwarded off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, no speculation, cache disabled, 128 returned raw token IDs per response on the small-context suite; every rung run twice on one server, warm pass shown. Every rung is output-identity-qualified in both passes (16/16 through 128/128). Peak 514.0 tok/s at 32 users; from 64 users the batch budget queues prefill (ttft_max 13-27 s).",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 16,
-     "value": 345.9,
-     "samples": 1,
-     "per_user_value": 21.6187
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 514.0,
-     "samples": 1,
-     "per_user_value": 16.0625
-    },
-    {
-     "concurrent_sequences": 64,
-     "value": 418.5,
-     "samples": 1,
-     "per_user_value": 6.5391
-    },
-    {
-     "concurrent_sequences": 96,
-     "value": 403.7,
-     "samples": 1,
-     "per_user_value": 4.2052
-    },
-    {
-     "concurrent_sequences": 128,
-     "value": 443.8,
-     "samples": 1,
-     "per_user_value": 3.4672
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp1-mtp4-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP1 (one card) MTP depth 4 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c16-c32; warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "R285 (2026-09-06): as the one-card MTP0 profile above with qwen3_next_mtp depth 4, FP16 target verifier and the draft-only INT4 lm_head. c16 and c32 are output-identity-qualified in both passes (16/16, 32/32). Measured but withheld: c64 246.2 (62/64), c96 243.4 (90/96), c128 243.9 (123/128), near-tie divergences as on TP2. One card saturates at ~245 tok/s with depth 4 from 16 users; MTP0 on the same card reaches 514 at 32 users, so serve more than about 8-16 one-card users without speculation.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 16,
-     "value": 237.3,
-     "samples": 1,
-     "per_user_value": 14.8313
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 243.7,
-     "samples": 1,
-     "per_user_value": 7.6156
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp2-mtp1-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP depth 1 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c2-c32; warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "R287 (2026-09-06): as the R284 profiles (two B70s, R276 image, capture sizes to 320, pad off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, two passes, warm pass shown) with qwen3_next_mtp depth 1. c2, c4 and c32 are output-identity-qualified in both passes (R288/R287); c16 in the warm pass (16/16; the first pass of the fresh server had one near-tie flip, 15/16). Measured but withheld: c64 842.0 (61/64), c96 906.3 (92/96), c128 894.8 (121/128). Depth 1 is the fastest setting through 32 users (depth 2: 723.4, depth 4: 641.3, no speculation: 815.0 at c32); from 64 users no speculation is faster and exact (992 at c64). R288 adds c2 147.3, c4 268.6 and c8 456.0 (7/8 in both passes, one near-tie prompt, withheld); depth 4 (R282) is faster at 1-4 users (191.0/294.7), depth 1 from 8 users.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 2,
-     "value": 147.3,
-     "samples": 1,
-     "per_user_value": 73.65
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 268.6,
-     "samples": 1,
-     "per_user_value": 67.15
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 711.0,
-     "samples": 1,
-     "per_user_value": 44.4375
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 854.4,
-     "samples": 1,
-     "per_user_value": 26.7
-    }
-   ]
-  },
-  {
-   "id": "http-int4-fixed-k-graph-drafthead-r276-big-admission-tp1-mtp1-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP1 (one card) MTP depth 1 (draft-only INT4 head), R276 image, 128-sequence admission, identity-qualified aggregate decode vs concurrent users (c4-c32; warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "R289 (2026-09-06): as the one-card R285 profiles (TENSOR_PARALLEL_SIZE=1, R276 image, capture sizes to 320, pad off, max-num-seqs 128, max-model-len 512, max-num-batched-tokens 1024, two passes, warm pass shown) with qwen3_next_mtp depth 1. c4, c8 and c16 are output-identity-qualified in both passes; c32 in the warm pass (32/32; first pass 30/32) and already behind no speculation there (371.9 vs 513.8, prefill queueing with ttft_max 7.5 s). One card: depth 1 from 4 to 16 users (464.7 at 16 vs 345.7 without speculation), no speculation from 32 users.",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 4,
-     "value": 181.4,
-     "samples": 1,
-     "per_user_value": 45.35
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 302.8,
-     "samples": 1,
-     "per_user_value": 37.85
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 464.7,
-     "samples": 1,
-     "per_user_value": 29.0437
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 371.9,
-     "samples": 1,
-     "per_user_value": 11.6219
-    }
-   ]
-  },
-  {
-   "id": "http-int4-r293-classpad-mtp0-identity-qualified-aggregate-vs-concurrent-users",
-   "label": "INT4 fixed-K TP2 MTP0, R293 class-consistent FP16 linears (CLASSPAD=1): identity-qualified aggregate decode vs concurrent users (c1-c64, warm pass)",
-   "metric": "aggregate_decode",
-   "unit": "tok/s",
-   "x_metric": "concurrent_sequences",
-   "x_label": "Concurrent HTTP users",
-   "scope": "Measured vLLM HTTP completions on two B70s with the R293 image and VLLM_XPU_FP16_LINEAR_CLASSPAD=1 (R295, 2026-09-11): the served R276 configuration (capture sizes to 320, INT4 draft head, pad off) with every unquantized FP16 linear kept in one verified oneDNN M-class instead of 32-row pieces. No speculation, 128 returned raw token IDs per response on the 64-prompt small-context suite, second of two passes. Every point is output-identity-qualified: each concurrent output equals its own sequential oracle byte for byte (128/128 at 64 users). One server; not a promoted concurrency speed record. With the 5 ms admission stagger the same rung is 640/640 over ten passes at 1014.4 tok/s (R297).",
-   "evidence": "experiments/qwen38-27b-b70/data/2026-09-05-qwen38-int4-graph-capture-tp2-mtp4-r247-result.json",
-   "points": [
-    {
-     "concurrent_sequences": 1,
-     "value": 49.6,
-     "samples": 1,
-     "per_user_value": 49.6,
-     "exact": "1/1"
-    },
-    {
-     "concurrent_sequences": 2,
-     "value": 94.9,
-     "samples": 1,
-     "per_user_value": 47.45,
-     "exact": "2/2"
-    },
-    {
-     "concurrent_sequences": 4,
-     "value": 177.9,
-     "samples": 1,
-     "per_user_value": 44.475,
-     "exact": "4/4"
-    },
-    {
-     "concurrent_sequences": 8,
-     "value": 326.5,
-     "samples": 1,
-     "per_user_value": 40.8125,
-     "exact": "8/8"
-    },
-    {
-     "concurrent_sequences": 16,
-     "value": 536.3,
-     "samples": 1,
-     "per_user_value": 33.5187,
-     "exact": "16/16"
-    },
-    {
-     "concurrent_sequences": 32,
-     "value": 815.4,
-     "samples": 1,
-     "per_user_value": 25.4812,
-     "exact": "32/32"
-    },
-    {
-     "concurrent_sequences": 64,
-     "value": 1019.2,
-     "samples": 1,
-     "per_user_value": 15.925,
-     "exact": "64/64"
-    }
-   ]
-  }
- ],
- "missing": [
-  "clean-host replay"
- ]
 }

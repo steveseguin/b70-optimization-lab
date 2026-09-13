@@ -4,7 +4,7 @@
 # CI check:        tools/check-container-packet.py
 
 x-b70-common: &b70-common
-  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1
+  image: ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
   ulimits:
     core: 0
   mem_limit: 12g
@@ -20,7 +20,7 @@ x-b70-common: &b70-common
   ipc: host
   shm_size: 8gb
   volumes:
-    - "${MODEL_DIR:?set MODEL_DIR to the verified RedHatAI/Qwen3.5-4B-quantized.w4a16 directory}:/model:ro"
+    - "${MODEL_DIR:?set MODEL_DIR to the verified RedHatAI/Qwen3.5-4B-quantized.w4a16 (verified download) directory}:/model:ro"
     - "${VLLM_CACHE_DIR:-./cache}:/root/.cache/vllm"
   healthcheck:
     test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status==200 else 1)"]
@@ -47,6 +47,7 @@ x-b70-common: &b70-common
     VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE: "0"
     VLLM_TARGET_DEVICE: "xpu"
     VLLM_USE_BREAKABLE_CUDAGRAPH: "0"
+    VLLM_USE_V2_MODEL_RUNNER: "0"
     VLLM_WORKER_MULTIPROC_METHOD: "spawn"
     VLLM_XPU_ALLREDUCE_HOST_WAIT: "1"
     VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP: "0"
@@ -130,6 +131,7 @@ services:
       VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE: "0"
       VLLM_TARGET_DEVICE: "xpu"
       VLLM_USE_BREAKABLE_CUDAGRAPH: "0"
+      VLLM_USE_V2_MODEL_RUNNER: "0"
       VLLM_WORKER_MULTIPROC_METHOD: "spawn"
       VLLM_XPU_ALLREDUCE_HOST_WAIT: "1"
       VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP: "0"
@@ -248,6 +250,7 @@ services:
       VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE: "0"
       VLLM_TARGET_DEVICE: "xpu"
       VLLM_USE_BREAKABLE_CUDAGRAPH: "0"
+      VLLM_USE_V2_MODEL_RUNNER: "0"
       VLLM_WORKER_MULTIPROC_METHOD: "spawn"
       VLLM_XPU_ALLREDUCE_HOST_WAIT: "1"
       VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP: "0"

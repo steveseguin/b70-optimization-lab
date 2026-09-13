@@ -14,8 +14,11 @@
 #              Details: repro/qwen35-9b-w4a16-b70/README.md (R293 section).
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd); repo_root=$(cd -- "${script_dir}/../../.." && pwd)
-export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b}
-export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1}
+export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304}
+export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2}
+# R304 (2026-09-13): the served image is the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head); the
+# image contract carries its own digest set keyed on this label. R294b (0.27.2 lineage) needs EXPECTED_KERNEL_HEAD=1e90ffa672ba02f17a909da11838a4c55b199783.
+export EXPECTED_KERNEL_HEAD=${EXPECTED_KERNEL_HEAD:-6d92b1bfbf32767ecda8e819613eb151e70030ad}
 # DRAFT_SHORTLIST (R294, 2026-09-12): the draft-only INT4 lm_head scores only these vocabulary rows; the target verifies
 # every draft with its full FP16 head, so outputs cannot change. Default: the 67,248-row union list (27% of the
 # vocabulary), +8% (4B) / +9% (9B) at one user with acceptance unchanged. DRAFT_SHORTLIST= (empty) scores every row.
