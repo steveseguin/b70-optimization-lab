@@ -39,3 +39,12 @@ Server fails health (memory); the oracle reports an identity failure at some con
 concurrency and above are not lossless on this line and are recorded, the largest exact
 concurrency is the candidate "Many users" cell. Either way the numbers are published with the
 gate outcome stated.
+
+## Amendment (07:55 UTC): placement and host floor
+
+A377 runs with the never-hit plus max-count-2 placement
+(`data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json`; the max-count-8 one
+pinned ~20 GB of host memory and tripped the supervisor's floor on A375) and with the MTP0 supervisor's
+MemAvailable floor moved from 16 GB to the 12 GB the certified MTP1 supervisor uses (`HOSTFLOOR:`
+generator option; see the A375/A376 note, amendment 2). The packet was regenerated at 07:44 UTC and
+launched at 07:46 UTC; nothing about the server identity changed.
