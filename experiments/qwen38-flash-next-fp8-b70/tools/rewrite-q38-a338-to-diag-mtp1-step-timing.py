@@ -56,11 +56,15 @@ def main():
     # Plain entries become launcher exports (Q38_* survive into the engine). Entries prefixed
     # DERIVED: are printed into the derived server script next to the other VLLM_XPU_* exports,
     # because the derived launcher unsets every inherited VLLM_* variable.
-    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:", "MAXLEN:", "KVBYTES:"))]
+    plain = [kv for kv in extra_env if not kv.startswith(("DERIVED:", "STAGE:", "MANIFEST:", "STAGE_BUILD_HEAD:", "MAXLEN:", "KVBYTES:", "PLACEMENT:"))]
     derived_kvs = [kv[len("DERIVED:"):] for kv in extra_env if kv.startswith("DERIVED:")]
     exports = "".join(f"export {kv}\n" for kv in plain)
+    # PLACEMENT:<path> swaps the expert host-placement file (bit-exact by construction; only VRAM moves).
+    pl = [kv2.split(":", 1)[1] for kv2 in extra_env if kv2.startswith("PLACEMENT:")]
+    if pl:
+        launcher = replace_n(launcher, "export Q38_EXPERT_HOST_PLACEMENT=/home/steve/llm-optimizations/experiments/qwen38-flash-next-fp8-b70/data/20260906-q38-expert-host-placement-3p5gib-per-rank.json\n", f"export Q38_EXPERT_HOST_PLACEMENT={pl[0]}\n", 1)
     # MAXLEN:<n> and KVBYTES:<n> override the served context and KV budget (long-context arms).
-    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:")))}
+    lc = {k: v for k, v in (kv2.split(":", 1) for kv2 in extra_env if kv2.startswith(("MAXLEN:", "KVBYTES:", "PLACEMENT:")))}
     if "MAXLEN" in lc:
         launcher = replace_n(launcher, " MAX_MODEL_LEN=4352 ", f" MAX_MODEL_LEN={lc['MAXLEN']} ", 1)
         # the derived script's frozen-context check and message, printed by the launcher's awk rules
