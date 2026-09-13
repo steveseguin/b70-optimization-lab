@@ -7391,56 +7391,105 @@
     "date": "2026-09-13",
     "boot": "dc3e2634",
     "image": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 sha256:7cd7bb16 (the R294b stack rebased onto stock vLLM XPU v0.29.0 + kernels 0.1.14.1 + upstream fixes #53059/#51565/#53542; ghcr digest = image id)",
-    "config": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head scoring the 67k shortlist, CLASSPAD=0, pad off), V1 model runner pinned, real image contract (v0290 digest set); ladders are a SINGLE cold pass (LADDER_REPEATS=1; R299 quoted the warm second pass) - a two-pass rerun (R304c) is queued",
+    "config": "served configuration (TP2, depth 4, sizes to 320, INT4 draft head scoring the 67k shortlist, CLASSPAD=0, pad off), V1 model runner pinned, real image contract (v0290 digest set); two-pass ladders (R304c, the warm second pass is quoted, as for R299); the first R304b run (single cold pass, strict 117.04/117.09) is superseded",
     "ladder": [
       {
         "concurrency": 1,
         "repeat": 1,
         "exact": "1/1",
-        "aggregate_tok_s_wall": 111.4,
+        "aggregate_tok_s_wall": 111.5,
         "ttft_s_max": 0.06
       },
       {
         "concurrency": 2,
         "repeat": 1,
         "exact": "2/2",
-        "aggregate_tok_s_wall": 89.7,
-        "ttft_s_max": 1.02
+        "aggregate_tok_s_wall": 89.1,
+        "ttft_s_max": 1.03
       },
       {
         "concurrency": 4,
         "repeat": 1,
         "exact": "4/4",
-        "aggregate_tok_s_wall": 301.7,
-        "ttft_s_max": 0.17
+        "aggregate_tok_s_wall": 302.7,
+        "ttft_s_max": 0.16
       },
       {
         "concurrency": 8,
         "repeat": 1,
-        "exact": "7/8",
-        "aggregate_tok_s_wall": 435.0,
-        "ttft_s_max": 0.22
+        "exact": "8/8",
+        "aggregate_tok_s_wall": 432.5,
+        "ttft_s_max": 0.21
       },
       {
         "concurrency": 16,
         "repeat": 1,
-        "exact": "16/16",
-        "aggregate_tok_s_wall": 544.0,
-        "ttft_s_max": 0.55
+        "exact": "15/16",
+        "aggregate_tok_s_wall": 540.5,
+        "ttft_s_max": 0.61
       },
       {
         "concurrency": 32,
         "repeat": 1,
-        "exact": "31/32",
-        "aggregate_tok_s_wall": 650.0,
-        "ttft_s_max": 0.55
+        "exact": "28/32",
+        "aggregate_tok_s_wall": 643.9,
+        "ttft_s_max": 0.67
       },
       {
         "concurrency": 64,
         "repeat": 1,
-        "exact": "59/64",
-        "aggregate_tok_s_wall": 593.8,
-        "ttft_s_max": 9.29
+        "exact": "62/64",
+        "aggregate_tok_s_wall": 598.5,
+        "ttft_s_max": 9.26
+      },
+      {
+        "concurrency": 1,
+        "repeat": 2,
+        "exact": "1/1",
+        "aggregate_tok_s_wall": 113.7,
+        "ttft_s_max": 0.04
+      },
+      {
+        "concurrency": 2,
+        "repeat": 2,
+        "exact": "2/2",
+        "aggregate_tok_s_wall": 192.1,
+        "ttft_s_max": 0.13
+      },
+      {
+        "concurrency": 4,
+        "repeat": 2,
+        "exact": "3/4",
+        "aggregate_tok_s_wall": 307.9,
+        "ttft_s_max": 0.15
+      },
+      {
+        "concurrency": 8,
+        "repeat": 2,
+        "exact": "8/8",
+        "aggregate_tok_s_wall": 435.9,
+        "ttft_s_max": 0.21
+      },
+      {
+        "concurrency": 16,
+        "repeat": 2,
+        "exact": "16/16",
+        "aggregate_tok_s_wall": 590.8,
+        "ttft_s_max": 0.24
+      },
+      {
+        "concurrency": 32,
+        "repeat": 2,
+        "exact": "31/32",
+        "aggregate_tok_s_wall": 645.4,
+        "ttft_s_max": 0.56
+      },
+      {
+        "concurrency": 64,
+        "repeat": 2,
+        "exact": "57/64",
+        "aggregate_tok_s_wall": 596.8,
+        "ttft_s_max": 9.31
       }
     ],
     "ladder_first_divergence_vs_oracle": {},
@@ -7456,7 +7505,7 @@
         "concurrency": 2,
         "repeat": 1,
         "exact": "2/2",
-        "aggregate_tok_s_wall": 94.8,
+        "aggregate_tok_s_wall": 94.9,
         "ttft_s_max": 0.1
       },
       {
@@ -7470,42 +7519,92 @@
         "concurrency": 8,
         "repeat": 1,
         "exact": "8/8",
-        "aggregate_tok_s_wall": 327.5,
+        "aggregate_tok_s_wall": 327.8,
         "ttft_s_max": 0.18
       },
       {
         "concurrency": 16,
         "repeat": 1,
         "exact": "16/16",
-        "aggregate_tok_s_wall": 540.0,
+        "aggregate_tok_s_wall": 539.6,
         "ttft_s_max": 0.26
       },
       {
         "concurrency": 32,
         "repeat": 1,
-        "exact": "31/32",
-        "aggregate_tok_s_wall": 812.8,
-        "ttft_s_max": 0.51
+        "exact": "32/32",
+        "aggregate_tok_s_wall": 816.6,
+        "ttft_s_max": 0.49
       },
       {
         "concurrency": 64,
         "repeat": 1,
-        "exact": "64/64",
+        "exact": "63/64",
         "aggregate_tok_s_wall": 990.3,
+        "ttft_s_max": 1.02
+      },
+      {
+        "concurrency": 1,
+        "repeat": 2,
+        "exact": "1/1",
+        "aggregate_tok_s_wall": 50.2,
+        "ttft_s_max": 0.04
+      },
+      {
+        "concurrency": 2,
+        "repeat": 2,
+        "exact": "2/2",
+        "aggregate_tok_s_wall": 95.4,
+        "ttft_s_max": 0.1
+      },
+      {
+        "concurrency": 4,
+        "repeat": 2,
+        "exact": "4/4",
+        "aggregate_tok_s_wall": 180.1,
+        "ttft_s_max": 0.12
+      },
+      {
+        "concurrency": 8,
+        "repeat": 2,
+        "exact": "8/8",
+        "aggregate_tok_s_wall": 329.8,
+        "ttft_s_max": 0.16
+      },
+      {
+        "concurrency": 16,
+        "repeat": 2,
+        "exact": "16/16",
+        "aggregate_tok_s_wall": 539.7,
+        "ttft_s_max": 0.26
+      },
+      {
+        "concurrency": 32,
+        "repeat": 2,
+        "exact": "32/32",
+        "aggregate_tok_s_wall": 816.3,
+        "ttft_s_max": 0.49
+      },
+      {
+        "concurrency": 64,
+        "repeat": 2,
+        "exact": "64/64",
+        "aggregate_tok_s_wall": 989.3,
         "ttft_s_max": 1.01
       }
     ],
     "ladder-mtp0_first_divergence_vs_oracle": {},
     "rates": [
-      117.038893836443,
-      117.090608198974
+      117.23824757653,
+      116.946159813681
     ],
     "rates_mtp0": [
-      50.113928878656,
-      50.028742486589
+      50.070323785048,
+      50.056517980446
     ],
     "gates": "G2 12/12, G3 12/12 x2 (own MTP0 pair)",
     "gates_mtp0": "G1 12/12",
-    "verdict": "lossless on the v0.29.0 rebase: G1 12/12 (50.11/50.03), G2 12/12, G3 12/12 x2 at 117.04/117.09 tok/s (R299 on the 0.27.2 image: 117.46/117.59); short prompts fixed (see the rebase note)"
+    "verdict": "lossless on the v0.29.0 rebase: G1 12/12 (50.07/50.06), G2 12/12, G3 12/12 x2 at 117.24/116.95 tok/s (R299 on the 0.27.2 image: 117.46/117.59); short prompts fixed (see the rebase note)",
+    "root": "/mnt/fast-ai/bench-results/qwen38-int4-rebase-v0290-r304c-20260912"
   }
 }

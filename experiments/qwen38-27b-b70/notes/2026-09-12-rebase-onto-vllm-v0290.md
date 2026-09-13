@@ -115,3 +115,17 @@ runs on the same image: G1/G2/G3 12/12, MTP1 54.82/54.83 tok/s, MTP0 33.08/33.08
 INT4-27B TP2 depth 4 on R304 under the real contract: G1/G2/G3 12/12, 117.04/117.09 tok/s, MTP0 50.11/50.03
 (published R299 117.46/117.59, 49.39). One image now serves all four published lanes; it is on GHCR as
 `ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16` (tag `r304-v0290-rebase-20260913`).
+
+## 27B ladders on R304 (warm second pass of two, R304c, vs R299 on the 0.27.2 image)
+
+Strict pair R304c: 117.24 / 116.95 depth 4, 50.07 / 50.06 no spec; all gates 12/12.
+
+| users | R304 depth 4 | R299 depth 4 | R304 no spec | R299 no spec |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 113.7 (1/1) | 111.4 (1/1) | 50.2 (1/1) | 50.2 (1/1) |
+| 2 | 192.1 (2/2) | 191.3 (2/2) | 95.4 (2/2) | 96.0 (2/2) |
+| 4 | 307.9 (3/4) | 304.9 (4/4) | 180.1 (4/4) | 180.1 (4/4) |
+| 8 | 435.9 (8/8) | 429.8 (8/8) | 329.8 (8/8) | 330.1 (8/8) |
+| 16 | 590.8 (16/16) | 589.0 (16/16) | 539.7 (16/16) | 540.2 (16/16) |
+| 32 | 645.4 (31/32) | 650.4 (31/32) | 816.3 (32/32) | 815.0 (32/32) |
+| 64 | 596.8 (57/64) | 597.4 (62/64) | 989.3 (64/64) | 987.3 (64/64) |
