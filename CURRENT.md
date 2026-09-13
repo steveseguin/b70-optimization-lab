@@ -32,7 +32,9 @@ an old coredump deletion notice incorrectly matched as a new fault; both GPUs
 and XCCL passed fresh bounded health checks. Final isolated R307 qualification
 is now authorized: runner failure propagation, token-ID boundary oracles and
 two fresh MTP3 servers per 4B/9B model, then isolated 9B strict pairs. Preserve
-`/mnt/fast-ai/bench-results/r307-qualification-20260913/` and follow the
+`/mnt/fast-ai/bench-results/r307-qualification-20260913/` (failed c4 gate) and
+`/mnt/fast-ai/bench-results/r307-single-request-qualification-20260913/`
+(active single-request follow-up); follow the
 [registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
 R307 remains unpromoted until the mandatory gates and recipe contract pass.
 
