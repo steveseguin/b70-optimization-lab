@@ -100,8 +100,8 @@ certification battery, not by byte identity with the lab's build).
 
 ```bash
 cd /path/to/b70-optimization-lab
-repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-48tps-20260913/verify-identity.sh
-REPRO_ATTEMPT=<unused number above 367> repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-48tps-20260913/run-record-gate.sh
+repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/verify-identity.sh
+REPRO_ATTEMPT=<unused number above 367> repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/run-record-gate.sh
 ```
 
 `verify-identity.sh` checks, without touching the GPUs: the four overlay bundles and the

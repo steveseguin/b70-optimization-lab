@@ -1,0 +1,67 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "created_utc": "2026-09-13T04:11:49Z",
+  "profile_id": "qwen38-flash-next-fp8-tp4-mtp1-fullgraphdet-4352-placement-hctriton-qsafused-exactgdn-realistic-v1",
+  "decision": "promote",
+  "promotion_authorized": true,
+  "headline": {
+    "value": 46.85424994838007,
+    "unit": "tok/s",
+    "aggregation": "median of prompt-class medians, 99 inter-token intervals after TTFT, fixed realistic suite run once cold",
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "note": "deterministic full-decode-graph line with one publisher MTP token on the certified fused-QSA overlay 6d872457, with the GDN verifier rows run by the kernel extension's own exact serial mode (VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1, persistent scratch, completion barrier) on stage v2: the served 2f829747 stage with _xpu_C rebuilt from kernel head bbae3c5 over e421889 (ad25aa9 generalises the exact replay to two rows; the served build gates it to four). vLLM overlay, MoE kernel, tuned map, UVA offload, expert placement and collective runtime unchanged. SAME OUTPUT AUTHORITY as the 37.83 tok/s line: exact-2K afffd211 and exact-4K 1d833e5f on the certification servers A364, A365, A366 and the record server; kernel-level probe bit-identical; quality byte for byte against the certified battery (7/7 exact cases, 16/16 repeats one hash, exact needle); twelve cold suite rows with cached_tokens 0"
+  },
+  "performance_evidence": {
+    "path": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a367-native-exact-gdn-realistic-suite-v1-result.json",
+    "sha256": "f88da9b4e041255dc36363363bd78756ebcd10418953e1ea7477d63e7b8014dc"
+  },
+  "identity": {
+    "model_revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+    "runtime_revision": "6d8724577dabbee5fa0bbc70c4d927c6174c8d8a",
+    "optimization_identity": "tp4-ep4-fullgraphdet-mtp1-4352-ple-embed-budget12p25-uva-coldexperts-hostplaced-3p5gib-w13n32-mkldnndet-oneccl-twoshots-hctriton-qsafused-exactgdn-stage-bbae3c5",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a364-native-exact-gdn-ple-only-qsa-stable-summary.json",
+      "sha256": "6af6a70ca3fc50e44d85fcc25af24b04329777872e7f3a0fb7f981dcae6c73ad",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    },
+    {
+      "path": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-a365-fresh-repeat-deterministic-summary.json",
+      "sha256": "8752fe4828b58d6d99b1e156639beb4efdc21be5f0e08b4eae3018776e3f69b9",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    },
+    {
+      "path": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp1-native-exact-gdn-exact-2k-pair-summary.json",
+      "sha256": "6b625ae35cb85317b56682787829c760e2815165205c326db2b15493d7ef6ff7",
+      "supports": [
+        "fresh_server_repeat_passed",
+        "deterministic_repeats_passed",
+        "exact_or_target_oracle_passed"
+      ]
+    }
+  ]
+}
