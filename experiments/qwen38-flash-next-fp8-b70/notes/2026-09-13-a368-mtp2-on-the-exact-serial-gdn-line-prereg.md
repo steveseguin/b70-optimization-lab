@@ -30,3 +30,14 @@ before, so the server's health is the first gate.
 Server fails health (three-row exact mode); any pin differs; client FAIL. A pass above 48.2 at
 exact-2K with the pins held sends MTP2 to a fresh-server repeat and the record suite; a pass below
 closes MTP2 on this line with the number recorded.
+
+## Amendment (04:45 UTC): A368 failed in the client, re-run as A374
+
+A368's server came up healthy at 04:36 UTC (the three-row exact mode captured and served), but the
+frozen client stopped at its first pin: the A309 client names its runtime verifier
+`verify-q38-a309-fullgraph-runtime.py`, a file that never existed (the a139->a309 generator renamed
+the attempt inside the file name; the 2026-09-07 screen used a row driver, not this client). The
+digest it pins is `verify-q38-a139-fullgraph-runtime.py`'s. The generator now maps the name back
+to the a139 file; the arm is regenerated as A374 (port 19987) and queued behind the A369-A373
+decomposition chain with the five-minute gap. The server health itself answers the first gate:
+the extension's exact mode accepts three verifier rows.
