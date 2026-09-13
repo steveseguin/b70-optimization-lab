@@ -83,10 +83,15 @@ that PR's `gdn_attn.py` hunks (`Dockerfile.r303-gdn-phase-fix`): `Hi` 0/30, ever
 
 | arm | k=1 `Hi` | k=2 | k=3 | k=4 (alias) | k=5 | k=6 | long |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| R294b served / R301 / R302 | 29-30/30 | 0 | 0 | 0 (R302) | 0 | 0 | 0 |
+| R294b served | 30/30 | 0 | 0 | **30/30** | 0 | 0 | 0 |
+| R301 / R302 (guard) | 29-30/30 | 0 | 0 | 0 (R302) | 0 | 0 | 0 |
 | **R303** | **0/30** | 0 | 0 | 0 | 0 | 0 | 0 |
 
-R303 is the shipping candidate; the contract digest set pins its `gdn_attn.py` too (seventeen files).
+Round two on the served image also lit the alias: the 4-token prompt `Hello, world!` degenerated 30/30 on R294b (depth 3,
+so 1+K = 4), which R302's guard removes. Without speculation the one-token failure is still there on R302 (29/30) and
+gone on R303 (0/30), so it does not need MTP. **The published recipe therefore breaks on every one-token prompt and,
+at depth K, on every (1+K)-token prompt.** R303 is the shipping candidate; the contract digest set pins its
+`gdn_attn.py` too (seventeen files).
 
 The recipe contract now carries a v0.29.0 digest set (sixteen files, keyed on the kernel-head label 6d92b1bf) so R302
 launches without `SKIP_IMAGE_CONTRACT`; R301 fails it on `gpu_model_runner.py` by design. The shared launchers pin

@@ -144,9 +144,19 @@
     "k4": "0/30",
     "k1 Hi": "0/30",
     "k2..k6,long": "0/30 each"
+   },
+   "r294b_served": {
+    "k4 alias \"Hello, world!\"": "30/30",
+    "k1 Hi": "30/30"
+   },
+   "r303_nospec": {
+    "k1 Hi (alias for K=0)": "0/30"
+   },
+   "r302_nospec": {
+    "k1 Hi": "29/30"
    }
   },
-  "reading": "The one-token failure is vLLM #51562 (fresh one-token GDN prefill classified as decode), present on the served R294b recipe; PR #51565 (R303) removes it. The 1+K alias shape (#53051) did not degenerate on this configuration with the guard; R301 without the guard was not tested at k=4.",
+  "reading": "Two live short-prompt failures on the served R294b recipe: (1) any one-token prompt (vLLM #51562, one-token GDN prefill classified as decode) with or without speculation; (2) at depth K any (1+K)-token prompt (vLLM #53051, uniform-decode shape alias). R302 (#53059 guard) fixes (2); R303 (+ #51565) fixes both. R303 is the shipping candidate.",
   "r303": {
    "image": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r303",
    "id": "sha256:8e7d4911498977bb50907725e716fe5cf904b9c2673969698514331dc47f0697"
