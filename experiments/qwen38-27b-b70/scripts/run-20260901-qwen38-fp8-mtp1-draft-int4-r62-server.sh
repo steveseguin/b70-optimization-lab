@@ -9,7 +9,7 @@ image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-draft-only-int4-r
 exec env \
   IMAGE="${image}" \
   EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID:?set EXPECTED_IMAGE_ID to the locally built R62 image ID}" \
-  EXPECTED_KERNEL_HEAD=1e90ffa672ba02f17a909da11838a4c55b199783 \
+  EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}" \
   CONTAINER_NAME="${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp1-draft-int4-r62}" \
   PORT="${PORT:-18124}" \
   SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp1-draft-int4-r62}" \
