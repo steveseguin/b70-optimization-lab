@@ -78,6 +78,26 @@ class Tests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 m.analyze(root/'single',root/'failed',root/'rebuild/out',rebuild_root=root/'rebuild')
 
+    def test_new_candidate_requires_4b_strict(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            result=m.analyze(root/'single',root/'failed',root/'out',candidate='r308')
+            self.assertFalse(result['passed'])
+            self.assertIn('4B same-image strict',result['error'])
+            with self.assertRaises(ValueError):
+                m.analyze(root/'single',root/'failed',root/'4b/out',four_b_strict_root=root/'4b')
+
+    def test_independent_strict_rejects_incomplete_or_aborted_root(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);strict=root/'strict';strict.mkdir()
+            cap=m.Capture(root/'out')
+            for aborted in (False,True):
+                if aborted:
+                    (strict/'campaign-end.txt').write_text('done')
+                    (strict/'ABORTED').write_text('failed')
+                with self.assertRaises(ValueError):
+                    m.strict_campaign(cap,strict,strict,'strict4b',m.IMAGE,'4b',{'contracts':{},'health':{}})
+
     def test_incomplete_campaign_cannot_pass(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)
