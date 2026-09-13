@@ -88,6 +88,12 @@ view, not a ranking: workloads, context lengths, card counts, quantization,
 and speculative-decoding modes differ. Open the detail page for the exact
 measurement scope and evidence.
 
+The optional R308 single-request boundary repair is available for
+[Qwen3.5 4B](repro/qwen35-4b-w4a16-b70/README.md) and
+[9B](repro/qwen35-9b-w4a16-b70/README.md). Both models passed fresh-server
+boundary and strict identity gates; the [qualification note](experiments/qwen35-4b-b70/notes/2026-09-13-r308-qualified-single-request.md)
+defines its one-card, fixed-depth scope.
+
 <!-- BEGIN GENERATED PUBLIC PACKAGE HEADLINES -->
 | Model and deployment | Package status | Measured headline | Exact guide |
 | --- | --- | ---: | --- |

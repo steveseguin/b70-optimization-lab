@@ -1,15 +1,17 @@
 # Qwen3.5-4B W4A16 on B70 — lane handoff
 
-**2026-09-13 continuation:** R307 remains unpromoted. Expanded exact token-ID
-tests passed both fresh 4B single-request servers (52/52 each), but failed c4
-and found a repeated 9B final-token defect (42/52). The matched 9B target-only
-control passed 6/6 while the acceptance trace failed 6/6. See the
-[negative evidence](notes/2026-09-13-r307-single-request-and-r308-negative.md),
-[historical audit](notes/2026-09-13-r307-resume-and-boundary-audit.md), and
-[active registered plan](notes/2026-09-13-r307-final-qualification-plan.md).
-A lifecycle diagnostic is investigating acceptance metadata across scheduling
-pauses. The 9B second speculative server and strict campaign have not yet run;
-no new deployment profile or image publication is qualified.
+**2026-09-13 completed repair:** R308 fixes the accepted-state metadata lost
+when a paused request leaves and re-enters the batch. Both 4B and 9B passed
+60/60 oracle checks, 52/52 boundary checks on each of two fresh MTP3 servers,
+and all four strict comparisons 12/12. The image is published and anonymously
+verified, with all 17 runtime hashes reproduced from the public R304 base.
+See the [qualification note](notes/2026-09-13-r308-qualified-single-request.md)
+and [optional serving profile](../../repro/qwen35-4b-w4a16-b70/README.md).
+Scope is one active request, TP1, fixed depth 3; boundary capacity 256 and strict
+capacity 1024. Concurrent speculative serving and a new 32K profile are not
+qualified. All test servers stopped with clean postflights. The
+[R307 failures](notes/2026-09-13-r307-single-request-and-r308-negative.md) and
+[lifecycle trace](notes/2026-09-13-r308-lifecycle-acceptance-reset.md) remain evidence.
 
 Last updated **2026-09-11**. The identity campaign (chains 1-10, 2026-09-09) is
 complete. Chains 11-15 (2026-09-09 evening to 2026-09-11 10:49) found and removed
