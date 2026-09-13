@@ -1,0 +1,19 @@
+# R301 (2026-09-12): the lab's Qwen3.5/3.8 INT4 runtime rebased onto stock vLLM XPU v0.29.0.
+#   base     vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901 (v0.29.0, kernels 0.1.14.1)
+#   python   ten files ported from the R294b lineage (port-diffs/ = the exact net diffs; ported-files/ = the result on v0.29.0):
+#            draft-only INT4 lm_head (+R256 fallback, +R294 shortlist), R213b W4A16 pad op, R224+R290..R293 FP16-linear
+#            class-pad, R156/R228/R276 GDN split-mixed + spec grouping (sync-free), packed-serial-exact Gemma RMSNorm,
+#            FA serial spec switches, XPU communicator and scaled_mm switches.
+#   kernels  _xpu_C.abi3.so + libgdn_attn_kernels_xe_2.so built by build-kernels-0.1.14.1.sh: vllm-xpu-kernels 0.1.14.1
+#            (6d92b1bf, includes upstream #544) with oneDNN 0e2a5bfe + r137a + r137b + r221 (onednn-*.applied.diff).
+#            Not r35/r50: the served configuration keeps every GDN serial-exact gate at 0 and the width contract is the
+#            vLLM side's job (PR #53542).
+#   serve    with VLLM_USE_V2_MODEL_RUNNER=0 (v0.29.0 defaults XPU to the V2 runner, which has no draft INT4 head).
+# Build context: this directory plus kernel-artifacts/ (the two .so files; sha256 in kernel-artifacts.sha256).
+FROM vllm/vllm-openai-xpu@sha256:96db42e248d48760a4937eb3d04c4878b39d13a9814efea95d510393e097a901
+COPY ported-files/ /opt/venv/lib/python3.12/site-packages/vllm/
+COPY draft-shortlists/ /opt/draft-shortlists/
+COPY kernel-artifacts/_xpu_C.abi3.so kernel-artifacts/libgdn_attn_kernels_xe_2.so /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/
+RUN cd /opt/venv/lib/python3.12/site-packages/vllm && python -m py_compile _xpu_ops.py model_executor/layers/utils.py model_executor/layers/vocab_parallel_embedding.py v1/spec_decode/llm_base_proposer.py model_executor/kernels/linear/mixed_precision/xpu.py model_executor/layers/layernorm.py v1/attention/backends/flash_attn.py distributed/device_communicators/xpu_communicator.py model_executor/kernels/linear/scaled_mm/xpu.py model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py \
+    && python -c "import torch, vllm_xpu_kernels._xpu_C; print('kernels ok', torch.__version__)" && ls /opt/draft-shortlists | wc -l
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r301" neural.download.kernel.head="6d92b1bfbf32767ecda8e819613eb151e70030ad" neural.download.kernel.patch="onednn 0e2a5bfe r137a+r137b+r221" neural.download.base="vllm/vllm-openai-xpu@sha256:96db42e2 v0.29.0"

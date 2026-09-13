@@ -1,0 +1,84 @@
+{
+ "kind": "rebase-v0290-r301-results",
+ "date": "2026-09-12",
+ "image": {
+  "candidate": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r301",
+  "id": "sha256:5640a86bb23977503e32a8b92a3dcb876c3127b76705496a2db8f6f1e11dc72f",
+  "content_identical_to": "rebase/vllm-xpu:v0290-stage-b1 (sha256:f4a3f904)",
+  "base": "vllm/vllm-openai-xpu@sha256:96db42e2 (v0.29.0, kernels 0.1.14.1)",
+  "kernel_head": "6d92b1bfbf32767ecda8e819613eb151e70030ad",
+  "onednn": "0e2a5bfe + r137a + r137b + r221",
+  "served_pin": "VLLM_USE_V2_MODEL_RUNNER=0"
+ },
+ "single_card_served_config_harness": {
+  "note": "c1/8/64 x2, 128 tokens, small-context suite; MAX_NUM_SEQS=16 for the lab launcher arms, 64 for the stock arm",
+  "stock_v0290_4b_depth3_c1": [
+   111.8,
+   113.7
+  ],
+  "stock_v0290_4b_nospec_c1": [
+   94.3,
+   95.8
+  ],
+  "stock_v0290_9b_depth3_c1": [
+   84.1,
+   84.0
+  ],
+  "stock_v0290_9b_nospec_c1": [
+   64.7,
+   64.9
+  ],
+  "served_r294b_4b_c1": [
+   170.9,
+   172.3
+  ],
+  "stageA2_python_only_4b_c1": [
+   122.2,
+   128.9
+  ],
+  "stageB1_kernels_v2runner_4b_c1": [
+   128.5,
+   128.2
+  ],
+  "stageB1_kernels_v1runner_4b_c1": [
+   172.1,
+   172.5
+  ]
+ },
+ "strict": {
+  "qwen35-4b-w4a16": {
+   "tok_s": {
+    "mtp0-a": 102.57,
+    "mtp0-b": 102.39,
+    "mtp3-a": 191.33,
+    "mtp3-b": 191.94
+   },
+   "gates": {
+    "G1": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e",
+    "G2": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e",
+    "G3a": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e",
+    "G3b": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e"
+   },
+   "root": "/mnt/fast-ai/bench-results/qwen35-4b-w4a16-20260912-rb1"
+  },
+  "qwen35-9b-w4a16": {
+   "tok_s": {
+    "mtp0-a": 64.33,
+    "mtp0-b": 64.28,
+    "mtp3-a": 124.13,
+    "mtp3-b": 124.14
+   },
+   "gates": {
+    "G1": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e",
+    "G2": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e",
+    "G3a": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e",
+    "G3b": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e"
+   },
+   "root": "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260912-rb1"
+  }
+ },
+ "served_reference": {
+  "4b": "R294b strict 191.87/191.58 depth 3; MTP0 102.6 (R224 path, CLASSPAD=0)",
+  "9b": "R294b strict 124.03/124.13; MTP0 64.3"
+ }
+}
