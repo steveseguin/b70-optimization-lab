@@ -1,0 +1,16 @@
+{
+ "pr53542": {
+  "url": "https://github.com/vllm-project/vllm/pull/53542#issuecomment-5649889561",
+  "id": 5649889561,
+  "created_at": "2026-09-13T01:15:08Z",
+  "author": "steveseguin",
+  "body": "Independent end-to-end confirmation on Intel XPU (Arc Pro B70) that this PR fixes a server-killing crash, not only the GDN state width.\n\n**Setup**: stock `vllm/vllm-openai-xpu:latest` (v0.29.0, image sha256:96db42e2, vllm-xpu-kernels 0.1.14.1), one B70, Qwen3.5-9B W4A16 (RedHatAI compressed-tensors), `--speculative-config '{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3,\"num_speculative_tokens_per_batch_size\":[[1,8,3],[9,16,1],[17,64,0]]}'`, `--max-model-len 256 --max-num-seqs 64`, greedy, 64-prompt suite compared against a sequential oracle.\n\n**Stock v0.29.0** (and today's `nightly`, eed1f3d0, identically): 1 user (K=3) is fine. 12 concurrent users (K=1 range) kill the engine immediately, and a 64-user batch dies while draining through 9\u201316 running requests, with both the V1 runner and `VLLM_USE_V2_MODEL_RUNNER=1`:\n\n```\nRuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.\n  File \".../vllm/_xpu_ops.py\", line 171, in _gdn_attention_core_xpu_impl\n```\n\nvLLM's `dump_input` shows the batch: 12 cached requests, `scheduled_spec_decode_tokens` one draft each, `total_num_scheduled_tokens=24`. The XPU kernel derives K from `spec_state_indices_tensor.size(-1)` (4 columns) and expects 48 tokens. (Kernel-side report: vllm-project/vllm-xpu-kernels#593.)\n\n**v0.29.0 + only the `vllm/v1/attention/backends/gdn_attn.py` hunks of this PR (head e981ca5, applied with `patch -p1`, kernels unchanged)**, same everything:\n\n| users | result |\n| --- | --- |\n| 1 | 69.1 tok/s, exact vs oracle |\n| 12 (K=1) | 242.9 tok/s, 12/12 exact vs oracle, all outputs complete |\n| 64 (ramp K=0 \u2192 drain through K=1 \u2192 K=3) | 1083 tok/s, all outputs complete, no engine error |\n\nSo on XPU the narrowed state-index view is what makes runtime K < max K work at all. Happy to run anything else on this hardware if useful.\n"
+ },
+ "kernels593": {
+  "url": "https://github.com/vllm-project/vllm-xpu-kernels/issues/593#issuecomment-5649890209",
+  "id": 5649890209,
+  "created_at": "2026-09-13T01:15:15Z",
+  "author": "steveseguin",
+  "body": "End-to-end follow-up (same B70, no lab patches): on stock `vllm/vllm-openai-xpu:latest` (v0.29.0, kernels 0.1.14.1) a dynamic schedule `[[1,8,3],[9,16,1],[17,64,0]]` with Qwen3.5-9B W4A16 reaches this assertion in ordinary serving \u2014 12 concurrent users (K=1, 24 tokens with a 4-column state-index tensor) kill the engine at once, and a 64-user batch dies while draining through 9\u201316 running requests, with both model runners:\n\n```\nRuntimeError: Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1) to be true, but got false.\n```\n\nApplying only the `gdn_attn.py` hunks of vllm-project/vllm#53542 (which narrows `spec_state_indices_tensor` to the active width on the vLLM side) on top of v0.29.0, kernels unchanged, removes the crash: 12 users run 12/12 exact against a sequential oracle and the 64-user ladder completes. So the contract can be satisfied from the vLLM side; the kernel-side change discussed above is not required for correctness once #53542 lands. Details posted on that PR.\n"
+ }
+}
