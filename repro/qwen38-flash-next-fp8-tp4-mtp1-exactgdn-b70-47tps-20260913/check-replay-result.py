@@ -3,7 +3,7 @@
 
 Pass: every prompt and output SHA-256 equals the record's (bit-identical text),
 every fresh-response and final-gate boolean equals the record's value, and the class-balanced median
-is printed next to the record's RECORD_RATE tok/s. Speed is reported, not gated:
+is printed next to the record's 46.854250 tok/s. Speed is reported, not gated:
 a slower replay with identical outputs is still an exact replay.
 """
 import json, sys
@@ -38,7 +38,7 @@ def main():
     if bad:
         print("FAIL: gates differ from the record:", ", ".join(bad)); ok = False
     med = rep["summary"]["class_balanced_tok_s_1_100_intervals_after_ttft"]["median"]
-    print(f"replay class-balanced median: {med:.6f} tok/s (record RECORD_RATE)")
+    print(f"replay class-balanced median: {med:.6f} tok/s (record 46.854250)")
     print("PASS: bit-identical outputs and all gates hold" if ok else "replay is NOT an exact replay")
     return 0 if ok else 1
 

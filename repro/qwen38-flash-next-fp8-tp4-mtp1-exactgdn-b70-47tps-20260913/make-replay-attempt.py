@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Derive a replay packet a<N> from the frozen A367 packet (MTP1 with the extension exact serial GDN mode on stage v2, RECORD_RATE tok/s).
+"""Derive a replay packet a<N> from the frozen A367 packet (MTP1 with the extension exact serial GDN mode on stage v2, 46.854250 tok/s).
 
 The four A367 scripts are pinned by frozen-a367-packet.sha256. The derived packet is
 byte-identical apart from the attempt number, port, and state-file names; every

@@ -138,6 +138,7 @@ the conventional 99-interval field.
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, VRAM headroom | 4x Arc Pro B70 | **25.617613 conventional interval median (class-balanced; 25.880608 all-prompt median)**, fixed cold realistic gate, no speculation, outputs identical to the approved 14.43 line on every row (1.6 GiB of expert weights host-offloaded ends the xe driver's whole-buffer VRAM paging) | [`cmtp3g14502cun701y5ey93rh`](https://www.localmaxxing.com/runs/cmtp3g14502cun701y5ey93rh) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-realistic-suite-v1-result.json); [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp0-a188-promotion-attestation.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, VRAM headroom | 4x Arc Pro B70 | **27.048435 conventional interval median (class-balanced; 27.526174 all-prompt median)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows (twelve suite rows, exact-2K and exact-4K authorities) | [`cmtp5u0ip02eln701lntsl2ns`](https://www.localmaxxing.com/runs/cmtp5u0ip02eln701lntsl2ns) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json); [battery](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels + W13-N64 map | 4x Arc Pro B70 | **34.495292 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation; two cold suites (34.510128, 34.495292), every row above every row of the record it supersedes; outputs bit-identical across three servers | [`cmts8zca50032ps01e0ddqm18`](https://www.localmaxxing.com/runs/cmts8zca50032ps01e0ddqm18) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/), [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260908-tp4-mtp0-a326-w13n64-promotion-attestation.json) |
+| Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, exact serial GDN rows in the kernel extension | 4x Arc Pro B70 | **46.854250 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the 37.83 line (12/12 suite outputs bit-identical) | [`cmtzask41000nlq011f16bpbc`](https://www.localmaxxing.com/runs/cmtzask41000nlq011f16bpbc) | [packet](qwen38-flash-next-fp8-b70/README.md) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, both reference Triton kernels | 4x Arc Pro B70 | **37.825654 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows | [`cmtrmp3mj001fps01thcathd0`](https://www.localmaxxing.com/runs/cmtrmp3mj001fps01thcathd0) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels | 4x Arc Pro B70 | **33.797067 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation. Superseded 2026-09-08 by `cmts8zca50032ps01e0ddqm18`; retained | [`cmtrmp37v001bps01a7fi46nf`](https://www.localmaxxing.com/runs/cmtrmp37v001bps01a7fi46nf) | [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp0-a301-promotion-attestation.json) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
@@ -781,6 +782,23 @@ receipt `data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp0-qsafused-w13
 | label | run id | c | headline | notes |
 | --- | --- | ---: | ---: | --- |
 | `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-placement-hctriton-qsafused-w13n64-realistic-20260908` | `cmts8zca50032ps01e0ddqm18` | 1 | **34.495292 class-balanced median of prompt-class medians, 99 intervals after TTFT** | supersedes `cmtrmp37v001bps01a7fi46nf` (33.797067), which is retained |
+
+### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, exact serial GDN verifier rows in the kernel extension (2026-09-13)
+
+Approved on submission (HTTP 201, run `cmtzask41000nlq011f16bpbc`). Identity: the fused-QSA
+MTP1 overlay `6d872457` unchanged, with the GDN verifier rows run by the kernel extension's own
+exact serial mode (`VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1`, persistent scratch,
+completion barrier) on a `_xpu_C.abi3.so` rebuilt from kernel head `bbae3c5` over the lane head
+`e421889` (the served build gates that mode to four rows); every other component of the 37.83
+line unchanged. Same output authority: exact-2K `afffd211…` and exact-4K `1d833e5f…` on the three
+certification servers (A364, A365, A366) and the record server; all twelve suite outputs
+bit-identical to run `cmtrmp3mj001fps01thcathd0`. Frozen packets A364 (frozen-client battery)
+and A367 (suite). Guide: `repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/`.
+Receipt `data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-realistic-20260913.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp1-placement-hctriton-qsafused-exactgdn-realistic-20260913` | `cmtzask41000nlq011f16bpbc` | 1 | **46.854250 class-balanced median of prompt-class medians (99 inter-token intervals after TTFT)** | +23.9% over the 37.83 line with identical outputs; short rows 53.4, exact-2K 48.2, exact-4K 48.5 tok/s on the certification battery |
 
 ### Qwen3.8 Flash-Next official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, both reference Triton kernels (2026-09-07)
 

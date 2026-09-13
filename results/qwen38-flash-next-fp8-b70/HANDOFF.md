@@ -562,3 +562,31 @@ Do not run an unchanged retry or 24K/32K. The next arm requires a material GDN
 request-boundary treatment and a fresh four-card health gate, with the known-
 good short/4K identity checked before deeper context. Receipt:
 `experiments/qwen38-flash-next-fp8-b70/data/20260828-tp4-mtp0-16k-a3-a4-runtime-instability.json`.
+
+## 2026-09-13 exact serial GDN verifier rows in the kernel extension (certified, record approved)
+
+- Fastest certified line: **46.854250 tok/s** class-balanced (A367), LocalMaxxing
+  `cmtzask41000nlq011f16bpbc`; certification battery A364 (short 53.41, exact-2K 48.16/48.21,
+  exact-4K 48.52/48.49), fresh-server repeat A365, third server A366; pins `afffd211…` /
+  `1d833e5f…` unchanged from the 37.83 line; 12/12 suite outputs bit-identical to
+  `cmtrmp3mj001fps01thcathd0`.
+- Identity: overlay `6d872457` unchanged; kernel stage v2
+  `/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70` (served stage with `_xpu_C`
+  rebuilt from `bbae3c5` over `e421889`; manifest
+  `experiments/qwen38-flash-next-fp8-b70/data/runtime-stage-gdn-roundstate-v2-loadable.sha256`);
+  derived exports `VLLM_XPU_GDN_SERIAL_SPEC_DECODE=0`,
+  `VLLM_XPU_GDN_NATIVE_SPEC_RECURRENT_SERIAL_EXACT=1`, `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`,
+  `VLLM_XPU_GDN_NATIVE_SPEC_COMPLETION_BARRIER=1`.
+- Packets: A364/A365/A366 from `rewrite-q38-a305-to-a364-native-exact-gdn-certification.py
+  <attempt> <port>` (launch through `q38-a36N-client-driver.sh`, which waits for health); A367
+  from `rewrite-q38-a306-to-a366-native-exact-gdn-realistic-suite.py <attempt> <port>` (launch
+  with the guide's `wait-and-run-client.sh`). Guide:
+  `repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/`.
+- Open: the multi-row spec kernel differs from the decode kernel by one ulp on row 0 (cause not
+  found; the extension's exact mode sidesteps it), so a one-launch two-row kernel is still open;
+  the remainder of the M=2 step (6.5 -> 13.2 ms outside the four blocks) is the next decomposition
+  target; MTP2 on this line is unscreened.
+- Host: two silent freezes at launches started 60-90 s after a teardown (2026-09-12 12:48 UTC,
+  2026-09-13 02:08 UTC); wait five minutes between a stop and the next launch; remount
+  `/dev/sda2` and `/dev/sdb2` after a reset.
+

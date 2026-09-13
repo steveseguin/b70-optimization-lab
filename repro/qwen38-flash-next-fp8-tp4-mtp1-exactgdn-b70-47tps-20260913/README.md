@@ -1,4 +1,4 @@
-# Reproduce the Qwen3.8 Flash-Next lossless-MTP1 line with the exact serial GDN verifier rows in the kernel extension (RECORD_RATE tok/s on four B70s)
+# Reproduce the Qwen3.8 Flash-Next lossless-MTP1 line with the exact serial GDN verifier rows in the kernel extension (46.854250 tok/s on four B70s)
 
 > **Certification: `lab-replay`.** This replays the record on a host where the
 > lab's vLLM overlay, kernel stage, oneCCL build, model copy, virtual
@@ -32,13 +32,13 @@ three certification servers plus the record server reproduce both pins), the qua
 byte for byte against the certified battery (seven of seven exact-case outputs identical,
 sixteen repeats collapsing to one hash, the long-context needle identical). The two-row
 verify step drops from 42.7 to 33.7 ms; every row class gains 23-24%.
-LocalMaxxing run: RUN_ID.
+LocalMaxxing run: cmtzask41000nlq011f16bpbc.
 
 ## Result and identity
 
 | Item | Value |
 | --- | --- |
-| Headline | **RECORD_RATE tok/s**, median of prompt-class medians over 99 inter-token intervals after TTFT, fixed cold 12-prompt realistic suite sent once (A367, 2026-09-13); the 37.83 line scored 37.825654 on the same suite |
+| Headline | **46.854250 tok/s**, median of prompt-class medians over 99 inter-token intervals after TTFT, fixed cold 12-prompt realistic suite sent once (A367, 2026-09-13); the 37.83 line scored 37.825654 on the same suite |
 | Exactness | Same authority as the certified 37.83 line: exact-2K `afffd211…` and exact-4K `1d833e5f…` on A364, A365, A366 (battery servers) and A367 (record server); kernel probe bit-identical |
 | Quality | 6/7 exact cases with the inherited `code_execution` miss and byte-identical outputs to the certified battery on all seven, 16/16 repeats one hash, exact needle (A364, A365, A366) |
 | Model | `Qwen/Qwen3.8-Flash-Next-FP8` revision `bcd9f01ddc9cff2316eb84281bebcd5b058bddce` (131 shards, 185,563,783,127 bytes; [contract](../qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json)) |
@@ -120,7 +120,7 @@ preflight on processes, ports, mounts, free space and recent GPU events), waits 
 `/health`, sends the fixed cold realistic suite once with the record's flags, stops the server
 through the packet's stop file, and compares `realistic-suite-v1-result.json` with the record:
 all 12 prompt and output SHA-256s must match and every gate must equal the record's. The
-replay's class-balanced median is printed beside RECORD_RATE tok/s; speed is reported, not
+replay's class-balanced median is printed beside 46.854250 tok/s; speed is reported, not
 gated. A full pass takes about 25 minutes. Leave at least five minutes between a previous
 server's stop and the launch: on this host two launches started 60-90 s after a teardown froze
 the machine at the wrapper's swap toggle (2026-09-12/13).
