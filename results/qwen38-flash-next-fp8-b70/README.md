@@ -236,8 +236,10 @@ sizes [1, 2, 4, 8], the row-wise all-reduce and HC-norm selectors at 8 rows, the
 and ran the identity-gated concurrency oracle (fixed 12-prompt realistic suite, completions, 128 tokens,
 temperature 0, two repeats): aggregate 30 / 47 / 59 / 82 tok/s at 1 / 2 / 4 / 8 users, but only 2 of 28
 concurrent completions at 2-8 users reproduced their single-user token ids (first divergences from token
-1 to 122, prompt-dependent). Concurrency 1 is exact. The "Many users" cell stays withheld; the next arm
-serves M=2..8 with the M=1 MoE tile configuration to make the grouped GEMM batch-invariant. Evidence:
+1 to 122, prompt-dependent). Concurrency 1 is exact. The "Many users" cell stays withheld. A code search
+afterwards found the row-wise all-reduce/HC-norm selectors do not exist on the MTP0 head (they were added
+in the MTP1 lineage), so the all-reduce ran batched, a known non-bit-equal path; the next arm re-runs the
+ladder on the MTP0 head plus those two commits. Evidence:
 `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a383-eight-users-concurrency-oracle.json`;
 note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a383-eight-users-identity-ladder-result.md`.
 

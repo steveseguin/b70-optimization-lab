@@ -38,3 +38,18 @@ Oracle exit code 4 (identity gate failed); classification `output-isolation-qual
   matches the single-row kernel), keep the row-wise selectors at 8, and re-run this ladder. If the
   ids then match at every concurrency, the eight-user cell becomes lossless at whatever rate the
   M=1 tiles give at M=8; if not, the remaining term is in the attention kernels' batched paths.
+
+## Addendum (11:15 UTC): the row-wise selectors were inert on this head
+
+A read-only search of the served trees (agent report, 2026-09-13) found that
+`VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS` and `VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS` do not exist at the MTP0
+head `2a372e86` (verified: `git grep` at that revision is empty for both; they were added in the MTP1
+lineage, commit `8ca2cbc28` and its HC-norm companion, and `2a372e86` is not an ancestor of `6d872457`).
+A383 therefore ran the tensor-parallel all-reduce batched over 2-8 rows, the path A104/A105 showed is
+not bit-equal to per-row reduction. The measured aggregates stand; the identity failure has at least one
+known, fixable cause that the arm did not test. Next arm (A388): the same packet on `2a372e86` plus the
+two selector commits cherry-picked (a new MTP0 candidate head; identical arithmetic at one user, so the
+single-user pins must reproduce), selectors at 8. If identity then holds at 2-8 users the cell becomes
+lossless; if not, the remaining suspects from the search are the oneDNN dense-projection primitive
+choice per M (router and LM head logits, a one-ULP change flips a top-k or an argmax) and the HC
+gate-mix mean, which the HC-norm selector does not cover.
