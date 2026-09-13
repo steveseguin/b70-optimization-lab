@@ -112,6 +112,9 @@ def main():
     launcher = launcher.replace("expected_derived=" + "0" * 64, "expected_derived=" + digest(derived))
     client = successor(source("run-tp4-mtp1-4352-ple-only-a305-fullgraphdet-w13n32-client.sh"))
     client = client.replace(OLD_STAGE_HEAD, NEW_STAGE_HEAD)
+    # the client's official-resolver env and its live-server PYTHONPATH identity check carry the stage path
+    client = client.replace(OLD_STAGE, NEW_STAGE)
+    assert OLD_STAGE not in client and client.count(NEW_STAGE) == 3, client.count(NEW_STAGE)
     old_check = f"grep -zFxq '{OLD_SELECTOR}' \"/proc/${{server_pid}}/environ\" || {{\n  printf 'FAIL: live server lacks the serial GDN verifier-row selector\n' >&2\n  exit 1\n}}\n"
     new_check = "".join(
         f"grep -zFxq '{kv}' \"/proc/${{server_pid}}/environ\" || {{\n  printf 'FAIL: live server lacks the exact GDN verifier selector {kv}\\n' >&2\n  exit 1\n}}\n"
