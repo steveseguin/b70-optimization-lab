@@ -129,3 +129,14 @@ Strict pair R304c: 117.24 / 116.95 depth 4, 50.07 / 50.06 no spec; all gates 12/
 | 16 | 590.8 (16/16) | 589.0 (16/16) | 539.7 (16/16) | 540.2 (16/16) |
 | 32 | 645.4 (31/32) | 650.4 (31/32) | 816.3 (32/32) | 815.0 (32/32) |
 | 64 | 596.8 (57/64) | 597.4 (62/64) | 989.3 (64/64) | 987.3 (64/64) |
+
+## Two-card profiles on R304 (TP2, 2026-09-13)
+
+| lane | G1/G2/G3 | depth 3 strict | no spec strict | previous TP2 record |
+| --- | --- | ---: | ---: | --- |
+| 4B W4A16 | 12/12 | 247.45 / 244.21 | 138.30 / 138.06 | 240.9 (R276-class, no shortlist) |
+| 9B W4A16 | 12/12 | 177.24 / 177.32 | 97.53 / 97.53 | 164.7 / 93.6 (R293, no shortlist) |
+
+The c128 rungs in that chain ran with the engine's ladder defaults (max 64 sequences, 512 batched tokens), so they
+are not the published c128 configuration (128 sequences, 1024 tokens, capture sizes to 128); a rerun with the
+published settings is queued and will replace them here.
