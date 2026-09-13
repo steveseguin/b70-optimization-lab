@@ -86,3 +86,16 @@ Source shows these travel through different paths: GPU counts default1 and
 are corrected only when previous draft bookkeeping is present. Any mismatch
 must be observed before calling that the cause. Diagnostic prints can alter
 synchronization; final qualification must use a non-debug image.
+
+### Acceptance diagnostic follow-up
+
+The matched MTP0 control passed all six cases; the logging-only MTP3 image
+reproduced all six final-token failures. Final CPU and GPU accepted counts both
+read one, with an empty previous-row mapping. This does not demonstrate a
+CPU/GPU disagreement. A source audit identified acceptance metadata reset on
+batch removal/re-addition as a possible cause, but the first trace did not
+observe that lifecycle directly. One additional logging-only 9B server will
+capture scheduling flags, removals, additions, and post-execute acceptance at
+the same six cases. It uses the prior matched MTP0 control, preserves original
+receipts, and is diagnostic only. No functional patch is qualified by these
+observations. The same cleanup and GPU fault abort rules apply.

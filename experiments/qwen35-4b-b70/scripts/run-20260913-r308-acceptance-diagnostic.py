@@ -6,7 +6,7 @@ REPO = pathlib.Path(__file__).resolve().parents[3]
 IMAGE = 'sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3'
 FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 BENIGN = 'Xe device coredump has been deleted.'
-p = argparse.ArgumentParser(); p.add_argument('--out', required=True); p.add_argument('--concurrency', default='1,4'); p.add_argument('--max-num-seqs', type=int, default=4); a=p.parse_args()
+p = argparse.ArgumentParser(); p.add_argument('--out', required=True); p.add_argument('--trace-image', default='rebase/r308-acceptance-trace'); p.add_argument('--trace-only', action='store_true'); p.add_argument('--concurrency', default='1,4'); p.add_argument('--max-num-seqs', type=int, default=4); a=p.parse_args()
 if not 1 <= min(map(int,a.concurrency.split(','))) <= max(map(int,a.concurrency.split(','))) <= a.max_num_seqs: p.error('concurrency must fit max-num-seqs')
 root=pathlib.Path(a.out).resolve(); root.mkdir(parents=True,exist_ok=True)
 lock=open('/tmp/r307-qualification.lock','w'); fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -72,12 +72,12 @@ def launch(model, depth, label):
         time.sleep(5)
     raise RuntimeError(f'{label}: health timeout')
 
-(root/'campaign-start.json').write_text(json.dumps({'started':start,'base_image':IMAGE,'scope':'diagnostic9B; same token-ID prefixes; MTP0 vs acceptance-trace MTP3'},indent=2)+'\n')
+(root/'campaign-start.json').write_text(json.dumps({'started':start,'base_image':IMAGE,'scope':'diagnostic9B; same token-ID prefixes; MTP0 vs acceptance-trace MTP3', 'trace_image':a.trace_image,'trace_only':a.trace_only,'runner_sha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()},indent=2)+'\n')
 try:
     oracle=pathlib.Path('/mnt/fast-ai/bench-results/r307-single-request-qualification-20260913/9b-oracle/result.json')
-    for label,depth in [('9b-mtp0-tail-control',0),('9b-acceptance-trace',3)]:
+    for label,depth in ([('9b-acceptance-trace',3)] if a.trace_only else [('9b-mtp0-tail-control',0),('9b-acceptance-trace',3)]):
         if depth:
-            IMAGE=cmd(['docker','image','inspect','rebase/r308-acceptance-trace','--format','{{.Id}}']).strip()
+            IMAGE=cmd(['docker','image','inspect',a.trace_image,'--format','{{.Id}}']).strip()
         d=launch('9b',depth,label)
         probe=['python3',str(REPO/'experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py'),'--base','http://127.0.0.1:18186','--model','m','--mode','compare','--oracle',str(oracle),'--concurrency','1','--lengths','14,16','--tail-offsets','238','--identity',IMAGE,'--out',str(d/'result.json')]
         rc=0

@@ -25,16 +25,18 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**2026-09-13 18:09 EDT, two-B70 host:** R307 is not promoted. The expanded
-c4 gate failed; the single-request follow-up passed both fresh4B servers but
-found repeated final-token9B differences. Both failed roots are preserved:
+**2026-09-13 18:15 EDT, two-B70 host:** R307 is not promoted. The expanded
+c4 gate failed; the single-request follow-up passed both fresh 4B servers but
+found repeated final-token 9B differences. Both failed roots are preserved:
 `/mnt/fast-ai/bench-results/r307-qualification-20260913/` and
 `/mnt/fast-ai/bench-results/r307-single-request-qualification-20260913/`.
-The explicitly authorized local diagnostic is now running on card0, localhost
-18186, root `/mnt/fast-ai/bench-results/r308-acceptance-diagnostic-20260913/`:
-matched MTP0 tail control passed6/6; an instrumented server will compare the
-CPU and GPU acceptance counts at the final state handoff. See the
-[registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
+The acceptance diagnostic completed and stopped its servers: matched MTP0
+control passed 6/6, instrumented MTP3 failed 6/6. Both acceptance counts were
+one at the final decode, so CPU/GPU disagreement was not observed. A possible
+loss of acceptance metadata across a scheduling pause is under investigation;
+no functional R308 repair or publication exists yet. Diagnostic root:
+`/mnt/fast-ai/bench-results/r308-acceptance-diagnostic-20260913/`.
+See the [registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
 No power, swap, driver, or reboot changes are part of this two-card campaign.
 
 **Four-B70 user operating policy, 2026-09-13:** stability takes priority. No
