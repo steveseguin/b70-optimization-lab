@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # After the R303 gates: strict gates on R304 (final candidate: + #53542 width fix) (the shipping candidate) under the REAL contract (no skip): 4B, 9B, then 27B.
 R=/mnt/fast-ai/bench-results/rebase-v0290-20260912; lab=/home/steve/b70-optimization-lab
-until [[ -e $R/r304-strict-DONE ]]; do sleep 30; done
+until [[ -e $R/r303-strict-DONE ]]; do sleep 30; done
 while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]|rebase-'; do sleep 20; done; sleep 10
 IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304 SKIP_IMAGE_CONTRACT=0 RB=r304 bash $lab/experiments/qwen35-4b-b70/scripts/run-20260912-rebase-v0290-strict-chain.sh > $R/r304-strict-4b9b.stdout 2>&1
 while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]|rebase-'; do sleep 20; done; sleep 10
