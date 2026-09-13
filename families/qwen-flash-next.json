@@ -1967,6 +1967,198 @@
         }
       ],
       "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp0-a304-fresh-repeat-deterministic-summary.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-placement-hctriton-qsafused-w13n64-context2k-a381",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2a372e86 (fused-QSA overlay on the Triton-HC MTP0 head) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 2048,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-placement-hctriton-qsafused-w13n64-ctx2048-cap33280-v1",
+      "measurement_class": "lab-measured exact p2048/o128 depth-ladder rows (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement",
+      "promotion_status": "lab-measured 2026-09-13 (A381 depth ladder, two rows per depth, both rows one output hash at every depth; the 2K rows reproduce the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified MTP0 head 2a372e86 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes (90,965 tokens) and a wider bit-exact expert host placement (3.6-4.0 GiB/rank) to make VRAM room for the KV",
+      "quality_scope": "output ids equal across the two rows at every depth; 2K equals the certified stream afffd211; 8K/16K/32K hashes are this lineage's first and are the pins for the MTP1 exact-mode ladder (A382): 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p2048/o128 requests on one server, cache zero; TTFT 29.6/10.9 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of never-routed and at-most-twice-routed experts in pinned host memory (host MemAvailable trough 9.2 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          33.32
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          33.392,
+          33.245
+        ],
+        "aggregation": "median of two rows on one server (A381 r1/r2)",
+        "output_sha256": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 33.32,
+          "label": "MTP0 line at 2K input on the 33,280-token capacity server (A381)"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-placement-hctriton-qsafused-w13n64-context8k-a381",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2a372e86 (fused-QSA overlay on the Triton-HC MTP0 head) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 8192,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-placement-hctriton-qsafused-w13n64-ctx8192-cap33280-v1",
+      "measurement_class": "lab-measured exact p8192/o128 depth-ladder rows (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement",
+      "promotion_status": "lab-measured 2026-09-13 (A381 depth ladder, two rows per depth, both rows one output hash at every depth; the 2K rows reproduce the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified MTP0 head 2a372e86 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes (90,965 tokens) and a wider bit-exact expert host placement (3.6-4.0 GiB/rank) to make VRAM room for the KV",
+      "quality_scope": "output ids equal across the two rows at every depth; 2K equals the certified stream afffd211; 8K/16K/32K hashes are this lineage's first and are the pins for the MTP1 exact-mode ladder (A382): 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p8192/o128 requests on one server, cache zero; TTFT 46.2/46.2 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of never-routed and at-most-twice-routed experts in pinned host memory (host MemAvailable trough 9.2 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          32.05
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          32.018,
+          32.076
+        ],
+        "aggregation": "median of two rows on one server (A381 r1/r2)",
+        "output_sha256": "0126d542095bcbc81a465383f296cffa806f96b47345a1f3b7344142ed196954"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 32.05,
+          "label": "MTP0 line at 8K input on the 33,280-token capacity server (A381)"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-placement-hctriton-qsafused-w13n64-context16k-a381",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2a372e86 (fused-QSA overlay on the Triton-HC MTP0 head) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 16384,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-placement-hctriton-qsafused-w13n64-ctx16384-cap33280-v1",
+      "measurement_class": "lab-measured exact p16384/o128 depth-ladder rows (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement",
+      "promotion_status": "lab-measured 2026-09-13 (A381 depth ladder, two rows per depth, both rows one output hash at every depth; the 2K rows reproduce the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified MTP0 head 2a372e86 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes (90,965 tokens) and a wider bit-exact expert host placement (3.6-4.0 GiB/rank) to make VRAM room for the KV",
+      "quality_scope": "output ids equal across the two rows at every depth; 2K equals the certified stream afffd211; 8K/16K/32K hashes are this lineage's first and are the pins for the MTP1 exact-mode ladder (A382): 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p16384/o128 requests on one server, cache zero; TTFT 96.4/96.3 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of never-routed and at-most-twice-routed experts in pinned host memory (host MemAvailable trough 9.2 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          31.35
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          31.374,
+          31.326
+        ],
+        "aggregation": "median of two rows on one server (A381 r1/r2)",
+        "output_sha256": "789cbcb82ff8ed8b5e85d70d408dc8be33c7ba97ff0a4f27fb98c9561bfa5771"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 31.35,
+          "label": "MTP0 line at 16K input on the 33,280-token capacity server (A381)"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json"
+    },
+    {
+      "id": "qwen38-flash-next-fp8-tp4-mtp0-placement-hctriton-qsafused-w13n64-context32k-a381",
+      "state": "lab-measured",
+      "revision": "qwen38-flash-next",
+      "artifact_id": "qwen38-flash-next-fp8-bcd9f01",
+      "variant": "official FP8 block-128",
+      "quantization": "FP8 block-128",
+      "runtime": "vLLM XPU 2a372e86 (fused-QSA overlay on the Triton-HC MTP0 head) + staged kernels 2f829747",
+      "runtime_family": "vLLM XPU",
+      "config": {
+        "tp": 4,
+        "ep": 4,
+        "parallel_profile": "TP=EP",
+        "mtp": 0,
+        "active_context_tokens": 32768,
+        "configured_max_context_tokens": 33280,
+        "graph_mode": "FULL_DECODE_ONLY",
+        "kv": "auto",
+        "modality": "text"
+      },
+      "profile_id": "flash-next-tp4-mtp0-placement-hctriton-qsafused-w13n64-ctx32768-cap33280-v1",
+      "measurement_class": "lab-measured exact p32768/o128 depth-ladder rows (99 inter-token intervals after TTFT) on a 33,280-token capacity server with the never-hit + max-count-2 census expert placement",
+      "promotion_status": "lab-measured 2026-09-13 (A381 depth ladder, two rows per depth, both rows one output hash at every depth; the 2K rows reproduce the certified pin afffd211); not a class-balanced record and not a certified-client battery. Served identity: the certified MTP0 head 2a372e86 with MAX_MODEL_LEN 33280, KV 1,341,530,112 bytes (90,965 tokens) and a wider bit-exact expert host placement (3.6-4.0 GiB/rank) to make VRAM room for the KV",
+      "quality_scope": "output ids equal across the two rows at every depth; 2K equals the certified stream afffd211; 8K/16K/32K hashes are this lineage's first and are the pins for the MTP1 exact-mode ladder (A382): 2k afffd211, 8k 0126d542, 16k 789cbcb8, 32k 1cc1699e",
+      "workload": "two exact p32768/o128 requests on one server, cache zero; TTFT 199.9/199.9 s (prefill in 64-token batches); PLE and embeddings host-offloaded over UVA (12.22 GiB/rank); 3.57-3.97 GiB/rank of never-routed and at-most-twice-routed experts in pinned host memory (host MemAvailable trough 9.2 GB, supervisor floor 8 GB)",
+      "metrics": {
+        "decode_tok_s": [
+          32.66
+        ]
+      },
+      "raw_observations": {
+        "decode_tok_s": [
+          32.67,
+          32.655
+        ],
+        "aggregation": "median of two rows on one server (A381 r1/r2)",
+        "output_sha256": "1cc1699ed8150fe5da9384b3df58dcf05156d772ff4dca8731e245beea281ca7"
+      },
+      "sample_annotations": [
+        {
+          "metric": "decode_tok_s",
+          "index": 0,
+          "value": 32.66,
+          "label": "MTP0 line at 32K input on the 33,280-token capacity server (A381)"
+        }
+      ],
+      "evidence": "experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json"
     }
   ],
   "series_measurements": [

@@ -191,6 +191,29 @@ Data: [A367 suite](../../experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4
 `2026-09-13-a364-native-exact-gdn-certification-result.md`.
 Replay guide: [`repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/`](../../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md) (`lab-replay`, candidate package).
 
+## 2026-09-13: the promoted MTP0 line at 32K input, lossless within the line (lab-measured)
+
+The certified lines serve a 4,352-token capacity. A381 served the certified MTP0 head (`2a372e86`,
+served stage, W13-N64 map) with `MAX_MODEL_LEN=33280`, a 1,341,530,112-byte KV (90,965 tokens) and a
+wider bit-exact expert host placement (never-hit plus at-most-twice-routed experts from the lineage's
+routing census, 3.57-3.97 GiB per rank) so the KV fits on cards that were within 0.1-0.35 GiB of full.
+Two exact rows per depth on one server, 99-interval decode rate after the first token:
+
+| input depth | decode tok/s (r1 / r2) | TTFT s | output ids |
+|---|---|---|---|
+| 2K | 33.39 / 33.25 | 29.6 / 10.9 | `afffd211…` (= the certified pin) |
+| 8K | 32.02 / 32.08 | 46.2 | `0126d542…` |
+| 16K | 31.37 / 31.33 | 96.4 | `789cbcb8…` |
+| 32K | 32.67 / 32.66 | 199.9 | `1cc1699e…` |
+
+Both rows agree at every depth; the 2K rows reproduce the certified stream on a server whose capacity,
+KV budget and placement all differ from the certified packet. Decode is flat with depth (32K keeps 98%
+of 2K); TTFT grows at ~6 s per 1K tokens because prefill runs in 64-token batches on this identity, a
+separate lever. Lab-measured, not a class-balanced record: the front page's "32K input" cell for the
+MTP0 row carries 32.67 with that caveat. The exact-mode MTP1 line's ladder (A382) gates on equality with
+these hashes. Evidence: `experiments/qwen38-flash-next-fp8-b70/data/20260913-tp4-mtp0-a381-32k-context-depth-ladder.json`;
+note `experiments/qwen38-flash-next-fp8-b70/notes/2026-09-13-a381-32k-context-ladder-mtp0-result.md`.
+
 ## 2026-09-07: the Triton hyper-connection glue on XPU, +19% at a new output authority
 
 The XPU port routed the model's hyper-connection glue (the per-layer mix, combine,
