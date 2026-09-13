@@ -1,0 +1,5 @@
+ARG BASE
+FROM ${BASE}
+COPY patch-prefill-rowchunk-out.py /tmp/patch-prefill-rowchunk-out.py
+RUN cd / && python3 /tmp/patch-prefill-rowchunk-out.py && rm /tmp/patch-prefill-rowchunk-out.py
+LABEL neural.download.prefill.experiment="direct-output-rowchunk-default-off"
