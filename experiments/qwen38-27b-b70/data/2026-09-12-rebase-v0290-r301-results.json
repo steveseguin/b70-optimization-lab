@@ -109,5 +109,47 @@
   "id": "sha256:db6f0004d3c0a303f996f6f433fc40940e045e7add5728933bd30f21568a34e9",
   "adds": "vLLM PR #53059 gpu_model_runner.py hunks (uniform-decode alias guard) on R301; from bosd PR #47 (merged 2026-09-12)",
   "contract": "verify-image-contract.sh v0290 digest set (16 files) keyed on kernel head 6d92b1bf; R301 fails it on gpu_model_runner.py by design"
+ },
+ "one_token_prompt_and_alias_test": {
+  "harness": "experiments/qwen35-4b-b70/probes/alias-harness-lab.py (bosd PR #47 harness + larger pool), 4B one card, depth 3, 30 greedy repeats per prompt shape, degenerate = single-char wall",
+  "round1_bosd_pool": {
+   "r301": {
+    "k1 Hi": "29/30",
+    "k2": "0/30",
+    "k3": "0/30",
+    "long": "0/30",
+    "k4": "no 4-token prompt in pool"
+   },
+   "r302": {
+    "k1 Hi": "29/30"
+   },
+   "r294b_served": {
+    "k1 Hi": "29/30"
+   },
+   "r294b+guard": {
+    "k1 Hi": "29/30"
+   }
+  },
+  "round2_lab_pool": {
+   "r302": {
+    "k4 alias \"Hello, world!\"": "0/30",
+    "k1 Hi": "30/30",
+    "k2": "0/30",
+    "k3": "0/30",
+    "k5": "0/30",
+    "k6": "0/30",
+    "long": "0/30"
+   },
+   "r303": {
+    "k4": "0/30",
+    "k1 Hi": "0/30",
+    "k2..k6,long": "0/30 each"
+   }
+  },
+  "reading": "The one-token failure is vLLM #51562 (fresh one-token GDN prefill classified as decode), present on the served R294b recipe; PR #51565 (R303) removes it. The 1+K alias shape (#53051) did not degenerate on this configuration with the guard; R301 without the guard was not tested at k=4.",
+  "r303": {
+   "image": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r303",
+   "id": "sha256:8e7d4911498977bb50907725e716fe5cf904b9c2673969698514331dc47f0697"
+  }
  }
 }

@@ -17,10 +17,10 @@ docker image inspect "${image}" >/dev/null 2>&1 || fail "image is not local: ${i
 
 actual_kernel_head=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')
 if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; then
-  # R302 (2026-09-12): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head) with the lab's
-  # ten ported Python files, rebuilt _xpu_C/GDN libraries and the #53059 alias guard. One closed digest set covers every
-  # profile: the sixteen files below are the complete surface the lineage's overlays touch, so a candidate that changes
-  # any of them is a different image. Digests: experiments/qwen38-27b-b70/docker/rebase-v0290/r302-contract-digests.sha256.
+  # R303 (2026-09-13): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head) with the lab's
+  # ten ported Python files, rebuilt _xpu_C/GDN libraries, the #53059 alias guard and the #51565 GDN first-chunk fix.
+  # One closed digest set covers every profile: the seventeen files below are the complete surface the lineage's overlays touch, so a candidate that changes
+  # any of them is a different image. Digests: experiments/qwen38-27b-b70/docker/rebase-v0290/r303-contract-digests.sha256.
   v0290_paths=(
     /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
     /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
@@ -38,6 +38,7 @@ if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; th
     /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py
     /opt/venv/lib/python3.12/site-packages/vllm/v1/spec_decode/llm_base_proposer.py
     /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_attn.py
   )
   v0290_expected=(
     7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208
@@ -56,6 +57,7 @@ if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; th
     1e72ed72ed7f495f9b4b5d28f7a0c97b5397e853dabc83acf2ab5ab112e9ffd9
     2d9007211cc62bff8dfde27e58714d95c5225be37905991ba34859390b6c8e96
     7cc7ca2fef07a0747a0892a2e774eebd03c5796948499272309d6260321cb751
+    ec3ee059e3952264d4889159200e787c8c8ae2d3f21f679557d022c0ac007145
   )
   mapfile -t v0290_observed < <(docker run --rm --entrypoint sha256sum "${image}" "${v0290_paths[@]}" | awk '{print $1}')
   [[ "${#v0290_observed[@]}" == "${#v0290_expected[@]}" ]] || fail 'image hash inventory is incomplete (v0290 set)'

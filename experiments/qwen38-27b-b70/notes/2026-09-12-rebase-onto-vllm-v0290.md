@@ -69,8 +69,24 @@ known non-exact regime); no-spec c128 128/128 and 127/128 at 2175 with the engin
 bosd's PR #47 (merged today) reproduces vLLM #53051 on demand: a fresh prompt of exactly 1+K tokens aliases the
 uniform-decode shape, enters the decode graph with stale GDN state indices and degenerates. The upstream guard (PR
 #53059) is still open, so neither v0.29.0 nor our lineage has it. R302 = R301 + those two hunks
-(`Dockerfile.r302-alias-guard`); the guarded served image `rebase/vllm-xpu:r294b-alias-guard` exists for comparison. A
-four-arm test with bosd's harness on the 4B (depth 3, alias = 4-token prompts) is queued; results appended below.
+(`Dockerfile.r302-alias-guard`); the guarded served image `rebase/vllm-xpu:r294b-alias-guard` exists for comparison. The
+four-arm test with bosd's harness on the 4B (depth 3) found something else first.
+
+## R303: a one-token prompt breaks the served recipe
+
+bosd's harness sends 30 greedy completions per prompt length. On R294b (served), R301 and R302 alike, the one-token
+prompt `Hi` came back as a `!!!!!!` wall on 29 of 30 runs; two tokens and longer were clean. That is not the alias shape
+(4 tokens at depth 3, which did not degenerate here once the harness could construct one) but vLLM #51562: a fresh
+one-token GDN prefill is classified as a decode step and touches recurrent state it never initialised. The lab's
+morning review had confirmed that defect from source and supported upstream PR #51565; it is still open. R303 = R302 +
+that PR's `gdn_attn.py` hunks (`Dockerfile.r303-gdn-phase-fix`): `Hi` 0/30, every other length 0/30.
+
+| arm | k=1 `Hi` | k=2 | k=3 | k=4 (alias) | k=5 | k=6 | long |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| R294b served / R301 / R302 | 29-30/30 | 0 | 0 | 0 (R302) | 0 | 0 | 0 |
+| **R303** | **0/30** | 0 | 0 | 0 | 0 | 0 | 0 |
+
+R303 is the shipping candidate; the contract digest set pins its `gdn_attn.py` too (seventeen files).
 
 The recipe contract now carries a v0.29.0 digest set (sixteen files, keyed on the kernel-head label 6d92b1bf) so R302
 launches without `SKIP_IMAGE_CONTRACT`; R301 fails it on `gpu_model_runner.py` by design. The shared launchers pin
