@@ -1,0 +1,11 @@
+# target=http://127.0.0.1:18175/v1 model=m spec_tokens=3 tag=r307
+ALIAS k=4 (=1+spec)          prompt='Hello, world!'                degenerate=  0/30 rate=0.0
+control k=1                  prompt='Hi'                           degenerate=  0/30 rate=0.0
+control k=2                  prompt='Hi.'                          degenerate=  0/30 rate=0.0
+control k=3                  prompt='1+1'                          degenerate=  0/30 rate=0.0
+control k=5                  prompt='sum 3 4'                      degenerate=  0/30 rate=0.0
+control k=6                  prompt='Red, green, blue.'            degenerate=  0/30 rate=0.0
+control long (11tok)         prompt='Continue: 1, 2, 3,'           degenerate=  0/30 rate=0.0
+
+=== JSON ===
+{"base": "http://127.0.0.1:18175/v1", "model": "m", "spec_tokens": 3, "tag": "r307", "ts": "2026-09-13T16:36:04", "results": [{"label": "ALIAS k=4 (=1+spec)", "prompt": "'Hello, world!'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}, {"label": "control k=1", "prompt": "'Hi'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}, {"label": "control k=2", "prompt": "'Hi.'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}, {"label": "control k=3", "prompt": "'1+1'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}, {"label": "control k=5", "prompt": "'sum 3 4'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}, {"label": "control k=6", "prompt": "'Red, green, blue.'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}, {"label": "control long (11tok)", "prompt": "'Continue: 1, 2, 3,'", "iters": 30, "degenerate": 0, "rate": 0.0, "samples": []}]}
