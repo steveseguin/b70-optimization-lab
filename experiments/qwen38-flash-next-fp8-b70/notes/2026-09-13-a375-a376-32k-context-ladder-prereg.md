@@ -47,3 +47,19 @@ MTP1, MTP1 is not lossless past that depth on this line and the cell is publishe
 ## Stop rules
 
 Server fails health (KV/capacity change); any depth row fails; the pair diverges.
+
+## Amendment (07:30 UTC): host memory, not VRAM, bounds the placement
+
+Three A375 launches failed on packet literals the context override had not moved (the launcher's
+option tokens exported verbatim, the campaign literal behind the derived script's fail-closed
+`--ack`, the supervisor's `--max-model-len` server-identity check; all fixed in the generators and
+recorded in memory). The fourth loaded the model and was stopped by the supervisor's host-memory
+guard: MemAvailable fell to 9.9 GB (floor 12 GB) while the 5.0 GiB max-count-8 placement pinned
+its host copies (four ranks, ~20 GB against ~10 GB for the promoted placement). Both 32K arms and
+the eight-user arm now carry the never-hit plus max-count-2 placement
+(`data/20260913-q38-expert-host-placement-a315-census-5gib-mc2-per-rank.json`: 3.57 / 3.73 / 3.97 /
+3.88 GiB per rank, at most 0.017% of census selections on the host), which frees 1.0-1.3 GiB of VRAM
+per rank against the promoted placement and adds ~4.8 GB of pinned host memory; the guard's margin
+is estimated at ~3 GB and the VRAM margin on rank 1 at ~0.2 GiB. If rank 1 cannot fit the 114-block
+KV the server fails at KV allocation and the next step is a 112-block KV with a 32,640-token
+capacity (a 32K prompt with a 128-token output no longer fits; the ladder would stop at 24K).
