@@ -53,7 +53,7 @@ def main():
     launcher = replace_n(launcher, "expected_derived=" + m.group(1), "expected_derived=" + "0" * 64, 1)
     launcher = successor(launcher)
     launcher = replace_n(launcher, OLD_HEAD, NEW_HEAD, 2)
-    OPTS = ("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:", "HOSTFLOOR:")
+    OPTS = ("MAXLEN:", "KVBYTES:", "PLACEMENT:", "USERS:", "HOSTFLOOR:", "PREFILL:")
     exports = "".join(f"export {kv}\n" for kv in extra_env if not kv.startswith(OPTS))
     # USERS:<n> serves n sequences: max_num_seqs, decode graph capture sizes [1,2,4,...,n], and the
     # row-wise all-reduce / HC-norm selectors at n rows (batch invariance for the multi-user identity gate).
@@ -77,6 +77,20 @@ def main():
         launcher = replace_n(launcher, '\\"cudagraph_capture_sizes\\":[1],\\"max_cudagraph_capture_size\\":1', f'\\"cudagraph_capture_sizes\\":[{js_list}],\\"max_cudagraph_capture_size\\":{n}', 2)
         anchor_q = '  print "export VLLM_XPU_QSA_FUSED_INDEXER=1"\n'
         launcher = replace_n(launcher, anchor_q, anchor_q + f'  print "export VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS={n}"\n  print "export VLLM_XPU_ROWWISE_HC_NORM_MAX_ROWS={n}"\n', 1)
+    # PREFILL:<n> moves the scheduler's max_num_batched_tokens (prefill batch) from the frozen 64: the engine
+    # kwarg, the config assert, the identity print and the server CLI arg all live in the frozen base and are
+    # rewritten by exact-line awk rules (plus one gsub for the printf line). Decode arithmetic is unchanged;
+    # prefill chunking changes, so the arm is identity-gated on the depth-ladder hashes. Not with USERS:.
+    pf = [kv2.split(":", 1)[1] for kv2 in extra_env if kv2.startswith("PREFILL:")]
+    if pf:
+        assert not us, "PREFILL: and USERS: together are not supported"
+        n = int(pf[0]); assert n > 64 and n % 64 == 0
+        anchor0 = '$0 == "export VLLM_XPU_GRAPH=0" { next }\n'
+        rules = (f'$0 == "    max_num_seqs=1, max_num_batched_tokens=64," {{ print "    max_num_seqs=1, max_num_batched_tokens={n},"; next }}\n'
+                 f'$0 == "assert config.scheduler_config.max_num_batched_tokens == 64" {{ print "assert config.scheduler_config.max_num_batched_tokens == {n}"; next }}\n'
+                 f'$0 == "  --max-num-batched-tokens 64" {{ print "  --max-num-batched-tokens {n}"; next }}\n'
+                 f'/max_num_batched_tokens=64\\\\n/ {{ sub(/max_num_batched_tokens=64/, "max_num_batched_tokens={n}") }}\n')
+        launcher = replace_n(launcher, anchor0, rules + anchor0, 1)
     # PLACEMENT:<path> swaps the expert host-placement file (bit-exact by construction; only VRAM moves).
     pl = [kv2.split(":", 1)[1] for kv2 in extra_env if kv2.startswith("PLACEMENT:")]
     if pl:
