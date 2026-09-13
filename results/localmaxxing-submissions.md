@@ -910,4 +910,12 @@ receipt `data/localmaxxing-responses/qwen38-flash-next-fp8-tp4-mtp0-headroom-rea
 | --- | --- | ---: | ---: | --- |
 | `qwen38-flash-next-official-fp8-tp4-fullgraphdet-mtp0-headroom-realistic-20260905` | `cmtp3g14502cun701y5ey93rh` | 1 | **25.617613 class-balanced median of prompt-class medians, 99 intervals after TTFT** (all-prompt median 25.880608, p10 25.816470, full after-TTFT 25.652, wall 24.830, TTFT median 0.59 s) | attestation `20260905-tp4-mtp0-a188-promotion-attestation.json` binds the suite JSON to the A187 frozen-client battery (6/7 quality, 16/16 repeat, exact needle, exact-2K/4K authorities) and the three-server exact-2K pair |
 
+## 2026-09-13: the served image moved to R304; the approved entries stand
 
+The three approved 2026-09-12 entries (4B 191.728, 9B 124.084, 27B INT4 117.528) were measured on image R294b
+(sha256:78bd728d). The recipes now serve R304 (sha256:7cd7bb16, the same stack rebased onto stock vLLM XPU v0.29.0
+with three upstream fixes; see `experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`). R304's strict
+pairs under the recipe contract are 191.37/191.41 (4B), 123.22/123.86 (9B) and 117.24/116.95 (27B), within 0.5% of the
+approved figures, so no re-submission was made; the R304 attestations and queue payloads are in each lane's `data/`
+(`*-20260912-r304-strict-result.json`, `localmaxxing-*-r304-strict-20260913.queue.json`) should a resubmission ever be
+wanted.

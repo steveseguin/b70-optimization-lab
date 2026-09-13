@@ -35,8 +35,9 @@ It fixes two failures that were live on R294b: every one-token prompt and every
 (1+K)-token prompt at depth K degenerated into single-character walls (30/30). Strict
 gates 12/12 at published speed on the 4B, 9B and FP8-27B lanes under the recipe contract
 (`verify-image-contract.sh` v0290 digest set); the INT4-27B pair is running. The 4B and
-9B recipes, packages and compose packets now point at R304; the 27B packages follow when
-its gates finish. Serve with `VLLM_USE_V2_MODEL_RUNNER=0` (the launchers pin it; v0.29.0
+9B and both 27B recipes, packages and compose packets now point at R304 (all gates 12/12, long context 18/18,
+high concurrency reproduced; kernel library reproduced bit-identically from a clean clone). The 9B scheduled-draft
+profile runs on R306 (`@sha256:f124c6fb`, R304 plus its overlays and a contiguous-staging fix for upstream PR #53542). Serve with `VLLM_USE_V2_MODEL_RUNNER=0` (the launchers pin it; v0.29.0
 defaults XPU to the V2 runner, which has no draft INT4 head). Details:
 `experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.
 
