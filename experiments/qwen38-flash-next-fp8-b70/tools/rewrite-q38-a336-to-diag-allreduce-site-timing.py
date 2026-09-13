@@ -111,6 +111,8 @@ def main():
     supervisor = successor(source("supervise-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64.sh"))
     if "MAXLEN" in lc:
         supervisor = supervisor.replace("-4352-ple-only-r1", "-" + lc["MAXLEN"] + "-ple-only-r1")
+        # the supervisor server-identity literal (owned_server_pid requires --max-model-len <served>)
+        supervisor = replace_n(supervisor, '"--max-model-len 4352"', '"--max-model-len ' + lc["MAXLEN"] + '"', 1)
     supervisor = replace_n(supervisor, "expected_wrapper=" + SOURCES["launch-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64.sh"], "expected_wrapper=" + digest(launcher), 1)
     supervisor = replace_n(supervisor, "expected_client=" + SOURCES["run-tp4-mtp0-4352-ple-only-a336-fullgraphdet-w13n64-client.sh"], "expected_client=" + digest(client), 1)
     host = successor(source("run-q38-a336-host-controlled.sh"))
