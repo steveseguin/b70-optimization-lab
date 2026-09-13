@@ -50,3 +50,13 @@ drifted": the A309 client pins the selection verifier at its 2026-09-07 bytes (`
 the verifier was repointed at the corrected fused head afterwards (`260ad72c`); the A305/A364
 clients pin the current file (`c874852b…`), which passes. The generator now repins it; the arm is
 regenerated as A380 (port 19993), queued after A379.
+
+## Amendment 3 (09:10 UTC): A380 fell over in the API server's tokenizer setup, re-run as A387
+
+A380 launched at 09:03 UTC and its API server died 75 s later, before the workers loaded, in
+`vllm/tokenizers/hf.py maybe_make_thread_pool` deep-copying the HF tokenizer ("Token `.PNG` out of
+vocabulary at column 10079686" from the tokenizers deserialiser). The same code path served A374
+(same packet lineage) at 07:06 and A379 at 08:51 with identical runtime versions; `tokenizer.json` on
+the USB drive and the NVMe copy hash the same (`0997f410…`); no other server log in the lane carries
+the message. Treated as a transient; the packet is re-run unchanged as A387 (port 20004), queued after
+the A384-A386 decomposition. The chain treated the exit as a finished arm, so A381 launches on schedule.
