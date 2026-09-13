@@ -1,0 +1,135 @@
+{
+  "schema": "r308-repair-cross-check-v1",
+  "passed": true,
+  "qualification_complete": false,
+  "scope": "9B TP1 depth3 one active request; first R308 speculative server only",
+  "sources": {
+    "old_oracle": {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/evidence/r307-single-request-qualification-20260913/9b-oracle/result.json",
+      "sha256": "53e8264dd0705976022c15f9ee258c3f259658b0feb2828f69e16ad155cff2a0",
+      "repo_relative_path": "experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/evidence/r307-single-request-qualification-20260913/9b-oracle/result.json"
+    },
+    "old_spec": {
+      "path": "/home/steve/b70-optimization-lab/experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/evidence/r307-single-request-qualification-20260913/9b-mtp3-a/result.json",
+      "sha256": "3ee734f85f24205e4e824abc3d871855efabea622101fdfed4f7259b58d0d312",
+      "repo_relative_path": "experiments/qwen35-4b-b70/data/2026-09-13-r307-r308-negative-qualification/evidence/r307-single-request-qualification-20260913/9b-mtp3-a/result.json"
+    },
+    "new_oracle": {
+      "path": "/mnt/fast-ai/bench-results/r308-single-request-qualification-20260913/9b-oracle/result.json",
+      "sha256": "453c3f0276950d20a5d3b89d586d14b6057ef62495ee3a2967577251103f429b",
+      "repo_relative_path": null
+    },
+    "new_spec": {
+      "path": "/mnt/fast-ai/bench-results/r308-single-request-qualification-20260913/9b-mtp3-a/result.json",
+      "sha256": "b3c09153154d2abcd88d2bec16fa7af0f7fa8479020d41acf2af64b4845c11df",
+      "repo_relative_path": null
+    }
+  },
+  "oracle_cases_unchanged": 20,
+  "comparison_cases_unchanged": 26,
+  "repaired_rows": 10,
+  "repairs": [
+    {
+      "case": "L13",
+      "repeat": 0,
+      "old_last_id": 89,
+      "new_last_id": 63,
+      "oracle_last_id": 63,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L14",
+      "repeat": 0,
+      "old_last_id": 89,
+      "new_last_id": 63,
+      "oracle_last_id": 63,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L16",
+      "repeat": 0,
+      "old_last_id": 13428,
+      "new_last_id": 8,
+      "oracle_last_id": 8,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L17",
+      "repeat": 0,
+      "old_last_id": 13428,
+      "new_last_id": 8,
+      "oracle_last_id": 8,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L14-tail238",
+      "repeat": 0,
+      "old_last_id": 89,
+      "new_last_id": 63,
+      "oracle_last_id": 63,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L13",
+      "repeat": 1,
+      "old_last_id": 89,
+      "new_last_id": 63,
+      "oracle_last_id": 63,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L14",
+      "repeat": 1,
+      "old_last_id": 89,
+      "new_last_id": 63,
+      "oracle_last_id": 63,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L16",
+      "repeat": 1,
+      "old_last_id": 13428,
+      "new_last_id": 8,
+      "oracle_last_id": 8,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L17",
+      "repeat": 1,
+      "old_last_id": 13428,
+      "new_last_id": 8,
+      "oracle_last_id": 8,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    },
+    {
+      "case": "L14-tail238",
+      "repeat": 1,
+      "old_last_id": 89,
+      "new_last_id": 63,
+      "oracle_last_id": 63,
+      "complete_ids_exact": true,
+      "cache_zero": true,
+      "usage_exact": true
+    }
+  ],
+  "old_identity": "sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3; model=9b; depth=0; TP1; cache-off",
+  "new_identity": "sha256:b9bbb5190f6dd47973501e61aa129706c92345b310eeec4537a20256eba424ba; model=9b; depth=0; TP1; cache-off"
+}
