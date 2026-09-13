@@ -55,13 +55,26 @@ Strict pairs on the candidate (the lab's lossless gates; G1 MTP0 a/b, G2 depth-3
 | --- | --- | --- | --- | ---: | ---: | --- |
 | 4B W4A16 | 12/12 | 12/12 | 12/12 + 12/12 | 191.33 / 191.94 | 102.57 / 102.39 | 191.87 / 191.58; 102.6 |
 | 9B W4A16 | 12/12 | 12/12 | 12/12 + 12/12 | 124.13 / 124.14 | 64.33 / 64.28 | 124.03 / 124.13; 64.3 |
-| 27B INT4 TP2 depth 4 | pending | | | | | 117.46 / 117.59; 49.4 |
+| 27B INT4 TP2 depth 4 | 12/12 | 12/12 | 12/12 + 12/12 | 117.12 / 117.08 | 50.01 / 50.07 | 117.46 / 117.59; 49.4 |
 
 4B 2K-32K exact-depth ladder on the candidate: **18/18 on both arms** (no-spec oracle, then depth 3 vs it), the same
 as the served recipe, so #544 changes nothing this model can see at 32K with 64 accepted-token blocks.
 
-Pending on the same image, queued: the 27B strict pair (both cards) and the concurrency-identity recipe (no-spec c64 with the 5 ms stagger on CLASSPAD=1;
-served: 1280/1280 at 2104 tok/s).
+Concurrency-identity recipe on the candidate (4B, one card, CLASSPAD=1): no-spec c64 with the 5 ms stagger **64/64 on
+all seven passes** at 2086-2113 tok/s (served R293: 1280/1280 at 2104); depth 3 c64 42-47/64 at ~1840 (served 1831, the
+known non-exact regime); no-spec c128 128/128 and 127/128 at 2175 with the engine's ladder defaults.
+
+## R302: the alias guard from the fork review
+
+bosd's PR #47 (merged today) reproduces vLLM #53051 on demand: a fresh prompt of exactly 1+K tokens aliases the
+uniform-decode shape, enters the decode graph with stale GDN state indices and degenerates. The upstream guard (PR
+#53059) is still open, so neither v0.29.0 nor our lineage has it. R302 = R301 + those two hunks
+(`Dockerfile.r302-alias-guard`); the guarded served image `rebase/vllm-xpu:r294b-alias-guard` exists for comparison. A
+four-arm test with bosd's harness on the 4B (depth 3, alias = 4-token prompts) is queued; results appended below.
+
+The recipe contract now carries a v0.29.0 digest set (sixteen files, keyed on the kernel-head label 6d92b1bf) so R302
+launches without `SKIP_IMAGE_CONTRACT`; R301 fails it on `gpu_model_runner.py` by design. The shared launchers pin
+`VLLM_USE_V2_MODEL_RUNNER=0` (a no-op on the 0.27.2 lineage).
 
 ## Status
 

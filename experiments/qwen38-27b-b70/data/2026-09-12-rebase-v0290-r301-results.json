@@ -75,6 +75,17 @@
     "G3b": "{'comparison': {'complete_token_arrays_exact': True, 'divergent_prompts': [], 'e"
    },
    "root": "/mnt/fast-ai/bench-results/qwen35-9b-w4a16-20260912-rb1"
+  },
+  "qwen38-27b-int4-tp2-depth4": {
+   "tok_s": {
+    "mtp0-a": 50.01,
+    "mtp0-b": 50.07,
+    "mtp1-a": 117.12,
+    "mtp1-b": 117.08
+   },
+   "gates": "G1 12/12, G2 12/12, G3 12/12 + 12/12 (wrapper log)",
+   "root": "/mnt/fast-ai/bench-results/qwen38-int4-rebase-v0290-rb2-20260912",
+   "served_reference": "R299 117.46/117.59; MTP0 49.39"
   }
  },
  "served_reference": {
@@ -86,5 +97,17 @@
   "mtp0_arm": "18/18 passed (3 prompts x 2K..32K)",
   "depth3_arm": "18/18 passed vs the MTP0 oracle",
   "served_reference": "R294b/R293 recipe 18/18 at 32K"
+ },
+ "identity_4b_r301": {
+  "nospec_c64_stagger5ms_fragile": "64/64 x7 passes (rbid3 x2, rbid5 x5) at 2086-2113 tok/s; served R293: 1280/1280 at 2104",
+  "depth3_c64_stagger": "42-47/64 at 1324-1851 tok/s; served R293 1831 (known non-exact regime)",
+  "nospec_c128": "128/128, 127/128 at 2175 (engine ladder defaults; the served 2520 figure used different ladder settings, not compared)",
+  "depth3_c128": "111/128, 114/128 at 1562/1809"
+ },
+ "r302": {
+  "image": "neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r302",
+  "id": "sha256:db6f0004d3c0a303f996f6f433fc40940e045e7add5728933bd30f21568a34e9",
+  "adds": "vLLM PR #53059 gpu_model_runner.py hunks (uniform-decode alias guard) on R301; from bosd PR #47 (merged 2026-09-12)",
+  "contract": "verify-image-contract.sh v0290 digest set (16 files) keyed on kernel head 6d92b1bf; R301 fails it on gpu_model_runner.py by design"
  }
 }

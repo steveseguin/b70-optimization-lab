@@ -9,8 +9,8 @@ wrap=$out/qwen38-int4-rebase-v0290-20260912-wrapper.log
 log() { printf '[27b-rebase %s] %s\n' "$(date '+%m-%d %H:%M:%S')" "$*" | tee -a "$wrap"; }
 until [[ -e $out/rebase-v0290-identity2-20260912-DONE ]]; do sleep 30; done
 source $out/final-int4-config.env
-IMAGE=rebase/vllm-xpu:v0290-stage-b1; IMAGE_ID=$(docker image inspect "$IMAGE" --format '{{.Id}}')
-export SKIP_IMAGE_CONTRACT=1 EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad VLLM_USE_V2_MODEL_RUNNER=0
+IMAGE=${IMAGE:-rebase/vllm-xpu:v0290-stage-b1}; IMAGE_ID=$(docker image inspect "$IMAGE" --format '{{.Id}}')
+export SKIP_IMAGE_CONTRACT=${SKIP_IMAGE_CONTRACT:-1} EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad VLLM_USE_V2_MODEL_RUNNER=0
 CC='{"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2,3,4,5,6,8,10,15,16,20,25,30,32,40,50,60,64,80,100,120,160,200,240,320],"max_cudagraph_capture_size":320,"splitting_ops":[],"inductor_compile_config":{"combo_kernels":false,"benchmark_combo_kernel":false,"deterministic":true,"split_reductions":false,"triton.autotune_pointwise":false,"benchmark_epilogue_fusion":false}}'
 wait_free() { while docker ps --format '{{.Names}}' | grep -qE 'qwen3[58]|rebase-'; do sleep 30; done; sleep 20; }
 root=$out/qwen38-int4-rebase-v0290-${RB:-rb2}-20260912
