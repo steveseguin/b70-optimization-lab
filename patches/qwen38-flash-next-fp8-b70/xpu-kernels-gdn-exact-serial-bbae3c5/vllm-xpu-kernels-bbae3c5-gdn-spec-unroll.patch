@@ -1,0 +1,125 @@
+From bbae3c59e226c1b0c2a2dca6c51b4465cf36fd26 Mon Sep 17 00:00:00 2001
+From: steve <punkrawker@gmail.com>
+Date: Sat, 12 Sep 2026 01:49:30 -0400
+Subject: [PATCH] gdn spec kernel: unroll the fixed-count loops exactly as the
+ decode kernel does (same FMA contraction pattern; probe showed 1-ulp row-0
+ differences without it)
+
+---
+ csrc/xpu/gdn_attn/spec_decode.hpp | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 90f43e8..4a34c60 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -2274,7 +2274,10 @@ struct gated_delta_rule_spec_kernel {
+         ssm_state + static_cast<int64_t>(base_state_id) * ssm_state_stride_0 +
+         num_v_heads_id * head_k_dim * head_v_dim;
+ 
++    #pragma unroll
++
+     for (int j = 0; j < v_dim_per_sg; ++j) {
++      #pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+         state_local[j * k_bucket_size + i] = static_cast<float>(
+             ssm_state_ptr[(k_bucket_size * sg_local_id + i) +
+@@ -2308,6 +2311,7 @@ struct gated_delta_rule_spec_kernel {
+ 
+       float q_sum = 0.0f;
+       float k_sum = 0.0f;
++      #pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+         q_local[i] =
+             static_cast<float>(
+@@ -2326,6 +2330,7 @@ struct gated_delta_rule_spec_kernel {
+       k_sum = sycl::reduce_over_group(sg, k_sum, sycl::plus<>());
+       q_sum += eps;
+       k_sum += eps;
++      #pragma unroll
+       for (int i = 0; i < k_bucket_size; ++i) {
+         q_local[i] /= sycl::sqrt(q_sum);
+         q_local[i] *= scale;
+@@ -2333,20 +2338,27 @@ struct gated_delta_rule_spec_kernel {
+       }
+ 
+       float kv_mem[v_dim_per_sg];
++      #pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         kv_mem[i] = 0.0f;
+       }
+ 
++      #pragma unroll
++
+       for (int j = 0; j < v_dim_per_sg; ++j) {
++        #pragma unroll
+         for (int i = 0; i < k_bucket_size; ++i) {
+           state_local[j * k_bucket_size + i] *= g;
+           kv_mem[j] += state_local[j * k_bucket_size + i] * k_local[i];
+         }
+       }
++      #pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         kv_mem[i] = sycl::reduce_over_group(sg, kv_mem[i], sycl::plus<>());
+       }
+ 
++      #pragma unroll
++
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         v_local[i] = static_cast<float>(
+             v[t * num_v_heads * head_v_dim + num_v_heads_id * head_v_dim +
+@@ -2354,25 +2366,31 @@ struct gated_delta_rule_spec_kernel {
+       }
+ 
+       float delta[v_dim_per_sg];
++      #pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         delta[i] = (v_local[i] - kv_mem[i]) * beta;
+       }
+ 
+       float res[v_dim_per_sg];
++      #pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         res[i] = 0.0f;
+       }
++      #pragma unroll
+       for (int j = 0; j < v_dim_per_sg; ++j) {
++        #pragma unroll
+         for (int i = 0; i < k_bucket_size; ++i) {
+           state_local[j * k_bucket_size + i] += k_local[i] * delta[j];
+           res[j] += state_local[j * k_bucket_size + i] * q_local[i];
+         }
+       }
++      #pragma unroll
+       for (int i = 0; i < v_dim_per_sg; ++i) {
+         res[i] = sycl::reduce_over_group(sg, res[i], sycl::plus<>());
+       }
+ 
+       if (sg_local_id == 0) {
++        #pragma unroll
+         for (int i = 0; i < v_dim_per_sg; ++i) {
+           core_attn_out
+               [output_token_id * num_v_heads * head_v_dim +
+@@ -2395,7 +2413,9 @@ struct gated_delta_rule_spec_kernel {
+             ssm_state +
+             static_cast<int64_t>(dst_state_id) * ssm_state_stride_0 +
+             num_v_heads_id * head_k_dim * head_v_dim;
++        #pragma unroll
+         for (int j = 0; j < v_dim_per_sg; ++j) {
++          #pragma unroll
+           for (int i = 0; i < k_bucket_size; ++i) {
+             dst_state_ptr[(k_bucket_size * sg_local_id + i) +
+                           (head_v_dim_id + j) * head_k_dim] =
+@@ -2404,7 +2424,9 @@ struct gated_delta_rule_spec_kernel {
+         }
+       }
+       if (round_state_between_tokens && t + 1 < seq_end_offset) {
++        #pragma unroll
+         for (int j = 0; j < v_dim_per_sg; ++j) {
++          #pragma unroll
+           for (int i = 0; i < k_bucket_size; ++i) {
+             state_local[j * k_bucket_size + i] = static_cast<float>(
+                 static_cast<StateT>(state_local[j * k_bucket_size + i]));
+-- 
+2.43.0
+
