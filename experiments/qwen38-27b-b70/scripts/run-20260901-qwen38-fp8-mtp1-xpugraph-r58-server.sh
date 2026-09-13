@@ -12,7 +12,7 @@ image=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-g
 exec env \
   IMAGE="${image}" \
   EXPECTED_IMAGE_ID="${EXPECTED_IMAGE_ID:-sha256:41aec5da9b124497a9b5dbc6b38f17175bf923d930d5702b9913589f107802d4}" \
-  EXPECTED_KERNEL_HEAD=1e90ffa672ba02f17a909da11838a4c55b199783 \
+  EXPECTED_KERNEL_HEAD="${EXPECTED_KERNEL_HEAD:-1e90ffa672ba02f17a909da11838a4c55b199783}" \
   CONTAINER_NAME="${CONTAINER_NAME:-qwen38-fp8-w8a16-mtp1-xpugraph-r58}" \
   PORT="${PORT:-18124}" \
   SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen38-fp8-block-w8a16-mtp1}" \
