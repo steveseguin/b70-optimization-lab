@@ -30,13 +30,16 @@ fi
 # R294 (2026-09-12): the draft-only INT4 lm_head scores a token shortlist (67,248 rows) instead of all 248,320; the target
 # verifies every draft with its full FP16 head, so outputs cannot change (R299: 12/12 on every gate, 117.46/117.59 tok/s
 # against 112.90/113.00). DRAFT_SHORTLIST= (empty) scores every row. The image is R294b = R293 + the shortlisted head.
-export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-draft-head-shortlist-r294b}
-export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:78bd728d610995d3a05a493c21a0f8a0fdc4062baa570f1c80ade02bf374baf1}
+export IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304}
+export EXPECTED_IMAGE_ID=${EXPECTED_IMAGE_ID:-sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2}
+# R304 (2026-09-13): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head); the image contract
+# carries its own digest set keyed on this label. The R294b lineage needs EXPECTED_KERNEL_HEAD=1e90ffa672ba02f17a909da11838a4c55b199783.
+export EXPECTED_KERNEL_HEAD=${EXPECTED_KERNEL_HEAD:-6d92b1bfbf32767ecda8e819613eb151e70030ad}
 export VLLM_XPU_DRAFT_LM_HEAD_SHORTLIST=${DRAFT_SHORTLIST-/opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt}
 export VLLM_XPU_FP16_LINEAR_CLASSPAD=${CLASSPAD:-0}
-export EXPECTED_XPU_EXTENSION_SHA256=${EXPECTED_XPU_EXTENSION_SHA256:-271db0d4882124e21ac6a4d080bfeab303fbb08b9ec10e11f21d10fb0723998f}
+export EXPECTED_XPU_EXTENSION_SHA256=${EXPECTED_XPU_EXTENSION_SHA256:-bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932}
 export EXPECTED_XPU_OPS_SHA256=${EXPECTED_XPU_OPS_SHA256:-6ee6b8db18759873246aca28e85ca6d2ba177eb08bfd3b9b0f0feea168cee9b3}
-export EXPECTED_LAYERNORM_SHA256=${EXPECTED_LAYERNORM_SHA256:-50cf5f4f9c72f679e4318cd3e3e021a844f59ac188a891d9a4f9638188f4bce8}
+export EXPECTED_LAYERNORM_SHA256=${EXPECTED_LAYERNORM_SHA256:-3f949e537ccc52744d7eba52ed2034b20ee3fbaeaabbfab4e672f1dc9767602c}
 export MODEL_DIR=${MODEL_DIR:?set MODEL_DIR to the gptq-relabelled model directory built by make-gptq-relabel.py in this directory}
 export MODEL_MANIFEST=${MODEL_MANIFEST:-${script_dir}/../manifests/model-gptq-relabel-r212.json}
 # DRAFT_HEAD_INT4=1 (default): the MTP draft passes use a draft-only INT4 copy of the lm_head (R257: depth 4 112.4 tok/s vs

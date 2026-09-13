@@ -38,6 +38,8 @@
 | R293 (classpad on) | 1 | 0 | on (sizes to 320) | n/a | 32.58 / 32.50 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 63/64 (warm pass) | R298 |
 | R294b | 2 | 4 | on (sizes to 320) | INT4 draft-only, 67k shortlist (R294) | 117.46 / 117.59 | G2 12/12, G3 12/12 x2 (own MTP0 pair) | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 31/32, c64 62/64 (warm pass) | R299 |
 | R294b | 2 | 0 | on (sizes to 320) | n/a | 50.01 / 50.04 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 32/32, c64 64/64 (warm pass) | R299 |
+| R304 (v0.29.0 rebase) | 2 | 4 | on (sizes to 320) | INT4 draft-only, 67k shortlist (R294) | 117.04 / 117.09 | G2 12/12, G3 12/12 x2 (own MTP0 pair) | c1 1/1, c2 2/2, c4 4/4, c8 7/8, c16 16/16, c32 31/32, c64 59/64 (warm pass) | R304 |
+| R304 (v0.29.0 rebase) | 2 | 0 | on (sizes to 320) | n/a | 50.11 / 50.03 | G1 12/12 | c1 1/1, c2 2/2, c4 4/4, c8 8/8, c16 16/16, c32 31/32, c64 64/64 (warm pass) | R304 |
 
 **Settings common to every row:** vLLM 0.27.2rc1.dev77+gac7509e2b (XPU), `--dtype float16 --quantization gptq --kv-cache-dtype auto --block-size 64 --no-enable-prefix-caching --language-model-only`, `VLLM_BATCH_INVARIANT=0` (vLLM's own switch is off: the strict launchers pin it and vLLM refuses to boot the GDN backend with it on; batch invariance on this lane comes from the kernels and the switches below), `TORCHINDUCTOR_DETERMINISTIC=1`, `VLLM_ENABLE_INDUCTOR_MAX_AUTOTUNE=0`, `VLLM_ENABLE_INDUCTOR_COORDINATE_DESCENT_TUNING=0`, `PYTHONHASHSEED=0`, `VLLM_XPU_GDN_SPEC_PERSISTENT_SCRATCH=1`, `VLLM_XPU_QWEN_GEMMA_RMSNORM_PACKED_SERIAL_EXACT=1`, `VLLM_XPU_GDN_NATIVE_FALLBACK=1`, `VLLM_XPU_FP8_BLOCK_W8A16=1` (inert on the gptq path), `VLLM_XPU_GDN_SPLIT_MIXED=1`, `VLLM_XPU_GDN_SPEC_GROUP=16`, `VLLM_XPU_FP16_LINEAR_ROWCHUNK=32` (R293 rows: `VLLM_XPU_FP16_LINEAR_CLASSPAD=1`, which replaces the 32-row pieces with one verified oneDNN M-class per weight shape), `VLLM_XPU_W4A16_DETERMINISM_PAD=0` (correction 2026-09-06: the launchers did not forward this switch until R278k, so every runner-launched ladder rung above 128 verify rows, i.e. c32/c64, ran with the R213b pad on; c1-c16 and the single-user headline were never affected; the R281 ladder below is the corrected measurement), `VLLM_XPU_ALLREDUCE_HOST_WAIT=1`, `VLLM_XPU_RMSNORM_TRITON=0`, `VLLM_XPU_GEMMA_RMSNORM_TRITON=0`, whole-graph `torch.compile` (`splitting_ops: []`) with `inductor_compile_config {deterministic: true, split_reductions: false, triton.autotune_pointwise: false, combo_kernels: false, benchmark_combo_kernel: false, benchmark_epilogue_fusion: false}`, oneCCL `CCL_ATL_TRANSPORT=ofi FI_PROVIDER=tcp CCL_ZE_IPC_EXCHANGE=pidfd CCL_SEND=direct CCL_RECV=direct CCL_TOPO_P2P_ACCESS=1` with the three `CCL_SYCL_*_SIMPLE_THRESHOLD=4294967296`, greedy decoding (`temperature 0`), speculative config `{"method":"qwen3_next_mtp","num_speculative_tokens":<depth>}` (omitted for MTP0). Model: `devan-carlin/Qwen3.8-27B-int4-AutoRound` bce40cac relabelled to plain gptq (manifest `model-gptq-relabel-r212.json`).
 
@@ -359,6 +361,21 @@ above R282 with the same identity profile (c16 32/32, c32 61/64, c64 121/128); M
 launcher enables it by default (`DRAFT_SHORTLIST`; empty scores every row). R300's second control server never
 became healthy: a copy-engine reset on card `e3:00.0` at 12:46 (fault signature in the kernel journal), the class
 this lane has seen before; recorded, and the host wants a reboot before further servers.
+
+### Rebased onto stock vLLM XPU v0.29.0 with three upstream fixes: R304 (2026-09-13): 117.04 / 117.09
+
+The served image is now `neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304`
+(`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16`): the same overlay stack ported onto the public
+v0.29.0 image (vllm-xpu-kernels 0.1.14.1, which carries upstream GDN fix #544), the kernel library rebuilt from
+public sources with the lab's oneDNN patches (r137a, r137b, r221; r35/r50 dropped because every serial-exact gate
+is 0 in the served configuration), and three open upstream vLLM fixes applied verbatim: PR #53059 (uniform-decode
+alias guard), PR #51565 (GDN first-chunk classification), PR #53542 (active runtime-K width). On the previous image
+every one-token prompt and every (1+K)-token prompt at depth K came back as a single-character wall on 30 of 30
+greedy runs; R304 returns 0 of 30 on every prompt length tested. Strict pair on R304 under the recipe contract, TP2
+depth 4: G1/G2/G3 12/12, **117.04 / 117.09 tok/s**, MTP0 50.11 / 50.03 (R299 on the old image: 117.46 / 117.59,
+50.0). The launcher pins `VLLM_USE_V2_MODEL_RUNNER=0` (v0.29.0 defaults XPU to the V2 runner, which has no draft
+INT4 head). Build and provenance: `experiments/qwen38-27b-b70/docker/rebase-v0290/`, publication manifest chain
+`r304`, note `experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`.
 
 ### Kernel-library build reproducibility (clean-clone replay, 2026-09-06)
 

@@ -20,6 +20,21 @@ MTP0. MTP0 output is byte-identical to a single request through 64 concurrent
 users, MTP1 and depths 3-5 through 16, depth 2 through 4, and all six are
 repeat-exact at every tested prompt length.
 
+## The R187 profile on the v0.29.0 rebase: R304 (2026-09-13): 54.82 / 54.83
+
+The lab's INT4 runtime was rebased onto stock vLLM XPU v0.29.0 as R304 (see the INT4 recipe and
+`experiments/qwen38-27b-b70/notes/2026-09-12-rebase-onto-vllm-v0290.md`). This lane's kernel needs are the oneDNN
+r137a + r137b patches, which the rebuilt library carries, and its Python overlays (R156 split-mixed GDN, block W8A16
+switches, draft-only INT4 head, packed-serial-exact RMSNorm) are part of the ported set, so the R187 profile runs on
+the same image: strict pair under the recipe contract, TP2 depth 1: G1/G2/G3 12/12, **54.82 / 54.83 tok/s**, MTP0
+33.08 / 33.08 (R187: 54.935 / 33.097). R304 also carries three open upstream vLLM fixes (#53059, #51565, #53542); on the
+R156/R187 image every one-token prompt and every 2-token prompt (1+K at depth 1) degenerates into a single-character
+wall, which R304 fixes. Launch as in "Run R187" with `IMAGE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r304
+EXPECTED_IMAGE_ID=sha256:7cd7bb16b1fd2e679f0230a38b2f0242fe1c278853867e697c0ce139be2133d2
+EXPECTED_KERNEL_HEAD=6d92b1bfbf32767ecda8e819613eb151e70030ad VLLM_USE_V2_MODEL_RUNNER=0` (pull:
+`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16...`). The R139/R156/R187 sections below remain the
+record of how the profile was built and qualified on the 0.27.2 lineage.
+
 ## Whole-graph compile R187 profile (qualified 2026-09-03)
 
 R187 is the R156 image and launcher chain with one change in the vLLM

@@ -112,4 +112,6 @@ Strict pairs under the real contract on R304: 4B 12/12 at 191.37/191.41 (MTP0 10
 (MTP0 64.3); short prompts 0/30 on every length. The **FP8 27B lane** (R187 profile: whole-graph piecewise compile,
 block W8A16, GDN split-mixed, depth 1) needs only oneDNN r137a/r137b from the kernel library, which R304 carries, so it
 runs on the same image: G1/G2/G3 12/12, MTP1 54.82/54.83 tok/s, MTP0 33.08/33.08 (published 54.935 / 33.097).
-One image now serves all four published lanes.
+INT4-27B TP2 depth 4 on R304 under the real contract: G1/G2/G3 12/12, 117.04/117.09 tok/s, MTP0 50.11/50.03
+(published R299 117.46/117.59, 49.39). One image now serves all four published lanes; it is on GHCR as
+`ghcr.io/steveseguin/vllm-openai-xpu-qwen38-int4@sha256:7cd7bb16` (tag `r304-v0290-rebase-20260913`).
