@@ -1,0 +1,6 @@
+# R308: preserve accepted GDN state selection across an unscheduled batch pause.
+ARG BASE=sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3
+FROM ${BASE}
+COPY r308-gdn-state-resume.py /tmp/r308-gdn-state-resume.py
+RUN cd / && python3 /tmp/r308-gdn-state-resume.py && rm /tmp/r308-gdn-state-resume.py
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r308-gdn-state-resume"

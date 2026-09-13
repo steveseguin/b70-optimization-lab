@@ -99,3 +99,31 @@ capture scheduling flags, removals, additions, and post-execute acceptance at
 the same six cases. It uses the prior matched MTP0 control, preserves original
 receipts, and is diagnostic only. No functional patch is qualified by these
 observations. The same cleanup and GPU fault abort rules apply.
+
+The outstanding original R307 9B strict campaign remains authorized even if
+boundary repair is unsuccessful. If run separately, it uses a new root
+`/mnt/fast-ai/bench-results/r307-9b-independent-strict-20260913/`, immutable
+R307, TP1, depth3, max_model_len1024, max_num_seqs1, all12 strict prompts,
+four fresh servers and G1/G2/G3 plus health/cache/canary gates. A strict pass
+cannot override the failed boundary verdict or authorize publication.
+
+### R308 functional follow-up after confirmed lifecycle failure
+
+All six lifecycle traces show the previous step accepted two tokens, followed
+by unscheduled nonpreempted batch removal preserving count2, re-addition at
+computed254 resetting count1, and final decode consuming count1. The state
+survives this pause; its selection metadata does not. A minimal R308 overlay
+will preserve the acceptance count per paused request and restore it for its
+first resumed computation, invalidating it on actual preemption or finish.
+It must not overwrite unrelated active rows. CPU tests cover these lifecycle
+boundaries before building a non-debug immutable image with an exact contract.
+
+The R308 qualification uses the same complete single-request matrix: each
+model's same-image MTP0 oracle and two fresh MTP3 servers, all20 numeric prompt
+lengths and six tail offsets, two repeats, followed by four fresh9B strict
+servers at1024. A new root `r308-single-request-qualification-20260913` preserves
+both failedR307 roots. The candidate is passed explicitly by immutableID with
+its17-file inventory. Any boundary failure stops qualification; strict gates
+remain separately reportable as registered above. Public reconstruction from
+R304 plus committedR307/R308 overlays must match all17 file hashes. No concurrent
+exactness, long-context9B extension, or new performance headline is claimed.

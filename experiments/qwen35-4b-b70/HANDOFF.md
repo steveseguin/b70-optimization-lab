@@ -1,9 +1,15 @@
 # Qwen3.5-4B W4A16 on B70 — lane handoff
 
-**2026-09-13 continuation:** final R307 debug boundary tests pass (12/12 tail,
-36/36 sequential, 72/72 c4); non-debug regression and stock attribution
-campaigns are running. See the [resume record](notes/2026-09-13-r307-resume-and-boundary-audit.md)
-for evidence, probe corrections, remaining gates, and runner paths.
+**2026-09-13 continuation:** R307 remains unpromoted. Expanded exact token-ID
+tests passed both fresh 4B single-request servers (52/52 each), but failed c4
+and found a repeated 9B final-token defect (42/52). The matched 9B target-only
+control passed 6/6 while the acceptance trace failed 6/6. See the
+[negative evidence](notes/2026-09-13-r307-single-request-and-r308-negative.md),
+[historical audit](notes/2026-09-13-r307-resume-and-boundary-audit.md), and
+[active registered plan](notes/2026-09-13-r307-final-qualification-plan.md).
+A lifecycle diagnostic is investigating acceptance metadata across scheduling
+pauses. The 9B second speculative server and strict campaign have not yet run;
+no new deployment profile or image publication is qualified.
 
 Last updated **2026-09-11**. The identity campaign (chains 1-10, 2026-09-09) is
 complete. Chains 11-15 (2026-09-09 evening to 2026-09-11 10:49) found and removed

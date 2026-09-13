@@ -76,6 +76,57 @@ if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${
   printf 'IMAGE CONTRACT PASS: profile=%s(v0290-dynsd) image=%s files=%s kernel=%s\n' "${profile}" "${image}" "${#v0290d_expected[@]}" "${actual_kernel_head}"
   exit 0
 fi
+if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${actual_build_lane}" == qwen38-int4-v0290-rebase-r308-gdn-state-resume ]]; then
+  # R308: preserve GDN acceptance across paused-request batch removal over R307.
+  # Full inventory: experiments/qwen38-27b-b70/docker/rebase-v0290/r308-contract-digests.sha256.
+  # Label-specific branch preserves the R304 and dynamic R306 contracts.
+  r308_paths=(
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+    /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
+    /opt/venv/lib/python3.12/site-packages/vllm/config/compilation.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py
+    /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/_xpu_C.abi3.so
+    /opt/venv/lib/python3.12/site-packages/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so
+    /opt/venv/lib/python3.12/site-packages/vllm/ir/ops/layernorm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/logits_processor.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/layernorm.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/flash_attn.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/worker/gpu_model_runner.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/utils.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/spec_decode/llm_base_proposer.py
+    /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/mixed_precision/xpu.py
+    /opt/venv/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_attn.py
+  )
+  r308_expected=(
+    7c36e4a8dab4bfc06b1d5be2d8466e8cdc94099dd5409424fecc6dd8ffc2c208
+    6466ad4222e3aaba5ae537c92e4a31f8876b0c396be200bfa69775b708b110c1
+    3a79ea08d48d44879ac8cbfee1c7d88f9bd72927d9bd12eee31743e8da8a4d7e
+    7ef91a9e03424571155e7a09d8a506bafdd7ea4e08c292b049ab7317b42996e0
+    5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d
+    bbce7295fb8a58bad456675cfac7cdf3d1e29fe7a9dd5c0970741b130616c932
+    6f0fec189b04bd6a94b1b3ca0983623be7e7f2a4734b58e086fab3b0341213f3
+    65d33dcb96404ddde273acf84ef901151a8155a2cffc144bdd0c49fe1d576a22
+    6b0603d67b0c756253c2fdc882a3896d2e873a16e9aa2ef877aabca8d36bdb5f
+    3f949e537ccc52744d7eba52ed2034b20ee3fbaeaabbfab4e672f1dc9767602c
+    e0ae4ae14ffdc0c7db1c480978f94b56f74778665a9c454bab32a89371e342e7
+    b79665ff48ed7be2210e4266b42444aa5214ee51f5443ebe97b665b96ef02604
+    34ef265d5a05425bd217b718229428e7b124788fb4586d367bd8053d50a80168
+    1e72ed72ed7f495f9b4b5d28f7a0c97b5397e853dabc83acf2ab5ab112e9ffd9
+    2d9007211cc62bff8dfde27e58714d95c5225be37905991ba34859390b6c8e96
+    7cc7ca2fef07a0747a0892a2e774eebd03c5796948499272309d6260321cb751
+    3196d7ff9095e086fddc3bd44a9bb7bb6d92ac4c46011af56d2079a91c304f32
+  )
+  mapfile -t r308_observed < <(docker run --rm --entrypoint sha256sum "${image}" "${r308_paths[@]}" | awk '{print $1}')
+  [[ "${#r308_observed[@]}" == "${#r308_expected[@]}" ]] || fail 'image hash inventory is incomplete (r308 set)'
+  for index in "${!r308_expected[@]}"; do
+    [[ "${r308_observed[index]}" == "${r308_expected[index]}" ]] || \
+      fail "content mismatch for ${r308_paths[index]}: expected ${r308_expected[index]}, found ${r308_observed[index]}"
+  done
+  printf 'IMAGE CONTRACT PASS: profile=%s(r308) image=%s files=%s kernel=%s\n' "${profile}" "${image}" "${#r308_expected[@]}" "${actual_kernel_head}"
+  exit 0
+fi
 if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad && "${actual_build_lane}" == qwen38-int4-v0290-rebase-r307-gdn-state-handoff ]]; then
   # R307: fixed-depth Qwen3.5 4B/9B TP1 boundary repair over R304.
   # Full inventory: experiments/qwen38-27b-b70/docker/rebase-v0290/r307-contract-digests.sha256.

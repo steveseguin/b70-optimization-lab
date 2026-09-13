@@ -25,19 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**2026-09-13 18:17 EDT, two-B70 host:** R307 is not promoted. The expanded
-c4 gate failed; the single-request follow-up passed both fresh 4B servers but
-found repeated final-token 9B differences. Both failed roots are preserved:
-`/mnt/fast-ai/bench-results/r307-qualification-20260913/` and
-`/mnt/fast-ai/bench-results/r307-single-request-qualification-20260913/`.
-The acceptance diagnostic completed and stopped its servers: matched MTP0
-control passed 6/6, instrumented MTP3 failed 6/6. Both acceptance counts were
-one at the final decode, so CPU/GPU disagreement was not observed. A possible
-loss of acceptance metadata across a scheduling pause is under investigation;
-no functional R308 repair or publication exists yet. The lifecycle trace is
-now starting on card0, localhost18186, under
-`/mnt/fast-ai/bench-results/r308-lifecycle-diagnostic-20260913/`. Initial diagnostic root:
-`/mnt/fast-ai/bench-results/r308-acceptance-diagnostic-20260913/`.
+**2026-09-13 18:20 EDT, two-B70 host:** R307 remains unpromoted. Both
+fresh 4B single-request boundary servers passed, but c4 and 9B final-token
+gates failed. Lifecycle tracing confirmed the 9B defect: accepted count2 is
+lost when a nonpreempted request leaves the batch and returns with count1.
+Both diagnostic campaigns completed with healthy postflights and stopped
+servers. A non-debug R308 repair is being prepared; no repair is qualified yet.
+Preserve all roots under `/mnt/fast-ai/bench-results/`:
+`r307-qualification-20260913`, `r307-single-request-qualification-20260913`,
+`r308-acceptance-diagnostic-20260913`, `r308-lifecycle-diagnostic-20260913`.
 See the [registered plan](experiments/qwen35-4b-b70/notes/2026-09-13-r307-final-qualification-plan.md).
 No power, swap, driver, or reboot changes are part of this two-card campaign.
 
