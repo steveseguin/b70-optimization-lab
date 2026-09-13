@@ -17,10 +17,10 @@ docker image inspect "${image}" >/dev/null 2>&1 || fail "image is not local: ${i
 
 actual_kernel_head=$(docker image inspect "${image}" --format '{{ index .Config.Labels "neural.download.kernel.head" }}')
 if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; then
-  # R303 (2026-09-13): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head) with the lab's
-  # ten ported Python files, rebuilt _xpu_C/GDN libraries, the #53059 alias guard and the #51565 GDN first-chunk fix.
+  # R304 (2026-09-13): the runtime rebased onto stock vLLM XPU v0.29.0 (kernels 0.1.14.1 = this head) with the lab's
+  # ten ported Python files, rebuilt _xpu_C/GDN libraries, the #53059 alias guard, the #51565 GDN first-chunk fix and the #53542 active-width fix.
   # One closed digest set covers every profile: the seventeen files below are the complete surface the lineage's overlays touch, so a candidate that changes
-  # any of them is a different image. Digests: experiments/qwen38-27b-b70/docker/rebase-v0290/r303-contract-digests.sha256.
+  # any of them is a different image. Digests: experiments/qwen38-27b-b70/docker/rebase-v0290/r304-contract-digests.sha256.
   v0290_paths=(
     /opt/venv/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
     /opt/venv/lib/python3.12/site-packages/vllm/_xpu_ops.py
@@ -57,7 +57,7 @@ if [[ "${actual_kernel_head}" == 6d92b1bfbf32767ecda8e819613eb151e70030ad ]]; th
     1e72ed72ed7f495f9b4b5d28f7a0c97b5397e853dabc83acf2ab5ab112e9ffd9
     2d9007211cc62bff8dfde27e58714d95c5225be37905991ba34859390b6c8e96
     7cc7ca2fef07a0747a0892a2e774eebd03c5796948499272309d6260321cb751
-    ec3ee059e3952264d4889159200e787c8c8ae2d3f21f679557d022c0ac007145
+    94498e7dc8dd4190d22cbda6fdadcfa92df174a86cae897bc5c173a9afc103a4
   )
   mapfile -t v0290_observed < <(docker run --rm --entrypoint sha256sum "${image}" "${v0290_paths[@]}" | awk '{print $1}')
   [[ "${#v0290_observed[@]}" == "${#v0290_expected[@]}" ]] || fail 'image hash inventory is incomplete (v0290 set)'

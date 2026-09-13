@@ -1,0 +1,9 @@
+# R304 (2026-09-13): R303 + the vllm/v1/attention/backends/gdn_attn.py hunks of open upstream vLLM PR #53542 ("Preserve
+# active runtime-K width in GDN metadata"). Without it any dynamic draft schedule that reaches a K below the configured
+# maximum kills the server on the XPU GDN kernel's width assertion (kernels issue #593; reproduced on stock v0.29.0 and
+# fixed by exactly these hunks in the 2026-09-12 upstream review). A no-op for static-K serving.
+ARG BASE=neural-download/vllm-openai-xpu:qwen38-int4-v0290-rebase-r303
+FROM ${BASE}
+COPY r304-gdn-active-width-pr53542.diff /tmp/r304.diff
+RUN cd /opt/venv/lib/python3.12/site-packages && patch -p1 --forward < /tmp/r304.diff && python -m py_compile vllm/v1/attention/backends/gdn_attn.py && rm /tmp/r304.diff
+LABEL neural.download.build.lane="qwen38-int4-v0290-rebase-r304-gdn-active-width"
