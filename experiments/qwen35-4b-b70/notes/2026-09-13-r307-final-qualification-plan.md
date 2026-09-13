@@ -52,3 +52,20 @@ If exact boundary or strict gates fail, preserve the negative evidence and
 resolve the concrete cause before promotion. Public image/source closure,
 recipe checks, documentation integrity, and deployment verification remain
 required if the candidate is promoted.
+
+## Failed expanded gate and narrower follow-up, 17:40 EDT
+
+The first campaign is **failed**, not qualified: 4B target-only passed 100/100;
+first MTP3 passed c1 full40/40 and tails12/12, but c4 full33/40 (tails12/12).
+First differences occur at output indices36,153,164,193,197, before the final
+boundary step. This does not establish the numerical cause, and no c4
+oracle-exact claim may be promoted. The runner stopped and failure postflight
+passed. Original evidence remains in its original root.
+
+The follow-up is explicitly restricted to one active request (`max_num_seqs=1`,
+`--concurrency 1`), root `r307-single-request-qualification-20260913`. It runs
+the same complete L8–27 and L14-tail fixture on both models, same-image oracle,
+two fresh MTP3 servers, then the unchanged isolated 9B strict pairs. No failing
+case is removed from the c1 fixture. Only a **single-request profile** may be
+promoted if these gates pass; multi-request serving remains outside that
+qualification. The original c1/c4 gate remains failed permanently.

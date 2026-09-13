@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Isolated R307 qualification: token-ID boundary repeats, then fresh 9B strict pairs."""
-import argparse, datetime, fcntl, json, os, pathlib, re, subprocess, sys, time, urllib.request
+import argparse, datetime, fcntl, hashlib, json, os, pathlib, re, subprocess, sys, time, urllib.request
 
 REPO = pathlib.Path(__file__).resolve().parents[3]
 IMAGE = 'sha256:9be49c62baabf4611ecf08419d836a2e2f171adba5d2a28509b6fd796e7d28c3'
 FAULT = re.compile(r'(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump|Timedout job|timed out|\bhung\b|wedged|device lost)|soft lockup', re.I)
 BENIGN = 'Xe device coredump has been deleted.'
-p = argparse.ArgumentParser(); p.add_argument('--out', required=True); a=p.parse_args()
+p = argparse.ArgumentParser(); p.add_argument('--out', required=True); p.add_argument('--concurrency', default='1,4'); p.add_argument('--max-num-seqs', type=int, default=4); a=p.parse_args()
+if not 1 <= min(map(int,a.concurrency.split(','))) <= max(map(int,a.concurrency.split(','))) <= a.max_num_seqs: p.error('concurrency must fit max-num-seqs')
 root=pathlib.Path(a.out).resolve(); root.mkdir(parents=True,exist_ok=True)
 lock=open('/tmp/r307-qualification.lock','w'); fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
 if (root/'campaign-start.json').exists(): raise SystemExit('Refusing reused campaign root')
@@ -55,7 +56,7 @@ def launch(model, depth, label):
     if cmd(['docker','ps','-q']).strip(): raise RuntimeError('Another container is running')
     health(label+'-preflight')
     d=root/label; d.mkdir(); name='r307-qual-'+label
-    env=os.environ.copy(); env.update(IMAGE=IMAGE,EXPECTED_IMAGE_ID=IMAGE,SKIP_IMAGE_CONTRACT='0',EXPECTED_KERNEL_HEAD='6d92b1bfbf32767ecda8e819613eb151e70030ad',MODEL_DIR=f'/home/steve/llm-models/qwen35-{model}-w4a16',CONTAINER_NAME=name,SERVED_MODEL_NAME='m',PORT='18186',VLLM_CACHE_DIR=str(d/'cache'),MTP_DEPTH=str(depth),TENSOR_PARALLEL_SIZE='1',XPU_DEVICE_MASK='0',MAX_MODEL_LEN='256',MAX_NUM_SEQS='4',MAX_NUM_BATCHED_TOKENS='1024',VLLM_USE_V2_MODEL_RUNNER='0')
+    env=os.environ.copy(); env.update(IMAGE=IMAGE,EXPECTED_IMAGE_ID=IMAGE,SKIP_IMAGE_CONTRACT='0',EXPECTED_KERNEL_HEAD='6d92b1bfbf32767ecda8e819613eb151e70030ad',MODEL_DIR=f'/home/steve/llm-models/qwen35-{model}-w4a16',CONTAINER_NAME=name,SERVED_MODEL_NAME='m',PORT='18186',VLLM_CACHE_DIR=str(d/'cache'),MTP_DEPTH=str(depth),TENSOR_PARALLEL_SIZE='1',XPU_DEVICE_MASK='0',MAX_MODEL_LEN='256',MAX_NUM_SEQS=str(a.max_num_seqs),MAX_NUM_BATCHED_TOKENS='1024',VLLM_USE_V2_MODEL_RUNNER='0')
     (d/'launch-env.json').write_text(json.dumps({k:env[k] for k in ['IMAGE','EXPECTED_IMAGE_ID','SKIP_IMAGE_CONTRACT','MODEL_DIR','CONTAINER_NAME','VLLM_CACHE_DIR','MTP_DEPTH','MAX_MODEL_LEN','MAX_NUM_SEQS','XPU_DEVICE_MASK']},indent=2)+'\n')
     launcher=REPO/f'repro/qwen35-{model}-w4a16-b70/scripts/run-qwen35-{model}-w4a16-server.sh'
     server_log=(d/'server.log').open('w'); proc=subprocess.Popen(['bash',str(launcher)],cwd=REPO,env=env,stdout=server_log,stderr=subprocess.STDOUT)
@@ -71,7 +72,7 @@ def launch(model, depth, label):
         time.sleep(5)
     raise RuntimeError(f'{label}: health timeout')
 
-(root/'campaign-start.json').write_text(json.dumps({'started':start,'image':IMAGE,'repo_head':cmd(['git','rev-parse','HEAD']).strip(),'scope':'TP1 fixed depth 3; boundary c1/c4; strict 9B'},indent=2)+'\n')
+(root/'campaign-start.json').write_text(json.dumps({'started':start,'image':IMAGE,'repo_head':cmd(['git','rev-parse','HEAD']).strip(),'scope':f'TP1 fixed depth 3; boundary concurrency={a.concurrency}; max_num_seqs={a.max_num_seqs}; strict 9B','runner_sha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),'probe_sha256':hashlib.sha256((REPO/'experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py').read_bytes()).hexdigest()},indent=2)+'\n')
 try:
     if cmd(['docker','ps','-q']).strip(): raise RuntimeError('Host already busy')
     cmd(['docker','image','inspect',IMAGE],root/'image-inspect.json')
@@ -79,7 +80,7 @@ try:
         oracle=None
         for arm,depth in [('oracle',0),('mtp3-a',3),('mtp3-b',3)]:
             label=f'{model}-{arm}'; d=launch(model,depth,label)
-            probe=['python3',str(REPO/'experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py'),'--base','http://127.0.0.1:18186','--model','m','--mode','compare' if oracle else 'oracle','--identity',f'{IMAGE}; model={model}; depth={depth}; TP1; cache-off','--out',str(d/'result.json')]
+            probe=['python3',str(REPO/'experiments/qwen35-4b-b70/probes/boundary-token-id-probe.py'),'--base','http://127.0.0.1:18186','--model','m','--concurrency',a.concurrency,'--mode','compare' if oracle else 'oracle','--identity',f'{IMAGE}; model={model}; depth={depth}; TP1; cache-off','--out',str(d/'result.json')]
             if oracle: probe+=['--oracle',str(oracle)]
             cmd(probe,d/'probe.log',timeout=1800)
             if oracle is None: oracle=d/'result.json'
