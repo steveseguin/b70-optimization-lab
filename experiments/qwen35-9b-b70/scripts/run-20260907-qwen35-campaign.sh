@@ -11,7 +11,7 @@ set -Eeuo pipefail
 repo=/home/steve/b70-optimization-lab; out=/mnt/fast-ai/bench-results
 LANE=${LANE:-qwen35-9b-fp8}; QUANT=${QUANT:-compressed-tensors}; W4A16_PAD=${W4A16_PAD:-0}
 RUN=${RUN:?set RUN}; TP=${TP:-1}; DEPTH=${DEPTH:-3}; GRAPH=${GRAPH:-1}; DRAFT_HEAD=${DRAFT_HEAD:-1}; STAGES=${STAGES:-strict ladders}; port=${PORT:-18131}
-root=${ROOT:-${out}/${LANE}-tp${TP}-mtp${DEPTH}-graph${GRAPH}$([[ "${DRAFT_HEAD}" == 1 ]] && echo -dhint4)$([[ "${W4A16_PAD}" == 1 ]] && echo -pad)-20260907-${RUN}}
+root=${ROOT:-${out}/${LANE}-tp${TP}-mtp${DEPTH}-graph${GRAPH}$([ "${DRAFT_HEAD}" != 1 ] || echo -dhint4)$([ "${W4A16_PAD}" != 1 ] || echo -pad)-20260907-${RUN}}
 repro=${repo}/repro/qwen38-27b-fp8-vllm-tp2-asrock-b70
 # IMAGE/IMAGE_ID select the runtime. They default to the published R276 image; a diagnostic overlay sets both plus
 # EXPECTED_XPU_COMMUNICATOR_SHA256, which is how verify-image-contract.sh lets a candidate opt into a replaced
@@ -65,7 +65,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-journal_check() { journalctl -k -b 0 --no-pager --since "${campaign_start}" >"${root}/$1-kernel-journal.txt" 2>&1 || true; fault_lines "${root}/$1-kernel-journal.txt" >"${root}/$1-kernel-fault-lines.txt"; [[ ! -s "${root}/$1-kernel-fault-lines.txt" ]]; }
+journal_check() { journalctl -k -b 0 --no-pager --since "${campaign_start}" >"${root}/$1-kernel-journal.txt" 2>&1 || return 1; fault_lines "${root}/$1-kernel-journal.txt" >"${root}/$1-kernel-fault-lines.txt"; [[ ! -s "${root}/$1-kernel-fault-lines.txt" ]]; }
 lane_containers() { docker ps --format '{{.Names}}' | grep -cE 'qwen3[58]' || true; }
 postflight() { devices_normal "$1" || abort "$1: a B70 is not in normal state"; journal_check "$1" || abort "$1: fault signature in the kernel journal"; ROOT="${repo}" "${health}" >"${root}/$1-compute-xccl.txt" 2>&1 || abort "$1: compute/XCCL health failed"; [[ "$(lane_containers)" == 0 ]] || abort "$1: a lane container is still running"; log "$1: postflight clean"; }
 wait_health() { local pid=$1 deadline=$(( $(date +%s) + health_timeout )); while (( $(date +%s) < deadline )); do journal_check startup || abort "startup: fault signature in the kernel journal"; curl -fsS "http://127.0.0.1:${port}/health" >/dev/null 2>&1 && return 0; kill -0 "${pid}" 2>/dev/null || return 1; sleep 15; done; return 1; }

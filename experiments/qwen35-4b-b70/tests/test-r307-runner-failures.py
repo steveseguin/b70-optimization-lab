@@ -75,3 +75,17 @@ postflight() {{ :; }}
 '''+tail)
  assert r.returncode==2,r
  print('PASS depth workload failure aborts')
+
+ # Default root suffixes must remain valid with errexit and padding disabled.
+ root_line=next(l for l in engine.splitlines() if l.startswith('root=${ROOT:'))
+ for draft in (0,1):
+  for pad in (0,1):
+   r=run(f'set -e; unset ROOT; out=/tmp; LANE=test; TP=1; DEPTH=3; GRAPH=1; RUN=test; DRAFT_HEAD={draft}; W4A16_PAD={pad}; '+root_line+'; echo "$root"')
+   assert r.returncode==0,r
+   assert ('-dhint4' in r.stdout)==bool(draft)
+   assert ('-pad' in r.stdout)==bool(pad)
+ print('PASS default ROOT under errexit for all draft/padding combinations')
+ journal_fn=next(l for l in engine.splitlines() if l.startswith('journal_check()'))
+ r=run('root='+str(root)+'; campaign_start=now; journalctl() { return 7; }; fault_lines() { :; }; '+journal_fn+'; journal_check failed')
+ assert r.returncode==1,r
+ print('PASS journal read errors fail closed')
