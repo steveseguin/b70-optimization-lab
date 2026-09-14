@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+here=$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")" && pwd)
+worker_venv=${NEURAL_WORKER_VENV:-${HOME}/.venvs/neural-worker}
+[[ -x "${worker_venv}/bin/python" ]] || { echo "Run ${here}/setup.sh first." >&2; exit 1; }
+exec "${worker_venv}/bin/python" "${here}/run.py" "$@"

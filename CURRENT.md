@@ -63,6 +63,18 @@ service; no new speed claim. Next: finish startup identity/client and actual
 placement diagnostics before any maintenance decision or the bounded 25-request
 comparison. See the [source packet and remaining gates](experiments/ltx25-b70/notes/encoder-runtime-packet.md).
 
+**2026-09-14 UTC, two-B70 host: local coding worker setup.**
+User authorized an issue-to-patch worker using preferred official 27B FP8.
+One unchanged qualified TP2/MTP1 server is being started at port 18124,
+33,024 capacity / 4,096 batch / one sequence, using the package serve.py helper.
+Exact ownership and logs: `/mnt/fast-ai/bench-results/local-worker-20260914/server/`.
+Five real issues across the lab and ML Bottleneck will run sequentially in
+CPU-only, network-disabled source snapshots; original checkouts are not mounted.
+No model optimization, server restart chain, host-setting change or cloud fallback.
+Leave the healthy FP8 service available for subsequent worker tasks. Preserve
+four-card LTX work. [Worker plan](worker/PLAN.md).
+
+
 **Four-B70 host, post-stability LTX diagnostics: next runtime candidates prepared.**
 One 15-second nonblocking py-spy attachment and one unchanged clip completed on
 PID24848; all four output tensors matched baseline-01. The trace points to
