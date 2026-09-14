@@ -1,0 +1,132 @@
+{
+  "scope": "read-only generated-source audit; hypotheses not localized numerical cause",
+  "native_execution_performed": false,
+  "compiler_options": {
+    "compile_threads": 1,
+    "eager_numerics.division_rounding": true,
+    "emulate_precision_casts": true,
+    "max_autotune": false,
+    "max_autotune_gemm": false,
+    "triton.cudagraphs": false
+  },
+  "failure_outputs": [
+    {
+      "actual_sha256": "9829dc4d3327dd25203c3e8a275c08dd1e4b3770fdcc162051c022ebf982dee1",
+      "bitwise_equal": false,
+      "device": "xpu:1",
+      "dtype": "torch.bfloat16",
+      "expected": {
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "shape": [
+          1,
+          64,
+          4096
+        ],
+        "stride": [
+          262144,
+          4096,
+          1
+        ]
+      },
+      "expected_sha256": "5120b58cd61f34d08c9b8cc6d0af5418699ac0ee7547b12725b69537abbdff9e",
+      "finite": true,
+      "metadata_equal": true,
+      "output": "video",
+      "shape": [
+        1,
+        64,
+        4096
+      ],
+      "stride": [
+        262144,
+        4096,
+        1
+      ],
+      "unequal_bytes": 54
+    },
+    {
+      "actual_sha256": "d93a3e21ab9035cfe1da1f8a73ce98cc89c2e7080376d742b13c55d6a0bb9b18",
+      "bitwise_equal": false,
+      "device": "xpu:1",
+      "dtype": "torch.bfloat16",
+      "expected": {
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "shape": [
+          1,
+          26,
+          2048
+        ],
+        "stride": [
+          53248,
+          2048,
+          1
+        ]
+      },
+      "expected_sha256": "f502226a5e25c57224f5f235674eadecc6ad624d64e2f46f51a6d85f0291f991",
+      "finite": true,
+      "metadata_equal": true,
+      "output": "audio",
+      "shape": [
+        1,
+        26,
+        2048
+      ],
+      "stride": [
+        53248,
+        2048,
+        1
+      ],
+      "unequal_bytes": 5923
+    }
+  ],
+  "generated_wrapper": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-03/inductor-cache/rx/crx5gzovt3rxiijvak577nmftatyazzjjytqe2hiddhjvmitnwiu.py",
+    "sha256": "ca5c4f30f70d1073a9503aa453bd91af79e3f742ad50c439d409c8b378838ab1"
+  },
+  "excerpts": [
+    {
+      "label": "weighted_rms_decomposition",
+      "first_line": 211,
+      "last_line": 257,
+      "text": "def triton_red_fused__fused_rms_norm_apply_rope_split_half_view_2(in_out_ptr0, in_ptr0, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):\n    xnumel = 64\n    r0_numel = 4096\n    rnumel = r0_numel\n    RBLOCK: tl.constexpr = R0_BLOCK\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]\n    xmask = xindex < xnumel\n    r0_base = tl.arange(0, R0_BLOCK)[None, :]\n    rbase = r0_base\n    x0 = xindex\n    _tmp4 = tl.full([XBLOCK, R0_BLOCK], 0, tl.float32)\n    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):\n        r0_index = r0_offset + r0_base\n        r0_mask = r0_index < r0_numel\n        roffset = r0_offset\n        rindex = r0_index\n        r0_1 = r0_index\n        tmp0 = tl.load(in_out_ptr0 + (r0_1 + 4096*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp1 = tmp0.to(tl.float32)\n        tmp2 = tmp1 * tmp1\n        tmp3 = tl.broadcast_to(tmp2, [XBLOCK, R0_BLOCK])\n        tmp5 = _tmp4 + tmp3\n        _tmp4 = tl.where(r0_mask & xmask, tmp5, _tmp4)\n    tmp4 = tl.sum(_tmp4, 1)[:, None]\n    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):\n        r0_index = r0_offset + r0_base\n        r0_mask = r0_index < r0_numel\n        roffset = r0_offset\n        rindex = r0_index\n        r0_1 = r0_index\n        tmp6 = tl.load(in_out_ptr0 + (r0_1 + 4096*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)\n        tmp14 = tl.load(in_ptr0 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp7 = tmp6.to(tl.float32)\n        tmp8 = tl.full([1, 1], 4096.0, tl.float32)\n        tmp9 = triton.language.div_rn(tmp4, tmp8)\n        tmp10 = tl.full([1, 1], 1e-05, tl.float32)\n        tmp11 = tmp9 + tmp10\n        tmp12 = libdevice.rsqrt(tmp11)\n        tmp13 = tmp7 * tmp12\n        tmp15 = tmp14.to(tl.float32)\n        tmp16 = tmp13 * tmp15\n        tmp17 = tmp16.to(tl.bfloat16)\n        tmp18 = tmp17.to(tl.float32)\n        tmp19 = tmp18.to(tl.bfloat16)\n        tmp20 = tmp19.to(tl.float32)\n        tl.store(in_out_ptr0 + (r0_1 + 4096*x0), tmp20, r0_mask & xmask)"
+    },
+    {
+      "label": "audio_rms_reduction",
+      "first_line": 777,
+      "last_line": 819,
+      "text": "def triton_red_fused__fused_rms_norm_add_mul_slice_unbind_unsqueeze_view_9(in_ptr0, in_ptr1, in_ptr2, out_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):\n    xnumel = 26\n    r0_numel = 2048\n    rnumel = r0_numel\n    RBLOCK: tl.constexpr = R0_BLOCK\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]\n    xmask = xindex < xnumel\n    r0_base = tl.arange(0, R0_BLOCK)[None, :]\n    rbase = r0_base\n    x0 = xindex\n    _tmp4 = tl.full([XBLOCK, R0_BLOCK], 0, tl.float32)\n    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):\n        r0_index = r0_offset + r0_base\n        r0_mask = r0_index < r0_numel\n        roffset = r0_offset\n        rindex = r0_index\n        r0_1 = r0_index\n        tmp0 = tl.load(in_ptr0 + (r0_1 + 2048*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp1 = tmp0.to(tl.float32)\n        tmp2 = tmp1 * tmp1\n        tmp3 = tl.broadcast_to(tmp2, [XBLOCK, R0_BLOCK])\n        tmp5 = _tmp4 + tmp3\n        _tmp4 = tl.where(r0_mask & xmask, tmp5, _tmp4)\n    tmp4 = tl.sum(_tmp4, 1)[:, None]\n    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):\n        r0_index = r0_offset + r0_base\n        r0_mask = r0_index < r0_numel\n        roffset = r0_offset\n        rindex = r0_index\n        r0_1 = r0_index\n        tmp6 = tl.load(in_ptr0 + (r0_1 + 2048*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)\n        tmp20 = tl.load(in_ptr1 + (2048 + r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp23 = tl.load(in_ptr2 + (2048 + r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp42 = tl.load(in_ptr1 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp45 = tl.load(in_ptr2 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)\n        tmp7 = tmp6.to(tl.float32)\n        tmp8 = tl.full([1, 1], 2048.0, tl.float32)\n        tmp9 = triton.language.div_rn(tmp4, tmp8)\n        tmp10 = tl.full([1, 1], 1e-06, tl.float32)\n        tmp11 = tmp9 + tmp10\n        tmp12 = libdevice.rsqrt(tmp11)\n        tmp13 = tmp7 * tmp12"
+    },
+    {
+      "label": "sigmoid_gate",
+      "first_line": 297,
+      "last_line": 325,
+      "text": "def triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_3(in_out_ptr0, in_ptr0, xnumel, XBLOCK : tl.constexpr):\n    xnumel = 262144\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x2 = xindex\n    x1 = xindex // 128\n    tmp0 = tl.load(in_out_ptr0 + (x2), None).to(tl.float32)\n    tmp3 = tl.load(in_ptr0 + (x1), None, eviction_policy='evict_last').to(tl.float32)\n    tmp1 = tmp0.to(tl.bfloat16)\n    tmp2 = tmp1.to(tl.float32)\n    tmp4 = tmp3.to(tl.bfloat16)\n    tmp5 = tmp4.to(tl.float32)\n    tmp6 = tl.sigmoid(tmp5)\n    tmp7 = tmp6.to(tl.bfloat16)\n    tmp8 = tmp7.to(tl.float32)\n    tmp9 = tmp8.to(tl.bfloat16)\n    tmp10 = tmp9.to(tl.float32)\n    tmp11 = tl.full([1], 2.0, tl.float32)\n    tmp12 = tmp10 * tmp11\n    tmp13 = tmp12.to(tl.bfloat16)\n    tmp14 = tmp13.to(tl.float32)\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp2 * tmp16\n    tmp18 = tmp17.to(tl.bfloat16)\n    tmp19 = tmp18.to(tl.float32)\n    tl.store(in_out_ptr0 + (x2), tmp19, None)\n''', device_str='xpu')"
+    },
+    {
+      "label": "gelu",
+      "first_line": 2203,
+      "last_line": 2227,
+      "text": "def triton_poi_fused__unsafe_view_gelu_25(in_out_ptr0, xnumel, XBLOCK : tl.constexpr):\n    xnumel = 1048576\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x0 = xindex\n    tmp0 = tl.load(in_out_ptr0 + (x0), None).to(tl.float32)\n    tmp1 = tmp0.to(tl.float32)\n    tmp2 = tl.full([1], 0.5, tl.float32)\n    tmp3 = tmp1 * tmp2\n    tmp4 = tmp1 * tmp1\n    tmp5 = tmp4 * tmp1\n    tmp6 = tl.full([1], 0.044715, tl.float32)\n    tmp7 = tmp5 * tmp6\n    tmp8 = tmp1 + tmp7\n    tmp9 = tl.full([1], 0.7978845608028654, tl.float32)\n    tmp10 = tmp8 * tmp9\n    tmp11 = libdevice.tanh(tmp10)\n    tmp12 = tl.full([1], 1.0, tl.float32)\n    tmp13 = tmp11 + tmp12\n    tmp14 = tmp3 * tmp13\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp16.to(tl.bfloat16)\n    tmp18 = tmp17.to(tl.float32)"
+    }
+  ],
+  "pinned_dependencies": [
+    {
+      "path": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/rmsnorm.py",
+      "sha256": "e8dfbebe9272587038f504538f72fe7e82261307f2c7fbd6f0b05cce28172fdd"
+    },
+    {
+      "path": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "sha256": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d"
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_decomp/decompositions.py",
+      "sha256": "a99e383f4852a8e46bb1180659c50827dc3e6c9c520220c226678c4ebf78052e"
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/lowering.py",
+      "sha256": "c2ea8692e9948b82175cf8fc3ad9fa67e98b04c9b9e1fba5ae2ac77902d18e0c"
+    }
+  ]
+}
