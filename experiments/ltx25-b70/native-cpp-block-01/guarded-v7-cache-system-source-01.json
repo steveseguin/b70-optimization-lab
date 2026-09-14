@@ -1,0 +1,154 @@
+{
+  "status": "source-only proposal; no successor implementation or native work",
+  "evidence_sha256s": {
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v7-result-01.json": "df657e392b21a094a48a70828bb822d6ba16bc2aad4cf58f4e339384b3d6000a",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v7-run-01.log": "cca402b7c347313dd2db2c04e9598c5dde5365e70bdc41d9f75075a06954c401",
+    "experiments/ltx25-b70/native-cpp-block-01/guarded-v7-startup-01.json": "de534a9245b5444e8d63286c9bd6037fd1f5ee15377296403ef18d3af47a0b53",
+    "experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v7.py": "ac75b4bffe6449a939fed91ae07b494aec867a858e0615a87e64566549c57da2",
+    "experiments/ltx25-b70/native-cpp-block-01/cpu_device_registry_policy_v7.py": "f6fe6e2723f9fb71cfe8bc627f7f2df0531d4720ea0ca8b96a854c61b71490a1"
+  },
+  "outcome": {
+    "pid": 112422,
+    "phase": "python-compile-and-execute",
+    "passed": false,
+    "error": "AcceleratorAccessBlocked('CPU diagnostic blocked accelerator entry: torch.cuda.current_device')",
+    "xpu_initialized_at_exit": false,
+    "cuda_initialized_at_exit": false,
+    "fault_present_at_exit": false,
+    "cpu_device_registry_finalizer_intact": false,
+    "cpu_metadata_finalizer_intact": false,
+    "cpu_triton_finalizer_intact": false,
+    "cpu_comfy_import_finalizer_intact": false
+  },
+  "completed_model_calls": 1,
+  "cache_metadata_omissions": 0,
+  "source": [
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py",
+      "sha256": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "excerpts": [
+        {
+          "start_line": 329,
+          "end_line": 369,
+          "text": "class CacheBase:\n    @staticmethod\n    @functools.cache\n    def get_system() -> SystemInfo:\n        with dynamo_timed(\"CacheBase.get_system.triton_key\"):\n            triton_version = triton_key()\n\n        try:\n            device_info: SystemDeviceInfo = {\"name\": None}\n            version_info: SystemVersionInfo = {\"triton\": triton_version}\n            device_properties = torch.cuda.get_device_properties(\n                torch.cuda.current_device()\n            )\n            if torch.version.cuda is not None:\n                device_info[\"name\"] = device_properties.name\n                version_info[\"cuda\"] = torch.version.cuda\n            else:\n                device_info[\"name\"] = device_properties.gcnArchName\n                version_info[\"hip\"] = torch.version.hip\n            hash_input: dict[str, Any] = {\n                \"device\": device_info,\n                \"version\": version_info,\n            }\n            return {\n                \"device\": device_info,\n                \"version\": version_info,\n                \"hash\": SYSTEM_CACHE_KEY_STRATEGY.key_from_json(hash_input),\n            }\n        except (AssertionError, RuntimeError):\n            # If cuda is not installed, none of the above config is relevant.\n            return {\"hash\": SYSTEM_CACHE_KEY_STRATEGY.key_from_json({})}\n\n    @staticmethod\n    @clear_on_fresh_cache\n    @functools.cache\n    def get_local_cache_path() -> Path:\n        return Path(os.path.join(cache_dir(), \"cache\", CacheBase.get_system()[\"hash\"]))\n\n    def __init__(self) -> None:\n        self.system = CacheBase.get_system()\n"
+        },
+        {
+          "start_line": 1640,
+          "end_line": 1648,
+          "text": "                    self.cudagraph_annotation = annotation\n\n        # Also hash on various system info (including the triton compiler version).\n        self.torch_version = torch_key()\n        self.system_info = CacheBase.get_system()\n        self.inductor_config = config.save_config_portable(\n            ignore_private_configs=False, readonly_values=True\n        )\n        # pyrefly: ignore [missing-attribute]"
+        },
+        {
+          "start_line": 1481,
+          "end_line": 1490,
+          "text": "    def __init__(\n        self,\n        gm: torch.fx.GraphModule | None,\n        example_inputs: Sequence[InputType],\n        fx_kwargs: _CompileFxKwargs,\n        inputs_to_check: Sequence[int],\n    ) -> None:\n        self.gm = gm\n        # Replace opaque references with hashable ordinals. What's important\n        # is that if the same reference appears twice then it's the same hash"
+        },
+        {
+          "start_line": 1572,
+          "end_line": 1577,
+          "text": "        no_tensor_inputs = not any(isinstance(x, torch.Tensor) for x in example_inputs)\n        # This device index is usually already encoded by the device of the inputs\n        # but fx graphs don't necessarily have tensor inputs. If there aren't any,\n        # we need to guard on the device index in case we allocate cuda tensors\n        if no_tensor_inputs and torch.accelerator.is_available():\n            self.default_cuda_device_index = torch.accelerator.current_device_index()"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/compiler/config.py",
+      "sha256": "c33afa23de57aec75072d1a4f4e21cc37f5a08448e8f8b57fa19e2715ac9406a",
+      "excerpts": [
+        {
+          "start_line": 98,
+          "end_line": 108,
+          "text": "force_disable_caches: bool = Config(\n    justknob=\"pytorch/remote_cache:force_disable_caches\",\n    env_name_force=[\n        \"TORCHINDUCTOR_FORCE_DISABLE_CACHES\",\n        \"TORCH_COMPILE_FORCE_DISABLE_CACHES\",\n    ],\n    default=False,\n)\n\"\"\"\nForce disables all caching -- This will take precedence over and override any other caching flag\n\"\"\""
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py",
+      "sha256": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a",
+      "excerpts": [
+        {
+          "start_line": 107,
+          "end_line": 114,
+          "text": "\n# use fx aot graph codegen cache\nfx_graph_cache: bool = Config(\n    justknob=\"pytorch/remote_cache:enable_local_fx_graph_cache\",\n    env_name_default=\"TORCHINDUCTOR_FX_GRAPH_CACHE_DEFAULT\",\n    env_name_force=\"TORCHINDUCTOR_FX_GRAPH_CACHE\",\n    default=True,\n)"
+        },
+        {
+          "start_line": 164,
+          "end_line": 166,
+          "text": "\n# See torch.compiler.config.force_disable_caches\nforce_disable_caches: bool = Config(alias=\"torch.compiler.config.force_disable_caches\")"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/config.py",
+      "sha256": "b108e2ab52690a0f64fdc9a624c25b34989d74d0062cf15ff6f5561b5ea1ce24",
+      "excerpts": [
+        {
+          "start_line": 70,
+          "end_line": 75,
+          "text": "\nenable_autograd_cache: bool = Config(\n    justknob=\"pytorch/remote_cache:enable_local_autograd_cache\",\n    env_name_force=\"TORCHINDUCTOR_AUTOGRAD_CACHE\",\n    default=True,\n)"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py",
+      "sha256": "8f8357618ef656dd843fdddc0860c87e831826a1cd6b33860e7e0079f50d7962",
+      "excerpts": [
+        {
+          "start_line": 115,
+          "end_line": 121,
+          "text": "def should_use_remote_autograd_cache() -> bool:\n    if torch.compiler.config.force_disable_caches:\n        return False\n    if config.enable_remote_autograd_cache is not None:\n        return config.enable_remote_autograd_cache\n    if not config.is_fbcode():\n        return False"
+        },
+        {
+          "start_line": 136,
+          "end_line": 140,
+          "text": "def should_use_local_autograd_cache() -> bool:\n    if torch.compiler.config.force_disable_caches:\n        return False\n    return config.enable_autograd_cache\n"
+        },
+        {
+          "start_line": 537,
+          "end_line": 543,
+          "text": "        # saved config), because activation_memory_budget_runtime_estimator and\n        # activation_memory_budget_solver are excluded from save_config (in\n        # _save_config_ignore) since they're not serializable. We must access the\n        # config module directly to get the patched runtime values.\n        self.custom_estimator_solver_uuids = _get_custom_estimator_solver_uuids(config)\n        self._init_fx_graph_hash_details(gm, example_inputs, fx_config)\n"
+        },
+        {
+          "start_line": 564,
+          "end_line": 570,
+          "text": "        try:\n            # FXGraphCache has constraints on what can be pickled in its inductor\n            # config. Check that the gm is cacheable by inductor first,\n            # and if it raises an exception, also bypass on our end.\n            FxGraphCache._check_can_cache(gm, example_inputs, fx_config)\n            super().__init__(gm, example_inputs, fx_config, [])\n        except BypassFxGraphCache as e:"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py",
+      "sha256": "91b5d203d5f5dac96e7cc4afe26a320ab5891ff704036eb4169507f730e5df2d",
+      "excerpts": [
+        {
+          "start_line": 1210,
+          "end_line": 1229,
+          "text": "\n        if (\n            isinstance(fw_compiler, SerializableAOTDispatchCompiler)\n            or torch._functorch.config.force_autograd_cache\n        ):\n            local = should_use_local_autograd_cache()\n            remote = should_use_remote_autograd_cache()\n            if local or remote:\n                set_feature_use(\"aot_autograd_remote_cache\", remote)\n                compiled_fn, aot_config = AOTAutogradCache.try_load(\n                    mod,\n                    fake_flat_args,\n                    aot_config,\n                    compiler_config_extra,\n                    local,\n                    remote,\n                    act_input_paths,\n                    compile_region_name=compile_region_name,\n                )\n"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py",
+      "sha256": "4e5b593e018c6bd6f69062483d524b64820ab272351fbf073b7ec118a66598f8",
+      "excerpts": [
+        {
+          "start_line": 1025,
+          "end_line": 1034,
+          "text": "    ):\n        use_cache = (\n            not config.force_disable_caches\n            and (config.fx_graph_cache or fx_graph_remote_cache)\n            and not aot_mode\n            and backends_support_caching\n            and not torch._functorch.config.bundled_autograd_cache\n        )\n        local = config.fx_graph_cache\n        remote = fx_graph_remote_cache"
+        },
+        {
+          "start_line": 1065,
+          "end_line": 1075,
+          "text": "        if use_cache:\n            (key_info, cache_info) = FxGraphCache.prepare_key(\n                gm, example_inputs, graph_kwargs, inputs_to_check, remote\n            )\n\n            # Attempt a cache lookup\n            if key_info is not None:\n                key, debug_lines = key_info\n                log.debug(\"FX cache key generated: %s\", key)\n                if remote:\n                    remote_cache = FxGraphCache.get_remote_cache()"
+        },
+        {
+          "start_line": 1199,
+          "end_line": 1210,
+          "text": "            cache_info[\"time_taken_ns\"] = mb_compiled_graph._time_taken_ns\n            log.debug(\"Saving compiled graph to FX cache with key: %s\", cache_key)\n            FxGraphCache._save_graph(\n                cache_key,\n                mb_compiled_graph,\n                example_inputs,\n                local,\n                remote_cache,\n            )\n\n        # CACHE HIT: not much to really do, just make sure the cache key\n        # is recorded on the graph"
+        },
+        {
+          "start_line": 819,
+          "end_line": 829,
+          "text": "\n@contextlib.contextmanager\ndef with_fresh_cache_if_config() -> Generator[None, None, None]:\n    if config.force_disable_caches:\n        # Don't delete the cache dir because it has to survive beyond the\n        # compile_fx call. Let's put the temp dirs under the default cache\n        # dir so they're easier to locate.\n        with fresh_cache(dir=cache_dir(), delete=False):\n            yield\n    else:\n        yield"
+        }
+      ]
+    }
+  ]
+}

@@ -33,6 +33,27 @@ collective design lead; neither is applied or benchmarked. The inactive
 metadata patch must be rebased and qualified before runtime use.
 [Review and adoption decisions](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September14 17:54 UTC: actual CLIP integration CPU gate passed.**
+The inactive host-table adapter passed all six actual tiny CPU CLIP integration
+groups, including unchanged memory estimation/native owner loading, clone and
+state lifecycle, byte-exact encoding, bounded metadata observations and inference
+tensors. PID112132/exec53199 exited0; both GPU backends remained uninitialized.
+The resident component assembly also passed nine stdlib lifecycle/source tests.
+Full-model GPU residency, original four-output clip parity and speed remain
+unqualified. Packet11 and its comparison client are being prepared offline;
+packet10 PID84255/exec33936 remains the live application. No reload or host
+settings action occurred. The17:54 postflight found the same full identity,
+empty queue, only84255 on all four render nodes, and no faults.
+[CPU evidence](experiments/ltx25-b70/data/host-embedding-integration-postflight-01.json).
+
+The separate C++ CPU v7 fixture installed the reviewed virtual CPU registry and
+completed one eager call. Its first compile halted at the retained CUDA
+current-device trap in AOT cache system metadata; no compiled result or C++ call
+completed. Both GPU backends remained uninitialized. Preserve the refusal;
+no unchanged retry. This does not block the encoder comparison.
+[V7 result](experiments/ltx25-b70/native-cpp-block-01/guarded-v7-result-01.json),
+[postflight](experiments/ltx25-b70/native-cpp-block-01/guarded-v7-postflight-01.json).
+
 **Four-B70 host, September14 17:34 UTC: encoder CPU proof passed; application unchanged.**
 The CPU embedding candidate passed all six actual-source groups: raw-byte
 token/embedding equality, named-owner loading, clone/detach/restore, inference

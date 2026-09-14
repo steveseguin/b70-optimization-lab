@@ -1,0 +1,51 @@
+--- test_guarded_v7_stdlib-01.failed.py
++++ test_guarded_v7_stdlib.py
+@@ -7,7 +7,7 @@
+ import json
+ from pathlib import Path
+ import sys
+-from types import ModuleType, SimpleNamespace
++from types import FunctionType, ModuleType, SimpleNamespace
+ from typing import Iterable
+ import unittest
+ from unittest.mock import patch
+@@ -41,10 +41,10 @@
+         module.__file__ = str(policy.SITE / policy.DEVICE_SOURCE)
+         module.torch = torch
+         module.Iterable = Iterable
+-        def stream(*args, **kwargs): raise AssertionError('No stream call allowed')
++        def fake_stream(*args, **kwargs): raise AssertionError('No stream call allowed')
+         class Base:
+-            stream = staticmethod(stream)
+-            current_stream = staticmethod(stream)
++            stream = staticmethod(fake_stream)
++            current_stream = staticmethod(fake_stream)
+             Event = type('Event', (), {})
+         module.DeviceInterface = Base
+         for key, name in policy.INTERFACES:
+@@ -165,6 +165,25 @@
+             policy.CpuDeviceRegistryPolicy(f.module, f.torch, f.report, guard)
+             with self.assertRaises(guard.AcceleratorAccessBlocked): policy.CpuDeviceRegistryPolicy(f.module, f.torch, f.report, guard)
+ 
++    def test_original_handler_code_with_populated_cache_refuses(self):
++        for size in (0, 1):
++            with fixture() as f:
++                module = ModuleType('torch._dynamo.variables.torch')
++                original = FunctionType(policy.source_code(policy.HANDLER_SOURCE,
++                    'TorchInGraphFunctionVariable._get_handlers'), {})
++                wrapper = SimpleNamespace(__wrapped__=original,
++                    cache_info=lambda: SimpleNamespace(_asdict=lambda: {'hits': 0, 'misses': size, 'maxsize': None, 'currsize': size}))
++                module.TorchInGraphFunctionVariable = SimpleNamespace(_get_handlers=wrapper)
++                sys.modules[module.__name__] = module
++                if size:
++                    with self.assertRaises(guard.AcceleratorAccessBlocked):
++                        policy.CpuDeviceRegistryPolicy(f.module, f.torch, f.report, guard)
++                    self.assertEqual(f.module.device_interfaces, {})
++                else:
++                    controller = policy.CpuDeviceRegistryPolicy(f.module, f.torch, f.report, guard)
++                    controller.require_intact()
++                    self.assertEqual(f.report['cpu_device_registry_policy']['before']['handler_cache']['currsize'], 0)
++
+     def test_handler_cache_admission_rejects_foreign_constructor(self):
+         with fixture() as f:
+             module = ModuleType('torch._dynamo.variables.torch')

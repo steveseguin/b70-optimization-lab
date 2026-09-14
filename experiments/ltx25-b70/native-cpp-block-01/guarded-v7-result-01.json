@@ -1,0 +1,1677 @@
+{
+  "schema": "ltx.cpp-actual-tiny-block-cpu.v1",
+  "passed": false,
+  "phase": "python-compile-and-execute",
+  "rows": [],
+  "calls": [
+    {
+      "arm": "eager",
+      "video_tokens": 64,
+      "seed": 17,
+      "expected_new_graphs": 0,
+      "counter_delta": {},
+      "cpu_import_policy_schema": "ltx.cpu-import-policy.v3",
+      "cpu_metadata_policy_schema": "ltx.cpu-cache-metadata-policy.v4",
+      "cpu_triton_policy_schema": "ltx.cpu-triton-device-detection-policy.v6",
+      "cpu_device_registry_policy_schema": "ltx.virtual-cpu-device-registry.v7",
+      "cpu_metadata_omissions_delta": 0
+    }
+  ],
+  "command": [
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v7.py",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/guarded-v7-result-01.json",
+    "--evidence-dir",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v7-01"
+  ],
+  "pid": 112422,
+  "ppid": 112421,
+  "scope": "Tiny actual BF16 CPU block exactness only; no XPU/model/clip/speed qualification",
+  "source_pins": {
+    "comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+  },
+  "fixture_parent_sha256": "09632eba818a3cf925a7627b14f9b61db326dcb310e6ab2b282f51720d1cd18d",
+  "operator_qualification_sha256": "feba23a06a7baf237055c526a135b2a68290e6ada53f688d71093729c0fcbd71",
+  "helper_sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v7.py": "ac75b4bffe6449a939fed91ae07b494aec867a858e0615a87e64566549c57da2",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/fixture.py": "6016032d4623ed32aa3d61f9012f4663b098a6758be955e84a9e31f40aa7a54c",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/backend.py": "cb34a32b6e2268fd54e3be1c9d006ebc06b9888cd033f619bd41ba73af57be0a",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_metadata_policy_v4.py": "4fffdedf7d109cc14456aef37031e7471138a9c19c840596efb1e3197e972a80",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_triton_policy_v6.py": "6feb786c72e07a611abb3c339087b09465074f832ab169d739c20ec883302dfd",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_device_registry_policy_v7.py": "f6fe6e2723f9fb71cfe8bc627f7f2df0531d4720ea0ca8b96a854c61b71490a1",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/cpu_comfy_import_policy_v1.py": "7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec"
+  },
+  "evidence_directory": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v7-01",
+  "torch_imported": true,
+  "cpu_import_policy_requested": {
+    "schema": "ltx.cpu-import-policy.v3",
+    "availability": {
+      "torch.cuda.is_available": false,
+      "torch.xpu.is_available": false
+    },
+    "scope": "Entire disposable CPU fixture process, before Kitchen/Inductor imports through both compiled arms",
+    "arms": [
+      "eager",
+      "python",
+      "python_repeat",
+      "cpp",
+      "cpp_repeat"
+    ],
+    "availability_call_logging": false,
+    "availability_implementation": "Pure literal False functions; original availability functions never called",
+    "device_entry_traps": "Frozen accelerator_guard_v2.py retained; sticky BaseException halt",
+    "cache_metadata_hook": null,
+    "native_admission": "Pending separate review of Triton NVIDIA ctypes driver-query bypass"
+  },
+  "cpu_metadata_policy_requested": {
+    "schema": "ltx.cpu-cache-metadata-policy.v4",
+    "hook": "torch.utils._triton.triton_backend",
+    "allowed_caller": "Exact original pinned FxGraphCache._save_graph code object and globals",
+    "allowed_metadata": "compiled_graph.device_types == {'cpu'}; extern_libs_key is None",
+    "behavior": "Recorded ordinary exception at allowed CPU save; sticky BaseException everywhere else; never call original backend",
+    "scope": "Same disposable CPU fixture process for eager, Python and C++ compiled/repeat arms",
+    "expected_omissions": 4,
+    "source_pins": {
+      "torch/utils/_ordered_set.py": "5c232fb67e7c378fd46e19c89de9228397439b09f666996dbae177b487455716",
+      "torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "torch/_inductor/codecache.py": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "torch/_inductor/output_code.py": "647fdca5e7ab214acdf8280885d419efc607f3a003353a46611e59ec6b3d8fe6"
+    }
+  },
+  "cpu_comfy_import_policy_requested": {
+    "schema": "ltx.cpu-comfy-import-policy.v1",
+    "hook": "torch.xpu.device_count",
+    "source_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+    "allowed_caller": "Pinned model_management top-level code and actual importing module globals",
+    "preconditions": "args.cpu is True; expected import phase; first and only omission",
+    "behavior": "Ordinary RuntimeError refusal for one import query; original sticky trap for every other call",
+    "expected_omissions": 1,
+    "scope": "Same process across all CPU fixture arms; no device-count simulation or hardware query"
+  },
+  "cpu_triton_policy_requested": {
+    "schema": "ltx.cpu-triton-device-detection-policy.v6",
+    "environment": {
+      "TORCHINDUCTOR_TRITON_DISABLE_DEVICE_DETECTION": "1"
+    },
+    "native_config": {
+      "triton_disable_device_detection": true
+    },
+    "native_has_triton_expected": false,
+    "scope": "Same disposable CPU fixture process; set before Torch import and shared by eager/Python/C++ compile/repeat arms",
+    "registry_policy": null,
+    "callable_replacements": [],
+    "numeric_OPTIONS_changed": false,
+    "total_compiler_config_changed": true,
+    "semantics": "One explicit CPU diagnostic setting disables native Triton device detection; no unchanged GPU semantics claim",
+    "source_pins": {
+      "torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a",
+      "torch/_dynamo/utils.py": "e550c68c924e1c0babaf31fc629e900c1d3b6ecbcf10aa88442d39b405b7102a",
+      "torch/_dynamo/device_interface.py": "b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b",
+      "torch/_dynamo/variables/builder.py": "900e23d3fad5636389796eefe1863e861fd848c69040de0d84decd6e00c52142"
+    }
+  },
+  "cpu_device_registry_policy_requested": {
+    "schema": "ltx.virtual-cpu-device-registry.v7",
+    "registry": [
+      "cuda",
+      "xpu",
+      "mtia",
+      "cpu",
+      "mps",
+      "tpu"
+    ],
+    "ordinal_entries": [],
+    "semantics": "Explicit virtual CPU fixture registry, equivalent mapping to native zero enumeration loops; not a host hardware claim",
+    "scope": "One disposable CPU process and one registry lifetime shared by eager/Python/C++ compile/repeat arms",
+    "construction": "Original register_interface_for_device on original empty dict, then original initialized flag True",
+    "device_count_calls": 0,
+    "repair_or_reset": false,
+    "native_interface_classes_preserved": true,
+    "numeric_OPTIONS_changed": false,
+    "total_compiler_state_changed": true,
+    "source_pins": {
+      "torch/_dynamo/device_interface.py": "b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b",
+      "torch/_dynamo/variables/torch.py": "28e9fce5a40ee7038f1ee8517d73781655849da99a02a560ae8c71ea39042995"
+    }
+  },
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "fixture_AST_contract": {
+    "block_initialization_unchanged": true,
+    "input_arithmetic_unchanged": true
+  },
+  "cpu_triton_environment": {
+    "key": "TORCHINDUCTOR_TRITON_DISABLE_DEVICE_DETECTION",
+    "previous": null,
+    "effective": "1",
+    "torch_imported": false,
+    "scope": "Process-local CPU diagnostic; not installed or host/device settings"
+  },
+  "compiler_environment": {
+    "MAX_JOBS": "1",
+    "TORCHINDUCTOR_COMPILE_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v7-01/inductor-cache",
+    "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v7-01/triton-cache",
+    "TORCHINDUCTOR_TRITON_DISABLE_DEVICE_DETECTION": "1"
+  },
+  "startup_receipt": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v7-01/startup-identity.json",
+    "sha256": "de534a9245b5444e8d63286c9bd6037fd1f5ee15377296403ef18d3af47a0b53"
+  },
+  "accelerator_guard_attempts": [
+    {
+      "entry": "torch.cuda.current_device",
+      "pid": 112422,
+      "monotonic_ns": 17978249641487,
+      "phase": "python-compile-and-execute",
+      "argument_types": [],
+      "keyword_names": [],
+      "stack": [
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1261, in compile_wrapper\n    result = fn(*args, **kwargs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1783, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1794, in _call_impl\n    return forward_call(*args, **kwargs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2649, in __call__\n    result = self._torchdynamo_orig_backend(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 778, in __call__\n    result = _compile(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2116, in _compile\n    guarded_code, tracer_output = compile_inner(code, one_graph, hooks)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_utils_internal.py\", line 114, in wrapper_function\n    return function(*args, **kwargs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1701, in compile_inner\n    result = _compile_inner(code, one_graph, hooks)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1761, in _compile_inner\n    dynamo_output = compile_frame(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1598, in compile_frame\n    bytecode, tracer_output = transform_code_object(code, transform)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/bytecode_transformation.py\", line 1843, in transform_code_object\n    tracer_output = transformations(instructions, code_options)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1569, in transform\n    tracer_output = trace_frame(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 369, in _fn\n    return fn(*args, **kwargs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 968, in trace_frame\n    run_tracer()\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 949, in run_tracer\n    tracer.run()\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 2094, in run\n    while self.step():\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 1747, in step\n    self.dispatch_table[inst.opcode](self, inst)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 5891, in RETURN_VALUE\n    self._return(inst)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 5864, in _return\n    all_stack_locals_metadata = self.output.compile_subgraph(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 2318, in compile_subgraph\n    instructions, subgraph_pycode = self.compile_and_call_fx_graph(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 2993, in compile_and_call_fx_graph\n    compiled_fn = self.call_user_compiler(gm, example_inputs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 3170, in call_user_compiler\n    return self._call_user_compiler(gm, example_inputs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 3232, in _call_user_compiler\n    compiled_fn = compiler_fn(gm, example_inputs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/repro/after_dynamo.py\", line 163, in __call__\n    compiled_gm = compiler_fn(gm, example_inputs)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py\", line 3002, in __call__\n    return self.compiler_fn(model_, inputs_, **self.kwargs)\n",
+        "  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-ops-01/parents/ltx_native_activations_backend.py\", line 173, in backend\n    result = torch._inductor.compile(rewritten, example_inputs, options=dict(options))\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/__init__.py\", line 61, in compile\n    return compile_fx(gm, example_inputs, config_patches=options)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 2939, in compile_fx\n    return compile_fx(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 3020, in compile_fx\n    return _maybe_wrap_and_compile_fx_main(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 3104, in _maybe_wrap_and_compile_fx_main\n    return _compile_fx_main(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 3309, in _compile_fx_main\n    return dynamo_common.aot_autograd(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/backends/common.py\", line 150, in __call__\n    cg = aot_module_simplified(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py\", line 1219, in aot_module_simplified\n    compiled_fn, aot_config = AOTAutogradCache.try_load(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 1081, in try_load\n    cache_key, debug_lines = autograd_cache_key(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 943, in autograd_cache_key\n    details = AOTAutogradCacheDetails(\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 542, in __init__\n    self._init_fx_graph_hash_details(gm, example_inputs, fx_config)\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 569, in _init_fx_graph_hash_details\n    super().__init__(gm, example_inputs, fx_config, [])\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py\", line 1644, in __init__\n    self.system_info = CacheBase.get_system()\n",
+        "  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py\", line 340, in get_system\n    torch.cuda.current_device()\n",
+        "  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py\", line 31, in blocked\n    'keyword_names': sorted(kwargs), 'stack': traceback.format_stack(limit=40)})\n"
+      ]
+    }
+  ],
+  "accelerator_guard_entries": [
+    "torch.cuda.init",
+    "torch.cuda._lazy_init",
+    "torch.cuda.device_count",
+    "torch.cuda.get_device_properties",
+    "torch.cuda.get_device_capability",
+    "torch.cuda.get_device_name",
+    "torch.cuda.current_device",
+    "torch.cuda.current_stream",
+    "torch.cuda.set_device",
+    "torch.cuda.synchronize",
+    "torch.xpu.init",
+    "torch.xpu._lazy_init",
+    "torch.xpu.device_count",
+    "torch.xpu.get_device_properties",
+    "torch.xpu.get_device_capability",
+    "torch.xpu.get_device_name",
+    "torch.xpu.current_device",
+    "torch.xpu.current_stream",
+    "torch.xpu.set_device",
+    "torch.xpu.synchronize",
+    "torch._C._xpu_init",
+    "torch._C._xpu_getDeviceCount",
+    "torch._C._xpu_getDevice",
+    "torch._C._xpu_setDevice",
+    "torch._C._xpu_getCurrentRawStream"
+  ],
+  "accelerator_guard_scope": "Frozen v2 device-entry traps plus explicit process-local CPU availability False policy; no installed source, compiler option, cache metadata, or device setting changes",
+  "cpu_comfy_import_omissions": [
+    {
+      "ordinal": 1,
+      "pid": 112422,
+      "phase": "guarded-Kitchen-Inductor-import",
+      "monotonic_ns": 17975179654294,
+      "source_path": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_management.py",
+      "source_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+      "caller_function": "<module>",
+      "caller_line": 127,
+      "args_cpu": true,
+      "action": "Raise CpuOnlyComfyImportQueryUnavailable; no hardware query"
+    }
+  ],
+  "cpu_comfy_import_policy": {
+    "schema": "ltx.cpu-comfy-import-policy.v1",
+    "hook": "torch.xpu.device_count",
+    "source_sha256": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd",
+    "allowed_caller": "Pinned model_management top-level code and actual importing module globals",
+    "preconditions": "args.cpu is True; expected import phase; first and only omission",
+    "behavior": "Ordinary RuntimeError refusal for one import query; original sticky trap for every other call",
+    "expected_omissions": 1,
+    "scope": "Same process across all CPU fixture arms; no device-count simulation or hardware query",
+    "installed": true,
+    "complete": true,
+    "source_path": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_management.py",
+    "expected_phase": "guarded-Kitchen-Inductor-import"
+  },
+  "cpu_import_policy": {
+    "schema": "ltx.cpu-import-policy.v3",
+    "availability": {
+      "torch.cuda.is_available": false,
+      "torch.xpu.is_available": false
+    },
+    "scope": "Entire disposable CPU fixture process, before Kitchen/Inductor imports through both compiled arms",
+    "arms": [
+      "eager",
+      "python",
+      "python_repeat",
+      "cpp",
+      "cpp_repeat"
+    ],
+    "availability_call_logging": false,
+    "availability_implementation": "Pure literal False functions; original availability functions never called",
+    "device_entry_traps": "Frozen accelerator_guard_v2.py retained; sticky BaseException halt",
+    "cache_metadata_hook": null,
+    "native_admission": "Pending separate review of Triton NVIDIA ctypes driver-query bypass",
+    "installed": true,
+    "installed_function_names": {
+      "torch.cuda.is_available": "cpu_cuda_unavailable",
+      "torch.xpu.is_available": "cpu_xpu_unavailable"
+    },
+    "trap_identity_count": 25
+  },
+  "accelerator_guard_original_scope": "Process-local Python/C entry traps only; no installed-source/registry/runtime mutation. They block device enumeration and metadata queries as well as initialization. No CPU/GPU availability simulation, compiler option changes or retry.",
+  "cpu_metadata_omissions": [],
+  "cpu_metadata_policy": {
+    "schema": "ltx.cpu-cache-metadata-policy.v4",
+    "hook": "torch.utils._triton.triton_backend",
+    "allowed_caller": "Exact original pinned FxGraphCache._save_graph code object and globals",
+    "allowed_metadata": "compiled_graph.device_types == {'cpu'}; extern_libs_key is None",
+    "behavior": "Recorded ordinary exception at allowed CPU save; sticky BaseException everywhere else; never call original backend",
+    "scope": "Same disposable CPU fixture process for eager, Python and C++ compiled/repeat arms",
+    "expected_omissions": 4,
+    "source_pins": {
+      "torch/utils/_ordered_set.py": "5c232fb67e7c378fd46e19c89de9228397439b09f666996dbae177b487455716",
+      "torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "torch/_inductor/codecache.py": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "torch/_inductor/output_code.py": "647fdca5e7ab214acdf8280885d419efc607f3a003353a46611e59ec6b3d8fe6"
+    },
+    "installed": true,
+    "bound": true,
+    "original_backend_qualname": "triton_backend",
+    "original_backend_firstlineno": 242,
+    "caller_file": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py",
+    "caller_qualname": "FxGraphCache._save_graph",
+    "caller_firstlineno": 2276
+  },
+  "cpu_triton_policy": {
+    "schema": "ltx.cpu-triton-device-detection-policy.v6",
+    "environment": {
+      "TORCHINDUCTOR_TRITON_DISABLE_DEVICE_DETECTION": "1"
+    },
+    "native_config": {
+      "triton_disable_device_detection": true
+    },
+    "native_has_triton_expected": false,
+    "scope": "Same disposable CPU fixture process; set before Torch import and shared by eager/Python/C++ compile/repeat arms",
+    "registry_policy": null,
+    "callable_replacements": [],
+    "numeric_OPTIONS_changed": false,
+    "total_compiler_config_changed": true,
+    "semantics": "One explicit CPU diagnostic setting disables native Triton device detection; no unchanged GPU semantics claim",
+    "source_pins": {
+      "torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a",
+      "torch/_dynamo/utils.py": "e550c68c924e1c0babaf31fc629e900c1d3b6ecbcf10aa88442d39b405b7102a",
+      "torch/_dynamo/device_interface.py": "b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b",
+      "torch/_dynamo/variables/builder.py": "900e23d3fad5636389796eefe1863e861fd848c69040de0d84decd6e00c52142"
+    },
+    "verified": true,
+    "native_function": "has_triton",
+    "native_function_firstlineno": 208,
+    "native_has_triton": false,
+    "observed_triton_disable_device_detection": true
+  },
+  "cpu_device_registry_policy": {
+    "schema": "ltx.virtual-cpu-device-registry.v7",
+    "registry": [
+      "cuda",
+      "xpu",
+      "mtia",
+      "cpu",
+      "mps",
+      "tpu"
+    ],
+    "ordinal_entries": [],
+    "semantics": "Explicit virtual CPU fixture registry, equivalent mapping to native zero enumeration loops; not a host hardware claim",
+    "scope": "One disposable CPU process and one registry lifetime shared by eager/Python/C++ compile/repeat arms",
+    "construction": "Original register_interface_for_device on original empty dict, then original initialized flag True",
+    "device_count_calls": 0,
+    "repair_or_reset": false,
+    "native_interface_classes_preserved": true,
+    "numeric_OPTIONS_changed": false,
+    "total_compiler_state_changed": true,
+    "source_pins": {
+      "torch/_dynamo/device_interface.py": "b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b",
+      "torch/_dynamo/variables/torch.py": "28e9fce5a40ee7038f1ee8517d73781655849da99a02a560ae8c71ea39042995"
+    },
+    "installed": true,
+    "before": {
+      "registry_id": 136355460428352,
+      "entries": [],
+      "initialized": false,
+      "handler_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": null,
+        "currsize": 0
+      }
+    },
+    "after": {
+      "registry_id": 136355460428352,
+      "initialized": true,
+      "entries": [
+        {
+          "name": "cuda",
+          "class": "torch._dynamo.device_interface.CudaInterface",
+          "class_id": 549381968,
+          "handlers": {
+            "stream": {
+              "id": 136355976996448,
+              "qualified_name": "stream"
+            },
+            "current_stream": {
+              "id": 136355710080704,
+              "qualified_name": "install.<locals>.trap.<locals>.blocked"
+            },
+            "Event": {
+              "id": 505572384,
+              "qualified_name": "Event"
+            }
+          }
+        },
+        {
+          "name": "xpu",
+          "class": "torch._dynamo.device_interface.XpuInterface",
+          "class_id": 549390640,
+          "handlers": {
+            "stream": {
+              "id": 136355727575616,
+              "qualified_name": "stream"
+            },
+            "current_stream": {
+              "id": 136355727574816,
+              "qualified_name": "install.<locals>.trap.<locals>.blocked"
+            },
+            "Event": {
+              "id": 518020720,
+              "qualified_name": "Event"
+            }
+          }
+        },
+        {
+          "name": "mtia",
+          "class": "torch._dynamo.device_interface.MtiaInterface",
+          "class_id": 549386304,
+          "handlers": {
+            "stream": {
+              "id": 136355731509856,
+              "qualified_name": "stream"
+            },
+            "current_stream": {
+              "id": 136355731506976,
+              "qualified_name": "current_stream"
+            },
+            "Event": {
+              "id": 136357412492992,
+              "qualified_name": "Event"
+            }
+          }
+        },
+        {
+          "name": "cpu",
+          "class": "torch._dynamo.device_interface.CpuInterface",
+          "class_id": 549409376,
+          "handlers": {
+            "stream": {
+              "id": 136355460377280,
+              "qualified_name": "DeviceInterface.stream"
+            },
+            "current_stream": {
+              "id": 136355460377440,
+              "qualified_name": "DeviceInterface.current_stream"
+            },
+            "Event": {
+              "id": 549406608,
+              "qualified_name": "CpuInterface.Event"
+            }
+          }
+        },
+        {
+          "name": "mps",
+          "class": "torch._dynamo.device_interface.MpsInterface",
+          "class_id": 549412928,
+          "handlers": {
+            "stream": {
+              "id": 136355460377280,
+              "qualified_name": "DeviceInterface.stream"
+            },
+            "current_stream": {
+              "id": 136355460377440,
+              "qualified_name": "DeviceInterface.current_stream"
+            },
+            "Event": {
+              "id": 549396240,
+              "qualified_name": "DeviceInterface.Event"
+            }
+          }
+        },
+        {
+          "name": "tpu",
+          "class": "torch._dynamo.device_interface.TpuInterface",
+          "class_id": 549416480,
+          "handlers": {
+            "stream": {
+              "id": 136355460377280,
+              "qualified_name": "DeviceInterface.stream"
+            },
+            "current_stream": {
+              "id": 136355460377440,
+              "qualified_name": "DeviceInterface.current_stream"
+            },
+            "Event": {
+              "id": 549396240,
+              "qualified_name": "DeviceInterface.Event"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "torch": "2.14.0+xpu",
+  "dynamo_limits": {
+    "recompile_limit": 8,
+    "accumulated_recompile_limit": 256
+  },
+  "determinism": {
+    "enabled": true,
+    "warn_only": false,
+    "threads": 1,
+    "interop_threads": 1
+  },
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "binary": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-ops-cpu-01/ltx_exact_cpp_cpu01.so",
+    "sha256": "6eee2a1379b818921a1bdf980493a6eab6746dc52e885deba39c9ccfe3870280"
+  },
+  "block_dimensions": {
+    "video": 32,
+    "audio": 32,
+    "heads": 1,
+    "head_dim": 32,
+    "context_tokens": 8,
+    "audio_tokens": 26
+  },
+  "video_stages": [
+    64,
+    256
+  ],
+  "state_before": {
+    "scale_shift_table": {
+      "id": 136355239660592,
+      "sha256": "1c2effd8b98d63b72f883e093ded21d7f77c2acce4be167095c51ed39030b368",
+      "shape": [
+        9,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_scale_shift_table": {
+      "id": 136355239661312,
+      "sha256": "6266ab4c700d4f3619973de4f0c7ec1f2ac8dcce53a8a703cc97a9cfc159df05",
+      "shape": [
+        9,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "prompt_scale_shift_table": {
+      "id": 136355239661392,
+      "sha256": "ac959d6e87faeb870a6c0e37acde30b5d637547081cb0982b6cb30e691e041dc",
+      "shape": [
+        2,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_prompt_scale_shift_table": {
+      "id": 136355239661472,
+      "sha256": "327c03f06722543793508ac0d8c9d4f2a89f9d7c3fc007c73f7600297c5032fc",
+      "shape": [
+        2,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "scale_shift_table_a2v_ca_audio": {
+      "id": 136355239661552,
+      "sha256": "40318672d478d8107dbcca03b3ba70364ba99ff76c2e5dbea1de51cc38682446",
+      "shape": [
+        5,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "scale_shift_table_a2v_ca_video": {
+      "id": 136355239661632,
+      "sha256": "6921d6a8dfbc5a0953f8aa4fd8dc5034e994ea9fa2dbf548806764b0c86e43c4",
+      "shape": [
+        5,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.q_norm.weight": {
+      "id": 136355705777888,
+      "sha256": "517ba2b376c148a73a5117f619b34546a1dd84e016718abbab59abbf3898c5d4",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.k_norm.weight": {
+      "id": 136355705777968,
+      "sha256": "35398fa9bc33daa18aa1fb2abed94998b657f86804e22fe25980e26a3203c89a",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_q.weight": {
+      "id": 136355435058416,
+      "sha256": "6dcf59578394c8bcb6f9a55c8df072ea1de7712da1a46b98d3f063f4628552a8",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_q.bias": {
+      "id": 136355239195936,
+      "sha256": "e1d17fdb602cfb7bcd397528300941f303c8402543d6f74937f9fbbe20e622a4",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_k.weight": {
+      "id": 136355239198096,
+      "sha256": "f46c96ce99114e39555ae41b9c20a5bfa4f1ed2f0be9a5491d208badfeca41c9",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_k.bias": {
+      "id": 136355239196336,
+      "sha256": "fa274cfc05a46cd1e11e58332df33070a705fe677e4ce98115887af1bca443f9",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_v.weight": {
+      "id": 136355239198496,
+      "sha256": "52c33747b436fc77363d8b68243e8f3731606d14b6e9587ed304b77908b094c4",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_v.bias": {
+      "id": 136355239197936,
+      "sha256": "2efb9dda54ae53f499b3cf578a3dc1e590e515af5a9f828f40226bac0501f96d",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_gate_logits.weight": {
+      "id": 136355239414832,
+      "sha256": "144fb07a6193c735f5c1f29da2467ff5351ad7950319aa7f51591193c37d3552",
+      "shape": [
+        1,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_gate_logits.bias": {
+      "id": 136355239422432,
+      "sha256": "5ac175c4f8ef27bb7eb802c581e1cb2406ed61efecd37509659c6c93fc4ad591",
+      "shape": [
+        1
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_out.0.weight": {
+      "id": 136355239422192,
+      "sha256": "aa593a745fcffac5ddf2be6cc813b11edefe4e4b017d209b91a7e942718264b9",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn1.to_out.0.bias": {
+      "id": 136355239421872,
+      "sha256": "290c7d17ba0699ccaeccede4806ff50a91690a3aff3d1a9d58a7f2c68801d668",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.q_norm.weight": {
+      "id": 136355239421632,
+      "sha256": "5e8b8e41e31f179b44329459fa9aa7f4a756db27247a62d8fd553a0ff7bc9a64",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.k_norm.weight": {
+      "id": 136355239421952,
+      "sha256": "18705557ea6a749bb49d90da137ce237e12e64aed9e570b63d5f6154957f3c88",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_q.weight": {
+      "id": 136355239422272,
+      "sha256": "b426d1073ef849c89eeeee70bec4aeea4c92bfa0adcc537dbd68f70bdc6b214e",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_q.bias": {
+      "id": 136355239415392,
+      "sha256": "25dc0b1d6c327f8301ea21db51a6eb81c3ddc85848dec73c6a3682a25c10838a",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_k.weight": {
+      "id": 136355239415952,
+      "sha256": "395039a72b899b4b2524d35a2a67ef97a40b87c75d36adbff6f701426a3f98ff",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_k.bias": {
+      "id": 136355239415472,
+      "sha256": "be48c5c43dce52665316ca0f2d2238ca5f2da8e5df25aa7053ff1295c520a961",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_v.weight": {
+      "id": 136355239414512,
+      "sha256": "ccab56482f745441441a32f6b17f9aa03ea04b837d5793e72be81dd4d7324ef2",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_v.bias": {
+      "id": 136355239415712,
+      "sha256": "e86b25acc31da5753a10599071f58de4a32435b886dcc32ba52ce4edf99c8399",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_gate_logits.weight": {
+      "id": 136355239415552,
+      "sha256": "eb1baa6534e8c0f827bea0f43db39021134bb11a2e6682ffb4ec29989854a3ce",
+      "shape": [
+        1,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_gate_logits.bias": {
+      "id": 136355239426832,
+      "sha256": "1272d0c61fe021600e493383c6aac1e6599776ca3d307139beeaefd8d46dfc2c",
+      "shape": [
+        1
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_out.0.weight": {
+      "id": 136355239426752,
+      "sha256": "dcea2514fb426577117d2df0ef5c6816be97e37040bdee3abb89e7f5f3b63801",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn1.to_out.0.bias": {
+      "id": 136355239426912,
+      "sha256": "8ab5283d57c2bc335acdbad1d521271aa29637583571b2c89940203d45c0f2b7",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.q_norm.weight": {
+      "id": 136355239427232,
+      "sha256": "bf4b166d77d37190561d322207b3c1ca53e1c3df35e2448d481484608f7aef40",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.k_norm.weight": {
+      "id": 136355239427472,
+      "sha256": "acc417b9130a3702b40eee7849b1e82b4684960912910d8d5ec0e122f09feffa",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_q.weight": {
+      "id": 136355239427552,
+      "sha256": "07ff8f09edbec85e01a99d917223da4e9a41c265470d92fc659146f12ca453d2",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_q.bias": {
+      "id": 136355239427392,
+      "sha256": "7cd816ca929fede3e4ab920590ef8e44c266332f3db08fa4cabbb171c82b1888",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_k.weight": {
+      "id": 136355239427632,
+      "sha256": "101a0da02f8550223728c287d0b3ae50a7c5611b1a7348f3aeb612406d5afdfe",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_k.bias": {
+      "id": 136355239427712,
+      "sha256": "218a02a40c938f05fd3c6d95465238bd3f6c38475049883cefabf753e739e01e",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_v.weight": {
+      "id": 136355239427792,
+      "sha256": "050525107fe1377045c01a9c7ca5af351b49119d53f6db583a526863eb270baf",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_v.bias": {
+      "id": 136355239427872,
+      "sha256": "941021662d2b678075ed86e8bf607b5f1ca0023fb5ccbd9599302ae216a3e6ea",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_gate_logits.weight": {
+      "id": 136355239427952,
+      "sha256": "bd368c11161cbcaa461ae9608bb55994b5833f26919c74c86fcfa2a533c6754f",
+      "shape": [
+        1,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_gate_logits.bias": {
+      "id": 136355239428032,
+      "sha256": "937199f3a31823c55022499e9b0aa55724a490574ddbc8d1eabb7ab9370fc7e6",
+      "shape": [
+        1
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_out.0.weight": {
+      "id": 136355239657552,
+      "sha256": "3c831ed8308a2ffaabfcdacd9bed83a61c7baedadb485e5aee85d83fa23c45b1",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "attn2.to_out.0.bias": {
+      "id": 136355239657632,
+      "sha256": "69fda26e0d223d67dce4bdab0c0a9c051c30b3277d5634b49e5477a3928466a5",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.q_norm.weight": {
+      "id": 136355239657712,
+      "sha256": "9340f1c658a0e014a3a62d0f9ff4aecb6f2740bb32858ab511b93a0fb1ff3c97",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.k_norm.weight": {
+      "id": 136355239657792,
+      "sha256": "046211a83707ca859c40fffe011b917d9cd0eb5fa26d34629647d686ef4aa165",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_q.weight": {
+      "id": 136355239657872,
+      "sha256": "5a6155b34e9d7b190119de89f3ffe0477be3678bb0b78869509335726bc0ac63",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_q.bias": {
+      "id": 136355239657952,
+      "sha256": "f20ce6fbae0a7206444c106c597b08789cf963cdef4fab452f9bfdf811f3e2c4",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_k.weight": {
+      "id": 136355239658032,
+      "sha256": "4e7bb277e722051c7f5c514c83e2f6559e01ba9690956ac53f0ffb4343287ab5",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_k.bias": {
+      "id": 136355239658112,
+      "sha256": "4b0190b3d569cdb0bce7f2a84e2c54671e0ff28424cc42d242ed7cbca4356e95",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_v.weight": {
+      "id": 136355239658192,
+      "sha256": "0df9ddfcabe55b39045df9b44c0858bcc11a58caacd7408c9f7b85cd3a2b2fe3",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_v.bias": {
+      "id": 136355239658272,
+      "sha256": "b450472dfeb341c9adcb95970ebf78af8505e49a68b0ac36d55b013e3d44822b",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_gate_logits.weight": {
+      "id": 136355239658352,
+      "sha256": "167897a9fcb10d8ff27d42bdfade802b63c237744dbd8b879f2cb7f8fd4dce4b",
+      "shape": [
+        1,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_gate_logits.bias": {
+      "id": 136355239658432,
+      "sha256": "d2c508cece6600d97dd88e9ff71ce6e6c8de56d291d913b851b52e713d49015e",
+      "shape": [
+        1
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_out.0.weight": {
+      "id": 136355239658512,
+      "sha256": "ca59b9ae279f07ffac68d8c530f1685fd4758216a863f7d87c15278b20b3085b",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_attn2.to_out.0.bias": {
+      "id": 136355239658592,
+      "sha256": "163b8a8de952511fe29ab915311c679571b641b0fc68b419952a730fda387bd7",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.q_norm.weight": {
+      "id": 136355239658672,
+      "sha256": "4053008b8541cce8a15fabedcc5ec4b32af17687df75efc4278f83b228f7c3ae",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.k_norm.weight": {
+      "id": 136355239658752,
+      "sha256": "246a1943b8856ee1f214508d60c874ba274377b60d0839c440e4bf81b221fd8e",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_q.weight": {
+      "id": 136355239658832,
+      "sha256": "0db4546a2962b55ac36ccf75484c5088d81eb2d36102f29069cbb76009f75522",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_q.bias": {
+      "id": 136355239658912,
+      "sha256": "03866b55fa69e14b620916ceb9124e808d56e0c6b542840d3697f8c061f21250",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_k.weight": {
+      "id": 136355239658992,
+      "sha256": "ffd0124177f5cf32a887d5c141c50d7531d2b27336d688a28edf949a889dc2b3",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_k.bias": {
+      "id": 136355239659072,
+      "sha256": "9a95a350a0d9eea94fc146086b86dad2c0fef0e322a79c69db2e7d14c0bba8a6",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_v.weight": {
+      "id": 136355239659152,
+      "sha256": "93315c87dafe135d997d6c6cd3ecb4aa8751ae704bef3c26be883a58ace754eb",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_v.bias": {
+      "id": 136355239659232,
+      "sha256": "978b911ede5d620739644fca0678f3a8516f8f2c2c906b5fbaac932f44de864f",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_gate_logits.weight": {
+      "id": 136355239659312,
+      "sha256": "8b889953ad23adf59c5f1c8335b1f3828b764bd194093a2eaa2b2225e91964eb",
+      "shape": [
+        1,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_gate_logits.bias": {
+      "id": 136355239659392,
+      "sha256": "2a0c57315f52d066bdd83231ef208b45f85ad797ebe191bba5eb5b16921f81a3",
+      "shape": [
+        1
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_out.0.weight": {
+      "id": 136355239659472,
+      "sha256": "f47077b363d5dcabfa5ba1aae41a57ac39b7429089ad4cdd66a8ee8018c560c8",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_to_video_attn.to_out.0.bias": {
+      "id": 136355239659552,
+      "sha256": "388ecb0d6983fd89b5544df14a3d7bc1e632d968cb32778cbc080de22b9772e3",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.q_norm.weight": {
+      "id": 136355239659632,
+      "sha256": "3053f3b0a8e24807b9024105ac75564cbc130be4e997f6e651bd3e43e0e81f1c",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.k_norm.weight": {
+      "id": 136355239659712,
+      "sha256": "7b6958e0c7a890c9852fab4a27899efebc21d60d3a8c79587b0b861fdf1bdeab",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_q.weight": {
+      "id": 136355239659792,
+      "sha256": "2ff4d1a3fc12ce27d57a7d850494dee6a94a88b820f625831c28a92fd0ed4387",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_q.bias": {
+      "id": 136355239659872,
+      "sha256": "6aa2fc98ee7162948571b2a7d0eb4abdd5588b47fc8e16cd43408fe5adabdfd0",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_k.weight": {
+      "id": 136355239659952,
+      "sha256": "e333dd7eff4a674a6d10d46ac31c0b9e487a13239a3ca6984de02e59872d1b77",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_k.bias": {
+      "id": 136355239660032,
+      "sha256": "ee1d7dd3b9cb7a54e3256ecf070a2b3847a25ff9669bc4b4616bcff26b232fd3",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_v.weight": {
+      "id": 136355239660112,
+      "sha256": "3ba75dc8e686fcaa1fbdfde48e8464712d598d0148fb77881dc65b084ce49e0e",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_v.bias": {
+      "id": 136355239660192,
+      "sha256": "4b9a20be2fb8fdecd81732f9eb29026fa0b563838bd651d4884321ada1d942f7",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_gate_logits.weight": {
+      "id": 136355239660272,
+      "sha256": "3993584a37f35dc7cc72f7b45c71e31c309a94445ef4d235143659a88da929c0",
+      "shape": [
+        1,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_gate_logits.bias": {
+      "id": 136355239660352,
+      "sha256": "075bc2216957294275bf6e13a40cc4bdc9948e681eb7763e5bf941a85b92c17c",
+      "shape": [
+        1
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_out.0.weight": {
+      "id": 136355239660432,
+      "sha256": "b32abda2dbe0401b950747acc9f9051ac7f9132dee02333e78dfd2e1a68e4254",
+      "shape": [
+        32,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "video_to_audio_attn.to_out.0.bias": {
+      "id": 136355239660512,
+      "sha256": "ccc0d6489329add118bb667d3a85ac2dd10c33b0c0fd317a08892d25f06d4096",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "ff.net.0.proj.weight": {
+      "id": 136355239660672,
+      "sha256": "0e93d0d72e0d75f4be9f77a32b01a02b93e79e5b76a57ce3d5d4a25df1e5354c",
+      "shape": [
+        128,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "ff.net.0.proj.bias": {
+      "id": 136355239660752,
+      "sha256": "b79b0e2f5530b60f737e02882d004c96d2492073ad96fd4fe31cdbeba38e4db6",
+      "shape": [
+        128
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "ff.net.2.weight": {
+      "id": 136355239660832,
+      "sha256": "32d857a945296523ae84f9d059f9091d2e2bb6a639229bea7335449450eb22a9",
+      "shape": [
+        32,
+        128
+      ],
+      "stride": [
+        128,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "ff.net.2.bias": {
+      "id": 136355239660912,
+      "sha256": "12110bcc4bb316aa697d4f3bb04e27ecb20ae71084ed6d367f83e17dffb9f18e",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_ff.net.0.proj.weight": {
+      "id": 136355239660992,
+      "sha256": "355d251e75dcf4624203ca5ebe02b16dd458f1f0d6bf29ffa53283c12599fae1",
+      "shape": [
+        128,
+        32
+      ],
+      "stride": [
+        32,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_ff.net.0.proj.bias": {
+      "id": 136355239661072,
+      "sha256": "2cd086386f542384470b95b7479ad17cd9bcb06a421d0cce402c76edf734c12e",
+      "shape": [
+        128
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_ff.net.2.weight": {
+      "id": 136355239661152,
+      "sha256": "9412a2e69e26487e2565a96b77254f2942110c8b308dafc1e2d638b6909ee301",
+      "shape": [
+        32,
+        128
+      ],
+      "stride": [
+        128,
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    },
+    "audio_ff.net.2.bias": {
+      "id": 136355239661232,
+      "sha256": "880c45da8f94f0d9c0c37f44973814b3101c1a788eec66bcd2915a0bf70359af",
+      "shape": [
+        32
+      ],
+      "stride": [
+        1
+      ],
+      "dtype": "torch.bfloat16",
+      "device": "cpu"
+    }
+  },
+  "current_case": {
+    "video_tokens": 64,
+    "seed": 17
+  },
+  "accelerator_guard_tripped": true,
+  "error": "AcceleratorAccessBlocked('CPU diagnostic blocked accelerator entry: torch.cuda.current_device')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v7.py\", line 270, in main\n    outputs[arm] = execute(compiled[arm], arm, tokens, seed, int(seed == 17))\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v7.py\", line 242, in execute\n    result = function(tuple(value.clone() for value in x), **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 563, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1783, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1794, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1261, in compile_wrapper\n    result = fn(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1783, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1794, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2649, in __call__\n    result = self._torchdynamo_orig_backend(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 778, in __call__\n    result = _compile(\n             ^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2116, in _compile\n    guarded_code, tracer_output = compile_inner(code, one_graph, hooks)\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_utils_internal.py\", line 114, in wrapper_function\n    return function(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1701, in compile_inner\n    result = _compile_inner(code, one_graph, hooks)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1761, in _compile_inner\n    dynamo_output = compile_frame(\n                    ^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1598, in compile_frame\n    bytecode, tracer_output = transform_code_object(code, transform)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/bytecode_transformation.py\", line 1843, in transform_code_object\n    tracer_output = transformations(instructions, code_options)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 1569, in transform\n    tracer_output = trace_frame(\n                    ^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 369, in _fn\n    return fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 968, in trace_frame\n    run_tracer()\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 949, in run_tracer\n    tracer.run()\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 2094, in run\n    while self.step():\n          ^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 1747, in step\n    self.dispatch_table[inst.opcode](self, inst)\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 5891, in RETURN_VALUE\n    self._return(inst)\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py\", line 5864, in _return\n    all_stack_locals_metadata = self.output.compile_subgraph(\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 2318, in compile_subgraph\n    instructions, subgraph_pycode = self.compile_and_call_fx_graph(\n                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 2993, in compile_and_call_fx_graph\n    compiled_fn = self.call_user_compiler(gm, example_inputs)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 3170, in call_user_compiler\n    return self._call_user_compiler(gm, example_inputs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/output_graph.py\", line 3232, in _call_user_compiler\n    compiled_fn = compiler_fn(gm, example_inputs)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/repro/after_dynamo.py\", line 163, in __call__\n    compiled_gm = compiler_fn(gm, example_inputs)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py\", line 3002, in __call__\n    return self.compiler_fn(model_, inputs_, **self.kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-ops-01/parents/ltx_native_activations_backend.py\", line 173, in backend\n    result = torch._inductor.compile(rewritten, example_inputs, options=dict(options))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/__init__.py\", line 61, in compile\n    return compile_fx(gm, example_inputs, config_patches=options)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 2939, in compile_fx\n    return compile_fx(\n           ^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 3020, in compile_fx\n    return _maybe_wrap_and_compile_fx_main(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 3104, in _maybe_wrap_and_compile_fx_main\n    return _compile_fx_main(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 3309, in _compile_fx_main\n    return dynamo_common.aot_autograd(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/backends/common.py\", line 150, in __call__\n    cg = aot_module_simplified(\n         ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py\", line 1219, in aot_module_simplified\n    compiled_fn, aot_config = AOTAutogradCache.try_load(\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 1081, in try_load\n    cache_key, debug_lines = autograd_cache_key(\n                             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 943, in autograd_cache_key\n    details = AOTAutogradCacheDetails(\n              ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 542, in __init__\n    self._init_fx_graph_hash_details(gm, example_inputs, fx_config)\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/autograd_cache.py\", line 569, in _init_fx_graph_hash_details\n    super().__init__(gm, example_inputs, fx_config, [])\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py\", line 1644, in __init__\n    self.system_info = CacheBase.get_system()\n                       ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py\", line 340, in get_system\n    torch.cuda.current_device()\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py\", line 32, in blocked\n    raise AcceleratorAccessBlocked('CPU diagnostic blocked accelerator entry: ' + label)\nprivate_cpu_accelerator_guard_v2.AcceleratorAccessBlocked: CPU diagnostic blocked accelerator entry: torch.cuda.current_device\n",
+  "cpu_device_registry_finalizer_intact": false,
+  "cpu_device_registry_finalizer_error": "AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')",
+  "cpu_triton_finalizer_intact": false,
+  "cpu_triton_finalizer_error": "AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')",
+  "cpu_comfy_import_finalizer_intact": false,
+  "cpu_comfy_import_finalizer_error": "AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')",
+  "cpu_metadata_finalizer_intact": false,
+  "cpu_metadata_finalizer_error": "AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')",
+  "fault_present_at_exit": false,
+  "max_rss_kib": 713428,
+  "xpu_initialized_at_exit": false,
+  "cuda_initialized_at_exit": false
+}
