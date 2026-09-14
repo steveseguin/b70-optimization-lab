@@ -1,0 +1,69 @@
+{
+  "status": "passed",
+  "scope": "Source identity and reversible allowed delta only; no native execution or speed qualification",
+  "packet_manifest_sha256": "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b",
+  "cases": [
+    {
+      "parent": "run-multiblock-screen-v2.py",
+      "candidate": "run-multiblock-screen-v3.py",
+      "parent_sha256": "dfb1ed9a8875173e644aecf17068f7b244fbcc02ce4264a76c2aa1ed279b8945",
+      "candidate_sha256": "d8054e9866dfb314a5df37415811a5d4a5db79828b0494cca5f3526884ee3114",
+      "allowed_replacements": [
+        [
+          "afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1",
+          "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b"
+        ],
+        [
+          "Bounded packet07 all48 adjacent-state exactness and paired timing screen.",
+          "Bounded packet08 all48 one-pass exactness and paired timing screen."
+        ],
+        [
+          "2eb5cfe0a719d41b5d240b9f2b5fe68bc6c3816874de3f18f8ace527914e22dd",
+          "aa72ba88cbce87ebe6f5c8b298112bcd6a72cea046020cab55fe2256a616d124"
+        ],
+        [
+          "scripts/ltx_multiblock_receipts_v2.py",
+          "scripts/ltx_multiblock_receipts_v3.py"
+        ],
+        [
+          "multiblock_receipt_helpers_v2",
+          "multiblock_receipt_helpers_v3"
+        ],
+        [
+          "Client requires sealed packet07",
+          "Client requires sealed packet08"
+        ],
+        [
+          "all48 adjacent-state reuse; original/compiled/restored in one process, control encoder",
+          "all48 one-pass registry/state validation; original/compiled/restored in one process, control encoder"
+        ]
+      ],
+      "reversed_bytes_identical": true,
+      "reversed_AST_identical": true,
+      "diff": "--- run-multiblock-screen-v2.py\n+++ run-multiblock-screen-v3.py\n@@ -1,5 +1,5 @@\n #!/usr/bin/env python3\n-\"\"\"Bounded packet07 all48 adjacent-state exactness and paired timing screen.\"\"\"\n+\"\"\"Bounded packet08 all48 one-pass exactness and paired timing screen.\"\"\"\n import argparse\n import copy\n import fcntl\n@@ -15,8 +15,8 @@\n sys.dont_write_bytecode = True\n LANE = Path(__file__).resolve().parents[1]\n ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')\n-PACKET_SHA = 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1'\n-RECEIPTS_SHA = '2eb5cfe0a719d41b5d240b9f2b5fe68bc6c3816874de3f18f8ace527914e22dd'\n+PACKET_SHA = 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b'\n+RECEIPTS_SHA = 'aa72ba88cbce87ebe6f5c8b298112bcd6a72cea046020cab55fe2256a616d124'\n SELECTIONS = {'all48': tuple(range(48))}\n COLD_TIMEOUTS = {'all48': 7200}\n ENCODER_CLIENT_SHA = '4ec94d7e69c3d93b2caa740209f6a84ff35d56bdbbb8bf55f4b9782bacde10b0'\n@@ -115,9 +115,9 @@\n \n \n def receipt_helpers():\n-    path = LANE / 'scripts/ltx_multiblock_receipts_v2.py'\n+    path = LANE / 'scripts/ltx_multiblock_receipts_v3.py'\n     require(sha(path) == RECEIPTS_SHA, 'Multiblock receipt validator changed')\n-    return load('multiblock_receipt_helpers_v2', path)\n+    return load('multiblock_receipt_helpers_v3', path)\n \n \n def validate_owner_continuity(owners, request):\n@@ -135,7 +135,7 @@\n \n \n def prepared_sources(args, common):\n-    require(args.manifest_sha256 == PACKET_SHA, 'Client requires sealed packet07')\n+    require(args.manifest_sha256 == PACKET_SHA, 'Client requires sealed packet08')\n     manifest = common.verify_packet(args.packet, args.manifest_sha256)\n     common.verify_runtime(manifest['runtime'])\n     common.verify_model_receipt()\n@@ -204,7 +204,7 @@\n         'campaign': campaign, 'schedule': rows, 'max_requests': 12, 'fixtures': fixtures,\n         'client_sha256': sha(Path(__file__)), 'encoder_helpers_sha256': ENCODER_CLIENT_SHA,\n         'packet_manifest_sha256': args.manifest_sha256, 'identity': identity,\n-        'scope': 'all48 adjacent-state reuse; original/compiled/restored in one process, control encoder',\n+        'scope': 'all48 one-pass registry/state validation; original/compiled/restored in one process, control encoder',\n         'receipt_validator_sha256': RECEIPTS_SHA, 'cold_timeout_seconds': COLD_TIMEOUTS,\n         'compiler_limits': {'recompile_limit': 8, 'accumulated_recompile_limit': 256},\n         'timeout_action': 'stop submissions and preserve server job; timeout is not cancellation',\n"
+    },
+    {
+      "parent": "ltx_multiblock_receipts_v2.py",
+      "candidate": "ltx_multiblock_receipts_v3.py",
+      "parent_sha256": "2eb5cfe0a719d41b5d240b9f2b5fe68bc6c3816874de3f18f8ace527914e22dd",
+      "candidate_sha256": "aa72ba88cbce87ebe6f5c8b298112bcd6a72cea046020cab55fe2256a616d124",
+      "allowed_replacements": [
+        [
+          "afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1",
+          "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b"
+        ],
+        [
+          "Stdlib offline receipt gates for the pinned packet07 adjacent-state screen.",
+          "Stdlib offline receipt gates for the pinned packet08 one-pass screen."
+        ],
+        [
+          "79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584",
+          "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b"
+        ]
+      ],
+      "reversed_bytes_identical": true,
+      "reversed_AST_identical": true,
+      "diff": "--- ltx_multiblock_receipts_v2.py\n+++ ltx_multiblock_receipts_v3.py\n@@ -1,4 +1,4 @@\n-\"\"\"Stdlib offline receipt gates for the pinned packet07 adjacent-state screen.\n+\"\"\"Stdlib offline receipt gates for the pinned packet08 one-pass screen.\n \n The caller owns live server/packet identity checks, full-output comparison and\n cross-request ownership continuity. Receipt acceptance is not clip acceptance.\n@@ -10,9 +10,9 @@\n from pathlib import Path\n \n SELECTIONS = {'single24': (24,), 'boundary4': (0, 20, 21, 47), 'all48': tuple(range(48))}\n-PACKET_MANIFEST_SHA = 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1'\n+PACKET_MANIFEST_SHA = 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b'\n MODEL_SHA = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'\n-ADAPTER_SHA = '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584'\n+ADAPTER_SHA = 'ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b'\n NODE_SHA = 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'\n NATIVE_ACTIVATIONS_BACKEND_SHA = '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a'\n NATIVE_RMS_BACKEND_SHA = '09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb'\n"
+    }
+  ]
+}

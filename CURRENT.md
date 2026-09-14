@@ -25,6 +25,21 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: one-pass native screen running on packet08.**
+PID66846 serves `http://127.0.0.1:8188`, manifest
+`a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.
+All four startup checks and strict after-import determinism passed. Old PID56711
+exited0 after one SIGINT, with render ownership clear. Same computer boot; no
+host reboot, driver reset or power/memory changes. The12-request all48
+`multiblock-screen-03` is running (client exec97668, server exec53546).
+New native quality/speed remain pending; failed requests halt without retry or
+cycling the server. [Prepared comparison](experiments/ltx25-b70/notes/onepass-runtime-08-prepared.md),
+[startup](experiments/ltx25-b70/data/multiblock-migration-08/startup.json).
+Next after terminal quality/timing: prepare a bounded retained-candidate stack
+profile on this same application to attribute remaining cost. No profiler
+request or source integration is qualified yet. This supersedes live PID56711
+and packet07 statements below; inspect actual client state before submissions.
+
 **Four-B70 host, September14: packet07 screen complete; original dispatch selected.**
 PID56711 serves `http://127.0.0.1:8188`, manifest
 `afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1`.
