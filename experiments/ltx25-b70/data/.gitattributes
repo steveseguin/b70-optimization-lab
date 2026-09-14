@@ -1,2 +1,4 @@
 # Preserve raw runtime logs byte-for-byte, including terminal formatting.
 *.log -whitespace
+# Preserve hash-bound unified diffs; blank context lines contain one space.
+*.patch whitespace=-blank-at-eol,-blank-at-eof

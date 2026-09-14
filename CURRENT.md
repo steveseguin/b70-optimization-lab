@@ -45,7 +45,16 @@ host-fault detection; its copied launcher correctly refuses current FAULT.
 Runtime remains on packet02, never migrated to03.
 [Preparation and fault revalidation](experiments/ltx25-b70/notes/kernel-fault-source-progress-01.md).
 
-**Four-B70 host, September14: native compiler comparison running.**
+Further offline work prepared a continuation graph constructor (13 source tests
+passed) and two inactive loader-memory patches. The loader's tiny Torch CPU
+test did not finish: PID102144 remains present with SIGINT pending; no numerical
+pass or RAM-saving result exists. No further Torch/GPU test retries on this
+faulted host. The last durable test artifact is the extracted candidate source,
+which does not identify the exact stalled instruction.
+[Loader candidate and incomplete test](experiments/ltx25-b70/notes/loader-memory-candidate-02.md);
+[continuation source checks](experiments/ltx25-b70/notes/continuation-graph-constructor-cpu.md).
+
+**Historical startup, superseded by the fault above: native compiler comparison.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
 Endpoint identity and strict after-import determinism match the startup receipt.
