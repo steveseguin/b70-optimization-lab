@@ -1,0 +1,777 @@
+{
+  "schema": "ltx25.multiblock-capture-cpu.v1",
+  "passed": false,
+  "phase": "compiled_composed",
+  "checks": [
+    "adapter_hash_format",
+    "adapter_source_hash_matches",
+    "copied_adapter_hash_matches",
+    "import_uses_copied_adapter",
+    "unchanged_compiler_options",
+    "registered_ownership_unchanged",
+    "parent_routes_unchanged",
+    "native_pre_run_method",
+    "native_pre_run_binds_candidate",
+    "aggregate_lifecycle_present_in_capture_registry_0",
+    "aggregate_lifecycle_present_in_capture_registry_20",
+    "aggregate_lifecycle_present_in_capture_registry_21",
+    "aggregate_lifecycle_present_in_capture_registry_24",
+    "aggregate_lifecycle_present_in_capture_registry_47",
+    "exact_composed_64_17_block_0_video",
+    "exact_composed_64_17_block_0_audio",
+    "exact_composed_64_17_block_20_video",
+    "exact_composed_64_17_block_20_audio",
+    "exact_composed_64_17_block_21_video",
+    "exact_composed_64_17_block_21_audio",
+    "exact_composed_64_17_block_24_video",
+    "exact_composed_64_17_block_24_audio",
+    "exact_composed_64_17_block_47_video",
+    "exact_composed_64_17_block_47_audio",
+    "graph_receipt_exact_native_operations_0_1",
+    "graph_receipt_exact_native_operations_20_1",
+    "graph_receipt_exact_native_operations_21_1",
+    "graph_receipt_exact_native_operations_24_1",
+    "graph_receipt_exact_native_operations_47_1",
+    "one_graph_per_block_per_stage_64_17",
+    "no_extra_graphs_or_fallback_64_17",
+    "exact_composed_64_123_block_0_video",
+    "exact_composed_64_123_block_0_audio",
+    "exact_composed_64_123_block_20_video",
+    "exact_composed_64_123_block_20_audio",
+    "exact_composed_64_123_block_21_video",
+    "exact_composed_64_123_block_21_audio",
+    "exact_composed_64_123_block_24_video",
+    "exact_composed_64_123_block_24_audio",
+    "exact_composed_64_123_block_47_video",
+    "exact_composed_64_123_block_47_audio",
+    "graph_receipt_exact_native_operations_0_1",
+    "graph_receipt_exact_native_operations_20_1",
+    "graph_receipt_exact_native_operations_21_1",
+    "graph_receipt_exact_native_operations_24_1",
+    "graph_receipt_exact_native_operations_47_1",
+    "one_graph_per_block_per_stage_64_123",
+    "no_extra_graphs_or_fallback_64_123"
+  ],
+  "rows": [
+    {
+      "video_tokens": 64,
+      "seed": 17,
+      "blocks": [
+        {
+          "index": 0,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 47,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "video_tokens": 64,
+      "seed": 123,
+      "blocks": [
+        {
+          "index": 0,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 47,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "graphs": [
+    {
+      "block": 0,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/graphs/block-00/graph-001.json",
+      "sha256": "5a2623ac6152d772025a9afe4090b928f11eb4b6228e8a4bedd224aee9431ff0",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 20,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/graphs/block-20/graph-001.json",
+      "sha256": "5a2623ac6152d772025a9afe4090b928f11eb4b6228e8a4bedd224aee9431ff0",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 21,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/graphs/block-21/graph-001.json",
+      "sha256": "5a2623ac6152d772025a9afe4090b928f11eb4b6228e8a4bedd224aee9431ff0",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 24,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/graphs/block-24/graph-001.json",
+      "sha256": "5a2623ac6152d772025a9afe4090b928f11eb4b6228e8a4bedd224aee9431ff0",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 47,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/graphs/block-47/graph-001.json",
+      "sha256": "5a2623ac6152d772025a9afe4090b928f11eb4b6228e8a4bedd224aee9431ff0",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    }
+  ],
+  "scope": "Actual composed tiny native BF16 CPU blocks through native ModelPatcher lifecycle and complete options registry",
+  "not_claimed": [
+    "XPU qualification",
+    "full checkpoint quality",
+    "generation speed"
+  ],
+  "selected_blocks": [
+    0,
+    20,
+    21,
+    24,
+    47
+  ],
+  "owned_blocks": 48,
+  "split": 21,
+  "block_dimensions": {
+    "video": 32,
+    "audio": 32,
+    "heads": 1,
+    "head_dim": 32
+  },
+  "video_tokens": [
+    64,
+    256
+  ],
+  "audio_tokens": 26,
+  "seeds": [
+    17,
+    123
+  ],
+  "fullgraph": true,
+  "dynamic": false,
+  "guard_filter": null,
+  "evidence_directory": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01",
+  "compilation_executed": true,
+  "source_snapshots": [
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-multiblock-capture-cpu.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/test-ltx-multiblock-capture-cpu.py",
+      "sha256": "5ea11b466ec2216b753bdd81a3b44a9e8d14dca94e79081e0d105fde4e837206"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_multiblock_compile.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_multiblock_compile.py",
+      "sha256": "4d99f69734d0759464b1571dd59593bfac18a9912a25b259e6e9ab4168ac55c5"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_layer_shard.py",
+      "sha256": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_native_activations_backend.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_native_activations_backend.py",
+      "sha256": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_native_rms_backend.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_native_rms_backend.py",
+      "sha256": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-route.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/test-ltx-block-compile-route.py",
+      "sha256": "1720e45b5296d8fa27d0451c737c1de4c1b28337ff82a06cadfa20857110f58f"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-cpu.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/test-ltx-block-compile-cpu.py",
+      "sha256": "f0928810e670e3d3a8bb2998c4cbe430557e796a6535426481e9047a0dc18aa0"
+    }
+  ],
+  "comfy_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "comfy_sources": [
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_patcher.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/comfy-provenance/comfy/model_patcher.py",
+      "sha256": "26da6710a7d84e8e98ea3e0f0bc07b88cfef3f99a7f7d59daa71e650512c6ed4"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/patcher_extension.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/comfy-provenance/comfy/patcher_extension.py",
+      "sha256": "1c7b3b855278d0b95d1c1a705fa0b3c91a265f320e2f97bdeb9d15469d6d4ac7"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/comfy-provenance/comfy/ops.py",
+      "sha256": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/comfy-provenance/comfy/ldm/lightricks/av_model.py",
+      "sha256": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/model.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/comfy-provenance/comfy/ldm/lightricks/model.py",
+      "sha256": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718"
+    }
+  ],
+  "compiler_environment": {
+    "TORCHINDUCTOR_COMPILE_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/inductor-cache",
+    "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/triton-cache"
+  },
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "torch": "2.14.0+xpu",
+  "dynamo_limits": {
+    "recompile_limit": 8,
+    "accumulated_recompile_limit": 256
+  },
+  "determinism": {
+    "enabled": true,
+    "warn_only": false,
+    "cpu_threads": 1,
+    "interop_threads": 1
+  },
+  "fixture_final_block_weight_multiplier": 0.875,
+  "current_case": {
+    "video_tokens": 256,
+    "seed": 17
+  },
+  "error_type": "FailOnRecompileLimitHit",
+  "error": "Hard failure due to fullgraph=True",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2038, in _compile\n    raise_unimplemented_cache_limit_exceeded()\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2022, in raise_unimplemented_cache_limit_exceeded\n    unimplemented(\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/exc.py\", line 775, in unimplemented\n    raise Unsupported(msg, gb_type, skip_frame)\ntorch._dynamo.exc.Unsupported: Dynamo recompile limit exceeded\n  Explanation: Dynamo attempted to recompile the code object too many times, exceeding the recompile_limit cache size limit (currently set to 8). Excessive recompilations can degrade performance due to the compilation overhead of each recompilation.\n  Hint: To monitor recompilations, enable TORCH_LOGS=recompiles. If recompilations are expected, consider increasing torch._dynamo.config.recompile_limit to an appropriate value.\n  Hint: See https://docs.pytorch.org/docs/main/user_guide/torch_compiler/compile/programming_model.recompilation.html for tips on dealing with recompilations.\n\n  Developer debug context: Limit type: recompile_limit\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0039.html\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-multiblock-capture-cpu.py\", line 272, in main\n    actual = run(x, kwargs, True)\n             ^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-multiblock-capture-cpu.py\", line 239, in run\n    _forward_transfers(execute, None, None, None, None, None, options)\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_layer_shard.py\", line 62, in _forward_transfers\n    return executor(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-multiblock-capture-cpu.py\", line 234, in execute\n    current = chosen(values, {'original_block': native_functions[index]})['img']\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_multiblock_compile.py\", line 123, in __call__\n    return self.original_route(args, {**extra, 'original_block': self._call_native})\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_layer_shard.py\", line 79, in __call__\n    result = extra[\"original_block\"](routed)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01/tested-source/ltx_multiblock_compile.py\", line 105, in _call_native\n    return {'img': self.compiled(\n                   ^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 563, in __call__\n    return super().__call__(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1783, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1794, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 1261, in compile_wrapper\n    result = fn(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1783, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1794, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2649, in __call__\n    result = self._torchdynamo_orig_backend(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 778, in __call__\n    result = _compile(\n             ^^^^^^^^^\n  File \"/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py\", line 2045, in _compile\n    raise FailOnRecompileLimitHit(\ntorch._dynamo.exc.FailOnRecompileLimitHit: Hard failure due to fullgraph=True\n",
+  "dynamo_counters": {
+    "stats": {
+      "calls_captured": 3944,
+      "unique_graphs": 8
+    },
+    "aot_autograd": {
+      "total": 8,
+      "autograd_cache_miss": 2,
+      "autograd_cache_saved": 2,
+      "ok": 8,
+      "autograd_cache_hit": 6
+    },
+    "inductor": {
+      "pattern_matcher_count": 316,
+      "pattern_matcher_nodes": 340,
+      "removed_pointless_view_pair": 12,
+      "fxgraph_cache_miss": 2,
+      "extern_calls": 680,
+      "fxgraph_cache_hit": 6
+    },
+    "graph_break": {},
+    "aten_mm_info": {
+      "aten.addmm_64_32_32": 10,
+      "aten.addmm_64_1_32": 3,
+      "aten.addmm_8_32_32": 8,
+      "aten.addmm_26_32_32": 20,
+      "aten.addmm_26_1_32": 6,
+      "aten.addmm_64_128_32": 1,
+      "aten.addmm_64_32_128": 1,
+      "aten.addmm_26_128_32": 2,
+      "aten.addmm_26_32_128": 2,
+      "aten.addmm_256_32_32": 10,
+      "aten.addmm_256_1_32": 3,
+      "aten.addmm_256_128_32": 1,
+      "aten.addmm_256_32_128": 1
+    },
+    "unimplemented": {
+      "Dynamo recompile limit exceeded\n  Explanation: Dynamo attempted to recompile the code object too many times, exceeding the recompile_limit cache size limit (currently set to 8). Excessive recompilations can degrade performance due to the compilation overhead of each recompilation.\n  Hint: To monitor recompilations, enable TORCH_LOGS=recompiles. If recompilations are expected, consider increasing torch._dynamo.config.recompile_limit to an appropriate value.\n  Hint: See https://docs.pytorch.org/docs/main/user_guide/torch_compiler/compile/programming_model.recompilation.html for tips on dealing with recompilations.\n\n  Developer debug context: Limit type: recompile_limit\n\n For more details about this graph break, please visit: https://meta-pytorch.github.io/compile-graph-break-site/gb/gb0039.html": 1
+    }
+  },
+  "torch_imported": true,
+  "max_rss_kib": 1174464
+}

@@ -49,6 +49,18 @@ Parent and candidate native CPU lifecycle gates passed; no GPU speed result or
 deployment. Next: qualify overhead changes and prepare bounded multi-block
 selection without per-block application reloads. Continuous real-time generation
 remains incomplete. [Patch and CPU evidence](experiments/ltx25-b70/notes/compile-registry-reuse-01-cpu.md).
+The multi-block successor now passes CPU qualification. Initial five-block
+capture failed at graph9 under the unchanged recompile_limit8; its preserved
+successor uses private per-block compiler entry frames and passed10graphs,
+20 block cases with exact eager/repeated outputs, plus54 native CPU lifecycle
+checks. Packet06 is prepared and inactive, manifest
+`3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394`;
+its launcher check-only passed. PID17769/packet05 remain unchanged and idle;
+passive kernel/fault checks passed. Next: finish the bounded multiblock client,
+then a necessary controlled application reload and native GPU qualification.
+No new GPU speed/quality result or application reload in this preparation.
+[CPU fix and preparation](experiments/ltx25-b70/notes/multiblock-private-entry-02.md).
+
 [Exact native results](experiments/ltx25-b70/notes/compiler-screen-04-results.md),
 [scaling/guard audit](experiments/ltx25-b70/notes/compiler-screen-04-conditional-scaling-audit.md),
 [prepared source](experiments/ltx25-b70/notes/native-activations-runtime-05-prepared.md).

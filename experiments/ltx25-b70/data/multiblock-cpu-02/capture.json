@@ -1,0 +1,1386 @@
+{
+  "schema": "ltx25.multiblock-capture-cpu.v1",
+  "passed": true,
+  "phase": "completed",
+  "checks": [
+    "adapter_hash_format",
+    "adapter_source_hash_matches",
+    "copied_adapter_hash_matches",
+    "import_uses_copied_adapter",
+    "unchanged_compiler_options",
+    "registered_ownership_unchanged",
+    "parent_routes_unchanged",
+    "native_pre_run_method",
+    "native_pre_run_binds_candidate",
+    "aggregate_lifecycle_present_in_capture_registry_0",
+    "aggregate_lifecycle_present_in_capture_registry_20",
+    "aggregate_lifecycle_present_in_capture_registry_21",
+    "aggregate_lifecycle_present_in_capture_registry_24",
+    "aggregate_lifecycle_present_in_capture_registry_47",
+    "exact_composed_64_17_block_0_video",
+    "exact_composed_64_17_block_0_audio",
+    "exact_composed_64_17_block_20_video",
+    "exact_composed_64_17_block_20_audio",
+    "exact_composed_64_17_block_21_video",
+    "exact_composed_64_17_block_21_audio",
+    "exact_composed_64_17_block_24_video",
+    "exact_composed_64_17_block_24_audio",
+    "exact_composed_64_17_block_47_video",
+    "exact_composed_64_17_block_47_audio",
+    "graph_receipt_exact_native_operations_0_1",
+    "graph_receipt_exact_native_operations_20_1",
+    "graph_receipt_exact_native_operations_21_1",
+    "graph_receipt_exact_native_operations_24_1",
+    "graph_receipt_exact_native_operations_47_1",
+    "one_graph_per_block_per_stage_64_17",
+    "no_extra_graphs_or_fallback_64_17",
+    "exact_composed_64_123_block_0_video",
+    "exact_composed_64_123_block_0_audio",
+    "exact_composed_64_123_block_20_video",
+    "exact_composed_64_123_block_20_audio",
+    "exact_composed_64_123_block_21_video",
+    "exact_composed_64_123_block_21_audio",
+    "exact_composed_64_123_block_24_video",
+    "exact_composed_64_123_block_24_audio",
+    "exact_composed_64_123_block_47_video",
+    "exact_composed_64_123_block_47_audio",
+    "graph_receipt_exact_native_operations_0_1",
+    "graph_receipt_exact_native_operations_20_1",
+    "graph_receipt_exact_native_operations_21_1",
+    "graph_receipt_exact_native_operations_24_1",
+    "graph_receipt_exact_native_operations_47_1",
+    "one_graph_per_block_per_stage_64_123",
+    "no_extra_graphs_or_fallback_64_123",
+    "exact_composed_256_17_block_0_video",
+    "exact_composed_256_17_block_0_audio",
+    "exact_composed_256_17_block_20_video",
+    "exact_composed_256_17_block_20_audio",
+    "exact_composed_256_17_block_21_video",
+    "exact_composed_256_17_block_21_audio",
+    "exact_composed_256_17_block_24_video",
+    "exact_composed_256_17_block_24_audio",
+    "exact_composed_256_17_block_47_video",
+    "exact_composed_256_17_block_47_audio",
+    "graph_receipt_exact_native_operations_0_1",
+    "graph_receipt_exact_native_operations_0_2",
+    "graph_receipt_exact_native_operations_20_1",
+    "graph_receipt_exact_native_operations_20_2",
+    "graph_receipt_exact_native_operations_21_1",
+    "graph_receipt_exact_native_operations_21_2",
+    "graph_receipt_exact_native_operations_24_1",
+    "graph_receipt_exact_native_operations_24_2",
+    "graph_receipt_exact_native_operations_47_1",
+    "graph_receipt_exact_native_operations_47_2",
+    "one_graph_per_block_per_stage_256_17",
+    "no_extra_graphs_or_fallback_256_17",
+    "exact_composed_256_123_block_0_video",
+    "exact_composed_256_123_block_0_audio",
+    "exact_composed_256_123_block_20_video",
+    "exact_composed_256_123_block_20_audio",
+    "exact_composed_256_123_block_21_video",
+    "exact_composed_256_123_block_21_audio",
+    "exact_composed_256_123_block_24_video",
+    "exact_composed_256_123_block_24_audio",
+    "exact_composed_256_123_block_47_video",
+    "exact_composed_256_123_block_47_audio",
+    "graph_receipt_exact_native_operations_0_1",
+    "graph_receipt_exact_native_operations_0_2",
+    "graph_receipt_exact_native_operations_20_1",
+    "graph_receipt_exact_native_operations_20_2",
+    "graph_receipt_exact_native_operations_21_1",
+    "graph_receipt_exact_native_operations_21_2",
+    "graph_receipt_exact_native_operations_24_1",
+    "graph_receipt_exact_native_operations_24_2",
+    "graph_receipt_exact_native_operations_47_1",
+    "graph_receipt_exact_native_operations_47_2",
+    "one_graph_per_block_per_stage_256_123",
+    "no_extra_graphs_or_fallback_256_123",
+    "emitted_wrapper_preserves_native_operations_cn5rgfne6ictvy7kosd77uvrnwqn2scgunhj3kjbvhgwb2q5a34k",
+    "emitted_wrapper_preserves_native_operations_cw7sfpiyh4vahcl6jdbhydhytwhmfn2ybkjpgrvu6rtaqhs6uqbj",
+    "actual_inductor_wrappers_retained",
+    "native_cleanup_clears_execution",
+    "restored_registered_ownership_unchanged",
+    "restored_original_routes",
+    "native_comfy_sources_stable_during_test"
+  ],
+  "rows": [
+    {
+      "video_tokens": 64,
+      "seed": 17,
+      "blocks": [
+        {
+          "index": 0,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        },
+        {
+          "index": 47,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "compiled_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f",
+              "repeat_sha256": "ebf76b10181a9c280ea5986c7f6d0cb178fa65ad3e708f02155b6a2244242c9f"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "compiled_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e",
+              "repeat_sha256": "806af86018f4520568484f55fbc7cea9113f254ec33f04fd39d832bf74720e9e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "video_tokens": 64,
+      "seed": 123,
+      "blocks": [
+        {
+          "index": 0,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        },
+        {
+          "index": 47,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                64,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                2048,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "compiled_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383",
+              "repeat_sha256": "29306758129cf9db2d030d32c7deda2040e63da1209c7229b4fa189da4024383"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "compiled_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530",
+              "repeat_sha256": "a3e23fefaaee345ba1a1d416bb9e6c094cb5e175601e036947f02fe29e750530"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "video_tokens": 256,
+      "seed": 17,
+      "blocks": [
+        {
+          "index": 0,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "compiled_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "repeat_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "compiled_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "repeat_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb"
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "compiled_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "repeat_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "compiled_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "repeat_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb"
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "compiled_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "repeat_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "compiled_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "repeat_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb"
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "compiled_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "repeat_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "compiled_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "repeat_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb"
+            }
+          ]
+        },
+        {
+          "index": 47,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "compiled_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7",
+              "repeat_sha256": "3244b93b79a3f778ce53bfb5ef6e2f4368cead5432b7baaaab1bd01a29f530d7"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "compiled_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb",
+              "repeat_sha256": "c70714dbf127d60c90a84ab3ea83312e25c330165f9ab946c044665d6e6e28fb"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "video_tokens": 256,
+      "seed": 123,
+      "blocks": [
+        {
+          "index": 0,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "compiled_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "repeat_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "compiled_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "repeat_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99"
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "compiled_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "repeat_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "compiled_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "repeat_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99"
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "compiled_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "repeat_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "compiled_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "repeat_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99"
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "compiled_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "repeat_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "compiled_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "repeat_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99"
+            }
+          ]
+        },
+        {
+          "index": 47,
+          "outputs": [
+            {
+              "name": "video",
+              "shape": [
+                1,
+                256,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                8192,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "compiled_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d",
+              "repeat_sha256": "11a81f9a03bd2a77bb2898a9d188ea82eb655b1e7cac45eb8ca263171cf7e98d"
+            },
+            {
+              "name": "audio",
+              "shape": [
+                1,
+                26,
+                32
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu",
+              "stride": [
+                832,
+                32,
+                1
+              ],
+              "finite": true,
+              "exact_eager": true,
+              "exact_repeat": true,
+              "eager_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "compiled_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99",
+              "repeat_sha256": "0591653d987834efcb32a9669f96c23cc4db95599750afdf441fb3b753267b99"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "graphs": [
+    {
+      "block": 0,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-00/graph-001.json",
+      "sha256": "18a6ff3e0aa96c48af7573e18cbbbce428d8e293872f41057607d047dcce153d",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 0,
+      "graph": 2,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-00/graph-002.json",
+      "sha256": "946085ce4ad7f8b64e2aa4882dc2ea67b06f99fdecc509dc3728678eef1409cc",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 20,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-20/graph-001.json",
+      "sha256": "18a6ff3e0aa96c48af7573e18cbbbce428d8e293872f41057607d047dcce153d",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 20,
+      "graph": 2,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-20/graph-002.json",
+      "sha256": "946085ce4ad7f8b64e2aa4882dc2ea67b06f99fdecc509dc3728678eef1409cc",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 21,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-21/graph-001.json",
+      "sha256": "18a6ff3e0aa96c48af7573e18cbbbce428d8e293872f41057607d047dcce153d",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 21,
+      "graph": 2,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-21/graph-002.json",
+      "sha256": "946085ce4ad7f8b64e2aa4882dc2ea67b06f99fdecc509dc3728678eef1409cc",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 24,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-24/graph-001.json",
+      "sha256": "18a6ff3e0aa96c48af7573e18cbbbce428d8e293872f41057607d047dcce153d",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 24,
+      "graph": 2,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-24/graph-002.json",
+      "sha256": "946085ce4ad7f8b64e2aa4882dc2ea67b06f99fdecc509dc3728678eef1409cc",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 47,
+      "graph": 1,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-47/graph-001.json",
+      "sha256": "18a6ff3e0aa96c48af7573e18cbbbce428d8e293872f41057607d047dcce153d",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    },
+    {
+      "block": 47,
+      "graph": 2,
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/graphs/block-47/graph-002.json",
+      "sha256": "946085ce4ad7f8b64e2aa4882dc2ea67b06f99fdecc509dc3728678eef1409cc",
+      "rms_count": 15,
+      "activation_counts": {
+        "sigmoid": 6,
+        "gelu": 2
+      },
+      "status": "compiled-native-activations-boundary"
+    }
+  ],
+  "scope": "Actual composed tiny native BF16 CPU blocks through native ModelPatcher lifecycle and complete options registry",
+  "not_claimed": [
+    "XPU qualification",
+    "full checkpoint quality",
+    "generation speed"
+  ],
+  "selected_blocks": [
+    0,
+    20,
+    21,
+    24,
+    47
+  ],
+  "owned_blocks": 48,
+  "split": 21,
+  "block_dimensions": {
+    "video": 32,
+    "audio": 32,
+    "heads": 1,
+    "head_dim": 32
+  },
+  "video_tokens": [
+    64,
+    256
+  ],
+  "audio_tokens": 26,
+  "seeds": [
+    17,
+    123
+  ],
+  "fullgraph": true,
+  "dynamic": false,
+  "guard_filter": null,
+  "evidence_directory": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02",
+  "compilation_executed": true,
+  "source_snapshots": [
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-multiblock-capture-cpu.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/test-ltx-multiblock-capture-cpu.py",
+      "sha256": "5ea11b466ec2216b753bdd81a3b44a9e8d14dca94e79081e0d105fde4e837206"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_multiblock_compile.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/ltx_multiblock_compile.py",
+      "sha256": "12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/ltx_layer_shard.py",
+      "sha256": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_native_activations_backend.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/ltx_native_activations_backend.py",
+      "sha256": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_native_rms_backend.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/ltx_native_rms_backend.py",
+      "sha256": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-route.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/test-ltx-block-compile-route.py",
+      "sha256": "1720e45b5296d8fa27d0451c737c1de4c1b28337ff82a06cadfa20857110f58f"
+    },
+    {
+      "source": "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-cpu.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/test-ltx-block-compile-cpu.py",
+      "sha256": "f0928810e670e3d3a8bb2998c4cbe430557e796a6535426481e9047a0dc18aa0"
+    }
+  ],
+  "comfy_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "comfy_sources": [
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_patcher.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/comfy-provenance/comfy/model_patcher.py",
+      "sha256": "26da6710a7d84e8e98ea3e0f0bc07b88cfef3f99a7f7d59daa71e650512c6ed4"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/patcher_extension.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/comfy-provenance/comfy/patcher_extension.py",
+      "sha256": "1c7b3b855278d0b95d1c1a705fa0b3c91a265f320e2f97bdeb9d15469d6d4ac7"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/comfy-provenance/comfy/ops.py",
+      "sha256": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/comfy-provenance/comfy/ldm/lightricks/av_model.py",
+      "sha256": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d"
+    },
+    {
+      "source": "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/model.py",
+      "snapshot": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/tested-source/comfy-provenance/comfy/ldm/lightricks/model.py",
+      "sha256": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718"
+    }
+  ],
+  "compiler_environment": {
+    "TORCHINDUCTOR_COMPILE_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/inductor-cache",
+    "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/triton-cache"
+  },
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "torch": "2.14.0+xpu",
+  "dynamo_limits": {
+    "recompile_limit": 8,
+    "accumulated_recompile_limit": 256
+  },
+  "determinism": {
+    "enabled": true,
+    "warn_only": false,
+    "cpu_threads": 1,
+    "interop_threads": 1
+  },
+  "fixture_final_block_weight_multiplier": 0.875,
+  "current_case": {
+    "video_tokens": 256,
+    "seed": 123
+  },
+  "generated_wrappers": [
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/inductor-cache/n5/cn5rgfne6ictvy7kosd77uvrnwqn2scgunhj3kjbvhgwb2q5a34k.py",
+      "sha256": "18e77a13af48c440bf03b671a445f62b0e7b8d39bb29a218b20f1b16ce8d9713",
+      "opaque_calls": {
+        "rms": 15,
+        "sigmoid": 6,
+        "gelu": 2
+      }
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02/inductor-cache/w7/cw7sfpiyh4vahcl6jdbhydhytwhmfn2ybkjpgrvu6rtaqhs6uqbj.py",
+      "sha256": "638580946bce06e2170c14f8663e5ae497aa6fe37a56c802dc084885c41860db",
+      "opaque_calls": {
+        "rms": 15,
+        "sigmoid": 6,
+        "gelu": 2
+      }
+    }
+  ],
+  "wrapper_accounting": "Backend receipts bind two graphs to each block; physical generated code can be shared across block instances.",
+  "dynamo_counters": {
+    "stats": {
+      "calls_captured": 4930,
+      "unique_graphs": 10
+    },
+    "aot_autograd": {
+      "total": 10,
+      "autograd_cache_miss": 2,
+      "autograd_cache_saved": 2,
+      "ok": 10,
+      "autograd_cache_hit": 8
+    },
+    "inductor": {
+      "pattern_matcher_count": 316,
+      "pattern_matcher_nodes": 340,
+      "removed_pointless_view_pair": 12,
+      "fxgraph_cache_miss": 2,
+      "extern_calls": 850,
+      "fxgraph_cache_hit": 8
+    },
+    "graph_break": {},
+    "aten_mm_info": {
+      "aten.addmm_64_32_32": 10,
+      "aten.addmm_64_1_32": 3,
+      "aten.addmm_8_32_32": 8,
+      "aten.addmm_26_32_32": 20,
+      "aten.addmm_26_1_32": 6,
+      "aten.addmm_64_128_32": 1,
+      "aten.addmm_64_32_128": 1,
+      "aten.addmm_26_128_32": 2,
+      "aten.addmm_26_32_128": 2,
+      "aten.addmm_256_32_32": 10,
+      "aten.addmm_256_1_32": 3,
+      "aten.addmm_256_128_32": 1,
+      "aten.addmm_256_32_128": 1
+    },
+    "unimplemented": {}
+  },
+  "torch_imported": true,
+  "max_rss_kib": 1183304
+}

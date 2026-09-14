@@ -1,0 +1,19 @@
+{
+  "schema": "ltx25.multiblock-node-stdlib-contract.v1",
+  "status": "passed",
+  "tests": 15,
+  "commands": [
+    "python3 experiments/ltx25-b70/scripts/test-multiblock-node-contract-stdlib.py",
+    "python3 experiments/ltx25-b70/scripts/test-multiblock-plugin-identity-stdlib.py"
+  ],
+  "sources": {
+    "scripts/multiblock_compile_node.py": "e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f",
+    "scripts/test-multiblock-node-contract-stdlib.py": "b8b33021132e048a032a4d2524584845a91b0d611f42dbafc094aa1dddc378a3",
+    "scripts/test-multiblock-plugin-identity-stdlib.py": "b6c1a6bab7c4d1f72c0de2166af399ccb4faa980d44e8e9dfd6762de0ec5a053",
+    "patches/multiblock-node-02.original.py": "93a5806ca3fac06bca467c8d8e6c5a337a0697d9f05205f2d9b565aeb3b590c2",
+    "patches/multiblock-node-03-plugin-identity.patch": "77f491791bb4cd2e792e01ae9f03e0366ac08fb5ce6838579af177476f92c688"
+  },
+  "scope": "12 unchanged receipt/helper contracts plus3 AST-extracted exact plugin identity-loop regressions. No Torch import or native runtime execution.",
+  "prior_receipt": "data/multiblock-node-contract-stdlib-02.json",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+}

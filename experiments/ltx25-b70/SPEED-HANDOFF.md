@@ -3,7 +3,18 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
-Latest September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)
+Current September14: packet05 PID17769 remains idle on restored dispatch after
+27 exact full clips. One-block compilation is exact but slower in matched timing
+(+99.797 ms median preview); see [paired result](notes/compiler-timing-01-results.md).
+A multi-block successor passed54 CPU lifecycle checks, then the actual composed
+five-block CPU test hit the unchanged eight-graph compiler limit. A private
+per-block entry fix then passed all10 stage graphs and exact eager/repeat checks;
+packet06 is prepared and inactive. No new native speed result or application
+reload is claimed. [CPU fix and packet](notes/multiblock-private-entry-02.md).
+CURRENT.md remains authoritative; historical incident/process statements below
+are superseded by its verified current state.
+
+Historical September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)
 halted the first eager control of the subsequent compiler campaign after graph
 completion, before oracle postflight. No compiled execution occurred. The shared
 fault latch overrides stale running progress; no new GPU requests. Preserve

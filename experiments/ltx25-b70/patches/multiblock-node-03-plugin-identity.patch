@@ -1,0 +1,21 @@
+--- a/scripts/multiblock_compile_node.py
++++ b/scripts/multiblock_compile_node.py
+@@ -322,12 +322,13 @@
+                 'Model/startup identity changed')
+         server = json.loads((run / 'server-identity.json').read_text())
+         hashes = {}
+-        for path in (Path(adapter.__file__), Path(__file__),
+-                     Path(__file__).with_name('ltx_native_activations_backend.py'),
+-                     Path(__file__).with_name('ltx_native_rms_backend.py')):
++        for path, name in ((Path(adapter.__file__), 'ltx_multiblock_compile.py'),
++                           (Path(__file__), 'multiblock_compile_node.py'),
++                           (Path(adapter.activation_backend.__file__), 'ltx_native_activations_backend.py'),
++                           (Path(adapter.activation_backend.rms.__file__), 'ltx_native_rms_backend.py')):
+             actual = hashlib.sha256(path.read_bytes()).hexdigest()
+-            require(server['extension_sha256s'][path.name] == actual, 'Sealed extension changed')
+-            hashes[path.name] = actual
++            require(server['extension_sha256s'][name] == actual, 'Sealed extension changed')
++            hashes[name] = actual
+         require(hashes['ltx_native_activations_backend.py'] == ACTIVATIONS_SHA256 and
+                 hashes['ltx_native_rms_backend.py'] == RMS_SHA256, 'Unqualified native operations')
+         require(torch.are_deterministic_algorithms_enabled() and
