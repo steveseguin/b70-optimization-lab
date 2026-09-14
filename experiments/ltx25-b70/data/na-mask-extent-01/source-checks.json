@@ -1,0 +1,112 @@
+{
+  "schema": "ltx25.na-mask-extent-source-candidate.v1",
+  "status": "source-checks-passed-runtime-unqualified",
+  "source_path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py",
+  "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+  "candidate_sha256": "4df083f73ee533e6a45efd9f7cc14e0a2abf21bbc065c128b19ff5083be6f228",
+  "patch_sha256": "4ac65c20b0184e6ab1a846206f13d0fd53a8cfaf41b294332c63bf7de524b811",
+  "preparer_sha256": "08fde7267910710cdeb2e88b76a6ae6d1813ce1667eb9bb0dcce9e89f18803e2",
+  "only_changed_expression": {
+    "before": "torch.arange(int(en.max()), device=device)",
+    "after": "torch.arange(max(ends), device=device)"
+  },
+  "axis_configurations_checked": 144,
+  "nonempty_axis_subranges_checked": 17728,
+  "integer_extent_parity": true,
+  "ast_delta_only_declared_expression": true,
+  "source_derived_untiled_stages": [
+    {
+      "dimensions": [
+        6,
+        8,
+        8
+      ],
+      "kernels": [
+        3,
+        7,
+        7
+      ],
+      "depth_assumption": 4,
+      "geometry_groups_per_block": 1,
+      "removed_scalar_readback_calls_per_block": 3,
+      "tiles_per_block": 1
+    },
+    {
+      "dimensions": [
+        6,
+        16,
+        16
+      ],
+      "kernels": [
+        3,
+        7,
+        7
+      ],
+      "depth_assumption": 6,
+      "geometry_groups_per_block": 1,
+      "removed_scalar_readback_calls_per_block": 3,
+      "tiles_per_block": 1
+    },
+    {
+      "dimensions": [
+        11,
+        16,
+        16
+      ],
+      "kernels": [
+        3,
+        5,
+        5
+      ],
+      "depth_assumption": 4,
+      "geometry_groups_per_block": 1,
+      "removed_scalar_readback_calls_per_block": 3,
+      "tiles_per_block": 1
+    },
+    {
+      "dimensions": [
+        21,
+        32,
+        32
+      ],
+      "kernels": [
+        3,
+        5,
+        5
+      ],
+      "depth_assumption": 2,
+      "geometry_groups_per_block": 8,
+      "removed_scalar_readback_calls_per_block": 24,
+      "tiles_per_block": 8
+    },
+    {
+      "dimensions": [
+        25,
+        64,
+        64
+      ],
+      "kernels": [
+        11,
+        11,
+        11
+      ],
+      "depth_assumption": 8,
+      "geometry_groups_per_block": 18,
+      "removed_scalar_readback_calls_per_block": 54,
+      "tiles_per_block": 64
+    }
+  ],
+  "assumed_full_decoder_removed_scalar_readbacks": 522,
+  "torch_imported": false,
+  "native_mask_parity_tested": false,
+  "native_attention_parity_tested": false,
+  "full_clip_parity_tested": false,
+  "timing_measured": false,
+  "live_source_modified": false,
+  "limitations": [
+    "integer/source checks only; native execution pending",
+    "stage dimensions assume default full untiled decoder; not a runtime trace",
+    "removed scalar reads are source counts, not measured synchronization durations",
+    "finite int64 nonempty ends from current na3d grouping are required"
+  ]
+}

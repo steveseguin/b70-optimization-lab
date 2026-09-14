@@ -90,6 +90,16 @@ reports cannot satisfy a live gate; no generation-speed gain or runtime
 qualification is claimed. Host FAULT remains present.
 [Candidate and exact evidence](experiments/ltx25-b70/notes/streaming-comparison-01.md).
 
+An inactive one-line decoder candidate removes GPU scalar readbacks when the
+attention-window maximum is already available as a Python integer. All17,728
+source/integer extent cases pass and the complete AST differs only in that
+extent expression. No native mask, attention, full-clip parity or speed result
+exists yet. Installed runtime source remains unchanged; FAULT still prevents
+native tests. [Patch and qualification scope](experiments/ltx25-b70/notes/na-mask-extent-01.md).
+The separate small native mask/attention gate is prepared; its check-only run
+correctly halted before importing Torch under the existing fault.
+[Gate and refusal evidence](experiments/ltx25-b70/notes/na-mask-extent-native-gate.md).
+
 **Historical startup, superseded by the fault above: native compiler comparison.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.

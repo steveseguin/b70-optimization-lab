@@ -1,0 +1,11 @@
+--- a/comfy_kitchen/backends/eager/na.py
++++ b/comfy_kitchen/backends/eager/na.py
+@@ -73,7 +73,7 @@
+     for starts, ends in rel_bounds:
+         st = torch.tensor(starts, device=device)
+         en = torch.tensor(ends, device=device)
+-        kj = torch.arange(int(en.max()), device=device)
++        kj = torch.arange(max(ends), device=device)
+         bools.append((kj[None, :] >= st[:, None]) & (kj[None, :] < en[:, None]))
+     visible = (bools[0][:, None, None, :, None, None]
+                & bools[1][None, :, None, None, :, None]
