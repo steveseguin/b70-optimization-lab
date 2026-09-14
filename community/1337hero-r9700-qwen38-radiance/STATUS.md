@@ -13,3 +13,8 @@
 - Disposition: retain research notes; no changes to model packages, homepage rates, serving defaults or LocalMaxxing submissions.
 
 Read the [findings and transfer priorities](README.md). Reported metadata is preserved separately from [local static review](validation/review-metadata.json).
+
+September 14 follow-up: user excludes DFlash and retains FP8/native MTP.
+[MTP-only source review](validation/2026-09-14-mtp-fp8-transfer-review.md)
+preserves one inactive metadata cleanup and an exact-communication design lead.
+No model requests, installed changes, new speed measurements or promotion.

@@ -25,6 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Two-B70 host, September 14: MTP-only transfer review.**
+The user excludes DFlash and retains official FP8 with lossless native MTP.
+The restored service below remains unchanged and healthy. Source review
+identified a small unused metadata subtraction and a larger exact P2P
+collective design lead; neither is applied or benchmarked. The inactive
+metadata patch must be rebased and qualified before runtime use.
+[Review and adoption decisions](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
+
 **Two-B70 host, September 14: user-reported freeze during candidate startup.**
 The user restarted the computer. Current boot is
 `5ba85b30-0455-466a-b9fc-d9132975417e`; the prior boot ended after logs stopped

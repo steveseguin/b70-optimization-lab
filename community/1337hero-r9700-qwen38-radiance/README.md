@@ -105,24 +105,22 @@ Sources: [target head](https://github.com/magiccodingman/vllm-radiance/blob/f295
 [collectives](https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/radiance_allreduce.py),
 [qualification boundary](https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/README.md).
 
-## Transfer priorities for the preferred B70 FP8 model
+## Current transfer decision: retain FP8 and native MTP
 
-1. A bounded DFlash2 feasibility/quality experiment is the most interesting
-   follow-up. Keep the official FP8 target and full target output head, native
-   KV and exact communication; first establish XPU support and source closure.
-   Their serving path requires the V2 runner; our qualified overlay uses V1,
-   so check that an XPU integration retains the accepted arithmetic patches.
-   Then compare c1 against MTP1 on varied cold prompts, complete outputs,
-   prefill, first-token wait and decode. This research review launches no GPU experiment and predicts no speed gain.
-2. Study GDN projection/update fusion and small-row matrix-kernel organization
-   against our actual profiles. AMD HIP/WMMA code is not a drop-in Intel kernel.
-   Changed reduction order or activation precision needs separate quality gates.
-3. Compress the drafter further only if profiling justifies it. Our FP8 package
-   already has a draft-only INT4 output head while retaining the full target
-   head; that idea is pre-existing lab work, not a newly imported optimization.
-4. Keep concurrency tuning and dynamic draft width as a later serving-throughput
-   experiment with genuinely different requests. Report aggregate and per-user
-   metrics separately. Do not replace single-user homepage numbers with c8 totals.
+The user now excludes DFlash. The [MTP-only follow-up review](validation/2026-09-14-mtp-fp8-transfer-review.md)
+compares other Radiance mechanisms with the actual restored B70 source and
+existing negative tests. It prepares a small inactive metadata cleanup and
+retains exact native two-card communication as a larger design lead. No new
+runtime optimization or speed gain is established. Convolution channel tiling
+is a useful native-kernel reference, not an applicable Triton flag on this XPU
+path. Existing lossless output, target precision and cache rules remain intact.
+
+The [earlier transfer test](../../experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-results.md)
+found exact-but-neutral projection dispatch and a combined newer-runtime/V2/
+DFlash startup freeze before inference. The user rebooted; the original MTP
+service was restored and verified. That attempt supplies no DFlash quality or
+performance result. It is closed, and the MTP-only review supersedes the old
+DFlash feasibility priority.
 
 The runtime's broader [RX5 report](https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/docs/MXFP4_RX5_FP8KV_CONTINUATION.md)
 reports 183.1 weighted single-stream tok/s and 523.5 c8 aggregate on its broader

@@ -1,0 +1,18 @@
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -288,7 +288,6 @@
+             non_spec_query_start_loc_cpu = query_start_loc_cpu[: num_non_spec_reqs + 1]
+             num_accepted_tokens = None
+         else:
+-            query_lens = query_start_loc[1:] - query_start_loc[:-1]
+             assert spec_sequence_masks_cpu is not None
+             non_spec_sequence_masks_cpu = ~spec_sequence_masks_cpu
+             query_lens_cpu = query_start_loc_cpu[1:] - query_start_loc_cpu[:-1]
+@@ -346,6 +345,7 @@
+                 non_spec_query_start_loc = None
+                 non_spec_query_start_loc_cpu = None
+             else:
++                query_lens = query_start_loc[1:] - query_start_loc[:-1]
+                 spec_token_masks = torch.repeat_interleave(
+                     spec_sequence_masks,
+                     query_lens,

@@ -94,6 +94,8 @@ adds 512/2K/16K reading measurements for the recommended 27B FP8 setup.
 The exact projection-dispatch candidate was neutral. The newer-runtime/V2/
 DFlash2 startup froze the host before inference; the user rebooted it and the
 original qualified service was restored. No new speedup is claimed.
+The [MTP-only source follow-up](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md)
+excludes DFlash and ranks the remaining exactness-preserving ideas.
 
 [`CURRENT.md`](CURRENT.md) alone owns the live service and active research
 state. These are evidence-backed examples; the broader expected-performance

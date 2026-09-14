@@ -1,0 +1,25 @@
+{
+  "schema": "neural.download.inactive-source-patch-proof.v1",
+  "status": "inactive source candidate; not installed or benchmarked",
+  "source_path": "vllm/v1/attention/backends/gdn_attn.py",
+  "baseline_sha256": "94498e7dc8dd4190d22cbda6fdadcfa92df174a86cae897bc5c173a9afc103a4",
+  "candidate_sha256": "c1ba29da73cefd169e04ff3ec6eea9e5572b89b7962ff0279e4958aee0f7f7fb",
+  "patch_sha256": "7f45e7a62f971688de0aa76522a7093233f1b6824ca0a9649b665472ae319ef4",
+  "checks": {
+    "baseline_matches_r304_frozen_contract": true,
+    "unique_assignment_and_insertion_anchors": true,
+    "all_four_variable_reads_dominated_by_mixed_branch": true,
+    "entire_ast_diff_is_exactly_one_assignment_move": true,
+    "no_query_start_loc_reference_in_crossed_statements": true,
+    "zero_fuzz_patch_replay_exact": true,
+    "python_syntax_compiles_without_importing_or_executing_module": true
+  },
+  "effect": "Skips one GPU integer subtraction per GDN metadata build in all-spec decode branch. No saving claimed for mixed/prefill work; size or speed on B70 unmeasured.",
+  "runtime_gates_pending": [
+    "Metadata output and alias/lifetime comparison on native XPU.",
+    "Complete strict token identity versus qualified FP8/MTP1, including first-chunk, rejected-draft and 512/2K/16K context cases.",
+    "Matched prefill/decode timing and health checks; source proof is not promotion."
+  ],
+  "installed_runtime_modified": false,
+  "model_requests_sent": 0
+}

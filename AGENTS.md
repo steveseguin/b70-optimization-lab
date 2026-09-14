@@ -23,6 +23,11 @@ and continue optimization afterward. The no-restart-chain, no host reboot or
 driver reset, no power/memory-setting changes, and fault-halt rules still apply.
 
 
+2026-09-14 preferred 27B FP8 lane: the user explicitly excludes DFlash from
+further work. Keep native MTP, official FP8 target weights, the qualified target
+arithmetic/KV settings and lossless output gates. Investigate other transferable
+ideas without reopening the DFlash startup candidate.
+
 This repository is a reproducible lab notebook and deployment guide for Intel
 XPU local AI work across multiple B70 model efforts: MiniMax, Qwen, Gemma, and
 future lanes.
