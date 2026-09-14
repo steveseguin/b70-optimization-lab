@@ -43,6 +43,9 @@ untested. The transformer stays resident; the encoder still partially offloads.
 Server is idle with split components retained. Further variants
 use this same process; no restart chains/power/swap/cache-drop/driver changes.
 See [speed campaign handoff](experiments/ltx25-b70/SPEED-HANDOFF.md).
+The [LTX north star and plan](experiments/ltx25-b70/PLAN.md) now define the next
+milestones: bounded stability validation, <=3 s exact clips, coherent streaming,
+then sustained 24 fps. These are targets; this planning update launches no jobs.
 Original baseline remains frozen; new process identity is under the original
 evidence root's `speed-server/`. Use `profile-clip.py --server-run` pointing there.
 

@@ -3,6 +3,8 @@
 Status: **validated exact-output speedup: 6.44–7.10 s warm clips**, September 13, 2026.
 User authorized bring-up and repeatability validation on September 13, 2026.
 
+Direction: [north star, milestones and next work](PLAN.md).
+
 ## Current optimized baseline
 
 The selected experimental setup uses all four 32 GiB B70s. The original BF16

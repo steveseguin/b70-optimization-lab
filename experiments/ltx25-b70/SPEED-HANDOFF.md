@@ -1,5 +1,8 @@
 # LTX exact-output latency campaign
 
+Forward plan: [north star and staged execution](PLAN.md). Historical stages below
+record the completed residency campaign; use the plan for upcoming priorities.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,
