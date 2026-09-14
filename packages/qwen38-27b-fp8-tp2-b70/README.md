@@ -91,6 +91,11 @@ network overhead. These measurements have separate configuration labels:
 - The **86.18 output tokens/s** historical record uses an older runtime and
   MTP depth 5. It is an advanced configuration, not this launcher's expected rate.
 
+A later [FP8/native-MTP optimization attempt](../../experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-results.md)
+implemented two candidates but stopped after a communication exactness failure
+and GPU faults. Neither candidate is included in this recipe, and no new speed
+measurement was qualified. The metadata candidate remains untested in inference.
+
 Prompt caching is off. Existing 2K–32K continuation checks matched all 18
 reference outputs; they do not establish general document retrieval accuracy.
 A clean-directory replay from public source passed **12/12 reference-output

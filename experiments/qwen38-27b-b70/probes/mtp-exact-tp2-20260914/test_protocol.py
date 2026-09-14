@@ -7,11 +7,37 @@ import tempfile
 import threading
 import unittest
 
-from protocol import Channel, exchange_ipc
+from protocol import Channel, exchange_ipc, received_ipc_handle
 from native import Collective
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_received_fd_collision_preserves_metadata_and_lifetime(self):
+        received = os.memfd_create("received-ipc-collision")
+        os.write(received, b"original object")
+        exporter_standin = os.dup(received)
+        self.addCleanup(os.close, exporter_standin)
+        handle = bytearray(range(64))
+        struct.pack_into("i", handle, 0, received)
+        modified, duplicate = received_ipc_handle(handle, received)
+        self.addCleanup(os.close, duplicate)
+        self.assertGreater(duplicate, received)
+        self.assertEqual(struct.unpack_from("i", modified)[0], duplicate)
+        self.assertEqual(modified[4:], bytes(handle[4:]))
+        self.assertFalse(os.get_inheritable(duplicate))
+        with self.assertRaises(OSError):
+            os.fstat(received)
+        self.assertEqual(os.pread(duplicate, 15, 0), b"original object")
+        self.assertEqual(os.pread(exporter_standin, 15, 0), b"original object")
+
+    def test_invalid_received_fd_is_rejected(self):
+        fd = os.memfd_create("received-invalid")
+        handle = bytearray(64)
+        struct.pack_into("i", handle, 0, fd)
+        os.close(fd)
+        with self.assertRaises(OSError):
+            received_ipc_handle(handle, fd)
+
     def pair(self):
         a, b = socket.socketpair()
         self.addCleanup(a.close)

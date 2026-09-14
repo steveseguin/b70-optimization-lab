@@ -27,33 +27,33 @@ AMD-transfer packet stay preserved.
 
 - [done] 1. Snapshot actual service/source identities, refresh upstream,
   and preregister the experiment. Keep the current service during preparation.
-- [in progress] 2. Validate the metadata subtraction relocation against actual
+- [offline done; native blocked] 2. Validate the metadata subtraction relocation against actual
   original and candidate builders: ordinary, all-spec, rejected-draft, mixed,
   chunked and padding cases; full metadata fields and alias/lifetime behavior.
   Produce an isolated candidate with explicit control selection if useful for
   paired screening. Do not mutate frozen source/evidence or loaded code.
-- [in progress] 3. Implement an exact out-of-place two-rank communication
+- [implemented; native gate failed] 3. Implement an exact out-of-place two-rank communication
   prototype. Establish Intel memory/IPC/event semantics before native execution;
   no unbounded peer spin or stale-result success. CPU build/protocol checks first.
-- [pending] 4. With exclusive GPUs, qualify metadata natively and compare the
+- [halted after GPU fault] 4. With exclusive GPUs, qualify metadata natively and compare the
   communication operator against XCCL at actual decode/prefill sizes. Cover both
   ranks, changing data/buffer reuse, cancellation/subnormal/extreme values and
   deterministic repeats. Keep failures and improve a faulty implementation;
   stop on device faults. Only a correct, materially faster operator goes further.
-- [pending] 5. Qualify the refreshed FP8/MTP1 base independently against the
+- [blocked by fault halt] 5. Qualify the refreshed FP8/MTP1 base independently against the
   frozen target oracle. Then screen surviving candidate(s) on matched settings,
   full strict suite and exact 512/2K/16K continuations. Measure server prefill,
   HTTP first-token latency and conventional 99-interval decode separately.
   Prefer paired comparisons on a persistent process if the selection mechanism
   itself is reviewed and its overhead is shared by both arms.
-- [pending] 6. A surviving speed candidate needs independent-process confirmation
+- [not reached] 6. A surviving speed candidate needs independent-process confirmation
   consistent with stability policy before promotion. No noisy one-process win
   or microbenchmark result becomes a public recommendation. Preserve original
   defaults if no candidate meets both quality and performance requirements.
 - [done] 7. Attribute native convolution time from existing evidence. Pursue
   native channel tiling only if the measured cost supports it; a different
   backend's Triton constant is not an optimization of the native XPU route.
-- [pending] 8. Close source/evidence, update recipes/packages/site only for
+- [evidence and site updated; service restoration blocked] 8. Close source/evidence, update recipes/packages/site only for
   qualifying changes, run relevant validators and desktop/mobile checks, push,
   verify deployment when public surfaces change, leave a healthy qualified
   service, and report achieved gains, rejected work and concrete remaining gates.
@@ -83,11 +83,26 @@ The accepted overlay is preserved on separately built V1/MTP-only image
 It remains runtime-unqualified. Both source versions pass36 metadata cases;
 the communication prototype passes nine CPU protocol/lifetime cases and loads
 under the control image without initializing XPU. The previous service was
-stopped gracefully once at18:07UTC; ownership and kernel checks passed afterward.
+stopped gracefully once at 18:07UTC; ownership and kernel checks passed afterward.
 
 Saved-trace attribution identifies48 native convolution calls per rank,
-3.547/3.571ms total, about2.02/2.03% of summed device kernel time. This native
-implementation already tiles256 channels and8tokens. The external Triton
+3.547/3.571ms total, about 2.02/2.03% of summed device kernel time. This native
+implementation already tiles 256 channels and 8tokens. The external Triton
 constant does not affect it. This bounded campaign does not justify a native
 convolution rewrite from that small measured share; the other GDN stages must
 not be counted as convolution savings. See [attribution receipt](../data/2026-09-14-mtp-lossless-transfer/convolution-attribution.json).
+
+## GPU halt and remaining work
+
+The corrected communication probe captured12 matching finite/edge cases per
+rank before failing its NaN payload comparison. The same attempt recorded
+copy-engine memory faults on both cards and driver-initiated engine resets.
+The controller latched the fault and confirmed container exit at 18:30:42UTC.
+No further native test or model reload followed. The original API remains
+offline; read-only ownership checks do not requalify GPU compute health.
+
+The implementation objective is not fully validated. Metadata native/model
+quality, the refreshed control, all performance comparisons and independent
+confirmation remain unrun. Offline analysis and evidence publication continue
+without crossing the user's fault-halt rule. [Results, incident and exact
+remaining gates](2026-09-14-mtp-lossless-transfer-results.md).

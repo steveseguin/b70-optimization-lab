@@ -1,0 +1,65 @@
+--- a/gate.py
++++ b/gate.py
+@@ -18,6 +18,11 @@
+ 
+ from native import Native, Collective
+ from protocol import Channel, exchange_ipc
++from quality_retirement import retire_completed_allocations
++
++
++class QualityRejected(Exception):
++    pass
+ 
+ 
+ def fixture(torch, n, rank, kind, repeat):
+@@ -132,7 +137,15 @@
+                 channel.exchange("READY", **verdict)
+                 channel.exchange("COPIED", **verdict)
+                 if not same:
+-                    raise AssertionError(f"{prefix}: XCCL bit equality/input lifetime failed")
++                    # Both verdict frames matched, all copy/add events completed,
++                    # and neither transport is poisoned. Release peer mappings
++                    # cooperatively before normal process-group teardown.
++                    retire_completed_allocations(native, channel, queue, peer, remote_fd,
++                                                 handle, output, local, rows,
++                                                 completed_and_agreed=True)
++                    dist.destroy_process_group()
++                    sock.close()
++                    raise QualityRejected(f"{prefix}: exact-bit quality gate rejected")
+         timings = []
+         for block in range(args.blocks):
+             # Every block changes both messages. Setup copies are excluded for
+@@ -157,17 +170,9 @@
+                 elapsed = (time.perf_counter_ns() - start) / args.iterations
+                 timings.append({"block": block, "arm": arm, "ns_per_call": elapsed})
+         (out / f"rank{rank}-rows{rows}-timing.json").write_text(json.dumps(timings, indent=2) + "\n")
+-        channel.exchange("READY", retiring_rows=rows)
+-        channel.exchange("COPIED", retiring_rows=rows)
+-        native.call("close", queue, peer)
+-        os.close(remote_fd)
+-        # Both importers close BEFORE either exporter returns its IPC handle or
+-        # frees the underlying allocation. Explicit two-phase lifetime barrier.
+-        channel.exchange("READY", importers_closed=rows)
+-        channel.exchange("COPIED", importers_closed=rows)
+-        native.call("put_export", queue, handle)
+-        native.call("free", queue, output)
+-        native.call("free", queue, local)
++        retire_completed_allocations(native, channel, queue, peer, remote_fd,
++                                     handle, output, local, rows,
++                                     completed_and_agreed=True)
+     sock.close()
+     dist.destroy_process_group()
+     (out / f"rank{rank}-DONE.json").write_text(json.dumps({"status": "operator-screen-completed", "quality_cases": len(records), "runtime_qualified": False, "torch": torch.__version__}) + "\n")
+@@ -187,6 +192,12 @@
+     args = p.parse_args()
+     try:
+         main(args)
++    except QualityRejected as exc:
++        out = Path(args.out)
++        (out / f"rank{os.environ.get('RANK', 'unknown')}-QUALITY-REJECTED.json").write_text(
++            json.dumps({"error": str(exc), "imports_retired": True,
++                        "exporter_storage_released_after_peer_ack": True}) + "\n")
++        raise SystemExit(2)  # Normal teardown; no new GPU work or auto restart.
+     except BaseException:
+         # In fault cases do not call GPU destruction, synchronize, collective
+         # teardown, or automatic retries. The external monitor owns termination.
