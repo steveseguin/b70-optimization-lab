@@ -3,6 +3,15 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
+September14 update: [encoder screen02](notes/encoder-screen-02-results.md) passed
+all25 native GPU clips with strict original-reference equality and all unload
+gates. Candidate medians6.38–6.44s show no convincing gain against bracketing
+controls6.36/6.64s. Small-state residency fixes the observed accounting drift.
+PID78769 remains idle on control after the completed campaign. Compiler runtime
+integration is next. This supersedes the historical inactive-packet and pending
+maintenance statements below; ordinary necessary application reloads no longer
+cause approval pauses. The computer was not rebooted.
+
 The user subsequently made **one second of video in under one second** the actual
 goal, with24fps and a256x256 minimum final output. The [first30-request campaign](notes/stability-01-results.md)
 passed all10 fixture repeats at6.515s median preview and bounded review storage.

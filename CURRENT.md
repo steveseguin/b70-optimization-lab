@@ -25,7 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14: strict startup fixed; encoder comparison active.**
+**Four-B70 host, September14: encoder comparison complete; compiler integration next.**
+All25 encoder-screen-02 clips passed strict four-output original-reference parity
+and all four unload transitions passed. No convincing speed winner: warm medians
+6.364s control-before,6.377s crop,6.430s small-state,6.441s combined,6.643s
+control-after. Small-state residency fixes the observed loaded-byte accounting
+drift, but has no demonstrated full-clip speed gain. PID78769 is idle on control,
+generation5, at `http://127.0.0.1:8188`; no fault latch. Preserve this process
+while preparing the compiler successor; no competing GPU requests. Next is a
+bounded one-native-block exact compilation gate, then full-clip verification if
+it passes. [Results](experiments/ltx25-b70/notes/encoder-screen-02-results.md).
+This supersedes the active-screen statements immediately below.
+
+**Four-B70 host, September14: strict startup fixed; encoder comparison started.**
 PID78769 serves `http://127.0.0.1:8188` from prepared-encoder-03 / encoder-server-02.
 Startup identity matches the endpoint and the after-import receipt verifies
 strict determinism (enabled, warning-only off). Encoder-screen-02 is running;

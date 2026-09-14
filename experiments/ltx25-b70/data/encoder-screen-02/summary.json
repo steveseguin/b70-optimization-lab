@@ -1,0 +1,3641 @@
+{
+  "schema": "ltx.encoder-screen-result.v1",
+  "status": "passed",
+  "campaign": "encoder-screen-02",
+  "source_root": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+  "identity": {
+    "pid": 78769,
+    "proc_start_ticks": "1645345",
+    "boot_id": "39a36df1-8b22-498e-b74a-28384839a024",
+    "start_utc": "2026-09-14 04:52:04 UTC",
+    "devices": [
+      {
+        "ordinal": 0,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      },
+      {
+        "ordinal": 1,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      },
+      {
+        "ordinal": 2,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      },
+      {
+        "ordinal": 3,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      }
+    ],
+    "torch": "2.14.0+xpu",
+    "runtime": {
+      "torch": "2.14.0+xpu",
+      "python": "3.12.13",
+      "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "files": {
+        "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+        "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a",
+        "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8"
+      }
+    },
+    "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+    "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-03",
+    "source_packet_manifest_sha256": "d391ac4236e7ea683af1e1cdae5a4f020e608e20c4ff849d9fe958b524d028e7",
+    "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-02",
+    "extension_sha256s": {
+      "resident_node.py": "57b60dcba6be6b3127bd5c532603905cdcb1e541889ecb5f9b37ff2084ee1c25",
+      "ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+      "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+      "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+      "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b"
+    },
+    "launcher_sha256": "f4f87cdebcb808507edf8147c67043e5252bcf0ebb66efd78b95ea20eb8e2b37",
+    "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+    "server_args_sha256": "4f4e4489a4db927c8bb987e1ced5f8e236e6c481e0b95da471e7148254a65d7c"
+  },
+  "completed_requests": 25,
+  "exact_four_outputs": true,
+  "strict_determinism": true,
+  "speed_promotion": false,
+  "streaming_qualification": false,
+  "limits": [
+    "Four warm samples per arm in one persistent process.",
+    "First request per arm includes rebuild and is excluded.",
+    "Control small-state placement changes during warm-up; compare matching fixture positions.",
+    "Node times are client event intervals, not synchronized kernel timings.",
+    "Exact tensor comparisons qualify these three prompt/seed fixtures only."
+  ],
+  "arms": [
+    {
+      "arm": 0,
+      "variant": "control",
+      "initialization_preview_seconds": 62.32817119599713,
+      "warm_preview_median_seconds": 6.364154236998729,
+      "warm_count": 4,
+      "warm_tensor_median_seconds": 6.247408583998549,
+      "node_median_seconds": {
+        "364": 1.7977804269994522,
+        "344": 2.5292396179993375,
+        "368": 1.0019022659998882,
+        "374": 0.6091987695017451,
+        "358": 0.175623353001356,
+        "414": 0.020673193499533227,
+        "75": 0.1153040820008755
+      }
+    },
+    {
+      "arm": 1,
+      "variant": "crop",
+      "initialization_preview_seconds": 100.25348422099705,
+      "warm_preview_median_seconds": 6.3774779055002,
+      "warm_count": 4,
+      "warm_tensor_median_seconds": 6.2642149064995465,
+      "node_median_seconds": {
+        "364": 1.6473845854980027,
+        "344": 2.603321151498676,
+        "368": 1.03474175500196,
+        "374": 0.6403141129994765,
+        "358": 0.1831065149999631,
+        "414": 0.0210644870003307,
+        "75": 0.12720560599882447
+      }
+    },
+    {
+      "arm": 2,
+      "variant": "small_state",
+      "initialization_preview_seconds": 69.39058047800063,
+      "warm_preview_median_seconds": 6.4303158670009,
+      "warm_count": 4,
+      "warm_tensor_median_seconds": 6.295911552000689,
+      "node_median_seconds": {
+        "364": 1.770603974500773,
+        "344": 2.627327038997464,
+        "368": 1.0152800329997262,
+        "374": 0.6146234519983409,
+        "358": 0.17936752200148476,
+        "414": 0.0225962399981654,
+        "75": 0.13742022949918464
+      }
+    },
+    {
+      "arm": 3,
+      "variant": "combined",
+      "initialization_preview_seconds": 86.00034442600008,
+      "warm_preview_median_seconds": 6.440957539502051,
+      "warm_count": 4,
+      "warm_tensor_median_seconds": 6.310148899001433,
+      "node_median_seconds": {
+        "364": 1.666213943000912,
+        "344": 2.657658491500115,
+        "368": 1.05728442849977,
+        "374": 0.6140153244996327,
+        "358": 0.18693725200137123,
+        "414": 0.020898110002235626,
+        "75": 0.12888312050017703
+      }
+    },
+    {
+      "arm": 4,
+      "variant": "control",
+      "initialization_preview_seconds": 84.90169801999946,
+      "warm_preview_median_seconds": 6.642690398499326,
+      "warm_count": 4,
+      "warm_tensor_median_seconds": 6.519578254501539,
+      "node_median_seconds": {
+        "364": 1.833549947499705,
+        "344": 2.715378816001248,
+        "368": 1.0599962019987288,
+        "374": 0.6288200400013011,
+        "358": 0.18398922049891553,
+        "414": 0.021723766500144848,
+        "75": 0.12833126449913834
+      }
+    }
+  ],
+  "rows": [
+    {
+      "run": "encoder-screen-02-r01-control-boat",
+      "arm": 0,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": true,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 62.32817119599713,
+      "tensor_archive_ready_seconds": 62.16060928300067,
+      "node_seconds": {
+        "420": 21.330918643998302,
+        "366": 0.0003326379992358852,
+        "356": 0.0001828500026022084,
+        "377": 0.000154317996930331,
+        "404": 0.00012506200073403306,
+        "352": 0.0001864969999587629,
+        "364": 7.82979694900132,
+        "421": 0.011132106999866664,
+        "365": 0.00019676599913509563,
+        "388": 0.00015977699877112173,
+        "339": 0.0003267780011810828,
+        "344": 20.47333604999949,
+        "367": 0.00034659499942790717,
+        "348": 0.3841852639998251,
+        "340": 0.000294167002721224,
+        "395": 0.0003605309975682758,
+        "341": 0.0003032750028069131,
+        "391": 0.0012840189992857631,
+        "338": 0.0004043519984406885,
+        "368": 1.0925273370012292,
+        "369": 0.00046892200043657795,
+        "358": 9.135240173000057,
+        "374": 1.844968263998453,
+        "414": 0.05051394900146988,
+        "370": 0.006656939000095008,
+        "75": 2.469432586000039
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25733103104,
+      "reported_loaded_bytes": 25733103104,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 2,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r01-control-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r02-control-boat",
+      "arm": 0,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 7.250548061001609,
+      "tensor_archive_ready_seconds": 7.13438282000061,
+      "node_seconds": {
+        "420": 0.001237202999618603,
+        "366": 0.021523870000237366,
+        "356": 0.0002461379990563728,
+        "377": 0.00014311600170913152,
+        "404": 0.00023045899797580205,
+        "352": 0.0023194170025817584,
+        "364": 2.7412030380000942,
+        "421": 0.010966260997520294,
+        "365": 0.00019685699953697622,
+        "388": 0.00047095600166358054,
+        "339": 0.00021422899953904562,
+        "344": 2.528623983998841,
+        "367": 0.00037456700010807253,
+        "348": 0.022719469001458492,
+        "340": 0.00019728700135601684,
+        "395": 0.0002551849975134246,
+        "341": 0.00018623700088937767,
+        "391": 0.0002796199987642467,
+        "338": 0.00019638600133475848,
+        "368": 0.9915730930006248,
+        "369": 0.00024931399821070954,
+        "358": 0.17837467299978016,
+        "374": 0.6076440870019724,
+        "414": 0.021116916999744717,
+        "370": 0.00038320299790939316,
+        "75": 0.11518824200175004
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725193728,
+      "reported_loaded_bytes": 25725193728,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 0,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r02-control-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r03-control-marble",
+      "arm": 0,
+      "variant": "control",
+      "fixture": "marble",
+      "initialization": false,
+      "reference": "speed-oracle-marble",
+      "preview_ready_seconds": 6.314152020997426,
+      "tensor_archive_ready_seconds": 6.217029936997278,
+      "node_seconds": {
+        "420": 0.007915745001810137,
+        "366": 0.00028991999715799466,
+        "356": 0.010554546999628656,
+        "377": 0.009147898002993315,
+        "404": 0.0005517680001503322,
+        "352": 0.0005327709986886475,
+        "364": 1.7997545430007449,
+        "421": 0.011202082998352125,
+        "365": 0.00013921899881097488,
+        "388": 0.00040355100281885825,
+        "339": 0.000203538998903241,
+        "344": 2.558567668998876,
+        "367": 0.00030536900158040226,
+        "348": 0.023582319998240564,
+        "340": 0.0002312600008735899,
+        "395": 0.0003659110006992705,
+        "341": 0.0001722409979265649,
+        "391": 0.00016321400107699446,
+        "338": 0.0002229349993285723,
+        "368": 0.9923099080006068,
+        "369": 0.00039512600051239133,
+        "358": 0.1762631390010938,
+        "374": 0.5992018219985766,
+        "414": 0.020229469999321736,
+        "370": 0.0003553910028131213,
+        "75": 0.09657676899951184
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25726483968,
+      "reported_loaded_bytes": 25679298048,
+      "accounting_shortfall_bytes": 47185920,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 163,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r03-control-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r04-control-bird",
+      "arm": 0,
+      "variant": "control",
+      "fixture": "bird",
+      "initialization": false,
+      "reference": "speed-oracle-bird",
+      "preview_ready_seconds": 6.345940642997448,
+      "tensor_archive_ready_seconds": 6.22983339199709,
+      "node_seconds": {
+        "420": 0.006511092000437202,
+        "366": 0.00016013799904612824,
+        "356": 0.00011414300024625845,
+        "377": 0.010188225998717826,
+        "404": 0.004193627999484306,
+        "352": 0.0021670840033038985,
+        "364": 1.7908246319966565,
+        "421": 0.011369176001608139,
+        "365": 0.00019622499894467182,
+        "388": 0.00032092800029204227,
+        "339": 0.00022834500123281032,
+        "344": 2.529855251999834,
+        "367": 0.0002897300000768155,
+        "348": 0.02282689799903892,
+        "340": 0.00026066600185004063,
+        "395": 0.00018644699957803823,
+        "341": 0.00027154499912285246,
+        "391": 0.00018196900055045262,
+        "338": 0.00020225700063747354,
+        "368": 1.0336657379993994,
+        "369": 0.00029115199868101627,
+        "358": 0.17447115500181098,
+        "374": 0.615000013000099,
+        "414": 0.020086557997274213,
+        "370": 0.000445850000687642,
+        "75": 0.11541992200000095
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25726483968,
+      "reported_loaded_bytes": 25632112128,
+      "accounting_shortfall_bytes": 94371840,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 163,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r04-control-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r05-control-boat",
+      "arm": 0,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.3823678310000105,
+      "tensor_archive_ready_seconds": 6.264983776000008,
+      "node_seconds": {
+        "420": 0.002491818999260431,
+        "366": 0.0004178480012342334,
+        "356": 0.00024085900076897815,
+        "377": 0.00011605599866015837,
+        "404": 0.00016622900147922337,
+        "352": 0.1085283669999626,
+        "364": 1.7958063109981595,
+        "421": 0.011303798000881216,
+        "365": 0.00018097700012731366,
+        "388": 0.00032464399919263087,
+        "339": 0.00018499400175642222,
+        "344": 2.495893024999532,
+        "367": 0.00022663199706585146,
+        "348": 0.022814992000348866,
+        "340": 0.000256307001109235,
+        "395": 0.00017217099957633764,
+        "341": 0.0002734890003921464,
+        "391": 0.0001780320017132908,
+        "338": 0.00027533200045581907,
+        "368": 1.0114946239991696,
+        "369": 0.00025998399723903276,
+        "358": 0.1749835670016182,
+        "374": 0.6107534520015179,
+        "414": 0.02410930299811298,
+        "370": 0.0003420770008233376,
+        "75": 0.11682202899828553
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25726483968,
+      "reported_loaded_bytes": 25584926208,
+      "accounting_shortfall_bytes": 141557760,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 163,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r05-control-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r06-crop-boat",
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "boat",
+      "initialization": true,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 100.25348422099705,
+      "tensor_archive_ready_seconds": 100.01581618199998,
+      "node_seconds": {
+        "420": 41.72501836199808,
+        "366": 0.002710389999265317,
+        "356": 0.0007343680008489173,
+        "377": 0.00022892700144439004,
+        "404": 0.00023443600002792664,
+        "352": 0.00044787499791709706,
+        "364": 7.30837974500173,
+        "421": 0.020023639997816645,
+        "365": 0.0025082430001930334,
+        "388": 0.0007665080011065584,
+        "339": 0.012053108999680262,
+        "344": 41.854284068002016,
+        "367": 0.0003567549974832218,
+        "348": 2.9115557500008435,
+        "340": 0.00037391699879663065,
+        "395": 0.0003335210021759849,
+        "341": 0.0004178589988441672,
+        "391": 0.0004368350018921774,
+        "338": 0.00034018399674096145,
+        "368": 1.0840168710019498,
+        "369": 0.0010265240016451571,
+        "358": 1.1474508659994171,
+        "374": 3.8907911969981797,
+        "414": 0.05810931900123251,
+        "370": 0.005822685998282395,
+        "75": 2.8400172729998303
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25733103104,
+      "reported_loaded_bytes": 25733103104,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 2,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r06-crop-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r07-crop-boat",
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 7.334187445998396,
+      "tensor_archive_ready_seconds": 7.179461055999127,
+      "node_seconds": {
+        "420": 0.0030529719988408033,
+        "366": 0.0003103890012425836,
+        "356": 0.00017717100126901641,
+        "377": 0.0003062209980271291,
+        "404": 0.002087983000819804,
+        "352": 0.004424718998052413,
+        "364": 2.6202079090035113,
+        "421": 0.01496356999996351,
+        "365": 0.00022835599884274416,
+        "388": 0.0005322420001903083,
+        "339": 0.00021965999985695817,
+        "344": 2.600446431999444,
+        "367": 0.0002189779988839291,
+        "348": 0.024021921002713498,
+        "340": 0.0002656959986779839,
+        "395": 0.0002880469983210787,
+        "341": 0.00034618500285432674,
+        "391": 0.00020459199731703848,
+        "338": 0.00023668100038776174,
+        "368": 1.0444403100009367,
+        "369": 0.0003477989994280506,
+        "358": 0.20487576999948942,
+        "374": 0.6310083480020694,
+        "414": 0.020588490999216447,
+        "370": 0.0004496080000535585,
+        "75": 0.15409697699942626
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725193728,
+      "reported_loaded_bytes": 25725193728,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 0,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r07-crop-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r08-crop-marble",
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "marble",
+      "initialization": false,
+      "reference": "speed-oracle-marble",
+      "preview_ready_seconds": 6.294414543001039,
+      "tensor_archive_ready_seconds": 6.155867115998262,
+      "node_seconds": {
+        "420": 0.01459462399725453,
+        "366": 0.0003530890026013367,
+        "356": 0.018715909998718416,
+        "377": 0.0006372780007950496,
+        "404": 0.0005522690007637721,
+        "352": 0.00020413099991856143,
+        "364": 1.6432249619974755,
+        "421": 0.011621671001194045,
+        "365": 0.00024097999994410202,
+        "388": 0.0004542169990600087,
+        "339": 0.0002097710021189414,
+        "344": 2.5811336299993854,
+        "367": 0.00023498799782828428,
+        "348": 0.02548193900292972,
+        "340": 0.0001676519968896173,
+        "395": 0.0001889120030682534,
+        "341": 0.0001877309987321496,
+        "391": 0.0002728280014707707,
+        "338": 0.0002018469967879355,
+        "368": 1.0069115969999984,
+        "369": 0.00029127300149411894,
+        "358": 0.18008209899926442,
+        "374": 0.6412804510000569,
+        "414": 0.0243584939998982,
+        "370": 0.00045885600047768094,
+        "75": 0.13754623999921023
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725763072,
+      "reported_loaded_bytes": 25678577152,
+      "accounting_shortfall_bytes": 47185920,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 70,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r08-crop-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r09-crop-bird",
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "bird",
+      "initialization": false,
+      "reference": "speed-oracle-bird",
+      "preview_ready_seconds": 6.334613893999631,
+      "tensor_archive_ready_seconds": 6.225796370999888,
+      "node_seconds": {
+        "420": 0.011107082998933038,
+        "366": 0.0009943639997800346,
+        "356": 0.00023595000311615877,
+        "377": 0.0002030789983109571,
+        "404": 0.015264746998582268,
+        "352": 0.0005101010028738528,
+        "364": 1.65154420899853,
+        "421": 0.012464846000511898,
+        "365": 0.0001990609998756554,
+        "388": 0.0003339629984111525,
+        "339": 0.00022231399998418055,
+        "344": 2.6062318840013177,
+        "367": 0.0002307110007677693,
+        "348": 0.025427149997995002,
+        "340": 0.0002536329993745312,
+        "395": 0.00024276300246128812,
+        "341": 0.00024030799977481365,
+        "391": 0.00029669300056411885,
+        "338": 0.0001870889973361045,
+        "368": 1.0379454300018551,
+        "369": 0.00035456099794828333,
+        "358": 0.1775905110007443,
+        "374": 0.6583273920005013,
+        "414": 0.021540483001444954,
+        "370": 0.0003811409987974912,
+        "75": 0.10823153000092134
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725763072,
+      "reported_loaded_bytes": 25631391232,
+      "accounting_shortfall_bytes": 94371840,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 70,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r09-crop-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r10-crop-boat",
+      "arm": 1,
+      "variant": "crop",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.420341917000769,
+      "tensor_archive_ready_seconds": 6.302633441999205,
+      "node_seconds": {
+        "420": 0.0028752020007232204,
+        "366": 0.0004949729991494678,
+        "356": 0.00032617900069453754,
+        "377": 0.00021220499911578372,
+        "404": 0.10577722800007905,
+        "352": 0.005139826000231551,
+        "364": 1.6422138810012257,
+        "421": 0.022297887000604533,
+        "365": 0.00021696499970857985,
+        "388": 0.0003841859979729634,
+        "339": 0.00024343400218640454,
+        "344": 2.606195870997908,
+        "367": 0.00023323500136029907,
+        "348": 0.02371654500166187,
+        "340": 0.0002085189989884384,
+        "395": 0.008799220999208046,
+        "341": 0.00023274400155059993,
+        "391": 0.00037320599949453026,
+        "338": 0.00022237499797483906,
+        "368": 1.0315380800020648,
+        "369": 0.00027374099954613484,
+        "358": 0.1861309310006618,
+        "374": 0.6393477749988961,
+        "414": 0.02057568699819967,
+        "370": 0.0006795280023652595,
+        "75": 0.1168649719984387
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725763072,
+      "reported_loaded_bytes": 25584205312,
+      "accounting_shortfall_bytes": 141557760,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 70,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r10-crop-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r11-small-state-boat",
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "boat",
+      "initialization": true,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 69.39058047800063,
+      "tensor_archive_ready_seconds": 69.23936246900121,
+      "node_seconds": {
+        "420": 41.25260149699898,
+        "366": 0.00015532000179518946,
+        "356": 0.00022432799960370176,
+        "377": 0.00021708499843953177,
+        "404": 0.0002908830028900411,
+        "352": 0.0003675459993246477,
+        "364": 6.585865639997792,
+        "421": 0.011620224002399482,
+        "365": 0.00014549199840985239,
+        "388": 0.00022763400193070993,
+        "339": 0.0003461960004642606,
+        "344": 18.505257256998448,
+        "367": 0.00021426999956020154,
+        "348": 0.30662198800200713,
+        "340": 0.00031670099997427315,
+        "395": 0.0003428999989409931,
+        "341": 0.0001795149983081501,
+        "391": 0.00027237900212639943,
+        "338": 0.00019042499843635596,
+        "368": 1.0038410679990193,
+        "369": 0.0006471880005847197,
+        "358": 0.4293758070016338,
+        "374": 1.1026315989984141,
+        "414": 0.03555202600182383,
+        "370": 0.0006155589981062803,
+        "75": 0.1493096570011403
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25730723936,
+      "reported_loaded_bytes": 25730723936,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r11-small-state-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r12-small-state-boat",
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.51387411199903,
+      "tensor_archive_ready_seconds": 6.391756106000685,
+      "node_seconds": {
+        "420": 0.001145918999100104,
+        "366": 0.002903810000134399,
+        "356": 0.0002357400007895194,
+        "377": 0.0006000299981678836,
+        "404": 0.014164236999931745,
+        "352": 0.0001284300014958717,
+        "364": 1.7833405429992126,
+        "421": 0.011767563999455888,
+        "365": 0.00023935699937283061,
+        "388": 0.00031912600024952553,
+        "339": 0.00023728300220682286,
+        "344": 2.689888531996985,
+        "367": 0.00032519700107513927,
+        "348": 0.02354666199971689,
+        "340": 0.00021653400108334608,
+        "395": 0.00026635799804353155,
+        "341": 0.00018539600205258466,
+        "391": 0.0002664969979377929,
+        "338": 0.00020126600065850653,
+        "368": 1.0114058879989898,
+        "369": 0.00028806800037273206,
+        "358": 0.18964004000008572,
+        "374": 0.6348083690027124,
+        "414": 0.02130421599940746,
+        "370": 0.0003068129990424495,
+        "75": 0.1216858100015088
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r12-small-state-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r13-small-state-marble",
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "marble",
+      "initialization": false,
+      "reference": "speed-oracle-marble",
+      "preview_ready_seconds": 6.4620523390003655,
+      "tensor_archive_ready_seconds": 6.31305137399977,
+      "node_seconds": {
+        "420": 0.0013009079993935302,
+        "366": 0.0016740450009820051,
+        "356": 0.0002486439989297651,
+        "377": 0.00015422800061060116,
+        "404": 0.00024763200053712353,
+        "352": 0.0001922089977597352,
+        "364": 1.7784157390015025,
+        "421": 0.011908839998795884,
+        "365": 0.0001451010029995814,
+        "388": 0.0003786469969782047,
+        "339": 0.00023096100267139263,
+        "344": 2.6493880489979347,
+        "367": 0.00021737600036431104,
+        "348": 0.023710690998996142,
+        "340": 0.000191447001270717,
+        "395": 0.00029114399876561947,
+        "341": 0.00018855199959944002,
+        "391": 0.0002887290029320866,
+        "338": 0.00018801099940901622,
+        "368": 1.0160779190009634,
+        "369": 0.00029767599698971026,
+        "358": 0.17936026500319713,
+        "374": 0.620541416999913,
+        "414": 0.023888263996923342,
+        "370": 0.00031333400329458527,
+        "75": 0.14874378599779448
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r13-small-state-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r14-small-state-bird",
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "bird",
+      "initialization": false,
+      "reference": "speed-oracle-bird",
+      "preview_ready_seconds": 6.398579395001434,
+      "tensor_archive_ready_seconds": 6.278771730001608,
+      "node_seconds": {
+        "420": 0.002742290002061054,
+        "366": 0.00034148700069636106,
+        "356": 0.00034624599720700644,
+        "377": 0.00032746200304245576,
+        "404": 0.00031072999991010875,
+        "352": 0.101891276997776,
+        "364": 1.7627922100000433,
+        "421": 0.021706682000512956,
+        "365": 0.0001953149985638447,
+        "388": 0.00044470000284491107,
+        "339": 0.0001914669992402196,
+        "344": 2.5274008679989493,
+        "367": 0.00033199999961652793,
+        "348": 0.023176356000476517,
+        "340": 0.000193161002243869,
+        "395": 0.00027467299878480844,
+        "341": 0.00020388000120874494,
+        "391": 0.00030121300005703233,
+        "338": 0.00019861999680870213,
+        "368": 1.0192007570003625,
+        "369": 0.0002926560009655077,
+        "358": 0.1793747789997724,
+        "374": 0.6010916369996266,
+        "414": 0.031198033000691794,
+        "370": 0.0004018200015707407,
+        "75": 0.32246257799852174
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r14-small-state-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r15-small-state-boat",
+      "arm": 2,
+      "variant": "small_state",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.374871379000979,
+      "tensor_archive_ready_seconds": 6.248255547001463,
+      "node_seconds": {
+        "420": 0.0024534509975637775,
+        "366": 0.000390639001125237,
+        "356": 0.000275984999461798,
+        "377": 0.009846974000538466,
+        "404": 0.003656195000075968,
+        "352": 0.003970874000515323,
+        "364": 1.7498755359993083,
+        "421": 0.021432894001918612,
+        "365": 0.0002730999985942617,
+        "388": 0.0003311379987280816,
+        "339": 0.00020412100275279954,
+        "344": 2.6052660289969936,
+        "367": 0.00020544400103972293,
+        "348": 0.02321435100020608,
+        "340": 0.0002761249998002313,
+        "395": 0.00019158800205332227,
+        "341": 0.00017976499657379463,
+        "391": 0.0003027560014743358,
+        "338": 0.0001905450008052867,
+        "368": 1.014482146998489,
+        "369": 0.00042573500104481354,
+        "358": 0.17736946800141595,
+        "374": 0.6087054869967687,
+        "414": 0.020686241001385497,
+        "370": 0.00039696200110483915,
+        "75": 0.1260966730005748
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r15-small-state-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r16-combined-boat",
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "boat",
+      "initialization": true,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 86.00034442600008,
+      "tensor_archive_ready_seconds": 85.80337191700164,
+      "node_seconds": {
+        "420": 40.59066038700257,
+        "366": 0.00019703799989656545,
+        "356": 0.00040561800051364116,
+        "377": 0.0004581659995892551,
+        "404": 0.00012860000060754828,
+        "352": 0.0001287199993385002,
+        "364": 6.520592124998075,
+        "421": 0.011903823000466218,
+        "365": 0.0006844790004834067,
+        "388": 0.00034901199978776276,
+        "339": 0.023922470998513745,
+        "344": 34.64558447100353,
+        "367": 0.0005305409977154341,
+        "348": 0.7073114310005622,
+        "340": 0.00020787800167454407,
+        "395": 0.00031008999940240756,
+        "341": 0.0002355899996473454,
+        "391": 0.0002285269983985927,
+        "338": 0.00030863700158079155,
+        "368": 1.0569071780009835,
+        "369": 0.0005937799978710245,
+        "358": 0.545882235001045,
+        "374": 1.627108775999659,
+        "414": 0.06707125699904282,
+        "370": 0.0005111350001243409,
+        "75": 1.7737140339995676
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25730723936,
+      "reported_loaded_bytes": 25730723936,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r16-combined-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r17-combined-boat",
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.477201940000668,
+      "tensor_archive_ready_seconds": 6.336236586001178,
+      "node_seconds": {
+        "420": 0.0009199879968946334,
+        "366": 0.011753580001823138,
+        "356": 0.00027942199812969193,
+        "377": 0.0002454290006426163,
+        "404": 0.007740632001514314,
+        "352": 0.00657437300105812,
+        "364": 1.7437072849970718,
+        "421": 0.011197761999937939,
+        "365": 0.0002475319997756742,
+        "388": 0.00042431300244061276,
+        "339": 0.0002553869999246672,
+        "344": 2.6396776709989354,
+        "367": 0.00022220499886316247,
+        "348": 0.02433805300097447,
+        "340": 0.000197509001736762,
+        "395": 0.00032424600067315623,
+        "341": 0.00018699899737839587,
+        "391": 0.00026878300195676275,
+        "338": 0.00020044399934704416,
+        "368": 1.0614351549993444,
+        "369": 0.0002744029989116825,
+        "358": 0.18479260000094655,
+        "374": 0.6151457999985723,
+        "414": 0.0213773220020812,
+        "370": 0.0015373319984064437,
+        "75": 0.3742271980008809
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r17-combined-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r18-combined-marble",
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "marble",
+      "initialization": false,
+      "reference": "speed-oracle-marble",
+      "preview_ready_seconds": 6.28072543899907,
+      "tensor_archive_ready_seconds": 6.16199182100172,
+      "node_seconds": {
+        "420": 0.0028771159995812923,
+        "366": 0.0002629709997563623,
+        "356": 0.00016631100152153522,
+        "377": 0.00014000100054545328,
+        "404": 0.000115075999929104,
+        "352": 0.012050033998093568,
+        "364": 1.6006379800019204,
+        "421": 0.011833450000267476,
+        "365": 0.0002042519990936853,
+        "388": 0.00037641299786628224,
+        "339": 0.000212077000469435,
+        "344": 2.6463958580025064,
+        "367": 0.0002495969965821132,
+        "348": 0.026922996003122535,
+        "340": 0.00023457799761672504,
+        "395": 0.0002165240002796054,
+        "341": 0.00028122599906055257,
+        "391": 0.0002765560020634439,
+        "338": 0.00023772499844199046,
+        "368": 1.039857022002252,
+        "369": 0.0002969149973068852,
+        "358": 0.18908190400179592,
+        "374": 0.605121089000022,
+        "414": 0.019974933999037603,
+        "370": 0.00039548900167574175,
+        "75": 0.1181621699979587
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r18-combined-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r19-combined-bird",
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "bird",
+      "initialization": false,
+      "reference": "speed-oracle-bird",
+      "preview_ready_seconds": 6.425753556002746,
+      "tensor_archive_ready_seconds": 6.2840612120016885,
+      "node_seconds": {
+        "420": 0.0068474149993562605,
+        "366": 0.0005480840009113308,
+        "356": 0.00020367999968584627,
+        "377": 0.018145515998185147,
+        "404": 0.0007483090012101457,
+        "352": 0.0002680309989955276,
+        "364": 1.5961670510005206,
+        "421": 0.01575374800086138,
+        "365": 0.00021949000074528158,
+        "388": 0.0004026119968330022,
+        "339": 0.00016314500317093916,
+        "344": 2.6689211249977234,
+        "367": 0.0002224750023742672,
+        "348": 0.025164513997879112,
+        "340": 0.0003080550013692118,
+        "395": 0.00018279199866810814,
+        "341": 0.0002853229998436291,
+        "391": 0.000197359000594588,
+        "338": 0.0002793220010062214,
+        "368": 1.0702399389992934,
+        "369": 0.000364791998435976,
+        "358": 0.18163916699995752,
+        "374": 0.6713182519997645,
+        "414": 0.02210921400182997,
+        "370": 0.00036052399809705094,
+        "75": 0.13960407100239536
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r19-combined-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r20-combined-boat",
+      "arm": 3,
+      "variant": "combined",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.456161523001356,
+      "tensor_archive_ready_seconds": 6.340600116000132,
+      "node_seconds": {
+        "420": 0.0007834440002625342,
+        "366": 0.0019337230005476158,
+        "356": 0.00025568799901520833,
+        "377": 0.00021057400226709433,
+        "404": 0.00014681399989058264,
+        "352": 0.00015446899851667695,
+        "364": 1.7317899059999036,
+        "421": 0.011783250000007683,
+        "365": 0.0002988380001625046,
+        "388": 0.0004472559994610492,
+        "339": 0.0003007420018548146,
+        "344": 2.6775887219992,
+        "367": 0.0002625999986776151,
+        "348": 0.025650945000961656,
+        "340": 0.00020497299919952638,
+        "395": 0.0002804340001603123,
+        "341": 0.00017204200048581697,
+        "391": 0.0002753039989329409,
+        "338": 0.00020243900144123472,
+        "368": 1.0531337020001956,
+        "369": 0.000294400000711903,
+        "358": 0.19790152799760108,
+        "374": 0.6128848490006931,
+        "414": 0.02041889800239005,
+        "370": 0.0003823349979938939,
+        "75": 0.11508862299888278
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25721818208,
+      "reported_loaded_bytes": 25721818208,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 289,
+        "scalar": 48
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r20-combined-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r21-control-boat",
+      "arm": 4,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": true,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 84.90169801999946,
+      "tensor_archive_ready_seconds": 84.68057393599884,
+      "node_seconds": {
+        "420": 42.19101732299896,
+        "366": 0.0007108989993866999,
+        "356": 0.0001381680012855213,
+        "377": 0.00023643199892831035,
+        "404": 0.00033271199936280027,
+        "352": 0.00013266799942357466,
+        "364": 6.946459986000264,
+        "421": 0.011190028002602048,
+        "365": 0.0002760459974524565,
+        "388": 0.00032038900098996237,
+        "339": 0.010733434999565361,
+        "344": 28.5854595339988,
+        "367": 0.000215963002119679,
+        "348": 0.6957470470006228,
+        "340": 0.00034451399915269576,
+        "395": 0.0002562400004535448,
+        "341": 0.00017564799782121554,
+        "391": 0.00046374700104934163,
+        "338": 0.00019168899962096475,
+        "368": 1.0660155180012225,
+        "369": 0.00038459899951703846,
+        "358": 0.7920607970008859,
+        "374": 4.316853170999821,
+        "414": 0.05609824899875093,
+        "370": 0.0030182240006979555,
+        "75": 1.6254479160015762
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25733103104,
+      "reported_loaded_bytes": 25733103104,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 2,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r21-control-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r22-control-boat",
+      "arm": 4,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.766791005000414,
+      "tensor_archive_ready_seconds": 6.615708343000733,
+      "node_seconds": {
+        "420": 0.0010378210026829038,
+        "366": 0.01941983099823119,
+        "356": 0.0002447480001137592,
+        "377": 0.00017900500097312033,
+        "404": 0.0002056439989246428,
+        "352": 0.0013700019990210421,
+        "364": 2.000189018999663,
+        "421": 0.014122807002422633,
+        "365": 0.0002709159998630639,
+        "388": 0.00044347999937599525,
+        "339": 0.00028264800130273215,
+        "344": 2.660516291998647,
+        "367": 0.00024279400167870335,
+        "348": 0.02861058700000285,
+        "340": 0.00025727100000949576,
+        "395": 0.00023683299878030084,
+        "341": 0.00017765200027497485,
+        "391": 0.0002828289980243426,
+        "338": 0.00020762799977092072,
+        "368": 1.0398648320006032,
+        "369": 0.00023479900119127706,
+        "358": 0.1937893559988879,
+        "374": 0.6261290790025669,
+        "414": 0.022122365997347515,
+        "370": 0.00023707400032435544,
+        "75": 0.1508381540006667
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725193728,
+      "reported_loaded_bytes": 25725193728,
+      "accounting_shortfall_bytes": 0,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 0,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r22-control-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r23-control-marble",
+      "arm": 4,
+      "variant": "control",
+      "fixture": "marble",
+      "initialization": false,
+      "reference": "speed-oracle-marble",
+      "preview_ready_seconds": 6.630446974999359,
+      "tensor_archive_ready_seconds": 6.50141821699799,
+      "node_seconds": {
+        "420": 0.007278519999090349,
+        "366": 0.0011135230015497655,
+        "356": 0.00020286899962229654,
+        "377": 0.00016271400090772659,
+        "404": 0.01880237799923634,
+        "352": 0.00037445999987539835,
+        "364": 1.8151960229988617,
+        "421": 0.011408924001443665,
+        "365": 0.00031147199842962436,
+        "388": 0.0003733280027518049,
+        "339": 0.0002497869973012712,
+        "344": 2.725785660000838,
+        "367": 0.00021748699873569421,
+        "348": 0.024312011002621148,
+        "340": 0.00024585999926785007,
+        "395": 0.00026877300115302205,
+        "341": 0.00019652699847938493,
+        "391": 0.0002790120015561115,
+        "338": 0.00020483299886109307,
+        "368": 1.0523118050004996,
+        "369": 0.00027842999770655297,
+        "358": 0.18358338100006222,
+        "374": 0.6315110010000353,
+        "414": 0.02132516700294218,
+        "370": 0.0003576079980120994,
+        "75": 0.12847165600032895
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725763072,
+      "reported_loaded_bytes": 25678577152,
+      "accounting_shortfall_bytes": 47185920,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 70,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r23-control-marble",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "66aa124d7381d5a75fe417e665a03e818256b4a05ae3ddd7ccf038ba1775fb4a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.19642217457294464
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "39b9c6e83db69a07505d55eb170a75906cbaa491db62ba9853ad8271cd088612",
+            "finite": true,
+            "min": -4.303928375244141,
+            "max": 4.020559310913086,
+            "std": 0.8684225678443909
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "2b4124de87922ad28b674216e8dd62826997cd7be982e702ade7d513e0613384",
+            "finite": true,
+            "min": -5.899345397949219,
+            "max": 4.9155402183532715,
+            "std": 2.3170104026794434
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "87097080f54de93bd344d8e6c99f7058e9fa62ce022a86af1c6d79a4abb9a6cc",
+            "finite": true,
+            "min": -0.007659912109375,
+            "max": 0.0072021484375,
+            "std": 0.0012218992924317718
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r24-control-bird",
+      "arm": 4,
+      "variant": "control",
+      "fixture": "bird",
+      "initialization": false,
+      "reference": "speed-oracle-bird",
+      "preview_ready_seconds": 6.615497161001258,
+      "tensor_archive_ready_seconds": 6.513127195001289,
+      "node_seconds": {
+        "420": 0.008823009000479942,
+        "366": 0.001325007000559708,
+        "356": 0.00040061899926513433,
+        "377": 0.00033351399906678125,
+        "404": 0.006544528001541039,
+        "352": 0.010588189998088637,
+        "364": 1.814984579999873,
+        "421": 0.013170529000490205,
+        "365": 0.0001712100020085927,
+        "388": 0.0004799679991265293,
+        "339": 0.00017861399828689173,
+        "344": 2.7049719720016583,
+        "367": 0.00022002100013196468,
+        "348": 0.024273922997963382,
+        "340": 0.0002908240021497477,
+        "395": 0.0002294389996677637,
+        "341": 0.00020830900029977784,
+        "391": 0.00030669400075566955,
+        "338": 0.0002526120006223209,
+        "368": 1.067680598996958,
+        "369": 0.0002938290017482359,
+        "358": 0.18336703200111515,
+        "374": 0.6474549519989523,
+        "414": 0.022255699997913325,
+        "370": 0.00034576600228319876,
+        "75": 0.10120772300069802
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725763072,
+      "reported_loaded_bytes": 25631391232,
+      "accounting_shortfall_bytes": 94371840,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 70,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r24-control-bird",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "963811a465679d06192ab04cb0bfb23e2e685e355c85d4e0fc278c96743a441a",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.20565633475780487
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "ec1d42faaae43f9fdbd5f29819b1d2d5da4c7697d6f9b05569022515d2bdb65f",
+            "finite": true,
+            "min": -5.637712478637695,
+            "max": 5.126581192016602,
+            "std": 1.2340888977050781
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "50feb07f4e655e4e36b8521bb7610c449126c82b0b4b6809c2da16098267dc17",
+            "finite": true,
+            "min": -6.488918304443359,
+            "max": 5.451141357421875,
+            "std": 1.6776491403579712
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "6d08b9aa314143351f690dccd6b77c605f4581e015e9b5701ef8be390e524ddf",
+            "finite": true,
+            "min": -0.017822265625,
+            "max": 0.01806640625,
+            "std": 0.0022500986233353615
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    },
+    {
+      "run": "encoder-screen-02-r25-control-boat",
+      "arm": 4,
+      "variant": "control",
+      "fixture": "boat",
+      "initialization": false,
+      "reference": "baseline-01",
+      "preview_ready_seconds": 6.654933821999293,
+      "tensor_archive_ready_seconds": 6.526029314001789,
+      "node_seconds": {
+        "420": 0.001191709001432173,
+        "366": 0.0014865400007693097,
+        "356": 0.000251239998760866,
+        "377": 0.00016582000171183608,
+        "404": 0.00028158599889138713,
+        "352": 0.00017330400078208186,
+        "364": 1.8519038720005483,
+        "421": 0.016936392999923555,
+        "365": 0.00019773899839492515,
+        "388": 0.00037020300078438595,
+        "339": 0.00020849000065936707,
+        "344": 2.7267811950005125,
+        "367": 0.00023481899916077964,
+        "348": 0.030983271997683914,
+        "340": 0.0004950660004396923,
+        "395": 0.00017845399997895584,
+        "341": 0.0001517730015621055,
+        "391": 0.00015812600031495094,
+        "338": 0.00023681300081079826,
+        "368": 1.0752557679988968,
+        "369": 0.0002204630000051111,
+        "358": 0.18439505999776884,
+        "374": 0.6180476440022176,
+        "414": 0.012074170001142193,
+        "370": 0.00026224099929095246,
+        "75": 0.12819087299794774
+      },
+      "exact_four_outputs": true,
+      "strict_determinism": true,
+      "actual_registered_resident_bytes": 25725763072,
+      "reported_loaded_bytes": 25584205312,
+      "accounting_shortfall_bytes": 141557760,
+      "offload_buffer_bytes": 47185920,
+      "small_state_xpu_counts": {
+        "rmsnorm": 70,
+        "scalar": 0
+      },
+      "capture": {
+        "run_name": "encoder-screen-02-r25-control-boat",
+        "sample_rate": 48000,
+        "deterministic_enabled": true,
+        "deterministic_warn_only": false,
+        "tensors": {
+          "images": {
+            "dtype": "torch.float32",
+            "shape": [
+              25,
+              256,
+              256,
+              3
+            ],
+            "sha256": "df54058176fcaa8df582369a93ed0eb62a0c430a3717f6416648e5f77c76bdb5",
+            "finite": true,
+            "min": 0.0,
+            "max": 1.0,
+            "std": 0.1604965180158615
+          },
+          "video_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              128,
+              4,
+              8,
+              8
+            ],
+            "sha256": "7e8d9cb5c706d5736dea437f77113784c12bb48d914b8b7b570c8359426e8ee0",
+            "finite": true,
+            "min": -4.3923516273498535,
+            "max": 4.198836803436279,
+            "std": 0.9638756513595581
+          },
+          "audio_latent": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              8,
+              26,
+              16
+            ],
+            "sha256": "bf06056763fb6b1e8f254e6c00363a3f3ebb3c99af9bce6f1186e98afa4a1b30",
+            "finite": true,
+            "min": -5.978236198425293,
+            "max": 5.219908714294434,
+            "std": 1.628729224205017
+          },
+          "waveform": {
+            "dtype": "torch.float32",
+            "shape": [
+              1,
+              2,
+              48480
+            ],
+            "sha256": "945692b4f79b0c5a5adea9f0bae5940b785f36445d95d291eaf4f61dfb39a934",
+            "finite": true,
+            "min": -0.0023193359375,
+            "max": 0.0023956298828125,
+            "std": 0.0004533766186796129
+          }
+        }
+      },
+      "comparisons": {
+        "audio_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "images": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "video_latent": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        },
+        "waveform": {
+          "bitwise_equal": true,
+          "same_layout": true,
+          "max_abs_diff": 0.0,
+          "unequal_values": 0
+        }
+      }
+    }
+  ],
+  "retained_outputs": [
+    {
+      "run": "encoder-screen-02-r23-control-marble",
+      "relative_path": "output/encoder-screen-02-r23-control-marble/preview_00001_.mp4",
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/encoder-screen-02-r23-control-marble/preview_00001_.mp4",
+      "bytes": 40568,
+      "sha256": "71480b89c03964134f1264e25c2d42f1ebb6ba231a11ca8a15f1b0e04832c881",
+      "device": 66306,
+      "inode": 40659824
+    },
+    {
+      "run": "encoder-screen-02-r24-control-bird",
+      "relative_path": "output/encoder-screen-02-r24-control-bird/preview_00001_.mp4",
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/encoder-screen-02-r24-control-bird/preview_00001_.mp4",
+      "bytes": 53356,
+      "sha256": "36f15867342e92705e6d84e6393a83706cfdcba3f2b1e732f9267b8eb8069aa6",
+      "device": 66306,
+      "inode": 40659841
+    },
+    {
+      "run": "encoder-screen-02-r25-control-boat",
+      "relative_path": "output/encoder-screen-02-r25-control-boat/preview_00001_.mp4",
+      "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/encoder-screen-02-r25-control-boat/preview_00001_.mp4",
+      "bytes": 56408,
+      "sha256": "58cc01d960775d695101566761a132a130920fc416c57742676c20ffc8bbc3d6",
+      "device": 66306,
+      "inode": 40659858
+    }
+  ],
+  "evidence_archive_sha256": "65bdc5078b22fbbe880c6304c9ada6911360bb7446f6c9d680be9798c7eb339f",
+  "exporter_sha256": "3752fa82da8f0d40fc72c3604616baa92fc8ee247f5478bb75e30311c62e5de6"
+}
