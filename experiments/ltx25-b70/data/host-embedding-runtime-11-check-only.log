@@ -1,0 +1,84 @@
+{
+  "status": "inactive-source-check-passed",
+  "files_written": 0,
+  "builder_sha256": "5537c5d94dd4f97b4e291544b91800f9d6c7d45f9e0eff698b91caaa8e2ba54f",
+  "host_embedding": {
+    "modes": [
+      "control",
+      "host-table"
+    ],
+    "component_node_class": "LTXHostEmbeddingComponents",
+    "placement_node_class": "LTXHostEmbeddingPlacementCheck",
+    "extension_sha256s": {
+      "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+      "host_embedding_clip.py": "53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994",
+      "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+      "host_embedding_resident_node.py": "c34129c15bea2639a7916a6a4b2445428c22f2056cf9a7d419dc95b3b2c6ed7b"
+    },
+    "graphs": [
+      "graphs/host-embedding-control.json",
+      "graphs/host-embedding-host-table.json"
+    ],
+    "transformer_dispatch": "original",
+    "reserve_override": false,
+    "force_full_load": false,
+    "construction_device": "cpu",
+    "encoder_load_device": "xpu:2",
+    "table_device": "cpu",
+    "cache_scope": "one-shared-component-generation",
+    "prompt_encoding_cache": false,
+    "generated_output_cache": false,
+    "native_gpu_qualified": false,
+    "full_clip_qualified": false,
+    "speed_qualified": false,
+    "admissions": {
+      "cpu_integration": {
+        "path": "provenance/host-embedding/cpu-integration-result.json",
+        "sha256": "b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326"
+      },
+      "resident_assembly": {
+        "path": "provenance/host-embedding/resident-assembly-result.json",
+        "sha256": "4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35"
+      }
+    },
+    "proof_source_sha256s": {
+      "provenance/host-embedding/cpu-integration-result.json": "b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326",
+      "provenance/host-embedding/resident-assembly-result.json": "4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35",
+      "provenance/host-embedding/cpu-startup-identity.json": "fd398a2f242fbe0da9de81f4be05014b888886a1c9fa4cf314ca58ee7fe93d1e",
+      "provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v3.py": "1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca",
+      "provenance/host-embedding/cpu-sources/scripts/host_embedding_clip_v2.py": "53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994",
+      "provenance/host-embedding/cpu-sources/scripts/host_embedding_placement_node_v2.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+      "provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu-fixture.py": "2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e",
+      "provenance/host-embedding/cpu-sources/scripts/cpu_comfy_import_policy_v1.py": "7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec",
+      "provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v2.py": "9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3",
+      "provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu.py": "2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534",
+      "provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-fixture-v2.py": "b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32",
+      "provenance/host-embedding/cpu-sources/scripts/ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+      "provenance/host-embedding/cpu-sources/native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce",
+      "provenance/host-embedding/cpu-sources/native-cpp-block-01/cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a",
+      "provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu.py": "6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d",
+      "provenance/host-embedding/resident-sources/scripts/test-host-embedding-resident-stdlib.py": "6f76cbc5e7257d92552a0c8b559b7aa8253a70c723a8fd2a03d9210dde108117"
+    },
+    "cpu_actual_source_sha256s": {
+      "comfy/text_encoders/llama.py": "7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f",
+      "comfy/sd1_clip.py": "fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8",
+      "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0",
+      "comfy/model_patcher.py": "768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99",
+      "comfy/sd.py": "41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0",
+      "scripts/encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+      "comfy/model_management.py": "ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd"
+    }
+  },
+  "source_checks": {
+    "inherited_checker_reverses_byte_for_byte": true,
+    "only_modified_parent_file": "launch/encoder_runtime_common.py",
+    "all_parent_numerical_sources_unchanged": true,
+    "launcher_inherited_unchanged": true,
+    "graphs_change_only_nodes420_421": true,
+    "new_custom_node_directories": [
+      "ltx_host_embedding_lab"
+    ],
+    "torch_imported": false,
+    "native_admission": false
+  }
+}

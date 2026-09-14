@@ -1,0 +1,144 @@
+--- a/launch/encoder_runtime_common.py
++++ b/launch/encoder_runtime_common.py
+@@ -1,5 +1,6 @@
+ """CPU-only source/runtime identity checks shared by encoder launch and clients."""
+ import ast
++import copy
+ import hashlib
+ import importlib.metadata
+ import importlib.util
+@@ -17,13 +18,16 @@
+               'ltx_block_compile.py', 'block_compile_node.py',
+               'ltx_native_rms_backend.py', 'ltx_native_activations_backend.py',
+               'ltx_multiblock_compile.py', 'multiblock_compile_node.py',
+-              'ltx_na_axis_router.py', 'ltx_na_axis_candidate.py', 'na_axis_decode_node.py')
++              'ltx_na_axis_router.py', 'ltx_na_axis_candidate.py', 'na_axis_decode_node.py',
++              'ltx_host_embedding_candidate.py', 'host_embedding_clip.py',
++              'host_embedding_placement_node.py', 'host_embedding_resident_node.py')
+ NODES = {'ltx_speed_lab': 'resident_node.py', 'ltx_baseline_capture': 'capture_node.py',
+          'ltx_encoder_diagnostics': 'encoder_diagnostics.py',
+          'ltx_encoder_identity': 'encoder_identity_node.py',
+          'ltx_block_compile_lab': 'block_compile_node.py',
+          'ltx_multiblock_compile_lab': 'multiblock_compile_node.py',
+-         'ltx_na_axis_decode_lab': 'na_axis_decode_node.py'}
++         'ltx_na_axis_decode_lab': 'na_axis_decode_node.py',
++         'ltx_host_embedding_lab': 'host_embedding_resident_node.py'}
+ 
+ 
+ def require(condition, message):
+@@ -110,6 +114,61 @@
+             'native_imports': False, 'startup_registration_qualified': False}
+ 
+ 
++
++def graph_source(control, mode):
++    require(mode in ('control', 'host-table'), 'Unknown encoder mode')
++    graph = copy.deepcopy(control)
++    require(graph['420'] == {'class_type': 'LTXResidentComponents',
++            'inputs': {'placement': 'split', 'encoder_variant': 'control'}}, 'Original component graph differs')
++    require(graph['421']['class_type'] == 'LTXEncoderPlacementCheck'
++            and graph['421']['inputs']['encoder_variant'] == 'control', 'Original placement graph differs')
++    graph['420']['class_type'] = 'LTXHostEmbeddingComponents'
++    graph['421']['class_type'] = 'LTXHostEmbeddingPlacementCheck'
++    for name in ('420', '421'):
++        del graph[name]['inputs']['encoder_variant']
++        graph[name]['inputs']['encoder_mode'] = mode
++    return graph
++
++
++def validate_admissions(cpu, resident, source_hashes):
++    require(cpu['schema'] == 'ltx.host-embedding-integration-guarded-cpu.v1'
++            and cpu['status'] == 'passed-guarded-cpu-integration'
++            and cpu['phase'] == 'finished' and cpu['tests_run'] == 6
++            and cpu['native_cpu_tests_executed'] is True and cpu['torch_imported'] is True,
++            'Reviewed actual CPU integration pass required')
++    require(cpu['xpu_initialized'] is False and cpu['cuda_initialized'] is False
++            and cpu['final_guards_intact'] is True and cpu['native_gpu_requests'] == 0
++            and cpu['compilation_permitted'] is False,
++            'CPU integration accelerator/guard boundaries differ')
++    require(not cpu['test_failures'] and not cpu['test_errors'] and not cpu['test_skips']
++            and len(cpu['test_names']) == len(set(cpu['test_names'])) == 6,
++            'Incomplete CPU integration test result')
++    require(cpu['determinism'] == {'enabled': True, 'warn_only': False}, 'CPU deterministic gate differs')
++    require(cpu['accelerator_guard_attempts'] == [] and cpu['backend_refusals']['attempts'] == []
++            and cpu['backend_refusals']['tripped'] is False, 'CPU forbidden native attempt recorded')
++    omissions = cpu['cpu_comfy_import_omissions']
++    require(len(omissions) == 1 and omissions[0]['ordinal'] == 1
++            and omissions[0]['args_cpu'] is True and omissions[0]['caller_function'] == '<module>'
++            and omissions[0]['source_sha256'] == cpu['comfy_model_management_sha256']
++            and cpu['cpu_comfy_import_policy']['complete'] is True,
++            'CPU import refusal boundary incomplete')
++    for stage in ('identity_after_import', 'identity_after_tests'):
++        require(cpu[stage] == {'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False},
++                'CPU identity boundary differs: ' + stage)
++    for canonical, filename in (
++            ('ltx_host_embedding_candidate.py', 'scripts/ltx_host_embedding_candidate.py'),
++            ('host_embedding_clip.py', 'scripts/host_embedding_clip_v2.py'),
++            ('host_embedding_placement_node.py', 'scripts/host_embedding_placement_node_v2.py')):
++        require(cpu['helper_sha256s'][filename] == source_hashes[canonical],
++                'CPU integration did not test this added source: ' + canonical)
++    require(resident['schema'] == 'ltx.host-embedding-resident-stdlib.v1'
++            and resident['status'] == 'passed-source-only-assembly' and resident['tests_run'] == 9
++            and resident['native_imports'] is False and resident['gpu_actions'] == 0
++            and resident['runtime_requests'] == 0, 'Resident nine-test source admission required')
++    require(resident['source_sha256s']['experiments/ltx25-b70/scripts/host_embedding_resident_node.py']
++            == source_hashes['host_embedding_resident_node.py'], 'Resident admission source differs')
++
++
+ def verify_packet(packet, expected_manifest_sha256):
+     packet = Path(packet)
+     require(packet.is_absolute() and packet.parent == ROOT and
+@@ -119,7 +178,7 @@
+             'Explicit manifest SHA256 required')
+     require(sha(manifest_path) == expected_manifest_sha256, 'Packet manifest changed')
+     manifest = json.loads(manifest_path.read_text())
+-    require(manifest['schema'] == 'ltx.na-axis-runtime-packet.v2', 'Launcher requires compiler packet')
++    require(manifest['schema'] == 'ltx.host-embedding-runtime-packet.v1', 'Launcher requires compiler packet')
+     require(manifest['source_commit'] == PIN, 'Core revision changed')
+     require(manifest['model_verification_sha256'] == MODEL_VERIFICATION_SHA256,
+             'Model identity changed')
+@@ -316,7 +375,7 @@
+             and onepass['cross_call_state_cache'] is False,
+             'One-pass validation contract changed')
+     # Decoder successor retains every packet08 numerical source and graph.
+-    require(manifest['parent_manifest_sha256'] == 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b', 'Unexpected packet08 parent')
++    require(manifest['na_axis_parent_manifest_sha256'] == 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b', 'Unexpected packet08 parent')
+     axis_parent_path = safe_path(packet, 'onepass-08-parent-manifest.json')
+     require(sha(axis_parent_path) == 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b', 'Packet08 parent manifest changed')
+     axis_parent = json.loads(axis_parent_path.read_text())
+@@ -362,6 +421,35 @@
+     for name, digest in correction['files'].items():
+         require(sha(safe_path(packet, 'provenance/na-axis-correction/' + name)) == digest,
+                 'Decoder failed09 correction evidence changed: ' + name)
++    # All packet10 numerical bytes, graphs, and NA closure remain inherited.
++    require(manifest['parent_manifest_sha256'] == 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a', 'Unexpected packet10 parent')
++    host_parent_path = safe_path(packet, 'na-axis-10-parent-manifest.json')
++    require(sha(host_parent_path) == 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a', 'Packet10 parent manifest changed')
++    host_parent = json.loads(host_parent_path.read_text())
++    require(host_parent['schema'] == 'ltx.na-axis-runtime-packet.v2', 'Unexpected packet10 schema')
++    require(manifest['runtime'] == host_parent['runtime'], 'Host embedding runtime changed')
++    require(manifest['na_axis'] == host_parent['na_axis']
++            and manifest['na_axis_correction'] == host_parent['na_axis_correction'], 'Inherited NA scope changed')
++    for name, expected in host_parent['files'].items():
++        target = 'provenance/host-embedding' + '/parent/' + name if name == 'launch/encoder_runtime_common.py' else name
++        require(manifest['files'].get(target) == expected, 'Inherited packet10 bytes changed: ' + name)
++    host = manifest['host_embedding']
++    require(host == {'modes': ['control', 'host-table'], 'component_node_class': 'LTXHostEmbeddingComponents', 'placement_node_class': 'LTXHostEmbeddingPlacementCheck', 'extension_sha256s': {'ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'host_embedding_clip.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'host_embedding_placement_node.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'host_embedding_resident_node.py': 'c34129c15bea2639a7916a6a4b2445428c22f2056cf9a7d419dc95b3b2c6ed7b'}, 'graphs': ['graphs/host-embedding-control.json', 'graphs/host-embedding-host-table.json'], 'transformer_dispatch': 'original', 'reserve_override': False, 'force_full_load': False, 'construction_device': 'cpu', 'encoder_load_device': 'xpu:2', 'table_device': 'cpu', 'cache_scope': 'one-shared-component-generation', 'prompt_encoding_cache': False, 'generated_output_cache': False, 'native_gpu_qualified': False, 'full_clip_qualified': False, 'speed_qualified': False, 'admissions': {'cpu_integration': {'path': 'provenance/host-embedding/cpu-integration-result.json', 'sha256': 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326'}, 'resident_assembly': {'path': 'provenance/host-embedding/resident-assembly-result.json', 'sha256': '4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35'}}, 'proof_source_sha256s': {'provenance/host-embedding/cpu-integration-result.json': 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326', 'provenance/host-embedding/resident-assembly-result.json': '4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35', 'provenance/host-embedding/cpu-startup-identity.json': 'fd398a2f242fbe0da9de81f4be05014b888886a1c9fa4cf314ca58ee7fe93d1e', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca', 'provenance/host-embedding/cpu-sources/scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'provenance/host-embedding/cpu-sources/scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu-fixture.py': '2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e', 'provenance/host-embedding/cpu-sources/scripts/cpu_comfy_import_policy_v1.py': '7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v2.py': '9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32', 'provenance/host-embedding/cpu-sources/scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'provenance/host-embedding/cpu-sources/native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce', 'provenance/host-embedding/cpu-sources/native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu.py': '6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d', 'provenance/host-embedding/resident-sources/scripts/test-host-embedding-resident-stdlib.py': '6f76cbc5e7257d92552a0c8b559b7aa8253a70c723a8fd2a03d9210dde108117'}, 'cpu_actual_source_sha256s': {'comfy/text_encoders/llama.py': '7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f', 'comfy/sd1_clip.py': 'fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8', 'comfy/ops.py': '6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0', 'comfy/model_patcher.py': '768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99', 'comfy/sd.py': '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0', 'scripts/encoder_diagnostics.py': 'f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a', 'comfy/model_management.py': 'ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd'}}, 'Host embedding admission/scope changed')
++    for name, expected in host['extension_sha256s'].items():
++        require(manifest['extension_sha256s'][name] == expected, 'Added extension pin differs: ' + name)
++    receipts = {}
++    for kind, row in host['admissions'].items():
++        require(sha(safe_path(packet, row['path'])) == row['sha256'], 'Admission receipt changed: ' + kind)
++        receipts[kind] = json.loads(safe_path(packet, row['path']).read_text())
++    validate_admissions(receipts['cpu_integration'], receipts['resident_assembly'], host['extension_sha256s'])
++    for name, expected in host['proof_source_sha256s'].items():
++        require(sha(safe_path(packet, name)) == expected, 'Admission proof source changed: ' + name)
++    for name, expected in host['cpu_actual_source_sha256s'].items():
++        require(sha(safe_path(packet, 'source/' + name)) == expected, 'CPU actual source closure differs: ' + name)
++    host_control = json.loads(safe_path(packet, 'graphs/control.json').read_text())
++    for mode in ('control', 'host-table'):
++        graph = json.loads(safe_path(packet, 'graphs/host-embedding-' + mode + '.json').read_text())
++        require(graph == graph_source(host_control, mode), 'Host graph differs beyond nodes420/421')
+     return manifest
+ 
+ 
