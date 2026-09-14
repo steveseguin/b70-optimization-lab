@@ -2,6 +2,10 @@
 
 Status: **CPU follow-up passed; inactive and unqualified on XPU.**
 
+The subsequent [executing-patcher lifecycle gate](ltx-block-compile-pre-run-lifecycle.md)
+addresses the remaining owner/late-registry limits below and passes 25 CPU
+checks. Its compiler metadata capture and GPU behavior remain unqualified.
+
 The original compiler adapter, route test and receipt01 remain unchanged.
 [The additive patch](../patches/ltx-block-compile-ownership-guard.patch) applies
 to `scripts/ltx_block_compile.py`. The [new test driver](../scripts/test-ltx-block-compile-route-guard.py)

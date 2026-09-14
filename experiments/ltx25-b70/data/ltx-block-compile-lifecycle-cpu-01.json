@@ -1,0 +1,47 @@
+{
+  "scope": "CPU lifecycle gate with native ModelPatcher.pre_run; one tiny native block compiled; no GPU/checkpoint/speed claim",
+  "passed": false,
+  "phase": "one_bound_native_capture",
+  "checks": [
+    "actual_native_pre_run_method",
+    "lifecycle_guard_first_original_placement_second",
+    "reject_missing_native_pre_run_before_compiled_compute",
+    "valid_native_pre_run_permits_dispatch",
+    "shared_clone_uses_its_own_native_pre_run",
+    "reject_replaced_top_level_model_before_compiled_compute",
+    "reject_replaced_diffusion_owner_before_compiled_compute",
+    "reject_replaced_secondary_owner_before_compiled_compute",
+    "reject_late_patches_before_compiled_compute",
+    "reject_late_weight_wrapper_patches_before_compiled_compute",
+    "reject_late_injections_before_compiled_compute",
+    "reject_late_wrappers_before_compiled_compute",
+    "reject_late_foreign_callback_before_compiled_compute",
+    "appended_foreign_callback_not_executed",
+    "removed_guard_rejected_before_routing_before_compiled_compute",
+    "late_patch_after_pre_run_rejected_before_compiled_compute",
+    "control_parent_cannot_dispatch_retained_compiler_before_compiled_compute",
+    "restored_control_has_only_native_callbacks",
+    "restored_control_has_original_routes",
+    "parent_callbacks_and_registered_ownership_preserved",
+    "restoration_leaves_compiled_sibling_dispatch_intact",
+    "guard_stores_no_strong_patcher_reference"
+  ],
+  "patch_order": [
+    "ltx-block-compile-ownership-guard.patch",
+    "ltx-block-compile-pre-run-lifecycle.patch"
+  ],
+  "sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-lifecycle.py": "f757f3e9d3fd969e403cdea9b3c9d2a0064343feee8228ab2e7489d82c706366",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_block_compile.py": "96871c075b1c9851882171b84223d7e2b2294a734f15242278f75cc462b21ea4",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-route.py": "1720e45b5296d8fa27d0451c737c1de4c1b28337ff82a06cadfa20857110f58f",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-ltx-block-compile-cpu.py": "f0928810e670e3d3a8bb2998c4cbe430557e796a6535426481e9047a0dc18aa0",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_patcher.py": "26da6710a7d84e8e98ea3e0f0bc07b88cfef3f99a7f7d59daa71e650512c6ed4",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/ltx-block-compile-ownership-guard.patch": "98ea91b751eefd6e200957115c7d277953e4751a24f5a2bc033177f0eb03df62",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/ltx-block-compile-pre-run-lifecycle.patch": "d1dce19a611d499c2fe47f6ac49b9ea808661ce4770d58858cabad909ffde0a1"
+  },
+  "effective_adapter_sha256": "9d50b42f59be1969de0b7b73141fee143539444e02a156aff053719f59dcc79b",
+  "torch": "2.14.0+xpu",
+  "max_parent_rss_kib": 1103664
+}

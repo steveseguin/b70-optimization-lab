@@ -32,6 +32,13 @@ options registry. Both stage shapes and seeds remain exact. The
 sizes and stored dtypes. Native-weight XPU correctness and speed remain
 unmeasured; none of this work changes the pending encoder v2 packet.
 
+The [executing-patcher lifecycle follow-up](notes/ltx-block-compile-pre-run-lifecycle.md)
+passed 25 CPU checks, closing the recorded owner/late-registry gaps before
+compiled dispatch. This gate uses a dispatch spy; lifecycle-metadata compiler
+capture and GPU overhead/correctness are still unqualified. The separate
+[continuation source audit](notes/continuation-source-boundary.md) identifies
+the upsampler's dropped anchor mask and audio-timing work required for streaming.
+
 User authorized speed optimization on September 13, 2026, while maintaining
 lossless quality. Target is first usable clip ideally immediately, otherwise
 within a few seconds. Preserve the native BF16, seed, resolution, frame count,

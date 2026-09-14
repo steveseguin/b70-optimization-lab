@@ -33,6 +33,13 @@ exactly and repeated identically, with two compiled graphs and no graph breaks.
 These are tiny CPU fixtures, not native-weight GPU or speed results. The
 [checkpoint header census](experiments/ltx25-b70/notes/native-block-header-census.md)
 records native block dimensions and mixed stored dtypes without loading weights.
+A subsequent [executing-patcher lifecycle gate](experiments/ltx25-b70/notes/ltx-block-compile-pre-run-lifecycle.md)
+passed 25 CPU checks for live owner anchoring, late changes, clone behavior and
+cleanup. It used a dispatch spy; compiler capture with the new lifecycle metadata
+and native GPU correctness/overhead remain unqualified. The cancelled optional
+CPU compilation attempt is preserved separately. The
+[continuation audit](experiments/ltx25-b70/notes/continuation-source-boundary.md)
+also records two-stage mask loss and unresolved audio timing before streaming.
 PID24848 remains idle, fault-free and unchanged; the encoder v2 maintenance
 approval is still pending. Compiler work is separate from that immutable packet.
 See the [route gate](experiments/ltx25-b70/notes/ltx-block-compile-route-cpu.md).
