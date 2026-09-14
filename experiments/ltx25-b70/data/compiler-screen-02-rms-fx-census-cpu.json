@@ -1,0 +1,2122 @@
+{
+  "scope": "Actual tiny CPU LTXAV block, Dynamo FX RMS census; backend only returns gm.forward; no Inductor",
+  "not_claimed": [
+    "XPU qualification",
+    "full checkpoint quality",
+    "generation speed",
+    "output resolution change"
+  ],
+  "source": "/home/steve/src/ComfyUI-ltx25-baseline",
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "source_hashes": {
+    "comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+  },
+  "helper_sha256": "0bb74cc2e7480777be6874612b18cbdc85bd976b7e985119daf6fa6d3fc9873e",
+  "passed": true,
+  "rows": [
+    {
+      "video_tokens": 64,
+      "seed": 17,
+      "outputs": [
+        {
+          "name": "video",
+          "shape": [
+            1,
+            64,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        },
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            26,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "video_tokens": 256,
+      "seed": 17,
+      "outputs": [
+        {
+          "name": "video",
+          "shape": [
+            1,
+            256,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        },
+        {
+          "name": "audio",
+          "shape": [
+            1,
+            26,
+            32
+          ],
+          "dtype": "torch.bfloat16",
+          "finite": true,
+          "exact_eager": true,
+          "exact_repeat": true,
+          "unequal_values": 0,
+          "max_abs_diff": 0.0
+        }
+      ]
+    }
+  ],
+  "graphs": [
+    {
+      "index": 0,
+      "rms_count": 15,
+      "rms_nodes": [
+        {
+          "name": "q_1",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q",
+              "meta": {
+                "shape": [
+                  1,
+                  64,
+                  32
+                ],
+                "stride": [
+                  2048,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn1_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              64,
+              32
+            ],
+            "stride": [
+              2048,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_1",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k",
+              "meta": {
+                "shape": [
+                  1,
+                  64,
+                  32
+                ],
+                "stride": [
+                  2048,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn1_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              64,
+              32
+            ],
+            "stride": [
+              2048,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_8",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_7",
+              "meta": {
+                "shape": [
+                  1,
+                  64,
+                  32
+                ],
+                "stride": [
+                  2048,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn2_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              64,
+              32
+            ],
+            "stride": [
+              2048,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_8",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_7",
+              "meta": {
+                "shape": [
+                  1,
+                  8,
+                  32
+                ],
+                "stride": [
+                  256,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn2_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              8,
+              32
+            ],
+            "stride": [
+              256,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "rms_norm_4",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "l_x_1_",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            null,
+            1e-06
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_12",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_11",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn1_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_12",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_11",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn1_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_19",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_18",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn2_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_19",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_18",
+              "meta": {
+                "shape": [
+                  1,
+                  8,
+                  32
+                ],
+                "stride": [
+                  256,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn2_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              8,
+              32
+            ],
+            "stride": [
+              256,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "ax_norm3",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "l_x_1_",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            null,
+            1e-06
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_23",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_22",
+              "meta": {
+                "shape": [
+                  1,
+                  64,
+                  32
+                ],
+                "stride": [
+                  2048,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              64,
+              32
+            ],
+            "stride": [
+              2048,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_23",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_22",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_28",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_27",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_28",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_27",
+              "meta": {
+                "shape": [
+                  1,
+                  64,
+                  32
+                ],
+                "stride": [
+                  2048,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              64,
+              32
+            ],
+            "stride": [
+              2048,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "rms_norm_14",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "l_x_1_",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            null,
+            1e-06
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        }
+      ],
+      "target_counts": {
+        ".L_x_1_": 1,
+        ".L_self_parameters_scale_shift_table_": 1,
+        ".L_x_0_": 1,
+        ".L_v_timestep_data": 1,
+        ".L_self_modules_attn1_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_k_norm_parameters_weight_": 1,
+        ".L_v_pe_0_": 1,
+        ".L_self_modules_attn1_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_prompt_scale_shift_table_": 1,
+        ".L_v_prompt_timestep_": 1,
+        ".L_v_context_": 1,
+        ".L_self_modules_attn2_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_k_norm_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_audio_scale_shift_table_": 1,
+        ".L_a_timestep_": 1,
+        ".L_self_modules_audio_attn1_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_k_norm_parameters_weight_": 1,
+        ".L_a_pe_0_": 1,
+        ".L_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_audio_prompt_scale_shift_table_": 1,
+        ".L_a_prompt_timestep_": 1,
+        ".L_a_context_": 1,
+        ".L_self_modules_audio_attn2_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_k_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_scale_shift_table_a2v_ca_audio_": 1,
+        ".L_a_cross_scale_shift_timestep_": 1,
+        ".L_self_parameters_scale_shift_table_a2v_ca_video_": 1,
+        ".L_v_cross_scale_shift_timestep_data": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_": 1,
+        ".L_v_cross_pe_0_": 1,
+        ".L_a_cross_pe_0_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_v_cross_gate_timestep_data": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_a_cross_gate_timestep_": 1,
+        ".L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_": 1,
+        ".L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_": 1,
+        ".L_self_modules_ff_modules_net_modules_2_parameters_weight_": 1,
+        ".L_self_modules_ff_modules_net_modules_2_parameters_bias_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_2_parameters_weight_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_2_parameters_bias_": 1,
+        ".reshape": 76,
+        "_operator.getitem": 80,
+        ".unsqueeze": 74,
+        ".to": 52,
+        "_operator.add": 30,
+        ".unbind": 18,
+        ".expand": 18,
+        "torch._ops.comfy_kitchen.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.rms_adaln": 6,
+        "torch._C._nn.linear": 34,
+        "torch._VariableFunctionsClass.rms_norm": 15,
+        "torch._ops.comfy_kitchen.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.apply_rope_split_half": 2,
+        ".transpose": 24,
+        "torch._C._nn.scaled_dot_product_attention": 6,
+        ".view": 12,
+        "torch._VariableFunctionsClass.sigmoid": 6,
+        "_operator.mul": 20,
+        "torch.nn.functional.dropout": 6,
+        ".addcmul_": 6,
+        ".add_": 2,
+        "torch._ops.comfy_kitchen.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.apply_rope_split_half1": 4,
+        "torch._C._nn.gelu": 2,
+        ".output": 1
+      },
+      "graph_code_sha256": "e87b4d8bf755f52ae44425686a16fbdac17ba70451228d07278e4dc6f1d66cb4",
+      "graph_code": "\n\n\ndef forward(self, L_x_1_ : torch.Tensor, L_self_parameters_scale_shift_table_ : torch.nn.parameter.Parameter, L_x_0_ : torch.Tensor, L_v_timestep_data : torch.Tensor, L_self_modules_attn1_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_v_pe_0_ : torch.Tensor, L_self_modules_attn1_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_prompt_scale_shift_table_ : torch.nn.parameter.Parameter, L_v_prompt_timestep_ : torch.Tensor, L_v_context_ : torch.Tensor, L_self_modules_attn2_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_audio_scale_shift_table_ : torch.nn.parameter.Parameter, L_a_timestep_ : torch.Tensor, L_self_modules_audio_attn1_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_a_pe_0_ : torch.Tensor, L_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_audio_prompt_scale_shift_table_ : torch.nn.parameter.Parameter, L_a_prompt_timestep_ : torch.Tensor, L_a_context_ : torch.Tensor, L_self_modules_audio_attn2_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_scale_shift_table_a2v_ca_audio_ : torch.nn.parameter.Parameter, L_a_cross_scale_shift_timestep_ : torch.Tensor, L_self_parameters_scale_shift_table_a2v_ca_video_ : torch.nn.parameter.Parameter, L_v_cross_scale_shift_timestep_data : torch.Tensor, L_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_v_cross_pe_0_ : torch.Tensor, L_a_cross_pe_0_ : torch.Tensor, L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_v_cross_gate_timestep_data : torch.Tensor, L_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_a_cross_gate_timestep_ : torch.Tensor, L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_ff_modules_net_modules_2_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_ff_modules_net_modules_2_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_2_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_2_parameters_bias_ : torch.nn.parameter.Parameter):\n    l_x_1_ = L_x_1_\n    l_self_parameters_scale_shift_table_ = L_self_parameters_scale_shift_table_\n    l_x_0_ = L_x_0_\n    l_v_timestep_data = L_v_timestep_data\n    l_self_modules_attn1_modules_to_q_parameters_weight_ = L_self_modules_attn1_modules_to_q_parameters_weight_\n    l_self_modules_attn1_modules_to_q_parameters_bias_ = L_self_modules_attn1_modules_to_q_parameters_bias_\n    l_self_modules_attn1_modules_to_k_parameters_weight_ = L_self_modules_attn1_modules_to_k_parameters_weight_\n    l_self_modules_attn1_modules_to_k_parameters_bias_ = L_self_modules_attn1_modules_to_k_parameters_bias_\n    l_self_modules_attn1_modules_to_v_parameters_weight_ = L_self_modules_attn1_modules_to_v_parameters_weight_\n    l_self_modules_attn1_modules_to_v_parameters_bias_ = L_self_modules_attn1_modules_to_v_parameters_bias_\n    l_self_modules_attn1_modules_q_norm_parameters_weight_ = L_self_modules_attn1_modules_q_norm_parameters_weight_\n    l_self_modules_attn1_modules_k_norm_parameters_weight_ = L_self_modules_attn1_modules_k_norm_parameters_weight_\n    l_v_pe_0_ = L_v_pe_0_\n    l_self_modules_attn1_modules_to_gate_logits_parameters_weight_ = L_self_modules_attn1_modules_to_gate_logits_parameters_weight_\n    l_self_modules_attn1_modules_to_gate_logits_parameters_bias_ = L_self_modules_attn1_modules_to_gate_logits_parameters_bias_\n    l_self_modules_attn1_modules_to_out_modules_0_parameters_weight_ = L_self_modules_attn1_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_attn1_modules_to_out_modules_0_parameters_bias_ = L_self_modules_attn1_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_prompt_scale_shift_table_ = L_self_parameters_prompt_scale_shift_table_\n    l_v_prompt_timestep_ = L_v_prompt_timestep_\n    l_v_context_ = L_v_context_\n    l_self_modules_attn2_modules_to_q_parameters_weight_ = L_self_modules_attn2_modules_to_q_parameters_weight_\n    l_self_modules_attn2_modules_to_q_parameters_bias_ = L_self_modules_attn2_modules_to_q_parameters_bias_\n    l_self_modules_attn2_modules_to_k_parameters_weight_ = L_self_modules_attn2_modules_to_k_parameters_weight_\n    l_self_modules_attn2_modules_to_k_parameters_bias_ = L_self_modules_attn2_modules_to_k_parameters_bias_\n    l_self_modules_attn2_modules_to_v_parameters_weight_ = L_self_modules_attn2_modules_to_v_parameters_weight_\n    l_self_modules_attn2_modules_to_v_parameters_bias_ = L_self_modules_attn2_modules_to_v_parameters_bias_\n    l_self_modules_attn2_modules_q_norm_parameters_weight_ = L_self_modules_attn2_modules_q_norm_parameters_weight_\n    l_self_modules_attn2_modules_k_norm_parameters_weight_ = L_self_modules_attn2_modules_k_norm_parameters_weight_\n    l_self_modules_attn2_modules_to_gate_logits_parameters_weight_ = L_self_modules_attn2_modules_to_gate_logits_parameters_weight_\n    l_self_modules_attn2_modules_to_gate_logits_parameters_bias_ = L_self_modules_attn2_modules_to_gate_logits_parameters_bias_\n    l_self_modules_attn2_modules_to_out_modules_0_parameters_weight_ = L_self_modules_attn2_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_attn2_modules_to_out_modules_0_parameters_bias_ = L_self_modules_attn2_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_audio_scale_shift_table_ = L_self_parameters_audio_scale_shift_table_\n    l_a_timestep_ = L_a_timestep_\n    l_self_modules_audio_attn1_modules_to_q_parameters_weight_ = L_self_modules_audio_attn1_modules_to_q_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_q_parameters_bias_ = L_self_modules_audio_attn1_modules_to_q_parameters_bias_\n    l_self_modules_audio_attn1_modules_to_k_parameters_weight_ = L_self_modules_audio_attn1_modules_to_k_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_k_parameters_bias_ = L_self_modules_audio_attn1_modules_to_k_parameters_bias_\n    l_self_modules_audio_attn1_modules_to_v_parameters_weight_ = L_self_modules_audio_attn1_modules_to_v_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_v_parameters_bias_ = L_self_modules_audio_attn1_modules_to_v_parameters_bias_\n    l_self_modules_audio_attn1_modules_q_norm_parameters_weight_ = L_self_modules_audio_attn1_modules_q_norm_parameters_weight_\n    l_self_modules_audio_attn1_modules_k_norm_parameters_weight_ = L_self_modules_audio_attn1_modules_k_norm_parameters_weight_\n    l_a_pe_0_ = L_a_pe_0_\n    l_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_ = L_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_ = L_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_\n    l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_ = L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_ = L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_audio_prompt_scale_shift_table_ = L_self_parameters_audio_prompt_scale_shift_table_\n    l_a_prompt_timestep_ = L_a_prompt_timestep_\n    l_a_context_ = L_a_context_\n    l_self_modules_audio_attn2_modules_to_q_parameters_weight_ = L_self_modules_audio_attn2_modules_to_q_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_q_parameters_bias_ = L_self_modules_audio_attn2_modules_to_q_parameters_bias_\n    l_self_modules_audio_attn2_modules_to_k_parameters_weight_ = L_self_modules_audio_attn2_modules_to_k_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_k_parameters_bias_ = L_self_modules_audio_attn2_modules_to_k_parameters_bias_\n    l_self_modules_audio_attn2_modules_to_v_parameters_weight_ = L_self_modules_audio_attn2_modules_to_v_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_v_parameters_bias_ = L_self_modules_audio_attn2_modules_to_v_parameters_bias_\n    l_self_modules_audio_attn2_modules_q_norm_parameters_weight_ = L_self_modules_audio_attn2_modules_q_norm_parameters_weight_\n    l_self_modules_audio_attn2_modules_k_norm_parameters_weight_ = L_self_modules_audio_attn2_modules_k_norm_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_ = L_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_ = L_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_\n    l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_ = L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_ = L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_scale_shift_table_a2v_ca_audio_ = L_self_parameters_scale_shift_table_a2v_ca_audio_\n    l_a_cross_scale_shift_timestep_ = L_a_cross_scale_shift_timestep_\n    l_self_parameters_scale_shift_table_a2v_ca_video_ = L_self_parameters_scale_shift_table_a2v_ca_video_\n    l_v_cross_scale_shift_timestep_data = L_v_cross_scale_shift_timestep_data\n    l_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_\n    l_v_cross_pe_0_ = L_v_cross_pe_0_\n    l_a_cross_pe_0_ = L_a_cross_pe_0_\n    l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_\n    l_v_cross_gate_timestep_data = L_v_cross_gate_timestep_data\n    l_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_\n    l_a_cross_gate_timestep_ = L_a_cross_gate_timestep_\n    l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_ = L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_\n    l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_ = L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_\n    l_self_modules_ff_modules_net_modules_2_parameters_weight_ = L_self_modules_ff_modules_net_modules_2_parameters_weight_\n    l_self_modules_ff_modules_net_modules_2_parameters_bias_ = L_self_modules_ff_modules_net_modules_2_parameters_bias_\n    l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_ = L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_\n    l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_ = L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_\n    l_self_modules_audio_ff_modules_net_modules_2_parameters_weight_ = L_self_modules_audio_ff_modules_net_modules_2_parameters_weight_\n    l_self_modules_audio_ff_modules_net_modules_2_parameters_bias_ = L_self_modules_audio_ff_modules_net_modules_2_parameters_bias_\n    reshape = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped = reshape[(slice(None, None, None), slice(None, None, None), slice(0, 2, None), slice(None, None, None))];  reshape = None\n    getitem_1 = l_self_parameters_scale_shift_table_[slice(0, 2, None)]\n    unsqueeze = getitem_1.unsqueeze(0);  getitem_1 = None\n    unsqueeze_1 = unsqueeze.unsqueeze(0);  unsqueeze = None\n    table_values = unsqueeze_1.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_1 = None\n    add = table_values + frame_reshaped;  table_values = frame_reshaped = None\n    unbind = add.unbind(dim = 2);  add = None\n    frame_val = unbind[0]\n    frame_val_1 = unbind[1];  unbind = None\n    unsqueeze_2 = frame_val.unsqueeze(2);  frame_val = None\n    expand = unsqueeze_2.expand(1, 4, 16, -1);  unsqueeze_2 = None\n    vshift_msa = expand.reshape(1, -1, 32);  expand = None\n    unsqueeze_3 = frame_val_1.unsqueeze(2);  frame_val_1 = None\n    expand_1 = unsqueeze_3.expand(1, 4, 16, -1);  unsqueeze_3 = None\n    vscale_msa = expand_1.reshape(1, -1, 32);  expand_1 = None\n    norm_vx = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, vscale_msa, vshift_msa, 1e-06);  vscale_msa = vshift_msa = None\n    bias = l_self_modules_attn1_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_q_parameters_bias_ = None\n    q = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_q_parameters_weight_, bias);  l_self_modules_attn1_modules_to_q_parameters_weight_ = bias = None\n    bias_1 = l_self_modules_attn1_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_k_parameters_bias_ = None\n    k = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_k_parameters_weight_, bias_1);  l_self_modules_attn1_modules_to_k_parameters_weight_ = bias_1 = None\n    bias_2 = l_self_modules_attn1_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_v_parameters_bias_ = None\n    v = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_v_parameters_weight_, bias_2);  l_self_modules_attn1_modules_to_v_parameters_weight_ = bias_2 = None\n    q_1 = torch.rms_norm(q, (32,), l_self_modules_attn1_modules_q_norm_parameters_weight_, 1e-05);  q = l_self_modules_attn1_modules_q_norm_parameters_weight_ = None\n    k_1 = torch.rms_norm(k, (32,), l_self_modules_attn1_modules_k_norm_parameters_weight_, 1e-05);  k = l_self_modules_attn1_modules_k_norm_parameters_weight_ = None\n    q_2 = q_1.reshape(1, 64, 1, -1);  q_1 = None\n    k_2 = k_1.reshape(1, 64, 1, -1);  k_1 = None\n    apply_rope_split_half = torch.ops.comfy_kitchen.apply_rope_split_half(q_2, k_2, l_v_pe_0_);  q_2 = k_2 = l_v_pe_0_ = None\n    q_3 = apply_rope_split_half[0]\n    k_3 = apply_rope_split_half[1];  apply_rope_split_half = None\n    q_4 = q_3.reshape((1, 64, 32));  q_3 = None\n    k_4 = k_3.reshape((1, 64, 32));  k_3 = None\n    unsqueeze_4 = q_4.unsqueeze(3);  q_4 = None\n    q_5 = unsqueeze_4.reshape(1, -1, 1, 32);  unsqueeze_4 = None\n    unsqueeze_5 = k_4.unsqueeze(3);  k_4 = None\n    k_5 = unsqueeze_5.reshape(1, -1, 1, 32);  unsqueeze_5 = None\n    unsqueeze_6 = v.unsqueeze(3);  v = None\n    v_1 = unsqueeze_6.reshape(1, -1, 1, 32);  unsqueeze_6 = None\n    q_6 = q_5.transpose(1, 2);  q_5 = None\n    k_6 = k_5.transpose(1, 2);  k_5 = None\n    v_2 = v_1.transpose(1, 2);  v_1 = None\n    out = torch._C._nn.scaled_dot_product_attention(q_6, k_6, v_2, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_6 = k_6 = v_2 = None\n    transpose_3 = out.transpose(1, 2);  out = None\n    out_1 = transpose_3.reshape(1, -1, 32);  transpose_3 = None\n    bias_3 = l_self_modules_attn1_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_gate_logits_parameters_weight_, bias_3);  norm_vx = l_self_modules_attn1_modules_to_gate_logits_parameters_weight_ = bias_3 = None\n    out_2 = out_1.view(1, 64, 1, 32);  out_1 = None\n    sigmoid = torch.sigmoid(gate_logits);  gate_logits = None\n    gates = 2.0 * sigmoid;  sigmoid = None\n    unsqueeze_7 = gates.unsqueeze(-1);  gates = None\n    out_3 = out_2 * unsqueeze_7;  out_2 = unsqueeze_7 = None\n    out_4 = out_3.view(1, 64, 32);  out_3 = None\n    bias_4 = l_self_modules_attn1_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_out_modules_0_parameters_bias_ = None\n    input_1 = torch._C._nn.linear(out_4, l_self_modules_attn1_modules_to_out_modules_0_parameters_weight_, bias_4);  out_4 = l_self_modules_attn1_modules_to_out_modules_0_parameters_weight_ = bias_4 = None\n    input_2 = torch.nn.functional.dropout(input_1, 0.0, False, False);  input_1 = None\n    reshape_11 = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped_1 = reshape_11[(slice(None, None, None), slice(None, None, None), slice(2, 3, None), slice(None, None, None))];  reshape_11 = None\n    getitem_7 = l_self_parameters_scale_shift_table_[slice(2, 3, None)]\n    unsqueeze_8 = getitem_7.unsqueeze(0);  getitem_7 = None\n    unsqueeze_9 = unsqueeze_8.unsqueeze(0);  unsqueeze_8 = None\n    table_values_1 = unsqueeze_9.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_9 = None\n    add_1 = table_values_1 + frame_reshaped_1;  table_values_1 = frame_reshaped_1 = None\n    unbind_1 = add_1.unbind(dim = 2);  add_1 = None\n    frame_val_2 = unbind_1[0];  unbind_1 = None\n    unsqueeze_10 = frame_val_2.unsqueeze(2);  frame_val_2 = None\n    expand_2 = unsqueeze_10.expand(1, 4, 16, -1);  unsqueeze_10 = None\n    vgate_msa = expand_2.reshape(1, -1, 32);  expand_2 = None\n    addcmul_ = l_x_0_.addcmul_(input_2, vgate_msa);  input_2 = vgate_msa = addcmul_ = None\n    reshape_13 = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped_2 = reshape_13[(slice(None, None, None), slice(None, None, None), slice(6, 9, None), slice(None, None, None))];  reshape_13 = None\n    getitem_10 = l_self_parameters_scale_shift_table_[slice(6, 9, None)]\n    unsqueeze_11 = getitem_10.unsqueeze(0);  getitem_10 = None\n    unsqueeze_12 = unsqueeze_11.unsqueeze(0);  unsqueeze_11 = None\n    table_values_2 = unsqueeze_12.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_12 = None\n    add_2 = table_values_2 + frame_reshaped_2;  table_values_2 = frame_reshaped_2 = None\n    unbind_2 = add_2.unbind(dim = 2);  add_2 = None\n    frame_val_3 = unbind_2[0]\n    frame_val_4 = unbind_2[1]\n    frame_val_5 = unbind_2[2];  unbind_2 = None\n    unsqueeze_13 = frame_val_3.unsqueeze(2);  frame_val_3 = None\n    expand_3 = unsqueeze_13.expand(1, 4, 16, -1);  unsqueeze_13 = None\n    shift_q = expand_3.reshape(1, -1, 32);  expand_3 = None\n    unsqueeze_14 = frame_val_4.unsqueeze(2);  frame_val_4 = None\n    expand_4 = unsqueeze_14.expand(1, 4, 16, -1);  unsqueeze_14 = None\n    scale_q = expand_4.reshape(1, -1, 32);  expand_4 = None\n    unsqueeze_15 = frame_val_5.unsqueeze(2);  frame_val_5 = None\n    expand_5 = unsqueeze_15.expand(1, 4, 16, -1);  unsqueeze_15 = None\n    gate = expand_5.reshape(1, -1, 32);  expand_5 = None\n    getitem_14 = l_self_parameters_prompt_scale_shift_table_[(None, None)];  l_self_parameters_prompt_scale_shift_table_ = None\n    to_8 = getitem_14.to(device = device(type='cpu'), dtype = torch.bfloat16);  getitem_14 = None\n    reshape_17 = l_v_prompt_timestep_.reshape(1, 1, 2, -1);  l_v_prompt_timestep_ = None\n    add_3 = to_8 + reshape_17;  to_8 = reshape_17 = None\n    unbind_3 = add_3.unbind(dim = 2);  add_3 = None\n    shift_kv = unbind_3[0]\n    scale_kv = unbind_3[1];  unbind_3 = None\n    attn_input = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, scale_q, shift_q, 1e-06);  scale_q = shift_q = None\n    add_4 = 1 + scale_kv;  scale_kv = None\n    mul_2 = l_v_context_ * add_4;  l_v_context_ = add_4 = None\n    encoder_hidden_states = mul_2 + shift_kv;  mul_2 = shift_kv = None\n    bias_5 = l_self_modules_attn2_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_q_parameters_bias_ = None\n    q_7 = torch._C._nn.linear(attn_input, l_self_modules_attn2_modules_to_q_parameters_weight_, bias_5);  l_self_modules_attn2_modules_to_q_parameters_weight_ = bias_5 = None\n    bias_6 = l_self_modules_attn2_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_k_parameters_bias_ = None\n    k_7 = torch._C._nn.linear(encoder_hidden_states, l_self_modules_attn2_modules_to_k_parameters_weight_, bias_6);  l_self_modules_attn2_modules_to_k_parameters_weight_ = bias_6 = None\n    bias_7 = l_self_modules_attn2_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_v_parameters_bias_ = None\n    v_3 = torch._C._nn.linear(encoder_hidden_states, l_self_modules_attn2_modules_to_v_parameters_weight_, bias_7);  encoder_hidden_states = l_self_modules_attn2_modules_to_v_parameters_weight_ = bias_7 = None\n    q_8 = torch.rms_norm(q_7, (32,), l_self_modules_attn2_modules_q_norm_parameters_weight_, 1e-05);  q_7 = l_self_modules_attn2_modules_q_norm_parameters_weight_ = None\n    k_8 = torch.rms_norm(k_7, (32,), l_self_modules_attn2_modules_k_norm_parameters_weight_, 1e-05);  k_7 = l_self_modules_attn2_modules_k_norm_parameters_weight_ = None\n    unsqueeze_16 = q_8.unsqueeze(3);  q_8 = None\n    q_9 = unsqueeze_16.reshape(1, -1, 1, 32);  unsqueeze_16 = None\n    unsqueeze_17 = k_8.unsqueeze(3);  k_8 = None\n    k_9 = unsqueeze_17.reshape(1, -1, 1, 32);  unsqueeze_17 = None\n    unsqueeze_18 = v_3.unsqueeze(3);  v_3 = None\n    v_4 = unsqueeze_18.reshape(1, -1, 1, 32);  unsqueeze_18 = None\n    q_10 = q_9.transpose(1, 2);  q_9 = None\n    k_10 = k_9.transpose(1, 2);  k_9 = None\n    v_5 = v_4.transpose(1, 2);  v_4 = None\n    out_5 = torch._C._nn.scaled_dot_product_attention(q_10, k_10, v_5, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_10 = k_10 = v_5 = None\n    transpose_7 = out_5.transpose(1, 2);  out_5 = None\n    out_6 = transpose_7.reshape(1, -1, 32);  transpose_7 = None\n    bias_8 = l_self_modules_attn2_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_1 = torch._C._nn.linear(attn_input, l_self_modules_attn2_modules_to_gate_logits_parameters_weight_, bias_8);  attn_input = l_self_modules_attn2_modules_to_gate_logits_parameters_weight_ = bias_8 = None\n    out_7 = out_6.view(1, 64, 1, 32);  out_6 = None\n    sigmoid_1 = torch.sigmoid(gate_logits_1);  gate_logits_1 = None\n    gates_1 = 2.0 * sigmoid_1;  sigmoid_1 = None\n    unsqueeze_19 = gates_1.unsqueeze(-1);  gates_1 = None\n    out_8 = out_7 * unsqueeze_19;  out_7 = unsqueeze_19 = None\n    out_9 = out_8.view(1, 64, 32);  out_8 = None\n    bias_9 = l_self_modules_attn2_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_out_modules_0_parameters_bias_ = None\n    input_3 = torch._C._nn.linear(out_9, l_self_modules_attn2_modules_to_out_modules_0_parameters_weight_, bias_9);  out_9 = l_self_modules_attn2_modules_to_out_modules_0_parameters_weight_ = bias_9 = None\n    input_4 = torch.nn.functional.dropout(input_3, 0.0, False, False);  input_3 = None\n    mul_5 = input_4 * gate;  input_4 = gate = None\n    add_ = l_x_0_.add_(mul_5);  mul_5 = add_ = None\n    getitem_17 = l_self_parameters_audio_scale_shift_table_[slice(0, 2, None)]\n    unsqueeze_20 = getitem_17.unsqueeze(0);  getitem_17 = None\n    unsqueeze_21 = unsqueeze_20.unsqueeze(0);  unsqueeze_20 = None\n    to_14 = unsqueeze_21.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_21 = None\n    reshape_22 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_18 = reshape_22[(slice(None, None, None), slice(None, None, None), slice(0, 2, None), slice(None, None, None))];  reshape_22 = None\n    add_6 = to_14 + getitem_18;  to_14 = getitem_18 = None\n    unbind_4 = add_6.unbind(dim = 2);  add_6 = None\n    ashift_msa = unbind_4[0]\n    ascale_msa = unbind_4[1];  unbind_4 = None\n    rms_norm_4 = torch.rms_norm(l_x_1_, (32,), None, 1e-06)\n    add_7 = 1 + ascale_msa;  ascale_msa = None\n    mul_6 = rms_norm_4 * add_7;  rms_norm_4 = add_7 = None\n    norm_ax = mul_6 + ashift_msa;  mul_6 = ashift_msa = None\n    bias_10 = l_self_modules_audio_attn1_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_q_parameters_bias_ = None\n    q_11 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_q_parameters_weight_, bias_10);  l_self_modules_audio_attn1_modules_to_q_parameters_weight_ = bias_10 = None\n    bias_11 = l_self_modules_audio_attn1_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_k_parameters_bias_ = None\n    k_11 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_k_parameters_weight_, bias_11);  l_self_modules_audio_attn1_modules_to_k_parameters_weight_ = bias_11 = None\n    bias_12 = l_self_modules_audio_attn1_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_v_parameters_bias_ = None\n    v_6 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_v_parameters_weight_, bias_12);  l_self_modules_audio_attn1_modules_to_v_parameters_weight_ = bias_12 = None\n    q_12 = torch.rms_norm(q_11, (32,), l_self_modules_audio_attn1_modules_q_norm_parameters_weight_, 1e-05);  q_11 = l_self_modules_audio_attn1_modules_q_norm_parameters_weight_ = None\n    k_12 = torch.rms_norm(k_11, (32,), l_self_modules_audio_attn1_modules_k_norm_parameters_weight_, 1e-05);  k_11 = l_self_modules_audio_attn1_modules_k_norm_parameters_weight_ = None\n    q_13 = q_12.reshape(1, 26, 1, -1);  q_12 = None\n    k_13 = k_12.reshape(1, 26, 1, -1);  k_12 = None\n    apply_rope_split_half_1 = torch.ops.comfy_kitchen.apply_rope_split_half(q_13, k_13, l_a_pe_0_);  q_13 = k_13 = l_a_pe_0_ = None\n    q_14 = apply_rope_split_half_1[0]\n    k_14 = apply_rope_split_half_1[1];  apply_rope_split_half_1 = None\n    q_15 = q_14.reshape((1, 26, 32));  q_14 = None\n    k_15 = k_14.reshape((1, 26, 32));  k_14 = None\n    unsqueeze_22 = q_15.unsqueeze(3);  q_15 = None\n    q_16 = unsqueeze_22.reshape(1, -1, 1, 32);  unsqueeze_22 = None\n    unsqueeze_23 = k_15.unsqueeze(3);  k_15 = None\n    k_16 = unsqueeze_23.reshape(1, -1, 1, 32);  unsqueeze_23 = None\n    unsqueeze_24 = v_6.unsqueeze(3);  v_6 = None\n    v_7 = unsqueeze_24.reshape(1, -1, 1, 32);  unsqueeze_24 = None\n    q_17 = q_16.transpose(1, 2);  q_16 = None\n    k_17 = k_16.transpose(1, 2);  k_16 = None\n    v_8 = v_7.transpose(1, 2);  v_7 = None\n    out_10 = torch._C._nn.scaled_dot_product_attention(q_17, k_17, v_8, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_17 = k_17 = v_8 = None\n    transpose_11 = out_10.transpose(1, 2);  out_10 = None\n    out_11 = transpose_11.reshape(1, -1, 32);  transpose_11 = None\n    bias_13 = l_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_2 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_, bias_13);  norm_ax = l_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_ = bias_13 = None\n    out_12 = out_11.view(1, 26, 1, 32);  out_11 = None\n    sigmoid_2 = torch.sigmoid(gate_logits_2);  gate_logits_2 = None\n    gates_2 = 2.0 * sigmoid_2;  sigmoid_2 = None\n    unsqueeze_25 = gates_2.unsqueeze(-1);  gates_2 = None\n    out_13 = out_12 * unsqueeze_25;  out_12 = unsqueeze_25 = None\n    out_14 = out_13.view(1, 26, 32);  out_13 = None\n    bias_14 = l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_ = None\n    input_5 = torch._C._nn.linear(out_14, l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_, bias_14);  out_14 = l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_ = bias_14 = None\n    input_6 = torch.nn.functional.dropout(input_5, 0.0, False, False);  input_5 = None\n    getitem_23 = l_self_parameters_audio_scale_shift_table_[slice(2, 3, None)]\n    unsqueeze_26 = getitem_23.unsqueeze(0);  getitem_23 = None\n    unsqueeze_27 = unsqueeze_26.unsqueeze(0);  unsqueeze_26 = None\n    to_20 = unsqueeze_27.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_27 = None\n    reshape_31 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_24 = reshape_31[(slice(None, None, None), slice(None, None, None), slice(2, 3, None), slice(None, None, None))];  reshape_31 = None\n    add_9 = to_20 + getitem_24;  to_20 = getitem_24 = None\n    unbind_5 = add_9.unbind(dim = 2);  add_9 = None\n    agate_msa = unbind_5[0];  unbind_5 = None\n    addcmul__1 = l_x_1_.addcmul_(input_6, agate_msa);  input_6 = agate_msa = addcmul__1 = None\n    getitem_26 = l_self_parameters_audio_scale_shift_table_[slice(6, 9, None)]\n    unsqueeze_28 = getitem_26.unsqueeze(0);  getitem_26 = None\n    unsqueeze_29 = unsqueeze_28.unsqueeze(0);  unsqueeze_28 = None\n    to_21 = unsqueeze_29.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_29 = None\n    reshape_32 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_27 = reshape_32[(slice(None, None, None), slice(None, None, None), slice(6, 9, None), slice(None, None, None))];  reshape_32 = None\n    add_10 = to_21 + getitem_27;  to_21 = getitem_27 = None\n    unbind_6 = add_10.unbind(dim = 2);  add_10 = None\n    shift_q_1 = unbind_6[0]\n    scale_q_1 = unbind_6[1]\n    gate_1 = unbind_6[2];  unbind_6 = None\n    getitem_31 = l_self_parameters_audio_prompt_scale_shift_table_[(None, None)];  l_self_parameters_audio_prompt_scale_shift_table_ = None\n    to_22 = getitem_31.to(device = device(type='cpu'), dtype = torch.bfloat16);  getitem_31 = None\n    reshape_33 = l_a_prompt_timestep_.reshape(1, 1, 2, -1);  l_a_prompt_timestep_ = None\n    add_11 = to_22 + reshape_33;  to_22 = reshape_33 = None\n    unbind_7 = add_11.unbind(dim = 2);  add_11 = None\n    shift_kv_1 = unbind_7[0]\n    scale_kv_1 = unbind_7[1];  unbind_7 = None\n    attn_input_1 = torch.ops.comfy_kitchen.rms_adaln(l_x_1_, scale_q_1, shift_q_1, 1e-06);  scale_q_1 = shift_q_1 = None\n    add_12 = 1 + scale_kv_1;  scale_kv_1 = None\n    mul_9 = l_a_context_ * add_12;  l_a_context_ = add_12 = None\n    encoder_hidden_states_1 = mul_9 + shift_kv_1;  mul_9 = shift_kv_1 = None\n    bias_15 = l_self_modules_audio_attn2_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_q_parameters_bias_ = None\n    q_18 = torch._C._nn.linear(attn_input_1, l_self_modules_audio_attn2_modules_to_q_parameters_weight_, bias_15);  l_self_modules_audio_attn2_modules_to_q_parameters_weight_ = bias_15 = None\n    bias_16 = l_self_modules_audio_attn2_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_k_parameters_bias_ = None\n    k_18 = torch._C._nn.linear(encoder_hidden_states_1, l_self_modules_audio_attn2_modules_to_k_parameters_weight_, bias_16);  l_self_modules_audio_attn2_modules_to_k_parameters_weight_ = bias_16 = None\n    bias_17 = l_self_modules_audio_attn2_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_v_parameters_bias_ = None\n    v_9 = torch._C._nn.linear(encoder_hidden_states_1, l_self_modules_audio_attn2_modules_to_v_parameters_weight_, bias_17);  encoder_hidden_states_1 = l_self_modules_audio_attn2_modules_to_v_parameters_weight_ = bias_17 = None\n    q_19 = torch.rms_norm(q_18, (32,), l_self_modules_audio_attn2_modules_q_norm_parameters_weight_, 1e-05);  q_18 = l_self_modules_audio_attn2_modules_q_norm_parameters_weight_ = None\n    k_19 = torch.rms_norm(k_18, (32,), l_self_modules_audio_attn2_modules_k_norm_parameters_weight_, 1e-05);  k_18 = l_self_modules_audio_attn2_modules_k_norm_parameters_weight_ = None\n    unsqueeze_30 = q_19.unsqueeze(3);  q_19 = None\n    q_20 = unsqueeze_30.reshape(1, -1, 1, 32);  unsqueeze_30 = None\n    unsqueeze_31 = k_19.unsqueeze(3);  k_19 = None\n    k_20 = unsqueeze_31.reshape(1, -1, 1, 32);  unsqueeze_31 = None\n    unsqueeze_32 = v_9.unsqueeze(3);  v_9 = None\n    v_10 = unsqueeze_32.reshape(1, -1, 1, 32);  unsqueeze_32 = None\n    q_21 = q_20.transpose(1, 2);  q_20 = None\n    k_21 = k_20.transpose(1, 2);  k_20 = None\n    v_11 = v_10.transpose(1, 2);  v_10 = None\n    out_15 = torch._C._nn.scaled_dot_product_attention(q_21, k_21, v_11, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_21 = k_21 = v_11 = None\n    transpose_15 = out_15.transpose(1, 2);  out_15 = None\n    out_16 = transpose_15.reshape(1, -1, 32);  transpose_15 = None\n    bias_18 = l_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_3 = torch._C._nn.linear(attn_input_1, l_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_, bias_18);  attn_input_1 = l_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_ = bias_18 = None\n    out_17 = out_16.view(1, 26, 1, 32);  out_16 = None\n    sigmoid_3 = torch.sigmoid(gate_logits_3);  gate_logits_3 = None\n    gates_3 = 2.0 * sigmoid_3;  sigmoid_3 = None\n    unsqueeze_33 = gates_3.unsqueeze(-1);  gates_3 = None\n    out_18 = out_17 * unsqueeze_33;  out_17 = unsqueeze_33 = None\n    out_19 = out_18.view(1, 26, 32);  out_18 = None\n    bias_19 = l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_ = None\n    input_7 = torch._C._nn.linear(out_19, l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_, bias_19);  out_19 = l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_ = bias_19 = None\n    input_8 = torch.nn.functional.dropout(input_7, 0.0, False, False);  input_7 = None\n    mul_12 = input_8 * gate_1;  input_8 = gate_1 = None\n    add__1 = l_x_1_.add_(mul_12);  mul_12 = add__1 = None\n    ax_norm3 = torch.rms_norm(l_x_1_, (32,), None, 1e-06)\n    getitem_34 = l_self_parameters_scale_shift_table_a2v_ca_audio_[(slice(None, 4, None), slice(None, None, None))]\n    getitem_35 = getitem_34[slice(None, None, None)];  getitem_34 = None\n    unsqueeze_34 = getitem_35.unsqueeze(0);  getitem_35 = None\n    unsqueeze_35 = unsqueeze_34.unsqueeze(0);  unsqueeze_34 = None\n    to_28 = unsqueeze_35.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_35 = None\n    reshape_38 = l_a_cross_scale_shift_timestep_.reshape(1, 26, 4, -1)\n    getitem_36 = reshape_38[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_38 = None\n    add_14 = to_28 + getitem_36;  to_28 = getitem_36 = None\n    unbind_8 = add_14.unbind(dim = 2);  add_14 = None\n    scale_ca_audio_hidden_states_a2v = unbind_8[0]\n    shift_ca_audio_hidden_states_a2v = unbind_8[1];  unbind_8 = None\n    getitem_41 = l_self_parameters_scale_shift_table_a2v_ca_video_[(slice(None, 4, None), slice(None, None, None))]\n    reshape_39 = l_v_cross_scale_shift_timestep_data.reshape(1, 4, 4, -1)\n    frame_reshaped_3 = reshape_39[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_39 = None\n    getitem_43 = getitem_41[slice(None, None, None)];  getitem_41 = None\n    unsqueeze_36 = getitem_43.unsqueeze(0);  getitem_43 = None\n    unsqueeze_37 = unsqueeze_36.unsqueeze(0);  unsqueeze_36 = None\n    table_values_3 = unsqueeze_37.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_37 = None\n    add_15 = table_values_3 + frame_reshaped_3;  table_values_3 = frame_reshaped_3 = None\n    unbind_9 = add_15.unbind(dim = 2);  add_15 = None\n    frame_val_6 = unbind_9[0]\n    frame_val_7 = unbind_9[1]\n    frame_val_8 = unbind_9[2]\n    frame_val_9 = unbind_9[3];  unbind_9 = None\n    unsqueeze_38 = frame_val_6.unsqueeze(2);  frame_val_6 = None\n    expand_6 = unsqueeze_38.expand(1, 4, 16, -1);  unsqueeze_38 = None\n    scale_ca_video_hidden_states_a2v_v = expand_6.reshape(1, -1, 32);  expand_6 = None\n    unsqueeze_39 = frame_val_7.unsqueeze(2);  frame_val_7 = None\n    expand_7 = unsqueeze_39.expand(1, 4, 16, -1);  unsqueeze_39 = None\n    shift_ca_video_hidden_states_a2v_v = expand_7.reshape(1, -1, 32);  expand_7 = None\n    unsqueeze_40 = frame_val_8.unsqueeze(2);  frame_val_8 = None\n    expand_8 = unsqueeze_40.expand(1, 4, 16, -1);  unsqueeze_40 = None\n    reshape_42 = expand_8.reshape(1, -1, 32);  expand_8 = reshape_42 = None\n    unsqueeze_41 = frame_val_9.unsqueeze(2);  frame_val_9 = None\n    expand_9 = unsqueeze_41.expand(1, 4, 16, -1);  unsqueeze_41 = None\n    reshape_43 = expand_9.reshape(1, -1, 32);  expand_9 = reshape_43 = None\n    vx_scaled = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, scale_ca_video_hidden_states_a2v_v, shift_ca_video_hidden_states_a2v_v, 1e-06);  scale_ca_video_hidden_states_a2v_v = shift_ca_video_hidden_states_a2v_v = None\n    add_16 = 1 + scale_ca_audio_hidden_states_a2v;  scale_ca_audio_hidden_states_a2v = None\n    mul_13 = ax_norm3 * add_16;  add_16 = None\n    ax_scaled = mul_13 + shift_ca_audio_hidden_states_a2v;  mul_13 = shift_ca_audio_hidden_states_a2v = None\n    bias_20 = l_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_ = None\n    q_22 = torch._C._nn.linear(vx_scaled, l_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_, bias_20);  l_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_ = bias_20 = None\n    bias_21 = l_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_ = None\n    k_22 = torch._C._nn.linear(ax_scaled, l_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_, bias_21);  l_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_ = bias_21 = None\n    bias_22 = l_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_ = None\n    v_12 = torch._C._nn.linear(ax_scaled, l_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_, bias_22);  ax_scaled = l_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_ = bias_22 = None\n    q_23 = torch.rms_norm(q_22, (32,), l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_, 1e-05);  q_22 = l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_ = None\n    k_23 = torch.rms_norm(k_22, (32,), l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_, 1e-05);  k_22 = l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_ = None\n    input_tensor = q_23.reshape(1, 64, 1, -1);  q_23 = None\n    output = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor, l_v_cross_pe_0_);  input_tensor = None\n    q_24 = output.reshape((1, 64, 32));  output = None\n    input_tensor_1 = k_23.reshape(1, 26, 1, -1);  k_23 = None\n    output_1 = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor_1, l_a_cross_pe_0_);  input_tensor_1 = None\n    k_24 = output_1.reshape((1, 26, 32));  output_1 = None\n    unsqueeze_42 = q_24.unsqueeze(3);  q_24 = None\n    q_25 = unsqueeze_42.reshape(1, -1, 1, 32);  unsqueeze_42 = None\n    unsqueeze_43 = k_24.unsqueeze(3);  k_24 = None\n    k_25 = unsqueeze_43.reshape(1, -1, 1, 32);  unsqueeze_43 = None\n    unsqueeze_44 = v_12.unsqueeze(3);  v_12 = None\n    v_13 = unsqueeze_44.reshape(1, -1, 1, 32);  unsqueeze_44 = None\n    q_26 = q_25.transpose(1, 2);  q_25 = None\n    k_26 = k_25.transpose(1, 2);  k_25 = None\n    v_14 = v_13.transpose(1, 2);  v_13 = None\n    out_20 = torch._C._nn.scaled_dot_product_attention(q_26, k_26, v_14, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_26 = k_26 = v_14 = None\n    transpose_19 = out_20.transpose(1, 2);  out_20 = None\n    out_21 = transpose_19.reshape(1, -1, 32);  transpose_19 = None\n    bias_23 = l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_4 = torch._C._nn.linear(vx_scaled, l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_, bias_23);  vx_scaled = l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_ = bias_23 = None\n    out_22 = out_21.view(1, 64, 1, 32);  out_21 = None\n    sigmoid_4 = torch.sigmoid(gate_logits_4);  gate_logits_4 = None\n    gates_4 = 2.0 * sigmoid_4;  sigmoid_4 = None\n    unsqueeze_45 = gates_4.unsqueeze(-1);  gates_4 = None\n    out_23 = out_22 * unsqueeze_45;  out_22 = unsqueeze_45 = None\n    out_24 = out_23.view(1, 64, 32);  out_23 = None\n    bias_24 = l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_ = None\n    input_9 = torch._C._nn.linear(out_24, l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_, bias_24);  out_24 = l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_ = bias_24 = None\n    input_10 = torch.nn.functional.dropout(input_9, 0.0, False, False);  input_9 = None\n    getitem_48 = l_self_parameters_scale_shift_table_a2v_ca_video_[(slice(4, None, None), slice(None, None, None))]\n    reshape_52 = l_v_cross_gate_timestep_data.reshape(1, 4, 1, -1);  l_v_cross_gate_timestep_data = None\n    frame_reshaped_4 = reshape_52[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_52 = None\n    getitem_50 = getitem_48[slice(None, None, None)];  getitem_48 = None\n    unsqueeze_46 = getitem_50.unsqueeze(0);  getitem_50 = None\n    unsqueeze_47 = unsqueeze_46.unsqueeze(0);  unsqueeze_46 = None\n    table_values_4 = unsqueeze_47.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_47 = None\n    add_18 = table_values_4 + frame_reshaped_4;  table_values_4 = frame_reshaped_4 = None\n    unbind_10 = add_18.unbind(dim = 2);  add_18 = None\n    frame_val_10 = unbind_10[0];  unbind_10 = None\n    unsqueeze_48 = frame_val_10.unsqueeze(2);  frame_val_10 = None\n    expand_10 = unsqueeze_48.expand(1, 4, 16, -1);  unsqueeze_48 = None\n    gate_out_a2v = expand_10.reshape(1, -1, 32);  expand_10 = None\n    addcmul__2 = l_x_0_.addcmul_(input_10, gate_out_a2v);  input_10 = gate_out_a2v = addcmul__2 = None\n    getitem_52 = l_self_parameters_scale_shift_table_a2v_ca_audio_[(slice(None, 4, None), slice(None, None, None))]\n    getitem_53 = getitem_52[slice(None, None, None)];  getitem_52 = None\n    unsqueeze_49 = getitem_53.unsqueeze(0);  getitem_53 = None\n    unsqueeze_50 = unsqueeze_49.unsqueeze(0);  unsqueeze_49 = None\n    to_36 = unsqueeze_50.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_50 = None\n    reshape_54 = l_a_cross_scale_shift_timestep_.reshape(1, 26, 4, -1);  l_a_cross_scale_shift_timestep_ = None\n    getitem_54 = reshape_54[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_54 = None\n    add_19 = to_36 + getitem_54;  to_36 = getitem_54 = None\n    unbind_11 = add_19.unbind(dim = 2);  add_19 = None\n    scale_ca_audio_hidden_states_v2a = unbind_11[2]\n    shift_ca_audio_hidden_states_v2a = unbind_11[3];  unbind_11 = None\n    getitem_59 = l_self_parameters_scale_shift_table_a2v_ca_video_[(slice(None, 4, None), slice(None, None, None))];  l_self_parameters_scale_shift_table_a2v_ca_video_ = None\n    reshape_55 = l_v_cross_scale_shift_timestep_data.reshape(1, 4, 4, -1);  l_v_cross_scale_shift_timestep_data = None\n    frame_reshaped_5 = reshape_55[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_55 = None\n    getitem_61 = getitem_59[slice(None, None, None)];  getitem_59 = None\n    unsqueeze_51 = getitem_61.unsqueeze(0);  getitem_61 = None\n    unsqueeze_52 = unsqueeze_51.unsqueeze(0);  unsqueeze_51 = None\n    table_values_5 = unsqueeze_52.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_52 = None\n    add_20 = table_values_5 + frame_reshaped_5;  table_values_5 = frame_reshaped_5 = None\n    unbind_12 = add_20.unbind(dim = 2);  add_20 = None\n    frame_val_11 = unbind_12[0]\n    frame_val_12 = unbind_12[1]\n    frame_val_13 = unbind_12[2]\n    frame_val_14 = unbind_12[3];  unbind_12 = None\n    unsqueeze_53 = frame_val_11.unsqueeze(2);  frame_val_11 = None\n    expand_11 = unsqueeze_53.expand(1, 4, 16, -1);  unsqueeze_53 = None\n    reshape_56 = expand_11.reshape(1, -1, 32);  expand_11 = reshape_56 = None\n    unsqueeze_54 = frame_val_12.unsqueeze(2);  frame_val_12 = None\n    expand_12 = unsqueeze_54.expand(1, 4, 16, -1);  unsqueeze_54 = None\n    reshape_57 = expand_12.reshape(1, -1, 32);  expand_12 = reshape_57 = None\n    unsqueeze_55 = frame_val_13.unsqueeze(2);  frame_val_13 = None\n    expand_13 = unsqueeze_55.expand(1, 4, 16, -1);  unsqueeze_55 = None\n    scale_ca_video_hidden_states_v2a = expand_13.reshape(1, -1, 32);  expand_13 = None\n    unsqueeze_56 = frame_val_14.unsqueeze(2);  frame_val_14 = None\n    expand_14 = unsqueeze_56.expand(1, 4, 16, -1);  unsqueeze_56 = None\n    shift_ca_video_hidden_states_v2a = expand_14.reshape(1, -1, 32);  expand_14 = None\n    add_21 = 1 + scale_ca_audio_hidden_states_v2a;  scale_ca_audio_hidden_states_v2a = None\n    mul_16 = ax_norm3 * add_21;  ax_norm3 = add_21 = None\n    ax_scaled_1 = mul_16 + shift_ca_audio_hidden_states_v2a;  mul_16 = shift_ca_audio_hidden_states_v2a = None\n    vx_scaled_1 = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, scale_ca_video_hidden_states_v2a, shift_ca_video_hidden_states_v2a, 1e-06);  scale_ca_video_hidden_states_v2a = shift_ca_video_hidden_states_v2a = None\n    bias_25 = l_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_ = None\n    q_27 = torch._C._nn.linear(ax_scaled_1, l_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_, bias_25);  l_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_ = bias_25 = None\n    bias_26 = l_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_ = None\n    k_27 = torch._C._nn.linear(vx_scaled_1, l_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_, bias_26);  l_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_ = bias_26 = None\n    bias_27 = l_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_ = None\n    v_15 = torch._C._nn.linear(vx_scaled_1, l_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_, bias_27);  vx_scaled_1 = l_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_ = bias_27 = None\n    q_28 = torch.rms_norm(q_27, (32,), l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_, 1e-05);  q_27 = l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_ = None\n    k_28 = torch.rms_norm(k_27, (32,), l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_, 1e-05);  k_27 = l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_ = None\n    input_tensor_2 = q_28.reshape(1, 26, 1, -1);  q_28 = None\n    output_2 = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor_2, l_a_cross_pe_0_);  input_tensor_2 = l_a_cross_pe_0_ = None\n    q_29 = output_2.reshape((1, 26, 32));  output_2 = None\n    input_tensor_3 = k_28.reshape(1, 64, 1, -1);  k_28 = None\n    output_3 = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor_3, l_v_cross_pe_0_);  input_tensor_3 = l_v_cross_pe_0_ = None\n    k_29 = output_3.reshape((1, 64, 32));  output_3 = None\n    unsqueeze_57 = q_29.unsqueeze(3);  q_29 = None\n    q_30 = unsqueeze_57.reshape(1, -1, 1, 32);  unsqueeze_57 = None\n    unsqueeze_58 = k_29.unsqueeze(3);  k_29 = None\n    k_30 = unsqueeze_58.reshape(1, -1, 1, 32);  unsqueeze_58 = None\n    unsqueeze_59 = v_15.unsqueeze(3);  v_15 = None\n    v_16 = unsqueeze_59.reshape(1, -1, 1, 32);  unsqueeze_59 = None\n    q_31 = q_30.transpose(1, 2);  q_30 = None\n    k_31 = k_30.transpose(1, 2);  k_30 = None\n    v_17 = v_16.transpose(1, 2);  v_16 = None\n    out_25 = torch._C._nn.scaled_dot_product_attention(q_31, k_31, v_17, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_31 = k_31 = v_17 = None\n    transpose_23 = out_25.transpose(1, 2);  out_25 = None\n    out_26 = transpose_23.reshape(1, -1, 32);  transpose_23 = None\n    bias_28 = l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_5 = torch._C._nn.linear(ax_scaled_1, l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_, bias_28);  ax_scaled_1 = l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_ = bias_28 = None\n    out_27 = out_26.view(1, 26, 1, 32);  out_26 = None\n    sigmoid_5 = torch.sigmoid(gate_logits_5);  gate_logits_5 = None\n    gates_5 = 2.0 * sigmoid_5;  sigmoid_5 = None\n    unsqueeze_60 = gates_5.unsqueeze(-1);  gates_5 = None\n    out_28 = out_27 * unsqueeze_60;  out_27 = unsqueeze_60 = None\n    out_29 = out_28.view(1, 26, 32);  out_28 = None\n    bias_29 = l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_ = None\n    input_11 = torch._C._nn.linear(out_29, l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_, bias_29);  out_29 = l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_ = bias_29 = None\n    input_12 = torch.nn.functional.dropout(input_11, 0.0, False, False);  input_11 = None\n    getitem_66 = l_self_parameters_scale_shift_table_a2v_ca_audio_[(slice(4, None, None), slice(None, None, None))];  l_self_parameters_scale_shift_table_a2v_ca_audio_ = None\n    getitem_67 = getitem_66[slice(None, None, None)];  getitem_66 = None\n    unsqueeze_61 = getitem_67.unsqueeze(0);  getitem_67 = None\n    unsqueeze_62 = unsqueeze_61.unsqueeze(0);  unsqueeze_61 = None\n    to_43 = unsqueeze_62.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_62 = None\n    reshape_68 = l_a_cross_gate_timestep_.reshape(1, 26, 1, -1);  l_a_cross_gate_timestep_ = None\n    getitem_68 = reshape_68[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_68 = None\n    add_23 = to_43 + getitem_68;  to_43 = getitem_68 = None\n    unbind_13 = add_23.unbind(dim = 2);  add_23 = None\n    gate_out_v2a = unbind_13[0];  unbind_13 = None\n    addcmul__3 = l_x_1_.addcmul_(input_12, gate_out_v2a);  input_12 = gate_out_v2a = addcmul__3 = None\n    reshape_69 = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped_6 = reshape_69[(slice(None, None, None), slice(None, None, None), slice(3, 5, None), slice(None, None, None))];  reshape_69 = None\n    getitem_71 = l_self_parameters_scale_shift_table_[slice(3, 5, None)]\n    unsqueeze_63 = getitem_71.unsqueeze(0);  getitem_71 = None\n    unsqueeze_64 = unsqueeze_63.unsqueeze(0);  unsqueeze_63 = None\n    table_values_6 = unsqueeze_64.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_64 = None\n    add_24 = table_values_6 + frame_reshaped_6;  table_values_6 = frame_reshaped_6 = None\n    unbind_14 = add_24.unbind(dim = 2);  add_24 = None\n    frame_val_15 = unbind_14[0]\n    frame_val_16 = unbind_14[1];  unbind_14 = None\n    unsqueeze_65 = frame_val_15.unsqueeze(2);  frame_val_15 = None\n    expand_15 = unsqueeze_65.expand(1, 4, 16, -1);  unsqueeze_65 = None\n    vshift_mlp = expand_15.reshape(1, -1, 32);  expand_15 = None\n    unsqueeze_66 = frame_val_16.unsqueeze(2);  frame_val_16 = None\n    expand_16 = unsqueeze_66.expand(1, 4, 16, -1);  unsqueeze_66 = None\n    vscale_mlp = expand_16.reshape(1, -1, 32);  expand_16 = None\n    vx_scaled_2 = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, vscale_mlp, vshift_mlp, 1e-06);  vscale_mlp = vshift_mlp = None\n    bias_30 = l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_ = None\n    linear_30 = torch._C._nn.linear(vx_scaled_2, l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_, bias_30);  vx_scaled_2 = l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_ = bias_30 = None\n    gelu = torch._C._nn.gelu(linear_30, approximate = 'tanh');  linear_30 = None\n    bias_31 = l_self_modules_ff_modules_net_modules_2_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_ff_modules_net_modules_2_parameters_bias_ = None\n    ff_out = torch._C._nn.linear(gelu, l_self_modules_ff_modules_net_modules_2_parameters_weight_, bias_31);  gelu = l_self_modules_ff_modules_net_modules_2_parameters_weight_ = bias_31 = None\n    reshape_72 = l_v_timestep_data.reshape(1, 4, 9, -1);  l_v_timestep_data = None\n    frame_reshaped_7 = reshape_72[(slice(None, None, None), slice(None, None, None), slice(5, 6, None), slice(None, None, None))];  reshape_72 = None\n    getitem_75 = l_self_parameters_scale_shift_table_[slice(5, 6, None)];  l_self_parameters_scale_shift_table_ = None\n    unsqueeze_67 = getitem_75.unsqueeze(0);  getitem_75 = None\n    unsqueeze_68 = unsqueeze_67.unsqueeze(0);  unsqueeze_67 = None\n    table_values_7 = unsqueeze_68.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_68 = None\n    add_25 = table_values_7 + frame_reshaped_7;  table_values_7 = frame_reshaped_7 = None\n    unbind_15 = add_25.unbind(dim = 2);  add_25 = None\n    frame_val_17 = unbind_15[0];  unbind_15 = None\n    unsqueeze_69 = frame_val_17.unsqueeze(2);  frame_val_17 = None\n    expand_17 = unsqueeze_69.expand(1, 4, 16, -1);  unsqueeze_69 = None\n    vgate_mlp = expand_17.reshape(1, -1, 32);  expand_17 = None\n    addcmul__4 = l_x_0_.addcmul_(ff_out, vgate_mlp);  l_x_0_ = ff_out = vgate_mlp = addcmul__4 = None\n    getitem_77 = l_self_parameters_audio_scale_shift_table_[slice(3, 5, None)]\n    unsqueeze_70 = getitem_77.unsqueeze(0);  getitem_77 = None\n    unsqueeze_71 = unsqueeze_70.unsqueeze(0);  unsqueeze_70 = None\n    to_48 = unsqueeze_71.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_71 = None\n    reshape_74 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_78 = reshape_74[(slice(None, None, None), slice(None, None, None), slice(3, 5, None), slice(None, None, None))];  reshape_74 = None\n    add_26 = to_48 + getitem_78;  to_48 = getitem_78 = None\n    unbind_16 = add_26.unbind(dim = 2);  add_26 = None\n    ashift_mlp = unbind_16[0]\n    ascale_mlp = unbind_16[1];  unbind_16 = None\n    rms_norm_14 = torch.rms_norm(l_x_1_, (32,), None, 1e-06)\n    add_27 = 1 + ascale_mlp;  ascale_mlp = None\n    mul_19 = rms_norm_14 * add_27;  rms_norm_14 = add_27 = None\n    ax_scaled_2 = mul_19 + ashift_mlp;  mul_19 = ashift_mlp = None\n    bias_32 = l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_ = None\n    linear_32 = torch._C._nn.linear(ax_scaled_2, l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_, bias_32);  ax_scaled_2 = l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_ = bias_32 = None\n    gelu_1 = torch._C._nn.gelu(linear_32, approximate = 'tanh');  linear_32 = None\n    bias_33 = l_self_modules_audio_ff_modules_net_modules_2_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_ff_modules_net_modules_2_parameters_bias_ = None\n    ff_out_1 = torch._C._nn.linear(gelu_1, l_self_modules_audio_ff_modules_net_modules_2_parameters_weight_, bias_33);  gelu_1 = l_self_modules_audio_ff_modules_net_modules_2_parameters_weight_ = bias_33 = None\n    getitem_81 = l_self_parameters_audio_scale_shift_table_[slice(5, 6, None)];  l_self_parameters_audio_scale_shift_table_ = None\n    unsqueeze_72 = getitem_81.unsqueeze(0);  getitem_81 = None\n    unsqueeze_73 = unsqueeze_72.unsqueeze(0);  unsqueeze_72 = None\n    to_51 = unsqueeze_73.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_73 = None\n    reshape_75 = l_a_timestep_.reshape(1, 26, 9, -1);  l_a_timestep_ = None\n    getitem_82 = reshape_75[(slice(None, None, None), slice(None, None, None), slice(5, 6, None), slice(None, None, None))];  reshape_75 = None\n    add_29 = to_51 + getitem_82;  to_51 = getitem_82 = None\n    unbind_17 = add_29.unbind(dim = 2);  add_29 = None\n    agate_mlp = unbind_17[0];  unbind_17 = None\n    addcmul__5 = l_x_1_.addcmul_(ff_out_1, agate_mlp);  l_x_1_ = ff_out_1 = agate_mlp = addcmul__5 = None\n    return ()\n    "
+    },
+    {
+      "index": 1,
+      "rms_count": 15,
+      "rms_nodes": [
+        {
+          "name": "q_1",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q",
+              "meta": {
+                "shape": [
+                  1,
+                  256,
+                  32
+                ],
+                "stride": [
+                  8192,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn1_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              256,
+              32
+            ],
+            "stride": [
+              8192,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_1",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k",
+              "meta": {
+                "shape": [
+                  1,
+                  256,
+                  32
+                ],
+                "stride": [
+                  8192,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn1_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              256,
+              32
+            ],
+            "stride": [
+              8192,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_8",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_7",
+              "meta": {
+                "shape": [
+                  1,
+                  256,
+                  32
+                ],
+                "stride": [
+                  8192,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn2_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              256,
+              32
+            ],
+            "stride": [
+              8192,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_8",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_7",
+              "meta": {
+                "shape": [
+                  1,
+                  8,
+                  32
+                ],
+                "stride": [
+                  256,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_attn2_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              8,
+              32
+            ],
+            "stride": [
+              256,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "rms_norm_4",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "l_x_1_",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            null,
+            1e-06
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_12",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_11",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn1_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_12",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_11",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn1_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_19",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_18",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn2_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_19",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_18",
+              "meta": {
+                "shape": [
+                  1,
+                  8,
+                  32
+                ],
+                "stride": [
+                  256,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_attn2_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              8,
+              32
+            ],
+            "stride": [
+              256,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "ax_norm3",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "l_x_1_",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            null,
+            1e-06
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_23",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_22",
+              "meta": {
+                "shape": [
+                  1,
+                  256,
+                  32
+                ],
+                "stride": [
+                  8192,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              256,
+              32
+            ],
+            "stride": [
+              8192,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_23",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_22",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "q_28",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "q_27",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "k_28",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "k_27",
+              "meta": {
+                "shape": [
+                  1,
+                  256,
+                  32
+                ],
+                "stride": [
+                  8192,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            {
+              "node": "l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_",
+              "meta": {
+                "shape": [
+                  32
+                ],
+                "stride": [
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            1e-05
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              256,
+              32
+            ],
+            "stride": [
+              8192,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        },
+        {
+          "name": "rms_norm_14",
+          "target": "torch._VariableFunctionsClass.rms_norm",
+          "is_torch_rms_norm": true,
+          "is_functional_rms_norm": false,
+          "args": [
+            {
+              "node": "l_x_1_",
+              "meta": {
+                "shape": [
+                  1,
+                  26,
+                  32
+                ],
+                "stride": [
+                  832,
+                  32,
+                  1
+                ],
+                "dtype": "torch.bfloat16",
+                "device": "cpu",
+                "contiguous": true
+              }
+            },
+            [
+              32
+            ],
+            null,
+            1e-06
+          ],
+          "kwargs": {},
+          "output_meta": {
+            "shape": [
+              1,
+              26,
+              32
+            ],
+            "stride": [
+              832,
+              32,
+              1
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu",
+            "contiguous": true
+          }
+        }
+      ],
+      "target_counts": {
+        ".L_x_1_": 1,
+        ".L_self_parameters_scale_shift_table_": 1,
+        ".L_x_0_": 1,
+        ".L_v_timestep_data": 1,
+        ".L_self_modules_attn1_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_k_norm_parameters_weight_": 1,
+        ".L_v_pe_0_": 1,
+        ".L_self_modules_attn1_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_attn1_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_attn1_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_prompt_scale_shift_table_": 1,
+        ".L_v_prompt_timestep_": 1,
+        ".L_v_context_": 1,
+        ".L_self_modules_attn2_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_k_norm_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_attn2_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_attn2_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_audio_scale_shift_table_": 1,
+        ".L_a_timestep_": 1,
+        ".L_self_modules_audio_attn1_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_k_norm_parameters_weight_": 1,
+        ".L_a_pe_0_": 1,
+        ".L_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_audio_prompt_scale_shift_table_": 1,
+        ".L_a_prompt_timestep_": 1,
+        ".L_a_context_": 1,
+        ".L_self_modules_audio_attn2_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_k_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_self_parameters_scale_shift_table_a2v_ca_audio_": 1,
+        ".L_a_cross_scale_shift_timestep_": 1,
+        ".L_self_parameters_scale_shift_table_a2v_ca_video_": 1,
+        ".L_v_cross_scale_shift_timestep_data": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_": 1,
+        ".L_v_cross_pe_0_": 1,
+        ".L_a_cross_pe_0_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_v_cross_gate_timestep_data": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_": 1,
+        ".L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_": 1,
+        ".L_a_cross_gate_timestep_": 1,
+        ".L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_": 1,
+        ".L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_": 1,
+        ".L_self_modules_ff_modules_net_modules_2_parameters_weight_": 1,
+        ".L_self_modules_ff_modules_net_modules_2_parameters_bias_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_2_parameters_weight_": 1,
+        ".L_self_modules_audio_ff_modules_net_modules_2_parameters_bias_": 1,
+        ".reshape": 76,
+        "_operator.getitem": 80,
+        ".unsqueeze": 74,
+        ".to": 52,
+        "_operator.add": 30,
+        ".unbind": 18,
+        ".expand": 18,
+        "torch._ops.comfy_kitchen.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.rms_adaln": 6,
+        "torch._C._nn.linear": 34,
+        "torch._VariableFunctionsClass.rms_norm": 15,
+        "torch._ops.comfy_kitchen.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.apply_rope_split_half": 2,
+        ".transpose": 24,
+        "torch._C._nn.scaled_dot_product_attention": 6,
+        ".view": 12,
+        "torch._VariableFunctionsClass.sigmoid": 6,
+        "_operator.mul": 20,
+        "torch.nn.functional.dropout": 6,
+        ".addcmul_": 6,
+        ".add_": 2,
+        "torch._ops.comfy_kitchen.pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.apply_rope_split_half1": 4,
+        "torch._C._nn.gelu": 2,
+        ".output": 1
+      },
+      "graph_code_sha256": "bc695d2ef1743c9d8c15a601eb6add7f8d5ebd2bfb0ab095454412f8758930c3",
+      "graph_code": "\n\n\ndef forward(self, L_x_1_ : torch.Tensor, L_self_parameters_scale_shift_table_ : torch.nn.parameter.Parameter, L_x_0_ : torch.Tensor, L_v_timestep_data : torch.Tensor, L_self_modules_attn1_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_v_pe_0_ : torch.Tensor, L_self_modules_attn1_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn1_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_prompt_scale_shift_table_ : torch.nn.parameter.Parameter, L_v_prompt_timestep_ : torch.Tensor, L_v_context_ : torch.Tensor, L_self_modules_attn2_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_attn2_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_audio_scale_shift_table_ : torch.nn.parameter.Parameter, L_a_timestep_ : torch.Tensor, L_self_modules_audio_attn1_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_a_pe_0_ : torch.Tensor, L_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_audio_prompt_scale_shift_table_ : torch.nn.parameter.Parameter, L_a_prompt_timestep_ : torch.Tensor, L_a_context_ : torch.Tensor, L_self_modules_audio_attn2_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_self_parameters_scale_shift_table_a2v_ca_audio_ : torch.nn.parameter.Parameter, L_a_cross_scale_shift_timestep_ : torch.Tensor, L_self_parameters_scale_shift_table_a2v_ca_video_ : torch.nn.parameter.Parameter, L_v_cross_scale_shift_timestep_data : torch.Tensor, L_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_v_cross_pe_0_ : torch.Tensor, L_a_cross_pe_0_ : torch.Tensor, L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_v_cross_gate_timestep_data : torch.Tensor, L_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_ : torch.nn.parameter.Parameter, L_a_cross_gate_timestep_ : torch.Tensor, L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_ff_modules_net_modules_2_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_ff_modules_net_modules_2_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_2_parameters_weight_ : torch.nn.parameter.Parameter, L_self_modules_audio_ff_modules_net_modules_2_parameters_bias_ : torch.nn.parameter.Parameter):\n    l_x_1_ = L_x_1_\n    l_self_parameters_scale_shift_table_ = L_self_parameters_scale_shift_table_\n    l_x_0_ = L_x_0_\n    l_v_timestep_data = L_v_timestep_data\n    l_self_modules_attn1_modules_to_q_parameters_weight_ = L_self_modules_attn1_modules_to_q_parameters_weight_\n    l_self_modules_attn1_modules_to_q_parameters_bias_ = L_self_modules_attn1_modules_to_q_parameters_bias_\n    l_self_modules_attn1_modules_to_k_parameters_weight_ = L_self_modules_attn1_modules_to_k_parameters_weight_\n    l_self_modules_attn1_modules_to_k_parameters_bias_ = L_self_modules_attn1_modules_to_k_parameters_bias_\n    l_self_modules_attn1_modules_to_v_parameters_weight_ = L_self_modules_attn1_modules_to_v_parameters_weight_\n    l_self_modules_attn1_modules_to_v_parameters_bias_ = L_self_modules_attn1_modules_to_v_parameters_bias_\n    l_self_modules_attn1_modules_q_norm_parameters_weight_ = L_self_modules_attn1_modules_q_norm_parameters_weight_\n    l_self_modules_attn1_modules_k_norm_parameters_weight_ = L_self_modules_attn1_modules_k_norm_parameters_weight_\n    l_v_pe_0_ = L_v_pe_0_\n    l_self_modules_attn1_modules_to_gate_logits_parameters_weight_ = L_self_modules_attn1_modules_to_gate_logits_parameters_weight_\n    l_self_modules_attn1_modules_to_gate_logits_parameters_bias_ = L_self_modules_attn1_modules_to_gate_logits_parameters_bias_\n    l_self_modules_attn1_modules_to_out_modules_0_parameters_weight_ = L_self_modules_attn1_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_attn1_modules_to_out_modules_0_parameters_bias_ = L_self_modules_attn1_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_prompt_scale_shift_table_ = L_self_parameters_prompt_scale_shift_table_\n    l_v_prompt_timestep_ = L_v_prompt_timestep_\n    l_v_context_ = L_v_context_\n    l_self_modules_attn2_modules_to_q_parameters_weight_ = L_self_modules_attn2_modules_to_q_parameters_weight_\n    l_self_modules_attn2_modules_to_q_parameters_bias_ = L_self_modules_attn2_modules_to_q_parameters_bias_\n    l_self_modules_attn2_modules_to_k_parameters_weight_ = L_self_modules_attn2_modules_to_k_parameters_weight_\n    l_self_modules_attn2_modules_to_k_parameters_bias_ = L_self_modules_attn2_modules_to_k_parameters_bias_\n    l_self_modules_attn2_modules_to_v_parameters_weight_ = L_self_modules_attn2_modules_to_v_parameters_weight_\n    l_self_modules_attn2_modules_to_v_parameters_bias_ = L_self_modules_attn2_modules_to_v_parameters_bias_\n    l_self_modules_attn2_modules_q_norm_parameters_weight_ = L_self_modules_attn2_modules_q_norm_parameters_weight_\n    l_self_modules_attn2_modules_k_norm_parameters_weight_ = L_self_modules_attn2_modules_k_norm_parameters_weight_\n    l_self_modules_attn2_modules_to_gate_logits_parameters_weight_ = L_self_modules_attn2_modules_to_gate_logits_parameters_weight_\n    l_self_modules_attn2_modules_to_gate_logits_parameters_bias_ = L_self_modules_attn2_modules_to_gate_logits_parameters_bias_\n    l_self_modules_attn2_modules_to_out_modules_0_parameters_weight_ = L_self_modules_attn2_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_attn2_modules_to_out_modules_0_parameters_bias_ = L_self_modules_attn2_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_audio_scale_shift_table_ = L_self_parameters_audio_scale_shift_table_\n    l_a_timestep_ = L_a_timestep_\n    l_self_modules_audio_attn1_modules_to_q_parameters_weight_ = L_self_modules_audio_attn1_modules_to_q_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_q_parameters_bias_ = L_self_modules_audio_attn1_modules_to_q_parameters_bias_\n    l_self_modules_audio_attn1_modules_to_k_parameters_weight_ = L_self_modules_audio_attn1_modules_to_k_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_k_parameters_bias_ = L_self_modules_audio_attn1_modules_to_k_parameters_bias_\n    l_self_modules_audio_attn1_modules_to_v_parameters_weight_ = L_self_modules_audio_attn1_modules_to_v_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_v_parameters_bias_ = L_self_modules_audio_attn1_modules_to_v_parameters_bias_\n    l_self_modules_audio_attn1_modules_q_norm_parameters_weight_ = L_self_modules_audio_attn1_modules_q_norm_parameters_weight_\n    l_self_modules_audio_attn1_modules_k_norm_parameters_weight_ = L_self_modules_audio_attn1_modules_k_norm_parameters_weight_\n    l_a_pe_0_ = L_a_pe_0_\n    l_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_ = L_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_ = L_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_\n    l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_ = L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_ = L_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_audio_prompt_scale_shift_table_ = L_self_parameters_audio_prompt_scale_shift_table_\n    l_a_prompt_timestep_ = L_a_prompt_timestep_\n    l_a_context_ = L_a_context_\n    l_self_modules_audio_attn2_modules_to_q_parameters_weight_ = L_self_modules_audio_attn2_modules_to_q_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_q_parameters_bias_ = L_self_modules_audio_attn2_modules_to_q_parameters_bias_\n    l_self_modules_audio_attn2_modules_to_k_parameters_weight_ = L_self_modules_audio_attn2_modules_to_k_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_k_parameters_bias_ = L_self_modules_audio_attn2_modules_to_k_parameters_bias_\n    l_self_modules_audio_attn2_modules_to_v_parameters_weight_ = L_self_modules_audio_attn2_modules_to_v_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_v_parameters_bias_ = L_self_modules_audio_attn2_modules_to_v_parameters_bias_\n    l_self_modules_audio_attn2_modules_q_norm_parameters_weight_ = L_self_modules_audio_attn2_modules_q_norm_parameters_weight_\n    l_self_modules_audio_attn2_modules_k_norm_parameters_weight_ = L_self_modules_audio_attn2_modules_k_norm_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_ = L_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_ = L_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_\n    l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_ = L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_ = L_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_\n    l_self_parameters_scale_shift_table_a2v_ca_audio_ = L_self_parameters_scale_shift_table_a2v_ca_audio_\n    l_a_cross_scale_shift_timestep_ = L_a_cross_scale_shift_timestep_\n    l_self_parameters_scale_shift_table_a2v_ca_video_ = L_self_parameters_scale_shift_table_a2v_ca_video_\n    l_v_cross_scale_shift_timestep_data = L_v_cross_scale_shift_timestep_data\n    l_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_\n    l_v_cross_pe_0_ = L_v_cross_pe_0_\n    l_a_cross_pe_0_ = L_a_cross_pe_0_\n    l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_\n    l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_ = L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_ = L_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_\n    l_v_cross_gate_timestep_data = L_v_cross_gate_timestep_data\n    l_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_\n    l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_ = L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_\n    l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_ = L_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_\n    l_a_cross_gate_timestep_ = L_a_cross_gate_timestep_\n    l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_ = L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_\n    l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_ = L_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_\n    l_self_modules_ff_modules_net_modules_2_parameters_weight_ = L_self_modules_ff_modules_net_modules_2_parameters_weight_\n    l_self_modules_ff_modules_net_modules_2_parameters_bias_ = L_self_modules_ff_modules_net_modules_2_parameters_bias_\n    l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_ = L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_\n    l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_ = L_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_\n    l_self_modules_audio_ff_modules_net_modules_2_parameters_weight_ = L_self_modules_audio_ff_modules_net_modules_2_parameters_weight_\n    l_self_modules_audio_ff_modules_net_modules_2_parameters_bias_ = L_self_modules_audio_ff_modules_net_modules_2_parameters_bias_\n    reshape = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped = reshape[(slice(None, None, None), slice(None, None, None), slice(0, 2, None), slice(None, None, None))];  reshape = None\n    getitem_1 = l_self_parameters_scale_shift_table_[slice(0, 2, None)]\n    unsqueeze = getitem_1.unsqueeze(0);  getitem_1 = None\n    unsqueeze_1 = unsqueeze.unsqueeze(0);  unsqueeze = None\n    table_values = unsqueeze_1.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_1 = None\n    add = table_values + frame_reshaped;  table_values = frame_reshaped = None\n    unbind = add.unbind(dim = 2);  add = None\n    frame_val = unbind[0]\n    frame_val_1 = unbind[1];  unbind = None\n    unsqueeze_2 = frame_val.unsqueeze(2);  frame_val = None\n    expand = unsqueeze_2.expand(1, 4, 64, -1);  unsqueeze_2 = None\n    vshift_msa = expand.reshape(1, -1, 32);  expand = None\n    unsqueeze_3 = frame_val_1.unsqueeze(2);  frame_val_1 = None\n    expand_1 = unsqueeze_3.expand(1, 4, 64, -1);  unsqueeze_3 = None\n    vscale_msa = expand_1.reshape(1, -1, 32);  expand_1 = None\n    norm_vx = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, vscale_msa, vshift_msa, 1e-06);  vscale_msa = vshift_msa = None\n    bias = l_self_modules_attn1_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_q_parameters_bias_ = None\n    q = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_q_parameters_weight_, bias);  l_self_modules_attn1_modules_to_q_parameters_weight_ = bias = None\n    bias_1 = l_self_modules_attn1_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_k_parameters_bias_ = None\n    k = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_k_parameters_weight_, bias_1);  l_self_modules_attn1_modules_to_k_parameters_weight_ = bias_1 = None\n    bias_2 = l_self_modules_attn1_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_v_parameters_bias_ = None\n    v = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_v_parameters_weight_, bias_2);  l_self_modules_attn1_modules_to_v_parameters_weight_ = bias_2 = None\n    q_1 = torch.rms_norm(q, (32,), l_self_modules_attn1_modules_q_norm_parameters_weight_, 1e-05);  q = l_self_modules_attn1_modules_q_norm_parameters_weight_ = None\n    k_1 = torch.rms_norm(k, (32,), l_self_modules_attn1_modules_k_norm_parameters_weight_, 1e-05);  k = l_self_modules_attn1_modules_k_norm_parameters_weight_ = None\n    q_2 = q_1.reshape(1, 256, 1, -1);  q_1 = None\n    k_2 = k_1.reshape(1, 256, 1, -1);  k_1 = None\n    apply_rope_split_half = torch.ops.comfy_kitchen.apply_rope_split_half(q_2, k_2, l_v_pe_0_);  q_2 = k_2 = l_v_pe_0_ = None\n    q_3 = apply_rope_split_half[0]\n    k_3 = apply_rope_split_half[1];  apply_rope_split_half = None\n    q_4 = q_3.reshape((1, 256, 32));  q_3 = None\n    k_4 = k_3.reshape((1, 256, 32));  k_3 = None\n    unsqueeze_4 = q_4.unsqueeze(3);  q_4 = None\n    q_5 = unsqueeze_4.reshape(1, -1, 1, 32);  unsqueeze_4 = None\n    unsqueeze_5 = k_4.unsqueeze(3);  k_4 = None\n    k_5 = unsqueeze_5.reshape(1, -1, 1, 32);  unsqueeze_5 = None\n    unsqueeze_6 = v.unsqueeze(3);  v = None\n    v_1 = unsqueeze_6.reshape(1, -1, 1, 32);  unsqueeze_6 = None\n    q_6 = q_5.transpose(1, 2);  q_5 = None\n    k_6 = k_5.transpose(1, 2);  k_5 = None\n    v_2 = v_1.transpose(1, 2);  v_1 = None\n    out = torch._C._nn.scaled_dot_product_attention(q_6, k_6, v_2, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_6 = k_6 = v_2 = None\n    transpose_3 = out.transpose(1, 2);  out = None\n    out_1 = transpose_3.reshape(1, -1, 32);  transpose_3 = None\n    bias_3 = l_self_modules_attn1_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits = torch._C._nn.linear(norm_vx, l_self_modules_attn1_modules_to_gate_logits_parameters_weight_, bias_3);  norm_vx = l_self_modules_attn1_modules_to_gate_logits_parameters_weight_ = bias_3 = None\n    out_2 = out_1.view(1, 256, 1, 32);  out_1 = None\n    sigmoid = torch.sigmoid(gate_logits);  gate_logits = None\n    gates = 2.0 * sigmoid;  sigmoid = None\n    unsqueeze_7 = gates.unsqueeze(-1);  gates = None\n    out_3 = out_2 * unsqueeze_7;  out_2 = unsqueeze_7 = None\n    out_4 = out_3.view(1, 256, 32);  out_3 = None\n    bias_4 = l_self_modules_attn1_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn1_modules_to_out_modules_0_parameters_bias_ = None\n    input_1 = torch._C._nn.linear(out_4, l_self_modules_attn1_modules_to_out_modules_0_parameters_weight_, bias_4);  out_4 = l_self_modules_attn1_modules_to_out_modules_0_parameters_weight_ = bias_4 = None\n    input_2 = torch.nn.functional.dropout(input_1, 0.0, False, False);  input_1 = None\n    reshape_11 = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped_1 = reshape_11[(slice(None, None, None), slice(None, None, None), slice(2, 3, None), slice(None, None, None))];  reshape_11 = None\n    getitem_7 = l_self_parameters_scale_shift_table_[slice(2, 3, None)]\n    unsqueeze_8 = getitem_7.unsqueeze(0);  getitem_7 = None\n    unsqueeze_9 = unsqueeze_8.unsqueeze(0);  unsqueeze_8 = None\n    table_values_1 = unsqueeze_9.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_9 = None\n    add_1 = table_values_1 + frame_reshaped_1;  table_values_1 = frame_reshaped_1 = None\n    unbind_1 = add_1.unbind(dim = 2);  add_1 = None\n    frame_val_2 = unbind_1[0];  unbind_1 = None\n    unsqueeze_10 = frame_val_2.unsqueeze(2);  frame_val_2 = None\n    expand_2 = unsqueeze_10.expand(1, 4, 64, -1);  unsqueeze_10 = None\n    vgate_msa = expand_2.reshape(1, -1, 32);  expand_2 = None\n    addcmul_ = l_x_0_.addcmul_(input_2, vgate_msa);  input_2 = vgate_msa = addcmul_ = None\n    reshape_13 = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped_2 = reshape_13[(slice(None, None, None), slice(None, None, None), slice(6, 9, None), slice(None, None, None))];  reshape_13 = None\n    getitem_10 = l_self_parameters_scale_shift_table_[slice(6, 9, None)]\n    unsqueeze_11 = getitem_10.unsqueeze(0);  getitem_10 = None\n    unsqueeze_12 = unsqueeze_11.unsqueeze(0);  unsqueeze_11 = None\n    table_values_2 = unsqueeze_12.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_12 = None\n    add_2 = table_values_2 + frame_reshaped_2;  table_values_2 = frame_reshaped_2 = None\n    unbind_2 = add_2.unbind(dim = 2);  add_2 = None\n    frame_val_3 = unbind_2[0]\n    frame_val_4 = unbind_2[1]\n    frame_val_5 = unbind_2[2];  unbind_2 = None\n    unsqueeze_13 = frame_val_3.unsqueeze(2);  frame_val_3 = None\n    expand_3 = unsqueeze_13.expand(1, 4, 64, -1);  unsqueeze_13 = None\n    shift_q = expand_3.reshape(1, -1, 32);  expand_3 = None\n    unsqueeze_14 = frame_val_4.unsqueeze(2);  frame_val_4 = None\n    expand_4 = unsqueeze_14.expand(1, 4, 64, -1);  unsqueeze_14 = None\n    scale_q = expand_4.reshape(1, -1, 32);  expand_4 = None\n    unsqueeze_15 = frame_val_5.unsqueeze(2);  frame_val_5 = None\n    expand_5 = unsqueeze_15.expand(1, 4, 64, -1);  unsqueeze_15 = None\n    gate = expand_5.reshape(1, -1, 32);  expand_5 = None\n    getitem_14 = l_self_parameters_prompt_scale_shift_table_[(None, None)];  l_self_parameters_prompt_scale_shift_table_ = None\n    to_8 = getitem_14.to(device = device(type='cpu'), dtype = torch.bfloat16);  getitem_14 = None\n    reshape_17 = l_v_prompt_timestep_.reshape(1, 1, 2, -1);  l_v_prompt_timestep_ = None\n    add_3 = to_8 + reshape_17;  to_8 = reshape_17 = None\n    unbind_3 = add_3.unbind(dim = 2);  add_3 = None\n    shift_kv = unbind_3[0]\n    scale_kv = unbind_3[1];  unbind_3 = None\n    attn_input = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, scale_q, shift_q, 1e-06);  scale_q = shift_q = None\n    add_4 = 1 + scale_kv;  scale_kv = None\n    mul_2 = l_v_context_ * add_4;  l_v_context_ = add_4 = None\n    encoder_hidden_states = mul_2 + shift_kv;  mul_2 = shift_kv = None\n    bias_5 = l_self_modules_attn2_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_q_parameters_bias_ = None\n    q_7 = torch._C._nn.linear(attn_input, l_self_modules_attn2_modules_to_q_parameters_weight_, bias_5);  l_self_modules_attn2_modules_to_q_parameters_weight_ = bias_5 = None\n    bias_6 = l_self_modules_attn2_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_k_parameters_bias_ = None\n    k_7 = torch._C._nn.linear(encoder_hidden_states, l_self_modules_attn2_modules_to_k_parameters_weight_, bias_6);  l_self_modules_attn2_modules_to_k_parameters_weight_ = bias_6 = None\n    bias_7 = l_self_modules_attn2_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_v_parameters_bias_ = None\n    v_3 = torch._C._nn.linear(encoder_hidden_states, l_self_modules_attn2_modules_to_v_parameters_weight_, bias_7);  encoder_hidden_states = l_self_modules_attn2_modules_to_v_parameters_weight_ = bias_7 = None\n    q_8 = torch.rms_norm(q_7, (32,), l_self_modules_attn2_modules_q_norm_parameters_weight_, 1e-05);  q_7 = l_self_modules_attn2_modules_q_norm_parameters_weight_ = None\n    k_8 = torch.rms_norm(k_7, (32,), l_self_modules_attn2_modules_k_norm_parameters_weight_, 1e-05);  k_7 = l_self_modules_attn2_modules_k_norm_parameters_weight_ = None\n    unsqueeze_16 = q_8.unsqueeze(3);  q_8 = None\n    q_9 = unsqueeze_16.reshape(1, -1, 1, 32);  unsqueeze_16 = None\n    unsqueeze_17 = k_8.unsqueeze(3);  k_8 = None\n    k_9 = unsqueeze_17.reshape(1, -1, 1, 32);  unsqueeze_17 = None\n    unsqueeze_18 = v_3.unsqueeze(3);  v_3 = None\n    v_4 = unsqueeze_18.reshape(1, -1, 1, 32);  unsqueeze_18 = None\n    q_10 = q_9.transpose(1, 2);  q_9 = None\n    k_10 = k_9.transpose(1, 2);  k_9 = None\n    v_5 = v_4.transpose(1, 2);  v_4 = None\n    out_5 = torch._C._nn.scaled_dot_product_attention(q_10, k_10, v_5, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_10 = k_10 = v_5 = None\n    transpose_7 = out_5.transpose(1, 2);  out_5 = None\n    out_6 = transpose_7.reshape(1, -1, 32);  transpose_7 = None\n    bias_8 = l_self_modules_attn2_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_1 = torch._C._nn.linear(attn_input, l_self_modules_attn2_modules_to_gate_logits_parameters_weight_, bias_8);  attn_input = l_self_modules_attn2_modules_to_gate_logits_parameters_weight_ = bias_8 = None\n    out_7 = out_6.view(1, 256, 1, 32);  out_6 = None\n    sigmoid_1 = torch.sigmoid(gate_logits_1);  gate_logits_1 = None\n    gates_1 = 2.0 * sigmoid_1;  sigmoid_1 = None\n    unsqueeze_19 = gates_1.unsqueeze(-1);  gates_1 = None\n    out_8 = out_7 * unsqueeze_19;  out_7 = unsqueeze_19 = None\n    out_9 = out_8.view(1, 256, 32);  out_8 = None\n    bias_9 = l_self_modules_attn2_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_attn2_modules_to_out_modules_0_parameters_bias_ = None\n    input_3 = torch._C._nn.linear(out_9, l_self_modules_attn2_modules_to_out_modules_0_parameters_weight_, bias_9);  out_9 = l_self_modules_attn2_modules_to_out_modules_0_parameters_weight_ = bias_9 = None\n    input_4 = torch.nn.functional.dropout(input_3, 0.0, False, False);  input_3 = None\n    mul_5 = input_4 * gate;  input_4 = gate = None\n    add_ = l_x_0_.add_(mul_5);  mul_5 = add_ = None\n    getitem_17 = l_self_parameters_audio_scale_shift_table_[slice(0, 2, None)]\n    unsqueeze_20 = getitem_17.unsqueeze(0);  getitem_17 = None\n    unsqueeze_21 = unsqueeze_20.unsqueeze(0);  unsqueeze_20 = None\n    to_14 = unsqueeze_21.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_21 = None\n    reshape_22 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_18 = reshape_22[(slice(None, None, None), slice(None, None, None), slice(0, 2, None), slice(None, None, None))];  reshape_22 = None\n    add_6 = to_14 + getitem_18;  to_14 = getitem_18 = None\n    unbind_4 = add_6.unbind(dim = 2);  add_6 = None\n    ashift_msa = unbind_4[0]\n    ascale_msa = unbind_4[1];  unbind_4 = None\n    rms_norm_4 = torch.rms_norm(l_x_1_, (32,), None, 1e-06)\n    add_7 = 1 + ascale_msa;  ascale_msa = None\n    mul_6 = rms_norm_4 * add_7;  rms_norm_4 = add_7 = None\n    norm_ax = mul_6 + ashift_msa;  mul_6 = ashift_msa = None\n    bias_10 = l_self_modules_audio_attn1_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_q_parameters_bias_ = None\n    q_11 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_q_parameters_weight_, bias_10);  l_self_modules_audio_attn1_modules_to_q_parameters_weight_ = bias_10 = None\n    bias_11 = l_self_modules_audio_attn1_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_k_parameters_bias_ = None\n    k_11 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_k_parameters_weight_, bias_11);  l_self_modules_audio_attn1_modules_to_k_parameters_weight_ = bias_11 = None\n    bias_12 = l_self_modules_audio_attn1_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_v_parameters_bias_ = None\n    v_6 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_v_parameters_weight_, bias_12);  l_self_modules_audio_attn1_modules_to_v_parameters_weight_ = bias_12 = None\n    q_12 = torch.rms_norm(q_11, (32,), l_self_modules_audio_attn1_modules_q_norm_parameters_weight_, 1e-05);  q_11 = l_self_modules_audio_attn1_modules_q_norm_parameters_weight_ = None\n    k_12 = torch.rms_norm(k_11, (32,), l_self_modules_audio_attn1_modules_k_norm_parameters_weight_, 1e-05);  k_11 = l_self_modules_audio_attn1_modules_k_norm_parameters_weight_ = None\n    q_13 = q_12.reshape(1, 26, 1, -1);  q_12 = None\n    k_13 = k_12.reshape(1, 26, 1, -1);  k_12 = None\n    apply_rope_split_half_1 = torch.ops.comfy_kitchen.apply_rope_split_half(q_13, k_13, l_a_pe_0_);  q_13 = k_13 = l_a_pe_0_ = None\n    q_14 = apply_rope_split_half_1[0]\n    k_14 = apply_rope_split_half_1[1];  apply_rope_split_half_1 = None\n    q_15 = q_14.reshape((1, 26, 32));  q_14 = None\n    k_15 = k_14.reshape((1, 26, 32));  k_14 = None\n    unsqueeze_22 = q_15.unsqueeze(3);  q_15 = None\n    q_16 = unsqueeze_22.reshape(1, -1, 1, 32);  unsqueeze_22 = None\n    unsqueeze_23 = k_15.unsqueeze(3);  k_15 = None\n    k_16 = unsqueeze_23.reshape(1, -1, 1, 32);  unsqueeze_23 = None\n    unsqueeze_24 = v_6.unsqueeze(3);  v_6 = None\n    v_7 = unsqueeze_24.reshape(1, -1, 1, 32);  unsqueeze_24 = None\n    q_17 = q_16.transpose(1, 2);  q_16 = None\n    k_17 = k_16.transpose(1, 2);  k_16 = None\n    v_8 = v_7.transpose(1, 2);  v_7 = None\n    out_10 = torch._C._nn.scaled_dot_product_attention(q_17, k_17, v_8, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_17 = k_17 = v_8 = None\n    transpose_11 = out_10.transpose(1, 2);  out_10 = None\n    out_11 = transpose_11.reshape(1, -1, 32);  transpose_11 = None\n    bias_13 = l_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_2 = torch._C._nn.linear(norm_ax, l_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_, bias_13);  norm_ax = l_self_modules_audio_attn1_modules_to_gate_logits_parameters_weight_ = bias_13 = None\n    out_12 = out_11.view(1, 26, 1, 32);  out_11 = None\n    sigmoid_2 = torch.sigmoid(gate_logits_2);  gate_logits_2 = None\n    gates_2 = 2.0 * sigmoid_2;  sigmoid_2 = None\n    unsqueeze_25 = gates_2.unsqueeze(-1);  gates_2 = None\n    out_13 = out_12 * unsqueeze_25;  out_12 = unsqueeze_25 = None\n    out_14 = out_13.view(1, 26, 32);  out_13 = None\n    bias_14 = l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_bias_ = None\n    input_5 = torch._C._nn.linear(out_14, l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_, bias_14);  out_14 = l_self_modules_audio_attn1_modules_to_out_modules_0_parameters_weight_ = bias_14 = None\n    input_6 = torch.nn.functional.dropout(input_5, 0.0, False, False);  input_5 = None\n    getitem_23 = l_self_parameters_audio_scale_shift_table_[slice(2, 3, None)]\n    unsqueeze_26 = getitem_23.unsqueeze(0);  getitem_23 = None\n    unsqueeze_27 = unsqueeze_26.unsqueeze(0);  unsqueeze_26 = None\n    to_20 = unsqueeze_27.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_27 = None\n    reshape_31 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_24 = reshape_31[(slice(None, None, None), slice(None, None, None), slice(2, 3, None), slice(None, None, None))];  reshape_31 = None\n    add_9 = to_20 + getitem_24;  to_20 = getitem_24 = None\n    unbind_5 = add_9.unbind(dim = 2);  add_9 = None\n    agate_msa = unbind_5[0];  unbind_5 = None\n    addcmul__1 = l_x_1_.addcmul_(input_6, agate_msa);  input_6 = agate_msa = addcmul__1 = None\n    getitem_26 = l_self_parameters_audio_scale_shift_table_[slice(6, 9, None)]\n    unsqueeze_28 = getitem_26.unsqueeze(0);  getitem_26 = None\n    unsqueeze_29 = unsqueeze_28.unsqueeze(0);  unsqueeze_28 = None\n    to_21 = unsqueeze_29.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_29 = None\n    reshape_32 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_27 = reshape_32[(slice(None, None, None), slice(None, None, None), slice(6, 9, None), slice(None, None, None))];  reshape_32 = None\n    add_10 = to_21 + getitem_27;  to_21 = getitem_27 = None\n    unbind_6 = add_10.unbind(dim = 2);  add_10 = None\n    shift_q_1 = unbind_6[0]\n    scale_q_1 = unbind_6[1]\n    gate_1 = unbind_6[2];  unbind_6 = None\n    getitem_31 = l_self_parameters_audio_prompt_scale_shift_table_[(None, None)];  l_self_parameters_audio_prompt_scale_shift_table_ = None\n    to_22 = getitem_31.to(device = device(type='cpu'), dtype = torch.bfloat16);  getitem_31 = None\n    reshape_33 = l_a_prompt_timestep_.reshape(1, 1, 2, -1);  l_a_prompt_timestep_ = None\n    add_11 = to_22 + reshape_33;  to_22 = reshape_33 = None\n    unbind_7 = add_11.unbind(dim = 2);  add_11 = None\n    shift_kv_1 = unbind_7[0]\n    scale_kv_1 = unbind_7[1];  unbind_7 = None\n    attn_input_1 = torch.ops.comfy_kitchen.rms_adaln(l_x_1_, scale_q_1, shift_q_1, 1e-06);  scale_q_1 = shift_q_1 = None\n    add_12 = 1 + scale_kv_1;  scale_kv_1 = None\n    mul_9 = l_a_context_ * add_12;  l_a_context_ = add_12 = None\n    encoder_hidden_states_1 = mul_9 + shift_kv_1;  mul_9 = shift_kv_1 = None\n    bias_15 = l_self_modules_audio_attn2_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_q_parameters_bias_ = None\n    q_18 = torch._C._nn.linear(attn_input_1, l_self_modules_audio_attn2_modules_to_q_parameters_weight_, bias_15);  l_self_modules_audio_attn2_modules_to_q_parameters_weight_ = bias_15 = None\n    bias_16 = l_self_modules_audio_attn2_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_k_parameters_bias_ = None\n    k_18 = torch._C._nn.linear(encoder_hidden_states_1, l_self_modules_audio_attn2_modules_to_k_parameters_weight_, bias_16);  l_self_modules_audio_attn2_modules_to_k_parameters_weight_ = bias_16 = None\n    bias_17 = l_self_modules_audio_attn2_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_v_parameters_bias_ = None\n    v_9 = torch._C._nn.linear(encoder_hidden_states_1, l_self_modules_audio_attn2_modules_to_v_parameters_weight_, bias_17);  encoder_hidden_states_1 = l_self_modules_audio_attn2_modules_to_v_parameters_weight_ = bias_17 = None\n    q_19 = torch.rms_norm(q_18, (32,), l_self_modules_audio_attn2_modules_q_norm_parameters_weight_, 1e-05);  q_18 = l_self_modules_audio_attn2_modules_q_norm_parameters_weight_ = None\n    k_19 = torch.rms_norm(k_18, (32,), l_self_modules_audio_attn2_modules_k_norm_parameters_weight_, 1e-05);  k_18 = l_self_modules_audio_attn2_modules_k_norm_parameters_weight_ = None\n    unsqueeze_30 = q_19.unsqueeze(3);  q_19 = None\n    q_20 = unsqueeze_30.reshape(1, -1, 1, 32);  unsqueeze_30 = None\n    unsqueeze_31 = k_19.unsqueeze(3);  k_19 = None\n    k_20 = unsqueeze_31.reshape(1, -1, 1, 32);  unsqueeze_31 = None\n    unsqueeze_32 = v_9.unsqueeze(3);  v_9 = None\n    v_10 = unsqueeze_32.reshape(1, -1, 1, 32);  unsqueeze_32 = None\n    q_21 = q_20.transpose(1, 2);  q_20 = None\n    k_21 = k_20.transpose(1, 2);  k_20 = None\n    v_11 = v_10.transpose(1, 2);  v_10 = None\n    out_15 = torch._C._nn.scaled_dot_product_attention(q_21, k_21, v_11, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_21 = k_21 = v_11 = None\n    transpose_15 = out_15.transpose(1, 2);  out_15 = None\n    out_16 = transpose_15.reshape(1, -1, 32);  transpose_15 = None\n    bias_18 = l_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_3 = torch._C._nn.linear(attn_input_1, l_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_, bias_18);  attn_input_1 = l_self_modules_audio_attn2_modules_to_gate_logits_parameters_weight_ = bias_18 = None\n    out_17 = out_16.view(1, 26, 1, 32);  out_16 = None\n    sigmoid_3 = torch.sigmoid(gate_logits_3);  gate_logits_3 = None\n    gates_3 = 2.0 * sigmoid_3;  sigmoid_3 = None\n    unsqueeze_33 = gates_3.unsqueeze(-1);  gates_3 = None\n    out_18 = out_17 * unsqueeze_33;  out_17 = unsqueeze_33 = None\n    out_19 = out_18.view(1, 26, 32);  out_18 = None\n    bias_19 = l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_bias_ = None\n    input_7 = torch._C._nn.linear(out_19, l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_, bias_19);  out_19 = l_self_modules_audio_attn2_modules_to_out_modules_0_parameters_weight_ = bias_19 = None\n    input_8 = torch.nn.functional.dropout(input_7, 0.0, False, False);  input_7 = None\n    mul_12 = input_8 * gate_1;  input_8 = gate_1 = None\n    add__1 = l_x_1_.add_(mul_12);  mul_12 = add__1 = None\n    ax_norm3 = torch.rms_norm(l_x_1_, (32,), None, 1e-06)\n    getitem_34 = l_self_parameters_scale_shift_table_a2v_ca_audio_[(slice(None, 4, None), slice(None, None, None))]\n    getitem_35 = getitem_34[slice(None, None, None)];  getitem_34 = None\n    unsqueeze_34 = getitem_35.unsqueeze(0);  getitem_35 = None\n    unsqueeze_35 = unsqueeze_34.unsqueeze(0);  unsqueeze_34 = None\n    to_28 = unsqueeze_35.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_35 = None\n    reshape_38 = l_a_cross_scale_shift_timestep_.reshape(1, 26, 4, -1)\n    getitem_36 = reshape_38[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_38 = None\n    add_14 = to_28 + getitem_36;  to_28 = getitem_36 = None\n    unbind_8 = add_14.unbind(dim = 2);  add_14 = None\n    scale_ca_audio_hidden_states_a2v = unbind_8[0]\n    shift_ca_audio_hidden_states_a2v = unbind_8[1];  unbind_8 = None\n    getitem_41 = l_self_parameters_scale_shift_table_a2v_ca_video_[(slice(None, 4, None), slice(None, None, None))]\n    reshape_39 = l_v_cross_scale_shift_timestep_data.reshape(1, 4, 4, -1)\n    frame_reshaped_3 = reshape_39[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_39 = None\n    getitem_43 = getitem_41[slice(None, None, None)];  getitem_41 = None\n    unsqueeze_36 = getitem_43.unsqueeze(0);  getitem_43 = None\n    unsqueeze_37 = unsqueeze_36.unsqueeze(0);  unsqueeze_36 = None\n    table_values_3 = unsqueeze_37.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_37 = None\n    add_15 = table_values_3 + frame_reshaped_3;  table_values_3 = frame_reshaped_3 = None\n    unbind_9 = add_15.unbind(dim = 2);  add_15 = None\n    frame_val_6 = unbind_9[0]\n    frame_val_7 = unbind_9[1]\n    frame_val_8 = unbind_9[2]\n    frame_val_9 = unbind_9[3];  unbind_9 = None\n    unsqueeze_38 = frame_val_6.unsqueeze(2);  frame_val_6 = None\n    expand_6 = unsqueeze_38.expand(1, 4, 64, -1);  unsqueeze_38 = None\n    scale_ca_video_hidden_states_a2v_v = expand_6.reshape(1, -1, 32);  expand_6 = None\n    unsqueeze_39 = frame_val_7.unsqueeze(2);  frame_val_7 = None\n    expand_7 = unsqueeze_39.expand(1, 4, 64, -1);  unsqueeze_39 = None\n    shift_ca_video_hidden_states_a2v_v = expand_7.reshape(1, -1, 32);  expand_7 = None\n    unsqueeze_40 = frame_val_8.unsqueeze(2);  frame_val_8 = None\n    expand_8 = unsqueeze_40.expand(1, 4, 64, -1);  unsqueeze_40 = None\n    reshape_42 = expand_8.reshape(1, -1, 32);  expand_8 = reshape_42 = None\n    unsqueeze_41 = frame_val_9.unsqueeze(2);  frame_val_9 = None\n    expand_9 = unsqueeze_41.expand(1, 4, 64, -1);  unsqueeze_41 = None\n    reshape_43 = expand_9.reshape(1, -1, 32);  expand_9 = reshape_43 = None\n    vx_scaled = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, scale_ca_video_hidden_states_a2v_v, shift_ca_video_hidden_states_a2v_v, 1e-06);  scale_ca_video_hidden_states_a2v_v = shift_ca_video_hidden_states_a2v_v = None\n    add_16 = 1 + scale_ca_audio_hidden_states_a2v;  scale_ca_audio_hidden_states_a2v = None\n    mul_13 = ax_norm3 * add_16;  add_16 = None\n    ax_scaled = mul_13 + shift_ca_audio_hidden_states_a2v;  mul_13 = shift_ca_audio_hidden_states_a2v = None\n    bias_20 = l_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_q_parameters_bias_ = None\n    q_22 = torch._C._nn.linear(vx_scaled, l_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_, bias_20);  l_self_modules_audio_to_video_attn_modules_to_q_parameters_weight_ = bias_20 = None\n    bias_21 = l_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_k_parameters_bias_ = None\n    k_22 = torch._C._nn.linear(ax_scaled, l_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_, bias_21);  l_self_modules_audio_to_video_attn_modules_to_k_parameters_weight_ = bias_21 = None\n    bias_22 = l_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_v_parameters_bias_ = None\n    v_12 = torch._C._nn.linear(ax_scaled, l_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_, bias_22);  ax_scaled = l_self_modules_audio_to_video_attn_modules_to_v_parameters_weight_ = bias_22 = None\n    q_23 = torch.rms_norm(q_22, (32,), l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_, 1e-05);  q_22 = l_self_modules_audio_to_video_attn_modules_q_norm_parameters_weight_ = None\n    k_23 = torch.rms_norm(k_22, (32,), l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_, 1e-05);  k_22 = l_self_modules_audio_to_video_attn_modules_k_norm_parameters_weight_ = None\n    input_tensor = q_23.reshape(1, 256, 1, -1);  q_23 = None\n    output = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor, l_v_cross_pe_0_);  input_tensor = None\n    q_24 = output.reshape((1, 256, 32));  output = None\n    input_tensor_1 = k_23.reshape(1, 26, 1, -1);  k_23 = None\n    output_1 = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor_1, l_a_cross_pe_0_);  input_tensor_1 = None\n    k_24 = output_1.reshape((1, 26, 32));  output_1 = None\n    unsqueeze_42 = q_24.unsqueeze(3);  q_24 = None\n    q_25 = unsqueeze_42.reshape(1, -1, 1, 32);  unsqueeze_42 = None\n    unsqueeze_43 = k_24.unsqueeze(3);  k_24 = None\n    k_25 = unsqueeze_43.reshape(1, -1, 1, 32);  unsqueeze_43 = None\n    unsqueeze_44 = v_12.unsqueeze(3);  v_12 = None\n    v_13 = unsqueeze_44.reshape(1, -1, 1, 32);  unsqueeze_44 = None\n    q_26 = q_25.transpose(1, 2);  q_25 = None\n    k_26 = k_25.transpose(1, 2);  k_25 = None\n    v_14 = v_13.transpose(1, 2);  v_13 = None\n    out_20 = torch._C._nn.scaled_dot_product_attention(q_26, k_26, v_14, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_26 = k_26 = v_14 = None\n    transpose_19 = out_20.transpose(1, 2);  out_20 = None\n    out_21 = transpose_19.reshape(1, -1, 32);  transpose_19 = None\n    bias_23 = l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_4 = torch._C._nn.linear(vx_scaled, l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_, bias_23);  vx_scaled = l_self_modules_audio_to_video_attn_modules_to_gate_logits_parameters_weight_ = bias_23 = None\n    out_22 = out_21.view(1, 256, 1, 32);  out_21 = None\n    sigmoid_4 = torch.sigmoid(gate_logits_4);  gate_logits_4 = None\n    gates_4 = 2.0 * sigmoid_4;  sigmoid_4 = None\n    unsqueeze_45 = gates_4.unsqueeze(-1);  gates_4 = None\n    out_23 = out_22 * unsqueeze_45;  out_22 = unsqueeze_45 = None\n    out_24 = out_23.view(1, 256, 32);  out_23 = None\n    bias_24 = l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_bias_ = None\n    input_9 = torch._C._nn.linear(out_24, l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_, bias_24);  out_24 = l_self_modules_audio_to_video_attn_modules_to_out_modules_0_parameters_weight_ = bias_24 = None\n    input_10 = torch.nn.functional.dropout(input_9, 0.0, False, False);  input_9 = None\n    getitem_48 = l_self_parameters_scale_shift_table_a2v_ca_video_[(slice(4, None, None), slice(None, None, None))]\n    reshape_52 = l_v_cross_gate_timestep_data.reshape(1, 4, 1, -1);  l_v_cross_gate_timestep_data = None\n    frame_reshaped_4 = reshape_52[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_52 = None\n    getitem_50 = getitem_48[slice(None, None, None)];  getitem_48 = None\n    unsqueeze_46 = getitem_50.unsqueeze(0);  getitem_50 = None\n    unsqueeze_47 = unsqueeze_46.unsqueeze(0);  unsqueeze_46 = None\n    table_values_4 = unsqueeze_47.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_47 = None\n    add_18 = table_values_4 + frame_reshaped_4;  table_values_4 = frame_reshaped_4 = None\n    unbind_10 = add_18.unbind(dim = 2);  add_18 = None\n    frame_val_10 = unbind_10[0];  unbind_10 = None\n    unsqueeze_48 = frame_val_10.unsqueeze(2);  frame_val_10 = None\n    expand_10 = unsqueeze_48.expand(1, 4, 64, -1);  unsqueeze_48 = None\n    gate_out_a2v = expand_10.reshape(1, -1, 32);  expand_10 = None\n    addcmul__2 = l_x_0_.addcmul_(input_10, gate_out_a2v);  input_10 = gate_out_a2v = addcmul__2 = None\n    getitem_52 = l_self_parameters_scale_shift_table_a2v_ca_audio_[(slice(None, 4, None), slice(None, None, None))]\n    getitem_53 = getitem_52[slice(None, None, None)];  getitem_52 = None\n    unsqueeze_49 = getitem_53.unsqueeze(0);  getitem_53 = None\n    unsqueeze_50 = unsqueeze_49.unsqueeze(0);  unsqueeze_49 = None\n    to_36 = unsqueeze_50.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_50 = None\n    reshape_54 = l_a_cross_scale_shift_timestep_.reshape(1, 26, 4, -1);  l_a_cross_scale_shift_timestep_ = None\n    getitem_54 = reshape_54[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_54 = None\n    add_19 = to_36 + getitem_54;  to_36 = getitem_54 = None\n    unbind_11 = add_19.unbind(dim = 2);  add_19 = None\n    scale_ca_audio_hidden_states_v2a = unbind_11[2]\n    shift_ca_audio_hidden_states_v2a = unbind_11[3];  unbind_11 = None\n    getitem_59 = l_self_parameters_scale_shift_table_a2v_ca_video_[(slice(None, 4, None), slice(None, None, None))];  l_self_parameters_scale_shift_table_a2v_ca_video_ = None\n    reshape_55 = l_v_cross_scale_shift_timestep_data.reshape(1, 4, 4, -1);  l_v_cross_scale_shift_timestep_data = None\n    frame_reshaped_5 = reshape_55[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_55 = None\n    getitem_61 = getitem_59[slice(None, None, None)];  getitem_59 = None\n    unsqueeze_51 = getitem_61.unsqueeze(0);  getitem_61 = None\n    unsqueeze_52 = unsqueeze_51.unsqueeze(0);  unsqueeze_51 = None\n    table_values_5 = unsqueeze_52.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_52 = None\n    add_20 = table_values_5 + frame_reshaped_5;  table_values_5 = frame_reshaped_5 = None\n    unbind_12 = add_20.unbind(dim = 2);  add_20 = None\n    frame_val_11 = unbind_12[0]\n    frame_val_12 = unbind_12[1]\n    frame_val_13 = unbind_12[2]\n    frame_val_14 = unbind_12[3];  unbind_12 = None\n    unsqueeze_53 = frame_val_11.unsqueeze(2);  frame_val_11 = None\n    expand_11 = unsqueeze_53.expand(1, 4, 64, -1);  unsqueeze_53 = None\n    reshape_56 = expand_11.reshape(1, -1, 32);  expand_11 = reshape_56 = None\n    unsqueeze_54 = frame_val_12.unsqueeze(2);  frame_val_12 = None\n    expand_12 = unsqueeze_54.expand(1, 4, 64, -1);  unsqueeze_54 = None\n    reshape_57 = expand_12.reshape(1, -1, 32);  expand_12 = reshape_57 = None\n    unsqueeze_55 = frame_val_13.unsqueeze(2);  frame_val_13 = None\n    expand_13 = unsqueeze_55.expand(1, 4, 64, -1);  unsqueeze_55 = None\n    scale_ca_video_hidden_states_v2a = expand_13.reshape(1, -1, 32);  expand_13 = None\n    unsqueeze_56 = frame_val_14.unsqueeze(2);  frame_val_14 = None\n    expand_14 = unsqueeze_56.expand(1, 4, 64, -1);  unsqueeze_56 = None\n    shift_ca_video_hidden_states_v2a = expand_14.reshape(1, -1, 32);  expand_14 = None\n    add_21 = 1 + scale_ca_audio_hidden_states_v2a;  scale_ca_audio_hidden_states_v2a = None\n    mul_16 = ax_norm3 * add_21;  ax_norm3 = add_21 = None\n    ax_scaled_1 = mul_16 + shift_ca_audio_hidden_states_v2a;  mul_16 = shift_ca_audio_hidden_states_v2a = None\n    vx_scaled_1 = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, scale_ca_video_hidden_states_v2a, shift_ca_video_hidden_states_v2a, 1e-06);  scale_ca_video_hidden_states_v2a = shift_ca_video_hidden_states_v2a = None\n    bias_25 = l_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_q_parameters_bias_ = None\n    q_27 = torch._C._nn.linear(ax_scaled_1, l_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_, bias_25);  l_self_modules_video_to_audio_attn_modules_to_q_parameters_weight_ = bias_25 = None\n    bias_26 = l_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_k_parameters_bias_ = None\n    k_27 = torch._C._nn.linear(vx_scaled_1, l_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_, bias_26);  l_self_modules_video_to_audio_attn_modules_to_k_parameters_weight_ = bias_26 = None\n    bias_27 = l_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_v_parameters_bias_ = None\n    v_15 = torch._C._nn.linear(vx_scaled_1, l_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_, bias_27);  vx_scaled_1 = l_self_modules_video_to_audio_attn_modules_to_v_parameters_weight_ = bias_27 = None\n    q_28 = torch.rms_norm(q_27, (32,), l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_, 1e-05);  q_27 = l_self_modules_video_to_audio_attn_modules_q_norm_parameters_weight_ = None\n    k_28 = torch.rms_norm(k_27, (32,), l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_, 1e-05);  k_27 = l_self_modules_video_to_audio_attn_modules_k_norm_parameters_weight_ = None\n    input_tensor_2 = q_28.reshape(1, 26, 1, -1);  q_28 = None\n    output_2 = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor_2, l_a_cross_pe_0_);  input_tensor_2 = l_a_cross_pe_0_ = None\n    q_29 = output_2.reshape((1, 26, 32));  output_2 = None\n    input_tensor_3 = k_28.reshape(1, 256, 1, -1);  k_28 = None\n    output_3 = torch.ops.comfy_kitchen.apply_rope_split_half1(input_tensor_3, l_v_cross_pe_0_);  input_tensor_3 = l_v_cross_pe_0_ = None\n    k_29 = output_3.reshape((1, 256, 32));  output_3 = None\n    unsqueeze_57 = q_29.unsqueeze(3);  q_29 = None\n    q_30 = unsqueeze_57.reshape(1, -1, 1, 32);  unsqueeze_57 = None\n    unsqueeze_58 = k_29.unsqueeze(3);  k_29 = None\n    k_30 = unsqueeze_58.reshape(1, -1, 1, 32);  unsqueeze_58 = None\n    unsqueeze_59 = v_15.unsqueeze(3);  v_15 = None\n    v_16 = unsqueeze_59.reshape(1, -1, 1, 32);  unsqueeze_59 = None\n    q_31 = q_30.transpose(1, 2);  q_30 = None\n    k_31 = k_30.transpose(1, 2);  k_30 = None\n    v_17 = v_16.transpose(1, 2);  v_16 = None\n    out_25 = torch._C._nn.scaled_dot_product_attention(q_31, k_31, v_17, attn_mask = None, dropout_p = 0.0, is_causal = False);  q_31 = k_31 = v_17 = None\n    transpose_23 = out_25.transpose(1, 2);  out_25 = None\n    out_26 = transpose_23.reshape(1, -1, 32);  transpose_23 = None\n    bias_28 = l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_bias_ = None\n    gate_logits_5 = torch._C._nn.linear(ax_scaled_1, l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_, bias_28);  ax_scaled_1 = l_self_modules_video_to_audio_attn_modules_to_gate_logits_parameters_weight_ = bias_28 = None\n    out_27 = out_26.view(1, 26, 1, 32);  out_26 = None\n    sigmoid_5 = torch.sigmoid(gate_logits_5);  gate_logits_5 = None\n    gates_5 = 2.0 * sigmoid_5;  sigmoid_5 = None\n    unsqueeze_60 = gates_5.unsqueeze(-1);  gates_5 = None\n    out_28 = out_27 * unsqueeze_60;  out_27 = unsqueeze_60 = None\n    out_29 = out_28.view(1, 26, 32);  out_28 = None\n    bias_29 = l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_bias_ = None\n    input_11 = torch._C._nn.linear(out_29, l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_, bias_29);  out_29 = l_self_modules_video_to_audio_attn_modules_to_out_modules_0_parameters_weight_ = bias_29 = None\n    input_12 = torch.nn.functional.dropout(input_11, 0.0, False, False);  input_11 = None\n    getitem_66 = l_self_parameters_scale_shift_table_a2v_ca_audio_[(slice(4, None, None), slice(None, None, None))];  l_self_parameters_scale_shift_table_a2v_ca_audio_ = None\n    getitem_67 = getitem_66[slice(None, None, None)];  getitem_66 = None\n    unsqueeze_61 = getitem_67.unsqueeze(0);  getitem_67 = None\n    unsqueeze_62 = unsqueeze_61.unsqueeze(0);  unsqueeze_61 = None\n    to_43 = unsqueeze_62.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_62 = None\n    reshape_68 = l_a_cross_gate_timestep_.reshape(1, 26, 1, -1);  l_a_cross_gate_timestep_ = None\n    getitem_68 = reshape_68[(slice(None, None, None), slice(None, None, None), slice(None, None, None), slice(None, None, None))];  reshape_68 = None\n    add_23 = to_43 + getitem_68;  to_43 = getitem_68 = None\n    unbind_13 = add_23.unbind(dim = 2);  add_23 = None\n    gate_out_v2a = unbind_13[0];  unbind_13 = None\n    addcmul__3 = l_x_1_.addcmul_(input_12, gate_out_v2a);  input_12 = gate_out_v2a = addcmul__3 = None\n    reshape_69 = l_v_timestep_data.reshape(1, 4, 9, -1)\n    frame_reshaped_6 = reshape_69[(slice(None, None, None), slice(None, None, None), slice(3, 5, None), slice(None, None, None))];  reshape_69 = None\n    getitem_71 = l_self_parameters_scale_shift_table_[slice(3, 5, None)]\n    unsqueeze_63 = getitem_71.unsqueeze(0);  getitem_71 = None\n    unsqueeze_64 = unsqueeze_63.unsqueeze(0);  unsqueeze_63 = None\n    table_values_6 = unsqueeze_64.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_64 = None\n    add_24 = table_values_6 + frame_reshaped_6;  table_values_6 = frame_reshaped_6 = None\n    unbind_14 = add_24.unbind(dim = 2);  add_24 = None\n    frame_val_15 = unbind_14[0]\n    frame_val_16 = unbind_14[1];  unbind_14 = None\n    unsqueeze_65 = frame_val_15.unsqueeze(2);  frame_val_15 = None\n    expand_15 = unsqueeze_65.expand(1, 4, 64, -1);  unsqueeze_65 = None\n    vshift_mlp = expand_15.reshape(1, -1, 32);  expand_15 = None\n    unsqueeze_66 = frame_val_16.unsqueeze(2);  frame_val_16 = None\n    expand_16 = unsqueeze_66.expand(1, 4, 64, -1);  unsqueeze_66 = None\n    vscale_mlp = expand_16.reshape(1, -1, 32);  expand_16 = None\n    vx_scaled_2 = torch.ops.comfy_kitchen.rms_adaln(l_x_0_, vscale_mlp, vshift_mlp, 1e-06);  vscale_mlp = vshift_mlp = None\n    bias_30 = l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_bias_ = None\n    linear_30 = torch._C._nn.linear(vx_scaled_2, l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_, bias_30);  vx_scaled_2 = l_self_modules_ff_modules_net_modules_0_modules_proj_parameters_weight_ = bias_30 = None\n    gelu = torch._C._nn.gelu(linear_30, approximate = 'tanh');  linear_30 = None\n    bias_31 = l_self_modules_ff_modules_net_modules_2_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_ff_modules_net_modules_2_parameters_bias_ = None\n    ff_out = torch._C._nn.linear(gelu, l_self_modules_ff_modules_net_modules_2_parameters_weight_, bias_31);  gelu = l_self_modules_ff_modules_net_modules_2_parameters_weight_ = bias_31 = None\n    reshape_72 = l_v_timestep_data.reshape(1, 4, 9, -1);  l_v_timestep_data = None\n    frame_reshaped_7 = reshape_72[(slice(None, None, None), slice(None, None, None), slice(5, 6, None), slice(None, None, None))];  reshape_72 = None\n    getitem_75 = l_self_parameters_scale_shift_table_[slice(5, 6, None)];  l_self_parameters_scale_shift_table_ = None\n    unsqueeze_67 = getitem_75.unsqueeze(0);  getitem_75 = None\n    unsqueeze_68 = unsqueeze_67.unsqueeze(0);  unsqueeze_67 = None\n    table_values_7 = unsqueeze_68.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_68 = None\n    add_25 = table_values_7 + frame_reshaped_7;  table_values_7 = frame_reshaped_7 = None\n    unbind_15 = add_25.unbind(dim = 2);  add_25 = None\n    frame_val_17 = unbind_15[0];  unbind_15 = None\n    unsqueeze_69 = frame_val_17.unsqueeze(2);  frame_val_17 = None\n    expand_17 = unsqueeze_69.expand(1, 4, 64, -1);  unsqueeze_69 = None\n    vgate_mlp = expand_17.reshape(1, -1, 32);  expand_17 = None\n    addcmul__4 = l_x_0_.addcmul_(ff_out, vgate_mlp);  l_x_0_ = ff_out = vgate_mlp = addcmul__4 = None\n    getitem_77 = l_self_parameters_audio_scale_shift_table_[slice(3, 5, None)]\n    unsqueeze_70 = getitem_77.unsqueeze(0);  getitem_77 = None\n    unsqueeze_71 = unsqueeze_70.unsqueeze(0);  unsqueeze_70 = None\n    to_48 = unsqueeze_71.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_71 = None\n    reshape_74 = l_a_timestep_.reshape(1, 26, 9, -1)\n    getitem_78 = reshape_74[(slice(None, None, None), slice(None, None, None), slice(3, 5, None), slice(None, None, None))];  reshape_74 = None\n    add_26 = to_48 + getitem_78;  to_48 = getitem_78 = None\n    unbind_16 = add_26.unbind(dim = 2);  add_26 = None\n    ashift_mlp = unbind_16[0]\n    ascale_mlp = unbind_16[1];  unbind_16 = None\n    rms_norm_14 = torch.rms_norm(l_x_1_, (32,), None, 1e-06)\n    add_27 = 1 + ascale_mlp;  ascale_mlp = None\n    mul_19 = rms_norm_14 * add_27;  rms_norm_14 = add_27 = None\n    ax_scaled_2 = mul_19 + ashift_mlp;  mul_19 = ashift_mlp = None\n    bias_32 = l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_bias_ = None\n    linear_32 = torch._C._nn.linear(ax_scaled_2, l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_, bias_32);  ax_scaled_2 = l_self_modules_audio_ff_modules_net_modules_0_modules_proj_parameters_weight_ = bias_32 = None\n    gelu_1 = torch._C._nn.gelu(linear_32, approximate = 'tanh');  linear_32 = None\n    bias_33 = l_self_modules_audio_ff_modules_net_modules_2_parameters_bias_.to(dtype = torch.bfloat16);  l_self_modules_audio_ff_modules_net_modules_2_parameters_bias_ = None\n    ff_out_1 = torch._C._nn.linear(gelu_1, l_self_modules_audio_ff_modules_net_modules_2_parameters_weight_, bias_33);  gelu_1 = l_self_modules_audio_ff_modules_net_modules_2_parameters_weight_ = bias_33 = None\n    getitem_81 = l_self_parameters_audio_scale_shift_table_[slice(5, 6, None)];  l_self_parameters_audio_scale_shift_table_ = None\n    unsqueeze_72 = getitem_81.unsqueeze(0);  getitem_81 = None\n    unsqueeze_73 = unsqueeze_72.unsqueeze(0);  unsqueeze_72 = None\n    to_51 = unsqueeze_73.to(device = device(type='cpu'), dtype = torch.bfloat16);  unsqueeze_73 = None\n    reshape_75 = l_a_timestep_.reshape(1, 26, 9, -1);  l_a_timestep_ = None\n    getitem_82 = reshape_75[(slice(None, None, None), slice(None, None, None), slice(5, 6, None), slice(None, None, None))];  reshape_75 = None\n    add_29 = to_51 + getitem_82;  to_51 = getitem_82 = None\n    unbind_17 = add_29.unbind(dim = 2);  add_29 = None\n    agate_mlp = unbind_17[0];  unbind_17 = None\n    addcmul__5 = l_x_1_.addcmul_(ff_out_1, agate_mlp);  l_x_1_ = ff_out_1 = agate_mlp = addcmul__5 = None\n    return ()\n    "
+    }
+  ],
+  "torch_imported": true,
+  "phase": "completed",
+  "block_dimensions": {
+    "video": 32,
+    "audio": 32,
+    "heads": 1,
+    "head_dim": 32,
+    "context_tokens": 8
+  },
+  "requested_video_tokens": [
+    64,
+    256
+  ],
+  "audio_tokens": 26,
+  "fullgraph": true,
+  "dynamic": false,
+  "guard_filter": null,
+  "backend": "census-only-gm.forward",
+  "fixture_script_sha256": "f0928810e670e3d3a8bb2998c4cbe430557e796a6535426481e9047a0dc18aa0",
+  "determinism": {
+    "enabled": true,
+    "warn_only": false,
+    "cpu_threads": 1,
+    "interop_threads": 1
+  },
+  "torch": "2.14.0+xpu",
+  "parameter_count": 43654,
+  "parameter_bytes": 87308,
+  "in_training": false,
+  "current_case": {
+    "video_tokens": 256,
+    "seed": 17
+  },
+  "dynamo_counters": {
+    "stats": {
+      "calls_captured": 986,
+      "unique_graphs": 2
+    }
+  },
+  "compiled_graphs": 2,
+  "torch_present_in_sys_modules": true,
+  "max_rss_kib": 1009880
+}

@@ -1,0 +1,88 @@
+{
+  "scope": "CPU RMS operator, FX rewrite and small compiled computation only",
+  "passed": true,
+  "xpu_tested": false,
+  "full_native_block_tested": false,
+  "rows": [
+    {
+      "width": 32,
+      "exact": true,
+      "finite": true,
+      "output_sha256": "db5f383b37acf3bbd0257600c1117ab9eef7817c54a888056e9567aa1d317e2b"
+    },
+    {
+      "width": 2048,
+      "exact": true,
+      "finite": true,
+      "output_sha256": "c54abe12252591d7e33dd138a1563e72bf28e68eb120f2fff2c26e1f42249b07"
+    },
+    {
+      "width": 4096,
+      "exact": true,
+      "finite": true,
+      "output_sha256": "0cb69a4bfea5599d0a6d31e9623cd9e1f73c3288d5ade5d223542cc1c4a0bc67"
+    }
+  ],
+  "checks": [
+    "native-torch.bfloat16-32-False-None",
+    "no-alias-torch.bfloat16-32-False-None",
+    "native-torch.bfloat16-32-False-1e-06",
+    "no-alias-torch.bfloat16-32-False-1e-06",
+    "native-torch.bfloat16-32-True-1e-05",
+    "no-alias-torch.bfloat16-32-True-1e-05",
+    "native-torch.bfloat16-2048-False-None",
+    "no-alias-torch.bfloat16-2048-False-None",
+    "native-torch.bfloat16-2048-False-1e-06",
+    "no-alias-torch.bfloat16-2048-False-1e-06",
+    "native-torch.bfloat16-2048-True-1e-05",
+    "no-alias-torch.bfloat16-2048-True-1e-05",
+    "native-torch.bfloat16-4096-False-None",
+    "no-alias-torch.bfloat16-4096-False-None",
+    "native-torch.bfloat16-4096-False-1e-06",
+    "no-alias-torch.bfloat16-4096-False-1e-06",
+    "native-torch.bfloat16-4096-True-1e-05",
+    "no-alias-torch.bfloat16-4096-True-1e-05",
+    "native-torch.float32-32-False-None",
+    "no-alias-torch.float32-32-False-None",
+    "native-torch.float32-32-False-1e-06",
+    "no-alias-torch.float32-32-False-1e-06",
+    "native-torch.float32-32-True-1e-05",
+    "no-alias-torch.float32-32-True-1e-05",
+    "native-torch.float32-2048-False-None",
+    "no-alias-torch.float32-2048-False-None",
+    "native-torch.float32-2048-False-1e-06",
+    "no-alias-torch.float32-2048-False-1e-06",
+    "native-torch.float32-2048-True-1e-05",
+    "no-alias-torch.float32-2048-True-1e-05",
+    "native-torch.float32-4096-False-None",
+    "no-alias-torch.float32-4096-False-None",
+    "native-torch.float32-4096-False-1e-06",
+    "no-alias-torch.float32-4096-False-1e-06",
+    "native-torch.float32-4096-True-1e-05",
+    "no-alias-torch.float32-4096-True-1e-05",
+    "reject-noncontiguous-input",
+    "reject-invalid-epsilon-nan",
+    "reject-invalid-epsilon-inf",
+    "reject-invalid-epsilon--1.0",
+    "fake-canonical-contiguous-stride",
+    "original-graph-unchanged",
+    "parameter-object-preserved",
+    "weight-and-epsilon-preserved",
+    "rewritten-weighted-graph-exact",
+    "reject-wrong-site-count",
+    "reject-zero-sites",
+    "compiled-exact-32",
+    "compiled-exact-2048",
+    "compiled-exact-4096",
+    "bound-options-not-mutated"
+  ],
+  "torch": "2.14.0+xpu",
+  "source_sha256": {
+    "test-native-rms-backend-cpu.py": "155966e3fe87e2c8979c8df80026f93129d6facafb034f6bfba908971bdbabf0",
+    "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb"
+  },
+  "determinism": {
+    "enabled": true,
+    "warn_only": false
+  }
+}
