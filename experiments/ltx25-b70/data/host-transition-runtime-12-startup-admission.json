@@ -1,0 +1,496 @@
+{
+  "status": "passed-startup-admission",
+  "identity": {
+    "pid": 11888,
+    "proc_start_ticks": "219666",
+    "boot_id": "5414a640-c223-4a67-baa2-ec2f4c4c5917",
+    "start_utc": "2026-09-14 19:49:17 UTC",
+    "devices": [
+      {
+        "ordinal": 0,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      },
+      {
+        "ordinal": 1,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      },
+      {
+        "ordinal": 2,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4300-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      },
+      {
+        "ordinal": 3,
+        "properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-4700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, last_level_cache_size=24576KB, max_compute_units=256, memory_clock_rate=2800MHz, memory_bus_width=64-bit, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1, is_integrated_gpu=0)",
+        "copy_compute": "passed"
+      }
+    ],
+    "torch": "2.14.0+xpu",
+    "runtime": {
+      "files": {
+        "/home/steve/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8",
+        "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/__init__.py": "bd4a10ff16357ed78f45aaf4b46ce5b771fdc0e8549402206e324d0eb792c672",
+        "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/config.py": "9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a"
+      },
+      "python": "3.12.13",
+      "python_executable": "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "torch": "2.14.0+xpu"
+    },
+    "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+    "source_packet_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-host-embedding-12",
+    "source_packet_manifest_sha256": "b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666",
+    "encoder_run_dir": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12",
+    "extension_sha256s": {
+      "block_compile_node.py": "ddd49674e2603d79818eed3263a4bc6876163fc6b1a1731fb6e95136ceb1ebdc",
+      "capture_node.py": "6495b0c4de7ac054e35a39fb00e7c7b979d5fb51d6e77bc0dee18bad9d0ec9da",
+      "encoder_diagnostics.py": "f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a",
+      "encoder_identity_node.py": "e7bcadcd5987920a5ab5b6e81b13075b19bf2b4af0f2436b17f89e35285ec26b",
+      "host_embedding_clip.py": "53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994",
+      "host_embedding_placement_node.py": "4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b",
+      "host_embedding_resident_node.py": "bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7",
+      "host_embedding_transition_memory.py": "707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86",
+      "ltx_block_compile.py": "c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e",
+      "ltx_host_embedding_candidate.py": "b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9",
+      "ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+      "ltx_multiblock_compile.py": "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b",
+      "ltx_na_axis_candidate.py": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+      "ltx_na_axis_router.py": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+      "ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+      "ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+      "multiblock_compile_node.py": "e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f",
+      "na_axis_decode_node.py": "ffd7549d29828a11f336f07873f63a407df7722328df519f2bec3514964ad32b",
+      "resident_node.py": "57b60dcba6be6b3127bd5c532603905cdcb1e541889ecb5f9b37ff2084ee1c25"
+    },
+    "compiler_environment": {
+      "TORCHINDUCTOR_COMPILE_THREADS": "1",
+      "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/inductor-cache",
+      "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-host-embedding-12/triton-cache"
+    },
+    "launcher_sha256": "b9d30d63a11bcce7bcdddd31a303ee8a47c6a83a37cad6d74a5bb6f91f35c1a7",
+    "model_verification_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+    "server_args_sha256": "765b97d79eb78c624c40314914bacb6bb6a4357d5323e073395d0ea28e613d3b"
+  },
+  "nodes": {
+    "LTXHostEmbeddingComponents": {
+      "input": {
+        "required": {
+          "placement": [
+            [
+              "split"
+            ]
+          ],
+          "encoder_mode": [
+            [
+              "control",
+              "host-table"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "placement",
+          "encoder_mode"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "VAE",
+        "LATENT_UPSCALE_MODEL"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "model",
+        "clip",
+        "video_vae",
+        "audio_vae",
+        "upscaler"
+      ],
+      "name": "LTXHostEmbeddingComponents",
+      "display_name": "LTXHostEmbeddingComponents",
+      "description": "",
+      "python_module": "custom_nodes.ltx_host_embedding_lab",
+      "category": "lab/validation",
+      "output_node": false,
+      "has_intermediate_output": false,
+      "search_aliases": []
+    },
+    "LTXHostEmbeddingPlacementCheck": {
+      "input": {
+        "required": {
+          "clip": [
+            "CLIP"
+          ],
+          "conditioning": [
+            "CONDITIONING"
+          ],
+          "run_name": [
+            "STRING",
+            {
+              "default": "assign-unique-request-name"
+            }
+          ],
+          "encoder_mode": [
+            [
+              "control",
+              "host-table"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "clip",
+          "conditioning",
+          "run_name",
+          "encoder_mode"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "CONDITIONING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "CONDITIONING"
+      ],
+      "name": "LTXHostEmbeddingPlacementCheck",
+      "display_name": "LTXHostEmbeddingPlacementCheck",
+      "description": "",
+      "python_module": "custom_nodes.ltx_host_embedding_lab",
+      "category": "lab/validation",
+      "output_node": false,
+      "has_intermediate_output": false,
+      "search_aliases": []
+    }
+  },
+  "snapshot": {
+    "utc": "2026-09-14T19:49:42.839760+00:00",
+    "process_status": "Name:\tpython\nUmask:\t0002\nState:\tS (sleeping)\nTgid:\t11888\nNgid:\t0\nPid:\t11888\nPPid:\t11887\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t64\nGroups:\t4 24 27 30 44 46 100 114 984 992 1000 \nNStgid:\t11888\nNSpid:\t11888\nNSpgid:\t11887\nNSsid:\t11887\nKthread:\t0\nVmPeak:\t 6997828 kB\nVmSize:\t 6932308 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t 2271112 kB\nVmRSS:\t 2271112 kB\nRssAnon:\t 1719636 kB\nRssFile:\t  551476 kB\nRssShmem:\t       0 kB\nVmData:\t 3320964 kB\nVmStk:\t     132 kB\nVmExe:\t   27344 kB\nVmLib:\t 1047200 kB\nVmPTE:\t    6700 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t49\nSigQ:\t0/477923\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000001001000\nSigCgt:\t00000001000004ea\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffffffff\nCpus_allowed_list:\t0-31\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t11741\nnonvoluntary_ctxt_switches:\t131\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n",
+    "host_meminfo": "MemTotal:       131754508 kB\nMemFree:        123458012 kB\nMemAvailable:   125261444 kB\nBuffers:          178848 kB\nCached:          2561728 kB\nSwapCached:            0 kB\nActive:          4048288 kB\nInactive:         773508 kB\nActive(anon):    2087508 kB\nInactive(anon):        0 kB\nActive(file):    1960780 kB\nInactive(file):   773508 kB\nUnevictable:        3088 kB\nMlocked:              16 kB\nSwapTotal:       8388604 kB\nSwapFree:        8388604 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:               632 kB\nWriteback:             0 kB\nAnonPages:       2085028 kB\nMapped:           957264 kB\nShmem:              6288 kB\nKReclaimable:     179812 kB\nSlab:             544380 kB\nSReclaimable:     179812 kB\nSUnreclaim:       364568 kB\nKernelStack:       13056 kB\nPageTables:        17480 kB\nSecPageTables:      2336 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    74265856 kB\nCommitted_AS:    7885116 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      114952 kB\nVmallocChunk:          0 kB\nPercpu:            23296 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:     22528 kB\nFilePmdMapped:         0 kB\nCmaTotal:              0 kB\nCmaFree:         9320448 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      316336 kB\nDirectMap2M:     6887424 kB\nDirectMap1G:    126877696 kB\n",
+    "drm_clients": {
+      "0000:27:00.0/101": {
+        "fd": "10",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "101",
+          "drm-pdev": "0000:27:00.0",
+          "drm-total-system": "125568 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "0",
+          "drm-purgeable-system": "0",
+          "drm-total-gtt": "139440 KiB",
+          "drm-shared-gtt": "66 MiB",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "139440 KiB",
+          "drm-total-vram0": "296896 KiB",
+          "drm-shared-vram0": "22 MiB",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "296896 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435513328",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435513328",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435513328",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435513328",
+          "drm-cycles-ccs": "777647",
+          "drm-total-cycles-ccs": "44435513328"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1208\ndrm-driver:\txe\ndrm-client-id:\t101\ndrm-pdev:\t0000:27:00.0\ndrm-total-system:\t125568 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t0\ndrm-purgeable-system:\t0\ndrm-total-gtt:\t139440 KiB\ndrm-shared-gtt:\t66 MiB\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t139440 KiB\ndrm-total-vram0:\t296896 KiB\ndrm-shared-vram0:\t22 MiB\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t296896 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435513328\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435513328\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435513328\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435513328\ndrm-cycles-ccs:\t777647\ndrm-total-cycles-ccs:\t44435513328\n"
+      },
+      "0000:23:00.0/102": {
+        "fd": "11",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "102",
+          "drm-pdev": "0000:23:00.0",
+          "drm-total-system": "125568 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "0",
+          "drm-purgeable-system": "0",
+          "drm-total-gtt": "139440 KiB",
+          "drm-shared-gtt": "66 MiB",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "139440 KiB",
+          "drm-total-vram0": "296892 KiB",
+          "drm-shared-vram0": "22 MiB",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "296892 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435274421",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435274421",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435274421",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435274421",
+          "drm-cycles-ccs": "785965",
+          "drm-total-cycles-ccs": "44435274421"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1168\ndrm-driver:\txe\ndrm-client-id:\t102\ndrm-pdev:\t0000:23:00.0\ndrm-total-system:\t125568 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t0\ndrm-purgeable-system:\t0\ndrm-total-gtt:\t139440 KiB\ndrm-shared-gtt:\t66 MiB\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t139440 KiB\ndrm-total-vram0:\t296892 KiB\ndrm-shared-vram0:\t22 MiB\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t296892 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435274421\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435274421\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435274421\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435274421\ndrm-cycles-ccs:\t785965\ndrm-total-cycles-ccs:\t44435274421\n"
+      },
+      "0000:47:00.0/103": {
+        "fd": "12",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "103",
+          "drm-pdev": "0000:47:00.0",
+          "drm-total-system": "125568 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "0",
+          "drm-purgeable-system": "0",
+          "drm-total-gtt": "139440 KiB",
+          "drm-shared-gtt": "66 MiB",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "139440 KiB",
+          "drm-total-vram0": "296872 KiB",
+          "drm-shared-vram0": "22 MiB",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "296872 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435377315",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435377315",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435377315",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435377315",
+          "drm-cycles-ccs": "781454",
+          "drm-total-cycles-ccs": "44435377315"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1128\ndrm-driver:\txe\ndrm-client-id:\t103\ndrm-pdev:\t0000:47:00.0\ndrm-total-system:\t125568 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t0\ndrm-purgeable-system:\t0\ndrm-total-gtt:\t139440 KiB\ndrm-shared-gtt:\t66 MiB\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t139440 KiB\ndrm-total-vram0:\t296872 KiB\ndrm-shared-vram0:\t22 MiB\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t296872 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435377315\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435377315\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435377315\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435377315\ndrm-cycles-ccs:\t781454\ndrm-total-cycles-ccs:\t44435377315\n"
+      },
+      "0000:43:00.0/104": {
+        "fd": "13",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "104",
+          "drm-pdev": "0000:43:00.0",
+          "drm-total-system": "125568 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "0",
+          "drm-purgeable-system": "0",
+          "drm-total-gtt": "139440 KiB",
+          "drm-shared-gtt": "66 MiB",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "139440 KiB",
+          "drm-total-vram0": "296896 KiB",
+          "drm-shared-vram0": "22 MiB",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "296896 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435422239",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435422239",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435422239",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435422239",
+          "drm-cycles-ccs": "786090",
+          "drm-total-cycles-ccs": "44435422239"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1088\ndrm-driver:\txe\ndrm-client-id:\t104\ndrm-pdev:\t0000:43:00.0\ndrm-total-system:\t125568 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t0\ndrm-purgeable-system:\t0\ndrm-total-gtt:\t139440 KiB\ndrm-shared-gtt:\t66 MiB\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t139440 KiB\ndrm-total-vram0:\t296896 KiB\ndrm-shared-vram0:\t22 MiB\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t296896 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435422239\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435422239\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435422239\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435422239\ndrm-cycles-ccs:\t786090\ndrm-total-cycles-ccs:\t44435422239\n"
+      },
+      "0000:27:00.0/105": {
+        "fd": "19",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "105",
+          "drm-pdev": "0000:27:00.0",
+          "drm-total-system": "62848 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "64 KiB",
+          "drm-purgeable-system": "64 KiB",
+          "drm-total-gtt": "40 KiB",
+          "drm-shared-gtt": "0",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "40 KiB",
+          "drm-total-vram0": "4640 KiB",
+          "drm-shared-vram0": "0",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "4640 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435562022",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435562022",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435562022",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435562022",
+          "drm-cycles-ccs": "0",
+          "drm-total-cycles-ccs": "44435562022"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1208\ndrm-driver:\txe\ndrm-client-id:\t105\ndrm-pdev:\t0000:27:00.0\ndrm-total-system:\t62848 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t64 KiB\ndrm-purgeable-system:\t64 KiB\ndrm-total-gtt:\t40 KiB\ndrm-shared-gtt:\t0\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t40 KiB\ndrm-total-vram0:\t4640 KiB\ndrm-shared-vram0:\t0\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t4640 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435562022\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435562022\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435562022\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435562022\ndrm-cycles-ccs:\t0\ndrm-total-cycles-ccs:\t44435562022\n"
+      },
+      "0000:23:00.0/106": {
+        "fd": "20",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "106",
+          "drm-pdev": "0000:23:00.0",
+          "drm-total-system": "62848 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "64 KiB",
+          "drm-purgeable-system": "64 KiB",
+          "drm-total-gtt": "40 KiB",
+          "drm-shared-gtt": "0",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "40 KiB",
+          "drm-total-vram0": "4628 KiB",
+          "drm-shared-vram0": "0",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "4628 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435316381",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435316381",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435316381",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435316381",
+          "drm-cycles-ccs": "0",
+          "drm-total-cycles-ccs": "44435316381"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1168\ndrm-driver:\txe\ndrm-client-id:\t106\ndrm-pdev:\t0000:23:00.0\ndrm-total-system:\t62848 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t64 KiB\ndrm-purgeable-system:\t64 KiB\ndrm-total-gtt:\t40 KiB\ndrm-shared-gtt:\t0\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t40 KiB\ndrm-total-vram0:\t4628 KiB\ndrm-shared-vram0:\t0\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t4628 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435316381\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435316381\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435316381\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435316381\ndrm-cycles-ccs:\t0\ndrm-total-cycles-ccs:\t44435316381\n"
+      },
+      "0000:47:00.0/107": {
+        "fd": "21",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "107",
+          "drm-pdev": "0000:47:00.0",
+          "drm-total-system": "62848 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "64 KiB",
+          "drm-purgeable-system": "64 KiB",
+          "drm-total-gtt": "40 KiB",
+          "drm-shared-gtt": "0",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "40 KiB",
+          "drm-total-vram0": "4624 KiB",
+          "drm-shared-vram0": "0",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "4624 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435412713",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435412713",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435412713",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435412713",
+          "drm-cycles-ccs": "0",
+          "drm-total-cycles-ccs": "44435412713"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1128\ndrm-driver:\txe\ndrm-client-id:\t107\ndrm-pdev:\t0000:47:00.0\ndrm-total-system:\t62848 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t64 KiB\ndrm-purgeable-system:\t64 KiB\ndrm-total-gtt:\t40 KiB\ndrm-shared-gtt:\t0\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t40 KiB\ndrm-total-vram0:\t4624 KiB\ndrm-shared-vram0:\t0\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t4624 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435412713\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435412713\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435412713\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435412713\ndrm-cycles-ccs:\t0\ndrm-total-cycles-ccs:\t44435412713\n"
+      },
+      "0000:43:00.0/108": {
+        "fd": "22",
+        "fields": {
+          "drm-driver": "xe",
+          "drm-client-id": "108",
+          "drm-pdev": "0000:43:00.0",
+          "drm-total-system": "62848 KiB",
+          "drm-shared-system": "0",
+          "drm-active-system": "0",
+          "drm-resident-system": "64 KiB",
+          "drm-purgeable-system": "64 KiB",
+          "drm-total-gtt": "40 KiB",
+          "drm-shared-gtt": "0",
+          "drm-active-gtt": "0",
+          "drm-resident-gtt": "40 KiB",
+          "drm-total-vram0": "4628 KiB",
+          "drm-shared-vram0": "0",
+          "drm-active-vram0": "0",
+          "drm-resident-vram0": "4628 KiB",
+          "drm-total-stolen": "0",
+          "drm-shared-stolen": "0",
+          "drm-active-stolen": "0",
+          "drm-resident-stolen": "0",
+          "drm-cycles-rcs": "0",
+          "drm-total-cycles-rcs": "44435447812",
+          "drm-cycles-vcs": "0",
+          "drm-total-cycles-vcs": "44435447812",
+          "drm-engine-capacity-vcs": "2",
+          "drm-cycles-vecs": "0",
+          "drm-total-cycles-vecs": "44435447812",
+          "drm-engine-capacity-vecs": "2",
+          "drm-cycles-bcs": "0",
+          "drm-total-cycles-bcs": "44435447812",
+          "drm-cycles-ccs": "0",
+          "drm-total-cycles-ccs": "44435447812"
+        },
+        "raw_fdinfo": "pos:\t0\nflags:\t02100002\nmnt_id:\t30\nino:\t1088\ndrm-driver:\txe\ndrm-client-id:\t108\ndrm-pdev:\t0000:43:00.0\ndrm-total-system:\t62848 KiB\ndrm-shared-system:\t0\ndrm-active-system:\t0\ndrm-resident-system:\t64 KiB\ndrm-purgeable-system:\t64 KiB\ndrm-total-gtt:\t40 KiB\ndrm-shared-gtt:\t0\ndrm-active-gtt:\t0\ndrm-resident-gtt:\t40 KiB\ndrm-total-vram0:\t4628 KiB\ndrm-shared-vram0:\t0\ndrm-active-vram0:\t0\ndrm-resident-vram0:\t4628 KiB\ndrm-total-stolen:\t0\ndrm-shared-stolen:\t0\ndrm-active-stolen:\t0\ndrm-resident-stolen:\t0\ndrm-cycles-rcs:\t0\ndrm-total-cycles-rcs:\t44435447812\ndrm-cycles-vcs:\t0\ndrm-total-cycles-vcs:\t44435447812\ndrm-engine-capacity-vcs:\t2\ndrm-cycles-vecs:\t0\ndrm-total-cycles-vecs:\t44435447812\ndrm-engine-capacity-vecs:\t2\ndrm-cycles-bcs:\t0\ndrm-total-cycles-bcs:\t44435447812\ndrm-cycles-ccs:\t0\ndrm-total-cycles-ccs:\t44435447812\n"
+      }
+    },
+    "accounting": "deduplicated by PCI device and drm-client-id; shared GTT is not summed"
+  },
+  "queue": {
+    "queue_running": [],
+    "queue_pending": []
+  }
+}

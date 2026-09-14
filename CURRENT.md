@@ -62,7 +62,19 @@ operator-stage snapshots and the earlier unrelated freeze packet below.
 [implementation plan](experiments/qwen38-27b-b70/notes/2026-09-14-mtp-lossless-transfer-plan.md),
 [earlier review](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
-**Four-B70 host, September14 19:32 UTC: bounded post-reboot health assessment passed.**
+**Four-B70 host, September14: packet12 live; full transition screen running.**
+LTX PID11888/exec40923 serves `http://127.0.0.1:8188`, packet
+`prepared-encoder-host-embedding-12`, manifest
+`b29b750c31feda9d4be7fdc768e876a1f5d58ad11a699022b1d8ae6bdaa59666`.
+Four startup checks, strict determinism, endpoint identity and node registration
+passed on user-reboot boot5414a640. No agent reboot/reset/settings action.
+The v3 client is running `host-embedding-screen-02`:15 newly generated clips,
+control/host/control, four original byte-exact raw gates, retained nonencoder
+owners and encoder memory/release checks. The cold admission requires96.02GiB.
+Failure halts requests without cycling the application. No speed promotion.
+[Prepared runtime](experiments/ltx25-b70/notes/host-transition-runtime-12-prepared.md).
+
+**Historical Four-B70 host, September14 19:32 UTC: bounded post-reboot health assessment passed.**
 One diagnostic (parent8068/worker8088) passed four exact copy/compute checks and
 twelve directed BF16 copies on the expected ordinal UUIDs. Both exited0;
 locked passive postflight confirmed released render nodes and no new kernel
