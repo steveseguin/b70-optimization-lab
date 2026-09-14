@@ -1,0 +1,222 @@
+{
+  "status": "passed-cpu-lifecycle",
+  "pid": 77919,
+  "phase": "complete",
+  "checks": [
+    {
+      "name": "actual-custom-op-default-original",
+      "passed": true
+    },
+    {
+      "name": "actual-custom-op-context-and-exact-bf16-output",
+      "passed": true
+    },
+    {
+      "name": "nested-token-restoration",
+      "passed": true
+    },
+    {
+      "name": "separate-thread-default-no-context-leak",
+      "passed": true
+    },
+    {
+      "name": "exception-restores-default",
+      "passed": true
+    },
+    {
+      "name": "missing-and-partial-coverage-rejected",
+      "passed": true
+    },
+    {
+      "name": "actual-registry-rejects-invalid-shape-before-routing",
+      "passed": true
+    },
+    {
+      "name": "duplicate-installation-rejected",
+      "passed": true
+    },
+    {
+      "name": "constraints-priority-other-ops-unchanged",
+      "passed": true
+    },
+    {
+      "name": "late-router-ownership-change-rejected",
+      "passed": true
+    },
+    {
+      "name": "late-candidate-callable-change-rejected",
+      "passed": true
+    }
+  ],
+  "source_sha256": "aeae73cf688607e9d9723358f1b87f79bed8903a72f2fe362a8b35e627905413",
+  "xpu_initialized_before": false,
+  "suppressed_availability_probes": [
+    "torch.cuda.is_available",
+    "torch.cuda.is_available",
+    "torch.xpu.is_available",
+    "torch.cuda.is_available"
+  ],
+  "forbidden_device_calls": [],
+  "router_sha256": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+  "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+  "example_receipts": [
+    {
+      "schema": "ltx.na-axis-route.v1",
+      "status": "passed-route-coverage",
+      "mode": "original",
+      "run_name": "cpu-original",
+      "thread_id": 135485646600000,
+      "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+      "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+      "calls": [
+        {
+          "index": 0,
+          "mode": "original",
+          "status": "completed",
+          "inputs": [
+            {
+              "shape": [
+                1,
+                2,
+                3,
+                3,
+                1,
+                4
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu"
+            },
+            {
+              "shape": [
+                1,
+                2,
+                3,
+                3,
+                1,
+                4
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu"
+            },
+            {
+              "shape": [
+                1,
+                2,
+                3,
+                3,
+                1,
+                4
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu"
+            }
+          ],
+          "kernel_size": [
+            3,
+            3,
+            3
+          ],
+          "is_causal": [
+            false,
+            false,
+            false
+          ],
+          "scale": 1.0,
+          "output": {
+            "shape": [
+              1,
+              2,
+              3,
+              3,
+              1,
+              4
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu"
+          }
+        }
+      ],
+      "scope_reset": true
+    },
+    {
+      "schema": "ltx.na-axis-route.v1",
+      "status": "passed-route-coverage",
+      "mode": "axis-cache",
+      "run_name": "cpu-candidate",
+      "thread_id": 135485646600000,
+      "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+      "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+      "calls": [
+        {
+          "index": 0,
+          "mode": "axis-cache",
+          "status": "completed",
+          "inputs": [
+            {
+              "shape": [
+                1,
+                2,
+                3,
+                3,
+                1,
+                4
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu"
+            },
+            {
+              "shape": [
+                1,
+                2,
+                3,
+                3,
+                1,
+                4
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu"
+            },
+            {
+              "shape": [
+                1,
+                2,
+                3,
+                3,
+                1,
+                4
+              ],
+              "dtype": "torch.bfloat16",
+              "device": "cpu"
+            }
+          ],
+          "kernel_size": [
+            3,
+            3,
+            3
+          ],
+          "is_causal": [
+            false,
+            false,
+            false
+          ],
+          "scale": 1.0,
+          "output": {
+            "shape": [
+              1,
+              2,
+              3,
+              3,
+              1,
+              4
+            ],
+            "dtype": "torch.bfloat16",
+            "device": "cpu"
+          }
+        }
+      ],
+      "scope_reset": true
+    }
+  ],
+  "xpu_initialized_after": false,
+  "limitation": "CPU-only registry availability probes were explicitly suppressed; no native XPU routing/quality/speed or VAEDecode node integration is qualified."
+}

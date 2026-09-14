@@ -1,0 +1,26 @@
+{
+  "schema": "ltx.na-axis-router-source-snapshot.v1",
+  "status": "passed-cpu-lifecycle-native-unqualified",
+  "source_sha256": {
+    "scripts/ltx_na_axis_router.py": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+    "scripts/test-na-axis-router-cpu.py": "aeae73cf688607e9d9723358f1b87f79bed8903a72f2fe362a8b35e627905413",
+    "data/na-axis-router-cpu-01/receipt.json": "b8374a81331a1a22480550bb5acd4363808cfc1a6d0b01102fe6872c57cabc1a"
+  },
+  "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+  "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+  "command": [
+    "env",
+    "OMP_NUM_THREADS=1",
+    "MKL_NUM_THREADS=1",
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "experiments/ltx25-b70/scripts/test-na-axis-router-cpu.py",
+    "--cpu",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/na-axis-router-cpu-01"
+  ],
+  "tool_session": 75750,
+  "exit_code": 0,
+  "installed_files_changed": false,
+  "live_process_changed": false,
+  "native_runtime_requests": 0
+}

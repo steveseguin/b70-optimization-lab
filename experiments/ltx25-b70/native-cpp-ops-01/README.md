@@ -3,6 +3,8 @@
 **CPU operator feasibility passed: 119 cases.** No live application import, GPU/XPU initialization, runtime install, source patching outside this folder, or deployment. The private dispatcher namespace `ltx_exact_cpp_cpu01` has **CPU implementations only**. XPU/full-model/full-clip qualification remains pending.
 
 The source was compiled once with `MAX_JOBS=1`, CPU threads 1, `with_cuda=False`, `with_sycl=False`, `-O2 -g0`. Compilation took 5.322 seconds, which is build duration and not a dispatch measurement. Source, commands, compiler output/version, runtime configuration, binary and build-file hashes are preserved in [cpu-result-01.json](cpu-result-01.json) and [cpu-build-01.log](cpu-build-01.log). Build products remain outside Git at `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-ops-cpu-01`.
+The raw build log preserves the compiler's trailing space on its first line;
+the source/documentation whitespace check passes with that raw log excluded.
 
 ## Contract and source delta
 

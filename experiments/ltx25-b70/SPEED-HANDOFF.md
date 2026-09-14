@@ -17,8 +17,16 @@ The subsequent inactive [decoder axis cache](notes/na-axis-cache-01.md) passed23
 CPU exactness/lifecycle groups, preserving every SDPA input and call order.
 Source analysis predicts522→100 axis constructions for the default untiled
 decoder path; this is not a runtime count or speed claim. Root reviewed its
-source and tests. Context-scoped startup routing is under isolated CPU review;
-native shapes, full-output comparisons and timing remain pending.
+source and tests. Context-scoped startup routing subsequently passed11 actual
+Kitchen CPU dispatcher lifecycle groups with device access blocked.
+[Routing gate](notes/na-axis-router-cpu-01.md). Next: original-VAEDecode node
+integration and full shape/route receipts, then sealed native comparison.
+Native shapes, full-output comparisons and timing remain pending.
+
+An independent [C++ dispatcher prototype](native-cpp-ops-01/README.md) passed119
+CPU operator/fake comparisons and small matched CPU timing. It retains exact
+ATen operations. CPU results do not predict XPU/clip speed; keep this candidate
+separate pending compiled tiny-block integration and native qualification.
 
 Current September14: packet08 PID66846 is idle on restored dispatch after
 12 exact full clips, including all48 compiled blocks. Compiled previews7.38–8.04s

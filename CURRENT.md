@@ -60,8 +60,12 @@ now passes23 CPU exactness/lifecycle groups, including unchanged SDPA inputs and
 call order. Root reviewed the patch and tests. Its source-derived untiled path
 reduces522 axis builds to100 with at most1,878 bytes predicted cached payload;
 the general cap is256KiB plus allocator/metadata overhead. Native shape coverage,
-full-clip equality and speed remain pending. A startup-only scoped router is
-being tested separately; no installed or loaded runtime source changed.
+full-clip equality and speed remain pending. The startup-only scoped router
+passed11 actual Kitchen CPU dispatcher lifecycle groups with XPU access
+blocked; root reviewed source/tests. [Routing gate](experiments/ltx25-b70/notes/na-axis-router-cpu-01.md).
+No installed or loaded runtime source changed. Next: private original-VAEDecode
+node integration, complete native shape/route receipts, then a sealed packet and
+bounded original/cache/original clip comparison. Keep the C++ experiment separate.
 
 The independent [private C++ operator prototype](experiments/ltx25-b70/native-cpp-ops-01/README.md)
 built once on CPU and passed119 operator/fake comparisons with exact outputs.
@@ -69,6 +73,9 @@ Small matched CPU dispatch observations are favorable but do not predict XPU
 speed; larger RMS samples include a loss and substantial noise. Root reviewed
 the C++ source and test/timing drivers. This namespace has CPU implementations
 only; compiled tiny-block, XPU and full-clip qualification remain pending.
+At16:07UTC the application was still healthy and idle on compiled all48 with
+the same boot, empty queue and no kernel/fault evidence after the CPU work.
+[Observation](experiments/ltx25-b70/data/retained-profile-final-observation-01.json).
 
 **Four-B70 host, September14: packet08 native screen complete; original selected.**
 PID66846 serves `http://127.0.0.1:8188`, manifest
