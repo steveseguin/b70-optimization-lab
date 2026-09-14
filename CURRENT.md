@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14: kernel incident; GPU requests halted.**
+`/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json` is present.
+The first compiler-screen-01 eager control clip completed generation, but client
+PID96119 became stuck in a kernel cross-CPU TLB wait during post-request work.
+CPU13/CPU6 soft lockups, RCU stalls and blocked system tasks are recorded.
+Only eager mode ran: no compiled candidate/block execution or completed oracle
+qualification. PID95931 remains present with an empty queue; one client SIGINT
+was sent, exit unconfirmed. No reboot/reset/restart or host-setting changes were
+performed after the fault. The stale campaign `running` status is superseded by
+this incident and the fault latch. **No new GPU requests until recovery and
+health are established.** Preserve all failed/current clip files and the earlier
+25/25 exact encoder results. [Incident and evidence](experiments/ltx25-b70/notes/compiler-screen-01-kernel-incident.md).
+
 **Four-B70 host, September14: native compiler comparison running.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.

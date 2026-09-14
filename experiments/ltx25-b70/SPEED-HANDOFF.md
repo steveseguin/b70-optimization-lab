@@ -3,6 +3,12 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
+Latest September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)
+halted the first eager control of the subsequent compiler campaign after graph
+completion, before oracle postflight. No compiled execution occurred. The shared
+fault latch overrides stale running progress; no new GPU requests. Preserve
+PID95931/current evidence and follow CURRENT for recovery state.
+
 September14 update: [encoder screen02](notes/encoder-screen-02-results.md) passed
 all25 native GPU clips with strict original-reference equality and all unload
 gates. Candidate medians6.38–6.44s show no convincing gain against bracketing
