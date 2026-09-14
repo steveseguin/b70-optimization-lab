@@ -1,0 +1,28 @@
+{
+  "schema": "neural.download.fp8-recovery-health-cpu-review.v1",
+  "status": "Runtime sources frozen for one parent-admitted health attempt; no launch by subagent",
+  "sources_sha256": {
+    "experiments/qwen38-27b-b70/scripts/run-fp8-recovery-health.py": "d8efe969068fceb9eecc9fa99e0ff4dd44eb8e429a403a70a791585f14657aae",
+    "experiments/qwen38-27b-b70/probes/mtp-recovery-20260914/health_worker.py": "4c740019d5d6c2cdd8d9f2766dec7b7eea0d48e5ac2731999152245e2ad62252",
+    "experiments/qwen38-27b-b70/scripts/test_fp8_recovery_health.py": "c9a64a6ffaff094dd32bfa1cf7dba14c93338970bb43e5a5b175e46eccc2c70c"
+  },
+  "cpu_tests_passed": 8,
+  "check_only_actual_admission_passed": true,
+  "worker_check_only_torch_import_blocked_passed": true,
+  "device_properties": "Records Torch device name, UUID if exposed and memory using cached device properties after normal initialization; optional fields are not required for admission",
+  "execution_command": [
+    "python3",
+    "experiments/qwen38-27b-b70/scripts/run-fp8-recovery-health.py",
+    "--out",
+    "/mnt/fast-ai/bench-results/fp8-mtp-recovery-metadata-20260914/health"
+  ],
+  "execution_timeout_seconds": 180,
+  "cleanup_timeout_seconds": 30,
+  "kernel_poll_seconds": 1,
+  "kernel_tail_postflight_seconds": 3,
+  "historical_fault_preserved": true,
+  "new_attempt_failure_or_timeout_latches_new_root": true,
+  "model_or_custom_ipc_imports": false,
+  "gpu_actions": 0,
+  "docker_calls": 0
+}

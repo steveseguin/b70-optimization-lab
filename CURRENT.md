@@ -25,12 +25,14 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Two-B70 host, September 14 19:12 UTC: user-authorized recovery review.**
-The new campaign first checks health once in the qualified runtime, then restores
-FP8/MTP1 and validates the prepared metadata change if healthy. No GPU action
-has occurred yet. Passive checks show the same boot, no GPU owners/listeners,
-and no GPU faults after the earlier incident. The old custom communicator stays
-quarantined and its fault packet is immutable. No reboot/reset/settings changes.
+**Two-B70 host, September 14 19:19 UTC: health passed; original FP8/MTP1 restoring.**
+The single bounded recovery check passed on both cards: exact local copy/compute,
+standard XCCL sums at both shapes, normal collective cleanup, confirmed container
+exit, no device owners and a clean new kernel window. Same boot; no reset or
+settings change. Starting the original qualified image on port18124 under
+`fp8-mtp-recovery-metadata-20260914/recovered-service`. It is not ready yet.
+The custom communicator remains quarantined. Metadata testing follows only
+a successful model restoration and full reference-output gate.
 [Recovery and metadata plan](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-recovery-metadata-plan.md).
 Raw root: `/mnt/fast-ai/bench-results/fp8-mtp-recovery-metadata-20260914`.
 The prior incident entry below remains historical evidence of the halted run.
