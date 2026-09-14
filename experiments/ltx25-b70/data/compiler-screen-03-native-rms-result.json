@@ -1,0 +1,99 @@
+{
+  "scope": "first native block24 stage1 only; no successful compiled full clip",
+  "emitted_wrapper": [
+    {
+      "path": "encoder-server-compiler-04/inductor-cache/e7/ce7xh7jwg3ob5i6vlhz2flyzahsoiqn3eenuwuzfizfylp5nznmn.py",
+      "sha256": "6e1474734e379c65aae34a54d7b2cddff5e4b32c0fe6c868cf62bc762a9344db",
+      "opaque_native_rms_calls": 15
+    }
+  ],
+  "rewrite_status": "compiled-native-rms-boundary",
+  "rewrite_count": 15,
+  "native_outputs": [
+    {
+      "actual_sha256": "9829dc4d3327dd25203c3e8a275c08dd1e4b3770fdcc162051c022ebf982dee1",
+      "bitwise_equal": false,
+      "device": "xpu:1",
+      "dtype": "torch.bfloat16",
+      "expected": {
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "shape": [
+          1,
+          64,
+          4096
+        ],
+        "stride": [
+          262144,
+          4096,
+          1
+        ]
+      },
+      "expected_sha256": "5120b58cd61f34d08c9b8cc6d0af5418699ac0ee7547b12725b69537abbdff9e",
+      "finite": true,
+      "metadata_equal": true,
+      "output": "video",
+      "shape": [
+        1,
+        64,
+        4096
+      ],
+      "stride": [
+        262144,
+        4096,
+        1
+      ],
+      "unequal_bytes": 54
+    },
+    {
+      "actual_sha256": "36c54f94bd6e424391d461172f8dd84fb9c95760a4e0d3c804f526b5e9e0e7ae",
+      "bitwise_equal": false,
+      "device": "xpu:1",
+      "dtype": "torch.bfloat16",
+      "expected": {
+        "device": "xpu:1",
+        "dtype": "torch.bfloat16",
+        "shape": [
+          1,
+          26,
+          2048
+        ],
+        "stride": [
+          53248,
+          2048,
+          1
+        ]
+      },
+      "expected_sha256": "f502226a5e25c57224f5f235674eadecc6ad624d64e2f46f51a6d85f0291f991",
+      "finite": true,
+      "metadata_equal": true,
+      "output": "audio",
+      "shape": [
+        1,
+        26,
+        2048
+      ],
+      "stride": [
+        53248,
+        2048,
+        1
+      ],
+      "unequal_bytes": 10
+    }
+  ],
+  "postflight": {
+    "queue_empty": true,
+    "kernel_fault_matches": 0,
+    "fault_latch_present": false,
+    "pid_present": true
+  },
+  "comparison_to_screen02": {
+    "video_expected_and_actual_hashes_unchanged": true,
+    "video_differing_bytes_before": 54,
+    "video_differing_bytes_after": 54,
+    "audio_expected_hash_unchanged": true,
+    "audio_differing_bytes_before": 5923,
+    "audio_differing_bytes_after": 10
+  },
+  "qualified": false
+}

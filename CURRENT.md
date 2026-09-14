@@ -34,8 +34,12 @@ was not rebooted. PID12199 now serves `http://127.0.0.1:8188` from
 Four-card startup checks and strict after-import determinism passed; endpoint
 identity matched. No fault latch. The candidate preserves original native RMS
 calls inside one compiled block; small CPU gates passed, native GPU/full-clip
-qualification is active via compiler-screen-03. Inspect its progress before new
-GPU requests. Preserve failed screen02 evidence.
+qualification failed in compiler-screen-03: audio differences fell from5,923 to10
+bytes; video remains54 bytes different. Both eager clips matched all original
+outputs (warm7.954s). The first compiled block failed before repeat/stage2/full
+clip; no speed result is qualified. Queue empty, kernel clean, no FAULT latch.
+The numerical gate remains failed; do not retry it. Next is remaining rounding
+localization. [Result](experiments/ltx25-b70/notes/compiler-screen-03-results.md).
 This supersedes PID6502 and historical blocked/fault states below.
 [CPU qualification](experiments/ltx25-b70/notes/native-rms-cpu-qualification-01.md),
 [prepared source](experiments/ltx25-b70/notes/native-rms-runtime-04-prepared.md).
