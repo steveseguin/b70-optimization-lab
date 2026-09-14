@@ -20,6 +20,18 @@ MTP0. MTP0 output is byte-identical to a single request through 64 concurrent
 users, MTP1 and depths 3-5 through 16, depth 2 through 4, and all six are
 repeat-exact at every tested prompt length.
 
+## Reading your prompt: 512 and 2,048 tokens
+
+A separate one-user test on two B70s with fixed MTP1 and 4,096-token capacity
+measured **2,857 input tokens/s at 512 tokens** and **3,679 at 2,048 tokens**.
+Server reading time was 179 and 557 ms; the full HTTP first-token wait was
+182 and 568 ms. Prompt caching was disabled. All 12 full quality outputs matched
+the qualified reference, with decode within 0.13% of its historical rate.
+
+The bounded profiling review found no justified inexpensive improvement.
+Serving defaults, the earlier short-input measurement and higher-draft decode
+records remain unchanged. [Test details and evidence](../../experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
+
 ## The R187 profile on the v0.29.0 rebase: R304 (2026-09-13): 54.82 / 54.83
 
 The lab's INT4 runtime was rebased onto stock vLLM XPU v0.29.0 as R304 (see the INT4 recipe and

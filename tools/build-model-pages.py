@@ -403,8 +403,10 @@ def page(pkg, all_pkgs, family=None):
             cards = setting.get("tensor_parallel_size", hw.get("cards", 1))
             draft = setting.get("speculative_tokens")
             draft_note = f" · {draft}-token draft" if draft is not None else ""
+            capacity = setting.get("max_model_len")
+            capacity_note = f" · {capacity:,}-token capacity" if isinstance(capacity, int) else ""
             prefill_highlight += (f'<div class="measured"><span class="big">{esc(fmt(point["value"]))}</span><span class="unit">input tokens/s</span></div>'
-                                 f'<p class="scope">512 input tokens · one user · {esc(cards)} GPU(s){esc(draft_note)}. Separate short-input test; no saved prompt cache.</p>')
+                                 f'<p class="scope">512 input tokens · one user · {esc(cards)} GPU(s){esc(draft_note)}{esc(capacity_note)}. Separate prompt-reading test; no saved prompt cache.</p>')
     prefill_section = '<h2 id="prefill">Reading speed (prefill)</h2>' + prefill_highlight + (render_profiles(prefill_profiles) or '<p>Not measured yet for this setup.</p>')
     evidence_link = f'<a class="inline" href="{GITHUB}{esc(fm["evidence"])}">Test details on GitHub</a>' if fm.get("evidence") else ""
     missing_html = ('<p class="missing">This setup still needs installation checks. <a class="inline" href="' + GITHUB + esc(pkg.get("guide", "")) + '">See what remains in the guide.</a></p>') if pkg.get("missing") else ""

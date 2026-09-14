@@ -70,6 +70,7 @@ class HumanPages(unittest.TestCase):
         second = copy.deepcopy(base)
         second.update(id='followup-tp2', public_label='Reading speed · 2 GPUs · 3-token draft')
         second['operating_profile']['tensor_parallel_size'] = 2
+        second['operating_profile']['max_model_len'] = 4096
         for point in second['points']:
             point['value'] = 1234.5
         proxy = copy.deepcopy(second)
@@ -82,6 +83,8 @@ class HumanPages(unittest.TestCase):
         self.assertEqual(section.count('input tokens/s'), 2)
         self.assertIn('1 GPU(s)', section)
         self.assertIn('2 GPU(s)', section)
+        self.assertIn('1,024-token capacity', section)
+        self.assertIn('4,096-token capacity', section)
         self.assertNotIn('987.6', section)
 
     def test_catalog_profiles_and_accessible_tables_render(self):

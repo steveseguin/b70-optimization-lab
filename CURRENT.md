@@ -25,6 +25,16 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**2026-09-13 EDT, two-B70 host: final FP8 prefill pass complete and stopped.**
+Official 27B FP8, R304 TP2/MTP1, measured 512/2048 inputs at 2,857/3,679 input
+tokens/s with 4096 capacity/batch. All 36 measured outputs repeated exactly;
+strict 12/12 original-reference parity, decode −0.13%. Profiling found FP8 matrix
+operations dominant and no justified quick candidate; defaults retained and
+prefill campaign closed. Owned server stopped, both GPUs/XCCL and journal
+postflights passed. [Results](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md).
+Raw root `/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914`.
+No restart chain or power/memory-setting changes; four-card LTX work preserved.
+
 **Four-B70 host, 2026-09-13 22:23 EDT: exact-output LTX speed result.**
 User prioritizes first usable clip within a few seconds, while retaining exact
 baseline outputs. Baseline PID11499 exited cleanly after one planned SIGINT;
@@ -45,13 +55,6 @@ use this same process; no restart chains/power/swap/cache-drop/driver changes.
 See [speed campaign handoff](experiments/ltx25-b70/SPEED-HANDOFF.md).
 Original baseline remains frozen; new process identity is under the original
 evidence root's `speed-server/`. Use `profile-clip.py --server-run` pointing there.
-
-**2026-09-13 EDT, two-B70 host: final preferred-model prefill pass prepared.**
-User selected official 27B FP8. One owned R304 TP2/MTP1 server will measure
-512/2048 inputs and one diagnostic trace at localhost 18152; no runtime changes
-or restart chain. [Preregistration](experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-prereg.md).
-Raw root `/mnt/fast-ai/bench-results/qwen-fp8-prefill-focus-20260914`.
-Four-card LTX work remains separate and protected.
 
 **2026-09-13 21:47 EDT, two-B70 host: bounded prefill follow-up complete.**
 4B TP2, 9B TP2 and 27B INT4 TP1 measured at 256/512 input tokens, one user,
