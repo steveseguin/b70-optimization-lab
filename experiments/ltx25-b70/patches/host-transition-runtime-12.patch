@@ -1,0 +1,512 @@
+--- a/launch/encoder_runtime_common.py
++++ b/launch/encoder_runtime_common.py
+@@ -20,7 +20,8 @@
+               'ltx_multiblock_compile.py', 'multiblock_compile_node.py',
+               'ltx_na_axis_router.py', 'ltx_na_axis_candidate.py', 'na_axis_decode_node.py',
+               'ltx_host_embedding_candidate.py', 'host_embedding_clip.py',
+-              'host_embedding_placement_node.py', 'host_embedding_resident_node.py')
++              'host_embedding_placement_node.py', 'host_embedding_resident_node.py',
++              'host_embedding_transition_memory.py')
+ NODES = {'ltx_speed_lab': 'resident_node.py', 'ltx_baseline_capture': 'capture_node.py',
+          'ltx_encoder_diagnostics': 'encoder_diagnostics.py',
+          'ltx_encoder_identity': 'encoder_identity_node.py',
+@@ -169,6 +170,44 @@
+             == source_hashes['host_embedding_resident_node.py'], 'Resident admission source differs')
+ 
+ 
++
++def validate_lifecycle(cpu, host):
++    require(cpu['schema'] == 'ltx.host-embedding-resident-lifecycle-guarded-cpu.v1'
++            and cpu['status'] == 'passed-guarded-cpu-resident-lifecycle'
++            and cpu['phase'] == 'finished' and cpu['tests_run'] == 6
++            and cpu['native_cpu_tests_executed'] is True and cpu['torch_imported'] is True,
++            'Actual CPU resident lifecycle pass required')
++    require(cpu['xpu_initialized'] is False and cpu['cuda_initialized'] is False
++            and cpu['final_guards_intact'] is True and cpu['native_gpu_requests'] == 0
++            and cpu['compilation_permitted'] is False, 'CPU guard boundary changed')
++    require(not cpu['test_failures'] and not cpu['test_errors'] and not cpu['test_skips'], 'Incomplete CPU lifecycle result')
++    require(cpu['test_names'] == sorted([
++        'test_actual_control_host_control_registry_death_and_exactness',
++        'test_construction_memory_refusal_after_actual_owner_death',
++        'test_external_actual_clone_refuses_replacement',
++        'test_external_actual_model_refuses_replacement',
++        'test_external_output_tuple_refuses_replacement',
++        'test_restore_memory_refusal_before_retirement']), 'Wrong lifecycle coverage')
++    require(cpu['determinism'] == {'enabled': True, 'warn_only': False}, 'Deterministic mode changed')
++    require(cpu['accelerator_guard_attempts'] == [] and cpu['backend_refusals']['attempts'] == []
++            and cpu['backend_refusals']['tripped'] is False, 'Forbidden native attempt recorded')
++    omissions = cpu['cpu_comfy_import_omissions']
++    require(len(omissions) == 1 and omissions[0]['ordinal'] == 1 and omissions[0]['args_cpu'] is True
++            and omissions[0]['caller_function'] == '<module>'
++            and omissions[0]['source_sha256'] == cpu['comfy_model_management_sha256']
++            and cpu['cpu_comfy_import_policy']['complete'] is True, 'CPU import boundary incomplete')
++    for stage in ('identity_after_import', 'identity_after_tests'):
++        require(cpu[stage] == {'guards_intact': True, 'xpu_initialized': False, 'cuda_initialized': False}, 'CPU identity differs: ' + stage)
++    for canonical, source in (
++            ('host_embedding_resident_node.py', 'scripts/host_embedding_resident_node_v2.py'),
++            ('host_embedding_transition_memory.py', 'scripts/host_embedding_transition_memory.py'),
++            ('host_embedding_clip.py', 'scripts/host_embedding_clip_v2.py'),
++            ('host_embedding_placement_node.py', 'scripts/host_embedding_placement_node_v2.py'),
++            ('ltx_host_embedding_candidate.py', 'scripts/ltx_host_embedding_candidate.py')):
++        require(cpu['helper_sha256s'][source] == host['extension_sha256s'][canonical], 'Lifecycle source differs: ' + canonical)
++    require(cpu['integration_cpu_receipt_sha256'] == host['admissions']['cpu_integration']['sha256'], 'Original integration proof differs')
++
++
+ def verify_packet(packet, expected_manifest_sha256):
+     packet = Path(packet)
+     require(packet.is_absolute() and packet.parent == ROOT and
+@@ -178,7 +217,7 @@
+             'Explicit manifest SHA256 required')
+     require(sha(manifest_path) == expected_manifest_sha256, 'Packet manifest changed')
+     manifest = json.loads(manifest_path.read_text())
+-    require(manifest['schema'] == 'ltx.host-embedding-runtime-packet.v1', 'Launcher requires compiler packet')
++    require(manifest['schema'] == 'ltx.host-embedding-runtime-packet.v2', 'Launcher requires compiler packet')
+     require(manifest['source_commit'] == PIN, 'Core revision changed')
+     require(manifest['model_verification_sha256'] == MODEL_VERIFICATION_SHA256,
+             'Model identity changed')
+@@ -422,7 +461,7 @@
+         require(sha(safe_path(packet, 'provenance/na-axis-correction/' + name)) == digest,
+                 'Decoder failed09 correction evidence changed: ' + name)
+     # All packet10 numerical bytes, graphs, and NA closure remain inherited.
+-    require(manifest['parent_manifest_sha256'] == 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a', 'Unexpected packet10 parent')
++    require(manifest['host_embedding_parent_manifest_sha256'] == 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a', 'Unexpected packet10 parent')
+     host_parent_path = safe_path(packet, 'na-axis-10-parent-manifest.json')
+     require(sha(host_parent_path) == 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a', 'Packet10 parent manifest changed')
+     host_parent = json.loads(host_parent_path.read_text())
+@@ -433,10 +472,12 @@
+     for name, expected in host_parent['files'].items():
+         target = 'provenance/host-embedding' + '/parent/' + name if name == 'launch/encoder_runtime_common.py' else name
+         require(manifest['files'].get(target) == expected, 'Inherited packet10 bytes changed: ' + name)
+-    host = manifest['host_embedding']
++    host = manifest['host_embedding_parent11']
+     require(host == {'modes': ['control', 'host-table'], 'component_node_class': 'LTXHostEmbeddingComponents', 'placement_node_class': 'LTXHostEmbeddingPlacementCheck', 'extension_sha256s': {'ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'host_embedding_clip.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'host_embedding_placement_node.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'host_embedding_resident_node.py': 'c34129c15bea2639a7916a6a4b2445428c22f2056cf9a7d419dc95b3b2c6ed7b'}, 'graphs': ['graphs/host-embedding-control.json', 'graphs/host-embedding-host-table.json'], 'transformer_dispatch': 'original', 'reserve_override': False, 'force_full_load': False, 'construction_device': 'cpu', 'encoder_load_device': 'xpu:2', 'table_device': 'cpu', 'cache_scope': 'one-shared-component-generation', 'prompt_encoding_cache': False, 'generated_output_cache': False, 'native_gpu_qualified': False, 'full_clip_qualified': False, 'speed_qualified': False, 'admissions': {'cpu_integration': {'path': 'provenance/host-embedding/cpu-integration-result.json', 'sha256': 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326'}, 'resident_assembly': {'path': 'provenance/host-embedding/resident-assembly-result.json', 'sha256': '4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35'}}, 'proof_source_sha256s': {'provenance/host-embedding/cpu-integration-result.json': 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326', 'provenance/host-embedding/resident-assembly-result.json': '4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35', 'provenance/host-embedding/cpu-startup-identity.json': 'fd398a2f242fbe0da9de81f4be05014b888886a1c9fa4cf314ca58ee7fe93d1e', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca', 'provenance/host-embedding/cpu-sources/scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'provenance/host-embedding/cpu-sources/scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu-fixture.py': '2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e', 'provenance/host-embedding/cpu-sources/scripts/cpu_comfy_import_policy_v1.py': '7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v2.py': '9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32', 'provenance/host-embedding/cpu-sources/scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'provenance/host-embedding/cpu-sources/native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce', 'provenance/host-embedding/cpu-sources/native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu.py': '6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d', 'provenance/host-embedding/resident-sources/scripts/test-host-embedding-resident-stdlib.py': '6f76cbc5e7257d92552a0c8b559b7aa8253a70c723a8fd2a03d9210dde108117'}, 'cpu_actual_source_sha256s': {'comfy/text_encoders/llama.py': '7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f', 'comfy/sd1_clip.py': 'fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8', 'comfy/ops.py': '6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0', 'comfy/model_patcher.py': '768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99', 'comfy/sd.py': '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0', 'scripts/encoder_diagnostics.py': 'f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a', 'comfy/model_management.py': 'ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd'}}, 'Host embedding admission/scope changed')
+     for name, expected in host['extension_sha256s'].items():
+-        require(manifest['extension_sha256s'][name] == expected, 'Added extension pin differs: ' + name)
++        require((manifest['files']['provenance/host-transition/parent/source/scripts/' + name]
++                 if name == 'host_embedding_resident_node.py' else manifest['extension_sha256s'][name])
++                == expected, 'Historical packet11 extension pin differs: ' + name)
+     receipts = {}
+     for kind, row in host['admissions'].items():
+         require(sha(safe_path(packet, row['path'])) == row['sha256'], 'Admission receipt changed: ' + kind)
+@@ -450,6 +491,31 @@
+     for mode in ('control', 'host-table'):
+         graph = json.loads(safe_path(packet, 'graphs/host-embedding-' + mode + '.json').read_text())
+         require(graph == graph_source(host_control, mode), 'Host graph differs beyond nodes420/421')
++    # Parent11 numerical sources/graphs remain byte-identical. The old
++    # resident/checker are provenance only; current lifecycle proof is separate.
++    require(manifest['parent_manifest_sha256'] == '34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08', 'Unexpected packet11 parent')
++    transition_parent_path = safe_path(packet, 'host-embedding-11-parent-manifest.json')
++    require(sha(transition_parent_path) == '34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08', 'Packet11 parent manifest changed')
++    transition_parent = json.loads(transition_parent_path.read_text())
++    require(manifest['runtime'] == transition_parent['runtime'], 'Transition runtime changed')
++    require(manifest['host_embedding_parent11'] == transition_parent['host_embedding'], 'Historical host admission changed')
++    for name, expected in transition_parent['files'].items():
++        destination = 'provenance/host-transition' + '/parent/' + name if name in ('launch/encoder_runtime_common.py', 'source/scripts/host_embedding_resident_node.py', 'source/custom_nodes/ltx_host_embedding_lab/__init__.py') else name
++        require(manifest['files'].get(destination) == expected, 'Inherited packet11 bytes changed: ' + name)
++    transition = manifest['host_embedding']
++    require(transition == {'admissions': {'cpu_integration': {'path': 'provenance/host-embedding/cpu-integration-result.json', 'sha256': 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326'}, 'resident_assembly': {'path': 'provenance/host-embedding/resident-assembly-result.json', 'sha256': '4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35'}, 'resident_lifecycle': {'path': 'provenance/host-transition/cpu-lifecycle-result.json', 'sha256': 'c9c2d81db33ab5d3174aaaaa87a31c6cf03e5d7923f1b9c305bae554e51ea452'}}, 'cache_scope': 'nonencoder-components-retained; encoder-replaced', 'component_node_class': 'LTXHostEmbeddingComponents', 'construction_device': 'cpu', 'cpu_actual_source_sha256s': {'comfy/model_management.py': 'ef3f3af0657c1b022ad69b25928fa52dd429db9aed9cb688e89c7fbe68ab50cd', 'comfy/model_patcher.py': '768d9b6f24b632dffba9e4c3c2d2962b3c309bf33182cf599d8c9abda2125d99', 'comfy/ops.py': '6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0', 'comfy/sd.py': '41cbf195657cc81a60173f13f192966c4276bf7931a6c10f75870a66c59546b0', 'comfy/sd1_clip.py': 'fc2c7e8442e00d525740699c936a00e93a87f58d7c63a1c23a87cd96226962f8', 'comfy/text_encoders/llama.py': '7a1c57dd6e94ff1731f4cc6d98db2baaf8fed03e2fe996f79e49e06d9199717f', 'scripts/encoder_diagnostics.py': 'f16d8cefa02dd7557c13348a95e6c0ce07a42c4d0f46b36329ab1c4f182a439a'}, 'encoder_load_device': 'xpu:2', 'extension_sha256s': {'host_embedding_clip.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'host_embedding_placement_node.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'host_embedding_resident_node.py': 'bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7', 'ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'host_embedding_transition_memory.py': '707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86'}, 'force_full_load': False, 'full_clip_qualified': False, 'generated_output_cache': False, 'graphs': ['graphs/host-embedding-control.json', 'graphs/host-embedding-host-table.json'], 'modes': ['control', 'host-table'], 'native_gpu_qualified': False, 'placement_node_class': 'LTXHostEmbeddingPlacementCheck', 'prompt_encoding_cache': False, 'proof_source_sha256s': {'provenance/host-embedding/cpu-integration-result.json': 'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326', 'provenance/host-embedding/cpu-sources/native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce', 'provenance/host-embedding/cpu-sources/native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a', 'provenance/host-embedding/cpu-sources/scripts/cpu_comfy_import_policy_v1.py': '7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec', 'provenance/host-embedding/cpu-sources/scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'provenance/host-embedding/cpu-sources/scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'provenance/host-embedding/cpu-sources/scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v2.py': '9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu-fixture.py': '2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e', 'provenance/host-embedding/cpu-sources/scripts/test-host-embedding-integration-cpu.py': '6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d', 'provenance/host-embedding/cpu-startup-identity.json': 'fd398a2f242fbe0da9de81f4be05014b888886a1c9fa4cf314ca58ee7fe93d1e', 'provenance/host-embedding/resident-assembly-result.json': '4a9929bba6bf004581ada3607bd27dbbd16862cf842f5c1721853c87e9ac2d35', 'provenance/host-embedding/resident-sources/scripts/test-host-embedding-resident-stdlib.py': '6f76cbc5e7257d92552a0c8b559b7aa8253a70c723a8fd2a03d9210dde108117', 'provenance/host-transition/cpu-lifecycle-result.json': 'c9c2d81db33ab5d3174aaaaa87a31c6cf03e5d7923f1b9c305bae554e51ea452', 'provenance/host-transition/cpu-startup-identity.json': 'fc32d7e6c9713f2eaab34882c3a5ce9caef35f872d972b4c73d929ab327ed621', 'provenance/host-transition/fixture-evidence.json': '4ca154fd9b77a4389e853a4e80eb4c543aead688a4dc51ed7e123aaaace95b9f', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-resident-lifecycle-cpu.py': '2a19169ac8b8a898294603f9216fdca96d3fd3efd5bcb1564d332de522b0b844', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-integration-cpu.py': '6f0e89f549b9abd704c4648d1f06288b57607d3c31174c3a7dc1cfc22103e26d', 'provenance/host-transition/cpu-sources/scripts/host_embedding_resident_node_v2.py': 'bdaa14a06bd9937946eee470e562f6109df239273e905197d6e94fad28dd02f7', 'provenance/host-transition/cpu-sources/scripts/host_embedding_transition_memory.py': '707de7176a47a26063b7282fc7368818d3362b1bd917c76141d58ed00dfcdb86', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-resident-lifecycle-cpu-fixture.py': '4e2d0d92eea345dcb0ae36a4143f7f0d8887dda5c996845c37c6eba30673ee73', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-candidate-cpu-v3.py': '1448bcf30e481f6c8e5d46a23cea1f84ef2e01b8cd574abd9716bddb03c1e6ca', 'provenance/host-transition/cpu-sources/scripts/host_embedding_clip_v2.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994', 'provenance/host-transition/cpu-sources/scripts/host_embedding_placement_node_v2.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-integration-cpu-fixture.py': '2fa5d3636afdc7f17fc5957916cc525fa935ff1181efc90dad8753860e69f79e', 'provenance/host-transition/cpu-sources/scripts/cpu_comfy_import_policy_v1.py': '7634e653e66a682596e2bd941017722a41b9241c785dd1fb4885bfc051c31bec', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-candidate-cpu-v2.py': '9d8053868a7a26c6dd36ff0ae1889278effee866e93cf7e931546d06a8493bd3', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-candidate-cpu.py': '2088003e92f50c4d2c2012fb2012f1289053ab3ac782edd0228bb3a297b47534', 'provenance/host-transition/cpu-sources/scripts/test-host-embedding-candidate-cpu-fixture-v2.py': 'b1295210e04c20069bded9972bdbb29ee65589410c57dc81a410956ae7e63a32', 'provenance/host-transition/cpu-sources/scripts/ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9', 'provenance/host-transition/cpu-sources/native-cpp-block-01/accelerator_guard_v2.py': 'b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce', 'provenance/host-transition/cpu-sources/native-cpp-block-01/cpu_import_policy_v3.py': '03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a'}, 'reserve_override': False, 'speed_qualified': False, 'table_device': 'cpu', 'transformer_dispatch': 'original', 'component_receipt_schema': 'ltx.host-embedding-components.v2', 'native_cpu_resident_lifecycle_qualified': True}, 'Current lifecycle admission changed')
++    for name, expected in transition['extension_sha256s'].items():
++        require(manifest['extension_sha256s'][name] == expected, 'Current lifecycle extension differs: ' + name)
++    for name, expected in transition['proof_source_sha256s'].items():
++        require(sha(safe_path(packet, name)) == expected, 'Current lifecycle proof differs: ' + name)
++    row = transition['admissions']['resident_lifecycle']
++    cpu = json.loads(safe_path(packet, row['path']).read_text())
++    require(sha(safe_path(packet, row['path'])) == row['sha256'], 'Lifecycle receipt changed')
++    validate_lifecycle(cpu, transition)
++    require(sha(safe_path(packet, 'provenance/host-transition' + '/fixture-evidence.json')) == cpu['fixture_evidence_sha256'], 'Native lifecycle evidence changed')
++    for name, expected in cpu['source_pins'].items():
++        require(manifest['files']['source/' + name] == expected, 'Lifecycle actual source differs: ' + name)
++    require(manifest['files']['source/comfy/model_management.py'] == cpu['comfy_model_management_sha256'], 'Lifecycle model manager differs')
+     return manifest
+ 
+ 
+--- a/source/scripts/host_embedding_resident_node.py
++++ b/source/scripts/host_embedding_resident_node.py
+@@ -1,4 +1,4 @@
+-"""Inactive component loader for matched control/CPU-table encoder experiments.
++"""Inactive successor: retain nonencoder components; replace only CLIP.
+ 
+ The five component outputs and all diffusion/VAE/upscaler loading operations
+ match packet10's split lane. Only the explicit CLIP ownership adapter changes.
+@@ -8,6 +8,9 @@
+ import hashlib
+ import json
+ import time
++import weakref
++
++from host_embedding_transition_memory import checkpoint_geometry, admission, restore_allocation
+ 
+ import torch
+ import comfy.model_management
+@@ -24,6 +27,7 @@
+ 
+ MODEL_SHA = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+ _components = None
++_shared = None
+ _mode = None
+ _generation = 0
+ _identity = None
+@@ -35,6 +39,38 @@
+     _exclusive_json(path, value, ROOT)
+ 
+ 
++def retirement_refs(clip):
++    group = clip._host_embedding
++    objects = {'clip': clip, 'group': group, 'encoder_patcher': clip.patcher,
++               'encoder_model': clip.cond_stage_model}
++    if group.owner is not None:
++        owner = group.owner
++        objects.update(host_owner=owner, host_patcher=owner.host,
++                       host_model=owner.host.model, host_weight=owner.weight)
++    return {name: weakref.ref(value) for name, value in objects.items()}
++
++
++def require_dead(refs):
++    survivors = [name for name, ref in refs.items() if ref() is not None]
++    require(not survivors, 'Retired CLIP owner survived; refuse replacement: ' + ', '.join(survivors))
++    return {'all_retired_weakrefs_dead': True, 'checked': sorted(refs)}
++
++
++def memory_gate(run_dir, prefix, stage, allocation):
++    report = admission(stage, allocation)
++    write_receipt(run_dir / (prefix + '-' + stage + '-memory.json'), report)
++    require(report['passed'], 'Insufficient source-budgeted host RAM at ' + stage)
++    return report
++
++
++def shared_identity(shared):
++    model, video, audio, upscaler = shared
++    shard, = model.get_additional_models_with_key('ltx_layer_shard')
++    return {'model_patcher': id(model), 'model': id(model.model), 'shard_patcher': id(shard),
++            'shard_model': id(shard.model), 'video_vae': id(video), 'audio_vae': id(audio),
++            'upscaler': id(upscaler)}
++
++
+ class LTXHostEmbeddingComponents:
+     @classmethod
+     def INPUT_TYPES(cls):
+@@ -46,7 +82,7 @@
+     CATEGORY = 'lab/validation'
+ 
+     def load(self, placement, encoder_mode):
+-        global _components, _mode, _generation, _identity, _failure, _pending
++        global _components, _shared, _mode, _generation, _identity, _failure, _pending
+         require(placement == 'split' and encoder_mode in MODES, 'Unsupported component configuration')
+         require(_failure is None, 'Component transition failed; halt new requests and inspect evidence')
+         run_dir, identity = _context(ROOT)
+@@ -62,56 +98,88 @@
+         started = run_dir / (prefix + '-started.json')
+         result_path = run_dir / (prefix + '-result.json')
+         require(not result_path.exists() and not result_path.is_symlink(), 'Existing transition result')
+-        record = {'schema': 'ltx.host-embedding-components.v1', **identity,
++        record = {'schema': 'ltx.host-embedding-components.v2', **identity,
+                   'generation': next_generation, 'previous_generation': _generation,
+                   'placement': placement, 'encoder_mode': encoder_mode, 'previous_mode': _mode,
+-                  'retained': 'model components only', 'prompt_encoding_cache': False,
++                  'retained': 'nonencoder components across all generations; one current CLIP', 'prompt_encoding_cache': False,
+                   'generated_output_cache': False, 'status': 'started'}
+         write_receipt(started, record)
+         start = time.monotonic()
+         phase = 'retire-previous-components'
+         try:
++            clip_path = folder_paths.get_full_path_or_raise('text_encoders', 'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
++            geometry = checkpoint_geometry(clip_path)
++            record['memory_geometry'] = geometry
+             if _components is not None:
+                 clip = _components[1]
++                inspection = clip._host_embedding.inventory(clip)
++                record['restore_memory'] = memory_gate(run_dir, prefix, 'before-restore', restore_allocation(inspection['encoder']))
++                retired_patcher_ids = [id(clip.patcher)]
++                if clip._host_embedding.owner is not None:
++                    retired_patcher_ids.append(id(clip._host_embedding.owner.host))
++                refs = retirement_refs(clip)
+                 retirement = clip._host_embedding.detach_restore(clip)
+                 write_receipt(run_dir / (prefix + '-unload.json'), {**identity, **retirement,
+                     'old_generation': _generation, 'new_generation': next_generation,
+                     'old_mode': _mode, 'new_mode': encoder_mode})
+-                comfy.model_management.unload_all_models()
++                # Keep nonencoder owners strongly resident. Remove old CLIP from
++                # every component slot/local before collecting cycles. The native
++                # LoadedModel registry is weak and its finalizer removes dead models.
+                 _components = None
+                 _mode = None
+                 del clip
+                 gc.collect()
+-                comfy.model_management.cleanup_models_gc()
+-
+-            phase = 'load-diffusion'
++                comfy.model_management.cleanup_models()
++                death = require_dead(refs)
++                live_registry_ids = {id(p) for p in comfy.model_management.loaded_models() if p is not None}
++                require(not live_registry_ids.intersection(retired_patcher_ids), 'Retired CLIP remains in native registry')
++                death['retired_patcher_ids_absent_from_registry'] = True
++                write_receipt(run_dir / (prefix + '-retired-owner-release.json'), {**identity, **death,
++                    'old_generation': _generation, 'new_generation': next_generation,
++                    'shared_owner_ids': shared_identity(_shared),
++                    'native_registry_cleanup': 'cleanup_models after weak-finalizer cleanup; no direct list mutation'})
++                record['released_memory'] = memory_gate(run_dir, prefix, 'after-release', 0)
++
+             _pending = []
+-            model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
+-            _pending.append(model)
++            if _shared is None:
++                phase = 'load-diffusion'
++                model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
++                _pending.append(model)
++            else:
++                model, video, audio, upscaler = _shared
++                vaes = [video, audio]
++                record['shared_owner_ids_before'] = shared_identity(_shared)
++            phase = 'admit-CPU-encoder-construction'
++            record['construction_memory'] = memory_gate(run_dir, prefix, 'before-construction', geometry['construction_overlap_bytes'])
+             phase = 'construct-CPU-encoder-ownership'
+-            clip_path = folder_paths.get_full_path_or_raise('text_encoders', 'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
+             clip = load_clip(ckpt_paths=[clip_path],
+                 embedding_directory=folder_paths.get_folder_paths('embeddings'), mode=encoder_mode,
+                 model_options={'load_device': torch.device('xpu:2'), 'offload_device': torch.device('cpu')})
+             _pending.append(clip)
++            record['constructed_memory'] = memory_gate(run_dir, prefix, 'after-construction', 0)
+             initial_encoder = clip._host_embedding.inventory(clip)
+             require(clip.patcher.loaded_size() == 0 and all(p.device.type == 'cpu'
+                     for p in clip.cond_stage_model.parameters()), 'Encoder loaded before ownership receipt')
+ 
+-            phase = 'load-VAEs'
+-            vaes = []
+-            for name in ['ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors']:
+-                path = folder_paths.get_full_path_or_raise('vae', name)
+-                weights, metadata = comfy.utils.load_torch_file(path, return_metadata=True)
+-                vae = comfy.sd.VAE(sd=weights, metadata=metadata, device=torch.device('xpu:3'))
+-                vae.throw_exception_if_invalid()
+-                del weights
+-                vaes.append(vae)
+-                _pending.append(vae)
+-            phase = 'load-upscaler-and-split'
+-            upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
+-            _pending.append(upscaler)
+-            model = apply_layer_shard(model, secondary_device='xpu:1')
++            if _shared is None:
++                phase = 'load-VAEs'
++                vaes = []
++                for name in ['ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors']:
++                    path = folder_paths.get_full_path_or_raise('vae', name)
++                    weights, metadata = comfy.utils.load_torch_file(path, return_metadata=True)
++                    vae = comfy.sd.VAE(sd=weights, metadata=metadata, device=torch.device('xpu:3'))
++                    vae.throw_exception_if_invalid()
++                    del weights
++                    vaes.append(vae)
++                    _pending.append(vae)
++                phase = 'load-upscaler-and-split'
++                upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
++                _pending.append(upscaler)
++                model = apply_layer_shard(model, secondary_device='xpu:1')
++                _shared = (model, *vaes, upscaler)
++            record['shared_owner_ids'] = shared_identity(_shared)
++            if 'shared_owner_ids_before' in record:
++                require(record['shared_owner_ids'] == record['shared_owner_ids_before'], 'Nonencoder ownership changed')
+             completed = (model, clip, *vaes, upscaler)
+             record.update(status='completed', seconds=time.monotonic() - start,
+                 encoder_initial_ownership=initial_encoder,
+@@ -126,7 +194,7 @@
+             # Retain partial owners for inspection; never retry or cycle a server.
+             _failure = {'phase': phase, 'error': repr(error), 'generation': next_generation}
+             record.update(status='failed', seconds=time.monotonic() - start, failure=_failure,
+-                          retained_partial_owners=len(_pending))
++                          retained_partial_owners=len(_pending), shared_components_retained=_shared is not None)
+             if not result_path.exists() and not result_path.is_symlink():
+                 write_receipt(result_path, record)
+             raise
+--- a/source/custom_nodes/ltx_host_embedding_lab/__init__.py
++++ b/source/custom_nodes/ltx_host_embedding_lab/__init__.py
+@@ -1,4 +1,4 @@
+-"""Inactive component loader for matched control/CPU-table encoder experiments.
++"""Inactive successor: retain nonencoder components; replace only CLIP.
+ 
+ The five component outputs and all diffusion/VAE/upscaler loading operations
+ match packet10's split lane. Only the explicit CLIP ownership adapter changes.
+@@ -8,6 +8,9 @@
+ import hashlib
+ import json
+ import time
++import weakref
++
++from host_embedding_transition_memory import checkpoint_geometry, admission, restore_allocation
+ 
+ import torch
+ import comfy.model_management
+@@ -24,6 +27,7 @@
+ 
+ MODEL_SHA = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+ _components = None
++_shared = None
+ _mode = None
+ _generation = 0
+ _identity = None
+@@ -35,6 +39,38 @@
+     _exclusive_json(path, value, ROOT)
+ 
+ 
++def retirement_refs(clip):
++    group = clip._host_embedding
++    objects = {'clip': clip, 'group': group, 'encoder_patcher': clip.patcher,
++               'encoder_model': clip.cond_stage_model}
++    if group.owner is not None:
++        owner = group.owner
++        objects.update(host_owner=owner, host_patcher=owner.host,
++                       host_model=owner.host.model, host_weight=owner.weight)
++    return {name: weakref.ref(value) for name, value in objects.items()}
++
++
++def require_dead(refs):
++    survivors = [name for name, ref in refs.items() if ref() is not None]
++    require(not survivors, 'Retired CLIP owner survived; refuse replacement: ' + ', '.join(survivors))
++    return {'all_retired_weakrefs_dead': True, 'checked': sorted(refs)}
++
++
++def memory_gate(run_dir, prefix, stage, allocation):
++    report = admission(stage, allocation)
++    write_receipt(run_dir / (prefix + '-' + stage + '-memory.json'), report)
++    require(report['passed'], 'Insufficient source-budgeted host RAM at ' + stage)
++    return report
++
++
++def shared_identity(shared):
++    model, video, audio, upscaler = shared
++    shard, = model.get_additional_models_with_key('ltx_layer_shard')
++    return {'model_patcher': id(model), 'model': id(model.model), 'shard_patcher': id(shard),
++            'shard_model': id(shard.model), 'video_vae': id(video), 'audio_vae': id(audio),
++            'upscaler': id(upscaler)}
++
++
+ class LTXHostEmbeddingComponents:
+     @classmethod
+     def INPUT_TYPES(cls):
+@@ -46,7 +82,7 @@
+     CATEGORY = 'lab/validation'
+ 
+     def load(self, placement, encoder_mode):
+-        global _components, _mode, _generation, _identity, _failure, _pending
++        global _components, _shared, _mode, _generation, _identity, _failure, _pending
+         require(placement == 'split' and encoder_mode in MODES, 'Unsupported component configuration')
+         require(_failure is None, 'Component transition failed; halt new requests and inspect evidence')
+         run_dir, identity = _context(ROOT)
+@@ -62,56 +98,88 @@
+         started = run_dir / (prefix + '-started.json')
+         result_path = run_dir / (prefix + '-result.json')
+         require(not result_path.exists() and not result_path.is_symlink(), 'Existing transition result')
+-        record = {'schema': 'ltx.host-embedding-components.v1', **identity,
++        record = {'schema': 'ltx.host-embedding-components.v2', **identity,
+                   'generation': next_generation, 'previous_generation': _generation,
+                   'placement': placement, 'encoder_mode': encoder_mode, 'previous_mode': _mode,
+-                  'retained': 'model components only', 'prompt_encoding_cache': False,
++                  'retained': 'nonencoder components across all generations; one current CLIP', 'prompt_encoding_cache': False,
+                   'generated_output_cache': False, 'status': 'started'}
+         write_receipt(started, record)
+         start = time.monotonic()
+         phase = 'retire-previous-components'
+         try:
++            clip_path = folder_paths.get_full_path_or_raise('text_encoders', 'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
++            geometry = checkpoint_geometry(clip_path)
++            record['memory_geometry'] = geometry
+             if _components is not None:
+                 clip = _components[1]
++                inspection = clip._host_embedding.inventory(clip)
++                record['restore_memory'] = memory_gate(run_dir, prefix, 'before-restore', restore_allocation(inspection['encoder']))
++                retired_patcher_ids = [id(clip.patcher)]
++                if clip._host_embedding.owner is not None:
++                    retired_patcher_ids.append(id(clip._host_embedding.owner.host))
++                refs = retirement_refs(clip)
+                 retirement = clip._host_embedding.detach_restore(clip)
+                 write_receipt(run_dir / (prefix + '-unload.json'), {**identity, **retirement,
+                     'old_generation': _generation, 'new_generation': next_generation,
+                     'old_mode': _mode, 'new_mode': encoder_mode})
+-                comfy.model_management.unload_all_models()
++                # Keep nonencoder owners strongly resident. Remove old CLIP from
++                # every component slot/local before collecting cycles. The native
++                # LoadedModel registry is weak and its finalizer removes dead models.
+                 _components = None
+                 _mode = None
+                 del clip
+                 gc.collect()
+-                comfy.model_management.cleanup_models_gc()
+-
+-            phase = 'load-diffusion'
++                comfy.model_management.cleanup_models()
++                death = require_dead(refs)
++                live_registry_ids = {id(p) for p in comfy.model_management.loaded_models() if p is not None}
++                require(not live_registry_ids.intersection(retired_patcher_ids), 'Retired CLIP remains in native registry')
++                death['retired_patcher_ids_absent_from_registry'] = True
++                write_receipt(run_dir / (prefix + '-retired-owner-release.json'), {**identity, **death,
++                    'old_generation': _generation, 'new_generation': next_generation,
++                    'shared_owner_ids': shared_identity(_shared),
++                    'native_registry_cleanup': 'cleanup_models after weak-finalizer cleanup; no direct list mutation'})
++                record['released_memory'] = memory_gate(run_dir, prefix, 'after-release', 0)
++
+             _pending = []
+-            model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
+-            _pending.append(model)
++            if _shared is None:
++                phase = 'load-diffusion'
++                model = nodes.UNETLoader().load_unet('ltx-2.5-22b-distilled-transformer-bf16.safetensors', 'default')[0]
++                _pending.append(model)
++            else:
++                model, video, audio, upscaler = _shared
++                vaes = [video, audio]
++                record['shared_owner_ids_before'] = shared_identity(_shared)
++            phase = 'admit-CPU-encoder-construction'
++            record['construction_memory'] = memory_gate(run_dir, prefix, 'before-construction', geometry['construction_overlap_bytes'])
+             phase = 'construct-CPU-encoder-ownership'
+-            clip_path = folder_paths.get_full_path_or_raise('text_encoders', 'gemma4-12b-with-proj-ltx-2.5-bf16.safetensors')
+             clip = load_clip(ckpt_paths=[clip_path],
+                 embedding_directory=folder_paths.get_folder_paths('embeddings'), mode=encoder_mode,
+                 model_options={'load_device': torch.device('xpu:2'), 'offload_device': torch.device('cpu')})
+             _pending.append(clip)
++            record['constructed_memory'] = memory_gate(run_dir, prefix, 'after-construction', 0)
+             initial_encoder = clip._host_embedding.inventory(clip)
+             require(clip.patcher.loaded_size() == 0 and all(p.device.type == 'cpu'
+                     for p in clip.cond_stage_model.parameters()), 'Encoder loaded before ownership receipt')
+ 
+-            phase = 'load-VAEs'
+-            vaes = []
+-            for name in ['ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors']:
+-                path = folder_paths.get_full_path_or_raise('vae', name)
+-                weights, metadata = comfy.utils.load_torch_file(path, return_metadata=True)
+-                vae = comfy.sd.VAE(sd=weights, metadata=metadata, device=torch.device('xpu:3'))
+-                vae.throw_exception_if_invalid()
+-                del weights
+-                vaes.append(vae)
+-                _pending.append(vae)
+-            phase = 'load-upscaler-and-split'
+-            upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
+-            _pending.append(upscaler)
+-            model = apply_layer_shard(model, secondary_device='xpu:1')
++            if _shared is None:
++                phase = 'load-VAEs'
++                vaes = []
++                for name in ['ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors']:
++                    path = folder_paths.get_full_path_or_raise('vae', name)
++                    weights, metadata = comfy.utils.load_torch_file(path, return_metadata=True)
++                    vae = comfy.sd.VAE(sd=weights, metadata=metadata, device=torch.device('xpu:3'))
++                    vae.throw_exception_if_invalid()
++                    del weights
++                    vaes.append(vae)
++                    _pending.append(vae)
++                phase = 'load-upscaler-and-split'
++                upscaler = LatentUpscaleModelLoader.execute('ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors')[0]
++                _pending.append(upscaler)
++                model = apply_layer_shard(model, secondary_device='xpu:1')
++                _shared = (model, *vaes, upscaler)
++            record['shared_owner_ids'] = shared_identity(_shared)
++            if 'shared_owner_ids_before' in record:
++                require(record['shared_owner_ids'] == record['shared_owner_ids_before'], 'Nonencoder ownership changed')
+             completed = (model, clip, *vaes, upscaler)
+             record.update(status='completed', seconds=time.monotonic() - start,
+                 encoder_initial_ownership=initial_encoder,
+@@ -126,7 +194,7 @@
+             # Retain partial owners for inspection; never retry or cycle a server.
+             _failure = {'phase': phase, 'error': repr(error), 'generation': next_generation}
+             record.update(status='failed', seconds=time.monotonic() - start, failure=_failure,
+-                          retained_partial_owners=len(_pending))
++                          retained_partial_owners=len(_pending), shared_components_retained=_shared is not None)
+             if not result_path.exists() and not result_path.is_symlink():
+                 write_receipt(result_path, record)
+             raise
