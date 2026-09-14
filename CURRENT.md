@@ -25,19 +25,24 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14: adjacent-state native screen running on packet07.**
+**Four-B70 host, September14: packet07 screen complete; original dispatch selected.**
 PID56711 serves `http://127.0.0.1:8188`, manifest
 `afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1`.
-All four startup checks and strict after-import determinism passed. Old PID39793
-exited cleanly after one SIGINT, with render ownership clear. Computer boot is
-unchanged; no reboot, driver reset or host-setting changes occurred.
-The 12-request `multiblock-screen-02` is running (client exec40600, server exec70494).
-It tests all48 adjacent-state reuse against restored original dispatch on three
-scenes. No speed or native quality result is claimed yet. Failed requests halt
-submissions without cycling the server. [Prepared comparison](experiments/ltx25-b70/notes/adjacent-state-runtime-07-prepared.md),
-[startup evidence](experiments/ltx25-b70/data/multiblock-migration-07/startup.json).
-This supersedes PID39793/packet06 live statements below; inspect actual progress
-before any new client action.
+All 12 screen02 clips match all four original raw outputs, including all48
+compiled blocks. Warm compiled previews7.59–7.65s remain slower than adjacent
+restored controls6.37–6.45s (median penalty1.214s preview/1.167s samplers).
+Client exec40600 exited0. Server exec70494 is idle on restored dispatch with
+all48 retained; queue empty, clean kernel postflight and no FAULT latch.
+[Native results](experiments/ltx25-b70/notes/multiblock-screen-02-results.md).
+Old PID39793 exited cleanly after one SIGINT. Same computer boot, no host reboot,
+driver reset or settings changes. [Startup](experiments/ltx25-b70/data/multiblock-migration-07/startup.json).
+
+A subsequent offline replay measured only52.5ms potential savings from compact
+receipt serialization across528 calls, with all parsed fields equal. This is
+CPU/filesystem attribution, not a native speed result; no reload is warranted
+for it alone. Next: attribute metadata/lifecycle traversal without GPU work.
+[Replay evidence](experiments/ltx25-b70/notes/serializer-replay-cpu-01.md).
+This supersedes PID39793/packet06 and running-client statements below.
 
 **Four-B70 host, September14: multiblock screen complete; exact but slower.**
 PID39793 serves `http://127.0.0.1:8188` on packet06, manifest

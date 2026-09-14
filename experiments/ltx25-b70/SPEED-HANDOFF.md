@@ -3,15 +3,15 @@
 Forward plan: [north star and staged execution](PLAN.md). Historical stages below
 record the completed residency campaign; use the plan for upcoming priorities.
 
-Current September14: packet06 PID39793 is idle on restored dispatch after
-32 exact full clips, including all48 compiled blocks. All three selections are
-retained. All48 warm previews took about 7.8 seconds and lost a median 1.303
-seconds against adjacent restored controls; no speed promotion. Queue and
-kernel postflight are clean, with no FAULT latch. See [native screen results](notes/multiblock-screen-01-results.md).
-The inactive [adjacent-state reuse03 candidate](notes/adjacent-state-reuse-03-cpu.md)
-passed all 60 CPU checks in both parent and candidate. Native GPU quality and
-speed remain pending; immutable runtime and bounded client preparation proceed.
-CURRENT.md remains authoritative; historical process statements below are superseded.
+Current September14: packet07 PID56711 is idle on restored dispatch after
+12 exact full clips, including all48 compiled blocks. Warm candidate previews
+7.59–7.65s lose a median1.214s against adjacent original controls; no promotion.
+All48 remains retained. Queue/kernel postflight are clean; no FAULT latch.
+[Native result](notes/multiblock-screen-02-results.md). An offline528-record
+serializer replay shows only52.5ms potential CPU savings, insufficient to
+explain the penalty or justify a reload alone. [Attribution](notes/serializer-replay-cpu-01.md).
+Next: measure metadata/lifecycle traversal before choosing another runtime patch.
+CURRENT.md remains authoritative; older process statements below are superseded.
 
 Historical September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)
 halted the first eager control of the subsequent compiler campaign after graph
