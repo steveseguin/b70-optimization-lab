@@ -1,0 +1,887 @@
+{
+  "block_forward_executed": false,
+  "cases": [
+    {
+      "case": "native_unmodified",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "shared_module",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "parameter_alias",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "buffer_alias",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "cross_registry_alias",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "none_registrations",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "combined_aliases_and_none",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "empty_state",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "all_none_state",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "bad_parameter_dtype",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "bad_buffer_dtype",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "shared_bad_buffer_dtype",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "shared_bad_parameter_dtype",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "cross_registry_bad_dtype",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is no longer native BF16",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "wrong_buffer_device",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is on the wrong route device",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is on the wrong route device",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "wrong_parameter_device",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": true,
+          "implementations": {
+            "candidate": {
+              "accepted": true
+            },
+            "original": {
+              "accepted": true
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Compiled block state is on the wrong route device",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Compiled block state is on the wrong route device",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_local_register_forward_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_local_register_forward_pre_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_local_register_full_backward_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_local_register_full_backward_pre_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Block acquired unsupported module hooks",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_global_register_module_forward_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_global_register_module_forward_pre_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_global_register_module_full_backward_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "late_global_register_module_full_backward_pre_hook",
+      "passed": true,
+      "results": [
+        {
+          "check_device": false,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        },
+        {
+          "check_device": true,
+          "expected_acceptance": false,
+          "implementations": {
+            "candidate": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            },
+            "original": {
+              "accepted": false,
+              "error": "Global module hooks are unsupported",
+              "error_type": "RuntimeError"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "cases_passed": 24,
+  "compiler_executed": false,
+  "guard_argv": [
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-onepass-state-cpu.py",
+    "--cpu",
+    "--disable-dynamic-vram",
+    "--disable-comfy-compiler",
+    "--disable-async-offload",
+    "--disable-pinned-memory",
+    "--use-pytorch-cross-attention",
+    "--disable-xformers"
+  ],
+  "harness_sha256": "a6c33bd15af8b7bf3f436594bf7c25b8cc1126ee123a9bf402a38ce8435920c9",
+  "max_rss_kib": 787172,
+  "phase": "completed",
+  "pid": 65839,
+  "schema": "ltx.onepass-state-cpu-acceptance.v1",
+  "scope": "Pinned _validate bodies on actual tiny native block metadata; compare acceptance, not first-error priority",
+  "source_sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/multiblock-onepass-state-04/candidate.py": "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/multiblock-onepass-state-04/original.py": "79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718"
+  },
+  "status": "passed",
+  "torch": "2.14.0+xpu",
+  "validation_comparisons": 48,
+  "xpu_execution_qualified": false,
+  "xpu_initialized_after_import": false,
+  "xpu_initialized_after_work": false,
+  "full_evidence_path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/onepass-state-cpu-edges-01",
+  "full_result_sha256": "dbab81050732c27eaa160a777f4e148289770478980b0f49219f590b9266609d",
+  "log_sha256": "143d4eec86b4488a2cd329bd7968f786cd25f86703c885191ada57a6c0ce769b"
+}

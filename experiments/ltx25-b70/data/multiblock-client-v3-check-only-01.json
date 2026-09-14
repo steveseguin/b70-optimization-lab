@@ -1,0 +1,147 @@
+{
+  "command": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/run-multiblock-screen-v3.py",
+    "--campaign",
+    "multiblock-screen-03",
+    "--packet",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-08",
+    "--manifest-sha256",
+    "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b",
+    "--server-run",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-08",
+    "--check-only"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"inactive-client-check-passed\",\n  \"packet_manifest_sha256\": \"a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b\",\n  \"client_sha256\": \"d8054e9866dfb314a5df37415811a5d4a5db79828b0494cca5f3526884ee3114\",\n  \"receipt_validator_sha256\": \"aa72ba88cbce87ebe6f5c8b298112bcd6a72cea046020cab55fe2256a616d124\",\n  \"schedule\": [\n    {\n      \"mode\": \"original\",\n      \"selection\": \"all48\",\n      \"fixture\": \"boat\",\n      \"qualified_before\": 0,\n      \"initialization\": true,\n      \"pair\": null,\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r01-all48-original-boat\"\n    },\n    {\n      \"mode\": \"original\",\n      \"selection\": \"all48\",\n      \"fixture\": \"boat\",\n      \"qualified_before\": 0,\n      \"initialization\": false,\n      \"pair\": null,\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r02-all48-original-boat\"\n    },\n    {\n      \"mode\": \"compiled\",\n      \"selection\": \"all48\",\n      \"fixture\": \"boat\",\n      \"qualified_before\": 0,\n      \"initialization\": true,\n      \"pair\": null,\n      \"timeout_seconds\": 7200,\n      \"run\": \"multiblock-screen-03-r03-all48-compiled-boat\"\n    },\n    {\n      \"mode\": \"restored\",\n      \"selection\": \"all48\",\n      \"fixture\": \"boat\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-boat\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r04-all48-restored-boat\"\n    },\n    {\n      \"mode\": \"compiled\",\n      \"selection\": \"all48\",\n      \"fixture\": \"boat\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-boat\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r05-all48-compiled-boat\"\n    },\n    {\n      \"mode\": \"restored\",\n      \"selection\": \"all48\",\n      \"fixture\": \"boat\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-boat\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r06-all48-restored-boat\"\n    },\n    {\n      \"mode\": \"restored\",\n      \"selection\": \"all48\",\n      \"fixture\": \"marble\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-marble\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r07-all48-restored-marble\"\n    },\n    {\n      \"mode\": \"compiled\",\n      \"selection\": \"all48\",\n      \"fixture\": \"marble\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-marble\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r08-all48-compiled-marble\"\n    },\n    {\n      \"mode\": \"restored\",\n      \"selection\": \"all48\",\n      \"fixture\": \"marble\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-marble\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r09-all48-restored-marble\"\n    },\n    {\n      \"mode\": \"restored\",\n      \"selection\": \"all48\",\n      \"fixture\": \"bird\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-bird\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r10-all48-restored-bird\"\n    },\n    {\n      \"mode\": \"compiled\",\n      \"selection\": \"all48\",\n      \"fixture\": \"bird\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-bird\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r11-all48-compiled-bird\"\n    },\n    {\n      \"mode\": \"restored\",\n      \"selection\": \"all48\",\n      \"fixture\": \"bird\",\n      \"qualified_before\": 2,\n      \"initialization\": false,\n      \"pair\": \"all48-bird\",\n      \"timeout_seconds\": 1200,\n      \"run\": \"multiblock-screen-03-r12-all48-restored-bird\"\n    }\n  ],\n  \"native_requests\": 0\n}\n",
+  "stderr": "",
+  "result": {
+    "status": "inactive-client-check-passed",
+    "packet_manifest_sha256": "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b",
+    "client_sha256": "d8054e9866dfb314a5df37415811a5d4a5db79828b0494cca5f3526884ee3114",
+    "receipt_validator_sha256": "aa72ba88cbce87ebe6f5c8b298112bcd6a72cea046020cab55fe2256a616d124",
+    "schedule": [
+      {
+        "mode": "original",
+        "selection": "all48",
+        "fixture": "boat",
+        "qualified_before": 0,
+        "initialization": true,
+        "pair": null,
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r01-all48-original-boat"
+      },
+      {
+        "mode": "original",
+        "selection": "all48",
+        "fixture": "boat",
+        "qualified_before": 0,
+        "initialization": false,
+        "pair": null,
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r02-all48-original-boat"
+      },
+      {
+        "mode": "compiled",
+        "selection": "all48",
+        "fixture": "boat",
+        "qualified_before": 0,
+        "initialization": true,
+        "pair": null,
+        "timeout_seconds": 7200,
+        "run": "multiblock-screen-03-r03-all48-compiled-boat"
+      },
+      {
+        "mode": "restored",
+        "selection": "all48",
+        "fixture": "boat",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-boat",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r04-all48-restored-boat"
+      },
+      {
+        "mode": "compiled",
+        "selection": "all48",
+        "fixture": "boat",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-boat",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r05-all48-compiled-boat"
+      },
+      {
+        "mode": "restored",
+        "selection": "all48",
+        "fixture": "boat",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-boat",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r06-all48-restored-boat"
+      },
+      {
+        "mode": "restored",
+        "selection": "all48",
+        "fixture": "marble",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-marble",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r07-all48-restored-marble"
+      },
+      {
+        "mode": "compiled",
+        "selection": "all48",
+        "fixture": "marble",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-marble",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r08-all48-compiled-marble"
+      },
+      {
+        "mode": "restored",
+        "selection": "all48",
+        "fixture": "marble",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-marble",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r09-all48-restored-marble"
+      },
+      {
+        "mode": "restored",
+        "selection": "all48",
+        "fixture": "bird",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-bird",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r10-all48-restored-bird"
+      },
+      {
+        "mode": "compiled",
+        "selection": "all48",
+        "fixture": "bird",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-bird",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r11-all48-compiled-bird"
+      },
+      {
+        "mode": "restored",
+        "selection": "all48",
+        "fixture": "bird",
+        "qualified_before": 2,
+        "initialization": false,
+        "pair": "all48-bird",
+        "timeout_seconds": 1200,
+        "run": "multiblock-screen-03-r12-all48-restored-bird"
+      }
+    ],
+    "native_requests": 0
+  }
+}

@@ -1,0 +1,102 @@
+--- a/launch/encoder_runtime_common.py
++++ b/launch/encoder_runtime_common.py
+@@ -71,7 +71,7 @@
+             'Explicit manifest SHA256 required')
+     require(sha(manifest_path) == expected_manifest_sha256, 'Packet manifest changed')
+     manifest = json.loads(manifest_path.read_text())
+-    require(manifest['schema'] == 'ltx.compiler-multiblock-adjacent-state-runtime-packet.v1', 'Launcher requires compiler packet')
++    require(manifest['schema'] == 'ltx.compiler-multiblock-onepass-state-runtime-packet.v1', 'Launcher requires compiler packet')
+     require(manifest['source_commit'] == PIN, 'Core revision changed')
+     require(manifest['model_verification_sha256'] == MODEL_VERIFICATION_SHA256,
+             'Model identity changed')
+@@ -187,11 +187,11 @@
+                     'Original activation checker changed')
+         else:
+             require(manifest['files'].get(name) == digest, 'Inherited activation source changed: ' + name)
+-    require(manifest['extension_sha256s']['ltx_multiblock_compile.py'] == '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584'
++    require(manifest['extension_sha256s']['ltx_multiblock_compile.py'] == 'ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b'
+             and manifest['extension_sha256s']['multiblock_compile_node.py'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f',
+             'Multiblock source identity changed')
+     multi = manifest['multiblock']
+-    require(multi['adapter_sha256'] == '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584' and multi['node_sha256'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'
++    require(multi['adapter_sha256'] == 'ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b' and multi['node_sha256'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'
+             and multi['backend_sha256'] == '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a' and multi['rms_dependency_sha256'] == '09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb',
+             'Multiblock implementation identity changed')
+     require(multi['selections'] == {'single24': [24], 'boundary4': [0, 20, 21, 47], 'all48': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]} and multi['modes'] == ['original', 'compiled', 'restored']
+@@ -217,7 +217,7 @@
+             require(graph == control, 'Multiblock graph changed original quality recipe')
+     require(multi['graphs'] == expected_graph_paths, 'Multiblock graph inventory changed')
+     # Packet07 retains all06 graphs, lifecycle boundaries and numerical code.
+-    require(manifest['parent_manifest_sha256'] == '3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394', 'Unexpected multiblock06 parent')
++    require(manifest['multiblock_parent_manifest_sha256'] == '3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394', 'Unexpected multiblock06 parent')
+     multiblock_parent_path = safe_path(packet, 'multiblock-06-parent-manifest.json')
+     require(sha(multiblock_parent_path) == '3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394', 'Multiblock06 parent manifest changed')
+     multiblock_parent = json.loads(multiblock_parent_path.read_text())
+@@ -239,6 +239,34 @@
+     require(adjacent['bound_state_scans_before'] == 5 and adjacent['bound_state_scans_after'] == 3
+             and adjacent['lifecycle_registry_boundaries'] == 3 and adjacent['unbound_state_scans'] == 2,
+             'Adjacent-state validation contract changed')
++    # Current adapter identity is in multiblock/onepass_state; adjacent_state
++    # retains the historical packet07 source identity and its provenance gates.
++    require(manifest['parent_manifest_sha256'] == 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1', 'Unexpected adjacent-state07 parent')
++    onepass_parent_path = safe_path(packet, 'adjacent-state-07-parent-manifest.json')
++    require(sha(onepass_parent_path) == 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1', 'Adjacent-state07 parent manifest changed')
++    onepass_parent = json.loads(onepass_parent_path.read_text())
++    require(onepass_parent['schema'] == 'ltx.compiler-multiblock-adjacent-state-runtime-packet.v1',
++            'Unexpected one-pass parent schema')
++    require(manifest['runtime'] == onepass_parent['runtime'], 'One-pass runtime changed')
++    require(manifest['adjacent_state'] == onepass_parent['adjacent_state'],
++            'Historical adjacent-state provenance changed')
++    for name, digest in onepass_parent['files'].items():
++        if name in ('launch/encoder_runtime_common.py', 'source/scripts/ltx_multiblock_compile.py'):
++            require(manifest['files']['provenance/onepass-state-parent/' + name] == digest,
++                    'Original adjacent-state source changed: ' + name)
++        else:
++            require(manifest['files'].get(name) == digest, 'Inherited packet07 source changed: ' + name)
++    onepass = manifest['onepass_state']
++    require(onepass['parent_adapter_sha256'] == '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584'
++            and onepass['adapter_sha256'] == 'ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b'
++            and onepass['node_sha256'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'
++            and onepass['changed_parent_files'] == ['launch/encoder_runtime_common.py', 'source/scripts/ltx_multiblock_compile.py'],
++            'One-pass candidate identity changed')
++    require(onepass['hierarchy_traversals_per_state_check_before'] == 3
++            and onepass['hierarchy_traversals_per_state_check_after'] == 1
++            and onepass['lifecycle_registry_boundaries'] == 3
++            and onepass['cross_call_state_cache'] is False,
++            'One-pass validation contract changed')
+     return manifest
+ 
+ 
+--- a/source/scripts/ltx_multiblock_compile.py
++++ b/source/scripts/ltx_multiblock_compile.py
+@@ -79,15 +79,26 @@
+                 '_global_forward_hooks', '_global_forward_pre_hooks',
+                 '_global_backward_hooks', '_global_backward_pre_hooks')):
+             raise RuntimeError('Global module hooks are unsupported')
++        state_seen = False
++        # modules() already deduplicates shared module objects. Inspect each
++        # module's direct state here instead of recursively walking it twice
++        # more through parameters()/buffers(). Aliased tensors may be checked
++        # again; no tensor equality, copying, or cross-call cache is involved.
+         for module in self.block.modules():
+             if any(getattr(module, name, {}) for name in (
+                     '_forward_hooks', '_forward_pre_hooks', '_backward_hooks', '_backward_pre_hooks')):
+                 raise RuntimeError('Block acquired unsupported module hooks')
+-        state = tuple(self.block.parameters()) + tuple(self.block.buffers())
+-        if not state or any(t.dtype != torch.bfloat16 for t in state):
++            for registrations in (module._parameters, module._buffers):
++                for tensor in registrations.values():
++                    if tensor is None:
++                        continue
++                    state_seen = True
++                    if tensor.dtype != torch.bfloat16:
++                        raise RuntimeError('Compiled block state is no longer native BF16')
++                    if check_device and tensor.device != self._route_identity[0]:
++                        raise RuntimeError('Compiled block state is on the wrong route device')
++        if not state_seen:
+             raise RuntimeError('Compiled block state is no longer native BF16')
+-        if check_device and any(t.device != self._route_identity[0] for t in state):
+-            raise RuntimeError('Compiled block state is on the wrong route device')
+ 
+     def _validate_execution(self):
+         if self._binding is not None:
