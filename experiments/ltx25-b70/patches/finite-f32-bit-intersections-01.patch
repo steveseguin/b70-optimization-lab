@@ -1,0 +1,109 @@
+--- a/scripts/continuation_anchor_io.py
++++ b/scripts/continuation_anchor_io.py
+@@ -10,6 +10,8 @@
+ import re
+ import stat
+ import struct
++
++from finite_f32_bits import first_nonfinite_f32
+ 
+ IMAGE_SHAPE = [25, 256, 256, 3]
+ ANCHOR_SHAPE = [1, 256, 256, 3]
+@@ -31,9 +33,9 @@
+     _require(len(payload) == FRAME_BYTES, 'anchor must contain exactly 786432 bytes')
+     # IEEE754 exponent all ones means infinity or NaN, regardless of sign or
+     # mantissa. No float conversions: preserve zeros, subnormals and every bit.
+-    for index, (word,) in enumerate(struct.iter_unpack('<I', payload)):
+-        if word & 0x7f800000 == 0x7f800000:
+-            raise ValueError(f'nonfinite anchor sample at scalar index {index}')
++    index = first_nonfinite_f32(payload)
++    if index is not None:
++        raise ValueError(f'nonfinite anchor sample at scalar index {index}')
+     return {'sha256': hashlib.sha256(payload).hexdigest(), 'dtype': 'float32',
+             'storage_dtype': 'F32', 'byte_order': 'little',
+             'shape': list(ANCHOR_SHAPE), 'byte_length': FRAME_BYTES,
+--- a/scripts/continuation_delivery.py
++++ b/scripts/continuation_delivery.py
+@@ -14,6 +14,7 @@
+ import struct
+ 
+ import continuation_anchor_io as anchor_io
++from finite_f32_bits import first_nonfinite_f32
+ 
+ READ_BYTES = 65536
+ MAX_SUMMARY_BYTES = 262144
+@@ -111,9 +112,8 @@
+ 
+ 
+ def _finite(data, name):
+-    for (word,) in struct.iter_unpack('<I', data):
+-        if word & 0x7f800000 == 0x7f800000:
+-            raise ValueError(f'{name}: nonfinite captured sample')
++    if first_nonfinite_f32(data) is not None:
++        raise ValueError(f'{name}: nonfinite captured sample')
+ 
+ 
+ def verify_capture(capture_path, summary_path):
+--- a/scripts/bind-continuation-anchor.py
++++ b/scripts/bind-continuation-anchor.py
+@@ -67,7 +67,8 @@
+         'base_builder_sha256': BASE_BUILDER_SHA256,
+         'source_sha256': {name: hashlib.sha256((SCRIPTS / name).read_bytes()).hexdigest()
+                           for name in ('bind-continuation-anchor.py',
+-                                       'continuation_anchor_node.py', 'continuation_anchor_io.py')},
++                                       'continuation_anchor_node.py', 'continuation_anchor_io.py',
++                                       'finite_f32_bits.py')},
+         'deployment': 'inactive; prepare and attest a separate runtime before submission',
+     }
+     return envelope
+--- a/scripts/continuation_stream_state.py
++++ b/scripts/continuation_stream_state.py
+@@ -17,7 +17,7 @@
+ from continuation_delivery import verify_capture, iter_delivery_frames
+ 
+ SCRIPTS = Path(__file__).resolve().parent
+-BINDER_SHA256 = '30ea22b753cd33110ebd533f4487a71175dca14bc1e6bf2f36d32ca0c986e47a'
++BINDER_SHA256 = '6e7c45cf4927b2048ed212fe54f7c2835117d4dbee0accfeb73479dcab90ca6a'
+ MAX_CHECKPOINT_BYTES = 512 * 1024
+ MAX_RETAINED = 3
+ FAULT_ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+--- /dev/null
++++ b/scripts/finite_f32_bits.py
+@@ -0,0 +1,37 @@
++"""Exact bounded finite-F32 scan using integer bit intersections, no floats.
++
++Samples are their original little-endian IEEE754 bytes. This changes no sample
++and uses at most one 64KiB block plus fixed-size integer temporaries.
++"""
++import struct
++
++BLOCK_BYTES = 65536
++# Select bit23 (the least significant exponent bit) in every packed F32 word.
++EXPONENT_STARTS = int.from_bytes(b'\x00\x00\x80\x00' * (BLOCK_BYTES // 4), 'little')
++
++
++def first_nonfinite_f32(data):
++    """Return the first infinity/NaN sample index, or None for all-finite data.
++
++    Compatible contiguous byte buffers are read without conversion. Callers
++    must own immutable contents during the scan. Incomplete samples are errors.
++    """
++    with memoryview(data) as raw:
++        if not raw.c_contiguous:
++            raise BufferError('memoryview: underlying buffer is not C-contiguous')
++        with raw.cast('B') as view:
++            if len(view) % 4:
++                raise struct.error('iterative unpacking requires a buffer of a multiple of 4 bytes')
++            for offset in range(0, len(view), BLOCK_BYTES):
++                bits = int.from_bytes(view[offset:offset + BLOCK_BYTES], 'little', signed=False)
++                # After these three intersections, bit i is set iff all eight
++                # original bits i..i+7 were set. At each selected bit23 this
++                # examines only exponent bits23..30, never sign or mantissa.
++                bits &= bits >> 4
++                bits &= bits >> 2
++                bits &= bits >> 1
++                hits = bits & EXPONENT_STARTS
++                if hits:
++                    first_bit = hits & -hits
++                    return offset // 4 + (first_bit.bit_length() - 1) // 32
++    return None

@@ -11,8 +11,6 @@ import re
 import stat
 import struct
 
-from finite_f32_bits import first_nonfinite_f32
-
 IMAGE_SHAPE = [25, 256, 256, 3]
 ANCHOR_SHAPE = [1, 256, 256, 3]
 FRAME_INDEX = 24
@@ -33,9 +31,9 @@ def _anchor_metadata(payload):
     _require(len(payload) == FRAME_BYTES, 'anchor must contain exactly 786432 bytes')
     # IEEE754 exponent all ones means infinity or NaN, regardless of sign or
     # mantissa. No float conversions: preserve zeros, subnormals and every bit.
-    index = first_nonfinite_f32(payload)
-    if index is not None:
-        raise ValueError(f'nonfinite anchor sample at scalar index {index}')
+    for index, (word,) in enumerate(struct.iter_unpack('<I', payload)):
+        if word & 0x7f800000 == 0x7f800000:
+            raise ValueError(f'nonfinite anchor sample at scalar index {index}')
     return {'sha256': hashlib.sha256(payload).hexdigest(), 'dtype': 'float32',
             'storage_dtype': 'F32', 'byte_order': 'little',
             'shape': list(ANCHOR_SHAPE), 'byte_length': FRAME_BYTES,

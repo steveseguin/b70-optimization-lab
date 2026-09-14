@@ -14,7 +14,6 @@ import stat
 import struct
 
 import continuation_anchor_io as anchor_io
-from finite_f32_bits import first_nonfinite_f32
 
 READ_BYTES = 65536
 MAX_SUMMARY_BYTES = 262144
@@ -112,8 +111,9 @@ def _summary(summary_path, run_name):
 
 
 def _finite(data, name):
-    if first_nonfinite_f32(data) is not None:
-        raise ValueError(f'{name}: nonfinite captured sample')
+    for (word,) in struct.iter_unpack('<I', data):
+        if word & 0x7f800000 == 0x7f800000:
+            raise ValueError(f'{name}: nonfinite captured sample')
 
 
 def verify_capture(capture_path, summary_path):

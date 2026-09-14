@@ -67,8 +67,7 @@ def build_bound_chunk(chunk_index, run_name, seed=42, prompt=None,
         'base_builder_sha256': BASE_BUILDER_SHA256,
         'source_sha256': {name: hashlib.sha256((SCRIPTS / name).read_bytes()).hexdigest()
                           for name in ('bind-continuation-anchor.py',
-                                       'continuation_anchor_node.py', 'continuation_anchor_io.py',
-                                       'finite_f32_bits.py')},
+                                       'continuation_anchor_node.py', 'continuation_anchor_io.py')},
         'deployment': 'inactive; prepare and attest a separate runtime before submission',
     }
     return envelope

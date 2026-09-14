@@ -17,7 +17,7 @@ import tempfile
 from continuation_delivery import verify_capture, iter_delivery_frames
 
 SCRIPTS = Path(__file__).resolve().parent
-BINDER_SHA256 = '6e7c45cf4927b2048ed212fe54f7c2835117d4dbee0accfeb73479dcab90ca6a'
+BINDER_SHA256 = '30ea22b753cd33110ebd533f4487a71175dca14bc1e6bf2f36d32ca0c986e47a'
 MAX_CHECKPOINT_BYTES = 512 * 1024
 MAX_RETAINED = 3
 FAULT_ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')

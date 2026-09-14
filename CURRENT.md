@@ -72,6 +72,15 @@ playback, generation-speed result or footage deletion occurred. Transport,
 cleanup, native continuation and playback remain pending; host FAULT persists.
 [Bounded state and delivery evidence](experiments/ltx25-b70/notes/continuation-stream-state-01.md).
 
+The inactive continuation verifier now uses exact integer bit intersections
+for F32 finite checks. All65 affected bit/reader/provider/state checks pass;
+paired scalar/candidate verification of the three original captures produced
+identical receipts and all four original hashes. Provisional faulted-host CPU
+medians were304.38ms scalar versus44.04ms candidate for full capture verification.
+This is verification overhead only, not a generation-speed improvement or
+promotion. No GPU request, restart or host-setting change occurred.
+[Exact candidate, patch and timing limits](experiments/ltx25-b70/notes/finite-f32-bit-intersections-01.md).
+
 **Historical startup, superseded by the fault above: native compiler comparison.**
 PID95931 serves `http://127.0.0.1:8188` from prepared-encoder-compiler-02,
 manifest `f1fc467a4620caabac9065e72fb7fd1628db437d1c977c86237bb0378ef8f952`.
