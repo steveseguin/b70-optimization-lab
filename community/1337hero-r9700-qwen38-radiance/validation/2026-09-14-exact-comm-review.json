@@ -1,0 +1,256 @@
+{
+  "schema": "neural.download.community.static-source-review.v1",
+  "date": "2026-09-14",
+  "scope": "Read-only communication, residual-stream, attention-layout and graph source review. No contributed code execution, no GPU requests, no runtime modification. Installed baseline communicator retrieved by read-only docker cp.",
+  "evidence_level": "community-reported",
+  "radiance_commit": "f295b9ef51ad413a68e4192371e0377741a354ce",
+  "r4d_base_commit": "e8de4bc1f3dbd608dcb8d3ffceb6b48acdf83bb7",
+  "source_directory": "/mnt/fast-ai/research/radiance-mtp-fp8-review-20260914/exact-comm",
+  "files": [
+    {
+      "path": "radiance_allreduce.py",
+      "sha256": "453f92d9b61ca09d4b04543c9b1f504c7dc9382461a98c85fbf774c0ff18d573",
+      "bytes": 13822,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/radiance_allreduce.py"
+    },
+    {
+      "path": "radiance_arnq.py",
+      "sha256": "49444233842a2e18145b0da9c2bca6abb22ce15e03a90d74e74d62028612469f",
+      "bytes": 18442,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/radiance_arnq.py"
+    },
+    {
+      "path": "patch_ar_geometry.py",
+      "sha256": "0f4d41f3cd718096917e71fe51d597276b06560bf82944e60dd27d299e8620b1",
+      "bytes": 1801,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/patch_ar_geometry.py"
+    },
+    {
+      "path": "patch_ar_maxbytes.py",
+      "sha256": "528ed26716cfbac305b29e2d3b88ff80c938fd99cfffd09190b9a36fa9840340",
+      "bytes": 4129,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/patch_ar_maxbytes.py"
+    },
+    {
+      "path": "patch_rocm_cudagraph_current_stream.py",
+      "sha256": "f171e33e682624f76551a9f5426dd9a4ffc55687857de793f37ca5144de53667",
+      "bytes": 3037,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/patch_rocm_cudagraph_current_stream.py"
+    },
+    {
+      "path": "patch_unified_attention_lds.py",
+      "sha256": "9421bb2f26b4cea39f00ed2a739e407b6d8521e51220903cf59665c1675a6394",
+      "bytes": 3972,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/patch_unified_attention_lds.py"
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "3b0afcbe08477ef099d1dd7f45bd1621bf24365632a7696a697f562fd0a180a0",
+      "bytes": 26817,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/Dockerfile"
+    },
+    {
+      "path": "patch_r4d.py",
+      "sha256": "16a65529230e6bda1002620b2b6c4bdae0009c1fb2876f5dd722b67191eae519",
+      "bytes": 8266,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/patch_r4d.py"
+    },
+    {
+      "path": "r4d_radiance_extras.patch",
+      "sha256": "917294b76b853d23106099343bdec81f7b6bb79031964c19955aae07af718d61",
+      "bytes": 43433,
+      "url": "https://github.com/magiccodingman/vllm-radiance/blob/f295b9ef51ad413a68e4192371e0377741a354ce/r4d_radiance_extras.patch"
+    },
+    {
+      "path": "r4d_ar_oneshot_2rank_exact.hip",
+      "sha256": "3205ca17812b63fd6b3c33df97754a4dbb8dc03dc386dd739b334427d58c3dd6",
+      "bytes": 9535,
+      "url": "https://codeberg.org/StillDeadcode/libr4d/src/commit/e8de4bc1f3dbd608dcb8d3ffceb6b48acdf83bb7/r4d_ar_oneshot_2rank_exact.hip"
+    },
+    {
+      "path": "r304-xpu_communicator.py",
+      "sha256": "5ab2ea5d9e049e6b53e2d56d1e3419ce01d1988e8be5295bab1f912a7fdbf74d",
+      "bytes": 9503,
+      "url": null
+    }
+  ],
+  "baseline": {
+    "container": "neural-fp8-aea29e858af146c49cff3bd58d0cab9f",
+    "installed_file": "/opt/venv/lib/python3.12/site-packages/vllm/distributed/device_communicators/xpu_communicator.py",
+    "all_reduce_lines": [
+      48,
+      52
+    ],
+    "mechanism": "input clone, asynchronous XCCL all_reduce, work.wait",
+    "dtype": "FP16 target activations/native KV; official FP8 target weights; MTP1 unchanged"
+  },
+  "message_geometry": {
+    "hidden_size": 5120,
+    "element_bytes": 2,
+    "rows_to_bytes": {
+      "1": 10240,
+      "2": 20480,
+      "512": 5242880,
+      "2048": 20971520,
+      "4096": 41943040,
+      "8192": 83886080
+    },
+    "warning": "Model row arithmetic only; this is not a measured collective size histogram."
+  },
+  "findings": [
+    {
+      "rank": 1,
+      "idea": "Exact two-rank one-shot P2P collective",
+      "disposition": "Worth a separate bounded engineering feasibility task, not a quick adoption",
+      "source_refs": {
+        "radiance_allreduce.py": [
+          [
+            8,
+            16
+          ],
+          [
+            81,
+            107
+          ],
+          [
+            165,
+            187
+          ],
+          [
+            208,
+            237
+          ]
+        ],
+        "r4d_ar_oneshot_2rank_exact.hip": [
+          [
+            9,
+            24
+          ],
+          [
+            38,
+            60
+          ],
+          [
+            65,
+            123
+          ],
+          [
+            129,
+            146
+          ]
+        ]
+      },
+      "portable_mechanism": "Push exact input bytes into fixed double-buffered peer scratch, per-block device sequence and handshake, local sum into separate output; avoids input clone and generic collective path",
+      "constraints": [
+        "AMD HIP IPC/fine-grained coherence/store drain must be replaced with proven Level Zero/SYCL ordering, not copied.",
+        "FP32 add followed by FP16 cast must be bitwise qualified against XCCL, including subnormal/cancellation/overflow/signed-zero cases.",
+        "Two ranks only, contiguous 16-byte aligned messages; changing message/block shape and counter reuse need lifecycle tests.",
+        "Do not transplant spin timeout: current source breaks after 4 billion iterations and continues reduction without an error result.",
+        "Existing R199c profile is older and wait-heavy; its summed collective time is not removable wall time.",
+        "Idea already proposed by lab R199c; Radiance/StillDeadcode add a concrete implementation reference."
+      ],
+      "validated_b70_boost": null
+    },
+    {
+      "rank": 2,
+      "idea": "Match collective dispatch thresholds to real prefill message sizes",
+      "disposition": "Adopt as audit/accounting practice only; no missing RADIANCE setting on XCCL",
+      "source_refs": {
+        "patch_ar_maxbytes.py": [
+          [
+            2,
+            26
+          ]
+        ],
+        "patch_ar_geometry.py": [
+          [
+            2,
+            10
+          ],
+          [
+            19,
+            25
+          ]
+        ]
+      },
+      "constraints": [
+        "Radiance 48 MiB cap covers 4096x5120x2=40 MiB, fails at8192=80 MiB.",
+        "Existing B70 launcher already sets three XCCL SIMPLE thresholds to4GiB; no equivalent 48MiB Radiance fallback observed.",
+        "Radiance geometry knobs affect six-bit compressed path; its reported prefills gains are not qualified exact-path measurements."
+      ],
+      "validated_b70_boost": null
+    },
+    {
+      "rank": 3,
+      "idea": "Fuse collective + residual add + normalization",
+      "disposition": "Potential larger FP16-only future port, not directly transferable ARNQ",
+      "source_refs": {
+        "radiance_arnq.py": [
+          [
+            63,
+            102
+          ],
+          [
+            138,
+            141
+          ],
+          [
+            195,
+            210
+          ]
+        ]
+      },
+      "constraints": [
+        "Radiance emits FP8 activations/scales for W4A8; B70 intentionally uses FP16 activations.",
+        "Exact_nq name describes underlying reduce, not global exactness against our target; SiLU path source admits code differences.",
+        "FP16-only epilogue would need existing row-invariant normalization accumulation/rounding and aliasing preserved."
+      ],
+      "validated_b70_boost": null
+    },
+    {
+      "rank": 4,
+      "idea": "ROCm graph stream backport and attention LDS/layout geometry",
+      "disposition": "Hardware/backend-specific or correctness lesson, no current B70 runtime adoption",
+      "source_refs": {
+        "patch_rocm_cudagraph_current_stream.py": [
+          [
+            2,
+            8
+          ],
+          [
+            20,
+            38
+          ]
+        ],
+        "patch_unified_attention_lds.py": [
+          [
+            2,
+            18
+          ],
+          [
+            29,
+            39
+          ],
+          [
+            63,
+            72
+          ]
+        ]
+      },
+      "constraints": [
+        "Upstream vLLM PR53818 backport targets ROCm CUDA graph APIs/V2 general runner, not original XPU MTP1 V1 path.",
+        "AITER gfx1201 LDS thresholds and wave geometry do not transfer to native XPU attention.",
+        "Changing attention tile/split reduction may change floating point outputs despite unchanged FP16 KV.",
+        "Older B70 graph and opaque compiled-AR tests were neutral/negative; no unchanged repeats."
+      ],
+      "validated_b70_boost": null
+    }
+  ],
+  "b70_existing_evidence": [
+    "experiments/qwen38-27b-b70/notes/2026-09-04-qwen38-fp8-r187-decode-profile-r199c-result.md",
+    "experiments/qwen38-27b-b70/notes/2026-09-01-qwen38-fp8-mtp1-compiled-allreduce-r60-negative.md",
+    "experiments/qwen38-27b-b70/notes/2026-09-14-fp8-prefill-focus-results.md",
+    "experiments/qwen38-27b-b70/DO-NOT-REPEAT.md",
+    "repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/run-w8a16-mtp1-server.sh"
+  ]
+}
