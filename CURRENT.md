@@ -73,8 +73,12 @@ owned. No replacement encoder was allocated. Requests halted; no retry/reload.
 Postflight: same user-reboot boot5414a640, empty queue, only11888 owns renders,
 no FAULT latch and no new kernel entries. No agent reboot/reset/settings action.
 Preserve the failed screen; it does not qualify host timing or full transitions.
-Next: export evidence and audit encoder reuse without checkpoint/constructor
-allocation. Existing constructor floor and all quality gates remain unchanged.
+Terminal evidence is exported (325 text files, exact archived hashes).
+Next: keep a fixed encoder mode for later sampler work; separately design
+private ownership reuse without checkpoint/constructor allocation. The next
+sampler candidate is a two-stage, same-device full-N versus half-N Linear
+exactness diagnostic; its new adapter needs source review before any reload.
+Existing constructor floor and all quality gates remain unchanged.
 [Postflight](experiments/ltx25-b70/data/host-embedding-screen-02-postflight.json).
 
 **Historical Four-B70 host, September14 19:32 UTC: bounded post-reboot health assessment passed.**
