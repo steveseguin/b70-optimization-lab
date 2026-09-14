@@ -25,6 +25,15 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**LTX goal blocked on host recovery, September14.** The same kernel fault and
+pending-interrupt native clients were revalidated across three consecutive goal
+turns. Prepared source work is saved, but the next meaningful steps require a
+healthy native runtime: compiler exactness/speed and actual continuation quality.
+No new native request, restart or reboot was performed. Generation remains about
+6.4s per clip; the full real-time goal is incomplete. Do not continue producing
+synthetic-only qualification as a substitute for those native measurements.
+[Recovery handoff and resume order](experiments/ltx25-b70/notes/native-progress-recovery-handoff.md).
+
 **Four-B70 host, September14: kernel incident; GPU requests halted.**
 `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/FAULT.json` is present.
 The first compiler-screen-01 eager control clip completed generation, but client
