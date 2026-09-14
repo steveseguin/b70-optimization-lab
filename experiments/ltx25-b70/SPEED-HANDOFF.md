@@ -12,7 +12,9 @@ serializer replay shows only52.5ms potential CPU savings, insufficient to
 explain the penalty or justify a reload alone. [Attribution](notes/serializer-replay-cpu-01.md).
 CPU metadata attribution then measured0.480s per528 fake-compute route calls;
 [profile and scope](notes/metadata-dispatch-cpu-02-results.md). Next: a single
-state/hook traversal, preserving all execution boundaries, first tested on CPU.
+state/hook traversal now passes60 existing CPU lifecycle checks and measures
+0.313s in that fixture. [Candidate scope/pending gates](notes/onepass-state-04-cpu.md).
+Focused alias/None-state gates and native GPU validation remain pending.
 CURRENT.md remains authoritative; older process statements below are superseded.
 
 Historical September14: [kernel incident](notes/compiler-screen-01-kernel-incident.md)

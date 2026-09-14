@@ -43,8 +43,12 @@ CPU/filesystem attribution, not a native speed result; no reload is warranted
 for it alone. A corrected native-class CPU fixture then measured0.480s per528
 route calls with fake compute, preserving1584 state/registry boundaries. The
 separate profile points to repeated metadata traversal; this is not native
-speed attribution. Next: inactive single-traversal state/hook candidate and
-CPU parity/cost checks before another native build.
+speed attribution. The inactive single-traversal state/hook candidate then
+passed all60 existing lifecycle checks and measured0.313s in the same CPU
+fixture versus earlier0.480s. No native speed claim; focused alias/None-state
+gates and native qualification remain pending. Next: finish those focused CPU
+checks and prepare the next native comparison without touching live packet07.
+[Candidate and CPU cost](experiments/ltx25-b70/notes/onepass-state-04-cpu.md).
 [Replay evidence](experiments/ltx25-b70/notes/serializer-replay-cpu-01.md),
 [metadata attribution](experiments/ltx25-b70/notes/metadata-dispatch-cpu-02-results.md).
 This supersedes PID39793/packet06 and running-client statements below.

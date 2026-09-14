@@ -1,0 +1,40 @@
+{
+  "schema": "ltx.multiblock-onepass-state-candidate.v1",
+  "status": "inactive-source-only-unvalidated",
+  "parent_source": "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/multiblock-adjacent-state-03/candidate.py",
+  "parent_sha256": "79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584",
+  "candidate_sha256": "ba89394822e9ec607cc8ec7aad092a3afa7d87e0f723b781cf27f1f6158c031b",
+  "patch_sha256": "f210714ef65834ca0926f9f577a0db30b4c555aa8051e0c971014483d1f6535f",
+  "changed_method": "CompiledBlockRoute._validate",
+  "change": "One module traversal inspects hooks and direct parameter/buffer registrations instead of three recursive traversals",
+  "preserved": [
+    "Global hooks",
+    "Block class, original route placement and registered ownership",
+    "All three lifecycle/registry/state validation boundaries",
+    "All module hook types previously checked",
+    "Every non-None registered parameter/buffer BF16 and optional device check",
+    "Empty-state rejection",
+    "Numerical operations, original blocks/weights, backend, OPTIONS and Dynamo limits"
+  ],
+  "aliases": "Shared modules deduplicated by native modules(); aliased tensor registrations checked repeatedly without tensor equality or deduplication operations",
+  "none_state": "Skip None exactly as native named parameters/buffers iterators do; all-None/empty state still rejected",
+  "mutation_contract": "Static native module registration inspected anew on every call; no cache or protection against concurrent external mutation. When multiple violations coexist, first failure ordering can differ.",
+  "validation": {
+    "AST_parse": true,
+    "all_other_methods_functions_classes_AST_identical": true,
+    "tests_run": false,
+    "torch_imported": false,
+    "native_requests": false,
+    "speed_measured": false
+  },
+  "motivation": {
+    "CPU_metadata_528_call_seconds": [
+      0.479976492,
+      0.479732302,
+      0.47962436
+    ],
+    "separate_profile_total_seconds": 1.558,
+    "profile_note": "_named_members0.559s cumulative, parameters0.419s, buffers0.183s, named_modules0.396s overlap and must not be summed; profile overhead excluded from uninstrumented timings"
+  },
+  "next_gate": "Root-owned CPU metadata parity/negative tests and paired route-only attribution, then native full-output quality and timing if useful"
+}
