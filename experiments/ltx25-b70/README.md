@@ -1,7 +1,70 @@
 # LTX 2.5 native BF16 baseline on B70
 
-Status: preparing first short clip; no measured generation or determinism claim yet.
+Status: **working baseline, three byte-identical generations**, September 13, 2026.
 User authorized bring-up and repeatability validation on September 13, 2026.
+
+## Verified result
+
+LTX 2.5 distilled BF16 generated a 256x256, 25-frame clip at 24 fps on one B70
+with synchronous CPU weight offload. First/middle/last frames show a wooden boat
+moving gently on water. All three runs fully recomputed the same prompt and seed;
+decoded images, video latents, audio latents and waveform are bitwise identical,
+with zero unequal values and zero maximum difference. Strict deterministic
+algorithms remained enabled with warning-only mode off. No GPU fault, OOM or
+tiled-VAE fallback was recorded. The server remains running and idle.
+
+| Run | Server execution | Client elapsed | Cached nodes |
+| --- | ---: | ---: | ---: |
+| First | 97.590 s | 100.943 s | 0 |
+| Repeat 1 | 54.009 s | 55.431 s | 0 |
+| Repeat 2 | 52.774 s | 55.021 s | 0 |
+
+The native weights are BF16; upstream latents and decoded outputs are FP32.
+The exact tensor archive and FFV1 v4 float RGB32/PCM float32 media retain those
+outputs without quantization. Decoding the media independently reproduced every
+video/audio byte, including 24 fps and 48 kHz sample rate. FFV1's float profile is
+experimental; the MP4 is the convenient lossy preview. PNG previews also convert
+the original float pixels to 8-bit values. The video lasts 25/24 seconds; original
+audio is 48,480 samples (1.010 seconds), preserved without padding or resampling.
+
+Scope: **one prompt/seed, one process, one hardware/software configuration**.
+No fresh-process, different-seed/resolution, CUDA, dev-checkpoint or FP32-model
+parity claim is made. Distillation itself is not claimed lossless.
+
+Evidence: [result identity](data/baseline-result.json),
+[independent repeat verification](data/repeat-verification.json),
+[lossless round-trip receipt](data/float-lossless.verification.json),
+[server log](data/server-baseline-complete.log), and
+[post-run kernel journal](data/journal-after-baseline.txt).
+Submitted graphs, server histories, identities and capture summaries are under
+`data/requests/baseline-01`, `baseline-02` and `baseline-03`.
+
+Media under `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`:
+
+- `output/baseline-01/preview_00001_.mp4`: viewable preview.
+- `output/baseline-01/float-lossless.mkv`: exact float video and audio.
+- `output/validation/baseline-01/tensors.safetensors`: canonical four-output archive.
+
+## Reuse the current server
+
+The current endpoint is `http://127.0.0.1:8188`, PID 11499. Do not start a second
+server or cycle this one to run another clip. Confirm the queue is idle and the
+fault latch is absent; the client enforces those conditions. Use a new output
+identifier, since evidence directories are never overwritten:
+
+```bash
+cd /home/steve/llm-optimizations
+/home/steve/.venvs/ltx25-baseline/bin/python experiments/ltx25-b70/scripts/request-clip.py baseline-04
+```
+
+The client uses the frozen `data/baseline-api.json` graph. Compare that new result
+against existing executions with `scripts/verify-repeats.py` (at least three
+unique run names and a fresh `--output` receipt). Export another exact media file
+with `scripts/export-lossless.py SOURCE_VALIDATION_DIRECTORY NEW_MKV_PATH`.
+Runtime versions are pinned in [environment capture](data/environment.txt);
+startup flags and host/source identity are in [server arguments](data/server-args.json)
+and [server identity](data/server-identity.json). The source itself is unmodified;
+the local capture node only saves original outputs and gates requests.
 
 ## Preregistered baseline
 

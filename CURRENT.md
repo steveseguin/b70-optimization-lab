@@ -28,15 +28,20 @@ actions are historical, span multiple hosts, and are not current instructions.
 **Four-B70 host, 2026-09-13 20:42 EDT: LTX baseline bring-up.** User authorized
 a very short native-precision clip and deterministic repeat checks. One local
 ComfyUI server (PID 11499, `127.0.0.1:8188`) is running with exclusive device
-locks; all four cards passed its small copy/compute preflight. The first fixed-seed
-256x256/25-frame request `baseline-01` is running. The RAID transformer and encoder failed fresh
+locks; all four cards passed its small copy/compute preflight. **Baseline complete,
+server idle:** three fixed-seed 256x256/25-frame generations are bitwise identical
+across images, video/audio latents and waveform, with strict determinism and zero
+cached nodes. First/repeat server times were 97.590/54.009/52.774 seconds. Exact
+float video/audio export passed independent decode round-trip verification.
+No GPU fault, OOM or tiled-VAE fallback occurred. This establishes one-prompt,
+same-process repeatability, not cross-process or other-model parity. The RAID transformer and encoder failed fresh
 SHA-256 checks; rejected bytes and failed receipts are preserved. The transformer
 was repaired by replacing 79 damaged bytes, and the encoder by replacing 112.
 All five final component files passed publisher/direct-I/O hashes; the generation
 gate is now open. Rejected files and partial downloads remain preserved. Preserve the server, source and environment at
 `/home/steve/src/ComfyUI-ltx25-baseline` and
 `/home/steve/.venvs/ltx25-baseline`; no restart chain or power-setting changes.
-See [lane preregistration](experiments/ltx25-b70/README.md). Evidence root:
+See [verified baseline and reuse instructions](experiments/ltx25-b70/README.md). Evidence root:
 `/mnt/fast-ai/bench-results/ltx25-baseline-20260913`.
 
 **Four-B70 host, 2026-09-13 after 20:17 EDT reboot: LTX 2.5 pivot.** User

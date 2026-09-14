@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "model": "LTX 2.5 22B distilled native BF16",
+  "revision": "5e6e71018ee1756ed329b697a7b4aedc934dfce9",
+  "source_commit": "19e1058f4c445ef74047e77a23f9ca7684c1e4b6",
+  "width": 256,
+  "height": 256,
+  "frames": 25,
+  "fps": 24,
+  "video_duration_seconds": 1.0416666666666667,
+  "seed": 42,
+  "steps": [
+    8,
+    3
+  ],
+  "runs": [
+    {
+      "name": "baseline-01",
+      "prompt_id": "0bfc092b-340d-4688-b5cf-22c20c227a6a",
+      "server_execution_seconds": 97.59,
+      "client_seconds": 100.94307933099935
+    },
+    {
+      "name": "baseline-02",
+      "prompt_id": "d5af86c7-0abb-4127-9043-ad9abec60754",
+      "server_execution_seconds": 54.009,
+      "client_seconds": 55.4309517669999
+    },
+    {
+      "name": "baseline-03",
+      "prompt_id": "daf89d77-074e-4492-8e30-2d00e809d4eb",
+      "server_execution_seconds": 52.774,
+      "client_seconds": 55.020743496999785
+    }
+  ],
+  "all_four_tensor_outputs_bitwise_equal": true,
+  "strict_deterministic_algorithms": true,
+  "node_cache": "disabled; zero reused nodes in all three histories",
+  "lossless_float_video_audio_roundtrip": true,
+  "additional_weight_quantization": false,
+  "gpu_execution": "xpu:0, one 32 GiB B70; synchronous CPU weight offload",
+  "vae_decode": "untiled; no OOM fallback in log",
+  "device_faults": false,
+  "server_state": "running and idle",
+  "server_pid": 11499,
+  "limitations": [
+    "same process only; no fresh-process or cross-hardware test",
+    "distilled checkpoint is the target; no equivalence claim against dev checkpoint",
+    "BF16 weights with upstream FP32 outputs; no FP32-model parity claim",
+    "MP4 and PNG previews are not exact floating-point archives",
+    "FFV1 float RGB32 uses experimental version 4 profile"
+  ],
+  "evidence_root": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913",
+  "preview": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/baseline-01/preview_00001_.mp4",
+  "lossless_media": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/baseline-01/float-lossless.mkv",
+  "canonical_tensors": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/output/validation/baseline-01/tensors.safetensors"
+}
