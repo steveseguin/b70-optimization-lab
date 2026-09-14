@@ -1,0 +1,31 @@
+{
+  "schema": "ltx.retained-multiblock-profile-source-check.v1",
+  "status": "passed-source-only",
+  "sources": {
+    "scripts/record-retained-multiblock-profile.py": "11b34a0104818c0d3aa627b1799daf7f545633f42216495fa4ce12b38a6a0db8",
+    "scripts/test-retained-multiblock-profile-stdlib.py": "741ed7e296c66b03cc3c8cf874a4f736cc2c050b97b5648fbae6acfce0a2613e"
+  },
+  "stdlib_tests": {
+    "tests_run": 8,
+    "failures": 0,
+    "errors": 0,
+    "elapsed_seconds": 0.032,
+    "tool_chunk": "8172cb"
+  },
+  "packet_check_only": {
+    "status": "source-check-passed",
+    "tool_chunk": "4f76ac",
+    "python": "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "manifest_sha256": "a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b"
+  },
+  "native_requests": 0,
+  "profiler_attachments": 0,
+  "terminal_qualification_checked": false,
+  "native_readiness_qualified": false,
+  "limitations": [
+    "Synthetic failure-order tests mock the request and profiler; no native/profiler execution was performed.",
+    "Execution admits only same-process terminal screen03 identity, qualification, owners and full graph receipt bindings.",
+    "Recorded sampled thread weights include waiting/idle; they are not CPU percentages.",
+    "Subprocess timestamps bracket attachment/request observations, not exact Comfy node intervals."
+  ]
+}
