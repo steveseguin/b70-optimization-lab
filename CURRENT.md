@@ -25,6 +25,16 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, 2026-09-13 after 20:17 EDT reboot: LTX 2.5 pivot.** User
+requested parking the completed Flash-Next campaign, archiving its checkpoint
+to USB, then focusing on LTX 2.5. Recent LTX, YuE2 and MiniCPM downloads were
+located on the RAID, now mounted read-only. Corsair's read-only mount failed
+with an NTFS chkdsk recommendation; Qwen archive verification/reclaim is
+pending, and the internal checkpoint remains intact. No GPU workload was
+launched. The active task is storage/download review and LTX bring-up planning;
+prior queued four-card launch instructions are superseded. See the
+[pivot and storage review](notes/2026-09-13-ltx25-focus-and-storage-review.md).
+
 **2026-09-13 19:32 EDT, two-B70 host: R308 work complete.** The optional
 single-request repair for Qwen3.5 4B and 9B is published, anonymously pullable,
 and verified on the live site. Both models passed 60/60 oracle checks,
