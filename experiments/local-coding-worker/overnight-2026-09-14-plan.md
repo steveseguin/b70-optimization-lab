@@ -82,3 +82,20 @@ messages, cloud model fallback, new models, or competing GPU work.
 Publish verified worker changes, a clear result note, API/profile documentation,
 and the website summary. Run the relevant worker/integrity/guide checks and
 verify CI, deployment and live pages. Leave the healthy FP8 endpoint available.
+
+## Protocol findings before task generation
+
+The two permitted protocol generations finished naturally. The second exposed
+an API compatibility difference: `/tokenize` counted 446 tokens while generation
+used 478. Chat Completions normalizes the legacy `reasoning_content` message key;
+the tokenization route does not. The shared renderer reads canonical `reasoning`.
+The client now uses that canonical field on both wire requests and retains
+`reasoning_content` in its internal history. A CPU-only tokenization check of the
+same recorded history returned 478, matching the retained generation. No extra
+protocol generation, model restart, prompt change or history removal was needed.
+The failed protocol receipt remains failed; the diagnosis is separate evidence.
+
+The integration review also corrected history loss after malformed action
+responses. The full assistant answer and reasoning now precede the correction
+message. This harness fix applies to both candidate profiles. All 67 CPU tests
+passed before task generation.

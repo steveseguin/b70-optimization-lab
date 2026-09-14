@@ -57,7 +57,8 @@ class LocalModel:
             if self.thinking and message['role']=='assistant':
                 reasoning=message.get('reasoning_content','')
                 if not isinstance(reasoning,str):raise ValueError('Assistant reasoning history must be text')
-                item['reasoning_content']=reasoning
+                # vLLM chat accepts the legacy alias; /tokenize requires canonical reasoning.
+                item['reasoning']=reasoning
             clean.append(item)
         directory=self.out/f'{len(self.calls)+1:03d}';directory.mkdir()
         with self.fetch('/tokenize',{'model':self.model,'messages':clean,'add_generation_prompt':True,'chat_template_kwargs':self.template_kwargs}) as response:count=json.load(response)['count']

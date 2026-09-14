@@ -111,7 +111,7 @@ class LocalModelTests(unittest.TestCase):
                     self.assertNotIn('extra',str(generate['messages']))
                 previous=generations[1]['messages'][2]
                 self.assertEqual(previous['content'],first['content'])
-                self.assertEqual(previous['reasoning_content'],first['reasoning_content'])
+                self.assertEqual(previous['reasoning'],first['reasoning_content'])
                 self.assertEqual(generations[1]['messages'][:2],generations[0]['messages'])
                 self.assertIn('Output:\nline one\nline two\n',generations[1]['messages'][-1]['content'])
                 receipt=json.loads((model.out/'002/response.json').read_text())
@@ -194,7 +194,7 @@ class LocalModelTests(unittest.TestCase):
             answer=model.query(history+list(recovery))
             self.assertEqual(answer['extra']['actions'],[{'command':'echo safe'}])
             generate=next(p for u,p in model.opener.payloads if u.endswith('/chat/completions'))
-            self.assertEqual(generate['messages'][1]['reasoning_content'],'Useful reasoning')
+            self.assertEqual(generate['messages'][1]['reasoning'],'Useful reasoning')
             self.assertIn('Expected exactly 1 action',generate['messages'][2]['content'])
 
 if __name__=='__main__':unittest.main()
