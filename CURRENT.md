@@ -25,6 +25,19 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
+**Four-B70 host, September14 16:38 UTC: corrected packet10 loaded; decoder screen starting.**
+PID84255 serves `http://127.0.0.1:8188` in exec33936, packet
+`prepared-encoder-na-axis-10`, manifest
+`d6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a`.
+Four startup device checks, strict determinism, full identity and private decoder
+node registration passed. Packet09 PID82046 exited0 after one SIGINT following
+the reviewed source-pin correction; same computer boot and no fault recorded.
+The11-clip `na-axis-screen-01` uses original transformer dispatch and full raw
+parity, then scoped original/cache/original triples. Preserve this application;
+requests must halt on any failure without cycling it. No native speed result yet.
+[Corrected preparation](experiments/ltx25-b70/notes/na-axis-runtime-10-prepared.md).
+This supersedes all older PID/startup statements below.
+
 **Four-B70 host, September14 16:33 UTC: packet09 node startup rejected; zero clip requests.**
 PID82046 serves `http://127.0.0.1:8188` (exec49702) with an empty queue.
 All four startup device checks passed and strict determinism is enabled, but
