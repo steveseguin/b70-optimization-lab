@@ -37,6 +37,39 @@ python3 packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --model-dir /abso
 Wait for `Ready`. The worker defaults to `http://127.0.0.1:18124` and model
 `qwen38-27b-fp8`. Keep other requests off this endpoint while a task is running.
 
+## API and capacity
+
+The running service exposes an OpenAI-compatible Chat Completions API:
+
+| Setting | Current worker service |
+| --- | --- |
+| Base URL | `http://127.0.0.1:18124/v1` |
+| Model name | `qwen38-27b-fp8` |
+| Authentication | No key; bound to loopback on this host |
+| Requests | `POST /v1/chat/completions`, including streaming |
+| Active generations | One; additional requests queue |
+| Total context | 33,024 tokens, including input and generated output |
+| Worker input budget | 28,000 tokens, including instructions and conversation |
+| Speculative decoding | MTP depth 1, two B70s; prompt caching disabled |
+
+The service has not been qualified for multiple simultaneous users. Keep the
+endpoint exclusive while the worker records per-request server-prefill metrics.
+The model's advertised maximum context is larger than this deployed setting.
+Changing a client token limit does not increase the server's capacity.
+
+For a simple non-thinking streaming request:
+
+```bash
+curl --no-progress-meter http://127.0.0.1:18124/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen38-27b-fp8","messages":[{"role":"user","content":"Explain prefill in one sentence."}],"temperature":0,"max_tokens":512,"stream":true,"chat_template_kwargs":{"enable_thinking":false}}'
+```
+
+Client profiles select thinking, sampling and output budgets separately from
+the loaded server. The [original profile](config.json) uses greedy generation,
+thinking disabled, and a 2,048-token output cap. Profile experiments and their
+qualification status are recorded in the [worker results](../experiments/local-coding-worker/README.md).
+
 ## Give it work
 
 Write the issue in a text file, then run:
