@@ -1,0 +1,204 @@
+{
+  "schema": "ltx.cpp-actual-tiny-block-cpu.v1",
+  "passed": false,
+  "phase": "guarded-Kitchen-Inductor-import",
+  "rows": [],
+  "calls": [],
+  "command": [
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v4.py",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/guarded-v4-result-01.json",
+    "--evidence-dir",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v4-01"
+  ],
+  "pid": 105412,
+  "ppid": 105411,
+  "scope": "Tiny actual BF16 CPU block exactness only; no XPU/model/clip/speed qualification",
+  "source_pins": {
+    "comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+  },
+  "fixture_parent_sha256": "09632eba818a3cf925a7627b14f9b61db326dcb310e6ab2b282f51720d1cd18d",
+  "operator_qualification_sha256": "feba23a06a7baf237055c526a135b2a68290e6ada53f688d71093729c0fcbd71",
+  "helper_sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v4.py": "35924bf2f856afa57cb6f29c004b0dac56cf9d50764de8a6309dd432043a2a00",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/fixture.py": "6016032d4623ed32aa3d61f9012f4663b098a6758be955e84a9e31f40aa7a54c",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/backend.py": "cb34a32b6e2268fd54e3be1c9d006ebc06b9888cd033f619bd41ba73af57be0a",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_metadata_policy_v4.py": "4fffdedf7d109cc14456aef37031e7471138a9c19c840596efb1e3197e972a80"
+  },
+  "evidence_directory": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v4-01",
+  "torch_imported": true,
+  "cpu_import_policy_requested": {
+    "schema": "ltx.cpu-import-policy.v3",
+    "availability": {
+      "torch.cuda.is_available": false,
+      "torch.xpu.is_available": false
+    },
+    "scope": "Entire disposable CPU fixture process, before Kitchen/Inductor imports through both compiled arms",
+    "arms": [
+      "eager",
+      "python",
+      "python_repeat",
+      "cpp",
+      "cpp_repeat"
+    ],
+    "availability_call_logging": false,
+    "availability_implementation": "Pure literal False functions; original availability functions never called",
+    "device_entry_traps": "Frozen accelerator_guard_v2.py retained; sticky BaseException halt",
+    "cache_metadata_hook": null,
+    "native_admission": "Pending separate review of Triton NVIDIA ctypes driver-query bypass"
+  },
+  "cpu_metadata_policy_requested": {
+    "schema": "ltx.cpu-cache-metadata-policy.v4",
+    "hook": "torch.utils._triton.triton_backend",
+    "allowed_caller": "Exact original pinned FxGraphCache._save_graph code object and globals",
+    "allowed_metadata": "compiled_graph.device_types == {'cpu'}; extern_libs_key is None",
+    "behavior": "Recorded ordinary exception at allowed CPU save; sticky BaseException everywhere else; never call original backend",
+    "scope": "Same disposable CPU fixture process for eager, Python and C++ compiled/repeat arms",
+    "expected_omissions": 4,
+    "source_pins": {
+      "torch/utils/_ordered_set.py": "5c232fb67e7c378fd46e19c89de9228397439b09f666996dbae177b487455716",
+      "torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "torch/_inductor/codecache.py": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "torch/_inductor/output_code.py": "647fdca5e7ab214acdf8280885d419efc607f3a003353a46611e59ec6b3d8fe6"
+    }
+  },
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "fixture_AST_contract": {
+    "block_initialization_unchanged": true,
+    "input_arithmetic_unchanged": true
+  },
+  "compiler_environment": {
+    "MAX_JOBS": "1",
+    "TORCHINDUCTOR_COMPILE_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "TORCHINDUCTOR_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v4-01/inductor-cache",
+    "TRITON_CACHE_DIR": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v4-01/triton-cache"
+  },
+  "startup_receipt": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v4-01/startup-identity.json",
+    "sha256": "c3578b209c584e9fe356951dbcebdc4f1a19f496800fc4c92ac96f34181ffb8d"
+  },
+  "accelerator_guard_attempts": [
+    {
+      "entry": "torch.xpu.device_count",
+      "pid": 105412,
+      "monotonic_ns": 15855949934154,
+      "phase": "guarded-Kitchen-Inductor-import",
+      "argument_types": [],
+      "keyword_names": [],
+      "stack": [
+        "  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v4.py\", line 301, in <module>\n    raise SystemExit(main())\n",
+        "  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v4.py\", line 160, in main\n    import comfy.ops\n",
+        "  File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load\n",
+        "  File \"<frozen importlib._bootstrap>\", line 1331, in _find_and_load_unlocked\n",
+        "  File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\n",
+        "  File \"<frozen importlib._bootstrap_external>\", line 999, in exec_module\n",
+        "  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\n",
+        "  File \"/home/steve/src/ComfyUI-ltx25-baseline/comfy/ops.py\", line 23, in <module>\n    import comfy.model_management\n",
+        "  File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load\n",
+        "  File \"<frozen importlib._bootstrap>\", line 1331, in _find_and_load_unlocked\n",
+        "  File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\n",
+        "  File \"<frozen importlib._bootstrap_external>\", line 999, in exec_module\n",
+        "  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\n",
+        "  File \"/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_management.py\", line 127, in <module>\n    _ = torch.xpu.device_count()\n",
+        "  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py\", line 31, in blocked\n    'keyword_names': sorted(kwargs), 'stack': traceback.format_stack(limit=40)})\n"
+      ]
+    }
+  ],
+  "accelerator_guard_entries": [
+    "torch.cuda.init",
+    "torch.cuda._lazy_init",
+    "torch.cuda.device_count",
+    "torch.cuda.get_device_properties",
+    "torch.cuda.get_device_capability",
+    "torch.cuda.get_device_name",
+    "torch.cuda.current_device",
+    "torch.cuda.current_stream",
+    "torch.cuda.set_device",
+    "torch.cuda.synchronize",
+    "torch.xpu.init",
+    "torch.xpu._lazy_init",
+    "torch.xpu.device_count",
+    "torch.xpu.get_device_properties",
+    "torch.xpu.get_device_capability",
+    "torch.xpu.get_device_name",
+    "torch.xpu.current_device",
+    "torch.xpu.current_stream",
+    "torch.xpu.set_device",
+    "torch.xpu.synchronize",
+    "torch._C._xpu_init",
+    "torch._C._xpu_getDeviceCount",
+    "torch._C._xpu_getDevice",
+    "torch._C._xpu_setDevice",
+    "torch._C._xpu_getCurrentRawStream"
+  ],
+  "accelerator_guard_scope": "Frozen v2 device-entry traps plus explicit process-local CPU availability False policy; no installed source, compiler option, cache metadata, or device setting changes",
+  "cpu_import_policy": {
+    "schema": "ltx.cpu-import-policy.v3",
+    "availability": {
+      "torch.cuda.is_available": false,
+      "torch.xpu.is_available": false
+    },
+    "scope": "Entire disposable CPU fixture process, before Kitchen/Inductor imports through both compiled arms",
+    "arms": [
+      "eager",
+      "python",
+      "python_repeat",
+      "cpp",
+      "cpp_repeat"
+    ],
+    "availability_call_logging": false,
+    "availability_implementation": "Pure literal False functions; original availability functions never called",
+    "device_entry_traps": "Frozen accelerator_guard_v2.py retained; sticky BaseException halt",
+    "cache_metadata_hook": null,
+    "native_admission": "Pending separate review of Triton NVIDIA ctypes driver-query bypass",
+    "installed": true,
+    "installed_function_names": {
+      "torch.cuda.is_available": "cpu_cuda_unavailable",
+      "torch.xpu.is_available": "cpu_xpu_unavailable"
+    },
+    "trap_identity_count": 25
+  },
+  "accelerator_guard_original_scope": "Process-local Python/C entry traps only; no installed-source/registry/runtime mutation. They block device enumeration and metadata queries as well as initialization. No CPU/GPU availability simulation, compiler option changes or retry.",
+  "cpu_metadata_omissions": [],
+  "cpu_metadata_policy": {
+    "schema": "ltx.cpu-cache-metadata-policy.v4",
+    "hook": "torch.utils._triton.triton_backend",
+    "allowed_caller": "Exact original pinned FxGraphCache._save_graph code object and globals",
+    "allowed_metadata": "compiled_graph.device_types == {'cpu'}; extern_libs_key is None",
+    "behavior": "Recorded ordinary exception at allowed CPU save; sticky BaseException everywhere else; never call original backend",
+    "scope": "Same disposable CPU fixture process for eager, Python and C++ compiled/repeat arms",
+    "expected_omissions": 4,
+    "source_pins": {
+      "torch/utils/_ordered_set.py": "5c232fb67e7c378fd46e19c89de9228397439b09f666996dbae177b487455716",
+      "torch/utils/_triton.py": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "torch/_inductor/codecache.py": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "torch/_inductor/output_code.py": "647fdca5e7ab214acdf8280885d419efc607f3a003353a46611e59ec6b3d8fe6"
+    },
+    "installed": true,
+    "bound": false,
+    "original_backend_qualname": "triton_backend",
+    "original_backend_firstlineno": 242
+  },
+  "accelerator_guard_tripped": true,
+  "error": "AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v4.py\", line 165, in main\n    metadata_policy.bind(FxGraphCache)\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_metadata_policy_v4.py\", line 101, in bind\n    self.require_intact()\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/cpu_metadata_policy_v4.py\", line 123, in require_intact\n    self.guard.require_clean(self.report)\n  File \"/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py\", line 17, in require_clean\n    raise AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')\nprivate_cpu_accelerator_guard_v2.AcceleratorAccessBlocked: CPU diagnostic remains halted after accelerator access\n",
+  "cpu_metadata_finalizer_intact": false,
+  "cpu_metadata_finalizer_error": "AcceleratorAccessBlocked('CPU diagnostic remains halted after accelerator access')",
+  "fault_present_at_exit": false,
+  "max_rss_kib": 632496,
+  "xpu_initialized_at_exit": false,
+  "cuda_initialized_at_exit": false
+}

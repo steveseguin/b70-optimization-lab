@@ -33,6 +33,98 @@ collective design lead; neither is applied or benchmarked. The inactive
 metadata patch must be rebased and qualified before runtime use.
 [Review and adoption decisions](community/1337hero-r9700-qwen38-radiance/validation/2026-09-14-mtp-fp8-transfer-review.md).
 
+**Four-B70 host, September14 17:19 UTC: optimization continues; application unchanged.**
+Packet10 PID84255/exec33936 remains healthy and idle with the same full endpoint
+identity, empty queue, sole ownership of all four render nodes and no fault.
+Saved-event attribution puts about1.82s in encoding and3.54s in the two sampler
+nodes. A new inactive CPU embedding ownership candidate could free1,920MiB of
+encoder VRAM and replace465MiB of recurring weight uploads with7.5MiB of token
+rows. Native correctness/residency and speed are unmeasured; unchanged memory
+reserve and full actual residency remain required. Source review caught and
+corrected named-owner loading and inference-tensor version assumptions.
+[Candidate](experiments/ltx25-b70/notes/host-embedding-gather-candidate-01.md),
+[review](experiments/ltx25-b70/notes/host-embedding-source-review-01.md).
+
+The guarded C++ CPU v4 diagnostic stopped at a second import-time device-count
+probe in Comfy, before any model/compile call; both GPU backends remained
+uninitialized. Its source/39 stdlib checks passed, but native qualification is
+still pending. The embedding CPU driver reaches this same import and was not
+run. Next: a narrowly scoped CPU import refusal, then bounded CPU qualification
+before runtime integration. No live application or host action occurred.
+[V4 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v4-native-attempt-01.md).
+Unconditional cross-step text K/V reuse was rejected from the actual checkpoint
+and source: ADaLN changes the projection inputs with timestep.
+[Audit](experiments/ltx25-b70/notes/cross-step-text-kv-audit-01.md).
+
+**Four-B70 host, September14 16:57 UTC: decoder confirmation complete; scoped gain retained.**
+All18 balanced `na-axis-confirm-01` clips passed the four original raw-output
+oracles and full24-call decoder checks on unchanged packet10 PID84255/exec33936.
+Across this screen and confirmation,29/29 clips are exact. All six balanced
+decoder comparisons favor the cache, median−83.231ms. Whole-preview effects
+split3wins/3losses, median−41.966ms; preview medians remain about6.4s. Retain the
+local decoder gain, with no overall speed promotion or streaming qualification.
+Client31882 exited0; same boot, queue empty, onlyPID84255 owns all four render
+devices, no fault. Default route is original; private axis-cache remains
+available. No reload was required for confirmation. Next: saved-event attribution
+of encoder/sampler variation and the remaining transformer/encoder costs.
+[Confirmation results](experiments/ltx25-b70/notes/na-axis-confirm-01-results.md).
+
+**Four-B70 host, September14 16:42 UTC: decoder screen passed; small speed gain to confirm.**
+PID84255 serves `http://127.0.0.1:8188` in exec33936, packet
+`prepared-encoder-na-axis-10`, manifest
+`d6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a`.
+Four startup device checks, strict determinism, full identity and private decoder
+node registration passed. Packet09 PID82046 exited0 after one SIGINT following
+the reviewed source-pin correction; same computer boot and no fault recorded.
+All11 `na-axis-screen-01` clips passed full original four-output raw parity;
+nine scoped decodes passed the complete24-call sequence and owner/config checks.
+Cache previews6.297–6.446s; median paired changes −119.528ms preview and
+−83.436ms decoder. Client80638 exited0; queue empty, no fault, original dispatch
+and default NA route. This is a screening gain, not a promotion or streaming
+qualification. Next: preserve terminal evidence and prepare a balanced18-request
+confirmation on this same application. No reload is required. Halt submissions
+on failure without cycling the service.
+[Screen results](experiments/ltx25-b70/notes/na-axis-screen-01-results.md).
+The separate guarded CPU compiler probe exited1 after blocking an import-time
+`torch.xpu.device_count` query; XPU stayed uninitialized, no model/compile calls
+occurred, and LTX PID84255 remained idle and healthy. It did not reach the earlier
+cache-metadata hypothesis. No retry is scheduled during confirmation.
+[Guarded probe](experiments/ltx25-b70/native-cpp-block-01/guarded-v2-native-attempt-01.md).
+[Corrected preparation](experiments/ltx25-b70/notes/na-axis-runtime-10-prepared.md).
+This supersedes all older PID/startup statements below.
+
+**Four-B70 host, September14 16:33 UTC: packet09 node startup rejected; zero clip requests.**
+PID82046 serves `http://127.0.0.1:8188` (exec49702) with an empty queue.
+All four startup device checks passed and strict determinism is enabled, but
+`LTXNAAxisDecode` failed registration before router installation: its sd.py pin
+incorrectly names the upstream source rather than the inherited encoder source.
+No native campaign was launched, and no automatic retry follows. Preserve this
+idle application and packet09 while correcting the source integration offline.
+Old PID66846 exited0 after one SIGINT; computer boot remains
+`8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a`, no host reboot or settings changes.
+[Startup failure evidence](experiments/ltx25-b70/data/na-axis-migration-09/startup-failure.json).
+This supersedes every older live PID and next-launch statement below.
+
+**Four-B70 host, September14: decoder packet09 preparation (historical).**
+Packet `/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-na-axis-09`
+is sealed at manifest`a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed`.
+The private original-VAEDecode integration passed9 CPU groups; the11-request
+client passed14 stdlib checks and offline packet admission. Root reviewed the
+node, builder, receipts and client; independent builder review found no blocker.
+The new graphs change only decoder374 and retain original transformer dispatch.
+Startup must prove the node is registered through object_info before requests.
+[Prepared package](experiments/ltx25-b70/notes/na-axis-runtime-09-prepared.md).
+PID66846/packet08 is still the live healthy application; no09 native request
+or application reload has occurred yet. Next: one controlled application reload
+to load09, then the bounded bare/original/cache comparison with full raw parity.
+
+The separate C++ CPU tiny-block probe stopped after detecting unintended XPU
+initialization during the first Python-boundary compile; no C++ compiled call
+followed. Root checked an empty queue, no FAULT or new kernel entries, and only
+the original LTX PID owning the four render devices. That probe stays separate;
+its source-backed cache metadata/driver initialization hypothesis and inactive
+guarded successor are preserved. Do not run CPU compilation during native timing.
+
 **Two-B70 host, September 14: user-reported freeze during candidate startup.**
 The user restarted the computer. Current boot is
 `5ba85b30-0455-466a-b9fc-d9132975417e`; the prior boot ended after logs stopped

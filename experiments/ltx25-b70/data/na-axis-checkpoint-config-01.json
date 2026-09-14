@@ -1,0 +1,174 @@
+{
+  "status": "pinned-header-config-verified",
+  "checkpoint_path": "/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors",
+  "header_bytes": 81544,
+  "prefix_bytes": 8,
+  "header_with_prefix_sha256": "bc4f0a9f8d1f436c6317e92ab057feeb746cdad6ab3d0e9c76df6b57b290602a",
+  "model_verification_receipt_sha256": "273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f",
+  "vae_config": {
+    "_class_name": "CausalDiffusionVAE",
+    "dims": 3,
+    "encoder": {
+      "_class_name": "Encoder",
+      "dims": 3,
+      "in_channels": 3,
+      "out_channels": 128,
+      "blocks": [
+        [
+          "res_x",
+          {
+            "num_layers": 4
+          }
+        ],
+        [
+          "compress_space_res",
+          {
+            "multiplier": 2
+          }
+        ],
+        [
+          "res_x",
+          {
+            "num_layers": 6
+          }
+        ],
+        [
+          "compress_time_res",
+          {
+            "multiplier": 2
+          }
+        ],
+        [
+          "res_x",
+          {
+            "num_layers": 4
+          }
+        ],
+        [
+          "compress_all_res",
+          {
+            "multiplier": 2
+          }
+        ],
+        [
+          "res_x",
+          {
+            "num_layers": 2
+          }
+        ],
+        [
+          "compress_all_res",
+          {
+            "multiplier": 1
+          }
+        ],
+        [
+          "res_x",
+          {
+            "num_layers": 2
+          }
+        ]
+      ],
+      "patch_size": 4,
+      "latent_log_var": "constant",
+      "latent_log_var_value": -7.824046010856292,
+      "norm_layer": "pixel_norm",
+      "base_channels": 128,
+      "spatial_padding_mode": "zeros"
+    },
+    "decoder": {
+      "_class_name": "NADiffusionDecoder",
+      "in_channels": 128,
+      "out_channels": 3,
+      "patch_size": 4,
+      "head_dim": 64,
+      "stage_channels": [
+        2048,
+        1024,
+        512,
+        512,
+        256
+      ],
+      "stage_depths": [
+        4,
+        6,
+        4,
+        2,
+        8
+      ],
+      "stage_kernels": [
+        [
+          3,
+          7,
+          7
+        ],
+        [
+          3,
+          7,
+          7
+        ],
+        [
+          3,
+          5,
+          5
+        ],
+        [
+          3,
+          5,
+          5
+        ],
+        [
+          11,
+          11,
+          11
+        ]
+      ],
+      "upsamples": [
+        [
+          [
+            1,
+            2,
+            2
+          ],
+          2
+        ],
+        [
+          [
+            2,
+            1,
+            1
+          ],
+          2
+        ],
+        [
+          [
+            2,
+            2,
+            2
+          ],
+          1
+        ],
+        [
+          [
+            2,
+            2,
+            2
+          ],
+          2
+        ]
+      ],
+      "spatial_padding_mode": "zeros",
+      "resampler_kind": "linear",
+      "stage5_kernel": [
+        11,
+        11,
+        11
+      ],
+      "timestep_scale_multiplier": 1000.0,
+      "default_num_inference_steps": 1
+    },
+    "model_output_type": "x0",
+    "spatial_padding_mode": "zeros"
+  },
+  "scope": "Header read only, no weight payload allocation or GPU/native imports; original verification receipt owns full weight identity"
+}

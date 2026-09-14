@@ -1,0 +1,110 @@
+{
+  "status": "inactive-source-and-stdlib-only; native admission blocked pending NVIDIA ctypes bypass review",
+  "scope": "Explicit availability False for both CPU compiled arms; no metadata hook or native dependency imports",
+  "parent_harness_sha256": "4e57bf38aacf919870506e765787ec042c6e0a00c0f30deeb0eb180bcaddf002",
+  "parent_guard_sha256": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce",
+  "files": {
+    "test_block_cpu_guarded_v3.py": "d42c828d577dc7ecc7217224804480f4eb92cee1316356d87daae50202e2d9c2",
+    "cpu_import_policy_v3.py": "03fdcf06f6de141ef7197b2b8e5a813a0929bd2bc958825c7d68f4e353843c0a",
+    "test_guarded_v3_stdlib.py": "8c0f024bf4bab65aa2de0f3847da6cf5cfdc2d9fc468f056dbb8c6b419a14951",
+    "test_guarded_v3_stdlib-01.failed.py": "928dce56c7b49f6e847a0e90bb623f7053af17eaeb6060c9d06a8ec9dafe718a",
+    "guarded-v3-stdlib-01.json": "43170daef437da6ab66eb0fc2a018fd124b2f1075e3b266717472d7a19f85ad9",
+    "guarded-v3-stdlib-02.json": "b1418e03e9713a3111bfd3338056a674f756b487f075665480cc196d9f244959",
+    "guarded-diagnostic-v3.patch": "31d53930a3d4cea705252b2e55b802423fe79e0f46196b5d964598c2182a453c"
+  },
+  "installed_source": [
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/triton/__init__.py",
+      "sha256": "9dd763c1688725d8d7cb4461e1e97687e4ca9e60ab19c6d369e47b175b59b8fa",
+      "excerpts": [
+        {
+          "start_line": 343,
+          "end_line": 362,
+          "text": "def _register():\n    if not _TRITON_AVAILABLE:\n        registry.mark_unavailable(\"triton\", _TRITON_ERROR or \"Triton not available\")\n        return\n\n    has_cuda = torch.cuda.is_available()\n    has_xpu = hasattr(torch, \"xpu\") and torch.xpu.is_available()\n\n    if not has_cuda and not has_xpu:\n        registry.mark_unavailable(\"triton\", \"Neither CUDA nor XPU available on this system\")\n        return\n\n    registry.register(\n        name=\"triton\",\n        module=__import__(__name__, fromlist=__all__),\n        capabilities=_build_constraints(),\n    )\n\n\n_register()"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_inductor/codecache.py",
+      "sha256": "1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156",
+      "excerpts": [
+        {
+          "start_line": 2304,
+          "end_line": 2313,
+          "text": "        )\n        try:\n            backend = torch.utils._triton.triton_backend()\n            compiled_graph.extern_libs_key = torch.utils._triton._extern_libs_key(\n                backend\n            )\n        except Exception:\n            pass\n        disk_compiled_graph = copy(compiled_graph)\n        disk_compiled_graph.prepare_for_serialization()"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/utils/_triton.py",
+      "sha256": "4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a",
+      "excerpts": [
+        {
+          "start_line": 240,
+          "end_line": 252,
+          "text": "\n\n@functools.cache\ndef triton_backend() -> Any:\n    from triton.compiler.compiler import make_backend\n    from triton.runtime.driver import driver\n\n    try:\n        target = driver.active.get_current_target()\n        return make_backend(target)\n    except (ImportError, OSError) as e:\n        if _FAILED_TO_MAP_SEGMENT_FROM_SHARED_OBJECT in str(e):\n            _raise_triton_cache_load_error(e)"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/triton/backends/intel/driver.py",
+      "sha256": "3861015216ebb1f649f383614ec6ffb4212a554929e8594baf3abdfd89e3d480",
+      "excerpts": [
+        {
+          "start_line": 775,
+          "end_line": 783,
+          "text": "\n    @staticmethod\n    def is_active():\n        try:\n            import torch\n            return torch.xpu.is_available()\n        except ImportError:\n            return False\n"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/triton/backends/nvidia/driver.py",
+      "sha256": "21e1da3e99aa5906cb47f6013f8a99c69b5e57c339a20bd415b712be4c9f3b14",
+      "excerpts": [
+        {
+          "start_line": 54,
+          "end_line": 85,
+          "text": "def _cuda_driver_is_active():\n    candidates = [\"libcuda.so.1\"]\n    try:\n        candidates.extend([os.path.join(path, \"libcuda.so.1\") for path in libcuda_dirs()])\n    except Exception:\n        pass\n\n    libcuda = None\n    for candidate in candidates:\n        try:\n            libcuda = ctypes.CDLL(candidate)\n            break\n        except OSError:\n            continue\n\n    if libcuda is None:\n        return False\n\n    cu_init = libcuda.cuInit\n    cu_init.argtypes = [ctypes.c_uint]\n    cu_init.restype = ctypes.c_int\n    if cu_init(0) != 0:\n        return False\n\n    cu_device_get_count = libcuda.cuDeviceGetCount\n    cu_device_get_count.argtypes = [ctypes.POINTER(ctypes.c_int)]\n    cu_device_get_count.restype = ctypes.c_int\n    count = ctypes.c_int()\n    if cu_device_get_count(ctypes.byref(count)) != 0:\n        return False\n\n    return count.value > 0"
+        },
+        {
+          "start_line": 382,
+          "end_line": 384,
+          "text": "    @staticmethod\n    def is_active():\n        return _cuda_driver_is_active()"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/triton/runtime/driver.py",
+      "sha256": "0fb16968b65b92142e64a142a1c67ba61f5ae364f77cd2aeec444a8c1cb67751",
+      "excerpts": [
+        {
+          "start_line": 8,
+          "end_line": 23,
+          "text": "def _create_driver() -> DriverBase:\n    selected = os.environ.get(\"TRITON_DEFAULT_BACKEND\", None)\n    if selected:\n        if selected not in backends:\n            raise RuntimeError(f\"Unknown backend device '{selected}'. Available backends: {list(backends.keys())}\")\n        driver = backends[selected].driver\n        if not driver.is_active():\n            raise RuntimeError(f\"Backend device '{selected}' is not active.\")\n        return driver()\n    else:\n        active_drivers = [x.driver for x in backends.values() if x.driver.is_active()]\n        if len(active_drivers) != 1:\n            raise RuntimeError(f\"{len(active_drivers)} active drivers ({active_drivers}). There should only be one.\")\n        return active_drivers[0]()\n\n"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/_dynamo/device_interface.py",
+      "sha256": "b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b",
+      "excerpts": [
+        {
+          "start_line": 661,
+          "end_line": 680,
+          "text": "\n\ndef init_device_reg() -> None:\n    global _device_initialized\n    register_interface_for_device(\"cuda\", CudaInterface)\n    for i in range(torch.cuda.device_count()):\n        register_interface_for_device(f\"cuda:{i}\", CudaInterface)\n\n    register_interface_for_device(\"xpu\", XpuInterface)\n    for i in range(torch.xpu.device_count()):\n        register_interface_for_device(f\"xpu:{i}\", XpuInterface)\n\n    register_interface_for_device(\"mtia\", MtiaInterface)\n    for i in range(torch.mtia.device_count()):\n        register_interface_for_device(f\"mtia:{i}\", MtiaInterface)\n\n    register_interface_for_device(\"cpu\", CpuInterface)\n    register_interface_for_device(\"mps\", MpsInterface)\n    register_interface_for_device(\"tpu\", TpuInterface)\n"
+        }
+      ]
+    },
+    {
+      "path": "/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/torch/version.py",
+      "sha256": "fc461e7b02d18589e28c00a3d2c3b0a3711a3f395ea3d42e878ae612bfd45008",
+      "excerpts": [
+        {
+          "start_line": 1,
+          "end_line": 12,
+          "text": "from typing import Optional\n\n__all__ = ['__version__', 'debug', 'cuda', 'git_version', 'hip', 'rocm', 'xpu']\n__version__ = '2.14.0+xpu'\ndebug = False\ncuda: Optional[str] = None\ngit_version = '08187d9e0fba026dc8217405802ab5381dc88d90'\nhip: Optional[str] = None\nrocm: Optional[str] = None\nxpu: Optional[str] = '20260100'"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+--- a/test_block_cpu.py
++++ b/test_block_cpu_guarded.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Actual tiny CPU LTXAV block: eager, Python boundaries, C++ boundaries, repeats."""
++"""Inactive guarded diagnostic successor: stop at any accelerator entry before initialization."""
+ import argparse
+ import ast
+ import copy
+@@ -95,9 +95,9 @@
+             args.evidence_dir.name.startswith('native-cpp-block-cpu-') and not args.evidence_dir.exists() and
+             not args.evidence_dir.is_symlink(), 'Evidence directory must be new and bounded')
+     report = {'schema': 'ltx.cpp-actual-tiny-block-cpu.v1', 'passed': False, 'phase': 'source-gate', 'rows': [],
+-              'calls': [], 'command': sys.argv, 'scope': 'Tiny actual BF16 CPU block exactness only; no XPU/model/clip/speed qualification',
++              'calls': [], 'command': sys.argv, 'pid': os.getpid(), 'ppid': os.getppid(), 'scope': 'Tiny actual BF16 CPU block exactness only; no XPU/model/clip/speed qualification',
+               'source_pins': SOURCE_PINS, 'fixture_parent_sha256': FIXTURE_SHA, 'operator_qualification_sha256': QUALIFICATION_SHA,
+-              'helper_sha256s': {str(p): sha(p) for p in (Path(__file__), HERE / 'fixture.py', HERE / 'backend.py')},
++              'helper_sha256s': {str(p): sha(p) for p in (Path(__file__), HERE / 'fixture.py', HERE / 'backend.py', HERE / 'accelerator_guard.py')},
+               'evidence_directory': str(args.evidence_dir), 'torch_imported': False}
+     try:
+         options = source_gate(); report['options'] = options
+@@ -118,6 +118,12 @@
+         import comfy.options
+         comfy.options.enable_args_parsing()
+         import torch
++        report['torch_imported'] = True
++        report['phase'] = 'install-accelerator-traps-before-Kitchen-Inductor'
++        guard_spec = importlib.util.spec_from_file_location('private_cpu_accelerator_guard', HERE / 'accelerator_guard.py')
++        guard = importlib.util.module_from_spec(guard_spec); guard_spec.loader.exec_module(guard)
++        guard.install(torch, report)
++        report['phase'] = 'guarded-Kitchen-Inductor-import'
+         import comfy.ops
+         import comfy.model_management
+         from comfy.ldm.lightricks.av_model import BasicAVTransformerBlock, CompressedTimestep
+@@ -224,6 +230,9 @@
+         report['torch_imported'] = 'torch' in sys.modules
+         report['fault_present_at_exit'] = FAULT.exists()
+         report['max_rss_kib'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
++        if 'torch' in sys.modules:
++            report['xpu_initialized_at_exit'] = sys.modules['torch'].xpu.is_initialized()
++            report['cuda_initialized_at_exit'] = sys.modules['torch'].cuda.is_initialized()
+         with args.output.open('x') as out:
+             json.dump(report, out, indent=2); out.write('\n')
+         print(json.dumps({'passed': report['passed'], 'phase': report['phase'], 'output': str(args.output), 'error': report.get('error')}, indent=2))

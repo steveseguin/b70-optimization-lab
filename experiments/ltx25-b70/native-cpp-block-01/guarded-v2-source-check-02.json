@@ -1,0 +1,48 @@
+{
+  "schema": "ltx.cpp-actual-tiny-block-cpu.v1",
+  "passed": true,
+  "phase": "source-check-only-passed",
+  "rows": [],
+  "calls": [],
+  "command": [
+    "experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v2.py",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/guarded-v2-source-check-02.json",
+    "--evidence-dir",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v2-01",
+    "--check-only"
+  ],
+  "pid": 90993,
+  "ppid": 3454,
+  "scope": "Tiny actual BF16 CPU block exactness only; no XPU/model/clip/speed qualification",
+  "source_pins": {
+    "comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "comfy/ops.py": "6058f688d936b083c49fa49a57964837476db6d95750ea70198ad60e884ffed0"
+  },
+  "fixture_parent_sha256": "09632eba818a3cf925a7627b14f9b61db326dcb310e6ab2b282f51720d1cd18d",
+  "operator_qualification_sha256": "feba23a06a7baf237055c526a135b2a68290e6ada53f688d71093729c0fcbd71",
+  "helper_sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/test_block_cpu_guarded_v2.py": "4e57bf38aacf919870506e765787ec042c6e0a00c0f30deeb0eb180bcaddf002",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/fixture.py": "6016032d4623ed32aa3d61f9012f4663b098a6758be955e84a9e31f40aa7a54c",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/backend.py": "cb34a32b6e2268fd54e3be1c9d006ebc06b9888cd033f619bd41ba73af57be0a",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/native-cpp-block-01/accelerator_guard_v2.py": "b37549c29f589702e1a9a8279a9ecdc5355fb7b56277f35ff0199a34488908ce"
+  },
+  "evidence_directory": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/native-cpp-block-cpu-guarded-v2-01",
+  "torch_imported": false,
+  "options": {
+    "compile_threads": 1,
+    "emulate_precision_casts": true,
+    "eager_numerics.division_rounding": true,
+    "triton.cudagraphs": false,
+    "max_autotune": false,
+    "max_autotune_gemm": false
+  },
+  "fixture_AST_contract": {
+    "block_initialization_unchanged": true,
+    "input_arithmetic_unchanged": true
+  },
+  "native_calls": 0,
+  "fault_present_at_exit": false,
+  "max_rss_kib": 109272
+}

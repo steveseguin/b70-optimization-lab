@@ -1,0 +1,149 @@
+--- a/launch/encoder_runtime_common.py
++++ b/launch/encoder_runtime_common.py
+@@ -1,4 +1,5 @@
+ """CPU-only source/runtime identity checks shared by encoder launch and clients."""
++import ast
+ import hashlib
+ import importlib.metadata
+ import importlib.util
+@@ -15,12 +16,14 @@
+               'encoder_diagnostics.py', 'encoder_identity_node.py',
+               'ltx_block_compile.py', 'block_compile_node.py',
+               'ltx_native_rms_backend.py', 'ltx_native_activations_backend.py',
+-              'ltx_multiblock_compile.py', 'multiblock_compile_node.py')
++              'ltx_multiblock_compile.py', 'multiblock_compile_node.py',
++              'ltx_na_axis_router.py', 'ltx_na_axis_candidate.py', 'na_axis_decode_node.py')
+ NODES = {'ltx_speed_lab': 'resident_node.py', 'ltx_baseline_capture': 'capture_node.py',
+          'ltx_encoder_diagnostics': 'encoder_diagnostics.py',
+          'ltx_encoder_identity': 'encoder_identity_node.py',
+          'ltx_block_compile_lab': 'block_compile_node.py',
+-         'ltx_multiblock_compile_lab': 'multiblock_compile_node.py'}
++         'ltx_multiblock_compile_lab': 'multiblock_compile_node.py',
++         'ltx_na_axis_decode_lab': 'na_axis_decode_node.py'}
+ 
+ 
+ def require(condition, message):
+@@ -60,6 +63,51 @@
+     require(actual['torch'] == '2.14.0+xpu' and actual['python'] == '3.12.13',
+             'Unexpected baseline Python/Torch version')
+     return actual
++
++
++
++def literal_source_pins(path, names):
++    """Read declarations without importing a node or executing its startup."""
++    tree = ast.parse(Path(path).read_text(), filename=str(path))
++    pins = {}
++    for name in names:
++        writes = [n for n in ast.walk(tree) if isinstance(n, ast.Name)
++                  and isinstance(n.ctx, ast.Store) and n.id == name]
++        declarations = [n for n in tree.body if isinstance(n, ast.Assign)
++                        and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name)
++                        and n.targets[0].id == name]
++        require(len(writes) == len(declarations) == 1, 'Ambiguous/missing startup pin: ' + name)
++        value = declarations[0].value
++        require(isinstance(value, ast.Constant) and type(value.value) is str
++                and re.fullmatch(r'[0-9a-f]{64}', value.value), 'Nonliteral startup pin: ' + name)
++        pins[name] = value.value
++    return pins
++
++
++def verify_na_source_closure(source, *, node_path=None, router_path=None, candidate_path=None,
++        original_na_path='/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py'):
++    """Close every startup hash edge over the actual sealed/inherited sources."""
++    source = Path(source)
++    node_path = Path(node_path) if node_path is not None else source / 'scripts/na_axis_decode_node.py'
++    router_path = Path(router_path) if router_path is not None else source / 'scripts/ltx_na_axis_router.py'
++    candidate_path = Path(candidate_path) if candidate_path is not None else source / 'scripts/ltx_na_axis_candidate.py'
++    files = {'NODES_SHA': source / 'nodes.py', 'SD_SHA': source / 'comfy/sd.py',
++             'DECODER_SHA': source / 'comfy/ldm/lightricks/vae/na_diffusion_decoder.py',
++             'ROUTER_SHA': router_path, 'CANDIDATE_SHA': candidate_path}
++    for path in (node_path, *files.values(), Path(original_na_path)):
++        require(path.is_file() and not any(p.is_symlink() for p in (path, *path.parents)),
++                'Missing/linked startup dependency: ' + str(path))
++    pins = literal_source_pins(node_path, files)
++    router_pins = literal_source_pins(router_path, ('ORIGINAL_SHA', 'CANDIDATE_SHA'))
++    rows = {name: {'declared_sha256': pins[name], 'actual_sha256': sha(path)}
++            for name, path in files.items()}
++    rows.update({'router.' + name: {'declared_sha256': router_pins[name], 'actual_sha256': sha(path)}
++                 for name, path in {'ORIGINAL_SHA': original_na_path, 'CANDIDATE_SHA': candidate_path}.items()})
++    mismatches = [name + ': declared=' + row['declared_sha256'] + ' actual=' + row['actual_sha256']
++                  for name, row in rows.items() if row['declared_sha256'] != row['actual_sha256']]
++    require(not mismatches, 'NA startup source closure failed: ' + '; '.join(mismatches))
++    return {'status': 'passed-stdlib-source-pin-closure', 'dependencies': rows,
++            'native_imports': False, 'startup_registration_qualified': False}
+ 
+ 
+ def verify_packet(packet, expected_manifest_sha256):
+@@ -71,7 +119,7 @@
+             'Explicit manifest SHA256 required')
+     require(sha(manifest_path) == expected_manifest_sha256, 'Packet manifest changed')
+     manifest = json.loads(manifest_path.read_text())
+-    require(manifest['schema'] == 'ltx.compiler-multiblock-onepass-state-runtime-packet.v1', 'Launcher requires compiler packet')
++    require(manifest['schema'] == 'ltx.na-axis-runtime-packet.v2', 'Launcher requires compiler packet')
+     require(manifest['source_commit'] == PIN, 'Core revision changed')
+     require(manifest['model_verification_sha256'] == MODEL_VERIFICATION_SHA256,
+             'Model identity changed')
+@@ -241,7 +289,7 @@
+             'Adjacent-state validation contract changed')
+     # Current adapter identity is in multiblock/onepass_state; adjacent_state
+     # retains the historical packet07 source identity and its provenance gates.
+-    require(manifest['parent_manifest_sha256'] == 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1', 'Unexpected adjacent-state07 parent')
++    require(manifest['onepass_parent_manifest_sha256'] == 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1', 'Unexpected adjacent-state07 parent')
+     onepass_parent_path = safe_path(packet, 'adjacent-state-07-parent-manifest.json')
+     require(sha(onepass_parent_path) == 'afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1', 'Adjacent-state07 parent manifest changed')
+     onepass_parent = json.loads(onepass_parent_path.read_text())
+@@ -267,6 +315,53 @@
+             and onepass['lifecycle_registry_boundaries'] == 3
+             and onepass['cross_call_state_cache'] is False,
+             'One-pass validation contract changed')
++    # Decoder successor retains every packet08 numerical source and graph.
++    require(manifest['parent_manifest_sha256'] == 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b', 'Unexpected packet08 parent')
++    axis_parent_path = safe_path(packet, 'onepass-08-parent-manifest.json')
++    require(sha(axis_parent_path) == 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b', 'Packet08 parent manifest changed')
++    axis_parent = json.loads(axis_parent_path.read_text())
++    require(axis_parent['schema'] == 'ltx.compiler-multiblock-onepass-state-runtime-packet.v1',
++            'Unexpected packet08 schema')
++    require(manifest['runtime'] == axis_parent['runtime'], 'Decoder runtime changed')
++    for name, digest in axis_parent['files'].items():
++        if name == 'launch/encoder_runtime_common.py':
++            require(manifest['files']['provenance/na-axis-parent/' + name] == digest,
++                    'Original packet08 checker changed')
++        else:
++            require(manifest['files'].get(name) == digest, 'Inherited packet08 source changed: ' + name)
++    axis = manifest['na_axis']
++    require(axis['router_sha256'] == '9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537' and axis['candidate_sha256'] == '40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2'
++            and axis['node_sha256'] == 'ffd7549d29828a11f336f07873f63a407df7722328df519f2bec3514964ad32b', 'Decoder source identities changed')
++    for name, digest in zip(('ltx_na_axis_router.py', 'ltx_na_axis_candidate.py', 'na_axis_decode_node.py'), ('9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537', '40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2', 'ffd7549d29828a11f336f07873f63a407df7722328df519f2bec3514964ad32b')):
++        require(manifest['extension_sha256s'][name] == digest, 'Decoder extension identity differs')
++    require(axis['dependencies'] == {'/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/na.py': '4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995', '/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/backends/eager/__init__.py': '8a92e2b0b1b80781fe401fecba658bb7f79962c73ba2a463d4a44488feda375d', '/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/registry.py': '181b02ee1ee60154766cebb3cad6dc5d2015c38551e10071303a5a2a897f7015', '/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages/comfy_kitchen/__init__.py': 'e19ad20021eb35986c9cfce19c4ee2fdc813f2783aeeae46559d62b649744117'}, 'Kitchen dependency identity changed')
++    for name, digest in axis['dependencies'].items():
++        path = Path(name)
++        require(not any(p.is_symlink() for p in (path, *path.parents)) and sha(path) == digest,
++                'Installed Kitchen dependency changed: ' + name)
++    require(axis['modes'] == ['original', 'axis-cache'] and axis['node_class'] == 'LTXNAAxisDecode'
++            and axis['cache_scope'] == 'one-na3d-invocation' and axis['max_cache_entries'] == 64
++            and axis['max_axis_bool_elements'] == 4096 and axis['max_cache_tensor_bytes'] == 262144
++            and axis['transformer_dispatch'] == 'original', 'Decoder qualification scope changed')
++    axis_control = json.loads(safe_path(packet, 'graphs/control.json').read_text())
++    require('422' not in axis_control, 'Unexpected compiler gate in decoder control')
++    for mode in ('original', 'axis-cache'):
++        graph = json.loads(safe_path(packet, 'graphs/na-axis-' + mode + '.json').read_text())
++        require(graph['374']['class_type'] == 'LTXNAAxisDecode'
++                and graph['374']['inputs'].pop('mode') == mode
++                and graph['374']['inputs'].pop('run_name') == 'assign-unique-request-name',
++                'Unexpected private decoder node')
++        graph['374']['class_type'] = 'VAEDecode'
++        require(graph == axis_control, 'Decoder graph changed original quality recipe')
++    require(axis['graphs'] == ['graphs/na-axis-original.json', 'graphs/na-axis-axis-cache.json'],
++            'Decoder graph inventory changed')
++    require(axis['source_pin_closure'] == verify_na_source_closure(safe_path(packet, 'source')),
++            'Decoder startup source closure receipt differs')
++    correction = manifest['na_axis_correction']
++    require(correction == {'failed_packet_manifest_sha256': 'a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed', 'reason': 'startup-pin-mismatch-before-native-requests', 'files': {'failed09-manifest.json': 'a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed', 'failed09-startup-failure.json': 'bdf914ee6fe908ea0bda69180bb9814b40db208b96b66b1e81fba16ad50a7729', 'failed09-startup-failure.log': '1989e73176d45dc4dc869c4e792bd25ee3ffe0593887dee8c9ed3b779ed9daee'}}, 'Decoder correction provenance differs')
++    for name, digest in correction['files'].items():
++        require(sha(safe_path(packet, 'provenance/na-axis-correction/' + name)) == digest,
++                'Decoder failed09 correction evidence changed: ' + name)
+     return manifest
+ 
+ 

@@ -1,0 +1,33 @@
+{
+  "schema": "ltx.na-axis-decode-node-snapshot.v1",
+  "status": "passed-cpu-node-lifecycle-native-unqualified",
+  "sources": {
+    "scripts/na_axis_decode_node.py": "27e95788b3213adab52a72df46049cda2c17ed9c32afb85338c7c7f839bebf03",
+    "scripts/test-na-axis-decode-node-cpu.py": "dc6c8794ae69d8c0d52997f06d5957c3ce7a7f6552d4cd46ae1d9a805047d52f",
+    "data/na-axis-decode-node-cpu-01/receipt.json": "4e83ca05720bf5e253ecf134311b928927e83e8a3e1e974c87901b27f89f9b86"
+  },
+  "router_sha256": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537",
+  "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+  "cpu_test": {
+    "pid": 79476,
+    "tool_session": 78872,
+    "exit_code": 0,
+    "check_groups": 9,
+    "xpu_initialized_before": false,
+    "xpu_initialized_after": false,
+    "forbidden_device_calls": []
+  },
+  "command": [
+    "env",
+    "OMP_NUM_THREADS=1",
+    "MKL_NUM_THREADS=1",
+    "/home/steve/.venvs/ltx25-baseline/bin/python",
+    "experiments/ltx25-b70/scripts/test-na-axis-decode-node-cpu.py",
+    "--cpu",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/data/na-axis-decode-node-cpu-01"
+  ],
+  "active_packet_modified": false,
+  "native_requests": 0,
+  "startup_integration_qualified": false
+}

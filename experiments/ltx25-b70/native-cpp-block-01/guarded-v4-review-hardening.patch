@@ -1,0 +1,207 @@
+--- test_block_cpu_guarded_v4-01.before-review.py
++++ test_block_cpu_guarded_v4.py
+@@ -274,6 +274,14 @@
+     except BaseException as error:
+         report.update(error=repr(error), traceback=traceback.format_exc())
+     finally:
++        if 'metadata_policy' in locals():
++            try:
++                metadata_policy.require_intact()
++                require_cpu_policy()
++                report['cpu_metadata_finalizer_intact'] = True
++            except BaseException as error:
++                report.update(passed=False, cpu_metadata_finalizer_intact=False,
++                              cpu_metadata_finalizer_error=repr(error))
+         if report.get('accelerator_guard_tripped') or report.get('accelerator_guard_attempts'):
+             report['passed'] = False
+             report.setdefault('error', 'CPU diagnostic remains halted after accelerator access')
+--- cpu_metadata_policy_v4-01.before-review.py
++++ cpu_metadata_policy_v4.py
+@@ -13,6 +13,7 @@
+ 
+ SITE = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages')
+ PINS = {
++    'torch/utils/_ordered_set.py': '5c232fb67e7c378fd46e19c89de9228397439b09f666996dbae177b487455716',
+     'torch/utils/_triton.py': '4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a',
+     'torch/_inductor/codecache.py': '1edadc1e1229adbd7c6f84cef43a04c031add6e1793be0f12b73f22798966156',
+     'torch/_inductor/output_code.py': '647fdca5e7ab214acdf8280885d419efc607f3a003353a46611e59ec6b3d8fe6',
+@@ -72,7 +73,7 @@
+         if not isinstance(underlying, types.FunctionType) or underlying.__code__ != source_code('torch/utils/_triton.py', 'triton_backend'):
+             raise RuntimeError('Original Triton backend code changed')
+         self.utils, self.report, self.guard = triton_utils, report, guard
+-        self.cache_class = self.original_save = self.original_save_code = None
++        self.cache_class = self.original_save = self.original_save_code = self.ordered_set = None
+         self.expected_save = source_code('torch/_inductor/codecache.py', 'FxGraphCache._save_graph')
+         self.original_backend = original
+         self.events = report.setdefault('cpu_metadata_omissions', [])
+@@ -106,6 +107,12 @@
+             self._halt('Cache save code differs from pinned source')
+         if original.__globals__.get('FxGraphCache') is not cache_class:
+             self._halt('Cache save class/global ownership mismatch')
++        ordered_set = original.__globals__.get('OrderedSet')
++        if not isinstance(ordered_set, type) or vars(ordered_set).get('__slots__') != ('_dict',):
++            self._halt('Expected pinned OrderedSet layout missing')
++        if ordered_set.__init__.__code__ != source_code('torch/utils/_ordered_set.py', 'OrderedSet.__init__'):
++            self._halt('OrderedSet constructor code changed')
++        self.ordered_set = ordered_set
+         self.cache_class, self.original_save = cache_class, original
+         self.original_save_code = original.__code__
+         self.report['cpu_metadata_policy'].update(bound=True, caller_file=original.__code__.co_filename,
+@@ -117,6 +124,8 @@
+         if self.utils.triton_backend is not self.hook:
+             self._halt('Metadata hook identity changed')
+         if self.cache_class is not None:
++            if self.original_save.__globals__.get('OrderedSet') is not self.ordered_set:
++                self._halt('OrderedSet global identity changed')
+             if self.cache_class._save_graph is not self.original_save or self.original_save.__code__ is not self.original_save_code:
+                 self._halt('Bound cache save identity changed')
+ 
+@@ -130,12 +139,19 @@
+                 self._halt('Backend query outside bound CPU cache save', caller)
+             graph = caller.f_locals.get('compiled_graph')
+             # Read plain instance fields only; no tensor/device API or property call.
+-            fields = getattr(graph, '__dict__', {})
++            try:
++                fields = object.__getattribute__(graph, '__dict__')
++            except (AttributeError, TypeError):
++                self._halt('Cache graph has no plain instance fields', caller)
++            if type(fields) is not dict:
++                self._halt('Cache graph fields are not a plain dict', caller)
+             devices = fields.get('device_types')
+-            try:
+-                cpu_only = set(devices) == {'cpu'}
+-            except (TypeError, ValueError):
+-                cpu_only = False
++            if type(devices) is not self.ordered_set:
++                self._halt('Device metadata is not the exact pinned OrderedSet class', caller)
++            mapping = object.__getattribute__(devices, '_dict')
++            if type(mapping) is not dict or any(type(key) is not str for key in mapping):
++                self._halt('OrderedSet metadata is not a plain string-keyed dict', caller)
++            cpu_only = set(mapping) == {'cpu'}
+             if not cpu_only or 'extern_libs_key' not in fields or fields['extern_libs_key'] is not None:
+                 self._halt('Cache graph is not qualified CPU-only metadata', caller)
+             if len(self.events) >= DESCRIPTION['expected_omissions']:
+--- test_guarded_v4_stdlib-01.before-review.py
++++ test_guarded_v4_stdlib.py
+@@ -34,6 +34,11 @@
+ def triton_backend():
+     raise AssertionError("Original backend must never run")
+ '''
++ORDERED_SOURCE = '''class OrderedSet:
++    __slots__ = ("_dict",)
++    def __init__(self, iterable=None):
++        self._dict = dict.fromkeys(iterable, None) if iterable is not None else {}
++'''
+ CACHE_SOURCE = '''class FxGraphCache:
+     @staticmethod
+     def _save_graph(compiled_graph):
+@@ -51,6 +56,7 @@
+     with tempfile.TemporaryDirectory() as directory:
+         root = Path(directory)
+         contents = {'torch/utils/_triton.py': TRITON_SOURCE,
++                    'torch/utils/_ordered_set.py': ORDERED_SOURCE,
+                     'torch/_inductor/codecache.py': CACHE_SOURCE,
+                     'torch/_inductor/output_code.py': '# fake metadata source\n'}
+         pins = {}
+@@ -63,7 +69,9 @@
+             triton_ns = {'__file__': str(root / 'torch/utils/_triton.py')}
+             exec(compile(TRITON_SOURCE, triton_ns['__file__'], 'exec', dont_inherit=True), triton_ns)
+             utils = SimpleNamespace(**triton_ns)
+-            cache_ns = {'utils': utils}
++            ordered_ns = {}
++            exec(compile(ORDERED_SOURCE, str(root / 'torch/utils/_ordered_set.py'), 'exec', dont_inherit=True), ordered_ns)
++            cache_ns = {'utils': utils, 'OrderedSet': ordered_ns['OrderedSet']}
+             exec(compile(CACHE_SOURCE, str(root / 'torch/_inductor/codecache.py'), 'exec', dont_inherit=True), cache_ns)
+             cache = cache_ns['FxGraphCache']
+             control = metadata.MetadataPolicy(utils, report, guard)
+@@ -75,7 +83,7 @@
+ class MetadataContracts(unittest.TestCase):
+     def test_exact_cpu_save_continues_without_backend(self):
+         with installed() as f:
+-            graph = SimpleNamespace(device_types={'cpu'}, extern_libs_key=None)
++            graph = SimpleNamespace(device_types=f.control.ordered_set(['cpu']), extern_libs_key=None)
+             f.cache._save_graph(graph)
+             self.assertTrue(graph.saved); self.assertIsNone(graph.extern_libs_key)
+             self.assertEqual(f.originals, [])
+@@ -85,6 +93,29 @@
+             self.assertEqual(row['device_types'], ['cpu']); self.assertEqual(row['ordinal'], 1)
+             f.intact(); f.control.require_intact()
+ 
++    def test_only_exact_ordered_layout_accepted(self):
++        with installed() as f:
++            graph = SimpleNamespace(device_types=f.control.ordered_set(['cpu']), extern_libs_key=None)
++            f.cache._save_graph(graph)
++            self.assertTrue(graph.saved)
++        for cls in (set, frozenset, list, tuple):
++            with installed() as f:
++                with self.assertRaises(guard.AcceleratorAccessBlocked):
++                    f.cache._save_graph(SimpleNamespace(device_types=cls(['cpu']), extern_libs_key=None))
++
++    def test_foreign_iterable_never_iterated(self):
++        class Foreign:
++            def __iter__(self):
++                raise AssertionError('Foreign iterator must never run')
++        with installed() as f:
++            with self.assertRaises(guard.AcceleratorAccessBlocked):
++                f.cache._save_graph(SimpleNamespace(device_types=Foreign(), extern_libs_key=None))
++
++    def test_non_string_metadata_refuses(self):
++        with installed() as f:
++            with self.assertRaises(guard.AcceleratorAccessBlocked):
++                f.cache._save_graph(SimpleNamespace(device_types=f.control.ordered_set([None]), extern_libs_key=None))
++
+     def test_unbound_query_sticky_refuses(self):
+         with installed(False) as f:
+             with self.assertRaises(guard.AcceleratorAccessBlocked): f.utils.triton_backend()
+@@ -93,7 +124,7 @@
+ 
+     def test_foreign_direct_caller_refuses_even_cpu_graph(self):
+         with installed() as f:
+-            compiled_graph = SimpleNamespace(device_types={'cpu'}, extern_libs_key=None)
++            compiled_graph = SimpleNamespace(device_types=f.control.ordered_set(['cpu']), extern_libs_key=None)
+             with self.assertRaises(guard.AcceleratorAccessBlocked): f.utils.triton_backend()
+             self.assertEqual(f.report['cpu_metadata_omissions'], [])
+ 
+@@ -110,6 +141,9 @@
+                        {'device_types': {'cpu'}},
+                        {'device_types': {'cpu'}, 'extern_libs_key': 'old'}):
+             with self.subTest(fields=fields), installed() as f:
++                fields = dict(fields)
++                if type(fields.get('device_types')) is set:
++                    fields['device_types'] = f.control.ordered_set(fields['device_types'])
+                 graph = SimpleNamespace(**fields)
+                 with self.assertRaises(guard.AcceleratorAccessBlocked): f.cache._save_graph(graph)
+                 self.assertFalse(hasattr(graph, 'saved'))
+@@ -117,9 +151,9 @@
+ 
+     def test_four_allowed_fifth_refuses(self):
+         with installed() as f:
+-            for _ in range(4): f.cache._save_graph(SimpleNamespace(device_types={'cpu'}, extern_libs_key=None))
++            for _ in range(4): f.cache._save_graph(SimpleNamespace(device_types=f.control.ordered_set(['cpu']), extern_libs_key=None))
+             with self.assertRaises(guard.AcceleratorAccessBlocked):
+-                f.cache._save_graph(SimpleNamespace(device_types={'cpu'}, extern_libs_key=None))
++                f.cache._save_graph(SimpleNamespace(device_types=f.control.ordered_set(['cpu']), extern_libs_key=None))
+             self.assertEqual(len(f.report['cpu_metadata_omissions']), 4)
+ 
+     def test_binding_replacement_refuses(self):
+@@ -192,6 +226,20 @@
+             receipt = harness.persist_startup(Path(directory), report)
+         self.assertEqual(receipt['cpu_metadata_policy_requested'], metadata.DESCRIPTION)
+         self.assertFalse(receipt['torch_imported'])
++
++    def test_finalizer_swallowed_tampering_cannot_pass(self):
++        tree = ast.parse((HERE / 'test_block_cpu_guarded_v4.py').read_text())
++        main = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'main')
++        final = next(n for n in main.body if isinstance(n, ast.Try)).finalbody[0]
++        code = compile(ast.Module(body=[final], type_ignores=[]), '<actual-v4-finalizer>', 'exec')
++        with installed() as f:
++            f.report['passed'] = True
++            f.utils.triton_backend = lambda: None
++            namespace = {'metadata_policy': f.control, 'require_cpu_policy': f.intact, 'report': f.report}
++            exec(code, namespace)
++            self.assertFalse(f.report['passed'])
++            self.assertFalse(f.report['cpu_metadata_finalizer_intact'])
++            self.assertTrue(f.report['accelerator_guard_tripped'])
+ 
+     def test_numerical_functions_and_source_gate_unchanged(self):
+         before = ast.parse((HERE / 'test_block_cpu_guarded_v3.py').read_text())

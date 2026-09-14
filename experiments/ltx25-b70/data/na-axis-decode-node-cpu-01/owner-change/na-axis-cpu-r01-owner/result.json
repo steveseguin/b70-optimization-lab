@@ -1,0 +1,135 @@
+{
+  "context_clear_after": true,
+  "decoder_config": {
+    "cpu_fake_config": true,
+    "decoder": {
+      "head_dim": 4
+    }
+  },
+  "finished_monotonic_ns": 12085699364406,
+  "identity": {
+    "model_verification_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "server_identity_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "input": {
+    "device": "cpu",
+    "dtype": "torch.bfloat16",
+    "nested": false,
+    "shape": [
+      1,
+      2,
+      3,
+      3,
+      1,
+      4
+    ]
+  },
+  "mode": "original",
+  "native_sequence_qualified": false,
+  "output": {
+    "device": "cpu",
+    "dtype": "torch.bfloat16",
+    "nested": false,
+    "shape": [
+      2,
+      3,
+      3,
+      4
+    ]
+  },
+  "owners": {
+    "decoder": 134282693866272,
+    "first_stage_model": 134282693865984,
+    "patcher": 134282709706352,
+    "vae": 134282693868192
+  },
+  "quality_qualified": false,
+  "route": {
+    "calls": [
+      {
+        "index": 0,
+        "inputs": [
+          {
+            "device": "cpu",
+            "dtype": "torch.bfloat16",
+            "shape": [
+              1,
+              2,
+              3,
+              3,
+              1,
+              4
+            ]
+          },
+          {
+            "device": "cpu",
+            "dtype": "torch.bfloat16",
+            "shape": [
+              1,
+              2,
+              3,
+              3,
+              1,
+              4
+            ]
+          },
+          {
+            "device": "cpu",
+            "dtype": "torch.bfloat16",
+            "shape": [
+              1,
+              2,
+              3,
+              3,
+              1,
+              4
+            ]
+          }
+        ],
+        "is_causal": [
+          false,
+          false,
+          false
+        ],
+        "kernel_size": [
+          3,
+          3,
+          3
+        ],
+        "mode": "original",
+        "output": {
+          "device": "cpu",
+          "dtype": "torch.bfloat16",
+          "shape": [
+            1,
+            2,
+            3,
+            3,
+            1,
+            4
+          ]
+        },
+        "scale": 1.0,
+        "status": "completed"
+      }
+    ],
+    "candidate_sha256": "40e360bc1f791f0373997f907ca67e804087541498c86ffa5731c8a9eae40cc2",
+    "mode": "original",
+    "original_sha256": "4f1d82fe02af995d395969667f6cfd8d10635c3144eec8ca78fe37c103803995",
+    "run_name": "cpu-r01-owner",
+    "schema": "ltx.na-axis-route.v1",
+    "scope_reset": true,
+    "status": "passed-route-coverage",
+    "thread_id": 134284880361280
+  },
+  "run_name": "cpu-r01-owner",
+  "schema": "ltx.na-axis-decode.v1",
+  "source_identity": {
+    "cpu_fixture": true,
+    "node": "27e95788b3213adab52a72df46049cda2c17ed9c32afb85338c7c7f839bebf03",
+    "nodes": "dddf275f6dbcbd1a9cbdc02ebee2bad86bf022cc968c58a3f14cb26a2d08926e",
+    "router": "9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537"
+  },
+  "started_monotonic_ns": 12085691307212,
+  "status": "passed-decode-route"
+}

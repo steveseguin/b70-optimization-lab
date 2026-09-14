@@ -1,0 +1,82 @@
+--- a/scripts/run-na-axis-screen.py
++++ b/scripts/run-na-axis-screen-v2.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Bounded decoder-only original/cache/original screen; no server lifecycle actions."""
++"""Packet10 successor: corrected startup pins, unchanged11-request decoder screen."""
+ import argparse
+ import copy
+ import fcntl
+@@ -15,10 +15,12 @@
+ LANE = Path(__file__).resolve().parents[1]
+ ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+ PARENT_SHA = 'a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b'
+-PACKET_SHA = 'a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed'
++PACKET_SHA = 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a'
+ VALIDATOR_SHA = 'ac11e8fc95275660d76336cafd892a6ec67e0c4f68b0208f5752a328b254274c'
+ V3_SHA = 'd8054e9866dfb314a5df37415811a5d4a5db79828b0494cca5f3526884ee3114'
+ ROUTER_SHA = '9aa3d6cc7be389555d60119ad3fd5960b762568e044eba49760fc03114c2b537'
++NODE_SHA = 'ffd7549d29828a11f336f07873f63a407df7722328df519f2bec3514964ad32b'
++FAILED09_SHA = 'a53e06ae5bd1be8931eff11d4e9112b850912147b37fcabf1bda064b12f419ed'
+ 
+ 
+ def load(name, path):
+@@ -99,9 +101,35 @@
+     return values
+ 
+ 
++def validate_source_closure(manifest, sources):
++    require(sources['node_sha256'] == NODE_SHA and manifest['na_axis']['node_sha256'] == NODE_SHA,
++            'Corrected packet10 node identity differs')
++    closure = manifest['na_axis']['source_pin_closure']
++    require(closure['status'] == 'passed-stdlib-source-pin-closure' and
++            closure['native_imports'] is False and closure['startup_registration_qualified'] is False,
++            'Missing stdlib startup-pin closure; source closure cannot claim registration')
++    expected = {'NODES_SHA': sources['nodes_sha256'], 'SD_SHA': sources['sd_sha256'],
++        'DECODER_SHA': sources['decoder_sha256'], 'ROUTER_SHA': sources['router_sha256'],
++        'CANDIDATE_SHA': sources['candidate_sha256'], 'router.ORIGINAL_SHA': validators.ORIGINAL_SHA,
++        'router.CANDIDATE_SHA': validators.CANDIDATE_SHA}
++    require(set(closure['dependencies']) == set(expected), 'Incomplete startup dependency closure')
++    for name, value in expected.items():
++        require(closure['dependencies'][name] == {'declared_sha256': value, 'actual_sha256': value},
++                'Startup declared pin differs from actual packet dependency: ' + name)
++    correction = manifest['na_axis_correction']
++    require(correction['failed_packet_manifest_sha256'] == FAILED09_SHA and
++            correction['reason'] == 'startup-pin-mismatch-before-native-requests', 'Wrong correction provenance')
++    require(set(correction['files']) == {'failed09-manifest.json', 'failed09-startup-failure.json',
++                                       'failed09-startup-failure.log'}, 'Missing failed09 evidence')
++    require(correction['files']['failed09-manifest.json'] == FAILED09_SHA, 'Failed09 manifest differs')
++    for name, digest in correction['files'].items():
++        require(manifest['files']['provenance/na-axis-correction/' + name] == digest,
++                'Correction evidence differs from packet inventory')
++
++
+ def prepared_sources(args, common):
+     require(isinstance(PACKET_SHA, str) and args.manifest_sha256 == PACKET_SHA,
+-            'Client is inactive until the reviewed09 manifest is pinned')
++            'Client is inactive until the reviewed10 manifest is pinned')
+     require(isinstance(VALIDATOR_SHA, str) and sha(LANE / 'scripts/ltx_na_axis_receipts.py') == VALIDATOR_SHA,
+             'NA receipt validator is not pinned or changed')
+     require(sha(LANE / 'scripts/run-multiblock-screen-v3.py') == V3_SHA, 'Inherited identity helper changed')
+@@ -109,7 +137,7 @@
+     for name, digest in screen.FROZEN.items():
+         require(sha(LANE / 'scripts' / name) == digest, 'Frozen helper changed: ' + name)
+     manifest = common.verify_packet(args.packet, args.manifest_sha256)
+-    require(manifest['schema'] == 'ltx.na-axis-runtime-packet.v1', 'Wrong runtime packet schema')
++    require(manifest['schema'] == 'ltx.na-axis-runtime-packet.v2', 'Wrong runtime packet schema')
+     require(manifest['parent_manifest_sha256'] == PARENT_SHA, 'Wrong packet08 parent')
+     common.verify_runtime(manifest['runtime'])
+     common.verify_model_receipt()
+@@ -123,7 +151,11 @@
+     contract = validators.source_contract((source / 'comfy/ldm/lightricks/vae/na_diffusion_decoder.py').read_text(),
+         (source / 'comfy/sd.py').read_text(), validators.checkpoint_config(
+             '/mnt/fast-ai/llm-models/LTX-2.5-baseline/vae/ltx-2.5-video-vae-bf16.safetensors'))
+-    return base, manifest, contract, source_identity(args.packet)
++    sources = source_identity(args.packet)
++    # verify_packet recomputes these declared-versus-actual dependencies in its
++    # generated stdlib checker; also bind the returned receipt to our source view.
++    validate_source_closure(manifest, sources)
++    return base, manifest, contract, sources
+ 
+ 
+ def paired_results(rows):
