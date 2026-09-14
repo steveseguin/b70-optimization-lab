@@ -1,0 +1,774 @@
+--- /dev/null
++++ b/scripts/run-host-embedding-screen.py
+@@ -0,0 +1,323 @@
++#!/usr/bin/env python3
++"""Bounded packet11 original/CPU-table/original encoder screen; no lifecycle actions."""
++import argparse
++import copy
++import fcntl
++import importlib.util
++import json
++import math
++from pathlib import Path
++import re
++import statistics
++import sys
++
++sys.dont_write_bytecode = True
++LANE = Path(__file__).resolve().parents[1]
++ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
++PARENT_SHA = 'd6ec6c63869d30dbe009708095f53811372e228becf16b7475ad30d11213fe6a'
++PACKET_SHA = '34b7ff2f7a74b6951f87dd2621738b37930d15a5de9d064409c8b12351adcf08'
++VALIDATOR_SHA = '085792c1b2148db86abca387e4142d15da948cb52b1b10e0b3ea4dd84d8a6efd'
++CONTRACT_SHA = '80be5c70f42cbe004a0be7af7c8b43a02269d29d9b6fbb6eb53597176b6e4add'
++V3_SHA = 'd8054e9866dfb314a5df37415811a5d4a5db79828b0494cca5f3526884ee3114'
++EXTENSIONS = {
++    'host_embedding_clip.py': '53d45d883bcc46d1a5889d3b6f162b0e95417e834c62dde8d8836791cffe2994',
++    'host_embedding_placement_node.py': '4ab92f1580f8f54ecc6631acd4fb74603d06bc8cf6c3760ede7638c655f5753b',
++    'ltx_host_embedding_candidate.py': 'b58bf0bbfc084ea89f2673f3c10d9520b5f6ac1993517c79e346ea2c573ca7e9',
++}
++
++
++def load(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    module = importlib.util.module_from_spec(spec)
++    sys.modules[name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++v3 = load('na_axis_v3_helpers', LANE / 'scripts/run-multiblock-screen-v3.py')
++screen, retention = v3.screen, v3.retention
++require, sha, write_json = screen.require, screen.sha, screen.write_json
++validators = load('host_embedding_receipts', LANE / 'scripts/ltx_host_embedding_receipts.py')
++
++
++def schedule(campaign):
++    require(isinstance(campaign, str) and re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', campaign), 'Unsafe campaign')
++    rows = []
++    for generation, (arm, mode) in enumerate((('control-a', 'control'), ('host-table', 'host-table'),
++                                            ('control-b', 'control')), 1):
++        for ordinal, fixture in enumerate(('boat', 'boat', 'marble', 'bird', 'boat'), 1):
++            rows.append({'arm': arm, 'mode': mode, 'generation': generation, 'ordinal': ordinal,
++                         'fixture': fixture, 'initialization': ordinal == 1,
++                         'run': f'{campaign}-r{len(rows)+1:02d}-{arm}-{fixture}'})
++    return rows
++
++
++def expected_graph(base, mode):
++    require(mode in ('control', 'host-table'), 'Unregistered host graph mode')
++    graph = screen.expected_graph(base, 'control')
++    require('422' not in graph and all(graph[n]['inputs']['model'] == ['420', 0] for n in ('388', '391')) and
++            graph['374']['class_type'] == 'VAEDecode', 'Original transformer/decoder required')
++    for node, class_name in (('420', 'LTXHostEmbeddingComponents'), ('421', 'LTXHostEmbeddingPlacementCheck')):
++        graph[node]['class_type'] = class_name
++        del graph[node]['inputs']['encoder_variant']
++        graph[node]['inputs']['encoder_mode'] = mode
++    graph['421']['inputs']['run_name'] = 'assign-unique-request-name'
++    return graph
++
++
++def normalized(graph):
++    return screen.normalize_graph(graph)
++
++
++def validate_node_info(response, name):
++    require(set(response) == {name}, 'Private host node did not load')
++    node = response[name]
++    if name == 'LTXHostEmbeddingComponents':
++        inputs = {'placement': [['split']], 'encoder_mode': [['control', 'host-table']]}
++        outputs = ['MODEL', 'CLIP', 'VAE', 'VAE', 'LATENT_UPSCALE_MODEL']
++        output_names = ['model', 'clip', 'video_vae', 'audio_vae', 'upscaler']
++    else:
++        require(name == 'LTXHostEmbeddingPlacementCheck', 'Unknown private node')
++        inputs = {'clip': ['CLIP'], 'conditioning': ['CONDITIONING'],
++                  'run_name': ['STRING', {'default': 'assign-unique-request-name'}],
++                  'encoder_mode': [['control', 'host-table']]}
++        outputs = output_names = ['CONDITIONING']
++    require(node['input'] == {'required': inputs} and node['output'] == outputs and
++            node['output_name'] == output_names and node['output_is_list'] == [False] * len(outputs) and
++            node['is_input_list'] is False and node['output_node'] is False and node['name'] == name and
++            node['category'] == 'lab/validation' and node['python_module'] == 'custom_nodes.ltx_host_embedding_lab',
++            'Private host node interface differs')
++    # object_info does not expose FUNCTION; source/manifest pins bind that field.
++    return node
++
++
++def prepared_sources(args, common):
++    require(args.manifest_sha256 == PACKET_SHA, 'Client requires sealed packet11')
++    require(isinstance(VALIDATOR_SHA, str) and sha(LANE / 'scripts/ltx_host_embedding_receipts.py') == VALIDATOR_SHA,
++            'Receipt validator not frozen or changed')
++    require(sha(LANE / 'scripts/run-multiblock-screen-v3.py') == V3_SHA, 'Inherited identity helper changed')
++    require(sha(LANE / 'scripts/run-encoder-screen.py') == v3.ENCODER_CLIENT_SHA, 'Encoder helper changed')
++    for name, digest in screen.FROZEN.items():
++        require(sha(LANE / 'scripts' / name) == digest, 'Frozen helper changed: ' + name)
++    manifest = common.verify_packet(args.packet, args.manifest_sha256)
++    require(manifest['schema'] == 'ltx.host-embedding-runtime-packet.v1' and
++            manifest['parent_manifest_sha256'] == PARENT_SHA, 'Wrong packet11 source ancestry')
++    common.verify_runtime(manifest['runtime'])
++    common.verify_model_receipt()
++    host = manifest['host_embedding']
++    require(host['modes'] == ['control', 'host-table'] and host['transformer_dispatch'] == 'original' and
++            host['construction_device'] == 'cpu' and host['encoder_load_device'] == 'xpu:2' and
++            host['table_device'] == 'cpu' and host['force_full_load'] is False and host['reserve_override'] is False,
++            'Prepared host model/loading scope changed')
++    for name, digest in EXTENSIONS.items():
++        require(host['extension_sha256s'][name] == digest and sha(args.packet / 'source/scripts' / name) == digest,
++                'Unqualified host source: ' + name)
++    require(host['admissions']['cpu_integration']['sha256'] ==
++            'b06e617ccb8c307eeb0a8b29981049f30561985480007c85259cca54b7e09326', 'Wrong actual CPU qualification')
++    require(sha(LANE / 'data/speed-resident-split-api.json') == screen.BASELINE_SHA, 'Baseline graph changed')
++    base = json.loads((LANE / 'data/speed-resident-split-api.json').read_text())
++    for mode in ('control', 'host-table'):
++        graph = json.loads((args.packet / 'graphs' / ('host-embedding-' + mode + '.json')).read_text())
++        require(normalized(graph) == normalized(expected_graph(base, mode)), 'Graph changed beyond CLIP components/gate')
++    path = LANE / 'data/host-embedding-registered-contract-01.json'
++    require(sha(path) == CONTRACT_SHA, 'Original registration contract changed')
++    contract = json.loads(path.read_text())
++    require(sha(Path(contract['source_path'])) == contract['source_sha256'], 'Original placement provenance changed')
++    return base, manifest, contract
++
++
++def paired_results(rows):
++    pairs = []
++    # Match warm positions, including both newly recomputed boat repetitions.
++    for ordinal in (2, 3, 4, 5):
++        chosen = [r for r in rows if r['ordinal'] == ordinal]
++        if len(chosen) != 3 or any(r['status'] != 'passed' for r in chosen):
++            continue
++        require([r['arm'] for r in chosen] == ['control-a', 'host-table', 'control-b'] and
++                len({r['fixture'] for r in chosen}) == 1, 'Matched arm order/fixture changed')
++        metrics = {}
++        for metric in ('preview_ready_seconds', 'encoder_node_seconds'):
++            times = [r[metric] for r in chosen]
++            require(all(type(t) in (int, float) and math.isfinite(t) and t > 0 for t in times), 'Invalid timing')
++            control_mean = (times[0] + times[2]) / 2
++            metrics[metric] = {'seconds': times, 'control_mean': control_mean,
++                               'host_minus_control_mean': times[1] - control_mean}
++        pairs.append({'fixture': chosen[0]['fixture'], 'ordinal': ordinal,
++                      'runs': [r['run'] for r in chosen], 'metrics': metrics})
++    return {'pairs': pairs, 'paired_samples': len(pairs),
++            'scope': 'Warm positions bracketed by control arms; repeated boat is not an independent fixture; client event intervals, no promotion'}
++
++
++def run_campaign(args, common):
++    base, manifest, contract = prepared_sources(args, common)
++    identity, _ = v3.identity_binding(common, args.packet, args.manifest_sha256, args.server_run)
++    node_info = {name: validate_node_info(screen.get_json('/object_info/' + name), name)
++                 for name in ('LTXHostEmbeddingComponents', 'LTXHostEmbeddingPlacementCheck')}
++    identity_sha = sha(args.server_run / 'server-identity.json')
++    require(not list(args.server_run.glob('host-components-*')) and not list(args.server_run.glob('host-embedding-placement-*')) and
++            not list(args.server_run.glob('na-axis-*')) and not list(args.server_run.glob('native-multiblock-*')),
++            'This server already attempted candidate work; no automatic retry')
++    rows = schedule(args.campaign)
++    require(len(rows) == 15, 'Unbounded schedule')
++    fixtures = {}
++    for name, (reference, seed) in screen.REFERENCES.items():
++        graph = json.loads(retention.safe_path(ROOT, Path('requests') / reference / 'prompt.json').read_text())
++        require(all(graph[n]['inputs']['noise_seed'] == seed for n in ('338', '339')), 'Reference seed differs')
++        retention.safe_path(ROOT, Path('output/validation') / reference / 'tensors.safetensors')
++        fixtures[name] = {'reference': reference, 'seed': seed, 'prompt': graph['364']['inputs']['text']}
++    for row in rows:
++        for path in (Path('requests') / row['run'], Path('output') / row['run'],
++                     Path('output/validation') / row['run']):
++            require(not retention.safe_path(ROOT, path, exists=False).exists(), 'Output collision')
++        require(not retention.safe_path(args.server_run, 'host-embedding-placement-' + row['run'] + '.json', exists=False).exists(), 'Receipt collision')
++    output = retention.safe_path(ROOT, args.campaign, exists=False)
++    output.mkdir(exist_ok=False)
++    write_json(output / 'preregistration.json', {'campaign': args.campaign, 'schedule': rows, 'max_requests': 15,
++        'fixtures': fixtures, 'identity': identity, 'packet_manifest_sha256': args.manifest_sha256,
++        'client_sha256': sha(Path(__file__)), 'validator_sha256': VALIDATOR_SHA,
++        'inherited_v3_sha256': V3_SHA, 'frozen_helpers': screen.FROZEN, 'registered_contract_sha256': CONTRACT_SHA,
++        'loaded_node_info': node_info,
++        'registered_contract': contract,
++        'scope': 'original transformer/decoder; control/host-table/control, initialization excluded from timing pairs',
++        'failure_action': 'halt new requests; preserve geometry/ownership/parity failure; no retry or gate widening',
++        'timeout_action': 'halt client submissions, preserve running server request; timeout is not cancellation',
++        'retention': 'delete only own verified redundant raw archives; retain latest3 passing previews',
++        'speed_promotion': False, 'streaming_qualification': False})
++    completed, inventory, deleted = [], {}, set()
++    previous, components = None, None
++    runs = {row['run'] for row in rows}
++    current, stage = None, 'preflight'
++    try:
++        for plan in rows:
++            current, stage = copy.deepcopy(plan), 'preflight'
++            v3.identity_binding(common, args.packet, args.manifest_sha256, args.server_run, identity)
++            require({name: validate_node_info(screen.get_json('/object_info/' + name), name) for name in node_info} == node_info,
++                    'Private host node registration changed')
++            current.update(status='running', before=retention.snapshot(identity['pid']))
++            completed.append(current)
++            write_json(output / 'progress.json', {'status': 'running', 'rows': completed})
++            run, mode = current['run'], current['mode']
++            fixture = fixtures[current['fixture']]
++            graph = expected_graph(base, mode)
++            graph['364']['inputs']['text'] = fixture['prompt']
++            for node in ('338', '339'):
++                graph[node]['inputs']['noise_seed'] = fixture['seed']
++            graph['421']['inputs']['run_name'] = run
++            graph_path = output / (run + '-graph.json')
++            write_json(graph_path, graph)
++            stage = 'request'
++            command = [sys.executable, str(LANE / 'scripts/profile-clip.py'), run, '--graph', str(graph_path),
++                       '--server-run', str(args.server_run), '--timeout', '1200']
++            current['command'] = command
++            try:
++                screen.run_subprocess(command, output / (run + '-client.log'), 1260)
++            finally:
++                current['after'] = retention.snapshot(identity['pid'])
++            v3.identity_binding(common, args.packet, args.manifest_sha256, args.server_run, identity)
++            stage = 'graph-placement-retirement-gates'
++            request = ROOT / 'requests' / run
++            submitted = json.loads((request / 'prompt.json').read_text())
++            require(normalized(submitted) == normalized(graph), 'Submitted graph differs')
++            require(submitted['364']['inputs']['text'] == fixture['prompt'] and
++                    all(submitted[n]['inputs']['noise_seed'] == fixture['seed'] for n in ('338', '339')) and
++                    submitted['421']['inputs']['run_name'] == run and
++                    submitted['414']['inputs']['run_name'] == run and
++                    submitted['75']['inputs']['filename_prefix'] == run + '/preview', 'Submitted fixture/output identity differs')
++            request_identity = json.loads((request / 'identity.json').read_text())
++            require(all(request_identity[k] == identity[k] for k in screen.IDENTITY_FIELDS), 'Request server changed')
++            placement = json.loads(retention.safe_path(args.server_run, 'host-embedding-placement-' + run + '.json').read_text())
++            prefix = f"host-components-{current['generation']:02d}-{mode}"
++            started = json.loads(retention.safe_path(args.server_run, prefix + '-started.json').read_text())
++            observed = json.loads(retention.safe_path(args.server_run, prefix + '-result.json').read_text())
++            validators.component(started, observed, contract=contract, mode=mode, generation=current['generation'],
++                                 server_sha=identity_sha, model_sha=identity['model_verification_sha256'])
++            if current['initialization']:
++                if components is not None:
++                    retirement = json.loads(retention.safe_path(args.server_run, prefix + '-unload.json').read_text())
++                    current['retirement_validation'] = validators.unload(retirement, contract=contract, previous=previous,
++                        old_generation=current['generation'] - 1, new_generation=current['generation'], mode=mode,
++                        server_sha=identity_sha, model_sha=identity['model_verification_sha256'])
++                    write_json(output / (prefix + '-unload.json'), retirement)
++                else:
++                    require(current['generation'] == 1 and not (args.server_run / (prefix + '-unload.json')).exists(),
++                            'Initial component unexpectedly has prior ownership')
++                components, previous = observed, None
++                write_json(output / (prefix + '-started.json'), started)
++                write_json(output / (prefix + '-result.json'), observed)
++            else:
++                require(components == observed, 'Resident component generation changed within arm')
++            current['placement_validation'] = validators.placement(placement, contract=contract, run=run, mode=mode,
++                ordinal=current['ordinal'], server_sha=identity_sha, model_sha=identity['model_verification_sha256'],
++                initial=components['encoder_initial_ownership'], previous=previous)
++            write_json(output / (run + '-placement.json'), placement)
++            current['component_generation'] = components['generation']
++            previous = placement
++            stage = 'four-output-oracle'
++            parity_path = output / (run + '-parity.json')
++            screen.run_subprocess([sys.executable, str(LANE / 'scripts/compare-clip.py'), fixture['reference'], run,
++                '--output', str(parity_path)], output / (run + '-compare.log'), 120)
++            parity = json.loads(parity_path.read_text())
++            require(parity['status'] == 'passed' and set(parity['comparisons']) ==
++                    {'images', 'video_latent', 'audio_latent', 'waveform'} and
++                    all(x['bitwise_equal'] is True for x in parity['comparisons'].values()), 'Original raw parity failed')
++            current['capture'] = retention.validate_capture(ROOT, run)
++            profile = json.loads((request / 'profile.json').read_text())
++            encoder_rows = [row for row in profile['nodes'] if row['node'] == '364']
++            require(len(encoder_rows) == 1, 'Missing/unexpected encoder profile intervals')
++            current.update(reference=fixture['reference'], parity_path=str(parity_path), profile=profile,
++                preview_ready_seconds=profile['preview_ready_seconds'], encoder_node_seconds=encoder_rows[0]['seconds'])
++            stage = 'verified-retention'
++            history = json.loads((request / 'history.json').read_text())
++            previews = history['outputs']['75']['images']
++            require(len(previews) == 1 and previews[0]['type'] == 'output' and previews[0]['subfolder'] == run,
++                    'Unexpected preview path')
++            inventory[run] = [retention.inventory(ROOT, args.campaign, runs, run, Path('output/validation') / run / 'tensors.safetensors'),
++                              retention.inventory(ROOT, args.campaign, runs, run, Path('output') / run / previews[0]['filename'])]
++            write_json(output / 'output-inventory.json', inventory)
++            eligible = [entry for records in inventory.values() for entry in records
++                        if entry['relative_path'].endswith('.mp4') and entry['relative_path'] not in deleted]
++            for entry in [inventory[run][0], *eligible[:-3]]:
++                retention.delete_owned(ROOT, args.campaign, runs, entry, parity_passed=True,
++                                       receipts=output / 'deletion-receipts.jsonl')
++                deleted.add(entry['relative_path'])
++            current['status'] = 'passed'
++            write_json(output / 'progress.json', {'status': 'running', 'rows': completed})
++            print(json.dumps({'run': run, 'status': 'passed', 'preview_seconds': current['preview_ready_seconds']}), flush=True)
++        v3.identity_binding(common, args.packet, args.manifest_sha256, args.server_run, identity)
++        write_json(output / 'progress.json', {'status': 'passed', 'rows': completed, 'completed_requests': len(completed),
++            'paired_results': paired_results(completed), 'speed_promotion': False, 'streaming_qualification': False,
++            'retained_outputs': [entry for records in inventory.values() for entry in records if entry['relative_path'] not in deleted]})
++    except BaseException as error:
++        if current is not None:
++            current['status'] = 'failed'
++        write_json(output / 'progress.json', {'status': 'failed', 'failure_stage': stage, 'error': repr(error),
++            'rows': completed, 'action': 'halt new requests; preserve process/evidence'})
++        raise
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--campaign', required=True)
++    parser.add_argument('--packet', type=Path, required=True)
++    parser.add_argument('--manifest-sha256', required=True)
++    parser.add_argument('--server-run', type=Path, required=True)
++    parser.add_argument('--check-only', action='store_true')
++    args = parser.parse_args()
++    schedule(args.campaign)
++    args.packet, args.server_run = args.packet.absolute(), args.server_run.absolute()
++    require(args.packet.parent == ROOT and args.server_run.parent == ROOT, 'Unexpected packet/server paths')
++    retention.safe_path(ROOT, args.packet.name)
++    retention.safe_path(ROOT, args.server_run.name, exists=not args.check_only)
++    common = load('encoder_runtime_common', args.packet / 'launch/encoder_runtime_common.py')
++    if args.check_only:
++        _, _, contract = prepared_sources(args, common)
++        print(json.dumps({'status': 'source-check-passed', 'native_requests': 0, 'schedule': schedule(args.campaign),
++                          'registered_parameters': len(contract['parameters']), 'registered_buffers': len(contract['buffers'])}, indent=2))
++        return
++    with (args.server_run / 'encoder-screen-client.lock').open('a') as lock:
++        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
++        run_campaign(args, common)
++
++
++if __name__ == '__main__':
++    main()
+--- /dev/null
++++ b/scripts/ltx_host_embedding_receipts.py
+@@ -0,0 +1,201 @@
++"""Stdlib-only gates for the bounded, exact-output host-table screen."""
++import math
++
++TABLE_NAME = 'gemma3_12b.transformer.model.embed_tokens.weight'
++TABLE_BYTES = 2013265920
++MODES = ('control', 'host-table')
++
++
++def require(value, message):
++    if not value:
++        raise RuntimeError(message)
++
++
++def positive_id(value):
++    require(type(value) is int and value > 0, 'Invalid owner identity')
++
++
++def identity(report, server_sha, model_sha):
++    require(report['server_identity_sha256'] == server_sha and report['model_verification_sha256'] == model_sha,
++            'Receipt identity differs')
++
++
++def record_key(row, owners=False):
++    keys = ['name', 'kind', 'dtype', 'shape', 'bytes']
++    if row['kind'] == 'buffer':
++        keys.append('persistent')
++    if owners:
++        keys.append('owner_id')
++    return tuple(tuple(row[k]) if k == 'shape' else row[k] for k in keys)
++
++
++def inventory(report, expected, device=None):
++    for group in ('parameters', 'buffers'):
++        summary = report[group]
++        rows = summary['records']
++        require(type(summary['count']) is int and summary['count'] == len(rows), 'Incorrect tensor count')
++        require(summary['bytes'] == sum(row['bytes'] for row in rows), 'Incorrect registered bytes')
++        require(len({r['name'] for r in rows}) == len(rows), 'Duplicate registered name')
++        require(sorted(record_key(r) for r in rows) == sorted(record_key(r) for r in expected[group]),
++                'Registered geometry/dtype/bytes differs from original: ' + group)
++        by_device = {}
++        for row in rows:
++            positive_id(row['owner_id'])
++            require(row['device'] in ('cpu', 'xpu:2'), 'Unexpected registered device')
++            require(type(row['bytes']) is int and row['bytes'] >= 0, 'Invalid tensor bytes')
++            if device:
++                require(row['device'] == device, 'Registered state is not fully on ' + device)
++            key = row['device'] + '/' + row['dtype']
++            entry = by_device.setdefault(key, {'tensors': 0, 'bytes': 0})
++            entry['tensors'] += 1
++            entry['bytes'] += row['bytes']
++        require(summary['by_device_dtype'] == by_device, 'Device summary differs from actual records')
++    account = report['accounting']
++    require(account['offload_device'] == 'cpu' and account['load_device'] in ('cpu', 'xpu:2'), 'Wrong loader devices')
++    for key in ('crop_option', 'patcher_small_state_option', 'model_small_state_policy', 'is_dynamic'):
++        require(account[key] is False, 'Unsupported model policy: ' + key)
++    for key in ('reported_loaded_weight_bytes', 'reported_offload_buffer_bytes', 'reported_model_size_bytes'):
++        require(type(account[key]) is int and account[key] >= 0, 'Invalid accounting bytes')
++    actual = sum(r['bytes'] for r in report['parameters']['records'] if r['device'] == account['load_device'])
++    persistent = sum(r['bytes'] for r in report['buffers']['records'] if r['persistent'] and r['device'] == account['load_device'])
++    require(account['registered_parameter_bytes_on_load_device'] == actual and
++            account['registered_persistent_buffer_bytes_on_load_device'] == persistent, 'Residency summary differs')
++    size = sum(r['bytes'] for r in expected['parameters']) + sum(r['bytes'] for r in expected['buffers'] if r['persistent'])
++    require(account['reported_model_size_bytes'] == size, 'Eligible model accounting differs')
++    return actual + persistent
++
++
++def expected_inventory(contract, mode):
++    require(mode in MODES, 'Unknown encoder mode')
++    return {'parameters': [r for r in contract['parameters'] if mode == 'control' or r['name'] != TABLE_NAME],
++            'buffers': contract['buffers']}
++
++
++def same_owners(a, b):
++    for group in ('parameters', 'buffers'):
++        require(sorted(record_key(r, True) for r in a[group]['records']) ==
++                sorted(record_key(r, True) for r in b[group]['records']), 'Registered owner changed')
++
++
++def ownership(report, contract, mode, *, initial=False, previous=None):
++    require(report['schema'] == 'ltx.host-embedding-placement.v1' and report['mode'] == mode,
++            'Unexpected ownership schema/mode')
++    require(report['original_combined_bytes'] == contract['original_combined_bytes'], 'Combined accounting changed')
++    require(report['quality_qualified'] is False and report['speed_qualified'] is False, 'Metadata cannot qualify quality/speed')
++    encoder = report['encoder']
++    expected = expected_inventory(contract, mode)
++    actual = inventory(encoder, expected, 'cpu' if initial else ('xpu:2' if mode == 'host-table' else None))
++    require(encoder['accounting']['load_device'] == 'xpu:2', 'Wrong encoder load device')
++    require(report['embedding_observation_limit'] == 4, 'Observation bound changed')
++    if initial:
++        require(report['encodes_completed'] == 0 and report['last_load'] is None and report['embedding_observations'] == [],
++                'Initial CPU construction already encoded/loaded')
++        require(encoder['accounting']['reported_loaded_weight_bytes'] == 0 and
++                encoder['accounting']['reported_offload_buffer_bytes'] == 0, 'Encoder preloaded before ownership')
++    if mode == 'host-table':
++        table = next(r for r in contract['parameters'] if r['name'] == TABLE_NAME)
++        table = {**table, 'name': 'embedding.weight'}
++        require(table['shape'] == [262144, 3840] and table['dtype'] == 'torch.bfloat16' and table['bytes'] == TABLE_BYTES,
++                'Original table contract differs')
++        host = report['host']
++        inventory(host, {'parameters': [table], 'buffers': []}, 'cpu')
++        require(host['accounting']['load_device'] == 'cpu' and
++                host['accounting']['reported_loaded_weight_bytes'] == (0 if initial else TABLE_BYTES),
++                'Host owner is not correctly accounted by loader')
++        owner = report['owner']
++        require(owner['schema'] == 'ltx.host-embedding-ownership.v1', 'Wrong host-owner schema')
++        for key in ('host_owner_id', 'host_weight_id'):
++            positive_id(owner[key])
++        require(owner['host_device'] == 'cpu' and owner['host_dtype'] == 'torch.bfloat16' and
++                owner['host_registered_bytes'] == TABLE_BYTES and owner['execution_device'] == 'xpu:2' and
++                owner['original_combined_bytes'] == contract['original_combined_bytes'] and
++                owner['encoder_eligible_bytes'] == contract['original_combined_bytes'] - TABLE_BYTES and
++                owner['encoder_reported_loaded_bytes'] == encoder['accounting']['reported_loaded_weight_bytes'] and
++                owner['native_qualified'] is False, 'Host ownership/accounting differs')
++        require(type(owner['inference_tensor']) is bool and type(owner['weight_version_tracked']) is bool and
++                owner['weight_version_tracked'] is (not owner['inference_tensor']), 'Mutation-check scope differs')
++        if not initial:
++            require(actual == encoder['accounting']['reported_loaded_weight_bytes'] == owner['encoder_eligible_bytes'],
++                    'Remaining encoder is not fully resident/accounted')
++    else:
++        require(report['host'] is None and report['owner'] is None, 'Control unexpectedly extracted table')
++    if previous:
++        same_owners(previous['encoder'], encoder)
++        if mode == 'host-table':
++            same_owners(previous['host'], report['host'])
++            for key in ('host_owner_id', 'host_weight_id'):
++                require(previous['owner'][key] == report['owner'][key], 'Host owner changed')
++
++
++def placement(report, *, contract, run, mode, ordinal, server_sha, model_sha, initial, previous=None):
++    identity(report, server_sha, model_sha)
++    ownership(report, contract, mode, previous=previous or initial)
++    require(report['stage'] == 'post_encode' and report['run_name'] == run and report['passed'] is True,
++            'Placement result is not this completed request')
++    require(report['generated_output_cache'] is False and report['prompt_encoding_cache'] is False,
++            'Output/encoding reuse forbidden')
++    require(type(report['encodes_completed']) is int and report['encodes_completed'] == ordinal,
++            'Each request requires one newly completed encode')
++    observations = report['embedding_observations']
++    # The pinned text-only process_tokens path performs exactly one embedding call.
++    require(len(observations) == 1 and observations[0]['ordinal'] == 1, 'Unexpected embedding call sequence')
++    row = observations[0]
++    require(row['input_ids'] == {'shape': [1, 1024], 'dtype': 'torch.int64', 'device': 'xpu:2'} and
++            row['scaled_embedding'] == {'shape': [1, 1024, 3840], 'dtype': 'torch.float32', 'device': 'xpu:2'},
++            'Actual token/embedding metadata differs from fixed original text path')
++    load = report['last_load']
++    require(type(load['memory_required']) in (int, float) and math.isfinite(load['memory_required']) and load['memory_required'] >= 0,
++            'Invalid original memory estimate')
++    require(load['force_full_load'] is False and load['reserve_override'] is False, 'Loader budget override forbidden')
++    ids = load['patcher_ids']
++    require(len(ids) == (2 if mode == 'host-table' else 1) and len(set(ids)) == len(ids), 'Missing/duplicate loaded owner')
++    for value in ids:
++        positive_id(value)
++    if previous:
++        require(ids == previous['last_load']['patcher_ids'] and load['memory_required'] == previous['last_load']['memory_required'],
++                'Loaded patcher identity or fixed-token estimator changed')
++    return {'status': 'passed-host-placement', 'new_encode_ordinal': ordinal,
++            'table_bytes': TABLE_BYTES if mode == 'host-table' else 0,
++            'encoder_loaded_bytes': report['encoder']['accounting']['reported_loaded_weight_bytes']}
++
++
++def component(started, result, *, contract, mode, generation, server_sha, model_sha):
++    for report in (started, result):
++        identity(report, server_sha, model_sha)
++        require(report['schema'] == 'ltx.host-embedding-components.v1' and report['encoder_mode'] == mode and
++                type(report['generation']) is int and report['generation'] == generation and
++                report['previous_generation'] == generation - 1 and report['placement'] == 'split' and
++                report['previous_mode'] == (None if generation == 1 else ('control' if mode == 'host-table' else 'host-table')),
++                'Component generation/transition differs')
++        require(report['generated_output_cache'] is False and report['prompt_encoding_cache'] is False,
++                'Component output cache forbidden')
++    require(started['status'] == 'started' and result['status'] == 'completed', 'Incomplete component construction')
++    require(all(result[k] == v for k, v in started.items() if k != 'status'), 'Component started/result changed')
++    require(result['text_encoder_load_device'] == 'xpu:2' and result['vae_devices'] == ['xpu:3', 'xpu:3'] and
++            result['model_load_device'] == 'xpu:0', 'Component device map changed')
++    ownership(result['encoder_initial_ownership'], contract, mode, initial=True)
++
++
++def unload(report, *, contract, previous, old_generation, new_generation, mode, server_sha, model_sha):
++    identity(report, server_sha, model_sha)
++    require(report['schema'] == 'ltx.host-embedding-unload.v1' and report['old_generation'] == old_generation and
++            report['new_generation'] == new_generation == old_generation + 1 and
++            report['old_mode'] == previous['mode'] and report['new_mode'] == mode and
++            report['original_ownership_restored'] is True and report['all_shared_clones_retired'] is True and
++            report['after_host_registered_bytes'] == 0, 'Incomplete owner retirement')
++    before, after = report['before'], report['after_encoder']
++    ownership(before, contract, previous['mode'], previous=previous)
++    require(before['encodes_completed'] == previous['encodes_completed'] and before['embedding_observations'] == [],
++            'Retirement did not consume exactly previous encode')
++    inventory(after, expected_inventory(contract, 'control'), 'cpu')
++    # Restoring the table changes its registration path only, not the table owner.
++    expected = {g: {'records': list(before['encoder'][g]['records'])} for g in ('parameters', 'buffers')}
++    if previous['mode'] == 'host-table':
++        table = dict(before['host']['parameters']['records'][0], name=TABLE_NAME)
++        expected['parameters']['records'].append(table)
++    same_owners(expected, after)
++    account = after['accounting']
++    require(account['reported_loaded_weight_bytes'] == 0 and account['reported_offload_buffer_bytes'] == 0 and
++            account['marked_modules'] == [] and account['small_buffers_loaded'] is False,
++            'Retired encoder accounting not cleared')
++    return {'status': 'passed-complete-owner-retirement', 'old_generation': old_generation, 'new_generation': new_generation}
+--- /dev/null
++++ b/scripts/test-host-embedding-screen-stdlib.py
+@@ -0,0 +1,237 @@
++#!/usr/bin/env python3
++"""Offline metadata/graph mutation tests. No native imports or endpoint calls."""
++import copy
++import hashlib
++import importlib.util
++import json
++from pathlib import Path
++import sys
++import unittest
++
++sys.dont_write_bytecode = True
++LANE = Path(__file__).resolve().parents[1]
++spec = importlib.util.spec_from_file_location('host_screen_test', LANE / 'scripts/run-host-embedding-screen.py')
++client = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(client)
++v = client.validators
++CONTRACT = json.loads((LANE / 'data/host-embedding-registered-contract-01.json').read_text())
++S, M = 's' * 64, 'm' * 64
++
++
++def inspection(mode, initial=False, host=False):
++    expected = v.expected_inventory(CONTRACT, mode)
++    if host:
++        table = next(r for r in CONTRACT['parameters'] if r['name'] == v.TABLE_NAME)
++        expected = {'parameters': [dict(table, name='embedding.weight')], 'buffers': []}
++    result = {}
++    for group in ('parameters', 'buffers'):
++        rows = []
++        by = {}
++        for n, row in enumerate(expected[group], 1):
++            device = 'cpu' if initial or host else 'xpu:2'
++            owner = 100000 + n + (10000 if group == 'buffers' else 0)
++            if row['name'] in (v.TABLE_NAME, 'embedding.weight'):
++                owner = 999999
++            rows.append(dict(row, owner_id=owner, device=device))
++            entry = by.setdefault(device + '/' + row['dtype'], {'tensors': 0, 'bytes': 0})
++            entry['tensors'] += 1; entry['bytes'] += row['bytes']
++        result[group] = {'records': rows, 'count': len(rows), 'bytes': sum(r['bytes'] for r in rows), 'by_device_dtype': by}
++    load_device = 'cpu' if host else 'xpu:2'
++    size = sum(r['bytes'] for r in expected['parameters']) + sum(r['bytes'] for r in expected['buffers'] if r['persistent'])
++    result['accounting'] = {'offload_device': 'cpu', 'load_device': load_device,
++        'crop_option': False, 'patcher_small_state_option': False, 'model_small_state_policy': False, 'is_dynamic': False,
++        'reported_model_size_bytes': size, 'reported_loaded_weight_bytes': 0 if initial else size,
++        'reported_offload_buffer_bytes': 0, 'small_buffers_loaded': False, 'marked_modules': [],
++        'registered_parameter_bytes_on_load_device': sum(r['bytes'] for r in result['parameters']['records'] if r['device'] == load_device),
++        'registered_persistent_buffer_bytes_on_load_device': sum(r['bytes'] for r in result['buffers']['records'] if r['persistent'] and r['device'] == load_device)}
++    return result
++
++
++def report(mode='host-table', initial=False, ordinal=1):
++    encoder = inspection(mode, initial)
++    r = {'schema': 'ltx.host-embedding-placement.v1', 'mode': mode, 'encodes_completed': 0 if initial else ordinal,
++        'original_combined_bytes': CONTRACT['original_combined_bytes'], 'encoder': encoder, 'host': None, 'owner': None,
++        'quality_qualified': False, 'speed_qualified': False, 'embedding_observation_limit': 4,
++        'embedding_observations': [] if initial else [{'ordinal': 1,
++            'input_ids': {'shape': [1,1024], 'dtype': 'torch.int64', 'device': 'xpu:2'},
++            'scaled_embedding': {'shape': [1,1024,3840], 'dtype': 'torch.float32', 'device': 'xpu:2'}}],
++        'last_load': None if initial else {'memory_required': 5000, 'patcher_ids': [123,456] if mode == 'host-table' else [123],
++                                          'force_full_load': False, 'reserve_override': False}}
++    if mode == 'host-table':
++        r['host'] = inspection(mode, initial, host=True)
++        r['owner'] = {'schema': 'ltx.host-embedding-ownership.v1', 'host_owner_id': 789, 'host_weight_id': 888,
++            'host_device': 'cpu', 'host_dtype': 'torch.bfloat16', 'host_registered_bytes': v.TABLE_BYTES,
++            'original_combined_bytes': CONTRACT['original_combined_bytes'], 'execution_device': 'xpu:2',
++            'encoder_eligible_bytes': CONTRACT['original_combined_bytes'] - v.TABLE_BYTES,
++            'encoder_reported_loaded_bytes': encoder['accounting']['reported_loaded_weight_bytes'],
++            'inference_tensor': True, 'weight_version_tracked': False, 'native_qualified': False}
++    if not initial:
++        r.update(server_identity_sha256=S, model_verification_sha256=M, stage='post_encode', run_name='test-r01-host-table-boat',
++                 passed=True, generated_output_cache=False, prompt_encoding_cache=False)
++    return r
++
++
++def validate(r, initial=None, previous=None):
++    v.placement(r, contract=CONTRACT, run='test-r01-host-table-boat', mode=r['mode'], ordinal=r['encodes_completed'],
++                server_sha=S, model_sha=M, initial=initial or report(r['mode'], True), previous=previous)
++
++
++def retired(mode):
++    previous = report(mode)
++    before = copy.deepcopy(previous)
++    before['embedding_observations'] = []
++    after = inspection('control', True)
++    # Match all original owner IDs after restoring the extracted registration.
++    owners = {r['name']: r['owner_id'] for r in before['encoder']['parameters']['records']}
++    if mode == 'host-table':
++        owners[v.TABLE_NAME] = before['host']['parameters']['records'][0]['owner_id']
++    for row in after['parameters']['records']:
++        row['owner_id'] = owners[row['name']]
++    receipt = {'schema': 'ltx.host-embedding-unload.v1', 'server_identity_sha256': S, 'model_verification_sha256': M,
++        'old_generation': 1 if mode == 'control' else 2, 'new_generation': 2 if mode == 'control' else 3,
++        'old_mode': mode, 'new_mode': 'host-table' if mode == 'control' else 'control',
++        'before': before, 'after_encoder': after, 'after_host_registered_bytes': 0,
++        'original_ownership_restored': True, 'all_shared_clones_retired': True}
++    return previous, receipt
++
++
++def validate_retired(previous, receipt):
++    return v.unload(receipt, contract=CONTRACT, previous=previous,
++        old_generation=receipt['old_generation'], new_generation=receipt['new_generation'], mode=receipt['new_mode'],
++        server_sha=S, model_sha=M)
++
++
++class Tests(unittest.TestCase):
++    def test_actual_saved_control_metadata_contract(self):
++        p = Path(CONTRACT['source_path'])
++        self.assertEqual(hashlib.sha256(p.read_bytes()).hexdigest(), CONTRACT['source_sha256'])
++        actual = json.loads(p.read_text())['inspection']
++        v.inventory(actual, v.expected_inventory(CONTRACT, 'control'))
++        self.assertEqual((len(CONTRACT['parameters']), len(CONTRACT['buffers'])), (634, 51))
++        self.assertEqual(CONTRACT['original_combined_bytes'], 26231582820)
++
++    def test_initial_control_host_and_new_encode(self):
++        for mode in v.MODES:
++            initial = report(mode, True)
++            v.ownership(initial, CONTRACT, mode, initial=True)
++            r = report(mode)
++            validate(r, initial)
++            next_r = report(mode, ordinal=2)
++            validate(next_r, initial, r)
++
++    def test_identity_metadata_and_accounting_rejections(self):
++        paths = [(('server_identity_sha256',), 'changed'), (('encodes_completed',), True),
++            (('prompt_encoding_cache',), True), (('last_load','reserve_override'), True),
++            (('last_load','force_full_load'), True), (('last_load','patcher_ids'), [123]),
++            (('last_load','memory_required'), float('nan')), (('host','accounting','reported_loaded_weight_bytes'), 0),
++            (('owner','host_device'), 'xpu:2'), (('encoder','accounting','reported_loaded_weight_bytes'), 1),
++            (('encoder','accounting','is_dynamic'), True), (('embedding_observation_limit',), 5)]
++        for path, value in paths:
++            with self.subTest(path=path):
++                r = report(); target = r
++                for k in path[:-1]: target = target[k]
++                target[path[-1]] = value
++                with self.assertRaises(RuntimeError): validate(r)
++
++    def test_geometry_and_individual_state_rejections(self):
++        for field, value in [('shape',[1,512]), ('device','cpu'), ('dtype','torch.int32')]:
++            r=report(); r['embedding_observations'][0]['input_ids'][field]=value
++            with self.assertRaises(RuntimeError): validate(r)
++        for field, value in [('shape',[1,1024,3072]), ('device','cpu'), ('dtype','torch.bfloat16')]:
++            r=report(); r['embedding_observations'][0]['scaled_embedding'][field]=value
++            with self.assertRaises(RuntimeError): validate(r)
++        for group in ('parameters','buffers'):
++            r=report(); r['encoder'][group]['records'][0]['device']='cpu'
++            with self.assertRaises(RuntimeError): validate(r)
++        r=report(); r['embedding_observations'] *= 2
++        with self.assertRaises(RuntimeError): validate(r)
++        r=report(); r['host']['parameters']['records'][0]['shape']=[262143,3840]
++        with self.assertRaises(RuntimeError): validate(r)
++
++    def test_owner_continuity_and_repeated_encode_rejections(self):
++        first=report(); second=report(ordinal=2)
++        second['owner']['host_weight_id'] += 1
++        with self.assertRaises(RuntimeError): validate(second, previous=first)
++        second=report(ordinal=2); second['encoder']['parameters']['records'][2]['owner_id'] += 1
++        with self.assertRaises(RuntimeError): validate(second, previous=first)
++        second=report(ordinal=2); second['last_load']['patcher_ids']=[345,456]
++        with self.assertRaises(RuntimeError): validate(second, previous=first)
++        with self.assertRaises(RuntimeError):
++            v.placement(first, contract=CONTRACT, run=first['run_name'], mode='host-table', ordinal=2,
++                server_sha=S, model_sha=M, initial=report('host-table',True), previous=first)
++
++    def test_both_retirements_and_incomplete_restoration_reject(self):
++        for mode in v.MODES:
++            previous, receipt = retired(mode)
++            validate_retired(previous, receipt)
++            for key, value in [('after_host_registered_bytes',v.TABLE_BYTES), ('all_shared_clones_retired',False)]:
++                r=copy.deepcopy(receipt); r[key]=value
++                with self.assertRaises(RuntimeError): validate_retired(previous,r)
++            r=copy.deepcopy(receipt); r['after_encoder']['parameters']['records'][0]['owner_id']+=1
++            with self.assertRaises(RuntimeError): validate_retired(previous,r)
++            r=copy.deepcopy(receipt); r['after_encoder']['accounting']['reported_loaded_weight_bytes']=1
++            with self.assertRaises(RuntimeError): validate_retired(previous,r)
++
++    def test_component_sequence_and_initial_cpu(self):
++        for generation, mode in [(1,'control'),(2,'host-table'),(3,'control')]:
++            started={'schema':'ltx.host-embedding-components.v1','server_identity_sha256':S,'model_verification_sha256':M,
++                'generation':generation,'previous_generation':generation-1,'placement':'split','encoder_mode':mode,
++                'previous_mode':None if generation==1 else ('control' if mode=='host-table' else 'host-table'),
++                'generated_output_cache':False,'prompt_encoding_cache':False,'status':'started'}
++            result=dict(started,status='completed',text_encoder_load_device='xpu:2',vae_devices=['xpu:3','xpu:3'],
++                model_load_device='xpu:0',encoder_initial_ownership=report(mode,True))
++            kw=dict(contract=CONTRACT,mode=mode,generation=generation,server_sha=S,model_sha=M)
++            v.component(started,result,**kw)
++            result['encoder_initial_ownership']['encoder']['accounting']['reported_loaded_weight_bytes']=10
++            with self.assertRaises(RuntimeError):v.component(started,result,**kw)
++
++    def test_schedule_pair_sign_and_finite_timing(self):
++        rows=client.schedule('test')
++        self.assertEqual(len(rows),15)
++        self.assertEqual(len({r['run'] for r in rows}),15)
++        self.assertEqual([r['generation'] for r in rows if r['initialization']],[1,2,3])
++        for r in rows:
++            r.update(status='passed',preview_ready_seconds=5 if r['mode']=='host-table' else 6,
++                     encoder_node_seconds=1 if r['mode']=='host-table' else 2)
++        pairs=client.paired_results(rows)
++        self.assertEqual(pairs['paired_samples'],4)
++        self.assertTrue(all(p['metrics']['preview_ready_seconds']['host_minus_control_mean']==-1 for p in pairs['pairs']))
++        rows[1]['encoder_node_seconds']=float('inf')
++        with self.assertRaises(RuntimeError): client.paired_results(rows)
++        with self.assertRaises(RuntimeError): client.schedule('../unsafe')
++
++    def test_graph_packet_scope_and_no_native_imports(self):
++        base=json.loads((LANE/'data/speed-resident-split-api.json').read_text())
++        packet=client.ROOT/'prepared-encoder-host-embedding-11'
++        for mode in v.MODES:
++            graph=client.expected_graph(base,mode)
++            expected=json.loads((packet/'graphs'/f'host-embedding-{mode}.json').read_text())
++            self.assertEqual(client.normalized(graph),client.normalized(expected))
++            self.assertEqual(graph['374']['class_type'],'VAEDecode')
++            self.assertNotIn('422',graph)
++        self.assertNotIn('torch',sys.modules)
++        self.assertFalse(any(k.startswith('comfy.') for k in sys.modules))
++
++    def test_exact_node_registration_contract(self):
++        for name in ['LTXHostEmbeddingComponents','LTXHostEmbeddingPlacementCheck']:
++            if name.endswith('Components'):
++                inputs={'placement':[['split']],'encoder_mode':[['control','host-table']]}
++                outputs=['MODEL','CLIP','VAE','VAE','LATENT_UPSCALE_MODEL']; names=['model','clip','video_vae','audio_vae','upscaler']
++            else:
++                inputs={'clip':['CLIP'],'conditioning':['CONDITIONING'], 'run_name':['STRING',{'default':'assign-unique-request-name'}],
++                        'encoder_mode':[['control','host-table']]}; outputs=names=['CONDITIONING']
++            obj={name:{'input':{'required':inputs},'output':outputs,'output_name':names,'output_is_list':[False]*len(outputs),
++                'is_input_list':False,'output_node':False,'name':name,'category':'lab/validation',
++                'python_module':'custom_nodes.ltx_host_embedding_lab'}}
++            client.validate_node_info(obj,name)
++            obj[name]['python_module']='custom_nodes.old'
++            with self.assertRaises(RuntimeError):client.validate_node_info(obj,name)
++
++
++if __name__=='__main__':
++    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
++    print(json.dumps({'status':'passed' if result.wasSuccessful() else 'failed','tests_run':result.testsRun,
++        'native_imports':False,'endpoint_calls':0,'source_sha256s':{str(p.relative_to(LANE)):hashlib.sha256(p.read_bytes()).hexdigest()
++        for p in [Path(__file__),LANE/'scripts/run-host-embedding-screen.py',LANE/'scripts/ltx_host_embedding_receipts.py',
++                  LANE/'data/host-embedding-registered-contract-01.json']}}))
++    raise SystemExit(0 if result.wasSuccessful() else 1)
+--- /dev/null
++++ b/data/host-embedding-registered-contract-01.json
+@@ -0,0 +1 @@
++{"buffers":[{"bytes":1024,"dtype":"torch.float32","kind":"buffer","name":"gemma3_12b.transformer.model._global_inv_freq","persistent":false,"shape":[256]},{"bytes":512,"dtype":"torch.float32","kind":"buffer","name":"gemma3_12b.transformer.model._sliding_inv_freq","persistent":false,"shape":[128]},{"bytes":16,"dtype":"torch.int64","kind":"buffer","name":"gemma3_12b.transformer.model._suppress_tokens","persistent":false,"shape":[2]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.0.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.1.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.2.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.3.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.4.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.5.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.6.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.7.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.8.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.9.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.10.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.11.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.12.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.13.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.14.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.15.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.16.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.17.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.18.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.19.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.20.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.21.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.22.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.23.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.24.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.25.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.26.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.27.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.28.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.29.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.30.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.31.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.32.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.33.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.34.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.35.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.36.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.37.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.38.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.39.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.40.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.41.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.42.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.43.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.44.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.45.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.46.layer_scalar","persistent":true,"shape":[1]},{"bytes":2,"dtype":"torch.bfloat16","kind":"buffer","name":"gemma3_12b.transformer.model.layers.47.layer_scalar","persistent":true,"shape":[1]}],"original_combined_bytes":26231582820,"parameters":[{"bytes":4,"dtype":"torch.float32","kind":"parameter","name":"gemma3_12b.logit_scale","shape":[]},{"bytes":2013265920,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.embed_tokens.weight","shape":[262144,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.0.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.1.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.2.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.3.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.4.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.5.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.6.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.7.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.8.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.9.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.10.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.11.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.12.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.13.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.14.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.15.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.16.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.17.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.18.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.19.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.20.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.21.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.22.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.23.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.24.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.25.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.26.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.27.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.28.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.29.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.30.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.31.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.32.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.33.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.34.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.35.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.36.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.37.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.38.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.39.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.40.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.41.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.42.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.43.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.44.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.45.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.self_attn.q_proj.weight","shape":[4096,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.self_attn.k_proj.weight","shape":[2048,3840]},{"bytes":15728640,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.self_attn.v_proj.weight","shape":[2048,3840]},{"bytes":31457280,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.self_attn.o_proj.weight","shape":[3840,4096]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.self_attn.q_norm.weight","shape":[256]},{"bytes":512,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.self_attn.k_norm.weight","shape":[256]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.46.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.self_attn.q_proj.weight","shape":[8192,3840]},{"bytes":3932160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.self_attn.k_proj.weight","shape":[512,3840]},{"bytes":62914560,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.self_attn.o_proj.weight","shape":[3840,8192]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.self_attn.q_norm.weight","shape":[512]},{"bytes":1024,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.self_attn.k_norm.weight","shape":[512]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.mlp.gate_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.mlp.up_proj.weight","shape":[15360,3840]},{"bytes":117964800,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.mlp.down_proj.weight","shape":[3840,15360]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.input_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.post_attention_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.pre_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.layers.47.post_feedforward_layernorm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.model.norm.weight","shape":[3840]},{"bytes":17203200,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.pos_embedding","shape":[1120,2,3840]},{"bytes":13824,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.patch_ln1.weight","shape":[6912]},{"bytes":13824,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.patch_ln1.bias","shape":[6912]},{"bytes":53084160,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.patch_dense.weight","shape":[3840,6912]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.patch_dense.bias","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.patch_ln2.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.patch_ln2.bias","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.pos_norm.weight","shape":[3840]},{"bytes":7680,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.vision_model.pos_norm.bias","shape":[3840]},{"bytes":29491200,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.multi_modal_projector.embedding_projection.weight","shape":[3840,3840]},{"bytes":4915200,"dtype":"torch.bfloat16","kind":"parameter","name":"gemma3_12b.transformer.audio_projector.embedding_projection.weight","shape":[3840,640]},{"bytes":770703360,"dtype":"torch.bfloat16","kind":"parameter","name":"text_embedding_projection.audio_aggregate_embed.weight","shape":[2048,188160]},{"bytes":4096,"dtype":"torch.bfloat16","kind":"parameter","name":"text_embedding_projection.audio_aggregate_embed.bias","shape":[2048]},{"bytes":1541406720,"dtype":"torch.bfloat16","kind":"parameter","name":"text_embedding_projection.video_aggregate_embed.weight","shape":[4096,188160]},{"bytes":8192,"dtype":"torch.bfloat16","kind":"parameter","name":"text_embedding_projection.video_aggregate_embed.bias","shape":[4096]}],"schema":"ltx.host-embedding-registered-contract.v1","scope":"Original registered metadata only; no tensor contents or new runtime observations","source_path":"/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-na-axis-10/encoder-placement-na-axis-confirm-01-r18-axis-cache-boat.json","source_sha256":"3becd16abfa4e37e640ce3bd9de48efc2f57b929682bed4198310061b6731a7a"}
