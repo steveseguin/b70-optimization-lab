@@ -1,0 +1,250 @@
+--- test_block_cpu_guarded_v6-01.function-draft.py
++++ test_block_cpu_guarded_v6.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Inactive guarded diagnostic v6: pure CPU Triton capability False before Dynamo aliases."""
++"""Inactive guarded diagnostic v6: native CPU-only Triton device-detection disable setting."""
+ import argparse
+ import ast
+ import copy
+@@ -98,7 +98,8 @@
+               'cpu_import_policy_requested': report['cpu_import_policy_requested'],
+               'cpu_metadata_policy_requested': report['cpu_metadata_policy_requested'],
+               'cpu_comfy_import_policy_requested': report['cpu_comfy_import_policy_requested'],
+-              'cpu_triton_policy_requested': report['cpu_triton_policy_requested']}
++              'cpu_triton_policy_requested': report['cpu_triton_policy_requested'],
++              'cpu_triton_environment': report['cpu_triton_environment']}
+     path = evidence_dir / 'startup-identity.json'
+     with path.open('x') as out:
+         json.dump(record, out, indent=2); out.write('\n')
+@@ -143,11 +144,12 @@
+         if args.check_only:
+             report.update(passed=True, phase='source-check-only-passed', native_calls=0)
+             return 0
++        triton_policy_module.prepare_environment(report)
+         for key in ('MAX_JOBS', 'TORCHINDUCTOR_COMPILE_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
+             os.environ[key] = '1'
+         os.environ['TORCHINDUCTOR_CACHE_DIR'] = str(args.evidence_dir / 'inductor-cache')
+         os.environ['TRITON_CACHE_DIR'] = str(args.evidence_dir / 'triton-cache')
+-        report['compiler_environment'] = {key: os.environ[key] for key in ('MAX_JOBS', 'TORCHINDUCTOR_COMPILE_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'TORCHINDUCTOR_CACHE_DIR', 'TRITON_CACHE_DIR')}
++        report['compiler_environment'] = {key: os.environ[key] for key in ('MAX_JOBS', 'TORCHINDUCTOR_COMPILE_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'TORCHINDUCTOR_CACHE_DIR', 'TRITON_CACHE_DIR', triton_policy_module.ENV_KEY)}
+         args.evidence_dir.mkdir()
+         persist_startup(args.evidence_dir, report)
+         no_fault(); report['phase'] = 'CPU-import'
+@@ -167,15 +169,15 @@
+         require_cpu_policy = policy.install(torch, report, guard)
+         require_cpu_policy()
+         import torch.utils._triton as triton_utils
+-        triton_policy = triton_policy_module.CpuTritonPolicy(triton_utils, report, guard)
+         metadata_policy = metadata_module.MetadataPolicy(triton_utils, report, guard)
++        from torch._inductor import config as inductor_config
++        triton_policy = triton_policy_module.CpuTritonPolicy(triton_utils, inductor_config, report, guard)
+         report['phase'] = 'guarded-Kitchen-Inductor-import'
+         import comfy.ops
+         import comfy.model_management
+         comfy_import_policy.finish_import(comfy.model_management)
+         from comfy.ldm.lightricks.av_model import BasicAVTransformerBlock, CompressedTimestep
+         from torch._dynamo.utils import counters
+-        triton_policy.require_intact(require_alias=True)
+         from torch._inductor.codecache import FxGraphCache
+         metadata_policy.bind(FxGraphCache)
+         metadata_policy.require_intact()
+@@ -225,7 +227,7 @@
+             require_cpu_policy()
+             metadata_policy.require_intact()
+             comfy_import_policy.require_intact(require_complete=True)
+-            triton_policy.require_intact(require_alias=True)
++            triton_policy.require_intact()
+             metadata_before = len(report['cpu_metadata_omissions'])
+             x, kwargs = fixture.make_inputs(torch, CompressedTimestep, tokens, seed)
+             before = snapshot()
+@@ -233,7 +235,7 @@
+             require_cpu_policy()
+             metadata_policy.require_intact()
+             comfy_import_policy.require_intact(require_complete=True)
+-            triton_policy.require_intact(require_alias=True)
++            triton_policy.require_intact()
+             metadata_delta = len(report['cpu_metadata_omissions']) - metadata_before
+             delta = difference(snapshot(), before)
+             report['calls'].append({'arm': arm, 'video_tokens': tokens, 'seed': seed,
+@@ -273,7 +275,7 @@
+         no_fault(); require_cpu_policy(); report['phase'] = 'graph-census'
+         metadata_policy.require_intact()
+         comfy_import_policy.require_intact(require_complete=True)
+-        triton_policy.require_intact(require_alias=True)
++        triton_policy.require_intact()
+         require(len(report['cpu_metadata_omissions']) == 4, 'Exactly four CPU cache metadata omissions required')
+         report['graphs'] = {}
+         for arm in ('python', 'cpp'):
+@@ -298,7 +300,7 @@
+     finally:
+         if 'triton_policy' in locals():
+             try:
+-                triton_policy.require_intact(require_alias=report.get('passed', False))
++                triton_policy.require_intact()
+                 report['cpu_triton_finalizer_intact'] = True
+             except BaseException as error:
+                 report.update(passed=False, cpu_triton_finalizer_intact=False,
+@@ -306,7 +308,6 @@
+         if 'comfy_import_policy' in locals():
+             try:
+                 comfy_import_policy.require_intact(require_complete=True)
+-                triton_policy.require_intact(require_alias=True)
+                 report['cpu_comfy_import_finalizer_intact'] = True
+             except BaseException as error:
+                 report.update(passed=False, cpu_comfy_import_finalizer_intact=False,
+@@ -315,7 +316,6 @@
+             try:
+                 metadata_policy.require_intact()
+                 comfy_import_policy.require_intact(require_complete=True)
+-                triton_policy.require_intact(require_alias=True)
+                 require_cpu_policy()
+                 report['cpu_metadata_finalizer_intact'] = True
+             except BaseException as error:
+--- cpu_triton_policy_v6-01.function-draft.py
++++ cpu_triton_policy_v6.py
+@@ -1,9 +1,10 @@
+-"""Inactive CPU fixture Triton capability policy; stdlib imports only.
++"""Inactive CPU diagnostic: use native Triton device-detection disable setting.
+ 
+-The pure replacement never calls the original detection/registry function.
+-Install before Dynamo imports; do not rewrite already captured aliases.
++Stdlib imports only. Set one process-local environment variable before Torch
++imports, then verify native config/function behavior. No callable replacement.
+ """
+ import hashlib
++import os
+ from pathlib import Path
+ import sys
+ import time
+@@ -11,28 +12,27 @@
+ import types
+ 
+ SITE = Path('/home/steve/.venvs/ltx25-baseline/lib/python3.12/site-packages')
++ENV_KEY = 'TORCHINDUCTOR_TRITON_DISABLE_DEVICE_DETECTION'
+ PINS = {
+     'torch/utils/_triton.py': '4ff5137347620b8995807cfe3711f7826ef062581cde7d19e798ffbc781f810a',
++    'torch/_inductor/config.py': '9171c2ed249e13a19a2ae22dba0db14f3c4fe11762108f87c8a4e85f96945b0a',
+     'torch/_dynamo/utils.py': 'e550c68c924e1c0babaf31fc629e900c1d3b6ecbcf10aa88442d39b405b7102a',
+     'torch/_dynamo/device_interface.py': 'b21d1fbaae999fee0bb98907c44f454f778bac6b28f43f4c2832930438208e8b',
+     'torch/_dynamo/variables/builder.py': '900e23d3fad5636389796eefe1863e861fd848c69040de0d84decd6e00c52142',
+ }
+ DESCRIPTION = {
+-    'schema': 'ltx.cpu-triton-capability-policy.v6',
+-    'hook': 'torch.utils._triton.has_triton',
+-    'result': False,
+-    'implementation': 'Pure literal False; no call counters or original detection calls',
+-    'scope': 'Entire disposable CPU fixture process; identical eager/Python/C++ compile/repeat arms',
+-    'alias_policy': 'Install before Dynamo import; reject preexisting Dynamo module, verify later utils.has_triton alias',
++    'schema': 'ltx.cpu-triton-device-detection-policy.v6',
++    'environment': {ENV_KEY: '1'},
++    'native_config': {'triton_disable_device_detection': True},
++    'native_has_triton_expected': False,
++    'scope': 'Same disposable CPU fixture process; set before Torch import and shared by eager/Python/C++ compile/repeat arms',
+     'registry_policy': None,
+-    'compiler_options_changed': False,
+-    'semantics': 'Explicit CPU-only Triton capability unavailable; not unchanged accelerator execution semantics',
++    'callable_replacements': [],
++    'numeric_OPTIONS_changed': False,
++    'total_compiler_config_changed': True,
++    'semantics': 'One explicit CPU diagnostic setting disables native Triton device detection; no unchanged GPU semantics claim',
+     'source_pins': PINS,
+ }
+-
+-
+-def cpu_has_triton():
+-    return False
+ 
+ 
+ def source_gate():
+@@ -41,50 +41,61 @@
+             raise RuntimeError('CPU Triton policy source changed: ' + relative)
+ 
+ 
++def prepare_environment(report):
++    if any(name == 'torch' or name.startswith('torch.') for name in sys.modules):
++        raise RuntimeError('Set CPU Triton environment before any Torch import')
++    source_gate()
++    if 'cpu_triton_environment' in report:
++        raise RuntimeError('CPU Triton environment cannot be prepared twice')
++    previous = os.environ.get(ENV_KEY)
++    os.environ[ENV_KEY] = '1'
++    report['cpu_triton_environment'] = {'key': ENV_KEY, 'previous': previous, 'effective': '1',
++        'torch_imported': False, 'scope': 'Process-local CPU diagnostic; not installed or host/device settings'}
++
++
+ class CpuTritonPolicy:
+-    def __init__(self, triton_utils, report, guard):
++    def __init__(self, triton_utils, config, report, guard):
+         guard.require_clean(report)
+         source_gate()
+-        self.report, self.guard, self.utils = report, guard, triton_utils
++        self.report, self.guard, self.utils, self.config = report, guard, triton_utils, config
+         if 'cpu_triton_policy' in report:
+-            self._halt('Triton capability policy cannot be reinstalled')
+-        loaded = sorted(name for name in sys.modules if name == 'torch._dynamo' or name.startswith('torch._dynamo.'))
+-        if loaded:
+-            report['cpu_triton_preexisting_dynamo_modules'] = loaded
+-            self._halt('Install CPU Triton policy before Dynamo imports')
++            self._halt('CPU Triton observation cannot be installed twice')
++        if report.get('cpu_triton_environment', {}).get('effective') != '1':
++            self._halt('Pre-import environment evidence missing')
+         path = SITE / 'torch/utils/_triton.py'
+-        if Path(triton_utils.__file__).resolve() != path:
+-            self._halt('Triton helper module path changed')
++        if Path(triton_utils.__file__).resolve() != path or Path(config.__file__).resolve() != SITE / 'torch/_inductor/config.py':
++            self._halt('Native Triton/config module source path mismatch')
+         original = triton_utils.has_triton
+         underlying = getattr(original, '__wrapped__', None)
+-        root = compile(path.read_text(), str(path), 'exec', dont_inherit=True)
+-        expected = next(value for value in root.co_consts if isinstance(value, types.CodeType) and value.co_name == 'has_triton')
++        code = compile(path.read_text(), str(path), 'exec', dont_inherit=True)
++        expected = next(value for value in code.co_consts if isinstance(value, types.CodeType) and value.co_name == 'has_triton')
+         if not isinstance(underlying, types.FunctionType) or underlying.__code__ != expected:
+-            self._halt('Original Triton detection code changed')
++            self._halt('Original native has_triton code changed')
+         self.original = original
+-        self.hook = cpu_has_triton
+-        triton_utils.has_triton = self.hook
+-        report['cpu_triton_policy'] = {**DESCRIPTION, 'installed': True,
+-            'installed_function': self.hook.__qualname__, 'original_firstlineno': underlying.__code__.co_firstlineno,
+-            'dynamo_utils_alias_verified': False}
++        report['cpu_triton_policy'] = {**DESCRIPTION, 'verified': False,
++            'native_function': underlying.__qualname__, 'native_function_firstlineno': underlying.__code__.co_firstlineno}
++        self.require_intact()
++        # This is the unchanged native function, invoked with all hardware traps
++        # active. Its pinned config branch returns before registry enumeration.
++        result = original()
++        guard.require_clean(report)
++        if result is not False:
++            self._halt('Native has_triton did not return literal False')
++        report['cpu_triton_policy'].update(verified=True, native_has_triton=False,
++            observed_triton_disable_device_detection=config.triton_disable_device_detection)
+         self.require_intact()
+ 
+     def _halt(self, reason):
+         self.report['accelerator_guard_tripped'] = True
+         self.report.setdefault('accelerator_guard_attempts', []).append({
+-            'entry': 'torch.utils._triton.has_triton', 'reason': reason,
++            'entry': 'CPU Triton device-detection policy', 'reason': reason, 'pid': os.getpid(),
+             'phase': self.report.get('phase'), 'monotonic_ns': time.monotonic_ns(),
+             'stack': traceback.format_stack(limit=40)})
+-        raise self.guard.AcceleratorAccessBlocked('CPU Triton capability policy halted: ' + reason)
++        raise self.guard.AcceleratorAccessBlocked('CPU Triton device-detection policy halted: ' + reason)
+ 
+-    def require_intact(self, *, require_alias=False):
++    def require_intact(self):
+         self.guard.require_clean(self.report)
+-        if self.utils.has_triton is not self.hook:
+-            self._halt('Triton capability hook identity changed')
+-        module = sys.modules.get('torch._dynamo.utils')
+-        if module is not None:
+-            if type(module) is not types.ModuleType or vars(module).get('has_triton') is not self.hook:
+-                self._halt('Dynamo utils captured a different Triton capability function')
+-            self.report['cpu_triton_policy']['dynamo_utils_alias_verified'] = True
+-        elif require_alias:
+-            self._halt('Expected Dynamo utils alias was never imported')
++        if os.environ.get(ENV_KEY) != '1' or self.config.triton_disable_device_detection is not True:
++            self._halt('CPU Triton device-detection setting changed')
++        if self.utils.has_triton is not self.original:
++            self._halt('Native has_triton callable identity changed')

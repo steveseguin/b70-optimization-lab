@@ -25,7 +25,7 @@ actions are historical, span multiple hosts, and are not current instructions.
 
 ## Local Host And Active Review
 
-**Four-B70 host, September14 17:29 UTC: encoder CPU proof passed; application unchanged.**
+**Four-B70 host, September14 17:34 UTC: encoder CPU proof passed; application unchanged.**
 The CPU embedding candidate passed all six actual-source groups: raw-byte
 token/embedding equality, named-owner loading, clone/detach/restore, inference
 storage, mutation refusals and installation rollback. PID107471/exec35632
@@ -45,13 +45,14 @@ corrected named-owner loading and inference-tensor version assumptions.
 [Candidate](experiments/ltx25-b70/notes/host-embedding-gather-candidate-01.md),
 [review](experiments/ltx25-b70/notes/host-embedding-source-review-01.md).
 
-The guarded C++ CPU v5 diagnostic fixed the Comfy import probe, completed one
-eager call, then stopped at PyTorch Triton detection's device enumeration during
-the first Python-boundary compile. Both GPU backends stayed uninitialized;
-no compiled C++ qualification yet. Next: the built-in CPU device-detection
-disable setting, explicitly recorded for both arms, followed by a bounded gate.
-No live application or host action occurred.
-[V5 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v5-native-attempt-01.md).
+The guarded C++ CPU v6 diagnostic verified PyTorch's built-in CPU detection
+disable setting and completed one eager call. Generic Dynamo torch-function
+handler registration still enumerates device interfaces; the first compile
+halted at that retained trap. Both GPU backends stayed uninitialized; no
+compiled C++ qualification yet. A future explicit CPU device-registry policy
+needs source review; no unchanged retry is scheduled. Encoder integration
+continues independently. No live application or host action occurred.
+[V6 refusal](experiments/ltx25-b70/native-cpp-block-01/guarded-v6-native-attempt-01.md).
 Unconditional cross-step text K/V reuse was rejected from the actual checkpoint
 and source: ADaLN changes the projection inputs with timestep.
 [Audit](experiments/ltx25-b70/notes/cross-step-text-kv-audit-01.md).
