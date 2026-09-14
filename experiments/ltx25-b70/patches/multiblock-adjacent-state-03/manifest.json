@@ -1,0 +1,39 @@
+{
+  "schema": "ltx.multiblock-adjacent-state-candidate.v1",
+  "status": "inactive-source-only-unvalidated",
+  "parent_source": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-06/source/scripts/ltx_multiblock_compile.py",
+  "parent_sha256": "12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f",
+  "candidate_sha256": "79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584",
+  "patch_sha256": "8264353e478ee1cd42bfc53277e6f28f285999faaa36425d84e1e7659d9818df",
+  "intervention": "Reuse successful bound lifecycle state validation for two immediately adjacent explicit state checks; preserve unbound fallback and every lifecycle boundary",
+  "changed_functions": [
+    "CompiledBlockRoute._validate_execution",
+    "CompiledBlockRoute._call_native",
+    "CompiledBlockRoute.__call__"
+  ],
+  "preserved": [
+    "All three lifecycle/registry checks per selected block invocation",
+    "Current patcher and ownership checks",
+    "Late callback/routing/hook/state/device checks",
+    "Original block objects, code, parameters and native math",
+    "Native activation backend, OPTIONS and Dynamo limits",
+    "Original routing and argument translation",
+    "Unbound route explicit state validation"
+  ],
+  "contract": "Static single-request inference with admitted native modules and callbacks; no cross-thread mutation exclusion or transaction guarantee",
+  "expected_warm_all48_reduction": {
+    "invocations": 528,
+    "state_scans_before_inner_calls": 2640,
+    "state_scans_after_inner_calls": 1584,
+    "state_scans_saved": 1056,
+    "lifecycle_registry_checks_before_and_after": 1584
+  },
+  "validation": {
+    "native_imports": false,
+    "tests_run": false,
+    "native_requests": false,
+    "speed_measured": false,
+    "source_anchor_checks": "Each of three frozen-source edit anchors matched exactly once"
+  },
+  "next_gate": "Root-owned CPU lifecycle negative tests, then native exact and matched timing gates if admitted"
+}

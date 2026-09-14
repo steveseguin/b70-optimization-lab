@@ -1,0 +1,51 @@
+{
+  "schema": "ltx.multiblock-cpu-result.v1",
+  "status": "cpu-qualified-native-gpu-pending",
+  "deployed": false,
+  "native_gpu_tested": false,
+  "speed_qualified": false,
+  "source_sha256s": {
+    "scripts/ltx_multiblock_compile.py": "12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f",
+    "scripts/test-ltx-multiblock-capture-cpu.py": "5ea11b466ec2216b753bdd81a3b44a9e8d14dca94e79081e0d105fde4e837206",
+    "scripts/test-ltx-multiblock-lifecycle-cpu.py": "7969d7e9d7be70e306f376b09b14755f0977bcd74c8649b955878cec61505d54"
+  },
+  "capture": {
+    "passed": true,
+    "checks": 99,
+    "block_cases": 20,
+    "output_pairs": 40,
+    "graphs": 10,
+    "physical_wrappers": 2,
+    "selected_blocks": [
+      0,
+      20,
+      21,
+      24,
+      47
+    ],
+    "stage_video_tokens": [
+      64,
+      256
+    ],
+    "audio_tokens": 26,
+    "seeds": [
+      17,
+      123
+    ],
+    "dynamo_limits": {
+      "recompile_limit": 8,
+      "accumulated_recompile_limit": 256
+    },
+    "evidence": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02"
+  },
+  "lifecycle": {
+    "passed": true,
+    "checks": 54,
+    "evidence": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-lifecycle-cpu-02"
+  },
+  "predecessor_failure": "../multiblock-cpu-01/summary.json",
+  "commands": [
+    "/home/steve/.venvs/ltx25-baseline/bin/python scripts/test-ltx-multiblock-capture-cpu.py --adapter-sha256 12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f --indices 0 20 21 24 47 --output /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02.json --evidence /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-02",
+    "/home/steve/.venvs/ltx25-baseline/bin/python scripts/test-ltx-multiblock-lifecycle-cpu.py --adapter-sha256 12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f --adapter scripts/ltx_multiblock_compile.py --output /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-lifecycle-cpu-02.json --evidence /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-lifecycle-cpu-02"
+  ]
+}

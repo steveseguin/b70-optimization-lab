@@ -1,0 +1,92 @@
+--- a/launch/encoder_runtime_common.py
++++ b/launch/encoder_runtime_common.py
+@@ -71,7 +71,7 @@
+             'Explicit manifest SHA256 required')
+     require(sha(manifest_path) == expected_manifest_sha256, 'Packet manifest changed')
+     manifest = json.loads(manifest_path.read_text())
+-    require(manifest['schema'] == 'ltx.compiler-multiblock-runtime-packet.v1', 'Launcher requires compiler packet')
++    require(manifest['schema'] == 'ltx.compiler-multiblock-adjacent-state-runtime-packet.v1', 'Launcher requires compiler packet')
+     require(manifest['source_commit'] == PIN, 'Core revision changed')
+     require(manifest['model_verification_sha256'] == MODEL_VERIFICATION_SHA256,
+             'Model identity changed')
+@@ -174,7 +174,7 @@
+             and manifest['native_activations']['expected_activation_counts'] == {'sigmoid': 6, 'gelu': 2},
+             'Native activation intervention changed')
+     # Preserve all single-block ancestry/gates; only this checker changes.
+-    require(manifest['parent_manifest_sha256'] == '45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5', 'Unexpected activation parent')
++    require(manifest['native_activations_parent_manifest_sha256'] == '45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5', 'Unexpected activation parent')
+     activation_parent_path = safe_path(packet, 'native-activations-parent-manifest.json')
+     require(sha(activation_parent_path) == '45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5', 'Activation parent manifest changed')
+     activation_parent = json.loads(activation_parent_path.read_text())
+@@ -187,11 +187,11 @@
+                     'Original activation checker changed')
+         else:
+             require(manifest['files'].get(name) == digest, 'Inherited activation source changed: ' + name)
+-    require(manifest['extension_sha256s']['ltx_multiblock_compile.py'] == '12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f'
++    require(manifest['extension_sha256s']['ltx_multiblock_compile.py'] == '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584'
+             and manifest['extension_sha256s']['multiblock_compile_node.py'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f',
+             'Multiblock source identity changed')
+     multi = manifest['multiblock']
+-    require(multi['adapter_sha256'] == '12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f' and multi['node_sha256'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'
++    require(multi['adapter_sha256'] == '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584' and multi['node_sha256'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'
+             and multi['backend_sha256'] == '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a' and multi['rms_dependency_sha256'] == '09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb',
+             'Multiblock implementation identity changed')
+     require(multi['selections'] == {'single24': [24], 'boundary4': [0, 20, 21, 47], 'all48': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]} and multi['modes'] == ['original', 'compiled', 'restored']
+@@ -216,6 +216,29 @@
+                 graph[node]['inputs']['model'] = ['420', 0]
+             require(graph == control, 'Multiblock graph changed original quality recipe')
+     require(multi['graphs'] == expected_graph_paths, 'Multiblock graph inventory changed')
++    # Packet07 retains all06 graphs, lifecycle boundaries and numerical code.
++    require(manifest['parent_manifest_sha256'] == '3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394', 'Unexpected multiblock06 parent')
++    multiblock_parent_path = safe_path(packet, 'multiblock-06-parent-manifest.json')
++    require(sha(multiblock_parent_path) == '3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394', 'Multiblock06 parent manifest changed')
++    multiblock_parent = json.loads(multiblock_parent_path.read_text())
++    require(multiblock_parent['schema'] == 'ltx.compiler-multiblock-runtime-packet.v1',
++            'Unexpected multiblock parent schema')
++    require(manifest['runtime'] == multiblock_parent['runtime'], 'Adjacent-state runtime changed')
++    for name, digest in multiblock_parent['files'].items():
++        if name in ('launch/encoder_runtime_common.py', 'source/scripts/ltx_multiblock_compile.py'):
++            require(manifest['files']['provenance/adjacent-state-parent/' + name] == digest,
++                    'Original multiblock06 source changed: ' + name)
++        else:
++            require(manifest['files'].get(name) == digest, 'Inherited multiblock06 source changed: ' + name)
++    adjacent = manifest['adjacent_state']
++    require(adjacent['parent_adapter_sha256'] == '12ffb29cb4c8a61e8d9a22586a5f9f96ad170de882d62bfb4981f269d3b1bd3f'
++            and adjacent['adapter_sha256'] == '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584'
++            and adjacent['node_sha256'] == 'e7d6e69ff44d5b727dba27f52142647a06afe6d494abb043af49fa132a005d2f'
++            and adjacent['changed_parent_files'] == ['launch/encoder_runtime_common.py', 'source/scripts/ltx_multiblock_compile.py'],
++            'Adjacent-state candidate identity changed')
++    require(adjacent['bound_state_scans_before'] == 5 and adjacent['bound_state_scans_after'] == 3
++            and adjacent['lifecycle_registry_boundaries'] == 3 and adjacent['unbound_state_scans'] == 2,
++            'Adjacent-state validation contract changed')
+     return manifest
+ 
+ 
+--- a/source/scripts/ltx_multiblock_compile.py
++++ b/source/scripts/ltx_multiblock_compile.py
+@@ -94,10 +94,12 @@
+             if type(self._lifecycle) is not _CompilePreRun:
+                 raise RuntimeError('Bound compiler callback has no lifecycle gate')
+             self._lifecycle.validate_current_execution(self)
++            return True
++        return False
+ 
+     def _call_native(self, args):
+-        self._validate_execution()
+-        self._validate(check_device=True)
++        if not self._validate_execution():
++            self._validate(check_device=True)
+         def require_device(value):
+             if isinstance(value, torch.Tensor) and value.device != self._route_identity[0]:
+                 raise RuntimeError('Routed numerical input is on the wrong device')
+@@ -129,8 +131,8 @@
+ 
+     def __call__(self, args, extra):
+         # The original route owns transfers, device context and last-block return.
+-        self._validate_execution()
+-        self._validate(check_device=False)
++        if not self._validate_execution():
++            self._validate(check_device=False)
+         return self.original_route(args, {**extra, 'original_block': self._call_native})
+ 
+ 

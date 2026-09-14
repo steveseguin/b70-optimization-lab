@@ -1,0 +1,24 @@
+--- a/scripts/multiblock_compile_node.py
++++ b/scripts/multiblock_compile_node.py
+@@ -333,6 +333,8 @@
+         require(torch.are_deterministic_algorithms_enabled() and
+                 not torch.is_deterministic_algorithms_warn_only_enabled(), 'Strict determinism required')
+         require(os.environ.get('TORCHINDUCTOR_COMPILE_THREADS') == '1', 'One compiler worker required')
++        dynamo_limits = {'recompile_limit': torch._dynamo.config.recompile_limit,
++                         'accumulated_recompile_limit': torch._dynamo.config.accumulated_recompile_limit}
+         require(_original is None or model is _original, 'Original resident model generation changed')
+         indices = SELECTIONS[selection]
+         directory = run / ('compiler-' + run_name)
+@@ -340,8 +342,12 @@
+         report = {'schema': 'ltx.multiblock-request.v1', **identity, 'run_name': run_name,
+                   'mode': mode, 'selection': selection, 'block_indices': list(indices),
+                   'extension_sha256s': hashes, 'compiler_options': dict(adapter.OPTIONS),
++                  'dynamo_limits': dynamo_limits,
+                   'passed': False, 'failures': []}
+         try:
++            require(all(type(value) is int for value in dynamo_limits.values()) and
++                    dynamo_limits == {'recompile_limit': 8, 'accumulated_recompile_limit': 256},
++                    'Actual Dynamo limits differ from the preregistered unchanged8/256 settings')
+             adapter._routes(model)
+             require(model.ltx_layer_shard_report['split_index'] == 21, 'Expected native21/27 split')
+             for state in _states.values():

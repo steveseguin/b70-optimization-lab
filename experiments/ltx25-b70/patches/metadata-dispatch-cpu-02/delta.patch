@@ -1,0 +1,77 @@
+--- original.py
++++ candidate.py
+@@ -25,6 +25,9 @@
+ ROOT = Path('/mnt/fast-ai/bench-results/ltx25-baseline-20260913')
+ ADAPTER = LANE / 'patches/multiblock-adjacent-state-03/candidate.py'
+ ADAPTER_SHA = '79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584'
++NATIVE_CENSUS = ROOT / 'encoder-server-compiler-07/compiler-multiblock-screen-02-r05-all48-compiled-boat/block-00/call-01.json'
++NATIVE_CENSUS_SHA = '0bf847900c86d2d3edf37045eb5d969f8520e033d0539fc8f8ec8aee43baf25b'
++MODEL_STRUCTURE_SHA = 'f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718'
+ CALLS = 48 * 11
+ 
+ 
+@@ -57,6 +60,23 @@
+             'Use a fresh metadata-dispatch-cpu-* directory under the evidence root')
+     require(not (ROOT / 'FAULT.json').exists(), 'Recorded fault prohibits native imports')
+     require(sha(ADAPTER) == ADAPTER_SHA, 'Selected adjacent-state source changed')
++    require(sha(NATIVE_CENSUS) == NATIVE_CENSUS_SHA, 'Frozen native census changed')
++    require(sha(SOURCE / 'comfy/ldm/lightricks/model.py') == MODEL_STRUCTURE_SHA,
++            'Source-derived parameterless module structure changed')
++    native_census = json.loads(NATIVE_CENSUS.read_text())['state_census']
++    expected_state_names = sorted((r['kind'], r['name']) for r in native_census['records'])
++    require(len(expected_state_names) == 84 and len(set(expected_state_names)) == 84,
++            'Frozen native state-name census changed')
++    expected_module_names = {''}
++    for kind, name in expected_state_names:
++        parts = name.split('.')[:-1]
++        expected_module_names.update('.'.join(parts[:n]) for n in range(1, len(parts) + 1))
++    # Native receipts list state, not parameterless modules. These eight dropout
++    # paths are derived from the pinned CrossAttention/FeedForward constructors.
++    attention_names = ('attn1', 'audio_attn1', 'attn2', 'audio_attn2',
++                       'audio_to_video_attn', 'video_to_audio_attn')
++    expected_module_names.update(name + '.to_out.1' for name in attention_names)
++    expected_module_names.update(('ff.net.1', 'audio_ff.net.1'))
+     require('torch' not in sys.modules, 'Torch was imported before the CPU admission')
+     output.mkdir(exist_ok=False)
+     (output / 'tested-harness.py').write_bytes(Path(__file__).read_bytes())
+@@ -64,6 +84,7 @@
+     paths = [Path(__file__), ADAPTER, LANE / 'scripts/ltx_layer_shard.py',
+              LANE / 'scripts/ltx_native_activations_backend.py', LANE / 'scripts/ltx_native_rms_backend.py',
+              SOURCE / 'comfy/model_patcher.py', SOURCE / 'comfy/ldm/lightricks/av_model.py',
++             SOURCE / 'comfy/ldm/lightricks/model.py', NATIVE_CENSUS,
+              LANE / 'scripts/test-adjacent-state-reuse-cpu.py']
+     report = {'schema': 'ltx.adjacent-metadata-cpu.v1', 'status': 'running', 'phase': 'before-native-import',
+               'source_sha256s': {str(p): sha(p) for p in paths}, 'calls_per_round': CALLS,
+@@ -108,7 +129,8 @@
+             # fixture. Values are never read by compute, so no RNG initialization.
+             return BasicAVTransformerBlock(v_dim=32, a_dim=32, v_heads=1, a_heads=1,
+                 vd_head=32, ad_head=32, v_context_dim=32, a_context_dim=32,
+-                apply_gated_attention=True, cross_attention_adaln=True, dtype=torch.bfloat16,
++                apply_gated_attention=True, cross_attention_adaln=True,
++                ff_bias=False, audio_ff_bias=True, dtype=torch.bfloat16,
+                 device='cpu', operations=comfy.ops.manual_cast).eval()
+ 
+         class TinyDiffusion(LTXAVModel):
+@@ -128,7 +150,22 @@
+         parent = LTXLayerShardedPatcher.install(ModelPatcher(TinyModel(), cpu, cpu), cpu, cpu, 21)
+         blocks = parent.model.diffusion_model.transformer_blocks
+         state = [tuple(block.parameters()) + tuple(block.buffers()) for block in blocks]
++        observed_state_names = [sorted((kind, name)
++            for kind, values in (('parameter', block.named_parameters()), ('buffer', block.named_buffers()))
++            for name, tensor in values) for block in blocks]
++        observed_module_names = [sorted(name for name, module in block.named_modules()) for block in blocks]
++        report['census'] = {'native_receipt': str(NATIVE_CENSUS), 'native_receipt_sha256': NATIVE_CENSUS_SHA,
++            'expected_state_names': expected_state_names,
++            'expected_module_names': sorted(expected_module_names),
++            'module_names_basis': 'Native state-name prefixes plus eight parameterless dropout paths from pinned model.py constructors; native receipt has no direct module census',
++            'observed_state_names': observed_state_names, 'observed_module_names': observed_module_names,
++            'per_block_state_count': [len(values) for values in state],
++            'constructor_flags': {'ff_bias': False, 'audio_ff_bias': True}}
+         require(all(len(values) == 84 for values in state), 'Tiny native block state census changed')
++        require(all(names == expected_state_names for names in observed_state_names),
++                'Tiny native registered parameter/buffer names differ from frozen model')
++        require(all(names == sorted(expected_module_names) for names in observed_module_names),
++                'Tiny native module tree differs from frozen state/source-derived structure')
+         require(all(t.device.type == 'cpu' and t.dtype == torch.bfloat16 for values in state for t in values),
+                 'Expected native BF16 metadata on CPU only')
+         total_bytes = sum(t.numel() * t.element_size() for values in state for t in values)

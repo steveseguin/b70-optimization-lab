@@ -1,0 +1,349 @@
+--- a/ltx_block_compile.py
++++ b/ltx_multiblock_compile.py
+@@ -1,10 +1,11 @@
+-"""Inactive one-block Inductor experiment; preserve native registration/routing."""
++"""Inactive multi-block Inductor candidate; preserve native registration/routing."""
+ import hashlib
+-import os
+ import weakref
+ from pathlib import Path
++from types import MappingProxyType
+ 
+ import torch
++import ltx_native_activations_backend as activation_backend
+ from ltx_native_activations_backend import make_backend
+ from comfy.ldm.lightricks import av_model
+ from ltx_layer_shard import (LTXLayerShardedPatcher, _BlockRoute, _Shard,
+@@ -12,7 +13,8 @@
+ from comfy.patcher_extension import CallbacksMP, WrappersMP
+ 
+ AV_SOURCE_SHA256 = '6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d'
+-LIFECYCLE_KEY = 'ltx_block_compile_lifecycle'
++LIFECYCLE_KEY = 'ltx_multiblock_compile_lifecycle'
++ACTIVATION_BACKEND_SHA256 = '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a'
+ OPTIONS = {'compile_threads': 1, 'emulate_precision_casts': True,
+            'eager_numerics.division_rounding': True, 'triton.cudagraphs': False,
+            'max_autotune': False, 'max_autotune_gemm': False}
+@@ -21,11 +23,13 @@
+ def check_source():
+     if hashlib.sha256(Path(av_model.__file__).read_bytes()).hexdigest() != AV_SOURCE_SHA256:
+         raise RuntimeError('Native LTXAV call mapping changed; re-audit compiler adapter')
++    if hashlib.sha256(Path(activation_backend.__file__).read_bytes()).hexdigest() != ACTIVATION_BACKEND_SHA256:
++        raise RuntimeError('Native activation backend source changed')
+ 
+ 
+ class CompiledBlockRoute:
+     """Clone-local callback; its module remains owned by the original shard."""
+-    def __init__(self, block, original_route, *, compiler=torch.compile, binding=None):
++    def __init__(self, block, original_route, *, receipt_directory, compiler=torch.compile, binding=None):
+         check_source()
+         if type(block) is not av_model.BasicAVTransformerBlock or type(original_route) is not _BlockRoute:
+             raise TypeError('Expected original native LTXAV block and shard route')
+@@ -39,11 +43,13 @@
+         self.original_route = original_route
+         self._route_identity = (original_route.device, original_route.primary, original_route.last)
+         self._binding = binding
++        self.index = binding[1] if binding is not None else None
++        self.receipt_directory = Path(receipt_directory)
+         self._lifecycle = None
+         self._validate(check_device=False)
+         # This callable is never assigned to an nn.Module registration or forward.
+         self.compiled = compiler(block, backend=make_backend(
+-            OPTIONS, Path(os.environ['LTX_ENCODER_RUN_DIR']) / 'native-activation-graphs',
++            OPTIONS, self.receipt_directory,
+             expected_count=15), fullgraph=True, dynamic=False)
+ 
+     def _validate(self, *, check_device):
+@@ -76,7 +82,7 @@
+         if self._binding is not None:
+             if type(self._lifecycle) is not _CompilePreRun:
+                 raise RuntimeError('Bound compiler callback has no lifecycle gate')
+-            self._lifecycle.validate_current_execution()
++            self._lifecycle.validate_current_execution(self)
+ 
+     def _call_native(self, args):
+         self._validate_execution()
+@@ -117,26 +123,50 @@
+         return self.original_route(args, {**extra, 'original_block': self._call_native})
+ 
+ 
+-def _routes(patcher, *, binding_index=None):
+-    # Ordinary callers retain two results; lifecycle callers may request the
+-    # binding selected by the same complete registry/placement validation.
+-    if binding_index is not None and (type(binding_index) is not int or not 0 <= binding_index < 48):
+-        raise ValueError('Select one native binding index from 0 through 47')
++def _indices(values):
++    """Normalize a bounded iterable of distinct native zero-based indices."""
++    try:
++        iterator = iter(values)
++    except TypeError as error:
++        raise ValueError('Select 1..48 distinct native block indices from 0 through 47') from error
++    selected = set()
++    for value in iterator:
++        if type(value) is not int or not 0 <= value < 48 or value in selected:
++            raise ValueError('Block indices must be distinct exact integers from 0 through 47')
++        selected.add(value)
++        if len(selected) > 48:
++            raise ValueError('Select at most 48 native blocks')
++    if not selected:
++        raise ValueError('Select at least one native block')
++    return tuple(sorted(selected))
++
++
++def _routes(patcher, *, binding_indices=None):
++    """Validate all48 registrations once; optionally return selected bindings."""
++    requested = None if binding_indices is None else _indices(binding_indices)
+     if type(patcher) is not LTXLayerShardedPatcher or patcher.is_dynamic():
+-        raise TypeError('One-block compilation requires the native static layer-sharded patcher')
++        raise TypeError('Multi-block compilation requires the native static layer-sharded patcher')
+     if (patcher.patches or patcher.hook_patches or patcher.forced_hooks or patcher.object_patches
+             or patcher.weight_wrapper_patches or patcher.injections):
+         raise RuntimeError('Unsupported model patches/hooks for the compiler screen')
++    diffusion = patcher.model.diffusion_model
++    if not isinstance(diffusion, av_model.LTXAVModel) or len(diffusion.transformer_blocks) != 48:
++        raise TypeError('Expected native 48-block LTXAV model')
+     registry = patcher.model_options.get('transformer_options', {}).get('patches_replace', {}).get('dit', {})
+-    selected = [route for route in registry.values() if type(route) is CompiledBlockRoute]
++    if set(registry) != {('double_block', i) for i in range(48)}:
++        raise RuntimeError('Unexpected block route registry')
++    selected = {i: registry[('double_block', i)] for i in range(48)
++                if type(registry[('double_block', i)]) is CompiledBlockRoute}
+     expected_callbacks = {CallbacksMP.ON_PRE_RUN: {KEY: [_verify_placement]}}
+     expected_order = [_verify_placement]
+     if selected:
+-        if len(selected) != 1 or type(selected[0]._lifecycle) is not _CompilePreRun:
+-            raise RuntimeError('Expected one bound compiler lifecycle gate')
+-        guard = selected[0]._lifecycle
+-        if guard.route is not selected[0]:
+-            raise RuntimeError('Compiler lifecycle route identity changed')
++        guard = next(iter(selected.values()))._lifecycle
++        if type(guard) is not _CompilePreRun:
++            raise RuntimeError('Expected one aggregate compiler lifecycle gate')
++        guard._validate_selection()
++        if tuple(selected.items()) != guard._route_items or any(
++                route._lifecycle is not guard for route in selected.values()):
++            raise RuntimeError('Compiler lifecycle route selection changed')
+         expected_callbacks = {CallbacksMP.ON_PRE_RUN: {LIFECYCLE_KEY: [guard], KEY: [_verify_placement]}}
+         expected_order = [guard, _verify_placement]
+     if (patcher.callbacks != expected_callbacks
+@@ -147,20 +177,14 @@
+     options = patcher.model_options.get('transformer_options', {})
+     if any(options.get(key) for key in ('wrappers', 'callbacks', 'patches')):
+         raise RuntimeError('Inline transformer callbacks/wrappers/patches are unsupported')
+-    diffusion = patcher.model.diffusion_model
+-    if not isinstance(diffusion, av_model.LTXAVModel) or len(diffusion.transformer_blocks) != 48:
+-        raise TypeError('Expected native 48-block LTXAV model')
+-    routes = patcher.model_options['transformer_options']['patches_replace']['dit']
+-    if set(routes) != {('double_block', i) for i in range(48)}:
+-        raise RuntimeError('Unexpected block route registry')
+-    binding = _registered_binding(patcher, diffusion, routes,
+-                                  0 if binding_index is None else binding_index)
+-    if binding_index is not None:
+-        return diffusion, routes, binding
+-    return diffusion, routes
+-
+-
+-def _registered_binding(patcher, diffusion, routes, index):
++    bindings = _registered_bindings(patcher, diffusion, registry, (0,) if requested is None else requested)
++    if requested is not None:
++        return diffusion, registry, bindings
++    return diffusion, registry
++
++
++def _registered_bindings(patcher, diffusion, routes, indices):
++    """One full registry/placement walk, then cheap selected owner bindings."""
+     if set(patcher.additional_models) != {KEY}:
+         raise RuntimeError('Unexpected additional model ownership')
+     shards = patcher.get_additional_models_with_key(KEY)
+@@ -180,110 +204,123 @@
+         if type(route) is not _BlockRoute or (route.device, route.primary, route.last) != (
+                 expected_device, patcher.load_device, i == 47):
+             raise RuntimeError('Block route disagrees with registered shard placement')
+-    if index < len(primary):
+-        return diffusion, index, diffusion, '_ltx_primary_blocks', primary, index
+-    return diffusion, index, secondary_owner, 'blocks', secondary, index - len(primary)
+-
+-
++        if type(callback) is CompiledBlockRoute and callback.block is not diffusion.transformer_blocks[i]:
++            raise RuntimeError('Compiled route names a different registered block')
++    bindings = {}
++    for index in indices:
++        if index < len(primary):
++            bindings[index] = diffusion, index, diffusion, '_ltx_primary_blocks', primary, index
++        else:
++            bindings[index] = diffusion, index, secondary_owner, 'blocks', secondary, index - len(primary)
++    return bindings
+ 
+ 
+ class _CompilePreRun:
+-    """Validate the actual executing patcher without owning a patcher reference."""
+-    def __init__(self, patcher, route, index):
++    """One aggregate guard; model ownership is retained, executing patcher is weak."""
++    def __init__(self, patcher, routes):
+         if not hasattr(patcher.model, 'current_patcher'):
+             raise RuntimeError('Native BaseModel.current_patcher is required')
++        self.indices = _indices(routes)
++        self._route_items = tuple((index, routes[index]) for index in self.indices)
++        self.routes = MappingProxyType(dict(self._route_items))
+         self.model = patcher.model
+         self.diffusion = patcher.model.diffusion_model
+         self.secondary_owner = patcher.get_additional_models_with_key(KEY)[0].model
+-        self.route = route
+-        self.index = index
+         self._last_pre_run = None
+ 
+-    def _validate(self, patcher):
++    def _validate_selection(self):
++        if (self.indices != tuple(index for index, route in self._route_items)
++                or tuple(self.routes.items()) != self._route_items
++                or any(type(route) is not CompiledBlockRoute or route.index != index
++                       for index, route in self._route_items)):
++            raise RuntimeError('Aggregate compiler selection changed')
++
++    def _validate(self, patcher, route=None):
+         if (not torch.are_deterministic_algorithms_enabled()
+                 or torch.is_deterministic_algorithms_warn_only_enabled()):
+             raise RuntimeError('Compiler lifecycle requires strict deterministic mode')
+-        if (patcher.model is not self.model
+-                or patcher.model.diffusion_model is not self.diffusion):
++        if (patcher.model is not self.model or patcher.model.diffusion_model is not self.diffusion):
+             raise RuntimeError('Executing top-level diffusion owner changed')
+         shards = patcher.get_additional_models_with_key(KEY)
+         if len(shards) != 1 or shards[0].model is not self.secondary_owner:
+             raise RuntimeError('Executing secondary shard owner changed')
+-        diffusion, routes, current = _routes(patcher, binding_index=self.index)
+-        if routes[('double_block', self.index)] is not self.route:
+-            raise RuntimeError('Executing compiler callback was replaced')
+-        if any(a is not b if isinstance(a, torch.nn.Module) else a != b
+-               for a, b in zip(current, self.route._binding)):
+-            raise RuntimeError('Executing compiler registration binding changed')
+-        self.route._validate(check_device=True)
++        self._validate_selection()
++        if route is not None and (type(route) is not CompiledBlockRoute
++                                  or self.routes.get(route.index) is not route):
++            raise RuntimeError('Executing route is outside the selected compiler set')
++        diffusion, registry, bindings = _routes(patcher, binding_indices=self.indices)
++        for index, selected in self._route_items:
++            if registry[('double_block', index)] is not selected:
++                raise RuntimeError('Executing compiler callback was replaced')
++            current = bindings[index]
++            if not isinstance(selected._binding, tuple) or len(selected._binding) != len(current):
++                raise RuntimeError('Executing compiler registration binding changed')
++            if any(a is not b if isinstance(a, torch.nn.Module) else a != b
++                   for a, b in zip(current, selected._binding)):
++                raise RuntimeError('Executing compiler registration binding changed')
++        # Pre-run checks every selected block. Each later invocation scans only
++        # its current block's parameters/buffers/hooks, plus the full registry.
++        active = self.routes.values() if route is None else (route,)
++        for selected in active:
++            selected._validate(check_device=True)
+ 
+     def __call__(self, patcher):
+         self._last_pre_run = None
+-        # ModelPatcher.pre_run assigns current_patcher before invoking callbacks.
+         if self.model.current_patcher is not patcher:
+             raise RuntimeError('Lifecycle callback must run through native pre_run')
+         self._validate(patcher)
+         self._last_pre_run = weakref.ref(patcher)
+ 
+-    def validate_current_execution(self):
++    def validate_current_execution(self, route):
+         patcher = self.model.current_patcher
+-        if (patcher is None or self._last_pre_run is None
+-                or self._last_pre_run() is not patcher):
++        if (patcher is None or self._last_pre_run is None or self._last_pre_run() is not patcher):
+             raise RuntimeError('Executing patcher has not passed native pre_run')
+-        # Also closes callback removal and late changes after pre_run. Routing
+-        # metadata remains unmodified; this is outside the compiled callable.
+-        self._validate(patcher)
+-
+-
+-def apply_block_compile(patcher, index=0):
++        # Callback removal and late registry changes remain checked at each
++        # existing route-entry/native-call boundary; no per-request hoisting.
++        self._validate(patcher, route)
++
++
++def apply_blocks_compile(patcher, indices, *, receipt_root, compiler=torch.compile):
+     check_source()
+-    if not torch.are_deterministic_algorithms_enabled() or torch.is_deterministic_algorithms_warn_only_enabled():
++    indices = _indices(indices)
++    if (not torch.are_deterministic_algorithms_enabled()
++            or torch.is_deterministic_algorithms_warn_only_enabled()):
+         raise RuntimeError('Strict deterministic mode is required for the compiler screen')
+-    diffusion, routes = _routes(patcher)
+-    if type(index) is not int or not 0 <= index < 48:
+-        raise ValueError('Select one native block index from 0 through 47')
++    diffusion, routes, bindings = _routes(patcher, binding_indices=indices)
+     if any(isinstance(route, CompiledBlockRoute) for route in routes.values()):
+-        raise RuntimeError('This bounded screen allows only one compiled block')
+-    block = diffusion.transformer_blocks[index]
+-    route = routes[('double_block', index)]
++        raise RuntimeError('Compilation is already applied; selections cannot be stacked')
++    receipt_root = Path(receipt_root)
++    if receipt_root.exists() and not receipt_root.is_dir():
++        raise RuntimeError('Compiler receipt root is not a directory')
++    if any(path.is_symlink() for path in (receipt_root, *receipt_root.parents)):
++        raise RuntimeError('Compiler receipt root cannot contain symlinks')
++    directories = {index: receipt_root / f'block-{index:02d}' for index in indices}
++    if any(path.exists() or path.is_symlink() for path in directories.values()):
++        raise RuntimeError('Compiler block receipt directory already exists; never overwrite')
+     candidate = patcher.clone()
+-    compiled = CompiledBlockRoute(block, route,
+-        binding=_registered_binding(patcher, diffusion, routes, index))
+-    guard = _CompilePreRun(candidate, compiled, index)
+-    compiled._lifecycle = guard
+-    candidate.set_model_patch_replace(compiled, 'dit', 'double_block', index)
+-    # First under the native ordered callback traversal; original placement
+-    # validation follows. Loading/injection occurs earlier in native sampling.
++    selected = {}
++    for index in indices:
++        selected[index] = CompiledBlockRoute(diffusion.transformer_blocks[index], routes[('double_block', index)],
++            receipt_directory=directories[index], compiler=compiler, binding=bindings[index])
++    guard = _CompilePreRun(candidate, selected)
++    for index, route in selected.items():
++        route._lifecycle = guard
++        candidate.set_model_patch_replace(route, 'dit', 'double_block', index)
+     candidate.callbacks = {CallbacksMP.ON_PRE_RUN: {LIFECYCLE_KEY: [guard], KEY: [_verify_placement]}}
+     return candidate
+ 
+ 
+-def remove_block_compile(patcher):
++def remove_blocks_compile(patcher):
+     diffusion, routes = _routes(patcher)
+-    selected = [(key, route) for key, route in routes.items() if isinstance(route, CompiledBlockRoute)]
+-    if len(selected) != 1:
+-        raise RuntimeError('Expected exactly one compiler callback to restore')
+-    key, route = selected[0]
+-    route._validate(check_device=False)
+-    if key[0] != 'double_block' or diffusion.transformer_blocks[key[1]] is not route.block:
+-        raise RuntimeError('Compiled callback no longer names its original registered block')
++    selected = [(key, route) for key, route in routes.items() if type(route) is CompiledBlockRoute]
++    if not selected:
++        raise RuntimeError('Expected selected compiler callbacks to restore')
++    for key, route in selected:
++        route._validate(check_device=False)
++        if key[0] != 'double_block' or diffusion.transformer_blocks[key[1]] is not route.block:
++            raise RuntimeError('Compiled callback no longer names its original registered block')
+     restored = patcher.clone()
+-    restored.set_model_patch_replace(route.original_route, 'dit', 'double_block', key[1])
++    for key, route in selected:
++        restored.set_model_patch_replace(route.original_route, 'dit', 'double_block', key[1])
+     restored.callbacks = {CallbacksMP.ON_PRE_RUN: {KEY: [_verify_placement]}}
+     return restored
+-
+-
+-class LTXCompileOneBlock:
+-    @classmethod
+-    def INPUT_TYPES(cls):
+-        return {'required': {'model': ('MODEL',), 'block_index': ('INT', {'default': 0, 'min': 0, 'max': 47})}}
+-
+-    RETURN_TYPES = ('MODEL',)
+-    FUNCTION = 'apply'
+-    CATEGORY = 'lab/validation'
+-
+-    def apply(self, model, block_index):
+-        return (apply_block_compile(model, block_index),)
+-
+-
+-NODE_CLASS_MAPPINGS = {'LTXCompileOneBlock': LTXCompileOneBlock}

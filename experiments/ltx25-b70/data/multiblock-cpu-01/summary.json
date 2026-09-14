@@ -1,0 +1,31 @@
+{
+  "schema": "ltx.multiblock-cpu-progress.v1",
+  "status": "lifecycle-passed-actual-compile-cache-limit-failure",
+  "native_gpu_tested": false,
+  "deployed": false,
+  "speed_qualified": false,
+  "source_sha256s": {
+    "patches/compile-registry-reuse-01/ltx_block_compile.candidate.py": "4fe9f3e8ed962a0e50e53b00734c9095290f58e6a16dcff998db5282a819b970",
+    "scripts/ltx_multiblock_compile.py": "4d99f69734d0759464b1571dd59593bfac18a9912a25b259e6e9ab4168ac55c5",
+    "patches/ltx-multiblock-compile-01.patch": "f3e1f7dcb349ca276376decbfbc9b29030296f9382b350b0b661604c66a42ef6",
+    "scripts/multiblock_compile_node.py": "627b348d5d6b9b0d0eadf4f966389a8f56440f983699550a882300ac7cfc7a82",
+    "scripts/test-ltx-multiblock-lifecycle-cpu.py": "7969d7e9d7be70e306f376b09b14755f0977bcd74c8649b955878cec61505d54"
+  },
+  "lifecycle": {
+    "passed": true,
+    "checks": 54,
+    "report": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/multiblock-cpu-01/lifecycle.json",
+    "full_evidence": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-lifecycle-cpu-01",
+    "command": "/home/steve/.venvs/ltx25-baseline/bin/python scripts/test-ltx-multiblock-lifecycle-cpu.py --adapter scripts/ltx_multiblock_compile.py --adapter-sha256 4d99f69734d0759464b1571dd59593bfac18a9912a25b259e6e9ab4168ac55c5 --output /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-lifecycle-cpu-01.json --evidence /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-lifecycle-cpu-01"
+  },
+  "capture": {
+    "passed": false,
+    "report": "/home/steve/llm-optimizations/experiments/ltx25-b70/data/multiblock-cpu-01/capture.json",
+    "full_evidence": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01",
+    "phase": "compiled_composed",
+    "failure": "Ninth graph hits unchanged recompile_limit8; BACKEND_MATCH failure; fullgraph hard failure",
+    "candidate_sha256": "4d99f69734d0759464b1571dd59593bfac18a9912a25b259e6e9ab4168ac55c5",
+    "test_sha256": "5ea11b466ec2216b753bdd81a3b44a9e8d14dca94e79081e0d105fde4e837206",
+    "command": "/home/steve/.venvs/ltx25-baseline/bin/python scripts/test-ltx-multiblock-capture-cpu.py --adapter-sha256 4d99f69734d0759464b1571dd59593bfac18a9912a25b259e6e9ab4168ac55c5 --indices 0 20 21 24 47 --output /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01.json --evidence /mnt/fast-ai/bench-results/ltx25-baseline-20260913/multiblock-capture-cpu-01"
+  }
+}

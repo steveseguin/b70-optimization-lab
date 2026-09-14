@@ -1,0 +1,25 @@
+{
+  "status": "prepared-inactive-not-deployed",
+  "packet": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-06",
+  "manifest_sha256": "3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394",
+  "parent_manifest_sha256": "45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5",
+  "builder_sha256": "6969d5871924d696e962620dca21680fe05b597a15d1400328a911c7d09d3f56",
+  "command": "/home/steve/.venvs/ltx25-baseline/bin/python scripts/prepare-multiblock-runtime.py --output /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-06",
+  "startup_check": {
+    "status": "inactive-startup-check-passed",
+    "exit_code": 0,
+    "command": "/home/steve/.venvs/ltx25-baseline/bin/python /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-06/launch/serve-encoder.py --packet /mnt/fast-ai/bench-results/ltx25-baseline-20260913/prepared-encoder-compiler-06 --manifest-sha256 3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394 --run-name encoder-server-compiler-06 --check-only",
+    "device_discovery": false,
+    "locks_or_process_changes": false
+  },
+  "preparation_attempts": [
+    {
+      "interpreter": "system python3",
+      "result": "failed before packet creation: torch spec absent"
+    },
+    {
+      "interpreter": "/home/steve/.venvs/ltx25-baseline/bin/python",
+      "result": "passed"
+    }
+  ]
+}

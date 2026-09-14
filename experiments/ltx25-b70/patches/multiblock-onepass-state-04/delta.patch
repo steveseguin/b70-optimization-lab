@@ -1,0 +1,33 @@
+--- original.py
++++ candidate.py
+@@ -79,15 +79,26 @@
+                 '_global_forward_hooks', '_global_forward_pre_hooks',
+                 '_global_backward_hooks', '_global_backward_pre_hooks')):
+             raise RuntimeError('Global module hooks are unsupported')
++        state_seen = False
++        # modules() already deduplicates shared module objects. Inspect each
++        # module's direct state here instead of recursively walking it twice
++        # more through parameters()/buffers(). Aliased tensors may be checked
++        # again; no tensor equality, copying, or cross-call cache is involved.
+         for module in self.block.modules():
+             if any(getattr(module, name, {}) for name in (
+                     '_forward_hooks', '_forward_pre_hooks', '_backward_hooks', '_backward_pre_hooks')):
+                 raise RuntimeError('Block acquired unsupported module hooks')
+-        state = tuple(self.block.parameters()) + tuple(self.block.buffers())
+-        if not state or any(t.dtype != torch.bfloat16 for t in state):
++            for registrations in (module._parameters, module._buffers):
++                for tensor in registrations.values():
++                    if tensor is None:
++                        continue
++                    state_seen = True
++                    if tensor.dtype != torch.bfloat16:
++                        raise RuntimeError('Compiled block state is no longer native BF16')
++                    if check_device and tensor.device != self._route_identity[0]:
++                        raise RuntimeError('Compiled block state is on the wrong route device')
++        if not state_seen:
+             raise RuntimeError('Compiled block state is no longer native BF16')
+-        if check_device and any(t.device != self._route_identity[0] for t in state):
+-            raise RuntimeError('Compiled block state is on the wrong route device')
+ 
+     def _validate_execution(self):
+         if self._binding is not None:

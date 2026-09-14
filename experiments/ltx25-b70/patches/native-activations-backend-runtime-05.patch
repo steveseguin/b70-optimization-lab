@@ -1,0 +1,109 @@
+--- a/launch/encoder_runtime_common.py
++++ b/launch/encoder_runtime_common.py
+@@ -14,7 +14,7 @@
+ EXTENSIONS = ('resident_node.py', 'ltx_layer_shard.py', 'capture_node.py',
+               'encoder_diagnostics.py', 'encoder_identity_node.py',
+               'ltx_block_compile.py', 'block_compile_node.py',
+-              'ltx_native_rms_backend.py')
++              'ltx_native_rms_backend.py', 'ltx_native_activations_backend.py')
+ NODES = {'ltx_speed_lab': 'resident_node.py', 'ltx_baseline_capture': 'capture_node.py',
+          'ltx_encoder_diagnostics': 'encoder_diagnostics.py',
+          'ltx_encoder_identity': 'encoder_identity_node.py',
+@@ -69,7 +69,7 @@
+             'Explicit manifest SHA256 required')
+     require(sha(manifest_path) == expected_manifest_sha256, 'Packet manifest changed')
+     manifest = json.loads(manifest_path.read_text())
+-    require(manifest['schema'] == 'ltx.compiler-native-rms-runtime-packet.v1', 'Launcher requires compiler packet')
++    require(manifest['schema'] == 'ltx.compiler-native-activations-runtime-packet.v1', 'Launcher requires compiler packet')
+     require(manifest['source_commit'] == PIN, 'Core revision changed')
+     require(manifest['model_verification_sha256'] == MODEL_VERIFICATION_SHA256,
+             'Model identity changed')
+@@ -112,7 +112,7 @@
+         else:
+             require(manifest['files'].get(name) == digest, 'Inherited file changed: ' + name)
+     require(manifest['compiler']['effective_adapter_sha256'] ==
+-            'd3daa4a7b7150a4fa316c346fdea259139147419a59950642bf06b2ec62fe3d4',
++            'c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e',
+             'Compiler adapter differs from reviewed effective patch')
+     require(manifest['extension_sha256s']['ltx_block_compile.py'] ==
+             manifest['compiler']['effective_adapter_sha256'], 'Adapter inventory mismatch')
+@@ -130,7 +130,7 @@
+         require(graph == expected, 'Compiler graph changed original quality recipe')
+     # Native-RMS successor: pin the complete immediate compiler parent and
+     # allow only backend selection plus the checker/node source identity pins.
+-    require(manifest['parent_manifest_sha256'] == '9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980', 'Unexpected compiler parent')
++    require(manifest['compiler_parent_manifest_sha256'] == '9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980', 'Unexpected compiler parent')
+     compiler_parent_path = safe_path(packet, 'compiler-parent-manifest.json')
+     require(sha(compiler_parent_path) == '9ecd5f9863289e00a934c1f4f400582092f37d0ee92035512fc095773ad02980', 'Compiler parent manifest changed')
+     compiler_parent = json.loads(compiler_parent_path.read_text())
+@@ -149,6 +149,28 @@
+     require(manifest['native_rms']['expected_count'] == 15
+             and manifest['native_rms']['effective_adapter_sha256'] == 'd3daa4a7b7150a4fa316c346fdea259139147419a59950642bf06b2ec62fe3d4',
+             'Native RMS intervention changed')
++    # Retain the complete RMS04 ancestry and add this immediate-parent gate.
++    require(manifest['parent_manifest_sha256'] == 'c4e0f7e56fc7bbc51101894d79d279dd9886f07272868dc99cc7953c647a65c9', 'Unexpected native RMS parent')
++    rms_parent_path = safe_path(packet, 'native-rms-parent-manifest.json')
++    require(sha(rms_parent_path) == 'c4e0f7e56fc7bbc51101894d79d279dd9886f07272868dc99cc7953c647a65c9', 'Native RMS parent manifest changed')
++    rms_parent = json.loads(rms_parent_path.read_text())
++    require(rms_parent['schema'] == 'ltx.compiler-native-rms-runtime-packet.v1', 'Unexpected RMS parent schema')
++    require(manifest['runtime'] == rms_parent['runtime'], 'Activation runtime changed')
++    changed_activation_files = ('launch/encoder_runtime_common.py', 'source/scripts/ltx_block_compile.py', 'source/scripts/block_compile_node.py', 'source/custom_nodes/ltx_block_compile_lab/__init__.py')
++    for name, digest in rms_parent['files'].items():
++        if name in changed_activation_files:
++            require(manifest['files']['provenance/native-activations-parent/' + name] == digest,
++                    'Original RMS parent source changed: ' + name)
++        else:
++            require(manifest['files'].get(name) == digest, 'Inherited RMS source changed: ' + name)
++    require(manifest['native_activations']['backend_sha256'] == '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a'
++            and manifest['extension_sha256s']['ltx_native_activations_backend.py'] == '62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a',
++            'Native activation backend changed')
++    require(manifest['native_activations']['rms_dependency_sha256'] == '09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb'
++            and manifest['native_activations']['effective_adapter_sha256'] == 'c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e'
++            and manifest['native_activations']['expected_count'] == 15
++            and manifest['native_activations']['expected_activation_counts'] == {'sigmoid': 6, 'gelu': 2},
++            'Native activation intervention changed')
+     return manifest
+ 
+ 
+--- a/source/scripts/ltx_block_compile.py
++++ b/source/scripts/ltx_block_compile.py
+@@ -5,7 +5,7 @@
+ from pathlib import Path
+ 
+ import torch
+-from ltx_native_rms_backend import make_backend
++from ltx_native_activations_backend import make_backend
+ from comfy.ldm.lightricks import av_model
+ from ltx_layer_shard import (LTXLayerShardedPatcher, _BlockRoute, _Shard,
+                              _forward_transfers, _verify_placement, KEY)
+@@ -43,7 +43,7 @@
+         self._validate(check_device=False)
+         # This callable is never assigned to an nn.Module registration or forward.
+         self.compiled = compiler(block, backend=make_backend(
+-            OPTIONS, Path(os.environ['LTX_ENCODER_RUN_DIR']) / 'native-rms-graphs',
++            OPTIONS, Path(os.environ['LTX_ENCODER_RUN_DIR']) / 'native-activation-graphs',
+             expected_count=15), fullgraph=True, dynamic=False)
+ 
+     def _validate(self, *, check_device):
+--- a/source/scripts/block_compile_node.py
++++ b/source/scripts/block_compile_node.py
+@@ -15,7 +15,7 @@
+ import ltx_block_compile as adapter
+ from encoder_diagnostics import _context
+ 
+-ADAPTER_SHA256 = 'd3daa4a7b7150a4fa316c346fdea259139147419a59950642bf06b2ec62fe3d4'
++ADAPTER_SHA256 = 'c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e'
+ MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+ _state = None
+ _failed = False
+--- a/source/custom_nodes/ltx_block_compile_lab/__init__.py
++++ b/source/custom_nodes/ltx_block_compile_lab/__init__.py
+@@ -15,7 +15,7 @@
+ import ltx_block_compile as adapter
+ from encoder_diagnostics import _context
+ 
+-ADAPTER_SHA256 = 'd3daa4a7b7150a4fa316c346fdea259139147419a59950642bf06b2ec62fe3d4'
++ADAPTER_SHA256 = 'c3f3e4ede85b2798981dca40562bd77586ad63afe55b043c0705fceddda29a1e'
+ MODEL_SHA256 = '273ad9125c1cbe239e44ffaa29ce11a7eb8f89d252630de7ef8e6503a1c1cf0f'
+ _state = None
+ _failed = False

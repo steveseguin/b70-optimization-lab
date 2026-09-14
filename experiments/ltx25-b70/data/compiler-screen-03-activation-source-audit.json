@@ -1,0 +1,307 @@
+{
+  "schema": "ltx25.compiler-screen-03.activation-source-audit.v1",
+  "scope": "stdlib AST/text inspection only; no native import or execution",
+  "wrapper": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-04/inductor-cache/e7/ce7xh7jwg3ob5i6vlhz2flyzahsoiqn3eenuwuzfizfylp5nznmn.py",
+    "sha256": "6e1474734e379c65aae34a54d7b2cddff5e4b32c0fe6c868cf62bc762a9344db"
+  },
+  "prior_wrapper": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-03/inductor-cache/rx/crx5gzovt3rxiijvak577nmftatyazzjjytqe2hiddhjvmitnwiu.py",
+    "sha256": "ca5c4f30f70d1073a9503aa453bd91af79e3f742ad50c439d409c8b378838ab1"
+  },
+  "high_level_graph": {
+    "path": "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-04/native-rms-graphs/graph-001-before.py",
+    "sha256": "cc067afe863bc50a7f85aed56421b5f94e5de08624a9d36a4e11286a15481824"
+  },
+  "actual_opaque_rms_call_count": 15,
+  "actual_opaque_rms_calls": [
+    {
+      "line": 2067,
+      "call": "torch.ops.ltx_exact_rms.native.default(arg0_1, [2048], None, 1e-06)"
+    },
+    {
+      "line": 2093,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf36, (1, 26, 2048), (53248, 2048, 1), 0), [2048], arg40_1, 1e-05)"
+    },
+    {
+      "line": 2108,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf38, (1, 26, 2048), (53248, 2048, 1), 0), [2048], arg41_1, 1e-05)"
+    },
+    {
+      "line": 2184,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf56, (1, 26, 2048), (53248, 2048, 1), 0), [2048], arg56_1, 1e-05)"
+    },
+    {
+      "line": 2215,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf3, (1, 64, 4096), (262144, 4096, 1), 0), [4096], arg10_1, 1e-05)"
+    },
+    {
+      "line": 2230,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf5, (1, 64, 4096), (262144, 4096, 1), 0), [4096], arg11_1, 1e-05)"
+    },
+    {
+      "line": 2307,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf23, (1, 64, 4096), (262144, 4096, 1), 0), [4096], arg26_1, 1e-05)"
+    },
+    {
+      "line": 2334,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf59, (1, 1024, 2048), (2097152, 2048, 1), 0), [2048], arg57_1, 1e-05)"
+    },
+    {
+      "line": 2372,
+      "call": "torch.ops.ltx_exact_rms.native.default(buf80, [2048], None, 1e-06)"
+    },
+    {
+      "line": 2404,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf93, (1, 26, 2048), (53248, 2048, 1), 0), [2048], arg87_1, 1e-05)"
+    },
+    {
+      "line": 2426,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf83, (1, 26, 2048), (53248, 2048, 1), 0), [2048], arg73_1, 1e-05)"
+    },
+    {
+      "line": 2467,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf26, (1, 1024, 4096), (4194304, 4096, 1), 0), [4096], arg27_1, 1e-05)"
+    },
+    {
+      "line": 2531,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf74, (1, 64, 2048), (131072, 2048, 1), 0), [2048], arg72_1, 1e-05)"
+    },
+    {
+      "line": 2599,
+      "call": "torch.ops.ltx_exact_rms.native.default(reinterpret_tensor(buf103, (1, 64, 2048), (131072, 2048, 1), 0), [2048], arg88_1, 1e-05)"
+    },
+    {
+      "line": 2642,
+      "call": "torch.ops.ltx_exact_rms.native.default(buf121, [2048], None, 1e-06)"
+    }
+  ],
+  "activation_sites": [
+    {
+      "node": "sigmoid",
+      "target_expression": "torch.sigmoid",
+      "line": 142,
+      "call": "torch.sigmoid(gate_logits)",
+      "role": "video self-attention",
+      "input_shape": [
+        1,
+        64,
+        32
+      ],
+      "input_stride": [
+        2048,
+        32,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "sigmoid_1",
+      "target_expression": "torch.sigmoid",
+      "line": 200,
+      "call": "torch.sigmoid(gate_logits_1)",
+      "role": "video text cross-attention",
+      "input_shape": [
+        1,
+        64,
+        32
+      ],
+      "input_stride": [
+        2048,
+        32,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "sigmoid_2",
+      "target_expression": "torch.sigmoid",
+      "line": 249,
+      "call": "torch.sigmoid(gate_logits_2)",
+      "role": "audio self-attention",
+      "input_shape": [
+        1,
+        26,
+        32
+      ],
+      "input_stride": [
+        832,
+        32,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "sigmoid_3",
+      "target_expression": "torch.sigmoid",
+      "line": 307,
+      "call": "torch.sigmoid(gate_logits_3)",
+      "role": "audio text cross-attention",
+      "input_shape": [
+        1,
+        26,
+        32
+      ],
+      "input_stride": [
+        832,
+        32,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "sigmoid_4",
+      "target_expression": "torch.sigmoid",
+      "line": 368,
+      "call": "torch.sigmoid(gate_logits_4)",
+      "role": "audio-to-video cross-attention",
+      "input_shape": [
+        1,
+        64,
+        32
+      ],
+      "input_stride": [
+        2048,
+        32,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "sigmoid_5",
+      "target_expression": "torch.sigmoid",
+      "line": 437,
+      "call": "torch.sigmoid(gate_logits_5)",
+      "role": "video-to-audio cross-attention",
+      "input_shape": [
+        1,
+        26,
+        32
+      ],
+      "input_stride": [
+        832,
+        32,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "gelu",
+      "target_expression": "torch._C._nn.gelu",
+      "line": 467,
+      "call": "torch._C._nn.gelu(linear_30, approximate='tanh')",
+      "role": "video feed-forward",
+      "input_shape": [
+        1,
+        64,
+        16384
+      ],
+      "input_stride": [
+        1048576,
+        16384,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    },
+    {
+      "node": "gelu_1",
+      "target_expression": "torch._C._nn.gelu",
+      "line": 494,
+      "call": "torch._C._nn.gelu(linear_32, approximate='tanh')",
+      "role": "audio feed-forward",
+      "input_shape": [
+        1,
+        26,
+        8192
+      ],
+      "input_stride": [
+        212992,
+        8192,
+        1
+      ],
+      "dtype": "bfloat16",
+      "device": "xpu:1 (process-visible)",
+      "shape_evidence": "Generated graph-fragment metadata at lines 676,810,1435,1720,1858; repeated sigmoid kernel call sites at lines 2146,2268,2358,2491,2554,2621, plus high-level graph views."
+    }
+  ],
+  "remaining_activation_kernels": [
+    {
+      "name": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_10",
+      "line": 681,
+      "normalized_function_ast_sha256": "044288316e031b6eed6185d60d6ce987a01671c07dd23462713ed6858efe6383",
+      "function_excerpt": "def kernel(in_out_ptr0, in_ptr0, xnumel, XBLOCK: tl.constexpr):\n    xnumel = 53248\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x2 = xindex\n    x1 = xindex // 64\n    tmp0 = tl.load(in_out_ptr0 + x2, None).to(tl.float32)\n    tmp3 = tl.load(in_ptr0 + x1, None, eviction_policy='evict_last').to(tl.float32)\n    tmp1 = tmp0.to(tl.bfloat16)\n    tmp2 = tmp1.to(tl.float32)\n    tmp4 = tmp3.to(tl.bfloat16)\n    tmp5 = tmp4.to(tl.float32)\n    tmp6 = tl.sigmoid(tmp5)\n    tmp7 = tmp6.to(tl.bfloat16)\n    tmp8 = tmp7.to(tl.float32)\n    tmp9 = tmp8.to(tl.bfloat16)\n    tmp10 = tmp9.to(tl.float32)\n    tmp11 = tl.full([1], 2.0, tl.float32)\n    tmp12 = tmp10 * tmp11\n    tmp13 = tmp12.to(tl.bfloat16)\n    tmp14 = tmp13.to(tl.float32)\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp2 * tmp16\n    tmp18 = tmp17.to(tl.bfloat16)\n    tmp19 = tmp18.to(tl.float32)\n    tl.store(in_out_ptr0 + x2, tmp19, None)",
+      "identical_prior_kernel": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_11"
+    },
+    {
+      "name": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_12",
+      "line": 815,
+      "normalized_function_ast_sha256": "1d0b3b0d7a20ca38d6ceb030963bf900a357f4f9769e5f400d5bd7c93ec6c3c6",
+      "function_excerpt": "def kernel(in_out_ptr0, in_ptr0, xnumel, XBLOCK: tl.constexpr):\n    xnumel = 262144\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x2 = xindex\n    x1 = xindex // 128\n    tmp0 = tl.load(in_out_ptr0 + x2, None).to(tl.float32)\n    tmp3 = tl.load(in_ptr0 + x1, None, eviction_policy='evict_last').to(tl.float32)\n    tmp1 = tmp0.to(tl.bfloat16)\n    tmp2 = tmp1.to(tl.float32)\n    tmp4 = tmp3.to(tl.bfloat16)\n    tmp5 = tmp4.to(tl.float32)\n    tmp6 = tl.sigmoid(tmp5)\n    tmp7 = tmp6.to(tl.bfloat16)\n    tmp8 = tmp7.to(tl.float32)\n    tmp9 = tmp8.to(tl.bfloat16)\n    tmp10 = tmp9.to(tl.float32)\n    tmp11 = tl.full([1], 2.0, tl.float32)\n    tmp12 = tmp10 * tmp11\n    tmp13 = tmp12.to(tl.bfloat16)\n    tmp14 = tmp13.to(tl.float32)\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp2 * tmp16\n    tmp18 = tmp17.to(tl.bfloat16)\n    tmp19 = tmp18.to(tl.float32)\n    tl.store(in_out_ptr0 + x2, tmp19, None)",
+      "identical_prior_kernel": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_3"
+    },
+    {
+      "name": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_19",
+      "line": 1440,
+      "normalized_function_ast_sha256": "e39487d8055463576116bf71d10a99343a68c86b4c902cbff8f73414d7c72282",
+      "function_excerpt": "def kernel(in_out_ptr0, in_ptr0, xnumel, XBLOCK: tl.constexpr):\n    xnumel = 131072\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x2 = xindex\n    x1 = xindex // 64\n    tmp0 = tl.load(in_out_ptr0 + x2, None).to(tl.float32)\n    tmp3 = tl.load(in_ptr0 + x1, None, eviction_policy='evict_last').to(tl.float32)\n    tmp1 = tmp0.to(tl.bfloat16)\n    tmp2 = tmp1.to(tl.float32)\n    tmp4 = tmp3.to(tl.bfloat16)\n    tmp5 = tmp4.to(tl.float32)\n    tmp6 = tl.sigmoid(tmp5)\n    tmp7 = tmp6.to(tl.bfloat16)\n    tmp8 = tmp7.to(tl.float32)\n    tmp9 = tmp8.to(tl.bfloat16)\n    tmp10 = tmp9.to(tl.float32)\n    tmp11 = tl.full([1], 2.0, tl.float32)\n    tmp12 = tmp10 * tmp11\n    tmp13 = tmp12.to(tl.bfloat16)\n    tmp14 = tmp13.to(tl.float32)\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp2 * tmp16\n    tmp18 = tmp17.to(tl.bfloat16)\n    tmp19 = tmp18.to(tl.float32)\n    tl.store(in_out_ptr0 + x2, tmp19, None)",
+      "identical_prior_kernel": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_20"
+    },
+    {
+      "name": "triton_poi_fused_gelu_view_23",
+      "line": 1733,
+      "normalized_function_ast_sha256": "902b2d0b94871af41db024d193953a3dd96af67f9acf68ed449e89a3978916ae",
+      "function_excerpt": "def kernel(in_out_ptr0, xnumel, XBLOCK: tl.constexpr):\n    xnumel = 212992\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x0 = xindex\n    tmp0 = tl.load(in_out_ptr0 + x0, None).to(tl.float32)\n    tmp1 = tmp0.to(tl.float32)\n    tmp2 = tl.full([1], 0.5, tl.float32)\n    tmp3 = tmp1 * tmp2\n    tmp4 = tmp1 * tmp1\n    tmp5 = tmp4 * tmp1\n    tmp6 = tl.full([1], 0.044715, tl.float32)\n    tmp7 = tmp5 * tmp6\n    tmp8 = tmp1 + tmp7\n    tmp9 = tl.full([1], 0.7978845608028654, tl.float32)\n    tmp10 = tmp8 * tmp9\n    tmp11 = libdevice.tanh(tmp10)\n    tmp12 = tl.full([1], 1.0, tl.float32)\n    tmp13 = tmp11 + tmp12\n    tmp14 = tmp3 * tmp13\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp16.to(tl.bfloat16)\n    tmp18 = tmp17.to(tl.float32)\n    tl.store(in_out_ptr0 + x0, tmp18, None)",
+      "identical_prior_kernel": "triton_poi_fused_gelu_view_27"
+    },
+    {
+      "name": "triton_poi_fused__unsafe_view_gelu_25",
+      "line": 1871,
+      "normalized_function_ast_sha256": "73db97811100fc99c4c2181634c5891215a8304fd1afe8f1901b54627026bc61",
+      "function_excerpt": "def kernel(in_out_ptr0, xnumel, XBLOCK: tl.constexpr):\n    xnumel = 1048576\n    xoffset = tl.program_id(0) * XBLOCK\n    xindex = xoffset + tl.arange(0, XBLOCK)[:]\n    xmask = tl.full([XBLOCK], True, tl.int1)[:]\n    x0 = xindex\n    tmp0 = tl.load(in_out_ptr0 + x0, None).to(tl.float32)\n    tmp1 = tmp0.to(tl.float32)\n    tmp2 = tl.full([1], 0.5, tl.float32)\n    tmp3 = tmp1 * tmp2\n    tmp4 = tmp1 * tmp1\n    tmp5 = tmp4 * tmp1\n    tmp6 = tl.full([1], 0.044715, tl.float32)\n    tmp7 = tmp5 * tmp6\n    tmp8 = tmp1 + tmp7\n    tmp9 = tl.full([1], 0.7978845608028654, tl.float32)\n    tmp10 = tmp8 * tmp9\n    tmp11 = libdevice.tanh(tmp10)\n    tmp12 = tl.full([1], 1.0, tl.float32)\n    tmp13 = tmp11 + tmp12\n    tmp14 = tmp3 * tmp13\n    tmp15 = tmp14.to(tl.bfloat16)\n    tmp16 = tmp15.to(tl.float32)\n    tmp17 = tmp16.to(tl.bfloat16)\n    tmp18 = tmp17.to(tl.float32)\n    tl.store(in_out_ptr0 + x0, tmp18, None)",
+      "identical_prior_kernel": "triton_poi_fused__unsafe_view_gelu_25"
+    }
+  ],
+  "prior_activation_kernels": [
+    {
+      "name": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_3",
+      "line": 280,
+      "normalized_function_ast_sha256": "1d0b3b0d7a20ca38d6ceb030963bf900a357f4f9769e5f400d5bd7c93ec6c3c6"
+    },
+    {
+      "name": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_11",
+      "line": 984,
+      "normalized_function_ast_sha256": "044288316e031b6eed6185d60d6ce987a01671c07dd23462713ed6858efe6383"
+    },
+    {
+      "name": "triton_poi_fused_mul_sigmoid_transpose_unsqueeze_view_20",
+      "line": 1880,
+      "normalized_function_ast_sha256": "e39487d8055463576116bf71d10a99343a68c86b4c902cbff8f73414d7c72282"
+    },
+    {
+      "name": "triton_poi_fused__unsafe_view_gelu_25",
+      "line": 2186,
+      "normalized_function_ast_sha256": "73db97811100fc99c4c2181634c5891215a8304fd1afe8f1901b54627026bc61"
+    },
+    {
+      "name": "triton_poi_fused_gelu_view_27",
+      "line": 2470,
+      "normalized_function_ast_sha256": "902b2d0b94871af41db024d193953a3dd96af67f9acf68ed449e89a3978916ae"
+    }
+  ],
+  "comparison_method": "Parse each async_compile.triton source string, remove decorators and normalize only function name to kernel, compare ast.dump(include_attributes=False) SHA256. Arguments, arithmetic, casts, constants, indexing, stores and xnumel remain in comparison.",
+  "qualification": "Source census only. No claim that an activation causes the first divergence or that native preservation passes model parity. Shapes describe only the first compiled stage; stage two has not qualified."
+}

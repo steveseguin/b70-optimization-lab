@@ -1,0 +1,41 @@
+--- multiblock-compile-01.original.py
++++ ltx_multiblock_compile.py
+@@ -1,8 +1,9 @@
+ """Inactive multi-block Inductor candidate; preserve native registration/routing."""
+ import hashlib
+ import weakref
++from itertools import count
+ from pathlib import Path
+-from types import MappingProxyType
++from types import FunctionType, MappingProxyType
+ 
+ import torch
+ import ltx_native_activations_backend as activation_backend
+@@ -18,6 +19,7 @@
+ OPTIONS = {'compile_threads': 1, 'emulate_precision_casts': True,
+            'eager_numerics.division_rounding': True, 'triton.cudagraphs': False,
+            'max_autotune': False, 'max_autotune_gemm': False}
++_ENTRY_IDS = count()
+ 
+ 
+ def check_source():
+@@ -47,8 +49,17 @@
+         self.receipt_directory = Path(receipt_directory)
+         self._lifecycle = None
+         self._validate(check_device=False)
+-        # This callable is never assigned to an nn.Module registration or forward.
+-        self.compiled = compiler(block, backend=make_backend(
++        # Each route owns an entry code object and its Dynamo cache. The shared
++        # native forward is inlined; its registration and Python code stay intact.
++        def invoke(x, **kwargs):
++            return block(x, **kwargs)
++        entry_name = f'ltx_private_block_{next(_ENTRY_IDS)}'
++        self._compile_target = FunctionType(
++            invoke.__code__.replace(co_name=entry_name, co_qualname=entry_name),
++            invoke.__globals__, entry_name,
++            invoke.__defaults__, invoke.__closure__)
++        # Neither private callable is assigned to a module registration/forward.
++        self.compiled = compiler(self._compile_target, backend=make_backend(
+             OPTIONS, self.receipt_directory,
+             expected_count=15), fullgraph=True, dynamic=False)
+ 

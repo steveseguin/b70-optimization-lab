@@ -1,0 +1,28 @@
+--- original.py
++++ candidate.py
+@@ -94,10 +94,12 @@
+             if type(self._lifecycle) is not _CompilePreRun:
+                 raise RuntimeError('Bound compiler callback has no lifecycle gate')
+             self._lifecycle.validate_current_execution(self)
++            return True
++        return False
+ 
+     def _call_native(self, args):
+-        self._validate_execution()
+-        self._validate(check_device=True)
++        if not self._validate_execution():
++            self._validate(check_device=True)
+         def require_device(value):
+             if isinstance(value, torch.Tensor) and value.device != self._route_identity[0]:
+                 raise RuntimeError('Routed numerical input is on the wrong device')
+@@ -129,8 +131,8 @@
+ 
+     def __call__(self, args, extra):
+         # The original route owns transfers, device context and last-block return.
+-        self._validate_execution()
+-        self._validate(check_device=False)
++        if not self._validate_execution():
++            self._validate(check_device=False)
+         return self.original_route(args, {**extra, 'original_block': self._call_native})
+ 
+ 

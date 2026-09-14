@@ -39,6 +39,143 @@ by restoration of the original R304 FP8 service if healthy. The earlier control
 and exact-but-neutral projection screen remain valid separate observations.
 [Incident receipt](experiments/qwen38-27b-b70/data/2026-09-14-amd-transfer/freeze-incident.json).
 
+**Four-B70 host, September14: one-pass native screen running on packet08.**
+PID66846 serves `http://127.0.0.1:8188`, manifest
+`a32f645772d2ef59d46b66c9181f1d9433950172bcc763924de8aa7acb679b6b`.
+All four startup checks and strict after-import determinism passed. Old PID56711
+exited0 after one SIGINT, with render ownership clear. Same computer boot; no
+host reboot, driver reset or power/memory changes. The12-request all48
+`multiblock-screen-03` is running (client exec97668, server exec53546).
+New native quality/speed remain pending; failed requests halt without retry or
+cycling the server. [Prepared comparison](experiments/ltx25-b70/notes/onepass-runtime-08-prepared.md),
+[startup](experiments/ltx25-b70/data/multiblock-migration-08/startup.json).
+Next after terminal quality/timing: prepare a bounded retained-candidate stack
+profile on this same application to attribute remaining cost. No profiler
+request or source integration is qualified yet. This supersedes live PID56711
+and packet07 statements below; inspect actual client state before submissions.
+
+**Four-B70 host, September14: packet07 screen complete; original dispatch selected.**
+PID56711 serves `http://127.0.0.1:8188`, manifest
+`afdbad186a6873a286f93e9d1e715f6bf4c17e1552d75dbce2a3e03c0a1f35c1`.
+All 12 screen02 clips match all four original raw outputs, including all48
+compiled blocks. Warm compiled previews7.59–7.65s remain slower than adjacent
+restored controls6.37–6.45s (median penalty1.214s preview/1.167s samplers).
+Client exec40600 exited0. Server exec70494 is idle on restored dispatch with
+all48 retained; queue empty, clean kernel postflight and no FAULT latch.
+[Native results](experiments/ltx25-b70/notes/multiblock-screen-02-results.md).
+Old PID39793 exited cleanly after one SIGINT. Same computer boot, no host reboot,
+driver reset or settings changes. [Startup](experiments/ltx25-b70/data/multiblock-migration-07/startup.json).
+
+A subsequent offline replay measured only52.5ms potential savings from compact
+receipt serialization across528 calls, with all parsed fields equal. This is
+CPU/filesystem attribution, not a native speed result; no reload is warranted
+for it alone. A corrected native-class CPU fixture then measured0.480s per528
+route calls with fake compute, preserving1584 state/registry boundaries. The
+separate profile points to repeated metadata traversal; this is not native
+speed attribution. The inactive single-traversal state/hook candidate then
+passed all60 existing lifecycle checks and measured0.313s in the same CPU
+fixture versus earlier0.480s. No native speed claim; focused alias/None-state
+gates and native qualification remain pending. Next: finish those focused CPU
+checks and prepare the next native comparison without touching live packet07.
+[Candidate and CPU cost](experiments/ltx25-b70/notes/onepass-state-04-cpu.md).
+[Replay evidence](experiments/ltx25-b70/notes/serializer-replay-cpu-01.md),
+[metadata attribution](experiments/ltx25-b70/notes/metadata-dispatch-cpu-02-results.md).
+This supersedes PID39793/packet06 and running-client statements below.
+
+**Four-B70 host, September14: multiblock screen complete; exact but slower.**
+PID39793 serves `http://127.0.0.1:8188` on packet06, manifest
+`3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394`.
+All 32 clips passed all four original raw-output comparisons, including all48
+compiled blocks. Median all48 penalty was +1.303 seconds versus adjacent
+restored controls; no speed promotion. The client exited zero. The application
+is idle on restored dispatch, queue empty, kernel postflight clean and no FAULT
+latch; all three compiled selections remain retained. Server exec38020.
+PID17769 exited after one SIGINT; same host boot, no computer reboot, driver
+reset or power/memory-setting changes. [Native results](experiments/ltx25-b70/notes/multiblock-screen-01-results.md).
+
+The next inactive adjacent-state reuse03 patch passed all 60 CPU checks for
+both parent and candidate, preserving three validation boundaries while
+removing two adjacent duplicate state checks per block call. Native quality
+and speed remain pending. Prepare its sealed runtime and bounded comparison,
+then perform any necessary controlled application reload within authorized work.
+[Patch and CPU evidence](experiments/ltx25-b70/notes/adjacent-state-reuse-03-cpu.md).
+This supersedes earlier process, inactive-packet and running-client statements below.
+
+**Four-B70 host, September 14: native block compilation exact; paired timing complete.**
+PID17769 serves `http://127.0.0.1:8188`, server `encoder-server-compiler-05`,
+packet `prepared-encoder-compiler-05`, manifest
+`45dc23a7c0a0a234412e31a36225716edf60bb16ad342d96fe12f65139bccbe5`.
+All nine compiler-screen-04 clips match all four original raw outputs. Five
+compiled clips covered three scenes; both native stages passed eager/compiled
+and compiled/repeat checks. Two emitted graphs each retain15 native RMS, six
+sigmoid and two tanh-GELU calls. This qualifies block24 only, with no demonstrated
+speed win (warm compiled median6.607s; restored boat about6.49s).
+Postflight: empty queue, matching identity, clean kernel and no FAULT latch.
+
+The bounded18-request `compiler-timing-01` completed on this same process, with
+all original-output checks passing. Median compiled-minus-adjacent-control mean
+was+99.797ms preview and+17.977ms sampler intervals: a measured speed loss, not
+promotion. The application is idle on restored dispatch, with the qualified
+compiled candidate retained and no fault. Across both campaigns27 clips passed,
+including11 compiled clips. [Paired results](experiments/ltx25-b70/notes/compiler-timing-01-results.md).
+
+An inactive registry-binding reuse patch removes one duplicate full registry
+walk per lifecycle validation while keeping all late-mutation/ownership checks.
+Parent and candidate native CPU lifecycle gates passed; no GPU speed result or
+deployment. Next: qualify overhead changes and prepare bounded multi-block
+selection without per-block application reloads. Continuous real-time generation
+remains incomplete. [Patch and CPU evidence](experiments/ltx25-b70/notes/compile-registry-reuse-01-cpu.md).
+The multi-block successor now passes CPU qualification. Initial five-block
+capture failed at graph9 under the unchanged recompile_limit8; its preserved
+successor uses private per-block compiler entry frames and passed10graphs,
+20 block cases with exact eager/repeated outputs, plus54 native CPU lifecycle
+checks. Packet06 is prepared and inactive, manifest
+`3676b1e47b514f5c28597063b42c9806ed13639cc2dde0f3b25fd44564c08394`;
+its launcher check-only passed. PID17769/packet05 remain unchanged and idle;
+passive kernel/fault checks passed. Next: finish the bounded multiblock client,
+then a necessary controlled application reload and native GPU qualification.
+No new GPU speed/quality result or application reload in this preparation.
+[CPU fix and preparation](experiments/ltx25-b70/notes/multiblock-private-entry-02.md).
+
+[Exact native results](experiments/ltx25-b70/notes/compiler-screen-04-results.md),
+[scaling/guard audit](experiments/ltx25-b70/notes/compiler-screen-04-conditional-scaling-audit.md),
+[prepared source](experiments/ltx25-b70/notes/native-activations-runtime-05-prepared.md).
+This supersedes all earlier process and failed-candidate state below.
+
+**Four-B70 host, September14: native RMS compiler successor running.** One
+controlled LTX application replacement completed: PID6502 exited cleanly after
+one SIGINT; render ownership cleared and the port was available. The computer
+was not rebooted. PID12199 now serves `http://127.0.0.1:8188` from
+`encoder-server-compiler-04`, packet `prepared-encoder-compiler-04`, manifest
+`c4e0f7e56fc7bbc51101894d79d279dd9886f07272868dc99cc7953c647a65c9`.
+Four-card startup checks and strict after-import determinism passed; endpoint
+identity matched. No fault latch. The candidate preserves original native RMS
+calls inside one compiled block; small CPU gates passed, native GPU/full-clip
+qualification failed in compiler-screen-03: audio differences fell from5,923 to10
+bytes; video remains54 bytes different. Both eager clips matched all original
+outputs (warm7.954s). The first compiled block failed before repeat/stage2/full
+clip; no speed result is qualified. Queue empty, kernel clean, no FAULT latch.
+The numerical gate remains failed; do not retry it. Next is remaining rounding
+localization. [Result](experiments/ltx25-b70/notes/compiler-screen-03-results.md).
+This supersedes PID6502 and historical blocked/fault states below.
+[CPU qualification](experiments/ltx25-b70/notes/native-rms-cpu-qualification-01.md),
+[prepared source](experiments/ltx25-b70/notes/native-rms-runtime-04-prepared.md).
+The separate native activation successor is now CPU-qualified:21 guard checks,
+four tiny block cases, and two emitted graphs each retaining15 RMS/six sigmoid/
+two GELU calls. It is not deployed; native GPU and full-clip parity remain
+pending. Prepare its immutable packet/client before another necessary controlled
+application reload. [Candidate and exact scope](experiments/ltx25-b70/notes/native-activations-cpu-qualification-01.md).
+
+**Two-B70 host, September 14: AMD transfer tests authorized.** The unchanged
+FP8 service at localhost:18124 passed 12/12 full-output reference checks and
+short/16K continuation controls. A newest-upstream candidate with the accepted
+arithmetic overlay is being built for a bounded projection-dispatch and DFlash2
+screen. The original service is still running during CPU preparation; one
+controlled maintenance transition will precede exclusive GPU testing. No new
+runtime or speed result is promoted. Evidence root:
+`/mnt/fast-ai/bench-results/amd-transfer-fp8-20260914`.
+[Preregistration](experiments/qwen38-27b-b70/notes/2026-09-14-amd-transfer-prereg.md).
+
 **Four-B70 host recovered after an external boot, September14.** Current boot
 `8e4b1b65-1c38-47bb-8ca5-e4fd6bbdf94a` differs from the faulted boot; all three
 old processes are absent. Four-card copy/compute and clean-kernel checks passed,

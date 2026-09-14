@@ -1,0 +1,43 @@
+{
+  "actual_compilation_executed": false,
+  "calls_per_round": 528,
+  "guard_argv": [
+    "scripts/profile-adjacent-metadata-cpu.py",
+    "--cpu",
+    "--disable-dynamic-vram",
+    "--disable-comfy-compiler",
+    "--disable-async-offload",
+    "--disable-pinned-memory",
+    "--use-pytorch-cross-attention",
+    "--disable-xformers"
+  ],
+  "native_block_forward_executed": false,
+  "phase": "before-native-import",
+  "schema": "ltx.adjacent-metadata-cpu.v1",
+  "scope": "Actual tiny native module metadata with fake compute and CPU-only routing; excludes node filesystem/JSON/census/counters and model kernels",
+  "source_sha256s": {
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/patches/multiblock-adjacent-state-03/candidate.py": "79b4e76b10f49094f3ad11cc70ba62334c2ccf10e50960ac209fb5a0cdd2a584",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_layer_shard.py": "0c836c2c19ef678360c4e5dddb09173d60e0fd011e44430370485abd63336d3b",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_native_activations_backend.py": "62b78186fdfc6d9a22cb8cb10423869ecc37cc09c9c0994a7ccebe2eafd41c2a",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/ltx_native_rms_backend.py": "09defae7340dc3d7f33e16ab80c76f22b6a2ae733617704f2e7b69086108d9fb",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/profile-adjacent-metadata-cpu.py": "2d1b8b760ed4965557ec4a01d61d89094b718e4f8841253b2fc8a9a64c87ce6c",
+    "/home/steve/llm-optimizations/experiments/ltx25-b70/scripts/test-adjacent-state-reuse-cpu.py": "2240282f59e22d108d0ca93ed0b4b534ed0ec92d2ef7acda55d1eacc8967efeb",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/av_model.py": "6582ee5c9fe1119b0dfa85a7c5e4f6d94a899f3b551b1886546fd787c3799e7d",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/ldm/lightricks/model.py": "f0292be2a39491d411ad3cf4b58cebd87e62bf2568aafa35814b954828733718",
+    "/home/steve/src/ComfyUI-ltx25-baseline/comfy/model_patcher.py": "26da6710a7d84e8e98ea3e0f0bc07b88cfef3f99a7f7d59daa71e650512c6ed4",
+    "/mnt/fast-ai/bench-results/ltx25-baseline-20260913/encoder-server-compiler-07/compiler-multiblock-screen-02-r05-all48-compiled-boat/block-00/call-01.json": "0bf847900c86d2d3edf37045eb5d969f8520e033d0539fc8f8ec8aee43baf25b"
+  },
+  "stages": [
+    {
+      "steps": 8,
+      "video_tokens": 64
+    },
+    {
+      "steps": 3,
+      "video_tokens": 256
+    }
+  ],
+  "status": "running",
+  "timing_rounds": 3,
+  "xpu_generation_speed_qualified": false
+}

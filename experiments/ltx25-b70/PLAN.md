@@ -113,9 +113,11 @@ qualified yet.
 
 Prepare any startup-dependent code and CPU tests as durable patches first.
 The current loaded extensions are frozen; disk edits do not update them. No
-restart is scheduled by this plan. Work requiring a new runtime stays pending
-until an appropriate maintenance decision; do not use live monkey-patching to
-bypass process identity or the user's stability constraints.
+restart is scheduled by this plan. When tested source requires a new runtime,
+perform one necessary controlled application reload within the authorized work,
+explain that it reloads LTX rather than the computer, and continue optimization.
+Do not insert another approval pause for that routine action. Preserve source
+identity; do not hot-patch live code or introduce restart/retry chains.
 
 ## Quality gates and continuation
 
