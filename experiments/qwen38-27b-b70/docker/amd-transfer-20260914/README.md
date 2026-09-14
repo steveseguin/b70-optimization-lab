@@ -1,5 +1,7 @@
 # September 14 AMD transfer: refreshed accepted overlay
 
+**Do not launch this candidate unchanged.** The first V2/DFlash2 attempt coincided with a user-reported host freeze during target loading, before readiness. The user restarted the host; no DFlash2 output or speed result exists. Preserve this source packet for diagnosis. See the [incident](../../data/2026-09-14-amd-transfer/freeze-incident.json).
+
 This is an **unqualified candidate build recipe**, not a promoted runtime. It
 ports the complete R304 Python overlay onto the newest XPU nightly resolved at
 campaign start. It does not add DFlash, change target precision, or enable an

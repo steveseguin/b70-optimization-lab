@@ -64,9 +64,13 @@ def main():
     finally:
         if child is not None and child.poll() is None:
             os.killpg(child.pid, signal.SIGINT)
-            try:
-                child.wait(timeout=15)
-            except subprocess.TimeoutExpired:
+            # Application controllers may still be recording evidence and
+            # executing their single graceful Docker stop. Keep the mutex
+            # until their bounded cleanup completes; never start a successor.
+            deadline = time.monotonic() + 120
+            while child.poll() is None and time.monotonic() < deadline:
+                time.sleep(2)
+            if child.poll() is None:
                 (a.out / 'CLIENT_EXIT_UNCONFIRMED').write_text(str(child.pid) + '\n')
         lock.close()
 
