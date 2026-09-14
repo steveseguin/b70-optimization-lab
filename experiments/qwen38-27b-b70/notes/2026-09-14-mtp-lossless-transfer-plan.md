@@ -53,7 +53,7 @@ AMD-transfer packet stay preserved.
 - [done] 7. Attribute native convolution time from existing evidence. Pursue
   native channel tiling only if the measured cost supports it; a different
   backend's Triton constant is not an optimization of the native XPU route.
-- [evidence closed; publication in progress; service restoration blocked] 8. Close source/evidence, update recipes/packages/site only for
+- [evidence and site updated; service restoration blocked] 8. Close source/evidence, update recipes/packages/site only for
   qualifying changes, run relevant validators and desktop/mobile checks, push,
   verify deployment when public surfaces change, leave a healthy qualified
   service, and report achieved gains, rejected work and concrete remaining gates.
