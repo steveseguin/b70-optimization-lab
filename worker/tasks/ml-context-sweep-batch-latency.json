@@ -1,0 +1,9 @@
+{
+  "id": "ml-context-sweep-batch-latency",
+  "repository": "ml-bottleneck",
+  "source_commit": "8df1372c4f20fc8ae0bf4e35e1b75084327b17fc",
+  "issue": "For batched requests, the public context sweep reports a different first-token latency from predict() for the same setup and input length. For Qwen3.8 27B on one RTX 4090, q4, llama_cpp, pipeline, 2048 input/128 output tokens, and batchSize=4, predict() reports 4.646 seconds but the sweep reports about 1.161 seconds at that input length. Make the context-sweep latency describe the same workload as predict(), while preserving single-request behavior and existing prefill/decode throughput predictions. Add focused offline regression coverage and regenerate SDK output as required. Do not change calibration constants, hardware/model specifications, benchmark evidence, or refresh workflows.",
+  "validation_command": "node /acceptance/ml_context_sweep_latency.mjs",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "Context-sweep TTFT must represent the complete batch and agree with predict()"
+}

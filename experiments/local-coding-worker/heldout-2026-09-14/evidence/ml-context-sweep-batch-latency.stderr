@@ -1,0 +1,14 @@
+node:internal/process/esm_loader:40
+      internalBinding('errors').triggerUncaughtException(
+                                ^
+
+AssertionError [ERR_ASSERTION]: Context-sweep TTFT must represent the complete batch and agree with predict(): [{"batchSize":2,"promptTokens":512,"actual":0.4109288625334164,"expected":0.8218577250668327},{"batchSize":2,"promptTokens":1024,"actual":0.7071848762423836,"expected":1.4143697524847672},{"batchSize":2,"promptTokens":2048,"actual":1.2584489372859005,"expected":2.516897874571801},{"batchSize":2,"promptTokens":4096,"actual":2.3394985004352065,"expected":4.678997000870413}]
+    at file:///tmp/worker-overnight-heldout/acceptance/ml_context_sweep_latency.mjs:32:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 22,
+  expected: 0,
+  operator: 'strictEqual'
+}
+
+Node.js v18.19.1

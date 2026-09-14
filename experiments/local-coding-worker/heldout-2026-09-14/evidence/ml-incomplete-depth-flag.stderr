@@ -1,0 +1,14 @@
+node:internal/process/esm_loader:40
+      internalBinding('errors').triggerUncaughtException(
+                                ^
+
+AssertionError [ERR_ASSERTION]: An incomplete depth flag must not become a precise decode-depth measurement: [{"command":"llama-bench -d 512 --n-depth","parsed":{"decodeDepthTokens":512,"decodeMeasurementIssue":null}},{"command":"llama-bench --n-depth=512 -d","parsed":{"decodeDepthTokens":512,"decodeMeasurementIssue":null}},{"command":"llama-bench -d 512 --n-depth=","parsed":{"decodeDepthTokens":512,"decodeMeasurementIssue":null}},{"command":"llama-bench --n-depth 0 -d=","parsed":{"decodeDepthTokens":0,"decodeMeasurementIssue":null}},{"command":"llama-bench -d \"512\" --n-depth   ","parsed":{"decodeDepthTokens":512,"decodeMeasurementIssue":null}}]
+    at file:///tmp/worker-overnight-heldout/acceptance/ml_incomplete_depth_flag.mjs:31:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 5,
+  expected: 0,
+  operator: 'strictEqual'
+}
+
+Node.js v18.19.1

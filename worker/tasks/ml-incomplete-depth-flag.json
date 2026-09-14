@@ -1,0 +1,9 @@
+{
+  "id": "ml-incomplete-depth-flag",
+  "repository": "ml-bottleneck",
+  "source_commit": "8df1372c4f20fc8ae0bf4e35e1b75084327b17fc",
+  "issue": "The llama-bench decode-context parser currently treats a command such as \"llama-bench -d 512 --n-depth\" as an unambiguous 512-token decode-depth measurement, even though its second depth option has no value. Such incomplete commands must remain unresolved with a useful measurement-issue explanation, including short/long and equals-form variants. Preserve valid single depth values, explicit zero, unrelated-command handling, and the existing conservative handling of sweeps and combined tests. Add focused offline parser regressions. Do not regenerate or edit historical benchmark snapshots, calibration data, physics, or published measurements.",
+  "validation_command": "node /acceptance/ml_incomplete_depth_flag.mjs",
+  "expected_baseline_failure": true,
+  "expected_baseline_error": "An incomplete depth flag must not become a precise decode-depth measurement"
+}
